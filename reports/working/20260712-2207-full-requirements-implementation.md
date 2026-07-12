@@ -54,6 +54,9 @@
 - benchmark seed の一覧が空になる回帰は authoritative identity 判定へ修復し、対象 contract は約2秒で完了した。
 - benchmark seed 削除の初回監査で resource owner を actor として記録する blocker を検出した。認可 subject と verified runner attribution を分離し、`smoke-agent-v1` 等の共有 corpus owner は suite registry から解決するよう修復した。API 658/658 と独立再監査 blocker 0 を確認した。
 - 最終 workspace 一括実行では Web role navigation 1件が `/me` 解決前の同期 assertion で失敗した。権限依存 nav を待機する test に修復し、対象 41/41 と Web 全体 307/307 を再実行した。API/infra/benchmark/contract は同一一括実行で全件成功した。
+- Draft PR の初回 CI では API coverage 用環境変数不足と SNS topic の TLS policy 不足を検出した。package script と同じ test environment を利用し、SNS の insecure transport deny policy、infra test/snapshot を追加した。
+- 2回目の CI では SNS policy 追加後の infra inventory 未同期と API test 選択差を検出した。通常 script は shell 展開された一部階層のみを実行する一方、workflow は未展開の重複 recursive glob を `tsx` に渡していたため、1本の quoted recursive glob と `node --import tsx --test --test-concurrency=1` に統一した。C1 は未達を非表示にせず `tasks/todo/20260712-coverage-api-c1-recovery.md` へ継続した。
+- 修正後の sandbox coverage は全97 test file を一意に選択し、listener 不使用の92 file が pass、localhost listener を必要とする5 file は sandbox の `EPERM` で未完了だった。Statements/lines 88.32%、branches 79.82%、functions 90.89% はこの5 file 未実行時の参考値であり、coverage gate の最終判定には使用しない。実 runner の結果は PR CI で確認する。
 
 ## 成果物
 
@@ -75,5 +78,6 @@
 - `FR-066`: AWS registry backfill/convergence と live cleanup duration は未実施。
 - `FR-093`: live notification、drift、rollback drill は未実施。
 - `SQ-005`–`SQ-015`: approved dataset/threshold/window/owner/workload/price catalog を用いた live/load/chaos/cost/billing acceptance は未実施。
+- API C1 branches 85% は未達として `tasks/todo/20260712-coverage-api-c1-recovery.md` で追跡する。C0 statements/functions/lines 90% は blocking gate のまま維持する。
 - `npm install` 時点の audit は 4 vulnerabilities（low 1、moderate 1、high 2）を報告した。本タスクでは依存更新による互換性変更を実施していない。
-- Draft PR、受け入れコメント、セルフレビュー、CI はこのレポート更新後に実施する。運用 evidence が未取得のため task は `do` のままとし、全49件の operational acceptance 完了は主張しない。
+- Draft PR #341、受け入れコメント、セルフレビューは作成済み。CI repair は継続中であり、運用 evidence が未取得のため task は `do` のままとし、全49件の operational acceptance 完了は主張しない。

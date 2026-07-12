@@ -2,7 +2,7 @@
   "generatedBy": "tools/infra-inventory/generate-infra-inventory.mjs",
   "source": "infra/test/__snapshots__/memorag-mvp-stack.snapshot.json",
   "stackName": "MemoRagMvpStack",
-  "totalResources": 249,
+  "totalResources": 250,
   "totalsByDomain": [
     {
       "domain": "Storage",
@@ -218,6 +218,11 @@
     },
     {
       "type": "AWS::SNS::Topic",
+      "count": 1,
+      "purpose": "CloudFormation resource"
+    },
+    {
+      "type": "AWS::SNS::TopicPolicy",
       "count": 1,
       "purpose": "CloudFormation resource"
     }
@@ -5376,6 +5381,41 @@
         ]
       },
       "detailFilePath": "infra-inventory/aws-sns-topic.md"
+    },
+    {
+      "logicalId": "RagQualityAlertTopicPolicy15888B09",
+      "logicalName": "Rag Quality Alert Topic Policy",
+      "type": "AWS::SNS::TopicPolicy",
+      "purpose": "Rag Quality Alert Topic Policy (AWS::SNS::TopicPolicy)",
+      "settings": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sns:Publish",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false"
+                }
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*"
+              },
+              "Resource": {
+                "Ref": "RagQualityAlertTopic3AFB5A32"
+              },
+              "Sid": "0"
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "Topics": [
+          {
+            "Ref": "RagQualityAlertTopic3AFB5A32"
+          }
+        ]
+      },
+      "detailFilePath": "infra-inventory/aws-sns-topicpolicy.md"
     }
   ]
 }

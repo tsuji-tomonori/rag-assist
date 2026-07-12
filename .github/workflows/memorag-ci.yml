@@ -118,19 +118,10 @@ jobs:
 
       - name: Test api with coverage
         id: api_test
-        env:
-          NODE_ENV: test
-          LOCAL_AUTH_USER_ID: local-dev
-          LOCAL_AUTH_EMAIL: local-dev@example.com
-          LOCAL_AUTH_GROUPS: SYSTEM_ADMIN
-          LOCAL_AUTH_ACCOUNT_STATUS: active
-          LOCAL_AUTH_TENANT_ID: local-test
-          BENCHMARK_EVALUATION_ENABLED: "true"
-          BENCHMARK_EVALUATION_TENANT_ID: benchmark-test
         run: |
-          # C1 is reported with the tracked improvement task below. Keep C0/function/line
-          # gates blocking, and serialize resource-heavy server/PDF tests under c8.
-          npm exec -w @memorag-mvp/api -- c8 --check-coverage --statements 90 --functions 90 --lines 90 --reporter=text-summary --reporter=json-summary tsx --test --test-concurrency=1 src/**/*.test.ts src/**/**/*.test.ts
+          # The package script owns one quoted recursive glob so shell/npm cwd
+          # differences cannot omit or duplicate API test files.
+          npm run test:coverage -w @memorag-mvp/api
           node -e 'const fs = require("fs"); const s = require("./apps/api/coverage/coverage-summary.json").total; fs.appendFileSync(process.env.GITHUB_OUTPUT, `c0=${s.statements.pct}%\nc1=${s.branches.pct}%\n`)'
         continue-on-error: true
 
@@ -248,7 +239,7 @@ jobs:
               ['benchmark', 'Product runtime release audit', '${{ steps.rag_release_source_audit.outcome }}', 'actual apps/api/src + apps/web/src scan', '`npm run rag:release:source-audit`'],
               ['infra', 'Test', '${{ steps.infra_test.outcome }}', 'C0: 未計測 / C1: 未計測', '`npm test -w @memorag-mvp/infra`'],
               ['benchmark', 'Test', '${{ steps.benchmark_test.outcome }}', 'C0: 未計測 / C1: 未計測', '`npm test -w @memorag-mvp/benchmark`'],
-              ['api', 'Test', '${{ steps.api_test.outcome }}', coverage('${{ steps.api_test.outputs.c0 }}', '${{ steps.api_test.outputs.c1 }}', { c1ImprovementTask: '`tasks/todo/20260507-2012-api-c1-coverage-improvement.md`' }), '`npm exec -w @memorag-mvp/api -- c8 --check-coverage --statements 90 --functions 90 --lines 90 ...`'],
+              ['api', 'Test', '${{ steps.api_test.outcome }}', coverage('${{ steps.api_test.outputs.c0 }}', '${{ steps.api_test.outputs.c1 }}', { c1ImprovementTask: '`tasks/todo/20260712-coverage-api-c1-recovery.md`' }), '`npm run test:coverage -w @memorag-mvp/api`'],
               ['web', 'Test', '${{ steps.web_test.outcome }}', coverage('${{ steps.web_test.outputs.c0 }}', '${{ steps.web_test.outputs.c1 }}'), '`npm exec -w @memorag-mvp/web -- vitest run --coverage ...`'],
               ['infra', 'Build', '${{ steps.infra_build.outcome }}', '-', '`npm run build -w @memorag-mvp/infra`'],
               ['api', 'Build', '${{ steps.api_build.outcome }}', '-', '`npm run build -w @memorag-mvp/api`'],

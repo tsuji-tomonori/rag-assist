@@ -11,7 +11,7 @@
 ## 全体サマリ
 
 - 対象スタック: `MemoRagMvpStack`
-- CloudFormation resources: 249
+- CloudFormation resources: 250
 
 | 領域 | 件数 |
 | --- | ---: |
@@ -65,6 +65,7 @@
 | `AWS::CloudWatch::Alarm` | 4 | CloudFormation resource | [詳細](infra-inventory/aws-cloudwatch-alarm.md) |
 | `AWS::Events::Rule` | 3 | CloudFormation resource | [詳細](infra-inventory/aws-events-rule.md) |
 | `AWS::SNS::Topic` | 1 | CloudFormation resource | [詳細](infra-inventory/aws-sns-topic.md) |
+| `AWS::SNS::TopicPolicy` | 1 | CloudFormation resource | [詳細](infra-inventory/aws-sns-topicpolicy.md) |
 
 ## リソース別主要設定
 
@@ -107,6 +108,7 @@
 | `AWS::CloudWatch::Alarm` | [aws-cloudwatch-alarm.md](infra-inventory/aws-cloudwatch-alarm.md) |
 | `AWS::Events::Rule` | [aws-events-rule.md](infra-inventory/aws-events-rule.md) |
 | `AWS::SNS::Topic` | [aws-sns-topic.md](infra-inventory/aws-sns-topic.md) |
+| `AWS::SNS::TopicPolicy` | [aws-sns-topicpolicy.md](infra-inventory/aws-sns-topicpolicy.md) |
 
 ## 注意事項
 
