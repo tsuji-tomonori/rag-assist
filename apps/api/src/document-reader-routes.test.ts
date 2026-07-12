@@ -18,8 +18,8 @@ test("FR-064/091 reader summaries, authorized-only pagination, extracted downloa
   const basePort = 18800 + Math.floor(Math.random() * 300)
   const dataDir = await mkdtemp(path.join(tmpdir(), "document-reader-routes-"))
   const owner = await startLocalServer(dataDir, "RAG_GROUP_MANAGER", "owner-1", basePort)
-  const reader = await startLocalServer(dataDir, "CHAT_USER,READERS", "reader-1", basePort + 1)
   const outsiderManager = await startLocalServer(dataDir, "RAG_GROUP_MANAGER", "outsider-1", basePort + 2)
+  let reader: LocalServer | undefined
 
   try {
     const visibleGroup1 = await postJson<{ groupId: string }>(owner, "/document-groups", {
@@ -30,6 +30,7 @@ test("FR-064/091 reader summaries, authorized-only pagination, extracted downloa
     })
     await seedFolderReaderPolicy(dataDir, visibleGroup1.groupId, "owner-1", "reader-1")
     await seedFolderReaderPolicy(dataDir, visibleGroup2.groupId, "owner-1", "reader-1")
+    reader = await startLocalServer(dataDir, "CHAT_USER,READERS", "reader-1", basePort + 1)
     const hiddenGroup = await postJson<{ groupId: string }>(owner, "/document-groups", { name: "C Private Policies" })
     const outsiderDestination = await postJson<{ groupId: string }>(outsiderManager, "/document-groups", { name: "Outsider Destination" })
 
@@ -138,7 +139,7 @@ test("FR-064/091 reader summaries, authorized-only pagination, extracted downloa
     assert.doesNotMatch(await invalidCursor.text(), /hidden-owner-policy|owner-1|tenant|policy/i)
   } finally {
     stopLocalServer(owner)
-    stopLocalServer(reader)
+    if (reader) stopLocalServer(reader)
     stopLocalServer(outsiderManager)
   }
 })

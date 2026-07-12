@@ -14,7 +14,8 @@ test("document direct share routes return a policy version without weakening res
   const basePort = 18400 + Math.floor(Math.random() * 400)
   const dataDir = await mkdtemp(path.join(tmpdir(), "document-share-routes-"))
   const owner = await startLocalServer(dataDir, "RAG_GROUP_MANAGER", "user-a", basePort)
-  const directUser = await startLocalServer(dataDir, "RAG_GROUP_MANAGER", "user-b", basePort + 1)
+  let directUser: LocalServer | undefined
+  let fullDirectUser: LocalServer | undefined
 
   try {
     const sourceGroup = await postJson<{ groupId: string }>(owner, "/document-groups", { name: "Source Folder" })
@@ -33,6 +34,7 @@ test("document direct share routes return a policy version without weakening res
       reason: "read only review"
     }, { expectedStatus: 400 })
     await seedDocumentShare(dataDir, uploaded.documentId, "user-b", "readOnly")
+    directUser = await startLocalServer(dataDir, "RAG_GROUP_MANAGER", "user-b", basePort + 1)
 
     const forbiddenShareInfo = await fetch(url(directUser, `/documents/${encodeURIComponent(uploaded.documentId)}/share`))
     assert.equal(forbiddenShareInfo.status, 404)
@@ -54,22 +56,23 @@ test("document direct share routes return a policy version without weakening res
     assert.ok(ownerShareInfo.version)
 
     await seedDocumentShare(dataDir, uploaded.documentId, "user-b", "full")
-    const directUserShareInfo = await getJson<{ currentUserEffectivePermission: string; version: string }>(directUser, `/documents/${encodeURIComponent(uploaded.documentId)}/share`)
+    fullDirectUser = await startLocalServer(dataDir, "RAG_GROUP_MANAGER", "user-b", basePort + 2)
+    const directUserShareInfo = await getJson<{ currentUserEffectivePermission: string; version: string }>(fullDirectUser, `/documents/${encodeURIComponent(uploaded.documentId)}/share`)
     assert.equal(directUserShareInfo.currentUserEffectivePermission, "full")
     assert.ok(directUserShareInfo.version)
 
-    const destination = await postJson<{ groupId: string }>(directUser, "/document-groups", { name: "Destination Folder" })
-    await postJson(directUser, "/documents", {
+    const destination = await postJson<{ groupId: string }>(fullDirectUser, "/document-groups", { name: "Destination Folder" })
+    await postJson(fullDirectUser, "/documents", {
       fileName: uploaded.fileName,
       text: "Destination conflict document.",
       scope: { scopeType: "group", groupIds: [destination.groupId] }
     })
-    await postJson(directUser, `/documents/${encodeURIComponent(uploaded.documentId)}/move`, {
+    await postJson(fullDirectUser, `/documents/${encodeURIComponent(uploaded.documentId)}/move`, {
       destinationFolderId: destination.groupId,
       reason: "same name conflict"
     }, { expectedStatus: 409 })
 
-    const moveOk = await postJson<{ document: { documentId: string; fileName: string; metadata?: Record<string, unknown> }; directDocumentGrantsPreserved: boolean }>(directUser, `/documents/${encodeURIComponent(uploaded.documentId)}/move`, {
+    const moveOk = await postJson<{ document: { documentId: string; fileName: string; metadata?: Record<string, unknown> }; directDocumentGrantsPreserved: boolean }>(fullDirectUser, `/documents/${encodeURIComponent(uploaded.documentId)}/move`, {
       destinationFolderId: destination.groupId,
       newTitle: "direct-share-moved.txt",
       reason: "direct full move route"
@@ -80,7 +83,8 @@ test("document direct share routes return a policy version without weakening res
     assert.equal(moveOk.directDocumentGrantsPreserved, true)
   } finally {
     stopLocalServer(owner)
-    stopLocalServer(directUser)
+    if (directUser) stopLocalServer(directUser)
+    if (fullDirectUser) stopLocalServer(fullDirectUser)
   }
 })
 

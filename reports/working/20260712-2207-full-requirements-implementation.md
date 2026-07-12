@@ -57,6 +57,7 @@
 - Draft PR の初回 CI では API coverage 用環境変数不足と SNS topic の TLS policy 不足を検出した。package script と同じ test environment を利用し、SNS の insecure transport deny policy、infra test/snapshot を追加した。
 - 2回目の CI では SNS policy 追加後の infra inventory 未同期と API test 選択差を検出した。通常 script は shell 展開された一部階層のみを実行する一方、workflow は未展開の重複 recursive glob を `tsx` に渡していたため、1本の quoted recursive glob と `node --import tsx --test --test-concurrency=1` に統一した。C1 は未達を非表示にせず `tasks/todo/20260712-coverage-api-c1-recovery.md` へ継続した。
 - 修正後の sandbox coverage は全97 test file を一意に選択し、listener 不使用の92 file が pass、localhost listener を必要とする5 file は sandbox の `EPERM` で未完了だった。Statements/lines 88.32%、branches 79.82%、functions 90.89% はこの5 file 未実行時の参考値であり、coverage gate の最終判定には使用しない。実 runner の結果は PR CI で確認する。
+- 3回目の CI では infra inventory を含む全項目が成功し、API coverage だけが5 test failure を返した。reader/share route fixture は policy file を server 起動後に直接 seed しており、初期 cache 状態に依存していたため seed 後起動へ変更した。PDF 3件は `pdf-parse` 1.x の legacy pdf.js が Node `Buffer` を current Node 上で binary data として安定認識せず、runner に `pdftotext` がない場合だけ OCR path へ落ちていた。本番 extractor から exact `Uint8Array` を渡して host binary 非依存に修正し、FR-082 text-processing 27/27、API typecheck/lint を確認した。
 
 ## 成果物
 

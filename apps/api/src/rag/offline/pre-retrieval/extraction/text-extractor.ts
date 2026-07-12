@@ -219,7 +219,10 @@ async function extractPdfText(buffer: Buffer, enforceObservedFallbackGuards = fa
   const warnings: ExtractionWarning[] = []
   try {
     const pdfParse = (await import("pdf-parse")).default
-    const parsed = await pdfParse(buffer, { pagerender: renderPdfPageWithBoundary })
+    // pdf-parse 1.x bundles a legacy pdf.js that does not reliably recognize a
+    // Node Buffer as binary data on current Node releases. Give it an exact
+    // Uint8Array copy so parsing never depends on the host's pdftotext binary.
+    const parsed = await pdfParse(new Uint8Array(buffer), { pagerender: renderPdfPageWithBoundary })
     parsedText = parsed.text ?? ""
     parsedPageCount = parsed.numpages
   } catch (error) {
