@@ -25,7 +25,7 @@ test("document direct share routes return a policy version without weakening res
       scope: { scopeType: "group", groupIds: [sourceGroup.groupId] }
     })
 
-    const emptyPolicy = await getJson<{ directDocumentGrants: unknown[]; version: string }>(owner, `/documents/${encodeURIComponent(uploaded.documentId)}/share`)
+    const emptyPolicy = await getJsonEventually<{ directDocumentGrants: unknown[]; version: string }>(owner, `/documents/${encodeURIComponent(uploaded.documentId)}/share`)
     assert.deepEqual(emptyPolicy.directDocumentGrants, [])
     assert.ok(emptyPolicy.version)
 
@@ -173,6 +173,18 @@ async function getJson<T>(server: LocalServer, route: string): Promise<T> {
   const response = await fetch(url(server, route))
   assert.equal(response.status, 200)
   return response.json() as Promise<T>
+}
+
+async function getJsonEventually<T>(server: LocalServer, route: string): Promise<T> {
+  const startedAt = Date.now()
+  let lastStatus = 0
+  while (Date.now() - startedAt < 5_000) {
+    const response = await fetch(url(server, route))
+    lastStatus = response.status
+    if (response.status === 200) return response.json() as Promise<T>
+    await new Promise((resolve) => setTimeout(resolve, 50))
+  }
+  assert.fail(`GET ${route} did not become readable; last status ${lastStatus}`)
 }
 
 async function postJson<T>(server: LocalServer, route: string, body: unknown, options: { expectedStatus?: number } = {}): Promise<T> {

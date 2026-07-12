@@ -30,7 +30,6 @@ test("FR-064/091 reader summaries, authorized-only pagination, extracted downloa
     })
     await seedFolderReaderPolicy(dataDir, visibleGroup1.groupId, "owner-1", "reader-1")
     await seedFolderReaderPolicy(dataDir, visibleGroup2.groupId, "owner-1", "reader-1")
-    reader = await startLocalServer(dataDir, "CHAT_USER,READERS", "reader-1", basePort + 1)
     const hiddenGroup = await postJson<{ groupId: string }>(owner, "/document-groups", { name: "C Private Policies" })
     const outsiderDestination = await postJson<{ groupId: string }>(outsiderManager, "/document-groups", { name: "Outsider Destination" })
 
@@ -50,6 +49,7 @@ test("FR-064/091 reader summaries, authorized-only pagination, extracted downloa
       text: "This body must never be disclosed to outsider-1.",
       scope: { scopeType: "group", groupIds: [hiddenGroup.groupId] }
     })
+    reader = await startLocalServer(dataDir, "CHAT_USER,READERS", "reader-1", basePort + 1)
 
     const firstGroupPage = await getJson<CollectionPage<Record<string, unknown>, "groups">>(reader, "/document-groups?limit=1")
     assert.equal(firstGroupPage.count, 1)

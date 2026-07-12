@@ -121,8 +121,12 @@ jobs:
         run: |
           # The package script owns one quoted recursive glob so shell/npm cwd
           # differences cannot omit or duplicate API test files.
+          set +e
           npm run test:coverage -w @memorag-mvp/api
+          api_test_status=$?
+          set -e
           node -e 'const fs = require("fs"); const s = require("./apps/api/coverage/coverage-summary.json").total; fs.appendFileSync(process.env.GITHUB_OUTPUT, `c0=${s.statements.pct}%\nc1=${s.branches.pct}%\n`)'
+          exit "$api_test_status"
         continue-on-error: true
 
       - name: Test web with coverage
