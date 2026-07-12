@@ -17,38 +17,41 @@ type CollectionPage<T, K extends string> = {
 test("FR-064/091 reader summaries, authorized-only pagination, extracted download, and non-enumeration are enforced by HTTP routes", async () => {
   const basePort = 18800 + Math.floor(Math.random() * 300)
   const dataDir = await mkdtemp(path.join(tmpdir(), "document-reader-routes-"))
-  const owner = await startLocalServer(dataDir, "RAG_GROUP_MANAGER", "owner-1", basePort)
+  const setupOwner = await startLocalServer(dataDir, "RAG_GROUP_MANAGER", "owner-1", basePort)
+  let owner: LocalServer | undefined
   const outsiderManager = await startLocalServer(dataDir, "RAG_GROUP_MANAGER", "outsider-1", basePort + 2)
   let reader: LocalServer | undefined
 
   try {
-    const visibleGroup1 = await postJson<{ groupId: string }>(owner, "/document-groups", {
+    const visibleGroup1 = await postJson<{ groupId: string }>(setupOwner, "/document-groups", {
       name: "A Shared Policies"
     })
-    const visibleGroup2 = await postJson<{ groupId: string }>(owner, "/document-groups", {
+    const visibleGroup2 = await postJson<{ groupId: string }>(setupOwner, "/document-groups", {
       name: "B Shared Policies"
     })
     await seedFolderReaderPolicy(dataDir, visibleGroup1.groupId, "owner-1", "reader-1")
     await seedFolderReaderPolicy(dataDir, visibleGroup2.groupId, "owner-1", "reader-1")
-    const hiddenGroup = await postJson<{ groupId: string }>(owner, "/document-groups", { name: "C Private Policies" })
+    const hiddenGroup = await postJson<{ groupId: string }>(setupOwner, "/document-groups", { name: "C Private Policies" })
     const outsiderDestination = await postJson<{ groupId: string }>(outsiderManager, "/document-groups", { name: "Outsider Destination" })
 
     const visibleText1 = "Reader-downloadable extracted policy text one."
-    const visibleDocument1 = await postJson<{ documentId: string }>(owner, "/documents", {
+    const visibleDocument1 = await postJson<{ documentId: string }>(setupOwner, "/documents", {
       fileName: "visible-one.md",
       text: visibleText1,
       scope: { scopeType: "group", groupIds: [visibleGroup1.groupId] }
     })
-    const visibleDocument2 = await postJson<{ documentId: string }>(owner, "/documents", {
+    const visibleDocument2 = await postJson<{ documentId: string }>(setupOwner, "/documents", {
       fileName: "visible-two.md",
       text: "Reader-downloadable extracted policy text two.",
       scope: { scopeType: "group", groupIds: [visibleGroup2.groupId] }
     })
-    const hiddenDocument = await postJson<{ documentId: string }>(owner, "/documents", {
+    const hiddenDocument = await postJson<{ documentId: string }>(setupOwner, "/documents", {
       fileName: "hidden-owner-policy.md",
       text: "This body must never be disclosed to outsider-1.",
       scope: { scopeType: "group", groupIds: [hiddenGroup.groupId] }
     })
+    stopLocalServer(setupOwner)
+    owner = await startLocalServer(dataDir, "RAG_GROUP_MANAGER", "owner-1", basePort + 3)
     reader = await startLocalServer(dataDir, "CHAT_USER,READERS", "reader-1", basePort + 1)
 
     const firstGroupPage = await getJson<CollectionPage<Record<string, unknown>, "groups">>(reader, "/document-groups?limit=1")
@@ -138,7 +141,8 @@ test("FR-064/091 reader summaries, authorized-only pagination, extracted downloa
     assert.equal(invalidCursor.status, 400)
     assert.doesNotMatch(await invalidCursor.text(), /hidden-owner-policy|owner-1|tenant|policy/i)
   } finally {
-    stopLocalServer(owner)
+    stopLocalServer(setupOwner)
+    if (owner) stopLocalServer(owner)
     if (reader) stopLocalServer(reader)
     stopLocalServer(outsiderManager)
   }

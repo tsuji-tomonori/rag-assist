@@ -13,19 +13,22 @@ type LocalServer = {
 test("document direct share routes return a policy version without weakening resource-hidden responses", async () => {
   const basePort = 18400 + Math.floor(Math.random() * 400)
   const dataDir = await mkdtemp(path.join(tmpdir(), "document-share-routes-"))
-  const owner = await startLocalServer(dataDir, "RAG_GROUP_MANAGER", "user-a", basePort)
+  const setupOwner = await startLocalServer(dataDir, "RAG_GROUP_MANAGER", "user-a", basePort)
+  let owner: LocalServer | undefined
   let directUser: LocalServer | undefined
   let fullDirectUser: LocalServer | undefined
 
   try {
-    const sourceGroup = await postJson<{ groupId: string }>(owner, "/document-groups", { name: "Source Folder" })
-    const uploaded = await postJson<{ documentId: string; fileName: string }>(owner, "/documents", {
+    const sourceGroup = await postJson<{ groupId: string }>(setupOwner, "/document-groups", { name: "Source Folder" })
+    const uploaded = await postJson<{ documentId: string; fileName: string }>(setupOwner, "/documents", {
       fileName: "direct-share.txt",
       text: "Direct document share route contract.",
       scope: { scopeType: "group", groupIds: [sourceGroup.groupId] }
     })
 
-    const emptyPolicy = await getJsonEventually<{ directDocumentGrants: unknown[]; version: string }>(owner, `/documents/${encodeURIComponent(uploaded.documentId)}/share`)
+    stopLocalServer(setupOwner)
+    owner = await startLocalServer(dataDir, "RAG_GROUP_MANAGER", "user-a", basePort + 3)
+    const emptyPolicy = await getJson<{ directDocumentGrants: unknown[]; version: string }>(owner, `/documents/${encodeURIComponent(uploaded.documentId)}/share`)
     assert.deepEqual(emptyPolicy.directDocumentGrants, [])
     assert.ok(emptyPolicy.version)
 
@@ -82,7 +85,8 @@ test("document direct share routes return a policy version without weakening res
     assert.equal(moveOk.document.metadata?.folderId, destination.groupId)
     assert.equal(moveOk.directDocumentGrantsPreserved, true)
   } finally {
-    stopLocalServer(owner)
+    stopLocalServer(setupOwner)
+    if (owner) stopLocalServer(owner)
     if (directUser) stopLocalServer(directUser)
     if (fullDirectUser) stopLocalServer(fullDirectUser)
   }
@@ -173,18 +177,6 @@ async function getJson<T>(server: LocalServer, route: string): Promise<T> {
   const response = await fetch(url(server, route))
   assert.equal(response.status, 200)
   return response.json() as Promise<T>
-}
-
-async function getJsonEventually<T>(server: LocalServer, route: string): Promise<T> {
-  const startedAt = Date.now()
-  let lastStatus = 0
-  while (Date.now() - startedAt < 5_000) {
-    const response = await fetch(url(server, route))
-    lastStatus = response.status
-    if (response.status === 200) return response.json() as Promise<T>
-    await new Promise((resolve) => setTimeout(resolve, 50))
-  }
-  assert.fail(`GET ${route} did not become readable; last status ${lastStatus}`)
 }
 
 async function postJson<T>(server: LocalServer, route: string, body: unknown, options: { expectedStatus?: number } = {}): Promise<T> {
