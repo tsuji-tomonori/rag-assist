@@ -26,7 +26,12 @@ _なし_
 
 ## Data
 
-_なし_
+Media type: `application/json`
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `expectedUpdatedAt` | `string` | yes | `data.expectedUpdatedAt` の値。項目名は expected updated at を表します。 | minLength=1 |
+| `reason` | `string` | yes | 判断や失敗の理由。 | minLength=1<br>maxLength=500 |
 
 ## Authorization
 
@@ -58,9 +63,11 @@ _なし_
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
 | `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 2 field(s) |
+| `400` | リクエスト形式または入力値が不正です。 | `application/json` | 2 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
-| `404` | 指定したリソースが見つかりません。 | `application/json` | 2 field(s) |
+| `404` | 指定したリソースが見つかりません。 | `application/json` | 3 field(s) |
+| `409` | 現在のリソース状態と要求された操作が競合しています。 | `application/json` | 2 field(s) |
 
 ##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
@@ -70,6 +77,15 @@ Media type: `application/json`
 | --- | --- | --- | --- | --- |
 | `documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
 | `deletedVectorCount` | `number` | yes | `response.deletedVectorCount` の値。項目名は deleted vector count を表します。 | - |
+
+##### `400` リクエスト形式または入力値が不正です。
+
+Media type: `application/json`
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ##### `401` 認証が必要です。
 
@@ -90,6 +106,16 @@ Media type: `application/json`
 | `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ##### `404` 指定したリソースが見つかりません。
+
+Media type: `application/json`
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `enum(Resource unavailable)` | yes | エラー内容を表すメッセージ。 | enum=Resource unavailable |
+| `code` | `enum(RESOURCE_UNAVAILABLE)` | yes | `response.code` の値。項目名は code を表します。 | enum=RESOURCE_UNAVAILABLE |
+| `responseProfileVersion` | `enum(resource-non-enumeration-v1)` | yes | `response.responseProfileVersion` の値。項目名は response profile version を表します。 | enum=resource-non-enumeration-v1 |
+
+##### `409` 現在のリソース状態と要求された操作が競合しています。
 
 Media type: `application/json`
 

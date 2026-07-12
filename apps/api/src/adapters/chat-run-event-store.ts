@@ -6,6 +6,6 @@ export type CreateChatRunEventInput = Omit<ChatRunEvent, "seq" | "createdAt"> & 
 }
 
 export interface ChatRunEventStore {
-  append(input: CreateChatRunEventInput): Promise<ChatRunEvent>
-  listAfter(runId: string, afterSeq: number, limit?: number): Promise<ChatRunEvent[]>
+  append(tenantId: string, input: CreateChatRunEventInput): Promise<ChatRunEvent>
+  listAfter(tenantId: string, runId: string, afterSeq: number, limit?: number): Promise<ChatRunEvent[]>
 }

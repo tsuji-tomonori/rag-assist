@@ -16,6 +16,8 @@
     "prepare:mtrag": "tsx mtrag.ts",
     "prepare:mmrag-docqa": "tsx mmrag-docqa.ts",
     "prepare:mlit-pdf-figure-table-rag": "tsx mlit-pdf-figure-table-rag.ts",
+    "release:audit": "node --import tsx release-audit.ts",
+    "promotion:check": "node --import tsx promotion-gate.ts",
     "test": "tsx --test *.test.ts metrics/**/*.test.ts",
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit"

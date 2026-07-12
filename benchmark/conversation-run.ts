@@ -20,6 +20,7 @@ import {
   type ConversationTurnResult
 } from "./metrics/conversation.js"
 import { createBenchmarkApiClient } from "./api-client.js"
+import { createCurrentAuthorizedFetch } from "./run-authorization.js"
 import {
   benchmarkArtifactContractVersion,
   createBenchmarkCaseResult,
@@ -104,7 +105,8 @@ type SummaryOutput = ReturnType<typeof summarizeConversationResults> & {
 
 const apiBaseUrl = process.env.API_BASE_URL ?? "http://localhost:8787"
 const apiAuthToken = process.env.API_AUTH_TOKEN
-const api = createBenchmarkApiClient({ apiBaseUrl, authToken: apiAuthToken })
+const authorizedFetch = createCurrentAuthorizedFetch()
+const api = createBenchmarkApiClient({ apiBaseUrl, authToken: apiAuthToken, fetchImpl: authorizedFetch })
 const defaultModelId = process.env.MODEL_ID ?? "amazon.nova-lite-v1:0"
 const benchmarkSuiteId = process.env.BENCHMARK_SUITE_ID ?? "mtrag-v1"
 const benchmarkDir = path.dirname(fileURLToPath(import.meta.url))
@@ -153,6 +155,7 @@ export async function runConversationBenchmark(): Promise<SummaryOutput> {
     embeddingModelId: process.env.EMBEDDING_MODEL_ID,
     ingestRunPollIntervalMs: benchmarkIngestRunPollIntervalMsFromEnv(process.env),
     ingestRunTimeoutMs: benchmarkIngestRunTimeoutMsFromEnv(process.env),
+    fetchImpl: authorizedFetch,
     log: (message) => console.log(message)
   })
 
@@ -180,7 +183,7 @@ export async function runConversationBenchmark(): Promise<SummaryOutput> {
             turnDependency: (turn.requiresHistory ?? turnIndex > 0) ? "coreference" : "standalone"
           },
           modelId: defaultModelId,
-          benchmarkSuiteId,
+          suiteId: benchmarkSuiteId,
           includeDebug: true
         })
         const evaluation = evaluateConversationTurn(turn, body, status)
@@ -238,6 +241,16 @@ export async function runConversationBenchmark(): Promise<SummaryOutput> {
     citation: {
       citationCount: row.result.citations?.length,
       expectedFileHit: row.evaluation.expectedFileHit
+    },
+    answerability: {
+      expectedAnswerable: row.evaluation.expectedAnswerable,
+      actualAnswerable: row.evaluation.actualAnswerable,
+      expectedResponseType: row.evaluation.expectedResponseType,
+      actualResponseType: row.evaluation.actualResponseType
+    },
+    task: {
+      expectedOutcome: "complete",
+      actualOutcome: row.evaluation.answerCorrect ? "complete" : "failed"
     },
     latency: {
       latencyMs: row.latencyMs

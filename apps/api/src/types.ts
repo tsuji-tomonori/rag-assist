@@ -1,9 +1,12 @@
+import type { SafeDegradationDecision } from "./rag/_shared/security/safe-degradation-policy.js"
+
 export type JsonPrimitive = string | number | boolean | null
 export type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue }
 
 export type VectorKind = "chunk" | "memory"
 export type ChunkKind = "text" | "table" | "list" | "code" | "figure"
 export type DocumentLifecycleStatus = "active" | "staging" | "superseded"
+export type IngestProcessingStatus = "complete" | "partial" | "quarantined" | "rejected"
 export type DocumentScopeType = "personal" | "group" | "chat" | "benchmark"
 export type KnowledgeQualityStatus = "approved" | "warning" | "blocked"
 export type VerificationStatus = "verified" | "unverified" | "rejected"
@@ -18,11 +21,155 @@ export type QualityFlag =
   | "low_extraction_confidence"
   | "manual_rag_exclusion"
 
+export type SourceAdmissionStatus = "approved" | "quarantined" | "rejected"
+export type SourceInspectionStatus = "passed" | "failed" | "unknown"
+
+export type VersionedRecordReference = {
+  id: string
+  version: string
+  hash: string
+}
+
+export type AuthoritativeAdmissionContext = {
+  mode: "authoritative"
+  tenantId: string
+  ownerUserId: string
+  authorizationRef?: VersionedRecordReference
+  classificationRef?: VersionedRecordReference
+  usagePolicyRef?: VersionedRecordReference
+  qualityRef?: VersionedRecordReference
+  lifecycleRef?: VersionedRecordReference
+  provenanceRef?: VersionedRecordReference
+  inspectionStatus?: SourceInspectionStatus
+  qualityProfile?: DocumentQualityProfile
+  lifecycleStatus?: Extract<DocumentLifecycleStatus, "active" | "staging" | "superseded">
+  scope?: {
+    scopeType: DocumentScopeType
+    groupIds?: string[]
+    folderIds?: string[]
+    allowedUsers?: string[]
+    temporaryScopeId?: string
+    expiresAt?: string
+  }
+  lifecycleMetadata?: {
+    activeDocumentId?: string
+    stagedFromDocumentId?: string
+    reindexMigrationId?: string
+  }
+}
+
+export type LocalTestFixtureAdmissionContext = {
+  mode: "local_test_fixture"
+  fixtureId: string
+  tenantId?: string
+  ownerUserId?: string
+}
+
+export type IngestAdmissionContext = AuthoritativeAdmissionContext | LocalTestFixtureAdmissionContext
+
+export type SourceAdmissionRecord = {
+  schemaVersion: 1
+  status: SourceAdmissionStatus
+  tenantId?: string
+  ownerUserId?: string
+  authorizationRef?: VersionedRecordReference
+  classificationRef?: VersionedRecordReference
+  usagePolicyRef?: VersionedRecordReference
+  qualityRef?: VersionedRecordReference
+  lifecycleRef?: VersionedRecordReference
+  provenanceRef?: VersionedRecordReference
+  inspectionStatus: SourceInspectionStatus
+  reasons: string[]
+  rejectedProtectedMetadataKeys: string[]
+  admittedAt: string
+  degradationDecision?: SafeDegradationDecision
+}
+
+export type DerivedRecordSecurityEnvelope = {
+  schemaVersion: 1
+  documentId: string
+  documentVersion: string
+  tenantId: string
+  authorizationRef: VersionedRecordReference
+  classificationRef: VersionedRecordReference
+  usagePolicyRef: VersionedRecordReference
+  qualityRef: VersionedRecordReference
+  lifecycleRef: VersionedRecordReference
+  provenanceRef: VersionedRecordReference
+  sourceLocator: SourceLocation
+  envelopeHash: string
+}
+
+export type DerivedArtifactIntegrity = {
+  schemaVersion: 1
+  expectedChunkCount: number
+  expectedMemoryCardCount: number
+  evidenceRecordCount: number
+  memoryRecordCount: number
+  manifestHash: string
+  recordSetHash: string
+  objectHashes?: {
+    source: string
+    structuredBlocks?: string
+    memoryCards?: string
+  }
+  verified: boolean
+  reasons: string[]
+}
+
+export type ChunkingPolicySnapshot = {
+  schemaVersion: 1
+  policyId: string
+  version: string
+  strategy: "structure_aware"
+  tokenizer: "unicode_code_point_v1"
+  maxChars: number
+  maxTokens: number
+  overlapChars: number
+  minTokens: number
+  preserveAtomicBlocks: boolean
+  stableIdAlgorithm: "sha256_locator_content_v1"
+}
+
+export type ChunkingViolation = {
+  code: "invalid_policy" | "missing_locator" | "oversized_atomic_block" | "char_budget_exceeded" | "token_budget_exceeded" | "fragment_below_minimum"
+  message: string
+  sourceBlockId?: string
+  chunkId?: string
+}
+
+export type PublicationPurpose = "ingest" | "reindex" | "rollback"
+
+export type StagedPublicationFence = {
+  schemaVersion: 1
+  runId: string
+  artifactId: string
+  idempotencyKey: string
+  sourceId: string
+  purpose: PublicationPurpose
+  stageNamespace: string
+  generation: number
+  fencingToken: string
+}
+
+export type PublicationControl = {
+  schemaVersion: 1
+  sourceId: string
+  purpose: PublicationPurpose
+  activePointerKey: string
+  artifactId: string
+  runId: string
+  generation: number
+  fencingToken: string
+}
+
 export type FolderStatus = "active" | "archived"
 export type FolderPolicySource = "explicit" | "inherited" | "ownerDefault" | "none"
 export type FolderPrincipalType = "user" | "group"
-export type FolderPolicyPermissionLevel = "readOnly" | "full"
+export type FolderPolicyPermissionLevel = "deny" | "readOnly" | "full"
+export type GroupMembershipPermissionLevel = "readOnly" | "full"
 export type DocumentPermissionLevel = "readOnly" | "full"
+export type DocumentPolicyPermissionLevel = "deny" | DocumentPermissionLevel
 export type EffectiveDocumentPermission = "none" | DocumentPermissionLevel
 export type FolderPolicyEntry = {
   principalType: FolderPrincipalType
@@ -37,7 +184,7 @@ export type DocumentShareGrant = {
   documentId: string
   principalType: FolderPrincipalType
   principalId: string
-  permissionLevel: DocumentPermissionLevel
+  permissionLevel: DocumentPolicyPermissionLevel
   createdBy: string
   reason: string
   createdAt: string
@@ -79,7 +226,7 @@ export type UserGroupType = "department" | "project" | "team" | "admin" | "folde
 export type UserGroup = {
   groupId: string
   itemType?: "userGroup"
-  tenantId?: string
+  tenantId: string
   name: string
   type: UserGroupType
   parentGroupId?: string
@@ -94,11 +241,11 @@ export type GroupMembershipSource = "manual" | "external" | "system"
 export type GroupMembership = {
   membershipId?: string
   itemType?: "groupMembership"
-  tenantId?: string
+  tenantId: string
   groupId: string
   memberType: FolderPrincipalType
   memberId: string
-  permissionLevel: FolderPolicyPermissionLevel
+  permissionLevel: GroupMembershipPermissionLevel
   source: GroupMembershipSource
   createdAt: string
   updatedAt: string
@@ -129,7 +276,7 @@ export type DocumentGroup = {
   groupId: string
   schemaVersion?: number
   itemType?: "documentGroup"
-  tenantId?: string
+  tenantId: string
   adminPrincipalType?: "user" | "group"
   adminPrincipalId?: string
   name: string
@@ -153,6 +300,12 @@ export type DocumentGroup = {
   effectivePermission?: "none" | "readOnly" | "full"
   policySource?: FolderPolicySource
   inheritedFromFolderId?: string
+  /** Durable projection metadata maintained by the folder move coordinator. */
+  inheritedPolicyId?: string
+  inheritedPolicyVersion?: string
+  folderLocalPolicyVersion?: string
+  folderProjectionVersion?: string
+  folderMoveOperationId?: string
   createdAt: string
   updatedAt: string
 }
@@ -177,6 +330,11 @@ export type SourceLocation = {
   bbox?: JsonValue
   unit?: "normalized_page" | "pdf_point" | "pixel" | "unknown"
   source?: string
+  sectionPath?: string[]
+  startChar?: number
+  endChar?: number
+  sourceBlockId?: string
+  sourceChunkIds?: string[]
 }
 
 export type ExtractionWarning = {
@@ -184,8 +342,14 @@ export type ExtractionWarning = {
   message: string
   severity: "info" | "warning" | "error"
   page?: number
+  pageStart?: number
+  pageEnd?: number
+  sectionPath?: string[]
+  startChar?: number
+  endChar?: number
   sourceBlockId?: string
   confidence?: number
+  degradationDecision?: SafeDegradationDecision
 }
 
 export type PdfFileProfile = "digital_text" | "scanned_image" | "mixed" | "image_only" | "unknown"
@@ -258,6 +422,10 @@ export type ParsedDocument = {
   figures?: ExtractedFigure[]
   warnings?: ExtractionWarning[]
   counters?: Record<string, number>
+  extractionStatus?: "complete" | "partial"
+  inputCharCount?: number
+  outputCharCount?: number
+  contentHash?: string
 }
 
 export type DocumentStatistics = {
@@ -274,6 +442,12 @@ export type DocumentStatistics = {
 export type VectorMetadata = {
   kind: VectorKind
   documentId: string
+  documentVersion?: string
+  evidenceTopic?: string
+  evidenceRole?: EvidenceRole
+  authorityStatus?: EvidenceAuthorityStatus
+  effectiveFrom?: string
+  effectiveUntil?: string
   fileName: string
   chunkId?: string
   memoryId?: string
@@ -310,6 +484,8 @@ export type VectorMetadata = {
   confidence?: number
   readingOrder?: number
   sourceLocation?: SourceLocation
+  securityEnvelope?: DerivedRecordSecurityEnvelope
+  publicationFence?: StagedPublicationFence
   extractionMethod?: string
   lifecycleStatus?: DocumentLifecycleStatus
   tenantId?: string
@@ -322,6 +498,10 @@ export type VectorMetadata = {
   folderId?: string
   groupIds?: string[]
   folderIds?: string[]
+  folderCanonicalPaths?: string[]
+  folderPolicyRefs?: string[]
+  folderProjectionVersion?: string
+  folderMoveOperationId?: string
   ownerUserId?: string
   temporaryScopeId?: string
   expiresAt?: string
@@ -363,10 +543,22 @@ export type RetrievedVector = {
 
 export type DocumentManifest = {
   documentId: string
+  documentVersion?: string
+  traceId?: string
+  replayVersionManifest?: ReplayVersionManifest
   fileName: string
   mimeType?: string
   metadata?: Record<string, JsonValue>
   qualityProfile?: DocumentQualityProfile
+  admission?: SourceAdmissionRecord
+  derivedIntegrity?: DerivedArtifactIntegrity
+  securityEnvelope?: DerivedRecordSecurityEnvelope
+  chunkingPolicy?: ChunkingPolicySnapshot
+  chunkingViolations?: ChunkingViolation[]
+  publicationEligible?: boolean
+  processingStatus?: IngestProcessingStatus
+  publicationFence?: StagedPublicationFence
+  publicationControl?: PublicationControl
   sourceObjectKey: string
   structuredBlocksObjectKey?: string
   memoryCardsObjectKey?: string
@@ -466,6 +658,7 @@ export type MemoryCard = {
   pageStart?: number
   pageEnd?: number
   sectionPath?: string[]
+  securityEnvelope?: DerivedRecordSecurityEnvelope
 }
 
 export type Chunk = {
@@ -497,6 +690,7 @@ export type Chunk = {
   bbox?: JsonValue
   sourceLocation?: SourceLocation
   extractionMethod?: string
+  securityEnvelope?: DerivedRecordSecurityEnvelope
 }
 
 export type ChunkMetadata = Omit<Chunk, "text">
@@ -528,6 +722,7 @@ export type StructuredBlock = {
 
 export type Citation = {
   documentId: string
+  documentVersion?: string
   fileName: string
   chunkId?: string
   pageStart?: number
@@ -542,7 +737,18 @@ export type Citation = {
   bbox?: JsonValue
   score: number
   text: string
+  topic?: string
+  evidenceRole?: EvidenceRole
+  authorityStatus?: EvidenceAuthorityStatus
+  effectiveFrom?: string
+  effectiveUntil?: string
+  sourceLocator?: SourceLocation
+  authorizationDecision?: "allowed"
+  authorizationEvaluatedAt?: string
 }
+
+export type EvidenceRole = "supporting" | "conflicting" | "outdated" | "background"
+export type EvidenceAuthorityStatus = "authoritative" | "secondary" | "unknown"
 
 export type ClarificationOption = {
   id: string
@@ -611,6 +817,7 @@ export type DebugStep = {
   output?: Record<string, unknown>
   hitCount?: number
   tokenCount?: number
+  degradationDecision?: SafeDegradationDecision
   startedAt: string
   completedAt: string
 }
@@ -620,6 +827,11 @@ export const DEBUG_TRACE_SCHEMA_VERSION = 1
 export type DebugTrace = {
   schemaVersion: typeof DEBUG_TRACE_SCHEMA_VERSION
   runId: string
+  requestTraceId?: string
+  parentTraceIds?: string[]
+  tenantPartitionId?: string
+  actorPartitionId?: string
+  securityResourceRefs?: string[]
   targetType?: DebugTraceTargetType
   visibility?: DebugTraceVisibility
   sanitizePolicyVersion?: typeof DEBUG_TRACE_SANITIZE_POLICY_VERSION
@@ -634,6 +846,8 @@ export type DebugTrace = {
   conversationState?: unknown
   decontextualizedQuery?: unknown
   pipelineVersions?: PipelineVersions
+  replayVersionManifest?: ReplayVersionManifest
+  decision?: ReplayDecisionSummary
   ragProfile?: {
     id: string
     version: string
@@ -663,6 +877,7 @@ export type WorkerErrorCode = "validation_error" | "not_found" | "permission_rev
 
 export type WorkerEvent = {
   runId: string
+  tenantId: string
   targetType?: WorkerTargetType
 }
 
@@ -671,6 +886,9 @@ export type WorkerResult = {
   targetType?: WorkerTargetType
   status: string
   resultType: "succeeded" | "failed"
+  traceId?: string
+  replayVersionManifest?: ReplayVersionManifest
+  responseProfileVersion?: "resource-non-enumeration-v1"
   error?: {
     code: WorkerErrorCode
     message: string
@@ -802,11 +1020,13 @@ export type AsyncAgentRun = {
   runId: string
   tenantId: string
   requesterUserId: string
+  requesterEmail?: string
+  requesterGroups?: string[]
   provider: AgentRuntimeProvider
   modelId: string
   status: AsyncAgentRunStatus
   providerAvailability: AgentProviderAvailability
-  failureReasonCode?: "not_configured" | "provider_unavailable" | "cancelled" | "execution_error"
+  failureReasonCode?: "not_configured" | "provider_unavailable" | "cancelled" | "permission_revoked" | "execution_error"
   failureReason?: string
   instruction: string
   selectedFolderIds: string[]
@@ -856,7 +1076,9 @@ export type DebugReplayPlan = {
   sourceTraceVisibility: DebugTraceVisibility
   createdAt: string
   replayable: boolean
+  versionComplete: boolean
   blockedReason?: string
+  versionManifest?: ReplayVersionManifest
   inputSummary: {
     question: string
     modelId: string
@@ -867,6 +1089,78 @@ export type DebugReplayPlan = {
     citationCount: number
   }
   redaction: DebugTraceExportRedaction
+}
+
+export type ReplaySourceSnapshot = {
+  documentId: string
+  documentVersion: string | null
+  ingestTraceId: string | null
+  parserVersion: string | null
+  ocrVersion: string | null
+  chunkerVersion: string | null
+  chunkingPolicyVersion: string | null
+  embeddingModelId: string | null
+  embeddingDimensions: number | null
+  indexVersion: string | null
+  promptVersion: string | null
+  pipelineVersion: string | null
+}
+
+export type ReplayVersionManifest = {
+  schemaVersion: 1
+  sourceSnapshots: ReplaySourceSnapshot[]
+  parserVersion: string | null
+  ocrVersion: string | null
+  chunkerVersion: string | null
+  chunkingPolicyVersion: string | null
+  embedding: { modelId: string | null; dimensions: number | null }
+  policyVersions: {
+    ragProfile: string | null
+    retrieval: string | null
+    answer: string | null
+    authorization: string | null
+    eligibility: string | null
+    untrustedContent: string | null
+    traceSanitization: string | null
+  }
+  indexVersion: string | null
+  modelVersions: { answer: string | null; clue: string | null }
+  promptVersion: string | null
+  pipelineVersion: string | null
+  datasetVersion: string | null
+  queryTransformation: {
+    originalQuestionHash: string
+    normalizedQueryHash: string | null
+    expandedQuerySetHash: string | null
+  }
+  decisions: ReplayDecisionSummary
+  nondeterministicFactors: string[]
+  missingVersions: string[]
+}
+
+export type ReplayDecisionCode = "completed" | "refused" | "rejected" | "failed" | "cancelled"
+
+export type ReplayDecisionReasonCode =
+  | "authorization_denied"
+  | "safety_interlock"
+  | "dependency_error"
+  | "admission_rejected"
+  | "publication_not_eligible"
+  | "permission_revoked"
+  | "execution_error"
+  | "insufficient_evidence"
+  | "clarification_required"
+  | "output_secret_detected"
+  | "cancelled"
+
+export type ReplayDecisionSummary = {
+  candidateCount: number
+  deniedCandidateCount: number
+  finalEvidenceCount: number
+  responseStatus: "success" | "warning" | "error"
+  decisionCode: ReplayDecisionCode
+  reasonCodes: ReplayDecisionReasonCode[]
+  totalLatencyMs: number
 }
 
 export type ChatResponsePayload = {
@@ -887,8 +1181,10 @@ export type ChatRun = {
   runId: string
   status: ChatRunStatus
   createdBy: string
+  tenantId: string
   userEmail?: string
   userGroups?: string[]
+  securityResourceRefs?: string[]
   question: string
   conversationHistory?: ConversationHistoryTurn[]
   clarificationContext?: ClarificationContext
@@ -912,6 +1208,7 @@ export type ChatRun = {
   retrieved?: Citation[]
   debugRunId?: string
   error?: string
+  errorCode?: WorkerErrorCode
   createdAt: string
   updatedAt: string
   startedAt?: string
@@ -932,26 +1229,32 @@ export type ChatRunEvent = {
   ttl?: number
 }
 
-export type DocumentIngestRunStatus = "queued" | "running" | "succeeded" | "failed" | "cancelled"
+export type DocumentIngestRunStatus = "queued" | "running" | "succeeded" | "rejected" | "failed" | "cancelled"
 
 export type DocumentIngestRun = {
   runId: string
   status: DocumentIngestRunStatus
   createdBy: string
+  tenantId: string
   userEmail?: string
   userGroups?: string[]
+  securityResourceRefs?: string[]
   uploadId: string
   objectKey: string
   purpose: "document" | "benchmarkSeed" | "chatAttachment"
   fileName: string
   mimeType?: string
   metadata?: Record<string, JsonValue>
+  admissionContext?: IngestAdmissionContext
   embeddingModelId?: string
   memoryModelId?: string
   skipMemory?: boolean
   manifest?: DocumentManifestSummary
   documentId?: string
+  traceId?: string
+  replayVersionManifest?: ReplayVersionManifest
   error?: string
+  errorCode?: WorkerErrorCode
   stage?: string
   counters?: Record<string, number>
   warnings?: ExtractionWarning[]
@@ -968,6 +1271,8 @@ export type DocumentIngestRunEvent = {
   runId: string
   seq: number
   type: DocumentIngestRunEventType
+  traceId?: string
+  replayVersionManifest?: ReplayVersionManifest
   stage?: string
   message?: string
   data?: JsonValue
@@ -1001,12 +1306,105 @@ export type BenchmarkRunMetrics = {
   abstentionAccuracy?: number
   citationHitRate?: number
   expectedFileHitRate?: number
+  extractionAccuracy?: number
+  admissionCorrectness?: number
   retrievalRecallAt20?: number
   retrievalRecallAtK?: number
+  falseDenialRate?: number
+  faithfulness?: number
+  unsupportedClaimRate?: number
+  unsupportedSentenceRate?: number
+  unsupportedAnswerRate?: number
+  citationPrecision?: number
+  citationSupportPassRate?: number
+  citationCompleteness?: number
+  citationLocatorValidity?: number
+  requiredClaimMissCount?: number
+  falseAnswerRate?: number
+  falseRefusalRate?: number
+  taskCompletionRate?: number
+  taskOutcomeAccuracy?: number
+  criticalTaskFailureCount?: number
+  criticalUnsupportedClaimCount?: number
+  noAccessLeakCount?: number
+  injectionSuccessCount?: number
+  secretExposureCount?: number
+  eligibilityPropagationP99Ms?: number
+  eligibilityPropagationP50Ms?: number
+  eligibilityPropagationP95Ms?: number
+  eligibilityPropagationMaxMs?: number
+  eligibilityProbeSampleCount?: number
+  eligibilityMatrixCoverage?: number
+  eligibilityUnreconciledResourceCount?: number
+  mttrMs?: number
+  recoveryP95Ms?: number
+  recoveryWithoutLossRate?: number
+  recoveryLossCount?: number
+  recoveryScenarioCoverage?: number
+  recoverySampleCount?: number
+  backlogAgeP99Ms?: number
+  backlogAgeSampleCount?: number
+  timeoutRate?: number
+  retryExhaustionCount?: number
   p50LatencyMs?: number
   p95LatencyMs?: number
+  p99LatencyMs?: number
   averageLatencyMs?: number
   errorRate?: number
+  datasetVersion?: string
+  workloadProfileVersion?: string
+  runtimeProfileVersion?: string
+  priceCatalogVersion?: string
+  indexVersion?: string
+  promptVersion?: string
+  pipelineVersion?: string
+  parserVersion?: string
+  chunkerVersion?: string
+  corpusProfileVersion?: string
+  aclDistributionVersion?: string
+  workloadConcurrency?: number
+  documentSizeProfileVersion?: string
+  dependencyLatencyProfileVersion?: string
+  qualitySliceMeasurements?: Array<{
+    slice: string
+    sampleCount: number
+    measurements: Partial<Record<string, number>>
+  }>
+  eligibilityMatrixReport?: {
+    schemaVersion: number
+    triggerCount: number
+    pathCount: number
+    probeCount: number
+    p50Ms?: number
+    p95Ms?: number
+    p99Ms?: number
+    maxMs?: number
+    unreflectedResourceIds: string[]
+    probes: Array<{
+      trigger: string
+      path: string
+      propagationMs?: number
+      unreflectedResourceIds: string[]
+    }>
+  }
+  modelCostPerUnit?: number
+  embeddingCostPerUnit?: number
+  storageCostPerUnit?: number
+  workerCostPerUnit?: number
+  egressCostPerUnit?: number
+  totalCostPerUnit?: number
+  costEvidenceSampleCount?: number
+  chatCostEvidenceSampleCount?: number
+  searchCostEvidenceSampleCount?: number
+  ingestCostEvidenceSampleCount?: number
+  unitCostKind?: "chat_request" | "search_request" | "ingest_document"
+  chatCostPerRequest?: number
+  searchCostPerRequest?: number
+  ingestCostPerDocument?: number
+  releaseAuditVersion?: string
+  releaseAuditId?: string
+  datasetSpecificBranchCount?: number
+  artifactManifestMismatchCount?: number
 }
 
 export type BenchmarkRunThresholds = {
@@ -1023,6 +1421,8 @@ export type BenchmarkRun = {
   suiteId: string
   datasetS3Key: string
   createdBy: string
+  tenantId: string
+  securityResourceRefs?: string[]
   createdAt: string
   updatedAt: string
   startedAt?: string
@@ -1044,6 +1444,7 @@ export type BenchmarkRun = {
   resultsS3Key?: string
   metrics?: BenchmarkRunMetrics
   error?: string
+  errorCode?: WorkerErrorCode
 }
 
 export type BenchmarkSuite = {
@@ -1066,6 +1467,23 @@ export type ManagedUser = {
   createdAt: string
   updatedAt: string
   lastLoginAt?: string
+}
+
+export type ManagedUserDeletionPreflight = {
+  targetUserId: string
+  requiresSuccessor: boolean
+  ownedResources: {
+    folders: number
+    resourceGroups: number
+    documents: number
+    total: number
+  }
+  eligibleSuccessors: Array<{
+    userId: string
+    email: string
+    displayName?: string
+    status: "active"
+  }>
 }
 
 export type ManagedUserAuditAction = "user:create" | "role:assign" | "user:suspend" | "user:unsuspend" | "user:delete"
@@ -1161,18 +1579,27 @@ export type ReindexMigration = {
   rolledBackAt?: string
   previousManifestObjectKey: string
   stagedManifestObjectKey: string
+  publicationRunId?: string
+  publicationArtifactId?: string
+  publicationIdempotencyKey?: string
+  activePointerKey?: string
+  generation?: number
+  fencingToken?: string
+  checkpoint?: string
 }
 
 export type UserUsageSummary = {
   userId: string
   email: string
   displayName?: string
-  chatMessages: number
-  conversationCount: number
-  questionCount: number
-  documentCount: number
-  benchmarkRunCount: number
-  debugRunCount: number
+  chatMessages?: number
+  conversationCount?: number
+  questionCount?: number
+  documentCount?: number
+  benchmarkRunCount?: number
+  debugRunCount?: number
+  availableMetrics: Array<"chatMessages" | "conversationCount" | "questionCount" | "documentCount" | "benchmarkRunCount" | "debugRunCount">
+  unavailableMetrics: Array<"chatMessages" | "conversationCount" | "questionCount" | "documentCount" | "benchmarkRunCount" | "debugRunCount">
   lastActivityAt?: string
 }
 
@@ -1193,13 +1620,15 @@ export type UserCostSummary = {
 }
 
 export type CostAuditSummary = {
+  available: boolean
+  unavailableReason?: string
   periodStart: string
   periodEnd: string
-  currency: "USD"
-  totalEstimatedUsd: number
-  items: CostAuditItem[]
-  users: UserCostSummary[]
-  pricingCatalogUpdatedAt: string
+  currency?: "USD"
+  totalEstimatedUsd?: number
+  items?: CostAuditItem[]
+  users?: UserCostSummary[]
+  pricingCatalogUpdatedAt?: string
 }
 
 export type QuestionStatus = "open" | "in_progress" | "waiting_requester" | "answered" | "resolved"

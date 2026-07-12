@@ -8,8 +8,8 @@
     "start": "tsx src/local.ts",
     "docs:openapi": "tsx src/generate-openapi-docs.ts",
     "docs:openapi:check": "tsx src/validate-openapi-docs.ts",
-    "test": "tsx --test src/**/*.test.ts src/**/**/*.test.ts",
-    "test:coverage": "c8 --check-coverage --statements 90 --branches 85 --functions 90 --lines 90 --reporter=text-summary --reporter=json-summary tsx --test src/**/*.test.ts src/**/**/*.test.ts",
+    "test": "NODE_ENV=test LOCAL_AUTH_USER_ID=local-dev LOCAL_AUTH_EMAIL=local-dev@example.com LOCAL_AUTH_GROUPS=SYSTEM_ADMIN LOCAL_AUTH_ACCOUNT_STATUS=active LOCAL_AUTH_TENANT_ID=local-test BENCHMARK_EVALUATION_ENABLED=true BENCHMARK_EVALUATION_TENANT_ID=benchmark-test tsx --test src/**/*.test.ts src/**/**/*.test.ts",
+    "test:coverage": "NODE_ENV=test LOCAL_AUTH_USER_ID=local-dev LOCAL_AUTH_EMAIL=local-dev@example.com LOCAL_AUTH_GROUPS=SYSTEM_ADMIN LOCAL_AUTH_ACCOUNT_STATUS=active LOCAL_AUTH_TENANT_ID=local-test BENCHMARK_EVALUATION_ENABLED=true BENCHMARK_EVALUATION_TENANT_ID=benchmark-test c8 --check-coverage --statements 90 --branches 85 --functions 90 --lines 90 --reporter=text-summary --reporter=json-summary tsx --test src/**/*.test.ts src/**/**/*.test.ts",
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
@@ -22,6 +22,7 @@
     "@aws-sdk/client-s3": "^3.1024.0",
     "@aws-sdk/client-s3vectors": "^3.1024.0",
     "@aws-sdk/client-sfn": "^3.1041.0",
+    "@aws-sdk/client-sns": "^3.1085.0",
     "@aws-sdk/client-textract": "^3.1044.0",
     "@aws-sdk/s3-request-presigner": "^3.1024.0",
     "@aws-sdk/util-dynamodb": "^3.996.2",

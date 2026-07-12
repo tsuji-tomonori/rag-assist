@@ -10,7 +10,7 @@
 
 用途概要: Cognito role group
 
-リソース数: 9
+リソース数: 12
 
 ## Logical ID 一覧
 
@@ -18,11 +18,14 @@
 | --- | --- | --- |
 | [ACCESSADMIN Group](#accessadmin-group) | `ACCESSADMINGroup` | ACCESSADMIN Group (Cognito role group) |
 | [ANSWEREDITOR Group](#answereditor-group) | `ANSWEREDITORGroup` | ANSWEREDITOR Group (Cognito role group) |
+| [ASYNCAGENTADMIN Group](#asyncagentadmin-group) | `ASYNCAGENTADMINGroup` | ASYNCAGENTADMIN Group (Cognito role group) |
+| [ASYNCAGENTUSER Group](#asyncagentuser-group) | `ASYNCAGENTUSERGroup` | ASYNCAGENTUSER Group (Cognito role group) |
 | [BENCHMARKOPERATOR Group](#benchmarkoperator-group) | `BENCHMARKOPERATORGroup` | BENCHMARKOPERATOR Group (Cognito role group) |
 | [BENCHMARKRUNNER Group](#benchmarkrunner-group) | `BENCHMARKRUNNERGroup` | BENCHMARKRUNNER Group (Cognito role group) |
 | [CHATUSER Group](#chatuser-group) | `CHATUSERGroup` | CHATUSER Group (Cognito role group) |
 | [COSTAUDITOR Group](#costauditor-group) | `COSTAUDITORGroup` | COSTAUDITOR Group (Cognito role group) |
 | [RAGGROUPMANAGER Group](#raggroupmanager-group) | `RAGGROUPMANAGERGroup` | RAGGROUPMANAGER Group (Cognito role group) |
+| [SKILLPROFILEADMIN Group](#skillprofileadmin-group) | `SKILLPROFILEADMINGroup` | SKILLPROFILEADMIN Group (Cognito role group) |
 | [SYSTEMADMIN Group](#systemadmin-group) | `SYSTEMADMINGroup` | SYSTEMADMIN Group (Cognito role group) |
 | [USERADMIN Group](#useradmin-group) | `USERADMINGroup` | USERADMIN Group (Cognito role group) |
 
@@ -49,6 +52,28 @@ Logical ID: `ANSWEREDITORGroup`
 | --- | --- |
 | `groupName` | ANSWER_EDITOR |
 | `description` | MemoRAG role: ANSWER_EDITOR |
+
+### ASYNCAGENTADMIN Group
+
+Logical ID: `ASYNCAGENTADMINGroup`
+
+用途推定: ASYNCAGENTADMIN Group (Cognito role group)
+
+| 設定項目 | 値 |
+| --- | --- |
+| `groupName` | ASYNC_AGENT_ADMIN |
+| `description` | MemoRAG role: ASYNC_AGENT_ADMIN |
+
+### ASYNCAGENTUSER Group
+
+Logical ID: `ASYNCAGENTUSERGroup`
+
+用途推定: ASYNCAGENTUSER Group (Cognito role group)
+
+| 設定項目 | 値 |
+| --- | --- |
+| `groupName` | ASYNC_AGENT_USER |
+| `description` | MemoRAG role: ASYNC_AGENT_USER |
 
 ### BENCHMARKOPERATOR Group
 
@@ -104,6 +129,17 @@ Logical ID: `RAGGROUPMANAGERGroup`
 | --- | --- |
 | `groupName` | RAG_GROUP_MANAGER |
 | `description` | MemoRAG role: RAG_GROUP_MANAGER |
+
+### SKILLPROFILEADMIN Group
+
+Logical ID: `SKILLPROFILEADMINGroup`
+
+用途推定: SKILLPROFILEADMIN Group (Cognito role group)
+
+| 設定項目 | 値 |
+| --- | --- |
+| `groupName` | SKILL_PROFILE_ADMIN |
+| `description` | MemoRAG role: SKILL_PROFILE_ADMIN |
 
 ### SYSTEMADMIN Group
 

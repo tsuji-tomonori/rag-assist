@@ -3,7 +3,7 @@ import { RPCHandler } from "@orpc/server/fetch"
 import { cors } from "hono/cors"
 import { HTTPException } from "hono/http-exception"
 import type { AppEnv } from "./app-env.js"
-import { authMiddleware } from "./auth.js"
+import { authMiddleware, configureVerifiedIdentityProvider } from "./auth.js"
 import { config } from "./config.js"
 import { createDependencies } from "./dependencies.js"
 import { logUnhandledApiError, safeUnhandledErrorResponse } from "./error-response.js"
@@ -11,10 +11,12 @@ import { orpcRouter } from "./orpc/router.js"
 import { enrichOpenApiDocument, type OpenApiDocument } from "./openapi-doc-quality.js"
 import { MemoRagService } from "./rag/memorag-service.js"
 import { registerApiRoutes } from "./routes/api-routes.js"
+import { ResourceUnavailableError, publicResourceUnavailable } from "./security/public-resource-response.js"
 
 export { isBenchmarkSeedUpload, isBenchmarkSeedUploadedObjectIngest } from "./routes/api-routes.js"
 
 const deps = createDependencies()
+configureVerifiedIdentityProvider(deps.verifiedIdentityProvider)
 const service = new MemoRagService(deps)
 const rpcHandler = new RPCHandler(orpcRouter)
 
@@ -75,6 +77,11 @@ app.get("/openapi.json", (c) => {
 })
 
 app.onError((err, c) => {
+  if (err instanceof ResourceUnavailableError) {
+    const response = publicResourceUnavailable()
+    for (const [name, value] of Object.entries(response.headers)) c.header(name, value)
+    return c.json(response.body, response.status)
+  }
   if (err instanceof HTTPException) return c.json({ error: err.message || "Request failed" }, err.status)
   if (typeof err === "object" && err !== null && "getResponse" in err && typeof (err as { getResponse?: unknown }).getResponse === "function") {
     return (err as { getResponse: () => Response }).getResponse()

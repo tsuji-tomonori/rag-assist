@@ -434,6 +434,46 @@ describe("useChatSession", () => {
     }))
   })
 
+  it("取り込みだけを先に行った一時添付を同じ会話の次の質問へ引き継ぐ", async () => {
+    const file = new File(["製品コードはMVP-2026です。"], "temporary.txt", { type: "text/plain" })
+    const ingestDocument = vi.fn().mockResolvedValue(undefined)
+    const setFile = vi.fn()
+    let props = createProps({ file, ingestDocument, setFile, currentConversationId: "conv-1" })
+    chatApiMock.startChatRun.mockResolvedValue({ runId: "chat-run-1", status: "queued", eventsPath: "/chat-runs/chat-run-1/events" })
+    chatApiMock.streamChatRunEvents.mockImplementationOnce(async (_runId, onEvent) => {
+      onEvent({
+        id: 1,
+        type: "final",
+        data: {
+          answer: "MVP-2026です。",
+          isAnswerable: true,
+          citations: [],
+          retrieved: []
+        }
+      })
+    })
+    const { result, rerender } = renderHook(() => useChatSession(props))
+
+    await act(async () => {
+      await result.current.onAsk({ preventDefault: vi.fn() } as any)
+    })
+    props = { ...props, file: null }
+    rerender()
+    act(() => result.current.setQuestion("製品コードは何ですか？"))
+    await act(async () => {
+      await result.current.onAsk({ preventDefault: vi.fn() } as any)
+    })
+
+    expect(chatApiMock.startChatRun).toHaveBeenCalledWith(expect.objectContaining({
+      searchScope: {
+        mode: undefined,
+        groupIds: undefined,
+        includeTemporary: true,
+        temporaryScopeId: "conv-1"
+      }
+    }))
+  })
+
   it("対象文書スコープを chat run の検索スコープに含める", async () => {
     chatApiMock.startChatRun.mockResolvedValue({ runId: "chat-run-1", status: "queued", eventsPath: "/chat-runs/chat-run-1/events" })
     chatApiMock.streamChatRunEvents.mockImplementationOnce(async (_runId, onEvent) => {

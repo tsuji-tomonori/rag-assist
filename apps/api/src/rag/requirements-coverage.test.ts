@@ -59,44 +59,44 @@ const traceByRequirement: Record<string, string[]> = {
   "FR-053": ["docs/spec/CHAPTER_TO_REQ_MAP.md", "docs/spec/2026-chapter-spec.md"],
   "FR-054": ["docs/spec/CHAPTER_TO_REQ_MAP.md", "docs/spec/2026-chapter-spec.md"],
   "FR-055": ["docs/spec/CHAPTER_TO_REQ_MAP.md", "docs/spec/2026-chapter-spec.md"],
-  "FR-056": ["apps/api/src/auth.ts", "docs/spec-recovery/17_traceability_matrix_202607.csv"],
-  "FR-057": ["apps/api/src/authorization.test.ts", "apps/api/src/security/access-control-policy.test.ts", "docs/spec-recovery/14_authorization_sharing_matrix_202607.md"],
-  "FR-058": ["apps/api/src/adapters/user-directory.ts", "apps/api/src/rag/memorag-service.test.ts", "docs/spec-recovery/16_current_state_gap_analysis_202607.md"],
-  "FR-059": ["apps/api/src/folders/folder-permission-service.ts", "apps/api/src/folders/document-group-permissions.ts", "docs/spec-recovery/14_authorization_sharing_matrix_202607.md"],
-  "FR-060": ["apps/api/src/auth.ts", "docs/spec-recovery/16_current_state_gap_analysis_202607.md", "validation target: two-tenant negative matrix"],
-  "FR-061": ["apps/api/src/folders/folder-permission-service.ts", "apps/api/src/folders/folder-permission-service.test.ts", "docs/spec-recovery/14_authorization_sharing_matrix_202607.md"],
-  "FR-062": ["apps/api/src/documents/document-permission-service.ts", "apps/api/src/documents/document-permission-service.test.ts", "validation target: actor permission and same-tenant principal matrix"],
-  "FR-063": ["apps/api/src/documents/document-permission-service.ts", "docs/spec-recovery/14_authorization_sharing_matrix_202607.md", "validation target: grant composition matrix"],
-  "FR-064": ["apps/web/src/app/hooks/usePermissions.test.ts", "apps/web/src/features/documents/components/DocumentWorkspace.test.tsx", "validation target: read-only shared-user E2E"],
-  "FR-065": ["apps/api/src/documents/document-permission-service.test.ts", "apps/api/src/rag/memorag-service.test.ts", "validation target: source/destination move matrix"],
-  "FR-066": ["apps/api/src/rag/memorag-service.test.ts", "docs/spec-recovery/15_rag_lifecycle_matrix_202607.md", "validation target: revoke/delete race"],
-  "FR-067": ["apps/api/src/search/hybrid-search.test.ts", "apps/web/src/features/chat/hooks/useChatSession.test.ts", "validation target: owner/chat/expiry matrix"],
-  "FR-068": ["apps/api/src/rag/_shared/policies/quality-policy.ts", "validation target: document-ingest admission and quarantine suite"],
-  "FR-069": ["apps/api/src/rag/offline/pre-retrieval/ingestion/ingest-run.service.ts", "apps/api/src/search/hybrid-search.test.ts", "validation target: mandatory authorization classification usage quality lifecycle provenance references"],
-  "FR-070": ["apps/api/src/search/hybrid-search.test.ts", "apps/api/src/chat-orchestration/nodes/retrieve-memory.test.ts", "validation target: unauthorized or ineligible top-hit and current-policy expansion race"],
-  "FR-071": ["apps/api/src/rag/prompts.test.ts", "docs/spec-recovery/15_rag_lifecycle_matrix_202607.md", "validation target: prompt-injection corpus"],
-  "FR-072": ["apps/api/src/rag/memorag-service.test.ts", "docs/spec-recovery/15_rag_lifecycle_matrix_202607.md", "validation target: cutover/rollback fault injection"],
-  "FR-073": ["docs/spec-recovery/15_rag_lifecycle_matrix_202607.md", "validation target: claim-to-source support tests", "validation target: version/time/conflict corpus"],
-  "FR-074": ["apps/api/src/rag/orchestration/chat-rag-orchestrator.ts", "docs/spec-recovery/15_rag_lifecycle_matrix_202607.md", "validation target: source parser OCR chunker embedding and runtime version-complete replay manifest"],
-  "FR-075": ["benchmark/run.test.ts", "docs/spec-recovery/17_traceability_matrix_202607.csv", "validation target: executable promotion gate"],
-  "FR-076": ["apps/api/src/authorization.ts", "docs/spec-recovery/14_authorization_sharing_matrix_202607.md", "validation target: protected-resource operation matrix"],
-  "FR-077": ["apps/api/src/folders/folder-permission-service.ts", "apps/api/src/documents/document-permission-service.ts", "validation target: owner and adminPrincipal invariant"],
-  "FR-078": ["docs/spec-recovery/14_authorization_sharing_matrix_202607.md", "docs/spec-recovery/16_current_state_gap_analysis_202607.md", "validation target: administrative-principal transfer fault injection"],
-  "FR-079": ["apps/api/src/authorization.ts", "infra/lib/memorag-mvp-stack.ts", "validation target: identity API Web infra worker role-catalog parity"],
-  "FR-080": ["apps/api/src/routes/admin-routes.ts", "docs/spec-recovery/16_current_state_gap_analysis_202607.md", "validation target: role grant revoke self last-admin and session matrix"],
-  "FR-081": ["apps/api/src/folders/folder-permission-service.ts", "docs/spec-recovery/14_authorization_sharing_matrix_202607.md", "validation target: membership feature target-group authority retained-edge integrity stale cleanup and nested-cycle matrix"],
-  "FR-082": ["apps/api/src/rag/offline/pre-retrieval/ingestion/ingest-run.service.ts", "docs/spec-recovery/15_rag_lifecycle_matrix_202607.md", "validation target: source-span and no-silent-truncation corpus"],
-  "FR-083": ["apps/api/src/rag/offline/pre-retrieval/ingestion/ingest-run.service.ts", "docs/spec-recovery/16_current_state_gap_analysis_202607.md", "validation target: staged ingest single and concurrent retry fencing and reconciliation fault injection"],
-  "FR-084": ["apps/api/src/security/access-control-policy.test.ts", "apps/api/src/routes/benchmark-seed.ts", "validation target: runner-only simulated-subject isolation"],
-  "FR-085": ["apps/api/src/documents/document-permission-service.ts", "docs/spec-recovery/14_authorization_sharing_matrix_202607.md", "validation target: expected-version atomic share update"],
-  "FR-086": ["apps/api/src/documents/document-permission-service.ts", "docs/spec-recovery/14_authorization_sharing_matrix_202607.md", "validation target: all security eligibility mutation results and state-audit dual-write failure"],
-  "FR-087": ["apps/api/src/rag/memorag-service.ts", "docs/spec-recovery/16_current_state_gap_analysis_202607.md", "validation target: move metadata fault injection and reconciliation"],
-  "FR-088": ["apps/api/src/rag/orchestration/chat-rag-orchestrator.ts", "docs/spec-recovery/16_current_state_gap_analysis_202607.md", "validation target: save view and download field-level redaction"],
-  "FR-089": ["docs/spec-recovery/15_rag_lifecycle_matrix_202607.md", "validation target: dependency degradation without authorization classification usage injection tool grounding citation secret or redaction bypass"],
-  "FR-090": ["apps/api/src/rag/memorag-service.ts", "docs/spec-recovery/16_current_state_gap_analysis_202607.md", "validation target: worker start read side-effect and commit reauthorization race matrix"],
-  "FR-091": ["apps/api/src/schemas.ts", "docs/spec-recovery/16_current_state_gap_analysis_202607.md", "validation target: unauthorized existing/absent differential authorized-only pagination Web debug and worker-result minimization"],
-  "FR-092": ["apps/api/src/rag/offline/pre-retrieval/ingestion/ingest-run.service.ts", "docs/spec-recovery/15_rag_lifecycle_matrix_202607.md", "validation target: structured chunk boundary and repeat-run determinism corpus"],
-  "FR-093": ["apps/api/src/rag/orchestration/chat-rag-orchestrator.ts", "docs/spec-recovery/15_rag_lifecycle_matrix_202607.md", "validation target: production drift alert action and rollback drill"],
+  "FR-056": ["apps/api/src/auth.ts", "apps/api/src/adapters/verified-identity-provider.ts", "apps/api/src/auth.test.ts"],
+  "FR-057": ["apps/api/src/security/resource-operation-authorization.ts", "apps/api/src/security/resource-operation-authorization.test.ts", "apps/api/src/security/access-control-policy.test.ts", "apps/api/src/routes/benchmark-tenant-boundary.test.ts"],
+  "FR-058": ["apps/api/src/adapters/user-directory.ts", "apps/api/src/security/account-lifecycle-current-identity.test.ts", "apps/api/src/security/current-worker-authorization.test.ts"],
+  "FR-059": ["apps/api/src/security/resource-permission-decision.ts", "apps/api/src/documents/document-permission-service.ts", "apps/api/src/authorization.test.ts", "apps/api/src/search/hybrid-search.test.ts"],
+  "FR-060": ["apps/api/src/security/tenant-partition.ts", "apps/api/src/rag/_shared/storage/tenant-artifacts.ts", "apps/api/src/security/tenant-partition.test.ts", "apps/api/src/adapters/tenant-scoped-run-stores.test.ts", "apps/api/src/adapters/dynamodb-tenant-run-stores.test.ts", "apps/api/src/routes/benchmark-tenant-boundary.test.ts", "apps/api/src/rag/embedding-cache-tenant.test.ts", "apps/api/src/rag/tenant-artifact-partition.test.ts"],
+  "FR-061": ["apps/api/src/folders/folder-permission-service.ts", "apps/api/src/folders/folder-permission-service.test.ts"],
+  "FR-062": ["apps/api/src/folders/folder-permission-service.ts", "apps/api/src/documents/document-permission-service.ts", "apps/api/src/folders/folder-permission-service.test.ts", "apps/api/src/documents/document-permission-service.test.ts"],
+  "FR-063": ["apps/api/src/documents/document-permission-service.ts", "apps/api/src/documents/document-permission-service.test.ts"],
+  "FR-064": ["apps/web/src/app/hooks/usePermissions.ts", "apps/web/src/features/documents/components/DocumentWorkspace.tsx", "apps/web/src/features/documents/components/DocumentWorkspace.test.tsx"],
+  "FR-065": ["apps/api/src/documents/document-lifecycle-mutation-coordinator.ts", "apps/api/src/documents/document-lifecycle-mutation-coordinator.test.ts"],
+  "FR-066": ["apps/api/src/rag/offline/pre-retrieval/admission/source-governance-approval-service.ts", "apps/api/src/documents/document-lifecycle-mutation-coordinator.ts", "apps/api/src/rag/offline/pre-retrieval/admission/source-governance-approval-service.test.ts", "apps/api/src/documents/document-lifecycle-mutation-coordinator.test.ts"],
+  "FR-067": ["apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts", "apps/api/src/search/temporary-attachment-boundary.test.ts"],
+  "FR-068": ["apps/api/src/rag/offline/pre-retrieval/admission/source-admission.ts", "apps/api/src/rag/offline/pre-retrieval/admission/source-governance-approval-service.ts", "apps/api/src/rag/admission-lifecycle.test.ts", "apps/api/src/rag/offline/pre-retrieval/admission/source-governance-approval-service.test.ts"],
+  "FR-069": ["apps/api/src/rag/_shared/security/derived-record-security.ts", "apps/api/src/rag/offline/pre-retrieval/ingestion/ingest-run.service.ts", "apps/api/src/rag/admission-lifecycle.test.ts", "apps/api/src/rag/current-rag-eligibility.test.ts"],
+  "FR-070": ["apps/api/src/rag/_shared/security/current-evidence-reauthorizer.ts", "apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts", "apps/api/src/adapters/current-eligibility-vector-filter.test.ts", "apps/api/src/chat-orchestration/nodes/retrieve-memory.test.ts", "apps/api/src/search/hybrid-search.test.ts"],
+  "FR-071": ["apps/api/src/rag/_shared/security/untrusted-content-policy.ts", "apps/api/src/rag/untrusted-content.test.ts"],
+  "FR-072": ["apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts", "apps/api/src/rag/staged-publication.test.ts"],
+  "FR-073": ["apps/api/src/rag/online/post-retrieval/evidence/final-evidence-set.ts", "apps/api/src/rag/evidence-structure.test.ts"],
+  "FR-074": ["apps/api/src/rag/_shared/replay/replay-version-manifest.ts", "apps/api/src/rag/replay-version-manifest.test.ts", "apps/api/src/chat-orchestration/graph.test.ts"],
+  "FR-075": ["packages/contract/src/rag-quality-control.ts", "packages/contract/src/schemas/benchmark.ts", "benchmark/release-audit.ts", "benchmark/promotion-gate.ts", "infra/scripts/update-benchmark-run-metrics.mjs", "packages/contract/src/rag-quality-control.test.ts", "benchmark/release-audit.test.ts", "benchmark/promotion-gate.test.ts", "infra/test/update-benchmark-run-metrics.test.ts"],
+  "FR-076": ["apps/api/src/security/resource-operation-authorization.ts", "apps/api/src/security/resource-operation-authorization.test.ts", "packages/contract/src/access-control.test.ts"],
+  "FR-077": ["apps/api/src/folders/folder-permission-service.ts", "apps/api/src/documents/document-permission-service.ts", "apps/api/src/folders/folder-permission-service.test.ts", "apps/api/src/documents/document-permission-service.test.ts"],
+  "FR-078": ["apps/api/src/security/administrative-principal-transfer-service.ts", "apps/api/src/security/administrative-principal-transfer-service.test.ts", "apps/api/src/security/account-lifecycle-current-identity.test.ts", "apps/web/src/features/admin/components/AdminWorkspace.test.tsx"],
+  "FR-079": ["packages/contract/src/access-control.ts", "apps/api/src/routes/system-routes.ts", "infra/lib/memorag-mvp-stack.ts", "packages/contract/src/access-control.test.ts", "infra/test/memorag-mvp-stack.test.ts"],
+  "FR-080": ["apps/api/src/security/application-role-mutation-service.ts", "apps/api/src/security/application-role-mutation-service.test.ts"],
+  "FR-081": ["apps/api/src/security/resource-group-membership-service.ts", "apps/api/src/security/resource-group-membership-service.test.ts"],
+  "FR-082": ["apps/api/src/rag/offline/pre-retrieval/extraction/text-extractor.ts", "apps/api/src/rag/admission-lifecycle.test.ts", "apps/api/src/rag/text-processing.test.ts"],
+  "FR-083": ["apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts", "apps/api/src/rag/staged-publication.test.ts"],
+  "FR-084": ["apps/api/src/benchmark/evaluation-context.ts", "apps/api/src/benchmark/evaluation-context.test.ts"],
+  "FR-085": ["apps/api/src/folders/folder-permission-service.ts", "apps/api/src/documents/document-permission-service.ts", "apps/api/src/folders/folder-permission-service.test.ts", "apps/api/src/documents/document-permission-service.test.ts"],
+  "FR-086": ["apps/api/src/security/security-mutation-audit-outbox.ts", "apps/api/src/security/security-mutation-audit-outbox.test.ts", "apps/api/src/security/resource-group-membership-service.test.ts", "apps/api/src/rag/offline/pre-retrieval/admission/source-governance-approval-service.test.ts"],
+  "FR-087": ["apps/api/src/documents/document-lifecycle-mutation-coordinator.ts", "apps/api/src/folders/folder-lifecycle-mutation-coordinator.ts", "apps/api/src/routes/document-routes.ts", "apps/api/src/rag/memorag-service.ts", "apps/api/src/documents/document-lifecycle-mutation-coordinator.test.ts", "apps/api/src/folders/folder-lifecycle-mutation-coordinator.test.ts", "apps/api/src/folder-move-routes.test.ts", "apps/api/src/rag/memorag-service.test.ts", "apps/api/src/adapters/local-document-group-store.test.ts", "apps/web/src/features/documents/api/documentsApi.ts", "apps/web/src/features/documents/hooks/useDocuments.ts", "apps/web/src/features/documents/components/DocumentWorkspace.tsx", "apps/web/src/features/documents/components/DocumentWorkspace.test.tsx"],
+  "FR-088": ["apps/api/src/rag/_shared/security/trace-sanitizer.ts", "apps/api/src/rag/trace-sanitizer.test.ts", "apps/api/src/chat-orchestration/graph.test.ts"],
+  "FR-089": ["apps/api/src/rag/_shared/security/safe-degradation-policy.ts", "apps/api/src/rag/safe-degradation-policy.test.ts"],
+  "FR-090": ["apps/api/src/security/current-worker-authorization.ts", "apps/api/src/security/current-worker-authorization.test.ts", "apps/api/src/rag/offline/pre-retrieval/admission/source-governance-approval-service.test.ts"],
+  "FR-091": ["apps/api/src/security/public-resource-response.ts", "apps/api/src/security/public-resource-response.test.ts", "apps/api/src/contract/api-contract.test.ts", "apps/api/src/routes/benchmark-tenant-boundary.test.ts", "apps/web/src/features/documents/components/DocumentWorkspace.test.tsx"],
+  "FR-092": ["apps/api/src/rag/offline/pre-retrieval/chunking/chunker.service.ts", "apps/api/src/rag/admission-lifecycle.test.ts", "apps/api/src/rag/text-processing.test.ts"],
+  "FR-093": ["packages/contract/src/rag-quality-control.ts", "apps/api/src/rag/quality-control/production-rag-monitor.ts", "apps/api/src/rag/quality-control/production-rag-observation-producer.ts", "packages/contract/src/rag-quality-control.test.ts", "apps/api/src/rag/production-rag-monitor.test.ts", "apps/api/src/rag/production-rag-observation-producer.test.ts", "apps/api/src/rag-quality-monitor-worker.test.ts"],
   "NFR-001": ["graph.test.ts", "local-stores.test.ts", "text-processing.test.ts"],
   "NFR-002": ["infra/test/memorag-mvp-stack.test.ts", "docs/OPERATIONS.md"],
   "NFR-003": ["infra/test/memorag-mvp-stack.test.ts"],
@@ -116,17 +116,17 @@ const traceByRequirement: Record<string, string[]> = {
   "SQ-002": ["benchmark/run.test.ts", "benchmark/corpus.test.ts"],
   "SQ-003": ["docs/spec-recovery/07_specifications.md"],
   "SQ-004": ["apps/web/src/features/chat/components/ChatComposer.tsx", "apps/web/src/features/chat/components/ChatView.tsx", "validation target: responsive visual/layout no-overlap test"],
-  "SQ-005": ["docs/spec-recovery/17_traceability_matrix_202607.csv", "validation target: must-not-access candidate/prompt/cache/trace suite"],
-  "SQ-006": ["docs/spec-recovery/15_rag_lifecycle_matrix_202607.md", "validation target: all authoritative eligibility-loss triggers propagation max/p95/p99"],
-  "SQ-007": ["benchmark/run.test.ts", "docs/spec-recovery/17_traceability_matrix_202607.csv", "validation target: approved stage and slice thresholds"],
-  "SQ-008": ["docs/spec-recovery/15_rag_lifecycle_matrix_202607.md", "validation target: production-profile stage latency percentiles"],
-  "SQ-009": ["benchmark/run.test.ts", "apps/api/src/search/hybrid-search.test.ts", "validation target: authorized recall and false-denial by grant path"],
-  "SQ-010": ["apps/api/src/rag/online/generation/verification/answer-support-verifier.ts", "benchmark/run.test.ts", "validation target: claim faithfulness and unsupported-claim severity"],
-  "SQ-011": ["apps/api/src/rag/online/generation/citation/citation-validator.ts", "benchmark/run.test.ts", "validation target: citation precision completeness and locator validity"],
-  "SQ-012": ["apps/api/src/chat-orchestration/nodes/node-units.test.ts", "benchmark/run.test.ts", "validation target: answerability confusion matrix"],
-  "SQ-013": ["benchmark/run.test.ts", "docs/spec-recovery/15_rag_lifecycle_matrix_202607.md", "validation target: business task completion and handoff scenarios"],
-  "SQ-014": ["docs/spec-recovery/15_rag_lifecycle_matrix_202607.md", "validation target: availability backlog and recovery chaos suite"],
-  "SQ-015": ["benchmark/run.test.ts", "docs/spec-recovery/15_rag_lifecycle_matrix_202607.md", "validation target: price-versioned unit cost with quality gates"]
+  "SQ-005": ["packages/contract/src/rag-quality-control.ts", "packages/contract/src/rag-quality-control.test.ts", "apps/api/src/adapters/current-eligibility-vector-filter.test.ts", "apps/api/src/rag/trace-sanitizer.test.ts"],
+  "SQ-006": ["packages/contract/src/rag-quality-control.ts", "packages/contract/src/schemas/benchmark.ts", "infra/scripts/update-benchmark-run-metrics.mjs", "apps/api/src/rag/quality-control/production-rag-observation-producer.ts", "packages/contract/src/rag-quality-control.test.ts", "infra/test/update-benchmark-run-metrics.test.ts", "apps/api/src/rag/production-rag-observation-producer.test.ts"],
+  "SQ-007": ["packages/contract/src/rag-quality-control.ts", "benchmark/promotion-gate.ts", "infra/scripts/update-benchmark-run-metrics.mjs", "packages/contract/src/rag-quality-control.test.ts", "benchmark/promotion-gate.test.ts", "infra/test/update-benchmark-run-metrics.test.ts"],
+  "SQ-008": ["packages/contract/src/rag-quality-control.ts", "packages/contract/src/schemas/benchmark.ts", "infra/scripts/update-benchmark-run-metrics.mjs", "apps/api/src/rag/quality-control/production-rag-observation-producer.ts", "packages/contract/src/rag-quality-control.test.ts", "infra/test/update-benchmark-run-metrics.test.ts", "apps/api/src/rag/production-rag-observation-producer.test.ts"],
+  "SQ-009": ["packages/contract/src/rag-quality-control.ts", "apps/api/src/rag/quality-control/production-rag-observation-producer.ts", "packages/contract/src/rag-quality-control.test.ts", "apps/api/src/search/hybrid-search.test.ts"],
+  "SQ-010": ["packages/contract/src/rag-quality-control.ts", "packages/contract/src/schemas/benchmark.ts", "infra/scripts/update-benchmark-run-metrics.mjs", "apps/api/src/rag/online/generation/verification/answer-support-verifier.ts", "packages/contract/src/rag-quality-control.test.ts", "infra/test/update-benchmark-run-metrics.test.ts", "apps/api/src/rag/production-rag-observation-producer.test.ts"],
+  "SQ-011": ["packages/contract/src/rag-quality-control.ts", "packages/contract/src/schemas/benchmark.ts", "infra/scripts/update-benchmark-run-metrics.mjs", "apps/api/src/rag/online/generation/citation/citation-validator.ts", "packages/contract/src/rag-quality-control.test.ts", "infra/test/update-benchmark-run-metrics.test.ts", "apps/api/src/rag/production-rag-observation-producer.test.ts"],
+  "SQ-012": ["packages/contract/src/rag-quality-control.ts", "apps/api/src/chat-orchestration/nodes/node-units.test.ts", "packages/contract/src/rag-quality-control.test.ts", "apps/api/src/rag/production-rag-observation-producer.test.ts"],
+  "SQ-013": ["packages/contract/src/rag-quality-control.ts", "packages/contract/src/schemas/benchmark.ts", "infra/scripts/update-benchmark-run-metrics.mjs", "apps/api/src/rag/quality-control/production-rag-observation-producer.ts", "packages/contract/src/rag-quality-control.test.ts", "infra/test/update-benchmark-run-metrics.test.ts", "apps/api/src/rag/production-rag-observation-producer.test.ts"],
+  "SQ-014": ["packages/contract/src/rag-quality-control.ts", "packages/contract/src/schemas/benchmark.ts", "infra/scripts/update-benchmark-run-metrics.mjs", "apps/api/src/rag/quality-control/production-rag-monitor.ts", "packages/contract/src/rag-quality-control.test.ts", "infra/test/update-benchmark-run-metrics.test.ts", "apps/api/src/rag/production-rag-monitor.test.ts"],
+  "SQ-015": ["packages/contract/src/rag-quality-control.ts", "apps/api/src/rag/quality-control/production-rag-observation-producer.ts", "packages/contract/src/rag-quality-control.test.ts", "apps/api/src/rag/production-rag-observation-producer.test.ts"]
 }
 
 const redefinedRequirementIds = new Set([
@@ -162,8 +162,23 @@ test("product requirement documents have non-empty trace references", async () =
 
   for (const requirementId of redefinedRequirementIds) {
     const references = traceByRequirement[requirementId] ?? []
+    assert.equal(
+      references.some((reference) => reference.startsWith("validation target:")),
+      false,
+      `${requirementId} must not retain a validation placeholder`
+    )
     const evidenceReferences = references.filter((reference) => !reference.startsWith("validation target:"))
-    assert.ok(evidenceReferences.length > 0, `${requirementId} must have current evidence or a trace artifact`)
+    assert.ok(
+      evidenceReferences.some((reference) => /\.(?:test|spec)\.[cm]?[jt]sx?$/.test(reference)),
+      `${requirementId} must reference at least one direct executable test`
+    )
+    assert.ok(
+      evidenceReferences.some((reference) => (
+        /\.[cm]?[jt]sx?$/.test(reference)
+        && !/\.(?:test|spec)\.[cm]?[jt]sx?$/.test(reference)
+      )),
+      `${requirementId} must reference at least one runtime implementation`
+    )
     for (const reference of evidenceReferences) {
       const content = await readFile(path.resolve(repoRoot, reference))
       assert.ok(content.length > 0, `${requirementId} trace reference must not be empty: ${reference}`)

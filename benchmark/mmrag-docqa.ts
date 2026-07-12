@@ -2,6 +2,7 @@ import { existsSync } from "node:fs"
 import { mkdir, writeFile } from "node:fs/promises"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
+import { createCurrentAuthorizedFetch } from "./run-authorization.js"
 
 type MmLongBenchRow = {
   doc_id: string
@@ -61,12 +62,13 @@ const expectedFullQuestionCount = 1091
 const pageLength = 100
 const benchmarkDir = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(benchmarkDir, "..")
+const currentAuthorizedFetch = createCurrentAuthorizedFetch()
 
 if (isMainModule()) {
   await prepareMmragDocqaBenchmark(process.env)
 }
 
-export async function prepareMmragDocqaBenchmark(env: NodeJS.ProcessEnv, fetchImpl: typeof fetch = fetch): Promise<void> {
+export async function prepareMmragDocqaBenchmark(env: NodeJS.ProcessEnv, fetchImpl: typeof fetch = currentAuthorizedFetch): Promise<void> {
   const datasetOutput = resolveOutput(env.MMRAG_DOCQA_DATASET_OUTPUT ?? ".local-data/mmrag-docqa-v1/dataset.jsonl")
   const corpusDir = resolveOutput(env.MMRAG_DOCQA_CORPUS_DIR ?? ".local-data/mmrag-docqa-v1/corpus")
   const expectedRows = positiveInt(env.MMRAG_DOCQA_EXPECTED_TOTAL) ?? expectedFullQuestionCount

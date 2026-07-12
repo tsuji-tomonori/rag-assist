@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, type ReactNode } from "react"
 
 export function ConfirmDialog({
   title,
@@ -8,6 +8,8 @@ export function ConfirmDialog({
   cancelLabel = "キャンセル",
   tone = "danger",
   loading = false,
+  confirmDisabled = false,
+  children,
   onCancel,
   onConfirm
 }: {
@@ -18,6 +20,8 @@ export function ConfirmDialog({
   cancelLabel?: string
   tone?: "danger" | "warning"
   loading?: boolean
+  confirmDisabled?: boolean
+  children?: ReactNode
   onCancel: () => void
   onConfirm: () => Promise<void> | void
 }) {
@@ -62,10 +66,11 @@ export function ConfirmDialog({
               })}
             </dl>
           )}
+          {children}
         </div>
         <div className="confirm-dialog-actions">
           <button type="button" onClick={onCancel} disabled={busy}>{cancelLabel}</button>
-          <button type="button" className="confirm-dialog-primary" onClick={() => void confirm()} disabled={busy}>
+          <button type="button" className="confirm-dialog-primary" onClick={() => void confirm()} disabled={busy || confirmDisabled}>
             {busy ? "処理中" : confirmLabel}
           </button>
         </div>

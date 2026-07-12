@@ -1,15 +1,33 @@
 import { createHash, randomUUID } from "node:crypto"
+import { isApplicationRole } from "@memorag-mvp/contract/access-control"
 import type { AppUser } from "../auth.js"
-import { folderPermissionSatisfies, hasPermission, type EffectiveFolderPermission } from "../authorization.js"
+import { folderPermissionSatisfies, hasPermission, isActiveAccount, type EffectiveFolderPermission } from "../authorization.js"
 import type { GroupMembershipStore } from "../adapters/group-membership-store.js"
 import type { ObjectStore } from "../adapters/object-store.js"
 import type { UserGroupStore } from "../adapters/user-group-store.js"
 import type { DocumentGroupStore } from "../adapters/document-group-store.js"
 import type { FolderPolicyStore } from "../adapters/folder-policy-store.js"
 import { FolderPermissionService } from "../folders/folder-permission-service.js"
+import type { ResourceUserPrincipalDirectory } from "../security/resource-group-membership-service.js"
+import type { SecurityMutationAuditOutboxPort } from "../security/security-mutation-audit-outbox.js"
+import { ObjectStoreRevocationCleanupCoordinator } from "../rag/_shared/security/revocation-cleanup-coordinator.js"
+import { ObjectStoreRevocationCleanupRepairOutbox } from "../rag/_shared/security/revocation-cleanup-repair-outbox.js"
+import {
+  createResourcePermissionDecision,
+  type ResourcePermissionContribution,
+  type ResourcePermissionDecision,
+  type ResourcePermissionDecisionReasonCode
+} from "../security/resource-permission-decision.js"
+import {
+  enforceResourceGroupSearchUse,
+  enforceResolvedResourceOperation,
+  resolvedResourceScope,
+  ResourceOperationAuthorizationError
+} from "../security/production-resource-operation-authorizer.js"
+import type { ProtectedResourceOperation, ResourceOperationGuard } from "../security/resource-operation-authorization.js"
 import type {
   DocumentManifest,
-  DocumentPermissionLevel,
+  DocumentPolicyPermissionLevel,
   DocumentShareAuditAction,
   DocumentShareAuditLogEntry,
   DocumentShareGrant,
@@ -24,12 +42,14 @@ export type DocumentPermissionServiceDeps = {
   folderPolicyStore: FolderPolicyStore
   userGroupStore: UserGroupStore
   groupMembershipStore: GroupMembershipStore
+  resourceUserPrincipalDirectory?: ResourceUserPrincipalDirectory
+  securityAuditOutbox?: SecurityMutationAuditOutboxPort
 }
 
 export type DocumentShareGrantInput = {
   principalType: FolderPrincipalType
   principalId: string
-  permissionLevel: DocumentPermissionLevel
+  permissionLevel: DocumentPolicyPermissionLevel
 }
 
 export type DocumentShareInfo = {
@@ -40,6 +60,19 @@ export type DocumentShareInfo = {
   directDocumentGrants: DocumentShareGrant[]
   currentUserEffectivePermission: EffectiveDocumentPermission
 }
+
+export type VersionedDocumentSharePolicyState = Readonly<{
+  grants: readonly DocumentShareGrant[]
+  version: string
+}>
+
+export type ReplaceVersionedDocumentSharePolicyInput = Readonly<{
+  grants: readonly DocumentShareGrantInput[]
+  expectedVersion: string
+  reason: string
+}>
+
+export const DOCUMENT_SHARE_POLICY_VERSION = "document-share-policy-v1" as const
 
 function tenantIdForManifest(manifest: DocumentManifest): string {
   return typeof manifest.metadata?.tenantId === "string" ? manifest.metadata.tenantId : "default"
@@ -58,6 +91,12 @@ const permissionRank: Record<EffectiveDocumentPermission, number> = {
 
 const permissionByRank = ["none", "readOnly", "full"] as const
 
+type DocumentPermissionResolution = {
+  permission: EffectiveDocumentPermission
+  integrity: "valid" | "invalid"
+  explicitDeny: boolean
+}
+
 export class DocumentPermissionService {
   private readonly folderPermissionService: FolderPermissionService
 
@@ -67,28 +106,298 @@ export class DocumentPermissionService {
 
   async getShareInfo(user: AppUser, manifest: DocumentManifest): Promise<DocumentShareInfo> {
     const tenantId = tenantIdForManifest(manifest)
-    const [directDocumentGrants, folderPermission] = await Promise.all([
+    const folderIds = this.folderIds(manifest)
+    const [directDocumentGrants, folderDetails, decision] = await Promise.all([
       this.loadDocumentGrants(tenantId, manifest.documentId),
-      this.resolveFolderPermission(user, manifest)
+      Promise.all(folderIds.map((folderId) => this.folderPermissionService.resolveEffectiveFolderPermissionDetail(user, folderId))),
+      this.resolveEffectiveDocumentPermissionDecision(user, manifest)
     ])
-    const directPermission = await this.resolveDirectDocumentPermission(user, manifest.documentId, directDocumentGrants)
     return {
-      inheritedFolderGrants: this.folderIds(manifest).map((folderId) => ({ folderId, permissionLevel: folderPermission })),
+      inheritedFolderGrants: folderDetails.map((detail) => ({ folderId: detail.folderId, permissionLevel: detail.permission })),
       directDocumentGrants,
-      currentUserEffectivePermission: calculateEffectiveDocumentPermission(folderPermission, directPermission)
+      currentUserEffectivePermission: decision.permission
     }
   }
 
   async resolveEffectiveDocumentPermission(user: AppUser, manifest: DocumentManifest): Promise<EffectiveDocumentPermission> {
-    if (user.cognitoGroups.includes("SYSTEM_ADMIN")) return "full"
-    const folderPermission = await this.resolveFolderPermission(user, manifest)
-    const tenantId = tenantIdForManifest(manifest)
+    return (await this.resolveEffectiveDocumentPermissionDecision(user, manifest)).permission
+  }
+
+  async assertDocumentOperation(
+    user: AppUser,
+    manifest: DocumentManifest,
+    operation: Extract<ProtectedResourceOperation, "read" | "update" | "share" | "searchUse">,
+    satisfiedGuards: readonly ResourceOperationGuard[]
+  ): Promise<void> {
+    const tenantId = authoritativeManifestTenantId(manifest)
+    const permission = await this.resolveEffectiveDocumentPermission(user, manifest)
+    const authorizationPath = operation === "searchUse" ? "document" : "target"
+    enforceResolvedResourceOperation(user, {
+      resourceType: "document",
+      operation,
+      authorizationPath,
+      resourceScopes: {
+        target: resolvedResourceScope({
+          tenantId,
+          permission,
+          lifecycle: manifest.lifecycleStatus === undefined || manifest.lifecycleStatus === "active" ? "active" : "inactive",
+          integrity: manifest.derivedIntegrity?.verified === false ? "invalid" : "valid",
+          administrativePrincipal: documentOwnerUserId(manifest) === user.userId
+        })
+      },
+      satisfiedGuards
+    })
+  }
+
+  async resolveEffectiveDocumentPermissionDecision(user: AppUser, manifest: DocumentManifest): Promise<ResourcePermissionDecision> {
+    const tenantId = authoritativeManifestTenantId(manifest)
+    if (!isCanonicalIdentifier(user.userId)) return documentDenied(user, manifest, "identity_unverified")
+    if (!isActiveAccount(user)) return documentDenied(user, manifest, "account_not_active")
+    if (!isCanonicalIdentifier(user.tenantId)) return documentDenied(user, manifest, "actor_tenant_unresolved")
+    if (!isCanonicalIdentifier(tenantId)) return documentDenied(user, manifest, "resource_tenant_unresolved")
+    if (user.tenantId !== tenantId) return documentDenied(user, manifest, "tenant_mismatch")
+    if (manifest.lifecycleStatus !== undefined && manifest.lifecycleStatus !== "active") {
+      return documentDenied(user, manifest, "resource_not_active")
+    }
+    if (!isCanonicalIdentifier(manifest.documentId) || manifest.derivedIntegrity?.verified === false) {
+      return documentDenied(user, manifest, "resource_integrity_unverified")
+    }
+    const folderIds = this.folderIds(manifest)
+    if (documentOwnerUserId(manifest) === user.userId) {
+      return documentDecision(user, manifest, "full", "administrative_principal", [{
+        sourceType: "administrativePrincipal",
+        sourceId: `user:${user.userId}`,
+        policyVersion: "document-administrative-principal-v1",
+        effect: "allow",
+        permission: "full",
+        reasonCode: "administrative_principal"
+      }])
+    }
+
+    const folderDetails = await Promise.all(folderIds.map((folderId) => this.folderPermissionService.resolveEffectiveFolderPermissionDetail(user, folderId)))
+    let directGrants: DocumentShareGrant[]
+    try {
+      directGrants = await this.loadDocumentGrants(tenantId, manifest.documentId)
+    } catch {
+      return documentDenied(user, manifest, "ordinary_policy_unavailable", [{
+        sourceType: "directDocumentPolicy",
+        sourceId: manifest.documentId,
+        policyVersion: DOCUMENT_SHARE_POLICY_VERSION,
+        effect: "unavailable",
+        permission: "none",
+        reasonCode: "ordinary_policy_unavailable"
+      }])
+    }
     const directPermission = await this.resolveDirectDocumentPermission(
       user,
       manifest.documentId,
-      await this.loadDocumentGrants(tenantId, manifest.documentId)
+      tenantId,
+      directGrants
     )
-    return calculateEffectiveDocumentPermission(folderPermission, directPermission)
+    const directPolicyVersion = `${DOCUMENT_SHARE_POLICY_VERSION}:${documentSharePolicyStateVersion(directGrants)}`
+    const directContribution: ResourcePermissionContribution = {
+      sourceType: "directDocumentPolicy",
+      sourceId: manifest.documentId,
+      policyVersion: directPolicyVersion,
+      effect: directPermission.integrity === "invalid"
+        ? "unavailable"
+        : directPermission.explicitDeny
+          ? "deny"
+          : directPermission.permission === "none" ? "notApplicable" : "allow",
+      permission: directPermission.permission,
+      reasonCode: directPermission.integrity === "invalid"
+        ? "ordinary_policy_unavailable"
+        : directPermission.explicitDeny
+          ? "ordinary_policy_denied"
+          : directPermission.permission === "none" ? "no_matching_allow" : "allowed"
+    }
+    const legacyPermission = this.legacyMetadataPermission(user, manifest)
+    const legacyContribution = legacyPermission === undefined ? [] : [{
+      sourceType: "legacyPolicy" as const,
+      sourceId: manifest.documentId,
+      policyVersion: "legacy-document-metadata-acl-v1",
+      effect: legacyPermission === "none" ? "notApplicable" as const : "allow" as const,
+      permission: legacyPermission,
+      reasonCode: legacyPermission === "none" ? "no_matching_allow" as const : "allowed" as const
+    }]
+    const contributions = [directContribution, ...folderDetails.flatMap((detail) => detail.decision.contributions), ...legacyContribution]
+    const mandatoryFolderDeny = folderDetails.find((detail) => isMandatoryDenyDecision(detail.decision))
+    if (mandatoryFolderDeny) {
+      return documentDenied(user, manifest, mandatoryFolderDeny.decision.reasonCode, contributions)
+    }
+    if (directPermission.integrity === "invalid" || folderDetails.some((detail) => isUnavailableDecision(detail.decision))) {
+      return documentDenied(user, manifest, "ordinary_policy_unavailable", contributions)
+    }
+    if (directPermission.explicitDeny || folderDetails.some((detail) => detail.decision.reasonCode === "ordinary_policy_denied")) {
+      return documentDenied(user, manifest, "ordinary_policy_denied", contributions)
+    }
+    const permission = calculateEffectiveDocumentPermission(
+      maxPermission(folderDetails.map((detail) => detail.permission)),
+      maxPermission([directPermission.permission, legacyPermission ?? "none"])
+    )
+    return documentDecision(
+      user,
+      manifest,
+      permission,
+      permission === "none" ? "no_matching_allow" : "allowed",
+      contributions
+    )
+  }
+
+  async getVersionedDocumentSharePolicy(manifest: DocumentManifest): Promise<VersionedDocumentSharePolicyState> {
+    const tenantId = tenantIdForManifest(manifest)
+    const current = await this.loadDocumentGrantFile(tenantId, manifest.documentId)
+    const grants = current?.grants ?? (await this.loadLegacyDocumentGrants(tenantId, manifest.documentId))
+    return { grants, version: documentSharePolicyStateVersion(grants) }
+  }
+
+  async replaceVersionedDocumentSharePolicy(
+    actor: AppUser,
+    manifest: DocumentManifest,
+    input: ReplaceVersionedDocumentSharePolicyInput
+  ): Promise<VersionedDocumentSharePolicyState> {
+    const auditOutbox = this.deps.securityAuditOutbox
+    const principalDirectory = this.deps.resourceUserPrincipalDirectory
+    if (!auditOutbox || !principalDirectory) throw new Error("Versioned document share policy security dependencies are not configured")
+    const tenantId = tenantIdForManifest(manifest)
+    const currentFile = await this.loadDocumentGrantFile(tenantId, manifest.documentId)
+    const before = currentFile?.grants ?? (await this.loadLegacyDocumentGrants(tenantId, manifest.documentId))
+    const currentVersion = documentSharePolicyStateVersion(before)
+    let normalizedInputs = [...input.grants]
+    const auditIntent = await auditOutbox.prepare({
+      actorId: actor.userId,
+      tenantId,
+      targetType: "document",
+      targetId: manifest.documentId,
+      operation: "share.replace",
+      before: auditDocumentGrants(before),
+      proposedAfter: auditGrantInputs(input.grants),
+      reason: input.reason.trim() || "missing_reason",
+      policyVersion: DOCUMENT_SHARE_POLICY_VERSION
+    })
+
+    try {
+      normalizedInputs = normalizeGrantInputs(normalizedInputs)
+      validateDocumentShareRequest(normalizedInputs, input.reason)
+      if (input.expectedVersion !== currentVersion) throw new DocumentShareConflictError("document share policy version conflict")
+      const effectivePermission = await this.resolveEffectiveDocumentPermission(actor, manifest)
+      if (!canShareDocument(effectivePermission, actor) || actor.tenantId !== tenantId) {
+        throw new DocumentShareValidationError("actor cannot replace document share policy")
+      }
+      await this.validateSharePrincipals(manifest, normalizedInputs, principalDirectory)
+      await this.assertDocumentOperation(actor, manifest, "share", [
+        "principalsActiveSameTenant",
+        "administrativePrincipalPreserved",
+        "expectedVersionMatched"
+      ])
+    } catch (error) {
+      const result = error instanceof DocumentShareConflictError ? "conflict" : "denied"
+      await auditOutbox.complete(auditIntent.intentId, tenantId, result, auditDocumentGrants(before))
+      throw error
+    }
+
+    const now = new Date().toISOString()
+    const nextGrants: DocumentShareGrant[] = normalizedInputs.map((grant) => ({
+      documentShareGrantId: `docshare_${randomUUID().slice(0, 12)}`,
+      itemType: "documentShareGrant",
+      tenantId,
+      documentId: manifest.documentId,
+      principalType: grant.principalType,
+      principalId: grant.principalId,
+      permissionLevel: grant.permissionLevel,
+      createdBy: actor.userId,
+      reason: input.reason,
+      createdAt: now,
+      updatedAt: now
+    }))
+    const cleanupRepairOutbox = new ObjectStoreRevocationCleanupRepairOutbox(this.deps.objectStore)
+    if (documentSharePolicyIncreases(before, nextGrants)) {
+      try {
+        await cleanupRepairOutbox.assertResourceFenceReleased(tenantId, "document", manifest.documentId)
+      } catch {
+        await auditOutbox.complete(auditIntent.intentId, tenantId, "conflict", auditDocumentGrants(before))
+        throw new DocumentShareConflictError("document revocation cleanup is still fenced")
+      }
+    }
+    const revokedCandidates = revokedDocumentGrants(before, nextGrants)
+    const revoked: Array<{ grant: DocumentShareGrant; ceiling: "none" | "readOnly" }> = []
+    for (const revokedGrant of revokedCandidates) {
+      const grant = revokedGrant.grant
+      if (grant.principalType === "user") {
+        const remaining = await this.resolveEffectiveDocumentPermissionWithDirectGrants({
+          userId: grant.principalId,
+          cognitoGroups: [],
+          accountStatus: "active",
+          tenantId
+        }, manifest, nextGrants)
+        if (remaining === undefined || permissionRank[remaining] > permissionRank[revokedGrant.ceiling]) continue
+      }
+      revoked.push(revokedGrant)
+    }
+    const cleanupRegistration = revoked.length > 0 ? {
+      operationId: `document-share:${auditIntent.intentId}`,
+      tenantId,
+      resourceType: "document" as const,
+      resourceId: manifest.documentId,
+      trigger: "share_revoked" as const,
+      deniedPurposes: ["normal_rag", "external_model", "logging", "evaluation"],
+      authoritativeDenyVersion: documentSharePolicyStateVersion(nextGrants),
+      authoritativeDenyConfirmedAt: now,
+      knownTargets: revoked.flatMap(({ grant, ceiling }) => {
+        const principal = `${grant.principalType}:${grant.principalId}`
+        const principalReference = `document:${manifest.documentId}:principal:${principal}`
+        return [
+          { scope: "grant" as const, reference: `${principalReference}:ceiling:${ceiling}` },
+          { scope: "cache" as const, reference: principalReference },
+          { scope: "session" as const, reference: `${principalReference}/session` },
+          { scope: "queued_run" as const, reference: principalReference }
+        ]
+      })
+    } : undefined
+    if (cleanupRegistration) {
+      try {
+        await cleanupRepairOutbox.prepare({
+          expectedBeforeDenyVersion: currentVersion,
+          cleanupRegistration,
+          preparedAt: now
+        })
+      } catch {
+        await auditOutbox.complete(auditIntent.intentId, tenantId, "failed", auditDocumentGrants(before))
+        throw new Error("Document revocation cleanup repair intent could not be persisted")
+      }
+    }
+    try {
+      await this.saveDocumentGrants(tenantId, manifest.documentId, nextGrants, currentFile?.version)
+    } catch (error) {
+      if (cleanupRegistration) {
+        await cleanupRepairOutbox.markAbandoned({
+          tenantId,
+          resourceType: "document",
+          resourceId: manifest.documentId,
+          operationId: cleanupRegistration.operationId
+        }, now).catch(() => undefined)
+      }
+      const result = error instanceof DocumentShareConflictError ? "conflict" : "failed"
+      await auditOutbox.complete(auditIntent.intentId, tenantId, result, auditDocumentGrants(before))
+      throw error
+    }
+    if (cleanupRegistration) {
+      try {
+        const committed = await cleanupRepairOutbox.markDenyCommitted({
+          tenantId,
+          resourceType: "document",
+          resourceId: manifest.documentId,
+          operationId: cleanupRegistration.operationId
+        }, now)
+        await new ObjectStoreRevocationCleanupCoordinator(this.deps.objectStore).register(committed.cleanupRegistration)
+        await cleanupRepairOutbox.markCleanupRegistered(committed, now)
+      } catch (error) {
+        await auditOutbox.complete(auditIntent.intentId, tenantId, "failed", auditDocumentGrants(nextGrants))
+        throw error
+      }
+    }
+    await auditOutbox.complete(auditIntent.intentId, tenantId, "success", auditDocumentGrants(nextGrants))
+    return { grants: nextGrants, version: documentSharePolicyStateVersion(nextGrants) }
   }
 
   async replaceDocumentShareGrants(
@@ -103,6 +412,10 @@ export class DocumentPermissionService {
     const before = current?.grants ?? (await this.loadLegacyDocumentGrants(tenantId, manifest.documentId))
     const now = new Date().toISOString()
     const normalized = normalizeGrantInputs(grants)
+    const ownerUserId = documentOwnerUserId(manifest)
+    if (ownerUserId && normalized.some((grant) => (
+      grant.principalType === "user" && grant.principalId === ownerUserId && grant.permissionLevel === "deny"
+    ))) throw new DocumentShareValidationError("document policy cannot deny the administrative principal")
     const nextGrants: DocumentShareGrant[] = normalized.map((grant) => ({
       documentShareGrantId: `docshare_${randomUUID().slice(0, 12)}`,
       itemType: "documentShareGrant",
@@ -140,6 +453,38 @@ export class DocumentPermissionService {
         return
       } catch (err) {
         if (!isConditionalWriteError(err) || attempt === maxAuditAppendAttempts) throw err
+      }
+    }
+  }
+
+  private async validateSharePrincipals(
+    manifest: DocumentManifest,
+    grants: readonly DocumentShareGrantInput[],
+    principalDirectory: ResourceUserPrincipalDirectory
+  ): Promise<void> {
+    const tenantId = tenantIdForManifest(manifest)
+    const ownerUserId = documentOwnerUserId(manifest)
+    if (!ownerUserId) throw new DocumentShareValidationError("document administrative principal is missing")
+    const owner = await principalDirectory.getUser(ownerUserId)
+    if (!owner || owner.status !== "active" || owner.tenantId !== tenantId) {
+      throw new DocumentShareValidationError("document administrative principal is inactive or cross-tenant")
+    }
+    for (const grant of grants) {
+      if (!isCanonicalIdentifier(grant.principalId)) throw new DocumentShareValidationError("principalId is invalid")
+      if (grant.principalType === "user" && grant.principalId === ownerUserId && grant.permissionLevel === "deny") {
+        throw new DocumentShareValidationError("document policy cannot deny the administrative principal")
+      }
+      if (grant.principalType === "user") {
+        const user = await principalDirectory.getUser(grant.principalId)
+        if (!user || user.status !== "active" || user.tenantId !== tenantId) {
+          throw new DocumentShareValidationError("document share user principal is missing, inactive, or cross-tenant")
+        }
+        continue
+      }
+      if (isApplicationRole(grant.principalId)) throw new DocumentShareValidationError("application roles cannot be document share principals")
+      const group = await this.deps.userGroupStore.get(tenantId, grant.principalId)
+      if (!group || group.status !== "active" || group.tenantId !== tenantId) {
+        throw new DocumentShareValidationError("document share group principal is missing, inactive, or cross-tenant")
       }
     }
   }
@@ -183,7 +528,6 @@ export class DocumentPermissionService {
       }
     } catch (err) {
       if (isMissingObjectError(err)) return undefined
-      if (err instanceof SyntaxError) return { grants: [], version: "" }
       throw err
     }
   }
@@ -193,7 +537,7 @@ export class DocumentPermissionService {
       const raw = JSON.parse(await this.deps.objectStore.getText(documentShareLegacyLedgerKey)) as Partial<DocumentShareLedger>
       return sortGrants(Array.isArray(raw.grants) ? raw.grants.filter((grant) => grant.tenantId === tenantId && grant.documentId === documentId) : [])
     } catch (err) {
-      if (isMissingObjectError(err) || err instanceof SyntaxError) return []
+      if (isMissingObjectError(err)) return []
       throw err
     }
   }
@@ -257,53 +601,212 @@ export class DocumentPermissionService {
     return entries.flat()
   }
 
-  private async resolveFolderPermission(user: AppUser, manifest: DocumentManifest): Promise<EffectiveFolderPermission> {
-    const folderIds = this.folderIds(manifest)
-    if (folderIds.length === 0) return "none"
-    const permissions = await this.folderPermissionService.resolveEffectiveFolderPermissions(user, folderIds)
-    return maxPermission(folderIds.map((folderId) => permissions[folderId] ?? "none"))
-  }
-
   private async resolveDirectDocumentPermission(
     user: AppUser,
     documentId: string,
+    tenantId: string,
     grants: DocumentShareGrant[]
-  ): Promise<EffectiveDocumentPermission> {
-    const permissions = await Promise.all(grants.map((grant) => this.evaluateGrant(user, grant)))
-    return maxPermission(permissions, documentId)
+  ): Promise<DocumentPermissionResolution> {
+    const permissions = await Promise.all(grants.map((grant) => this.evaluateGrant(user, grant, tenantId, documentId)))
+    if (permissions.some((permission) => permission.integrity === "invalid")) return invalidDocumentResolution()
+    if (permissions.some((permission) => permission.explicitDeny)) return deniedDocumentResolution()
+    return validDocumentResolution(maxPermission(permissions.map((permission) => permission.permission), documentId))
   }
 
-  private async evaluateGrant(user: AppUser, grant: DocumentShareGrant): Promise<EffectiveDocumentPermission> {
+  private async resolveEffectiveDocumentPermissionWithDirectGrants(
+    user: AppUser,
+    manifest: DocumentManifest,
+    directGrants: DocumentShareGrant[]
+  ): Promise<EffectiveDocumentPermission | undefined> {
+    const tenantId = authoritativeManifestTenantId(manifest)
+    if (!tenantId) return undefined
+    if (documentOwnerUserId(manifest) === user.userId) return "full"
+    const folderDetails = await Promise.all(this.folderIds(manifest).map((folderId) => (
+      this.folderPermissionService.resolveEffectiveFolderPermissionDetail(user, folderId)
+    )))
+    const direct = await this.resolveDirectDocumentPermission(user, manifest.documentId, tenantId, directGrants)
+    if (direct.integrity === "invalid" || folderDetails.some((detail) => isUnavailableDecision(detail.decision))) return undefined
+    if (direct.explicitDeny || folderDetails.some((detail) => detail.decision.reasonCode === "ordinary_policy_denied")) return "none"
+    const legacy = this.legacyMetadataPermission(user, manifest) ?? "none"
+    return calculateEffectiveDocumentPermission(
+      maxPermission(folderDetails.map((detail) => detail.permission)),
+      maxPermission([direct.permission, legacy])
+    )
+  }
+
+  private async evaluateGrant(
+    user: AppUser,
+    grant: DocumentShareGrant,
+    tenantId: string,
+    documentId: string
+  ): Promise<DocumentPermissionResolution> {
+    if (
+      grant.tenantId !== tenantId ||
+      grant.documentId !== documentId ||
+      !isCanonicalIdentifier(grant.principalId)
+    ) return invalidDocumentResolution()
     if (grant.principalType === "user") {
-      return user.userId === grant.principalId || user.email === grant.principalId ? grant.permissionLevel : "none"
+      if (user.userId !== grant.principalId) return validDocumentResolution("none")
+      return grant.permissionLevel === "deny" ? deniedDocumentResolution() : validDocumentResolution(grant.permissionLevel)
     }
-    const membershipPermission = await this.resolveUserMembershipPermission(user, grant.principalId, new Set())
-    return minPermission(grant.permissionLevel, membershipPermission)
+    const membership = await this.resolveUserMembershipPermission(user, grant.principalId, tenantId, new Set())
+    if (membership.integrity === "invalid") return membership
+    if (grant.permissionLevel === "deny") return membership.permission === "none" ? validDocumentResolution("none") : deniedDocumentResolution()
+    const permission = minPermission(grant.permissionLevel, membership.permission)
+    if (permission === "none") return validDocumentResolution("none")
+    try {
+      enforceResourceGroupSearchUse({
+        actor: user,
+        tenantId,
+        targetPermission: permission,
+        activeSameTenantMembership: true
+      })
+      return validDocumentResolution(permission)
+    } catch (error) {
+      if (error instanceof ResourceOperationAuthorizationError) return invalidDocumentResolution()
+      throw error
+    }
   }
 
-  private async resolveUserMembershipPermission(user: AppUser, groupId: string, visited: Set<string>): Promise<EffectiveDocumentPermission> {
-    if (visited.has(groupId)) return "none"
-    visited.add(groupId)
-    const group = await this.deps.userGroupStore.get(groupId)
-    if (group?.status === "archived") return "none"
-    if (user.cognitoGroups.includes(groupId)) return "full"
+  private async resolveUserMembershipPermission(
+    user: AppUser,
+    groupId: string,
+    tenantId: string,
+    path: Set<string>
+  ): Promise<DocumentPermissionResolution> {
+    if (path.has(groupId)) return invalidDocumentResolution()
+    const nextPath = new Set(path)
+    nextPath.add(groupId)
+    let group
+    let memberships
+    try {
+      group = await this.deps.userGroupStore.get(tenantId, groupId)
+      memberships = await this.deps.groupMembershipStore.listByGroupId(tenantId, groupId)
+    } catch {
+      return invalidDocumentResolution()
+    }
+    if (!group || group.status !== "active" || group.tenantId !== tenantId) return invalidDocumentResolution()
 
-    const memberships = await this.deps.groupMembershipStore.listByGroupId(groupId)
     const grants: EffectiveDocumentPermission[] = []
     for (const membership of memberships) {
+      if (membership.groupId !== groupId || membership.tenantId !== tenantId || !isCanonicalIdentifier(membership.memberId)) {
+        return invalidDocumentResolution()
+      }
       if (membership.memberType === "user") {
-        if (membership.memberId === user.userId || membership.memberId === user.email) grants.push(membership.permissionLevel)
+        if (membership.memberId === user.userId) grants.push(membership.permissionLevel)
         continue
       }
-      const childPermission = await this.resolveUserMembershipPermission(user, membership.memberId, new Set(visited))
-      grants.push(minPermission(membership.permissionLevel, childPermission))
+      const child = await this.resolveUserMembershipPermission(user, membership.memberId, tenantId, nextPath)
+      if (child.integrity === "invalid") return child
+      grants.push(minPermission(membership.permissionLevel, child.permission))
     }
-    return maxPermission(grants, groupId)
+    return validDocumentResolution(maxPermission(grants, groupId))
   }
 
   private folderIds(manifest: DocumentManifest): string[] {
     return stringArray(manifest.metadata?.folderIds ?? manifest.metadata?.folderId ?? manifest.metadata?.groupIds ?? manifest.metadata?.groupId)
   }
+
+  private legacyMetadataPermission(user: AppUser, manifest: DocumentManifest): EffectiveDocumentPermission | undefined {
+    const localFixture = Boolean((this.deps as DocumentPermissionServiceDeps & { localTestIngestAdmissionContext?: unknown }).localTestIngestAdmissionContext)
+    if (!localFixture) return undefined
+    const allowedUsers = stringArray(manifest.metadata?.allowedUsers ?? manifest.metadata?.userIds)
+    if (allowedUsers.length === 0) return undefined
+    return allowedUsers.includes(user.userId) ? "readOnly" : "none"
+  }
+}
+
+function validDocumentResolution(permission: EffectiveDocumentPermission): DocumentPermissionResolution {
+  return { permission, integrity: "valid", explicitDeny: false }
+}
+
+function deniedDocumentResolution(): DocumentPermissionResolution {
+  return { permission: "none", integrity: "valid", explicitDeny: true }
+}
+
+function invalidDocumentResolution(): DocumentPermissionResolution {
+  return { permission: "none", integrity: "invalid", explicitDeny: false }
+}
+
+function documentOwnerUserId(manifest: DocumentManifest): string | undefined {
+  const metadataOwner = manifest.metadata?.ownerUserId
+  if (typeof metadataOwner === "string" && isCanonicalIdentifier(metadataOwner)) return metadataOwner
+  return isCanonicalIdentifier(manifest.admission?.ownerUserId) ? manifest.admission.ownerUserId : undefined
+}
+
+function authoritativeManifestTenantId(manifest: DocumentManifest): string | undefined {
+  const metadataTenant = manifest.metadata?.tenantId
+  if (typeof metadataTenant === "string") return metadataTenant
+  return manifest.admission?.tenantId
+}
+
+function documentDecision(
+  user: AppUser,
+  manifest: DocumentManifest,
+  permission: EffectiveDocumentPermission,
+  reasonCode: ResourcePermissionDecisionReasonCode,
+  contributions: readonly ResourcePermissionContribution[]
+): ResourcePermissionDecision {
+  return createResourcePermissionDecision({
+    resourceType: "document",
+    resourceId: manifest.documentId,
+    actorId: user.userId,
+    permission,
+    reasonCode,
+    contributions
+  })
+}
+
+function documentDenied(
+  user: AppUser,
+  manifest: DocumentManifest,
+  reasonCode: ResourcePermissionDecisionReasonCode,
+  contributions: readonly ResourcePermissionContribution[] = []
+): ResourcePermissionDecision {
+  return documentDecision(user, manifest, "none", reasonCode, contributions)
+}
+
+function isUnavailableDecision(decision: ResourcePermissionDecision): boolean {
+  return decision.reasonCode === "ordinary_policy_unavailable"
+}
+
+function isMandatoryDenyDecision(decision: ResourcePermissionDecision): boolean {
+  return [
+    "account_not_active",
+    "actor_tenant_unresolved",
+    "identity_unverified",
+    "resource_integrity_unverified",
+    "resource_not_active",
+    "resource_tenant_unresolved",
+    "tenant_mismatch"
+  ].includes(decision.reasonCode)
+}
+
+function isCanonicalIdentifier(value: string | undefined): value is string {
+  return typeof value === "string" && value.length > 0 && value.trim() === value
+}
+
+export function documentSharePolicyStateVersion(grants: readonly DocumentShareGrant[]): string {
+  return createHash("sha256").update(JSON.stringify(sortGrants([...grants]))).digest("hex")
+}
+
+function auditDocumentGrants(grants: readonly DocumentShareGrant[]) {
+  return grants.map((grant) => ({
+    tenantId: grant.tenantId,
+    documentId: grant.documentId,
+    principalType: grant.principalType,
+    principalId: grant.principalId,
+    permissionLevel: grant.permissionLevel,
+    updatedAt: grant.updatedAt
+  }))
+}
+
+function auditGrantInputs(grants: readonly DocumentShareGrantInput[]) {
+  return grants.map((grant) => ({
+    principalType: grant.principalType,
+    principalId: grant.principalId,
+    permissionLevel: grant.permissionLevel
+  }))
 }
 
 export function calculateEffectiveDocumentPermission(
@@ -406,8 +909,33 @@ function mergeAuditEntries(primary: DocumentShareAuditLogEntry[], legacy: Docume
   return [...byId.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
 }
 
-function documentShareGrantKey(tenantId: string, documentId: string): string {
+export function documentShareGrantKey(tenantId: string, documentId: string): string {
   return `${documentShareGrantPrefix}/${encodePathPart(tenantId)}/${encodePathPart(documentId)}.json`
+}
+
+function revokedDocumentGrants(
+  before: readonly DocumentShareGrant[],
+  after: readonly DocumentShareGrant[]
+): Array<{ grant: DocumentShareGrant; ceiling: "none" | "readOnly" }> {
+  const afterByPrincipal = new Map(after.map((grant) => [`${grant.principalType}:${grant.principalId}`, grant]))
+  return before.flatMap<{ grant: DocumentShareGrant; ceiling: "none" | "readOnly" }>((grant) => {
+    if (grant.permissionLevel === "deny") return []
+    const replacement = afterByPrincipal.get(`${grant.principalType}:${grant.principalId}`)
+    if (!replacement || replacement.permissionLevel === "deny") return [{ grant, ceiling: "none" as const }]
+    if (grant.permissionLevel === "full" && replacement.permissionLevel === "readOnly") {
+      return [{ grant, ceiling: "readOnly" as const }]
+    }
+    return []
+  })
+}
+
+function documentSharePolicyIncreases(
+  before: readonly DocumentShareGrant[],
+  after: readonly DocumentShareGrant[]
+): boolean {
+  const rank: Record<DocumentPolicyPermissionLevel, number> = { deny: 0, readOnly: 1, full: 2 }
+  const beforeByPrincipal = new Map(before.map((grant) => [`${grant.principalType}:${grant.principalId}`, grant.permissionLevel]))
+  return after.some((grant) => rank[grant.permissionLevel] > rank[beforeByPrincipal.get(`${grant.principalType}:${grant.principalId}`) ?? "deny"])
 }
 
 function documentShareAuditKey(tenantId: string, documentId: string): string {

@@ -2,6 +2,7 @@ import { existsSync } from "node:fs"
 import { mkdir, readFile, writeFile } from "node:fs/promises"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
+import { createCurrentAuthorizedFetch } from "./run-authorization.js"
 
 type CorpusDocument = {
   fileName: string
@@ -24,6 +25,7 @@ type PrepareOptions = {
 const benchmarkDir = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(benchmarkDir, "..")
 const sourceDatasetPath = path.join(benchmarkDir, "dataset.jp-public-pdf-qa.jsonl")
+const currentAuthorizedFetch = createCurrentAuthorizedFetch()
 
 const textCorpusDocuments: CorpusDocument[] = [
   {
@@ -74,7 +76,7 @@ if (isMainModule()) {
   await prepareJpPublicPdfQaBenchmark(process.env)
 }
 
-export async function prepareJpPublicPdfQaBenchmark(env: NodeJS.ProcessEnv, fetchImpl: typeof fetch = fetch): Promise<void> {
+export async function prepareJpPublicPdfQaBenchmark(env: NodeJS.ProcessEnv, fetchImpl: typeof fetch = currentAuthorizedFetch): Promise<void> {
   await prepareJpPublicPdfQaBenchmarkWithOptions({
     datasetOutput: resolveOutput(env.JP_PUBLIC_PDF_QA_DATASET_OUTPUT ?? ".local-data/jp-public-pdf-qa-v1/dataset.jsonl"),
     corpusDir: resolveOutput(env.JP_PUBLIC_PDF_QA_CORPUS_DIR ?? ".local-data/jp-public-pdf-qa-v1/corpus"),

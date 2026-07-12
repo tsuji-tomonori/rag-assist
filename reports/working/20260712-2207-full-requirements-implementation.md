@@ -1,0 +1,79 @@
+# 追加要件完全実装 作業レポート
+
+- 実施日時: 2026-07-12 22:07 JST
+- branch: `codex/full-requirements-implementation`
+- task: `tasks/do/20260711-1518-full-requirements-implementation.md`
+- 状態: repository implementation / local acceptance verified、delivery in progress、operational acceptance pending
+
+## 受けた指示
+
+`FR-056`–`FR-093` と `SQ-005`–`SQ-015` の実行計画を作成し、production path の実装、テスト、受け入れ判定、証跡、Draft PR まで進める。未実施の検証や未承認の閾値・実測を完了扱いにしない。
+
+## 要件整理と判断
+
+- verified identity、tenant/owner/resource permission、deny-first revoke、current worker authorization、response minimization を共通境界として実装した。
+- 永続文書の source governance と、一時添付の owner/tenant/chat/expiry 境界を分離した。一時添付は `warning/unverified/eligible_with_warning` を保持し、永続文書の管理者承認を偽装しない temporary 専用 policy とした。
+- RAG admission/extraction/chunk/security envelope、staged publication、replay、safe degradation、quality observation/promotion を fail-closed にした。
+- 未承認 threshold、live AWS、representative workload、chaos、billing は repository 実装と分離し、pending のまま記録した。
+
+## 実施作業
+
+- `FR-056`–`FR-093`: 認証・認可、3×7 操作、共有・membership・transfer・move/delete、durable audit/repair、RAG lifecycle、worker reauthorization、monitoring/observation を実装・修復した。
+- `SQ-005`–`SQ-015`: versioned evidence schema、stage/slice gate、zero-tolerance signal、latency/availability/recovery/cost の fail-closed control を実装した。
+- benchmark seed の list/delete は authoritative benchmark tenant/scope/owner identity に限定し、caller-controlled ACL metadata を認可根拠から除外した。
+- 一時添付は同一会話の次質問へ scope を引き継ぎ、永続一覧へ混入せず回答/citation に利用できるよう修正した。
+- local chat event ledger は temporary file + atomic rename とし、worker 書き込み中の SSE partial JSON read を防止した。
+- Web の fake usage/cost fallback を honest unavailable state へ置換し、benchmark 履歴を 380px 以下の内部スクロールへ同期した。
+- OpenAPI、Web/infra inventory、REQ/ARC/DES/OPS、spec-recovery trace/evidence を同期した。README と運用文書は実装・検証手順変更に合わせて更新した。AGENTS.md 自体の変更は不要だった。
+
+## 検証結果
+
+- final workspace suites:
+  - contract 1/1
+  - API 658/658
+  - Web 307/307
+  - infra 38/38
+  - benchmark 102/102
+- `npm run test:e2e:smoke -w @memorag-mvp/web`: 4/4 pass
+- `npm run lint`: pass
+- `npm run build --workspaces --if-present`: pass
+- `npm run docs:openapi:check`: pass
+- `npm run docs:web-inventory:check`: pass
+- `npm run docs:infra-inventory:check`: pass
+- `python3 scripts/validate_spec_recovery.py docs/spec-recovery`: pass。semantic atomicity/sufficiency は人手レビュー対象との validator 注記あり。
+- `npm run docs:hidden-unicode:check`: pass
+- `npm run rag:release:source-audit`: pass。dataset-specific branch 0、artifact manifest mismatch 0。
+- `git diff --check`: pass
+- read-only 最終再監査: production-path blocker 0。benchmark seed 削除の認可 subject と verified runner の audit/tombstone attribution、共有 corpus mapping、mismatched owner 拒否を再確認した。
+
+### 検証中に検出して修復した主な失敗
+
+- API contract/fixture、benchmark seed list/delete、FR-082 PDF page-gap fixture、Web role navigation、OpenAPI guard schema の不整合を修復した。
+- 手動 API 全件診断で 20 件失敗したが、公式 package script の `LOCAL_AUTH_*` / `BENCHMARK_EVALUATION_*` を欠いた診断コマンドが原因だった。公式 script で 657/657 を確認し、偽陽性として記録した。
+- E2E は local identity/store 設定不足、旧 benchmark selector/confirm flow、temporary attachment scope 消失、local SSE partial JSON race を検出し、修復後 4/4 pass とした。
+- benchmark seed の一覧が空になる回帰は authoritative identity 判定へ修復し、対象 contract は約2秒で完了した。
+- benchmark seed 削除の初回監査で resource owner を actor として記録する blocker を検出した。認可 subject と verified runner attribution を分離し、`smoke-agent-v1` 等の共有 corpus owner は suite registry から解決するよう修復した。API 658/658 と独立再監査 blocker 0 を確認した。
+- 最終 workspace 一括実行では Web role navigation 1件が `/me` 解決前の同期 assertion で失敗した。権限依存 nav を待機する test に修復し、対象 41/41 と Web 全体 307/307 を再実行した。API/infra/benchmark/contract は同一一括実行で全件成功した。
+
+## 成果物
+
+- 実行計画: `docs/spec-recovery/18_implementation_execution_plan_202607.md`
+- 要件別証跡: `docs/spec-recovery/19_implementation_evidence_202607.csv`
+- task: `tasks/do/20260711-1518-full-requirements-implementation.md`
+- runtime/API/Web/infra/benchmark/test/docs 一式
+- 本レポート
+
+## 指示への fit 評価
+
+- repository implementation と local acceptance は要件 ID 別 evidence および全回帰で確認した。
+- production UI/API の mock/fake fallback は追加せず、unavailable/permission/error を正直に表示する。
+- benchmark期待語句、QA sample 固有値、dataset 固有分岐は production source audit で 0。
+- production deploy、migration 実行、PR merge/close は行っていない。
+
+## 未対応・制約・リスク
+
+- `FR-066`: AWS registry backfill/convergence と live cleanup duration は未実施。
+- `FR-093`: live notification、drift、rollback drill は未実施。
+- `SQ-005`–`SQ-015`: approved dataset/threshold/window/owner/workload/price catalog を用いた live/load/chaos/cost/billing acceptance は未実施。
+- `npm install` 時点の audit は 4 vulnerabilities（low 1、moderate 1、high 2）を報告した。本タスクでは依存更新による互換性変更を実施していない。
+- Draft PR、受け入れコメント、セルフレビュー、CI はこのレポート更新後に実施する。運用 evidence が未取得のため task は `do` のままとし、全49件の operational acceptance 完了は主張しない。

@@ -69,6 +69,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     canReadDocuments,
     canCreateDocumentGroups,
     canShareDocumentGroups,
+    canMoveDocumentGroups,
     canWriteDocuments,
     canDeleteDocuments,
     canReindexDocuments,
@@ -115,12 +116,16 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     refreshReindexMigrations,
     ingestDocument,
     onDelete,
+    onDownloadExtractedText,
     onUploadDocumentFile,
     onStageReindex,
     onCutoverReindex,
     onRollbackReindex,
     onCreateDocumentGroup,
     onShareDocumentGroup,
+    onMoveDocumentGroup,
+    onLoadFolderShare,
+    onReplaceFolderShare,
     onLoadDocumentShare,
     onShareDocument,
     onMoveDocument
@@ -130,6 +135,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     canWriteDocuments,
     canCreateDocumentGroups,
     canShareDocumentGroups,
+    canMoveDocumentGroups,
     canDeleteDocuments,
     canReindexDocuments,
     setLoading,
@@ -264,6 +270,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     refreshAdminData,
     onAssignUserRoles,
     onCreateManagedUser,
+    onPrepareManagedUserDelete,
     onSetManagedUserStatus,
     onCreateAlias,
     onUpdateAlias,
@@ -346,9 +353,9 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     if (!currentUser) return
     if (activeView === "assignee" && !canAnswerQuestions) setActiveView("chat")
     if (activeView === "benchmark" && !canReadBenchmarkRuns) setActiveView("chat")
-    if (activeView === "documents" && !canManageDocuments) setActiveView("chat")
+    if (activeView === "documents" && !canReadDocuments) setActiveView("chat")
     if (activeView === "admin" && !canSeeAdminSettings) setActiveView("chat")
-  }, [activeView, canAnswerQuestions, canManageDocuments, canReadBenchmarkRuns, canSeeAdminSettings, currentUser, setActiveView])
+  }, [activeView, canAnswerQuestions, canReadBenchmarkRuns, canReadDocuments, canSeeAdminSettings, currentUser, setActiveView])
 
   useEffect(() => {
     if (!canReadDebugRuns && debugMode) setDebugMode(false)
@@ -416,7 +423,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     authSession,
     canAnswerQuestions,
     canReadBenchmarkRuns,
-    canManageDocuments,
+    canReadDocuments,
     canSeeAdminSettings,
     onChangeView: setActiveView
   }
@@ -435,7 +442,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     activeView,
     canAnswerQuestions,
     canReadBenchmarkRuns,
-    canManageDocuments,
+    canReadDocuments,
     canSeeAdminSettings,
     chatProps: {
       messages: visibleMessages,
@@ -514,6 +521,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       loading,
       canCreateGroup: canCreateDocumentGroups,
       canShareGroup: canShareDocumentGroups,
+      canMoveGroup: canMoveDocumentGroups,
       canUpload: canWriteDocuments,
       canDelete: canDeleteDocuments,
       canReindex: canReindexDocuments,
@@ -525,10 +533,14 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       onUpload: onUploadDocumentFile,
       onCreateGroup: onCreateDocumentGroup,
       onShareGroup: onShareDocumentGroup,
+      onMoveGroup: onMoveDocumentGroup,
+      onLoadFolderShare,
+      onReplaceFolderShare,
       onLoadDocumentShare,
       onShareDocument,
       onMoveDocument,
       onDelete,
+      onDownloadExtractedText,
       onStageReindex,
       onCutoverReindex,
       onRollbackReindex,
@@ -537,7 +549,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
         setQuestion(`この資料について質問する: ${document.fileName}`)
         setActiveView("chat")
       },
-      onBack: () => setActiveView("admin"),
+      onBack: () => setActiveView(canSeeAdminSettings ? "admin" : "chat"),
       urlState: documentUrlState,
       onUrlStateChange: onDocumentUrlStateChange
     }),
@@ -584,6 +596,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       onOpenBenchmark: () => setActiveView("benchmark"),
       onCreateUser: onCreateManagedUser,
       onAssignRoles: onAssignUserRoles,
+      onPrepareUserDelete: onPrepareManagedUserDelete,
       onSetUserStatus: onSetManagedUserStatus,
       onRefreshAdminData: async () => {
         setLoading(true)

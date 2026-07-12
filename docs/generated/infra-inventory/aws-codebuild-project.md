@@ -34,7 +34,7 @@ Logical ID: `BenchmarkProject1593465D`
 | `computeType` | BUILD_GENERAL1_SMALL |
 | `image` | aws/codebuild/standard:7.0 |
 | `privilegedMode` | false |
-| `environmentVariables` | [{"name":"COGNITO_USER_POOL_ID","value":"Ref:UserPool6BA7E5F2","type":"PLAINTEXT"},{"name":"COGNITO_APP_CLIENT_ID","value":"Ref:UserPoolWebClient4C9370B0","type":"PLAINTEXT"},{"name":"BENCHMARK_AUTH_SECRET_ID","value":"<masked-or-reference>","type":"PLAINTEXT"},{"name":"BENCHMARK_RUNNER_GROUP","value":"BENCHMARK_RUNNER","type":"PLAINTEXT"},{"name":"BENCHMARK_RUNS_TABLE_NAME","value":"Ref:BenchmarkRunsTableD0841636","type":"PLAINTEXT"},{"name":"BENCHMARK_CODEBUILD_LOG_GROUP_NAME","value":"Ref:BenchmarkProjectLogGroup395F719E","type":"PLAINTEXT"}] |
+| `environmentVariables` | [{"name":"COGNITO_USER_POOL_ID","value":"Ref:UserPool6BA7E5F2","type":"PLAINTEXT"},{"name":"COGNITO_APP_CLIENT_ID","value":"Ref:UserPoolWebClient4C9370B0","type":"PLAINTEXT"},{"name":"BENCHMARK_AUTH_SECRET_ID","value":"<masked-or-reference>","type":"PLAINTEXT"},{"name":"BENCHMARK_RUNNER_GROUP","value":"BENCHMARK_RUNNER","type":"PLAINTEXT"},{"name":"BENCHMARK_RUNS_TABLE_NAME","value":"Ref:BenchmarkRunsTableD0841636","type":"PLAINTEXT"},{"name":"BENCHMARK_CODEBUILD_LOG_GROUP_NAME","value":"Ref:BenchmarkProjectLogGroup395F719E","type":"PLAINTEXT"},{"name":"BENCHMARK_BUCKET_NAME","value":"Ref:BenchmarkBucketDD7D1D2F","type":"PLAINTEXT"},{"name":"BENCHMARK_AUTHORIZATION_FUNCTION_NAME","value":"Ref:BenchmarkRunAuthorizationFunction16D4CD86","type":"PLAINTEXT"}] |
 | `sourceType` | GITHUB |
 | `sourceLocation` | https://github.com/tsuji-tomonori/rag-assist.git |
 | `sourceVersion` | main |

@@ -55,7 +55,7 @@ export function managedUserStatusLabel(status: ManagedUser["status"]): string {
   return "削除済み"
 }
 
-export function costConfidenceLabel(confidence: CostAuditSummary["items"][number]["confidence"]): string {
+export function costConfidenceLabel(confidence: NonNullable<CostAuditSummary["items"]>[number]["confidence"]): string {
   if (confidence === "actual_usage") return "実測"
   if (confidence === "estimated_usage") return "概算"
   return "手動見積"

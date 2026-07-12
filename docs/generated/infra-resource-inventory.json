@@ -2,7 +2,7 @@
   "generatedBy": "tools/infra-inventory/generate-infra-inventory.mjs",
   "source": "infra/test/__snapshots__/memorag-mvp-stack.snapshot.json",
   "stackName": "MemoRagMvpStack",
-  "totalResources": 218,
+  "totalResources": 249,
   "totalsByDomain": [
     {
       "domain": "Storage",
@@ -10,11 +10,11 @@
     },
     {
       "domain": "Data",
-      "count": 9
+      "count": 10
     },
     {
       "domain": "Compute",
-      "count": 15
+      "count": 19
     },
     {
       "domain": "API",
@@ -22,7 +22,7 @@
     },
     {
       "domain": "Identity",
-      "count": 12
+      "count": 15
     },
     {
       "domain": "Delivery",
@@ -34,11 +34,11 @@
     },
     {
       "domain": "Security/IAM",
-      "count": 34
+      "count": 42
     },
     {
       "domain": "Observability",
-      "count": 14
+      "count": 18
     },
     {
       "domain": "Custom",
@@ -53,12 +53,12 @@
     },
     {
       "type": "AWS::DynamoDB::Table",
-      "count": 9,
+      "count": 10,
       "purpose": "DynamoDB table"
     },
     {
       "type": "AWS::Lambda::Function",
-      "count": 11,
+      "count": 15,
       "purpose": "Lambda function"
     },
     {
@@ -98,7 +98,7 @@
     },
     {
       "type": "AWS::Cognito::UserPoolGroup",
-      "count": 9,
+      "count": 12,
       "purpose": "Cognito role group"
     },
     {
@@ -133,17 +133,17 @@
     },
     {
       "type": "AWS::Logs::LogGroup",
-      "count": 14,
+      "count": 18,
       "purpose": "CloudWatch Logs log group"
     },
     {
       "type": "AWS::IAM::Role",
-      "count": 16,
+      "count": 20,
       "purpose": "IAM role"
     },
     {
       "type": "AWS::IAM::Policy",
-      "count": 14,
+      "count": 18,
       "purpose": "IAM inline policy"
     },
     {
@@ -178,7 +178,7 @@
     },
     {
       "type": "AWS::Lambda::Permission",
-      "count": 38,
+      "count": 41,
       "purpose": "Lambda invoke permission"
     },
     {
@@ -205,6 +205,21 @@
       "type": "AWS::ApiGateway::Authorizer",
       "count": 1,
       "purpose": "API Gateway Cognito authorizer"
+    },
+    {
+      "type": "AWS::CloudWatch::Alarm",
+      "count": 4,
+      "purpose": "CloudFormation resource"
+    },
+    {
+      "type": "AWS::Events::Rule",
+      "count": 3,
+      "purpose": "CloudFormation resource"
+    },
+    {
+      "type": "AWS::SNS::Topic",
+      "count": 1,
+      "purpose": "CloudFormation resource"
     }
   ],
   "resources": [
@@ -359,6 +374,37 @@
       "detailFilePath": "infra-inventory/aws-s3-bucket.md"
     },
     {
+      "logicalId": "ActiveRunAuthorizationIndexTable2D018C99",
+      "logicalName": "Active Run Authorization Index Table",
+      "type": "AWS::DynamoDB::Table",
+      "purpose": "Active Run Authorization Index Table (DynamoDB table)",
+      "settings": {
+        "keySchema": [
+          {
+            "AttributeName": "tenantPartitionId",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "runKey",
+            "KeyType": "RANGE"
+          }
+        ],
+        "attributeDefinitions": [
+          {
+            "AttributeName": "tenantPartitionId",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "runKey",
+            "AttributeType": "S"
+          }
+        ],
+        "billingMode": "PAY_PER_REQUEST",
+        "pointInTimeRecoveryEnabled": true
+      },
+      "detailFilePath": "infra-inventory/aws-dynamodb-table.md"
+    },
+    {
       "logicalId": "BenchmarkRunsTableD0841636",
       "logicalName": "Benchmark Runs Table",
       "type": "AWS::DynamoDB::Table",
@@ -373,6 +419,14 @@
         "attributeDefinitions": [
           {
             "AttributeName": "runId",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "tenantPartitionId",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "tenantItemId",
             "AttributeType": "S"
           }
         ],
@@ -431,6 +485,14 @@
         "attributeDefinitions": [
           {
             "AttributeName": "runId",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "tenantPartitionId",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "tenantItemId",
             "AttributeType": "S"
           }
         ],
@@ -498,6 +560,14 @@
           {
             "AttributeName": "normalizedCanonicalPath",
             "AttributeType": "S"
+          },
+          {
+            "AttributeName": "tenantPartitionId",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "tenantItemId",
+            "AttributeType": "S"
           }
         ],
         "billingMode": "PAY_PER_REQUEST",
@@ -555,6 +625,14 @@
         "attributeDefinitions": [
           {
             "AttributeName": "runId",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "tenantPartitionId",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "tenantItemId",
             "AttributeType": "S"
           }
         ],
@@ -655,10 +733,14 @@
         "memorySize": 1024,
         "timeoutSeconds": 60,
         "environment": {
+          "ACTIVE_RUN_AUTHORIZATION_INDEX_TABLE_NAME": "Ref:ActiveRunAuthorizationIndexTable2D018C99",
           "AUTH_ENABLED": "true",
+          "AUTH_TENANT_ID": "Ref:AWS::AccountId",
           "BENCHMARK_BUCKET_NAME": "Ref:BenchmarkBucketDD7D1D2F",
           "BENCHMARK_DEFAULT_DATASET_KEY": "datasets/agent/standard-v1.jsonl",
           "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+          "BENCHMARK_EVALUATION_ENABLED": "true",
+          "BENCHMARK_EVALUATION_TENANT_ID": "Join:[\"\",[\"benchmark-\",{\"Ref\":\"AWS::AccountId\"}]]",
           "BENCHMARK_RUNS_TABLE_NAME": "Ref:BenchmarkRunsTableD0841636",
           "BENCHMARK_STATE_MACHINE_ARN": "Ref:BenchmarkStateMachine8C582B8A",
           "BENCHMARK_TARGET_API_BASE_URL": "Join:[\"\",[\"https://\",{\"Ref\":\"RestApi0C43BF4B\"},\".execute-api.\",{\"Ref\":\"AWS::Region\"},\".\",{\"Ref\":\"AWS::URLSuffix\"},\"/prod/\"]]",
@@ -691,6 +773,8 @@
           "PDF_OCR_FALLBACK_ENABLED": "true",
           "PDF_OCR_FALLBACK_TIMEOUT_MS": "45000",
           "QUESTION_TABLE_NAME": "Ref:HumanQuestionsTable5DA9688B",
+          "RAG_MONITORING_REQUIRED": "1",
+          "RAG_SAFETY_STATE_TTL_SECONDS": "600",
           "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
           "USE_LOCAL_CHAT_RUN_STORE": "false",
           "USE_LOCAL_VECTOR_STORE": "false",
@@ -701,10 +785,10 @@
       "detailFilePath": "infra-inventory/aws-lambda-function.md"
     },
     {
-      "logicalId": "ChatRunEventsStreamFunctionA12E11AC",
-      "logicalName": "Chat Run Events Stream Function",
+      "logicalId": "BenchmarkRunAuthorizationFunction16D4CD86",
+      "logicalName": "Benchmark Run Authorization Function",
       "type": "AWS::Lambda::Function",
-      "purpose": "Chat Run Events Stream Function (Lambda function)",
+      "purpose": "Benchmark Run Authorization Function (Lambda function)",
       "settings": {
         "handler": "index.handler",
         "runtime": "nodejs22.x",
@@ -712,12 +796,16 @@
           "arm64"
         ],
         "memorySize": 512,
-        "timeoutSeconds": 900,
+        "timeoutSeconds": 29,
         "environment": {
+          "ACTIVE_RUN_AUTHORIZATION_INDEX_TABLE_NAME": "Ref:ActiveRunAuthorizationIndexTable2D018C99",
           "AUTH_ENABLED": "true",
+          "AUTH_TENANT_ID": "Ref:AWS::AccountId",
           "BENCHMARK_BUCKET_NAME": "Ref:BenchmarkBucketDD7D1D2F",
           "BENCHMARK_DEFAULT_DATASET_KEY": "datasets/agent/standard-v1.jsonl",
           "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+          "BENCHMARK_EVALUATION_ENABLED": "true",
+          "BENCHMARK_EVALUATION_TENANT_ID": "Join:[\"\",[\"benchmark-\",{\"Ref\":\"AWS::AccountId\"}]]",
           "BENCHMARK_RUNS_TABLE_NAME": "Ref:BenchmarkRunsTableD0841636",
           "CHAT_RUN_EVENTS_TABLE_NAME": "Ref:ChatRunEventsTable7455A50E",
           "CHAT_RUNS_TABLE_NAME": "Ref:ChatRunsTable8446CD95",
@@ -744,6 +832,67 @@
           "MOCK_BEDROCK": "false",
           "NODE_ENV": "production",
           "QUESTION_TABLE_NAME": "Ref:HumanQuestionsTable5DA9688B",
+          "RAG_MONITORING_REQUIRED": "1",
+          "RAG_SAFETY_STATE_TTL_SECONDS": "600",
+          "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
+          "USE_LOCAL_CHAT_RUN_STORE": "false",
+          "USE_LOCAL_VECTOR_STORE": "false",
+          "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"
+        },
+        "role": "GetAtt:BenchmarkRunAuthorizationFunctionServiceRole23F15ADE.Arn"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-function.md"
+    },
+    {
+      "logicalId": "ChatRunEventsStreamFunctionA12E11AC",
+      "logicalName": "Chat Run Events Stream Function",
+      "type": "AWS::Lambda::Function",
+      "purpose": "Chat Run Events Stream Function (Lambda function)",
+      "settings": {
+        "handler": "index.handler",
+        "runtime": "nodejs22.x",
+        "architectures": [
+          "arm64"
+        ],
+        "memorySize": 512,
+        "timeoutSeconds": 900,
+        "environment": {
+          "ACTIVE_RUN_AUTHORIZATION_INDEX_TABLE_NAME": "Ref:ActiveRunAuthorizationIndexTable2D018C99",
+          "AUTH_ENABLED": "true",
+          "AUTH_TENANT_ID": "Ref:AWS::AccountId",
+          "BENCHMARK_BUCKET_NAME": "Ref:BenchmarkBucketDD7D1D2F",
+          "BENCHMARK_DEFAULT_DATASET_KEY": "datasets/agent/standard-v1.jsonl",
+          "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+          "BENCHMARK_EVALUATION_ENABLED": "true",
+          "BENCHMARK_EVALUATION_TENANT_ID": "Join:[\"\",[\"benchmark-\",{\"Ref\":\"AWS::AccountId\"}]]",
+          "BENCHMARK_RUNS_TABLE_NAME": "Ref:BenchmarkRunsTableD0841636",
+          "CHAT_RUN_EVENTS_TABLE_NAME": "Ref:ChatRunEventsTable7455A50E",
+          "CHAT_RUNS_TABLE_NAME": "Ref:ChatRunsTable8446CD95",
+          "COGNITO_APP_CLIENT_ID": "Ref:UserPoolWebClient4C9370B0",
+          "COGNITO_REGION": "Ref:AWS::Region",
+          "COGNITO_USER_POOL_ID": "Ref:UserPool6BA7E5F2",
+          "CONVERSATION_HISTORY_TABLE_NAME": "Ref:ConversationHistoryTable59A3534C",
+          "CORS_ALLOWED_ORIGINS": "*",
+          "DEBUG_DOWNLOAD_BUCKET_NAME": "Ref:DebugDownloadBucketAB6A16BE",
+          "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+          "DEFAULT_MEMORY_MODEL_ID": "amazon.nova-lite-v1:0",
+          "DEFAULT_MODEL_ID": "amazon.nova-lite-v1:0",
+          "DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID": "ANSWER_EDITOR",
+          "DOCS_BUCKET_NAME": "Ref:DocumentsBucket9EC9DEB9",
+          "DOCUMENT_GROUPS_TABLE_NAME": "Ref:DocumentGroupsTableA5108040",
+          "DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME": "Ref:DocumentIngestRunEventsTableF4692EBE",
+          "DOCUMENT_INGEST_RUNS_TABLE_NAME": "Ref:DocumentIngestRunsTableEA8F8CCA",
+          "EMBEDDING_DIMENSIONS": "1024",
+          "EMBEDDING_MODEL_ID": "amazon.titan-embed-text-v2:0",
+          "EVIDENCE_VECTOR_INDEX_NAME": "evidence-index",
+          "FAVORITES_TABLE_NAME": "Ref:FavoritesTable4DA8A306",
+          "MEMORY_VECTOR_INDEX_NAME": "memory-index",
+          "MIN_RETRIEVAL_SCORE": "0.20",
+          "MOCK_BEDROCK": "false",
+          "NODE_ENV": "production",
+          "QUESTION_TABLE_NAME": "Ref:HumanQuestionsTable5DA9688B",
+          "RAG_MONITORING_REQUIRED": "1",
+          "RAG_SAFETY_STATE_TTL_SECONDS": "600",
           "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
           "USE_LOCAL_CHAT_RUN_STORE": "false",
           "USE_LOCAL_VECTOR_STORE": "false",
@@ -767,10 +916,14 @@
         "memorySize": 512,
         "timeoutSeconds": 29,
         "environment": {
+          "ACTIVE_RUN_AUTHORIZATION_INDEX_TABLE_NAME": "Ref:ActiveRunAuthorizationIndexTable2D018C99",
           "AUTH_ENABLED": "true",
+          "AUTH_TENANT_ID": "Ref:AWS::AccountId",
           "BENCHMARK_BUCKET_NAME": "Ref:BenchmarkBucketDD7D1D2F",
           "BENCHMARK_DEFAULT_DATASET_KEY": "datasets/agent/standard-v1.jsonl",
           "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+          "BENCHMARK_EVALUATION_ENABLED": "true",
+          "BENCHMARK_EVALUATION_TENANT_ID": "Join:[\"\",[\"benchmark-\",{\"Ref\":\"AWS::AccountId\"}]]",
           "BENCHMARK_RUNS_TABLE_NAME": "Ref:BenchmarkRunsTableD0841636",
           "CHAT_RUN_EVENTS_TABLE_NAME": "Ref:ChatRunEventsTable7455A50E",
           "CHAT_RUNS_TABLE_NAME": "Ref:ChatRunsTable8446CD95",
@@ -797,6 +950,8 @@
           "MOCK_BEDROCK": "false",
           "NODE_ENV": "production",
           "QUESTION_TABLE_NAME": "Ref:HumanQuestionsTable5DA9688B",
+          "RAG_MONITORING_REQUIRED": "1",
+          "RAG_SAFETY_STATE_TTL_SECONDS": "600",
           "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
           "USE_LOCAL_CHAT_RUN_STORE": "false",
           "USE_LOCAL_VECTOR_STORE": "false",
@@ -820,10 +975,14 @@
         "memorySize": 1024,
         "timeoutSeconds": 900,
         "environment": {
+          "ACTIVE_RUN_AUTHORIZATION_INDEX_TABLE_NAME": "Ref:ActiveRunAuthorizationIndexTable2D018C99",
           "AUTH_ENABLED": "true",
+          "AUTH_TENANT_ID": "Ref:AWS::AccountId",
           "BENCHMARK_BUCKET_NAME": "Ref:BenchmarkBucketDD7D1D2F",
           "BENCHMARK_DEFAULT_DATASET_KEY": "datasets/agent/standard-v1.jsonl",
           "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+          "BENCHMARK_EVALUATION_ENABLED": "true",
+          "BENCHMARK_EVALUATION_TENANT_ID": "Join:[\"\",[\"benchmark-\",{\"Ref\":\"AWS::AccountId\"}]]",
           "BENCHMARK_RUNS_TABLE_NAME": "Ref:BenchmarkRunsTableD0841636",
           "CHAT_RUN_EVENTS_TABLE_NAME": "Ref:ChatRunEventsTable7455A50E",
           "CHAT_RUNS_TABLE_NAME": "Ref:ChatRunsTable8446CD95",
@@ -850,6 +1009,8 @@
           "MOCK_BEDROCK": "false",
           "NODE_ENV": "production",
           "QUESTION_TABLE_NAME": "Ref:HumanQuestionsTable5DA9688B",
+          "RAG_MONITORING_REQUIRED": "1",
+          "RAG_SAFETY_STATE_TTL_SECONDS": "600",
           "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
           "USE_LOCAL_CHAT_RUN_STORE": "false",
           "USE_LOCAL_VECTOR_STORE": "false",
@@ -906,10 +1067,14 @@
         "memorySize": 512,
         "timeoutSeconds": 29,
         "environment": {
+          "ACTIVE_RUN_AUTHORIZATION_INDEX_TABLE_NAME": "Ref:ActiveRunAuthorizationIndexTable2D018C99",
           "AUTH_ENABLED": "true",
+          "AUTH_TENANT_ID": "Ref:AWS::AccountId",
           "BENCHMARK_BUCKET_NAME": "Ref:BenchmarkBucketDD7D1D2F",
           "BENCHMARK_DEFAULT_DATASET_KEY": "datasets/agent/standard-v1.jsonl",
           "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+          "BENCHMARK_EVALUATION_ENABLED": "true",
+          "BENCHMARK_EVALUATION_TENANT_ID": "Join:[\"\",[\"benchmark-\",{\"Ref\":\"AWS::AccountId\"}]]",
           "BENCHMARK_RUNS_TABLE_NAME": "Ref:BenchmarkRunsTableD0841636",
           "CHAT_RUN_EVENTS_TABLE_NAME": "Ref:ChatRunEventsTable7455A50E",
           "CHAT_RUNS_TABLE_NAME": "Ref:ChatRunsTable8446CD95",
@@ -936,6 +1101,8 @@
           "MOCK_BEDROCK": "false",
           "NODE_ENV": "production",
           "QUESTION_TABLE_NAME": "Ref:HumanQuestionsTable5DA9688B",
+          "RAG_MONITORING_REQUIRED": "1",
+          "RAG_SAFETY_STATE_TTL_SECONDS": "600",
           "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
           "USE_LOCAL_CHAT_RUN_STORE": "false",
           "USE_LOCAL_VECTOR_STORE": "false",
@@ -960,10 +1127,14 @@
         "timeoutSeconds": 900,
         "ephemeralStorageMb": 4096,
         "environment": {
+          "ACTIVE_RUN_AUTHORIZATION_INDEX_TABLE_NAME": "Ref:ActiveRunAuthorizationIndexTable2D018C99",
           "AUTH_ENABLED": "true",
+          "AUTH_TENANT_ID": "Ref:AWS::AccountId",
           "BENCHMARK_BUCKET_NAME": "Ref:BenchmarkBucketDD7D1D2F",
           "BENCHMARK_DEFAULT_DATASET_KEY": "datasets/agent/standard-v1.jsonl",
           "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+          "BENCHMARK_EVALUATION_ENABLED": "true",
+          "BENCHMARK_EVALUATION_TENANT_ID": "Join:[\"\",[\"benchmark-\",{\"Ref\":\"AWS::AccountId\"}]]",
           "BENCHMARK_RUNS_TABLE_NAME": "Ref:BenchmarkRunsTableD0841636",
           "CHAT_RUN_EVENTS_TABLE_NAME": "Ref:ChatRunEventsTable7455A50E",
           "CHAT_RUNS_TABLE_NAME": "Ref:ChatRunsTable8446CD95",
@@ -992,6 +1163,8 @@
           "PDF_OCR_FALLBACK_ENABLED": "true",
           "PDF_OCR_FALLBACK_TIMEOUT_MS": "45000",
           "QUESTION_TABLE_NAME": "Ref:HumanQuestionsTable5DA9688B",
+          "RAG_MONITORING_REQUIRED": "1",
+          "RAG_SAFETY_STATE_TTL_SECONDS": "600",
           "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
           "USE_LOCAL_CHAT_RUN_STORE": "false",
           "USE_LOCAL_VECTOR_STORE": "false",
@@ -1015,10 +1188,14 @@
         "memorySize": 3008,
         "timeoutSeconds": 60,
         "environment": {
+          "ACTIVE_RUN_AUTHORIZATION_INDEX_TABLE_NAME": "Ref:ActiveRunAuthorizationIndexTable2D018C99",
           "AUTH_ENABLED": "true",
+          "AUTH_TENANT_ID": "Ref:AWS::AccountId",
           "BENCHMARK_BUCKET_NAME": "Ref:BenchmarkBucketDD7D1D2F",
           "BENCHMARK_DEFAULT_DATASET_KEY": "datasets/agent/standard-v1.jsonl",
           "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+          "BENCHMARK_EVALUATION_ENABLED": "true",
+          "BENCHMARK_EVALUATION_TENANT_ID": "Join:[\"\",[\"benchmark-\",{\"Ref\":\"AWS::AccountId\"}]]",
           "BENCHMARK_RUNS_TABLE_NAME": "Ref:BenchmarkRunsTableD0841636",
           "BENCHMARK_STATE_MACHINE_ARN": "Ref:BenchmarkStateMachine8C582B8A",
           "BENCHMARK_TARGET_API_BASE_URL": "Join:[\"\",[\"https://\",{\"Ref\":\"RestApi0C43BF4B\"},\".execute-api.\",{\"Ref\":\"AWS::Region\"},\".\",{\"Ref\":\"AWS::URLSuffix\"},\"/prod/\"]]",
@@ -1051,12 +1228,133 @@
           "PDF_OCR_FALLBACK_ENABLED": "true",
           "PDF_OCR_FALLBACK_TIMEOUT_MS": "45000",
           "QUESTION_TABLE_NAME": "Ref:HumanQuestionsTable5DA9688B",
+          "RAG_MONITORING_REQUIRED": "1",
+          "RAG_SAFETY_STATE_TTL_SECONDS": "600",
           "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
           "USE_LOCAL_CHAT_RUN_STORE": "false",
           "USE_LOCAL_VECTOR_STORE": "false",
           "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"
         },
         "role": "GetAtt:HeavyApiFunctionServiceRole25A7AE5E.Arn"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-function.md"
+    },
+    {
+      "logicalId": "RagQualityMonitorFunction9BE8E903",
+      "logicalName": "Rag Quality Monitor Function",
+      "type": "AWS::Lambda::Function",
+      "purpose": "Rag Quality Monitor Function (Lambda function)",
+      "settings": {
+        "handler": "index.handler",
+        "runtime": "nodejs22.x",
+        "architectures": [
+          "arm64"
+        ],
+        "memorySize": 512,
+        "timeoutSeconds": 300,
+        "environment": {
+          "ACTIVE_RUN_AUTHORIZATION_INDEX_TABLE_NAME": "Ref:ActiveRunAuthorizationIndexTable2D018C99",
+          "AUTH_ENABLED": "true",
+          "AUTH_TENANT_ID": "Ref:AWS::AccountId",
+          "BENCHMARK_BUCKET_NAME": "Ref:BenchmarkBucketDD7D1D2F",
+          "BENCHMARK_DEFAULT_DATASET_KEY": "datasets/agent/standard-v1.jsonl",
+          "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+          "BENCHMARK_EVALUATION_ENABLED": "true",
+          "BENCHMARK_EVALUATION_TENANT_ID": "Join:[\"\",[\"benchmark-\",{\"Ref\":\"AWS::AccountId\"}]]",
+          "BENCHMARK_RUNS_TABLE_NAME": "Ref:BenchmarkRunsTableD0841636",
+          "CHAT_RUN_EVENTS_TABLE_NAME": "Ref:ChatRunEventsTable7455A50E",
+          "CHAT_RUNS_TABLE_NAME": "Ref:ChatRunsTable8446CD95",
+          "COGNITO_APP_CLIENT_ID": "Ref:UserPoolWebClient4C9370B0",
+          "COGNITO_REGION": "Ref:AWS::Region",
+          "COGNITO_USER_POOL_ID": "Ref:UserPool6BA7E5F2",
+          "CONVERSATION_HISTORY_TABLE_NAME": "Ref:ConversationHistoryTable59A3534C",
+          "CORS_ALLOWED_ORIGINS": "*",
+          "DEBUG_DOWNLOAD_BUCKET_NAME": "Ref:DebugDownloadBucketAB6A16BE",
+          "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+          "DEFAULT_MEMORY_MODEL_ID": "amazon.nova-lite-v1:0",
+          "DEFAULT_MODEL_ID": "amazon.nova-lite-v1:0",
+          "DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID": "ANSWER_EDITOR",
+          "DOCS_BUCKET_NAME": "Ref:DocumentsBucket9EC9DEB9",
+          "DOCUMENT_GROUPS_TABLE_NAME": "Ref:DocumentGroupsTableA5108040",
+          "DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME": "Ref:DocumentIngestRunEventsTableF4692EBE",
+          "DOCUMENT_INGEST_RUNS_TABLE_NAME": "Ref:DocumentIngestRunsTableEA8F8CCA",
+          "EMBEDDING_DIMENSIONS": "1024",
+          "EMBEDDING_MODEL_ID": "amazon.titan-embed-text-v2:0",
+          "EVIDENCE_VECTOR_INDEX_NAME": "evidence-index",
+          "FAVORITES_TABLE_NAME": "Ref:FavoritesTable4DA8A306",
+          "MEMORY_VECTOR_INDEX_NAME": "memory-index",
+          "MIN_RETRIEVAL_SCORE": "0.20",
+          "MOCK_BEDROCK": "false",
+          "NODE_ENV": "production",
+          "QUESTION_TABLE_NAME": "Ref:HumanQuestionsTable5DA9688B",
+          "RAG_ALERT_TOPIC_ARN": "Ref:RagQualityAlertTopic3AFB5A32",
+          "RAG_MONITORING_REQUIRED": "1",
+          "RAG_SAFETY_STATE_TTL_SECONDS": "600",
+          "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
+          "USE_LOCAL_CHAT_RUN_STORE": "false",
+          "USE_LOCAL_VECTOR_STORE": "false",
+          "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"
+        },
+        "role": "GetAtt:RagQualityMonitorFunctionServiceRole1754DFBD.Arn"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-function.md"
+    },
+    {
+      "logicalId": "RevocationCleanupFunctionE7C00D6D",
+      "logicalName": "Revocation Cleanup Function",
+      "type": "AWS::Lambda::Function",
+      "purpose": "Revocation Cleanup Function (Lambda function)",
+      "settings": {
+        "handler": "index.handler",
+        "runtime": "nodejs22.x",
+        "architectures": [
+          "arm64"
+        ],
+        "memorySize": 1024,
+        "timeoutSeconds": 300,
+        "environment": {
+          "ACTIVE_RUN_AUTHORIZATION_INDEX_TABLE_NAME": "Ref:ActiveRunAuthorizationIndexTable2D018C99",
+          "AUTH_ENABLED": "true",
+          "AUTH_TENANT_ID": "Ref:AWS::AccountId",
+          "BENCHMARK_BUCKET_NAME": "Ref:BenchmarkBucketDD7D1D2F",
+          "BENCHMARK_DEFAULT_DATASET_KEY": "datasets/agent/standard-v1.jsonl",
+          "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+          "BENCHMARK_EVALUATION_ENABLED": "true",
+          "BENCHMARK_EVALUATION_TENANT_ID": "Join:[\"\",[\"benchmark-\",{\"Ref\":\"AWS::AccountId\"}]]",
+          "BENCHMARK_RUNS_TABLE_NAME": "Ref:BenchmarkRunsTableD0841636",
+          "CHAT_RUN_EVENTS_TABLE_NAME": "Ref:ChatRunEventsTable7455A50E",
+          "CHAT_RUNS_TABLE_NAME": "Ref:ChatRunsTable8446CD95",
+          "COGNITO_APP_CLIENT_ID": "Ref:UserPoolWebClient4C9370B0",
+          "COGNITO_REGION": "Ref:AWS::Region",
+          "COGNITO_USER_POOL_ID": "Ref:UserPool6BA7E5F2",
+          "CONVERSATION_HISTORY_TABLE_NAME": "Ref:ConversationHistoryTable59A3534C",
+          "CORS_ALLOWED_ORIGINS": "*",
+          "DEBUG_DOWNLOAD_BUCKET_NAME": "Ref:DebugDownloadBucketAB6A16BE",
+          "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+          "DEFAULT_MEMORY_MODEL_ID": "amazon.nova-lite-v1:0",
+          "DEFAULT_MODEL_ID": "amazon.nova-lite-v1:0",
+          "DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID": "ANSWER_EDITOR",
+          "DOCS_BUCKET_NAME": "Ref:DocumentsBucket9EC9DEB9",
+          "DOCUMENT_GROUPS_TABLE_NAME": "Ref:DocumentGroupsTableA5108040",
+          "DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME": "Ref:DocumentIngestRunEventsTableF4692EBE",
+          "DOCUMENT_INGEST_RUNS_TABLE_NAME": "Ref:DocumentIngestRunsTableEA8F8CCA",
+          "EMBEDDING_DIMENSIONS": "1024",
+          "EMBEDDING_MODEL_ID": "amazon.titan-embed-text-v2:0",
+          "EVIDENCE_VECTOR_INDEX_NAME": "evidence-index",
+          "FAVORITES_TABLE_NAME": "Ref:FavoritesTable4DA8A306",
+          "MEMORY_VECTOR_INDEX_NAME": "memory-index",
+          "MIN_RETRIEVAL_SCORE": "0.20",
+          "MOCK_BEDROCK": "false",
+          "NODE_ENV": "production",
+          "QUESTION_TABLE_NAME": "Ref:HumanQuestionsTable5DA9688B",
+          "RAG_MONITORING_REQUIRED": "1",
+          "RAG_SAFETY_STATE_TTL_SECONDS": "600",
+          "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
+          "USE_LOCAL_CHAT_RUN_STORE": "false",
+          "USE_LOCAL_VECTOR_STORE": "false",
+          "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"
+        },
+        "role": "GetAtt:RevocationCleanupFunctionServiceRole15557E81.Arn"
       },
       "detailFilePath": "infra-inventory/aws-lambda-function.md"
     },
@@ -1089,6 +1387,65 @@
           "USER_ON_EVENT_FUNCTION_ARN": "GetAtt:S3VectorsProviderFn215E3A4E.Arn"
         },
         "role": "GetAtt:S3VectorsProviderframeworkonEventServiceRole5255E58B.Arn"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-function.md"
+    },
+    {
+      "logicalId": "SecurityAuditReconciliationFunction9A53A79D",
+      "logicalName": "Security Audit Reconciliation Function",
+      "type": "AWS::Lambda::Function",
+      "purpose": "Security Audit Reconciliation Function (Lambda function)",
+      "settings": {
+        "handler": "index.handler",
+        "runtime": "nodejs22.x",
+        "architectures": [
+          "arm64"
+        ],
+        "memorySize": 512,
+        "timeoutSeconds": 60,
+        "environment": {
+          "ACTIVE_RUN_AUTHORIZATION_INDEX_TABLE_NAME": "Ref:ActiveRunAuthorizationIndexTable2D018C99",
+          "AUTH_ENABLED": "true",
+          "AUTH_TENANT_ID": "Ref:AWS::AccountId",
+          "BENCHMARK_BUCKET_NAME": "Ref:BenchmarkBucketDD7D1D2F",
+          "BENCHMARK_DEFAULT_DATASET_KEY": "datasets/agent/standard-v1.jsonl",
+          "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+          "BENCHMARK_EVALUATION_ENABLED": "true",
+          "BENCHMARK_EVALUATION_TENANT_ID": "Join:[\"\",[\"benchmark-\",{\"Ref\":\"AWS::AccountId\"}]]",
+          "BENCHMARK_RUNS_TABLE_NAME": "Ref:BenchmarkRunsTableD0841636",
+          "CHAT_RUN_EVENTS_TABLE_NAME": "Ref:ChatRunEventsTable7455A50E",
+          "CHAT_RUNS_TABLE_NAME": "Ref:ChatRunsTable8446CD95",
+          "COGNITO_APP_CLIENT_ID": "Ref:UserPoolWebClient4C9370B0",
+          "COGNITO_REGION": "Ref:AWS::Region",
+          "COGNITO_USER_POOL_ID": "Ref:UserPool6BA7E5F2",
+          "CONVERSATION_HISTORY_TABLE_NAME": "Ref:ConversationHistoryTable59A3534C",
+          "CORS_ALLOWED_ORIGINS": "*",
+          "DEBUG_DOWNLOAD_BUCKET_NAME": "Ref:DebugDownloadBucketAB6A16BE",
+          "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+          "DEFAULT_MEMORY_MODEL_ID": "amazon.nova-lite-v1:0",
+          "DEFAULT_MODEL_ID": "amazon.nova-lite-v1:0",
+          "DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID": "ANSWER_EDITOR",
+          "DOCS_BUCKET_NAME": "Ref:DocumentsBucket9EC9DEB9",
+          "DOCUMENT_GROUPS_TABLE_NAME": "Ref:DocumentGroupsTableA5108040",
+          "DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME": "Ref:DocumentIngestRunEventsTableF4692EBE",
+          "DOCUMENT_INGEST_RUNS_TABLE_NAME": "Ref:DocumentIngestRunsTableEA8F8CCA",
+          "EMBEDDING_DIMENSIONS": "1024",
+          "EMBEDDING_MODEL_ID": "amazon.titan-embed-text-v2:0",
+          "EVIDENCE_VECTOR_INDEX_NAME": "evidence-index",
+          "FAVORITES_TABLE_NAME": "Ref:FavoritesTable4DA8A306",
+          "MEMORY_VECTOR_INDEX_NAME": "memory-index",
+          "MIN_RETRIEVAL_SCORE": "0.20",
+          "MOCK_BEDROCK": "false",
+          "NODE_ENV": "production",
+          "QUESTION_TABLE_NAME": "Ref:HumanQuestionsTable5DA9688B",
+          "RAG_MONITORING_REQUIRED": "1",
+          "RAG_SAFETY_STATE_TTL_SECONDS": "600",
+          "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
+          "USE_LOCAL_CHAT_RUN_STORE": "false",
+          "USE_LOCAL_VECTOR_STORE": "false",
+          "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"
+        },
+        "role": "GetAtt:SecurityAuditReconciliationFunctionServiceRoleF4787D99.Arn"
       },
       "detailFilePath": "infra-inventory/aws-lambda-function.md"
     },
@@ -2046,6 +2403,28 @@
       "detailFilePath": "infra-inventory/aws-cognito-userpoolgroup.md"
     },
     {
+      "logicalId": "ASYNCAGENTADMINGroup",
+      "logicalName": "ASYNCAGENTADMIN Group",
+      "type": "AWS::Cognito::UserPoolGroup",
+      "purpose": "ASYNCAGENTADMIN Group (Cognito role group)",
+      "settings": {
+        "groupName": "ASYNC_AGENT_ADMIN",
+        "description": "MemoRAG role: ASYNC_AGENT_ADMIN"
+      },
+      "detailFilePath": "infra-inventory/aws-cognito-userpoolgroup.md"
+    },
+    {
+      "logicalId": "ASYNCAGENTUSERGroup",
+      "logicalName": "ASYNCAGENTUSER Group",
+      "type": "AWS::Cognito::UserPoolGroup",
+      "purpose": "ASYNCAGENTUSER Group (Cognito role group)",
+      "settings": {
+        "groupName": "ASYNC_AGENT_USER",
+        "description": "MemoRAG role: ASYNC_AGENT_USER"
+      },
+      "detailFilePath": "infra-inventory/aws-cognito-userpoolgroup.md"
+    },
+    {
       "logicalId": "BENCHMARKOPERATORGroup",
       "logicalName": "BENCHMARKOPERATOR Group",
       "type": "AWS::Cognito::UserPoolGroup",
@@ -2097,6 +2476,17 @@
       "settings": {
         "groupName": "RAG_GROUP_MANAGER",
         "description": "MemoRAG role: RAG_GROUP_MANAGER"
+      },
+      "detailFilePath": "infra-inventory/aws-cognito-userpoolgroup.md"
+    },
+    {
+      "logicalId": "SKILLPROFILEADMINGroup",
+      "logicalName": "SKILLPROFILEADMIN Group",
+      "type": "AWS::Cognito::UserPoolGroup",
+      "purpose": "SKILLPROFILEADMIN Group (Cognito role group)",
+      "settings": {
+        "groupName": "SKILL_PROFILE_ADMIN",
+        "description": "MemoRAG role: SKILL_PROFILE_ADMIN"
       },
       "detailFilePath": "infra-inventory/aws-cognito-userpoolgroup.md"
     },
@@ -2218,6 +2608,16 @@
             "name": "BENCHMARK_CODEBUILD_LOG_GROUP_NAME",
             "value": "Ref:BenchmarkProjectLogGroup395F719E",
             "type": "PLAINTEXT"
+          },
+          {
+            "name": "BENCHMARK_BUCKET_NAME",
+            "value": "Ref:BenchmarkBucketDD7D1D2F",
+            "type": "PLAINTEXT"
+          },
+          {
+            "name": "BENCHMARK_AUTHORIZATION_FUNCTION_NAME",
+            "value": "Ref:BenchmarkRunAuthorizationFunction16D4CD86",
+            "type": "PLAINTEXT"
           }
         ],
         "sourceType": "GITHUB",
@@ -2323,6 +2723,16 @@
       "detailFilePath": "infra-inventory/aws-logs-loggroup.md"
     },
     {
+      "logicalId": "BenchmarkRunAuthorizationLogGroup8F09A680",
+      "logicalName": "Benchmark Run Authorization Log Group",
+      "type": "AWS::Logs::LogGroup",
+      "purpose": "Benchmark Run Authorization Log Group (CloudWatch Logs log group)",
+      "settings": {
+        "retentionInDays": 30
+      },
+      "detailFilePath": "infra-inventory/aws-logs-loggroup.md"
+    },
+    {
       "logicalId": "BenchmarkStateMachineLogGroup6D80BBB2",
       "logicalName": "Benchmark State Machine Log Group",
       "type": "AWS::Logs::LogGroup",
@@ -2413,12 +2823,32 @@
       "detailFilePath": "infra-inventory/aws-logs-loggroup.md"
     },
     {
+      "logicalId": "RagQualityMonitorLogGroup58870B2B",
+      "logicalName": "Rag Quality Monitor Log Group",
+      "type": "AWS::Logs::LogGroup",
+      "purpose": "Rag Quality Monitor Log Group (CloudWatch Logs log group)",
+      "settings": {
+        "retentionInDays": 30
+      },
+      "detailFilePath": "infra-inventory/aws-logs-loggroup.md"
+    },
+    {
       "logicalId": "RestApiAccessLogGroup246D1CE0",
       "logicalName": "Rest Api Access Log Group",
       "type": "AWS::Logs::LogGroup",
       "purpose": "Rest Api Access Log Group (CloudWatch Logs log group)",
       "settings": {
         "retentionInDays": 7
+      },
+      "detailFilePath": "infra-inventory/aws-logs-loggroup.md"
+    },
+    {
+      "logicalId": "RevocationCleanupLogGroup2104FB3A",
+      "logicalName": "Revocation Cleanup Log Group",
+      "type": "AWS::Logs::LogGroup",
+      "purpose": "Revocation Cleanup Log Group (CloudWatch Logs log group)",
+      "settings": {
+        "retentionInDays": 30
       },
       "detailFilePath": "infra-inventory/aws-logs-loggroup.md"
     },
@@ -2439,6 +2869,16 @@
       "purpose": "S3Vectors Provider Log Group (CloudWatch Logs log group)",
       "settings": {
         "retentionInDays": 7
+      },
+      "detailFilePath": "infra-inventory/aws-logs-loggroup.md"
+    },
+    {
+      "logicalId": "SecurityAuditReconciliationLogGroup3B5C9710",
+      "logicalName": "Security Audit Reconciliation Log Group",
+      "type": "AWS::Logs::LogGroup",
+      "purpose": "Security Audit Reconciliation Log Group (CloudWatch Logs log group)",
+      "settings": {
+        "retentionInDays": 30
       },
       "detailFilePath": "infra-inventory/aws-logs-loggroup.md"
     },
@@ -2466,6 +2906,22 @@
       "settings": {
         "assumedBy": [
           "Service:codebuild.amazonaws.com"
+        ],
+        "inlinePolicyCount": 0
+      },
+      "detailFilePath": "infra-inventory/aws-iam-role.md"
+    },
+    {
+      "logicalId": "BenchmarkRunAuthorizationFunctionServiceRole23F15ADE",
+      "logicalName": "Benchmark Run Authorization Function Service Role",
+      "type": "AWS::IAM::Role",
+      "purpose": "Benchmark Run Authorization Function Service Role (IAM role)",
+      "settings": {
+        "assumedBy": [
+          "Service:lambda.amazonaws.com"
+        ],
+        "managedPolicyArns": [
+          "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole\"]]"
         ],
         "inlinePolicyCount": 0
       },
@@ -2639,6 +3095,22 @@
       "detailFilePath": "infra-inventory/aws-iam-role.md"
     },
     {
+      "logicalId": "RagQualityMonitorFunctionServiceRole1754DFBD",
+      "logicalName": "Rag Quality Monitor Function Service Role",
+      "type": "AWS::IAM::Role",
+      "purpose": "Rag Quality Monitor Function Service Role (IAM role)",
+      "settings": {
+        "assumedBy": [
+          "Service:lambda.amazonaws.com"
+        ],
+        "managedPolicyArns": [
+          "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole\"]]"
+        ],
+        "inlinePolicyCount": 0
+      },
+      "detailFilePath": "infra-inventory/aws-iam-role.md"
+    },
+    {
       "logicalId": "RestApiCloudWatchRoleE3ED6605",
       "logicalName": "Rest Api Cloud Watch Role",
       "type": "AWS::IAM::Role",
@@ -2649,6 +3121,22 @@
         ],
         "managedPolicyArns": [
           "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs\"]]"
+        ],
+        "inlinePolicyCount": 0
+      },
+      "detailFilePath": "infra-inventory/aws-iam-role.md"
+    },
+    {
+      "logicalId": "RevocationCleanupFunctionServiceRole15557E81",
+      "logicalName": "Revocation Cleanup Function Service Role",
+      "type": "AWS::IAM::Role",
+      "purpose": "Revocation Cleanup Function Service Role (IAM role)",
+      "settings": {
+        "assumedBy": [
+          "Service:lambda.amazonaws.com"
+        ],
+        "managedPolicyArns": [
+          "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole\"]]"
         ],
         "inlinePolicyCount": 0
       },
@@ -2675,6 +3163,22 @@
       "logicalName": "S3Vectors Providerframeworkon Event Service Role",
       "type": "AWS::IAM::Role",
       "purpose": "S3Vectors Providerframeworkon Event Service Role (IAM role)",
+      "settings": {
+        "assumedBy": [
+          "Service:lambda.amazonaws.com"
+        ],
+        "managedPolicyArns": [
+          "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole\"]]"
+        ],
+        "inlinePolicyCount": 0
+      },
+      "detailFilePath": "infra-inventory/aws-iam-role.md"
+    },
+    {
+      "logicalId": "SecurityAuditReconciliationFunctionServiceRoleF4787D99",
+      "logicalName": "Security Audit Reconciliation Function Service Role",
+      "type": "AWS::IAM::Role",
+      "purpose": "Security Audit Reconciliation Function Service Role (IAM role)",
       "settings": {
         "assumedBy": [
           "Service:lambda.amazonaws.com"
@@ -2738,8 +3242,11 @@
           "GetAtt:FavoritesTable4DA8A306.Arn",
           "GetAtt:HumanQuestionsTable5DA9688B.Arn",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"BenchmarkBucketDD7D1D2F\",\"Arn\"]},\"/*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"BenchmarkRunsTableD0841636\",\"Arn\"]},\"/index/*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"ChatRunsTable8446CD95\",\"Arn\"]},\"/index/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DebugDownloadBucketAB6A16BE\",\"Arn\"]},\"/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentGroupsTableA5108040\",\"Arn\"]},\"/index/*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentIngestRunsTableEA8F8CCA\",\"Arn\"]},\"/index/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"HumanQuestionsTable5DA9688B\",\"Arn\"]},\"/index/*\"]]"
         ]
@@ -2756,7 +3263,7 @@
         "roles": [
           "Ref:BenchmarkProjectRole31C9ABBD"
         ],
-        "statementCount": 9,
+        "statementCount": 10,
         "actions": [
           "codebuild:BatchPutCodeCoverages",
           "codebuild:BatchPutTestCases",
@@ -2773,6 +3280,7 @@
           "kms:Encrypt",
           "kms:GenerateDataKey*",
           "kms:ReEncrypt*",
+          "lambda:InvokeFunction",
           "logs:CreateLogGroup",
           "logs:CreateLogStream",
           "logs:PutLogEvents",
@@ -2794,13 +3302,66 @@
           "GetAtt:BenchmarkBucketDD7D1D2F.Arn",
           "GetAtt:BenchmarkProjectKeyB840011B.Arn",
           "GetAtt:BenchmarkProjectLogGroup395F719E.Arn",
+          "GetAtt:BenchmarkRunAuthorizationFunction16D4CD86.Arn",
           "GetAtt:BenchmarkRunsTableD0841636.Arn",
           "GetAtt:UserPool6BA7E5F2.Arn",
           "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":codebuild:ap-northeast-1:111111111111:report-group/\",{\"Ref\":\"BenchmarkProject1593465D\"},\"-*\"]]",
           "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":logs:ap-northeast-1:111111111111:log-group:/aws/codebuild/\",{\"Ref\":\"BenchmarkProject1593465D\"},\":*\"]]",
           "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":logs:ap-northeast-1:111111111111:log-group:/aws/codebuild/\",{\"Ref\":\"BenchmarkProject1593465D\"}]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"BenchmarkBucketDD7D1D2F\",\"Arn\"]},\"/*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"BenchmarkRunAuthorizationFunction16D4CD86\",\"Arn\"]},\":*\"]]",
           "Ref:BenchmarkRunnerAuthSecret035EF8F2"
+        ]
+      },
+      "detailFilePath": "infra-inventory/aws-iam-policy.md"
+    },
+    {
+      "logicalId": "BenchmarkRunAuthorizationFunctionServiceRoleDefaultPolicyD7F09778",
+      "logicalName": "Benchmark Run Authorization Function Service Role Default Policy",
+      "type": "AWS::IAM::Policy",
+      "purpose": "Benchmark Run Authorization Function Service Role Default Policy (IAM inline policy)",
+      "settings": {
+        "policyName": "BenchmarkRunAuthorizationFunctionServiceRoleDefaultPolicyD7F09778",
+        "roles": [
+          "Ref:BenchmarkRunAuthorizationFunctionServiceRole23F15ADE"
+        ],
+        "statementCount": 9,
+        "actions": [
+          "cognito-idp:AdminGetUser",
+          "cognito-idp:AdminListGroupsForUser",
+          "cognito-idp:ListUsers",
+          "dynamodb:BatchGetItem",
+          "dynamodb:BatchWriteItem",
+          "dynamodb:ConditionCheckItem",
+          "dynamodb:DeleteItem",
+          "dynamodb:DescribeTable",
+          "dynamodb:GetItem",
+          "dynamodb:GetRecords",
+          "dynamodb:GetShardIterator",
+          "dynamodb:PutItem",
+          "dynamodb:Query",
+          "dynamodb:Scan",
+          "dynamodb:UpdateItem",
+          "s3:Abort*",
+          "s3:DeleteObject*",
+          "s3:GetBucket*",
+          "s3:GetObject*",
+          "s3:List*",
+          "s3:PutObject",
+          "s3:PutObjectLegalHold",
+          "s3:PutObjectRetention",
+          "s3:PutObjectTagging",
+          "s3:PutObjectVersionTagging"
+        ],
+        "resources": [
+          "GetAtt:ActiveRunAuthorizationIndexTable2D018C99.Arn",
+          "GetAtt:BenchmarkBucketDD7D1D2F.Arn",
+          "GetAtt:BenchmarkRunsTableD0841636.Arn",
+          "GetAtt:DocumentsBucket9EC9DEB9.Arn",
+          "GetAtt:UserPool6BA7E5F2.Arn",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"BenchmarkBucketDD7D1D2F\",\"Arn\"]},\"/runs/*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"BenchmarkRunsTableD0841636\",\"Arn\"]},\"/index/*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/security/revocation-cleanup/*\"]]"
         ]
       },
       "detailFilePath": "infra-inventory/aws-iam-policy.md"
@@ -2815,7 +3376,7 @@
         "roles": [
           "Ref:BenchmarkStateMachineRole9EC7E298"
         ],
-        "statementCount": 4,
+        "statementCount": 5,
         "actions": [
           "codebuild:BatchGetBuilds",
           "codebuild:StartBuild",
@@ -2828,6 +3389,7 @@
           "events:DescribeRule",
           "events:PutRule",
           "events:PutTargets",
+          "lambda:InvokeFunction",
           "logs:CreateLogDelivery",
           "logs:DeleteLogDelivery",
           "logs:DescribeLogGroups",
@@ -2840,7 +3402,10 @@
         "resources": [
           "*",
           "GetAtt:BenchmarkProject1593465D.Arn",
-          "GetAtt:BenchmarkRunsTableD0841636.Arn"
+          "GetAtt:BenchmarkRunAuthorizationFunction16D4CD86.Arn",
+          "GetAtt:BenchmarkRunsTableD0841636.Arn",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"BenchmarkRunAuthorizationFunction16D4CD86\",\"Arn\"]},\":*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"BenchmarkRunsTableD0841636\",\"Arn\"]},\"/index/*\"]]"
         ]
       },
       "detailFilePath": "infra-inventory/aws-iam-policy.md"
@@ -2868,7 +3433,8 @@
         ],
         "resources": [
           "GetAtt:ChatRunEventsTable7455A50E.Arn",
-          "GetAtt:ChatRunsTable8446CD95.Arn"
+          "GetAtt:ChatRunsTable8446CD95.Arn",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"ChatRunsTable8446CD95\",\"Arn\"]},\"/index/*\"]]"
         ]
       },
       "detailFilePath": "infra-inventory/aws-iam-policy.md"
@@ -2883,7 +3449,7 @@
         "roles": [
           "Ref:ChatRunMarkFailedFunctionServiceRoleAAD50CA8"
         ],
-        "statementCount": 4,
+        "statementCount": 6,
         "actions": [
           "dynamodb:BatchGetItem",
           "dynamodb:BatchWriteItem",
@@ -2899,8 +3465,10 @@
           "dynamodb:UpdateItem"
         ],
         "resources": [
+          "GetAtt:ActiveRunAuthorizationIndexTable2D018C99.Arn",
           "GetAtt:ChatRunEventsTable7455A50E.Arn",
-          "GetAtt:ChatRunsTable8446CD95.Arn"
+          "GetAtt:ChatRunsTable8446CD95.Arn",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"ChatRunsTable8446CD95\",\"Arn\"]},\"/index/*\"]]"
         ]
       },
       "detailFilePath": "infra-inventory/aws-iam-policy.md"
@@ -2947,10 +3515,13 @@
         "roles": [
           "Ref:ChatRunWorkerFunctionServiceRoleBED42CDB"
         ],
-        "statementCount": 10,
+        "statementCount": 13,
         "actions": [
           "bedrock:InvokeModel",
           "bedrock:InvokeModelWithResponseStream",
+          "cognito-idp:AdminGetUser",
+          "cognito-idp:AdminListGroupsForUser",
+          "cognito-idp:ListUsers",
           "dynamodb:BatchGetItem",
           "dynamodb:BatchWriteItem",
           "dynamodb:ConditionCheckItem",
@@ -2981,11 +3552,14 @@
         ],
         "resources": [
           "*",
+          "GetAtt:ActiveRunAuthorizationIndexTable2D018C99.Arn",
           "GetAtt:ChatRunEventsTable7455A50E.Arn",
           "GetAtt:ChatRunsTable8446CD95.Arn",
           "GetAtt:DebugDownloadBucketAB6A16BE.Arn",
           "GetAtt:DocumentGroupsTableA5108040.Arn",
           "GetAtt:DocumentsBucket9EC9DEB9.Arn",
+          "GetAtt:UserPool6BA7E5F2.Arn",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"ChatRunsTable8446CD95\",\"Arn\"]},\"/index/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DebugDownloadBucketAB6A16BE\",\"Arn\"]},\"/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentGroupsTableA5108040\",\"Arn\"]},\"/index/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/*\"]]"
@@ -3035,7 +3609,7 @@
         "roles": [
           "Ref:DocumentIngestRunMarkFailedFunctionServiceRole8A5F469D"
         ],
-        "statementCount": 4,
+        "statementCount": 6,
         "actions": [
           "dynamodb:BatchGetItem",
           "dynamodb:BatchWriteItem",
@@ -3051,8 +3625,10 @@
           "dynamodb:UpdateItem"
         ],
         "resources": [
+          "GetAtt:ActiveRunAuthorizationIndexTable2D018C99.Arn",
           "GetAtt:DocumentIngestRunEventsTableF4692EBE.Arn",
-          "GetAtt:DocumentIngestRunsTableEA8F8CCA.Arn"
+          "GetAtt:DocumentIngestRunsTableEA8F8CCA.Arn",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentIngestRunsTableEA8F8CCA\",\"Arn\"]},\"/index/*\"]]"
         ]
       },
       "detailFilePath": "infra-inventory/aws-iam-policy.md"
@@ -3099,10 +3675,13 @@
         "roles": [
           "Ref:DocumentIngestRunWorkerFunctionServiceRole7BEAC0ED"
         ],
-        "statementCount": 10,
+        "statementCount": 13,
         "actions": [
           "bedrock:InvokeModel",
           "bedrock:InvokeModelWithResponseStream",
+          "cognito-idp:AdminGetUser",
+          "cognito-idp:AdminListGroupsForUser",
+          "cognito-idp:ListUsers",
           "dynamodb:BatchGetItem",
           "dynamodb:BatchWriteItem",
           "dynamodb:ConditionCheckItem",
@@ -3136,11 +3715,14 @@
         ],
         "resources": [
           "*",
+          "GetAtt:ActiveRunAuthorizationIndexTable2D018C99.Arn",
           "GetAtt:DocumentGroupsTableA5108040.Arn",
           "GetAtt:DocumentIngestRunEventsTableF4692EBE.Arn",
           "GetAtt:DocumentIngestRunsTableEA8F8CCA.Arn",
           "GetAtt:DocumentsBucket9EC9DEB9.Arn",
+          "GetAtt:UserPool6BA7E5F2.Arn",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentGroupsTableA5108040\",\"Arn\"]},\"/index/*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentIngestRunsTableEA8F8CCA\",\"Arn\"]},\"/index/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/*\"]]"
         ]
       },
@@ -3198,10 +3780,111 @@
           "GetAtt:FavoritesTable4DA8A306.Arn",
           "GetAtt:HumanQuestionsTable5DA9688B.Arn",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"BenchmarkBucketDD7D1D2F\",\"Arn\"]},\"/*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"BenchmarkRunsTableD0841636\",\"Arn\"]},\"/index/*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"ChatRunsTable8446CD95\",\"Arn\"]},\"/index/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DebugDownloadBucketAB6A16BE\",\"Arn\"]},\"/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentGroupsTableA5108040\",\"Arn\"]},\"/index/*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentIngestRunsTableEA8F8CCA\",\"Arn\"]},\"/index/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"HumanQuestionsTable5DA9688B\",\"Arn\"]},\"/index/*\"]]"
+        ]
+      },
+      "detailFilePath": "infra-inventory/aws-iam-policy.md"
+    },
+    {
+      "logicalId": "RagQualityMonitorFunctionServiceRoleDefaultPolicy28D810D0",
+      "logicalName": "Rag Quality Monitor Function Service Role Default Policy",
+      "type": "AWS::IAM::Policy",
+      "purpose": "Rag Quality Monitor Function Service Role Default Policy (IAM inline policy)",
+      "settings": {
+        "policyName": "RagQualityMonitorFunctionServiceRoleDefaultPolicy28D810D0",
+        "roles": [
+          "Ref:RagQualityMonitorFunctionServiceRole1754DFBD"
+        ],
+        "statementCount": 2,
+        "actions": [
+          "s3:Abort*",
+          "s3:DeleteObject*",
+          "s3:GetBucket*",
+          "s3:GetObject*",
+          "s3:List*",
+          "s3:PutObject",
+          "s3:PutObjectLegalHold",
+          "s3:PutObjectRetention",
+          "s3:PutObjectTagging",
+          "s3:PutObjectVersionTagging",
+          "sns:Publish"
+        ],
+        "resources": [
+          "GetAtt:DocumentsBucket9EC9DEB9.Arn",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/*\"]]",
+          "Ref:RagQualityAlertTopic3AFB5A32"
+        ]
+      },
+      "detailFilePath": "infra-inventory/aws-iam-policy.md"
+    },
+    {
+      "logicalId": "RevocationCleanupFunctionServiceRoleDefaultPolicy688B596B",
+      "logicalName": "Revocation Cleanup Function Service Role Default Policy",
+      "type": "AWS::IAM::Policy",
+      "purpose": "Revocation Cleanup Function Service Role Default Policy (IAM inline policy)",
+      "settings": {
+        "policyName": "RevocationCleanupFunctionServiceRoleDefaultPolicy688B596B",
+        "roles": [
+          "Ref:RevocationCleanupFunctionServiceRole15557E81"
+        ],
+        "statementCount": 17,
+        "actions": [
+          "cognito-idp:AdminGetUser",
+          "cognito-idp:AdminListGroupsForUser",
+          "cognito-idp:AdminUpdateUserAttributes",
+          "cognito-idp:AdminUserGlobalSignOut",
+          "cognito-idp:ListUsers",
+          "dynamodb:DeleteItem",
+          "dynamodb:DescribeTable",
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:Query",
+          "dynamodb:UpdateItem",
+          "s3:Abort*",
+          "s3:DeleteObject",
+          "s3:GetObject",
+          "s3:ListBucket",
+          "s3:PutObject",
+          "s3:PutObjectLegalHold",
+          "s3:PutObjectRetention",
+          "s3:PutObjectTagging",
+          "s3:PutObjectVersionTagging",
+          "s3vectors:DeleteVectors",
+          "s3vectors:GetVectors"
+        ],
+        "resources": [
+          "*",
+          "GetAtt:ActiveRunAuthorizationIndexTable2D018C99.Arn",
+          "GetAtt:BenchmarkBucketDD7D1D2F.Arn",
+          "GetAtt:BenchmarkRunsTableD0841636.Arn",
+          "GetAtt:ChatRunsTable8446CD95.Arn",
+          "GetAtt:DocumentGroupsTableA5108040.Arn",
+          "GetAtt:DocumentIngestRunsTableEA8F8CCA.Arn",
+          "GetAtt:DocumentsBucket9EC9DEB9.Arn",
+          "GetAtt:UserPool6BA7E5F2.Arn",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"BenchmarkBucketDD7D1D2F\",\"Arn\"]},\"/runs/*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"BenchmarkRunsTableD0841636\",\"Arn\"]},\"/index/*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"ChatRunsTable8446CD95\",\"Arn\"]},\"/index/*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentGroupsTableA5108040\",\"Arn\"]},\"/index/*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentIngestRunsTableEA8F8CCA\",\"Arn\"]},\"/index/*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/debug-runs/*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/documents/share-grants/*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/embedding-cache/*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/publication/active/*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/quality-control/source-samples/*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/security/account-revocations/*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/security/revocation-cleanup-repairs/*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/security/revocation-cleanup-tenant-registry-state/*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/security/revocation-cleanup-tenants/*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/security/revocation-cleanup/*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/source-governance/*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/tenant-artifacts/*\"]]"
         ]
       },
       "detailFilePath": "infra-inventory/aws-iam-policy.md"
@@ -3249,6 +3932,30 @@
       "detailFilePath": "infra-inventory/aws-iam-policy.md"
     },
     {
+      "logicalId": "SecurityAuditReconciliationFunctionServiceRoleDefaultPolicy77DBBA3A",
+      "logicalName": "Security Audit Reconciliation Function Service Role Default Policy",
+      "type": "AWS::IAM::Policy",
+      "purpose": "Security Audit Reconciliation Function Service Role Default Policy (IAM inline policy)",
+      "settings": {
+        "policyName": "SecurityAuditReconciliationFunctionServiceRoleDefaultPolicy77DBBA3A",
+        "roles": [
+          "Ref:SecurityAuditReconciliationFunctionServiceRoleF4787D99"
+        ],
+        "statementCount": 2,
+        "actions": [
+          "s3:GetObject",
+          "s3:ListBucket",
+          "s3:PutObject"
+        ],
+        "resources": [
+          "GetAtt:DocumentsBucket9EC9DEB9.Arn",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/security-audit/intents/\",{\"Ref\":\"AWS::AccountId\"},\"/*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/source-governance/\",{\"Ref\":\"AWS::AccountId\"},\"/*\"]]"
+        ]
+      },
+      "detailFilePath": "infra-inventory/aws-iam-policy.md"
+    },
+    {
       "logicalId": "ApiFunctionServiceRoleOverflowPolicy15B8AE146",
       "logicalName": "Api Function Service Role Overflow Policy15B8AE146",
       "type": "AWS::IAM::ManagedPolicy",
@@ -3257,15 +3964,31 @@
         "roles": [
           "Ref:ApiFunctionServiceRole52B9747B"
         ],
-        "statementCount": 10,
+        "statementCount": 12,
         "actions": [
           "codebuild:BatchGetBuilds",
           "cognito-idp:AdminAddUserToGroup",
+          "cognito-idp:AdminDeleteUser",
+          "cognito-idp:AdminDisableUser",
+          "cognito-idp:AdminEnableUser",
+          "cognito-idp:AdminGetUser",
           "cognito-idp:AdminListGroupsForUser",
           "cognito-idp:AdminRemoveUserFromGroup",
+          "cognito-idp:AdminUpdateUserAttributes",
+          "cognito-idp:AdminUserGlobalSignOut",
           "cognito-idp:ListUsers",
+          "dynamodb:BatchGetItem",
+          "dynamodb:BatchWriteItem",
+          "dynamodb:ConditionCheckItem",
+          "dynamodb:DeleteItem",
+          "dynamodb:DescribeTable",
+          "dynamodb:GetItem",
           "dynamodb:GetRecords",
           "dynamodb:GetShardIterator",
+          "dynamodb:PutItem",
+          "dynamodb:Query",
+          "dynamodb:Scan",
+          "dynamodb:UpdateItem",
           "logs:GetLogEvents",
           "s3vectors:DeleteVectors",
           "s3vectors:GetVectors",
@@ -3281,6 +4004,7 @@
         ],
         "resources": [
           "*",
+          "GetAtt:ActiveRunAuthorizationIndexTable2D018C99.Arn",
           "GetAtt:BenchmarkProject1593465D.Arn",
           "GetAtt:DocumentGroupsTableA5108040.Arn",
           "GetAtt:UserPool6BA7E5F2.Arn",
@@ -3302,15 +4026,31 @@
         "roles": [
           "Ref:HeavyApiFunctionServiceRole25A7AE5E"
         ],
-        "statementCount": 10,
+        "statementCount": 12,
         "actions": [
           "codebuild:BatchGetBuilds",
           "cognito-idp:AdminAddUserToGroup",
+          "cognito-idp:AdminDeleteUser",
+          "cognito-idp:AdminDisableUser",
+          "cognito-idp:AdminEnableUser",
+          "cognito-idp:AdminGetUser",
           "cognito-idp:AdminListGroupsForUser",
           "cognito-idp:AdminRemoveUserFromGroup",
+          "cognito-idp:AdminUpdateUserAttributes",
+          "cognito-idp:AdminUserGlobalSignOut",
           "cognito-idp:ListUsers",
+          "dynamodb:BatchGetItem",
+          "dynamodb:BatchWriteItem",
+          "dynamodb:ConditionCheckItem",
+          "dynamodb:DeleteItem",
+          "dynamodb:DescribeTable",
+          "dynamodb:GetItem",
           "dynamodb:GetRecords",
           "dynamodb:GetShardIterator",
+          "dynamodb:PutItem",
+          "dynamodb:Query",
+          "dynamodb:Scan",
+          "dynamodb:UpdateItem",
           "logs:GetLogEvents",
           "s3vectors:DeleteVectors",
           "s3vectors:GetVectors",
@@ -3326,6 +4066,7 @@
         ],
         "resources": [
           "*",
+          "GetAtt:ActiveRunAuthorizationIndexTable2D018C99.Arn",
           "GetAtt:BenchmarkProject1593465D.Arn",
           "GetAtt:DocumentGroupsTableA5108040.Arn",
           "GetAtt:UserPool6BA7E5F2.Arn",
@@ -3620,6 +4361,19 @@
         "content": "{\"S3Bucket\":\"cdk-hnb659fds-assets-111111111111-ap-northeast-1\",\"S3Key\":\"<asset-hash>.zip\"}"
       },
       "detailFilePath": "infra-inventory/aws-lambda-layerversion.md"
+    },
+    {
+      "logicalId": "RagQualityMonitorScheduleAllowEventRuleMemoRagMvpStackTestRagQualityMonitorFunctionA92247BF180FFB6A",
+      "logicalName": "Rag Quality Monitor Schedule Allow Event Rule Memo Rag Mvp Stack Test Rag Quality Monitor Function A92247BF180FFB6A",
+      "type": "AWS::Lambda::Permission",
+      "purpose": "Rag Quality Monitor Schedule Allow Event Rule Memo Rag Mvp Stack Test Rag Quality Monitor Function A92247BF180FFB6A (Lambda invoke permission)",
+      "settings": {
+        "action": "lambda:InvokeFunction",
+        "principal": "events.amazonaws.com",
+        "functionName": "GetAtt:RagQualityMonitorFunction9BE8E903.Arn",
+        "sourceArn": "GetAtt:RagQualityMonitorScheduleCFE9DF24.Arn"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
     },
     {
       "logicalId": "RestApiANYApiPermissionMemoRagMvpStackTestRestApi748483EDANYD291338E",
@@ -4116,6 +4870,32 @@
       "detailFilePath": "infra-inventory/aws-lambda-permission.md"
     },
     {
+      "logicalId": "RevocationCleanupScheduleAllowEventRuleMemoRagMvpStackTestRevocationCleanupFunction3573F11BF4ADB52E",
+      "logicalName": "Revocation Cleanup Schedule Allow Event Rule Memo Rag Mvp Stack Test Revocation Cleanup Function3573F11BF4ADB52E",
+      "type": "AWS::Lambda::Permission",
+      "purpose": "Revocation Cleanup Schedule Allow Event Rule Memo Rag Mvp Stack Test Revocation Cleanup Function3573F11BF4ADB52E (Lambda invoke permission)",
+      "settings": {
+        "action": "lambda:InvokeFunction",
+        "principal": "events.amazonaws.com",
+        "functionName": "GetAtt:RevocationCleanupFunctionE7C00D6D.Arn",
+        "sourceArn": "GetAtt:RevocationCleanupScheduleF357B692.Arn"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
+    },
+    {
+      "logicalId": "SecurityAuditReconciliationScheduleAllowEventRuleMemoRagMvpStackTestSecurityAuditReconciliationFunctionAE02055288EA6965",
+      "logicalName": "Security Audit Reconciliation Schedule Allow Event Rule Memo Rag Mvp Stack Test Security Audit Reconciliation Function AE02055288EA6965",
+      "type": "AWS::Lambda::Permission",
+      "purpose": "Security Audit Reconciliation Schedule Allow Event Rule Memo Rag Mvp Stack Test Security Audit Reconciliation Function AE02055288EA6965 (Lambda invoke permission)",
+      "settings": {
+        "action": "lambda:InvokeFunction",
+        "principal": "events.amazonaws.com",
+        "functionName": "GetAtt:SecurityAuditReconciliationFunction9A53A79D.Arn",
+        "sourceArn": "GetAtt:SecurityAuditReconciliationSchedule6C1B6D38.Arn"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
+    },
+    {
       "logicalId": "RestApiAccount7C83CF5A",
       "logicalName": "Rest Api Account",
       "type": "AWS::ApiGateway::Account",
@@ -4191,6 +4971,411 @@
         ]
       },
       "detailFilePath": "infra-inventory/aws-apigateway-authorizer.md"
+    },
+    {
+      "logicalId": "RagQualityControlLoopFailureAlarmD9AA7805",
+      "logicalName": "Rag Quality Control Loop Failure Alarm",
+      "type": "AWS::CloudWatch::Alarm",
+      "purpose": "Rag Quality Control Loop Failure Alarm (AWS::CloudWatch::Alarm)",
+      "settings": {
+        "AlarmActions": [
+          {
+            "Ref": "RagQualityAlertTopic3AFB5A32"
+          }
+        ],
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "EvaluationPeriods": 1,
+        "MetricName": "ControlLoopFailure",
+        "Namespace": "MemoRAG/QualityControl",
+        "Period": 300,
+        "Statistic": "Sum",
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ],
+        "Threshold": 1,
+        "TreatMissingData": "breaching"
+      },
+      "detailFilePath": "infra-inventory/aws-cloudwatch-alarm.md"
+    },
+    {
+      "logicalId": "RagQualityCriticalAlertAlarm982F6330",
+      "logicalName": "Rag Quality Critical Alert Alarm",
+      "type": "AWS::CloudWatch::Alarm",
+      "purpose": "Rag Quality Critical Alert Alarm (AWS::CloudWatch::Alarm)",
+      "settings": {
+        "AlarmActions": [
+          {
+            "Ref": "RagQualityAlertTopic3AFB5A32"
+          }
+        ],
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "EvaluationPeriods": 1,
+        "MetricName": "CriticalAlertCount",
+        "Namespace": "MemoRAG/QualityControl",
+        "Period": 300,
+        "Statistic": "Sum",
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ],
+        "Threshold": 1,
+        "TreatMissingData": "notBreaching"
+      },
+      "detailFilePath": "infra-inventory/aws-cloudwatch-alarm.md"
+    },
+    {
+      "logicalId": "RagQualityMonitorLambdaErrorAlarm8C816F0C",
+      "logicalName": "Rag Quality Monitor Lambda Error Alarm",
+      "type": "AWS::CloudWatch::Alarm",
+      "purpose": "Rag Quality Monitor Lambda Error Alarm (AWS::CloudWatch::Alarm)",
+      "settings": {
+        "AlarmActions": [
+          {
+            "Ref": "RagQualityAlertTopic3AFB5A32"
+          }
+        ],
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "Dimensions": [
+          {
+            "Name": "FunctionName",
+            "Value": {
+              "Ref": "RagQualityMonitorFunction9BE8E903"
+            }
+          }
+        ],
+        "EvaluationPeriods": 1,
+        "MetricName": "Errors",
+        "Namespace": "AWS/Lambda",
+        "Period": 300,
+        "Statistic": "Sum",
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ],
+        "Threshold": 1,
+        "TreatMissingData": "notBreaching"
+      },
+      "detailFilePath": "infra-inventory/aws-cloudwatch-alarm.md"
+    },
+    {
+      "logicalId": "RevocationCleanupLambdaErrorAlarm944198D7",
+      "logicalName": "Revocation Cleanup Lambda Error Alarm",
+      "type": "AWS::CloudWatch::Alarm",
+      "purpose": "Revocation Cleanup Lambda Error Alarm (AWS::CloudWatch::Alarm)",
+      "settings": {
+        "AlarmActions": [
+          {
+            "Ref": "RagQualityAlertTopic3AFB5A32"
+          }
+        ],
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "Dimensions": [
+          {
+            "Name": "FunctionName",
+            "Value": {
+              "Ref": "RevocationCleanupFunctionE7C00D6D"
+            }
+          }
+        ],
+        "EvaluationPeriods": 1,
+        "MetricName": "Errors",
+        "Namespace": "AWS/Lambda",
+        "Period": 300,
+        "Statistic": "Sum",
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ],
+        "Threshold": 1,
+        "TreatMissingData": "breaching"
+      },
+      "detailFilePath": "infra-inventory/aws-cloudwatch-alarm.md"
+    },
+    {
+      "logicalId": "RagQualityMonitorScheduleCFE9DF24",
+      "logicalName": "Rag Quality Monitor Schedule",
+      "type": "AWS::Events::Rule",
+      "purpose": "Rag Quality Monitor Schedule (AWS::Events::Rule)",
+      "settings": {
+        "Description": "Evaluate production RAG quality/security signals and apply the approved safety runbook.",
+        "ScheduleExpression": "rate(5 minutes)",
+        "State": "ENABLED",
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ],
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::GetAtt": [
+                "RagQualityMonitorFunction9BE8E903",
+                "Arn"
+              ]
+            },
+            "Id": "Target0",
+            "Input": "{\"windowMinutes\":5}"
+          }
+        ]
+      },
+      "detailFilePath": "infra-inventory/aws-events-rule.md"
+    },
+    {
+      "logicalId": "RevocationCleanupScheduleF357B692",
+      "logicalName": "Revocation Cleanup Schedule",
+      "type": "AWS::Events::Rule",
+      "purpose": "Revocation Cleanup Schedule (AWS::Events::Rule)",
+      "settings": {
+        "Description": "Reconcile tenant-scoped deny-first revocation cleanup manifests.",
+        "ScheduleExpression": "rate(1 minute)",
+        "State": "ENABLED",
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ],
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::GetAtt": [
+                "RevocationCleanupFunctionE7C00D6D",
+                "Arn"
+              ]
+            },
+            "Id": "Target0",
+            "Input": "{\"limitPerTenant\":100}"
+          }
+        ]
+      },
+      "detailFilePath": "infra-inventory/aws-events-rule.md"
+    },
+    {
+      "logicalId": "SecurityAuditReconciliationSchedule6C1B6D38",
+      "logicalName": "Security Audit Reconciliation Schedule",
+      "type": "AWS::Events::Rule",
+      "purpose": "Security Audit Reconciliation Schedule (AWS::Events::Rule)",
+      "settings": {
+        "Description": "Finalize tenant-scoped security mutation audits after authoritative state reconciliation.",
+        "ScheduleExpression": "rate(1 minute)",
+        "State": "ENABLED",
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ],
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::GetAtt": [
+                "SecurityAuditReconciliationFunction9A53A79D",
+                "Arn"
+              ]
+            },
+            "Id": "Target0",
+            "Input": {
+              "Fn::Join": [
+                "",
+                [
+                  "{\"tenantId\":\"",
+                  {
+                    "Ref": "AWS::AccountId"
+                  },
+                  "\",\"limit\":100}"
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "detailFilePath": "infra-inventory/aws-events-rule.md"
+    },
+    {
+      "logicalId": "RagQualityAlertTopic3AFB5A32",
+      "logicalName": "Rag Quality Alert Topic",
+      "type": "AWS::SNS::Topic",
+      "purpose": "Rag Quality Alert Topic (AWS::SNS::Topic)",
+      "settings": {
+        "DisplayName": "MemoRAG production quality and safety alerts",
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ]
+      },
+      "detailFilePath": "infra-inventory/aws-sns-topic.md"
     }
   ]
 }

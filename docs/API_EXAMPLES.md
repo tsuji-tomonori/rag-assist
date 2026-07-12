@@ -380,7 +380,7 @@ curl -s http://localhost:8787/conversation-history "${AUTH_HEADER[@]}" | jq
 
 `POST /benchmark/query` は `/chat` と同じ `conversationHistory` を受け取れる。conversation benchmark runner は、前ターンの user / assistant 発話を渡して照応や省略を解決する。ただし履歴は質問解釈用であり、回答根拠は retrieved chunks / computed facts に限定する。
 
-`POST /benchmark/search` は `BENCHMARK_RUNNER` service user からの呼び出しに限り search benchmark dataset の `user` を任意で受け取り、ACL 評価用の利用者文脈として `user.userId` と `user.groups` を使う。通常利用者向け `/search` は request body の `user` を受け付けず、認証 token の本人だけで検索する。
+`POST /benchmark/query` と `POST /benchmark/search` は `suiteId` を必須とし、server-side allowlist から nonprivileged simulated subject、benchmark 専用 tenant、corpus suite を解決する。request body の `user`、`groups`、`tenantId`、`filters`、`scope` は受け付けない。通常利用者向け `/chat` と `/search` は認証 token の本人だけを使い、simulated subject を適用しない。
 
 ```bash
 curl -s http://localhost:8787/benchmark/query \
@@ -388,6 +388,7 @@ curl -s http://localhost:8787/benchmark/query \
   -H 'Content-Type: application/json' \
   -d '{
     "id":"case-001",
+    "suiteId":"standard-agent-v1",
     "question":"経費精算の期限は？",
     "conversationHistory":[
       {"role":"user","text":"経費精算の申請方法は？"},
@@ -404,11 +405,8 @@ curl -s http://localhost:8787/benchmark/search \
   -H 'Content-Type: application/json' \
   -d '{
     "query":"経費精算の期限は？",
-    "topK":10,
-    "user":{
-      "userId":"benchmark-user-1",
-      "groups":["GROUP_A"]
-    }
+    "suiteId":"search-standard-v1",
+    "topK":10
   }' | jq
 ```
 

@@ -66,8 +66,9 @@ test("chat run event payload preserves stage and message when data exists", () =
 test("chat run event stream responses include CORS headers", async () => {
   const run: ChatRun = {
     runId: "run-1",
-    status: "running",
+    status: "succeeded",
     createdBy: "user-1",
+    tenantId: "default",
     question: "質問",
     modelId: "model",
     createdAt: "2026-05-04T00:00:00.000Z",
@@ -110,7 +111,7 @@ test("chat run event stream responses include CORS headers", async () => {
     events: [],
     event: event({ runId: "run-1", userId: "user-2" })
   })
-  assert.equal(forbidden.metadata?.statusCode, 403)
+  assert.equal(forbidden.metadata?.statusCode, 404)
   assert.deepEqual(forbidden.metadata?.headers, plainResponseHeaders)
 
   const missingReadPermission = await invokeStream({
@@ -118,7 +119,7 @@ test("chat run event stream responses include CORS headers", async () => {
     events: [],
     event: event({ runId: "run-1", userId: "user-1", groups: [] })
   })
-  assert.equal(missingReadPermission.metadata?.statusCode, 403)
+  assert.equal(missingReadPermission.metadata?.statusCode, 404)
   assert.deepEqual(missingReadPermission.metadata?.headers, plainResponseHeaders)
 
   const adminReadAll = await invokeStream({
@@ -216,12 +217,39 @@ test("chat run event stream responses include CORS headers", async () => {
   assert.equal(invalidLastEventId.metadata?.statusCode, 200)
   assert.match(invalidLastEventId.body, /id: 1/)
 
+  const failedTerminal = await invokeStream({
+    run: { ...run, status: "failed", errorCode: "permission_revoked" },
+    events: [
+      {
+        runId: "run-1",
+        seq: 1,
+        type: "final",
+        stage: "done",
+        message: "must not be exposed",
+        data: { answer: "must not be exposed" },
+        createdAt: "2026-05-04T00:00:01.000Z"
+      },
+      {
+        runId: "run-1",
+        seq: 2,
+        type: "error",
+        stage: "failed",
+        message: "permission_revoked",
+        createdAt: "2026-05-04T00:00:02.000Z"
+      }
+    ],
+    event: event({ runId: "run-1", userId: "user-1" })
+  })
+  assert.doesNotMatch(failedTerminal.body, /event: final|must not be exposed/)
+  assert.match(failedTerminal.body, /event: error/)
+  assert.match(failedTerminal.body, /permission_revoked/)
+
   const noClaims = await invokeStream({
     run,
     events: [],
     event: event({ runId: "run-1", userId: "", claims: false })
   })
-  assert.equal(noClaims.metadata?.statusCode, 403)
+  assert.equal(noClaims.metadata?.statusCode, 404)
   assert.deepEqual(noClaims.metadata?.headers, plainResponseHeaders)
 })
 
@@ -270,17 +298,33 @@ async function invokeStream({
         if (getError) throw getError
         return run
       },
-      async update(_runId, input) {
+      async update(_tenantId, _runId, input) {
         return { ...(run as ChatRun), ...input }
       }
     },
     chatRunEventStore: {
-      async append(input) {
+      async append(_tenantId, input) {
         return { ...input, seq: 1, createdAt: "2026-05-04T00:00:00.000Z" }
       },
       async listAfter() {
         if (listError) throw listError
         return events
+      }
+    },
+    verifiedIdentityProvider: {
+      getCurrentIdentity: async () => undefined,
+      getCurrentIdentityBySubject: async (subject) => {
+        const claim = (event.requestContext.authorizer as { claims?: Record<string, unknown> } | undefined)
+          ?.claims?.["cognito:groups"]
+        return {
+          username: subject,
+          userId: subject,
+          accountStatus: "active",
+          cognitoGroups: Array.isArray(claim)
+            ? claim.map(String)
+            : typeof claim === "string" ? claim.split(",").filter(Boolean) : [],
+          tenantId: "default"
+        }
       }
     }
   }) as (event: APIGatewayProxyEvent, responseStream: NodeJS.WritableStream) => Promise<void>

@@ -7,10 +7,10 @@
     "build": "tsc -p tsconfig.json && npm run bundle",
     "bundle": "node scripts/bundle-lambdas.mjs",
     "synth:yaml": "mkdir -p cdk.out && cdk synth > cdk.out/MemoRagMvpStack.template.yaml",
-    "test": "npm run bundle && node --test -r ts-node/register test/*.test.ts",
+    "test": "npm run bundle && node --import tsx --test test/*.test.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "cdk": "cdk",
-    "check:dynamodb-gsi-update-limit": "node -r ts-node/register scripts/check-dynamodb-gsi-update-limit.ts"
+    "check:dynamodb-gsi-update-limit": "node --import tsx scripts/check-dynamodb-gsi-update-limit.ts"
   },
   "dependencies": {
     "@aws-sdk/client-cognito-identity-provider": "^3.1041.0",
@@ -27,7 +27,7 @@
     "aws-cdk": "^2.190.0",
     "cdk-nag": "^2.38.2",
     "esbuild": "^0.25.3",
-    "ts-node": "^10.9.2",
+    "tsx": "^4.19.4",
     "typescript": "^5.8.3"
   }
 }

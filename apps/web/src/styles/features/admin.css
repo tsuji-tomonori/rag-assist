@@ -388,6 +388,7 @@
 }
 
 .role-assignment select,
+.role-assignment input,
 .role-assignment button,
 .user-row-actions button {
   min-height: 34px;
@@ -399,9 +400,42 @@
   font-weight: 900;
 }
 
+.role-assignment input {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
 .user-row-actions {
   display: flex;
   gap: 8px;
+}
+
+.admin-successor-selection {
+  display: grid;
+  gap: 7px;
+}
+
+.admin-successor-selection label {
+  color: #68758f;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.admin-successor-selection select {
+  min-height: 38px;
+  border: 1px solid #c9d4e3;
+  border-radius: var(--radius-xs);
+  padding: 0 10px;
+  color: #18223a;
+  background: var(--color-surface);
+  font-weight: 800;
+}
+
+.admin-successor-selection span {
+  color: #9b1c1c;
+  font-size: 13px;
+  font-weight: 850;
+  line-height: 1.5;
 }
 
 .role-definition-list,

@@ -66,7 +66,7 @@
 | 実現可能性 | OK | guard 共通 pipeline、profile validation、fail-closed routing で実現可能 |
 | 検証可能性 | OK | dependency fault injection と guard-bypass profile negative test で確認できる |
 | ニーズ適合 | OK | 可用性を追求して機密性・根拠性・引用正確性を犠牲にしない |
-| 実装適合 | partial | 個別 timeout はあるが全 fallback path の guard parity 契約は不足する |
+| 実装適合 | OK（confirmed） | `safe-degradation-policy.ts` が dependency timeout/error/cost/circuit state と auth/classification/usage/injection/tool/grounding/citation/secret/redaction invariants を同時強制する matrix test を持つ |
 
 ## トレース
 

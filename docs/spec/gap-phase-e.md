@@ -48,7 +48,7 @@ Phase E は、仕様 3A「取り込み・抽出・チャンク化」と 3C「高
 | 領域 | 現行挙動 | 根拠 |
 | --- | --- | --- |
 | Extract dispatcher | `textractJson`、direct text、PDF、DOCX、その他 UTF-8 text を `extractDocumentFromUpload` が分岐する。 | `apps/api/src/rag/text-extract.ts` |
-| PDF native extraction | PDF は `pdf-parse` と `pdftotext -layout` の品質スコアを比較し、良い方を `pdf-layout-v2` として使う。 | `apps/api/src/rag/text-extract.ts` |
+| PDF native extraction | PDF は `pdf-parse` と `pdftotext -layout` の品質スコアを比較し、良い方を page/block/character locator 付きの `pdf-layout-v3` として使う。 | `apps/api/src/rag/offline/pre-retrieval/extraction/text-extractor.ts` |
 | PDF OCR fallback | PDF native text の品質スコアが 0 の場合、`DetectDocumentText` または S3 object 起点の async `StartDocumentTextDetection` を使う。 | `apps/api/src/rag/text-extract.ts` |
 | Textract table | Textract `TABLE` / `CELL` は markdown table の `StructuredBlock(kind: "table")` に変換される。 | `apps/api/src/rag/text-extract.ts` |
 | Textract line | Textract `LINE` は text/list/figure を軽量推定し、pageStart/pageEnd と sourceBlockId を持つ `StructuredBlock` になる。 | `apps/api/src/rag/text-extract.ts` |

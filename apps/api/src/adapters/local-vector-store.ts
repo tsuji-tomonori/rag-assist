@@ -22,21 +22,30 @@ export class LocalVectorStore implements VectorStore {
     await this.save({ records: [...byKey.values()] })
   }
 
+  async getByKeys(keys: string[]): Promise<VectorRecord[]> {
+    if (keys.length === 0) return []
+    const requested = new Set(keys)
+    const db = await this.load()
+    const byKey = new Map(db.records.filter((record) => requested.has(record.key)).map((record) => [record.key, record]))
+    return keys.map((key) => byKey.get(key)).filter((record): record is VectorRecord => record !== undefined)
+  }
+
   async query(vector: number[], topK: number, filter: VectorFilter = {}): Promise<RetrievedVector[]> {
     const db = await this.load()
     return db.records
       .filter((record) => (filter.kind ? record.metadata.kind === filter.kind : true))
       .filter((record) => (filter.documentId ? record.metadata.documentId === filter.documentId : true))
+      .filter((record) => (filter.documentIds ? filter.documentIds.includes(record.metadata.documentId) : true))
       .filter((record) => (filter.tenantId ? record.metadata.tenantId === filter.tenantId : true))
       .filter((record) => (filter.department ? record.metadata.department === filter.department : true))
       .filter((record) => (filter.source ? record.metadata.source === filter.source : true))
       .filter((record) => (filter.docType ? record.metadata.docType === filter.docType : true))
       .filter((record) => (filter.benchmarkSuiteId ? record.metadata.benchmarkSuiteId === filter.benchmarkSuiteId : true))
-      .filter((record) => (filter.lifecycleStatus ? (record.metadata.lifecycleStatus ?? "active") === filter.lifecycleStatus : true))
-      .filter((record) => (filter.ragEligibility ? (record.metadata.ragEligibility ?? "eligible") === filter.ragEligibility : true))
+      .filter((record) => (filter.lifecycleStatus ? record.metadata.lifecycleStatus === filter.lifecycleStatus : true))
+      .filter((record) => (filter.ragEligibility ? record.metadata.ragEligibility === filter.ragEligibility : true))
       .filter((record) => {
         if (!filter.allowedGroups || filter.allowedGroups.length === 0) return true
-        if (!record.metadata.aclGroup && !record.metadata.aclGroups) return true
+        if (!record.metadata.aclGroup && !record.metadata.aclGroups) return false
         const aclGroups = record.metadata.aclGroups ?? (record.metadata.aclGroup ? [record.metadata.aclGroup] : [])
         return aclGroups.some((group) => filter.allowedGroups?.includes(group))
       })

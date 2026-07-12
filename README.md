@@ -71,3 +71,10 @@ npm run build -w @memorag-mvp/infra
 npm run cdk -w @memorag-mvp/infra -- bootstrap
 npm run cdk -w @memorag-mvp/infra -- deploy
 ```
+
+## Ingest / reindex publication invariants
+
+- 通常 RAG へ公開できるのは、authoritative admission が approved で、抽出・chunk・派生 record の整合性検証を通過した artifact だけです。unknown、partial、quarantined の入力は staging に留まり、vector を公開しません。
+- reindex は tenant、actor、source/version、purpose で一意な run / artifact を使います。各 attempt は lease generation と fencing token を持ち、期限切れ worker の commit は拒否されます。
+- source、block ledger、memory ledger、vector、manifest は attempt 固有 namespace に staging し、全件を再読込・検証してから generation 固有の published namespace へ昇格します。
+- 読み取り経路は durable active pointer を正として current artifact だけを採用します。pointer の conditional write が cutover の単一 winner を決めるため、再試行・並行実行・rollback・reconcile 中も旧版と新版を同時に根拠へ混在させません。

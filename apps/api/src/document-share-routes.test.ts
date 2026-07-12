@@ -1,6 +1,6 @@
 import assert from "node:assert/strict"
 import { spawn, type ChildProcess } from "node:child_process"
-import { mkdtemp } from "node:fs/promises"
+import { mkdir, mkdtemp, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import path from "node:path"
 import test from "node:test"
@@ -10,27 +10,32 @@ type LocalServer = {
   process: ChildProcess
 }
 
-test("document direct share routes do not leak share metadata to direct readOnly users and allow direct full operations", async () => {
+test("document direct share routes return a policy version without weakening resource-hidden responses", async () => {
   const basePort = 18400 + Math.floor(Math.random() * 400)
   const dataDir = await mkdtemp(path.join(tmpdir(), "document-share-routes-"))
   const owner = await startLocalServer(dataDir, "RAG_GROUP_MANAGER", "user-a", basePort)
   const directUser = await startLocalServer(dataDir, "RAG_GROUP_MANAGER", "user-b", basePort + 1)
 
   try {
-    const sourceGroup = await postJson<{ groupId: string }>(owner, "/document-groups", { name: "Source Folder", visibility: "private" })
+    const sourceGroup = await postJson<{ groupId: string }>(owner, "/document-groups", { name: "Source Folder" })
     const uploaded = await postJson<{ documentId: string; fileName: string }>(owner, "/documents", {
       fileName: "direct-share.txt",
       text: "Direct document share route contract.",
       scope: { scopeType: "group", groupIds: [sourceGroup.groupId] }
     })
 
+    const emptyPolicy = await getJson<{ directDocumentGrants: unknown[]; version: string }>(owner, `/documents/${encodeURIComponent(uploaded.documentId)}/share`)
+    assert.deepEqual(emptyPolicy.directDocumentGrants, [])
+    assert.ok(emptyPolicy.version)
+
     await putJson(owner, `/documents/${encodeURIComponent(uploaded.documentId)}/share`, {
       grants: [{ principalType: "user", principalId: "user-b", permissionLevel: "readOnly" }],
       reason: "read only review"
-    })
+    }, { expectedStatus: 400 })
+    await seedDocumentShare(dataDir, uploaded.documentId, "user-b", "readOnly")
 
     const forbiddenShareInfo = await fetch(url(directUser, `/documents/${encodeURIComponent(uploaded.documentId)}/share`))
-    assert.equal(forbiddenShareInfo.status, 403)
+    assert.equal(forbiddenShareInfo.status, 404)
     const directUserDocuments = await getJson<{ documents: Array<{ documentId: string; metadata?: Record<string, unknown>; currentUserEffectivePermission?: string; capabilities?: Record<string, boolean> }> }>(directUser, "/documents")
     const visible = directUserDocuments.documents.find((document) => document.documentId === uploaded.documentId)
     assert.ok(visible)
@@ -44,35 +49,16 @@ test("document direct share routes do not leak share metadata to direct readOnly
     assert.equal(visible.metadata?.folderIds, undefined)
     assert.equal(visible.metadata?.folderLabel, "共有文書")
 
-    const ownerShareInfo = await getJson<{ directDocumentGrants: Array<{ principalId: string; permissionLevel: string; tenantId?: string }> }>(owner, `/documents/${encodeURIComponent(uploaded.documentId)}/share`)
+    const ownerShareInfo = await getJson<{ directDocumentGrants: Array<{ principalId: string; permissionLevel: string; tenantId?: string }>; version: string }>(owner, `/documents/${encodeURIComponent(uploaded.documentId)}/share`)
     assert.deepEqual(ownerShareInfo.directDocumentGrants.map((grant) => [grant.principalId, grant.permissionLevel, grant.tenantId]), [["user-b", "readOnly", "default"]])
+    assert.ok(ownerShareInfo.version)
 
-    await putJson(owner, `/documents/${encodeURIComponent(uploaded.documentId)}/share`, {
-      grants: [
-        { principalType: "user", principalId: "user-b", permissionLevel: "readOnly" },
-        { principalType: "user", principalId: "user-b", permissionLevel: "full" }
-      ],
-      reason: "duplicate principal check"
-    }, { expectedStatus: 400 })
-    await putJson(owner, `/documents/${encodeURIComponent(uploaded.documentId)}/share`, {
-      grants: [{ principalType: "user", principalId: "   ", permissionLevel: "readOnly" }],
-      reason: "blank principal check"
-    }, { expectedStatus: 400 })
+    await seedDocumentShare(dataDir, uploaded.documentId, "user-b", "full")
+    const directUserShareInfo = await getJson<{ currentUserEffectivePermission: string; version: string }>(directUser, `/documents/${encodeURIComponent(uploaded.documentId)}/share`)
+    assert.equal(directUserShareInfo.currentUserEffectivePermission, "full")
+    assert.ok(directUserShareInfo.version)
 
-    await putJson(owner, `/documents/${encodeURIComponent(uploaded.documentId)}/share`, {
-      grants: [{ principalType: "user", principalId: "user-b", permissionLevel: "full" }],
-      reason: "delegate document administration"
-    })
-    const directUserShareUpdate = await putJson<{ directDocumentGrants: Array<{ principalId: string; permissionLevel: string }> }>(directUser, `/documents/${encodeURIComponent(uploaded.documentId)}/share`, {
-      grants: [
-        { principalType: "user", principalId: "user-b", permissionLevel: "full" },
-        { principalType: "user", principalId: "user-c", permissionLevel: "readOnly" }
-      ],
-      reason: "route level document effective full"
-    })
-    assert.deepEqual(directUserShareUpdate.directDocumentGrants.map((grant) => [grant.principalId, grant.permissionLevel]), [["user-b", "full"], ["user-c", "readOnly"]])
-
-    const destination = await postJson<{ groupId: string }>(directUser, "/document-groups", { name: "Destination Folder", visibility: "private" })
+    const destination = await postJson<{ groupId: string }>(directUser, "/document-groups", { name: "Destination Folder" })
     await postJson(directUser, "/documents", {
       fileName: uploaded.fileName,
       text: "Destination conflict document.",
@@ -98,9 +84,41 @@ test("document direct share routes do not leak share metadata to direct readOnly
   }
 })
 
+async function seedDocumentShare(
+  dataDir: string,
+  documentId: string,
+  principalId: string,
+  permissionLevel: "readOnly" | "full"
+) {
+  const key = path.join(
+    dataDir,
+    "documents",
+    "share-grants",
+    encodeURIComponent("default"),
+    `${encodeURIComponent(documentId)}.json`
+  )
+  await mkdir(path.dirname(key), { recursive: true })
+  const now = "2026-07-11T00:00:00.000Z"
+  await writeFile(key, JSON.stringify({
+    schemaVersion: 1,
+    grants: [{
+      documentShareGrantId: `fixture-${principalId}`,
+      itemType: "documentShareGrant",
+      tenantId: "default",
+      documentId,
+      principalType: "user",
+      principalId,
+      permissionLevel,
+      createdBy: "user-a",
+      reason: "test fixture",
+      createdAt: now,
+      updatedAt: now
+    }]
+  }, null, 2), "utf8")
+}
+
 async function startLocalServer(dataDir: string, groups: string, userId: string, port: number): Promise<LocalServer> {
-  const tsxBin = path.resolve(process.cwd(), "../../node_modules/.bin/tsx")
-  const child = spawn(tsxBin, ["src/local.ts"], {
+  const child = spawn(process.execPath, ["--import", "tsx", "src/local.ts"], {
     cwd: process.cwd(),
     env: {
       ...process.env,

@@ -66,7 +66,7 @@ trace は再現性に有用だが、raw question、会話、根拠、回答、AC
 | 実現可能性 | OK | schema projection、field/content sanitizer、visibility policy で実現可能 |
 | 検証可能性 | OK | secret/PII/unauthorized canary の stored/view/download assertion で確認できる |
 | ニーズ適合 | OK | 調査可能性を保ちながら trace 経由の情報漏えいを防ぐ |
-| 実装適合 | partial/conflict | trace は存在するが raw data と redaction metadata の差が残る |
+| 実装適合 | OK（confirmed） | save/view/download 共通の `trace-sanitizer.ts` が secret/PII/raw body/unauthorized evidence を allowlist/hash/redaction し、sanitizer/graph tests が生値非保存を検証する |
 
 ## トレース
 

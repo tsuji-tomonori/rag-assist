@@ -1,8 +1,9 @@
 import { z } from "@hono/zod-openapi"
 import { requirePermission } from "../authorization.js"
-import { DebugDownloadResponseSchema, DebugReplayPlanSchema, DebugTraceListResponseSchema, DebugTraceSchema, ErrorResponseSchema } from "../schemas.js"
+import { DebugDownloadResponseSchema, DebugReplayPlanSchema, DebugTraceListResponseSchema, DebugTraceSchema, ErrorResponseSchema, ResourceUnavailableResponseSchema } from "../schemas.js"
 import type { ApiRouteContext } from "./route-context.js"
 import { looseRoute, routeAuthorization, validParam } from "./route-utils.js"
+import { ResourceUnavailableError, settleNonEnumerationTiming } from "../security/public-resource-response.js"
 
 const debugReadAuthorization = routeAuthorization({
   mode: "required",
@@ -41,8 +42,9 @@ export function registerDebugRoutes({ app, service }: ApiRouteContext) {
       }
     }),
     async (c) => {
-      requirePermission(c.get("user"), "chat:admin:read_all")
-      return c.json({ debugRuns: await service.listDebugRuns() }, 200)
+      const user = c.get("user")
+      requirePermission(user, "chat:admin:read_all")
+      return c.json({ debugRuns: await service.listDebugRuns(user) }, 200)
     }
   )
 
@@ -56,14 +58,19 @@ export function registerDebugRoutes({ app, service }: ApiRouteContext) {
       },
       responses: {
         200: { description: "Get a persisted chat debug trace", content: { "application/json": { schema: DebugTraceSchema } } },
-        404: { description: "Debug run not found", content: { "application/json": { schema: ErrorResponseSchema } } }
+        404: { description: "Resource unavailable under the non-enumeration response profile", content: { "application/json": { schema: ResourceUnavailableResponseSchema } } }
       }
     }),
     async (c) => {
-      requirePermission(c.get("user"), "chat:admin:read_all")
+      const user = c.get("user")
+      requirePermission(user, "chat:admin:read_all")
       const { runId } = validParam<{ runId: string }>(c)
-      const trace = await service.getDebugRun(runId)
-      if (!trace) return c.json({ error: "Debug run not found" }, 404)
+      const lookupStartedAt = Date.now()
+      const trace = await service.getDebugRun(runId, user)
+      if (!trace) {
+        await settleNonEnumerationTiming(lookupStartedAt)
+        throw new ResourceUnavailableError()
+      }
       return c.json(trace, 200)
     }
   )
@@ -88,14 +95,19 @@ export function registerDebugRoutes({ app, service }: ApiRouteContext) {
       responses: {
         200: { description: "Create sanitized debug replay plan metadata without execution", content: { "application/json": { schema: DebugReplayPlanSchema } } },
         403: { description: "Forbidden", content: { "application/json": { schema: ErrorResponseSchema } } },
-        404: { description: "Debug run not found", content: { "application/json": { schema: ErrorResponseSchema } } }
+        404: { description: "Resource unavailable under the non-enumeration response profile", content: { "application/json": { schema: ResourceUnavailableResponseSchema } } }
       }
     }),
     async (c) => {
-      requirePermission(c.get("user"), "chat:admin:read_all")
+      const user = c.get("user")
+      requirePermission(user, "chat:admin:read_all")
       const { runId } = validParam<{ runId: string }>(c)
-      const plan = await service.createDebugReplayPlan(runId)
-      if (!plan) return c.json({ error: "Debug run not found" }, 404)
+      const lookupStartedAt = Date.now()
+      const plan = await service.createDebugReplayPlan(runId, user)
+      if (!plan) {
+        await settleNonEnumerationTiming(lookupStartedAt)
+        throw new ResourceUnavailableError()
+      }
       return c.json(plan, 200)
     }
   )
@@ -108,14 +120,19 @@ export function registerDebugRoutes({ app, service }: ApiRouteContext) {
       request: { params: z.object({ runId: z.string().min(1) }) },
       responses: {
         200: { description: "Create signed download URL for debug JSON", content: { "application/json": { schema: DebugDownloadResponseSchema } } },
-        404: { description: "Debug run not found", content: { "application/json": { schema: ErrorResponseSchema } } }
+        404: { description: "Resource unavailable under the non-enumeration response profile", content: { "application/json": { schema: ResourceUnavailableResponseSchema } } }
       }
     }),
     async (c) => {
-      requirePermission(c.get("user"), "chat:admin:read_all")
+      const user = c.get("user")
+      requirePermission(user, "chat:admin:read_all")
       const { runId } = validParam<{ runId: string }>(c)
-      const download = await service.createDebugTraceDownloadUrl(runId)
-      if (!download) return c.json({ error: "Debug run not found" }, 404)
+      const lookupStartedAt = Date.now()
+      const download = await service.createDebugTraceDownloadUrl(runId, user)
+      if (!download) {
+        await settleNonEnumerationTiming(lookupStartedAt)
+        throw new ResourceUnavailableError()
+      }
       return c.json(download, 200)
     }
   )

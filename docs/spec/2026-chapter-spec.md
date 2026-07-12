@@ -9391,7 +9391,7 @@ benchmark-run-worker:
 runId を受け取り benchmark suite / corpus / metrics を処理する。
 
 async-agent-run-worker:
-runId を受け取り provider workspace を準備し、Claude Code / Codex / OpenCode 等を実行する。
+将来有効化する場合に runId を受け取り provider workspace を準備し、Claude Code / Codex / OpenCode 等を実行する。現行 production では route・role・CDK worker を公開しない。
 ```
 
 失敗時の扱いです。
@@ -9420,7 +9420,7 @@ AC-WORKER-001:
 worker handler は runId を必須入力とし、欠落時は validation error にする。
 
 AC-WORKER-002:
-chat run、document ingest run、benchmark run、async agent run は runId 単位で worker 実行できる。
+production で有効化された chat run、document ingest run、benchmark run は runId 単位で worker 実行できる。async agent run を将来有効化する場合も同じ契約と current authorization を満たす。
 
 AC-WORKER-003:
 worker 実行中に resource permission が失われた場合、実行を安全に停止または権限内処理に制限する。
@@ -11795,5 +11795,5 @@ Benchmark runner:
 Secrets Manager の service credential、BENCHMARK_RUNNER ACL、corpus seed isolation、external dataset prepare、skipped_unextractable、metadata budget を扱う。
 
 Worker:
-chat、ingest、benchmark、async agent は runId を契約にした非同期 worker で実行できる。
+現行 production の chat、ingest、benchmark は runId を契約にした非同期 worker で実行できる。async agent は schema/type の予約と将来要件に留め、route・role・CDK worker は公開しない。
 ```

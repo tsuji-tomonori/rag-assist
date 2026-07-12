@@ -72,7 +72,7 @@ source、chunk、embedding、vector、manifest の順次書き込み中に失敗
 | 実現可能性 | OK | stage ledger、generation/fencing token、conditional commit、stable ID、manifest count/hash、compensation で実現可能 |
 | 検証可能性 | OK | stage 別 failure injection、同一 key の単独/並行 retry、stale worker、orphan/duplicate/winner assertion で確認できる |
 | ニーズ適合 | OK | 一時障害から回復しても検索対象を重複・欠損させない |
-| 実装適合 | NG | durable checkpoint、idempotency、reconciliation が不足する |
+| 実装適合 | OK（confirmed） | ingest/staged publication が scoped checkpoint/idempotency、attempt fencing、winner-only commit/compensation、reconciliation state を実装し、retry/partial/concurrent fault tests を持つ |
 
 ## トレース
 

@@ -67,6 +67,7 @@
 | 実現可能性 | OK | ETag/version と conditional transaction または同等の compare-and-swap で実現可能 |
 | 検証可能性 | OK | matching/stale version、同時 writer、last-admin violation、partial-write absence を検証できる |
 | ニーズ適合 | OK | 管理者が他者の更新を失わず、安全に共有状態を編集するニーズに対応する |
+| 実装適合 | OK（confirmed） | folder/document share の versioned replace が expected-version CAS、complete next state、administrative-principal invariant を不可分に検証し、stale/concurrent writer tests を持つ |
 
 ## トレース
 

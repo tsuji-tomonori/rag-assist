@@ -28,11 +28,11 @@ export function AdminUsagePanel({ usageSummaries }: { usageSummaries: UserUsageS
           usageSummaries.map((item) => (
             <div className="usage-row" role="row" key={item.userId}>
               <span role="cell">{item.email}</span>
-              <span role="cell">{item.chatMessages}</span>
-              <span role="cell">{item.documentCount}</span>
-              <span role="cell">{item.questionCount}</span>
-              <span role="cell">{item.benchmarkRunCount}</span>
-              <span role="cell">{item.debugRunCount}</span>
+              <span role="cell">{item.chatMessages ?? "利用不可"}</span>
+              <span role="cell">{item.documentCount ?? "利用不可"}</span>
+              <span role="cell">{item.questionCount ?? "利用不可"}</span>
+              <span role="cell">{item.benchmarkRunCount ?? "利用不可"}</span>
+              <span role="cell">{item.debugRunCount ?? "利用不可"}</span>
               <span role="cell">{item.lastActivityAt ? formatDateTime(item.lastActivityAt) : "未設定"}</span>
             </div>
           ))

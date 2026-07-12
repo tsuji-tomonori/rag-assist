@@ -30,6 +30,7 @@ import {
 } from "./artifact-contract.js"
 import { benchmarkCorpusDirFromEnv, benchmarkCorpusSkipMemoryFromEnv, benchmarkIngestRunPollIntervalMsFromEnv, benchmarkIngestRunTimeoutMsFromEnv, seedBenchmarkCorpus, type SeededDocument } from "./corpus.js"
 import { createBenchmarkApiClient } from "./api-client.js"
+import { createCurrentAuthorizedFetch } from "./run-authorization.js"
 import type { BenchmarkSearchResponse, SearchResult } from "@memorag-mvp/contract"
 import type { BenchmarkRun, BenchmarkSuite, BenchmarkTargetConfig, BenchmarkUseCase } from "@memorag-mvp/contract"
 
@@ -135,7 +136,8 @@ type SearchSummary = {
 
 const apiBaseUrl = process.env.API_BASE_URL ?? "http://localhost:8787"
 const apiAuthToken = process.env.API_AUTH_TOKEN
-const api = createBenchmarkApiClient({ apiBaseUrl, authToken: apiAuthToken })
+const authorizedFetch = createCurrentAuthorizedFetch()
+const api = createBenchmarkApiClient({ apiBaseUrl, authToken: apiAuthToken, fetchImpl: authorizedFetch })
 const defaultEmbeddingModelId = process.env.EMBEDDING_MODEL_ID?.trim() || undefined
 const benchmarkCorpusSuiteId = process.env.BENCHMARK_CORPUS_SUITE_ID ?? "standard-agent-v1"
 const benchmarkSuiteId = process.env.BENCHMARK_SUITE_ID ?? benchmarkCorpusSuiteId
@@ -199,6 +201,7 @@ try {
     embeddingModelId: defaultEmbeddingModelId,
     ingestRunPollIntervalMs: benchmarkIngestRunPollIntervalMsFromEnv(process.env),
     ingestRunTimeoutMs: benchmarkIngestRunTimeoutMsFromEnv(process.env),
+    fetchImpl: authorizedFetch,
     log: (message) => console.log(message)
   })
 
@@ -246,9 +249,7 @@ async function runSearch(row: SearchDatasetRow): Promise<{ status: number; body:
       lexicalTopK: row.lexicalTopK ?? envInt("LEXICAL_TOP_K"),
       semanticTopK: row.semanticTopK ?? envInt("SEMANTIC_TOP_K"),
       embeddingModelId: row.embeddingModelId ?? process.env.EMBEDDING_MODEL_ID,
-      filters: row.filters,
-      benchmarkSuiteId: benchmarkCorpusSuiteId,
-      user: row.user
+      suiteId: benchmarkSuiteId
     })
     return { status: 200, body }
   } catch (error) {

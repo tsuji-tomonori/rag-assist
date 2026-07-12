@@ -7,6 +7,8 @@
 - 対象 task: `G-pre-gap`
 - 後続 task: `G1-async-agent-foundation`, `G2-async-agent-claude-code`, `G3-async-agent-codex`, `G4-async-agent-opencode`
 
+> 2026-07-11 現在: 本文中の G1/G2 実装メモは履歴記録である。production route・実行 role・CDK worker は無効であり、到達不能だった `async-agent-run-worker.ts` も削除した。型・schema の予約値と将来要件は維持するが、active production capability や FR-090 の実装証跡には数えない。
+
 ## Scope
 
 Phase G は、仕様 4C「非同期エージェント実行」を対象にする。
@@ -184,7 +186,7 @@ Phase G は、仕様 4C「非同期エージェント実行」を対象にする
 | G1-IMPL-003 | `/agents/providers`、`/agents/runs` create/list/get/cancel、`/agents/runs/{agentRunId}/artifacts` read-only metadata API を追加した。 | `apps/api/src/routes/agent-routes.ts` |
 | G1-IMPL-004 | provider は G1 では実行せず、未設定/無効/利用不可を `blocked` run と `not_configured` / `provider_unavailable` で返す。架空 provider execution、架空 artifact、固定 cost は作らない。 | `MemoRagService.createAsyncAgentRun`, `agent-routes.test.ts` |
 | G1-IMPL-005 | selected folder/document は readOnly mount metadata として扱い、service 層で read access を確認する。writeback は `agent:artifact:writeback` と `agentWritebackFull` boundary だけ定義し、本実行は scope-out とした。 | `MemoRagService.assertAsyncAgentSelectionsReadable`, `access-control-policy.test.ts` |
-| G1-IMPL-006 | worker contract は J2 の `{ runId }` 互換を維持し、`agentRunId` と `runId` を同一値として保存する。`agentRunId` input は worker alias として受ける。 | `apps/api/src/async-agent-run-worker.ts`, `worker-contract.test.ts` |
+| G1-IMPL-006 | 履歴上は worker alias を追加したが、production entrypoint が無効な状態で残ったため 2026-07-11 に source/test を削除した。再有効化時は tenant/current authorization/cleanup と同時実装する。 | historical: `reports/working/20260514-2339-g1-async-agent-foundation.md` |
 | G1-IMPL-007 | Web は provider 未設定、empty、permission denied、read-only run detail の最小表示に限定した。 | `apps/web/src/features/agents/` |
 
 ### scope-out

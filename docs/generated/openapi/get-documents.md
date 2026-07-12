@@ -20,7 +20,10 @@ _なし_
 
 ## Query Parameters
 
-_なし_
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `limit` | `integer` | no | `limit` の値。項目名は limit を表します。 クエリ文字列で検索または一覧条件を指定します。 | minimum=1<br>maximum=100 |
+| `cursor` | `string` | no | `cursor` の値。項目名は cursor を表します。 クエリ文字列で検索または一覧条件を指定します。 | minLength=1<br>maxLength=256 |
 
 ## Data
 
@@ -55,7 +58,8 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 23 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 4 field(s) |
+| `400` | リクエスト形式または入力値が不正です。 | `application/json` | 2 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 | `500` | サーバー内部で処理エラーが発生しました。 | `application/json` | 2 field(s) |
@@ -66,29 +70,19 @@ Media type: `application/json`
 
 | 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
-| `documents` | `array<object>` | yes | 文書一覧。 | - |
-| `documents[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
-| `documents[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
-| `documents[].mimeType` | `string` | no | `response.documents[].mimeType` の値。項目名は mime type を表します。 | - |
-| `documents[].chunkCount` | `number` | yes | `response.documents[].chunkCount` の値。項目名は chunk count を表します。 | - |
-| `documents[].memoryCardCount` | `number` | yes | `response.documents[].memoryCardCount` の値。項目名は memory card count を表します。 | - |
-| `documents[].createdAt` | `string` | yes | レコードを作成した日時。 | - |
-| `documents[].lifecycleStatus` | `enum(active \| staging \| superseded)` | no | `response.documents[].lifecycleStatus` の値。項目名は lifecycle status を表します。 | enum=active, staging, superseded |
-| `documents[].activeDocumentId` | `string` | no | `response.documents[].activeDocumentId` の値。項目名は active document id を表します。 | - |
-| `documents[].stagedFromDocumentId` | `string` | no | `response.documents[].stagedFromDocumentId` の値。項目名は staged from document id を表します。 | - |
-| `documents[].reindexMigrationId` | `string` | no | `response.documents[].reindexMigrationId` の値。項目名は reindex migration id を表します。 | - |
-| `documents[].chunkerVersion` | `string` | no | `response.documents[].chunkerVersion` の値。項目名は chunker version を表します。 | - |
-| `documents[].sourceExtractorVersion` | `string` | no | `response.documents[].sourceExtractorVersion` の値。項目名は source extractor version を表します。 | - |
-| `documents[].metadata` | `object` | no | `response.documents[].metadata` の値。項目名は metadata を表します。 | - |
-| `documents[].embeddingModelId` | `string` | no | embedding 生成に利用する model ID。 | - |
-| `documents[].embeddingDimensions` | `integer` | no | `response.documents[].embeddingDimensions` の値。項目名は embedding dimensions を表します。 | minimum=0 |
-| `documents[].currentUserEffectivePermission` | `enum(none \| readOnly \| full)` | no | `response.documents[].currentUserEffectivePermission` の値。項目名は current user effective permission を表します。 | enum=none, readOnly, full |
-| `documents[].capabilities` | `object` | no | `response.documents[].capabilities` の値。項目名は capabilities を表します。 | - |
-| `documents[].capabilities.canRead` | `boolean` | yes | `response.documents[].capabilities.canRead` の値。項目名は can read を表します。 | - |
-| `documents[].capabilities.canShare` | `boolean` | yes | `response.documents[].capabilities.canShare` の値。項目名は can share を表します。 | - |
-| `documents[].capabilities.canMove` | `boolean` | yes | `response.documents[].capabilities.canMove` の値。項目名は can move を表します。 | - |
-| `documents[].capabilities.canDelete` | `boolean` | yes | `response.documents[].capabilities.canDelete` の値。項目名は can delete を表します。 | - |
-| `documents[].capabilities.canReindex` | `boolean` | yes | `response.documents[].capabilities.canReindex` の値。項目名は can reindex を表します。 | - |
+| `documents` | `array<anyOf>` | yes | 文書一覧。 | - |
+| `count` | `integer` | yes | `response.count` の値。項目名は count を表します。 | minimum=0 |
+| `nextCursor` | `string` | no | `response.nextCursor` の値。項目名は next cursor を表します。 | - |
+| `responseProfileVersion` | `enum(resource-non-enumeration-v1)` | yes | `response.responseProfileVersion` の値。項目名は response profile version を表します。 | enum=resource-non-enumeration-v1 |
+
+##### `400` リクエスト形式または入力値が不正です。
+
+Media type: `application/json`
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ##### `401` 認証が必要です。
 

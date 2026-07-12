@@ -2,6 +2,8 @@ import type { z } from "@hono/zod-openapi"
 import { HTTPException } from "hono/http-exception"
 import { hasPermission } from "../authorization.js"
 import type { AppUser } from "../auth.js"
+import { config } from "../config.js"
+import { benchmarkCorpusOwnerId } from "../benchmark/evaluation-context.js"
 import type { MemoRagService } from "../rag/memorag-service.js"
 import type { DocumentManifestSchema, DocumentUploadRequestSchema, IngestUploadedDocumentRequestSchema } from "../schemas.js"
 
@@ -67,7 +69,7 @@ export function isBenchmarkSeedUpload(body: z.infer<typeof DocumentUploadRequest
   return false
 }
 
-function isBenchmarkSeedDocumentManifest(manifest: z.infer<typeof DocumentManifestSchema>): boolean {
+export function isBenchmarkSeedDocumentManifest(manifest: z.infer<typeof DocumentManifestSchema>): boolean {
   const metadata = manifest.metadata
   return (manifest.lifecycleStatus ?? "active") === "active"
     && metadata?.benchmarkSeed === true
@@ -75,9 +77,10 @@ function isBenchmarkSeedDocumentManifest(manifest: z.infer<typeof DocumentManife
     && benchmarkSeedSuites.has(metadata.benchmarkSuiteId)
     && metadata.source === "benchmark-runner"
     && metadata.docType === "benchmark-corpus"
-    && Array.isArray(metadata.aclGroups)
-    && metadata.aclGroups.length === 1
-    && metadata.aclGroups[0] === "BENCHMARK_RUNNER"
+    && metadata.scopeType === "benchmark"
+    && metadata.tenantId === config.benchmarkEvaluationTenantId.trim()
+    && typeof metadata.ownerUserId === "string"
+    && metadata.ownerUserId === benchmarkCorpusOwnerId(metadata.benchmarkSuiteId)
 }
 
 export function isBenchmarkSeedUploadedObjectIngest(body: z.infer<typeof IngestUploadedDocumentRequestSchema>): boolean {
@@ -393,6 +396,7 @@ export function authorizeUploadedDocumentIngest(user: AppUser, purpose: UploadPu
 
 export async function authorizeDocumentDelete(service: MemoRagService, user: AppUser, documentId: string) {
   if (hasPermission(user, "rag:doc:delete:group")) {
+    if (isDocumentDeletionTombstone(await service.getDocumentManifest(documentId, user))) return
     try {
       await service.assertDocumentWritable(user, documentId)
       return
@@ -406,8 +410,37 @@ export async function authorizeDocumentDelete(service: MemoRagService, user: App
   if (!hasPermission(user, "benchmark:seed_corpus")) {
     throw new HTTPException(403, { message: "Forbidden" })
   }
-  const manifest = await service.getDocumentManifest(documentId)
-  if (!isBenchmarkSeedDocumentManifest(manifest)) {
+  let manifest
+  try {
+    manifest = await service.getBenchmarkDocumentManifest(documentId)
+  } catch {
     throw new HTTPException(403, { message: "Forbidden" })
   }
+  const deletionRetry = isDocumentDeletionTombstone(manifest)
+  if (!isBenchmarkSeedDocumentManifest(manifest) && !(deletionRetry && isBenchmarkSeedDocumentIdentity(manifest))) {
+    throw new HTTPException(403, { message: "Forbidden" })
+  }
+}
+
+function isDocumentDeletionTombstone(manifest: z.infer<typeof DocumentManifestSchema>): boolean {
+  const revocation = manifest.metadata?.documentRevocation
+  return manifest.lifecycleStatus === "superseded" && Boolean(
+    revocation &&
+    typeof revocation === "object" &&
+    !Array.isArray(revocation) &&
+    typeof revocation.operationId === "string"
+  )
+}
+
+function isBenchmarkSeedDocumentIdentity(manifest: z.infer<typeof DocumentManifestSchema>): boolean {
+  const metadata = manifest.metadata
+  return metadata?.benchmarkSeed === true &&
+    typeof metadata.benchmarkSuiteId === "string" &&
+    benchmarkSeedSuites.has(metadata.benchmarkSuiteId) &&
+    metadata.source === "benchmark-runner" &&
+    metadata.docType === "benchmark-corpus" &&
+    metadata.scopeType === "benchmark" &&
+    metadata.tenantId === config.benchmarkEvaluationTenantId.trim() &&
+    typeof metadata.ownerUserId === "string" &&
+    metadata.ownerUserId === benchmarkCorpusOwnerId(metadata.benchmarkSuiteId)
 }
