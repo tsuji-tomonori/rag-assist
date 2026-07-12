@@ -59,6 +59,8 @@
 - 修正後の sandbox coverage は全97 test file を一意に選択し、listener 不使用の92 file が pass、localhost listener を必要とする5 file は sandbox の `EPERM` で未完了だった。Statements/lines 88.32%、branches 79.82%、functions 90.89% はこの5 file 未実行時の参考値であり、coverage gate の最終判定には使用しない。実 runner の結果は PR CI で確認する。
 - 3回目の CI では infra inventory を含む全項目が成功し、API coverage だけが5 test failure を返した。reader/share route fixture は policy file を server 起動後に直接 seed しており、初期 cache 状態に依存していたため seed 後起動へ変更した。PDF 3件は `pdf-parse` 1.x の legacy pdf.js が Node `Buffer` を current Node 上で binary data として安定認識せず、runner に `pdftotext` がない場合だけ OCR path へ落ちていた。本番 extractor から exact `Uint8Array` を渡して host binary 非依存に修正し、FR-082 text-processing 27/27、API typecheck/lint を確認した。
 - 4回目の CI では PDF 3件が解消し、reader document cache と upload 直後の share read の2件だけが残った。reader server を全 document fixture 作成後に起動し、share read は5秒上限の bounded convergence 待機へ変更した。失敗時にも coverage JSON summary を PR コメントへ出すよう workflow を修正した。失敗時参考値は tests 756/758、statements/lines 89.71%、branches 80.06%、functions 91.97% であり、未完了2 test の後半を含まない。
+- 5・6回目の CI で残った reader/share 2件を実 listen 環境でも再現し、通常文書が source governance 未承認の `quarantined` 状態であること、share fixture が `LocalObjectStore` 外へ grant を書いていたこと、direct `full` grant は source folder `full` を要求する move 境界を迂回しないことを確認した。fixture を承認・公開ライフサイクル、active document ID、tenant-scoped object key、resource-hidden 404 契約へ同期し、対象2/2を確認した。
+- child process route test は c8 親 process の coverage に算入されないため、Bedrock、CodeBuild/CloudWatch Logs、S3 object store、replay source snapshot の AWS/境界 adapter unit test を追加した。API 全件は 765/765 pass、statements/lines 90.03%（50212/55772）、functions 92.48%、branches 80.08%。C0 gate は維持したまま達成し、C1 は継続 task の対象とした。
 
 ## 成果物
 
@@ -82,4 +84,4 @@
 - `SQ-005`–`SQ-015`: approved dataset/threshold/window/owner/workload/price catalog を用いた live/load/chaos/cost/billing acceptance は未実施。
 - API C1 branches 85% は未達として `tasks/todo/20260712-coverage-api-c1-recovery.md` で追跡する。C0 statements/functions/lines 90% は blocking gate のまま維持する。
 - `npm install` 時点の audit は 4 vulnerabilities（low 1、moderate 1、high 2）を報告した。本タスクでは依存更新による互換性変更を実施していない。
-- Draft PR #341、受け入れコメント、セルフレビューは作成済み。CI repair は継続中であり、運用 evidence が未取得のため task は `do` のままとし、全49件の operational acceptance 完了は主張しない。
+- Draft PR #341、受け入れコメント、セルフレビューは作成済み。最終 head の GitHub Actions 再検証は push 後に実施する。運用 evidence が未取得のため task は `do` のままとし、全49件の operational acceptance 完了は主張しない。
