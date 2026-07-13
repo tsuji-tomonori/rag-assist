@@ -3,7 +3,7 @@
 - 作成日時: 2026-07-13 23:31 JST
 - branch: `codex/api-code-doc-generation`
 - base: `origin/main` (`9cd904d3`)
-- task: `tasks/do/20260713-2237-api-code-doc-generation.md`
+- task: `tasks/done/20260713-2237-api-code-doc-generation.md`
 
 ## 受けた指示
 
@@ -87,10 +87,13 @@
 - branch と call graph は静的構造を示し、runtime path coverage や business correctness を証明しない。既存 test の対応有無と追加推奨観点を `unit-test_gen.md` で区別する。
 - 生成物は約 4.2 MB である。完全な IF schema を保持しつつ、その他の文書は主要 call depth と data boundary を優先している。
 - 本タスクは API behavior、RAG retrieval、認証・認可 policy を変更していない。access-control policy test の更新対象となる route 変更もない。
-- GitHub publication は本レポート初版時点では未実施であり、PR URL とコメント結果を完了後に追記する。
+- GitHub Actions の PR CI は publication 完了時点では未確認であり、ローカル検証の pass と区別する。
 
 ## Publication
 
-- PR: 作成前
-- 受け入れ条件確認コメント: 未投稿
-- セルフレビューコメント: 未投稿
+- Draft PR: `https://github.com/tsuji-tomonori/rag-assist/pull/343`
+- label: `semver:minor`
+- 実装 commit: `7af40f7f`
+- 受け入れ条件確認コメント: 投稿済み（comment ID `4959445096`）
+- セルフレビューコメント: 投稿済み（comment ID `4959441269`）
+- GitHub Actions: publication 完了時点では未確認
