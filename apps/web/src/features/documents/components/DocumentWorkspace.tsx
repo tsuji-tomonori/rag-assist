@@ -202,6 +202,15 @@ export function DocumentWorkspace({
     canUploadToDestination,
     isUploading: operationState.isUploading
   })
+  const documentAddUploadGroupId = canUploadToDestination ? uploadGroupId : ""
+  const documentAddUploadDestinationLabel = documentAddUploadGroupId ? uploadDestinationLabel : "未選択"
+  const documentAddUploadDisabledReason = getUploadDisabledReason({
+    canUpload: canWrite,
+    uploadGroupId: documentAddUploadGroupId,
+    hasUploadDestination: Boolean(documentAddUploadGroupId),
+    canUploadToDestination,
+    isUploading: operationState.isUploading
+  })
   const canOpenDocumentAdd = canWrite && !operationState.isUploading && (canCreateGroups || uploadDestinations.length > 0)
   const addDocumentDisabledReason = getAddDocumentDisabledReason({
     canUpload: canWrite,
@@ -402,6 +411,7 @@ export function DocumentWorkspace({
       setLastUploadedDocument(result.document ?? null)
       recordSessionOperation("アップロード", fileName, `保存先: ${destination}`, "反映済み")
       setUploadFile(null)
+      if (uploadInputRef.current) uploadInputRef.current.value = ""
     } else {
       setLastUploadedDocument(null)
       setUploadSubmissionError(result.error)
@@ -789,12 +799,12 @@ export function DocumentWorkspace({
       {documentAddOpen && (
         <DocumentAddDialog
           destinations={uploadDestinations}
-          uploadGroupId={uploadGroupId}
-          uploadDestinationLabel={uploadDestinationLabel}
+          uploadGroupId={documentAddUploadGroupId}
+          uploadDestinationLabel={documentAddUploadDestinationLabel}
           uploadFile={uploadFile}
           uploadState={uploadState}
           uploadedDocument={lastUploadedDocument}
-          uploadedDocumentGroupId={uploadedDocumentGroupId(lastUploadedDocument, uploadState?.groupId, uploadGroupId)}
+          uploadedDocumentGroupId={uploadedDocumentGroupId(lastUploadedDocument, uploadState?.groupId, documentAddUploadGroupId)}
           quickGroupName={quickGroupName}
           quickCreateExpanded={quickCreateExpanded}
           quickCreateMessage={quickCreateMessage}
@@ -802,7 +812,7 @@ export function DocumentWorkspace({
           uploadSubmissionError={uploadSubmissionError}
           canCreateGroups={canCreateGroups}
           canUploadToDestination={canUploadToDestination}
-          uploadDisabledReason={uploadDisabledReason}
+          uploadDisabledReason={documentAddUploadDisabledReason}
           operationState={operationState}
           uploadInputRef={uploadInputRef}
           onClose={() => setDocumentAddOpen(false)}

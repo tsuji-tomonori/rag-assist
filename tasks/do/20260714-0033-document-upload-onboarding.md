@@ -102,7 +102,7 @@ API request schema、認可判定、永続化形式は変更しない。
 
 ## 必要情報
 
-- ベース: `origin/main` `9cd904d3c5203caf2400eb2ff654096d63f9d8fb`
+- ベース: 作業開始時 `origin/main` `9cd904d3c5203caf2400eb2ff654096d63f9d8fb`。作業中に進んだ最新 `origin/main` `964c3a98` を merge commit `422d31bb` で統合済み。
 - 画面証拠: 元worktreeの `.workspace/20260713/スクリーンショット 2026-07-13 224146.png`、`224201.png`
 - 要件: `FR-001`、`FR-002`、`FR-076`
 - 実装契約: `CreateDocumentGroupRequestSchema`、`DocumentGroup.effectivePermission`、`DocumentUploadState`
