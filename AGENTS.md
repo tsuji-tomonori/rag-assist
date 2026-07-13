@@ -97,9 +97,10 @@
   - `skills/requirement-spec-synthesizer-ja/SKILL.md`
   - `skills/rag-quality-and-security-spec-ja/SKILL.md`
   - `skills/traceability-gap-analysis-ja/SKILL.md`
-- 成果物は原則 `docs/spec-recovery/` に置き、確定事実と推定・矛盾・未確定点を `confirmed`、`inferred`、`conflict`、`open_question` で区別する。
+- 調査途中の抽出物は `reports/working/` に置き、確定した成果だけを `docs/1_要求_REQ/`、`docs/2_アーキテクチャ_ARC/`、`docs/3_設計_DES/`、`docs/4_運用_OPS/21_監視_MONITORING/` の該当文書へ統合する。旧仕様抽出用の並行ディレクトリは作らない。
+- 確定事実と推定・矛盾・未確定点を `confirmed`、`inferred`、`conflict`、`open_question` で区別する。
 - 画面操作・期待値は要件そのものではなく、要件を検証可能にした具体例として扱う。
-- 完了前に `scripts/validate_spec_recovery.py` の適用可否を確認し、実施または未実施理由を記録する。
+- 完了前に `python3 scripts/validate_docs.py` を実行し、実施できない場合は理由を記録する。
 
 ## Implementation Test Selection
 - 対象: 実装、修正、リファクタ、設定変更、ドキュメント変更の完了前。
@@ -126,8 +127,9 @@
 
 ## Docs Update Policy for `docs/`
 - 更新依頼では `skills/docs-swebok-template-writer/SKILL.md` を参照し、SWEBOK-lite の体裁に合わせる。
+- `docs/` 直下は `1_要求_REQ/`、`2_アーキテクチャ_ARC/`、`3_設計_DES/`、`4_運用_OPS/`、`generated/` の 5 ディレクトリだけとする。
+- `docs/4_運用_OPS/` の恒久文書は `21_監視_MONITORING/` のみに置く。
+- `docs/generated/` は repository の生成コマンドが出力する OpenAPI、Web inventory、infra inventory だけとし、手編集文書を置かない。
 - 要求は原子性（1 要件 = 1 検証可能条件）を保つ。
 - 要件ドキュメントは「1 要件 = 1 ファイル」とし、受け入れ条件を同一ファイル内に明記する。
-- 新規/大規模更新は `docs/DOCS_STRUCTURE.md` の構成方針に合わせる。
-- 既存単一ファイル（例: `REQUIREMENTS.md`, `ARCHITECTURE.md`）を更新する場合も、将来移行しやすいように種別メタ情報と要件IDを維持する。
-- 以降の docs 修正では、可能な限り REQ/ARC/DES/OPS のディレクトリに分割して追記・修正する。
+- 新規/大規模更新は `docs/2_アーキテクチャ_ARC/README.md` の構成方針に合わせ、旧ルート文書や移行用の重複索引を作らない。

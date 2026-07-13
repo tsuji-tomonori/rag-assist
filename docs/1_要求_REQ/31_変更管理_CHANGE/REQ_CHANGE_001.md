@@ -22,10 +22,10 @@
 
 | 要求 | ASR | ADR | HLD/DLD/API/Data | 受入・評価 |
 | --- | --- | --- | --- | --- |
-| `FR-056`–`FR-060`, `FR-077`–`FR-080`, `FR-090`, `FR-091` | `ASR-SEC-001` | `ARC_ADR_004`, `ARC_ADR_005` | target design pending; gap: `docs/spec-recovery/16_current_state_gap_analysis_202607.md` | `AC-AUTH-003`, `E2E-TENANT-001`, `SQ-005`, `SQ-006` |
-| `FR-061`–`FR-067`, `FR-076`, `FR-081`, `FR-085`–`FR-087` | `ASR-SEC-001`, `ASR-RETRIEVAL-001` | `ARC_ADR_004` | target matrix: `docs/spec-recovery/14_authorization_sharing_matrix_202607.md` | `AC-SHARE-003`, `E2E-SHARE-004`, `SQ-005`, `SQ-006`, `SQ-009` |
-| `FR-068`–`FR-075`, `FR-082`–`FR-084`, `FR-087`–`FR-089`, `FR-092`, `FR-093`, `SQ-005`–`SQ-015` | `ASR-SEC-001`, `ASR-RETRIEVAL-001`, `ASR-EVAL-001`, `ASR-OPER-001` | ADR review pending | target lifecycle: `docs/spec-recovery/15_rag_lifecycle_matrix_202607.md` | `AC-RAG-004`–`AC-RAG-006`, `E2E-RAG-003`–`E2E-RAG-006` |
-| `CHG-003` | なし | なし | `REQUIREMENTS_BASELINE_202607.md`, `docs/spec-recovery/13_requirements_redefinition_202607.md`, `docs/spec-recovery/17_traceability_matrix_202607.csv` | `REQ_CHANGE_003` |
+| `FR-056`–`FR-060`, `FR-077`–`FR-080`, `FR-090`, `FR-091` | `ASR-SEC-001` | `ARC_ADR_004`, `ARC_ADR_005` | baseline の identity/authorization invariant と gap/todo 表 | 各要求の AC、`SQ-005`, `SQ-006` |
+| `FR-061`–`FR-067`, `FR-076`, `FR-081`, `FR-085`–`FR-087` | `ASR-SEC-001`, `ASR-RETRIEVAL-001` | `ARC_ADR_004` | baseline の sharing invariant と gap/todo 表 | 各要求の AC、`SQ-005`, `SQ-006`, `SQ-009` |
+| `FR-068`–`FR-075`, `FR-082`–`FR-084`, `FR-087`–`FR-089`, `FR-092`, `FR-093`, `SQ-005`–`SQ-015` | `ASR-SEC-001`, `ASR-RETRIEVAL-001`, `ASR-EVAL-001`, `ASR-OPER-001` | ADR review pending | baseline の RAG lifecycle invariant と gap/todo 表 | 各要求の AC と実装 task の検証計画 |
+| `CHG-003` | なし | なし | `docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md` | `REQ_CHANGE_003` |
 | `FR-001`, `FR-002`, `FR-038` | `ASR-OPER-001` | `ARC_ADR_001` | `DES_HLD_001`, `DES_DATA_001`, `DES_API_001` | 各要求の受け入れ条件 |
 | `FR-041`（Superseded compatibility） | `ASR-SEC-001`, `ASR-RETRIEVAL-001` | `ARC_ADR_001` | AC disposition の置換先を正とする | `REQ_FUNCTIONAL_041` |
 | `FR-003`, `FR-004`, `FR-005`, `FR-029` | `ASR-TRUST-001` | `ARC_ADR_001` | `DES_HLD_001`, `DES_DLD_001`, `DES_API_001` | `REQ_ACCEPTANCE_001`, `SQ-001` |
@@ -41,7 +41,7 @@
 | `FR-046`, `NFR-015` | `ASR-SEC-001`, `ASR-EVAL-001` | `ARC_ADR_001` | `DES_API_001`, `DES_DATA_001` | `REQ_FUNCTIONAL_046`, `REQ_NON_FUNCTIONAL_015` |
 | `FR-047`, `FR-048`, `SQ-002` | `ASR-EVAL-001` | `ARC_ADR_001` | `DES_DATA_001`, `DES_API_001` | `REQ_FUNCTIONAL_047`, `REQ_FUNCTIONAL_048`, `SQ-002` |
 | `NFR-014` | `ASR-OPER-001` | `ARC_ADR_001` | `DES_DATA_001`, `DES_API_001` | `REQ_NON_FUNCTIONAL_014` |
-| `CHG-002` | なし | なし | `docs/spec-recovery` | `REQ_CHANGE_002` |
+| `CHG-002` | なし | なし | `reports/working/` から正規 REQ/ARC/DES/OPS への trace | `REQ_CHANGE_002` |
 | `TC-001` | `ASR-RETRIEVAL-001` | `ARC_ADR_001` | `DES_HLD_001`, `DES_DLD_001` | `SQ-001` |
 | `TC-002` | `ASR-SEC-001` | `ARC_ADR_001` | `DES_API_001` | 各要求の受け入れ条件 |
 | `TC-003` | `ASR-SEC-001`, `ASR-OPER-001` | `ARC_ADR_005` | CloudFront / API middleware / WebSocket ticket design TBD。追跡: `tasks/todo/20260522-2120-cloudfront-single-entry-implementation.md` | `REQ_TECHNICAL_CONSTRAINT_003` |

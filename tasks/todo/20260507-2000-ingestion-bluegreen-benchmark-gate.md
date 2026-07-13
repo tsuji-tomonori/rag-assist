@@ -6,6 +6,8 @@
 
 - todo
 
+関連要件・gap: `FR-072`, `FR-075`, `SQ-006`, `SQ-007`, `GAP-RD-017`, `GAP-RD-019`
+
 ## 背景
 
 `DocumentBlock` による ingestion v2 は RAG 品質改善の本命だが、chunk 数、index version、citation metadata、OCR confidence の変更は retrieval 品質と latency に大きく影響する。rag-assist には再インデックス、blue-green 切替、benchmark、debug trace の導線があるため、v1 と v2 の比較を gate 化してから切り替える必要がある。

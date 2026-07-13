@@ -28,7 +28,7 @@ source、chunk、embedding、vector、manifest の順次書き込み中に失敗
 | 識別子 | `FR-083` |
 | 説明 | scoped idempotency、checkpoint、attempt fencing、winner-only reconciliation/publish を持つ staged ingest recovery |
 | 根拠 | 再試行時の duplicate、orphan、部分公開を防ぐ |
-| 源泉 | `docs/spec-recovery/15_rag_lifecycle_matrix_202607.md`、`docs/spec-recovery/16_current_state_gap_analysis_202607.md` の `GAP-RD-013` |
+| 源泉 | `docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md` の `GAP-RD-013` |
 | Actor / trigger | ingest worker が stage を commit、retry または recovery するとき |
 | 種類 | 機能要求 / ingest / recovery |
 | 依存関係 | `FR-038`, `FR-069`, `FR-072`, `FR-082` |
@@ -76,5 +76,5 @@ source、chunk、embedding、vector、manifest の順次書き込み中に失敗
 
 ## トレース
 
-- 後方: `GAP-RD-013`、`FR-038`、`docs/spec-recovery/15_rag_lifecycle_matrix_202607.md`。
+- 後方: `GAP-RD-013`、`FR-038`、`docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md`。
 - 前方: ingest stage ledger、idempotency contract、fault-injection suite、`FR-072`。

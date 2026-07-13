@@ -28,7 +28,7 @@
 | 識別子 | `FR-089` |
 | 説明 | retry/fallback/degradation path の safety guard invariant |
 | 根拠 | 障害・高負荷・費用上限時の security/grounding bypass を防ぐ |
-| 源泉 | `SQ-008`、RAG ガイド §8.5–8.6（PDF pp.198–203）、`docs/spec-recovery/15_rag_lifecycle_matrix_202607.md` |
+| 源泉 | `SQ-008`、RAG ガイド §8.5–8.6（PDF pp.198–203）、`docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md` |
 | Actor / trigger | runtime が timeout、circuit open、dependency failure、overload、cost limit を検出するとき |
 | 種類 | 機能要求 / resilience / security / RAG safety |
 | 依存関係 | `FR-068`, `FR-070`, `FR-071`, `FR-073`, `FR-075`, `FR-088`, `SQ-008` |

@@ -28,9 +28,9 @@
 
 ## 要件の源泉・背景
 
-- 源泉: `docs/spec-recovery/06_requirements.md` の `REQ-BENCH-003`
-- 源泉: `docs/spec-recovery/03_acceptance_criteria.md` の `AC-BENCH-003`
-- 源泉: `docs/spec-recovery/07_specifications.md` の `SPEC-BENCH-003`
+- 源泉: `docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md` の `REQ-BENCH-003`
+- 源泉: `docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md` の `AC-BENCH-003`
+- 源泉: `docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md` の `SPEC-BENCH-003`
 - 背景: 復元仕様では、長時間 benchmark run の timeout、progress、metrics、raw results download、artifact generation の追跡が求められている。
 
 ## 要件の目的・意図
@@ -58,4 +58,4 @@
 ## 関連文書
 
 - `docs/1_要求_REQ/11_製品要求_PRODUCT/11_非機能要求_NON_FUNCTIONAL/11_サービス品質制約_SERVICE_QUALITY/REQ_SERVICE_QUALITY_002.md`
-- `docs/OPERATIONS.md`
+- `docs/4_運用_OPS/21_監視_MONITORING/OPS_MONITORING_001.md`

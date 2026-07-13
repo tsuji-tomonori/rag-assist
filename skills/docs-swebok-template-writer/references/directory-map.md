@@ -21,11 +21,11 @@ Use this map to decide where a document belongs and what it should contain.
 | `DES_UI_UX` | `docs/3_設計_DES/21_UI_UX/` | Screens, flows, interaction states, wording, accessibility expectations | Backend-only design decisions |
 | `DES_DATA` | `docs/3_設計_DES/31_データ_DATA/` | Data model, schema, migration notes, retention, data ownership | API endpoint behavior unless it affects data shape |
 | `DES_API` | `docs/3_設計_DES/41_API_API/` | API contracts, request/response shape, errors, compatibility | Internal implementation details not visible at boundary |
-| `OPS_PLAN` | `docs/4_運用_OPS/01_運用計画_PLAN/` | Operating assumptions, environments, backup, security posture, manual procedures | Product roadmap |
-| `OPS_RELEASE` | `docs/4_運用_OPS/11_リリース_RELEASE/` | Release steps, rollback, migration, version notes, verification checklist | Deep architecture rationale |
+| `OPS_PLAN` | `docs/4_運用_OPS/21_監視_MONITORING/` | Current operating assumptions and observable verification procedures | Product roadmap or execution history |
+| `OPS_RELEASE` | `docs/4_運用_OPS/21_監視_MONITORING/` | Observable release checks, rollback signals, migration verification | Release execution logs |
 | `OPS_MONITORING` | `docs/4_運用_OPS/21_監視_MONITORING/` | Signals, logs, metrics, alerts, health checks, diagnostics | Full incident narratives |
-| `OPS_INCIDENT` | `docs/4_運用_OPS/31_インシデント_INCIDENT/` | Incident report, timeline, impact, cause, response, prevention | Routine maintenance plans |
-| `OPS_MAINTENANCE` | `docs/4_運用_OPS/41_保守_MAINTENANCE/` | Maintenance tasks, technical debt, dependency updates, recurring checks | Individual release execution logs |
+| `OPS_INCIDENT` | `docs/4_運用_OPS/21_監視_MONITORING/` | Reusable incident detection and response procedure; narratives go to `reports/bugs/` | Incident timeline/history |
+| `OPS_MAINTENANCE` | `docs/4_運用_OPS/21_監視_MONITORING/` | Observable recurring checks and maintenance verification | Individual execution logs or technical-debt tasks |
 
 ## Selection Heuristic
 

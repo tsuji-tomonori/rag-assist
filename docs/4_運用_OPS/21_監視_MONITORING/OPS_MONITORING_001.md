@@ -1,55 +1,57 @@
-# 運用監視
+# MemoRAG MVP 監視・検証ランブック
 
-- ファイル: `OPS_MONITORING_001.md`
+- ファイル: `docs/4_運用_OPS/21_監視_MONITORING/OPS_MONITORING_001.md`
 - 種別: `OPS_MONITORING`
 - 状態: Draft
+- 最終更新: 2026-07-13
 
 ## 目的
 
-AWS Cost Anomaly Detection で検知される少額の KMS / Secrets Manager コストを、既知の MemoRAG MVP 構成と突合できるようにする。
+現行実装で利用できる health、ログ、benchmark、生成物 freshness を使い、障害と品質劣化の初動確認を再現可能にする。未実装の本番 RAG 監視機能は、利用可能であるかのように記載せず todo へ分離する。
 
-## 監視対象
+## 現行の観測点
 
-| AWS service | MemoRAG MVP の必要リソース | 用途 | 継続判断 |
-| --- | --- | --- | --- |
-| AWS Key Management Service | `BenchmarkProjectKey` | CodeBuild project artifact 暗号化設定用の customer managed key | benchmark runner を管理画面から実行する場合は必要 |
-| AWS Secrets Manager | `BenchmarkRunnerAuthSecret` | `BENCHMARK_RUNNER` service user credential の保存 | production API を叩く benchmark runner では必要 |
-| AWS Key Management Service | AWS managed key `aws/secretsmanager` | Secrets Manager secret の保存時暗号化 | Secrets Manager を使う限り AWS 側で利用される |
+| 対象 | 現行の観測点 | 確認先 |
+| --- | --- | --- |
+| API 生存性 | health endpoint の HTTP status | `GET /health`、API Gateway/Lambda logs |
+| chat / ingestion | request、error、処理段階の application log | CloudWatch Logs、対象 Lambda log group |
+| debug trace | 認可された trace API と保存 artifact | `DES_API_001`、`DES_DATA_001` |
+| benchmark | run status、report、runner log | benchmark API、Step Functions、CodeBuild logs |
+| deploy | workflow run、CloudFormation event、smoke result | GitHub Actions、CloudFormation、health endpoint |
+| API/docs drift | 自動生成物の freshness check | `npm run docs:openapi:check` |
+| Web/infra docs drift | inventory の freshness check | `npm run docs:web-inventory:check`、`npm run docs:infra-inventory:check` |
 
-`BenchmarkProjectKey` は customer managed KMS key として CDK stack が作成するため、CodeBuild 実行履歴がない場合でも key storage 由来の少額コスト候補になる。Cost Explorer または Cost and Usage Report では、usage type が key storage 由来か request 由来かを確認する。
-
-AWS KMS の AWS managed key は key storage 自体の課金対象外だが、AWS managed key への API request は利用量として請求されうる。Secrets Manager は secret 保存数と API call に基づく課金対象であり、secret を維持する限り少額 anomaly の候補になる。
-
-## Anomaly 突合メモ
-
-2026-05-02 の Cost Anomaly Detection では、Member Account `713881826246 (GenU)` に対して AWS Key Management Service の Total Impact `$0.02` と AWS Secrets Manager の Total Impact `$0.01` が検知された。
-
-この金額が MemoRAG MVP deploy 後に発生した場合、第一候補は benchmark runner 用の `BenchmarkProjectKey`、`BenchmarkRunnerAuthSecret`、および Secrets Manager の AWS managed key 利用である。
+認証情報、source 本文、chunk 本文、prompt、raw model response を一般ログへ出力しない。debug trace の raw data/redaction 契約には既知の不一致があるため、修正 task が完了するまで本番 trace の共有範囲を最小化する。
 
 ## 初動確認
 
-1. Cost Explorer または Cost and Usage Report で account、region、service、usage type を確認する。
-2. CloudFormation stack に `BenchmarkProjectKey` と `BenchmarkRunnerAuthSecret` が存在するか確認する。
-3. `benchmarkRunnerAuthSecretId` context で外部 secret を参照している場合、外部 secret の所有者と利用目的を確認する。
-4. CodeBuild benchmark runner の実行履歴と Secrets Manager `GetSecretValue` の時刻を突合する。
-5. 性能テスト画面または `GET /benchmark-runs/{runId}/logs` から CodeBuild ログ本文を `.txt` として取得し、runner setup、dataset 準備、API 呼び出し、artifact upload のどこで失敗したかを確認する。
-6. 予算超過や想定外 region での発生があれば、benchmark runner の起動を止めて stack drift と未使用 stack を確認する。
+1. 影響範囲、発生時刻、request/run ID、環境を記録する。
+2. `GET /health` と直近 deploy/workflow status を確認する。
+3. API Gateway、Lambda、Step Functions、CodeBuild の順に、同じ時刻と ID の error を追跡する。
+4. RAG 品質事象は回答、引用、取得 evidence、answerability、debug trace、使用中の index/alias を突合する。
+5. 権限事象は token や本文を転記せず、actor、tenant/resource、要求 permission、decision reason、audit event の有無を確認する。
+6. deploy や設定変更が原因候補なら、CloudFormation event と直前差分を確認する。rollback、resource 削除、deploy は別途承認を得て実行する。
 
-## 削除・抑制できる条件
+## ローカル／CI 検証
 
-| リソース | 削除・抑制条件 | 注意点 |
-| --- | --- | --- |
-| `BenchmarkProjectKey` | Step Functions + CodeBuild benchmark runner を使わない | CodeBuild project artifact 暗号化設定と cdk-nag 要件を再評価する |
-| `BenchmarkRunnerAuthSecret` | production API を叩く runner を使わない、または外部管理 secret へ移行する | 外部管理 secret を使う場合も Secrets Manager の保存・API call コストは残る |
-| AWS managed key `aws/secretsmanager` | Secrets Manager secret を全廃する | AWS managed key 自体の保存は管理対象外だが、関連 API request は請求表示に出る可能性がある |
+リポジトリ定義を正とし、実行前に `Taskfile.yml` または `package.json` の解決コマンドを確認する。
+
+| 目的 | コマンド |
+| --- | --- |
+| docs 構成と自動生成物 | `task docs:check` |
+| OpenAPI freshness | `npm run docs:openapi:check` |
+| Web inventory freshness | `npm run docs:web-inventory:check` |
+| infra inventory freshness | `npm run docs:infra-inventory:check` |
+| hidden Unicode | `npm run docs:hidden-unicode:check` |
+
+変更範囲に見合う lint、typecheck、test、build、smoke は `Taskfile.yml` と package scripts から追加選択する。未実施の確認は運用記録や PR で実施済みとしない。
+
+## 既知の未実装監視
+
+本番 stage/slice 別の RAG 品質・安全 drift、SLO alert、safe degradation/recovery action の control loop は未実装である。`FR-089`、`FR-093`、`SQ-008`、`SQ-012`–`SQ-015` と `GAP-RD-024` は `tasks/todo/20260713-2257-production-rag-monitoring.md` で追跡する。
 
 ## 受け入れ条件
 
-- AC-OPS-MON-001: Cost anomaly で KMS または Secrets Manager が検知された場合、上記の必要リソース表で MemoRAG MVP の既知リソースか判断できること。
-- AC-OPS-MON-002: benchmark runner を使わない運用では、削除・抑制条件に従って関連リソースの停止候補を説明できること。
-- AC-OPS-MON-003: benchmark runner の失敗時に、CodeBuild ログ本文を API または画面から取得して一次調査できること。
-
-## 参照
-
-- AWS Key Management Service pricing: https://aws.amazon.com/kms/pricing/
-- AWS Secrets Manager pricing: https://aws.amazon.com/secrets-manager/pricing/
+- AC-OPS-MON-001: API、chat/ingestion、benchmark、deploy、docs freshness の現行観測点を特定できること。
+- AC-OPS-MON-002: 障害調査時に機微な本文や credential を一般ログへ追加せず、時刻と ID で相関できること。
+- AC-OPS-MON-003: 未実装の本番 RAG 監視を現行機能と誤認せず、対応 task と要求へ逆引きできること。

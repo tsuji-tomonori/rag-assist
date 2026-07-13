@@ -26,8 +26,8 @@
 
 ## 要件の源泉・背景
 
-- 源泉: `docs/spec-recovery/06_requirements.md` の `REQ-UI-001`
-- 源泉: `docs/spec-recovery/03_acceptance_criteria.md` の `AC-UI-001`
+- 源泉: `docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md` の `REQ-UI-001`
+- 源泉: `docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md` の `AC-UI-001`
 - 背景: 復元仕様では chat UI の主要操作として send shortcut が確認されている。
 
 ## 要件の目的・意図
@@ -54,6 +54,6 @@
 
 ## 関連文書
 
-- `docs/REQUIREMENTS.md`
+- `docs/1_要求_REQ/README.md`
 - `docs/1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/02_チャットQA・根拠提示・回答不能制御/01_質問入力・回答取得/REQ_FUNCTIONAL_003.md`
 - `docs/1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/02_チャットQA・根拠提示・回答不能制御/05_統合チャットUI/REQ_FUNCTIONAL_009.md`
