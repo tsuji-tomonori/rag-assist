@@ -2,8 +2,8 @@
 
 - 実施日時: 2026-07-12 22:07 JST
 - branch: `codex/full-requirements-implementation`
-- task: `tasks/do/20260711-1518-full-requirements-implementation.md`
-- 状態: repository implementation / #342 統合後 local acceptance verified、delivery in progress、live operational acceptance は follow-up へ分離
+- task: `tasks/done/20260711-1518-full-requirements-implementation.md`
+- 状態: repository implementation / #342 統合後 local・GitHub CI acceptance verified、merge ready、live operational acceptance は follow-up へ分離
 
 ## 受けた指示
 
@@ -53,6 +53,7 @@
 - `npm run cdk -w @memorag-mvp/infra -- synth`: pass。既知の MFA/WAF cdk-nag warning は残るが synth failure はない。
 - `npm run check:dynamodb-gsi-update-limit -w @memorag-mvp/infra -- /tmp/pr341-base-template.json test/__snapshots__/memorag-mvp-stack.snapshot.json`: pass
 - `git diff --check`: pass
+- GitHub Actions: MemoRAG CI run 979、Validate Semver Label run 1432 ともに success（head `d36f6675e3633747b5e273ab178a184561615c0f`）。
 - read-only 最終再監査: production-path blocker 0。benchmark seed 削除の認可 subject と verified runner の audit/tombstone attribution、共有 corpus mapping、mismatched owner 拒否を再確認した。
 
 ### 検証中に検出して修復した主な失敗
@@ -75,7 +76,7 @@
 
 - 実行計画: `reports/working/20260711-1518-full-requirements-execution-plan.md`
 - 要件別証跡: `reports/working/20260712-2207-full-requirements-implementation-evidence.csv`
-- task: `tasks/do/20260711-1518-full-requirements-implementation.md`
+- task: `tasks/done/20260711-1518-full-requirements-implementation.md`
 - live operational acceptance follow-up: `tasks/todo/20260714-0104-full-requirements-operational-acceptance.md`
 - runtime/API/Web/infra/benchmark/test/docs 一式
 - 本レポート
@@ -94,4 +95,4 @@
 - `SQ-005`–`SQ-015`: approved dataset/threshold/window/owner/workload/price catalog を用いた live/load/chaos/cost/billing acceptance は未実施。
 - API C1 branches 85% は未達として `tasks/todo/20260712-coverage-api-c1-recovery.md` で追跡する。C0 statements/functions/lines 90% は blocking gate のまま維持する。
 - `npm install` 時点の audit は 4 vulnerabilities（low 1、moderate 1、high 2）を報告した。本タスクでは依存更新による互換性変更を実施していない。
-- Draft PR #341、既存の受け入れコメント、セルフレビューは作成済み。#342 統合後 head の GitHub Actions 再検証と最終コメントは push 後に実施する。live 運用 evidence の完了は主張せず、専用 follow-up task で継続する。
+- PR #341 は #342 統合後 head で本文・受け入れコメント・セルフレビューを更新し、`semver:minor`、Draft 解除、レビュー提出なし、未解決 thread なし、GitHub Actions success を確認した。task done 記録の final commit とその CI 成功後に exact head SHA で merge する。live 運用 evidence の完了は主張せず、専用 follow-up task で継続する。

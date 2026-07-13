@@ -128,7 +128,7 @@ AWS KMS の AWS managed key は key storage 自体の課金対象外だが、AWS
 
 ## 運用検証状況
 
-repository-local の実装・単体／統合テストと infrastructure 定義は確認対象に含む。一方、live AWS 上の backfill convergence、通知、drift、rollback、chaos、承認済み dataset・threshold・workload・price・billing evidence はこの文書だけでは完了扱いにしない。これらは `tasks/do/20260711-1518-full-requirements-implementation.md` の未完了項目として追跡する。
+repository-local の実装・単体／統合テストと infrastructure 定義は確認対象に含む。一方、live AWS 上の backfill convergence、通知、drift、rollback、chaos、承認済み dataset・threshold・workload・price・billing evidence はこの文書だけでは完了扱いにしない。これらは `tasks/todo/20260714-0104-full-requirements-operational-acceptance.md` で追跡する。
 
 ## 受け入れ条件
 
