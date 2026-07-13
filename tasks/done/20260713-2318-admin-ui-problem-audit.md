@@ -1,8 +1,9 @@
 # 管理画面の問題点・改善方針・受け入れ条件調査
 
-- 状態: do
+- 状態: done
 - タスク種別: 調査
 - 作成日: 2026-07-13
+- 完了日: 2026-07-14
 - ブランチ: `codex/admin-ui-audit-spec`
 
 ## 背景
@@ -46,16 +47,27 @@
 
 ## 受け入れ条件
 
-- [ ] 管理画面の全 route/section と、表示・操作に使う API/store/schema/permission/test の対応表がある。
-- [ ] 料金が 0 になる経路とロール一覧の可読性問題を、ファイル・行またはテストなどの根拠付きで説明している。
-- [ ] 管理画面全体の問題が、データ真正性、機能欠落、状態設計、情報設計、認可、安全性、responsive/a11y、テスト・仕様欠落の観点で棚卸しされている。
-- [ ] 各問題に severity、利用者影響、確度、根拠、改善方針、後続実装単位が対応している。
-- [ ] 各後続 task に正常系、異常系、権限、境界値、empty/loading/recovery、必要な非機能・アクセシビリティを含む原子的な受け入れ条件がある。
-- [ ] source から fact、finding/task、AC、E2E または非 UI 検証、requirement/specification まで双方向に追跡できる。
-- [ ] 未確定の料金ルール、閾値、ロール運用などは架空値で補わず open question として分離している。
-- [ ] `scripts/validate_spec_recovery.py` の適用可否を確認し、実行結果または非適用理由を記録している。
-- [ ] 変更範囲に対応する docs/Markdown 検証と `git diff --check` が成功し、未実施検証がある場合は理由と残余リスクを記録している。
-- [ ] 作業レポート、main 向け PR、日本語の受け入れ条件確認コメント、セルフレビューコメントが作成されている。
+- [x] 管理画面の全 route/section と、表示・操作に使う API/store/schema/permission/test の対応表がある。
+- [x] 料金が 0 になる経路とロール一覧の可読性問題を、ファイル・行またはテストなどの根拠付きで説明している。
+- [x] 管理画面全体の問題が、データ真正性、機能欠落、状態設計、情報設計、認可、安全性、responsive/a11y、テスト・仕様欠落の観点で棚卸しされている。
+- [x] 各問題に severity、利用者影響、確度、根拠、改善方針、後続実装単位が対応している。
+- [x] 各後続 task に正常系、異常系、権限、境界値、empty/loading/recovery、必要な非機能・アクセシビリティを含む原子的な受け入れ条件がある。
+- [x] source から fact、finding/task、AC、E2E または非 UI 検証、requirement/specification まで双方向に追跡できる。
+- [x] 未確定の料金ルール、閾値、ロール運用などは架空値で補わず open question として分離している。
+- [x] `scripts/validate_spec_recovery.py` の適用可否を確認し、実行結果または非適用理由を記録している。
+- [x] 変更範囲に対応する docs/Markdown 検証と `git diff --check` が成功し、未実施検証がある場合は理由と残余リスクを記録している。
+- [x] 作業レポート、main 向け PR、日本語の受け入れ条件確認コメント、セルフレビューコメントが作成されている。
+
+## 完了結果
+
+- 結論・問題一覧・改善方針: `docs/spec-recovery/18_admin_ui_audit_202607.md`–`29_admin_ui_open_questions_202607.md`
+- 要件候補: `docs/spec-recovery/admin-ui-202607/requirements/REQ_AUI_001.md`–`REQ_AUI_013.md`
+- 作業レポート: `reports/working/20260713-2359-admin-ui-audit-spec.md`
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/344
+- セルフレビュー: https://github.com/tsuji-tomonori/rag-assist/pull/344#issuecomment-4959463475
+- 受け入れ条件確認: https://github.com/tsuji-tomonori/rag-assist/pull/344#issuecomment-4959467766
+- 検証: spec-recovery validator、hidden Unicode、pre-commit、AUI ID/reference/collision、要件必須属性、stage済みdiff checkが成功
+- 未実施境界: production codeの修正、後続E2E、実AWS/請求/identity、実browser/支援技術は本調査の完了対象外であり、各ACとPRにrelease gateとして記録
 
 ## 検証計画
 

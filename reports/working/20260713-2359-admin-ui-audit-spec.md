@@ -3,8 +3,9 @@
 - 実施日時: 2026-07-13 23:59 JST
 - 基準: `origin/main` / `9cd904d3c5203caf2400eb2ff654096d63f9d8fb`
 - 作業ブランチ: `codex/admin-ui-audit-spec`
-- タスク: `tasks/do/20260713-2318-admin-ui-problem-audit.md`
-- 状態: PR作成・受け入れ条件コメント前
+- タスク: `tasks/done/20260713-2318-admin-ui-problem-audit.md`
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/344
+- 状態: 調査成果物、PR、受け入れ条件確認、セルフレビュー完了
 
 ## 受けた指示
 
@@ -36,6 +37,7 @@
 - 81件のfact、36件のgap、13件のtask、158件の原子的AC、17件のE2E/非UIscenario、13件の1要件1ファイル候補、13件のspecification、22件のopen questionを作成した。
 - 既存の`ADM` ID familyとの衝突をID検査で検出し、新規成果物を`AUI` prefixへ改名した。
 - source→fact→gap→task→requirement→specification→AC→E2Eと、その逆引きをtrace matrixへ記録した。
+- GitHub Appsでmain向けPR #344を作成し、`semver:patch` label、日本語のセルフレビュー、受け入れ条件確認を記録した。
 
 ## 成果物
 
@@ -67,7 +69,7 @@ API/Web production codeを変更していないため、lint/typecheck/unit/buil
 - 改善方針:各gapを依存順のtaskとAPI/read model/UI/security/migration仕様候補へ結び付けた。
 - 受け入れ条件:正常・error・permission・boundary・empty/loading/recovery・security/NFRを158件の独立判定へ分割した。
 - 未確定値:22件をowner付きopen questionへ分離し、実装fallbackを許可していない。
-- 残作業:commit/push/PR、受け入れ条件確認コメント、セルフレビュー、task完了移動。
+- workflow完了: taskの10受け入れ条件をPR上で確認した後、taskを`tasks/done/`へ移す更新を同じPR branchへ反映する。
 
 ## 未対応・制約・リスク
 
@@ -75,3 +77,4 @@ API/Web production codeを変更していないため、lint/typecheck/unit/buil
 - 利用者interview、実端末、screen reader、contrast、400% zoomの結果はないため、UX/a11yの影響度にはevidence gapが残る。
 - pricing source、session失効上限、delete/retention、strong-role承認、pagination/SLO、audit/SIEM、rollout許容差はowner決定が必要である。
 - 本成果物は`proposed / non-normative`であり、既存canonical product baselineを自動更新していない。
+- GitHub ActionsはPR作成後に別途実行されるため、最終回答時点の結果をrepository外のPR状態として確認する。
