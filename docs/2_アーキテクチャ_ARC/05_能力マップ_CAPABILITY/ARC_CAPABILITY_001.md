@@ -38,8 +38,8 @@
 
 ## 関連文書
 
-- `docs/REQUIREMENTS.md`
+- `docs/1_要求_REQ/README.md`
 - `docs/1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/README.md`
-- `docs/ARCHITECTURE.md`
+- `docs/2_アーキテクチャ_ARC/README.md`
 - `docs/2_アーキテクチャ_ARC/11_ビュー_VIEW/ARC_VIEW_001.md`
 - `docs/2_アーキテクチャ_ARC/31_品質属性_QA/ARC_QA_001.md`

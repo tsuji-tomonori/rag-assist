@@ -56,7 +56,7 @@
 | 識別子 | `FR-076` |
 | 説明 | protected resource の資源種別と操作を完全一致で評価する認可 decision |
 | 根拠 | 操作の取り違え、権限の過剰包含、未定義操作の暗黙許可を防ぐ |
-| 源泉 | `tasks/do/20260711-1148-redefine-rag-requirements.md`、`docs/spec-recovery/14_authorization_sharing_matrix_202607.md` §§2, 4.2, 5.1, 9、current authorization/routes |
+| 源泉 | `tasks/done/20260711-1148-redefine-rag-requirements.md`、`docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md` の横断不変条件と gap 表、current authorization/routes |
 | Actor / trigger | authenticated actor が document、folder、resource group の create/read/update/delete/move/share/search-use を要求するとき |
 | 種類 | 機能要求 / authorization policy |
 | 依存関係 | `FR-056`, `FR-057`, `FR-059`, authoritative permission catalog |
@@ -98,5 +98,5 @@
 
 ## トレース
 
-- 後方: `FR-057`, `FR-059`, `docs/spec-recovery/14_authorization_sharing_matrix_202607.md`、`apps/api/src/authorization.ts`、`apps/api/src/routes/document-routes.ts`。
+- 後方: `FR-057`, `FR-059`, `docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md`、`apps/api/src/authorization.ts`、`apps/api/src/routes/document-routes.ts`。
 - 前方: resource-operation authorization contract matrix、`FR-077`, `FR-081`, `FR-085`, `FR-086`。

@@ -19,9 +19,9 @@
 
 ## 要件の源泉・背景
 
-- 源泉: `docs/spec-recovery/06_requirements.md` の `REQ-DOC-002`
-- 源泉: `docs/spec-recovery/03_acceptance_criteria.md` の `AC-DOC-003`
-- 源泉: `docs/spec-recovery/09_gap_analysis.md` の `GAP-003`
+- 源泉: `docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md` の `REQ-DOC-002`
+- 源泉: `docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md` の `AC-DOC-003`
+- 源泉: `docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md` の `GAP-003`
 - 背景: 復元結果では PDF/OCR/大容量 ingest の境界値が重要とされているが、mime type、size、timeout の本番閾値は未確定である。
 
 ## 要件の目的・意図
@@ -50,4 +50,4 @@
 
 - `docs/1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/01_文書・知識ベース管理/06_非同期文書取り込み/REQ_FUNCTIONAL_038.md`
 - `docs/1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/07_評価・debug・benchmark/06_benchmark_corpus_seed/REQ_FUNCTIONAL_039.md`
-- `docs/OPERATIONS.md`
+- `docs/4_運用_OPS/21_監視_MONITORING/OPS_MONITORING_001.md`

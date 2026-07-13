@@ -2,8 +2,8 @@
 
 - 種別: `REQ_FUNCTIONAL`
 - 状態: planning
-- 仕様参照: `docs/spec/2026-chapter-spec.md` 4B 章
-- 補助調査: `docs/spec/gap-phase-f.md`
+- 仕様参照: `docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md` 4B 章
+- 補助調査: `docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md`
 - FR-049: チャット内の RAG 検索、回答生成、ツール実行、回答不能判定を `ChatOrchestrationRun` として扱い、非同期エージェント実行とは別の同期チャット処理として管理できること。
 
 ## 要求

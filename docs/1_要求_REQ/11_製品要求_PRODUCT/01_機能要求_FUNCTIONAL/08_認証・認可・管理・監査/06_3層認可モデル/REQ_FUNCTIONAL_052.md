@@ -2,7 +2,7 @@
 
 - 種別: `REQ_FUNCTIONAL`
 - 状態: Superseded（2026-07-11、`CHG-003`）
-- 仕様参照: `docs/spec/2026-chapter-spec.md` 16-20 章
+- 仕様参照: `docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md` 16-20 章
 - FR-052: 操作可否を Account status、Feature permission、Resource permission の 3 層で判定し、フォルダ・文書・RAG・benchmark・admin 操作に一貫して適用できること。
 
 ## 要求
