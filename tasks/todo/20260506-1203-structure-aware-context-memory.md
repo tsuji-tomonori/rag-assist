@@ -63,7 +63,7 @@ memory card 生成と context assembly では、summary 文字数、keywords 件
 - 要求仕様: `FR-002`、`FR-004`、`FR-005`、`FR-015`、`FR-020`、`SQ-001` について、memory card、context selection、citation、回答不能制御の受け入れ条件更新要否を確認する。
 - architecture / design: document statistics、manifest optional field、memory card、context assembly、evidence index の data / workflow 変更を `DES_HLD_001`、該当 DLD、`DES_DATA_001` に反映する。
 - README / API examples / OpenAPI: manifest / trace optional field が外部に見える場合は API examples / OpenAPI を更新する。通常 chat response が変わらない場合は更新不要理由を PR 本文に書く。
-- local verification / operations: reindex 要否、既存 manifest fallback、table / list / long document 確認、cost / latency / rollback を `docs/LOCAL_VERIFICATION.md` と `docs/OPERATIONS.md` に追記する。
+- monitoring / verification: reindex 要否、既存 manifest fallback、table / list / long document 確認、cost / latency / rollback を `docs/4_運用_OPS/21_監視_MONITORING/OPS_MONITORING_001.md` に追記する。
 - PR 本文: docs 更新範囲、既存 manifest 互換、reindex / rollback 方針、未確認 benchmark を明記する。
 
 ## 受け入れ条件

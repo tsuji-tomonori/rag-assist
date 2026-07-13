@@ -3,7 +3,7 @@
 - 実施日時: 2026-07-12 22:07 JST
 - branch: `codex/full-requirements-implementation`
 - task: `tasks/do/20260711-1518-full-requirements-implementation.md`
-- 状態: repository implementation / local acceptance verified、delivery in progress、operational acceptance pending
+- 状態: repository implementation / #342 統合後 local acceptance verified、delivery in progress、live operational acceptance は follow-up へ分離
 
 ## 受けた指示
 
@@ -24,25 +24,34 @@
 - 一時添付は同一会話の次質問へ scope を引き継ぎ、永続一覧へ混入せず回答/citation に利用できるよう修正した。
 - local chat event ledger は temporary file + atomic rename とし、worker 書き込み中の SSE partial JSON read を防止した。
 - Web の fake usage/cost fallback を honest unavailable state へ置換し、benchmark 履歴を 380px 以下の内部スクロールへ同期した。
-- OpenAPI、Web/infra inventory、REQ/ARC/DES/OPS、spec-recovery trace/evidence を同期した。README と運用文書は実装・検証手順変更に合わせて更新した。AGENTS.md 自体の変更は不要だった。
+- OpenAPI、Web/infra inventory、REQ/ARC/DES/OPS、要件 trace/evidence を同期した。README と運用文書は実装・検証手順変更に合わせて更新した。
+- 2026-07-14 に main（#342）の正規 docs 構成を統合し、legacy `docs/spec` / `docs/spec-recovery` を復活させず、実行計画と implementation evidence を `reports/working/` へ移した。#342 で更新された AGENTS.md、Taskfile、docs validator、正規文書構成を維持した。
+- workflow 競合は `docs_structure` guard と RAG release source audit／promotion gate の両方を残し、要件 coverage test は正規 docs/task/report path と production code/test trace を併存させた。
+- live AWS、承認済み閾値、実 workload、通知／drift／rollback drill、負荷／chaos／課金照合は `tasks/todo/20260714-0104-full-requirements-operational-acceptance.md` へ明示的に移管した。
 
 ## 検証結果
 
-- final workspace suites:
+- #342 統合後 final workspace suites:
   - contract 1/1
-  - API 658/658
+  - API 765/765
   - Web 307/307
   - infra 38/38
   - benchmark 102/102
-- `npm run test:e2e:smoke -w @memorag-mvp/web`: 4/4 pass
+- `npm run test:e2e:smoke -w @memorag-mvp/web`: runtime 実装 head で 4/4 pass。#342 統合は docs/task/workflow/test trace のみのため再実行していない。
 - `npm run lint`: pass
+- `npm run typecheck --workspaces --if-present`: pass
 - `npm run build --workspaces --if-present`: pass
+- `npm run ci`: pass。sandbox では listener を使う test が `listen EPERM` となったため、ユーザー承認を得た同一コマンドの実 runner 再実行で全件 pass を確認した。
 - `npm run docs:openapi:check`: pass
 - `npm run docs:web-inventory:check`: pass
 - `npm run docs:infra-inventory:check`: pass
-- `python3 scripts/validate_spec_recovery.py docs/spec-recovery`: pass。semantic atomicity/sufficiency は人手レビュー対象との validator 注記あり。
+- `python3 scripts/validate_docs.py`: pass
+- `python3 -m unittest scripts/test_validate_docs.py`: 6/6 pass
+- `task docs:check`: pass
 - `npm run docs:hidden-unicode:check`: pass
 - `npm run rag:release:source-audit`: pass。dataset-specific branch 0、artifact manifest mismatch 0。
+- `npm run cdk -w @memorag-mvp/infra -- synth`: pass。既知の MFA/WAF cdk-nag warning は残るが synth failure はない。
+- `npm run check:dynamodb-gsi-update-limit -w @memorag-mvp/infra -- /tmp/pr341-base-template.json test/__snapshots__/memorag-mvp-stack.snapshot.json`: pass
 - `git diff --check`: pass
 - read-only 最終再監査: production-path blocker 0。benchmark seed 削除の認可 subject と verified runner の audit/tombstone attribution、共有 corpus mapping、mismatched owner 拒否を再確認した。
 
@@ -64,9 +73,10 @@
 
 ## 成果物
 
-- 実行計画: `docs/spec-recovery/18_implementation_execution_plan_202607.md`
-- 要件別証跡: `docs/spec-recovery/19_implementation_evidence_202607.csv`
+- 実行計画: `reports/working/20260711-1518-full-requirements-execution-plan.md`
+- 要件別証跡: `reports/working/20260712-2207-full-requirements-implementation-evidence.csv`
 - task: `tasks/do/20260711-1518-full-requirements-implementation.md`
+- live operational acceptance follow-up: `tasks/todo/20260714-0104-full-requirements-operational-acceptance.md`
 - runtime/API/Web/infra/benchmark/test/docs 一式
 - 本レポート
 
@@ -75,7 +85,7 @@
 - repository implementation と local acceptance は要件 ID 別 evidence および全回帰で確認した。
 - production UI/API の mock/fake fallback は追加せず、unavailable/permission/error を正直に表示する。
 - benchmark期待語句、QA sample 固有値、dataset 固有分岐は production source audit で 0。
-- production deploy、migration 実行、PR merge/close は行っていない。
+- production deploy、migration 実行は行っていない。PR merge は 2026-07-14 の追加指示を受け、最終 CI 後に実施する。
 
 ## 未対応・制約・リスク
 
@@ -84,4 +94,4 @@
 - `SQ-005`–`SQ-015`: approved dataset/threshold/window/owner/workload/price catalog を用いた live/load/chaos/cost/billing acceptance は未実施。
 - API C1 branches 85% は未達として `tasks/todo/20260712-coverage-api-c1-recovery.md` で追跡する。C0 statements/functions/lines 90% は blocking gate のまま維持する。
 - `npm install` 時点の audit は 4 vulnerabilities（low 1、moderate 1、high 2）を報告した。本タスクでは依存更新による互換性変更を実施していない。
-- Draft PR #341、受け入れコメント、セルフレビューは作成済み。最終 head の GitHub Actions 再検証は push 後に実施する。運用 evidence が未取得のため task は `do` のままとし、全49件の operational acceptance 完了は主張しない。
+- Draft PR #341、既存の受け入れコメント、セルフレビューは作成済み。#342 統合後 head の GitHub Actions 再検証と最終コメントは push 後に実施する。live 運用 evidence の完了は主張せず、専用 follow-up task で継続する。

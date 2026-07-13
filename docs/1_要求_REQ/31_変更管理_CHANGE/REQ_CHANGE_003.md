@@ -15,7 +15,7 @@
 - AC-CHG003-002: 新要求は 1 要件 1 ファイルとし、要求属性、BDD 受け入れ条件、妥当性確認、trace を持つこと。
 - AC-CHG003-003: PDF、既存 docs、コード、テスト、作業・障害レポートの事実と、推定・矛盾・未確定判断を区別すること。
 - AC-CHG003-004: 現行実装の未達を実装済みと表現せず、gap と検証不足を記録すること。
-- AC-CHG003-005: 新要求 ID は要求索引、存在確認済み evidence と未実装 validation target を区別する requirement trace map、spec-recovery trace から到達できること。
+- AC-CHG003-005: 新要求 ID は要求索引、存在確認済み evidence と未実装 validation target を区別する baseline gap/todo 表から到達できること。
 
 ## 要求属性
 
@@ -27,7 +27,7 @@
 | 源泉 | ユーザー依頼、SWEBOK v4.0a Chapter 1、`CHG-002` |
 | トリガー | 権限、共有、取り込み、検索、生成、評価、失効の仕様変更 |
 | 種類 | 変更管理要求 |
-| 依存関係 | `REQUIREMENTS_BASELINE_202607.md`, `CHG-002`, `docs/spec-recovery` |
+| 依存関係 | `REQUIREMENTS_BASELINE_202607.md`, `CHG-002`, `tasks/todo/` |
 | 衝突 | 旧 ID 参照を残す互換性と、正規要求を一意にする必要性 |
 | 受け入れ基準 | `AC-CHG003-001` から `AC-CHG003-005` |
 | 優先度 | S |
@@ -48,4 +48,4 @@
 ## トレース
 
 - 後方: ユーザー依頼、SWEBOK v4.0a §6–7（PDF pp.58–61）。
-- 前方: `REQUIREMENTS_BASELINE_202607.md`, `FR-056`–`FR-093`, `SQ-005`–`SQ-015`, `docs/spec-recovery/17_traceability_matrix_202607.csv`。
+- 前方: `REQUIREMENTS_BASELINE_202607.md`, `FR-056`–`FR-093`, `SQ-005`–`SQ-015`, baseline の gap/todo 表。

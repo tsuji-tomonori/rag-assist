@@ -19,9 +19,9 @@
 
 ## 要件の源泉・背景
 
-- 源泉: `docs/spec-recovery/06_requirements.md` の `REQ-DBG-002`
-- 源泉: `docs/spec-recovery/03_acceptance_criteria.md` の `AC-DBG-002`
-- 源泉: `docs/spec-recovery/09_gap_analysis.md` の `GAP-008`
+- 源泉: `docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md` の `REQ-DBG-002`
+- 源泉: `docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md` の `AC-DBG-002`
+- 源泉: `docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md` の `GAP-008`
 - 背景: debug trace は管理者限定でも機微情報を含み得るため、artifact 化時に不要な raw data を露出させない必要がある。
 
 ## 要件の目的・意図

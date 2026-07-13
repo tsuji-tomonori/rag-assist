@@ -28,7 +28,7 @@
 | 識別子 | `FR-092` |
 | 説明 | structure-aware、budgeted、deterministic な versioned chunk derivation contract |
 | 根拠 | 文脈・表構造・source locator を保ち、再取り込み時の chunk drift と品質未検証公開を防ぐ |
-| 源泉 | RAG ガイド §3.2–3.4（PDF pp.63–77）、`docs/spec-recovery/15_rag_lifecycle_matrix_202607.md`、current ingest/chunk path |
+| 源泉 | RAG ガイド §3.2–3.4（PDF pp.63–77）、`docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md`、current ingest/chunk path |
 | Actor / trigger | chunker が normalized blocks を document-version の検索単位へ変換するとき |
 | 種類 | 機能要求 / ingest / chunking / data integrity |
 | 依存関係 | `FR-069`, `FR-075`, `FR-082`, `FR-083` |

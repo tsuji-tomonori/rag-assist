@@ -42,6 +42,16 @@ tasks:
     cmds:
       - npm run docs:openapi:check
 
+  docs:web-inventory:
+    desc: Generate Markdown and JSON Web UI inventory
+    cmds:
+      - npm run docs:web-inventory
+
+  docs:web-inventory:check:
+    desc: Check generated Web UI inventory freshness
+    cmds:
+      - npm run docs:web-inventory:check
+
   docs:infra-inventory:
     desc: Generate Markdown and JSON AWS resource inventory from the CDK snapshot
     cmds:
@@ -51,6 +61,15 @@ tasks:
     desc: Check generated AWS resource inventory freshness
     cmds:
       - npm run docs:infra-inventory:check
+
+  docs:check:
+    desc: Validate canonical docs structure, traceability, generated freshness, and hidden Unicode
+    cmds:
+      - python3 scripts/validate_docs.py
+      - npm run docs:openapi:check
+      - npm run docs:web-inventory:check
+      - npm run docs:infra-inventory:check
+      - npm run docs:hidden-unicode:check
 
   dev:api:
     desc: Run the Hono API locally with mock Bedrock and local vector store

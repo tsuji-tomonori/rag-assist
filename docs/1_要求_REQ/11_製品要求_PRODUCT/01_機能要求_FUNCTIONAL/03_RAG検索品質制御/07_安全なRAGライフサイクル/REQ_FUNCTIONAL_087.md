@@ -28,7 +28,7 @@ manifest や folder record だけを更新して vector/index/path/inherited pol
 | 識別子 | `FR-087` |
 | 説明 | document/folder move 時の manifest/subtree/vector/index/path/explicit-inherited-policy/grant coherence |
 | 根拠 | 文書移動後の stale search scope、grant 消失、旧 path 再露出を防ぐ |
-| 源泉 | `FR-061`, `FR-065`、`reports/working/20260521-0912-document-share-move-ui.md`、`docs/spec-recovery/16_current_state_gap_analysis_202607.md` の `GAP-RD-023` |
+| 源泉 | `FR-061`, `FR-065`、`reports/working/20260521-0912-document-share-move-ui.md`、`docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md` の `GAP-RD-023` |
 | Actor / trigger | move coordinator が認可済み document/folder move を commit、retry または reconcile するとき |
 | 種類 | 機能要求 / resource lifecycle / consistency |
 | 依存関係 | `FR-061`, `FR-063`, `FR-065`, `FR-069`, `FR-072`, `FR-076` |

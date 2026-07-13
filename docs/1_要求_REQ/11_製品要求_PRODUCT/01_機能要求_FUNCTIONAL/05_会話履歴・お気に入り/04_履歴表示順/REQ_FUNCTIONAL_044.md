@@ -26,8 +26,8 @@
 
 ## 要件の源泉・背景
 
-- 源泉: `docs/spec-recovery/06_requirements.md` の `REQ-HIST-002`
-- 源泉: `docs/spec-recovery/03_acceptance_criteria.md` の `AC-HIST-002`
+- 源泉: `docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md` の `REQ-HIST-002`
+- 源泉: `docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md` の `AC-HIST-002`
 - 背景: 復元条件では、同一時刻や短い substring でも履歴表示順が安定することが求められている。
 
 ## 要件の目的・意図

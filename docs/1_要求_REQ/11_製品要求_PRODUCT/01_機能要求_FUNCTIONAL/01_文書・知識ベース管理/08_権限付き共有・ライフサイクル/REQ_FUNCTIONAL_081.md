@@ -32,7 +32,7 @@
 | 識別子 | `FR-081` |
 | 説明 | membership feature permission、target-group authority、principal/tenant/cycle proposed-state integrity gate |
 | 根拠 | dangling/cross-tenant membership、nested cycle、無権限の membership 変更を永続化しない |
-| 源泉 | `ARC_ADR_004`、`docs/spec-recovery/14_authorization_sharing_matrix_202607.md` §§3, 4.1, 7、current GroupMembership model/store |
+| 源泉 | `ARC_ADR_004`、`docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md` の横断不変条件と `GAP-RD-003`, `GAP-RD-022`、current GroupMembership model/store |
 | Actor / trigger | authorized group administrator が membership の add/update/delete を要求するとき |
 | 種類 | 機能要求 / authorization / data integrity |
 | 依存関係 | `FR-056`, `FR-060`, `FR-076`, authoritative principal directory, resource group graph |

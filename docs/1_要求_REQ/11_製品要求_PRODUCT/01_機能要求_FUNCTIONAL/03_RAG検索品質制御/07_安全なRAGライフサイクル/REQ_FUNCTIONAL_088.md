@@ -28,7 +28,7 @@ trace は再現性に有用だが、raw question、会話、根拠、回答、AC
 | 識別子 | `FR-088` |
 | 説明 | purpose-bound trace field allowlist と save/export 前 redaction |
 | 根拠 | debug artifact への secret、個人情報、権限外 evidence の残存を防ぐ |
-| 源泉 | `FR-074`、`docs/spec-recovery/16_current_state_gap_analysis_202607.md` の `GAP-RD-018`、RAG ガイド §8.4（PDF pp.195–197） |
+| 源泉 | `FR-074`、`docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md` の `GAP-RD-018`、RAG ガイド §8.4（PDF pp.195–197） |
 | Actor / trigger | API/worker が trace を収集、保存、表示または download するとき |
 | 種類 | 機能要求 / observability / privacy / security |
 | 依存関係 | `FR-056`–`FR-060`, `FR-070`, `FR-074` |

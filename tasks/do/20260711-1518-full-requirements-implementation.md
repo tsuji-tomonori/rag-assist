@@ -10,7 +10,7 @@ Draft PR #340 で `FR-056`–`FR-093` と `SQ-005`–`SQ-015` を target require
 
 ## 目的
 
-今回追加した全 49 要件を production path に実装し、各要件の受け入れ条件へコード、テスト、運用 evidence を双方向に対応付ける。全自動検証と受け入れ判定を通過し、未実装・部分実装・未検証を残さない。
+今回追加した全 49 要件を production path に実装し、各要件の受け入れ条件へコード、テスト、運用 evidence を双方向に対応付ける。repository implementation と local/CI acceptance では未実装・部分実装・未検証を残さず、外部環境や承認値が必要な live operational acceptance は未取得の evidence を合格扱いにせず専用 follow-up task へ分離する。
 
 ## 対象範囲
 
@@ -24,9 +24,11 @@ Draft PR #340 で `FR-056`–`FR-093` と `SQ-005`–`SQ-015` を target require
 
 ### 対象外
 
-- production deploy、既存データの本番 migration 実行、PR merge/close
+- production deploy、既存データの本番 migration 実行
 - benchmark 固有期待語句、QA sample 固有値、dataset 固有分岐による見かけ上の品質改善
 - stakeholder が未承認の SLO/品質値を実測値または正式目標として捏造すること
+
+2026-07-14 のユーザー指示により、#342 が確立した正規 docs 構成への追従、PR の修正、CI 再確認、main への merge は本タスクの delivery scope に追加した。production deploy と live AWS migration／drill は引き続き対象外とする。
 
 ## 方針
 
@@ -42,10 +44,10 @@ Draft PR #340 で `FR-056`–`FR-093` と `SQ-005`–`SQ-015` を target require
 ## 必要情報
 
 - 要件 baseline: `docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md`
-- 認可・共有行列: `docs/spec-recovery/14_authorization_sharing_matrix_202607.md`
-- RAG lifecycle: `docs/spec-recovery/15_rag_lifecycle_matrix_202607.md`
-- current gap: `docs/spec-recovery/16_current_state_gap_analysis_202607.md`
-- trace: `docs/spec-recovery/17_traceability_matrix_202607.csv`
+- 実行計画: `reports/working/20260711-1518-full-requirements-execution-plan.md`
+- 要件別実装・検証証跡: `reports/working/20260712-2207-full-requirements-implementation-evidence.csv`
+- current gap／受け入れ状況: `reports/working/20260712-2207-full-requirements-implementation.md`
+- 認可・共有・RAG lifecycle の正本: baseline 配下の原子要求文書と `apps/api/src/rag/requirements-coverage.test.ts`
 - 要件定義 PR: `https://github.com/tsuji-tomonori/rag-assist/pull/340`
 - 実装 branch base: `codex/redefine-rag-requirements` (`28054c7f`)
 - stakeholder decision が必要な閾値・責任者は versioned config と open question の双方で追跡する。
@@ -60,20 +62,20 @@ Draft PR #340 で `FR-056`–`FR-093` と `SQ-005`–`SQ-015` を target require
 6. versioned quality policy、stage/slice evaluator、promotion gate、production drift/security monitoring、latency/cost/availability/recovery control loop を実装する。
 7. API/Web/OpenAPI/infra/operations docs を同期し、real-data UI と permission/error state を実装する。
 8. requirement ID ごとの unit/integration/E2E/benchmark/fault-injection evidence を実行し、失敗を修正して再実行する。
-9. 全 49 要件の受け入れ判定、作業レポート、commit/push、main 向け Draft PR、日本語コメント、task done 化まで完遂する。
+9. 全 49 要件の repository 受け入れ判定、作業レポート、commit/push、main 向け PR、日本語コメント、CI、merge まで完遂する。外部権限・承認値が必要な live operational acceptance は専用 follow-up task へ明示的に移管する。
 
 ## ドキュメントメンテナンス計画
 
 - 要件本文は意味を変えず、実装 evidence、validation、status、trace のみ必要に応じて同期する。
 - authorization、data、RAG workflow、API、monitoring、deployment/rollback の ARC/DES/OPS 文書を実装と同時に更新する。
-- request/response、error、permission、environment variable が変わる場合は OpenAPI、`docs/API_EXAMPLES.md`、`docs/LOCAL_VERIFICATION.md`、`docs/OPERATIONS.md` を更新する。
+- request/response、error、permission、environment variable が変わる場合は OpenAPI、`docs/3_設計_DES/41_API_API/DES_API_001.md`、`docs/4_運用_OPS/21_監視_MONITORING/OPS_MONITORING_001.md` を更新する。
 - reindex/migration/cutover/rollback が必要な変更は運用手順と compatibility risk を明記する。
 - README/AGENTS.md が不変の場合も、作業レポートと PR 本文に非影響理由を記載する。
-- `docs/spec-recovery/16`、`17` と implementation evidence matrix を、実装状態の変化に合わせて更新する。
+- 正規要求文書、requirement coverage test、作業レポート、implementation evidence CSV を、実装状態の変化に合わせて更新する。
 
 ## 受け入れ条件
 
-- [ ] 全 `FR-056`–`FR-093`、`SQ-005`–`SQ-015` に implementation evidence と直接対応する検証 evidence があり、missing/partial/unverified が残っていない。
+- [x] 全 `FR-056`–`FR-093`、`SQ-005`–`SQ-015` に repository implementation evidence と直接対応する検証 evidence があり、repository 判定に missing/partial/unverified が残っていない。live operational acceptance pending は `tasks/todo/20260714-0104-full-requirements-operational-acceptance.md` で継続する。
 - [x] verified identity、account/tenant/role、operation/resource scope、owner/adminPrincipal、ordinary deny/hard deny の優先順位が全 route/service/store/worker で一貫し、cross-tenant と unauthorized resource enumeration が拒否・最小化される。
 - [x] document/folder/resource-group の 3×7 操作行列について、supported operation の allow/deny と unsupported operation の deny が API/service/store/Web で一致する。
 - [x] sharing/membership/transfer/move/delete/revoke は expected version、post-state integrity、current reauthorization、state-audit atomicity、retry/reconciliation を満たす。
@@ -82,21 +84,21 @@ Draft PR #340 で `FR-056`–`FR-093` と `SQ-005`–`SQ-015` を target require
 - [x] retrieval、prompt construction、cache、evaluation、debug、queued worker の全経路で current authorization/classification/usage/quality/lifecycle eligibility が再評価される。
 - [x] prompt injection、system prompt/secret leakage、unsupported claim、invalid citation、no-evidence、conflicting evidence、dependency degradation が安全に処理される。
 - [x] versioned evaluation/promotion policy が ingest/retrieval/generation/citation/refusal/security/latency/cost を stage/slice 別に評価し、未設定・regression・threshold failure を fail closed にする。
-- [ ] production monitoring が quality/security drift、eligibility propagation、latency/cost、availability/backlog/recovery を集計し、versioned threshold に基づく alert/escalation/degradation/rollback evidence を残す。
+- [x] production monitoring の repository control が quality/security drift、eligibility propagation、latency/cost、availability/backlog/recovery を集計し、versioned threshold に基づく alert/escalation/degradation/rollback evidence を残す。live notification/drift/rollback drill は `tasks/todo/20260714-0104-full-requirements-operational-acceptance.md` で継続する。
 - [x] production UI/API に mock fallback、fake count/user/group/date/capacity、未実装 control がなく、real data または honest state のみを返す・表示する。
 - [x] API route/policy 変更は `apps/api/src/security/access-control-policy.test.ts` と OpenAPI を同期し、機微 response/debug/benchmark artifact は最小 permission と field-level filtering を持つ。
 - [x] migration/reindex/cutover/rollback/compatibility/operations docs が実装と同期し、production deploy を行わずに検証可能な local/CI acceptance procedure がある。
 - [ ] 選定した unit/integration/contract/static/browser E2E/benchmark/fault-injection/build/docs checks と最終 CI が pass し、未実施の必須検証がない。
 - [ ] main 向け Draft PR、`semver:*` label、日本語の受け入れ条件確認、セルフレビュー、作業レポート、task done 移動が完了している。
 
-## 2026-07-12 ローカル受け入れ判定
+## 2026-07-14 ローカル受け入れ判定
 
-- repository implementation: verified。`19_implementation_evidence_202607.csv` は 36 件 `implemented_verified`、2 件 `implementation_verified_operational_acceptance_pending`、11 件 `control_verified_live_acceptance_pending`。
-- validation: contract 1、API 658、Web 307、infra 38、benchmark 102、E2E smoke 4、lint、全 typecheck/build、OpenAPI/inventory/spec/docs/source audit が pass。最終 workspace 一括で Web 1件の待機競合を検出・修復し、Web 対象 41/41 と全体 307/307 を再実行した。
+- repository implementation: verified。`reports/working/20260712-2207-full-requirements-implementation-evidence.csv` は 36 件 `implemented_verified`、2 件 `implementation_verified_operational_acceptance_pending`、11 件 `control_verified_live_acceptance_pending`。pending は repository gap ではなく、外部環境・承認値を必要とする follow-up scope である。
+- validation: #342 統合後に contract 1/1、API 765/765、Web 307/307、infra 38/38、benchmark 102/102、lint、全 typecheck/build、OpenAPI/Web/infra inventory/docs/source audit、CDK synth、DynamoDB GSI update guard が pass。E2E smoke 4/4 は runtime 実装 head で pass 済みで、#342 統合は docs/task/workflow/test trace の競合解消のみのため再実行していない。
 - release source audit: dataset-specific branch 0、artifact manifest mismatch 0。
 - independent final review: benchmark seed の認可 subject／verified runner audit attribution／共有 corpus mapping を含め production-path blocker 0。
-- operational acceptance pending: AWS registry backfill/convergence、live notification/drift/rollback drill、approved threshold/window/owner/price catalog、representative workload/load/chaos/cost/billing evidence。
-- delivery pending: commit/push、Draft PR、日本語コメント、CI。外部運用 evidence が未取得のため task は `do` のまま維持する。
+- operational acceptance pending: AWS registry backfill/convergence、live notification/drift/rollback drill、approved threshold/window/owner/price catalog、representative workload/load/chaos/cost/billing evidence。`tasks/todo/20260714-0104-full-requirements-operational-acceptance.md` へ移管済み。
+- delivery pending: #342 統合 commit/push、最終 head の日本語コメント、GitHub Actions CI、task done 移動、merge。
 
 ## 検証計画
 
@@ -127,7 +129,7 @@ Draft PR #340 で `FR-056`–`FR-093` と `SQ-005`–`SQ-015` を target require
 - すべての品質・運用閾値は versioned policy profile に外部化し、未設定時は release/promotion を fail closed にする。
 - 新規 schema field は可能な限り optional 追加から開始し、required 化・migration・reindex は明示的な compatibility gate を通す。
 - production behavior の demo fallback は禁止し、依存機能が未設定なら unavailable/error state を返す。
-- production deploy、既存データ migration 実行、PR merge/close は本タスクでは行わない。
+- production deploy、既存データ migration 実行は本タスクでは行わない。PR merge は 2026-07-14 の追加指示により delivery scope とする。
 
 ### 実装時確認
 

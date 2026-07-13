@@ -104,7 +104,7 @@ Use checkboxes only for items actually satisfied. Use unchecked items for unreso
   - `ASR-RETRIEVAL-001`: lexical / semantic / RRF / evaluation remain sound.
   - `ASR-EVAL-001`: benchmark and trace can measure quality continuously.
   - `ASR-SEC-*`: debug, benchmark, alias, and ACL data are not exposed carelessly.
-- Root `README.md`, API examples, OpenAPI targets, `docs/LOCAL_VERIFICATION.md`, `docs/OPERATIONS.md`, deploy docs, and GitHub Actions docs are updated or explicitly judged unaffected.
+- Root `README.md`, canonical REQ/ARC/DES docs, generated OpenAPI targets, `docs/4_運用_OPS/21_監視_MONITORING/`, Taskfile, deploy workflows, and GitHub Actions docs are updated or explicitly judged unaffected.
 
 ### 2. API Changes
 

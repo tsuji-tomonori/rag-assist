@@ -1,14 +1,30 @@
-# 運用監視
+# MemoRAG MVP 監視・検証ランブック
 
-- ファイル: `OPS_MONITORING_001.md`
+- ファイル: `docs/4_運用_OPS/21_監視_MONITORING/OPS_MONITORING_001.md`
 - 種別: `OPS_MONITORING`
 - 状態: Draft
+- 最終更新: 2026-07-14
 
 ## 目的
 
-AWS Cost Anomaly Detection で検知される少額の KMS / Secrets Manager コストを、既知の MemoRAG MVP 構成と突合できるようにする。
+現行実装で利用できる health、ログ、benchmark、生成物 freshness と、本 PR で追加した RAG 品質 control loop を使い、障害・品質劣化・安全性違反の初動確認を再現可能にする。
 
-本番 RAG の品質・安全性・性能・信頼性・コスト signal を、承認済み profile/version/slice 単位で監視し、欠損や critical 違反を安全側の action へ接続できるようにする。
+本番 RAG の品質・安全性・性能・信頼性・コスト signal を、承認済み profile/version/slice 単位で監視し、欠損や critical 違反を安全側の action へ接続できるようにする。stakeholder 未承認の threshold や未取得の live evidence を合格値として補わない。
+
+## 現行の観測点
+
+| 対象 | 現行の観測点 | 確認先 |
+| --- | --- | --- |
+| API 生存性 | health endpoint の HTTP status | `GET /health`、API Gateway/Lambda logs |
+| chat / ingestion | request、error、処理段階の application log | CloudWatch Logs、対象 Lambda log group |
+| RAG 品質 control loop | source sample、observation、alert、safe action、runtime safety state | docs bucket の `quality-control/` prefix、`MemoRAG/QualityControl` metrics |
+| debug trace | 認可・redaction 済み trace API と保存 artifact | `DES_API_001`、`DES_DATA_001` |
+| benchmark | run status、report、release audit、runner log | benchmark API、Step Functions、CodeBuild logs |
+| deploy | promotion 判定、workflow run、CloudFormation event、smoke result | GitHub Actions、CloudFormation、health endpoint |
+| API/docs drift | 自動生成物の freshness check | `npm run docs:openapi:check` |
+| Web/infra docs drift | inventory の freshness check | `npm run docs:web-inventory:check`、`npm run docs:infra-inventory:check` |
+
+認証情報、source 本文、chunk 本文、prompt、raw model response を一般ログへ出力しない。debug trace と品質 artifact は認可・tenant partition・sanitization の境界を維持する。
 
 ## RAG 品質・安全監視
 
@@ -95,6 +111,25 @@ AWS KMS の AWS managed key は key storage 自体の課金対象外だが、AWS
 | `BenchmarkRunnerAuthSecret` | production API を叩く runner を使わない、または外部管理 secret へ移行する | 外部管理 secret を使う場合も Secrets Manager の保存・API call コストは残る |
 | AWS managed key `aws/secretsmanager` | Secrets Manager secret を全廃する | AWS managed key 自体の保存は管理対象外だが、関連 API request は請求表示に出る可能性がある |
 
+## ローカル／CI 検証
+
+リポジトリ定義を正とし、実行前に `Taskfile.yml` または `package.json` の解決コマンドを確認する。
+
+| 目的 | コマンド |
+| --- | --- |
+| docs 構成と自動生成物 | `python3 scripts/validate_docs.py` |
+| OpenAPI freshness | `npm run docs:openapi:check` |
+| Web inventory freshness | `npm run docs:web-inventory:check` |
+| infra inventory freshness | `npm run docs:infra-inventory:check` |
+| hidden Unicode | `npm run docs:hidden-unicode:check` |
+| production runtime の dataset 固有分岐 | `npm run rag:release:source-audit` |
+
+変更範囲に見合う lint、typecheck、test、build、smoke は `Taskfile.yml` と package scripts から追加選択する。未実施の確認は運用記録や PR で実施済みとしない。
+
+## 運用検証状況
+
+repository-local の実装・単体／統合テストと infrastructure 定義は確認対象に含む。一方、live AWS 上の backfill convergence、通知、drift、rollback、chaos、承認済み dataset・threshold・workload・price・billing evidence はこの文書だけでは完了扱いにしない。これらは `tasks/do/20260711-1518-full-requirements-implementation.md` の未完了項目として追跡する。
+
 ## 受け入れ条件
 
 - AC-OPS-MON-001: Cost anomaly で KMS または Secrets Manager が検知された場合、上記の必要リソース表で MemoRAG MVP の既知リソースか判断できること。
@@ -107,6 +142,9 @@ AWS KMS の AWS managed key は key storage 自体の課金対象外だが、AWS
 - AC-OPS-MON-008: deploy が承認済み policy と完全な observations の promotion pass より前に build、synth、deploy を開始しないこと。
 - AC-OPS-MON-009: release audit から dataset-specific runtime branch と artifact/manifest mismatch の finding、digest、zero-tolerance count を再現できること。
 - AC-OPS-MON-010: policy と observation の dataset/model/index/prompt/pipeline/parser/chunker/runtime/workload/price が厳密に一致し、全必須 case/workload/endpoint/recovery slice の欠損を promotion 不可として識別できること。
+- AC-OPS-MON-011: API、chat/ingestion、RAG 品質、benchmark、deploy、docs freshness の観測点を特定できること。
+- AC-OPS-MON-012: 障害調査時に機微な本文や credential を一般ログへ追加せず、時刻と ID で相関できること。
+- AC-OPS-MON-013: repository-local の検証と未取得の live operational evidence を区別できること。
 
 ## 参照
 
