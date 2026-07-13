@@ -3,7 +3,7 @@
 - 作成日時: 2026-07-13 23:13 JST
 - 対象 branch: `codex/docs-minimal-structure`
 - 基点: `origin/main` `9cd904d3c5203caf2400eb2ff654096d63f9d8fb`
-- 状態: 実装・ローカル検証完了、PR workflow 実施中
+- 状態: 実装・ローカル検証完了、PR #342 作成・初回コメント投稿済み
 
 ## 受けた指示
 
@@ -38,7 +38,7 @@
 - 構造 validator: `scripts/validate_docs.py`。
 - validator test: `scripts/test_validate_docs.py`。
 - 実装 gap todo: `tasks/todo/20260713-2250-*.md` から `20260713-2304-*.md` のうち 14 files。
-- 作業 task: `tasks/do/20260713-2232-docs-minimal-structure.md`。
+- 作業 task: `tasks/done/20260713-2232-docs-minimal-structure.md`。
 
 ## 検証結果
 
@@ -77,11 +77,11 @@
 - 12 件の open question と各実装 gap は本 task では実装していない。`tasks/todo/` の対応 task で継続する。
 - 品質/SLO/retention/break-glass/signup 方針は stakeholder 未承認のため、仮値を確定要求にしていない。
 - product runtime は変更していないため、全 workspace test/build、実 AWS deploy、smoke、benchmark は実施していない。docs/trace に直接関係する targeted test と freshness checks を選定した。
-- PR 作成、CI 結果確認、受け入れ条件コメント、セルフレビューコメント、task done 移動は、このレポート作成後の workflow で実施する。
+- PR の CI 最終結果は、task 完了追補 commit の push 後に確認し、PR コメントと最終回答へ記録する。
 
 ## PR workflow 結果
 
-- PR: 未作成
-- 受け入れ条件コメント: 未実施
-- セルフレビューコメント: 未実施
-- task 完了更新: 未実施
+- PR: [#342](https://github.com/tsuji-tomonori/rag-assist/pull/342)
+- 受け入れ条件コメント: [comment 4958976407](https://github.com/tsuji-tomonori/rag-assist/pull/342#issuecomment-4958976407) に日本語で投稿済み
+- セルフレビューコメント: [comment 4958976173](https://github.com/tsuji-tomonori/rag-assist/pull/342#issuecomment-4958976173) に日本語で投稿済み
+- task 完了更新: `tasks/done/20260713-2232-docs-minimal-structure.md` への移動と受け入れ条件の完了更新を本追補で実施

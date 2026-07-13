@@ -1,6 +1,6 @@
 # docs を実装準拠の最小構成へ統合
 
-状態: do
+状態: done
 
 タスク種別: ドキュメント更新
 
@@ -41,16 +41,26 @@
 
 ## 受け入れ条件
 
-- [ ] `docs/` の直下は `1_要求_REQ/`、`2_アーキテクチャ_ARC/`、`3_設計_DES/`、`4_運用_OPS/`、`generated/` のみである。
-- [ ] `docs/4_運用_OPS/` の恒久文書は `21_監視_MONITORING/` に統合され、同階層の別分類や root 直下の運用文書が残っていない。
-- [ ] `docs/generated/` の全ファイルが、リポジトリ内の生成コマンドまたは生成スクリプトへ追跡でき、自動生成物以外を含まない。
-- [ ] 旧 root 文書、`spec/`、`spec-recovery/` の有効な情報が正規区分へ統合され、重複・陳腐化・不要なファイルは削除されている。
-- [ ] docs の要求・ARC・DES・監視内容が現行実装とテストに照合され、実装済みでない内容を実装済みと記述していない。
-- [ ] 実装が必要だが未実装の要件は要件文書に残り、各項目に対応する `tasks/todo/` が存在する。
-- [ ] README、Taskfile、script、test、workflow、Markdown 内に削除済み docs path の意図しない参照が残っていない。
-- [ ] 選定した docs 構造・リンク・生成 freshness・Markdown 検証がすべて pass している。
-- [ ] 作業完了レポートを `reports/working/` に作成している。
-- [ ] PR 作成後、日本語の受け入れ条件確認コメントとセルフレビューコメントを投稿している。
+- [x] `docs/` の直下は `1_要求_REQ/`、`2_アーキテクチャ_ARC/`、`3_設計_DES/`、`4_運用_OPS/`、`generated/` のみである。
+- [x] `docs/4_運用_OPS/` の恒久文書は `21_監視_MONITORING/` に統合され、同階層の別分類や root 直下の運用文書が残っていない。
+- [x] `docs/generated/` の全ファイルが、リポジトリ内の生成コマンドまたは生成スクリプトへ追跡でき、自動生成物以外を含まない。
+- [x] 旧 root 文書、`spec/`、`spec-recovery/` の有効な情報が正規区分へ統合され、重複・陳腐化・不要なファイルは削除されている。
+- [x] docs の要求・ARC・DES・監視内容が現行実装とテストに照合され、実装済みでない内容を実装済みと記述していない。
+- [x] 実装が必要だが未実装の要件は要件文書に残り、各項目に対応する `tasks/todo/` が存在する。
+- [x] README、Taskfile、script、test、workflow、Markdown 内に削除済み docs path の意図しない参照が残っていない。
+- [x] 選定した docs 構造・リンク・生成 freshness・Markdown 検証がすべて pass している。
+- [x] 作業完了レポートを `reports/working/` に作成している。
+- [x] PR 作成後、日本語の受け入れ条件確認コメントとセルフレビューコメントを投稿している。
+
+## 完了実績
+
+- PR: [#342](https://github.com/tsuji-tomonori/rag-assist/pull/342)
+- 初回セルフレビュー: [comment 4958976173](https://github.com/tsuji-tomonori/rag-assist/pull/342#issuecomment-4958976173)
+- 受け入れ条件確認: [comment 4958976407](https://github.com/tsuji-tomonori/rag-assist/pull/342#issuecomment-4958976407)
+- 主変更 commit: `3b76004e7517439d96e66c65ad90681bb19b5a13`
+- 作業レポート: `reports/working/20260713-2313-docs-minimal-structure.md`
+- 検証結果: docs validator、6 unit tests、OpenAPI/Web/infra inventory、hidden Unicode、要求カバレッジ、skill validation、pre-commit、diff check が成功した。
+- 制約: `task docs:check` の wrapper は proto/npm toolchain 制約で起動前停止したが、解決される 5 サブコマンドを個別実行して全件成功を確認した。
 
 ## 検証計画
 
