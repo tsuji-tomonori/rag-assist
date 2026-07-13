@@ -8,6 +8,8 @@
     "start": "tsx src/local.ts",
     "docs:openapi": "tsx src/generate-openapi-docs.ts",
     "docs:openapi:check": "tsx src/validate-openapi-docs.ts",
+    "docs:api-code": "node --import tsx src/generate-api-code-docs.ts",
+    "docs:api-code:check": "node --import tsx src/generate-api-code-docs.ts --check",
     "test": "tsx --test src/**/*.test.ts src/**/**/*.test.ts",
     "test:coverage": "c8 --check-coverage --statements 90 --branches 85 --functions 90 --lines 90 --reporter=text-summary --reporter=json-summary tsx --test src/**/*.test.ts src/**/**/*.test.ts",
     "build": "tsc -p tsconfig.json",

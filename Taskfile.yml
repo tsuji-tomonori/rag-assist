@@ -42,6 +42,16 @@ tasks:
     cmds:
       - npm run docs:openapi:check
 
+  docs:api-code:
+    desc: Generate six source-backed design documents for every API route
+    cmds:
+      - npm run docs:api-code
+
+  docs:api-code:check:
+    desc: Validate API discovery coverage and generated source-backed document freshness
+    cmds:
+      - npm run docs:api-code:check
+
   docs:infra-inventory:
     desc: Generate Markdown and JSON AWS resource inventory from the CDK snapshot
     cmds:

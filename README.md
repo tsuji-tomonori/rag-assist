@@ -23,6 +23,7 @@ AWS では API Gateway、Lambda、Amazon Bedrock、Amazon S3、Amazon S3 Vectors
 - [GitHub Actions Deploy](docs/GITHUB_ACTIONS_DEPLOY.md): GitHub Actions からの CDK deploy 手順
 - [Docs Structure](docs/DOCS_STRUCTURE.md): `docs/` の構成方針
 - [OpenAPI Docs](docs/generated/openapi.md): 生成済み OpenAPI Markdown
+- [API Code Docs](docs/generated/api-code/index.md): API ごとの詳細設計、IF、メッセージ、query、sequence、unit test 自動生成文書
 - [Web UI Inventory](docs/generated/web-overview.md): Web UI 自動生成インベントリ
 - [AWS Resource Inventory](docs/generated/infra-inventory.md): CDK snapshot 由来の AWS リソースインベントリ
 
@@ -51,6 +52,7 @@ docker compose up --build
 npm test --workspaces --if-present
 npm run typecheck --workspaces --if-present
 npm run docs:openapi:check
+npm run docs:api-code:check
 ```
 
 Taskfile を使う場合:

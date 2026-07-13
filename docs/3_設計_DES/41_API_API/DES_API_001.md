@@ -96,6 +96,17 @@ npm run docs:openapi:check
 
 `.github/workflows/memorag-ci.yml` と `.github/workflows/memorag-openapi-docs.yml` はこの検証を実行し、summary / description / field description、authorization metadata、互換 API lifecycle metadata、generated Markdown freshness、代表 REST/oRPC mapping に不足がある場合は CI を失敗させる。
 
+## API コード対応ドキュメント
+
+runtime OpenAPI の IF だけでなく、route handler から到達する service、store/external boundary、message、sequence、既存 test を API 単位で理解するため、`docs/generated/api-code/` に 6 種類の Markdown を生成する。上位 index は `docs/generated/api-code/index.md` とする。
+
+```bash
+npm run docs:api-code
+npm run docs:api-code:check
+```
+
+生成器は TypeScript AST と type checker、runtime OpenAPI、既存 `.test.ts` を解析する。文書生成専用 metadata を production 実装へ追加しない。API 追加・変更・削除時は `docs:api-code` で再生成し、`docs:api-code:check` で missing、changed、stale file がないことを確認する。生成原理、投影範囲、静的解析の限界は `DES_DLD_011.md` を参照する。
+
 `GET /openapi.json` は `/health` と同じ public allowlist に置く。返却内容は OpenAPI contract metadata、route 一覧、schema、公開用 description、authorization / lifecycle extension であり、問い合わせ本文、回答、参照 chunk、内部 memo、debug trace、署名付き URL、個人別データを返さないため、認証なしで公開できる。濫用対策は現行 J1 ではアプリ内 rate limit を追加せず、API Gateway / WAF / CDN policy など edge 側で扱う後続運用 task とする。
 
 ## `POST /chat`

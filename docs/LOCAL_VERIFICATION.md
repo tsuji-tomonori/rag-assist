@@ -17,6 +17,15 @@ npm run typecheck --workspaces --if-present
 npm run build --workspaces --if-present
 ```
 
+API コード対応ドキュメントを再生成し、runtime OpenAPI、TypeScript 実装、既存テストと checked-in Markdown の鮮度を確認する。
+
+```bash
+npm run docs:api-code
+npm run docs:api-code:check
+```
+
+生成先は `docs/generated/api-code/` である。`docs:api-code:check` は内容差分だけでなく、API 追加時の missing file と API 削除後の stale file も失敗にする。OpenAPI contract だけを更新した場合も `npm run docs:openapi` と合わせて両方を再生成する。
+
 API起動:
 
 ```bash
