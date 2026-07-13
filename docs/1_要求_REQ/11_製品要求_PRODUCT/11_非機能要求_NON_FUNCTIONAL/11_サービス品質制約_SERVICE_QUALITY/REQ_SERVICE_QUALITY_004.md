@@ -18,9 +18,9 @@
 
 ## 要件の源泉・背景
 
-- 源泉: `docs/spec-recovery/06_requirements.md` の `REQ-UI-001`
-- 源泉: `docs/spec-recovery/03_acceptance_criteria.md` の `AC-UI-001`
-- 源泉: `docs/spec-recovery/07_specifications.md` の `SPEC-UI-001`
+- 源泉: `docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md` の `REQ-UI-001`
+- 源泉: `docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md` の `AC-UI-001`
+- 源泉: `docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md` の `SPEC-UI-001`
 - 背景: 復元条件では、回答、引用、debug panel、loading 表示が互いに重ならないことが求められている。
 
 ## 要件の目的・意図

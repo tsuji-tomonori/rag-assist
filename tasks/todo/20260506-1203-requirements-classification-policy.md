@@ -6,6 +6,8 @@
 
 - todo
 
+関連要件・gap: `FR-075`, `SQ-003`, `SQ-007`, `GAP-RD-019`
+
 ## 背景
 
 `prompts.ts`、`context-assembler.ts`、`agent/utils.ts`、`answerability-gate.ts`、`validate-citations.ts` には、SWEBOK / ソフトウェア要求分類に特化した検索 clue、chunk 選択、回答除外ルールがある。特定資料の誤答対策として有効だが、汎用 RAG としては他ドメインの分類質問へ過剰適用される。

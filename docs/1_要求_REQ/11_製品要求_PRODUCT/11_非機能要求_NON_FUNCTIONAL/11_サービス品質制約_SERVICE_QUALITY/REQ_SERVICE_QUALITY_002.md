@@ -60,5 +60,5 @@
 
 ## 関連文書
 
-- `docs/OPERATIONS.md`
+- `docs/4_運用_OPS/21_監視_MONITORING/OPS_MONITORING_001.md`
 - `docs/4_運用_OPS/21_監視_MONITORING/OPS_MONITORING_001.md`

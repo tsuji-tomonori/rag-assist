@@ -56,38 +56,41 @@ If some inputs are missing, proceed with the available material and mark gaps ex
 ## Execution steps
 
 1. Inventory sources.
-   - Create `docs/spec-recovery/00_input_inventory.md`.
+   - Create a task-scoped analysis report such as `reports/working/YYYYMMDD-HHMM-<summary>-spec-analysis.md`.
+   - Add an `Input inventory` section to that report.
    - List each input source, date if known, type, and reliability.
 
 2. Extract facts and tasks.
    - Invoke or follow `work-report-task-extractor-ja`.
-   - Output `01_report_facts.md` and `02_tasks.md`.
+   - Add `Report facts` and `Candidate tasks` sections to the task-scoped analysis report.
 
 3. Write acceptance criteria.
    - Invoke or follow `acceptance-criteria-writer-ja`.
    - Include normal path, error path, permission path, boundary values, and RAG quality paths.
-   - Output `03_acceptance_criteria.md`.
+   - Add an `Acceptance criteria` section to the task-scoped analysis report.
 
 4. Generate E2E scenarios.
    - Invoke or follow `e2e-scenario-writer-ja`.
    - Write screen operations and expected results in Japanese.
-   - Output `04_e2e_scenarios.md`.
+   - Add an `E2E and non-UI scenarios` section to the task-scoped analysis report.
 
 5. Group operations and expectations.
    - Invoke or follow `operation-expectation-clusterer-ja`.
-   - Output `05_operation_expectation_groups.md`.
+   - Add an `Operation and expectation groups` section to the task-scoped analysis report.
 
 6. Synthesize requirements and specifications.
    - Invoke or follow `requirement-spec-synthesizer-ja`.
-   - Output `06_requirements.md` and `07_specifications.md`.
+   - Write each approved requirement to one file under `docs/1_要求_REQ/`.
+   - Route architecture and design decisions to `docs/2_アーキテクチャ_ARC/` or `docs/3_設計_DES/` instead of creating a second specification tree.
 
 7. Add RAG quality and security specs.
    - Invoke or follow `rag-quality-and-security-spec-ja`.
-   - Integrate output into `06_requirements.md`, `07_specifications.md`, and `09_gap_analysis.md`.
+   - Integrate output into the canonical requirement files, architecture/design files, and the current requirements baseline gap table.
 
 8. Build traceability and gap analysis.
    - Invoke or follow `traceability-gap-analysis-ja`.
-   - Output `08_traceability_matrix.md`, `09_gap_analysis.md`, and `10_open_questions.md`.
+   - Update `docs/1_要求_REQ/31_変更管理_CHANGE/REQ_CHANGE_001.md` for durable traceability.
+   - Update the current `REQUIREMENTS_BASELINE_*.md` gap/open-question sections and create or reuse `tasks/todo/` files for unimplemented requirements.
 
 9. Final review.
    - Ensure all tasks have acceptance criteria.
@@ -95,24 +98,20 @@ If some inputs are missing, proceed with the available material and mark gaps ex
    - Ensure all requirements/specifications trace to evidence or are marked inferred/open.
    - Ensure security, RAG quality, and non-functional requirements are not omitted.
 
-## Output structure
+## Output routing
 
-Use this directory by default:
+Do not create a parallel specification directory. Use this routing:
 
 ```text
-docs/spec-recovery/
-  00_input_inventory.md
-  01_report_facts.md
-  02_tasks.md
-  03_acceptance_criteria.md
-  04_e2e_scenarios.md
-  05_operation_expectation_groups.md
-  06_requirements.md
-  07_specifications.md
-  08_traceability_matrix.md
-  09_gap_analysis.md
-  10_open_questions.md
+reports/working/YYYYMMDD-HHMM-<summary>-spec-analysis.md  # intermediate evidence
+docs/1_要求_REQ/                                           # approved requirements, gap, trace
+docs/2_アーキテクチャ_ARC/                                 # architecture and ADR
+docs/3_設計_DES/                                           # implementation contracts
+docs/4_運用_OPS/21_監視_MONITORING/                        # monitoring/verification only
+tasks/todo/                                                # missing or partial implementation
 ```
+
+`docs/generated/` is reserved for repository generators and must never receive authored analysis.
 
 ## Final response format
 

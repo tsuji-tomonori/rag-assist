@@ -3,6 +3,7 @@
 - ファイル: `docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md`
 - 種別: `REQ_PRODUCT_BASELINE`
 - 作成日: 2026-07-11
+- 最終更新: 2026-07-13
 - 状態: Draft（ステークホルダー承認前）
 - 変更要求: `CHG-003`
 
@@ -41,7 +42,7 @@ SWEBOK v4.0a Chapter 1 に従い、要求は次を満たす粒度にする。
 | --- | --- | --- | --- | --- |
 | SRC-034 | `.workspace/rag-engineering-guide.pdf` | 2026年7月版、243ページ、SHA-256 `7f887309fc92ec2046e4f4b62ff0de2d3c6f2a61c790b397bca2b73c446e7103` | ACL、文書ライフサイクル、検索、生成、評価、運用 | confirmed |
 | SRC-035 | `.workspace/swebok-v4.pdf` | SWEBOK v4.0a, September 2025, 411ページ、SHA-256 `b3cb8028fecb9607f757504c861947fa3bf423087ea8bf08c58020f0ba3596dc` | 要求獲得・分析・仕様化・妥当性確認・trace | confirmed |
-| SRC-036 | `apps/api/src`, `apps/web/src`, `infra` | `origin/main` commit `e8ae57f6126aca802d85042a1697d07c836b3603` | 現行実装とテストの事実 | confirmed |
+| SRC-036 | `apps/api/src`, `apps/web/src`, `infra` | `origin/main` commit `9cd904d3c5203caf2400eb2ff654096d63f9d8fb` と本 task の read-only audit | 現行実装とテストの事実 | confirmed |
 | SRC-037 | `docs/1_要求_REQ`, `docs/2_アーキテクチャ_ARC`, `docs/3_設計_DES` | 既存要求・ADR・設計 | 既存合意と矛盾の検出 | confirmed |
 | SRC-038 | `reports/working`, `reports/bugs` の権限・共有・RAG 関連レポート | 2026-05-12–2026-05-22 を中心に本文確認 | 実装意図、既知制約、未検証事項 | confirmed |
 
@@ -76,6 +77,21 @@ SWEBOK v4.0a Chapter 1 に従い、要求は次を満たす粒度にする。
 ```
 
 クライアントが指定した tenant、role、group、ACL は強制条件の源泉にしない。LLM は認可判断を行わない。権限外本文は、回答表示時だけでなく、prompt、cache、trace、評価データへ到達させない。
+
+### 横断不変条件
+
+| 境界 | 必須条件 |
+| --- | --- |
+| Identity | account、tenant、role、group は検証済み server-side context から取得し、request body/query の自己申告値を認可根拠にしない。 |
+| Authorization | account state → tenant → route permission → resource/owner/effective grant → mandatory deny の順で評価し、欠損・矛盾は deny にする。 |
+| Sharing | actor と principal の双方を検証し、管理主体 invariant、同一 tenant、version conflict、存在秘匿を維持する。 |
+| Retrieval | permission、classification、usage、quality、validity を evidence 選択前に評価し、memory/context/cache でも current state を再確認する。 |
+| Ingestion/index | admission、属性継承、version、attempt fencing、winner-only publish、exactly-one-active index を追跡する。 |
+| Generation/citation | 取得本文と tool output を未信頼 data とし、支持 span のない claim を citation 自動補完で正当化しない。 |
+| Revocation/delete | まず新規利用を deny し、その後に cache/index/derived artifact を reconcile する。 |
+| Async/trace | 長時間処理は開始・commit 前に再認可し、trace は本文・credential を最小化しつつ version/provenance を残す。 |
+
+これらは target invariant であり、次節の gap が残る間は実装済みとみなさない。
 
 ## 要求集合
 
@@ -153,32 +169,54 @@ SWEBOK v4.0a Chapter 1 に従い、要求は次を満たす粒度にする。
 
 互換のため古い ID と履歴は削除しない。新規実装・設計・テストの trace は置換先を優先する。
 
+### 統合済みの旧復元 ID
+
+旧抽出文書を削除しても既存要求の後方 trace を失わないよう、旧 ID は次の正規要求へ統合する。旧 ID 自体は新規実装の要件 ID として再利用しない。
+
+| 旧 ID | 正規の統合先 |
+| --- | --- |
+| `REQ-UI-001`, `AC-UI-001`, `SPEC-UI-001` | `FR-042`, `FR-043`, `SQ-004` |
+| `REQ-HIST-002`, `AC-HIST-002`, `SPEC-HIST-003` | `FR-044` |
+| `REQ-SRCH-002`, `AC-SRCH-002`, `SPEC-SRCH-002` | `FR-045` |
+| `REQ-DBG-002`, `AC-DBG-002`, `SPEC-DBG-002` | `FR-046`, `NFR-015` |
+| `REQ-BENCH-002`, `AC-BENCH-002`, `SPEC-BENCH-002` | `FR-047` |
+| `REQ-BENCH-003`, `AC-BENCH-003`, `SPEC-BENCH-003` | `FR-048` |
+| `REQ-RAG-003`, `AC-RAG-003`, `SPEC-RAG-003` | `SQ-003` |
+| `REQ-DOC-002`, `AC-DOC-003`, `GAP-003` | `NFR-014` |
+| `GAP-008` | `NFR-015` |
+
 ## 現行コードとの主要な不一致
 
-| ID | 現状 | 要求上の扱い | Confidence |
-| --- | --- | --- | --- |
-| GAP-RD-001 | 管理台帳の suspend/delete が Cognito user/session を無効化しない。 | `FR-058`, `FR-090`, `SQ-006` に未達。 | confirmed |
-| GAP-RD-002 | `AppUser` に tenant がなく、検索 filter の tenant は request 由来である。 | `FR-056`, `FR-060`, `FR-070` に未達。 | confirmed |
-| GAP-RD-003 | legacy helper と `FolderPermissionService` が併存し、role/resource-group と userId/email の namespace も重なる。 | `FR-059`, `FR-061`, `FR-079`, `FR-081` に未達。ADR-0004 と conflict。 | conflict |
-| GAP-RD-004 | `SYSTEM_ADMIN` が通常資源を無条件 bypass する経路がある。 | `FR-059` に未達。ADR-0004 と conflict。 | conflict |
-| GAP-RD-006 | `CHAT_USER` は read を持つが Web の documents view は manage permission を要求する。 | `FR-064` に未達。 | confirmed |
-| GAP-RD-008 | reader schema と error/count contract が principal、metadata、資源存在を過剰に示し得る。 | `FR-064`, `FR-091` に未達。 | confirmed |
-| GAP-RD-009 | semantic vector query は resource permission を finite hit 取得後に確認する。 | `FR-070`, `SQ-005` に部分適合。 | confirmed |
-| GAP-RD-010 | memory は legacy post-filter、context expansion は current permission を再確認しない。 | `FR-059`, `FR-070`, `SQ-005` に未達。 | confirmed |
-| GAP-RD-011 | worker は submit 時 group snapshot を再利用し、開始・commit 前の current identity/resource state を復元しない。 | `FR-090`, `SQ-006` に未達。 | confirmed |
-| GAP-RD-012 | quality metadata 欠損時に approved/verified/current/high/eligible を補い、classification/usage/quality の current reference を全派生物・利用目的で再評価しない。 | `FR-066`, `FR-068`–`FR-070`, `FR-075` と conflict。 | conflict |
-| GAP-RD-013 | 取り込みは scoped idempotency、attempt fencing、winner-only reconciliation を持たず、抽出で silent truncation し、chunking の versioned 構造・品質 contract がない。 | `FR-082`, `FR-083`, `FR-092` に未達。 | confirmed |
-| GAP-RD-014 | 構造 escape はあるが、untrusted instruction rule、detector/quarantine、attack corpus がない。 | `FR-071` に部分適合。 | confirmed |
-| GAP-RD-016 | delete は物理削除中心で deny-first/reconciliation 契約がない。 | `FR-066`, `SQ-006` に未達。 | confirmed |
-| GAP-RD-017 | cutover/rollback は exactly-one-active と current deny を保証しない。 | `FR-072`, `SQ-006` に未達。 | confirmed |
-| GAP-RD-018 | debug trace の raw data と redaction 宣言が一致しない。 | `FR-088` と conflict。`FR-074` の再現情報にも部分適合。 | conflict |
-| GAP-RD-019 | accepted evaluator profile 選択とは別に、product runtime に domain 固有語・regex と metadata 自動 policy 選択があり、expected-field 隔離と production equivalence の gate がない。 | `FR-075`, `SQ-007` に部分適合/conflict。 | conflict |
-| GAP-RD-020 | CDK self-signup disabled と `FR-025`/Web が衝突し、post-confirmation handler は未接続である。 | `FR-025`, `OQ-RD-008` と conflict。 | conflict |
-| GAP-RD-022 | backend/infra/Web の role catalog がずれ、role revoke/self/last-admin/audit guard が不足する。 | `FR-079`, `FR-080`, `FR-086` に未達。 | conflict |
-| GAP-RD-023 | document move は manifest を先に更新して vector metadata 更新が optional、folder move は subtree path と配下文書/index/policy を一つの公開単位で更新しない。 | `FR-061`, `FR-065`, `FR-087`, `SQ-009` に未達。 | confirmed |
-| GAP-RD-024 | trace と benchmark はあるが、本番 stage/slice 別の品質・安全 drift 検出、alert、safe action の control loop がない。 | `FR-093`, `SQ-005`–`SQ-015` に未達。 | confirmed |
+2026-07-13 の audit では `FR-056`–`FR-093` と `SQ-005`–`SQ-015` に完全実装と判定できる項目はなく、`partial`、`missing`、`conflict` のいずれかである。次の表を gap と実装 todo の正規対応とする。
 
-詳細、コード行、レポート根拠、改善順序は `docs/spec-recovery/16_current_state_gap_analysis_202607.md` を正とする。
+| ID | 現状と要求上の扱い | Confidence | 実装 todo |
+| --- | --- | --- | --- |
+| GAP-RD-001 | suspend/delete が Cognito user/session を無効化せず、`FR-058`, `FR-090`, `SQ-006` に未達。 | confirmed | `20260713-2250-authoritative-identity-session.md` |
+| GAP-RD-002 | authoritative tenant がなく request 由来 filter に依存し、`FR-056`, `FR-060`, `FR-070` に未達。 | confirmed | `20260517-1241-tenant-scoped-document-groups.md` |
+| GAP-RD-003 | authorization helper と principal namespace が併存し、`FR-059`, `FR-061`, `FR-079`, `FR-081` に未達。 | conflict | `20260713-2251-canonical-resource-authorization.md` |
+| GAP-RD-004 | `SYSTEM_ADMIN` の通常資源 bypass が `FR-059`、`ARC_ADR_004` と衝突する。 | conflict | `20260713-2251-canonical-resource-authorization.md` |
+| GAP-RD-005 | direct grant、folder grant、role、owner/manager の操作別合成順が一意でなく、`FR-057`, `FR-059`, `FR-063`, `FR-076` に未達。 | inferred | `20260713-2252-safe-sharing-reader-contract.md` |
+| GAP-RD-006 | `CHAT_USER` は read を持つが Web documents view は manage を要求し、`FR-064` に未達。 | confirmed | `20260713-2252-safe-sharing-reader-contract.md` |
+| GAP-RD-007 | principal selector と share mutation の同一 tenant・許可種別検証が不足し、`FR-062`, `FR-078`, `FR-085` に未達。 | confirmed | `20260713-2252-safe-sharing-reader-contract.md` |
+| GAP-RD-008 | reader schema/error/count が principal、metadata、資源存在を過剰に示し得て、`FR-064`, `FR-091` に未達。 | confirmed | `20260713-2252-safe-sharing-reader-contract.md` |
+| GAP-RD-009 | semantic query が有限件取得後に権限 filter し、`FR-070`, `SQ-005` に部分適合。 | confirmed | `20260713-2253-current-eligible-rag-retrieval.md` |
+| GAP-RD-010 | memory/context expansion が current permission を一貫して再確認せず、`FR-059`, `FR-070`, `SQ-005` に未達。 | confirmed | `20260713-2253-current-eligible-rag-retrieval.md` |
+| GAP-RD-011 | worker が submit 時 snapshot を再利用し、開始・commit 前の再認可がなく、`FR-090`, `SQ-006` に未達。 | confirmed | `20260713-2250-authoritative-identity-session.md` |
+| GAP-RD-012 | quality metadata 欠損を安全でない既定値で補い、`FR-066`, `FR-068`–`FR-070`, `FR-075` と衝突する。 | conflict | `20260713-2253-current-eligible-rag-retrieval.md`, `20260507-2000-document-block-ingestion-v2.md` |
+| GAP-RD-013 | ingest に scoped idempotency、attempt fencing、loss-aware extraction、versioned chunk contract がなく、`FR-082`, `FR-083`, `FR-092` に未達。 | confirmed | `20260507-2000-document-block-ingestion-v2.md` |
+| GAP-RD-014 | untrusted instruction rule、検出・隔離、attack corpus がなく、`FR-071` に部分適合。 | confirmed | `20260713-2255-prompt-evidence-safety.md` |
+| GAP-RD-015 | citation 自動補完が未支持 claim を支持済みに見せ得て、`FR-073`, `SQ-010`, `SQ-011` と衝突する。 | conflict | `20260713-2255-prompt-evidence-safety.md` |
+| GAP-RD-016 | delete が物理削除中心で deny-first/reconciliation 契約がなく、`FR-066`, `SQ-006` に未達。 | confirmed | `20260517-1241-folder-delete-archive.md` |
+| GAP-RD-017 | cutover/rollback が exactly-one-active と current deny を保証せず、`FR-072`, `SQ-006` に未達。 | confirmed | `20260507-2000-ingestion-bluegreen-benchmark-gate.md` |
+| GAP-RD-018 | trace raw data と redaction 宣言が一致せず、`FR-074`, `FR-088` と衝突する。 | conflict | `20260713-2256-trace-evaluation-isolation.md` |
+| GAP-RD-019 | product runtime に domain/dataset 固有 rule があり、`FR-075`, `SQ-007` に部分適合または衝突する。 | conflict | `20260713-2256-trace-evaluation-isolation.md`, `20260506-1203-requirements-classification-policy.md` |
+| GAP-RD-020 | CDK self-signup disabled と `FR-025`/Web が衝突し、post-confirmation handler が未接続。 | conflict | `20260713-2258-self-signup-policy-implementation.md` |
+| GAP-RD-021 | CloudFront/PKCE/CORS の accepted target と deploy/runtime が一致せず、`FR-054`, `TC-003` に未達。 | conflict | `20260522-2120-cloudfront-single-entry-implementation.md` |
+| GAP-RD-022 | role catalog が backend/infra/Web でずれ、mutation guard/audit が不足し、`FR-079`, `FR-080`, `FR-086` に未達。 | conflict | `20260713-2251-canonical-resource-authorization.md` |
+| GAP-RD-023 | move が manifest、vector metadata、subtree/index/policy を一公開単位で更新せず、`FR-061`, `FR-065`, `FR-087`, `SQ-009` に未達。 | confirmed | `20260517-1241-document-move-between-folders.md` |
+| GAP-RD-024 | 本番 stage/slice 別 drift、alert、safe action の control loop がなく、`FR-089`, `FR-093`, `SQ-008`, `SQ-012`–`SQ-015` に未達。 | confirmed | `20260713-2257-production-rag-monitoring.md` |
+
+表の todo はすべて `tasks/todo/` 配下である。planning 要求の `FR-049`–`FR-051`, `FR-053`–`FR-055` は、それぞれ `20260713-2259-chat-orchestration-completion.md`、`20260713-2300-async-agent-execution.md`、`20260713-2301-user-preferences.md`、`20260713-2302-api-lifecycle-common-middleware.md`、`20260522-2120-cloudfront-single-entry-implementation.md` で追跡する。`SQ-004` の未検証 responsive 条件は `20260713-2304-responsive-chat-ui-verification.md` で追跡する。
 
 ## 未確定判断
 
@@ -199,9 +237,7 @@ SWEBOK v4.0a Chapter 1 に従い、要求は次を満たす粒度にする。
 | `OQ-RD-011` | 共有 audience として許可する principal 種別。 |
 | `OQ-RD-012` | move に source container `full` を必須とするか。 |
 
-既存の `Q-001`–`Q-012` との重複・関連は `docs/spec-recovery/10_open_questions.md` の crosswalk を正とする。
-
-未確定値を仮の合格値として扱わず、対応する要求は Draft のままにする。
+未確定値を仮の合格値として扱わず、対応する要求は Draft のままにする。decision owner、選択肢、承認、要求/ADR 反映は `tasks/todo/20260713-2303-requirement-open-decisions.md` で追跡する。
 
 ## 妥当性確認状況
 
@@ -217,9 +253,8 @@ SWEBOK v4.0a Chapter 1 に従い、要求は次を満たす粒度にする。
 
 ## 関連文書
 
-- `docs/spec-recovery/13_requirements_redefinition_202607.md`
-- `docs/spec-recovery/14_authorization_sharing_matrix_202607.md`
-- `docs/spec-recovery/15_rag_lifecycle_matrix_202607.md`
-- `docs/spec-recovery/16_current_state_gap_analysis_202607.md`
-- `docs/spec-recovery/17_traceability_matrix_202607.csv`
+- `docs/1_要求_REQ/README.md`
+- `docs/1_要求_REQ/31_変更管理_CHANGE/REQ_CHANGE_001.md`
 - `docs/1_要求_REQ/31_変更管理_CHANGE/REQ_CHANGE_003.md`
+- `docs/2_アーキテクチャ_ARC/21_重要決定_ADR/ARC_ADR_004.md`
+- `docs/3_設計_DES/11_詳細設計_DLD/`

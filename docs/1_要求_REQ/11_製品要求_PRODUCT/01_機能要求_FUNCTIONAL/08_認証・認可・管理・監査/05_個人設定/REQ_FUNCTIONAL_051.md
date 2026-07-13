@@ -2,7 +2,7 @@
 
 - 種別: `REQ_FUNCTIONAL`
 - 状態: planning
-- 仕様参照: `docs/spec/2026-chapter-spec.md` 6A 章
+- 仕様参照: `docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md` 6A 章
 - FR-051: 利用者がチャット送信方法、既定モデル、既定回答範囲、非同期エージェントの既定 provider / model、通知、表示に関する個人設定を保存できること。
 
 ## 要求

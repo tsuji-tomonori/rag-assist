@@ -28,7 +28,7 @@
 | 識別子 | `FR-082` |
 | 説明 | source locator と warning を持つ loss-aware extraction/normalization |
 | 根拠 | silent data loss と不正確な citation locator を防ぐ |
-| 源泉 | RAG ガイド §3.1–3.2（PDF pp.59–66）、`docs/spec-recovery/15_rag_lifecycle_matrix_202607.md`、`GAP-RD-013` |
+| 源泉 | RAG ガイド §3.1–3.2（PDF pp.59–66）、`docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md`、`GAP-RD-013` |
 | Actor / trigger | parser/normalizer が取得済み文書を block へ変換するとき |
 | 種類 | 機能要求 / ingest / data integrity |
 | 依存関係 | `FR-068`, `FR-069` |
@@ -70,5 +70,5 @@
 
 ## トレース
 
-- 後方: `docs/spec-recovery/15_rag_lifecycle_matrix_202607.md`、`docs/spec-recovery/16_current_state_gap_analysis_202607.md` の `GAP-RD-013`。
+- 後方: `docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md` の `GAP-RD-013`。
 - 前方: extraction result schema、boundary corpus、`FR-083`、`FR-069`。

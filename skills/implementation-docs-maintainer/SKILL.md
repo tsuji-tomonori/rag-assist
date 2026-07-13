@@ -32,7 +32,7 @@ Update docs when a change affects any of these:
 - Repository-wide agent behavior: `AGENTS.md`.
 - MemoRAG product docs: `docs/`.
 - High-level setup and usage: `README.md`.
-- API examples: `docs/API_EXAMPLES.md`.
+- API contract and examples: `docs/3_設計_DES/41_API_API/` and generated `docs/generated/openapi.md`.
 - Transient completion records: `reports/working/`, not `docs/`.
 
 ## Avoid

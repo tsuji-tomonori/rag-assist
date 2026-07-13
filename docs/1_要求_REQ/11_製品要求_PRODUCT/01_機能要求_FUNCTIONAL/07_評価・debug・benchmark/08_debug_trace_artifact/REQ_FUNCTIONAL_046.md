@@ -27,9 +27,9 @@
 
 ## 要件の源泉・背景
 
-- 源泉: `docs/spec-recovery/06_requirements.md` の `REQ-DBG-002`
-- 源泉: `docs/spec-recovery/03_acceptance_criteria.md` の `AC-DBG-002`
-- 源泉: `docs/spec-recovery/07_specifications.md` の `SPEC-DBG-002`
+- 源泉: `docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md` の `REQ-DBG-002`
+- 源泉: `docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md` の `AC-DBG-002`
+- 源泉: `docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md` の `SPEC-DBG-002`
 - 背景: 復元仕様では、debug trace artifact が timeline、sentence assessments、finalEvidence、判定 step を再現できることが求められている。
 
 ## 要件の目的・意図

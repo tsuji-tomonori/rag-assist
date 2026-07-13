@@ -80,12 +80,7 @@ Check and add missing requirements/specifications for:
 
 ## Output
 
-Add to:
-
-- `docs/spec-recovery/06_requirements.md`
-- `docs/spec-recovery/07_specifications.md`
-- `docs/spec-recovery/09_gap_analysis.md`
-- `docs/spec-recovery/10_open_questions.md`
+Add approved conditions to the atomic requirement files under `docs/1_要求_REQ/`, architecture/design implications to the canonical ARC/DES files, and implementation mismatches/open decisions to the current requirements baseline. Create or reuse a `tasks/todo/` file for every required but incomplete behavior.
 
 Use requirement IDs such as:
 
