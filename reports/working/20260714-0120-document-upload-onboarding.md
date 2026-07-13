@@ -95,10 +95,12 @@
 
 - VoiceOver/NVDA の実機読み上げ、実スマートフォン、400% zoom、仮想キーボードは未検証。semantic test と headless browser の focus/reflow 確認で補完したが、実支援技術の読み上げ順は残存確認事項である。
 - 手動ブラウザ確認は mock API response を用いており、実 backend との end-to-end upload は未実施。API/hook 契約は変更せず、component test と既存 hook test の境界で検証した。
-- CI は PR 作成前のため未確認。PR 作成後も未完了なら、PR 本文とセルフレビューに pending として明記する。
+- `Validate Semver Label` の最新runは成功。task完了更新前の `MemoRAG CI` は実行中であり、成功扱いにしていない。
 - RAG の検索、根拠性、引用、benchmark dataset は変更していない。benchmark 期待語句、QA sample 固有値、dataset 固有分岐は追加していない。
 
 ## PR・完了状態
 
-- PR: 作成前。作成後に URL、受け入れ条件コメント、セルフレビュー結果を追記する。
-- task: PR コメント完了後に `tasks/done/` へ移動する。
+- PR: `https://github.com/tsuji-tomonori/rag-assist/pull/346`（draft、`semver:patch`、mergeable）。
+- 受け入れ条件コメント: PR comment ID `4960218666`。AC1〜AC13を13/13達成として記録した。
+- セルフレビュー: PR comment ID `4960218498`。blocking / should fix なし、実支援技術・実端末・実backend E2Eと実行中CIを明示した。
+- task: `tasks/done/20260714-0033-document-upload-onboarding.md` へ移動し、状態を `done` に更新した。

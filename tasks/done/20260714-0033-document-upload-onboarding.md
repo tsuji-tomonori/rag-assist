@@ -1,8 +1,8 @@
 # ドキュメント登録オンボーディングと文書一覧レイアウトを修正
 
-保存先: `tasks/do/20260714-0033-document-upload-onboarding.md`
+保存先: `tasks/done/20260714-0033-document-upload-onboarding.md`
 
-状態: do
+状態: done
 
 タスク種別: 修正
 
@@ -130,19 +130,19 @@ API request schema、認可判定、永続化形式は変更しない。
 
 ## 受け入れ条件
 
-- [ ] AC1: 最新 `origin/main` を基点とする専用worktreeで、元worktreeの未追跡変更を含めず作業している。
-- [ ] AC2: フォルダ0件・文書0件で、文字付き `ドキュメントを追加` と「保存先を用意→ファイルを選択」の順序が表示される。
-- [ ] AC3: 簡易作成で表示する業務入力は `新しいフォルダ名（必須）` だけで、`onCreateGroup` へ `{ name }` のみ渡す。
-- [ ] AC4: 作成成功後、新規フォルダを保存先に選び、作成済み通知と手動のファイル選択を提示する。
-- [ ] AC5: full 権限の既存フォルダを保存先に選択し、単一ファイルをアップロードできる。
-- [ ] AC6: フォルダ0件、選択フォルダ0件、絞り込み0件で、それぞれ実行可能な回復導線を表示する。
-- [ ] AC7: `uploadDisabledReason` の有無にかかわらず絞り込み欄が残余高へ伸びず、文書一覧だけが可変高になる。
-- [ ] AC8: 設定モーダルの短いカードが隣接カードの高さへ stretch せず、初回登録は設定モーダルを開かず完了できる。
-- [ ] AC9: upload/settings操作のアイコンと文字ラベルが意味に一致し、フォーム、状態、エラーに適切なaccessible name/description/live regionがある。
-- [ ] AC10: 320px幅で主フローが1列表示され、横方向の通常ページスクロールなしに操作できる。
-- [ ] AC11: 本番経路へ架空フォルダ、架空ユーザー、架空共有候補、固定件数を追加していない。
-- [ ] AC12: 関連component test、Web typecheck、build、lint、Web UI inventory check、pre-commit、`git diff --check` が成功する。
-- [ ] AC13: `FR-001/FR-002`、作業レポート、PR本文、受け入れ条件コメント、セルフレビューが実装・検証結果と同期する。
+- [x] AC1: 最新 `origin/main` を基点とする専用worktreeで、元worktreeの未追跡変更を含めず作業している。
+- [x] AC2: フォルダ0件・文書0件で、文字付き `ドキュメントを追加` と「保存先を用意→ファイルを選択」の順序が表示される。
+- [x] AC3: 簡易作成で表示する業務入力は `新しいフォルダ名（必須）` だけで、`onCreateGroup` へ `{ name }` のみ渡す。
+- [x] AC4: 作成成功後、新規フォルダを保存先に選び、作成済み通知と手動のファイル選択を提示する。
+- [x] AC5: full 権限の既存フォルダを保存先に選択し、単一ファイルをアップロードできる。
+- [x] AC6: フォルダ0件、選択フォルダ0件、絞り込み0件で、それぞれ実行可能な回復導線を表示する。
+- [x] AC7: `uploadDisabledReason` の有無にかかわらず絞り込み欄が残余高へ伸びず、文書一覧だけが可変高になる。
+- [x] AC8: 設定モーダルの短いカードが隣接カードの高さへ stretch せず、初回登録は設定モーダルを開かず完了できる。
+- [x] AC9: upload/settings操作のアイコンと文字ラベルが意味に一致し、フォーム、状態、エラーに適切なaccessible name/description/live regionがある。
+- [x] AC10: 320px幅で主フローが1列表示され、横方向の通常ページスクロールなしに操作できる。
+- [x] AC11: 本番経路へ架空フォルダ、架空ユーザー、架空共有候補、固定件数を追加していない。
+- [x] AC12: 関連component test、Web typecheck、build、lint、Web UI inventory check、pre-commit、`git diff --check` が成功する。
+- [x] AC13: `FR-001/FR-002`、作業レポート、PR本文、受け入れ条件コメント、セルフレビューが実装・検証結果と同期する。
 
 ## 検証計画
 
@@ -176,3 +176,14 @@ API request schema、認可判定、永続化形式は変更しない。
 - リスク: 作成直後に親から最新 `documentGroups` が再描画されるまで短い差があるため、成功レスポンス由来の保存先を一時的に扱う必要がある。
 - リスク: 自動テストだけではスクリーンリーダーの読み上げ順、400% zoom、実端末の仮想キーボードを完全検証できない。
 - 実装時確認: `検索で利用可能` の最終表示文言を既存 `DocumentUploadState.phase=complete` の契約と一致させる。
+
+## 完了記録
+
+- 完了日: 2026-07-14
+- PR: `https://github.com/tsuji-tomonori/rag-assist/pull/346`（draft、`semver:patch`）
+- 受け入れ条件コメント: PR comment ID `4960218666`、AC1〜AC13を13/13達成として記録。
+- セルフレビュー: PR comment ID `4960218498`、blocking / should fix なし、実支援技術・実端末・実backend E2Eを未検証として記録。
+- 検証: component test 65件、lint、Web typecheck/build、`task docs:check`、pre-commit、`git diff --check` が成功。
+- 手動確認: headless Chrome のデスクトップ幅と320 CSS px幅で初期空状態、追加ダイアログ、設定モーダルを確認。
+- CI: `Validate Semver Label` の最新runは成功。task完了更新前の `MemoRAG CI` は実行中であり、成功扱いにしていない。
+- 作業レポート: `reports/working/20260714-0120-document-upload-onboarding.md`
