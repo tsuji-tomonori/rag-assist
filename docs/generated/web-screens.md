@@ -17,7 +17,7 @@
 | お気に入り | favorites | / (client-state) | [履歴](web-features/history.md) | HistoryWorkspace | - | チャットへ戻る、履歴を検索、履歴の並び順、newest、oldest、messages ほか 2 件 | inferred |
 | 性能テスト | benchmark | / (client-state) | [性能テスト](web-features/benchmark.md) | BenchmarkWorkspace | canReadBenchmarkRuns | チャットへ戻る、テスト種別、benchmark suite を取得できません、データセット、モデル / Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku、modelId ほか 4 件 | confirmed |
 | 管理者設定 | admin | / (client-state) | [管理](web-features/admin.md) | AdminWorkspace | canSeeAdminSettings | チャットへ戻る、更新、管理対象ユーザー作成、メール、表示名、任意 ほか 19 件 | confirmed |
-| ドキュメント | documents | / (client-state) | [ドキュメント](web-features/documents.md) | DocumentWorkspace | canManageDocuments | 管理者設定へ戻る、フォルダ設定を閉じる、ファイル名: / 現在の権限: / 継承: / 共有先種別 / user / group / 共有先ID / 権限 / readOnly / full / 理…、削除、共有先種別 / user / group、documentSharePrincipalType ほか 94 件 | confirmed |
+| ドキュメント | documents | / (client-state) | [ドキュメント](web-features/documents.md) | DocumentWorkspace | canManageDocuments | 管理者設定へ戻る、フォルダ設定を閉じる、ファイル名: / 現在の権限: / 継承: / 共有先種別 / user / group / 共有先ID / 権限 / readOnly / full / 理…、削除、共有先種別 / user / group、documentSharePrincipalType ほか 103 件 | confirmed |
 | 個人設定 | profile | / (client-state) | [アプリケーション枠](web-features/app.md) | PersonalSettingsView | - | チャットへ戻る、送信キー / Enterで送信 / Ctrl+Enterで送信、submitShortcut、enter、ctrlEnter、サインアウト ほか 11 件 | confirmed |
 
 ## 画面ごとの説明
@@ -90,7 +90,7 @@
 - route: `/` (client-state)
 - 権限条件: `canManageDocuments`
 - 画面の意味: ドキュメント。ファイル upload、フォルダ作成、共有、reindex 切替を行います。
-- 主要操作: 管理者設定へ戻る、フォルダ設定を閉じる、ファイル名: / 現在の権限: / 継承: / 共有先種別 / user / group / 共有先ID / 権限 / readOnly / full / 理…、削除、共有先種別 / user / group、documentSharePrincipalType、user、group、共有先ID、documentSharePrincipalId ほか 90 件
+- 主要操作: 管理者設定へ戻る、フォルダ設定を閉じる、ファイル名: / 現在の権限: / 継承: / 共有先種別 / user / group / 共有先ID / 権限 / readOnly / full / 理…、削除、共有先種別 / user / group、documentSharePrincipalType、user、group、共有先ID、documentSharePrincipalId ほか 99 件
 
 ### 個人設定
 

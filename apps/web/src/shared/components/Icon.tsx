@@ -14,6 +14,7 @@ export type IconName =
   | "warning"
   | "expand"
   | "plus"
+  | "upload"
   | "download"
   | "trash"
   | "inbox"
@@ -62,6 +63,8 @@ function getIconPath(name: IconName) {
       return <path d="M4 4h7v2H7.4l4.2 4.2-1.4 1.4L6 7.4V11H4V4Zm9 0h7v7h-2V7.4l-4.2 4.2-1.4-1.4L16.6 6H13V4ZM6 16.6l4.2-4.2 1.4 1.4L7.4 18H11v2H4v-7h2v3.6Zm7.8-4.2 4.2 4.2V13h2v7h-7v-2h3.6l-4.2-4.2 1.4-1.4Z" />
     case "plus":
       return <path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5Z" />
+    case "upload":
+      return <path d="M11 16V6.8L7.7 10.1 6.3 8.7 12 3l5.7 5.7-1.4 1.4L13 6.8V16h-2ZM5 18h14v3H5v-3Z" />
     case "download":
       return <path d="M11 3h2v9.2l3.3-3.3 1.4 1.4L12 16l-5.7-5.7 1.4-1.4 3.3 3.3V3Zm-6 15h14v3H5v-3Z" />
     case "trash":
