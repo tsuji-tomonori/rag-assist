@@ -80,6 +80,7 @@ trace を実在する `tasks/done/` path へ更新し、shared resource state mo
 - API/Web typecheck: pass
 - repository ESLint: pass
 - `task docs:check`: pass
+- GitHub Actions: CI repair head `d16a679f` で MemoRAG CI run `29320645955`（run #1000）と Validate Semver Label run `29320646164`（run #1459）が success
 
 `pre-commit run --all-files` の初回試行は本 task 外の既存レポート `reports/working/20260501-0419-architecture-diagram-review.md` の意図的な Markdown hard break を trailing-whitespace hook が変更して失敗した。その task 外変更を元に戻し、今回の staged files に限定した正規 gate を再実行して全 hook が成功した。
 

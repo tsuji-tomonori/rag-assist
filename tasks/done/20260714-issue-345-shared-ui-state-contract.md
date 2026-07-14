@@ -59,6 +59,7 @@
 - `FR-095` の trace を実在する `tasks/done/` path へ更新し、shared resource state helper の confirmed/unconfirmed、content retention、busy、part availability 分岐を振る舞いテストで補った。coverage threshold は変更していない。
 - API full coverage は 773 tests pass、Web full coverage は 40 files / 338 tests pass、Web branch coverage は 85.08% で成功した。
 - API/Web typecheck、repository lint、`task docs:check` も再実行して成功した。
+- CI repair head `d16a679f` で MemoRAG CI run `29320645955`（run #1000）と Validate Semver Label run `29320646164`（run #1459）が成功した。
 
 ## ドキュメントメンテナンス計画
 
