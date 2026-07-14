@@ -104,3 +104,10 @@
 - 受け入れ条件コメント: PR comment ID `4960218666`。AC1〜AC13を13/13達成として記録した。
 - セルフレビュー: PR comment ID `4960218498`。blocking / should fix なし、実支援技術・実端末・実backend E2Eと実行中CIを明示した。
 - task: `tasks/done/20260714-0033-document-upload-onboarding.md` へ移動し、状態を `done` に更新した。
+
+## 2026-07-14 latest main 再統合
+
+- 状態: PR #341–#344 merge 後の current main へ再統合中。
+- 理由: PR head `802cb9ed` は #342 merge commit `964c3a98` を基準としており、current main の認可／RAG lifecycle／generated API docs／管理画面監査を含まないため、そのまま merge しない。
+- task: `tasks/do/20260714-0033-document-upload-onboarding.md` へ戻し、追加の受け入れ条件 R1–R6 を設定した。
+- 方針: current main を mergeし、競合を現行 source 契約に沿って解消した後、No Mock Product UI、認可境界、docs 同期、変更範囲に見合う検証を再実行する。

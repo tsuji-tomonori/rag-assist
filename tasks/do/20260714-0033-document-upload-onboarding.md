@@ -1,8 +1,8 @@
 # ドキュメント登録オンボーディングと文書一覧レイアウトを修正
 
-保存先: `tasks/done/20260714-0033-document-upload-onboarding.md`
+保存先: `tasks/do/20260714-0033-document-upload-onboarding.md`
 
-状態: done
+状態: do
 
 タスク種別: 修正
 
@@ -187,3 +187,16 @@ API request schema、認可判定、永続化形式は変更しない。
 - 手動確認: headless Chrome のデスクトップ幅と320 CSS px幅で初期空状態、追加ダイアログ、設定モーダルを確認。
 - CI: `Validate Semver Label` の最新runは成功。task完了更新前の `MemoRAG CI` は実行中であり、成功扱いにしていない。
 - 作業レポート: `reports/working/20260714-0120-document-upload-onboarding.md`
+
+## 2026-07-14 latest main 再統合
+
+PR #341–#344 の merge 後、branch は main より古く `mergeable=false` となった。文書・folder の所有者／resource scope、RAG admission、canonical docs、source-backed API docs、管理画面監査を後退させず、本 UI 修正を current main へ再統合する。
+
+### 再統合の受け入れ条件
+
+- [ ] R1: PR #344 merge 後の latest main を履歴改変なしで統合している。
+- [ ] R2: #341 で追加された文書・folder の認可／lifecycle と、本 PR の初回登録導線を両立し、競合解消でどちらも欠落させていない。
+- [ ] R3: 保存先、権限、folder、document、件数、状態は API response／props／component state または明示的 empty/loading/error/permission state に由来し、本番 fallback に架空値を追加していない。
+- [ ] R4: `FR-001/FR-002`、Web UI inventory、canonical docs と実装が current main で同期している。
+- [ ] R5: 対象 component test、Web lint/typecheck/build、docs check、pre-commit、diff check と final GitHub CI が成功している。
+- [ ] R6: PR 本文、`semver:patch`、日本語の受け入れ条件確認／セルフレビュー、task done 更新が current final content と検証結果へ同期している。
