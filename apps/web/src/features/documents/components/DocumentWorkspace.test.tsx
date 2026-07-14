@@ -3364,4 +3364,36 @@ describe("DocumentWorkspace", () => {
     await userEvent.click(within(drawer).getByRole("button", { name: "この資料に質問する" }))
     expect(onAskDocument).toHaveBeenCalledWith(readOnlyDocument)
   })
+
+  it("read-only の空 response は共有文書の空状態を表示し、作成 CTA を出さない", () => {
+    render(
+      <DocumentWorkspace
+        documents={[]}
+        documentGroups={[]}
+        loading={false}
+        canWrite={false}
+        canDelete={false}
+        canCreateGroups={false}
+        canShareGroups={false}
+        canReindex={false}
+        migrations={[]}
+        uploadGroupId=""
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={vi.fn()}
+        onShareGroup={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    expect(screen.getByRole("heading", { name: "共有ドキュメント" })).toBeInTheDocument()
+    expect(screen.getByText("利用できるドキュメントはありません。")).toBeInTheDocument()
+    expect(screen.getByText("現在の権限で閲覧できる共有ドキュメントはありません。")).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "ドキュメントを追加" })).not.toBeInTheDocument()
+    expect(screen.queryByText(/^保存先:/)).not.toBeInTheDocument()
+  })
 })

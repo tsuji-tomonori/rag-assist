@@ -127,7 +127,7 @@ export function DocumentFilePanel({
       <div className="document-file-panel-head">
         <div>
           <h3>{selectedFolder.name}</h3>
-          <span className={uploadGroupId ? "upload-destination-chip" : "upload-destination-chip missing"}>保存先: {uploadDestinationLabel}</span>
+          {showManagementControls && <span className={uploadGroupId ? "upload-destination-chip" : "upload-destination-chip missing"}>保存先: {uploadDestinationLabel}</span>}
           {showManagementControls && addDocumentDisabledReason && <p className="field-hint" id="document-add-disabled-reason">{addDocumentDisabledReason}</p>}
         </div>
         <span className="sr-only">登録文書</span>
