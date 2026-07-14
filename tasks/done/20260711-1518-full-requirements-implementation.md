@@ -1,7 +1,7 @@
 # 認可・文書共有・RAG 再定義要件の完全実装
 
-- 保存先: `tasks/do/20260711-1518-full-requirements-implementation.md`
-- 状態: do
+- 保存先: `tasks/done/20260711-1518-full-requirements-implementation.md`
+- 状態: done
 - タスク種別: 機能追加
 
 ## 背景
@@ -88,8 +88,8 @@ Draft PR #340 で `FR-056`–`FR-093` と `SQ-005`–`SQ-015` を target require
 - [x] production UI/API に mock fallback、fake count/user/group/date/capacity、未実装 control がなく、real data または honest state のみを返す・表示する。
 - [x] API route/policy 変更は `apps/api/src/security/access-control-policy.test.ts` と OpenAPI を同期し、機微 response/debug/benchmark artifact は最小 permission と field-level filtering を持つ。
 - [x] migration/reindex/cutover/rollback/compatibility/operations docs が実装と同期し、production deploy を行わずに検証可能な local/CI acceptance procedure がある。
-- [ ] 選定した unit/integration/contract/static/browser E2E/benchmark/fault-injection/build/docs checks と最終 CI が pass し、未実施の必須検証がない。
-- [ ] main 向け PR、`semver:*` label、日本語の受け入れ条件確認、セルフレビュー、作業レポート、task done 移動が完了している。
+- [x] 選定した unit/integration/contract/static/browser E2E/benchmark/fault-injection/build/docs checks と最終 CI が pass し、未実施の必須検証がない。
+- [x] main 向け PR、`semver:*` label、日本語の受け入れ条件確認、セルフレビュー、作業レポート、task done 移動が完了している。
 
 ## 2026-07-14 ローカル受け入れ判定
 
@@ -98,7 +98,7 @@ Draft PR #340 で `FR-056`–`FR-093` と `SQ-005`–`SQ-015` を target require
 - release source audit: dataset-specific branch 0、artifact manifest mismatch 0。
 - independent final review: benchmark seed の認可 subject／verified runner audit attribution／共有 corpus mapping を含め production-path blocker 0。
 - operational acceptance pending: AWS registry backfill/convergence、live notification/drift/rollback drill、approved threshold/window/owner/price catalog、representative workload/load/chaos/cost/billing evidence。`tasks/todo/20260714-0104-full-requirements-operational-acceptance.md` へ移管済み。
-- delivery repair local verification complete: #342 統合 commit `d36f6675` の MemoRAG CI run 979 は成功したが、task done 記録 head `591187a4` の run 980 で Web 307 test 成功後に `useFavorites` の未 mock HTTP fetch が teardown まで残り、`EnvironmentTeardownError` となった。favorites hook を mock へ隔離し、対象 4/4、Web coverage 307/307、対象 lint、Web typecheck、docs check を再検証済み。修復 head を push し、final GitHub CI を行う。
+- delivery repair verified: #342 統合 commit `d36f6675` の MemoRAG CI run 979 は成功したが、task done 記録 head `591187a4` の run 980 で Web 307 test 成功後に `useFavorites` の未 mock HTTP fetch が teardown まで残り、`EnvironmentTeardownError` となった。favorites hook を mock へ隔離し、対象 4/4、Web coverage 307/307、対象 lint、Web typecheck、docs check を再検証した。修復 head `359c999b` の MemoRAG CI run 981 と Validate Semver Label run 1434 は成功した。
 
 ## 検証計画
 

@@ -6,7 +6,7 @@
 
 ## 背景
 
-`tasks/do/20260711-1518-full-requirements-implementation.md` で `FR-056`–`FR-093`、`SQ-005`–`SQ-015` の repository implementation と local/CI acceptance を整備している。一方、外部環境、stakeholder 承認値、実 workload を必要とする運用受け入れは、未取得の evidence を合格扱いにしないため本タスクへ分離する。
+`tasks/done/20260711-1518-full-requirements-implementation.md` で `FR-056`–`FR-093`、`SQ-005`–`SQ-015` の repository implementation と local/CI acceptance を整備した。一方、外部環境、stakeholder 承認値、実 workload を必要とする運用受け入れは、未取得の evidence を合格扱いにしないため本タスクへ分離する。
 
 ## 対象範囲
 

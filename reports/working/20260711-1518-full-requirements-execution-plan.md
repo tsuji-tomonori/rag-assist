@@ -1,9 +1,9 @@
 # 追加要件完全実装 実行計画（2026-07）
 
 - 文書種別: 実装・検証計画
-- 状態: repository_implementation_verified_delivery_in_progress_operational_acceptance_pending
+- 状態: repository_implementation_verified_delivery_merge_ready_operational_acceptance_pending
 - 対象: `FR-056`–`FR-093`, `SQ-005`–`SQ-015`
-- 実装 task: `tasks/do/20260711-1518-full-requirements-implementation.md`
+- 実装 task: `tasks/done/20260711-1518-full-requirements-implementation.md`
 - 基準文書: `docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md`、同ディレクトリ配下の原子要求、`reports/working/20260712-2207-full-requirements-implementation.md`
 
 ## 1. 目的
