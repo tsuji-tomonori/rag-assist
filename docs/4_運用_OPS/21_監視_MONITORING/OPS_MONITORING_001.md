@@ -119,6 +119,7 @@ AWS KMS の AWS managed key は key storage 自体の課金対象外だが、AWS
 | --- | --- |
 | docs 構成と自動生成物 | `python3 scripts/validate_docs.py` |
 | OpenAPI freshness | `npm run docs:openapi:check` |
+| API コード対応文書の再生成／freshness | `npm run docs:api-code` / `npm run docs:api-code:check` |
 | Web inventory freshness | `npm run docs:web-inventory:check` |
 | infra inventory freshness | `npm run docs:infra-inventory:check` |
 | hidden Unicode | `npm run docs:hidden-unicode:check` |

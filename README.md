@@ -20,6 +20,7 @@ AWS では API Gateway、Lambda、Amazon Bedrock、Amazon S3、Amazon S3 Vectors
 - [API design](docs/3_設計_DES/41_API_API/DES_API_001.md): API 契約と生成 OpenAPI の位置づけ
 - [Monitoring and verification](docs/4_運用_OPS/21_監視_MONITORING/OPS_MONITORING_001.md): 現行の観測点、初動、docs check
 - [OpenAPI Docs](docs/generated/openapi.md): 生成済み OpenAPI Markdown
+- [API Code Docs](docs/generated/api-code/index.md): API ごとの詳細設計、IF、メッセージ、query、sequence、unit test 自動生成文書
 - [Web UI Inventory](docs/generated/web-overview.md): Web UI 自動生成インベントリ
 - [AWS Resource Inventory](docs/generated/infra-inventory.md): CDK snapshot 由来の AWS リソースインベントリ
 
@@ -48,6 +49,7 @@ docker compose up --build
 npm test --workspaces --if-present
 npm run typecheck --workspaces --if-present
 npm run docs:openapi:check
+npm run docs:api-code:check
 ```
 
 Taskfile を使う場合:

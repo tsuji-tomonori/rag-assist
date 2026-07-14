@@ -8,6 +8,8 @@
     "start": "tsx src/local.ts",
     "docs:openapi": "tsx src/generate-openapi-docs.ts",
     "docs:openapi:check": "tsx src/validate-openapi-docs.ts",
+    "docs:api-code": "node --import tsx src/generate-api-code-docs.ts",
+    "docs:api-code:check": "node --import tsx src/generate-api-code-docs.ts --check",
     "test": "NODE_ENV=test LOCAL_AUTH_USER_ID=local-dev LOCAL_AUTH_EMAIL=local-dev@example.com LOCAL_AUTH_GROUPS=SYSTEM_ADMIN LOCAL_AUTH_ACCOUNT_STATUS=active LOCAL_AUTH_TENANT_ID=local-test BENCHMARK_EVALUATION_ENABLED=true BENCHMARK_EVALUATION_TENANT_ID=benchmark-test node --import tsx --test --test-concurrency=1 \"src/**/*.test.ts\"",
     "test:coverage": "NODE_ENV=test LOCAL_AUTH_USER_ID=local-dev LOCAL_AUTH_EMAIL=local-dev@example.com LOCAL_AUTH_GROUPS=SYSTEM_ADMIN LOCAL_AUTH_ACCOUNT_STATUS=active LOCAL_AUTH_TENANT_ID=local-test BENCHMARK_EVALUATION_ENABLED=true BENCHMARK_EVALUATION_TENANT_ID=benchmark-test c8 --check-coverage --statements 90 --functions 90 --lines 90 --reporter=text-summary --reporter=json-summary node --import tsx --test --test-concurrency=1 \"src/**/*.test.ts\"",
     "build": "tsc -p tsconfig.json",
