@@ -69,6 +69,7 @@ Issue #345 の全体完了まで作業し、repository の worktree/task/validat
 | `task docs:check` | pass | docs validator、OpenAPI、95 APIs/570 API docs、UI trace、Web/infra inventory、hidden Unicode。 |
 | `pre-commit run` | pass | git-secrets、hidden Unicode、whitespace/EOF、YAML、large-file、merge-conflict、debug、line-ending。初回 EOF 修正後に再実行。 |
 | `git diff --check` | pass | whitespace error なし。 |
+| GitHub Actions `MemoRAG CI` run 994 / semver label check run 1451 | pass | 初回 CI failure 修復後の code head `4456e1bd`。 |
 
 ### 失敗・修復履歴
 
@@ -92,4 +93,4 @@ Issue #345 の全体完了まで作業し、repository の worktree/task/validat
 - Firefox/WebKit required/scheduled scope、代表 screen reader/device matrix、visual required set は open question である。
 - existing documents visual snapshot mismatch は別環境で再確認が必要であり、本作業では baseline を変更していない。
 - draft PR #348 の作成、`semver:minor` label、日本語 acceptance comment、日本語 self-review、task done 移動は完了した。
-- GitHub Actions の初回 PR CI は要件トレース回帰 test の登録漏れで失敗した。修復後の対象 test、API coverage 773 tests、targeted ESLint、`task docs:check` は local で成功しており、修復 commit push 後の CI を再監視する。
+- GitHub Actions の初回 PR CI は要件トレース回帰 test の登録漏れで失敗した。修復後の対象 test、API coverage 773 tests、targeted ESLint、`task docs:check` は local で成功し、code head `4456e1bd` の `MemoRAG CI` run 994 と semver label check run 1451 も成功した。
