@@ -4,8 +4,8 @@
 - branch: `codex/api-code-doc-generation`
 - initial base: `origin/main` (`9cd904d3`)
 - integration base: `origin/main` (`2b3fdb85`、PR #341 merge 後)
-- task: `tasks/do/20260713-2237-api-code-doc-generation.md`
-- 状態: 2026-07-14 最新 main への再統合・再検証中
+- task: `tasks/done/20260713-2237-api-code-doc-generation.md`
+- 状態: 実装・最新 main 再統合・final content CI 完了。metadata-only head の merge gate 確認待ち
 
 ## 受けた指示
 
@@ -77,7 +77,8 @@
 - 対象 ESLint、API typecheck、API build、check-yaml、`git diff --check` は pass。
 - `npm run rag:release:source-audit` は dataset-specific branch 0、artifact manifest mismatch 0 で pass。
 - 初回 generator test は worktree が親 worktree の古い `@memorag-mvp/contract` symlink を参照して失敗した。worktree 内で `npm install` を実行して workspace link を統合 head に同期し、再実行で解消した。install audit は 8 vulnerabilities（low 2、moderate 1、high 5）を報告し、本 PR では互換性影響を伴う自動修正を行っていない。
-- final GitHub Actions は未確認であり、ローカル pass と区別する。
+- final content head `bed5918d` の GitHub Actions は MemoRAG CI run 983、Semver run 1436 / 1437 がすべて成功した。
+- 受け入れ条件確認 comment `4964246601` とセルフレビュー comment `4964246707` を final content head に記録した。task/report の完了記録だけを変更する metadata head は、merge 前に CI とレビュー状態を再確認する。
 
 ## 指示への fit 評価
 
@@ -103,13 +104,14 @@
 - branch と call graph は静的構造を示し、runtime path coverage や business correctness を証明しない。既存 test の対応有無と追加推奨観点を `unit-test_gen.md` で区別する。
 - 生成物は最新 main で約 8.4 MB である。完全な IF schema を保持しつつ、その他の文書は主要 call depth と data boundary を優先している。
 - 本タスクは API behavior、RAG retrieval、認証・認可 policy を変更していない。access-control policy test の更新対象となる route 変更もない。
-- GitHub Actions の final head は未確認であり、ローカル検証の pass と区別する。
+- final content head の GitHub Actions は成功した。metadata-only head の GitHub Actions は merge 前の外部 gate とし、未確認のまま merge しない。
 
 ## Publication
 
-- Draft PR: `https://github.com/tsuji-tomonori/rag-assist/pull/343`
+- PR: `https://github.com/tsuji-tomonori/rag-assist/pull/343`（ready for review）
 - label: `semver:minor`
 - 実装 commit: `7af40f7f`
-- 受け入れ条件確認コメント: 投稿済み（comment ID `4959445096`）
-- セルフレビューコメント: 投稿済み（comment ID `4959441269`）
-- GitHub Actions: publication 完了時点では未確認
+- 最新 main 統合後の受け入れ条件確認コメント: 投稿済み（comment ID `4964246601`）
+- 最新 main 統合後のセルフレビューコメント: 投稿済み（comment ID `4964246707`）
+- GitHub Actions: final content head の MemoRAG CI run 983、Semver run 1436 / 1437 が成功
+- merge gate: metadata-only head の CI、review thread、review submission、mergeability、expected head SHA を再確認する
