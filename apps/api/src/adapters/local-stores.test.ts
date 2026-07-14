@@ -111,6 +111,21 @@ test("local question store creates, lists, answers, resolves, and rejects missin
   assert.deepEqual((await store.listAllForAdmin()).map((item) => item.questionId), [question.questionId])
   assert.deepEqual((await store.listRequestedByUser("user-1")).map((item) => item.questionId), [question.questionId])
 
+  const repeated = await store.create({
+    title: "変更された件名",
+    question: "再送された本文",
+    requesterUserId: "user-1",
+    messageId: "message-1"
+  })
+  const repeatedAgain = await store.create({
+    title: "さらに変更された件名",
+    question: "再送された本文",
+    requesterUserId: "user-1",
+    messageId: "message-1"
+  })
+  assert.equal(repeatedAgain.questionId, repeated.questionId)
+  assert.equal((await store.listRequestedByUser("user-1")).filter((item) => item.messageId === "message-1").length, 1)
+
   const answered = await store.answer(question.questionId, {
     answerTitle: "回答",
     answerBody: "担当者の確認結果です。",

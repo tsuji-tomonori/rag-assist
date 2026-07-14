@@ -8,8 +8,8 @@
 
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
-| 到達 symbol | service merges Cognito directory users with existing ledger users by email | `apps/api/src/rag/memorag-service.test.ts:2806 (service merges Cognito directory users with existing ledger users by email)` |
-| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:3117 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
+| 到達 symbol | service merges Cognito directory users with existing ledger users by email | `apps/api/src/rag/memorag-service.test.ts:2814 (service merges Cognito directory users with existing ledger users by email)` |
+| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:3125 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
 | 到達 symbol | account create provisions Cognito identity and roles before committing the managed ledger and common audit | `apps/api/src/security/account-lifecycle-current-identity.test.ts:52 (account create provisions Cognito identity and roles before committing the managed ledger and common audit)` |
 | 到達 symbol | account create role failure removes the authoritative identity and records failed without a ledger success | `apps/api/src/security/account-lifecycle-current-identity.test.ts:70 (account create role failure removes the authoritative identity and records failed without a ledger success)` |
 | 到達 symbol | account create persists denied audit before rejecting a currently unauthorized actor | `apps/api/src/security/account-lifecycle-current-identity.test.ts:89 (account create persists denied audit before rejecting a currently unauthorized actor)` |

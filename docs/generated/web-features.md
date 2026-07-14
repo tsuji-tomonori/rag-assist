@@ -16,7 +16,7 @@
 | アプリケーション枠 | app | ログイン後の共通フレーム、ナビゲーション、トップバー、個人設定を扱う領域です。 | profile | 7 | 15 | 「チャットへ戻る」を実行するボタン。<br>「送信キー / Enterで送信 / Ctrl+Enterで送信」に紐づく入力ラベル。<br>「Enterで送信 / Ctrl+Enterで送信」を選ぶ選択項目。 ほか 9 件 | [app.md](web-features/app.md) |
 | 認証 | auth | ログイン、サインアップ、確認コード、新規パスワード設定などの認証画面を扱う領域です。 | - | 2 | 26 | 「title」を入力・送信するフォーム。<br>「新しいパスワード」に紐づく入力ラベル。<br>「新しいパスワード」を入力または選択する項目。 ほか 15 件 | [auth.md](web-features/auth.md) |
 | 性能テスト | benchmark | ベンチマーク suite の選択、run 起動、履歴、成果物ダウンロードを扱う領域です。 | benchmark | 1 | 18 | 「チャットへ戻る」を実行するボタン。<br>「テスト種別」に紐づく入力ラベル。<br>「テスト種別」を選ぶ選択項目。 ほか 13 件 | [benchmark.md](web-features/benchmark.md) |
-| チャット | chat | RAG 質問、回答表示、引用、追加確認、担当者エスカレーション、チャット入力を扱う領域です。 | chat | 16 | 41 | 「回答をコピー済み / 回答をコピー」を実行するボタン。<br>「この候補で質問する」を実行するボタン。<br>「自分で入力」を実行するボタン。 ほか 37 件 | [chat.md](web-features/chat.md) |
+| チャット | chat | RAG 質問、回答表示、引用、追加確認、担当者エスカレーション、チャット入力を扱う領域です。 | chat | 17 | 41 | 「回答をコピー済み / 回答をコピー」を実行するボタン。<br>「この候補で質問する」を実行するボタン。<br>「自分で入力」を実行するボタン。 ほか 37 件 | [chat.md](web-features/chat.md) |
 | デバッグ | debug | RAG 実行 trace、検索根拠、support verification、step detail を調査する領域です。 | - | 5 | 11 | 「拡大デバッグパネルを閉じる」を実行するボタン。<br>「保存JSON」を実行するボタン。<br>「可視化JSON」を実行するボタン。 ほか 4 件 | [debug.md](web-features/debug.md) |
 | ドキュメント | documents | ドキュメント upload、document group、共有、blue-green reindex 操作を扱う領域です。 | documents | 7 | 145 | 「前の画面へ戻る」を実行するボタン。<br>「フォルダ設定を閉じる」を実行するボタン。<br>「ファイル名: / 現在の権限: / 継承: / 共有先種別 / ユーザー / グループ / 共有先識別子（管理者向け） / 権限 / 権限なし / 閲覧のみ / 管理可能 / 理由 / 保存」を入力・送信するフォーム。 ほか 113 件 | [documents.md](web-features/documents.md) |
 | favorites | favorites | - | - | 1 | 1 | 「チャットへ戻る」を実行するボタン。 | [favorites.md](web-features/favorites.md) |

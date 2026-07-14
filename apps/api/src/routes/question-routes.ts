@@ -35,7 +35,7 @@ export function registerQuestionRoutes({ app, service }: ApiRouteContext) {
         }
       },
       responses: {
-        200: { description: "Created human follow-up question", content: { "application/json": { schema: QuestionSchema } } },
+        200: { description: "Created human follow-up question, or the existing question for the same requester and messageId", content: { "application/json": { schema: QuestionSchema } } },
         400: { description: "Validation error", content: { "application/json": { schema: ErrorResponseSchema } } },
         500: { description: "Server error", content: { "application/json": { schema: ErrorResponseSchema } } }
       }

@@ -1,5 +1,5 @@
 import type { createQuestion } from "../../questions/api/questionsApi.js"
-import type { HumanQuestion } from "../../questions/types.js"
+import type { HumanQuestion, QuestionOperationOutcome } from "../../questions/types.js"
 import type { CurrentUser } from "../../../shared/types/common.js"
 import type { Message } from "../types.js"
 import type { ClarificationOption } from "../types-api.js"
@@ -11,6 +11,7 @@ import { FollowupSuggestions } from "./answer/FollowupSuggestions.js"
 import { useAnswerCopy } from "./answer/useAnswerCopy.js"
 import { QuestionAnswerPanel } from "./QuestionAnswerPanel.js"
 import { QuestionEscalationPanel } from "./QuestionEscalationPanel.js"
+import { ChatJourneyStatus } from "./ChatJourneyStatus.js"
 
 export function AssistantAnswer({
   message,
@@ -27,8 +28,8 @@ export function AssistantAnswer({
   linkedQuestion?: HumanQuestion
   currentUser: CurrentUser | null
   loading: boolean
-  onCreateQuestion: (input: Parameters<typeof createQuestion>[0]) => Promise<void>
-  onResolveQuestion: (questionId: string) => Promise<void>
+  onCreateQuestion: (input: Parameters<typeof createQuestion>[0]) => Promise<QuestionOperationOutcome>
+  onResolveQuestion: (questionId: string) => Promise<QuestionOperationOutcome>
   onAdditionalQuestion: (value: string) => void
   onSubmitClarificationOption: (option: ClarificationOption, originalQuestion: string) => Promise<void>
   onStartClarificationFreeform: (originalQuestion: string, seedText: string) => void
@@ -41,6 +42,7 @@ export function AssistantAnswer({
 
   return (
     <div className="answer-card">
+      {message.result && <ChatJourneyStatus result={message.result} />}
       <AnswerText text={message.text} />
       <CitationList citations={citations} />
       {!isClarification && message.result?.isAnswerable && (

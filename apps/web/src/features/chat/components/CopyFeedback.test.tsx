@@ -5,6 +5,7 @@ import type { Message } from "../types.js"
 import { AssistantAnswer } from "./AssistantAnswer.js"
 import { ChatRunIdBar } from "./ChatRunIdBar.js"
 import { UserPromptBubble } from "./UserPromptBubble.js"
+import { confirmedOperation } from "../../../shared/ui/operationOutcome.js"
 
 type CopyScenario = {
   copiedName: string
@@ -46,8 +47,8 @@ const copyScenarios: CopyScenario[] = [
           message={assistantMessage}
           currentUser={{ userId: "user-1", email: "tester@example.com", groups: ["CHAT_USER"], permissions: ["chat:create"] }}
           loading={false}
-          onCreateQuestion={async () => undefined}
-          onResolveQuestion={async () => undefined}
+          onCreateQuestion={async () => confirmedOperation<never>()}
+          onResolveQuestion={async () => confirmedOperation<never>()}
           onAdditionalQuestion={() => undefined}
           onSubmitClarificationOption={async () => undefined}
           onStartClarificationFreeform={() => undefined}
@@ -60,8 +61,8 @@ const copyScenarios: CopyScenario[] = [
             message={assistantMessage}
             currentUser={{ userId: "user-1", email: "tester@example.com", groups: ["CHAT_USER"], permissions: ["chat:create"] }}
             loading={false}
-            onCreateQuestion={async () => undefined}
-            onResolveQuestion={async () => undefined}
+            onCreateQuestion={async () => confirmedOperation<never>()}
+            onResolveQuestion={async () => confirmedOperation<never>()}
             onAdditionalQuestion={() => undefined}
             onSubmitClarificationOption={async () => undefined}
             onStartClarificationFreeform={() => undefined}

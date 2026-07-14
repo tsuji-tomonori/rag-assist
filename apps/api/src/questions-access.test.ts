@@ -48,11 +48,19 @@ test("question requester can read answers and resolve only their own ticket", as
     })
     assert.equal(created.requesterUserId, "requester-1")
 
+    const repeated = await postJson<{ questionId: string }>(requester, "/questions", {
+      title: "再送時に変更された件名",
+      question: "再送された本文",
+      messageId: "msg-1"
+    })
+    assert.equal(repeated.questionId, created.questionId)
+
     const requesterList = await fetch(url(requester, "/questions"))
     assert.equal(requesterList.status, 403)
 
     const editorList = await getJson<{ questions: Array<{ questionId: string; assigneeGroupId?: string }> }>(answerEditor, "/questions")
     assert.ok(editorList.questions.some((item) => item.questionId === created.questionId && item.assigneeGroupId === "ANSWER_EDITOR"))
+    assert.equal(editorList.questions.filter((item) => item.questionId === created.questionId).length, 1)
 
     const openResolve = await fetch(url(requester, `/questions/${created.questionId}/resolve`), { method: "POST" })
     assert.equal(openResolve.status, 409)

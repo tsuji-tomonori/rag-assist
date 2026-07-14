@@ -73,6 +73,7 @@
 - `apps/web/src/shared/ui/operationOutcome.ts` は `processing`、`success`、`failure`、`partial`、`unknown` を共通 outcome として定義し、HTTP 408/504、abort、network/timeout を根拠なく成功または確定失敗へ変換しない。
 - `apps/web/src/shared/ui/OperationFeedback.tsx` は action、target、reason、影響、回復条件と、API が返した actor、result reference、version、audit reference を対象付き status/alert として表示する。API 未提供値は生成せず、必要な管理画面でのみ「API 応答で未提供」と示す。
 - history delete、document delete/share/reindex migration、benchmark start/cancel、admin user status/role と alias disable/publish の代表操作は、API 応答前の重複送信を防ぎ、mutation 確定後の refresh failure を `partial`、timeout/network を `unknown` として扱う。最後の履歴を削除して empty state へ遷移した場合も確定結果を保持する。
+- question create/answer/resolve は message/ticket ごとの in-flight duplicate を防ぎ、API が確定した ticket ID を success evidence として表示する。create 確定後の担当者一覧 refresh failure は `partial`、timeout/network は `unknown` とし、回答失敗時は入力を成功/clean state へ進めない。
 - `E2E-UI-RISK-001` は Chromium で delete/share/cancel/publish の confirmation、mutation request、target-attached result、API version/reference と代表 `OperationFeedback` の axe 結果を検証する。unit/component tests は duplicate、known failure、unknown、partial と API response parsing を補完する。
 - UI confirmation は既存の route-level permission、resource capability、server guard、version/reason/audit contract を代替しない。本変更は API route または authorization policy を変更しておらず、質問画面を含む全 feature の exhaustive coverage、screen reader、実 browser zoom、real device、Firefox/WebKit は後続 task の未検証範囲である。
 

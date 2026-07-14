@@ -9,9 +9,9 @@
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
 | 到達 symbol | service ingests text, lists manifests, persists debug traces, and deletes all document vectors | `apps/api/src/rag/memorag-service.test.ts:47 (service ingests text, lists manifests, persists debug traces, and deletes all document vectors)` |
-| 到達 symbol | FR-090 chat trace precommit denial writes no debug artifact, observation, final event, or success | `apps/api/src/rag/memorag-service.test.ts:2289 (FR-090 chat trace precommit denial writes no debug artifact, observation, final event, or success)` |
-| 到達 symbol | FR-090 ordinary chat final-event denial compensates its always-persisted redacted trace and observations | `apps/api/src/rag/memorag-service.test.ts:2341 (FR-090 ordinary chat final-event denial compensates its always-persisted redacted trace and observations)` |
-| 到達 symbol | service chat returns refusal and error debug trace when external dependencies fail | `apps/api/src/rag/memorag-service.test.ts:2840 (service chat returns refusal and error debug trace when external dependencies fail)` |
+| 到達 symbol | FR-090 chat trace precommit denial writes no debug artifact, observation, final event, or success | `apps/api/src/rag/memorag-service.test.ts:2297 (FR-090 chat trace precommit denial writes no debug artifact, observation, final event, or success)` |
+| 到達 symbol | FR-090 ordinary chat final-event denial compensates its always-persisted redacted trace and observations | `apps/api/src/rag/memorag-service.test.ts:2349 (FR-090 ordinary chat final-event denial compensates its always-persisted redacted trace and observations)` |
+| 到達 symbol | service chat returns refusal and error debug trace when external dependencies fail | `apps/api/src/rag/memorag-service.test.ts:2848 (service chat returns refusal and error debug trace when external dependencies fail)` |
 
 ## 2. 実装分岐から導くテスト要因
 

@@ -6,7 +6,7 @@
 
 Summary: 担当者問い合わせを作成する
 
-回答不能または確認が必要な内容を担当者へ引き継ぐ問い合わせとして登録します。
+回答不能または確認が必要な内容を担当者へ引き継ぐ問い合わせとして登録します。同じ認証済み依頼者と messageId の再送は同一問い合わせを返します。
 
 ## Headers
 
@@ -36,7 +36,7 @@ Media type: `application/json`
 | `category` | `string` | no | 問い合わせや文書の分類。 | - |
 | `priority` | `enum(normal \| high \| urgent)` | no | `data.priority` の値。項目名は priority を表します。 | enum=normal, high, urgent |
 | `source` | `enum(manual_escalation \| answer_unavailable \| negative_feedback \| quality_issue)` | no | `data.source` の値。項目名は source を表します。 | enum=manual_escalation, answer_unavailable, negative_feedback, quality_issue |
-| `messageId` | `string` | no | `data.messageId` の値。項目名は message id を表します。 | - |
+| `messageId` | `string` | no | チャット発話の安定識別子。同じ認証済み requester と同じ値の再送は同一問い合わせを返します。 | minLength=1<br>maxLength=200 |
 | `ragRunId` | `string` | no | `data.ragRunId` の値。項目名は rag run id を表します。 | - |
 | `answerUnavailableEventId` | `string` | no | `data.answerUnavailableEventId` の値。項目名は answer unavailable event id を表します。 | - |
 | `answerUnavailableReason` | `string` | no | `data.answerUnavailableReason` の値。項目名は answer unavailable reason を表します。 | - |
@@ -107,7 +107,7 @@ Media type: `application/json`
 | `priority` | `enum(normal \| high \| urgent)` | yes | `response.priority` の値。項目名は priority を表します。 | enum=normal, high, urgent |
 | `status` | `enum(open \| in_progress \| waiting_requester \| answered \| resolved)` | yes | 現在の処理状態または管理状態。 | enum=open, in_progress, waiting_requester, answered, resolved |
 | `source` | `enum(manual_escalation \| answer_unavailable \| negative_feedback \| quality_issue)` | no | `response.source` の値。項目名は source を表します。 | enum=manual_escalation, answer_unavailable, negative_feedback, quality_issue |
-| `messageId` | `string` | no | `response.messageId` の値。項目名は message id を表します。 | - |
+| `messageId` | `string` | no | チャット発話の安定識別子。同じ認証済み requester と同じ値の再送は同一問い合わせを返します。 | - |
 | `ragRunId` | `string` | no | `response.ragRunId` の値。項目名は rag run id を表します。 | - |
 | `answerUnavailableEventId` | `string` | no | `response.answerUnavailableEventId` の値。項目名は answer unavailable event id を表します。 | - |
 | `answerUnavailableReason` | `string` | no | `response.answerUnavailableReason` の値。項目名は answer unavailable reason を表します。 | - |

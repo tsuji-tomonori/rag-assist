@@ -107,6 +107,16 @@
       "evidence": ["apps/web/e2e/visual-regression.spec.ts"]
     },
     {
+      "id": "E2E-UI-QUESTION-001",
+      "status": "implemented",
+      "evidence": ["apps/web/e2e/question-journey.spec.ts"]
+    },
+    {
+      "id": "E2E-UI-QUESTION-002",
+      "status": "implemented",
+      "evidence": ["apps/web/e2e/question-journey.spec.ts"]
+    },
+    {
       "id": "E2E-UI-MANUAL-001",
       "status": "manual",
       "task": "tasks/todo/20260714-issue-345-manual-a11y-evidence.md"
@@ -124,17 +134,33 @@
         { "id": "JOB-UI-CHAT", "summary": "質問し、回答・回答不能・根拠・確認質問・人手対応への状態を追う" }
       ],
       "requirements": [
+        { "id": "FR-003", "acceptanceCriteria": ["AC-FR003-002", "AC-FR003-003", "AC-FR003-004"] },
+        { "id": "FR-004", "acceptanceCriteria": ["AC-FR004-002", "AC-FR004-003"] },
+        { "id": "FR-005", "acceptanceCriteria": ["AC-FR005-002", "AC-FR005-003"] },
+        { "id": "FR-021", "acceptanceCriteria": ["AC-FR021-006", "AC-FR021-007"] },
+        { "id": "FR-029", "acceptanceCriteria": ["AC-FR029-001"] },
+        { "id": "FR-042", "acceptanceCriteria": ["AC-FR042-001", "AC-FR042-004"] },
+        { "id": "FR-043", "acceptanceCriteria": ["AC-FR043-001", "AC-FR043-003", "AC-FR043-004"] },
         { "id": "FR-094", "acceptanceCriteria": ["AC-FR094-002", "AC-FR094-004"] },
-        { "id": "FR-095", "acceptanceCriteria": ["AC-FR095-001", "AC-FR095-003"] }
+        { "id": "FR-095", "acceptanceCriteria": ["AC-FR095-001", "AC-FR095-003", "AC-FR095-004"] },
+        { "id": "FR-096", "acceptanceCriteria": ["AC-FR096-003", "AC-FR096-004"] }
       ],
       "verifications": [
         { "id": "E2E-VIEW-CHAT-001", "status": "implemented", "evidence": ["apps/web/e2e/visual-regression.spec.ts"] }
       ],
-      "implementationStatus": "partial",
-      "implementationEvidence": ["apps/web/src/features/chat/components/ChatView.tsx"],
+      "implementationStatus": "implemented",
+      "implementationEvidence": [
+        "apps/web/src/features/chat/components/ChatView.tsx",
+        "apps/web/src/features/chat/components/ChatJourneyStatus.tsx",
+        "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
+        "apps/web/src/features/chat/hooks/useChatSession.ts",
+        "apps/web/src/features/chat/utils/chatJourney.ts",
+        "apps/web/src/features/questions/hooks/useQuestions.ts"
+      ],
       "gapTasks": [
-        "tasks/todo/20260714-issue-345-chat-assignee-journey.md",
-        "tasks/todo/20260713-2304-responsive-chat-ui-verification.md"
+        "tasks/todo/20260713-2304-responsive-chat-ui-verification.md",
+        "tasks/todo/20260714-issue-345-cross-screen-a11y-responsive.md",
+        "tasks/todo/20260714-issue-345-manual-a11y-evidence.md"
       ]
     },
     {
@@ -148,17 +174,29 @@
         { "id": "JOB-UI-ASSIGNEE", "summary": "許可された問い合わせを検索・選択し、回答または下書きを安全に更新する" }
       ],
       "requirements": [
+        { "id": "FR-031", "acceptanceCriteria": ["AC-FR031-001", "AC-FR031-002", "AC-FR031-005", "AC-FR031-006"] },
+        { "id": "FR-032", "acceptanceCriteria": ["AC-FR032-004"] },
+        { "id": "FR-033", "acceptanceCriteria": ["AC-FR033-003", "AC-FR033-005", "AC-FR033-007", "AC-FR033-008"] },
         { "id": "FR-094", "acceptanceCriteria": ["AC-FR094-003"] },
         { "id": "FR-095", "acceptanceCriteria": ["AC-FR095-004"] },
+        { "id": "FR-096", "acceptanceCriteria": ["AC-FR096-003", "AC-FR096-004"] },
         { "id": "FR-097", "acceptanceCriteria": ["AC-FR097-001"] },
         { "id": "FR-098", "acceptanceCriteria": ["AC-FR098-001"] }
       ],
       "verifications": [
         { "id": "E2E-VIEW-ASSIGNEE-001", "status": "implemented", "evidence": ["apps/web/e2e/visual-regression.spec.ts"] }
       ],
-      "implementationStatus": "partial",
-      "implementationEvidence": ["apps/web/src/features/questions/components/AssigneeWorkspace.tsx"],
-      "gapTasks": ["tasks/todo/20260714-issue-345-chat-assignee-journey.md"]
+      "implementationStatus": "implemented",
+      "implementationEvidence": [
+        "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
+        "apps/web/src/features/questions/hooks/useQuestions.ts",
+        "apps/web/src/features/questions/utils/questionJourney.ts",
+        "apps/web/src/shared/ui/OperationFeedback.tsx"
+      ],
+      "gapTasks": [
+        "tasks/todo/20260714-issue-345-cross-screen-a11y-responsive.md",
+        "tasks/todo/20260714-issue-345-manual-a11y-evidence.md"
+      ]
     },
     {
       "view": "history",
@@ -171,6 +209,10 @@
         { "id": "JOB-UI-HISTORY", "summary": "自分の会話を検索・選択・再開・削除する" }
       ],
       "requirements": [
+        { "id": "FR-034", "acceptanceCriteria": ["AC-FR034-002", "AC-FR034-003", "AC-FR034-006"] },
+        { "id": "FR-035", "acceptanceCriteria": ["AC-FR035-001", "AC-FR035-002", "AC-FR035-003", "AC-FR035-006", "AC-FR035-007"] },
+        { "id": "FR-036", "acceptanceCriteria": ["AC-FR036-001", "AC-FR036-002", "AC-FR036-004"] },
+        { "id": "FR-044", "acceptanceCriteria": ["AC-FR044-001", "AC-FR044-004"] },
         { "id": "FR-094", "acceptanceCriteria": ["AC-FR094-002"] },
         { "id": "FR-095", "acceptanceCriteria": ["AC-FR095-002", "AC-FR095-003"] },
         { "id": "FR-096", "acceptanceCriteria": ["AC-FR096-001", "AC-FR096-003"] }
@@ -178,13 +220,17 @@
       "verifications": [
         { "id": "E2E-VIEW-HISTORY-001", "status": "implemented", "evidence": ["apps/web/e2e/visual-regression.spec.ts"] }
       ],
-      "implementationStatus": "partial",
+      "implementationStatus": "implemented",
       "implementationEvidence": [
         "apps/web/src/features/history/components/HistoryWorkspace.tsx",
         "apps/web/src/features/history/hooks/useConversationHistory.ts",
+        "apps/web/src/features/questions/utils/questionJourney.ts",
         "apps/web/src/shared/ui/OperationFeedback.tsx"
       ],
-      "gapTasks": ["tasks/todo/20260714-issue-345-chat-assignee-journey.md"]
+      "gapTasks": [
+        "tasks/todo/20260714-issue-345-cross-screen-a11y-responsive.md",
+        "tasks/todo/20260714-issue-345-manual-a11y-evidence.md"
+      ]
     },
     {
       "view": "favorites",
@@ -205,7 +251,10 @@
       ],
       "implementationStatus": "partial",
       "implementationEvidence": ["apps/web/src/features/favorites/components/FavoritesWorkspace.tsx"],
-      "gapTasks": ["tasks/todo/20260714-issue-345-chat-assignee-journey.md"]
+      "gapTasks": [
+        "tasks/todo/20260714-issue-345-cross-screen-a11y-responsive.md",
+        "tasks/todo/20260714-issue-345-manual-a11y-evidence.md"
+      ]
     },
     {
       "view": "benchmark",

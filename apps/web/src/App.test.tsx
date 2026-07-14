@@ -1249,7 +1249,7 @@ describe("App chat and upload flow", () => {
     await userEvent.type(screen.getByLabelText("担当部署"), "人事部")
     await userEvent.click(screen.getByText("担当者へ送信"))
 
-    await screen.findByText("担当者へ送信済み")
+    await screen.findByText("担当割当済み")
     const questionPayload = requestBodies(fetchMock, "/questions").find((body) => body.sourceQuestion === "今日山田さんは何を食べた?")
     expect(questionPayload).toMatchObject({
       title: "今日山田さんは何を食べた?について確認したい",
@@ -1259,6 +1259,7 @@ describe("App chat and upload flow", () => {
       assigneeDepartment: "人事部",
       category: "手続き",
       priority: "high",
+      messageId: expect.any(String),
       sourceQuestion: "今日山田さんは何を食べた?",
       chatAnswer: "資料からは回答できません。"
     })
@@ -1266,12 +1267,12 @@ describe("App chat and upload flow", () => {
     await userEvent.click(screen.getByTitle("担当者対応"))
     expect(await screen.findByText("問い合わせ概要")).toBeInTheDocument()
     expect(screen.getByText(/件が対応待ち/)).toBeInTheDocument()
-    expect(screen.getByText("下書きは未保存です")).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "下書き保存" })).toBeDisabled()
+    expect(screen.getByText("入力はこの画面に一時保持されていません")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "入力を一時保持" })).toBeDisabled()
     await userEvent.type(screen.getByLabelText("回答内容"), "山田さんは本日、社内食堂でカレーを食べました。")
-    expect(screen.getByText("未保存の変更があります")).toBeInTheDocument()
-    await userEvent.click(screen.getByRole("button", { name: "下書き保存" }))
-    expect(await screen.findByText(/下書きを保存済み/)).toBeInTheDocument()
+    expect(screen.getByText("未送信の変更があります")).toBeInTheDocument()
+    await userEvent.click(screen.getByRole("button", { name: "入力を一時保持" }))
+    expect(await screen.findByText(/この画面に入力を一時保持/)).toBeInTheDocument()
     await userEvent.type(screen.getByLabelText("参照資料 / 関連リンク"), "社内食堂メニュー表")
     await userEvent.type(screen.getByLabelText("内部メモ"), "確認済み")
     await userEvent.click(screen.getByLabelText("質問者へ通知する"))
@@ -1292,7 +1293,7 @@ describe("App chat and upload flow", () => {
     await userEvent.click(screen.getByText("追加で質問する"))
     expect(screen.getByLabelText("質問")).toHaveValue("追加確認: 今日山田さんは何を食べた?について確認したい\n")
     await userEvent.click(screen.getByText("解決した"))
-    expect(await screen.findByText("解決済み")).toBeInTheDocument()
+    expect((await screen.findAllByText("解決済み")).length).toBeGreaterThan(0)
   })
 
   it("does not fetch assignee or admin resources for chat users when escalating", async () => {
@@ -1338,7 +1339,7 @@ describe("App chat and upload flow", () => {
     await userEvent.click(screen.getByTitle("送信"))
     expect(await screen.findByText("資料からは回答できません。")).toBeInTheDocument()
     await userEvent.click(await screen.findByText("担当者へ送信"))
-    expect(await screen.findByText("担当者へ送信済み")).toBeInTheDocument()
+    expect(await screen.findByText("担当割当済み")).toBeInTheDocument()
 
     expect(fetchMock.mock.calls.some(([url, init]) => String(url).endsWith("/questions") && isGet(init as RequestInit | undefined))).toBe(false)
     expect(fetchMock.mock.calls.some(([url, init]) => String(url).endsWith("/questions/question-1") && isGet(init as RequestInit | undefined))).toBe(true)
@@ -1407,14 +1408,14 @@ describe("App chat and upload flow", () => {
         await Promise.resolve()
       })
       expect(findRequest(fetchMock, "/questions/question-1")).toBeTruthy()
-      expect(screen.getByText("確認待ち")).toBeInTheDocument()
+      expect(screen.getByText("担当割当済み")).toBeInTheDocument()
 
       await act(async () => {
         await vi.advanceTimersByTimeAsync(20000)
       })
 
-      expect(screen.getByText("返答あり")).toBeInTheDocument()
-      expect(screen.getByRole("button", { name: /山田さんの昼食.*返答あり/ })).toBeInTheDocument()
+      expect(screen.getByText("担当者回答あり")).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /山田さんの昼食.*担当者回答あり/ })).toBeInTheDocument()
       expect(questionGetCount).toBeGreaterThanOrEqual(2)
       expect(fetchMock.mock.calls.some(([url, init]) => String(url).endsWith("/questions") && isGet(init as RequestInit | undefined))).toBe(false)
     } finally {
@@ -1673,7 +1674,7 @@ describe("App chat and upload flow", () => {
     await userEvent.click(screen.getByTitle("担当者対応"))
     expect(await screen.findByText("問い合わせ一覧")).toBeInTheDocument()
     expect(screen.getByText("未対応 / 総務部")).toBeInTheDocument()
-    expect(screen.getByText("確認待ち / 総務部")).toBeInTheDocument()
+    expect(screen.getByText("依頼者確認待ち / 総務部")).toBeInTheDocument()
     await userEvent.click(screen.getByText("緊急確認"))
     expect(screen.getByText("解決済み / 総務部")).toBeInTheDocument()
     expect(screen.getAllByText("緊急").length).toBeGreaterThan(0)

@@ -19,6 +19,9 @@ import {
   type OperationFeedbackEntry,
   type OperationOutcome
 } from "../../../shared/ui/index.js"
+import { StatusBadge } from "../../../shared/ui/StatusBadge.js"
+import { summarizeQuestionJourney } from "../../questions/utils/questionJourney.js"
+import type { HumanQuestion } from "../../questions/types.js"
 
 export function HistoryWorkspace({
   dataState,
@@ -120,9 +123,14 @@ export function HistoryWorkspace({
           ) : (
             visibleHistory.map((result) => {
               const item = result.item
-              const questionStatus = summarizeQuestionStatus(item)
+              const questionStatus = summarizeQuestionJourney(
+                item.messages
+                  .map((message) => message.questionTicket)
+                  .filter((ticket): ticket is HumanQuestion => Boolean(ticket)),
+                "requester"
+              )
               return (
-                <div className={`question-list-item history-item ${questionStatus?.tone ?? ""}`} key={item.id}>
+                <div className={`question-list-item history-item ${questionStatus ? `history-tone-${questionStatus.presentation.tone}` : ""}`} key={item.id}>
                   <button
                     type="button"
                     className={`favorite-toggle ${item.isFavorite ? "active" : ""}`}
@@ -135,10 +143,21 @@ export function HistoryWorkspace({
                   <button type="button" onClick={() => onSelect(item)}>
                     <span className="history-title-line">
                       <strong>{item.title}</strong>
-                      {questionStatus && <span className="history-question-badge">{questionStatus.label}</span>}
+                      {questionStatus && (
+                        <StatusBadge
+                          className="history-question-badge"
+                          presentation={{
+                            ...questionStatus.presentation,
+                            label: questionStatus.ticketCount > 1
+                              ? `${questionStatus.presentation.label}（${questionStatus.ticketCount}件）`
+                              : questionStatus.presentation.label
+                          }}
+                        />
+                      )}
                     </span>
                     <span>{formatDateTime(item.updatedAt)}</span>
                     <HistorySearchSummary result={result} />
+                    {questionStatus && <small className="history-question-next">次の操作: {questionStatus.nextAction}</small>}
                   </button>
                   <button
                     className="history-delete-button"
@@ -201,12 +220,4 @@ function HistorySearchSummary({ result }: { result: ConversationHistorySearchRes
       <small className="history-search-snippet">{result.snippet.text}</small>
     </>
   )
-}
-
-function summarizeQuestionStatus(item: ConversationHistoryItem): { label: string; tone: string } | undefined {
-  const tickets = item.messages.map((message) => message.questionTicket).filter(Boolean)
-  if (tickets.some((ticket) => ticket?.status === "answered")) return { label: "返答あり", tone: "has-answer" }
-  if (tickets.some((ticket) => ticket?.status === "open")) return { label: "確認待ち", tone: "is-waiting" }
-  if (tickets.some((ticket) => ticket?.status === "resolved")) return { label: "解決済み", tone: "is-resolved" }
-  return undefined
 }

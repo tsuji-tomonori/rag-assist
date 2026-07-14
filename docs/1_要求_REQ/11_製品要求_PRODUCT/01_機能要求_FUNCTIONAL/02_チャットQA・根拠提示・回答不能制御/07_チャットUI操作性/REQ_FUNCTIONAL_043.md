@@ -21,7 +21,7 @@
 
 - AC-FR043-001: 回答本文の copy 操作は、対象回答の本文だけを clipboard へ渡すこと。
 - AC-FR043-002: copy 操作は、debug trace、内部 metadata、未表示の retrieved full text を clipboard に含めないこと。
-- AC-FR043-003: copy 成功または失敗の feedback は、対象回答に紐づく状態として表示されること。
+- `AC-FR043-003`: copy 成功または失敗の feedback は、対象回答に紐づく状態として表示されること。
 - AC-FR043-004: 回答不能結果の copy 操作は、回答不能理由または表示済み説明だけを対象にすること。
 
 ## 要件の源泉・背景

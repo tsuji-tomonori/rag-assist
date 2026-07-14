@@ -1,6 +1,6 @@
 import type { RefObject } from "react"
 import type { createQuestion } from "../../questions/api/questionsApi.js"
-import type { HumanQuestion } from "../../questions/types.js"
+import type { HumanQuestion, QuestionOperationOutcome } from "../../questions/types.js"
 import type { Message } from "../types.js"
 import type { ClarificationOption } from "../types-api.js"
 import { LoadingSpinner } from "../../../shared/components/LoadingSpinner.js"
@@ -34,8 +34,8 @@ export function MessageList({
   currentUser: CurrentUser | null
   loading: boolean
   onSelectPrompt: (value: string) => void
-  onCreateQuestion: (messageIndex: number, message: Message, input: Parameters<typeof createQuestion>[0]) => Promise<void>
-  onResolveQuestion: (questionId: string) => Promise<void>
+  onCreateQuestion: (messageIndex: number, message: Message, input: Parameters<typeof createQuestion>[0]) => Promise<QuestionOperationOutcome>
+  onResolveQuestion: (questionId: string) => Promise<QuestionOperationOutcome>
   onSubmitClarificationOption: (option: ClarificationOption, originalQuestion: string) => Promise<void>
   onStartClarificationFreeform: (originalQuestion: string, seedText: string) => void
 }) {
@@ -44,7 +44,7 @@ export function MessageList({
       {messages.length === 0 && !isProcessing && <ChatEmptyState documentsCount={documentsCount} onSelectPrompt={onSelectPrompt} />}
       {messages.map((message, index) => (
         <MessageItem
-          key={`${message.role}-${message.createdAt}-${index}`}
+          key={message.messageId ?? `${message.role}-${message.createdAt}-${index}`}
           message={message}
           messageIndex={index}
           latestMessageRef={index === messages.length - 1 && !pendingActivity ? latestMessageRef : undefined}

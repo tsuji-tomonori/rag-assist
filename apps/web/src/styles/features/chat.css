@@ -234,12 +234,45 @@
   box-shadow: 0 4px 16px rgba(31, 48, 77, 0.03);
 }
 
+.chat-journey-status {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #e3e8f0;
+  padding-bottom: 12px;
+}
+
+.chat-journey-status header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.chat-journey-status header > span:last-child {
+  color: #5e6e88;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.chat-journey-status p {
+  margin: 0;
+  color: #354763;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
 .processing-answer {
   display: flex;
   align-items: center;
   gap: 12px;
   border-color: #bdd2f4;
   background: linear-gradient(90deg, #f8fbff, #f5fffb);
+}
+
+.processing-answer > div {
+  display: grid;
+  gap: 6px;
 }
 
 .processing-answer p {
@@ -603,9 +636,10 @@
   gap: 8px;
 }
 
-.question-status-panel div {
+.question-status-panel > header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 10px;
 }
 
@@ -613,6 +647,33 @@
   margin: 0;
   color: #273750;
   font-weight: 800;
+}
+
+.question-status-panel dl {
+  display: grid;
+  gap: 7px;
+  margin: 4px 0 0;
+}
+
+.question-status-panel dl div {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: 10px;
+}
+
+.question-status-panel dt {
+  color: #68758f;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.question-status-panel dd {
+  min-width: 0;
+  margin: 0;
+  color: #273750;
+  font-size: 12px;
+  font-weight: 750;
+  overflow-wrap: anywhere;
 }
 
 .question-answer-panel header {
@@ -647,7 +708,7 @@
   height: 17px;
 }
 
-.question-answer-panel p {
+.question-answer-panel > p:not(.question-next-action) {
   margin: 14px 0 0;
   border: 1px solid #bfe4d0;
   border-radius: 7px;
@@ -656,6 +717,17 @@
   background: #f2fff7;
   line-height: 1.7;
   white-space: pre-wrap;
+}
+
+.question-answer-panel .question-next-action {
+  margin: 14px 0 0;
+  color: #354763;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.question-operation-feedback {
+  margin-top: 14px;
 }
 
 .question-answer-panel dl,

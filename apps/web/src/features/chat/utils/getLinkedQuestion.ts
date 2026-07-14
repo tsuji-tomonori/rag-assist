@@ -5,5 +5,11 @@ export function getLinkedQuestion(message: Message, questions: HumanQuestion[]):
   if (message.questionTicket) {
     return questions.find((question) => question.questionId === message.questionTicket?.questionId) ?? message.questionTicket
   }
-  return questions.find((question) => question.sourceQuestion && question.sourceQuestion === message.sourceQuestion)
+  if (message.messageId) {
+    const exactMatches = questions.filter((question) => question.messageId === message.messageId)
+    if (exactMatches.length === 1) return exactMatches[0]
+  }
+  if (!message.sourceQuestion) return undefined
+  const legacyMatches = questions.filter((question) => question.sourceQuestion === message.sourceQuestion)
+  return legacyMatches.length === 1 ? legacyMatches[0] : undefined
 }

@@ -57,7 +57,7 @@ _到達実装に store / external boundary call はありません。_
 
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
-| 到達 symbol | service preserves asynchronous chat run options and can mark worker failures | `apps/api/src/rag/memorag-service.test.ts:1590 (service preserves asynchronous chat run options and can mark worker failures)` |
+| 到達 symbol | service preserves asynchronous chat run options and can mark worker failures | `apps/api/src/rag/memorag-service.test.ts:1598 (service preserves asynchronous chat run options and can mark worker failures)` |
 
 ## 8. 解析上の注意
 

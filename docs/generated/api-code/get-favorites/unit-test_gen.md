@@ -8,7 +8,7 @@
 
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
-| 到達 symbol | favoriteList_marksUnsupportedTargetTypeInaccessible | `apps/api/src/rag/memorag-service.test.ts:1553 (favoriteList_marksUnsupportedTargetTypeInaccessible)` |
+| 到達 symbol | favoriteList_marksUnsupportedTargetTypeInaccessible | `apps/api/src/rag/memorag-service.test.ts:1561 (favoriteList_marksUnsupportedTargetTypeInaccessible)` |
 
 ## 2. 実装分岐から導くテスト要因
 

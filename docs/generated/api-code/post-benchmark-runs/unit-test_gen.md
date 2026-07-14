@@ -8,10 +8,10 @@
 
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
-| 到達 symbol | service preserves asynchronous chat run options and can mark worker failures | `apps/api/src/rag/memorag-service.test.ts:1590 (service preserves asynchronous chat run options and can mark worker failures)` |
-| 到達 symbol | benchmark CodeBuild log download returns the stored log URL | `apps/api/src/rag/memorag-service.test.ts:2892 (benchmark CodeBuild log download returns the stored log URL)` |
-| 到達 symbol | benchmark CodeBuild log text download uses stored log stream metadata | `apps/api/src/rag/memorag-service.test.ts:2910 (benchmark CodeBuild log text download uses stored log stream metadata)` |
-| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:3117 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
+| 到達 symbol | service preserves asynchronous chat run options and can mark worker failures | `apps/api/src/rag/memorag-service.test.ts:1598 (service preserves asynchronous chat run options and can mark worker failures)` |
+| 到達 symbol | benchmark CodeBuild log download returns the stored log URL | `apps/api/src/rag/memorag-service.test.ts:2900 (benchmark CodeBuild log download returns the stored log URL)` |
+| 到達 symbol | benchmark CodeBuild log text download uses stored log stream metadata | `apps/api/src/rag/memorag-service.test.ts:2918 (benchmark CodeBuild log text download uses stored log stream metadata)` |
+| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:3125 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
 
 ## 2. 実装分岐から導くテスト要因
 
