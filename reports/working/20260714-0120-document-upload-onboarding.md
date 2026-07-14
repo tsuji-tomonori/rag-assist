@@ -52,7 +52,7 @@
 - `docs/1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/01_文書・知識ベース管理/01_文書登録/REQ_FUNCTIONAL_001.md`
 - `docs/1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/01_文書・知識ベース管理/02_文書のQA利用可能化/REQ_FUNCTIONAL_002.md`
 - `docs/generated/web-*.md`、`docs/generated/web-features/*.md`、`docs/generated/web-ui-inventory.json` の関連生成物
-- `tasks/do/20260714-0033-document-upload-onboarding.md`
+- `tasks/done/20260714-0033-document-upload-onboarding.md`
 
 ## 検証結果
 
@@ -98,7 +98,7 @@
 - `Validate Semver Label` の最新runは成功。task完了更新前の `MemoRAG CI` は実行中であり、成功扱いにしていない。
 - RAG の検索、根拠性、引用、benchmark dataset は変更していない。benchmark 期待語句、QA sample 固有値、dataset 固有分岐は追加していない。
 
-## PR・完了状態
+## 初回 PR・完了状態
 
 - PR: `https://github.com/tsuji-tomonori/rag-assist/pull/346`（draft、`semver:patch`、mergeable）。
 - 受け入れ条件コメント: PR comment ID `4960218666`。AC1〜AC13を13/13達成として記録した。
@@ -111,3 +111,15 @@
 - 理由: PR head `802cb9ed` は #342 merge commit `964c3a98` を基準としており、current main の認可／RAG lifecycle／generated API docs／管理画面監査を含まないため、そのまま merge しない。
 - task: `tasks/do/20260714-0033-document-upload-onboarding.md` へ戻し、追加の受け入れ条件 R1–R6 を設定した。
 - 方針: current main を mergeし、競合を現行 source 契約に沿って解消した後、No Mock Product UI、認可境界、docs 同期、変更範囲に見合う検証を再実行する。
+
+### 再統合結果
+
+- latest main: PR #344 merge commit `e540dde76b0a3e6779462182bcbd8acd75647b2d` を merge commit `ac56a31e5fc49119e1274c482fb4bd7be93a14aa` で統合した。
+- 競合: `DocumentWorkspace.tsx`、`DocumentFilePanel.tsx`、component test と Web inventory を、current document capability／read-only shared view と onboarding dialog の両方を維持して解消した。Web inventory は source から再生成した。
+- 追加修正: 作成直後の一時保存先より authoritative `documentGroups` permission を優先し、readOnly へ変わった場合は候補と upload を無効化した。read-only の空 response では作成 CTA、保存先、管理操作を表示しないようにした。
+- No Mock Product UI: folder、permission、document、件数、状態は API/props/state または明示的 empty/error に由来し、production fallback へ架空値を追加していない。
+- local validation: component test 71件、root lint、Web typecheck/build、`task docs:check`、変更対象 pre-commit、`git diff --check` が成功した。
+- failure/repair: 最初の typecheck/build/docs check は親 worktree の古い contract export を参照して失敗した。専用 worktree の `npm install` で current workspace link へ同期し、再実行は全成功した。audit は 8 vulnerabilities（low 2 / moderate 1 / high 5）を報告し、自動修正はしていない。
+- GitHub gate: final content head `73349367521dc2107d7421fb4bf98d8cd77b632c` の MemoRAG CI run 988 と Semver run 1442 が成功した。
+- PR evidence: 受け入れ条件確認 comment `4964700050`、セルフレビュー comment `4964700132`、Draft 解除、`semver:patch` を確認した。
+- task: `tasks/done/20260714-0033-document-upload-onboarding.md` へ再度移動する。task/report のみの metadata head CI と最終コメントは merge gate として別途確認する。
