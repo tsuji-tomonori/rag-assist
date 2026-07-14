@@ -1,40 +1,70 @@
 {
   "complete": false,
-  "status": "partially_complete",
+  "status": "in_progress",
   "requested_items": [
-    "Create an executable plan for fully implementing FR-056 through FR-093 and SQ-005 through SQ-015",
-    "Implement every newly defined requirement in production paths",
-    "Run requirement-appropriate tests and repair failures",
-    "Perform requirement-by-requirement acceptance assessment",
-    "Complete the repository worktree, report, commit, PR, and review-comment flow"
+    "Complete every P0 and P1 improvement in GitHub Issue #345 without collapsing the work into one giant pull request",
+    "Make permission-aware primary journeys operable from 320px through desktop with keyboard and representative screen readers",
+    "Define and implement URL/history, common UI states, responsive navigation, destructive-operation feedback, and per-screen UX improvements",
+    "Add automated accessibility, mobile Chromium, visual regression, and semantic UI traceability gates",
+    "Keep canonical requirements, design, generated inventory, tests, reports, and pull request evidence synchronized",
+    "Complete the repository worktree, task, validation, report, commit, push, pull request, acceptance-comment, and self-review flow for each milestone"
   ],
   "completed_items": [
-    "Created the dedicated implementation worktree, task, execution plan, and requirement evidence matrix",
-    "Implemented and verified repository production paths for FR-056 through FR-093 and control paths for SQ-005 through SQ-015",
-    "Passed contract 1/1, API 658/658, Web 307/307, infra 38/38, benchmark 102/102, and browser E2E smoke 4/4",
-    "Passed lint, all workspace typechecks/builds, OpenAPI and inventory freshness, spec validation, hidden Unicode, source audit, and diff checks",
-    "Completed an independent final production-path review with blocker count zero",
-    "Created the required post-task working report"
+    "Fetched current origin/main and confirmed pull requests #341 through #344 are merged",
+    "Confirmed the canonical docs hierarchy is unique and legacy docs/spec and docs/spec-recovery are not authoritative",
+    "Created the dedicated issue-345 worktree and the first milestone task with acceptance criteria",
+    "Implemented the 8-AppView persona/job/URL/permission/REQ/AC/evidence trace manifest and generated projection",
+    "Implemented fail-closed semantic trace validation with positive and broken-reference classification tests",
+    "Integrated semantic trace tests and freshness into Taskfile docs check and pull request CI failure aggregation",
+    "Added UI-specific pull request evidence fields and decomposed all remaining issue work into owned tasks",
+    "Passed local docs, trace, Web typecheck/unit, lint, and 8-AppView Chromium smoke validations"
   ],
   "remaining_items": [
-    "Create and monitor the main-targeted draft PR, add the semver label, and post Japanese acceptance and self-review comments",
-    "Obtain live AWS registry backfill/convergence and cleanup-duration evidence for FR-066",
-    "Run live notification, drift, and rollback drills for FR-093",
-    "Obtain approved datasets, thresholds, owners, workloads, price catalog, load/chaos/cost/billing evidence for SQ-005 through SQ-015"
+    "Publish the UI requirement traceability and stale-detection gate milestone through commit, draft pull request, acceptance comment, self-review, task done update, and CI audit",
+    "Implement permission-aware mobile navigation and safe URL/history/deep-link behavior",
+    "Implement the shared loading, empty, error, permission, partial-success, stale, and retry contract",
+    "Complete document, admin, assignee, chat, and personal-settings user journeys and contextual feedback",
+    "Complete WCAG 2.2 AA metadata, keyboard, focus, dialog, target-size, contrast, zoom, reflow, and reduced-motion work",
+    "Make mobile Chromium, automated accessibility, visual regression, and the selected cross-browser scope required quality gates",
+    "Run manual keyboard, representative screen-reader, 320px/400-percent-zoom, and real-device verification or record an unresolved blocker",
+    "Create all milestone reports, commits, pull requests, Japanese acceptance comments, self-reviews, and final issue-level audit"
   ],
-  "blocked_items": [
-    "Operational acceptance needs an authorized non-production AWS environment and stakeholder-approved quality/SLO/cost profiles"
-  ],
+  "blocked_items": [],
   "validation": [
-    "contract tests: 1/1 pass",
-    "API tests: 658/658 pass",
-    "Web tests: 307/307 pass",
-    "infra tests: 38/38 pass",
-    "benchmark tests: 102/102 pass",
-    "browser E2E smoke: 4/4 pass",
-    "lint, typecheck, build, docs checks, spec validator, source audit, and git diff check: pass",
-    "independent production-path review: blocker 0"
+    {
+      "command": "GitHub Apps issue and pull request metadata inspection",
+      "result": "pass",
+      "note": "Issue #345 and merged state of pull requests #341 through #344 confirmed"
+    },
+    {
+      "command": "git fetch origin --prune",
+      "result": "pass"
+    },
+    {
+      "command": "task docs:check",
+      "result": "pass",
+      "note": "Canonical docs, OpenAPI, 95 APIs / 570 API docs, 8 semantic trace tests, Web/infra inventory, hidden Unicode"
+    },
+    {
+      "command": "npm run typecheck -w @memorag-mvp/web",
+      "result": "pass"
+    },
+    {
+      "command": "npm test -w @memorag-mvp/web",
+      "result": "pass",
+      "note": "37 files, 310 tests"
+    },
+    {
+      "command": "npm exec -w @memorag-mvp/web -- playwright test e2e/visual-regression.spec.ts --grep 全 AppView",
+      "result": "pass",
+      "note": "Chromium 8-view permission-aware reachability smoke"
+    },
+    {
+      "command": "existing management visual regression",
+      "result": "not_passed",
+      "note": "documents snapshot differed by 3%; production/CSS and existing visual test block were unchanged, baseline was not updated"
+    }
   ],
-  "next_action": "Commit and push the repository-verified implementation, create the draft PR and comments, then await live operational evidence",
+  "next_action": "Run staged pre-commit checks, commit and push milestone 1, create the Japanese draft pull request through GitHub Apps, post acceptance/self-review comments, then move the task to done and monitor CI",
   "safe_to_continue_without_user": true
 }

@@ -7,81 +7,594 @@
       "view": "chat",
       "label": "チャット",
       "routePath": "/",
-      "routeKind": "client-state",
+      "routeKind": "query-state",
       "screenComponent": "ChatView",
       "permissions": [],
-      "certainty": "confirmed"
+      "certainty": "confirmed",
+      "trace": {
+        "view": "chat",
+        "canonicalUrl": "/",
+        "urlPatterns": [
+          "/",
+          "/?view=chat"
+        ],
+        "routeKind": "query-state",
+        "access": {
+          "session": "authenticated",
+          "guards": []
+        },
+        "personas": [
+          "standard-user",
+          "answer-editor",
+          "operator",
+          "system-admin"
+        ],
+        "jobs": [
+          {
+            "id": "JOB-UI-CHAT",
+            "summary": "質問し、回答・回答不能・根拠・確認質問・人手対応への状態を追う"
+          }
+        ],
+        "requirements": [
+          {
+            "id": "FR-094",
+            "acceptanceCriteria": [
+              "AC-FR094-002",
+              "AC-FR094-004"
+            ]
+          },
+          {
+            "id": "FR-095",
+            "acceptanceCriteria": [
+              "AC-FR095-001",
+              "AC-FR095-003"
+            ]
+          }
+        ],
+        "verifications": [
+          {
+            "id": "E2E-VIEW-CHAT-001",
+            "status": "implemented",
+            "evidence": [
+              "apps/web/e2e/visual-regression.spec.ts"
+            ]
+          }
+        ],
+        "implementationStatus": "partial",
+        "implementationEvidence": [
+          "apps/web/src/features/chat/components/ChatView.tsx"
+        ],
+        "gapTasks": [
+          "tasks/todo/20260714-issue-345-chat-assignee-journey.md",
+          "tasks/todo/20260713-2304-responsive-chat-ui-verification.md"
+        ]
+      }
     },
     {
       "view": "assignee",
       "label": "担当者対応",
-      "routePath": "/",
-      "routeKind": "client-state",
+      "routePath": "/?view=assignee",
+      "routeKind": "query-state",
       "screenComponent": "AssigneeWorkspace",
       "permissions": [
         "canAnswerQuestions"
       ],
-      "certainty": "confirmed"
+      "certainty": "confirmed",
+      "trace": {
+        "view": "assignee",
+        "canonicalUrl": "/?view=assignee",
+        "urlPatterns": [
+          "/?view=assignee"
+        ],
+        "routeKind": "query-state",
+        "access": {
+          "session": "authenticated",
+          "guards": [
+            "canAnswerQuestions"
+          ]
+        },
+        "personas": [
+          "answer-editor",
+          "system-admin"
+        ],
+        "jobs": [
+          {
+            "id": "JOB-UI-ASSIGNEE",
+            "summary": "許可された問い合わせを検索・選択し、回答または下書きを安全に更新する"
+          }
+        ],
+        "requirements": [
+          {
+            "id": "FR-094",
+            "acceptanceCriteria": [
+              "AC-FR094-003"
+            ]
+          },
+          {
+            "id": "FR-095",
+            "acceptanceCriteria": [
+              "AC-FR095-004"
+            ]
+          },
+          {
+            "id": "FR-097",
+            "acceptanceCriteria": [
+              "AC-FR097-001"
+            ]
+          },
+          {
+            "id": "FR-098",
+            "acceptanceCriteria": [
+              "AC-FR098-001"
+            ]
+          }
+        ],
+        "verifications": [
+          {
+            "id": "E2E-VIEW-ASSIGNEE-001",
+            "status": "implemented",
+            "evidence": [
+              "apps/web/e2e/visual-regression.spec.ts"
+            ]
+          }
+        ],
+        "implementationStatus": "partial",
+        "implementationEvidence": [
+          "apps/web/src/features/questions/components/AssigneeWorkspace.tsx"
+        ],
+        "gapTasks": [
+          "tasks/todo/20260714-issue-345-chat-assignee-journey.md"
+        ]
+      }
     },
     {
       "view": "history",
       "label": "履歴",
-      "routePath": "/",
-      "routeKind": "client-state",
+      "routePath": "/?view=history",
+      "routeKind": "query-state",
       "screenComponent": "HistoryWorkspace",
       "permissions": [],
-      "certainty": "inferred"
+      "certainty": "inferred",
+      "trace": {
+        "view": "history",
+        "canonicalUrl": "/?view=history",
+        "urlPatterns": [
+          "/?view=history"
+        ],
+        "routeKind": "query-state",
+        "access": {
+          "session": "authenticated",
+          "guards": []
+        },
+        "personas": [
+          "standard-user",
+          "answer-editor",
+          "operator",
+          "system-admin"
+        ],
+        "jobs": [
+          {
+            "id": "JOB-UI-HISTORY",
+            "summary": "自分の会話を検索・選択・再開・削除する"
+          }
+        ],
+        "requirements": [
+          {
+            "id": "FR-094",
+            "acceptanceCriteria": [
+              "AC-FR094-002"
+            ]
+          },
+          {
+            "id": "FR-095",
+            "acceptanceCriteria": [
+              "AC-FR095-002",
+              "AC-FR095-003"
+            ]
+          },
+          {
+            "id": "FR-096",
+            "acceptanceCriteria": [
+              "AC-FR096-001",
+              "AC-FR096-003"
+            ]
+          }
+        ],
+        "verifications": [
+          {
+            "id": "E2E-VIEW-HISTORY-001",
+            "status": "implemented",
+            "evidence": [
+              "apps/web/e2e/visual-regression.spec.ts"
+            ]
+          }
+        ],
+        "implementationStatus": "partial",
+        "implementationEvidence": [
+          "apps/web/src/features/history/components/HistoryWorkspace.tsx"
+        ],
+        "gapTasks": [
+          "tasks/todo/20260714-issue-345-chat-assignee-journey.md",
+          "tasks/todo/20260714-issue-345-risky-operation-feedback.md"
+        ]
+      }
     },
     {
       "view": "favorites",
       "label": "お気に入り",
-      "routePath": "/",
-      "routeKind": "client-state",
+      "routePath": "/?view=favorites",
+      "routeKind": "query-state",
       "screenComponent": "HistoryWorkspace",
       "permissions": [],
-      "certainty": "inferred"
+      "certainty": "inferred",
+      "trace": {
+        "view": "favorites",
+        "canonicalUrl": "/?view=favorites",
+        "urlPatterns": [
+          "/?view=favorites"
+        ],
+        "routeKind": "query-state",
+        "access": {
+          "session": "authenticated",
+          "guards": []
+        },
+        "personas": [
+          "standard-user",
+          "answer-editor",
+          "operator",
+          "system-admin"
+        ],
+        "jobs": [
+          {
+            "id": "JOB-UI-FAVORITES",
+            "summary": "自分のお気に入り会話を確認し、再開または解除する"
+          }
+        ],
+        "requirements": [
+          {
+            "id": "FR-094",
+            "acceptanceCriteria": [
+              "AC-FR094-002"
+            ]
+          },
+          {
+            "id": "FR-095",
+            "acceptanceCriteria": [
+              "AC-FR095-002"
+            ]
+          }
+        ],
+        "verifications": [
+          {
+            "id": "E2E-VIEW-FAVORITES-001",
+            "status": "implemented",
+            "evidence": [
+              "apps/web/e2e/visual-regression.spec.ts"
+            ]
+          }
+        ],
+        "implementationStatus": "partial",
+        "implementationEvidence": [
+          "apps/web/src/features/favorites/components/FavoritesWorkspace.tsx"
+        ],
+        "gapTasks": [
+          "tasks/todo/20260714-issue-345-chat-assignee-journey.md"
+        ]
+      }
     },
     {
       "view": "benchmark",
       "label": "性能テスト",
-      "routePath": "/",
-      "routeKind": "client-state",
+      "routePath": "/?view=benchmark",
+      "routeKind": "query-state",
       "screenComponent": "BenchmarkWorkspace",
       "permissions": [
         "canReadBenchmarkRuns"
       ],
-      "certainty": "confirmed"
+      "certainty": "confirmed",
+      "trace": {
+        "view": "benchmark",
+        "canonicalUrl": "/?view=benchmark",
+        "urlPatterns": [
+          "/?view=benchmark"
+        ],
+        "routeKind": "query-state",
+        "access": {
+          "session": "authenticated",
+          "guards": [
+            "canReadBenchmarkRuns"
+          ]
+        },
+        "personas": [
+          "operator",
+          "system-admin"
+        ],
+        "jobs": [
+          {
+            "id": "JOB-UI-BENCHMARK",
+            "summary": "benchmark run を開始・監視・停止し、成果物を確認する"
+          }
+        ],
+        "requirements": [
+          {
+            "id": "FR-094",
+            "acceptanceCriteria": [
+              "AC-FR094-003"
+            ]
+          },
+          {
+            "id": "FR-095",
+            "acceptanceCriteria": [
+              "AC-FR095-001",
+              "AC-FR095-005"
+            ]
+          },
+          {
+            "id": "FR-096",
+            "acceptanceCriteria": [
+              "AC-FR096-002",
+              "AC-FR096-004"
+            ]
+          }
+        ],
+        "verifications": [
+          {
+            "id": "E2E-VIEW-BENCHMARK-001",
+            "status": "implemented",
+            "evidence": [
+              "apps/web/e2e/visual-regression.spec.ts"
+            ]
+          }
+        ],
+        "implementationStatus": "partial",
+        "implementationEvidence": [
+          "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx"
+        ],
+        "gapTasks": [
+          "tasks/todo/20260714-issue-345-risky-operation-feedback.md"
+        ]
+      }
     },
     {
       "view": "admin",
       "label": "管理者設定",
-      "routePath": "/",
-      "routeKind": "client-state",
+      "routePath": "/?view=admin",
+      "routeKind": "query-state",
       "screenComponent": "AdminWorkspace",
       "permissions": [
         "canSeeAdminSettings"
       ],
-      "certainty": "confirmed"
+      "certainty": "confirmed",
+      "trace": {
+        "view": "admin",
+        "canonicalUrl": "/?view=admin",
+        "urlPatterns": [
+          "/?view=admin"
+        ],
+        "routeKind": "query-state",
+        "access": {
+          "session": "authenticated",
+          "guards": [
+            "canSeeAdminSettings"
+          ]
+        },
+        "personas": [
+          "system-admin"
+        ],
+        "jobs": [
+          {
+            "id": "JOB-UI-ADMIN",
+            "summary": "管理対象の source/as-of/context を確認して許可された governance 操作を行う"
+          }
+        ],
+        "requirements": [
+          {
+            "id": "FR-094",
+            "acceptanceCriteria": [
+              "AC-FR094-003"
+            ]
+          },
+          {
+            "id": "FR-095",
+            "acceptanceCriteria": [
+              "AC-FR095-004",
+              "AC-FR095-005"
+            ]
+          },
+          {
+            "id": "FR-096",
+            "acceptanceCriteria": [
+              "AC-FR096-005"
+            ]
+          },
+          {
+            "id": "FR-097",
+            "acceptanceCriteria": [
+              "AC-FR097-001",
+              "AC-FR097-002"
+            ]
+          },
+          {
+            "id": "FR-098",
+            "acceptanceCriteria": [
+              "AC-FR098-003"
+            ]
+          }
+        ],
+        "verifications": [
+          {
+            "id": "E2E-VIEW-ADMIN-001",
+            "status": "implemented",
+            "evidence": [
+              "apps/web/e2e/visual-regression.spec.ts"
+            ]
+          }
+        ],
+        "implementationStatus": "partial",
+        "implementationEvidence": [
+          "apps/web/src/features/admin/components/AdminWorkspace.tsx"
+        ],
+        "gapTasks": [
+          "tasks/todo/20260714-1011-admin-ui-governance-quality.md"
+        ]
+      }
     },
     {
       "view": "documents",
       "label": "ドキュメント",
-      "routePath": "/",
-      "routeKind": "client-state",
+      "routePath": "/documents",
+      "routeKind": "path-query-state",
       "screenComponent": "DocumentWorkspace",
       "permissions": [
         "canReadDocuments"
       ],
-      "certainty": "confirmed"
+      "certainty": "confirmed",
+      "trace": {
+        "view": "documents",
+        "canonicalUrl": "/documents",
+        "urlPatterns": [
+          "/documents",
+          "/documents/:documentId",
+          "/documents/groups/:folderId",
+          "/documents/reindex-migrations/:migrationId",
+          "/?view=documents"
+        ],
+        "routeKind": "path-query-state",
+        "access": {
+          "session": "authenticated",
+          "guards": [
+            "canReadDocuments"
+          ]
+        },
+        "personas": [
+          "operator",
+          "system-admin"
+        ],
+        "jobs": [
+          {
+            "id": "JOB-UI-DOCUMENTS",
+            "summary": "許可された文書を発見・登録・共有・移動し、取り込みと索引状態を追う"
+          }
+        ],
+        "requirements": [
+          {
+            "id": "FR-094",
+            "acceptanceCriteria": [
+              "AC-FR094-002",
+              "AC-FR094-003"
+            ]
+          },
+          {
+            "id": "FR-095",
+            "acceptanceCriteria": [
+              "AC-FR095-004",
+              "AC-FR095-005"
+            ]
+          },
+          {
+            "id": "FR-096",
+            "acceptanceCriteria": [
+              "AC-FR096-001",
+              "AC-FR096-002"
+            ]
+          },
+          {
+            "id": "FR-097",
+            "acceptanceCriteria": [
+              "AC-FR097-001",
+              "AC-FR097-003"
+            ]
+          },
+          {
+            "id": "FR-098",
+            "acceptanceCriteria": [
+              "AC-FR098-001",
+              "AC-FR098-005"
+            ]
+          }
+        ],
+        "verifications": [
+          {
+            "id": "E2E-VIEW-DOCUMENTS-001",
+            "status": "implemented",
+            "evidence": [
+              "apps/web/e2e/visual-regression.spec.ts"
+            ]
+          }
+        ],
+        "implementationStatus": "partial",
+        "implementationEvidence": [
+          "apps/web/src/features/documents/components/DocumentWorkspace.tsx"
+        ],
+        "gapTasks": [
+          "tasks/todo/20260714-issue-345-document-workspace-context.md"
+        ]
+      }
     },
     {
       "view": "profile",
       "label": "個人設定",
-      "routePath": "/",
-      "routeKind": "client-state",
+      "routePath": "/?view=profile",
+      "routeKind": "query-state",
       "screenComponent": "PersonalSettingsView",
       "permissions": [],
-      "certainty": "confirmed"
+      "certainty": "confirmed",
+      "trace": {
+        "view": "profile",
+        "canonicalUrl": "/?view=profile",
+        "urlPatterns": [
+          "/?view=profile"
+        ],
+        "routeKind": "query-state",
+        "access": {
+          "session": "authenticated",
+          "guards": []
+        },
+        "personas": [
+          "standard-user",
+          "answer-editor",
+          "operator",
+          "system-admin"
+        ],
+        "jobs": [
+          {
+            "id": "JOB-UI-PROFILE",
+            "summary": "本人の設定状態を確認・変更し、安全に sign out する"
+          }
+        ],
+        "requirements": [
+          {
+            "id": "FR-094",
+            "acceptanceCriteria": [
+              "AC-FR094-001",
+              "AC-FR094-004"
+            ]
+          },
+          {
+            "id": "FR-095",
+            "acceptanceCriteria": [
+              "AC-FR095-003"
+            ]
+          }
+        ],
+        "verifications": [
+          {
+            "id": "E2E-VIEW-PROFILE-001",
+            "status": "implemented",
+            "evidence": [
+              "apps/web/e2e/visual-regression.spec.ts"
+            ]
+          }
+        ],
+        "implementationStatus": "partial",
+        "implementationEvidence": [
+          "apps/web/src/app/components/PersonalSettingsView.tsx"
+        ],
+        "gapTasks": [
+          "tasks/todo/20260714-issue-345-mobile-navigation.md",
+          "tasks/todo/20260713-2301-user-preferences.md"
+        ]
+      }
     }
   ],
   "features": [
@@ -13167,5 +13680,138 @@
       ],
       "certainty": "confirmed"
     }
-  ]
+  ],
+  "traceability": {
+    "generatedFrom": "tools/web-inventory/ui-traceability.json",
+    "schemaVersion": 1,
+    "personas": [
+      {
+        "id": "standard-user",
+        "label": "一般利用者",
+        "jobContext": "自分に許可された情報で質問し、回答・根拠・履歴・個人設定を扱う"
+      },
+      {
+        "id": "answer-editor",
+        "label": "回答担当者",
+        "jobContext": "許可された問い合わせを検索し、回答・下書き・状態を更新する"
+      },
+      {
+        "id": "operator",
+        "label": "運用担当者",
+        "jobContext": "許可された文書運用、benchmark、debug、利用状況・監査の操作と観測を行う"
+      },
+      {
+        "id": "system-admin",
+        "label": "システム管理者",
+        "jobContext": "許可された管理、監査、利用状況、alias governance を扱う"
+      }
+    ],
+    "qualityRequirements": [
+      {
+        "id": "NFR-016",
+        "acceptanceCriteria": [
+          "AC-NFR016-001",
+          "AC-NFR016-002",
+          "AC-NFR016-003",
+          "AC-NFR016-004",
+          "AC-NFR016-005"
+        ],
+        "appliesTo": [
+          "*"
+        ]
+      },
+      {
+        "id": "NFR-017",
+        "acceptanceCriteria": [
+          "AC-NFR017-002",
+          "AC-NFR017-003",
+          "AC-NFR017-004"
+        ],
+        "appliesTo": [
+          "*"
+        ]
+      },
+      {
+        "id": "NFR-018",
+        "acceptanceCriteria": [
+          "AC-NFR018-001",
+          "AC-NFR018-002",
+          "AC-NFR018-005",
+          "AC-NFR018-007"
+        ],
+        "appliesTo": [
+          "*"
+        ]
+      },
+      {
+        "id": "SQ-016",
+        "acceptanceCriteria": [
+          "AC-SQ016-001",
+          "AC-SQ016-002",
+          "AC-SQ016-003",
+          "AC-SQ016-007",
+          "AC-SQ016-008"
+        ],
+        "appliesTo": [
+          "*"
+        ]
+      }
+    ],
+    "crossViewVerifications": [
+      {
+        "id": "NONUI-UI-TRACE-001",
+        "status": "implemented",
+        "evidence": [
+          "tools/web-inventory/ui-traceability.test.mjs"
+        ]
+      },
+      {
+        "id": "NONUI-UI-TRACE-002",
+        "status": "implemented",
+        "evidence": [
+          "tools/web-inventory/ui-traceability.test.mjs"
+        ]
+      },
+      {
+        "id": "E2E-UI-NAV-001",
+        "status": "planned",
+        "task": "tasks/todo/20260714-issue-345-mobile-navigation.md"
+      },
+      {
+        "id": "E2E-UI-NAV-002",
+        "status": "planned",
+        "task": "tasks/todo/20260714-issue-345-mobile-navigation.md"
+      },
+      {
+        "id": "E2E-UI-ROUTE-001",
+        "status": "planned",
+        "task": "tasks/todo/20260714-issue-345-url-history-routing.md"
+      },
+      {
+        "id": "E2E-UI-ROUTE-002",
+        "status": "planned",
+        "task": "tasks/todo/20260714-issue-345-url-history-routing.md"
+      },
+      {
+        "id": "E2E-UI-STATE-001",
+        "status": "planned",
+        "task": "tasks/todo/20260714-issue-345-shared-ui-state-contract.md"
+      },
+      {
+        "id": "E2E-UI-RISK-001",
+        "status": "planned",
+        "task": "tasks/todo/20260714-issue-345-risky-operation-feedback.md"
+      },
+      {
+        "id": "E2E-UI-DOCUMENTS-001",
+        "status": "planned",
+        "task": "tasks/todo/20260714-issue-345-document-workspace-context.md"
+      },
+      {
+        "id": "E2E-UI-MANUAL-001",
+        "status": "manual",
+        "task": "tasks/todo/20260714-issue-345-manual-a11y-evidence.md"
+      }
+    ]
+  }
 }

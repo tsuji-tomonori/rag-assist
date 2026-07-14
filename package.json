@@ -21,6 +21,7 @@
     "docs:openapi:check": "npm run docs:openapi:check -w @memorag-mvp/api",
     "docs:api-code": "npm run docs:api-code -w @memorag-mvp/api",
     "docs:api-code:check": "npm run docs:api-code:check -w @memorag-mvp/api",
+    "docs:web-trace:test": "node --test tools/web-inventory/ui-traceability.test.mjs",
     "docs:web-inventory": "node tools/web-inventory/generate-web-inventory.mjs",
     "docs:web-inventory:check": "node tools/web-inventory/generate-web-inventory.mjs --check",
     "docs:infra-inventory": "node tools/infra-inventory/generate-infra-inventory.mjs",

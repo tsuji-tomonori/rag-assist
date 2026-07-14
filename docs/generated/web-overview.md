@@ -24,6 +24,7 @@
 | コンポーネント | 59 | [web-components.md](web-components.md) |
 | UI 操作要素 | 339 | [web-features.md](web-features.md) |
 | 操作説明 | 339 | [web-accessibility.md](web-accessibility.md) |
+| 意味トレース対象画面 | 8 | [web-traceability.md](web-traceability.md) |
 
 ## 初めて見る人向けの導線
 
@@ -32,6 +33,7 @@
 3. 気になる機能の詳細ファイルを開き、ボタン、フォーム、handler、実装ファイルを確認する。
 4. [操作説明一覧](web-accessibility.md) で、ボタンや入力項目が支援技術にどう説明されるかを確認する。
 5. [コンポーネント一覧](web-components.md) で、画面を構成する部品と JSX 使用要素を確認する。
+6. [UI 意味トレーサビリティ](web-traceability.md) で、画面、persona/job、URL/permission、要件、AC、検証、未完了 task を確認する。
 
 ## 生成されるファイル
 
@@ -43,4 +45,5 @@
 | [web-features/*.md](web-features/) | 機能ごとの画面、コンポーネント、UI 操作要素 |
 | [web-components.md](web-components.md) | コンポーネント、export、役割、関連画面 |
 | [web-accessibility.md](web-accessibility.md) | アクセシブル名、説明参照、状態属性に基づく UI 操作説明 |
+| [web-traceability.md](web-traceability.md) | production AppView と persona/job、URL/permission、REQ/AC、verification、gap task の対応 |
 | web-ui-inventory.json | CI や将来の可視化に使える機械可読データ |

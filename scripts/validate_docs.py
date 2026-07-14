@@ -180,11 +180,15 @@ def _validate_baseline_todos(repo_root: Path, docs_root: Path, errors: list[str]
     for name in sorted(set(TODO_FILE.findall(text))):
         if not (repo_root / "tasks" / "todo" / name).is_file():
             errors.append(f"baseline が参照する todo が存在しません: tasks/todo/{name}")
-    for number in range(56, 94):
+    for number in range(56, 99):
         requirement_id = f"FR-{number:03d}"
         if requirement_id not in text:
             errors.append(f"baseline に要求 ID がありません: {requirement_id}")
-    for number in range(5, 16):
+    for number in range(16, 19):
+        requirement_id = f"NFR-{number:03d}"
+        if requirement_id not in text:
+            errors.append(f"baseline に要求 ID がありません: {requirement_id}")
+    for number in range(5, 17):
         requirement_id = f"SQ-{number:03d}"
         if requirement_id not in text:
             errors.append(f"baseline に要求 ID がありません: {requirement_id}")

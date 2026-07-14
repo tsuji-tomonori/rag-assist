@@ -311,6 +311,29 @@ test('管理系画面の visual regression @visual', async ({ page }) => {
   await expect(page).toHaveScreenshot('admin-workspace.png', { fullPage: true, animations: 'disabled' })
 })
 
+test('全 AppView の permission-aware 到達性 @smoke', async ({ page }) => {
+  await signIn(page)
+
+  const viewSteps = [
+    { id: 'E2E-VIEW-CHAT-001', trigger: null, region: 'チャット' },
+    { id: 'E2E-VIEW-DOCUMENTS-001', trigger: 'ドキュメント', region: 'ドキュメント管理' },
+    { id: 'E2E-VIEW-ASSIGNEE-001', trigger: '担当者対応', region: '担当者対応' },
+    { id: 'E2E-VIEW-BENCHMARK-001', trigger: '性能テスト', region: '性能テスト' },
+    { id: 'E2E-VIEW-ADMIN-001', trigger: '管理者設定', region: '管理者設定' },
+    { id: 'E2E-VIEW-HISTORY-001', trigger: '履歴', region: '履歴' },
+    { id: 'E2E-VIEW-FAVORITES-001', trigger: 'お気に入り', region: 'お気に入り' },
+    { id: 'E2E-VIEW-PROFILE-001', trigger: '個人設定', region: '個人設定' }
+  ] as const
+
+  for (const viewStep of viewSteps) {
+    await test.step(`${viewStep.id}: ${viewStep.region} view を表示する`, async () => {
+      if (viewStep.trigger === '個人設定') await page.getByRole('button', { name: viewStep.trigger }).click()
+      else if (viewStep.trigger) await page.getByTitle(viewStep.trigger).click()
+      await expect(page.getByRole('region', { name: viewStep.region, exact: true })).toBeVisible()
+    })
+  }
+})
+
 test('性能テストの実行ボタンがサマリーに重ならずクリックできる @smoke', async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 900 })
   await signIn(page)
