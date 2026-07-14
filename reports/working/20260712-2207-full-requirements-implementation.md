@@ -2,8 +2,8 @@
 
 - 実施日時: 2026-07-12 22:07 JST
 - branch: `codex/full-requirements-implementation`
-- task: `tasks/done/20260711-1518-full-requirements-implementation.md`
-- 状態: repository implementation / #342 統合後 local・GitHub CI acceptance verified、merge ready、live operational acceptance は follow-up へ分離
+- task: `tasks/do/20260711-1518-full-requirements-implementation.md`
+- 状態: repository implementation / #342 統合後 local acceptance verified、final CI teardown failure の修復をローカル検証済み・GitHub CI 待ち、live operational acceptance は follow-up へ分離
 
 ## 受けた指示
 
@@ -53,7 +53,8 @@
 - `npm run cdk -w @memorag-mvp/infra -- synth`: pass。既知の MFA/WAF cdk-nag warning は残るが synth failure はない。
 - `npm run check:dynamodb-gsi-update-limit -w @memorag-mvp/infra -- /tmp/pr341-base-template.json test/__snapshots__/memorag-mvp-stack.snapshot.json`: pass
 - `git diff --check`: pass
-- GitHub Actions: MemoRAG CI run 979、Validate Semver Label run 1432 ともに success（head `d36f6675e3633747b5e273ab178a184561615c0f`）。
+- GitHub Actions: head `d36f6675e3633747b5e273ab178a184561615c0f` の MemoRAG CI run 979、Validate Semver Label run 1432 は success。task done 記録 head `591187a4` の run 980 は Web 307/307 成功後、`useAppShellState.test.ts` の `useFavorites` 未 mock fetch が teardown まで残った `EnvironmentTeardownError` で failure。assertion／coverage failure ではなく test isolation の欠落として修復・再検証する。
+- run 980 修復後: `useAppShellState.test.ts` 4/4、Web coverage 307/307、対象 ESLint、Web typecheck、`task docs:check`、`git diff --check` は pass。`useFavorites` を test double に置換し、HTTP fetch と pending RPC をテスト外へ隔離した。修復 head の GitHub Actions を final gate とする。
 - read-only 最終再監査: production-path blocker 0。benchmark seed 削除の認可 subject と verified runner の audit/tombstone attribution、共有 corpus mapping、mismatched owner 拒否を再確認した。
 
 ### 検証中に検出して修復した主な失敗
@@ -71,12 +72,13 @@
 - 4回目の CI では PDF 3件が解消し、reader document cache と upload 直後の share read の2件だけが残った。reader server を全 document fixture 作成後に起動し、share read は5秒上限の bounded convergence 待機へ変更した。失敗時にも coverage JSON summary を PR コメントへ出すよう workflow を修正した。失敗時参考値は tests 756/758、statements/lines 89.71%、branches 80.06%、functions 91.97% であり、未完了2 test の後半を含まない。
 - 5・6回目の CI で残った reader/share 2件を実 listen 環境でも再現し、通常文書が source governance 未承認の `quarantined` 状態であること、share fixture が `LocalObjectStore` 外へ grant を書いていたこと、direct `full` grant は source folder `full` を要求する move 境界を迂回しないことを確認した。fixture を承認・公開ライフサイクル、active document ID、tenant-scoped object key、resource-hidden 404 契約へ同期し、対象2/2を確認した。
 - child process route test は c8 親 process の coverage に算入されないため、Bedrock、CodeBuild/CloudWatch Logs、S3 object store、replay source snapshot の AWS/境界 adapter unit test を追加した。API 全件は 765/765 pass、statements/lines 90.03%（50212/55772）、functions 92.48%、branches 80.08%。C0 gate は維持したまま達成し、C1 は継続 task の対象とした。
+- task done 記録後の Web CI では、hook test が `useFavorites` を mock しておらず実 HTTP fetch を開始し、全 assertion 完了後の worker teardown で pending RPC が検出された。favorites hook を hoisted mock に追加し、対象 4/4 と Web coverage 全 307/307、lint/typecheck/docs を再実行して pending fetch が消えたことを確認した。
 
 ## 成果物
 
 - 実行計画: `reports/working/20260711-1518-full-requirements-execution-plan.md`
 - 要件別証跡: `reports/working/20260712-2207-full-requirements-implementation-evidence.csv`
-- task: `tasks/done/20260711-1518-full-requirements-implementation.md`
+- task: `tasks/do/20260711-1518-full-requirements-implementation.md`
 - live operational acceptance follow-up: `tasks/todo/20260714-0104-full-requirements-operational-acceptance.md`
 - runtime/API/Web/infra/benchmark/test/docs 一式
 - 本レポート
@@ -95,4 +97,4 @@
 - `SQ-005`–`SQ-015`: approved dataset/threshold/window/owner/workload/price catalog を用いた live/load/chaos/cost/billing acceptance は未実施。
 - API C1 branches 85% は未達として `tasks/todo/20260712-coverage-api-c1-recovery.md` で追跡する。C0 statements/functions/lines 90% は blocking gate のまま維持する。
 - `npm install` 時点の audit は 4 vulnerabilities（low 1、moderate 1、high 2）を報告した。本タスクでは依存更新による互換性変更を実施していない。
-- PR #341 は #342 統合後 head で本文・受け入れコメント・セルフレビューを更新し、`semver:minor`、Draft 解除、レビュー提出なし、未解決 thread なし、GitHub Actions success を確認した。task done 記録の final commit とその CI 成功後に exact head SHA で merge する。live 運用 evidence の完了は主張せず、専用 follow-up task で継続する。
+- PR #341 は #342 統合後 head で本文・受け入れコメント・セルフレビューを更新し、`semver:minor`、Draft 解除、レビュー提出なし、未解決 thread なしを確認した。final metadata head の Web teardown failure を修復し、その CI 成功後に task を done へ戻して exact head SHA で merge する。live 運用 evidence の完了は主張せず、専用 follow-up task で継続する。
