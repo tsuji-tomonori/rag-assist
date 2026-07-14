@@ -10,7 +10,7 @@
 
 用途概要: CloudWatch Logs log group
 
-リソース数: 14
+リソース数: 18
 
 ## Logical ID 一覧
 
@@ -18,6 +18,7 @@
 | --- | --- | --- |
 | [Api Function Log Group](#api-function-log-group) | `ApiFunctionLogGroup00D1AC73` | Api Function Log Group (CloudWatch Logs log group) |
 | [Benchmark Project Log Group](#benchmark-project-log-group) | `BenchmarkProjectLogGroup395F719E` | Benchmark Project Log Group (CloudWatch Logs log group) |
+| [Benchmark Run Authorization Log Group](#benchmark-run-authorization-log-group) | `BenchmarkRunAuthorizationLogGroup8F09A680` | Benchmark Run Authorization Log Group (CloudWatch Logs log group) |
 | [Benchmark State Machine Log Group](#benchmark-state-machine-log-group) | `BenchmarkStateMachineLogGroup6D80BBB2` | Benchmark State Machine Log Group (CloudWatch Logs log group) |
 | [Chat Run Events Stream Log Group](#chat-run-events-stream-log-group) | `ChatRunEventsStreamLogGroupDB3F86F0` | Chat Run Events Stream Log Group (CloudWatch Logs log group) |
 | [Chat Run Mark Failed Log Group](#chat-run-mark-failed-log-group) | `ChatRunMarkFailedLogGroup7848AD59` | Chat Run Mark Failed Log Group (CloudWatch Logs log group) |
@@ -27,9 +28,12 @@
 | [Document Ingest Run State Machine Log Group](#document-ingest-run-state-machine-log-group) | `DocumentIngestRunStateMachineLogGroup94B2F1DE` | Document Ingest Run State Machine Log Group (CloudWatch Logs log group) |
 | [Document Ingest Run Worker Log Group](#document-ingest-run-worker-log-group) | `DocumentIngestRunWorkerLogGroup2B1C84D3` | Document Ingest Run Worker Log Group (CloudWatch Logs log group) |
 | [Heavy Api Function Log Group](#heavy-api-function-log-group) | `HeavyApiFunctionLogGroupF418C95A` | Heavy Api Function Log Group (CloudWatch Logs log group) |
+| [Rag Quality Monitor Log Group](#rag-quality-monitor-log-group) | `RagQualityMonitorLogGroup58870B2B` | Rag Quality Monitor Log Group (CloudWatch Logs log group) |
 | [Rest Api Access Log Group](#rest-api-access-log-group) | `RestApiAccessLogGroup246D1CE0` | Rest Api Access Log Group (CloudWatch Logs log group) |
+| [Revocation Cleanup Log Group](#revocation-cleanup-log-group) | `RevocationCleanupLogGroup2104FB3A` | Revocation Cleanup Log Group (CloudWatch Logs log group) |
 | [S3Vectors Provider Framework Log Group](#s3vectors-provider-framework-log-group) | `S3VectorsProviderFrameworkLogGroupB49A141A` | S3Vectors Provider Framework Log Group (CloudWatch Logs log group) |
 | [S3Vectors Provider Log Group](#s3vectors-provider-log-group) | `S3VectorsProviderLogGroupE19D8C96` | S3Vectors Provider Log Group (CloudWatch Logs log group) |
+| [Security Audit Reconciliation Log Group](#security-audit-reconciliation-log-group) | `SecurityAuditReconciliationLogGroup3B5C9710` | Security Audit Reconciliation Log Group (CloudWatch Logs log group) |
 
 ## Logical ID 別設定
 
@@ -52,6 +56,16 @@ Logical ID: `BenchmarkProjectLogGroup395F719E`
 | 設定項目 | 値 |
 | --- | --- |
 | `retentionInDays` | 7 |
+
+### Benchmark Run Authorization Log Group
+
+Logical ID: `BenchmarkRunAuthorizationLogGroup8F09A680`
+
+用途推定: Benchmark Run Authorization Log Group (CloudWatch Logs log group)
+
+| 設定項目 | 値 |
+| --- | --- |
+| `retentionInDays` | 30 |
 
 ### Benchmark State Machine Log Group
 
@@ -143,6 +157,16 @@ Logical ID: `HeavyApiFunctionLogGroupF418C95A`
 | --- | --- |
 | `retentionInDays` | 7 |
 
+### Rag Quality Monitor Log Group
+
+Logical ID: `RagQualityMonitorLogGroup58870B2B`
+
+用途推定: Rag Quality Monitor Log Group (CloudWatch Logs log group)
+
+| 設定項目 | 値 |
+| --- | --- |
+| `retentionInDays` | 30 |
+
 ### Rest Api Access Log Group
 
 Logical ID: `RestApiAccessLogGroup246D1CE0`
@@ -152,6 +176,16 @@ Logical ID: `RestApiAccessLogGroup246D1CE0`
 | 設定項目 | 値 |
 | --- | --- |
 | `retentionInDays` | 7 |
+
+### Revocation Cleanup Log Group
+
+Logical ID: `RevocationCleanupLogGroup2104FB3A`
+
+用途推定: Revocation Cleanup Log Group (CloudWatch Logs log group)
+
+| 設定項目 | 値 |
+| --- | --- |
+| `retentionInDays` | 30 |
 
 ### S3Vectors Provider Framework Log Group
 
@@ -172,3 +206,13 @@ Logical ID: `S3VectorsProviderLogGroupE19D8C96`
 | 設定項目 | 値 |
 | --- | --- |
 | `retentionInDays` | 7 |
+
+### Security Audit Reconciliation Log Group
+
+Logical ID: `SecurityAuditReconciliationLogGroup3B5C9710`
+
+用途推定: Security Audit Reconciliation Log Group (CloudWatch Logs log group)
+
+| 設定項目 | 値 |
+| --- | --- |
+| `retentionInDays` | 30 |

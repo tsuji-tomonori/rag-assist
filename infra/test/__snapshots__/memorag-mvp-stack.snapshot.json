@@ -1247,9 +1247,35 @@
           {
             "AttributeName": "runId",
             "AttributeType": "S"
+          },
+          {
+            "AttributeName": "tenantPartitionId",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "tenantItemId",
+            "AttributeType": "S"
           }
         ],
         "BillingMode": "PAY_PER_REQUEST",
+        "GlobalSecondaryIndexes": [
+          {
+            "IndexName": "TenantItemIndex",
+            "KeySchema": [
+              {
+                "AttributeName": "tenantPartitionId",
+                "KeyType": "HASH"
+              },
+              {
+                "AttributeName": "tenantItemId",
+                "KeyType": "RANGE"
+              }
+            ],
+            "Projection": {
+              "ProjectionType": "ALL"
+            }
+          }
+        ],
         "KeySchema": [
           {
             "AttributeName": "runId",
@@ -1296,9 +1322,35 @@
           {
             "AttributeName": "runId",
             "AttributeType": "S"
+          },
+          {
+            "AttributeName": "tenantPartitionId",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "tenantItemId",
+            "AttributeType": "S"
           }
         ],
         "BillingMode": "PAY_PER_REQUEST",
+        "GlobalSecondaryIndexes": [
+          {
+            "IndexName": "TenantItemIndex",
+            "KeySchema": [
+              {
+                "AttributeName": "tenantPartitionId",
+                "KeyType": "HASH"
+              },
+              {
+                "AttributeName": "tenantItemId",
+                "KeyType": "RANGE"
+              }
+            ],
+            "Projection": {
+              "ProjectionType": "ALL"
+            }
+          }
+        ],
         "KeySchema": [
           {
             "AttributeName": "runId",
@@ -1410,9 +1462,35 @@
           {
             "AttributeName": "runId",
             "AttributeType": "S"
+          },
+          {
+            "AttributeName": "tenantPartitionId",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "tenantItemId",
+            "AttributeType": "S"
           }
         ],
         "BillingMode": "PAY_PER_REQUEST",
+        "GlobalSecondaryIndexes": [
+          {
+            "IndexName": "TenantItemIndex",
+            "KeySchema": [
+              {
+                "AttributeName": "tenantPartitionId",
+                "KeyType": "HASH"
+              },
+              {
+                "AttributeName": "tenantItemId",
+                "KeyType": "RANGE"
+              }
+            ],
+            "Projection": {
+              "ProjectionType": "ALL"
+            }
+          }
+        ],
         "KeySchema": [
           {
             "AttributeName": "runId",
@@ -1452,6 +1530,63 @@
           "AttributeName": "ttl",
           "Enabled": true
         }
+      },
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete"
+    },
+    "ActiveRunAuthorizationIndexTable2D018C99": {
+      "Type": "AWS::DynamoDB::Table",
+      "Properties": {
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "tenantPartitionId",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "runKey",
+            "AttributeType": "S"
+          }
+        ],
+        "BillingMode": "PAY_PER_REQUEST",
+        "KeySchema": [
+          {
+            "AttributeName": "tenantPartitionId",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "runKey",
+            "KeyType": "RANGE"
+          }
+        ],
+        "PointInTimeRecoverySpecification": {
+          "PointInTimeRecoveryEnabled": true
+        },
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ]
       },
       "UpdateReplacePolicy": "Delete",
       "DeletionPolicy": "Delete"
@@ -1532,6 +1667,14 @@
           {
             "AttributeName": "normalizedCanonicalPath",
             "AttributeType": "S"
+          },
+          {
+            "AttributeName": "tenantPartitionId",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "tenantItemId",
+            "AttributeType": "S"
           }
         ],
         "BillingMode": "PAY_PER_REQUEST",
@@ -1545,6 +1688,22 @@
               },
               {
                 "AttributeName": "normalizedCanonicalPath",
+                "KeyType": "RANGE"
+              }
+            ],
+            "Projection": {
+              "ProjectionType": "ALL"
+            }
+          },
+          {
+            "IndexName": "TenantItemIndex",
+            "KeySchema": [
+              {
+                "AttributeName": "tenantPartitionId",
+                "KeyType": "HASH"
+              },
+              {
+                "AttributeName": "tenantItemId",
                 "KeyType": "RANGE"
               }
             ],
@@ -2426,6 +2585,13 @@
             "RequireUppercase": true
           }
         },
+        "Schema": [
+          {
+            "AttributeDataType": "Number",
+            "Mutable": true,
+            "Name": "session_invalid_after"
+          }
+        ],
         "SmsVerificationMessage": "The verification code to your new account is {####}",
         "UserPoolTags": {
           "Application": "MemoRAG",
@@ -2543,6 +2709,36 @@
       "Properties": {
         "Description": "MemoRAG role: BENCHMARK_RUNNER",
         "GroupName": "BENCHMARK_RUNNER",
+        "UserPoolId": {
+          "Ref": "UserPool6BA7E5F2"
+        }
+      }
+    },
+    "ASYNCAGENTUSERGroup": {
+      "Type": "AWS::Cognito::UserPoolGroup",
+      "Properties": {
+        "Description": "MemoRAG role: ASYNC_AGENT_USER",
+        "GroupName": "ASYNC_AGENT_USER",
+        "UserPoolId": {
+          "Ref": "UserPool6BA7E5F2"
+        }
+      }
+    },
+    "SKILLPROFILEADMINGroup": {
+      "Type": "AWS::Cognito::UserPoolGroup",
+      "Properties": {
+        "Description": "MemoRAG role: SKILL_PROFILE_ADMIN",
+        "GroupName": "SKILL_PROFILE_ADMIN",
+        "UserPoolId": {
+          "Ref": "UserPool6BA7E5F2"
+        }
+      }
+    },
+    "ASYNCAGENTADMINGroup": {
+      "Type": "AWS::Cognito::UserPoolGroup",
+      "Properties": {
+        "Description": "MemoRAG role: ASYNC_AGENT_ADMIN",
+        "GroupName": "ASYNC_AGENT_ADMIN",
         "UserPoolId": {
           "Ref": "UserPool6BA7E5F2"
         }
@@ -2990,6 +3186,20 @@
                     "BenchmarkRunsTableD0841636",
                     "Arn"
                   ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "BenchmarkRunsTableD0841636",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
+                  ]
                 }
               ]
             },
@@ -3005,6 +3215,20 @@
                     "BenchmarkRunsTableD0841636",
                     "Arn"
                   ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "BenchmarkRunsTableD0841636",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
+                  ]
                 }
               ]
             },
@@ -3028,6 +3252,20 @@
                     "ChatRunsTable8446CD95",
                     "Arn"
                   ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "ChatRunsTable8446CD95",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
+                  ]
                 }
               ]
             },
@@ -3042,6 +3280,20 @@
                   "Fn::GetAtt": [
                     "ChatRunsTable8446CD95",
                     "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "ChatRunsTable8446CD95",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
                   ]
                 }
               ]
@@ -3104,6 +3356,20 @@
                     "DocumentIngestRunsTableEA8F8CCA",
                     "Arn"
                   ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentIngestRunsTableEA8F8CCA",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
+                  ]
                 }
               ]
             },
@@ -3118,6 +3384,20 @@
                   "Fn::GetAtt": [
                     "DocumentIngestRunsTableEA8F8CCA",
                     "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentIngestRunsTableEA8F8CCA",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
                   ]
                 }
               ]
@@ -3254,6 +3534,44 @@
             },
             {
               "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ActiveRunAuthorizationIndexTable2D018C99",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ActiveRunAuthorizationIndexTable2D018C99",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
                 "s3vectors:PutVectors",
                 "s3vectors:QueryVectors",
                 "s3vectors:GetVectors",
@@ -3266,9 +3584,15 @@
             {
               "Action": [
                 "cognito-idp:ListUsers",
+                "cognito-idp:AdminGetUser",
                 "cognito-idp:AdminListGroupsForUser",
                 "cognito-idp:AdminAddUserToGroup",
-                "cognito-idp:AdminRemoveUserFromGroup"
+                "cognito-idp:AdminRemoveUserFromGroup",
+                "cognito-idp:AdminDisableUser",
+                "cognito-idp:AdminEnableUser",
+                "cognito-idp:AdminUpdateUserAttributes",
+                "cognito-idp:AdminUserGlobalSignOut",
+                "cognito-idp:AdminDeleteUser"
               ],
               "Effect": "Allow",
               "Resource": {
@@ -3389,6 +3713,9 @@
             "BENCHMARK_RUNS_TABLE_NAME": {
               "Ref": "BenchmarkRunsTableD0841636"
             },
+            "ACTIVE_RUN_AUTHORIZATION_INDEX_TABLE_NAME": {
+              "Ref": "ActiveRunAuthorizationIndexTable2D018C99"
+            },
             "CHAT_RUNS_TABLE_NAME": {
               "Ref": "ChatRunsTable8446CD95"
             },
@@ -3435,6 +3762,21 @@
             "EMBEDDING_DIMENSIONS": "1024",
             "MIN_RETRIEVAL_SCORE": "0.20",
             "AUTH_ENABLED": "true",
+            "AUTH_TENANT_ID": {
+              "Ref": "AWS::AccountId"
+            },
+            "BENCHMARK_EVALUATION_ENABLED": "true",
+            "BENCHMARK_EVALUATION_TENANT_ID": {
+              "Fn::Join": [
+                "",
+                [
+                  "benchmark-",
+                  {
+                    "Ref": "AWS::AccountId"
+                  }
+                ]
+              ]
+            },
             "CORS_ALLOWED_ORIGINS": "*",
             "COGNITO_REGION": {
               "Ref": "AWS::Region"
@@ -3449,6 +3791,8 @@
               "Ref": "DebugDownloadBucketAB6A16BE"
             },
             "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+            "RAG_MONITORING_REQUIRED": "1",
+            "RAG_SAFETY_STATE_TTL_SECONDS": "600",
             "PDF_OCR_FALLBACK_ENABLED": "true",
             "PDF_OCR_FALLBACK_TIMEOUT_MS": "45000",
             "CHAT_RUN_STATE_MACHINE_ARN": {
@@ -3892,6 +4236,20 @@
                     "BenchmarkRunsTableD0841636",
                     "Arn"
                   ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "BenchmarkRunsTableD0841636",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
+                  ]
                 }
               ]
             },
@@ -3907,6 +4265,20 @@
                     "BenchmarkRunsTableD0841636",
                     "Arn"
                   ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "BenchmarkRunsTableD0841636",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
+                  ]
                 }
               ]
             },
@@ -3930,6 +4302,20 @@
                     "ChatRunsTable8446CD95",
                     "Arn"
                   ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "ChatRunsTable8446CD95",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
+                  ]
                 }
               ]
             },
@@ -3944,6 +4330,20 @@
                   "Fn::GetAtt": [
                     "ChatRunsTable8446CD95",
                     "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "ChatRunsTable8446CD95",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
                   ]
                 }
               ]
@@ -4006,6 +4406,20 @@
                     "DocumentIngestRunsTableEA8F8CCA",
                     "Arn"
                   ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentIngestRunsTableEA8F8CCA",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
+                  ]
                 }
               ]
             },
@@ -4020,6 +4434,20 @@
                   "Fn::GetAtt": [
                     "DocumentIngestRunsTableEA8F8CCA",
                     "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentIngestRunsTableEA8F8CCA",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
                   ]
                 }
               ]
@@ -4156,6 +4584,44 @@
             },
             {
               "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ActiveRunAuthorizationIndexTable2D018C99",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ActiveRunAuthorizationIndexTable2D018C99",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
                 "s3vectors:PutVectors",
                 "s3vectors:QueryVectors",
                 "s3vectors:GetVectors",
@@ -4168,9 +4634,15 @@
             {
               "Action": [
                 "cognito-idp:ListUsers",
+                "cognito-idp:AdminGetUser",
                 "cognito-idp:AdminListGroupsForUser",
                 "cognito-idp:AdminAddUserToGroup",
-                "cognito-idp:AdminRemoveUserFromGroup"
+                "cognito-idp:AdminRemoveUserFromGroup",
+                "cognito-idp:AdminDisableUser",
+                "cognito-idp:AdminEnableUser",
+                "cognito-idp:AdminUpdateUserAttributes",
+                "cognito-idp:AdminUserGlobalSignOut",
+                "cognito-idp:AdminDeleteUser"
               ],
               "Effect": "Allow",
               "Resource": {
@@ -4291,6 +4763,9 @@
             "BENCHMARK_RUNS_TABLE_NAME": {
               "Ref": "BenchmarkRunsTableD0841636"
             },
+            "ACTIVE_RUN_AUTHORIZATION_INDEX_TABLE_NAME": {
+              "Ref": "ActiveRunAuthorizationIndexTable2D018C99"
+            },
             "CHAT_RUNS_TABLE_NAME": {
               "Ref": "ChatRunsTable8446CD95"
             },
@@ -4337,6 +4812,21 @@
             "EMBEDDING_DIMENSIONS": "1024",
             "MIN_RETRIEVAL_SCORE": "0.20",
             "AUTH_ENABLED": "true",
+            "AUTH_TENANT_ID": {
+              "Ref": "AWS::AccountId"
+            },
+            "BENCHMARK_EVALUATION_ENABLED": "true",
+            "BENCHMARK_EVALUATION_TENANT_ID": {
+              "Fn::Join": [
+                "",
+                [
+                  "benchmark-",
+                  {
+                    "Ref": "AWS::AccountId"
+                  }
+                ]
+              ]
+            },
             "CORS_ALLOWED_ORIGINS": "*",
             "COGNITO_REGION": {
               "Ref": "AWS::Region"
@@ -4351,6 +4841,8 @@
               "Ref": "DebugDownloadBucketAB6A16BE"
             },
             "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+            "RAG_MONITORING_REQUIRED": "1",
+            "RAG_SAFETY_STATE_TTL_SECONDS": "600",
             "PDF_OCR_FALLBACK_ENABLED": "true",
             "PDF_OCR_FALLBACK_TIMEOUT_MS": "45000",
             "CHAT_RUN_STATE_MACHINE_ARN": {
@@ -4622,6 +5114,20 @@
                     "ChatRunsTable8446CD95",
                     "Arn"
                   ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "ChatRunsTable8446CD95",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
+                  ]
                 }
               ]
             },
@@ -4635,6 +5141,58 @@
                 {
                   "Fn::GetAtt": [
                     "ChatRunsTable8446CD95",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "ChatRunsTable8446CD95",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ActiveRunAuthorizationIndexTable2D018C99",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ActiveRunAuthorizationIndexTable2D018C99",
                     "Arn"
                   ]
                 }
@@ -4758,6 +5316,20 @@
               ],
               "Effect": "Allow",
               "Resource": "*"
+            },
+            {
+              "Action": [
+                "cognito-idp:ListUsers",
+                "cognito-idp:AdminGetUser",
+                "cognito-idp:AdminListGroupsForUser"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "UserPool6BA7E5F2",
+                  "Arn"
+                ]
+              }
             }
           ],
           "Version": "2012-10-17"
@@ -4800,6 +5372,9 @@
             },
             "BENCHMARK_RUNS_TABLE_NAME": {
               "Ref": "BenchmarkRunsTableD0841636"
+            },
+            "ACTIVE_RUN_AUTHORIZATION_INDEX_TABLE_NAME": {
+              "Ref": "ActiveRunAuthorizationIndexTable2D018C99"
             },
             "CHAT_RUNS_TABLE_NAME": {
               "Ref": "ChatRunsTable8446CD95"
@@ -4847,6 +5422,21 @@
             "EMBEDDING_DIMENSIONS": "1024",
             "MIN_RETRIEVAL_SCORE": "0.20",
             "AUTH_ENABLED": "true",
+            "AUTH_TENANT_ID": {
+              "Ref": "AWS::AccountId"
+            },
+            "BENCHMARK_EVALUATION_ENABLED": "true",
+            "BENCHMARK_EVALUATION_TENANT_ID": {
+              "Fn::Join": [
+                "",
+                [
+                  "benchmark-",
+                  {
+                    "Ref": "AWS::AccountId"
+                  }
+                ]
+              ]
+            },
             "CORS_ALLOWED_ORIGINS": "*",
             "COGNITO_REGION": {
               "Ref": "AWS::Region"
@@ -4860,7 +5450,9 @@
             "DEBUG_DOWNLOAD_BUCKET_NAME": {
               "Ref": "DebugDownloadBucketAB6A16BE"
             },
-            "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900"
+            "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+            "RAG_MONITORING_REQUIRED": "1",
+            "RAG_SAFETY_STATE_TTL_SECONDS": "600"
           }
         },
         "Handler": "index.handler",
@@ -5026,6 +5618,20 @@
                     "ChatRunsTable8446CD95",
                     "Arn"
                   ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "ChatRunsTable8446CD95",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
+                  ]
                 }
               ]
             },
@@ -5039,6 +5645,58 @@
                 {
                   "Fn::GetAtt": [
                     "ChatRunsTable8446CD95",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "ChatRunsTable8446CD95",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ActiveRunAuthorizationIndexTable2D018C99",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ActiveRunAuthorizationIndexTable2D018C99",
                     "Arn"
                   ]
                 }
@@ -5124,6 +5782,9 @@
             "BENCHMARK_RUNS_TABLE_NAME": {
               "Ref": "BenchmarkRunsTableD0841636"
             },
+            "ACTIVE_RUN_AUTHORIZATION_INDEX_TABLE_NAME": {
+              "Ref": "ActiveRunAuthorizationIndexTable2D018C99"
+            },
             "CHAT_RUNS_TABLE_NAME": {
               "Ref": "ChatRunsTable8446CD95"
             },
@@ -5170,6 +5831,21 @@
             "EMBEDDING_DIMENSIONS": "1024",
             "MIN_RETRIEVAL_SCORE": "0.20",
             "AUTH_ENABLED": "true",
+            "AUTH_TENANT_ID": {
+              "Ref": "AWS::AccountId"
+            },
+            "BENCHMARK_EVALUATION_ENABLED": "true",
+            "BENCHMARK_EVALUATION_TENANT_ID": {
+              "Fn::Join": [
+                "",
+                [
+                  "benchmark-",
+                  {
+                    "Ref": "AWS::AccountId"
+                  }
+                ]
+              ]
+            },
             "CORS_ALLOWED_ORIGINS": "*",
             "COGNITO_REGION": {
               "Ref": "AWS::Region"
@@ -5183,7 +5859,9 @@
             "DEBUG_DOWNLOAD_BUCKET_NAME": {
               "Ref": "DebugDownloadBucketAB6A16BE"
             },
-            "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900"
+            "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+            "RAG_MONITORING_REQUIRED": "1",
+            "RAG_SAFETY_STATE_TTL_SECONDS": "600"
           }
         },
         "Handler": "index.handler",
@@ -5345,6 +6023,20 @@
                     "ChatRunsTable8446CD95",
                     "Arn"
                   ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "ChatRunsTable8446CD95",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
+                  ]
                 }
               ]
             },
@@ -5359,6 +6051,20 @@
                   "Fn::GetAtt": [
                     "ChatRunsTable8446CD95",
                     "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "ChatRunsTable8446CD95",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
                   ]
                 }
               ]
@@ -5439,6 +6145,9 @@
             "BENCHMARK_RUNS_TABLE_NAME": {
               "Ref": "BenchmarkRunsTableD0841636"
             },
+            "ACTIVE_RUN_AUTHORIZATION_INDEX_TABLE_NAME": {
+              "Ref": "ActiveRunAuthorizationIndexTable2D018C99"
+            },
             "CHAT_RUNS_TABLE_NAME": {
               "Ref": "ChatRunsTable8446CD95"
             },
@@ -5485,6 +6194,21 @@
             "EMBEDDING_DIMENSIONS": "1024",
             "MIN_RETRIEVAL_SCORE": "0.20",
             "AUTH_ENABLED": "true",
+            "AUTH_TENANT_ID": {
+              "Ref": "AWS::AccountId"
+            },
+            "BENCHMARK_EVALUATION_ENABLED": "true",
+            "BENCHMARK_EVALUATION_TENANT_ID": {
+              "Fn::Join": [
+                "",
+                [
+                  "benchmark-",
+                  {
+                    "Ref": "AWS::AccountId"
+                  }
+                ]
+              ]
+            },
             "CORS_ALLOWED_ORIGINS": "*",
             "COGNITO_REGION": {
               "Ref": "AWS::Region"
@@ -5498,7 +6222,9 @@
             "DEBUG_DOWNLOAD_BUCKET_NAME": {
               "Ref": "DebugDownloadBucketAB6A16BE"
             },
-            "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900"
+            "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+            "RAG_MONITORING_REQUIRED": "1",
+            "RAG_SAFETY_STATE_TTL_SECONDS": "600"
           }
         },
         "Handler": "index.handler",
@@ -5701,6 +6427,20 @@
                     "DocumentIngestRunsTableEA8F8CCA",
                     "Arn"
                   ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentIngestRunsTableEA8F8CCA",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
+                  ]
                 }
               ]
             },
@@ -5714,6 +6454,58 @@
                 {
                   "Fn::GetAtt": [
                     "DocumentIngestRunsTableEA8F8CCA",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentIngestRunsTableEA8F8CCA",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ActiveRunAuthorizationIndexTable2D018C99",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ActiveRunAuthorizationIndexTable2D018C99",
                     "Arn"
                   ]
                 }
@@ -5840,6 +6632,20 @@
             },
             {
               "Action": [
+                "cognito-idp:ListUsers",
+                "cognito-idp:AdminGetUser",
+                "cognito-idp:AdminListGroupsForUser"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "UserPool6BA7E5F2",
+                  "Arn"
+                ]
+              }
+            },
+            {
+              "Action": [
                 "textract:DetectDocumentText",
                 "textract:StartDocumentTextDetection",
                 "textract:GetDocumentTextDetection"
@@ -5889,6 +6695,9 @@
             "BENCHMARK_RUNS_TABLE_NAME": {
               "Ref": "BenchmarkRunsTableD0841636"
             },
+            "ACTIVE_RUN_AUTHORIZATION_INDEX_TABLE_NAME": {
+              "Ref": "ActiveRunAuthorizationIndexTable2D018C99"
+            },
             "CHAT_RUNS_TABLE_NAME": {
               "Ref": "ChatRunsTable8446CD95"
             },
@@ -5935,6 +6744,21 @@
             "EMBEDDING_DIMENSIONS": "1024",
             "MIN_RETRIEVAL_SCORE": "0.20",
             "AUTH_ENABLED": "true",
+            "AUTH_TENANT_ID": {
+              "Ref": "AWS::AccountId"
+            },
+            "BENCHMARK_EVALUATION_ENABLED": "true",
+            "BENCHMARK_EVALUATION_TENANT_ID": {
+              "Fn::Join": [
+                "",
+                [
+                  "benchmark-",
+                  {
+                    "Ref": "AWS::AccountId"
+                  }
+                ]
+              ]
+            },
             "CORS_ALLOWED_ORIGINS": "*",
             "COGNITO_REGION": {
               "Ref": "AWS::Region"
@@ -5949,6 +6773,8 @@
               "Ref": "DebugDownloadBucketAB6A16BE"
             },
             "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+            "RAG_MONITORING_REQUIRED": "1",
+            "RAG_SAFETY_STATE_TTL_SECONDS": "600",
             "PDF_OCR_FALLBACK_ENABLED": "true",
             "PDF_OCR_FALLBACK_TIMEOUT_MS": "45000"
           }
@@ -6119,6 +6945,20 @@
                     "DocumentIngestRunsTableEA8F8CCA",
                     "Arn"
                   ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentIngestRunsTableEA8F8CCA",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
+                  ]
                 }
               ]
             },
@@ -6132,6 +6972,58 @@
                 {
                   "Fn::GetAtt": [
                     "DocumentIngestRunsTableEA8F8CCA",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentIngestRunsTableEA8F8CCA",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ActiveRunAuthorizationIndexTable2D018C99",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ActiveRunAuthorizationIndexTable2D018C99",
                     "Arn"
                   ]
                 }
@@ -6217,6 +7109,9 @@
             "BENCHMARK_RUNS_TABLE_NAME": {
               "Ref": "BenchmarkRunsTableD0841636"
             },
+            "ACTIVE_RUN_AUTHORIZATION_INDEX_TABLE_NAME": {
+              "Ref": "ActiveRunAuthorizationIndexTable2D018C99"
+            },
             "CHAT_RUNS_TABLE_NAME": {
               "Ref": "ChatRunsTable8446CD95"
             },
@@ -6263,6 +7158,21 @@
             "EMBEDDING_DIMENSIONS": "1024",
             "MIN_RETRIEVAL_SCORE": "0.20",
             "AUTH_ENABLED": "true",
+            "AUTH_TENANT_ID": {
+              "Ref": "AWS::AccountId"
+            },
+            "BENCHMARK_EVALUATION_ENABLED": "true",
+            "BENCHMARK_EVALUATION_TENANT_ID": {
+              "Fn::Join": [
+                "",
+                [
+                  "benchmark-",
+                  {
+                    "Ref": "AWS::AccountId"
+                  }
+                ]
+              ]
+            },
             "CORS_ALLOWED_ORIGINS": "*",
             "COGNITO_REGION": {
               "Ref": "AWS::Region"
@@ -6276,7 +7186,9 @@
             "DEBUG_DOWNLOAD_BUCKET_NAME": {
               "Ref": "DebugDownloadBucketAB6A16BE"
             },
-            "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900"
+            "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+            "RAG_MONITORING_REQUIRED": "1",
+            "RAG_SAFETY_STATE_TTL_SECONDS": "600"
           }
         },
         "Handler": "index.handler",
@@ -6325,6 +7237,2518 @@
         "DocumentIngestRunMarkFailedFunctionServiceRoleDefaultPolicy6B2C079B",
         "DocumentIngestRunMarkFailedFunctionServiceRole8A5F469D"
       ]
+    },
+    "BenchmarkRunAuthorizationLogGroup8F09A680": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "RetentionInDays": 30,
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ]
+      },
+      "UpdateReplacePolicy": "Retain",
+      "DeletionPolicy": "Retain"
+    },
+    "BenchmarkRunAuthorizationFunctionServiceRole23F15ADE": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ]
+      }
+    },
+    "BenchmarkRunAuthorizationFunctionServiceRoleDefaultPolicyD7F09778": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "BenchmarkRunsTableD0841636",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "BenchmarkRunsTableD0841636",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "BenchmarkRunsTableD0841636",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "BenchmarkRunsTableD0841636",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ActiveRunAuthorizationIndexTable2D018C99",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ActiveRunAuthorizationIndexTable2D018C99",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "s3:GetObject*",
+                "s3:GetBucket*",
+                "s3:List*"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "DocumentsBucket9EC9DEB9",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentsBucket9EC9DEB9",
+                          "Arn"
+                        ]
+                      },
+                      "/security/revocation-cleanup/*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "s3:PutObject",
+                "s3:PutObjectLegalHold",
+                "s3:PutObjectRetention",
+                "s3:PutObjectTagging",
+                "s3:PutObjectVersionTagging",
+                "s3:Abort*"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    {
+                      "Fn::GetAtt": [
+                        "DocumentsBucket9EC9DEB9",
+                        "Arn"
+                      ]
+                    },
+                    "/security/revocation-cleanup/*"
+                  ]
+                ]
+              }
+            },
+            {
+              "Action": [
+                "s3:GetObject*",
+                "s3:GetBucket*",
+                "s3:List*"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "BenchmarkBucketDD7D1D2F",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "BenchmarkBucketDD7D1D2F",
+                          "Arn"
+                        ]
+                      },
+                      "/runs/*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": "s3:DeleteObject*",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    {
+                      "Fn::GetAtt": [
+                        "BenchmarkBucketDD7D1D2F",
+                        "Arn"
+                      ]
+                    },
+                    "/runs/*"
+                  ]
+                ]
+              }
+            },
+            {
+              "Action": [
+                "cognito-idp:ListUsers",
+                "cognito-idp:AdminGetUser",
+                "cognito-idp:AdminListGroupsForUser"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "UserPool6BA7E5F2",
+                  "Arn"
+                ]
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "BenchmarkRunAuthorizationFunctionServiceRoleDefaultPolicyD7F09778",
+        "Roles": [
+          {
+            "Ref": "BenchmarkRunAuthorizationFunctionServiceRole23F15ADE"
+          }
+        ]
+      }
+    },
+    "BenchmarkRunAuthorizationFunction16D4CD86": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Architectures": [
+          "arm64"
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-111111111111-ap-northeast-1",
+          "S3Key": "<asset-hash>.zip"
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_ENV": "production",
+            "USE_LOCAL_VECTOR_STORE": "false",
+            "MOCK_BEDROCK": "false",
+            "DOCS_BUCKET_NAME": {
+              "Ref": "DocumentsBucket9EC9DEB9"
+            },
+            "QUESTION_TABLE_NAME": {
+              "Ref": "HumanQuestionsTable5DA9688B"
+            },
+            "DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID": "ANSWER_EDITOR",
+            "CONVERSATION_HISTORY_TABLE_NAME": {
+              "Ref": "ConversationHistoryTable59A3534C"
+            },
+            "FAVORITES_TABLE_NAME": {
+              "Ref": "FavoritesTable4DA8A306"
+            },
+            "BENCHMARK_RUNS_TABLE_NAME": {
+              "Ref": "BenchmarkRunsTableD0841636"
+            },
+            "ACTIVE_RUN_AUTHORIZATION_INDEX_TABLE_NAME": {
+              "Ref": "ActiveRunAuthorizationIndexTable2D018C99"
+            },
+            "CHAT_RUNS_TABLE_NAME": {
+              "Ref": "ChatRunsTable8446CD95"
+            },
+            "CHAT_RUN_EVENTS_TABLE_NAME": {
+              "Ref": "ChatRunEventsTable7455A50E"
+            },
+            "DOCUMENT_INGEST_RUNS_TABLE_NAME": {
+              "Ref": "DocumentIngestRunsTableEA8F8CCA"
+            },
+            "DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME": {
+              "Ref": "DocumentIngestRunEventsTableF4692EBE"
+            },
+            "DOCUMENT_GROUPS_TABLE_NAME": {
+              "Ref": "DocumentGroupsTableA5108040"
+            },
+            "BENCHMARK_BUCKET_NAME": {
+              "Ref": "BenchmarkBucketDD7D1D2F"
+            },
+            "BENCHMARK_DEFAULT_DATASET_KEY": "datasets/agent/standard-v1.jsonl",
+            "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+            "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
+            "USE_LOCAL_CHAT_RUN_STORE": "false",
+            "VECTOR_BUCKET_NAME": {
+              "Fn::Join": [
+                "",
+                [
+                  "memorag-",
+                  {
+                    "Ref": "AWS::AccountId"
+                  },
+                  "-",
+                  {
+                    "Ref": "AWS::Region"
+                  },
+                  "-c85f22a0"
+                ]
+              ]
+            },
+            "MEMORY_VECTOR_INDEX_NAME": "memory-index",
+            "EVIDENCE_VECTOR_INDEX_NAME": "evidence-index",
+            "DEFAULT_MODEL_ID": "amazon.nova-lite-v1:0",
+            "DEFAULT_MEMORY_MODEL_ID": "amazon.nova-lite-v1:0",
+            "EMBEDDING_MODEL_ID": "amazon.titan-embed-text-v2:0",
+            "EMBEDDING_DIMENSIONS": "1024",
+            "MIN_RETRIEVAL_SCORE": "0.20",
+            "AUTH_ENABLED": "true",
+            "AUTH_TENANT_ID": {
+              "Ref": "AWS::AccountId"
+            },
+            "BENCHMARK_EVALUATION_ENABLED": "true",
+            "BENCHMARK_EVALUATION_TENANT_ID": {
+              "Fn::Join": [
+                "",
+                [
+                  "benchmark-",
+                  {
+                    "Ref": "AWS::AccountId"
+                  }
+                ]
+              ]
+            },
+            "CORS_ALLOWED_ORIGINS": "*",
+            "COGNITO_REGION": {
+              "Ref": "AWS::Region"
+            },
+            "COGNITO_USER_POOL_ID": {
+              "Ref": "UserPool6BA7E5F2"
+            },
+            "COGNITO_APP_CLIENT_ID": {
+              "Ref": "UserPoolWebClient4C9370B0"
+            },
+            "DEBUG_DOWNLOAD_BUCKET_NAME": {
+              "Ref": "DebugDownloadBucketAB6A16BE"
+            },
+            "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+            "RAG_MONITORING_REQUIRED": "1",
+            "RAG_SAFETY_STATE_TTL_SECONDS": "600"
+          }
+        },
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "BenchmarkRunAuthorizationLogGroup8F09A680"
+          }
+        },
+        "MemorySize": 512,
+        "Role": {
+          "Fn::GetAtt": [
+            "BenchmarkRunAuthorizationFunctionServiceRole23F15ADE",
+            "Arn"
+          ]
+        },
+        "Runtime": "nodejs22.x",
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ],
+        "Timeout": 29
+      },
+      "DependsOn": [
+        "BenchmarkRunAuthorizationFunctionServiceRoleDefaultPolicyD7F09778",
+        "BenchmarkRunAuthorizationFunctionServiceRole23F15ADE"
+      ]
+    },
+    "RevocationCleanupLogGroup2104FB3A": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "RetentionInDays": 30,
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ]
+      },
+      "UpdateReplacePolicy": "Retain",
+      "DeletionPolicy": "Retain"
+    },
+    "RevocationCleanupFunctionServiceRole15557E81": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ]
+      }
+    },
+    "RevocationCleanupFunctionServiceRoleDefaultPolicy688B596B": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:ListBucket",
+              "Condition": {
+                "StringLike": {
+                  "s3:prefix": [
+                    "security/revocation-cleanup/*",
+                    "security/revocation-cleanup-repairs/*",
+                    "security/revocation-cleanup-tenants/*",
+                    "security/revocation-cleanup-tenant-registry-state/*",
+                    "security/account-revocations/*",
+                    "tenant-artifacts/*",
+                    "embedding-cache/*",
+                    "debug-runs/*",
+                    "quality-control/source-samples/*",
+                    "source-governance/*",
+                    "documents/share-grants/*",
+                    "publication/active/*"
+                  ]
+                }
+              },
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "DocumentsBucket9EC9DEB9",
+                  "Arn"
+                ]
+              }
+            },
+            {
+              "Action": "s3:GetObject",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentsBucket9EC9DEB9",
+                          "Arn"
+                        ]
+                      },
+                      "/security/revocation-cleanup/*"
+                    ]
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentsBucket9EC9DEB9",
+                          "Arn"
+                        ]
+                      },
+                      "/security/revocation-cleanup-repairs/*"
+                    ]
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentsBucket9EC9DEB9",
+                          "Arn"
+                        ]
+                      },
+                      "/security/revocation-cleanup-tenants/*"
+                    ]
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentsBucket9EC9DEB9",
+                          "Arn"
+                        ]
+                      },
+                      "/security/revocation-cleanup-tenant-registry-state/*"
+                    ]
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentsBucket9EC9DEB9",
+                          "Arn"
+                        ]
+                      },
+                      "/security/account-revocations/*"
+                    ]
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentsBucket9EC9DEB9",
+                          "Arn"
+                        ]
+                      },
+                      "/tenant-artifacts/*"
+                    ]
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentsBucket9EC9DEB9",
+                          "Arn"
+                        ]
+                      },
+                      "/embedding-cache/*"
+                    ]
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentsBucket9EC9DEB9",
+                          "Arn"
+                        ]
+                      },
+                      "/debug-runs/*"
+                    ]
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentsBucket9EC9DEB9",
+                          "Arn"
+                        ]
+                      },
+                      "/quality-control/source-samples/*"
+                    ]
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentsBucket9EC9DEB9",
+                          "Arn"
+                        ]
+                      },
+                      "/source-governance/*"
+                    ]
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentsBucket9EC9DEB9",
+                          "Arn"
+                        ]
+                      },
+                      "/documents/share-grants/*"
+                    ]
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentsBucket9EC9DEB9",
+                          "Arn"
+                        ]
+                      },
+                      "/publication/active/*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": "s3:DeleteObject",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentsBucket9EC9DEB9",
+                          "Arn"
+                        ]
+                      },
+                      "/security/account-revocations/*"
+                    ]
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentsBucket9EC9DEB9",
+                          "Arn"
+                        ]
+                      },
+                      "/tenant-artifacts/*"
+                    ]
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentsBucket9EC9DEB9",
+                          "Arn"
+                        ]
+                      },
+                      "/embedding-cache/*"
+                    ]
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentsBucket9EC9DEB9",
+                          "Arn"
+                        ]
+                      },
+                      "/debug-runs/*"
+                    ]
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentsBucket9EC9DEB9",
+                          "Arn"
+                        ]
+                      },
+                      "/quality-control/source-samples/*"
+                    ]
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentsBucket9EC9DEB9",
+                          "Arn"
+                        ]
+                      },
+                      "/source-governance/*"
+                    ]
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentsBucket9EC9DEB9",
+                          "Arn"
+                        ]
+                      },
+                      "/documents/share-grants/*"
+                    ]
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentsBucket9EC9DEB9",
+                          "Arn"
+                        ]
+                      },
+                      "/publication/active/*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "s3:PutObject",
+                "s3:PutObjectLegalHold",
+                "s3:PutObjectRetention",
+                "s3:PutObjectTagging",
+                "s3:PutObjectVersionTagging",
+                "s3:Abort*"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    {
+                      "Fn::GetAtt": [
+                        "DocumentsBucket9EC9DEB9",
+                        "Arn"
+                      ]
+                    },
+                    "/security/revocation-cleanup/*"
+                  ]
+                ]
+              }
+            },
+            {
+              "Action": [
+                "s3:PutObject",
+                "s3:PutObjectLegalHold",
+                "s3:PutObjectRetention",
+                "s3:PutObjectTagging",
+                "s3:PutObjectVersionTagging",
+                "s3:Abort*"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    {
+                      "Fn::GetAtt": [
+                        "DocumentsBucket9EC9DEB9",
+                        "Arn"
+                      ]
+                    },
+                    "/security/revocation-cleanup-repairs/*"
+                  ]
+                ]
+              }
+            },
+            {
+              "Action": [
+                "s3:PutObject",
+                "s3:PutObjectLegalHold",
+                "s3:PutObjectRetention",
+                "s3:PutObjectTagging",
+                "s3:PutObjectVersionTagging",
+                "s3:Abort*"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    {
+                      "Fn::GetAtt": [
+                        "DocumentsBucket9EC9DEB9",
+                        "Arn"
+                      ]
+                    },
+                    "/security/revocation-cleanup-tenants/*"
+                  ]
+                ]
+              }
+            },
+            {
+              "Action": [
+                "s3:PutObject",
+                "s3:PutObjectLegalHold",
+                "s3:PutObjectRetention",
+                "s3:PutObjectTagging",
+                "s3:PutObjectVersionTagging",
+                "s3:Abort*"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    {
+                      "Fn::GetAtt": [
+                        "DocumentsBucket9EC9DEB9",
+                        "Arn"
+                      ]
+                    },
+                    "/security/revocation-cleanup-tenant-registry-state/*"
+                  ]
+                ]
+              }
+            },
+            {
+              "Action": "s3:ListBucket",
+              "Condition": {
+                "StringLike": {
+                  "s3:prefix": [
+                    "runs/*"
+                  ]
+                }
+              },
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "BenchmarkBucketDD7D1D2F",
+                  "Arn"
+                ]
+              }
+            },
+            {
+              "Action": [
+                "s3:GetObject",
+                "s3:DeleteObject"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    {
+                      "Fn::GetAtt": [
+                        "BenchmarkBucketDD7D1D2F",
+                        "Arn"
+                      ]
+                    },
+                    "/runs/*"
+                  ]
+                ]
+              }
+            },
+            {
+              "Action": [
+                "dynamodb:Query",
+                "dynamodb:PutItem",
+                "dynamodb:DeleteItem"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "ActiveRunAuthorizationIndexTable2D018C99",
+                  "Arn"
+                ]
+              }
+            },
+            {
+              "Action": [
+                "dynamodb:GetItem",
+                "dynamodb:Query",
+                "dynamodb:UpdateItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "BenchmarkRunsTableD0841636",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "BenchmarkRunsTableD0841636",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:GetItem",
+                "dynamodb:Query",
+                "dynamodb:UpdateItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ChatRunsTable8446CD95",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "ChatRunsTable8446CD95",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:GetItem",
+                "dynamodb:Query",
+                "dynamodb:UpdateItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "DocumentIngestRunsTableEA8F8CCA",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentIngestRunsTableEA8F8CCA",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:GetItem",
+                "dynamodb:Query",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "DocumentGroupsTableA5108040",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentGroupsTableA5108040",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "s3vectors:GetVectors",
+                "s3vectors:DeleteVectors"
+              ],
+              "Effect": "Allow",
+              "Resource": "*"
+            },
+            {
+              "Action": [
+                "cognito-idp:ListUsers",
+                "cognito-idp:AdminGetUser",
+                "cognito-idp:AdminListGroupsForUser"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "UserPool6BA7E5F2",
+                  "Arn"
+                ]
+              }
+            },
+            {
+              "Action": [
+                "cognito-idp:AdminUpdateUserAttributes",
+                "cognito-idp:AdminUserGlobalSignOut"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "UserPool6BA7E5F2",
+                  "Arn"
+                ]
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "RevocationCleanupFunctionServiceRoleDefaultPolicy688B596B",
+        "Roles": [
+          {
+            "Ref": "RevocationCleanupFunctionServiceRole15557E81"
+          }
+        ]
+      }
+    },
+    "RevocationCleanupFunctionE7C00D6D": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Architectures": [
+          "arm64"
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-111111111111-ap-northeast-1",
+          "S3Key": "<asset-hash>.zip"
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_ENV": "production",
+            "USE_LOCAL_VECTOR_STORE": "false",
+            "MOCK_BEDROCK": "false",
+            "DOCS_BUCKET_NAME": {
+              "Ref": "DocumentsBucket9EC9DEB9"
+            },
+            "QUESTION_TABLE_NAME": {
+              "Ref": "HumanQuestionsTable5DA9688B"
+            },
+            "DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID": "ANSWER_EDITOR",
+            "CONVERSATION_HISTORY_TABLE_NAME": {
+              "Ref": "ConversationHistoryTable59A3534C"
+            },
+            "FAVORITES_TABLE_NAME": {
+              "Ref": "FavoritesTable4DA8A306"
+            },
+            "BENCHMARK_RUNS_TABLE_NAME": {
+              "Ref": "BenchmarkRunsTableD0841636"
+            },
+            "ACTIVE_RUN_AUTHORIZATION_INDEX_TABLE_NAME": {
+              "Ref": "ActiveRunAuthorizationIndexTable2D018C99"
+            },
+            "CHAT_RUNS_TABLE_NAME": {
+              "Ref": "ChatRunsTable8446CD95"
+            },
+            "CHAT_RUN_EVENTS_TABLE_NAME": {
+              "Ref": "ChatRunEventsTable7455A50E"
+            },
+            "DOCUMENT_INGEST_RUNS_TABLE_NAME": {
+              "Ref": "DocumentIngestRunsTableEA8F8CCA"
+            },
+            "DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME": {
+              "Ref": "DocumentIngestRunEventsTableF4692EBE"
+            },
+            "DOCUMENT_GROUPS_TABLE_NAME": {
+              "Ref": "DocumentGroupsTableA5108040"
+            },
+            "BENCHMARK_BUCKET_NAME": {
+              "Ref": "BenchmarkBucketDD7D1D2F"
+            },
+            "BENCHMARK_DEFAULT_DATASET_KEY": "datasets/agent/standard-v1.jsonl",
+            "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+            "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
+            "USE_LOCAL_CHAT_RUN_STORE": "false",
+            "VECTOR_BUCKET_NAME": {
+              "Fn::Join": [
+                "",
+                [
+                  "memorag-",
+                  {
+                    "Ref": "AWS::AccountId"
+                  },
+                  "-",
+                  {
+                    "Ref": "AWS::Region"
+                  },
+                  "-c85f22a0"
+                ]
+              ]
+            },
+            "MEMORY_VECTOR_INDEX_NAME": "memory-index",
+            "EVIDENCE_VECTOR_INDEX_NAME": "evidence-index",
+            "DEFAULT_MODEL_ID": "amazon.nova-lite-v1:0",
+            "DEFAULT_MEMORY_MODEL_ID": "amazon.nova-lite-v1:0",
+            "EMBEDDING_MODEL_ID": "amazon.titan-embed-text-v2:0",
+            "EMBEDDING_DIMENSIONS": "1024",
+            "MIN_RETRIEVAL_SCORE": "0.20",
+            "AUTH_ENABLED": "true",
+            "AUTH_TENANT_ID": {
+              "Ref": "AWS::AccountId"
+            },
+            "BENCHMARK_EVALUATION_ENABLED": "true",
+            "BENCHMARK_EVALUATION_TENANT_ID": {
+              "Fn::Join": [
+                "",
+                [
+                  "benchmark-",
+                  {
+                    "Ref": "AWS::AccountId"
+                  }
+                ]
+              ]
+            },
+            "CORS_ALLOWED_ORIGINS": "*",
+            "COGNITO_REGION": {
+              "Ref": "AWS::Region"
+            },
+            "COGNITO_USER_POOL_ID": {
+              "Ref": "UserPool6BA7E5F2"
+            },
+            "COGNITO_APP_CLIENT_ID": {
+              "Ref": "UserPoolWebClient4C9370B0"
+            },
+            "DEBUG_DOWNLOAD_BUCKET_NAME": {
+              "Ref": "DebugDownloadBucketAB6A16BE"
+            },
+            "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+            "RAG_MONITORING_REQUIRED": "1",
+            "RAG_SAFETY_STATE_TTL_SECONDS": "600"
+          }
+        },
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "RevocationCleanupLogGroup2104FB3A"
+          }
+        },
+        "MemorySize": 1024,
+        "Role": {
+          "Fn::GetAtt": [
+            "RevocationCleanupFunctionServiceRole15557E81",
+            "Arn"
+          ]
+        },
+        "Runtime": "nodejs22.x",
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ],
+        "Timeout": 300
+      },
+      "DependsOn": [
+        "RevocationCleanupFunctionServiceRoleDefaultPolicy688B596B",
+        "RevocationCleanupFunctionServiceRole15557E81"
+      ]
+    },
+    "RevocationCleanupScheduleF357B692": {
+      "Type": "AWS::Events::Rule",
+      "Properties": {
+        "Description": "Reconcile tenant-scoped deny-first revocation cleanup manifests.",
+        "ScheduleExpression": "rate(1 minute)",
+        "State": "ENABLED",
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ],
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::GetAtt": [
+                "RevocationCleanupFunctionE7C00D6D",
+                "Arn"
+              ]
+            },
+            "Id": "Target0",
+            "Input": "{\"limitPerTenant\":100}"
+          }
+        ]
+      }
+    },
+    "RevocationCleanupScheduleAllowEventRuleMemoRagMvpStackTestRevocationCleanupFunction3573F11BF4ADB52E": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "RevocationCleanupFunctionE7C00D6D",
+            "Arn"
+          ]
+        },
+        "Principal": "events.amazonaws.com",
+        "SourceArn": {
+          "Fn::GetAtt": [
+            "RevocationCleanupScheduleF357B692",
+            "Arn"
+          ]
+        }
+      }
+    },
+    "SecurityAuditReconciliationLogGroup3B5C9710": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "RetentionInDays": 30,
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ]
+      },
+      "UpdateReplacePolicy": "Retain",
+      "DeletionPolicy": "Retain"
+    },
+    "SecurityAuditReconciliationFunctionServiceRoleF4787D99": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ]
+      }
+    },
+    "SecurityAuditReconciliationFunctionServiceRoleDefaultPolicy77DBBA3A": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:ListBucket",
+              "Condition": {
+                "StringLike": {
+                  "s3:prefix": [
+                    {
+                      "Fn::Join": [
+                        "",
+                        [
+                          "security-audit/intents/",
+                          {
+                            "Ref": "AWS::AccountId"
+                          },
+                          "/*"
+                        ]
+                      ]
+                    },
+                    {
+                      "Fn::Join": [
+                        "",
+                        [
+                          "source-governance/",
+                          {
+                            "Ref": "AWS::AccountId"
+                          },
+                          "/*"
+                        ]
+                      ]
+                    }
+                  ]
+                }
+              },
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "DocumentsBucket9EC9DEB9",
+                  "Arn"
+                ]
+              }
+            },
+            {
+              "Action": [
+                "s3:GetObject",
+                "s3:PutObject"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentsBucket9EC9DEB9",
+                          "Arn"
+                        ]
+                      },
+                      "/security-audit/intents/",
+                      {
+                        "Ref": "AWS::AccountId"
+                      },
+                      "/*"
+                    ]
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentsBucket9EC9DEB9",
+                          "Arn"
+                        ]
+                      },
+                      "/source-governance/",
+                      {
+                        "Ref": "AWS::AccountId"
+                      },
+                      "/*"
+                    ]
+                  ]
+                }
+              ]
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "SecurityAuditReconciliationFunctionServiceRoleDefaultPolicy77DBBA3A",
+        "Roles": [
+          {
+            "Ref": "SecurityAuditReconciliationFunctionServiceRoleF4787D99"
+          }
+        ]
+      }
+    },
+    "SecurityAuditReconciliationFunction9A53A79D": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Architectures": [
+          "arm64"
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-111111111111-ap-northeast-1",
+          "S3Key": "<asset-hash>.zip"
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_ENV": "production",
+            "USE_LOCAL_VECTOR_STORE": "false",
+            "MOCK_BEDROCK": "false",
+            "DOCS_BUCKET_NAME": {
+              "Ref": "DocumentsBucket9EC9DEB9"
+            },
+            "QUESTION_TABLE_NAME": {
+              "Ref": "HumanQuestionsTable5DA9688B"
+            },
+            "DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID": "ANSWER_EDITOR",
+            "CONVERSATION_HISTORY_TABLE_NAME": {
+              "Ref": "ConversationHistoryTable59A3534C"
+            },
+            "FAVORITES_TABLE_NAME": {
+              "Ref": "FavoritesTable4DA8A306"
+            },
+            "BENCHMARK_RUNS_TABLE_NAME": {
+              "Ref": "BenchmarkRunsTableD0841636"
+            },
+            "ACTIVE_RUN_AUTHORIZATION_INDEX_TABLE_NAME": {
+              "Ref": "ActiveRunAuthorizationIndexTable2D018C99"
+            },
+            "CHAT_RUNS_TABLE_NAME": {
+              "Ref": "ChatRunsTable8446CD95"
+            },
+            "CHAT_RUN_EVENTS_TABLE_NAME": {
+              "Ref": "ChatRunEventsTable7455A50E"
+            },
+            "DOCUMENT_INGEST_RUNS_TABLE_NAME": {
+              "Ref": "DocumentIngestRunsTableEA8F8CCA"
+            },
+            "DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME": {
+              "Ref": "DocumentIngestRunEventsTableF4692EBE"
+            },
+            "DOCUMENT_GROUPS_TABLE_NAME": {
+              "Ref": "DocumentGroupsTableA5108040"
+            },
+            "BENCHMARK_BUCKET_NAME": {
+              "Ref": "BenchmarkBucketDD7D1D2F"
+            },
+            "BENCHMARK_DEFAULT_DATASET_KEY": "datasets/agent/standard-v1.jsonl",
+            "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+            "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
+            "USE_LOCAL_CHAT_RUN_STORE": "false",
+            "VECTOR_BUCKET_NAME": {
+              "Fn::Join": [
+                "",
+                [
+                  "memorag-",
+                  {
+                    "Ref": "AWS::AccountId"
+                  },
+                  "-",
+                  {
+                    "Ref": "AWS::Region"
+                  },
+                  "-c85f22a0"
+                ]
+              ]
+            },
+            "MEMORY_VECTOR_INDEX_NAME": "memory-index",
+            "EVIDENCE_VECTOR_INDEX_NAME": "evidence-index",
+            "DEFAULT_MODEL_ID": "amazon.nova-lite-v1:0",
+            "DEFAULT_MEMORY_MODEL_ID": "amazon.nova-lite-v1:0",
+            "EMBEDDING_MODEL_ID": "amazon.titan-embed-text-v2:0",
+            "EMBEDDING_DIMENSIONS": "1024",
+            "MIN_RETRIEVAL_SCORE": "0.20",
+            "AUTH_ENABLED": "true",
+            "AUTH_TENANT_ID": {
+              "Ref": "AWS::AccountId"
+            },
+            "BENCHMARK_EVALUATION_ENABLED": "true",
+            "BENCHMARK_EVALUATION_TENANT_ID": {
+              "Fn::Join": [
+                "",
+                [
+                  "benchmark-",
+                  {
+                    "Ref": "AWS::AccountId"
+                  }
+                ]
+              ]
+            },
+            "CORS_ALLOWED_ORIGINS": "*",
+            "COGNITO_REGION": {
+              "Ref": "AWS::Region"
+            },
+            "COGNITO_USER_POOL_ID": {
+              "Ref": "UserPool6BA7E5F2"
+            },
+            "COGNITO_APP_CLIENT_ID": {
+              "Ref": "UserPoolWebClient4C9370B0"
+            },
+            "DEBUG_DOWNLOAD_BUCKET_NAME": {
+              "Ref": "DebugDownloadBucketAB6A16BE"
+            },
+            "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+            "RAG_MONITORING_REQUIRED": "1",
+            "RAG_SAFETY_STATE_TTL_SECONDS": "600"
+          }
+        },
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "SecurityAuditReconciliationLogGroup3B5C9710"
+          }
+        },
+        "MemorySize": 512,
+        "Role": {
+          "Fn::GetAtt": [
+            "SecurityAuditReconciliationFunctionServiceRoleF4787D99",
+            "Arn"
+          ]
+        },
+        "Runtime": "nodejs22.x",
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ],
+        "Timeout": 60
+      },
+      "DependsOn": [
+        "SecurityAuditReconciliationFunctionServiceRoleDefaultPolicy77DBBA3A",
+        "SecurityAuditReconciliationFunctionServiceRoleF4787D99"
+      ]
+    },
+    "SecurityAuditReconciliationSchedule6C1B6D38": {
+      "Type": "AWS::Events::Rule",
+      "Properties": {
+        "Description": "Finalize tenant-scoped security mutation audits after authoritative state reconciliation.",
+        "ScheduleExpression": "rate(1 minute)",
+        "State": "ENABLED",
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ],
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::GetAtt": [
+                "SecurityAuditReconciliationFunction9A53A79D",
+                "Arn"
+              ]
+            },
+            "Id": "Target0",
+            "Input": {
+              "Fn::Join": [
+                "",
+                [
+                  "{\"tenantId\":\"",
+                  {
+                    "Ref": "AWS::AccountId"
+                  },
+                  "\",\"limit\":100}"
+                ]
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "SecurityAuditReconciliationScheduleAllowEventRuleMemoRagMvpStackTestSecurityAuditReconciliationFunctionAE02055288EA6965": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "SecurityAuditReconciliationFunction9A53A79D",
+            "Arn"
+          ]
+        },
+        "Principal": "events.amazonaws.com",
+        "SourceArn": {
+          "Fn::GetAtt": [
+            "SecurityAuditReconciliationSchedule6C1B6D38",
+            "Arn"
+          ]
+        }
+      }
+    },
+    "RagQualityMonitorLogGroup58870B2B": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "RetentionInDays": 30,
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ]
+      },
+      "UpdateReplacePolicy": "Retain",
+      "DeletionPolicy": "Retain"
+    },
+    "RagQualityMonitorFunctionServiceRole1754DFBD": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ]
+      }
+    },
+    "RagQualityMonitorFunctionServiceRoleDefaultPolicy28D810D0": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sns:Publish",
+              "Effect": "Allow",
+              "Resource": {
+                "Ref": "RagQualityAlertTopic3AFB5A32"
+              }
+            },
+            {
+              "Action": [
+                "s3:GetObject*",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+                "s3:PutObject",
+                "s3:PutObjectLegalHold",
+                "s3:PutObjectRetention",
+                "s3:PutObjectTagging",
+                "s3:PutObjectVersionTagging",
+                "s3:Abort*"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "DocumentsBucket9EC9DEB9",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentsBucket9EC9DEB9",
+                          "Arn"
+                        ]
+                      },
+                      "/*"
+                    ]
+                  ]
+                }
+              ]
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "RagQualityMonitorFunctionServiceRoleDefaultPolicy28D810D0",
+        "Roles": [
+          {
+            "Ref": "RagQualityMonitorFunctionServiceRole1754DFBD"
+          }
+        ]
+      }
+    },
+    "RagQualityMonitorFunction9BE8E903": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Architectures": [
+          "arm64"
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-111111111111-ap-northeast-1",
+          "S3Key": "<asset-hash>.zip"
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_ENV": "production",
+            "USE_LOCAL_VECTOR_STORE": "false",
+            "MOCK_BEDROCK": "false",
+            "DOCS_BUCKET_NAME": {
+              "Ref": "DocumentsBucket9EC9DEB9"
+            },
+            "QUESTION_TABLE_NAME": {
+              "Ref": "HumanQuestionsTable5DA9688B"
+            },
+            "DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID": "ANSWER_EDITOR",
+            "CONVERSATION_HISTORY_TABLE_NAME": {
+              "Ref": "ConversationHistoryTable59A3534C"
+            },
+            "FAVORITES_TABLE_NAME": {
+              "Ref": "FavoritesTable4DA8A306"
+            },
+            "BENCHMARK_RUNS_TABLE_NAME": {
+              "Ref": "BenchmarkRunsTableD0841636"
+            },
+            "ACTIVE_RUN_AUTHORIZATION_INDEX_TABLE_NAME": {
+              "Ref": "ActiveRunAuthorizationIndexTable2D018C99"
+            },
+            "CHAT_RUNS_TABLE_NAME": {
+              "Ref": "ChatRunsTable8446CD95"
+            },
+            "CHAT_RUN_EVENTS_TABLE_NAME": {
+              "Ref": "ChatRunEventsTable7455A50E"
+            },
+            "DOCUMENT_INGEST_RUNS_TABLE_NAME": {
+              "Ref": "DocumentIngestRunsTableEA8F8CCA"
+            },
+            "DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME": {
+              "Ref": "DocumentIngestRunEventsTableF4692EBE"
+            },
+            "DOCUMENT_GROUPS_TABLE_NAME": {
+              "Ref": "DocumentGroupsTableA5108040"
+            },
+            "BENCHMARK_BUCKET_NAME": {
+              "Ref": "BenchmarkBucketDD7D1D2F"
+            },
+            "BENCHMARK_DEFAULT_DATASET_KEY": "datasets/agent/standard-v1.jsonl",
+            "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+            "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
+            "USE_LOCAL_CHAT_RUN_STORE": "false",
+            "VECTOR_BUCKET_NAME": {
+              "Fn::Join": [
+                "",
+                [
+                  "memorag-",
+                  {
+                    "Ref": "AWS::AccountId"
+                  },
+                  "-",
+                  {
+                    "Ref": "AWS::Region"
+                  },
+                  "-c85f22a0"
+                ]
+              ]
+            },
+            "MEMORY_VECTOR_INDEX_NAME": "memory-index",
+            "EVIDENCE_VECTOR_INDEX_NAME": "evidence-index",
+            "DEFAULT_MODEL_ID": "amazon.nova-lite-v1:0",
+            "DEFAULT_MEMORY_MODEL_ID": "amazon.nova-lite-v1:0",
+            "EMBEDDING_MODEL_ID": "amazon.titan-embed-text-v2:0",
+            "EMBEDDING_DIMENSIONS": "1024",
+            "MIN_RETRIEVAL_SCORE": "0.20",
+            "AUTH_ENABLED": "true",
+            "AUTH_TENANT_ID": {
+              "Ref": "AWS::AccountId"
+            },
+            "BENCHMARK_EVALUATION_ENABLED": "true",
+            "BENCHMARK_EVALUATION_TENANT_ID": {
+              "Fn::Join": [
+                "",
+                [
+                  "benchmark-",
+                  {
+                    "Ref": "AWS::AccountId"
+                  }
+                ]
+              ]
+            },
+            "CORS_ALLOWED_ORIGINS": "*",
+            "COGNITO_REGION": {
+              "Ref": "AWS::Region"
+            },
+            "COGNITO_USER_POOL_ID": {
+              "Ref": "UserPool6BA7E5F2"
+            },
+            "COGNITO_APP_CLIENT_ID": {
+              "Ref": "UserPoolWebClient4C9370B0"
+            },
+            "DEBUG_DOWNLOAD_BUCKET_NAME": {
+              "Ref": "DebugDownloadBucketAB6A16BE"
+            },
+            "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+            "RAG_MONITORING_REQUIRED": "1",
+            "RAG_SAFETY_STATE_TTL_SECONDS": "600",
+            "RAG_ALERT_TOPIC_ARN": {
+              "Ref": "RagQualityAlertTopic3AFB5A32"
+            }
+          }
+        },
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "RagQualityMonitorLogGroup58870B2B"
+          }
+        },
+        "MemorySize": 512,
+        "Role": {
+          "Fn::GetAtt": [
+            "RagQualityMonitorFunctionServiceRole1754DFBD",
+            "Arn"
+          ]
+        },
+        "Runtime": "nodejs22.x",
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ],
+        "Timeout": 300
+      },
+      "DependsOn": [
+        "RagQualityMonitorFunctionServiceRoleDefaultPolicy28D810D0",
+        "RagQualityMonitorFunctionServiceRole1754DFBD"
+      ]
+    },
+    "RagQualityMonitorScheduleCFE9DF24": {
+      "Type": "AWS::Events::Rule",
+      "Properties": {
+        "Description": "Evaluate production RAG quality/security signals and apply the approved safety runbook.",
+        "ScheduleExpression": "rate(5 minutes)",
+        "State": "ENABLED",
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ],
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::GetAtt": [
+                "RagQualityMonitorFunction9BE8E903",
+                "Arn"
+              ]
+            },
+            "Id": "Target0",
+            "Input": "{\"windowMinutes\":5}"
+          }
+        ]
+      }
+    },
+    "RagQualityMonitorScheduleAllowEventRuleMemoRagMvpStackTestRagQualityMonitorFunctionA92247BF180FFB6A": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "RagQualityMonitorFunction9BE8E903",
+            "Arn"
+          ]
+        },
+        "Principal": "events.amazonaws.com",
+        "SourceArn": {
+          "Fn::GetAtt": [
+            "RagQualityMonitorScheduleCFE9DF24",
+            "Arn"
+          ]
+        }
+      }
+    },
+    "RagQualityAlertTopic3AFB5A32": {
+      "Type": "AWS::SNS::Topic",
+      "Properties": {
+        "DisplayName": "MemoRAG production quality and safety alerts",
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ]
+      }
+    },
+    "RagQualityAlertTopicPolicy15888B09": {
+      "Type": "AWS::SNS::TopicPolicy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sns:Publish",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false"
+                }
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*"
+              },
+              "Resource": {
+                "Ref": "RagQualityAlertTopic3AFB5A32"
+              },
+              "Sid": "0"
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "Topics": [
+          {
+            "Ref": "RagQualityAlertTopic3AFB5A32"
+          }
+        ]
+      }
+    },
+    "RagQualityControlLoopFailureAlarmD9AA7805": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "RagQualityAlertTopic3AFB5A32"
+          }
+        ],
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "EvaluationPeriods": 1,
+        "MetricName": "ControlLoopFailure",
+        "Namespace": "MemoRAG/QualityControl",
+        "Period": 300,
+        "Statistic": "Sum",
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ],
+        "Threshold": 1,
+        "TreatMissingData": "breaching"
+      }
+    },
+    "RagQualityCriticalAlertAlarm982F6330": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "RagQualityAlertTopic3AFB5A32"
+          }
+        ],
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "EvaluationPeriods": 1,
+        "MetricName": "CriticalAlertCount",
+        "Namespace": "MemoRAG/QualityControl",
+        "Period": 300,
+        "Statistic": "Sum",
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ],
+        "Threshold": 1,
+        "TreatMissingData": "notBreaching"
+      }
+    },
+    "RagQualityMonitorLambdaErrorAlarm8C816F0C": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "RagQualityAlertTopic3AFB5A32"
+          }
+        ],
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "Dimensions": [
+          {
+            "Name": "FunctionName",
+            "Value": {
+              "Ref": "RagQualityMonitorFunction9BE8E903"
+            }
+          }
+        ],
+        "EvaluationPeriods": 1,
+        "MetricName": "Errors",
+        "Namespace": "AWS/Lambda",
+        "Period": 300,
+        "Statistic": "Sum",
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ],
+        "Threshold": 1,
+        "TreatMissingData": "notBreaching"
+      }
+    },
+    "RevocationCleanupLambdaErrorAlarm944198D7": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "RagQualityAlertTopic3AFB5A32"
+          }
+        ],
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "Dimensions": [
+          {
+            "Name": "FunctionName",
+            "Value": {
+              "Ref": "RevocationCleanupFunctionE7C00D6D"
+            }
+          }
+        ],
+        "EvaluationPeriods": 1,
+        "MetricName": "Errors",
+        "Namespace": "AWS/Lambda",
+        "Period": 300,
+        "Statistic": "Sum",
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ],
+        "Threshold": 1,
+        "TreatMissingData": "breaching"
+      }
     },
     "RestApiAccessLogGroup246D1CE0": {
       "Type": "AWS::Logs::LogGroup",
@@ -10038,7 +13462,7 @@
                   "Arn"
                 ]
               },
-              "\",\"Payload\":{\"runId.$\":\"$.runId\"}}},\"ChatRunMarkFailedTask\":{\"End\":true,\"Retry\":[{\"ErrorEquals\":[\"Lambda.ClientExecutionTimeoutException\",\"Lambda.ServiceException\",\"Lambda.AWSLambdaException\",\"Lambda.SdkClientException\"],\"IntervalSeconds\":2,\"MaxAttempts\":6,\"BackoffRate\":2}],\"Type\":\"Task\",\"ResultPath\":\"$.markFailed\",\"Resource\":\"arn:",
+              "\",\"Payload\":{\"runId.$\":\"$.runId\",\"tenantId.$\":\"$.tenantId\"}}},\"ChatRunMarkFailedTask\":{\"End\":true,\"Retry\":[{\"ErrorEquals\":[\"Lambda.ClientExecutionTimeoutException\",\"Lambda.ServiceException\",\"Lambda.AWSLambdaException\",\"Lambda.SdkClientException\"],\"IntervalSeconds\":2,\"MaxAttempts\":6,\"BackoffRate\":2}],\"Type\":\"Task\",\"ResultPath\":\"$.markFailed\",\"Resource\":\"arn:",
               {
                 "Ref": "AWS::Partition"
               },
@@ -10049,7 +13473,7 @@
                   "Arn"
                 ]
               },
-              "\",\"Payload\":{\"runId.$\":\"$.runId\",\"errorInfo.$\":\"$.errorInfo\"}}}},\"TimeoutSeconds\":960}"
+              "\",\"Payload\":{\"runId.$\":\"$.runId\",\"tenantId.$\":\"$.tenantId\",\"errorInfo.$\":\"$.errorInfo\"}}}},\"TimeoutSeconds\":960}"
             ]
           ]
         },
@@ -10285,7 +13709,7 @@
                   "Arn"
                 ]
               },
-              "\",\"Payload\":{\"runId.$\":\"$.runId\"}}},\"DocumentIngestRunMarkFailedTask\":{\"End\":true,\"Retry\":[{\"ErrorEquals\":[\"Lambda.ClientExecutionTimeoutException\",\"Lambda.ServiceException\",\"Lambda.AWSLambdaException\",\"Lambda.SdkClientException\"],\"IntervalSeconds\":2,\"MaxAttempts\":6,\"BackoffRate\":2}],\"Type\":\"Task\",\"ResultPath\":\"$.markFailed\",\"Resource\":\"arn:",
+              "\",\"Payload\":{\"runId.$\":\"$.runId\",\"tenantId.$\":\"$.tenantId\"}}},\"DocumentIngestRunMarkFailedTask\":{\"End\":true,\"Retry\":[{\"ErrorEquals\":[\"Lambda.ClientExecutionTimeoutException\",\"Lambda.ServiceException\",\"Lambda.AWSLambdaException\",\"Lambda.SdkClientException\"],\"IntervalSeconds\":2,\"MaxAttempts\":6,\"BackoffRate\":2}],\"Type\":\"Task\",\"ResultPath\":\"$.markFailed\",\"Resource\":\"arn:",
               {
                 "Ref": "AWS::Partition"
               },
@@ -10296,7 +13720,7 @@
                   "Arn"
                 ]
               },
-              "\",\"Payload\":{\"runId.$\":\"$.runId\",\"errorInfo.$\":\"$.errorInfo\"}}}},\"TimeoutSeconds\":960}"
+              "\",\"Payload\":{\"runId.$\":\"$.runId\",\"tenantId.$\":\"$.tenantId\",\"errorInfo.$\":\"$.errorInfo\"}}}},\"TimeoutSeconds\":960}"
             ]
           ]
         },
@@ -10628,6 +14052,32 @@
               ]
             },
             {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "BenchmarkRunAuthorizationFunction16D4CD86",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "BenchmarkRunAuthorizationFunction16D4CD86",
+                          "Arn"
+                        ]
+                      },
+                      ":*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
               "Action": "dynamodb:UpdateItem",
               "Effect": "Allow",
               "Resource": {
@@ -10735,6 +14185,20 @@
               "Value": {
                 "Ref": "BenchmarkProjectLogGroup395F719E"
               }
+            },
+            {
+              "Name": "BENCHMARK_BUCKET_NAME",
+              "Type": "PLAINTEXT",
+              "Value": {
+                "Ref": "BenchmarkBucketDD7D1D2F"
+              }
+            },
+            {
+              "Name": "BENCHMARK_AUTHORIZATION_FUNCTION_NAME",
+              "Type": "PLAINTEXT",
+              "Value": {
+                "Ref": "BenchmarkRunAuthorizationFunction16D4CD86"
+              }
             }
           ],
           "Image": "aws/codebuild/standard:7.0",
@@ -10757,7 +14221,7 @@
           ]
         },
         "Source": {
-          "BuildSpec": "{\n  \"version\": \"0.2\",\n  \"env\": {\n    \"shell\": \"bash\"\n  },\n  \"phases\": {\n    \"install\": {\n      \"runtime-versions\": {\n        \"nodejs\": 22\n      },\n      \"commands\": [\n        \"set -euo pipefail\",\n        \"LOG_URL=\\\"${CODEBUILD_BUILD_URL:-https://${AWS_DEFAULT_REGION}.console.aws.amazon.com/codesuite/codebuild/projects/${CODEBUILD_PROJECT_NAME}/build/${CODEBUILD_BUILD_ID}/log?region=${AWS_DEFAULT_REGION}}\\\"\",\n        \"if [[ \\\"$CODEBUILD_LOG_PATH\\\" == *:* ]]; then LOG_GROUP_NAME=\\\"${CODEBUILD_LOG_PATH%%:*}\\\"; LOG_STREAM_NAME=\\\"${CODEBUILD_LOG_PATH#*:}\\\"; else LOG_GROUP_NAME=\\\"$BENCHMARK_CODEBUILD_LOG_GROUP_NAME\\\"; LOG_STREAM_NAME=\\\"$CODEBUILD_LOG_PATH\\\"; fi\",\n        \"aws dynamodb update-item --table-name \\\"$BENCHMARK_RUNS_TABLE_NAME\\\" --key \\\"{\\\\\\\"runId\\\\\\\":{\\\\\\\"S\\\\\\\":\\\\\\\"$RUN_ID\\\\\\\"}}\\\" --update-expression \\\"SET codeBuildBuildId = :buildId, codeBuildLogUrl = :logUrl, codeBuildLogGroupName = :logGroupName, codeBuildLogStreamName = :logStreamName\\\" --expression-attribute-values \\\"{\\\\\\\":buildId\\\\\\\":{\\\\\\\"S\\\\\\\":\\\\\\\"$CODEBUILD_BUILD_ID\\\\\\\"},\\\\\\\":logUrl\\\\\\\":{\\\\\\\"S\\\\\\\":\\\\\\\"$LOG_URL\\\\\\\"},\\\\\\\":logGroupName\\\\\\\":{\\\\\\\"S\\\\\\\":\\\\\\\"$LOG_GROUP_NAME\\\\\\\"},\\\\\\\":logStreamName\\\\\\\":{\\\\\\\"S\\\\\\\":\\\\\\\"$LOG_STREAM_NAME\\\\\\\"}}\\\" >/dev/null\",\n        \"cd \\\"$CODEBUILD_SRC_DIR\\\"\",\n        \"npm ci\"\n      ]\n    },\n    \"pre_build\": {\n      \"commands\": [\n        \"set -euo pipefail\",\n        \"cd \\\"$CODEBUILD_SRC_DIR\\\"\",\n        \"export OUTPUT=./benchmark/.runner-results.jsonl\",\n        \"export SUMMARY=./benchmark/.runner-summary.json\",\n        \"export REPORT=./benchmark/.runner-report.md\",\n        \"export DATASET=./benchmark/.runner-dataset.jsonl\",\n        \"export BENCHMARK_SUITE_ID=\\\"$SUITE_ID\\\"\",\n        \"npm run codebuild:prepare -w @memorag-mvp/benchmark\",\n        \"API_AUTH_TOKEN=\\\"$(node infra/scripts/resolve-benchmark-auth-token.mjs)\\\"\",\n        \"export API_AUTH_TOKEN\"\n      ]\n    },\n    \"build\": {\n      \"commands\": [\n        \"set -euo pipefail\",\n        \"cd \\\"$CODEBUILD_SRC_DIR\\\"\",\n        \"npm run codebuild:run -w @memorag-mvp/benchmark\"\n      ]\n    },\n    \"post_build\": {\n      \"commands\": [\n        \"set -euo pipefail\",\n        \"cd \\\"$CODEBUILD_SRC_DIR\\\"\",\n        \"if [ ! -f \\\"$OUTPUT\\\" ]; then printf '' > \\\"$OUTPUT\\\"; fi\",\n        \"if [ ! -f \\\"$SUMMARY\\\" ]; then printf '{\\\"total\\\":0,\\\"succeeded\\\":0,\\\"failedHttp\\\":0,\\\"metrics\\\":{\\\"errorRate\\\":1}}\\\\n' > \\\"$SUMMARY\\\"; fi\",\n        \"if [ ! -f \\\"$REPORT\\\" ]; then printf '# Benchmark runner failed\\\\n\\\\nCodeBuild failed before benchmark artifacts were produced. See the CodeBuild log URL recorded on the benchmark run.\\\\n' > \\\"$REPORT\\\"; fi\",\n        \"aws s3 cp \\\"$OUTPUT\\\" \\\"$OUTPUT_S3_PREFIX/results.jsonl\\\"\",\n        \"aws s3 cp \\\"$SUMMARY\\\" \\\"$OUTPUT_S3_PREFIX/summary.json\\\"\",\n        \"aws s3 cp \\\"$REPORT\\\" \\\"$OUTPUT_S3_PREFIX/report.md\\\"\",\n        \"node infra/scripts/update-benchmark-run-metrics.mjs\"\n      ]\n    }\n  },\n  \"artifacts\": {\n    \"files\": [\n      \"benchmark/.runner-results.jsonl\",\n      \"benchmark/.runner-summary.json\",\n      \"benchmark/.runner-report.md\"\n    ]\n  }\n}",
+          "BuildSpec": "{\n  \"version\": \"0.2\",\n  \"env\": {\n    \"shell\": \"bash\"\n  },\n  \"phases\": {\n    \"install\": {\n      \"runtime-versions\": {\n        \"nodejs\": 22\n      },\n      \"commands\": [\n        \"set -euo pipefail\",\n        \"LOG_URL=\\\"${CODEBUILD_BUILD_URL:-https://${AWS_DEFAULT_REGION}.console.aws.amazon.com/codesuite/codebuild/projects/${CODEBUILD_PROJECT_NAME}/build/${CODEBUILD_BUILD_ID}/log?region=${AWS_DEFAULT_REGION}}\\\"\",\n        \"if [[ \\\"$CODEBUILD_LOG_PATH\\\" == *:* ]]; then LOG_GROUP_NAME=\\\"${CODEBUILD_LOG_PATH%%:*}\\\"; LOG_STREAM_NAME=\\\"${CODEBUILD_LOG_PATH#*:}\\\"; else LOG_GROUP_NAME=\\\"$BENCHMARK_CODEBUILD_LOG_GROUP_NAME\\\"; LOG_STREAM_NAME=\\\"$CODEBUILD_LOG_PATH\\\"; fi\",\n        \"node infra/scripts/authorize-benchmark-boundary.mjs durable_commit build-metadata\",\n        \"aws dynamodb update-item --table-name \\\"$BENCHMARK_RUNS_TABLE_NAME\\\" --key \\\"{\\\\\\\"runId\\\\\\\":{\\\\\\\"S\\\\\\\":\\\\\\\"$STORAGE_RUN_ID\\\\\\\"}}\\\" --condition-expression \\\"#status = :running\\\" --expression-attribute-names \\\"{\\\\\\\"#status\\\\\\\":\\\\\\\"status\\\\\\\"}\\\" --update-expression \\\"SET codeBuildBuildId = :buildId, codeBuildLogUrl = :logUrl, codeBuildLogGroupName = :logGroupName, codeBuildLogStreamName = :logStreamName\\\" --expression-attribute-values \\\"{\\\\\\\":running\\\\\\\":{\\\\\\\"S\\\\\\\":\\\\\\\"running\\\\\\\"},\\\\\\\":buildId\\\\\\\":{\\\\\\\"S\\\\\\\":\\\\\\\"$CODEBUILD_BUILD_ID\\\\\\\"},\\\\\\\":logUrl\\\\\\\":{\\\\\\\"S\\\\\\\":\\\\\\\"$LOG_URL\\\\\\\"},\\\\\\\":logGroupName\\\\\\\":{\\\\\\\"S\\\\\\\":\\\\\\\"$LOG_GROUP_NAME\\\\\\\"},\\\\\\\":logStreamName\\\\\\\":{\\\\\\\"S\\\\\\\":\\\\\\\"$LOG_STREAM_NAME\\\\\\\"}}\\\" >/dev/null\",\n        \"cd \\\"$CODEBUILD_SRC_DIR\\\"\",\n        \"npm ci\"\n      ]\n    },\n    \"pre_build\": {\n      \"commands\": [\n        \"set -euo pipefail\",\n        \"cd \\\"$CODEBUILD_SRC_DIR\\\"\",\n        \"export OUTPUT=./benchmark/.runner-results.jsonl\",\n        \"export SUMMARY=./benchmark/.runner-summary.json\",\n        \"export REPORT=./benchmark/.runner-report.md\",\n        \"export DATASET=./benchmark/.runner-dataset.jsonl\",\n        \"export RAG_WORKLOAD_EVIDENCE_PATH=./benchmark/.workload-evidence.json\",\n        \"export RAG_PRICE_CATALOG_PATH=./benchmark/.price-catalog.json\",\n        \"node -e 'process.stdout.write(JSON.stringify({ tenantId: process.env.TENANT_ID, runId: process.env.RUN_ID, boundary: \\\"protected_read\\\" }))' > /tmp/benchmark-authorize-protected-read.json\",\n        \"AUTHORIZATION_FUNCTION_ERROR=\\\"$(aws lambda invoke --function-name \\\"$BENCHMARK_AUTHORIZATION_FUNCTION_NAME\\\" --cli-binary-format raw-in-base64-out --payload fileb:///tmp/benchmark-authorize-protected-read.json --query FunctionError --output text /tmp/benchmark-authorize-protected-read-response.json)\\\"\",\n        \"if [ \\\"$AUTHORIZATION_FUNCTION_ERROR\\\" != \\\"None\\\" ]; then exit 1; fi\",\n        \"node -e 'const value = JSON.parse(require(\\\"node:fs\\\").readFileSync(\\\"/tmp/benchmark-authorize-protected-read-response.json\\\", \\\"utf-8\\\")); if (value.authorized !== true || value.boundary !== \\\"protected_read\\\" || value.runId !== process.env.RUN_ID || value.tenantId !== process.env.TENANT_ID) process.exit(1)'\",\n        \"if [ -n \\\"${RAG_WORKLOAD_EVIDENCE_S3_KEY:-}\\\" ]; then node infra/scripts/authorize-benchmark-boundary.mjs protected_read workload-evidence; aws s3 cp \\\"s3://$BENCHMARK_BUCKET_NAME/$RAG_WORKLOAD_EVIDENCE_S3_KEY\\\" \\\"$RAG_WORKLOAD_EVIDENCE_PATH\\\"; fi\",\n        \"if [ -n \\\"${RAG_PRICE_CATALOG_S3_KEY:-}\\\" ]; then node infra/scripts/authorize-benchmark-boundary.mjs protected_read price-catalog; aws s3 cp \\\"s3://$BENCHMARK_BUCKET_NAME/$RAG_PRICE_CATALOG_S3_KEY\\\" \\\"$RAG_PRICE_CATALOG_PATH\\\"; fi\",\n        \"export BENCHMARK_SUITE_ID=\\\"$SUITE_ID\\\"\",\n        \"node -e 'process.stdout.write(JSON.stringify({ tenantId: process.env.TENANT_ID, runId: process.env.RUN_ID, boundary: \\\"external_side_effect\\\" }))' > /tmp/benchmark-authorize-prepare-external-side-effect.json\",\n        \"AUTHORIZATION_FUNCTION_ERROR=\\\"$(aws lambda invoke --function-name \\\"$BENCHMARK_AUTHORIZATION_FUNCTION_NAME\\\" --cli-binary-format raw-in-base64-out --payload fileb:///tmp/benchmark-authorize-prepare-external-side-effect.json --query FunctionError --output text /tmp/benchmark-authorize-prepare-external-side-effect-response.json)\\\"\",\n        \"if [ \\\"$AUTHORIZATION_FUNCTION_ERROR\\\" != \\\"None\\\" ]; then exit 1; fi\",\n        \"node -e 'const value = JSON.parse(require(\\\"node:fs\\\").readFileSync(\\\"/tmp/benchmark-authorize-prepare-external-side-effect-response.json\\\", \\\"utf-8\\\")); if (value.authorized !== true || value.boundary !== \\\"external_side_effect\\\" || value.runId !== process.env.RUN_ID || value.tenantId !== process.env.TENANT_ID) process.exit(1)'\",\n        \"npm run codebuild:prepare -w @memorag-mvp/benchmark\",\n        \"node infra/scripts/authorize-benchmark-boundary.mjs protected_read runner-token\",\n        \"API_AUTH_TOKEN=\\\"$(node infra/scripts/resolve-benchmark-auth-token.mjs)\\\"\",\n        \"export API_AUTH_TOKEN\"\n      ]\n    },\n    \"build\": {\n      \"commands\": [\n        \"set -euo pipefail\",\n        \"cd \\\"$CODEBUILD_SRC_DIR\\\"\",\n        \"node -e 'process.stdout.write(JSON.stringify({ tenantId: process.env.TENANT_ID, runId: process.env.RUN_ID, boundary: \\\"external_side_effect\\\" }))' > /tmp/benchmark-authorize-run-external-side-effect.json\",\n        \"AUTHORIZATION_FUNCTION_ERROR=\\\"$(aws lambda invoke --function-name \\\"$BENCHMARK_AUTHORIZATION_FUNCTION_NAME\\\" --cli-binary-format raw-in-base64-out --payload fileb:///tmp/benchmark-authorize-run-external-side-effect.json --query FunctionError --output text /tmp/benchmark-authorize-run-external-side-effect-response.json)\\\"\",\n        \"if [ \\\"$AUTHORIZATION_FUNCTION_ERROR\\\" != \\\"None\\\" ]; then exit 1; fi\",\n        \"node -e 'const value = JSON.parse(require(\\\"node:fs\\\").readFileSync(\\\"/tmp/benchmark-authorize-run-external-side-effect-response.json\\\", \\\"utf-8\\\")); if (value.authorized !== true || value.boundary !== \\\"external_side_effect\\\" || value.runId !== process.env.RUN_ID || value.tenantId !== process.env.TENANT_ID) process.exit(1)'\",\n        \"npm run codebuild:run -w @memorag-mvp/benchmark\"\n      ]\n    },\n    \"post_build\": {\n      \"commands\": [\n        \"set -euo pipefail\",\n        \"cd \\\"$CODEBUILD_SRC_DIR\\\"\",\n        \"if [ ! -f \\\"$OUTPUT\\\" ]; then printf '' > \\\"$OUTPUT\\\"; fi\",\n        \"if [ ! -f \\\"$SUMMARY\\\" ]; then printf '{\\\"total\\\":0,\\\"succeeded\\\":0,\\\"failedHttp\\\":0,\\\"metrics\\\":{\\\"errorRate\\\":1}}\\\\n' > \\\"$SUMMARY\\\"; fi\",\n        \"if [ ! -f \\\"$REPORT\\\" ]; then printf '# Benchmark runner failed\\\\n\\\\nCodeBuild failed before benchmark artifacts were produced. See the CodeBuild log URL recorded on the benchmark run.\\\\n' > \\\"$REPORT\\\"; fi\",\n        \"export RELEASE_AUDIT=./benchmark/.release-audit.json\",\n        \"npm run release:audit -w @memorag-mvp/benchmark -- --summary \\\"$SUMMARY\\\" --source-root apps/api/src --source-root apps/web/src --output \\\"$RELEASE_AUDIT\\\" --report-only\",\n        \"node -e 'process.stdout.write(JSON.stringify({ tenantId: process.env.TENANT_ID, runId: process.env.RUN_ID, boundary: \\\"durable_commit\\\" }))' > /tmp/benchmark-authorize-artifact-durable-commit.json\",\n        \"AUTHORIZATION_FUNCTION_ERROR=\\\"$(aws lambda invoke --function-name \\\"$BENCHMARK_AUTHORIZATION_FUNCTION_NAME\\\" --cli-binary-format raw-in-base64-out --payload fileb:///tmp/benchmark-authorize-artifact-durable-commit.json --query FunctionError --output text /tmp/benchmark-authorize-artifact-durable-commit-response.json)\\\"\",\n        \"if [ \\\"$AUTHORIZATION_FUNCTION_ERROR\\\" != \\\"None\\\" ]; then exit 1; fi\",\n        \"node -e 'const value = JSON.parse(require(\\\"node:fs\\\").readFileSync(\\\"/tmp/benchmark-authorize-artifact-durable-commit-response.json\\\", \\\"utf-8\\\")); if (value.authorized !== true || value.boundary !== \\\"durable_commit\\\" || value.runId !== process.env.RUN_ID || value.tenantId !== process.env.TENANT_ID) process.exit(1)'\",\n        \"node infra/scripts/authorize-benchmark-boundary.mjs durable_commit results-artifact\",\n        \"aws s3 cp \\\"$OUTPUT\\\" \\\"$OUTPUT_S3_PREFIX/results.jsonl\\\"\",\n        \"node infra/scripts/authorize-benchmark-boundary.mjs durable_commit summary-artifact\",\n        \"aws s3 cp \\\"$SUMMARY\\\" \\\"$OUTPUT_S3_PREFIX/summary.json\\\"\",\n        \"node infra/scripts/authorize-benchmark-boundary.mjs durable_commit report-artifact\",\n        \"aws s3 cp \\\"$REPORT\\\" \\\"$OUTPUT_S3_PREFIX/report.md\\\"\",\n        \"node infra/scripts/authorize-benchmark-boundary.mjs durable_commit release-audit-artifact\",\n        \"aws s3 cp \\\"$RELEASE_AUDIT\\\" \\\"$OUTPUT_S3_PREFIX/release-audit.json\\\"\",\n        \"node infra/scripts/authorize-benchmark-boundary.mjs durable_commit metrics-update\",\n        \"node infra/scripts/update-benchmark-run-metrics.mjs\"\n      ]\n    }\n  },\n  \"artifacts\": {\n    \"files\": [\n      \"benchmark/.runner-results.jsonl\",\n      \"benchmark/.runner-summary.json\",\n      \"benchmark/.runner-report.md\",\n      \"benchmark/.release-audit.json\"\n    ]\n  }\n}",
           "Location": "https://github.com/tsuji-tomonori/rag-assist.git",
           "ReportBuildStatus": true,
           "Type": "GITHUB"
@@ -10875,6 +14339,32 @@
         "PolicyDocument": {
           "Statement": [
             {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "BenchmarkRunAuthorizationFunction16D4CD86",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "BenchmarkRunAuthorizationFunction16D4CD86",
+                          "Arn"
+                        ]
+                      },
+                      ":*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
               "Action": [
                 "logs:CreateLogDelivery",
                 "logs:GetLogDelivery",
@@ -10902,6 +14392,20 @@
                   "Fn::GetAtt": [
                     "BenchmarkRunsTableD0841636",
                     "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "BenchmarkRunsTableD0841636",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
                   ]
                 }
               ]
@@ -10947,23 +14451,37 @@
           "Fn::Join": [
             "",
             [
-              "{\"StartAt\":\"BenchmarkMarkRunning\",\"States\":{\"BenchmarkMarkRunning\":{\"Next\":\"BenchmarkStartCodeBuild\",\"Type\":\"Task\",\"Resource\":\"arn:aws:states:::dynamodb:updateItem\",\"Parameters\":{\"TableName\":\"",
+              "{\"StartAt\":\"BenchmarkAuthorizeStart\",\"States\":{\"BenchmarkAuthorizeStart\":{\"Next\":\"BenchmarkMarkRunning\",\"Retry\":[{\"ErrorEquals\":[\"Lambda.ClientExecutionTimeoutException\",\"Lambda.ServiceException\",\"Lambda.AWSLambdaException\",\"Lambda.SdkClientException\"],\"IntervalSeconds\":2,\"MaxAttempts\":6,\"BackoffRate\":2}],\"Catch\":[{\"ErrorEquals\":[\"States.ALL\"],\"ResultPath\":\"$.errorInfo\",\"Next\":\"BenchmarkMarkFailed\"}],\"Type\":\"Task\",\"ResultPath\":null,\"Resource\":\"",
+              {
+                "Fn::GetAtt": [
+                  "BenchmarkRunAuthorizationFunction16D4CD86",
+                  "Arn"
+                ]
+              },
+              "\",\"Parameters\":{\"runId.$\":\"$.runId\",\"tenantId.$\":\"$.tenantId\",\"boundary\":\"start\"}},\"BenchmarkMarkRunning\":{\"Next\":\"BenchmarkStartCodeBuild\",\"Type\":\"Task\",\"Resource\":\"arn:aws:states:::dynamodb:updateItem\",\"Parameters\":{\"TableName\":\"",
               {
                 "Ref": "BenchmarkRunsTableD0841636"
               },
-              "\",\"Key\":{\"runId\":{\"S.$\":\"$.runId\"}},\"UpdateExpression\":\"SET #status = :status, startedAt = :startedAt, updatedAt = :startedAt\",\"ExpressionAttributeNames\":{\"#status\":\"status\"},\"ExpressionAttributeValues\":{\":status\":{\"S\":\"running\"},\":startedAt\":{\"S.$\":\"$$.State.EnteredTime\"}}},\"ResultPath\":\"$.markRunning\"},\"BenchmarkStartCodeBuild\":{\"Next\":\"BenchmarkMarkSucceeded\",\"Type\":\"Task\",\"Resource\":\"arn:aws:states:::codebuild:startBuild.sync\",\"Parameters\":{\"ProjectName\":\"",
+              "\",\"Key\":{\"runId\":{\"S.$\":\"$.storageRunId\"}},\"ConditionExpression\":\"#status = :queued\",\"UpdateExpression\":\"SET #status = :status, startedAt = :startedAt, updatedAt = :startedAt\",\"ExpressionAttributeNames\":{\"#status\":\"status\"},\"ExpressionAttributeValues\":{\":status\":{\"S\":\"running\"},\":queued\":{\"S\":\"queued\"},\":startedAt\":{\"S.$\":\"$$.State.EnteredTime\"}}},\"ResultPath\":\"$.markRunning\"},\"BenchmarkStartCodeBuild\":{\"Next\":\"BenchmarkAuthorizeCommit\",\"Type\":\"Task\",\"Resource\":\"arn:aws:states:::codebuild:startBuild.sync\",\"Parameters\":{\"ProjectName\":\"",
               {
                 "Ref": "BenchmarkProject1593465D"
               },
-              "\",\"EnvironmentVariablesOverride\":[{\"Name\":\"RUN_ID\",\"Value.$\":\"$.runId\",\"Type\":\"PLAINTEXT\"},{\"Name\":\"MODE\",\"Value.$\":\"$.mode\",\"Type\":\"PLAINTEXT\"},{\"Name\":\"SUITE_ID\",\"Value.$\":\"$.suiteId\",\"Type\":\"PLAINTEXT\"},{\"Name\":\"DATASET_S3_URI\",\"Value.$\":\"$.datasetS3Uri\",\"Type\":\"PLAINTEXT\"},{\"Name\":\"OUTPUT_S3_PREFIX\",\"Value.$\":\"$.outputS3Prefix\",\"Type\":\"PLAINTEXT\"},{\"Name\":\"API_BASE_URL\",\"Value.$\":\"$.apiBaseUrl\",\"Type\":\"PLAINTEXT\"},{\"Name\":\"MODEL_ID\",\"Value.$\":\"$.modelId\",\"Type\":\"PLAINTEXT\"},{\"Name\":\"EMBEDDING_MODEL_ID\",\"Value.$\":\"$.embeddingModelId\",\"Type\":\"PLAINTEXT\"},{\"Name\":\"TOP_K\",\"Value.$\":\"States.Format('{}', $.topK)\",\"Type\":\"PLAINTEXT\"},{\"Name\":\"MEMORY_TOP_K\",\"Value.$\":\"States.Format('{}', $.memoryTopK)\",\"Type\":\"PLAINTEXT\"},{\"Name\":\"MIN_SCORE\",\"Value.$\":\"States.Format('{}', $.minScore)\",\"Type\":\"PLAINTEXT\"}]},\"ResultPath\":\"$.build\",\"Catch\":[{\"ErrorEquals\":[\"States.ALL\"],\"ResultPath\":\"$.errorInfo\",\"Next\":\"BenchmarkMarkFailed\"}]},\"BenchmarkMarkSucceeded\":{\"End\":true,\"Type\":\"Task\",\"Resource\":\"arn:aws:states:::dynamodb:updateItem\",\"Parameters\":{\"TableName\":\"",
+              "\",\"EnvironmentVariablesOverride\":[{\"Name\":\"RUN_ID\",\"Value.$\":\"$.runId\",\"Type\":\"PLAINTEXT\"},{\"Name\":\"STORAGE_RUN_ID\",\"Value.$\":\"$.storageRunId\",\"Type\":\"PLAINTEXT\"},{\"Name\":\"TENANT_ID\",\"Value.$\":\"$.tenantId\",\"Type\":\"PLAINTEXT\"},{\"Name\":\"MODE\",\"Value.$\":\"$.mode\",\"Type\":\"PLAINTEXT\"},{\"Name\":\"SUITE_ID\",\"Value.$\":\"$.suiteId\",\"Type\":\"PLAINTEXT\"},{\"Name\":\"DATASET_S3_URI\",\"Value.$\":\"$.datasetS3Uri\",\"Type\":\"PLAINTEXT\"},{\"Name\":\"OUTPUT_S3_PREFIX\",\"Value.$\":\"$.outputS3Prefix\",\"Type\":\"PLAINTEXT\"},{\"Name\":\"API_BASE_URL\",\"Value.$\":\"$.apiBaseUrl\",\"Type\":\"PLAINTEXT\"},{\"Name\":\"MODEL_ID\",\"Value.$\":\"$.modelId\",\"Type\":\"PLAINTEXT\"},{\"Name\":\"EMBEDDING_MODEL_ID\",\"Value.$\":\"$.embeddingModelId\",\"Type\":\"PLAINTEXT\"},{\"Name\":\"TOP_K\",\"Value.$\":\"States.Format('{}', $.topK)\",\"Type\":\"PLAINTEXT\"},{\"Name\":\"MEMORY_TOP_K\",\"Value.$\":\"States.Format('{}', $.memoryTopK)\",\"Type\":\"PLAINTEXT\"},{\"Name\":\"MIN_SCORE\",\"Value.$\":\"States.Format('{}', $.minScore)\",\"Type\":\"PLAINTEXT\"}]},\"ResultPath\":\"$.build\",\"Catch\":[{\"ErrorEquals\":[\"States.ALL\"],\"ResultPath\":\"$.errorInfo\",\"Next\":\"BenchmarkMarkFailed\"}]},\"BenchmarkAuthorizeCommit\":{\"Next\":\"BenchmarkMarkSucceeded\",\"Retry\":[{\"ErrorEquals\":[\"Lambda.ClientExecutionTimeoutException\",\"Lambda.ServiceException\",\"Lambda.AWSLambdaException\",\"Lambda.SdkClientException\"],\"IntervalSeconds\":2,\"MaxAttempts\":6,\"BackoffRate\":2}],\"Catch\":[{\"ErrorEquals\":[\"States.ALL\"],\"ResultPath\":\"$.errorInfo\",\"Next\":\"BenchmarkMarkFailed\"}],\"Type\":\"Task\",\"ResultPath\":null,\"Resource\":\"",
+              {
+                "Fn::GetAtt": [
+                  "BenchmarkRunAuthorizationFunction16D4CD86",
+                  "Arn"
+                ]
+              },
+              "\",\"Parameters\":{\"runId.$\":\"$.runId\",\"tenantId.$\":\"$.tenantId\",\"boundary\":\"durable_commit\"}},\"BenchmarkMarkSucceeded\":{\"End\":true,\"Type\":\"Task\",\"Resource\":\"arn:aws:states:::dynamodb:updateItem\",\"Parameters\":{\"TableName\":\"",
               {
                 "Ref": "BenchmarkRunsTableD0841636"
               },
-              "\",\"Key\":{\"runId\":{\"S.$\":\"$.runId\"}},\"UpdateExpression\":\"SET #status = :status, completedAt = :completedAt, updatedAt = :completedAt, codeBuildBuildId = :codeBuildBuildId, summaryS3Key = :summaryS3Key, reportS3Key = :reportS3Key, resultsS3Key = :resultsS3Key\",\"ExpressionAttributeNames\":{\"#status\":\"status\"},\"ExpressionAttributeValues\":{\":status\":{\"S\":\"succeeded\"},\":completedAt\":{\"S.$\":\"$$.State.EnteredTime\"},\":codeBuildBuildId\":{\"S.$\":\"$.build.Build.Id\"},\":summaryS3Key\":{\"S.$\":\"$.summaryS3Key\"},\":reportS3Key\":{\"S.$\":\"$.reportS3Key\"},\":resultsS3Key\":{\"S.$\":\"$.resultsS3Key\"}}}},\"BenchmarkMarkFailed\":{\"End\":true,\"Type\":\"Task\",\"Resource\":\"arn:aws:states:::dynamodb:updateItem\",\"Parameters\":{\"TableName\":\"",
+              "\",\"Key\":{\"runId\":{\"S.$\":\"$.storageRunId\"}},\"ConditionExpression\":\"#status = :running\",\"UpdateExpression\":\"SET #status = :status, completedAt = :completedAt, updatedAt = :completedAt, codeBuildBuildId = :codeBuildBuildId, summaryS3Key = :summaryS3Key, reportS3Key = :reportS3Key, resultsS3Key = :resultsS3Key\",\"ExpressionAttributeNames\":{\"#status\":\"status\"},\"ExpressionAttributeValues\":{\":status\":{\"S\":\"succeeded\"},\":running\":{\"S\":\"running\"},\":completedAt\":{\"S.$\":\"$$.State.EnteredTime\"},\":codeBuildBuildId\":{\"S.$\":\"$.build.Build.Id\"},\":summaryS3Key\":{\"S.$\":\"$.summaryS3Key\"},\":reportS3Key\":{\"S.$\":\"$.reportS3Key\"},\":resultsS3Key\":{\"S.$\":\"$.resultsS3Key\"}}}},\"BenchmarkMarkFailed\":{\"End\":true,\"Type\":\"Task\",\"Resource\":\"arn:aws:states:::dynamodb:updateItem\",\"Parameters\":{\"TableName\":\"",
               {
                 "Ref": "BenchmarkRunsTableD0841636"
               },
-              "\",\"Key\":{\"runId\":{\"S.$\":\"$.runId\"}},\"UpdateExpression\":\"SET #status = :status, completedAt = :completedAt, updatedAt = :completedAt, #error = :error\",\"ExpressionAttributeNames\":{\"#status\":\"status\",\"#error\":\"error\"},\"ExpressionAttributeValues\":{\":status\":{\"S\":\"failed\"},\":completedAt\":{\"S.$\":\"$$.State.EnteredTime\"},\":error\":{\"S.$\":\"States.JsonToString($.errorInfo)\"}}}}},\"TimeoutSeconds\":32400}"
+              "\",\"Key\":{\"runId\":{\"S.$\":\"$.storageRunId\"}},\"UpdateExpression\":\"SET #status = :status, completedAt = if_not_exists(completedAt, :completedAt), updatedAt = if_not_exists(completedAt, :completedAt), #error = if_not_exists(#error, :error)\",\"ExpressionAttributeNames\":{\"#status\":\"status\",\"#error\":\"error\"},\"ExpressionAttributeValues\":{\":status\":{\"S\":\"failed\"},\":completedAt\":{\"S.$\":\"$$.State.EnteredTime\"},\":error\":{\"S.$\":\"States.JsonToString($.errorInfo)\"}}}}},\"TimeoutSeconds\":32400}"
             ]
           ]
         },

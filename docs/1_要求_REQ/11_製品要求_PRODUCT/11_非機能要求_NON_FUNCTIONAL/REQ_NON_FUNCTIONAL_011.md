@@ -43,7 +43,7 @@
 - AC-NFR011-028: `GET /me` は静的 policy test で認証必須かつ追加 role permission なしの route として検証されること。
 - AC-NFR011-029: `POST /benchmark/query` は `benchmark:query` を要求し、`BENCHMARK_OPERATOR` / `RAG_GROUP_MANAGER` による管理画面の benchmark run 起動権限 `benchmark:run` と分離されること。
 - AC-NFR011-030: `POST /benchmark/search` は `benchmark:query` を要求し、`BENCHMARK_RUNNER` が通常利用者向け `POST /search` を直接実行できないことを contract test で検証すること。
-- AC-NFR011-031: `POST /benchmark/search` は `BENCHMARK_RUNNER` service user からの呼び出しに限り search benchmark dataset の `user.groups` を ACL 評価用の利用者文脈として扱い、dataset payload から `SYSTEM_ADMIN` などの特権 group を指定できないこと。
+- AC-NFR011-031: `POST /benchmark/query` と `POST /benchmark/search` は `BENCHMARK_RUNNER` service user からの呼び出しに限り、必須 `suiteId` に対応する server-side allowlist の nonprivileged simulated subject と isolated tenant/corpus scope を使い、dataset/request の user、group、tenant、filter、scope override を拒否すること。
 
 ## 受け入れ条件 disposition
 
@@ -116,4 +116,4 @@
 - `1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/08_認証・認可・管理・監査/01_通常利用者セルフサインアップ/REQ_FUNCTIONAL_025.md`
 - `1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/08_認証・認可・管理・監査/03_Phase_2_管理・監査/REQ_FUNCTIONAL_027.md`
 - `3_設計_DES/41_API_API/DES_API_001.md`
-- `docs/GITHUB_ACTIONS_DEPLOY.md`
+- `docs/4_運用_OPS/21_監視_MONITORING/OPS_MONITORING_001.md`

@@ -193,14 +193,16 @@ sequenceDiagram
 
 | データ | AWS | ローカル |
 | --- | --- | --- |
-| source | `documents/<documentId>/source.txt` | `.local-data/documents/<documentId>/source.txt` |
-| manifest | `manifests/<documentId>.json` | `.local-data/manifests/<documentId>.json` |
+| source | `tenant-artifacts/<tenantPartitionHash>/documents/<documentId>/source.txt` | `.local-data/objects/tenant-artifacts/<tenantPartitionHash>/documents/<documentId>/source.txt` |
+| structured / memory ledger | `tenant-artifacts/<tenantPartitionHash>/documents/<documentId>/{structured-blocks,memory-cards}.json` | `.local-data/objects/tenant-artifacts/<tenantPartitionHash>/documents/<documentId>/` |
+| manifest | `tenant-artifacts/<tenantPartitionHash>/manifests/<documentId>.json` | `.local-data/objects/tenant-artifacts/<tenantPartitionHash>/manifests/<documentId>.json` |
 | debug trace | `debug-runs/<yyyy-mm-dd>/<runId>.json` | `.local-data/debug-runs/<yyyy-mm-dd>/<runId>.json` |
 | human question | DynamoDB question table | `.local-data/questions.json` |
 | conversation history | DynamoDB conversation history table | `.local-data/conversation-history.json` |
 | favorite conversation | DynamoDB conversation history table | `.local-data/conversation-history.json` |
-| memory vectors | `memory-index` | `.local-data/memory-vectors.json` |
-| evidence vectors | `evidence-index` | `.local-data/evidence-vectors.json` |
+| memory vectors | `memory-index` 内の tenant-prefixed key + authoritative `tenantId` filter | `.local-data/memory-vectors.json` 内の同一 partition key/filter |
+| evidence vectors | `evidence-index` 内の tenant-prefixed key + authoritative `tenantId` filter | `.local-data/evidence-vectors.json` 内の同一 partition key/filter |
+| lexical index | `tenant-artifacts/<tenantPartitionHash>/lexical-index/` | `.local-data/objects/tenant-artifacts/<tenantPartitionHash>/lexical-index/` |
 | alias artifact | S3 alias artifact prefix | `.local-data/search-aliases.json` |
 | alias audit log | DynamoDB audit table | `.local-data/audit-log.json` |
 | benchmark dataset | S3 benchmark artifact prefix | `.local-data/benchmark/datasets/` |
@@ -208,6 +210,8 @@ sequenceDiagram
 | benchmark summary | S3 benchmark artifact prefix | `.local-data/benchmark/summaries/` |
 | benchmark report | S3 benchmark artifact prefix | `.local-data/benchmark/reports/` |
 | admin audit log | DynamoDB audit table | `.local-data/audit-log.json` |
+
+`tenantPartitionHash` は認証済み actor または worker の authoritative tenant から server 側で導出する。production の manifest list/get/search は global `manifests/` へ fallback しない。旧 global layout は、明示的な local fixture / migration compatibility seam に限って隔離利用する。
 | usage / cost estimate | DynamoDB usage table | `.local-data/usage.json` |
 
 ## 認証認可・信頼境界ビュー

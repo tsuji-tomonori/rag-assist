@@ -1,6 +1,11 @@
 import type { DebugStep, JsonValue } from "../types.js"
 import type { ChatOrchestrationState, ChatOrchestrationUpdate, SearchAction } from "./state.js"
 import { NO_ANSWER } from "./state.js"
+import {
+  classifyDegradationTrigger,
+  measurePartialRuntimeRagGuards,
+  safeDegradationDecision
+} from "../rag/_shared/security/safe-degradation-policy.js"
 
 type NodeFn = (state: ChatOrchestrationState) => Promise<ChatOrchestrationUpdate>
 
@@ -32,6 +37,17 @@ export function tracedNode(label: string, fn: NodeFn): NodeFn {
     } catch (error) {
       const completedAt = new Date()
       const reason = inferErrorAnswerabilityReason(label)
+      const degradationDecision = safeDegradationDecision({
+        trigger: classifyDegradationTrigger(error),
+        stage: label,
+        requestedAction: "refuse",
+        guardOutcomes: measurePartialRuntimeRagGuards({
+          grounding: { passed: true, evidence: "dependency_failure_forced_no_content" },
+          citation: { passed: true, evidence: "dependency_failure_cleared_citations" },
+          output_secret: { passed: true, evidence: "dependency_failure_returned_fixed_refusal" },
+          trace_redaction: { passed: true, evidence: "refusal_trace_redacted_before_persistence" }
+        })
+      })
       return {
         answerability: {
           isAnswerable: false,
@@ -58,7 +74,8 @@ export function tracedNode(label: string, fn: NodeFn): NodeFn {
             answer: NO_ANSWER,
             citations: [],
             error: error instanceof Error ? error.message : String(error)
-          }
+          },
+          degradationDecision
         })
       }
     }
@@ -83,6 +100,7 @@ function buildStep(input: {
   output?: Record<string, JsonValue>
   hitCount?: number
   tokenCount?: number
+  degradationDecision?: DebugStep["degradationDecision"]
 }): DebugStep {
   return {
     id: input.id,
@@ -95,6 +113,7 @@ function buildStep(input: {
     output: input.output,
     hitCount: input.hitCount,
     tokenCount: input.tokenCount,
+    degradationDecision: input.degradationDecision,
     startedAt: input.startedAt.toISOString(),
     completedAt: input.completedAt.toISOString()
   }

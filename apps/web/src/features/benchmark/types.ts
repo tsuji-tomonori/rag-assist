@@ -28,8 +28,33 @@ export type BenchmarkRunMetrics = {
   retrievalRecallAtK?: number | null
   p50LatencyMs?: number | null
   p95LatencyMs?: number | null
+  p99LatencyMs?: number | null
   averageLatencyMs?: number | null
   errorRate?: number | null
+  falseDenialRate?: number | null
+  citationCompleteness?: number | null
+  falseAnswerRate?: number | null
+  falseRefusalRate?: number | null
+  taskCompletionRate?: number | null
+  taskOutcomeAccuracy?: number | null
+  eligibilityPropagationP99Ms?: number | null
+  mttrMs?: number | null
+  datasetVersion?: string
+  workloadProfileVersion?: string
+  runtimeProfileVersion?: string
+  priceCatalogVersion?: string
+  indexVersion?: string
+  promptVersion?: string
+  pipelineVersion?: string
+  parserVersion?: string
+  chunkerVersion?: string
+  modelCostPerUnit?: number | null
+  embeddingCostPerUnit?: number | null
+  storageCostPerUnit?: number | null
+  workerCostPerUnit?: number | null
+  egressCostPerUnit?: number | null
+  totalCostPerUnit?: number | null
+  unitCostKind?: "chat_request" | "search_request" | "ingest_document"
 }
 
 export type BenchmarkRun = {

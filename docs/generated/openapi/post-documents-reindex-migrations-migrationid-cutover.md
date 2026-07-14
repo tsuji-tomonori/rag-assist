@@ -54,10 +54,10 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 12 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 19 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
-| `404` | 指定したリソースが見つかりません。 | `application/json` | 2 field(s) |
+| `404` | 指定したリソースが見つかりません。 | `application/json` | 3 field(s) |
 
 ##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
@@ -77,6 +77,13 @@ Media type: `application/json`
 | `rolledBackAt` | `string` | no | `response.rolledBackAt` の値。項目名は rolled back at を表します。 | - |
 | `previousManifestObjectKey` | `string` | yes | `response.previousManifestObjectKey` の値。項目名は previous manifest object key を表します。 | - |
 | `stagedManifestObjectKey` | `string` | yes | `response.stagedManifestObjectKey` の値。項目名は staged manifest object key を表します。 | - |
+| `publicationRunId` | `string` | no | `response.publicationRunId` の値。項目名は publication run id を表します。 | - |
+| `publicationArtifactId` | `string` | no | `response.publicationArtifactId` の値。項目名は publication artifact id を表します。 | - |
+| `publicationIdempotencyKey` | `string` | no | `response.publicationIdempotencyKey` の値。項目名は publication idempotency key を表します。 | - |
+| `activePointerKey` | `string` | no | `response.activePointerKey` の値。項目名は active pointer key を表します。 | - |
+| `generation` | `integer` | no | `response.generation` の値。項目名は generation を表します。 | minimum=0 |
+| `fencingToken` | `string` | no | `response.fencingToken` の値。項目名は fencing token を表します。 | - |
+| `checkpoint` | `string` | no | `response.checkpoint` の値。項目名は checkpoint を表します。 | - |
 
 ##### `401` 認証が必要です。
 
@@ -102,5 +109,6 @@ Media type: `application/json`
 
 | 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
-| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
-| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
+| `error` | `enum(Resource unavailable)` | yes | エラー内容を表すメッセージ。 | enum=Resource unavailable |
+| `code` | `enum(RESOURCE_UNAVAILABLE)` | yes | `response.code` の値。項目名は code を表します。 | enum=RESOURCE_UNAVAILABLE |
+| `responseProfileVersion` | `enum(resource-non-enumeration-v1)` | yes | `response.responseProfileVersion` の値。項目名は response profile version を表します。 | enum=resource-non-enumeration-v1 |

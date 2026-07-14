@@ -194,6 +194,7 @@ export const ChatRequestSchema = z.object({
 
 export const CitationSchema = z.object({
   documentId: z.string(),
+  documentVersion: z.string().optional(),
   fileName: z.string(),
   chunkId: z.string().optional(),
   pageStart: z.number().int().positive().optional(),
@@ -207,7 +208,27 @@ export const CitationSchema = z.object({
   sourceType: z.string().optional(),
   bbox: JsonValueSchema.optional(),
   score: z.number(),
-  text: z.string()
+  text: z.string(),
+  topic: z.string().optional(),
+  evidenceRole: z.enum(["supporting", "conflicting", "outdated", "background"]).optional(),
+  authorityStatus: z.enum(["authoritative", "secondary", "unknown"]).optional(),
+  effectiveFrom: z.string().optional(),
+  effectiveUntil: z.string().optional(),
+  sourceLocator: z.object({
+    page: z.number().int().positive().optional(),
+    pageStart: z.number().int().positive().optional(),
+    pageEnd: z.number().int().positive().optional(),
+    bbox: JsonValueSchema.optional(),
+    unit: z.enum(["normalized_page", "pdf_point", "pixel", "unknown"]).optional(),
+    source: z.string().optional(),
+    sectionPath: z.array(z.string()).optional(),
+    startChar: z.number().int().nonnegative().optional(),
+    endChar: z.number().int().nonnegative().optional(),
+    sourceBlockId: z.string().optional(),
+    sourceChunkIds: z.array(z.string()).optional()
+  }).optional(),
+  authorizationDecision: z.literal("allowed").optional(),
+  authorizationEvaluatedAt: z.string().optional()
 })
 
 export const PipelineVersionsSchema = z.object({
@@ -274,6 +295,7 @@ export const DebugStepSchema = z.object({
   output: z.record(z.string(), z.unknown()).optional(),
   hitCount: z.number().optional(),
   tokenCount: z.number().optional(),
+  degradationDecision: JsonValueSchema.optional(),
   startedAt: z.string(),
   completedAt: z.string()
 })
@@ -281,6 +303,10 @@ export const DebugStepSchema = z.object({
 export const DebugTraceSchema = z.object({
   schemaVersion: z.literal(1).default(1),
   runId: z.string(),
+  requestTraceId: z.string().optional(),
+  parentTraceIds: z.array(z.string()).optional(),
+  tenantPartitionId: z.string().optional(),
+  actorPartitionId: z.string().optional(),
   question: z.string(),
   modelId: z.string(),
   embeddingModelId: z.string(),
@@ -290,6 +316,28 @@ export const DebugTraceSchema = z.object({
   conversation: z.unknown().optional(),
   conversationState: z.unknown().optional(),
   pipelineVersions: PipelineVersionsSchema.optional(),
+  replayVersionManifest: JsonValueSchema.optional(),
+  decision: z.object({
+    candidateCount: z.number().int().nonnegative(),
+    deniedCandidateCount: z.number().int().nonnegative(),
+    finalEvidenceCount: z.number().int().nonnegative(),
+    responseStatus: z.enum(["success", "warning", "error"]),
+    decisionCode: z.enum(["completed", "refused", "rejected", "failed", "cancelled"]),
+    reasonCodes: z.array(z.enum([
+      "authorization_denied",
+      "safety_interlock",
+      "dependency_error",
+      "admission_rejected",
+      "publication_not_eligible",
+      "permission_revoked",
+      "execution_error",
+      "insufficient_evidence",
+      "clarification_required",
+      "output_secret_detected",
+      "cancelled"
+    ])),
+    totalLatencyMs: z.number().nonnegative()
+  }).optional(),
   ragProfile: RagProfileTraceSchema.optional(),
   topK: z.number(),
   memoryTopK: z.number(),

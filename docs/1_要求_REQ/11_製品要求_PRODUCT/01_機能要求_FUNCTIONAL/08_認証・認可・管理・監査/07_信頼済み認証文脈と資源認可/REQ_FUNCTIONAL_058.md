@@ -67,7 +67,7 @@
 | 検証可能性 | OK | active token を持つ user の suspend/delete と identity/session/ledger 部分失敗で確認できる |
 | ニーズ適合 | OK | 退職・停止・削除された利用者のアクセスを速やかに止められる |
 | 原子性 | OK | account lifecycle の強制反映を規定する |
-| 実装適合 | NG | `memorag-service.ts:1498-1509`; `UserDirectory` に disable/revoke がない |
+| 実装適合 | OK（confirmed） | `user-directory.ts` の disable/delete/global sign-out と account lifecycle/revocation registry を接続し、account lifecycle/current-worker tests が suspend/delete と stale worker 拒否を検証する |
 | 合意 | pending | 反映 SLO と deleted user の保持方針は未確定 |
 
 ## トレース

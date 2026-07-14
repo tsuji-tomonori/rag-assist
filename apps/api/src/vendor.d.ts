@@ -1,5 +1,12 @@
 declare module "pdf-parse" {
-  const pdfParse: (dataBuffer: Buffer | Uint8Array) => Promise<{ text: string }>
+  type PdfTextItem = { str?: string; transform?: number[]; hasEOL?: boolean }
+  type PdfPageData = {
+    getTextContent(options?: { normalizeWhitespace?: boolean; disableCombineTextItems?: boolean }): Promise<{ items: PdfTextItem[] }>
+  }
+  const pdfParse: (
+    dataBuffer: Buffer | Uint8Array,
+    options?: { pagerender?: (pageData: PdfPageData) => Promise<string>; max?: number; version?: string }
+  ) => Promise<{ text: string; numpages: number; numrender: number }>
   export default pdfParse
 }
 

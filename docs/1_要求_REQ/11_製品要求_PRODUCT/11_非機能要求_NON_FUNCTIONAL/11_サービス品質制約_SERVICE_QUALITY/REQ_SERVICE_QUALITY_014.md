@@ -59,7 +59,7 @@
 | 実現可能性 | OK | monitoring と failure injection で測定可能 |
 | 検証可能性 | OK | soak/chaos/recovery test |
 | ニーズ適合 | OK | 利用者と運用者が予測可能にサービスを利用できる |
-| 実装適合 | partial | timeout はあるが versioned SLO と recovery gate が不足 |
+| 実装適合 | OK（measurement/gate contract、閾値未承認） | chat/search/ingest endpoint-stage success/timeout/error/backlog/retry exhaustion と vector/LLM/OCR/queue MTTR/no-loss/coverage を完全 evidence から導出し、loss を zero-tolerance gate する |
 
 ## トレース
 

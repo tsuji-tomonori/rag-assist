@@ -23,15 +23,26 @@ import { LocalQuestionStore } from "../adapters/local-question-store.js"
 import { LocalVectorStore } from "../adapters/local-vector-store.js"
 import { MockBedrockTextModel } from "../adapters/mock-bedrock.js"
 import type { Dependencies } from "../dependencies.js"
-import type { AgentRuntimeProvider, AsyncAgentRun, BenchmarkRunner, DebugTrace, ManagedUser } from "../types.js"
+import type { AgentRuntimeProvider, AsyncAgentRun, AuthoritativeAdmissionContext, BenchmarkRunner, DebugTrace, FolderPolicyEntry, ManagedUser } from "../types.js"
 import type { UserDirectory } from "../adapters/user-directory.js"
+import type { VerifiedIdentityProvider } from "../adapters/verified-identity-provider.js"
 import type { CodeBuildLogReader } from "../adapters/codebuild-log-reader.js"
+import {
+  DocumentShareConflictError,
+  DocumentShareValidationError
+} from "../documents/document-permission-service.js"
+import type { ResourceUserPrincipal } from "../security/resource-group-membership-service.js"
+import {
+  ObjectStoreSecurityMutationAuditOutbox,
+  type SecurityMutationAuditIntent
+} from "../security/security-mutation-audit-outbox.js"
 import { CommandAsyncAgentProvider } from "../async-agent/command-provider.js"
 import { AsyncAgentProviderRegistry, type AsyncAgentProviderAdapter, type AsyncAgentProviderInput } from "../async-agent/provider.js"
 import { ragRuntimePolicy } from "../chat-orchestration/runtime-policy.js"
 import { authorizeDocumentDelete } from "../routes/benchmark-seed.js"
 import { config } from "../config.js"
-import { createBenchmarkArtifactDownloadMetadata, createDebugTraceDownloadMetadata, formatDebugTraceJson, MemoRagService } from "./memorag-service.js"
+import { tenantPartitionId } from "../security/tenant-partition.js"
+import { createBenchmarkArtifactDownloadMetadata, createDebugTraceDownloadMetadata, formatDebugTraceJson, MemoRagService, tenantPartitionedOwnerKey } from "./memorag-service.js"
 
 test("service ingests text, lists manifests, persists debug traces, and deletes all document vectors", async () => {
   const { service, dataDir } = await createService()
@@ -48,7 +59,7 @@ test("service ingests text, lists manifests, persists debug traces, and deletes 
   assert.ok(manifest.memoryCardsObjectKey)
   assert.ok(manifest.evidenceVectorKeys?.length)
   assert.ok(manifest.memoryVectorKeys?.length)
-  assert.equal(manifest.pipelineVersions?.chunkerVersion, "chunk-semantic-v3")
+  assert.equal(manifest.pipelineVersions?.chunkerVersion, "chunk-structure-aware-2026-07-11.v1")
   assert.ok(manifest.chunks?.[0]?.chunkHash)
   assert.equal(manifest.documentStatistics?.chunkCount, manifest.chunkCount)
   assert.ok((manifest.documentStatistics?.averageChunkChars ?? 0) > 0)
@@ -61,18 +72,48 @@ test("service ingests text, lists manifests, persists debug traces, and deletes 
     includeDebug: true,
     minScore: 0.01
   })
-  assert.equal(answer.isAnswerable, true)
+  assert.equal(answer.isAnswerable, true, JSON.stringify(answer))
   assert.ok(answer.debug?.runId)
   assert.equal(answer.debug?.schemaVersion, 1)
-  assert.equal(answer.debug?.pipelineVersions?.promptVersion, "rag-prompts-v1")
+  assert.equal(answer.debug?.pipelineVersions, undefined)
+  assert.equal(answer.debug?.replayVersionManifest?.promptVersion, manifest.pipelineVersions?.promptVersion)
+  assert.equal(answer.debug?.replayVersionManifest?.parserVersion, manifest.sourceExtractorVersion)
+  assert.equal(answer.debug?.replayVersionManifest?.sourceSnapshots[0]?.ingestTraceId, manifest.traceId)
+  assert.equal(answer.debug?.requestTraceId, answer.debug?.runId)
+  assert.ok((answer.debug?.parentTraceIds?.length ?? 0) > 0)
+  const parentSearchTrace = await service.getDebugRun(answer.debug?.parentTraceIds?.[0] ?? "")
+  assert.equal(parentSearchTrace?.requestTraceId, answer.debug?.runId)
+  assert.ok(parentSearchTrace?.parentTraceIds?.includes(manifest.traceId ?? ""))
   assert.equal(answer.debug?.steps.at(-1)?.label, "finalize_response")
-  assert.match(String(answer.debug?.steps.at(-1)?.output?.answer ?? ""), /ソフトウェア製品要求|分類/)
+  assert.match(answer.answer, /ソフトウェア製品要求|分類/)
+  assert.equal(answer.debug?.steps.at(-1)?.output, undefined)
 
   const debugRuns = await service.listDebugRuns()
-  assert.equal(debugRuns.length, 1)
-  assert.deepEqual(await service.getDebugRun(answer.debug?.runId ?? ""), debugRuns[0])
+  const chatDebugRuns = debugRuns.filter((trace) => trace.runId === answer.debug?.runId)
+  assert.equal(chatDebugRuns.length, 1)
+  assert.deepEqual(await service.getDebugRun(answer.debug?.runId ?? ""), chatDebugRuns[0])
 
-  const deleted = await service.deleteDocument(manifest.documentId)
+  const ordinaryAnswer = await service.chat({
+    question: "機能要求と非機能要求を教えて",
+    minScore: 0.01
+  })
+  assert.equal(ordinaryAnswer.isAnswerable, true)
+  assert.equal(ordinaryAnswer.debug, undefined, "ordinary response must not expose operator trace")
+  const afterOrdinary = await service.listDebugRuns()
+  const persistedOrdinary = afterOrdinary.find((trace) => (
+    trace.runId !== answer.debug?.runId
+    && !trace.runId.startsWith("search_")
+    && trace.requestTraceId === trace.runId
+  ))
+  assert.ok(persistedOrdinary, "ordinary answer must persist a tenant-partitioned redacted trace")
+  assert.match(persistedOrdinary?.tenantPartitionId ?? "", /^tenant:[a-f0-9]{24}$/)
+  assert.match(persistedOrdinary?.question ?? "", /^sha256:[a-f0-9]{64}$/)
+  assert.ok((persistedOrdinary?.parentTraceIds?.length ?? 0) > 0)
+
+  const deleted = await service.deleteDocument(localDocumentManager(), manifest.documentId, {
+    reason: "test cleanup",
+    expectedUpdatedAt: manifest.updatedAt ?? manifest.createdAt
+  })
   assert.equal(deleted.documentId, manifest.documentId)
   assert.equal(deleted.deletedVectorCount, manifest.vectorKeys.length)
   assert.deepEqual(await service.listDocuments(), [])
@@ -87,22 +128,116 @@ test("service rejects empty uploads and missing documents", async () => {
   const { service } = await createService()
 
   await assert.rejects(() => service.ingest({ fileName: "empty.txt", text: "   " }), /extractable text|No chunks/)
-  await assert.rejects(() => service.deleteDocument("missing-document-id"))
+  await assert.rejects(() => service.deleteDocument(localDocumentManager(), "missing-document-id", {
+    reason: "missing document cleanup",
+    expectedUpdatedAt: "2026-07-11T00:00:00.000Z"
+  }))
   assert.equal(await service.getDebugRun("missing-run"), undefined)
+})
+
+test("FR-066 failed ingest compensation persists a tenant-scoped cleanup reconciliation manifest", async () => {
+  const { service, deps } = await createService({
+    evidencePutErrorAfterWriteWhen: () => true,
+    evidenceDeleteErrorAfterWrite: new Error("simulated vector cleanup outage")
+  })
+
+  await assert.rejects(() => service.ingest({
+    fileName: "cleanup-reconciliation.txt",
+    text: "A partial vector write must leave a durable cleanup manifest.",
+    skipMemory: true
+  }), /simulated partial active put failure/)
+
+  const keys = await deps.objectStore.listKeys("security/revocation-cleanup/")
+  assert.equal(keys.length, 1)
+  const manifest = JSON.parse(await deps.objectStore.getText(keys[0]!)) as {
+    tenantId: string
+    trigger: string
+    status: string
+    targets: Array<{ scope: string }>
+  }
+  assert.equal(manifest.tenantId, "default")
+  assert.equal(manifest.trigger, "deleted")
+  assert.equal(manifest.status, "cleanup_pending")
+  assert.ok(manifest.targets.some((target) => target.scope === "active_index"))
+  assert.deepEqual(await service.listDocuments(), [])
+})
+
+test("document share API uses the loaded policy version and common security audit path", async () => {
+  const { service, deps } = await createService({
+    resourceUserPrincipals: [
+      { userId: "local-dev", tenantId: "default", status: "active" },
+      { userId: "reader-active", tenantId: "default", status: "active" },
+      { userId: "reader-inactive", tenantId: "default", status: "suspended" },
+      { userId: "reader-other-tenant", tenantId: "tenant-b", status: "active" }
+    ]
+  })
+  const actor = localDocumentManager()
+  const manifest = await service.ingest({
+    fileName: "versioned-share.txt",
+    text: "Versioned document share contract.",
+    skipMemory: true,
+    metadata: { tenantId: "default", ownerUserId: actor.userId }
+  })
+
+  const loaded = await service.getDocumentShareInfo(actor, manifest.documentId)
+  assert.ok(loaded.version)
+  assert.deepEqual(loaded.directDocumentGrants, [])
+
+  const updated = await service.updateDocumentShare(actor, manifest.documentId, {
+    grants: [{ principalType: "user", principalId: "reader-active", permissionLevel: "readOnly" }],
+    expectedVersion: loaded.version,
+    reason: "active same-tenant review"
+  })
+  assert.notEqual(updated.version, loaded.version)
+  assert.deepEqual(updated.directDocumentGrants.map((grant) => grant.principalId), ["reader-active"])
+
+  await assert.rejects(() => service.updateDocumentShare(actor, manifest.documentId, {
+    grants: [],
+    expectedVersion: loaded.version,
+    reason: "stale writer"
+  }), DocumentShareConflictError)
+  await assert.rejects(() => service.updateDocumentShare(actor, manifest.documentId, {
+    grants: [{ principalType: "user", principalId: "reader-inactive", permissionLevel: "readOnly" }],
+    expectedVersion: updated.version,
+    reason: "inactive principal"
+  }), DocumentShareValidationError)
+  await assert.rejects(() => service.updateDocumentShare(actor, manifest.documentId, {
+    grants: [{ principalType: "user", principalId: "reader-other-tenant", permissionLevel: "readOnly" }],
+    expectedVersion: updated.version,
+    reason: "cross-tenant principal"
+  }), DocumentShareValidationError)
+
+  const current = await service.getDocumentShareInfo(actor, manifest.documentId)
+  assert.equal(current.version, updated.version)
+  assert.deepEqual(current.directDocumentGrants.map((grant) => grant.principalId), ["reader-active"])
+  assert.deepEqual(await deps.objectStore.listKeys("documents/share-audit/"), [])
+
+  const auditIntents = await readSecurityMutationAuditIntents(deps)
+  assert.deepEqual(auditIntents.map((intent) => intent.result).sort(), ["conflict", "denied", "denied", "success"])
+  assert.ok(auditIntents.every((intent) => intent.status === "completed"))
+  assert.ok(auditIntents.every((intent) => intent.draft.actorId === actor.userId))
+  assert.ok(auditIntents.every((intent) => intent.draft.tenantId === "default"))
+  assert.ok(auditIntents.every((intent) => intent.draft.targetId === manifest.documentId))
+  assert.ok(auditIntents.every((intent) => intent.draft.policyVersion === "document-share-policy-v1"))
+  assert.deepEqual(
+    auditIntents.map((intent) => intent.draft.reason).sort(),
+    ["active same-tenant review", "cross-tenant principal", "inactive principal", "stale writer"]
+  )
 })
 
 test("service manages async agent run metadata without provider execution or mock artifacts", async () => {
   const { service, deps } = await createService()
-  const owner: AppUser = { userId: "agent-owner", email: "agent-owner@example.com", cognitoGroups: ["ASYNC_AGENT_USER"] }
-  const other: AppUser = { userId: "other-user", email: "other@example.com", cognitoGroups: ["ASYNC_AGENT_USER"] }
-  const admin: AppUser = { userId: "agent-admin", email: "agent-admin@example.com", cognitoGroups: ["ASYNC_AGENT_ADMIN"] }
+  const owner: AppUser = { userId: "agent-owner", email: "agent-owner@example.com", cognitoGroups: ["ASYNC_AGENT_USER", "RAG_GROUP_MANAGER"], accountStatus: "active" as const, tenantId: "default" }
+  const other: AppUser = { userId: "other-user", email: "other@example.com", cognitoGroups: ["ASYNC_AGENT_USER"], accountStatus: "active" as const, tenantId: "default" }
+  const admin: AppUser = { userId: "agent-admin", email: "agent-admin@example.com", cognitoGroups: ["ASYNC_AGENT_ADMIN"], accountStatus: "active" as const, tenantId: "default" }
+  const otherTenantAdmin: AppUser = { userId: "tenant-b-admin", cognitoGroups: ["ASYNC_AGENT_ADMIN"], accountStatus: "active", tenantId: "tenant-b" }
+  const group = await service.createDocumentGroup(owner, { name: "Agent source group" })
   const manifest = await service.ingest({
     fileName: "agent-source.md",
     text: "非同期エージェントの対象資料です。",
     skipMemory: true,
-    metadata: { allowedUsers: [owner.userId] }
+    metadata: { groupIds: [group.groupId], scopeType: "group" }
   })
-  const group = await service.createDocumentGroup(owner, { name: "Agent source group" })
 
   const run = await service.createAsyncAgentRun(owner, {
     provider: "custom",
@@ -130,10 +265,13 @@ test("service manages async agent run metadata without provider execution or moc
 
   assert.equal((await service.getAsyncAgentRun(owner, run.agentRunId))?.agentRunId, run.agentRunId)
   assert.equal((await service.getAsyncAgentRun(admin, run.agentRunId))?.agentRunId, run.agentRunId)
+  assert.equal(await service.getAsyncAgentRun(otherTenantAdmin, run.agentRunId), undefined)
   await assert.rejects(() => service.getAsyncAgentRun(other, run.agentRunId), /Forbidden/)
   assert.deepEqual(await service.listAsyncAgentRuns(owner), [run])
   assert.deepEqual(await service.listAsyncAgentRuns(other), [])
   assert.equal((await service.listAsyncAgentRuns(admin))[0]?.agentRunId, run.agentRunId)
+  assert.deepEqual(await service.listAsyncAgentRuns(otherTenantAdmin), [])
+  assert.equal(await service.getAsyncAgentArtifact(otherTenantAdmin, run.agentRunId, "missing-artifact"), undefined)
 
   const unavailable = await service.createAsyncAgentRun(owner, {
     provider: "unknown_provider" as never,
@@ -159,7 +297,7 @@ test("service manages async agent run metadata without provider execution or moc
   assert.equal(await service.getAsyncAgentRun(owner, "missing-run"), undefined)
   assert.equal(await service.cancelAsyncAgentRun(owner, "missing-run"), undefined)
   assert.equal(await service.listAsyncAgentArtifacts(owner, "missing-run"), undefined)
-  await assert.rejects(() => service.executeAsyncAgentRun("missing-run"), /Async agent run not found/)
+  await assert.rejects(() => service.executeAsyncAgentRun("default", "missing-run"), /Async agent run not found/)
 
   const queuedRun: AsyncAgentRun = {
     ...run,
@@ -184,9 +322,9 @@ test("service manages async agent run metadata without provider execution or moc
     }],
     completedAt: undefined
   }
-  await deps.objectStore.putText("agent-runs/agent_queued_fixture.json", JSON.stringify(queuedRun), "application/json; charset=utf-8")
+  await deps.objectStore.putText(`agent-runs/${tenantPartitionId("default")}/runs/agent_queued_fixture.json`, JSON.stringify(queuedRun), "application/json; charset=utf-8")
 
-  const blockedByWorkerContract = await service.executeAsyncAgentRun("agent_queued_fixture")
+  const blockedByWorkerContract = await service.executeAsyncAgentRun("default", "agent_queued_fixture")
   assert.equal(blockedByWorkerContract.status, "blocked")
   assert.equal(blockedByWorkerContract.failureReasonCode, "not_configured")
   assert.equal((await service.getAsyncAgentArtifact(owner, "agent_queued_fixture", "artifact_report_fixture"))?.fileName, "report.md")
@@ -194,7 +332,7 @@ test("service manages async agent run metadata without provider execution or moc
 })
 
 test("service treats object-store missing variants as absent async agent runs", async () => {
-  const owner: AppUser = { userId: "agent-owner", email: "agent-owner@example.com", cognitoGroups: ["ASYNC_AGENT_USER"] }
+  const owner: AppUser = { userId: "agent-owner", email: "agent-owner@example.com", cognitoGroups: ["ASYNC_AGENT_USER"], accountStatus: "active" as const, tenantId: "default" }
   const missingVariants = [
     Object.assign(new Error("object missing"), { Code: "NoSuchKey" }),
     Object.assign(new Error("object missing"), { name: "NoSuchKey" }),
@@ -206,7 +344,7 @@ test("service treats object-store missing variants as absent async agent runs", 
 
   for (const [index, objectGetError] of missingVariants.entries()) {
     const { service } = await createService({
-      objectGetErrorPrefix: `agent-runs/missing-${index}`,
+      objectGetErrorPrefix: `agent-runs/${tenantPartitionId("default")}/runs/missing-${index}`,
       objectGetError
     })
     assert.equal(await service.getAsyncAgentRun(owner, `missing-${index}`), undefined)
@@ -214,21 +352,30 @@ test("service treats object-store missing variants as absent async agent runs", 
 })
 
 test("service surfaces non-missing async agent run load errors", async () => {
-  const owner: AppUser = { userId: "agent-owner", email: "agent-owner@example.com", cognitoGroups: ["ASYNC_AGENT_USER"] }
+  const owner: AppUser = { userId: "agent-owner", email: "agent-owner@example.com", cognitoGroups: ["ASYNC_AGENT_USER"], accountStatus: "active" as const, tenantId: "default" }
   const { service } = await createService({
-    objectGetErrorPrefix: "agent-runs/broken",
+    objectGetErrorPrefix: `agent-runs/${tenantPartitionId("default")}/runs/broken`,
     objectGetError: new Error("object store unavailable")
   })
   await assert.rejects(() => service.getAsyncAgentRun(owner, "broken"), /object store unavailable/)
 })
 
 test("service listDocuments filters manifests by ACL for callers", async () => {
-  const { service } = await createService()
+  const { service, deps } = await createService()
+  const chatUser = { userId: "chat-1", email: "chat@example.com", cognitoGroups: ["CHAT_USER", "RAG_GROUP_MANAGER"], accountStatus: "active" as const, tenantId: "default" }
+  const benchmarkRunner = { userId: "runner-1", email: "runner@example.com", cognitoGroups: ["BENCHMARK_RUNNER", "RAG_GROUP_MANAGER"], accountStatus: "active" as const, tenantId: "default" }
+  const systemAdmin = { userId: "admin-1", email: "admin@example.com", cognitoGroups: ["SYSTEM_ADMIN"], accountStatus: "active" as const, tenantId: "default" }
+  const generalGroup = await service.createDocumentGroup(chatUser, { name: "General readers" })
+  await seedFolderPolicy(deps, generalGroup.groupId, [
+    { principalType: "user", principalId: chatUser.userId, permissionLevel: "full" },
+    { principalType: "user", principalId: benchmarkRunner.userId, permissionLevel: "readOnly" }
+  ])
+  const benchmarkGroup = await service.createDocumentGroup(benchmarkRunner, { name: "Benchmark readers" })
   const general = await service.ingest({
     fileName: "general.md",
     text: "通常利用者向けの資料です。",
     skipMemory: true,
-    metadata: { aclGroups: ["CHAT_USER", "BENCHMARK_RUNNER"] }
+    metadata: { groupIds: [generalGroup.groupId], scopeType: "group" }
   })
   const benchmark = await service.ingest({
     fileName: "handbook.md",
@@ -238,16 +385,15 @@ test("service listDocuments filters manifests by ACL for callers", async () => {
       aclGroups: ["BENCHMARK_RUNNER"],
       docType: "benchmark-corpus",
       source: "benchmark-runner",
-      lifecycleStatus: "active"
+      lifecycleStatus: "active",
+      groupIds: [benchmarkGroup.groupId],
+      scopeType: "group"
     }
   })
-  const chatUser = { userId: "chat-1", email: "chat@example.com", cognitoGroups: ["CHAT_USER"] }
-  const benchmarkRunner = { userId: "runner-1", email: "runner@example.com", cognitoGroups: ["BENCHMARK_RUNNER"] }
-  const systemAdmin = { userId: "admin-1", email: "admin@example.com", cognitoGroups: ["SYSTEM_ADMIN"] }
 
   assert.deepEqual((await service.listDocuments(chatUser)).map((doc) => doc.documentId), [general.documentId])
   assert.deepEqual((await service.listDocuments(benchmarkRunner)).map((doc) => doc.documentId).sort(), [benchmark.documentId, general.documentId].sort())
-  assert.deepEqual((await service.listDocuments(systemAdmin)).map((doc) => doc.documentId).sort(), [benchmark.documentId, general.documentId].sort())
+  assert.deepEqual((await service.listDocuments(systemAdmin)).map((doc) => doc.documentId), [])
 })
 
 test("service listDocuments hides normal manifests without group owner or ACL from callers", async () => {
@@ -257,11 +403,12 @@ test("service listDocuments hides normal manifests without group owner or ACL fr
     text: "ACL がない通常資料です。",
     skipMemory: true
   })
-  const caller = { userId: "chat-1", email: "chat@example.com", cognitoGroups: ["CHAT_USER"] }
-  const systemAdmin = { userId: "admin-1", email: "admin@example.com", cognitoGroups: ["SYSTEM_ADMIN"] }
+  const caller = { userId: "chat-1", email: "chat@example.com", cognitoGroups: ["CHAT_USER"], accountStatus: "active" as const, tenantId: "default" }
+  const systemAdmin = { userId: "admin-1", email: "admin@example.com", cognitoGroups: ["SYSTEM_ADMIN"], accountStatus: "active" as const, tenantId: "default" }
 
   assert.deepEqual((await service.listDocuments(caller)).map((doc) => doc.documentId), [])
-  assert.deepEqual((await service.listDocuments(systemAdmin)).map((doc) => doc.documentId), [hidden.documentId])
+  assert.deepEqual((await service.listDocuments(systemAdmin)).map((doc) => doc.documentId), [])
+  assert.deepEqual((await service.listDocuments(localDocumentManager())).map((doc) => doc.documentId), [hidden.documentId])
 })
 
 test("service persists document quality profile and excludes ineligible documents from normal RAG search", async () => {
@@ -285,13 +432,13 @@ test("service persists document quality profile and excludes ineligible document
     }
   })
 
-  assert.equal(eligible.qualityProfile, undefined)
+  assert.equal(eligible.qualityProfile?.ragEligibility, "eligible")
   assert.equal(excluded.qualityProfile?.ragEligibility, "excluded")
   assert.equal(excluded.qualityProfile?.verificationStatus, "rejected")
   assert.deepEqual((await service.listDocuments()).map((doc) => doc.documentId).sort(), [eligible.documentId, excluded.documentId].sort())
   const search = await service.search(
     { query: "品質管理", topK: 5, lexicalTopK: 5, semanticTopK: 0 },
-    { userId: "user-1", email: "user@example.com", cognitoGroups: ["CHAT_USER"] }
+    { userId: "user-1", email: "user@example.com", cognitoGroups: ["CHAT_USER"], accountStatus: "active" as const, tenantId: "default" }
   )
   assert.deepEqual(search.results, [])
 
@@ -317,10 +464,17 @@ test("service listDocuments skips a manifest that disappeared after listing", as
 
 test("benchmark seed delete authorization reads only the target manifest", async () => {
   const { service } = await createService({ objectListExtraKeys: ["manifests/stale-missing.json"] })
+  const benchmarkTenantId = config.benchmarkEvaluationTenantId
   const benchmark = await service.ingest({
     fileName: "benchmark.md",
     text: "benchmark corpus content",
     skipMemory: true,
+    admissionContext: {
+      mode: "local_test_fixture",
+      fixtureId: "benchmark-seed-delete",
+      tenantId: benchmarkTenantId,
+      ownerUserId: "benchmark-evaluation:standard-agent-v1"
+    },
     metadata: {
       benchmarkSeed: true,
       benchmarkSuiteId: "smoke-agent-v1",
@@ -331,7 +485,10 @@ test("benchmark seed delete authorization reads only the target manifest", async
       aclGroups: ["BENCHMARK_RUNNER"],
       docType: "benchmark-corpus",
       lifecycleStatus: "active",
-      source: "benchmark-runner"
+      source: "benchmark-runner",
+      scopeType: "benchmark",
+      tenantId: benchmarkTenantId,
+      ownerUserId: "benchmark-evaluation:standard-agent-v1"
     }
   })
   const general = await service.ingest({
@@ -342,7 +499,7 @@ test("benchmark seed delete authorization reads only the target manifest", async
   service.listDocuments = async () => {
     throw new Error("authorizeDocumentDelete must not list all manifests")
   }
-  const benchmarkRunner = { userId: "runner-1", email: "runner@example.com", cognitoGroups: ["BENCHMARK_RUNNER"] }
+  const benchmarkRunner = { userId: "runner-1", email: "runner@example.com", cognitoGroups: ["BENCHMARK_RUNNER"], accountStatus: "active" as const, tenantId: benchmarkTenantId }
 
   await authorizeDocumentDelete(service, benchmarkRunner, benchmark.documentId)
   await assert.rejects(() => authorizeDocumentDelete(service, benchmarkRunner, general.documentId), (error) => {
@@ -410,20 +567,15 @@ test("service keeps rich drawing metadata out of vector filter metadata", async 
 })
 
 test("service listDocuments denies group-scoped manifests to non-members without legacy ACLs", async () => {
-  const { service } = await createService()
-  const owner = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["CHAT_USER"] }
-  const member = { userId: "member-1", email: "member@example.com", cognitoGroups: ["CHAT_USER"] }
-  const outsider = { userId: "outsider-1", email: "outsider@example.com", cognitoGroups: ["CHAT_USER"] }
-  const group = await service.createDocumentGroup(owner, {
-    name: "Private launch group",
-    sharedUserIds: [member.userId]
-  })
-  const publicDoc = await service.ingest({
-    fileName: "public.md",
-    text: "全員が読める一般資料です。",
-    skipMemory: true,
-    metadata: { aclGroups: ["CHAT_USER"] }
-  })
+  const { service, deps } = await createService()
+  const owner = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["CHAT_USER", "RAG_GROUP_MANAGER"], accountStatus: "active" as const, tenantId: "default" }
+  const member = { userId: "member-1", email: "member@example.com", cognitoGroups: ["CHAT_USER"], accountStatus: "active" as const, tenantId: "default" }
+  const outsider = { userId: "outsider-1", email: "outsider@example.com", cognitoGroups: ["CHAT_USER"], accountStatus: "active" as const, tenantId: "default" }
+  const group = await service.createDocumentGroup(owner, { name: "Private launch group" })
+  await seedFolderPolicy(deps, group.groupId, [
+    { principalType: "user", principalId: owner.userId, permissionLevel: "full" },
+    { principalType: "user", principalId: member.userId, permissionLevel: "readOnly" }
+  ])
   const groupDoc = await service.ingest({
     fileName: "group-secret.md",
     text: "group scope only launch plan.",
@@ -435,64 +587,65 @@ test("service listDocuments denies group-scoped manifests to non-members without
     }
   })
 
-  assert.deepEqual((await service.listDocuments(outsider)).map((doc) => doc.documentId), [publicDoc.documentId])
-  assert.deepEqual((await service.listDocuments(owner)).map((doc) => doc.documentId).sort(), [groupDoc.documentId, publicDoc.documentId].sort())
-  assert.deepEqual((await service.listDocuments(member)).map((doc) => doc.documentId).sort(), [groupDoc.documentId, publicDoc.documentId].sort())
+  assert.deepEqual((await service.listDocuments(outsider)).map((doc) => doc.documentId), [])
+  assert.deepEqual((await service.listDocuments(owner)).map((doc) => doc.documentId), [groupDoc.documentId])
+  assert.deepEqual((await service.listDocuments(member)).map((doc) => doc.documentId), [groupDoc.documentId])
 })
 
-test("service stores document group hierarchy outside S3 object keys", async () => {
+test("service stores hierarchy outside S3 and legacy metadata update cannot move or share folders", async () => {
   const { service, deps } = await createService()
-  const owner = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["CHAT_USER"] }
-  const parent = await service.createDocumentGroup(owner, {
-    name: "社内規定",
-    visibility: "shared",
-    sharedGroups: ["HR"]
-  })
+  const owner = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["CHAT_USER", "RAG_GROUP_MANAGER"], accountStatus: "active" as const, tenantId: "default" }
+  const parent = await service.createDocumentGroup(owner, { name: "社内規定" })
   const child = await service.createDocumentGroup(owner, {
     name: "人事",
-    parentGroupId: parent.groupId,
-    visibility: "private"
+    parentGroupId: parent.groupId
   })
   const grandchild = await service.createDocumentGroup(owner, {
     name: "採用",
-    parentGroupId: child.groupId,
-    visibility: "private"
+    parentGroupId: child.groupId
   })
-  const anotherParent = await service.createDocumentGroup(owner, {
-    name: "全社共有",
-    visibility: "private"
-  })
+  const anotherParent = await service.createDocumentGroup(owner, { name: "全社共有" })
 
   assert.equal(child.parentGroupId, parent.groupId)
   assert.deepEqual(child.ancestorGroupIds, [parent.groupId])
   assert.deepEqual(grandchild.ancestorGroupIds, [parent.groupId, child.groupId])
   assert.equal((await deps.objectStore.listKeys("document-groups/")).length, 0)
 
-  const moved = await service.updateDocumentGroupSharing(owner, child.groupId, {
+  const rejectedAuthority = {
+    description: "metadata only",
     parentGroupId: anotherParent.groupId,
     visibility: "shared",
     sharedGroups: ["HR"]
-  })
-  assert.equal(moved?.parentGroupId, anotherParent.groupId)
-  assert.deepEqual(moved?.ancestorGroupIds, [anotherParent.groupId])
-  assert.deepEqual(moved?.sharedGroups, ["HR"])
-  assert.deepEqual((await deps.documentGroupStore.get(grandchild.groupId))?.ancestorGroupIds, [anotherParent.groupId, child.groupId])
+  } as unknown as Parameters<MemoRagService["updateDocumentGroupSharing"]>[2]
+  const updated = await service.updateDocumentGroupSharing(owner, child.groupId, rejectedAuthority)
+  assert.equal(updated?.description, "metadata only")
+  assert.equal(updated?.parentGroupId, parent.groupId)
+  assert.deepEqual(updated?.ancestorGroupIds, [parent.groupId])
+  assert.deepEqual(updated?.sharedGroups, [])
+  assert.equal(updated?.visibility, "private")
+  assert.deepEqual((await deps.documentGroupStore.get("default", grandchild.groupId))?.ancestorGroupIds, [parent.groupId, child.groupId])
 })
 
-test("service assigns canonical document group paths and rejects duplicate paths per admin principal", async () => {
+test("service assigns canonical paths to the actor user and ignores requested administrative principals", async () => {
   const { service } = await createService()
-  const owner = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["CHAT_USER", "TEAM_A"] }
-  const otherOwner = { userId: "owner-2", email: "owner2@example.com", cognitoGroups: ["CHAT_USER"] }
+  const owner = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["CHAT_USER", "RAG_GROUP_MANAGER", "TEAM_A"], accountStatus: "active" as const, tenantId: "default" }
+  const otherOwner = { userId: "owner-2", email: "owner2@example.com", cognitoGroups: ["CHAT_USER", "RAG_GROUP_MANAGER"], accountStatus: "active" as const, tenantId: "default" }
+  const systemAdmin = { userId: "admin-1", email: "admin@example.com", cognitoGroups: ["SYSTEM_ADMIN"], accountStatus: "active" as const, tenantId: "default" }
 
   const root = await service.createDocumentGroup(owner, { name: "Team" })
   const child = await service.createDocumentGroup(owner, { name: "Spec", parentGroupId: root.groupId })
   const rootSibling = await service.createDocumentGroup(owner, { name: "Spec" })
   const otherOwnerRoot = await service.createDocumentGroup(otherOwner, { name: "Team" })
-  const groupManagedRoot = await service.createDocumentGroup(owner, {
-    name: "Team",
+  const attemptedGroupManagedRoot = await service.createDocumentGroup(owner, {
+    name: "Escalation attempt",
     adminPrincipalType: "group",
     adminPrincipalId: "TEAM_A"
-  })
+  } as unknown as Parameters<MemoRagService["createDocumentGroup"]>[1])
+  const attemptedSystemAdminBypass = await service.createDocumentGroup(systemAdmin, {
+    name: "System admin escalation attempt",
+    adminPrincipalType: "group",
+    adminPrincipalId: "UNKNOWN_ADMIN_GROUP"
+  } as unknown as Parameters<MemoRagService["createDocumentGroup"]>[1])
 
   assert.equal(root.canonicalPath, "/Team")
   assert.equal(root.normalizedCanonicalPath, "/team")
@@ -501,80 +654,94 @@ test("service assigns canonical document group paths and rejects duplicate paths
   assert.equal(child.normalizedCanonicalPath, "/team/spec")
   assert.equal(rootSibling.canonicalPath, "/Spec")
   assert.equal(otherOwnerRoot.adminPathPk, "default#user#owner-2")
-  assert.equal(groupManagedRoot.adminPathPk, "default#group#TEAM_A")
+  assert.equal(attemptedGroupManagedRoot.adminPrincipalType, "user")
+  assert.equal(attemptedGroupManagedRoot.adminPrincipalId, owner.userId)
+  assert.equal(attemptedGroupManagedRoot.adminPathPk, "default#user#owner-1")
+  assert.equal(attemptedGroupManagedRoot.visibility, "private")
+  assert.deepEqual(attemptedGroupManagedRoot.sharedUserIds, [])
+  assert.deepEqual(attemptedGroupManagedRoot.sharedGroups, [])
+  assert.deepEqual(attemptedGroupManagedRoot.managerUserIds, [owner.userId])
+  assert.equal(attemptedSystemAdminBypass.adminPrincipalType, "user")
+  assert.equal(attemptedSystemAdminBypass.adminPrincipalId, systemAdmin.userId)
+  assert.equal(attemptedSystemAdminBypass.adminPathPk, "default#user#admin-1")
 
   await assert.rejects(() => service.createDocumentGroup(owner, { name: "team" }), /canonical path already exists/)
   await assert.rejects(() => service.createDocumentGroup(owner, { name: "Forbidden/Name" }), /unsupported characters/)
   await assert.rejects(() => service.createDocumentGroup(owner, { name: "Forbidden\u0001Name" }), /unsupported characters/)
   await assert.rejects(() => service.createDocumentGroup(owner, { name: "   " }), /name is required/)
-  await assert.rejects(() => service.createDocumentGroup(owner, { name: "Group missing id", adminPrincipalType: "group" }), /adminPrincipalId is required/)
-  await assert.rejects(
-    () => service.createDocumentGroup(owner, { name: "Forbidden group", adminPrincipalType: "group", adminPrincipalId: "TEAM_B" }),
-    /cannot create a group-managed folder/
-  )
 })
 
-test("service recalculates descendant canonical paths and local lock items on move and rename", async () => {
+test("service recalculates descendant canonical paths and local lock items on rename", async () => {
   const { service, dataDir } = await createService()
-  const owner = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["CHAT_USER"] }
+  const owner = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["CHAT_USER", "RAG_GROUP_MANAGER"], accountStatus: "active" as const, tenantId: "default" }
   const source = await service.createDocumentGroup(owner, { name: "Source" })
-  const target = await service.createDocumentGroup(owner, { name: "Target" })
   const child = await service.createDocumentGroup(owner, { name: "Child", parentGroupId: source.groupId })
   const grandchild = await service.createDocumentGroup(owner, { name: "Grandchild", parentGroupId: child.groupId })
 
-  const moved = await service.updateDocumentGroupSharing(owner, child.groupId, {
-    name: "Renamed",
-    parentGroupId: target.groupId
-  })
-  assert.equal(moved?.canonicalPath, "/Target/Renamed")
-  assert.deepEqual(moved?.ancestorGroupIds, [target.groupId])
+  const renamed = await service.updateDocumentGroupSharing(owner, child.groupId, { name: "Renamed" })
+  assert.equal(renamed?.canonicalPath, "/Source/Renamed")
+  assert.deepEqual(renamed?.ancestorGroupIds, [source.groupId])
 
   const groups = await service.listDocumentGroups(owner)
   const movedGrandchild = groups.find((group) => group.groupId === grandchild.groupId)
-  assert.equal(movedGrandchild?.canonicalPath, "/Target/Renamed/Grandchild")
-  assert.deepEqual(movedGrandchild?.ancestorGroupIds, [target.groupId, child.groupId])
+  assert.equal(movedGrandchild?.canonicalPath, "/Source/Renamed/Grandchild")
+  assert.deepEqual(movedGrandchild?.ancestorGroupIds, [source.groupId, child.groupId])
 
-  const db = JSON.parse(await readFile(path.join(dataDir, "document-groups.json"), "utf-8")) as { pathLocks?: Array<{ lockedGroupId: string; normalizedCanonicalPath: string }> }
-  assert.ok(db.pathLocks?.some((lock) => lock.lockedGroupId === child.groupId && lock.normalizedCanonicalPath === "/target/renamed"))
-  assert.ok(db.pathLocks?.some((lock) => lock.lockedGroupId === grandchild.groupId && lock.normalizedCanonicalPath === "/target/renamed/grandchild"))
+  const db = JSON.parse(await readFile(path.join(
+    dataDir,
+    "document-groups",
+    tenantPartitionId("default"),
+    "items.json"
+  ), "utf-8")) as { pathLocks?: Array<{ lockedGroupId: string; normalizedCanonicalPath: string }> }
+  assert.ok(db.pathLocks?.some((lock) => lock.lockedGroupId === child.groupId && lock.normalizedCanonicalPath === "/source/renamed"))
+  assert.ok(db.pathLocks?.some((lock) => lock.lockedGroupId === grandchild.groupId && lock.normalizedCanonicalPath === "/source/renamed/grandchild"))
   assert.equal(db.pathLocks?.some((lock) => lock.lockedGroupId === child.groupId && lock.normalizedCanonicalPath === "/source/child"), false)
 })
 
-test("service moves a document group subtree back to root with path locks", async () => {
+test("service legacy metadata update ignores runtime parent mutation fields", async () => {
   const { service, dataDir } = await createService()
-  const owner = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["CHAT_USER"] }
+  const owner = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["CHAT_USER", "RAG_GROUP_MANAGER"], accountStatus: "active" as const, tenantId: "default" }
   const root = await service.createDocumentGroup(owner, { name: "Root" })
   const child = await service.createDocumentGroup(owner, { name: "Child", parentGroupId: root.groupId })
   const grandchild = await service.createDocumentGroup(owner, { name: "Grandchild", parentGroupId: child.groupId })
+  await service.createDocumentGroup(owner, { name: "Sibling", parentGroupId: root.groupId })
 
-  const moved = await service.updateDocumentGroupSharing(owner, child.groupId, { parentGroupId: null })
+  const rejectedMove = { description: "metadata only", parentGroupId: null } as unknown as Parameters<MemoRagService["updateDocumentGroupSharing"]>[2]
+  const updated = await service.updateDocumentGroupSharing(owner, child.groupId, rejectedMove)
 
-  assert.equal(moved?.parentGroupId, undefined)
-  assert.deepEqual(moved?.ancestorGroupIds, [])
-  assert.equal(moved?.canonicalPath, "/Child")
-  assert.equal(moved?.normalizedCanonicalPath, "/child")
+  assert.equal(updated?.description, "metadata only")
+  assert.equal(updated?.parentGroupId, root.groupId)
+  assert.deepEqual(updated?.ancestorGroupIds, [root.groupId])
+  assert.equal(updated?.canonicalPath, "/Root/Child")
+  assert.equal(updated?.normalizedCanonicalPath, "/root/child")
 
   const groups = await service.listDocumentGroups(owner)
   const movedGrandchild = groups.find((group) => group.groupId === grandchild.groupId)
-  assert.equal(movedGrandchild?.canonicalPath, "/Child/Grandchild")
-  assert.deepEqual(movedGrandchild?.ancestorGroupIds, [child.groupId])
+  assert.equal(movedGrandchild?.canonicalPath, "/Root/Child/Grandchild")
+  assert.deepEqual(movedGrandchild?.ancestorGroupIds, [root.groupId, child.groupId])
 
-  const db = JSON.parse(await readFile(path.join(dataDir, "document-groups.json"), "utf-8")) as { pathLocks?: Array<{ lockedGroupId: string; normalizedCanonicalPath: string }> }
-  assert.ok(db.pathLocks?.some((lock) => lock.lockedGroupId === child.groupId && lock.normalizedCanonicalPath === "/child"))
-  assert.ok(db.pathLocks?.some((lock) => lock.lockedGroupId === grandchild.groupId && lock.normalizedCanonicalPath === "/child/grandchild"))
-  assert.equal(db.pathLocks?.some((lock) => lock.lockedGroupId === child.groupId && lock.normalizedCanonicalPath === "/root/child"), false)
+  const db = JSON.parse(await readFile(path.join(
+    dataDir,
+    "document-groups",
+    tenantPartitionId("default"),
+    "items.json"
+  ), "utf-8")) as { pathLocks?: Array<{ lockedGroupId: string; normalizedCanonicalPath: string }> }
+  assert.ok(db.pathLocks?.some((lock) => lock.lockedGroupId === child.groupId && lock.normalizedCanonicalPath === "/root/child"))
+  assert.ok(db.pathLocks?.some((lock) => lock.lockedGroupId === grandchild.groupId && lock.normalizedCanonicalPath === "/root/child/grandchild"))
+  assert.equal(db.pathLocks?.some((lock) => lock.lockedGroupId === child.groupId && lock.normalizedCanonicalPath === "/child"), false)
 
   await assert.rejects(
-    () => service.updateDocumentGroupSharing(owner, child.groupId, { name: "Root", parentGroupId: null }),
+    () => service.updateDocumentGroupSharing(owner, child.groupId, { name: "Sibling" }),
     /canonical path already exists/
   )
 })
 
 test("service normalizes legacy document groups on read", async () => {
   const { service, deps } = await createService()
-  const owner = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["CHAT_USER"] }
+  const owner = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["CHAT_USER"], accountStatus: "active" as const, tenantId: "default" }
   await deps.documentGroupStore.create({
     groupId: "legacy-parent",
+    tenantId: "default",
     name: "Legacy",
     ownerUserId: owner.userId,
     visibility: "private",
@@ -586,6 +753,7 @@ test("service normalizes legacy document groups on read", async () => {
   })
   await deps.documentGroupStore.create({
     groupId: "legacy-child",
+    tenantId: "default",
     name: "Child",
     parentGroupId: "legacy-parent",
     ownerUserId: owner.userId,
@@ -604,13 +772,13 @@ test("service normalizes legacy document groups on read", async () => {
 })
 
 test("service enforces document group management and search scope boundaries", async () => {
-  const { service } = await createService()
-  const owner = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["CHAT_USER"] }
-  const manager = { userId: "manager-1", email: "manager@example.com", cognitoGroups: ["CHAT_USER"] }
-  const outsider = { userId: "outsider-1", email: "outsider@example.com", cognitoGroups: ["CHAT_USER"] }
-  const admin = { userId: "admin-1", email: "admin@example.com", cognitoGroups: ["SYSTEM_ADMIN"] }
+  const { service, deps } = await createService()
+  const owner = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["CHAT_USER", "RAG_GROUP_MANAGER"], accountStatus: "active" as const, tenantId: "default" }
+  const manager = { userId: "manager-1", email: "manager@example.com", cognitoGroups: ["CHAT_USER", "RAG_GROUP_MANAGER"], accountStatus: "active" as const, tenantId: "default" }
+  const outsider = { userId: "outsider-1", email: "outsider@example.com", cognitoGroups: ["CHAT_USER"], accountStatus: "active" as const, tenantId: "default" }
+  const admin = { userId: "admin-1", email: "admin@example.com", cognitoGroups: ["SYSTEM_ADMIN"], accountStatus: "active" as const, tenantId: "default" }
 
-  assert.equal(await service.updateDocumentGroupSharing(owner, "missing-group", { visibility: "shared" }), undefined)
+  assert.equal(await service.updateDocumentGroupSharing(owner, "missing-group", { description: "missing" }), undefined)
   await service.assertDocumentGroupsWritable(owner, [])
   await service.assertSearchScopeReadable(owner, undefined)
   await assert.rejects(
@@ -618,78 +786,67 @@ test("service enforces document group management and search scope boundaries", a
     /Parent document group not found/
   )
 
-  const parent = await service.createDocumentGroup(owner, {
-    name: "Parent",
-    visibility: "private",
-    managerUserIds: [manager.userId],
-    sharedUserIds: [manager.userId]
-  })
+  const parent = await service.createDocumentGroup(owner, { name: "Parent" })
+  await seedFolderPolicy(deps, parent.groupId, [
+    { principalType: "user", principalId: owner.userId, permissionLevel: "full" },
+    { principalType: "user", principalId: manager.userId, permissionLevel: "full" }
+  ])
   const child = await service.createDocumentGroup(manager, {
     name: "Child",
     parentGroupId: parent.groupId,
-    description: "  shared child  ",
-    sharedUserIds: [owner.userId, owner.userId],
-    sharedGroups: ["HR", "HR"],
-    managerUserIds: [manager.userId, manager.userId]
+    description: "  private child  "
   })
   const privateParent = await service.createDocumentGroup(owner, {
     name: "Private parent"
   })
 
-  assert.equal(child.description, "shared child")
-  assert.deepEqual(child.sharedUserIds, [owner.userId])
-  assert.deepEqual(child.sharedGroups, ["HR"])
+  assert.equal(child.description, "private child")
+  assert.equal(child.adminPrincipalType, "user")
+  assert.equal(child.adminPrincipalId, manager.userId)
+  assert.equal(child.visibility, "private")
+  assert.deepEqual(child.sharedUserIds, [])
+  assert.deepEqual(child.sharedGroups, [])
   assert.deepEqual(child.managerUserIds, [manager.userId])
   await assert.rejects(
     () => service.createDocumentGroup(outsider, { name: "Forbidden child", parentGroupId: parent.groupId }),
     /Forbidden: cannot create a child group/
   )
   await assert.rejects(
-    () => service.updateDocumentGroupSharing(owner, parent.groupId, { parentGroupId: parent.groupId }),
-    /cannot be its own parent/
-  )
-  await assert.rejects(
-    () => service.updateDocumentGroupSharing(owner, parent.groupId, { parentGroupId: child.groupId }),
-    /cannot move under its descendant/
-  )
-  await assert.rejects(
-    () => service.updateDocumentGroupSharing(owner, parent.groupId, { parentGroupId: "missing-parent" }),
-    /Parent document group not found/
-  )
-  await assert.rejects(
-    () => service.updateDocumentGroupSharing(outsider, parent.groupId, { visibility: "shared" }),
+    () => service.updateDocumentGroupSharing(outsider, parent.groupId, { description: "forbidden" }),
     /only group managers/
   )
-  await assert.rejects(
-    () => service.updateDocumentGroupSharing(manager, child.groupId, { parentGroupId: privateParent.groupId }),
-    /cannot move group under this parent/
-  )
+  const rejectedMove = { parentGroupId: privateParent.groupId } as unknown as Parameters<MemoRagService["updateDocumentGroupSharing"]>[2]
+  const unchangedChild = await service.updateDocumentGroupSharing(manager, child.groupId, rejectedMove)
+  assert.equal(unchangedChild?.parentGroupId, parent.groupId)
   await assert.rejects(() => service.assertDocumentGroupsWritable(outsider, [parent.groupId]), /cannot write document group/)
-  await service.assertDocumentGroupsWritable(admin, [parent.groupId])
+  await assert.rejects(() => service.assertDocumentGroupsWritable(admin, [parent.groupId]), /cannot write document group/)
   await assert.rejects(() => service.assertSearchScopeReadable(outsider, { groupIds: [parent.groupId] }), /cannot read document group/)
   await service.assertSearchScopeReadable(manager, { groupIds: [parent.groupId] })
 })
 
 test("service inherits parent document group sharing unless child has explicit policy", async () => {
-  const { service } = await createService()
-  const owner: AppUser = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
-  const reader: AppUser = { userId: "reader-1", email: "reader@example.com", cognitoGroups: ["CHAT_USER"] }
-  const outsider: AppUser = { userId: "outsider-1", email: "outsider@example.com", cognitoGroups: ["CHAT_USER"] }
+  const { service, deps } = await createService()
+  const owner: AppUser = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"], accountStatus: "active" as const, tenantId: "default" }
+  const reader: AppUser = { userId: "reader-1", email: "reader@example.com", cognitoGroups: ["CHAT_USER"], accountStatus: "active" as const, tenantId: "default" }
+  const outsider: AppUser = { userId: "outsider-1", email: "outsider@example.com", cognitoGroups: ["CHAT_USER"], accountStatus: "active" as const, tenantId: "default" }
   const suspendedReader: AppUser = { ...reader, accountStatus: "suspended" }
 
-  const parent = await service.createDocumentGroup(owner, {
-    name: "Parent policy",
-    sharedUserIds: [reader.userId]
-  })
+  const parent = await service.createDocumentGroup(owner, { name: "Parent policy" })
+  await seedFolderPolicy(deps, parent.groupId, [
+    { principalType: "user", principalId: owner.userId, permissionLevel: "full" },
+    { principalType: "user", principalId: reader.userId, permissionLevel: "readOnly" }
+  ])
   const inheritedChild = await service.createDocumentGroup(owner, {
     name: "Inherited child",
     parentGroupId: parent.groupId
   })
   const restrictedChild = await service.createDocumentGroup(owner, {
     name: "Restricted child",
-    parentGroupId: parent.groupId,
-    visibility: "private"
+    parentGroupId: parent.groupId
   })
+  await seedFolderPolicy(deps, restrictedChild.groupId, [
+    { principalType: "user", principalId: owner.userId, permissionLevel: "full" }
+  ])
   await service.ingest({
     fileName: "inherited-child.md",
     text: "inherited pear policy is readable through the parent folder sharing.",
@@ -711,11 +868,11 @@ test("service inherits parent document group sharing unless child has explicit p
     }
   })
 
-  assert.equal(inheritedChild.hasExplicitPolicy, undefined)
-  assert.equal(restrictedChild.hasExplicitPolicy, true)
+  assert.equal(await deps.folderPolicyStore.findByFolderId("default", inheritedChild.groupId), undefined)
+  assert.ok(await deps.folderPolicyStore.findByFolderId("default", restrictedChild.groupId))
   assert.deepEqual((await service.listDocumentGroups(reader)).map((group) => group.groupId).sort(), [inheritedChild.groupId, parent.groupId].sort())
   assert.equal((await service.listDocumentGroups(reader)).some((group) => group.groupId === restrictedChild.groupId), false)
-  assert.deepEqual(await service.listDocumentGroups(suspendedReader), [])
+  await assert.rejects(() => service.listDocumentGroups(suspendedReader), /Forbidden/)
   assert.deepEqual((await service.listDocuments(reader)).map((document) => document.fileName), ["inherited-child.md"])
   await service.assertSearchScopeReadable(reader, { groupIds: [inheritedChild.groupId] })
   await assert.rejects(() => service.assertDocumentGroupsWritable(reader, [inheritedChild.groupId]), /cannot write document group/)
@@ -744,11 +901,12 @@ test("service inherits parent document group sharing unless child has explicit p
 
 test("service preserves legacy explicit shared child policy when hasExplicitPolicy is false", async () => {
   const { service, deps } = await createService()
-  const owner: AppUser = { userId: "owner-legacy", email: "owner-legacy@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
-  const reader: AppUser = { userId: "reader-legacy", email: "reader-legacy@example.com", cognitoGroups: ["CHAT_USER"] }
+  const owner: AppUser = { userId: "owner-legacy", email: "owner-legacy@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"], accountStatus: "active" as const, tenantId: "default" }
+  const reader: AppUser = { userId: "reader-legacy", email: "reader-legacy@example.com", cognitoGroups: ["CHAT_USER"], accountStatus: "active" as const, tenantId: "default" }
 
   await deps.documentGroupStore.create({
     groupId: "legacy-private-parent",
+    tenantId: "default",
     name: "Legacy private parent",
     ownerUserId: owner.userId,
     visibility: "private",
@@ -761,6 +919,7 @@ test("service preserves legacy explicit shared child policy when hasExplicitPoli
   })
   await deps.documentGroupStore.create({
     groupId: "legacy-shared-child",
+    tenantId: "default",
     name: "Legacy shared child",
     parentGroupId: "legacy-private-parent",
     ownerUserId: owner.userId,
@@ -788,11 +947,12 @@ test("service preserves legacy explicit shared child policy when hasExplicitPoli
 
 test("service preserves legacy explicit private child policy and does not leak parent sharing", async () => {
   const { service, deps } = await createService()
-  const owner: AppUser = { userId: "owner-legacy", email: "owner-legacy@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
-  const reader: AppUser = { userId: "reader-legacy", email: "reader-legacy@example.com", cognitoGroups: ["CHAT_USER"] }
+  const owner: AppUser = { userId: "owner-legacy", email: "owner-legacy@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"], accountStatus: "active" as const, tenantId: "default" }
+  const reader: AppUser = { userId: "reader-legacy", email: "reader-legacy@example.com", cognitoGroups: ["CHAT_USER"], accountStatus: "active" as const, tenantId: "default" }
 
   await deps.documentGroupStore.create({
     groupId: "legacy-shared-parent",
+    tenantId: "default",
     name: "Legacy shared parent",
     ownerUserId: owner.userId,
     visibility: "shared",
@@ -805,6 +965,7 @@ test("service preserves legacy explicit private child policy and does not leak p
   })
   await deps.documentGroupStore.create({
     groupId: "legacy-private-child",
+    tenantId: "default",
     name: "Legacy private child",
     parentGroupId: "legacy-shared-parent",
     ownerUserId: owner.userId,
@@ -834,23 +995,26 @@ test("service preserves legacy explicit private child policy and does not leak p
 })
 
 test("service annotates visible document groups with effective permission and inheritance source", async () => {
-  const { service } = await createService()
-  const owner: AppUser = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
-  const reader: AppUser = { userId: "reader-1", email: "reader@example.com", cognitoGroups: ["CHAT_USER"] }
+  const { service, deps } = await createService()
+  const owner: AppUser = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"], accountStatus: "active" as const, tenantId: "default" }
+  const reader: AppUser = { userId: "reader-1", email: "reader@example.com", cognitoGroups: ["CHAT_USER"], accountStatus: "active" as const, tenantId: "default" }
 
-  const parent = await service.createDocumentGroup(owner, {
-    name: "Shared parent for annotation",
-    sharedUserIds: [reader.userId]
-  })
+  const parent = await service.createDocumentGroup(owner, { name: "Shared parent for annotation" })
+  await seedFolderPolicy(deps, parent.groupId, [
+    { principalType: "user", principalId: owner.userId, permissionLevel: "full" },
+    { principalType: "user", principalId: reader.userId, permissionLevel: "readOnly" }
+  ])
   const inheritedChild = await service.createDocumentGroup(owner, {
     name: "Inherited child for annotation",
     parentGroupId: parent.groupId
   })
   const explicitPrivateChild = await service.createDocumentGroup(owner, {
     name: "Explicit private child for annotation",
-    parentGroupId: parent.groupId,
-    visibility: "private"
+    parentGroupId: parent.groupId
   })
+  await seedFolderPolicy(deps, explicitPrivateChild.groupId, [
+    { principalType: "user", principalId: owner.userId, permissionLevel: "full" }
+  ])
 
   const visibleGroups = await service.listDocumentGroups(reader)
   const visibleParent = visibleGroups.find((group) => group.groupId === parent.groupId)
@@ -864,14 +1028,11 @@ test("service annotates visible document groups with effective permission and in
   assert.equal(visibleGroups.some((group) => group.groupId === explicitPrivateChild.groupId), false)
 })
 
-test("service does not expose group scoped documents to ownerUserId without folder read permission", async () => {
+test("document administrative principal retains read access despite ordinary folder denial", async () => {
   const { service } = await createService()
-  const groupAdmin: AppUser = { userId: "group-admin", email: "group-admin@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
-  const uploader: AppUser = { userId: "uploader", email: "uploader@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
-  const group = await service.createDocumentGroup(groupAdmin, {
-    name: "Owner bypass read group",
-    visibility: "private"
-  })
+  const groupAdmin: AppUser = { userId: "group-admin", email: "group-admin@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"], accountStatus: "active" as const, tenantId: "default" }
+  const uploader: AppUser = { userId: "uploader", email: "uploader@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"], accountStatus: "active" as const, tenantId: "default" }
+  const group = await service.createDocumentGroup(groupAdmin, { name: "Owner bypass read group" })
   const manifest = await service.ingest({
     fileName: "owner-bypass-read.md",
     text: "owner bypass read content must stay hidden without folder read permission.",
@@ -884,18 +1045,15 @@ test("service does not expose group scoped documents to ownerUserId without fold
   })
 
   assert.equal((await service.listDocumentGroups(uploader)).some((candidate) => candidate.groupId === group.groupId), false)
-  assert.deepEqual((await service.listDocuments(uploader)).map((document) => document.documentId), [])
-  await assert.rejects(() => service.getParsedDocumentPreview(uploader, manifest.documentId), /Forbidden/)
+  assert.deepEqual((await service.listDocuments(uploader)).map((document) => document.documentId), [manifest.documentId])
+  assert.equal((await service.getParsedDocumentPreview(uploader, manifest.documentId))?.documentId, manifest.documentId)
 })
 
-test("service does not allow group scoped document owner to delete or reindex without folder full permission", async () => {
+test("document administrative principal retains delete and reindex authority despite ordinary folder denial", async () => {
   const { service } = await createService()
-  const groupAdmin: AppUser = { userId: "group-admin", email: "group-admin@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
-  const uploader: AppUser = { userId: "uploader", email: "uploader@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
-  const group = await service.createDocumentGroup(groupAdmin, {
-    name: "Owner bypass manage group",
-    visibility: "private"
-  })
+  const groupAdmin: AppUser = { userId: "group-admin", email: "group-admin@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"], accountStatus: "active" as const, tenantId: "default" }
+  const uploader: AppUser = { userId: "uploader", email: "uploader@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"], accountStatus: "active" as const, tenantId: "default" }
+  const group = await service.createDocumentGroup(groupAdmin, { name: "Owner bypass manage group" })
   const manifest = await service.ingest({
     fileName: "owner-bypass-manage.md",
     text: "owner bypass manage content must not be deleted or reindexed without folder full permission.",
@@ -907,25 +1065,17 @@ test("service does not allow group scoped document owner to delete or reindex wi
     }
   })
 
-  await assert.rejects(
-    () => authorizeDocumentDelete(service, uploader, manifest.documentId),
-    /Forbidden|cannot manage document/
-  )
-  await assert.rejects(
-    () => service.stageReindexMigration(uploader, manifest.documentId),
-    /Forbidden|cannot manage document/
-  )
-  assert.deepEqual(await service.listReindexMigrations(), [])
+  await authorizeDocumentDelete(service, uploader, manifest.documentId)
+  const staged = await service.stageReindexMigration(uploader, manifest.documentId)
+  assert.equal(staged.sourceDocumentId, manifest.documentId)
+  assert.equal(staged.status, "staged")
 })
 
-test("search excludes owner-owned group scoped documents when folder permission is none", async () => {
+test("search includes owner-owned group scoped documents despite ordinary folder denial", async () => {
   const { service } = await createService()
-  const groupAdmin: AppUser = { userId: "group-admin", email: "group-admin@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
-  const uploader: AppUser = { userId: "uploader", email: "uploader@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
-  const group = await service.createDocumentGroup(groupAdmin, {
-    name: "Owner bypass search group",
-    visibility: "private"
-  })
+  const groupAdmin: AppUser = { userId: "group-admin", email: "group-admin@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"], accountStatus: "active" as const, tenantId: "default" }
+  const uploader: AppUser = { userId: "uploader", email: "uploader@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"], accountStatus: "active" as const, tenantId: "default" }
+  const group = await service.createDocumentGroup(groupAdmin, { name: "Owner bypass search group" })
   const manifest = await service.ingest({
     fileName: "owner-bypass-search.md",
     text: "revoked owner secret pear must not appear in all mode search.",
@@ -944,20 +1094,20 @@ test("search excludes owner-owned group scoped documents when folder permission 
     semanticTopK: 0
   }, uploader)
 
-  assert.deepEqual(result.results, [])
-  assert.equal(JSON.stringify(result).includes("revoked owner secret pear"), false)
-  assert.equal(JSON.stringify(result).includes(manifest.documentId), false)
+  assert.deepEqual(result.results.map((item) => item.documentId), [manifest.documentId])
+  assert.equal(JSON.stringify(result).includes("revoked owner secret pear"), true)
 })
 
 test("service enforces full document group permission for delete and reindex operations", async () => {
-  const { service } = await createService()
-  const owner = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
-  const sharedReader = { userId: "reader-1", email: "reader@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
-  const outsider = { userId: "outsider-1", email: "outsider@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
-  const group = await service.createDocumentGroup(owner, {
-    name: "Restricted group",
-    sharedUserIds: [sharedReader.userId]
-  })
+  const { service, deps } = await createService()
+  const owner = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"], accountStatus: "active" as const, tenantId: "default" }
+  const sharedReader = { userId: "reader-1", email: "reader@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"], accountStatus: "active" as const, tenantId: "default" }
+  const outsider = { userId: "outsider-1", email: "outsider@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"], accountStatus: "active" as const, tenantId: "default" }
+  const group = await service.createDocumentGroup(owner, { name: "Restricted group" })
+  await seedFolderPolicy(deps, group.groupId, [
+    { principalType: "user", principalId: owner.userId, permissionLevel: "full" },
+    { principalType: "user", principalId: sharedReader.userId, permissionLevel: "readOnly" }
+  ])
   const manifest = await service.ingest({
     fileName: "restricted.md",
     text: "restricted content",
@@ -985,7 +1135,13 @@ test("service enforces full document group permission for delete and reindex ope
 
 test("service reindexes documents through embedding cache compatible pipeline versions", async () => {
   const { service } = await createService()
-  const actor = { userId: "manager-1", email: "manager@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const actor: AppUser = {
+    userId: "manager-1",
+    email: "manager@example.com",
+    cognitoGroups: ["RAG_GROUP_MANAGER"],
+    accountStatus: "active",
+    tenantId: "tenant-a"
+  }
   const manifest = await service.ingest({
     fileName: "policy.md",
     text: "# 申請手順\n申請期限は翌月5営業日です。\n\n# 例外\n例外承認者は部長です。",
@@ -1002,12 +1158,12 @@ test("service reindexes documents through embedding cache compatible pipeline ve
 
   const migrations = await service.listReindexMigrations()
   assert.equal(migrations[0]?.status, "cutover")
-  assert.equal((await service.listDocuments()).some((doc) => doc.documentId === manifest.documentId), false)
+  assert.equal((await service.listDocuments(actor)).some((doc) => doc.documentId === manifest.documentId), false)
 })
 
 test("service stages and rolls back structured blue-green reindex migrations", async () => {
   const { service, dataDir } = await createService()
-  const actor = { userId: "manager-1", email: "manager@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const actor = localDocumentManager()
   const textractJson = JSON.stringify({
     Blocks: [
       { Id: "table-1", BlockType: "TABLE", Page: 1, Confidence: 92, Relationships: [{ Type: "CHILD", Ids: ["cell-1", "cell-2"] }] },
@@ -1062,7 +1218,7 @@ test("service restores staging state when cutover vector activation fails after 
     evidencePutErrorAfterWriteWhen: (records) =>
       failActivePut && records.some((record) => record.key.startsWith(stagedDocumentId) && record.metadata.lifecycleStatus === "active")
   })
-  const actor = { userId: "manager-1", email: "manager@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const actor = { userId: "manager-1", email: "manager@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"], accountStatus: "active" as const, tenantId: "default" }
   const manifest = await service.ingest({
     fileName: "policy.md",
     text: "申請期限は翌月5営業日です。",
@@ -1076,7 +1232,7 @@ test("service restores staging state when cutover vector activation fails after 
   await assert.rejects(() => service.cutoverReindexMigration(actor, staged.migrationId), /simulated partial active put failure/)
 
   assert.deepEqual((await service.listDocuments()).map((doc) => doc.documentId), [manifest.documentId])
-  const stagedManifest = JSON.parse(await readFile(path.join(dataDir, `objects/manifests/${staged.stagedDocumentId}.json`), "utf-8")) as { lifecycleStatus?: string }
+  const stagedManifest = JSON.parse(await readFile(path.join(dataDir, `objects/${staged.stagedManifestObjectKey}`), "utf-8")) as { lifecycleStatus?: string }
   assert.equal(stagedManifest.lifecycleStatus, "staging")
   const evidenceDb = JSON.parse(await readFile(path.join(dataDir, "evidence-vectors.json"), "utf-8")) as {
     records: Array<{ key: string; metadata?: { lifecycleStatus?: string } }>
@@ -1087,9 +1243,143 @@ test("service restores staging state when cutover vector activation fails after 
   )
 })
 
+test("FR-090 reindex cutover compensates publication when current authorization is revoked before ledger commit", async () => {
+  let armed = false
+  let revoked = false
+  let activePointerKey = ""
+  const actor: AppUser = { userId: "reindex-manager", email: "manager@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"], accountStatus: "active", tenantId: "default" }
+  const identityProvider: VerifiedIdentityProvider = {
+    getCurrentIdentity: async () => undefined,
+    getCurrentIdentityBySubject: async () => ({
+      username: actor.userId,
+      userId: actor.userId,
+      email: actor.email,
+      accountStatus: revoked ? "suspended" : "active",
+      cognitoGroups: actor.cognitoGroups,
+      tenantId: actor.tenantId!
+    })
+  }
+  const { service } = await createService({
+    verifiedIdentityProvider: identityProvider,
+    onObjectPutTextIfVersion: (key) => {
+      if (armed && key === activePointerKey) revoked = true
+    }
+  })
+  const manifest = await service.ingest({ fileName: "reauth-cutover.md", text: "reindex authorization", skipMemory: true, metadata: { ownerUserId: actor.userId } })
+  const staged = await service.stageReindexMigration(actor, manifest.documentId)
+  assert.ok(staged.activePointerKey)
+  activePointerKey = staged.activePointerKey
+  armed = true
+
+  await assert.rejects(() => service.cutoverReindexMigration(actor, staged.migrationId), /permission_revoked/)
+  const activeDocuments = await service.listDocuments(actor)
+  assert.equal(activeDocuments.length, 1)
+  assert.notEqual(activeDocuments[0]?.documentId, staged.stagedDocumentId)
+})
+
+test("FR-090 failed cutover compensation persists a durable intent and an authorized retry converges it", async () => {
+  let armed = false
+  let revoked = false
+  let failCompensation = true
+  let pointerWrites = 0
+  let activePointerKey = ""
+  const actor: AppUser = { userId: "reindex-repair", cognitoGroups: ["RAG_GROUP_MANAGER"], accountStatus: "active", tenantId: "default" }
+  const identityProvider: VerifiedIdentityProvider = {
+    getCurrentIdentity: async () => undefined,
+    getCurrentIdentityBySubject: async () => ({
+      username: actor.userId,
+      userId: actor.userId,
+      accountStatus: revoked ? "suspended" : "active",
+      cognitoGroups: actor.cognitoGroups,
+      tenantId: actor.tenantId!
+    })
+  }
+  const { service, deps } = await createService({
+    verifiedIdentityProvider: identityProvider,
+    onObjectPutTextIfVersion: (key) => {
+      if (!armed || key !== activePointerKey) return
+      pointerWrites += 1
+      if (pointerWrites === 1) revoked = true
+      if (pointerWrites === 2 && failCompensation) throw new Error("simulated compensation pointer outage")
+    }
+  })
+  const manifest = await service.ingest({
+    fileName: "cutover-repair.md",
+    text: "A failed publication compensation must remain retryable.",
+    skipMemory: true,
+    metadata: { ownerUserId: actor.userId }
+  })
+  const staged = await service.stageReindexMigration(actor, manifest.documentId)
+  activePointerKey = staged.activePointerKey!
+  armed = true
+
+  await assert.rejects(() => service.cutoverReindexMigration(actor, staged.migrationId), /permission_revoked/)
+  const repairKeys = await deps.objectStore.listKeys("security/reindex-publication-compensation/")
+  assert.equal(repairKeys.length, 1)
+  const pending = JSON.parse(await deps.objectStore.getText(repairKeys[0]!)) as { status: string; attempts: number; lastError?: string }
+  assert.equal(pending.status, "pending")
+  assert.equal(pending.attempts, 1)
+  assert.match(pending.lastError ?? "", /compensation_pointer_outage/)
+  await assert.rejects(() => service.cutoverReindexMigration(actor, staged.migrationId), /permission_revoked/)
+  assert.equal((JSON.parse(await deps.objectStore.getText(repairKeys[0]!)) as { status: string }).status, "pending")
+
+  revoked = false
+  failCompensation = false
+  const reconciled = await service.cutoverReindexMigration(actor, staged.migrationId)
+  assert.equal(reconciled.status, "rolled_back")
+  const completed = JSON.parse(await deps.objectStore.getText(repairKeys[0]!)) as { status: string }
+  assert.equal(completed.status, "completed")
+  assert.equal((await service.listDocuments(actor)).length, 1)
+})
+
+test("FR-090 revoked rollback persists ledger reconciliation and retries only after current authorization", async () => {
+  let armed = false
+  let revoked = false
+  let activePointerKey = ""
+  const actor: AppUser = { userId: "rollback-repair", cognitoGroups: ["RAG_GROUP_MANAGER"], accountStatus: "active", tenantId: "default" }
+  const identityProvider: VerifiedIdentityProvider = {
+    getCurrentIdentity: async () => undefined,
+    getCurrentIdentityBySubject: async () => ({
+      username: actor.userId,
+      userId: actor.userId,
+      accountStatus: revoked ? "suspended" : "active",
+      cognitoGroups: actor.cognitoGroups,
+      tenantId: actor.tenantId!
+    })
+  }
+  const { service, deps } = await createService({
+    verifiedIdentityProvider: identityProvider,
+    onObjectPutTextIfVersion: (key) => {
+      if (armed && key === activePointerKey) revoked = true
+    }
+  })
+  const manifest = await service.ingest({
+    fileName: "rollback-repair.md",
+    text: "Rollback ledger reconciliation requires a current actor.",
+    skipMemory: true,
+    metadata: { ownerUserId: actor.userId }
+  })
+  const staged = await service.stageReindexMigration(actor, manifest.documentId)
+  await service.cutoverReindexMigration(actor, staged.migrationId)
+  activePointerKey = staged.activePointerKey!
+  armed = true
+
+  await assert.rejects(() => service.rollbackReindexMigration(actor, staged.migrationId), /permission_revoked/)
+  const repairKeys = await deps.objectStore.listKeys("security/reindex-publication-compensation/")
+  assert.equal(repairKeys.length, 1)
+  assert.equal((JSON.parse(await deps.objectStore.getText(repairKeys[0]!)) as { status: string }).status, "compensated")
+  await assert.rejects(() => service.rollbackReindexMigration(actor, staged.migrationId), /permission_revoked/)
+
+  revoked = false
+  armed = false
+  const reconciled = await service.rollbackReindexMigration(actor, staged.migrationId)
+  assert.equal(reconciled.status, "rolled_back")
+  assert.equal((JSON.parse(await deps.objectStore.getText(repairKeys[0]!)) as { status: string }).status, "completed")
+})
+
 test("service manages reviewed alias artifacts and audit log", async () => {
   const { service, dataDir } = await createService()
-  const actor = { userId: "manager-1", email: "manager@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const actor = { userId: "manager-1", email: "manager@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"], accountStatus: "active" as const, tenantId: "default" }
 
   const alias = await service.createAlias(actor, {
     term: "PTO",
@@ -1118,8 +1408,8 @@ test("service manages reviewed alias artifacts and audit log", async () => {
 
 test("service creates search improvement candidates as draft review items", async () => {
   const { service } = await createService()
-  const requester = { userId: "user-1", email: "requester@example.com", cognitoGroups: ["CHAT_USER"] }
-  const manager = { userId: "manager-1", email: "manager@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const requester = { userId: "user-1", email: "requester@example.com", cognitoGroups: ["CHAT_USER"], accountStatus: "active" as const, tenantId: "default" }
+  const manager = { userId: "manager-1", email: "manager@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"], accountStatus: "active" as const, tenantId: "default" }
   const question = await service.createQuestion({
     title: "回答不能",
     question: "担当者へ確認してください。",
@@ -1166,7 +1456,7 @@ test("service creates search improvement candidates as draft review items", asyn
 
 test("service delegates human question lifecycle to the question store", async () => {
   const { service } = await createService()
-  const user = { userId: "user-1", email: "requester@example.com", cognitoGroups: ["CHAT_USER"] }
+  const user = { userId: "user-1", email: "requester@example.com", cognitoGroups: ["CHAT_USER"], accountStatus: "active" as const, tenantId: "default" }
 
   const question = await service.createQuestion({
     title: "資料外の質問",
@@ -1213,7 +1503,7 @@ test("service delegates human question lifecycle to the question store", async (
     answerTitle: "回答",
     answerBody: "担当者の確認結果です。",
     references: "社内確認"
-  }, { userId: "answerer-1", email: "answerer@example.com", cognitoGroups: ["ANSWER_EDITOR"] })
+  }, { userId: "answerer-1", email: "answerer@example.com", cognitoGroups: ["ANSWER_EDITOR"], accountStatus: "active" as const, tenantId: "default" })
   assert.equal(answered.status, "answered")
   assert.equal(answered.answerBody, "担当者の確認結果です。")
   assert.equal(answered.responderName, "answerer@example.com")
@@ -1231,7 +1521,7 @@ test("questionCreate_setsDefaultAssigneeGroupWhenMissing", async () => {
     const question = await service.createQuestion({
       title: "資料外の質問",
       question: "担当者へ確認してください。"
-    }, { userId: "user-1", email: "requester@example.com", cognitoGroups: ["CHAT_USER"] })
+    }, { userId: "user-1", email: "requester@example.com", cognitoGroups: ["CHAT_USER"], accountStatus: "active" as const, tenantId: "default" })
 
     assert.equal(question.assigneeGroupId, "support-default")
   } finally {
@@ -1241,18 +1531,18 @@ test("questionCreate_setsDefaultAssigneeGroupWhenMissing", async () => {
 
 test("conversationHistoryList_includesOldFavoriteBeforeRecentNonFavorites", async () => {
   const { service, deps } = await createService()
-  const userId = "user-1"
+  const user: AppUser = { userId: "user-1", tenantId: "default", accountStatus: "active", cognitoGroups: ["CHAT_USER"] }
   for (let index = 1; index <= 21; index += 1) {
-    await service.saveConversationHistory(userId, {
+    await service.saveConversationHistory(user, {
       id: `conv-${index}`,
       title: `会話 ${index}`,
       messages: [],
       updatedAt: `2026-05-${String(index).padStart(2, "0")}T00:00:00.000Z`
     })
   }
-  await deps.favoriteStore.save(userId, { targetType: "chatSession", targetId: "conv-1", label: "古いお気に入り" })
+  await deps.favoriteStore.save(tenantPartitionedOwnerKey(user), { targetType: "chatSession", targetId: "conv-1", label: "古いお気に入り" })
 
-  const history = await service.listConversationHistory(userId)
+  const history = await service.listConversationHistory(user)
 
   assert.equal(history.length, 20)
   assert.equal(history[0]?.id, "conv-1")
@@ -1262,8 +1552,8 @@ test("conversationHistoryList_includesOldFavoriteBeforeRecentNonFavorites", asyn
 
 test("favoriteList_marksUnsupportedTargetTypeInaccessible", async () => {
   const { service, deps } = await createService()
-  const user: AppUser = { userId: "user-1", email: "user@example.com", cognitoGroups: ["CHAT_USER"] }
-  await deps.favoriteStore.save(user.userId, { targetType: "skill", targetId: "skill-1", label: "Skill 1" })
+  const user: AppUser = { userId: "user-1", email: "user@example.com", cognitoGroups: ["CHAT_USER"], accountStatus: "active" as const, tenantId: "default" }
+  await deps.favoriteStore.save(tenantPartitionedOwnerKey(user), { targetType: "skill", targetId: "skill-1", label: "Skill 1" })
 
   const favorites = await service.listFavorites(user)
 
@@ -1274,16 +1564,16 @@ test("favoriteList_marksUnsupportedTargetTypeInaccessible", async () => {
 
 test("favoriteCreateDoesNotReturnAccessibleTrueWithoutResolver", async () => {
   const { service } = await createService()
-  const user: AppUser = { userId: "user-1", email: "user@example.com", cognitoGroups: ["CHAT_USER"] }
+  const user: AppUser = { userId: "user-1", email: "user@example.com", cognitoGroups: ["CHAT_USER"], accountStatus: "active" as const, tenantId: "default" }
 
   await assert.rejects(() => service.saveFavorite(user, { targetType: "skill", targetId: "skill-1" }), /Unsupported favorite target type/)
 })
 
 test("favoriteCreateRechecksChatSessionOwner", async () => {
   const { service } = await createService()
-  const owner: AppUser = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["CHAT_USER"] }
-  const other: AppUser = { userId: "other-1", email: "other@example.com", cognitoGroups: ["CHAT_USER"] }
-  await service.saveConversationHistory(owner.userId, {
+  const owner: AppUser = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["CHAT_USER"], accountStatus: "active" as const, tenantId: "default" }
+  const other: AppUser = { userId: "other-1", email: "other@example.com", cognitoGroups: ["CHAT_USER"], accountStatus: "active" as const, tenantId: "default" }
+  await service.saveConversationHistory(owner, {
     id: "conv-1",
     title: "会話",
     messages: [],
@@ -1299,7 +1589,7 @@ test("favoriteCreateRechecksChatSessionOwner", async () => {
 
 test("service preserves asynchronous chat run options and can mark worker failures", async () => {
   const { service, deps } = await createService()
-  const user = { userId: "user-1", email: "user@example.com", cognitoGroups: ["CHAT_USER"] }
+  const user = { userId: "user-1", email: "user@example.com", cognitoGroups: ["CHAT_USER"], accountStatus: "active" as const, tenantId: "default" }
 
   const started = await service.startChatRun({
     question: "検索設定を確認して",
@@ -1313,7 +1603,7 @@ test("service preserves asynchronous chat run options and can mark worker failur
     useMemory: false,
     maxIterations: 999
   }, user)
-  const stored = await deps.chatRunStore.get(started.runId)
+  const stored = await deps.chatRunStore.get("default", started.runId)
   assert.equal(stored?.strictGrounded, false)
   assert.equal(stored?.useMemory, false)
   assert.equal(stored?.maxIterations, ragRuntimePolicy.retrieval.maxIterations)
@@ -1378,25 +1668,26 @@ test("service preserves asynchronous chat run options and can mark worker failur
     runId: "run-worker-timeout",
     status: "running",
     createdBy: "user-1",
+    tenantId: "default",
     question: "timeout",
     modelId: "model-a",
     createdAt: "2026-05-04T00:00:00.000Z",
     updatedAt: "2026-05-04T00:00:00.000Z",
     ttl: 1_800_000_000
   })
-  const failed = await service.markChatRunFailed("run-worker-timeout", "States.Timeout: worker timed out")
+  const failed = await service.markChatRunFailed("default", "run-worker-timeout", "States.Timeout: worker timed out")
   assert.equal(failed.status, "failed")
   assert.equal(failed.error, "States.Timeout: worker timed out")
-  const errorEvents = await deps.chatRunEventStore.listAfter("run-worker-timeout", 0)
+  const errorEvents = await deps.chatRunEventStore.listAfter("default", "run-worker-timeout", 0)
   assert.equal(errorEvents.at(-1)?.type, "error")
   assert.equal(errorEvents.at(-1)?.message, "States.Timeout: worker timed out")
 })
 
 test("service preserves async agent ownership, cancel, and artifact metadata boundaries", async () => {
   const { service } = await createService()
-  const owner = { userId: "agent-owner", email: "owner@example.com", cognitoGroups: ["ASYNC_AGENT_USER"] }
-  const outsider = { userId: "agent-outsider", email: "outsider@example.com", cognitoGroups: ["ASYNC_AGENT_USER"] }
-  const admin = { userId: "agent-admin", email: "admin@example.com", cognitoGroups: ["SYSTEM_ADMIN"] }
+  const owner = { userId: "agent-owner", email: "owner@example.com", cognitoGroups: ["ASYNC_AGENT_USER"], accountStatus: "active" as const, tenantId: "default" }
+  const outsider = { userId: "agent-outsider", email: "outsider@example.com", cognitoGroups: ["ASYNC_AGENT_USER"], accountStatus: "active" as const, tenantId: "default" }
+  const admin = { userId: "agent-admin", email: "admin@example.com", cognitoGroups: ["SYSTEM_ADMIN"], accountStatus: "active" as const, tenantId: "default" }
 
   const run = await service.createAsyncAgentRun(owner, {
     provider: "custom",
@@ -1422,8 +1713,8 @@ test("service preserves async agent ownership, cancel, and artifact metadata bou
   assert.equal(cancelled?.failureReasonCode, "cancelled")
   assert.equal((await service.cancelAsyncAgentRun(owner, run.agentRunId))?.status, "cancelled")
   assert.equal(await service.cancelAsyncAgentRun(owner, "missing-agent-run"), undefined)
-  assert.equal((await service.executeAsyncAgentRun(run.agentRunId)).status, "cancelled")
-  await assert.rejects(() => service.executeAsyncAgentRun("missing-agent-run"), /Async agent run not found/)
+  assert.equal((await service.executeAsyncAgentRun("default", run.agentRunId)).status, "cancelled")
+  await assert.rejects(() => service.executeAsyncAgentRun("default", "missing-agent-run"), /Async agent run not found/)
 
   const unavailable = await service.createAsyncAgentRun(owner, {
     provider: "future_provider" as AgentRuntimeProvider,
@@ -1432,12 +1723,12 @@ test("service preserves async agent ownership, cancel, and artifact metadata bou
   })
   assert.equal(unavailable.providerAvailability, "provider_unavailable")
   assert.equal(unavailable.failureReasonCode, "provider_unavailable")
-  assert.equal((await service.executeAsyncAgentRun(unavailable.agentRunId)).status, "blocked")
+  assert.equal((await service.executeAsyncAgentRun("default", unavailable.agentRunId)).status, "blocked")
 })
 
 test("service rejects async agent selections that are not readable", async () => {
   const { service } = await createService()
-  const user = { userId: "agent-user", email: "agent@example.com", cognitoGroups: ["CHAT_USER"] }
+  const user = { userId: "agent-user", email: "agent@example.com", cognitoGroups: ["CHAT_USER"], accountStatus: "active" as const, tenantId: "default" }
   const baseInput = {
     provider: "claude_code" as const,
     modelId: "claude-placeholder",
@@ -1460,7 +1751,7 @@ test("service rejects async agent selections that are not readable", async () =>
 
 test("service records async agent readable selections without expanding duplicates", async () => {
   const { service } = await createService()
-  const user = { userId: "agent-user", email: "agent@example.com", cognitoGroups: ["ASYNC_AGENT_USER"] }
+  const user = { userId: "agent-user", email: "agent@example.com", cognitoGroups: ["ASYNC_AGENT_USER", "CHAT_USER"], accountStatus: "active" as const, tenantId: "default" }
   const document = await service.ingest({
     fileName: "agent-source.md",
     text: "非同期エージェントが参照する読み取り可能な資料です。",
@@ -1514,7 +1805,7 @@ test("service executes configured Claude Code provider with sanitized artifacts"
     }
   })
   const { service, deps } = await createService({ asyncAgentProviders: new AsyncAgentProviderRegistry([provider]) })
-  const user = { userId: "agent-user", email: "agent@example.com", cognitoGroups: ["ASYNC_AGENT_USER"] }
+  const user = { userId: "agent-user", email: "agent@example.com", cognitoGroups: ["ASYNC_AGENT_USER", "CHAT_USER"], accountStatus: "active" as const, tenantId: "default" }
   const document = await service.ingest({
     fileName: "agent-source.md",
     text: "Claude Code provider に readOnly mount される資料です。",
@@ -1531,7 +1822,7 @@ test("service executes configured Claude Code provider with sanitized artifacts"
   assert.equal(run.status, "queued")
   assert.equal(run.providerAvailability, "available")
 
-  const completed = await service.executeAsyncAgentRun(run.agentRunId)
+  const completed = await service.executeAsyncAgentRun("default", run.agentRunId)
 
   assert.equal(completed.status, "completed")
   assert.equal(completed.failureReason, undefined)
@@ -1549,6 +1840,60 @@ test("service executes configured Claude Code provider with sanitized artifacts"
   assert.match(logText, /Bearer \[REDACTED\]/)
 })
 
+test("FR-090 async agent revoke after artifact writes deletes artifacts before permission_revoked persistence", async () => {
+  let identityChecks = 0
+  const identityProvider: VerifiedIdentityProvider = {
+    getCurrentIdentity: async () => undefined,
+    getCurrentIdentityBySubject: async (subject) => {
+      identityChecks += 1
+      return {
+        username: subject,
+        userId: subject,
+        accountStatus: identityChecks >= 5 ? "suspended" : "active",
+        cognitoGroups: ["ASYNC_AGENT_USER"],
+        tenantId: "default"
+      }
+    }
+  }
+  const provider = fakeAsyncAgentProvider({
+    availability: "available",
+    execute: async () => ({
+      status: "completed",
+      artifacts: [{
+        artifactType: "report",
+        fileName: "late-report.md",
+        mimeType: "text/markdown",
+        text: "must be deleted after revoke"
+      }]
+    })
+  })
+  const { service, deps } = await createService({
+    asyncAgentProviders: new AsyncAgentProviderRegistry([provider]),
+    verifiedIdentityProvider: identityProvider
+  })
+  const user: AppUser = {
+    userId: "agent-race-user",
+    cognitoGroups: ["ASYNC_AGENT_USER"],
+    accountStatus: "active",
+    tenantId: "default"
+  }
+  const run = await service.createAsyncAgentRun(user, {
+    provider: "claude_code",
+    modelId: "claude-code-default",
+    instruction: "race boundary"
+  })
+
+  const failed = await service.executeAsyncAgentRun("default", run.agentRunId)
+
+  assert.equal(failed.status, "failed")
+  assert.equal(failed.failureReasonCode, "permission_revoked")
+  assert.deepEqual(failed.artifactIds, [])
+  assert.deepEqual(failed.artifacts, [])
+  assert.ok(identityChecks >= 5)
+  const runPrefix = `agent-runs/${tenantPartitionId("default")}/runs/${encodeURIComponent(run.agentRunId)}`
+  assert.deepEqual((await deps.objectStore.listKeys(runPrefix)).filter((key) => key.includes("/artifacts/")), [])
+})
+
 test("service records Claude Code provider failures without leaking raw secrets", async () => {
   const provider = fakeAsyncAgentProvider({
     availability: "available",
@@ -1559,14 +1904,14 @@ test("service records Claude Code provider failures without leaking raw secrets"
     })
   })
   const { service, deps } = await createService({ asyncAgentProviders: new AsyncAgentProviderRegistry([provider]) })
-  const user = { userId: "agent-user", email: "agent@example.com", cognitoGroups: ["ASYNC_AGENT_USER"] }
+  const user = { userId: "agent-user", email: "agent@example.com", cognitoGroups: ["ASYNC_AGENT_USER", "CHAT_USER"], accountStatus: "active" as const, tenantId: "default" }
   const run = await service.createAsyncAgentRun(user, {
     provider: "claude_code",
     modelId: "claude-code-default",
     instruction: "timeout を確認する"
   })
 
-  const expired = await service.executeAsyncAgentRun(run.agentRunId)
+  const expired = await service.executeAsyncAgentRun("default", run.agentRunId)
 
   assert.equal(expired.status, "expired")
   assert.equal(expired.failureReasonCode, "execution_error")
@@ -1585,14 +1930,14 @@ test("service converts Claude Code provider exceptions to sanitized failed runs"
     }
   })
   const { service } = await createService({ asyncAgentProviders: new AsyncAgentProviderRegistry([provider]) })
-  const user = { userId: "agent-user", email: "agent@example.com", cognitoGroups: ["ASYNC_AGENT_USER"] }
+  const user = { userId: "agent-user", email: "agent@example.com", cognitoGroups: ["ASYNC_AGENT_USER", "CHAT_USER"], accountStatus: "active" as const, tenantId: "default" }
   const run = await service.createAsyncAgentRun(user, {
     provider: "claude_code",
     modelId: "claude-code-default",
     instruction: "例外を確認する"
   })
 
-  const failed = await service.executeAsyncAgentRun(run.agentRunId)
+  const failed = await service.executeAsyncAgentRun("default", run.agentRunId)
 
   assert.equal(failed.status, "failed")
   assert.equal(failed.failureReasonCode, "execution_error")
@@ -1603,7 +1948,7 @@ test("service converts Claude Code provider exceptions to sanitized failed runs"
 test("service keeps Claude Code provider not configured without mock artifacts", async () => {
   const provider = fakeAsyncAgentProvider({ availability: "not_configured" })
   const { service } = await createService({ asyncAgentProviders: new AsyncAgentProviderRegistry([provider]) })
-  const user = { userId: "agent-user", email: "agent@example.com", cognitoGroups: ["ASYNC_AGENT_USER"] }
+  const user = { userId: "agent-user", email: "agent@example.com", cognitoGroups: ["ASYNC_AGENT_USER", "CHAT_USER"], accountStatus: "active" as const, tenantId: "default" }
 
   const run = await service.createAsyncAgentRun(user, {
     provider: "claude_code",
@@ -1615,7 +1960,7 @@ test("service keeps Claude Code provider not configured without mock artifacts",
   assert.equal(run.providerAvailability, "not_configured")
   assert.deepEqual(run.artifacts, [])
   assert.deepEqual(run.artifactIds, [])
-  assert.equal((await service.executeAsyncAgentRun(run.agentRunId)).status, "blocked")
+  assert.equal((await service.executeAsyncAgentRun("default", run.agentRunId)).status, "blocked")
 })
 
 test("service executes configured Codex command provider with sanitized artifacts", async () => {
@@ -1630,7 +1975,7 @@ test("service executes configured Codex command provider with sanitized artifact
     outputFileName: "codex-output.md"
   })
   const { service, deps } = await createService({ asyncAgentProviders: new AsyncAgentProviderRegistry([provider]) })
-  const user = { userId: "agent-user", email: "agent@example.com", cognitoGroups: ["ASYNC_AGENT_USER"] }
+  const user = { userId: "agent-user", email: "agent@example.com", cognitoGroups: ["ASYNC_AGENT_USER", "CHAT_USER"], accountStatus: "active" as const, tenantId: "default" }
   const document = await service.ingest({
     fileName: "codex-source.md",
     text: "Codex provider に readOnly mount される資料です。",
@@ -1647,7 +1992,7 @@ test("service executes configured Codex command provider with sanitized artifact
 
   assert.equal(run.status, "queued")
   assert.equal(run.providerAvailability, "available")
-  const completed = await service.executeAsyncAgentRun(run.agentRunId)
+  const completed = await service.executeAsyncAgentRun("default", run.agentRunId)
 
   assert.equal(completed.status, "completed")
   assert.equal(completed.artifacts.length, 2)
@@ -1684,7 +2029,7 @@ test("service records Codex command provider failures and timeouts without leaki
     timeoutMs: 10,
     outputFileName: "codex-output.md"
   })
-  const user = { userId: "agent-user", email: "agent@example.com", cognitoGroups: ["ASYNC_AGENT_USER"] }
+  const user = { userId: "agent-user", email: "agent@example.com", cognitoGroups: ["ASYNC_AGENT_USER"], accountStatus: "active" as const, tenantId: "default" }
 
   const { service: failureService, deps: failureDeps } = await createService({ asyncAgentProviders: new AsyncAgentProviderRegistry([failureProvider]) })
   const failedRun = await failureService.createAsyncAgentRun(user, {
@@ -1692,7 +2037,7 @@ test("service records Codex command provider failures and timeouts without leaki
     modelId: "codex-cli",
     instruction: "失敗時の sanitize を確認する"
   })
-  const failed = await failureService.executeAsyncAgentRun(failedRun.agentRunId)
+  const failed = await failureService.executeAsyncAgentRun("default", failedRun.agentRunId)
 
   assert.equal(failed.status, "failed")
   assert.equal(failed.failureReason, "Codex provider exited with code 7.")
@@ -1706,7 +2051,7 @@ test("service records Codex command provider failures and timeouts without leaki
     modelId: "codex-cli",
     instruction: "timeout を確認する"
   })
-  const expired = await timeoutService.executeAsyncAgentRun(timeoutRun.agentRunId)
+  const expired = await timeoutService.executeAsyncAgentRun("default", timeoutRun.agentRunId)
 
   assert.equal(expired.status, "expired")
   assert.equal(expired.failureReason, "Codex provider execution timed out.")
@@ -1723,7 +2068,7 @@ test("service keeps Codex provider not configured without mock artifacts", async
     outputFileName: "codex-output.md"
   })
   const { service } = await createService({ asyncAgentProviders: new AsyncAgentProviderRegistry([provider]) })
-  const user = { userId: "agent-user", email: "agent@example.com", cognitoGroups: ["ASYNC_AGENT_USER"] }
+  const user = { userId: "agent-user", email: "agent@example.com", cognitoGroups: ["ASYNC_AGENT_USER"], accountStatus: "active" as const, tenantId: "default" }
 
   const run = await service.createAsyncAgentRun(user, {
     provider: "codex",
@@ -1735,7 +2080,7 @@ test("service keeps Codex provider not configured without mock artifacts", async
   assert.equal(run.providerAvailability, "not_configured")
   assert.deepEqual(run.artifacts, [])
   assert.deepEqual(run.artifactIds, [])
-  assert.equal((await service.executeAsyncAgentRun(run.agentRunId)).status, "blocked")
+  assert.equal((await service.executeAsyncAgentRun("default", run.agentRunId)).status, "blocked")
 })
 
 test("service executes configured OpenCode command provider with sanitized artifacts", async () => {
@@ -1750,7 +2095,7 @@ test("service executes configured OpenCode command provider with sanitized artif
     outputFileName: "opencode-output.md"
   })
   const { service, deps } = await createService({ asyncAgentProviders: new AsyncAgentProviderRegistry([provider]) })
-  const user = { userId: "agent-user", email: "agent@example.com", cognitoGroups: ["ASYNC_AGENT_USER"] }
+  const user = { userId: "agent-user", email: "agent@example.com", cognitoGroups: ["ASYNC_AGENT_USER", "CHAT_USER"], accountStatus: "active" as const, tenantId: "default" }
   const document = await service.ingest({
     fileName: "opencode-source.md",
     text: "OpenCode provider に readOnly mount される資料です。",
@@ -1767,7 +2112,7 @@ test("service executes configured OpenCode command provider with sanitized artif
 
   assert.equal(run.status, "queued")
   assert.equal(run.providerAvailability, "available")
-  const completed = await service.executeAsyncAgentRun(run.agentRunId)
+  const completed = await service.executeAsyncAgentRun("default", run.agentRunId)
 
   assert.equal(completed.status, "completed")
   assert.equal(completed.artifacts.length, 2)
@@ -1804,7 +2149,7 @@ test("service records OpenCode command provider failures and timeouts without le
     timeoutMs: 10,
     outputFileName: "opencode-output.md"
   })
-  const user = { userId: "agent-user", email: "agent@example.com", cognitoGroups: ["ASYNC_AGENT_USER"] }
+  const user = { userId: "agent-user", email: "agent@example.com", cognitoGroups: ["ASYNC_AGENT_USER"], accountStatus: "active" as const, tenantId: "default" }
 
   const { service: failureService, deps: failureDeps } = await createService({ asyncAgentProviders: new AsyncAgentProviderRegistry([failureProvider]) })
   const failedRun = await failureService.createAsyncAgentRun(user, {
@@ -1812,7 +2157,7 @@ test("service records OpenCode command provider failures and timeouts without le
     modelId: "opencode-cli",
     instruction: "失敗時の sanitize を確認する"
   })
-  const failed = await failureService.executeAsyncAgentRun(failedRun.agentRunId)
+  const failed = await failureService.executeAsyncAgentRun("default", failedRun.agentRunId)
 
   assert.equal(failed.status, "failed")
   assert.equal(failed.failureReason, "OpenCode provider exited with code 7.")
@@ -1826,7 +2171,7 @@ test("service records OpenCode command provider failures and timeouts without le
     modelId: "opencode-cli",
     instruction: "timeout を確認する"
   })
-  const expired = await timeoutService.executeAsyncAgentRun(timeoutRun.agentRunId)
+  const expired = await timeoutService.executeAsyncAgentRun("default", timeoutRun.agentRunId)
 
   assert.equal(expired.status, "expired")
   assert.equal(expired.failureReason, "OpenCode provider execution timed out.")
@@ -1843,7 +2188,7 @@ test("service keeps OpenCode provider not configured without mock artifacts", as
     outputFileName: "opencode-output.md"
   })
   const { service } = await createService({ asyncAgentProviders: new AsyncAgentProviderRegistry([provider]) })
-  const user = { userId: "agent-user", email: "agent@example.com", cognitoGroups: ["ASYNC_AGENT_USER"] }
+  const user = { userId: "agent-user", email: "agent@example.com", cognitoGroups: ["ASYNC_AGENT_USER"], accountStatus: "active" as const, tenantId: "default" }
 
   const run = await service.createAsyncAgentRun(user, {
     provider: "opencode",
@@ -1855,7 +2200,246 @@ test("service keeps OpenCode provider not configured without mock artifacts", as
   assert.equal(run.providerAvailability, "not_configured")
   assert.deepEqual(run.artifacts, [])
   assert.deepEqual(run.artifactIds, [])
-  assert.equal((await service.executeAsyncAgentRun(run.agentRunId)).status, "blocked")
+  assert.equal((await service.executeAsyncAgentRun("default", run.agentRunId)).status, "blocked")
+})
+
+test("FR-090 chat run treats an authorized final append as the last success boundary", async () => {
+  let revoked = false
+  const identityProvider: VerifiedIdentityProvider = {
+    getCurrentIdentity: async () => undefined,
+    getCurrentIdentityBySubject: async () => ({
+      username: "chat-worker",
+      userId: "chat-worker",
+      email: "chat-worker@example.com",
+      accountStatus: revoked ? "suspended" : "active",
+      cognitoGroups: ["CHAT_USER"],
+      tenantId: "default"
+    })
+  }
+  const { service, deps } = await createService({
+    verifiedIdentityProvider: identityProvider,
+    onChatRunEventAppend: (event) => {
+      if (event.type === "final" && event.stage === "done") revoked = true
+    }
+  })
+  await deps.chatRunStore.create({
+    runId: "chat-final-reauth",
+    status: "queued",
+    createdBy: "chat-worker",
+    tenantId: "default",
+    userEmail: "chat-worker@example.com",
+    userGroups: ["CHAT_USER"],
+    question: "根拠がない場合は回答不能ですか？",
+    modelId: "model-a",
+    topK: 6,
+    memoryTopK: 4,
+    minScore: 0.01,
+    includeDebug: true,
+    createdAt: "2026-07-11T00:00:00.000Z",
+    updatedAt: "2026-07-11T00:00:00.000Z",
+    ttl: 1_800_000_000
+  })
+
+  const result = await service.executeChatRun("default", "chat-final-reauth")
+
+  assert.equal(result.status, "succeeded")
+  assert.equal(result.errorCode, undefined)
+  assert.ok(result.answer)
+  const events = await deps.chatRunEventStore.listAfter("default", result.runId, 0)
+  const final = events.find((event) => event.type === "final")
+  const debugRunId = (final?.data as Record<string, unknown> | undefined)?.debugRunId
+  assert.equal(typeof debugRunId, "string")
+  assert.ok(await service.getDebugRun(String(debugRunId)))
+  assert.equal(events.some((event) => event.type === "final"), true)
+  assert.equal(events.at(-1)?.type, "final")
+})
+
+test("FR-090 synchronous chat reauthorizes current identity at protected and external boundaries", async () => {
+  let identityReads = 0
+  const identityProvider: VerifiedIdentityProvider = {
+    getCurrentIdentity: async () => undefined,
+    getCurrentIdentityBySubject: async () => {
+      identityReads += 1
+      return {
+        username: "sync-chat-user",
+        userId: "sync-chat-user",
+        email: "sync-chat-user@example.com",
+        accountStatus: identityReads >= 3 ? "suspended" : "active",
+        cognitoGroups: ["CHAT_USER"],
+        tenantId: "default"
+      }
+    }
+  }
+  const { service } = await createService({ verifiedIdentityProvider: identityProvider })
+  const actor: AppUser = {
+    userId: "sync-chat-user",
+    email: "sync-chat-user@example.com",
+    accountStatus: "active",
+    cognitoGroups: ["CHAT_USER"],
+    tenantId: "default"
+  }
+
+  await assert.rejects(
+    () => service.chat({ question: "current authorization boundary test" }, actor),
+    /permission_revoked/
+  )
+  assert.ok(identityReads >= 3)
+})
+
+test("FR-090 chat trace precommit denial writes no debug artifact, observation, final event, or success", async () => {
+  let revoked = false
+  const identityProvider: VerifiedIdentityProvider = {
+    getCurrentIdentity: async () => undefined,
+    getCurrentIdentityBySubject: async () => ({
+      username: "chat-worker",
+      userId: "chat-worker",
+      email: "chat-worker@example.com",
+      accountStatus: revoked ? "suspended" : "active",
+      cognitoGroups: ["CHAT_USER"],
+      tenantId: "default"
+    })
+  }
+  const { service, deps } = await createService({
+    verifiedIdentityProvider: identityProvider,
+    onChatRunEventAppend: (event) => {
+      if (
+        event.type === "status"
+        && (event.stage === "finalize_response" || event.stage === "finalize_refusal")
+        && event.message?.includes("完了")
+      ) revoked = true
+    }
+  })
+  await deps.chatRunStore.create({
+    runId: "chat-trace-precommit-revoke",
+    status: "queued",
+    createdBy: "chat-worker",
+    tenantId: "default",
+    userEmail: "chat-worker@example.com",
+    userGroups: ["CHAT_USER"],
+    question: "根拠がない場合は回答不能ですか？",
+    modelId: "model-a",
+    topK: 6,
+    memoryTopK: 4,
+    minScore: 0.01,
+    includeDebug: true,
+    createdAt: "2026-07-11T00:00:00.000Z",
+    updatedAt: "2026-07-11T00:00:00.000Z",
+    ttl: 1_800_000_000
+  })
+
+  const result = await service.executeChatRun("default", "chat-trace-precommit-revoke")
+
+  assert.equal(result.status, "failed")
+  assert.equal(result.errorCode, "permission_revoked")
+  assert.deepEqual((await service.listDebugRuns()).filter((trace) => trace.targetType === "chat_orchestration_run"), [])
+  assert.deepEqual(await deps.objectStore.listKeys("quality-control/source-samples/"), [])
+  const events = await deps.chatRunEventStore.listAfter("default", result.runId, 0)
+  assert.equal(events.some((event) => event.type === "final"), false)
+  assert.equal(events.some((event) => event.type === "error"), false)
+})
+
+test("FR-090 ordinary chat final-event denial compensates its always-persisted redacted trace and observations", async () => {
+  let revoked = false
+  const identityProvider: VerifiedIdentityProvider = {
+    getCurrentIdentity: async () => undefined,
+    getCurrentIdentityBySubject: async () => ({
+      username: "chat-worker",
+      userId: "chat-worker",
+      email: "chat-worker@example.com",
+      accountStatus: revoked ? "suspended" : "active",
+      cognitoGroups: ["CHAT_USER"],
+      tenantId: "default"
+    })
+  }
+  const { service, deps } = await createService({
+    verifiedIdentityProvider: identityProvider,
+    onObjectPutText: (key) => {
+      if (key.startsWith("debug-runs/") && !key.includes("/search_")) revoked = true
+    }
+  })
+  await deps.chatRunStore.create({
+    runId: "chat-final-precommit-revoke",
+    status: "queued",
+    createdBy: "chat-worker",
+    tenantId: "default",
+    userEmail: "chat-worker@example.com",
+    userGroups: ["CHAT_USER"],
+    question: "根拠がない場合は回答不能ですか？",
+    modelId: "model-a",
+    topK: 6,
+    memoryTopK: 4,
+    minScore: 0.01,
+    includeDebug: false,
+    createdAt: "2026-07-11T00:00:00.000Z",
+    updatedAt: "2026-07-11T00:00:00.000Z",
+    ttl: 1_800_000_000
+  })
+
+  const result = await service.executeChatRun("default", "chat-final-precommit-revoke")
+
+  assert.equal(result.status, "failed")
+  assert.equal(result.errorCode, "permission_revoked")
+  assert.equal(result.answer, undefined)
+  assert.equal(result.debugRunId, undefined)
+  assert.deepEqual((await service.listDebugRuns()).filter((trace) => trace.targetType === "chat_orchestration_run"), [])
+  assert.deepEqual(await deps.objectStore.listKeys("quality-control/source-samples/"), [])
+  const events = await deps.chatRunEventStore.listAfter("default", result.runId, 0)
+  assert.equal(events.some((event) => event.type === "final"), false)
+  assert.equal(events.some((event) => event.type === "error"), false)
+})
+
+test("FR-090 chat compensation failure leaves a durable cleanup intent with the authoritative deny", async () => {
+  let revoked = false
+  const identityProvider: VerifiedIdentityProvider = {
+    getCurrentIdentity: async () => undefined,
+    getCurrentIdentityBySubject: async () => ({
+      username: "chat-worker",
+      userId: "chat-worker",
+      email: "chat-worker@example.com",
+      accountStatus: revoked ? "suspended" : "active",
+      cognitoGroups: ["CHAT_USER"],
+      tenantId: "default"
+    })
+  }
+  const { service, deps } = await createService({
+    verifiedIdentityProvider: identityProvider,
+    onObjectPutText: (key) => {
+      if (key.startsWith("debug-runs/") && !key.includes("/search_")) revoked = true
+    },
+    objectDeleteErrorPrefix: "debug-runs/",
+    objectDeleteError: new Error("simulated debug cleanup outage")
+  })
+  await deps.chatRunStore.create({
+    runId: "chat-cleanup-intent",
+    status: "queued",
+    createdBy: "chat-worker",
+    tenantId: "default",
+    userGroups: ["CHAT_USER"],
+    question: "根拠がない場合は回答不能ですか？",
+    modelId: "model-a",
+    includeDebug: false,
+    createdAt: "2026-07-11T00:00:00.000Z",
+    updatedAt: "2026-07-11T00:00:00.000Z"
+  })
+
+  const result = await service.executeChatRun("default", "chat-cleanup-intent")
+
+  assert.equal(result.status, "failed")
+  assert.equal(result.errorCode, "permission_revoked")
+  assert.equal((await deps.objectStore.listKeys("debug-runs/")).filter((key) => !key.includes("/search_")).length, 1)
+  const cleanupKeys = await deps.objectStore.listKeys("security/revocation-cleanup/")
+  assert.equal(cleanupKeys.length, 1)
+  const cleanup = JSON.parse(await deps.objectStore.getText(cleanupKeys[0]!)) as {
+    resourceType: string
+    authoritativeDeny: { status: string; version: string }
+    targets: Array<{ reference: string }>
+  }
+  assert.equal(cleanup.resourceType, "account")
+  assert.equal(cleanup.authoritativeDeny.status, "effective")
+  assert.equal(cleanup.authoritativeDeny.version, "worker-authorization:chat-cleanup-intent:permission_revoked")
+  assert.ok(cleanup.targets.some((target) => target.reference.startsWith("debug-runs/")))
+  assert.ok(cleanup.targets.some((target) => target.reference.includes("quality-control:debug_trace:")))
+  assert.ok(cleanup.targets.some((target) => target.reference.includes("quality-control:normal_chat:")))
 })
 
 test("asynchronous chat run stores debug trace by reference", async () => {
@@ -1869,6 +2453,7 @@ test("asynchronous chat run stores debug trace by reference", async () => {
     runId: "run-debug-reference",
     status: "queued",
     createdBy: "user-1",
+    tenantId: "default",
     userEmail: "user@example.com",
     userGroups: ["SYSTEM_ADMIN"],
     question: "debug trace の保存先は？",
@@ -1882,12 +2467,12 @@ test("asynchronous chat run stores debug trace by reference", async () => {
     ttl: 1_800_000_000
   })
 
-  const completed = await service.executeChatRun("run-debug-reference")
+  const completed = await service.executeChatRun("default", "run-debug-reference")
   assert.equal(completed.status, "succeeded")
   assert.equal((completed as unknown as Record<string, unknown>).debug, undefined)
   assert.ok(completed.debugRunId)
 
-  const events = await deps.chatRunEventStore.listAfter("run-debug-reference", 0)
+  const events = await deps.chatRunEventStore.listAfter("default", "run-debug-reference", 0)
   const final = events.find((event) => event.type === "final")
   assert.ok(final)
   assert.equal(typeof (final.data as Record<string, unknown>).debugRunId, "string")
@@ -1895,9 +2480,9 @@ test("asynchronous chat run stores debug trace by reference", async () => {
   assert.ok(await service.getDebugRun(completed.debugRunId ?? ""))
 })
 
-test("service executes asynchronous document ingest runs from uploaded object", async () => {
+test("FR-074 asynchronous document ingest success persists tenant-scoped replay evidence", async () => {
   const { service, deps } = await createService()
-  const user = { userId: "user-1", email: "user@example.com", cognitoGroups: ["CHAT_USER"] }
+  const user = { userId: "user-1", email: "user@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"], accountStatus: "active" as const, tenantId: "default" }
   await deps.objectStore.putBytes("uploads/documents/user-1/handbook.txt", Buffer.from("非同期取り込みはS3 upload sessionからworkerで実行します。"), "text/plain")
 
   const started = await service.startDocumentIngestRun({
@@ -1913,12 +2498,259 @@ test("service executes asynchronous document ingest runs from uploaded object", 
   assert.equal(completed.status, "succeeded")
   assert.equal(completed.manifest?.fileName, "handbook.txt")
   assert.equal(completed.documentId, completed.manifest?.documentId)
+  assert.ok(completed.traceId)
+  assert.equal(completed.replayVersionManifest?.sourceSnapshots[0]?.ingestTraceId, completed.traceId)
+  assert.equal(completed.replayVersionManifest?.parserVersion, completed.manifest?.sourceExtractorVersion)
+  assert.equal(completed.replayVersionManifest?.ocrVersion, null)
 
-  const events = await deps.documentIngestRunEventStore.listAfter(started.runId, 0)
+  const events = await deps.documentIngestRunEventStore.listAfter("default", started.runId, 0)
   assert.deepEqual(events.map((event) => event.type), ["status", "status", "status", "status", "final"])
   assert.equal(completed.stage, "done")
   assert.equal(completed.counters?.chunkCount, 1)
   assert.equal(events.at(-1)?.stage, "done")
+  assert.equal(events.at(-1)?.traceId, completed.traceId)
+  assert.deepEqual(events.at(-1)?.replayVersionManifest, completed.replayVersionManifest)
+  const trace = await service.getDebugRun(completed.traceId, user)
+  assert.equal(trace?.targetType, "ingest_run")
+  assert.equal(trace?.requestTraceId, started.runId)
+  assert.deepEqual(trace?.replayVersionManifest, completed.replayVersionManifest)
+  assert.equal(await service.getDebugRun(completed.traceId, { ...user, tenantId: "other-tenant" }), undefined)
+})
+
+test("FR-074 rejected document ingest persists observed replay evidence without publishing success", async () => {
+  const { service, deps } = await createService()
+  const objectKey = "uploads/documents/default/worker-user/rejected.txt"
+  await deps.objectStore.putBytes(objectKey, Buffer.from("Rejected admission is retained only as staging evidence."), "text/plain")
+  await deps.documentIngestRunStore.create({
+    runId: "ingest-rejected",
+    status: "queued",
+    createdBy: "worker-user",
+    tenantId: "default",
+    userEmail: "worker@example.com",
+    userGroups: ["RAG_GROUP_MANAGER"],
+    uploadId: "upload-rejected",
+    objectKey,
+    purpose: "document",
+    fileName: "rejected.txt",
+    mimeType: "text/plain",
+    admissionContext: { ...workerAdmissionContext(), inspectionStatus: "failed" },
+    skipMemory: true,
+    createdAt: "2026-07-12T00:00:00.000Z",
+    updatedAt: "2026-07-12T00:00:00.000Z",
+    ttl: 1_800_000_000
+  })
+
+  const rejected = await service.executeDocumentIngestRun("default", "ingest-rejected")
+
+  assert.equal(rejected.status, "rejected")
+  assert.ok(rejected.traceId)
+  assert.equal(rejected.replayVersionManifest?.sourceSnapshots[0]?.ingestTraceId, rejected.traceId)
+  assert.equal(rejected.replayVersionManifest?.decisions.responseStatus, "warning")
+  assert.equal(rejected.replayVersionManifest?.decisions.decisionCode, "rejected")
+  assert.deepEqual(rejected.replayVersionManifest?.decisions.reasonCodes, ["admission_rejected"])
+  assert.equal(rejected.replayVersionManifest?.decisions.deniedCandidateCount, rejected.replayVersionManifest?.decisions.candidateCount)
+  const events = await deps.documentIngestRunEventStore.listAfter("default", rejected.runId, 0)
+  assert.equal(events.at(-1)?.type, "final")
+  assert.equal(events.at(-1)?.stage, "rejected")
+  assert.equal(events.at(-1)?.traceId, rejected.traceId)
+  const actor = { userId: "worker-user", tenantId: "default", accountStatus: "active" as const, cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  assert.equal((await service.getDebugRun(rejected.traceId, actor))?.status, "warning")
+  assert.equal(await service.getDebugRun(rejected.traceId, { ...actor, tenantId: "other-tenant" }), undefined)
+})
+
+test("FR-074 worker failure persists an unknown-null replay manifest and a redacted trace", async () => {
+  const { service, deps } = await createService()
+  await deps.documentIngestRunStore.create({
+    runId: "ingest-worker-failed",
+    status: "queued",
+    createdBy: "worker-user",
+    tenantId: "default",
+    uploadId: "upload-worker-failed",
+    objectKey: "uploads/worker-failed.txt",
+    purpose: "document",
+    fileName: "secret-owner@example.com.txt",
+    createdAt: "2026-07-12T00:00:00.000Z",
+    updatedAt: "2026-07-12T00:00:00.000Z",
+    ttl: 1_800_000_000
+  })
+
+  const failed = await service.markDocumentIngestRunFailed("default", "ingest-worker-failed", "Bearer secret-worker-token-value")
+
+  assert.equal(failed.status, "failed")
+  assert.ok(failed.traceId)
+  assert.equal(failed.replayVersionManifest?.sourceSnapshots.length, 0)
+  assert.equal(failed.replayVersionManifest?.parserVersion, null)
+  assert.equal(failed.replayVersionManifest?.embedding.modelId, null)
+  assert.equal(failed.replayVersionManifest?.indexVersion, null)
+  assert.equal(failed.replayVersionManifest?.decisions.decisionCode, "failed")
+  assert.deepEqual(failed.replayVersionManifest?.decisions.reasonCodes, ["execution_error"])
+  const events = await deps.documentIngestRunEventStore.listAfter("default", failed.runId, 0)
+  assert.equal(events.at(-1)?.traceId, failed.traceId)
+  assert.deepEqual(events.at(-1)?.replayVersionManifest, failed.replayVersionManifest)
+  const actor = { userId: "worker-user", tenantId: "default", accountStatus: "active" as const, cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const trace = await service.getDebugRun(failed.traceId, actor)
+  assert.match(trace?.question ?? "", /^sha256:/)
+  assert.doesNotMatch(JSON.stringify(trace), /secret-owner@example\.com|secret-worker-token-value/)
+})
+
+test("FR-074 cancelled document ingest persists replay evidence without accepting caller trace correlation", async () => {
+  const { service, deps } = await createService()
+  await deps.documentIngestRunStore.create({
+    runId: "ingest-cancelled",
+    status: "queued",
+    createdBy: "worker-user",
+    tenantId: "default",
+    uploadId: "upload-cancelled",
+    objectKey: "uploads/cancelled.txt",
+    purpose: "document",
+    fileName: "cancelled.txt",
+    createdAt: "2026-07-12T00:00:00.000Z",
+    updatedAt: "2026-07-12T00:00:00.000Z",
+    ttl: 1_800_000_000
+  })
+
+  const cancelled = await service.cancelDocumentIngestRun("default", "ingest-cancelled")
+
+  assert.equal(cancelled?.status, "cancelled")
+  assert.equal(cancelled?.traceId, "ingest-run:ingest-cancelled")
+  assert.equal(cancelled?.replayVersionManifest?.parserVersion, null)
+  assert.equal(cancelled?.replayVersionManifest?.decisions.decisionCode, "cancelled")
+  assert.deepEqual(cancelled?.replayVersionManifest?.decisions.reasonCodes, ["cancelled"])
+  const trace = await service.getDebugRun(cancelled?.traceId ?? "", {
+    userId: "worker-user",
+    tenantId: "default",
+    accountStatus: "active",
+    cognitoGroups: ["RAG_GROUP_MANAGER"]
+  })
+  assert.equal(trace?.requestTraceId, "ingest-cancelled")
+  assert.equal(trace?.status, "warning")
+  assert.equal(await service.cancelDocumentIngestRun("other-tenant", "ingest-cancelled"), undefined)
+})
+
+test("FR-090 ingest reauthorizes after the final event and compensates before persisting success", async () => {
+  let revoked = false
+  const identityProvider: VerifiedIdentityProvider = {
+    getCurrentIdentity: async () => undefined,
+    getCurrentIdentityBySubject: async () => ({
+      username: "worker-user",
+      userId: "worker-user",
+      email: "worker@example.com",
+      accountStatus: revoked ? "suspended" : "active",
+      cognitoGroups: ["RAG_GROUP_MANAGER"],
+      tenantId: "default"
+    })
+  }
+  const { service, deps } = await createService({
+    verifiedIdentityProvider: identityProvider,
+    onDocumentIngestRunEventAppend: (event) => {
+      if (event.type === "final" && event.stage === "done") revoked = true
+    }
+  })
+  const objectKey = "uploads/documents/default/worker-user/final-reauth.txt"
+  await deps.objectStore.putBytes(objectKey, Buffer.from("A final-event race must never commit ingest success."), "text/plain")
+  await deps.documentIngestRunStore.create({
+    runId: "ingest-final-reauth",
+    status: "queued",
+    createdBy: "worker-user",
+    tenantId: "default",
+    userEmail: "worker@example.com",
+    userGroups: ["RAG_GROUP_MANAGER"],
+    uploadId: "upload-final-reauth",
+    objectKey,
+    purpose: "document",
+    fileName: "final-reauth.txt",
+    mimeType: "text/plain",
+    admissionContext: workerAdmissionContext(),
+    skipMemory: true,
+    stage: "queued",
+    counters: {},
+    warnings: [],
+    createdAt: "2026-07-11T00:00:00.000Z",
+    updatedAt: "2026-07-11T00:00:00.000Z",
+    ttl: 1_800_000_000
+  })
+
+  const result = await service.executeDocumentIngestRun("default", "ingest-final-reauth")
+
+  assert.equal(result.status, "failed")
+  assert.equal(result.errorCode, "permission_revoked")
+  assert.equal(result.documentId, undefined)
+  assert.deepEqual(await deps.objectStore.listKeys("source-governance/"), [])
+  assert.equal((await service.listDocuments({
+    userId: "worker-user",
+    tenantId: "default",
+    accountStatus: "active",
+    cognitoGroups: ["RAG_GROUP_MANAGER"]
+  })).length, 0)
+  const events = await deps.documentIngestRunEventStore.listAfter("default", result.runId, 0)
+  assert.equal(events.some((event) => event.type === "final"), true)
+  assert.equal(events.at(-1)?.type, "error")
+})
+
+test("FR-090 revoke after governance creation compensates all ingest artifacts and never publishes success", async () => {
+  let identityLookups = 0
+  const runtime = { deps: undefined as Dependencies | undefined }
+  const identityProvider: VerifiedIdentityProvider = {
+    getCurrentIdentity: async () => undefined,
+    getCurrentIdentityBySubject: async () => {
+      identityLookups += 1
+      const governanceCreated = runtime.deps
+        ? (await runtime.deps.objectStore.listKeys("source-governance/")).length > 0
+        : false
+      return {
+        username: "worker-user",
+        userId: "worker-user",
+        email: "worker@example.com",
+        accountStatus: governanceCreated ? "suspended" : "active",
+        cognitoGroups: ["RAG_GROUP_MANAGER"],
+        tenantId: "default"
+      }
+    }
+  }
+  const { service, deps } = await createService({ verifiedIdentityProvider: identityProvider })
+  runtime.deps = deps
+  const objectKey = "uploads/documents/default/worker-user/revoke-after-governance.txt"
+  await deps.objectStore.putBytes(objectKey, Buffer.from("A late revoke must compensate the whole document ingest transaction."), "text/plain")
+  const admissionContext = workerAdmissionContext()
+  await deps.documentIngestRunStore.create({
+    runId: "ingest-revoke-after-governance",
+    status: "queued",
+    createdBy: "worker-user",
+    tenantId: "default",
+    userEmail: "worker@example.com",
+    userGroups: ["RAG_GROUP_MANAGER"],
+    uploadId: "upload-revoke-after-governance",
+    objectKey,
+    purpose: "document",
+    fileName: "revoke-after-governance.txt",
+    mimeType: "text/plain",
+    admissionContext,
+    skipMemory: true,
+    stage: "queued",
+    counters: {},
+    warnings: [],
+    createdAt: "2026-07-11T00:00:00.000Z",
+    updatedAt: "2026-07-11T00:00:00.000Z",
+    ttl: 1_800_000_000
+  })
+
+  const completed = await service.executeDocumentIngestRun("default", "ingest-revoke-after-governance")
+
+  assert.equal(completed.status, "failed")
+  assert.equal(completed.errorCode, "permission_revoked")
+  assert.equal(completed.documentId, undefined)
+  assert.ok(identityLookups >= 7)
+  assert.equal((await service.listDocuments({
+    userId: "worker-user",
+    tenantId: "default",
+    accountStatus: "active",
+    cognitoGroups: ["RAG_GROUP_MANAGER"]
+  })).length, 0)
+  assert.deepEqual(await deps.objectStore.listKeys("source-governance/"), [])
+  assert.ok((await deps.objectStore.getBytes(objectKey)).length > 0, "upload is retained because revoke happened before delete")
+  const events = await deps.documentIngestRunEventStore.listAfter("default", completed.runId, 0)
+  assert.equal(events.some((event) => event.type === "final"), false)
+  assert.equal(events.at(-1)?.type, "error")
 })
 
 test("service lists all Cognito directory users in the managed user ledger", async () => {
@@ -1951,7 +2783,7 @@ test("service lists all Cognito directory users in the managed user ledger", asy
       }
     }
   })
-  const actor = { userId: "admin-sub", email: "admin@example.com", cognitoGroups: ["SYSTEM_ADMIN"] }
+  const actor = { userId: "admin-sub", email: "admin@example.com", cognitoGroups: ["SYSTEM_ADMIN"], accountStatus: "active" as const, tenantId: "default" }
 
   const users = await service.listManagedUsers(actor)
 
@@ -1978,7 +2810,7 @@ test("service merges Cognito directory users with existing ledger users by email
       listUsers: async () => directoryUsers
     }
   })
-  const actor = { userId: "admin-sub", email: "admin@example.com", cognitoGroups: ["SYSTEM_ADMIN"] }
+  const actor = { userId: "admin-sub", email: "admin@example.com", cognitoGroups: ["SYSTEM_ADMIN"], accountStatus: "active" as const, tenantId: "default" }
 
   await service.createManagedUser(actor, {
     email: "dup@example.com",
@@ -2020,10 +2852,12 @@ test("service chat returns refusal and error debug trace when external dependenc
 
   assert.equal(result.isAnswerable, false)
   assert.equal(result.answer, "資料からは回答できません。")
-  assert.equal(result.debug?.status, "warning")
+  assert.equal(result.debug?.status, "error")
   const errorStep = result.debug?.steps.find((step) => step.status === "error")
   assert.ok(errorStep)
-  assert.match(errorStep?.detail ?? "", /Bedrock embed timeout|Vector query failed/)
+  assert.equal(errorStep?.detail, undefined)
+  assert.equal(errorStep?.output, undefined)
+  assert.doesNotMatch(JSON.stringify(result.debug), /Bedrock embed timeout|Vector query failed/)
   await assert.rejects(() => service.listDebugRuns(), /S3 get failed/)
 })
 
@@ -2057,15 +2891,15 @@ test("benchmark artifact download metadata forces attachment and artifact extens
 
 test("benchmark CodeBuild log download returns the stored log URL", async () => {
   const { service, deps } = await createService()
-  const user = { userId: "user-1", email: "user@example.com", cognitoGroups: ["SYSTEM_ADMIN"] }
+  const user = { userId: "user-1", email: "user@example.com", cognitoGroups: ["SYSTEM_ADMIN"], accountStatus: "active" as const, tenantId: "default" }
   const run = await service.createBenchmarkRun(user, {})
-  await deps.benchmarkRunStore.update(run.runId, {
+  await deps.benchmarkRunStore.update("default", run.runId, {
     codeBuildBuildId: "memo-benchmark:build-id",
     codeBuildLogUrl: "https://console.aws.amazon.com/codesuite/codebuild/projects/memo/build/build-id/log"
   })
 
-  assert.equal(await service.createBenchmarkArtifactDownloadUrl("missing-run", "logs"), undefined)
-  const download = await service.createBenchmarkArtifactDownloadUrl(run.runId, "logs")
+  assert.equal(await service.createBenchmarkArtifactDownloadUrl(user, "missing-run", "logs"), undefined)
+  const download = await service.createBenchmarkArtifactDownloadUrl(user, run.runId, "logs")
   assert.deepEqual(download, {
     url: "https://console.aws.amazon.com/codesuite/codebuild/projects/memo/build/build-id/log",
     expiresInSeconds: 900,
@@ -2084,16 +2918,16 @@ test("benchmark CodeBuild log text download uses stored log stream metadata", as
     }
   }
   const { service, deps } = await createService({ codeBuildLogReader: logReader })
-  const user = { userId: "user-1", email: "user@example.com", cognitoGroups: ["SYSTEM_ADMIN"] }
+  const user = { userId: "user-1", email: "user@example.com", cognitoGroups: ["SYSTEM_ADMIN"], accountStatus: "active" as const, tenantId: "default" }
   const run = await service.createBenchmarkRun(user, {})
-  await deps.benchmarkRunStore.update(run.runId, {
+  await deps.benchmarkRunStore.update("default", run.runId, {
     codeBuildBuildId: "memo-benchmark:build-id",
     codeBuildLogGroupName: "/aws/codebuild/memo",
     codeBuildLogStreamName: "build-stream"
   })
 
-  assert.equal(await service.getBenchmarkCodeBuildLogText("missing-run"), undefined)
-  const download = await service.getBenchmarkCodeBuildLogText(run.runId)
+  assert.equal(await service.getBenchmarkCodeBuildLogText(user, "missing-run"), undefined)
+  const download = await service.getBenchmarkCodeBuildLogText(user, run.runId)
   assert.deepEqual(download, {
     text: "install phase\nbuild phase\n",
     fileName: `benchmark-logs-${run.runId}.txt`,
@@ -2189,13 +3023,19 @@ test("debug trace JSON for answerable runs matches the v1 schema example", () =>
   }
 
   const formatted = JSON.parse(formatDebugTraceJson(trace)) as DebugTrace
-  assert.deepEqual(formatted.citations, trace.citations)
-  assert.deepEqual(formatted.retrieved, trace.retrieved)
-  assert.deepEqual(formatted.steps, trace.steps)
+  assert.match(formatted.question, /^sha256:[0-9a-f]{64}$/)
+  assert.equal(formatted.answerPreview, "[redacted:document-content]")
+  assert.equal(formatted.citations[0]?.text, "[redacted:document-content]")
+  assert.equal(formatted.retrieved[0]?.text, "[redacted:document-content]")
+  assert.equal(formatted.steps[0]?.summary, "retrieve_memory:success")
+  assert.equal(formatted.steps[0]?.output, undefined)
+  assert.equal(formatted.steps[1]?.detail, undefined)
+  assert.equal(formatted.steps[1]?.output, undefined)
   assert.equal(formatted.targetType, "rag_run")
   assert.equal(formatted.visibility, "operator_sanitized")
   assert.equal(formatted.sanitizePolicyVersion, "debug-trace-sanitize-v1")
-  assert.deepEqual(formatted.exportRedaction?.redactedFields, ["rawPrompt", "credentials", "internalReasoning", "unauthorizedDocuments", "internalPolicyDetails"])
+  assert.ok(formatted.exportRedaction?.redactedFields.includes("retrieved[].text"))
+  assert.ok(formatted.exportRedaction?.redactedFields.includes("steps[].output"))
 })
 
 test("debug trace JSON for refusal runs matches the v1 schema example", () => {
@@ -2240,58 +3080,19 @@ test("debug trace JSON for refusal runs matches the v1 schema example", () => {
     ]
   }
 
-  assert.deepEqual(JSON.parse(formatDebugTraceJson(trace)), {
-    schemaVersion: 1,
-    runId: "run_refusal",
-    question: "資料にない制度は？",
-    modelId: "amazon.nova-lite-v1:0",
-    embeddingModelId: "amazon.titan-embed-text-v2:0",
-    clueModelId: "amazon.nova-lite-v1:0",
-    topK: 6,
-    memoryTopK: 4,
-    minScore: 0.2,
-    startedAt: "2026-05-02T00:00:00.000Z",
-    completedAt: "2026-05-02T00:00:00.200Z",
-    totalLatencyMs: 200,
-    status: "warning",
-    answerPreview: "資料からは回答できません。",
-    isAnswerable: false,
-    citations: [],
-    retrieved: [],
-    steps: [
-      {
-        id: 1,
-        label: "answerability_gate",
-        status: "warning",
-        latencyMs: 8,
-        summary: "answerable=false, reason=no_relevant_chunks",
-        detail: "reason=no_relevant_chunks\nconfidence=0",
-        output: {
-          answerability: {
-            isAnswerable: false,
-            reason: "no_relevant_chunks",
-            confidence: 0
-          },
-          answer: "資料からは回答できません。",
-          citations: []
-        },
-        startedAt: "2026-05-02T00:00:00.100Z",
-        completedAt: "2026-05-02T00:00:00.108Z"
-      }
-    ],
-    targetType: "rag_run",
-    visibility: "operator_sanitized",
-    sanitizePolicyVersion: "debug-trace-sanitize-v1",
-    exportRedaction: {
-      policyVersion: "debug-trace-sanitize-v1",
-      visibility: "operator_sanitized",
-      redactedFields: ["rawPrompt", "credentials", "internalReasoning", "unauthorizedDocuments", "internalPolicyDetails"],
-      notes: [
-        "legacy trace normalized with J2 debug redaction metadata",
-        "debug API remains protected by chat:admin:read_all until debug:* migration is completed"
-      ]
-    }
-  })
+  const formatted = JSON.parse(formatDebugTraceJson(trace)) as DebugTrace
+  assert.equal(formatted.schemaVersion, 1)
+  assert.equal(formatted.runId, "run_refusal")
+  assert.match(formatted.question, /^sha256:[0-9a-f]{64}$/)
+  assert.equal(formatted.answerPreview, "[redacted:document-content]")
+  assert.deepEqual(formatted.citations, [])
+  assert.deepEqual(formatted.retrieved, [])
+  assert.equal(formatted.steps[0]?.summary, "answerability_gate:warning")
+  assert.equal(formatted.steps[0]?.detail, undefined)
+  assert.equal(formatted.steps[0]?.output, undefined)
+  assert.equal(formatted.targetType, "rag_run")
+  assert.equal(formatted.visibility, "operator_sanitized")
+  assert.ok(formatted.exportRedaction?.redactedFields.includes("question"))
 })
 
 test("service ingest falls back when memory JSON parse fails and surfaces generate timeout", async () => {
@@ -2315,8 +3116,8 @@ test("service ingest falls back when memory JSON parse fails and surfaces genera
 
 test("service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases", async () => {
   const { service, deps } = await createService()
-  const admin = { userId: "admin-1", cognitoGroups: ["SYSTEM_ADMIN"] }
-  const chatUser = { userId: "user-1", email: "user@example.com", cognitoGroups: ["CHAT_USER"] }
+  const admin = { userId: "admin-1", cognitoGroups: ["SYSTEM_ADMIN"], accountStatus: "active" as const, tenantId: "default" }
+  const chatUser = { userId: "user-1", email: "user@example.com", cognitoGroups: ["CHAT_USER"], accountStatus: "active" as const, tenantId: "default" }
 
   const managed = await service.createManagedUser(admin, {
     email: "  Worker@Example.COM  ",
@@ -2337,10 +3138,12 @@ test("service covers admin defaults, alias misses, terminal async runs, and benc
   assert.ok((await service.listAdminAuditLog(admin)).some((entry) => entry.action === "role:assign"))
 
   const usage = await service.listUsageSummaries(admin)
-  assert.equal(usage.find((item) => item.userId === managed.userId)?.chatMessages, 0)
+  assert.equal(usage.find((item) => item.userId === managed.userId)?.chatMessages, undefined)
+  assert.ok(usage.find((item) => item.userId === managed.userId)?.unavailableMetrics.includes("chatMessages"))
   const cost = await service.getCostAuditSummary(admin)
-  assert.equal(cost.currency, "USD")
-  assert.ok(cost.items.some((item) => item.category === "document chunks"))
+  assert.equal(cost.available, false)
+  assert.equal(cost.currency, undefined)
+  assert.equal(cost.items, undefined)
 
   const alias = await service.createAlias(admin, {
     term: "  PTO  ",
@@ -2361,26 +3164,28 @@ test("service covers admin defaults, alias misses, terminal async runs, and benc
   await assert.rejects(() => service.cutoverReindexMigration(admin, "missing-migration"), /not found/)
   await assert.rejects(() => service.rollbackReindexMigration(admin, "missing-migration"), /not found/)
 
-  await assert.rejects(() => service.executeChatRun("missing-run"), /Chat run not found/)
-  await assert.rejects(() => service.markChatRunFailed("missing-run", "timeout"), /Chat run not found/)
+  await assert.rejects(() => service.executeChatRun("default", "missing-run"), /Chat run not found/)
+  await assert.rejects(() => service.markChatRunFailed("default", "missing-run", "timeout"), /Chat run not found/)
   await deps.chatRunStore.create({
     runId: "run-terminal",
     status: "succeeded",
     createdBy: chatUser.userId,
+    tenantId: "default",
     question: "done",
     modelId: "model-a",
     createdAt: "2026-05-04T00:00:00.000Z",
     updatedAt: "2026-05-04T00:00:00.000Z",
     ttl: 1_800_000_000
   })
-  assert.equal((await service.markChatRunFailed("run-terminal", "ignored")).status, "succeeded")
+  assert.equal((await service.markChatRunFailed("default", "run-terminal", "ignored")).status, "succeeded")
 
-  await assert.rejects(() => service.executeDocumentIngestRun("missing-ingest"), /Document ingest run not found/)
-  await assert.rejects(() => service.markDocumentIngestRunFailed("missing-ingest", "timeout"), /Document ingest run not found/)
+  await assert.rejects(() => service.executeDocumentIngestRun("default", "missing-ingest"), /Document ingest run not found/)
+  await assert.rejects(() => service.markDocumentIngestRunFailed("default", "missing-ingest", "timeout"), /Document ingest run not found/)
 	  await deps.documentIngestRunStore.create({
 	    runId: "ingest-terminal",
 	    status: "cancelled",
 	    createdBy: chatUser.userId,
+	    tenantId: "default",
 	    uploadId: "upload-terminal",
 	    objectKey: "uploads/cancelled.txt",
 	    purpose: "document",
@@ -2389,14 +3194,15 @@ test("service covers admin defaults, alias misses, terminal async runs, and benc
     updatedAt: "2026-05-04T00:00:00.000Z",
     ttl: 1_800_000_000
   })
-  assert.equal((await service.markDocumentIngestRunFailed("ingest-terminal", "ignored")).status, "cancelled")
+  assert.equal((await service.markDocumentIngestRunFailed("default", "ingest-terminal", "ignored")).status, "cancelled")
   await deps.objectStore.putBytes("uploads/empty.txt", Buffer.from(""))
 	  await deps.documentIngestRunStore.create({
 	    runId: "ingest-empty",
 	    status: "queued",
 	    createdBy: chatUser.userId,
 	    userEmail: chatUser.email,
-	    userGroups: chatUser.cognitoGroups,
+	    userGroups: ["RAG_GROUP_MANAGER"],
+	    tenantId: "default",
 	    uploadId: "upload-empty",
 	    objectKey: "uploads/empty.txt",
 	    purpose: "document",
@@ -2406,7 +3212,7 @@ test("service covers admin defaults, alias misses, terminal async runs, and benc
     updatedAt: "2026-05-04T00:00:00.000Z",
     ttl: 1_800_000_000
   })
-  const failedIngest = await service.executeDocumentIngestRun("ingest-empty")
+  const failedIngest = await service.executeDocumentIngestRun("default", "ingest-empty")
   assert.equal(failedIngest.status, "failed")
   assert.match(failedIngest.error ?? "", /Uploaded object is empty/)
 
@@ -2416,30 +3222,49 @@ test("service covers admin defaults, alias misses, terminal async runs, and benc
   const searchRun = await service.createBenchmarkRun(chatUser, { suiteId: "search-smoke-v1", mode: "search", topK: 999 })
   assert.equal(searchRun.mode, "search")
   assert.equal(searchRun.topK, ragRuntimePolicy.retrieval.searchRagMaxTopK)
-  assert.equal(await service.cancelBenchmarkRun("missing-benchmark-run"), undefined)
-  assert.equal((await service.cancelBenchmarkRun(searchRun.runId))?.status, "cancelled")
-  assert.equal(await service.createBenchmarkArtifactDownloadUrl(searchRun.runId, "logs"), undefined)
-  await assert.rejects(() => service.createBenchmarkArtifactDownloadUrl(searchRun.runId, "summary"), /BENCHMARK_BUCKET_NAME/)
-  assert.equal(await service.getBenchmarkCodeBuildLogText(searchRun.runId), undefined)
+  assert.equal(await service.cancelBenchmarkRun(chatUser, "missing-benchmark-run"), undefined)
+  assert.equal((await service.cancelBenchmarkRun(chatUser, searchRun.runId))?.status, "cancelled")
+  assert.equal(await service.createBenchmarkArtifactDownloadUrl(chatUser, searchRun.runId, "logs"), undefined)
+  await assert.rejects(() => service.createBenchmarkArtifactDownloadUrl(chatUser, searchRun.runId, "summary"), /BENCHMARK_BUCKET_NAME/)
+  assert.equal(await service.getBenchmarkCodeBuildLogText(chatUser, searchRun.runId), undefined)
 })
 
 async function createService(options: {
   textModel?: MockBedrockTextModel
   evidenceQueryError?: Error
   evidencePutErrorAfterWriteWhen?: (records: Parameters<LocalVectorStore["put"]>[0]) => boolean
+  evidenceDeleteErrorAfterWrite?: Error
   objectGetErrorPrefix?: string
   objectGetError?: Error
+  objectDeleteErrorPrefix?: string
+  objectDeleteError?: Error
   objectListExtraKeys?: string[]
   userDirectory?: UserDirectory
   codeBuildLogReader?: CodeBuildLogReader
   asyncAgentProviders?: AsyncAgentProviderRegistry
+  resourceUserPrincipals?: readonly ResourceUserPrincipal[]
+  verifiedIdentityProvider?: VerifiedIdentityProvider
+  onChatRunEventAppend?: (input: Parameters<LocalChatRunEventStore["append"]>[1]) => void | Promise<void>
+  onObjectPutText?: (key: string) => void | Promise<void>
+  onObjectPutTextIfVersion?: (key: string) => void | Promise<void>
+  onDocumentIngestRunEventAppend?: (input: Parameters<LocalDocumentIngestRunEventStore["append"]>[1]) => void | Promise<void>
 } = {}): Promise<{ service: MemoRagService; dataDir: string; deps: Dependencies }> {
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-service-test-"))
   const baseObjectStore = new LocalObjectStore(dataDir)
   const baseEvidenceStore = new LocalVectorStore(dataDir, "evidence-vectors.json")
+  const baseChatRunEventStore = new LocalChatRunEventStore(dataDir)
+  const baseDocumentIngestRunEventStore = new LocalDocumentIngestRunEventStore(dataDir)
   const deps = {
     objectStore: {
-      putText: (...args: Parameters<LocalObjectStore["putText"]>) => baseObjectStore.putText(...args),
+      putText: async (...args: Parameters<LocalObjectStore["putText"]>) => {
+        await baseObjectStore.putText(...args)
+        await options.onObjectPutText?.(args[0])
+      },
+      putTextIfVersion: async (...args: Parameters<LocalObjectStore["putTextIfVersion"]>) => {
+        const result = await baseObjectStore.putTextIfVersion(...args)
+        await options.onObjectPutTextIfVersion?.(args[0])
+        return result
+      },
       putBytes: (...args: Parameters<LocalObjectStore["putBytes"]>) => baseObjectStore.putBytes(...args),
       getText: async (key: string) => {
         if (options.objectGetError && options.objectGetErrorPrefix && key.startsWith(options.objectGetErrorPrefix)) {
@@ -2447,8 +3272,15 @@ async function createService(options: {
         }
         return baseObjectStore.getText(key)
       },
+      getTextWithVersion: (...args: Parameters<LocalObjectStore["getTextWithVersion"]>) => baseObjectStore.getTextWithVersion(...args),
       getBytes: (...args: Parameters<LocalObjectStore["getBytes"]>) => baseObjectStore.getBytes(...args),
-      deleteObject: (...args: Parameters<LocalObjectStore["deleteObject"]>) => baseObjectStore.deleteObject(...args),
+      getObjectSize: (...args: Parameters<LocalObjectStore["getObjectSize"]>) => baseObjectStore.getObjectSize(...args),
+      deleteObject: async (...args: Parameters<LocalObjectStore["deleteObject"]>) => {
+        if (options.objectDeleteError && options.objectDeleteErrorPrefix && args[0].startsWith(options.objectDeleteErrorPrefix)) {
+          throw options.objectDeleteError
+        }
+        return baseObjectStore.deleteObject(...args)
+      },
       listKeys: async (...args: Parameters<LocalObjectStore["listKeys"]>) => [
         ...(await baseObjectStore.listKeys(...args)),
         ...(options.objectListExtraKeys ?? [])
@@ -2464,7 +3296,11 @@ async function createService(options: {
         if (options.evidenceQueryError) throw options.evidenceQueryError
         return baseEvidenceStore.query(...args)
       },
-      delete: (...args: Parameters<LocalVectorStore["delete"]>) => baseEvidenceStore.delete(...args)
+      getByKeys: (...args: Parameters<LocalVectorStore["getByKeys"]>) => baseEvidenceStore.getByKeys(...args),
+      delete: async (...args: Parameters<LocalVectorStore["delete"]>) => {
+        await baseEvidenceStore.delete(...args)
+        if (options.evidenceDeleteErrorAfterWrite) throw options.evidenceDeleteErrorAfterWrite
+      }
     },
     textModel: options.textModel ?? new MockBedrockTextModel(),
     questionStore: new LocalQuestionStore(dataDir),
@@ -2472,18 +3308,100 @@ async function createService(options: {
     favoriteStore: new LocalFavoriteStore(dataDir),
     benchmarkRunStore: new LocalBenchmarkRunStore(dataDir),
     chatRunStore: new LocalChatRunStore(dataDir),
-    chatRunEventStore: new LocalChatRunEventStore(dataDir),
+    chatRunEventStore: {
+      append: async (...args: Parameters<LocalChatRunEventStore["append"]>) => {
+        const appended = await baseChatRunEventStore.append(...args)
+        await options.onChatRunEventAppend?.(args[1])
+        return appended
+      },
+      listAfter: (...args: Parameters<LocalChatRunEventStore["listAfter"]>) => baseChatRunEventStore.listAfter(...args)
+    },
     documentIngestRunStore: new LocalDocumentIngestRunStore(dataDir),
-    documentIngestRunEventStore: new LocalDocumentIngestRunEventStore(dataDir),
+    documentIngestRunEventStore: {
+      append: async (...args: Parameters<LocalDocumentIngestRunEventStore["append"]>) => {
+        const appended = await baseDocumentIngestRunEventStore.append(...args)
+        await options.onDocumentIngestRunEventAppend?.(args[1])
+        return appended
+      },
+      listAfter: (...args: Parameters<LocalDocumentIngestRunEventStore["listAfter"]>) => baseDocumentIngestRunEventStore.listAfter(...args)
+    },
     documentGroupStore: new LocalDocumentGroupStore(dataDir),
     folderPolicyStore: new LocalFolderPolicyStore(dataDir),
     userGroupStore: new LocalUserGroupStore(dataDir),
     groupMembershipStore: new LocalGroupMembershipStore(dataDir),
     codeBuildLogReader: options.codeBuildLogReader ?? { getText: async () => undefined },
     asyncAgentProviders: options.asyncAgentProviders ?? defaultTestAsyncAgentProviders(),
-    userDirectory: options.userDirectory
+    userDirectory: options.userDirectory,
+    verifiedIdentityProvider: options.verifiedIdentityProvider,
+    localTestIngestAdmissionContext: { mode: "local_test_fixture", fixtureId: "memorag-service-test", tenantId: "default", ownerUserId: "local-dev" }
   } as unknown as Dependencies
+  if (options.resourceUserPrincipals) {
+    const principals = new Map(options.resourceUserPrincipals.map((principal) => [principal.userId, principal]))
+    deps.resourceUserPrincipalDirectory = {
+      getUser: async (userId: string) => principals.get(userId)
+    }
+    deps.securityAuditOutbox = new ObjectStoreSecurityMutationAuditOutbox(deps.objectStore)
+  }
   return { service: new MemoRagService(deps), dataDir, deps }
+}
+
+function workerAdmissionContext(): AuthoritativeAdmissionContext {
+  const reference = (id: string) => ({ id: `worker:${id}`, version: "v1", hash: `${id}:approved` })
+  return {
+    mode: "authoritative",
+    tenantId: "default",
+    ownerUserId: "worker-user",
+    authorizationRef: reference("authorization"),
+    classificationRef: reference("classification"),
+    usagePolicyRef: reference("usage"),
+    qualityRef: reference("quality"),
+    lifecycleRef: reference("lifecycle"),
+    provenanceRef: reference("provenance"),
+    inspectionStatus: "passed",
+    qualityProfile: {
+      knowledgeQualityStatus: "approved",
+      verificationStatus: "verified",
+      freshnessStatus: "current",
+      supersessionStatus: "current",
+      extractionQualityStatus: "high",
+      ragEligibility: "eligible",
+      flags: []
+    },
+    lifecycleStatus: "active",
+    scope: { scopeType: "personal", allowedUsers: ["worker-user"] }
+  }
+}
+
+async function seedFolderPolicy(deps: Dependencies, folderId: string, entries: FolderPolicyEntry[], tenantId = "default"): Promise<void> {
+  const folder = await deps.documentGroupStore.get(tenantId, folderId)
+  assert.ok(folder, `folder fixture ${folderId} must exist`)
+  const policyId = `test-policy-${folderId}`
+  const now = "2026-05-01T00:00:00.000Z"
+  await deps.folderPolicyStore.save({
+    policyId,
+    itemType: "folderPolicy",
+    tenantId: folder.tenantId ?? "default",
+    folderId,
+    entries,
+    createdBy: folder.ownerUserId,
+    createdAt: now,
+    updatedAt: now
+  })
+}
+
+async function readSecurityMutationAuditIntents(deps: Dependencies): Promise<SecurityMutationAuditIntent[]> {
+  const keys = await deps.objectStore.listKeys("security-audit/intents/")
+  return Promise.all(keys.map(async (key) => JSON.parse(await deps.objectStore.getText(key)) as SecurityMutationAuditIntent))
+}
+
+function localDocumentManager(): AppUser {
+  return {
+    userId: "local-dev",
+    email: "local-dev@example.com",
+    cognitoGroups: ["RAG_GROUP_MANAGER"],
+    accountStatus: "active",
+    tenantId: "default"
+  }
 }
 
 function fakeAsyncAgentProvider(options: {
@@ -2528,8 +3446,8 @@ function asyncAgentCommandFixturePath(): string {
 
 async function waitForDocumentIngestRun(deps: Dependencies, runId: string) {
   for (let attempt = 0; attempt < 50; attempt += 1) {
-    const run = await deps.documentIngestRunStore.get(runId)
-    if (run?.status === "succeeded" || run?.status === "failed" || run?.status === "cancelled") return run
+    const run = await deps.documentIngestRunStore.get("default", runId)
+    if (run?.status === "succeeded" || run?.status === "rejected" || run?.status === "failed" || run?.status === "cancelled") return run
     await delay(20)
   }
   throw new Error(`Timed out waiting for document ingest run: ${runId}`)

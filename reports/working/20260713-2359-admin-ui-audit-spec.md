@@ -1,11 +1,12 @@
 # 管理画面 問題監査・改善方針・受け入れ条件 作業レポート
 
 - 実施日時: 2026-07-13 23:59 JST
-- 基準: `origin/main` / `9cd904d3c5203caf2400eb2ff654096d63f9d8fb`
+- 初回基準: `origin/main` / `9cd904d3c5203caf2400eb2ff654096d63f9d8fb`
+- 再検証基準: `origin/main` / `c6eff7deef0d8f3d06d66391be181e45b058aaaf`
 - 作業ブランチ: `codex/admin-ui-audit-spec`
-- タスク: `tasks/done/20260713-2318-admin-ui-problem-audit.md`
+- タスク: `tasks/do/20260713-2318-admin-ui-problem-audit.md`
 - PR: https://github.com/tsuji-tomonori/rag-assist/pull/344
-- 状態: 調査成果物、PR、受け入れ条件確認、セルフレビュー完了
+- 状態: 初回調査を latest main へ再統合し、final validation / PR gate を確認中
 
 ## 受けた指示
 
@@ -41,19 +42,21 @@
 
 ## 成果物
 
-- 入口・結論: `docs/spec-recovery/18_admin_ui_audit_202607.md`
+- 入口・結論: `reports/working/admin-ui-audit-202607/18_admin_ui_audit_202607.md`
 - input/fact: `19_admin_ui_input_inventory_202607.md`, `20_admin_ui_facts_202607.md`
 - 改善task/AC/E2E: `21_admin_ui_tasks_202607.md`–`23_admin_ui_e2e_scenarios_202607.md`
 - operation/requirement/spec: `24_admin_ui_operation_expectation_groups_202607.md`–`26_admin_ui_specifications_202607.md`
 - trace/gap/open questions: `27_admin_ui_traceability_matrix_202607.md`–`29_admin_ui_open_questions_202607.md`
-- 要件候補: `docs/spec-recovery/admin-ui-202607/requirements/REQ_AUI_001.md`–`REQ_AUI_013.md`
-- index: `docs/spec-recovery/README.md`
+- 要件候補（非規範の履歴）: `reports/working/admin-ui-audit-202607/requirements/REQ_AUI_001.md`–`REQ_AUI_013.md`
+- index: `reports/working/admin-ui-audit-202607/README.md`
+- latest main 再検証: `reports/working/admin-ui-audit-202607/30_admin_ui_revalidation_20260714.md`
+- 残余実装: `tasks/todo/20260714-1011-admin-usage-cost-integrity.md`、`tasks/todo/20260714-1011-admin-access-audit-state.md`、`tasks/todo/20260714-1011-admin-ui-governance-quality.md`
 
 ## 検証結果
 
 | 検証 | 結果 | 備考 |
 | --- | --- | --- |
-| `python3 scripts/validate_spec_recovery.py docs/spec-recovery` |成功 |既存必須成果物、2026-07 baseline、trace/AC構造を検証 |
+| 旧 spec-recovery validator |成功 |初回時点の必須成果物、2026-07 baseline、trace/AC構造を検証 |
 | `npm run docs:hidden-unicode:check` |成功 | `docs reports tasks` の不可視Unicode controlなし |
 | AUI ID sequence/count check |成功 | 81 facts、36 gaps、13 tasks、158 AC、17 E2E、13 specs、22 open questions |
 | AUI reference bounds/collision check |成功 |範囲外参照なし、既存`ADM` familyとの衝突なし |
@@ -78,3 +81,28 @@ API/Web production codeを変更していないため、lint/typecheck/unit/buil
 - pricing source、session失効上限、delete/retention、strong-role承認、pagination/SLO、audit/SIEM、rollout許容差はowner決定が必要である。
 - 本成果物は`proposed / non-normative`であり、既存canonical product baselineを自動更新していない。
 - GitHub ActionsはPR作成後に別途実行されるため、最終回答時点の結果をrepository外のPR状態として確認する。
+
+## 2026-07-14 latest main 再統合
+
+- PR #341–#343 の merge 後、旧 spec-recovery docs root は canonical docs policy で削除・禁止されているため復活させなかった。
+- 初回監査 bundle は基準 commit `9cd904d3` の非規範な履歴証跡として `reports/working/admin-ui-audit-202607/` へ移した。
+- 36 gap を current source/test で再判定し、`resolved` 4、`partially_resolved` 10、`open` 22 とした。
+- canonical role catalog、fenced role mutation、authoritative user create、account suspend/restore/delete は改善済みとして補正した。
+- Usage/Cost の完全計測、Web multi-role editor、query/error state、共通 audit read model、alias governance、pagination、responsive/a11y は残余 task へ分けた。
+- PR #339 は open・未 merge・mergeable false の candidate であり、tenant/Scan/pricing/live evidence の gap を残すため、そのまま取り込まない。
+- production behavior を変更せず、proposed requirement の owner decision もないため canonical REQ/ARC/DES/OPS は更新不要と判断した。
+
+### 再統合後のローカル検証
+
+| 検証 | 結果 | 備考 |
+| --- | --- | --- |
+| `python3 scripts/validate_docs.py` |成功 | canonical docs root、trace、legacy path 不在を確認 |
+| `python3 -m unittest scripts.test_validate_docs` |成功 | 9 tests |
+| 36 gap status/count check |成功 | `resolved` 4、`partially_resolved` 10、`open` 22 |
+| `task docs:check` |成功 | canonical docs、OpenAPI、API code 95/570、Web/infra inventory、hidden Unicode |
+| `pre-commit run --files <32 files>` |成功 | merge conflict、large file、Unicode、whitespace 等 |
+| `git diff --cached --check` |成功 | latest main に対する audit/task 差分 |
+
+初回の `python3 scripts/test_validate_docs.py` は package import path を満たさない起動方法だったため `ModuleNotFoundError` となり、module 起動へ修正して 9/9 が成功した。最初の `task docs:check` は親 worktree の古い `@memorag-mvp/contract` を解決して失敗した。専用 worktree で `npm install` を実行して workspace link を current main へ同期し、再実行で全 check が成功した。install audit は 8 vulnerabilities（low 2、moderate 1、high 5）を報告し、本調査 PR では互換性影響を伴う自動修正をしていない。
+
+final GitHub CI、最新 head の受け入れ条件確認、セルフレビュー、task done 更新は未確認であり、ローカル成功と区別する。

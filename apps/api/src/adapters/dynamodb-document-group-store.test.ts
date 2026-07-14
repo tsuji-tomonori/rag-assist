@@ -4,6 +4,7 @@ import { QueryCommand, TransactWriteItemsCommand } from "@aws-sdk/client-dynamod
 import { marshall } from "@aws-sdk/util-dynamodb"
 import { DynamoDbDocumentGroupStore } from "./dynamodb-document-group-store.js"
 import type { DocumentGroup } from "../types.js"
+import { tenantItemIndexAttributes, tenantPartitionId, tenantStorageKey } from "../security/tenant-partition.js"
 
 test("dynamodb document group store creates groups with a path lock transaction", async () => {
   const commands: unknown[] = []
@@ -28,7 +29,7 @@ test("dynamodb document group store updates paths with new lock, guarded group p
     return {}
   } } as never)
 
-  await store.updateWithPathLocks([{
+  await store.updateWithPathLocks("default", [{
     current: group("docgrp_1", "/old"),
     next: group("docgrp_1", "/new")
   }])
@@ -48,7 +49,7 @@ test("dynamodb document group store does not delete an old lock for legacy norma
     return {}
   } } as never)
 
-  await store.updateWithPathLocks([{
+  await store.updateWithPathLocks("default", [{
     current: { ...group("docgrp_1", "/old"), schemaVersion: 1 },
     next: group("docgrp_1", "/new")
   }])
@@ -67,7 +68,7 @@ test("dynamodb document group store queries the AdminCanonicalPathIndex", async 
     return { Items: [] }
   } } as never)
 
-  await store.listByAdminPath("default#user#owner-1")
+  await store.listByAdminPath("default", "default#user#owner-1")
   const command = commands[0]
   assert.ok(command instanceof QueryCommand)
   assert.equal(command.input.IndexName, "AdminCanonicalPathIndex")
@@ -79,19 +80,30 @@ test("dynamodb document group store skips path locks when finding a canonical pa
   const store = new DynamoDbDocumentGroupStore("DocumentGroups", { send: async () => ({
     Items: [
       marshall({
-        groupId: "pathlock#default%23user%23owner-1#%2Fteam",
+        tenantId: "default",
+        groupId: tenantStorageKey("default", "pathlock#default%23user%23owner-1#%2Fteam"),
+        rawGroupId: "pathlock#default%23user%23owner-1#%2Fteam",
         itemType: "documentGroupPathLock",
-        adminPathPk: "default#user#owner-1",
+        adminPathPk: `${tenantPartitionId("default")}#default%23user%23owner-1`,
+        rawAdminPathPk: "default#user#owner-1",
+        ...tenantItemIndexAttributes("default", "documentGroupPathLock#pathlock"),
         normalizedCanonicalPath: "/team",
         lockedGroupId: "docgrp_1",
         createdAt: "2026-05-01T00:00:00.000Z",
         updatedAt: "2026-05-01T00:00:00.000Z"
       }),
-      marshall(expected)
+      marshall({
+        ...expected,
+        groupId: tenantStorageKey("default", expected.groupId),
+        rawGroupId: expected.groupId,
+        adminPathPk: `${tenantPartitionId("default")}#default%23user%23owner-1`,
+        rawAdminPathPk: expected.adminPathPk,
+        ...tenantItemIndexAttributes("default", `documentGroup#${expected.groupId}`)
+      })
     ]
   }) } as never)
 
-  assert.deepEqual(await store.findByCanonicalPath("default#user#owner-1", "/team"), expected)
+  assert.deepEqual(await store.findByCanonicalPath("default", "default#user#owner-1", "/team"), expected)
 })
 
 function group(groupId: string, normalizedCanonicalPath: string): DocumentGroup {

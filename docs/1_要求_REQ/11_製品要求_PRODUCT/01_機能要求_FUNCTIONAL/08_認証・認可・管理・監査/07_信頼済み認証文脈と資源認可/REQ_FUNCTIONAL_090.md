@@ -29,10 +29,10 @@ submit 時に正当だった処理でも、開始・commit までに account sus
 | 説明 | queued/long-running work の current authorization freshness invariant |
 | 根拠 | submit 後の account/role/resource 変更を stale snapshot が迂回することを防ぐ |
 | 源泉 | RAG ガイド §8.1.7（PDF pp.188–189）、`GAP-RD-011`、current worker audit |
-| Actor / trigger | chat/ingest/benchmark/agent worker が開始、保護対象を読む、外部副作用または durable commit を行うとき |
+| Actor / trigger | production の chat/ingest/benchmark worker、および reindex/publication の長時間処理が開始、保護対象を読む、外部副作用または durable commit を行うとき |
 | 種類 | 機能要求 / authorization / async lifecycle |
 | 依存関係 | `FR-056`, `FR-057`, `FR-058`, `FR-060`, `FR-066`, `FR-079`, `FR-080`, `SQ-006` |
-| 衝突 | 現行 worker は submit 時の `user.groups` snapshot を run payload から再利用する |
+| 衝突 | submit 時の `user.groups` snapshot だけを run payload から再利用すると、実行時の失効を反映できない |
 | 受け入れ基準 | `AC-FR090-001`, `AC-FR090-002` |
 | 優先度 | S |
 | 安定性 | High |
@@ -67,9 +67,15 @@ submit 時に正当だった処理でも、開始・commit までに account sus
 | 検証可能性 | OK | submit/start/read/commit 間に各 revoke を挿入する race matrix で確認できる |
 | ニーズ適合 | OK | 管理者・owner の失効操作が待機中処理にも実効的に反映される |
 | 原子性 | OK | 長時間処理の認可鮮度という一つの判断を規定する |
-| 実装適合 | NG | worker が submit 時の group snapshot を再利用する経路が残る |
+| 実装適合 | OK（confirmed） | production 到達可能な chat/ingest/benchmark worker と reindex/publication が start/read/side-effect/commit で current identity/tenant/role/resource を再認可し、revoke-race tests が stale read/side effect/commit と未補償 artifact を拒否する。 |
+
+## Production scope
+
+- `async agent` は既存仕様上の予約 target だが、production route・実行 role・CDK worker が無効であるため、FR-090 の実装済み根拠には数えない。
+- 到達不能な `async-agent-run-worker.ts` は誤って production 実装済みと見なされないよう削除し、予約 schema/type と将来仕様だけを維持する。
+- async agent を将来有効化する場合は、route・role・worker・current authorization・artifact cleanup を同一変更で実装し、FR-090 の race matrix を改めて適用する。
 
 ## トレース
 
 - 後方: `GAP-RD-001`, `GAP-RD-011`, RAG ガイド PDF pp.188–189。
-- 前方: worker context resolver、start/read/commit reauthorization tests、`SQ-006`, `E2E-AUTH-003`, `E2E-SHARE-004`。
+- 前方: active worker context resolver、chat/ingest/benchmark の start/read/side-effect/commit reauthorization tests、`SQ-006`, `E2E-AUTH-003`, `E2E-SHARE-004`。

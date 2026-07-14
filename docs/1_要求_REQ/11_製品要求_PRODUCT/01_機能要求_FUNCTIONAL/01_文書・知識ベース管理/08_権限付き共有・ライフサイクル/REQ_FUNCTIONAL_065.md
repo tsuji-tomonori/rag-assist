@@ -66,7 +66,7 @@
 | 実現可能性 | OK | 既存 permission services で判定可能 |
 | 検証可能性 | OK | source/destination/feature/tenant の組合せ試験 |
 | ニーズ適合 | OK | 文書を権限外 container へ移動されない |
-| 実装適合 | partial | destination は確認するが source container 条件が不足 |
+| 実装適合 | OK（confirmed） | `document-lifecycle-mutation-coordinator.ts` が move feature/source full/destination full/same tenant/current revoke を commit 前に再評価し、fault/concurrency tests を持つ |
 
 ## トレース
 

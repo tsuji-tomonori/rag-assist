@@ -34,6 +34,7 @@ export type DocumentQualityProfile = {
 }
 
 export type DocumentManifest = {
+  detailLevel?: "reader" | "manager"
   documentId: string
   fileName: string
   mimeType?: string
@@ -43,8 +44,8 @@ export type DocumentManifest = {
   extractionCounters?: Record<string, number>
   fileProfile?: "digital_text" | "scanned_image" | "mixed" | "image_only" | "unknown"
   qualityProfile?: DocumentQualityProfile
-  chunkCount: number
-  memoryCardCount: number
+  chunkCount?: number
+  memoryCardCount?: number
   createdAt: string
   updatedAt?: string
   lifecycleStatus?: "active" | "staging" | "superseded"
@@ -64,26 +65,27 @@ export type DocumentManifest = {
 }
 
 export type DocumentGroup = {
+  detailLevel?: "reader" | "manager"
   groupId: string
   schemaVersion?: number
   itemType?: "documentGroup"
   tenantId?: string
-  adminPrincipalType: "user" | "group"
-  adminPrincipalId: string
+  adminPrincipalType?: "user" | "group"
+  adminPrincipalId?: string
   name: string
-  normalizedName: string
-  canonicalPath: string
-  normalizedCanonicalPath: string
-  adminPathPk: string
-  parentPathPk: string
+  normalizedName?: string
+  canonicalPath?: string
+  normalizedCanonicalPath?: string
+  adminPathPk?: string
+  parentPathPk?: string
   description?: string
   parentGroupId?: string
   ancestorGroupIds?: string[]
-  ownerUserId: string
-  visibility: "private" | "shared" | "org"
-  sharedUserIds: string[]
-  sharedGroups: string[]
-  managerUserIds: string[]
+  ownerUserId?: string
+  visibility?: "private" | "shared" | "org"
+  sharedUserIds?: string[]
+  sharedGroups?: string[]
+  managerUserIds?: string[]
   hasExplicitPolicy?: boolean
   policyId?: string
   status?: "active" | "archived"
@@ -91,8 +93,12 @@ export type DocumentGroup = {
   effectivePermission?: "none" | "readOnly" | "full"
   policySource?: "explicit" | "inherited" | "ownerDefault" | "none"
   inheritedFromFolderId?: string
-  createdAt: string
-  updatedAt: string
+  createdAt?: string
+  updatedAt?: string
+  capabilities?: {
+    canRead: boolean
+    canManage: boolean
+  }
 }
 
 export type SearchScope = {

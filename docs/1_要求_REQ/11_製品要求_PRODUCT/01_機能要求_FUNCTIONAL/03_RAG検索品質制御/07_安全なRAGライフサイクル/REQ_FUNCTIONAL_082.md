@@ -28,7 +28,7 @@
 | 識別子 | `FR-082` |
 | 説明 | source locator と warning を持つ loss-aware extraction/normalization |
 | 根拠 | silent data loss と不正確な citation locator を防ぐ |
-| 源泉 | RAG ガイド §3.1–3.2（PDF pp.59–66）、`docs/spec-recovery/15_rag_lifecycle_matrix_202607.md`、`GAP-RD-013` |
+| 源泉 | RAG ガイド §3.1–3.2（PDF pp.59–66）、`docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md`、`GAP-RD-013` |
 | Actor / trigger | parser/normalizer が取得済み文書を block へ変換するとき |
 | 種類 | 機能要求 / ingest / data integrity |
 | 依存関係 | `FR-068`, `FR-069` |
@@ -66,9 +66,9 @@
 | 実現可能性 | OK | parser result schema と publication gate で実現可能 |
 | 検証可能性 | OK | 境界 corpus、OCR/unsupported fixture、locator/warning assertion で確認できる |
 | ニーズ適合 | OK | 不完全な抽出を完全な回答根拠として利用しない |
-| 実装適合 | NG/conflict | 固定文字数での切り詰めと詳細 locator/warning 不足がある |
+| 実装適合 | OK（confirmed） | text extractor/ingest manifest が page/section/span、section 継承、OCR/source method、input/output count、loss warning を保持する。実2ページ native PDF と native/empty mixed PDF の production parser tests により、page/span round-trip と欠落 page の partial/quarantine/no-vector-publication を確認した。 |
 
 ## トレース
 
-- 後方: `docs/spec-recovery/15_rag_lifecycle_matrix_202607.md`、`docs/spec-recovery/16_current_state_gap_analysis_202607.md` の `GAP-RD-013`。
+- 後方: `docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md` の `GAP-RD-013`。
 - 前方: extraction result schema、boundary corpus、`FR-083`、`FR-069`。

@@ -1,8 +1,55 @@
 import { z } from "@hono/zod-openapi"
 import { ragRuntimePolicy } from "./chat-orchestration/runtime-policy.js"
-import type { JsonValue } from "./types.js"
+import type { JsonValue, ReplayVersionManifest } from "./types.js"
+import {
+  MANDATORY_RAG_GUARDS,
+  SAFE_DEGRADATION_POLICY_VERSION,
+  type SafeDegradationDecision
+} from "./rag/_shared/security/safe-degradation-policy.js"
 
 const MetadataValueSchema = z.custom<JsonValue>(isJsonValue)
+const ReplayVersionManifestSchema = z.custom<ReplayVersionManifest>(
+  (value) => isJsonValue(value) && typeof value === "object" && value !== null && !Array.isArray(value) && value.schemaVersion === 1
+)
+const ReplayDecisionSchema = z.object({
+  candidateCount: z.number().int().nonnegative(),
+  deniedCandidateCount: z.number().int().nonnegative(),
+  finalEvidenceCount: z.number().int().nonnegative(),
+  responseStatus: z.enum(["success", "warning", "error"]),
+  decisionCode: z.enum(["completed", "refused", "rejected", "failed", "cancelled"]),
+  reasonCodes: z.array(z.enum([
+    "authorization_denied",
+    "safety_interlock",
+    "dependency_error",
+    "admission_rejected",
+    "publication_not_eligible",
+    "permission_revoked",
+    "execution_error",
+    "insufficient_evidence",
+    "clarification_required",
+    "output_secret_detected",
+    "cancelled"
+  ])),
+  totalLatencyMs: z.number().nonnegative()
+})
+const MandatoryRagGuardSchema = z.enum(MANDATORY_RAG_GUARDS)
+const RagGuardOutcomeSchema = z.object({
+  guard: MandatoryRagGuardSchema,
+  observed: z.boolean(),
+  passed: z.boolean(),
+  evidence: z.string(),
+  observedAt: z.string().datetime()
+})
+const SafeDegradationDecisionSchema: z.ZodType<SafeDegradationDecision> = z.object({
+  policyVersion: z.literal(SAFE_DEGRADATION_POLICY_VERSION),
+  trigger: z.enum(["dependency_error", "timeout", "overload", "cost_limit", "circuit_open", "unsafe_profile"]),
+  stage: z.string(),
+  action: z.enum(["limited_answer", "refuse", "fail"]),
+  enforcedGuards: z.array(MandatoryRagGuardSchema),
+  missingGuards: z.array(MandatoryRagGuardSchema),
+  safeToReturnContent: z.boolean(),
+  guardOutcomes: z.array(RagGuardOutcomeSchema)
+})
 const DebugStepOutputSchema = z.record(z.string(), MetadataValueSchema)
 export const DebugTraceTargetTypeSchema = z.enum(["rag_run", "ingest_run", "chat_orchestration_run", "async_agent_run", "tool_invocation"])
 export const DebugTraceVisibilitySchema = z.enum(["user_safe", "support_sanitized", "operator_sanitized", "internal_restricted"])
@@ -84,6 +131,41 @@ export const PipelineVersionsSchema = z.object({
   embeddingDimensions: z.number().int().positive()
 })
 
+const VersionedRecordReferenceSchema = z.object({
+  id: z.string().min(1),
+  version: z.string().min(1),
+  hash: z.string().regex(/^[a-f0-9]{64}$/i)
+})
+
+const SourceLocationSchema = z.object({
+  page: z.number().int().positive().optional(),
+  pageStart: z.number().int().positive().optional(),
+  pageEnd: z.number().int().positive().optional(),
+  bbox: MetadataValueSchema.optional(),
+  unit: z.enum(["normalized_page", "pdf_point", "pixel", "unknown"]).optional(),
+  source: z.string().optional(),
+  sectionPath: z.array(z.string()).optional(),
+  startChar: z.number().int().nonnegative().optional(),
+  endChar: z.number().int().nonnegative().optional(),
+  sourceBlockId: z.string().optional(),
+  sourceChunkIds: z.array(z.string()).optional()
+})
+
+const DerivedRecordSecurityEnvelopeSchema = z.object({
+  schemaVersion: z.literal(1),
+  documentId: z.string(),
+  documentVersion: z.string(),
+  tenantId: z.string(),
+  authorizationRef: VersionedRecordReferenceSchema,
+  classificationRef: VersionedRecordReferenceSchema,
+  usagePolicyRef: VersionedRecordReferenceSchema,
+  qualityRef: VersionedRecordReferenceSchema,
+  lifecycleRef: VersionedRecordReferenceSchema,
+  provenanceRef: VersionedRecordReferenceSchema,
+  sourceLocator: SourceLocationSchema,
+  envelopeHash: z.string().regex(/^[a-f0-9]{64}$/i)
+})
+
 export const RagProfileTraceSchema = z.object({
   id: z.string(),
   version: z.string(),
@@ -119,15 +201,9 @@ const ChunkMetadataSchema = z.object({
   confidence: z.number().optional(),
   readingOrder: z.number().int().nonnegative().optional(),
   bbox: MetadataValueSchema.optional(),
-  sourceLocation: z.object({
-    page: z.number().int().positive().optional(),
-    pageStart: z.number().int().positive().optional(),
-    pageEnd: z.number().int().positive().optional(),
-    bbox: MetadataValueSchema.optional(),
-    unit: z.enum(["normalized_page", "pdf_point", "pixel", "unknown"]).optional(),
-    source: z.string().optional()
-  }).optional(),
-  extractionMethod: z.string().optional()
+  sourceLocation: SourceLocationSchema.optional(),
+  extractionMethod: z.string().optional(),
+  securityEnvelope: DerivedRecordSecurityEnvelopeSchema.optional()
 })
 
 const ExtractionWarningSchema = z.object({
@@ -135,8 +211,14 @@ const ExtractionWarningSchema = z.object({
   message: z.string(),
   severity: z.enum(["info", "warning", "error"]),
   page: z.number().int().positive().optional(),
+  pageStart: z.number().int().positive().optional(),
+  pageEnd: z.number().int().positive().optional(),
+  sectionPath: z.array(z.string()).optional(),
+  startChar: z.number().int().nonnegative().optional(),
+  endChar: z.number().int().nonnegative().optional(),
   sourceBlockId: z.string().optional(),
-  confidence: z.number().optional()
+  confidence: z.number().optional(),
+  degradationDecision: SafeDegradationDecisionSchema.optional()
 })
 
 const DocumentQualityProfileSchema = z.object({
@@ -158,6 +240,115 @@ const DocumentQualityProfileSchema = z.object({
   updatedBy: z.string().optional()
 })
 
+const SourceClassificationSchema = z.object({
+  level: z.enum(["public", "internal", "confidential", "restricted"]),
+  policyVersion: z.string().trim().min(1).max(200)
+})
+
+const SourceUsagePurposeSchema = z.enum(["normal_rag", "external_model", "logging", "evaluation"])
+
+const SourceUsagePolicySchema = z.object({
+  allowedPurposes: z.array(SourceUsagePurposeSchema).min(1).max(4),
+  externalModelAllowed: z.boolean(),
+  loggingAllowed: z.boolean(),
+  evaluationAllowed: z.boolean(),
+  policyVersion: z.string().trim().min(1).max(200)
+})
+
+const ExplicitSourceQualityProfileSchema = z.object({
+  knowledgeQualityStatus: z.literal("approved"),
+  verificationStatus: z.literal("verified"),
+  freshnessStatus: z.literal("current"),
+  supersessionStatus: z.literal("current"),
+  extractionQualityStatus: z.literal("high"),
+  ragEligibility: z.literal("eligible"),
+  confidence: z.number().min(0).max(1).optional(),
+  flags: z.array(z.enum([
+    "verification_required",
+    "freshness_review_required",
+    "superseded_by_newer_document",
+    "low_extraction_confidence",
+    "manual_rag_exclusion"
+  ])).max(0)
+})
+
+export const ApproveSourceGovernanceRequestSchema = z.object({
+  expectedVersion: z.string().trim().min(1).max(500),
+  reason: z.string().trim().min(1).max(1000),
+  classification: SourceClassificationSchema,
+  usagePolicy: SourceUsagePolicySchema,
+  qualityProfile: ExplicitSourceQualityProfileSchema,
+  qualityPolicyVersion: z.string().trim().min(1).max(200),
+  inspection: z.object({
+    status: z.literal("passed"),
+    profileVersion: z.string().trim().min(1).max(200)
+  })
+})
+
+export const RestrictSourceGovernanceRequestSchema = z.object({
+  expectedVersion: z.string().trim().min(1).max(500),
+  reason: z.string().trim().min(1).max(1000),
+  dimensions: z.array(z.enum(["classification", "quality", "lifecycle"])).max(3).optional(),
+  deniedPurposes: z.array(z.enum(["normal_rag", "external_model", "logging", "evaluation"])).max(4).optional()
+})
+
+const ApprovedSourceGovernancePolicySchema = z.object({
+  classification: SourceClassificationSchema,
+  usagePolicy: SourceUsagePolicySchema,
+  qualityProfile: DocumentQualityProfileSchema,
+  inspection: z.object({ status: z.literal("passed"), profileVersion: z.string() }),
+  classificationRef: VersionedRecordReferenceSchema,
+  usagePolicyRef: VersionedRecordReferenceSchema,
+  qualityRef: VersionedRecordReferenceSchema,
+  approvedBy: z.string(),
+  approvedAt: z.string(),
+  reason: z.string()
+})
+
+export const SourceGovernanceRecordSchema = z.object({
+  schemaVersion: z.literal(1),
+  sourceId: z.string(),
+  sourceVersion: z.string(),
+  sourceManifestObjectKey: z.string(),
+  tenantId: z.string(),
+  ownerUserId: z.string(),
+  status: z.enum(["unreviewed", "approval_pending", "approved", "published", "restricted", "reconciliation_required"]),
+  revision: z.number().int().positive(),
+  approval: ApprovedSourceGovernancePolicySchema.optional(),
+  restriction: z.object({
+    dimensions: z.array(z.enum(["classification", "quality", "lifecycle"])),
+    deniedPurposes: z.array(z.enum(["normal_rag", "external_model", "logging", "evaluation"])),
+    restrictedBy: z.string(),
+    restrictedAt: z.string(),
+    reason: z.string()
+  }).optional(),
+  auditIntentId: z.string().optional(),
+  stagedPublication: z.object({
+    runId: z.string(),
+    candidateDocumentId: z.string(),
+    candidateManifestObjectKey: z.string()
+  }).optional(),
+  activeDocumentId: z.string().optional(),
+  publishedAt: z.string().optional(),
+  lastFailureCode: z.string().optional(),
+  createdAt: z.string(),
+  updatedAt: z.string()
+})
+
+const PublicSourceGovernanceRecordSchema = SourceGovernanceRecordSchema
+  .omit({ sourceManifestObjectKey: true, stagedPublication: true })
+  .extend({
+    stagedPublication: z.object({
+      runId: z.string(),
+      candidateDocumentId: z.string()
+    }).optional()
+  })
+
+export const VersionedSourceGovernanceRecordSchema = z.object({
+  record: PublicSourceGovernanceRecordSchema,
+  version: z.string()
+})
+
 const ParsedDocumentSchema = z.object({
   schemaVersion: z.literal(2),
   text: z.string(),
@@ -168,15 +359,112 @@ const ParsedDocumentSchema = z.object({
   tables: z.array(z.record(z.string(), MetadataValueSchema)).optional(),
   figures: z.array(z.record(z.string(), MetadataValueSchema)).optional(),
   warnings: z.array(ExtractionWarningSchema).optional(),
-  counters: z.record(z.string(), z.number()).optional()
+  counters: z.record(z.string(), z.number()).optional(),
+  extractionStatus: z.enum(["complete", "partial"]).optional(),
+  inputCharCount: z.number().int().nonnegative().optional(),
+  outputCharCount: z.number().int().nonnegative().optional(),
+  contentHash: z.string().regex(/^[a-f0-9]{64}$/i).optional()
+})
+
+const SourceAdmissionRecordSchema = z.object({
+  schemaVersion: z.literal(1),
+  status: z.enum(["approved", "quarantined", "rejected"]),
+  tenantId: z.string().optional(),
+  ownerUserId: z.string().optional(),
+  authorizationRef: VersionedRecordReferenceSchema.optional(),
+  classificationRef: VersionedRecordReferenceSchema.optional(),
+  usagePolicyRef: VersionedRecordReferenceSchema.optional(),
+  qualityRef: VersionedRecordReferenceSchema.optional(),
+  lifecycleRef: VersionedRecordReferenceSchema.optional(),
+  provenanceRef: VersionedRecordReferenceSchema.optional(),
+  inspectionStatus: z.enum(["passed", "failed", "unknown"]),
+  reasons: z.array(z.string()),
+  rejectedProtectedMetadataKeys: z.array(z.string()),
+  admittedAt: z.string(),
+  degradationDecision: SafeDegradationDecisionSchema.optional()
+})
+
+const DerivedArtifactIntegritySchema = z.object({
+  schemaVersion: z.literal(1),
+  expectedChunkCount: z.number().int().nonnegative(),
+  expectedMemoryCardCount: z.number().int().nonnegative(),
+  evidenceRecordCount: z.number().int().nonnegative(),
+  memoryRecordCount: z.number().int().nonnegative(),
+  manifestHash: z.string().regex(/^[a-f0-9]{64}$/i),
+  recordSetHash: z.string().regex(/^[a-f0-9]{64}$/i),
+  objectHashes: z.object({
+    source: z.string().regex(/^[a-f0-9]{64}$/i),
+    structuredBlocks: z.string().regex(/^[a-f0-9]{64}$/i).optional(),
+    memoryCards: z.string().regex(/^[a-f0-9]{64}$/i).optional()
+  }).optional(),
+  verified: z.boolean(),
+  reasons: z.array(z.string())
+})
+
+const ChunkingPolicySnapshotSchema = z.object({
+  schemaVersion: z.literal(1),
+  policyId: z.string(),
+  version: z.string(),
+  strategy: z.literal("structure_aware"),
+  tokenizer: z.literal("unicode_code_point_v1"),
+  maxChars: z.number().int().positive(),
+  maxTokens: z.number().int().positive(),
+  overlapChars: z.number().int().nonnegative(),
+  minTokens: z.number().int().positive(),
+  preserveAtomicBlocks: z.boolean(),
+  stableIdAlgorithm: z.literal("sha256_locator_content_v1")
+})
+
+const ChunkingViolationSchema = z.object({
+  code: z.enum(["invalid_policy", "missing_locator", "oversized_atomic_block", "char_budget_exceeded", "token_budget_exceeded", "fragment_below_minimum"]),
+  message: z.string(),
+  sourceBlockId: z.string().optional(),
+  chunkId: z.string().optional()
+})
+
+const PublicationPurposeSchema = z.enum(["ingest", "reindex", "rollback"])
+
+const StagedPublicationFenceSchema = z.object({
+  schemaVersion: z.literal(1),
+  runId: z.string(),
+  artifactId: z.string(),
+  idempotencyKey: z.string(),
+  sourceId: z.string(),
+  purpose: PublicationPurposeSchema,
+  stageNamespace: z.string(),
+  generation: z.number().int().positive(),
+  fencingToken: z.string()
+})
+
+const PublicationControlSchema = z.object({
+  schemaVersion: z.literal(1),
+  sourceId: z.string(),
+  purpose: PublicationPurposeSchema,
+  activePointerKey: z.string(),
+  artifactId: z.string(),
+  runId: z.string(),
+  generation: z.number().int().nonnegative(),
+  fencingToken: z.string()
 })
 
 export const DocumentManifestSchema = z.object({
   documentId: z.string(),
+  documentVersion: z.string().optional(),
+  traceId: z.string().optional(),
+  replayVersionManifest: ReplayVersionManifestSchema.optional(),
   fileName: z.string(),
   mimeType: z.string().optional(),
   metadata: z.record(MetadataValueSchema).optional(),
   qualityProfile: DocumentQualityProfileSchema.optional(),
+  admission: SourceAdmissionRecordSchema.optional(),
+  derivedIntegrity: DerivedArtifactIntegritySchema.optional(),
+  securityEnvelope: DerivedRecordSecurityEnvelopeSchema.optional(),
+  chunkingPolicy: ChunkingPolicySnapshotSchema.optional(),
+  chunkingViolations: z.array(ChunkingViolationSchema).optional(),
+  publicationEligible: z.boolean().optional(),
+  processingStatus: z.enum(["complete", "partial", "quarantined", "rejected"]).optional(),
+  publicationFence: StagedPublicationFenceSchema.optional(),
+  publicationControl: PublicationControlSchema.optional(),
   sourceObjectKey: z.string(),
   structuredBlocksObjectKey: z.string().optional(),
   memoryCardsObjectKey: z.string().optional(),
@@ -234,6 +522,11 @@ export const DocumentGroupSchema = z.object({
   effectivePermission: z.enum(["none", "readOnly", "full"]).optional(),
   policySource: z.enum(["explicit", "inherited", "ownerDefault", "none"]).optional(),
   inheritedFromFolderId: z.string().optional(),
+  inheritedPolicyId: z.string().optional(),
+  inheritedPolicyVersion: z.string().optional(),
+  folderLocalPolicyVersion: z.string().optional(),
+  folderProjectionVersion: z.string().optional(),
+  folderMoveOperationId: z.string().optional(),
   createdAt: z.string(),
   updatedAt: z.string()
 })
@@ -241,7 +534,7 @@ export const DocumentGroupSchema = z.object({
 export const FolderPolicyEntrySchema = z.object({
   principalType: z.enum(["user", "group"]),
   principalId: z.string(),
-  permissionLevel: z.enum(["readOnly", "full"])
+  permissionLevel: z.enum(["deny", "readOnly", "full"])
 })
 
 export const DocumentShareGrantSchema = z.object({
@@ -251,7 +544,7 @@ export const DocumentShareGrantSchema = z.object({
   documentId: z.string(),
   principalType: z.enum(["user", "group"]),
   principalId: z.string(),
-  permissionLevel: z.enum(["readOnly", "full"]),
+  permissionLevel: z.enum(["deny", "readOnly", "full"]),
   createdBy: z.string(),
   reason: z.string(),
   createdAt: z.string(),
@@ -262,8 +555,9 @@ export const DocumentShareRequestSchema = z.object({
   grants: z.array(z.object({
     principalType: z.enum(["user", "group"]),
     principalId: z.string().min(1),
-    permissionLevel: z.enum(["readOnly", "full"])
+    permissionLevel: z.enum(["deny", "readOnly", "full"])
   })),
+  expectedVersion: z.string().min(1),
   reason: z.string().min(1)
 })
 
@@ -273,7 +567,8 @@ export const DocumentShareResponseSchema = z.object({
     permissionLevel: z.enum(["none", "readOnly", "full"])
   })),
   directDocumentGrants: z.array(DocumentShareGrantSchema),
-  currentUserEffectivePermission: z.enum(["none", "readOnly", "full"])
+  currentUserEffectivePermission: z.enum(["none", "readOnly", "full"]),
+  version: z.string().min(1)
 })
 
 export const DocumentMoveRequestSchema = z.object({
@@ -296,6 +591,41 @@ export const DocumentMoveResponseSchema = z.object({
   directDocumentGrantsPreserved: z.boolean()
 })
 
+export const FolderMoveRequestSchema = z.object({
+  destinationParentId: z.string().min(1).max(200)
+    .refine((value) => value.trim() === value, "destinationParentId must not contain surrounding whitespace")
+    .nullable(),
+  newName: z.string().min(1).max(120)
+    .refine((value) => value.trim() === value, "newName must not contain surrounding whitespace")
+    .refine((value) => !value.includes("/") && !value.includes("\\"), "newName must not contain path separators")
+    .optional(),
+  reason: z.string().min(1).max(1000)
+    .refine((value) => value.trim() === value, "reason must not contain surrounding whitespace"),
+  expectedVersion: z.string().min(1).max(500)
+    .refine((value) => value.trim() === value, "expectedVersion must not contain surrounding whitespace")
+}).strict()
+
+export const FolderMoveResponseSchema = z.object({
+  operationId: z.string().min(1),
+  folder: DocumentGroupSchema,
+  subtree: z.array(DocumentGroupSchema),
+  affectedDocumentCount: z.number().int().nonnegative(),
+  directDocumentGrantsPreserved: z.literal(true),
+  folderLocalPoliciesPreserved: z.literal(true),
+  documentVersionsPreserved: z.literal(true)
+})
+
+export const ArchiveFolderRequestSchema = z.object({
+  expectedVersion: z.string().min(1).max(500)
+    .refine((value) => value.trim() === value, "expectedVersion must not contain surrounding whitespace"),
+  reason: z.string().min(1).max(1000)
+    .refine((value) => value.trim() === value, "reason must not contain surrounding whitespace")
+}).strict()
+
+export const ArchiveFolderResponseSchema = z.object({
+  folder: DocumentGroupSchema
+})
+
 export const FolderPolicySchema = z.object({
   policyId: z.string(),
   itemType: z.literal("folderPolicy").optional(),
@@ -305,6 +635,25 @@ export const FolderPolicySchema = z.object({
   createdBy: z.string(),
   createdAt: z.string(),
   updatedAt: z.string()
+})
+
+export const VersionedFolderPolicyResponseSchema = z.object({
+  policy: FolderPolicySchema.nullable(),
+  version: z.string().min(1)
+})
+
+export const ReplaceVersionedFolderPolicyRequestSchema = z.object({
+  expectedVersion: z.string().trim().min(1).max(500),
+  entries: z.array(FolderPolicyEntrySchema.extend({
+    principalId: z.string().trim().min(1).max(200)
+  }).strict()).min(1).max(200),
+  reason: z.string().trim().min(1).max(1000)
+}).strict()
+
+export const ReplaceVersionedFolderPolicyResponseSchema = z.object({
+  policy: FolderPolicySchema,
+  version: z.string().min(1),
+  auditIntentId: z.string().min(1)
 })
 
 export const UserGroupSchema = z.object({
@@ -334,31 +683,126 @@ export const GroupMembershipSchema = z.object({
   updatedAt: z.string()
 })
 
+const CanonicalResourceGroupMembershipIdSchema = z.string()
+  .min(1)
+  .max(200)
+  .refine((value) => value.trim() === value, "identifier must not contain surrounding whitespace")
+
+export const ResourceGroupMembershipEntrySchema = z.object({
+  memberType: z.enum(["user", "group"]),
+  memberId: CanonicalResourceGroupMembershipIdSchema,
+  permissionLevel: z.enum(["readOnly", "full"])
+}).strict()
+
+export const ReplaceResourceGroupMembershipsRequestSchema = z.object({
+  expectedVersion: z.string()
+    .min(1)
+    .max(500)
+    .refine((value) => value.trim() === value, "expectedVersion must not contain surrounding whitespace"),
+  memberships: z.array(ResourceGroupMembershipEntrySchema).max(99),
+  reason: z.string()
+    .min(1)
+    .max(1000)
+    .refine((value) => value.trim() === value, "reason must not contain surrounding whitespace")
+}).strict().superRefine((value, ctx) => {
+  const seen = new Set<string>()
+  for (const [index, membership] of value.memberships.entries()) {
+    const key = `${membership.memberType}:${membership.memberId}`
+    if (!seen.has(key)) {
+      seen.add(key)
+      continue
+    }
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["memberships", index],
+      message: "duplicate membership principal"
+    })
+  }
+})
+
+export const ResourceGroupMembershipStateSchema = z.object({
+  groupId: CanonicalResourceGroupMembershipIdSchema,
+  version: z.string().min(1).max(500),
+  memberships: z.array(ResourceGroupMembershipEntrySchema).max(99)
+})
+
+export const ResourceGroupPublicSchema = z.object({
+  groupId: CanonicalResourceGroupMembershipIdSchema,
+  name: z.string().min(1).max(200),
+  type: z.enum(["department", "project", "team", "admin", "folderPolicy", "system", "custom"]),
+  status: z.enum(["active", "archived"]),
+  version: z.string().min(1).max(500)
+}).strict()
+
+export const ResourceGroupListResponseSchema = z.object({
+  resourceGroups: z.array(ResourceGroupPublicSchema),
+  count: z.number().int().nonnegative()
+}).strict()
+
+export const CreateResourceGroupRequestSchema = z.object({
+  groupId: CanonicalResourceGroupMembershipIdSchema,
+  name: z.string().min(1).max(200).refine((value) => value.trim() === value),
+  type: z.enum(["department", "project", "team", "admin", "folderPolicy", "system", "custom"]),
+  expectedVersion: z.literal("absent"),
+  reason: z.string().min(1).max(1000).refine((value) => value.trim() === value)
+}).strict()
+
+export const UpdateResourceGroupRequestSchema = z.object({
+  name: z.string().min(1).max(200).refine((value) => value.trim() === value),
+  type: z.enum(["department", "project", "team", "admin", "folderPolicy", "system", "custom"]),
+  expectedVersion: z.string().min(1).max(500).refine((value) => value.trim() === value),
+  reason: z.string().min(1).max(1000).refine((value) => value.trim() === value)
+}).strict()
+
+export const DeleteResourceGroupRequestSchema = z.object({
+  expectedVersion: z.string().min(1).max(500).refine((value) => value.trim() === value),
+  reason: z.string().min(1).max(1000).refine((value) => value.trim() === value)
+}).strict()
+
+export const UnsupportedResourceGroupMutationRequestSchema = DeleteResourceGroupRequestSchema
+
+const ResourceCollectionProfileVersionSchema = z.literal("resource-non-enumeration-v1")
+
+const DocumentGroupCapabilitiesSchema = z.object({
+  canRead: z.boolean(),
+  canManage: z.boolean()
+})
+
+export const DocumentGroupReaderListItemSchema = z.object({
+  detailLevel: z.literal("reader"),
+  groupId: z.string(),
+  name: z.string(),
+  description: z.string().optional(),
+  canonicalPath: z.string().optional(),
+  parentGroupId: z.string().optional(),
+  ancestorGroupIds: z.array(z.string()).optional(),
+  effectivePermission: z.enum(["none", "readOnly"]).optional(),
+  capabilities: DocumentGroupCapabilitiesSchema
+})
+
+export const DocumentGroupManagerListItemSchema = DocumentGroupSchema.extend({
+  detailLevel: z.literal("manager"),
+  effectivePermission: z.literal("full"),
+  capabilities: DocumentGroupCapabilitiesSchema
+})
+
 export const DocumentGroupListResponseSchema = z.object({
-  groups: z.array(DocumentGroupSchema)
+  groups: z.array(z.union([DocumentGroupReaderListItemSchema, DocumentGroupManagerListItemSchema])),
+  count: z.number().int().nonnegative(),
+  nextCursor: z.string().optional(),
+  responseProfileVersion: ResourceCollectionProfileVersionSchema
 })
 
 export const CreateDocumentGroupRequestSchema = z.object({
   name: z.string().min(1).max(120).openapi({ example: "社内規定" }),
   description: z.string().max(1000).optional(),
-  adminPrincipalType: z.enum(["user", "group"]).optional(),
-  adminPrincipalId: z.string().min(1).max(200).optional(),
-  parentGroupId: z.string().min(1).optional(),
-  visibility: z.enum(["private", "shared", "org"]).optional(),
-  sharedUserIds: z.array(z.string().min(1)).max(50).optional(),
-  sharedGroups: z.array(z.string().min(1)).max(50).optional(),
-  managerUserIds: z.array(z.string().min(1)).max(50).optional()
-})
+  parentGroupId: z.string().min(1).optional()
+}).strict()
 
 export const ShareDocumentGroupRequestSchema = z.object({
   name: z.string().min(1).max(120).optional(),
-  description: z.string().max(1000).optional(),
-  visibility: z.enum(["private", "shared", "org"]).optional(),
-  parentGroupId: z.string().min(1).nullable().optional(),
-  sharedUserIds: z.array(z.string().min(1)).max(50).optional(),
-  sharedGroups: z.array(z.string().min(1)).max(50).optional(),
-  managerUserIds: z.array(z.string().min(1)).max(50).optional()
-})
+  description: z.string().max(1000).optional()
+}).strict()
 
 export const DocumentManifestSummarySchema = DocumentManifestSchema.pick({
   documentId: true,
@@ -375,22 +819,44 @@ export const DocumentManifestSummarySchema = DocumentManifestSchema.pick({
   sourceExtractorVersion: true
 })
 
-export const DocumentListItemSummarySchema = DocumentManifestSummarySchema.extend({
+const DocumentCapabilitiesSchema = z.object({
+  canRead: z.boolean(),
+  canShare: z.boolean(),
+  canMove: z.boolean(),
+  canDelete: z.boolean(),
+  canReindex: z.boolean()
+})
+
+export const DocumentReaderListItemSummarySchema = z.object({
+  detailLevel: z.literal("reader"),
+  documentId: z.string(),
+  fileName: z.string(),
+  mimeType: z.string().optional(),
+  createdAt: z.string(),
+  metadata: z.record(MetadataValueSchema).optional(),
+  currentUserEffectivePermission: z.enum(["none", "readOnly"]).optional(),
+  capabilities: DocumentCapabilitiesSchema.optional()
+})
+
+export const DocumentManagerListItemSummarySchema = DocumentManifestSummarySchema.extend({
+  detailLevel: z.literal("manager"),
   metadata: z.record(MetadataValueSchema).optional(),
   embeddingModelId: z.string().optional(),
   embeddingDimensions: z.number().int().positive().optional(),
-  currentUserEffectivePermission: z.enum(["none", "readOnly", "full"]).optional(),
-  capabilities: z.object({
-    canRead: z.boolean(),
-    canShare: z.boolean(),
-    canMove: z.boolean(),
-    canDelete: z.boolean(),
-    canReindex: z.boolean()
-  }).optional()
+  currentUserEffectivePermission: z.literal("full"),
+  capabilities: DocumentCapabilitiesSchema.optional()
 })
 
+export const DocumentListItemSummarySchema = z.union([
+  DocumentReaderListItemSummarySchema,
+  DocumentManagerListItemSummarySchema
+])
+
 export const DocumentListResponseSchema = z.object({
-  documents: z.array(DocumentListItemSummarySchema)
+  documents: z.array(DocumentListItemSummarySchema),
+  count: z.number().int().nonnegative(),
+  nextCursor: z.string().optional(),
+  responseProfileVersion: ResourceCollectionProfileVersionSchema
 })
 
 export const ParsedDocumentPreviewSchema = z.object({
@@ -420,8 +886,10 @@ export const StartDocumentIngestRunRequestSchema = IngestUploadedDocumentRequest
 
 export const DocumentIngestRunSchema = z.object({
   runId: z.string(),
-  status: z.enum(["queued", "running", "succeeded", "failed", "cancelled"]),
+  tenantPartitionId: z.string().optional(),
+  status: z.enum(["queued", "running", "succeeded", "rejected", "failed", "cancelled"]),
   createdBy: z.string(),
+  tenantId: z.string().optional(),
   userEmail: z.string().optional(),
   userGroups: z.array(z.string()).optional(),
   uploadId: z.string(),
@@ -435,7 +903,10 @@ export const DocumentIngestRunSchema = z.object({
   skipMemory: z.boolean().optional(),
   manifest: DocumentManifestSummarySchema.optional(),
   documentId: z.string().optional(),
+  traceId: z.string().optional(),
+  replayVersionManifest: ReplayVersionManifestSchema.optional(),
   error: z.string().optional(),
+  errorCode: z.enum(["validation_error", "not_found", "permission_revoked", "execution_error"]).optional(),
   stage: z.string().optional(),
   counters: z.record(z.string(), z.number()).optional(),
   warnings: z.array(ExtractionWarningSchema).optional(),
@@ -447,7 +918,7 @@ export const DocumentIngestRunSchema = z.object({
 
 export const DocumentIngestRunStartResponseSchema = z.object({
   runId: z.string(),
-  status: z.enum(["queued", "running", "succeeded", "failed", "cancelled"]),
+  status: z.enum(["queued", "running", "succeeded", "rejected", "failed", "cancelled"]),
   eventsPath: z.string()
 })
 
@@ -455,6 +926,11 @@ export const DeleteDocumentResponseSchema = z.object({
   documentId: z.string(),
   deletedVectorCount: z.number()
 })
+
+export const DeleteDocumentRequestSchema = z.object({
+  expectedUpdatedAt: z.string().min(1),
+  reason: z.string().trim().min(1).max(500)
+}).strict()
 
 export const ReindexMigrationSchema = z.object({
   migrationId: z.string(),
@@ -468,7 +944,14 @@ export const ReindexMigrationSchema = z.object({
   cutoverAt: z.string().optional(),
   rolledBackAt: z.string().optional(),
   previousManifestObjectKey: z.string(),
-  stagedManifestObjectKey: z.string()
+  stagedManifestObjectKey: z.string(),
+  publicationRunId: z.string().optional(),
+  publicationArtifactId: z.string().optional(),
+  publicationIdempotencyKey: z.string().optional(),
+  activePointerKey: z.string().optional(),
+  generation: z.number().int().nonnegative().optional(),
+  fencingToken: z.string().optional(),
+  checkpoint: z.string().optional()
 })
 
 export const ReindexMigrationListResponseSchema = z.object({
@@ -499,6 +982,35 @@ export const ManagedUserSchema = z.object({
 
 export const ManagedUserListResponseSchema = z.object({
   users: z.array(ManagedUserSchema)
+})
+
+export const ManagedUserDeletionPreflightSchema = z.object({
+  targetUserId: z.string(),
+  requiresSuccessor: z.boolean(),
+  ownedResources: z.object({
+    folders: z.number().int().nonnegative(),
+    resourceGroups: z.number().int().nonnegative(),
+    documents: z.number().int().nonnegative(),
+    total: z.number().int().nonnegative()
+  }),
+  eligibleSuccessors: z.array(z.object({
+    userId: z.string(),
+    email: z.string(),
+    displayName: z.string().optional(),
+    status: z.literal("active")
+  }))
+})
+
+export const AdministrativePrincipalTransferRequestSchema = z.object({
+  successorUserId: z.string().trim().min(1),
+  reason: z.string().trim().min(1).max(1000)
+})
+
+export const AdministrativePrincipalTransferResponseSchema = z.object({
+  operationId: z.string().optional(),
+  transferredFolders: z.number().int().nonnegative(),
+  transferredResourceGroups: z.number().int().nonnegative(),
+  transferredDocuments: z.number().int().nonnegative()
 })
 
 export const CreateManagedUserRequestSchema = z.object({
@@ -537,7 +1049,8 @@ export const AccessRoleListResponseSchema = z.object({
 })
 
 export const AssignUserRolesRequestSchema = z.object({
-  groups: z.array(z.string().min(1)).min(1).max(12)
+  groups: z.array(z.string().min(1)).min(1).max(12),
+  reason: z.string().min(1).max(1000).refine((value) => value.trim() === value, "reason must not contain surrounding whitespace")
 })
 
 export const AliasStatusSchema = z.enum(["draft", "approved", "disabled"])
@@ -621,12 +1134,14 @@ export const UserUsageSummarySchema = z.object({
   userId: z.string(),
   email: z.string(),
   displayName: z.string().optional(),
-  chatMessages: z.number().int().nonnegative(),
-  conversationCount: z.number().int().nonnegative(),
-  questionCount: z.number().int().nonnegative(),
-  documentCount: z.number().int().nonnegative(),
-  benchmarkRunCount: z.number().int().nonnegative(),
-  debugRunCount: z.number().int().nonnegative(),
+  chatMessages: z.number().int().nonnegative().optional(),
+  conversationCount: z.number().int().nonnegative().optional(),
+  questionCount: z.number().int().nonnegative().optional(),
+  documentCount: z.number().int().nonnegative().optional(),
+  benchmarkRunCount: z.number().int().nonnegative().optional(),
+  debugRunCount: z.number().int().nonnegative().optional(),
+  availableMetrics: z.array(z.enum(["chatMessages", "conversationCount", "questionCount", "documentCount", "benchmarkRunCount", "debugRunCount"])),
+  unavailableMetrics: z.array(z.enum(["chatMessages", "conversationCount", "questionCount", "documentCount", "benchmarkRunCount", "debugRunCount"])),
   lastActivityAt: z.string().optional()
 })
 
@@ -651,13 +1166,15 @@ export const UserCostSummarySchema = z.object({
 })
 
 export const CostAuditSummarySchema = z.object({
+  available: z.boolean(),
+  unavailableReason: z.string().optional(),
   periodStart: z.string(),
   periodEnd: z.string(),
-  currency: z.literal("USD"),
-  totalEstimatedUsd: z.number().nonnegative(),
-  items: z.array(CostAuditItemSchema),
-  users: z.array(UserCostSummarySchema),
-  pricingCatalogUpdatedAt: z.string()
+  currency: z.literal("USD").optional(),
+  totalEstimatedUsd: z.number().nonnegative().optional(),
+  items: z.array(CostAuditItemSchema).optional(),
+  users: z.array(UserCostSummarySchema).optional(),
+  pricingCatalogUpdatedAt: z.string().optional()
 })
 
 const ClarificationContextSchema = z.object({
@@ -846,37 +1363,13 @@ export const SearchRequestSchema = z.object({
   scope: SearchScopeSchema.optional()
 })
 
-const BenchmarkSearchForbiddenUserGroups = new Set([
-  "SYSTEM_ADMIN",
-  "RAG_GROUP_MANAGER",
-  "BENCHMARK_OPERATOR",
-  "BENCHMARK_RUNNER",
-  "ANSWER_EDITOR",
-  "USER_ADMIN",
-  "ACCESS_ADMIN",
-  "COST_AUDITOR"
-])
-
-export const BenchmarkSearchRequestSchema = SearchRequestSchema.extend({
-  benchmarkSuiteId: z.string().optional(),
-  user: z.object({
-    userId: z.string().min(1).max(160).optional().openapi({ example: "benchmark-user-1" }),
-    groups: z.array(z.string().min(1).max(160)).max(20).optional().openapi({ example: ["GROUP_A"] })
-  }).optional()
-}).superRefine((value, ctx) => {
-  for (const group of value.user?.groups ?? []) {
-    if (BenchmarkSearchForbiddenUserGroups.has(group)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["user", "groups"],
-        message: `Benchmark search user cannot include privileged group ${group}`
-      })
-    }
-  }
-})
+export const BenchmarkSearchRequestSchema = SearchRequestSchema.omit({ filters: true, scope: true }).extend({
+  suiteId: z.string().min(1).openapi({ example: "search-standard-v1" })
+}).strict()
 
 export const CitationSchema = z.object({
   documentId: z.string(),
+  documentVersion: z.string().optional(),
   fileName: z.string(),
   chunkId: z.string().optional(),
   pageStart: z.number().int().positive().optional(),
@@ -890,7 +1383,27 @@ export const CitationSchema = z.object({
   sourceType: z.string().optional(),
   bbox: MetadataValueSchema.optional(),
   score: z.number(),
-  text: z.string()
+  text: z.string(),
+  topic: z.string().optional(),
+  evidenceRole: z.enum(["supporting", "conflicting", "outdated", "background"]).optional(),
+  authorityStatus: z.enum(["authoritative", "secondary", "unknown"]).optional(),
+  effectiveFrom: z.string().optional(),
+  effectiveUntil: z.string().optional(),
+  sourceLocator: z.object({
+    page: z.number().int().positive().optional(),
+    pageStart: z.number().int().positive().optional(),
+    pageEnd: z.number().int().positive().optional(),
+    bbox: MetadataValueSchema.optional(),
+    unit: z.enum(["normalized_page", "pdf_point", "pixel", "unknown"]).optional(),
+    source: z.string().optional(),
+    sectionPath: z.array(z.string()).optional(),
+    startChar: z.number().int().nonnegative().optional(),
+    endChar: z.number().int().nonnegative().optional(),
+    sourceBlockId: z.string().optional(),
+    sourceChunkIds: z.array(z.string()).optional()
+  }).optional(),
+  authorizationDecision: z.literal("allowed").optional(),
+  authorizationEvaluatedAt: z.string().optional()
 })
 
 export const ClarificationOptionSchema = z.object({
@@ -936,6 +1449,7 @@ export const DebugStepSchema = z.object({
   output: DebugStepOutputSchema.optional(),
   hitCount: z.number().optional(),
   tokenCount: z.number().optional(),
+  degradationDecision: SafeDegradationDecisionSchema.optional(),
   startedAt: z.string(),
   completedAt: z.string()
 })
@@ -943,6 +1457,10 @@ export const DebugStepSchema = z.object({
 export const DebugTraceSchema = z.object({
   schemaVersion: z.literal(1).default(1),
   runId: z.string(),
+  requestTraceId: z.string().optional(),
+  parentTraceIds: z.array(z.string()).optional(),
+  tenantPartitionId: z.string().optional(),
+  actorPartitionId: z.string().optional(),
   targetType: DebugTraceTargetTypeSchema.optional().default("rag_run"),
   visibility: DebugTraceVisibilitySchema.optional().default("operator_sanitized"),
   sanitizePolicyVersion: DebugTraceSanitizePolicyVersionSchema.optional().default("debug-trace-sanitize-v1"),
@@ -962,6 +1480,8 @@ export const DebugTraceSchema = z.object({
   conversationState: MetadataValueSchema.optional(),
   decontextualizedQuery: MetadataValueSchema.optional(),
   pipelineVersions: PipelineVersionsSchema.optional(),
+  replayVersionManifest: ReplayVersionManifestSchema.optional(),
+  decision: ReplayDecisionSchema.optional(),
   ragProfile: RagProfileTraceSchema.optional(),
   topK: z.number(),
   memoryTopK: z.number(),
@@ -995,6 +1515,7 @@ export const ChatRunSchema = z.object({
   runId: z.string(),
   status: z.enum(["queued", "running", "succeeded", "failed", "cancelled"]),
   createdBy: z.string(),
+  tenantId: z.string().optional(),
   userEmail: z.string().optional(),
   userGroups: z.array(z.string()).optional(),
   question: z.string(),
@@ -1019,6 +1540,7 @@ export const ChatRunSchema = z.object({
   retrieved: z.array(CitationSchema).optional(),
   debugRunId: z.string().optional(),
   error: z.string().optional(),
+  errorCode: z.enum(["validation_error", "not_found", "permission_revoked", "execution_error"]).optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
   startedAt: z.string().optional(),
@@ -1034,6 +1556,7 @@ export const ChatRunStartResponseSchema = z.object({
 export const SearchResultSchema = z.object({
   id: z.string(),
   documentId: z.string(),
+  documentVersion: z.string().optional(),
   fileName: z.string(),
   chunkId: z.string().optional(),
   text: z.string(),
@@ -1059,11 +1582,14 @@ export const SearchResponseSchema = z.object({
     semanticCount: z.number().int(),
     fusedCount: z.number().int(),
     latencyMs: z.number().int(),
+    traceId: z.string(),
+    replayVersionManifest: ReplayVersionManifestSchema,
     index: z.object({
       visibleManifestCount: z.number().int().nonnegative(),
       indexedChunkCount: z.number().int().nonnegative(),
       cache: z.enum(["memory", "artifact", "built"]),
-      loadMs: z.number().int().nonnegative()
+      loadMs: z.number().int().nonnegative(),
+      degradationDecision: SafeDegradationDecisionSchema.optional()
     }).optional()
   })
 })
@@ -1246,10 +1772,10 @@ export const DebugTraceListResponseSchema = z.object({
   debugRuns: z.array(DebugTraceSchema)
 })
 
-export const BenchmarkQueryRequestSchema = ChatRequestSchema.extend({
+export const BenchmarkQueryRequestSchema = ChatRequestSchema.omit({ searchScope: true }).extend({
   id: z.string().optional(),
-  benchmarkSuiteId: z.string().optional()
-})
+  suiteId: z.string().min(1).openapi({ example: "standard-agent-v1" })
+}).strict()
 
 export const BenchmarkQueryResponseSchema = ChatResponseSchema.extend({
   id: z.string().optional()
@@ -1287,12 +1813,105 @@ export const BenchmarkRunMetricsSchema = z.object({
   abstentionAccuracy: z.number().nullable().optional(),
   citationHitRate: z.number().nullable().optional(),
   expectedFileHitRate: z.number().nullable().optional(),
+  extractionAccuracy: z.number().nullable().optional(),
+  admissionCorrectness: z.number().nullable().optional(),
   retrievalRecallAt20: z.number().nullable().optional(),
   retrievalRecallAtK: z.number().nullable().optional(),
+  falseDenialRate: z.number().nullable().optional(),
+  faithfulness: z.number().nullable().optional(),
+  unsupportedClaimRate: z.number().nullable().optional(),
+  unsupportedSentenceRate: z.number().nullable().optional(),
+  unsupportedAnswerRate: z.number().nullable().optional(),
+  citationPrecision: z.number().nullable().optional(),
+  citationSupportPassRate: z.number().nullable().optional(),
+  citationCompleteness: z.number().nullable().optional(),
+  citationLocatorValidity: z.number().nullable().optional(),
+  requiredClaimMissCount: z.number().int().nonnegative().nullable().optional(),
+  falseAnswerRate: z.number().nullable().optional(),
+  falseRefusalRate: z.number().nullable().optional(),
+  taskCompletionRate: z.number().nullable().optional(),
+  taskOutcomeAccuracy: z.number().nullable().optional(),
+  criticalTaskFailureCount: z.number().int().nonnegative().nullable().optional(),
+  criticalUnsupportedClaimCount: z.number().int().nonnegative().nullable().optional(),
+  noAccessLeakCount: z.number().int().nonnegative().nullable().optional(),
+  injectionSuccessCount: z.number().int().nonnegative().nullable().optional(),
+  secretExposureCount: z.number().int().nonnegative().nullable().optional(),
+  eligibilityPropagationP99Ms: z.number().nonnegative().nullable().optional(),
+  eligibilityPropagationP50Ms: z.number().nonnegative().nullable().optional(),
+  eligibilityPropagationP95Ms: z.number().nonnegative().nullable().optional(),
+  eligibilityPropagationMaxMs: z.number().nonnegative().nullable().optional(),
+  eligibilityProbeSampleCount: z.number().int().nonnegative().nullable().optional(),
+  eligibilityMatrixCoverage: z.number().min(0).max(1).nullable().optional(),
+  eligibilityUnreconciledResourceCount: z.number().int().nonnegative().nullable().optional(),
+  mttrMs: z.number().nonnegative().nullable().optional(),
+  recoveryP95Ms: z.number().nonnegative().nullable().optional(),
+  recoveryWithoutLossRate: z.number().min(0).max(1).nullable().optional(),
+  recoveryLossCount: z.number().int().nonnegative().nullable().optional(),
+  recoveryScenarioCoverage: z.number().min(0).max(1).nullable().optional(),
+  recoverySampleCount: z.number().int().nonnegative().nullable().optional(),
+  backlogAgeP99Ms: z.number().nonnegative().nullable().optional(),
+  backlogAgeSampleCount: z.number().int().nonnegative().nullable().optional(),
+  timeoutRate: z.number().min(0).max(1).nullable().optional(),
+  retryExhaustionCount: z.number().int().nonnegative().nullable().optional(),
   p50LatencyMs: z.number().nullable().optional(),
   p95LatencyMs: z.number().nullable().optional(),
+  p99LatencyMs: z.number().nullable().optional(),
   averageLatencyMs: z.number().nullable().optional(),
-  errorRate: z.number().nullable().optional()
+  errorRate: z.number().nullable().optional(),
+  datasetVersion: z.string().min(1).optional(),
+  workloadProfileVersion: z.string().min(1).optional(),
+  runtimeProfileVersion: z.string().min(1).optional(),
+  priceCatalogVersion: z.string().min(1).optional(),
+  indexVersion: z.string().min(1).optional(),
+  promptVersion: z.string().min(1).optional(),
+  pipelineVersion: z.string().min(1).optional(),
+  parserVersion: z.string().min(1).optional(),
+  chunkerVersion: z.string().min(1).optional(),
+  corpusProfileVersion: z.string().min(1).optional(),
+  aclDistributionVersion: z.string().min(1).optional(),
+  workloadConcurrency: z.number().int().positive().optional(),
+  documentSizeProfileVersion: z.string().min(1).optional(),
+  dependencyLatencyProfileVersion: z.string().min(1).optional(),
+  qualitySliceMeasurements: z.array(z.object({
+    slice: z.string().min(1),
+    sampleCount: z.number().int().positive(),
+    measurements: z.record(z.string(), z.number())
+  }).strict()).optional(),
+  eligibilityMatrixReport: z.object({
+    schemaVersion: z.literal(1),
+    triggerCount: z.number().int().positive(),
+    pathCount: z.number().int().positive(),
+    probeCount: z.number().int().positive(),
+    p50Ms: z.number().nonnegative().optional(),
+    p95Ms: z.number().nonnegative().optional(),
+    p99Ms: z.number().nonnegative().optional(),
+    maxMs: z.number().nonnegative().optional(),
+    unreflectedResourceIds: z.array(z.string()),
+    probes: z.array(z.object({
+      trigger: z.string().min(1),
+      path: z.string().min(1),
+      propagationMs: z.number().nonnegative().optional(),
+      unreflectedResourceIds: z.array(z.string())
+    }).strict())
+  }).strict().optional(),
+  modelCostPerUnit: z.number().nonnegative().nullable().optional(),
+  embeddingCostPerUnit: z.number().nonnegative().nullable().optional(),
+  storageCostPerUnit: z.number().nonnegative().nullable().optional(),
+  workerCostPerUnit: z.number().nonnegative().nullable().optional(),
+  egressCostPerUnit: z.number().nonnegative().nullable().optional(),
+  totalCostPerUnit: z.number().nonnegative().nullable().optional(),
+  costEvidenceSampleCount: z.number().int().nonnegative().nullable().optional(),
+  chatCostEvidenceSampleCount: z.number().int().nonnegative().nullable().optional(),
+  searchCostEvidenceSampleCount: z.number().int().nonnegative().nullable().optional(),
+  ingestCostEvidenceSampleCount: z.number().int().nonnegative().nullable().optional(),
+  unitCostKind: z.enum(["chat_request", "search_request", "ingest_document"]).optional(),
+  chatCostPerRequest: z.number().nonnegative().nullable().optional(),
+  searchCostPerRequest: z.number().nonnegative().nullable().optional(),
+  ingestCostPerDocument: z.number().nonnegative().nullable().optional(),
+  releaseAuditVersion: z.string().min(1).optional(),
+  releaseAuditId: z.string().min(1).optional(),
+  datasetSpecificBranchCount: z.number().int().nonnegative().nullable().optional(),
+  artifactManifestMismatchCount: z.number().int().nonnegative().nullable().optional()
 })
 
 export const BenchmarkRunSchema = z.object({
@@ -1303,6 +1922,7 @@ export const BenchmarkRunSchema = z.object({
   suiteId: z.string(),
   datasetS3Key: z.string(),
   createdBy: z.string(),
+  tenantId: z.string().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
   startedAt: z.string().optional(),
@@ -1323,7 +1943,8 @@ export const BenchmarkRunSchema = z.object({
   reportS3Key: z.string().optional(),
   resultsS3Key: z.string().optional(),
   metrics: BenchmarkRunMetricsSchema.optional(),
-  error: z.string().optional()
+  error: z.string().optional(),
+  errorCode: z.enum(["validation_error", "not_found", "permission_revoked", "execution_error"]).optional()
 })
 
 export const CreateBenchmarkRunRequestSchema = z.object({
@@ -1494,11 +2115,13 @@ export const AsyncAgentRunSchema = z.object({
   runId: z.string(),
   tenantId: z.string(),
   requesterUserId: z.string(),
+  requesterEmail: z.string().optional(),
+  requesterGroups: z.array(z.string()).optional(),
   provider: AgentRuntimeProviderSchema,
   modelId: z.string(),
   status: AsyncAgentRunStatusSchema,
   providerAvailability: AgentProviderAvailabilitySchema,
-  failureReasonCode: z.enum(["not_configured", "provider_unavailable", "cancelled", "execution_error"]).optional(),
+  failureReasonCode: z.enum(["not_configured", "provider_unavailable", "cancelled", "permission_revoked", "execution_error"]).optional(),
   failureReason: z.string().optional(),
   instruction: z.string(),
   selectedFolderIds: z.array(z.string()),
@@ -1587,6 +2210,12 @@ export const ErrorResponseSchema = z.object({
   details: z.record(z.array(z.string())).optional()
 })
 
+export const ResourceUnavailableResponseSchema = z.object({
+  error: z.literal("Resource unavailable"),
+  code: z.literal("RESOURCE_UNAVAILABLE"),
+  responseProfileVersion: z.literal("resource-non-enumeration-v1")
+})
+
 
 export const DebugDownloadResponseSchema = z.object({
   url: z.string().url(),
@@ -1600,7 +2229,9 @@ export const DebugReplayPlanSchema = z.object({
   sourceTraceVisibility: DebugTraceVisibilitySchema,
   createdAt: z.string(),
   replayable: z.boolean(),
+  versionComplete: z.boolean(),
   blockedReason: z.string().optional(),
+  versionManifest: ReplayVersionManifestSchema.optional(),
   inputSummary: z.object({
     question: z.string(),
     modelId: z.string(),
@@ -1621,6 +2252,7 @@ export const DebugReplayPlanSchema = z.object({
 export const WorkerTargetTypeSchema = z.enum(["chat_run", "document_ingest_run", "benchmark_run", "async_agent_run"])
 export const WorkerEventSchema = z.object({
   runId: z.string().min(1),
+  tenantId: z.string().min(1),
   targetType: WorkerTargetTypeSchema.optional()
 }).passthrough()
 
@@ -1629,6 +2261,9 @@ export const WorkerResultSchema = z.object({
   targetType: WorkerTargetTypeSchema.optional(),
   status: z.string().min(1),
   resultType: z.enum(["succeeded", "failed"]),
+  traceId: z.string().optional(),
+  replayVersionManifest: ReplayVersionManifestSchema.optional(),
+  responseProfileVersion: z.literal("resource-non-enumeration-v1").optional(),
   error: z.object({
     code: z.enum(["validation_error", "not_found", "permission_revoked", "execution_error"]),
     message: z.string(),

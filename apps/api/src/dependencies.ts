@@ -32,6 +32,7 @@ import type { DocumentIngestRunStore } from "./adapters/document-ingest-run-stor
 import { DynamoDbDocumentIngestRunEventStore } from "./adapters/dynamodb-document-ingest-run-event-store.js"
 import { LocalDocumentIngestRunEventStore } from "./adapters/local-document-ingest-run-event-store.js"
 import type { DocumentIngestRunEventStore } from "./adapters/document-ingest-run-event-store.js"
+import { DynamoDbActiveRunAuthorizationIndex } from "./adapters/dynamodb-active-run-authorization-index.js"
 import { DynamoDbDocumentGroupStore } from "./adapters/dynamodb-document-group-store.js"
 import { LocalDocumentGroupStore } from "./adapters/local-document-group-store.js"
 import type { DocumentGroupStore } from "./adapters/document-group-store.js"
@@ -45,12 +46,34 @@ import { DynamoDbGroupMembershipStore } from "./adapters/dynamodb-group-membersh
 import { LocalGroupMembershipStore } from "./adapters/local-group-membership-store.js"
 import type { GroupMembershipStore } from "./adapters/group-membership-store.js"
 import { CognitoUserDirectory, type UserDirectory } from "./adapters/user-directory.js"
+import { CognitoVerifiedIdentityProvider, type VerifiedIdentityProvider } from "./adapters/verified-identity-provider.js"
 import { AwsCodeBuildLogReader, type CodeBuildLogReader } from "./adapters/codebuild-log-reader.js"
 import { createDefaultAsyncAgentProviderRegistry } from "./async-agent/claude-code-provider.js"
 import type { AsyncAgentProviderRegistry } from "./async-agent/provider.js"
+import type { LocalTestFixtureAdmissionContext } from "./rag/offline/pre-retrieval/admission/source-admission.js"
+import {
+  SingleTenantResourceUserPrincipalDirectory,
+  type ResourceUserPrincipalDirectory
+} from "./security/resource-group-membership-service.js"
+import {
+  ObjectStoreSecurityMutationAuditOutbox,
+  type SecurityMutationAuditOutboxPort,
+  type SecurityMutationAuditReconciliationOutboxPort
+} from "./security/security-mutation-audit-outbox.js"
+import {
+  ObjectStoreAccountRevocationRegistry,
+  RevocationAwareVerifiedIdentityProvider,
+  type AccountRevocationRegistryPort
+} from "./security/account-revocation-registry.js"
+import {
+  ObjectStoreAdministrativePrincipalTransferFence,
+  type AdministrativePrincipalTransferFencePort
+} from "./security/administrative-principal-transfer-fence.js"
 
 export type Dependencies = {
   objectStore: ObjectStore
+  /** Benchmark evaluation artifacts live in the isolated benchmark bucket. */
+  benchmarkArtifactStore?: ObjectStore
   memoryVectorStore: VectorStore
   evidenceVectorStore: VectorStore
   textModel: TextModel
@@ -69,6 +92,19 @@ export type Dependencies = {
   codeBuildLogReader?: CodeBuildLogReader
   asyncAgentProviders?: AsyncAgentProviderRegistry
   userDirectory?: UserDirectory
+  verifiedIdentityProvider?: VerifiedIdentityProvider
+  accountRevocationRegistry?: AccountRevocationRegistryPort
+  administrativePrincipalTransferFence?: AdministrativePrincipalTransferFencePort
+  resourceUserPrincipalDirectory?: ResourceUserPrincipalDirectory
+  securityAuditOutbox?: SecurityMutationAuditOutboxPort
+  securityAuditReconciliationOutbox?: SecurityMutationAuditReconciliationOutboxPort
+  /** Explicit compatibility seam for local/test fixtures. Never populated by createDependencies(). */
+  localTestIngestAdmissionContext?: LocalTestFixtureAdmissionContext
+  /**
+   * Explicit legacy-object-layout seam for local fixtures and migration tests.
+   * Production dependencies never enable global document artifact paths.
+   */
+  legacyGlobalDocumentArtifacts?: boolean
 }
 
 let cached: Dependencies | undefined
@@ -82,6 +118,9 @@ export function createDependencies(): Dependencies {
   const objectStore = config.useLocalVectorStore
     ? new LocalObjectStore(config.localDataDir)
     : new S3ObjectStore(config.docsBucketName)
+  const benchmarkArtifactStore = config.useLocalVectorStore
+    ? objectStore
+    : new S3ObjectStore(config.benchmarkBucketName)
 
   const memoryVectorStore = config.useLocalVectorStore
     ? new LocalVectorStore(config.localDataDir, "memory-vectors.json")
@@ -96,18 +135,19 @@ export function createDependencies(): Dependencies {
   const questionStore = useLegacyLocalStoresForTests ? new LocalQuestionStore(config.localDataDir) : new DynamoDbQuestionStore(config.questionTableName)
   const conversationHistoryStore = useLegacyLocalStoresForTests ? new LocalConversationHistoryStore(config.localDataDir) : new DynamoDbConversationHistoryStore(config.conversationHistoryTableName)
   const favoriteStore = useLegacyLocalStoresForTests ? new LocalFavoriteStore(config.localDataDir) : new DynamoDbFavoriteStore(config.favoritesTableName)
+  const activeRunAuthorizationIndex = new DynamoDbActiveRunAuthorizationIndex(config.activeRunAuthorizationIndexTableName)
   const benchmarkRunStore = config.useLocalBenchmarkRunStore
     ? new LocalBenchmarkRunStore(config.localDataDir)
-    : new DynamoDbBenchmarkRunStore(config.benchmarkRunsTableName)
+    : new DynamoDbBenchmarkRunStore(config.benchmarkRunsTableName, undefined, activeRunAuthorizationIndex)
   const chatRunStore = config.useLocalChatRunStore
     ? new LocalChatRunStore(config.localDataDir)
-    : new DynamoDbChatRunStore(config.chatRunsTableName)
+    : new DynamoDbChatRunStore(config.chatRunsTableName, undefined, activeRunAuthorizationIndex)
   const chatRunEventStore = config.useLocalChatRunStore
     ? new LocalChatRunEventStore(config.localDataDir)
     : new DynamoDbChatRunEventStore(config.chatRunEventsTableName)
   const documentIngestRunStore = config.useLocalDocumentIngestRunStore
     ? new LocalDocumentIngestRunStore(config.localDataDir)
-    : new DynamoDbDocumentIngestRunStore(config.documentIngestRunsTableName)
+    : new DynamoDbDocumentIngestRunStore(config.documentIngestRunsTableName, undefined, activeRunAuthorizationIndex)
   const documentIngestRunEventStore = config.useLocalDocumentIngestRunStore
     ? new LocalDocumentIngestRunEventStore(config.localDataDir)
     : new DynamoDbDocumentIngestRunEventStore(config.documentIngestRunEventsTableName)
@@ -126,8 +166,21 @@ export function createDependencies(): Dependencies {
   const codeBuildLogReader = new AwsCodeBuildLogReader()
   const asyncAgentProviders = createDefaultAsyncAgentProviderRegistry()
   const userDirectory = config.authEnabled && config.cognitoUserPoolId ? new CognitoUserDirectory() : undefined
+  const accountRevocationRegistry = new ObjectStoreAccountRevocationRegistry(objectStore)
+  const administrativePrincipalTransferFence = new ObjectStoreAdministrativePrincipalTransferFence(objectStore)
+  const verifiedIdentityProvider = config.authEnabled && config.cognitoUserPoolId
+    ? new RevocationAwareVerifiedIdentityProvider(
+      new CognitoVerifiedIdentityProvider(),
+      accountRevocationRegistry,
+      administrativePrincipalTransferFence
+    )
+    : undefined
+  const resourceUserPrincipalDirectory = userDirectory && config.authTenantId
+    ? new SingleTenantResourceUserPrincipalDirectory(userDirectory, config.authTenantId)
+    : undefined
+  const securityAuditOutbox = new ObjectStoreSecurityMutationAuditOutbox(objectStore)
 
-  cached = { objectStore, memoryVectorStore, evidenceVectorStore, textModel, questionStore, conversationHistoryStore, favoriteStore, benchmarkRunStore, chatRunStore, chatRunEventStore, documentIngestRunStore, documentIngestRunEventStore, documentGroupStore, folderPolicyStore, userGroupStore, groupMembershipStore, codeBuildLogReader, asyncAgentProviders, userDirectory }
+  cached = { objectStore, benchmarkArtifactStore, memoryVectorStore, evidenceVectorStore, textModel, questionStore, conversationHistoryStore, favoriteStore, benchmarkRunStore, chatRunStore, chatRunEventStore, documentIngestRunStore, documentIngestRunEventStore, documentGroupStore, folderPolicyStore, userGroupStore, groupMembershipStore, codeBuildLogReader, asyncAgentProviders, userDirectory, verifiedIdentityProvider, accountRevocationRegistry, administrativePrincipalTransferFence, resourceUserPrincipalDirectory, securityAuditOutbox, securityAuditReconciliationOutbox: securityAuditOutbox }
   return cached
 }
 

@@ -18,7 +18,7 @@ export async function validateCitations(state: ChatOrchestrationState): Promise<
   const used = new Set(answerJson.usedChunkIds ?? [])
   const citations = state.selectedChunks
     .filter((hit) => used.size === 0 || used.has(hit.key) || used.has(hit.metadata.chunkId ?? ""))
-    .map(toCitation)
+    .map((hit) => toCitation(hit))
     .slice(0, ragRuntimePolicy.limits.citationLimit)
   const usedComputedFactIds = validComputedFactIds(answerJson.usedComputedFactIds ?? [], state)
 

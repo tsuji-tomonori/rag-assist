@@ -4,6 +4,7 @@ import {
   buildShareDiff,
   buildWorkspaceFolders,
   compareDocuments,
+  descendantGroupIds,
   documentGroupIds,
   documentGroupNames,
   documentStatusLabel,
@@ -38,6 +39,20 @@ describe("documentWorkspaceUtils", () => {
 
     expect(folders[0]?.path).toBe("/ ドキュメントグループ/親/同名")
     expect(folders[0]?.group?.canonicalPath).toBe("/親/同名")
+  })
+
+  it("移動元の全 descendant ID を循環安全に列挙する", () => {
+    const groups = [
+      group({ groupId: "root", name: "root" }),
+      group({ groupId: "child", name: "child", parentGroupId: "root" }),
+      group({ groupId: "grandchild", name: "grandchild", parentGroupId: "child" }),
+      group({ groupId: "sibling", name: "sibling", parentGroupId: "root" }),
+      group({ groupId: "other", name: "other" })
+    ]
+
+    expect([...descendantGroupIds(groups, "child")]).toEqual(["grandchild"])
+    expect(descendantGroupIds(groups, "root")).toEqual(new Set(["child", "sibling", "grandchild"]))
+    expect(descendantGroupIds(groups, "other")).toEqual(new Set())
   })
 
   it("文書更新日時はmetadata.updatedAt、top-level updatedAt、createdAtの順に使う", () => {

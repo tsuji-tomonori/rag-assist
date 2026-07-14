@@ -26,9 +26,9 @@
 
 ## 要件の源泉・背景
 
-- 源泉: `docs/spec-recovery/06_requirements.md` の `REQ-BENCH-002`
-- 源泉: `docs/spec-recovery/03_acceptance_criteria.md` の `AC-BENCH-002`
-- 源泉: `docs/spec-recovery/07_specifications.md` の `SPEC-BENCH-002`
+- 源泉: `docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md` の `REQ-BENCH-002`
+- 源泉: `docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md` の `AC-BENCH-002`
+- 源泉: `docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md` の `SPEC-BENCH-002`
 - 背景: Allganize、MMRAG DocQA、NeoAI などの dataset を同じ benchmark runner で扱う必要がある。
 
 ## 要件の目的・意図

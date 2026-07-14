@@ -173,6 +173,14 @@ const operationDocs: Record<string, { summary: string; description: string }> = 
     summary: "管理対象ユーザー一覧を取得する",
     description: "Cognito と管理台帳を照合し、管理画面で扱うユーザー一覧を返します。"
   },
+  "GET /admin/users/{userId}/deletion-preflight": {
+    summary: "ユーザー削除前の移管条件を取得する",
+    description: "対象ユーザーの所有資源件数と、active かつ同一 tenant と検証済みの後継候補を返します。"
+  },
+  "POST /admin/users/{userId}/administrative-principal-transfer": {
+    summary: "管理主体の所有資源を後継へ移管する",
+    description: "owner または adminPrincipal の変更、tenant 離脱、恒久削除を確定する前に、対象 principal が管理するフォルダー、文書、resource group を active かつ同一 tenant の後継へ不可分に移管します。"
+  },
   "GET /admin/audit-log": {
     summary: "管理操作履歴を取得する",
     description: "ユーザー管理や権限管理に関する監査ログを取得します。"
@@ -253,6 +261,10 @@ const operationDocs: Record<string, { summary: string; description: string }> = 
     summary: "ParsedDocument preview を取得する",
     description: "参照権限のある文書について、抽出結果の preview、警告、件数、品質 profile を返します。raw object key や vector key は返しません。"
   },
+  "GET /documents/{documentId}/extracted-text": {
+    summary: "文書の抽出テキストを取得する",
+    description: "現行の文書参照権限、active lifecycle、公開 pointer を再確認し、許可された文書の実抽出テキストだけを text/plain download として返します。権限外または不在の資源は同じ最小応答に一般化します。"
+  },
   "POST /documents": {
     summary: "文書を同期登録する（非推奨）",
     description: "小さなテキスト互換用の同期登録 API です。通常文書は group scope と対象フォルダの full 権限が必要です。大容量ファイルや base64 ファイルアップロード用途では非推奨です。ファイルは POST /documents/uploads で upload session を作成し、S3 またはローカル upload URL に転送してから POST /document-ingest-runs で非同期取り込みを開始してください。レスポンスは文書 summary のみ返し、full manifest、chunk metadata、vector key は返しません。"
@@ -281,6 +293,18 @@ const operationDocs: Record<string, { summary: string; description: string }> = 
     summary: "文書取り込みイベントを購読する",
     description: "指定した文書取り込み run の進捗イベントを Server-Sent Events で返します。"
   },
+  "GET /documents/{documentId}/source-governance": {
+    summary: "情報源の審査状態を取得する",
+    description: "現行 actor の同一 tenant、rag:source:approve、対象文書の full permission を再確認し、CAS 更新に使う opaque version と情報源の審査・公開状態を返します。"
+  },
+  "POST /documents/{documentId}/source-governance/approve": {
+    summary: "情報源を審査して公開する",
+    description: "classification、usage、quality、inspection の明示 profile と expectedVersion を検証し、監査 intent、CAS、fenced staged ingest を経て承認済み candidate だけを通常 RAG へ公開します。"
+  },
+  "POST /documents/{documentId}/source-governance/restrict": {
+    summary: "公開済み情報源の利用を制限する",
+    description: "classification、usage purpose、quality、lifecycle の失効を expectedVersion と監査 intent 付きで先に確定し、派生物の cleanup 前でも検索・回答・評価の current eligibility を deny にします。"
+  },
   "POST /documents/{documentId}/reindex": {
     summary: "文書を再インデックスする",
     description: "指定した文書を現在設定の embedding / memory モデルで再処理します。"
@@ -288,12 +312,12 @@ const operationDocs: Record<string, { summary: string; description: string }> = 
   "GET /documents/{documentId}/share": {
     summary: "文書共有設定を取得する",
     description:
-      "指定した文書の直接共有とフォルダ由来の継承共有を取得します。文書の実効 full 権限と document share permission を持つユーザーだけが共有先一覧を取得できます。"
+      "指定した文書の直接共有、フォルダ由来の継承共有、次回更新で expectedVersion に指定する現在の opaque policy version を取得します。文書の実効 full 権限と document share permission を持つユーザーだけが共有先一覧を取得できます。"
   },
   "PUT /documents/{documentId}/share": {
     summary: "文書共有設定を更新する",
     description:
-      "指定した文書の直接共有 grant を置き換えます。フォルダ由来権限は打ち消さず、文書の実効 full 権限、document share permission、理由入力を要求します。"
+      "指定した文書の直接共有 grant を、GET で取得した expectedVersion と理由を使って置き換えます。文書の実効 full 権限、document share permission、active な同一 tenant principal を検証し、競合または不正な principal では state を変更せず security audit を記録します。"
   },
   "POST /documents/{documentId}/move": {
     summary: "文書を別フォルダへ移動する",
@@ -326,11 +350,63 @@ const operationDocs: Record<string, { summary: string; description: string }> = 
   },
   "POST /document-groups": {
     summary: "文書グループを作成する",
-    description: "文書をスコープごとに整理するための文書グループを作成します。"
+    description: "文書を整理するフォルダを、作成 actor の user principal が管理する private 状態で作成します。初期共有は受け付けず、作成後に versioned share PUT を使用します。"
+  },
+  "GET /document-groups/{groupId}/share": {
+    summary: "フォルダ共有 policy を取得する",
+    description: "対象フォルダの complete share policy と optimistic concurrency version を取得します。folder share permission と対象フォルダの実効 full 権限が必要です。"
+  },
+  "PUT /document-groups/{groupId}/share": {
+    summary: "フォルダ共有 policy を置き換える",
+    description: "expectedVersion、complete entries、変更理由を指定して共有 policy を原子的に置き換えます。active な同一 tenant user/resource group の検証と security mutation audit を実施します。"
   },
   "POST /document-groups/{groupId}/share": {
     summary: "文書グループ設定を更新する",
-    description: "指定した文書グループの名前、説明、親フォルダ、共有先、権限範囲を更新します。"
+    description: "legacy compatibility として指定した文書グループの名前と説明だけを更新します。path mutation は dedicated move endpoint、共有先と権限範囲は versioned PUT endpoint を使用します。"
+  },
+  "POST /document-groups/{groupId}/move": {
+    summary: "フォルダ subtree を整合状態で移動する",
+    description: "expectedVersion と理由を受け取り、current active actor、source/destination full、同一 tenant、非循環 path を確認します。配下文書の manifest と vector/index projection を先に hidden staging へ移し、subtree path-lock transaction 後に新しい path と inherited policy reference へ収束させます。失敗時は完全な before へ rollback するか hidden reconciliation pending とし、folder-local explicit policy/version と direct document grant、documentVersion を保持します。"
+  },
+  "DELETE /document-groups/{groupId}": {
+    summary: "空のフォルダをアーカイブする",
+    description: "対象フォルダの current full 権限、expectedVersion、理由、空であることを確認し、監査 intent と CAS を使ってアーカイブします。"
+  },
+  "GET /resource-groups": {
+    summary: "参照可能な resource group 一覧を取得する",
+    description: "current actor が同一 tenant で参照できる active resource group の公開項目だけを返します。"
+  },
+  "POST /resource-groups": {
+    summary: "resource group を作成する",
+    description: "current tenant、作成権限、expectedVersion、理由を確認し、作成者の full membership と監査 intent を伴う resource group を作成します。"
+  },
+  "GET /resource-groups/{groupId}": {
+    summary: "resource group を取得する",
+    description: "current actor の同一 tenant membership と参照権限を再確認し、対象 resource group の公開項目だけを返します。"
+  },
+  "PUT /resource-groups/{groupId}": {
+    summary: "resource group を更新する",
+    description: "対象 group の current full 権限、expectedVersion、理由を確認し、監査 intent と CAS を使って名前と種別を更新します。"
+  },
+  "DELETE /resource-groups/{groupId}": {
+    summary: "resource group をアーカイブする",
+    description: "membership と外部参照を deny-first で解除し、current full 権限、expectedVersion、理由を確認して durable lifecycle intent によりアーカイブします。"
+  },
+  "POST /resource-groups/{groupId}/move": {
+    summary: "resource group の未対応 move を拒否する",
+    description: "resource group の move は明示的に無効化されており、資源を読み取ったり変更したりせず拒否します。"
+  },
+  "POST /resource-groups/{groupId}/share": {
+    summary: "resource group の未対応 share を拒否する",
+    description: "resource group の share は membership API へ集約されており、この操作では資源を読み取ったり変更したりせず拒否します。"
+  },
+  "GET /resource-groups/{groupId}/memberships": {
+    summary: "resource group の membership state を取得する",
+    description: "membership mutate feature と対象 group の current full/manager authority を再確認し、complete membership state と opaque version だけを返します。tenant、store metadata、audit intent は返しません。"
+  },
+  "PUT /resource-groups/{groupId}/memberships": {
+    summary: "resource group の membership state を置き換える",
+    description: "expectedVersion、reason、完全な次 membership state を受け取り、active な同一 tenant principal、nested cycle、権限、監査 intent、CAS を検証して一度だけ確定します。"
   },
   "POST /chat": {
     summary: "同期チャット回答を生成する",
@@ -422,11 +498,11 @@ const operationDocs: Record<string, { summary: string; description: string }> = 
   },
   "POST /benchmark/query": {
     summary: "ベンチマーク質問を実行する",
-    description: "ベンチマーク runner が `/chat` 相当の RAG 処理を実行し、評価用の詳細情報を取得します。"
+    description: "BENCHMARK_RUNNER が必須の suiteId を指定し、server allowlist で解決した simulated subject と隔離 tenant/corpus scope だけで `/chat` 相当の評価を実行します。"
   },
   "POST /benchmark/search": {
     summary: "検索ベンチマークを実行する",
-    description: "ベンチマーク runner が `/search` 相当の検索処理を実行し、検索評価用の結果を取得します。"
+    description: "BENCHMARK_RUNNER が必須の suiteId を指定し、request の user/group/tenant/filter override を使わず server allowlist の隔離 scope だけで検索評価を実行します。"
   },
   "GET /benchmark-suites": {
     summary: "ベンチマーク suite 一覧を取得する",

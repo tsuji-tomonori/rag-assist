@@ -1,4 +1,90 @@
-import type { Chunk, DocumentStatistics, StructuredBlock } from "../../../../types.js"
+import { createHash } from "node:crypto"
+import type { Chunk, ChunkingPolicySnapshot, ChunkingViolation, DocumentStatistics, StructuredBlock } from "../../../../types.js"
+
+export type PolicyChunkingResult = {
+  chunks: Chunk[]
+  policy: ChunkingPolicySnapshot
+  violations: ChunkingViolation[]
+  publicationEligible: boolean
+}
+
+export function productionChunkingPolicy(maxChars: number, overlapChars: number): ChunkingPolicySnapshot {
+  return {
+    schemaVersion: 1,
+    policyId: "memorag-structure-aware-chunking",
+    version: "2026-07-11.v1",
+    strategy: "structure_aware",
+    tokenizer: "unicode_code_point_v1",
+    maxChars,
+    maxTokens: maxChars,
+    overlapChars,
+    minTokens: 1,
+    preserveAtomicBlocks: true,
+    stableIdAlgorithm: "sha256_locator_content_v1"
+  }
+}
+
+export function chunkDocumentWithPolicy(input: {
+  text: string
+  blocks?: StructuredBlock[]
+  documentVersion: string
+  policy: ChunkingPolicySnapshot
+}): PolicyChunkingResult {
+  const violations = validatePolicy(input.policy)
+  const effectiveBudget = Math.max(1, Math.min(input.policy.maxChars, input.policy.maxTokens))
+  const chunks = input.blocks?.length
+    ? chunkStructuredBlocks(input.blocks, effectiveBudget, input.policy.overlapChars)
+    : chunkText(input.text, effectiveBudget, input.policy.overlapChars)
+
+  for (const chunk of chunks) {
+    chunk.sourceLocation = {
+      ...chunk.sourceLocation,
+      pageStart: chunk.sourceLocation?.pageStart ?? chunk.pageStart,
+      pageEnd: chunk.sourceLocation?.pageEnd ?? chunk.pageEnd,
+      sectionPath: chunk.sectionPath,
+      startChar: chunk.startChar,
+      endChar: chunk.endChar,
+      sourceBlockId: chunk.sourceBlockId
+    }
+    chunk.id = stableChunkId(input.documentVersion, input.policy, chunk)
+    chunk.chunkHash = sha256(chunk.text)
+    chunk.previousChunkId = undefined
+    chunk.nextChunkId = undefined
+
+    const tokenCount = countPolicyTokens(chunk.text)
+    const atomic = chunk.chunkKind === "table" || chunk.chunkKind === "code" || chunk.chunkKind === "figure"
+    if (!hasStableLocator(chunk)) {
+      violations.push({ code: "missing_locator", message: "Chunk does not have a stable source locator.", chunkId: chunk.id, sourceBlockId: chunk.sourceBlockId })
+    }
+    if (atomic && input.policy.preserveAtomicBlocks && (chunk.text.length > input.policy.maxChars || tokenCount > input.policy.maxTokens)) {
+      violations.push({ code: "oversized_atomic_block", message: "Atomic structured block exceeds the configured publication budget.", chunkId: chunk.id, sourceBlockId: chunk.sourceBlockId })
+    }
+    if (chunk.text.length > input.policy.maxChars) {
+      violations.push({ code: "char_budget_exceeded", message: `Chunk has ${chunk.text.length} characters; maximum is ${input.policy.maxChars}.`, chunkId: chunk.id, sourceBlockId: chunk.sourceBlockId })
+    }
+    if (tokenCount > input.policy.maxTokens) {
+      violations.push({ code: "token_budget_exceeded", message: `Chunk has ${tokenCount} policy tokens; maximum is ${input.policy.maxTokens}.`, chunkId: chunk.id, sourceBlockId: chunk.sourceBlockId })
+    }
+    if (tokenCount < input.policy.minTokens) {
+      violations.push({ code: "fragment_below_minimum", message: `Chunk has ${tokenCount} policy tokens; minimum is ${input.policy.minTokens}.`, chunkId: chunk.id, sourceBlockId: chunk.sourceBlockId })
+    }
+  }
+
+  if (new Set(chunks.map((chunk) => chunk.id)).size !== chunks.length) {
+    violations.push({ code: "invalid_policy", message: "Stable chunk identifiers collided." })
+  }
+  linkChunks(chunks)
+  return {
+    chunks,
+    policy: { ...input.policy },
+    violations,
+    publicationEligible: chunks.length > 0 && violations.length === 0
+  }
+}
+
+export function countPolicyTokens(text: string): number {
+  return [...text.normalize("NFC")].length
+}
 
 export function chunkText(text: string, chunkSize = 1200, overlap = 200): Chunk[] {
   const normalized = text.replace(/\r\n/g, "\n").replace(/\f+/g, "\n\f\n").trim()
@@ -64,7 +150,7 @@ export function chunkStructuredBlocks(blocks: StructuredBlock[], chunkSize = 120
       page: block.pageStart ?? 1,
       block
     })
-    cursor += text.length + 1
+    cursor += text.length + 2
   }
 
   linkChunks(chunks)
@@ -310,6 +396,49 @@ function trimSpan(text: string, start: number, end: number): SemanticUnit | unde
 
 function isAtomicStructuredBlock(block: StructuredBlock): boolean {
   return block.kind === "table" || block.kind === "code" || block.kind === "figure"
+}
+
+function validatePolicy(policy: ChunkingPolicySnapshot): ChunkingViolation[] {
+  const violations: ChunkingViolation[] = []
+  if (!Number.isInteger(policy.maxChars) || policy.maxChars <= 0) {
+    violations.push({ code: "invalid_policy", message: "maxChars must be a positive integer." })
+  }
+  if (!Number.isInteger(policy.maxTokens) || policy.maxTokens <= 0) {
+    violations.push({ code: "invalid_policy", message: "maxTokens must be a positive integer." })
+  }
+  if (!Number.isInteger(policy.overlapChars) || policy.overlapChars < 0 || policy.overlapChars >= Math.min(policy.maxChars, policy.maxTokens)) {
+    violations.push({ code: "invalid_policy", message: "overlapChars must be non-negative and smaller than both budgets." })
+  }
+  if (!Number.isInteger(policy.minTokens) || policy.minTokens <= 0 || policy.minTokens > policy.maxTokens) {
+    violations.push({ code: "invalid_policy", message: "minTokens must be a positive integer within maxTokens." })
+  }
+  return violations
+}
+
+function stableChunkId(documentVersion: string, policy: ChunkingPolicySnapshot, chunk: Chunk): string {
+  return `chunk-${sha256(JSON.stringify({
+    documentVersion,
+    policyId: policy.policyId,
+    policyVersion: policy.version,
+    startChar: chunk.startChar,
+    endChar: chunk.endChar,
+    pageStart: chunk.pageStart,
+    pageEnd: chunk.pageEnd,
+    sourceBlockId: chunk.sourceBlockId,
+    sectionPath: chunk.sectionPath,
+    contentHash: sha256(chunk.text)
+  })).slice(0, 24)}`
+}
+
+function hasStableLocator(chunk: Chunk): boolean {
+  return Number.isInteger(chunk.startChar)
+    && Number.isInteger(chunk.endChar)
+    && chunk.startChar >= 0
+    && chunk.endChar >= chunk.startChar
+}
+
+function sha256(value: string): string {
+  return createHash("sha256").update(value).digest("hex")
 }
 
 function detectChunkKind(text: string): Chunk["chunkKind"] {

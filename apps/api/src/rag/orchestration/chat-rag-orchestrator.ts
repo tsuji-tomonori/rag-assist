@@ -4,9 +4,29 @@ import { config } from "../../config.js"
 import type { Dependencies } from "../../dependencies.js"
 import { hasUsableComputedFact } from "../../chat-orchestration/computation.js"
 import { loadChunksForManifest } from "../_shared/storage/manifest-chunks.js"
+import { isQualityApprovedForNormalRag } from "../_shared/policies/quality-policy.js"
+import { CURRENT_RAG_ELIGIBILITY_POLICY_VERSION, currentEligibilitySnapshotFromAuthoritativeState, evaluateCurrentRagEligibility } from "../_shared/security/current-rag-eligibility.js"
+import { reauthorizeCurrentEvidence } from "../_shared/security/current-evidence-reauthorizer.js"
+import { readTenantManifest } from "../_shared/storage/tenant-artifacts.js"
+import { DocumentPermissionService } from "../../documents/document-permission-service.js"
 import { buildPipelineVersions } from "../offline/pre-retrieval/indexing/index-version-store.js"
+import { containsSensitiveOutput, sanitizeDebugTraceForPersistence } from "../_shared/security/trace-sanitizer.js"
+import { UNTRUSTED_CONTENT_POLICY_VERSION, inspectPromptEvidence } from "../_shared/security/untrusted-content-policy.js"
+import { buildReplayVersionManifest } from "../_shared/replay/replay-version-manifest.js"
+import { emptyReplaySourceSnapshot, replaySourceSnapshotFromManifest } from "../_shared/replay/replay-source-snapshot.js"
+import { assertRagSafetyInterlock } from "../quality-control/production-rag-monitor.js"
+import { ProductionRagObservationProducer, bestEffortCapture } from "../quality-control/production-rag-observation-producer.js"
+import { RESOURCE_OPERATION_AUTHORIZATION_POLICY_VERSION } from "../../security/resource-operation-authorization.js"
+import { tenantPartitionId } from "../../security/tenant-partition.js"
+import {
+  STANDARD_RAG_GUARD_PROFILE,
+  assertSafeRagGuardProfile,
+  measurePartialRuntimeRagGuards,
+  type MandatoryRagGuard,
+  type SafeDegradationDecision
+} from "../_shared/security/safe-degradation-policy.js"
 import { DEBUG_TRACE_SANITIZE_POLICY_VERSION, DEBUG_TRACE_SCHEMA_VERSION, type DebugTrace } from "../../types.js"
-import type { DocumentManifest, RetrievedVector } from "../../types.js"
+import type { Citation, DocumentManifest, ReplaySourceSnapshot, ReplayVersionManifest, RetrievedVector } from "../../types.js"
 import { analyzeInput } from "../../chat-orchestration/nodes/analyze-input.js"
 import { answerabilityGate } from "../online/post-retrieval/answerability/answerability-gate.js"
 import { buildConversationState, decontextualizeQuery } from "../../chat-orchestration/nodes/build-conversation-state.js"
@@ -27,6 +47,7 @@ import { createRetrievalEvaluatorNode } from "../../chat-orchestration/nodes/ret
 import { createRetrieveMemoryNode } from "../../chat-orchestration/nodes/retrieve-memory.js"
 import { createSearchEvidenceNode } from "../online/retrieval/request-time/search-evidence.js"
 import { createSufficientContextGateNode } from "../online/post-retrieval/answerability/sufficient-context-gate.js"
+import { buildFinalEvidenceSet } from "../online/post-retrieval/evidence/final-evidence-set.js"
 import { validateCitations } from "../online/generation/citation/citation-validator.js"
 import { createVerifyAnswerSupportNode } from "../online/generation/verification/answer-support-verifier.js"
 import { deriveMinEvidenceCount, expandedSearchTopK, normalizeMaxIterations, normalizeMemoryTopK, normalizeMinScore, normalizeTopK, ragRuntimePolicy } from "../../chat-orchestration/runtime-policy.js"
@@ -35,12 +56,13 @@ import { buildSignalPhrase } from "../../chat-orchestration/text-signals.js"
 import { tracedNode } from "../../chat-orchestration/trace.js"
 import type { ChatInput, ChatOrchestrationResult } from "../../chat-orchestration/types.js"
 import { buildChatToolInvocationsFromTrace } from "../../chat-orchestration/tool-registry.js"
-import { toCitation } from "../../chat-orchestration/utils.js"
 
 const systemAdminUser: AppUser = {
-  userId: "system",
-  email: "system@example.com",
-  cognitoGroups: ["SYSTEM_ADMIN"]
+  userId: config.localAuthUserId,
+  email: config.localAuthEmail || undefined,
+  cognitoGroups: [...config.localAuthGroups],
+  accountStatus: "active",
+  tenantId: config.localAuthTenantId
 }
 
 export type ProgressSink = {
@@ -50,6 +72,11 @@ export type ProgressSink = {
     message?: string
     data?: unknown
   }) => Promise<void>
+  authorizeProtectedRead?: () => Promise<void>
+  authorizeExternalSideEffect?: () => Promise<void>
+  authorizeDurableCommit?: () => Promise<void>
+  recordObservationArtifact?: (runId: string) => void
+  recordPersistedTrace?: (trace: DebugTrace) => void
 }
 
 export function createChatOrchestrationGraph(deps: Dependencies, user: AppUser = systemAdminUser, progress?: ProgressSink) {
@@ -137,7 +164,8 @@ export function createChatOrchestrationGraph(deps: Dependencies, user: AppUser =
     summary: (newEvidenceCount: number) => string
   }> {
     if (action.type === "expand_context") {
-      const expanded = await expandContextWindow(deps, state, action)
+      await progress?.authorizeProtectedRead?.()
+      const expanded = await expandContextWindow(deps, state, action, user)
       const retrievedChunks = mergeRetrievedChunks(state.retrievedChunks, expanded, expandedSearchTopK(state.topK))
       return {
         searchUpdate: { retrievedChunks },
@@ -150,7 +178,9 @@ export function createChatOrchestrationGraph(deps: Dependencies, user: AppUser =
     }
 
     const searchState = action.type === "query_rewrite" ? withRewrittenQuery(state, action) : state
+    await progress?.authorizeExternalSideEffect?.()
     const embedUpdate = await embedQueries(searchState)
+    await progress?.authorizeProtectedRead?.()
     const searchUpdate = await searchEvidence({ ...searchState, ...embedUpdate } as ChatOrchestrationState)
     const retrievedChunks = searchUpdate.retrievedChunks ?? []
 
@@ -243,6 +273,43 @@ export function createChatOrchestrationGraph(deps: Dependencies, user: AppUser =
     return state.answerability.isAnswerable ? "answer" : "refuse"
   }
 
+  async function reauthorizeEvidence(state: ChatOrchestrationState): Promise<ChatOrchestrationUpdate> {
+    const unique = new Map<string, RetrievedVector>()
+    for (const chunk of [...state.retrievedChunks, ...state.selectedChunks, ...state.memoryCards]) unique.set(chunk.key, chunk)
+    if (unique.size === 0) return {}
+    const result = await reauthorizeCurrentEvidence({
+      deps,
+      user,
+      chunks: [...unique.values()],
+      purpose: "normal_answer"
+    })
+    const eligibleKeys = new Set(result.eligible.map((chunk) => chunk.key))
+    const selectedDenied = state.selectedChunks.some((chunk) => !eligibleKeys.has(chunk.key))
+    const retrievalDiagnostics = appendCurrentAuthorizationDenials(
+      state.retrievalDiagnostics,
+      result.eligible.length,
+      result.denied.length
+    )
+    return {
+      retrievedChunks: state.retrievedChunks.filter((chunk) => eligibleKeys.has(chunk.key)),
+      selectedChunks: state.selectedChunks.filter((chunk) => eligibleKeys.has(chunk.key)),
+      memoryCards: state.memoryCards.filter((chunk) => eligibleKeys.has(chunk.key)),
+      ...(retrievalDiagnostics ? { retrievalDiagnostics } : {}),
+      ...(selectedDenied
+        ? {
+            answer: NO_ANSWER,
+            citations: [],
+            usedComputedFactIds: [],
+            answerability: {
+              isAnswerable: false,
+              reason: "authorization_revoked" as const,
+              confidence: 1
+            }
+          }
+        : {})
+    }
+  }
+
   const nodes = {
     analyzeInput: tracedNode("analyze_input", analyzeInput),
     buildTemporalContext: tracedNode("build_temporal_context", buildTemporalContext),
@@ -259,6 +326,7 @@ export function createChatOrchestrationGraph(deps: Dependencies, user: AppUser =
     retrievalEvaluator: tracedNode("retrieval_evaluator", retrievalEvaluator),
     evaluateSearchProgress: tracedNode("evaluate_search_progress", evaluateSearchProgress),
     rerankChunks: tracedNode("rerank_chunks", rerankChunks),
+    reauthorizeEvidence: tracedNode("reauthorize_evidence", reauthorizeEvidence),
     extractPolicyComputations: tracedNode("extract_policy_computations", extractPolicyComputations),
     executeComputationTools: tracedNode("execute_computation_tools", executeComputationTools),
     answerabilityGate: tracedNode("answerability_gate", answerabilityGate),
@@ -321,6 +389,10 @@ export function createChatOrchestrationGraph(deps: Dependencies, user: AppUser =
       }
 
       state = await applyNode(state, "rerank_chunks", nodes.rerankChunks, progress)
+      state = await applyNode(state, "reauthorize_evidence", nodes.reauthorizeEvidence, progress)
+      if (state.answerability.reason === "authorization_revoked") {
+        return applyNode(state, "finalize_refusal", nodes.finalizeRefusal, progress)
+      }
       if (shouldExtractPolicyComputations(state)) {
         state = await applyNode(state, "extract_policy_computations", nodes.extractPolicyComputations, progress)
       }
@@ -339,8 +411,16 @@ export function createChatOrchestrationGraph(deps: Dependencies, user: AppUser =
       }
 
       state = await applyNode(state, "generate_answer", nodes.generateAnswer, progress)
+      state = await applyNode(state, "reauthorize_evidence", nodes.reauthorizeEvidence, progress)
+      if (state.answerability.reason === "authorization_revoked") {
+        return applyNode(state, "finalize_refusal", nodes.finalizeRefusal, progress)
+      }
       state = await applyNode(state, "validate_citations", nodes.validateCitations, progress)
       state = await applyNode(state, "verify_answer_support", nodes.verifyAnswerSupport, progress)
+      state = await applyNode(state, "reauthorize_evidence", nodes.reauthorizeEvidence, progress)
+      if (state.answerability.reason === "authorization_revoked") {
+        return applyNode(state, "finalize_refusal", nodes.finalizeRefusal, progress)
+      }
       return applyNode(state, "finalize_response", nodes.finalizeResponse, progress)
     }
   }
@@ -354,6 +434,7 @@ async function applyNode(state: ChatOrchestrationState, nodeName: string, node: 
     stage: nodeName,
     message: `${nodeName} を実行中`
   })
+  await authorizeNodeBoundary(nodeName, progress)
   const started = Date.now()
   const next = applyChatOrchestrationUpdate(state, await node(state))
   await progress?.emit({
@@ -363,6 +444,23 @@ async function applyNode(state: ChatOrchestrationState, nodeName: string, node: 
     data: { latencyMs: Date.now() - started }
   })
   return next
+}
+
+async function authorizeNodeBoundary(nodeName: string, progress: ProgressSink | undefined): Promise<void> {
+  if (["retrieve_memory", "reauthorize_evidence"].includes(nodeName)) {
+    await progress?.authorizeProtectedRead?.()
+    return
+  }
+  if ([
+    "generate_clues",
+    "retrieval_evaluator",
+    "extract_policy_computations",
+    "sufficient_context_gate",
+    "generate_answer",
+    "verify_answer_support"
+  ].includes(nodeName)) {
+    await progress?.authorizeExternalSideEffect?.()
+  }
 }
 
 export function applyChatOrchestrationUpdate(state: ChatOrchestrationState, update: ChatOrchestrationUpdate): ChatOrchestrationState {
@@ -443,12 +541,32 @@ function rewriteQuery(state: ChatOrchestrationState, action: Extract<SearchActio
 async function expandContextWindow(
   deps: Dependencies,
   state: ChatOrchestrationState,
-  action: Extract<SearchAction, { type: "expand_context" }>
+  action: Extract<SearchAction, { type: "expand_context" }>,
+  user: AppUser
 ): Promise<RetrievedVector[]> {
   const source = findChunkForExpansion(state.retrievedChunks, action.chunkKey)
   if (!source?.metadata.documentId || !source.metadata.chunkId) return []
-  const manifest = await loadManifest(deps, source.metadata.documentId)
+  const manifest = await loadManifest(deps, user, source.metadata.documentId)
   if (!manifest) return []
+  const permissionDecision = await new DocumentPermissionService(deps).resolveEffectiveDocumentPermissionDecision(user, manifest)
+  const current = await currentEligibilitySnapshotFromAuthoritativeState({
+    objectStore: deps.objectStore,
+    manifest,
+    authorizationAllowed: permissionDecision.permission === "readOnly" || permissionDecision.permission === "full",
+    qualityAllowed: isQualityApprovedForNormalRag(manifest, {
+      allowLegacyLocalTestFixture: Boolean(deps.localTestIngestAdmissionContext)
+    }),
+    purpose: "normal_answer",
+    roles: user.cognitoGroups,
+    allowLocalTestFixture: Boolean(deps.localTestIngestAdmissionContext)
+  })
+  if (!evaluateCurrentRagEligibility({
+    actor: user,
+    identityVerified: Boolean(user.userId && user.tenantId),
+    purpose: "normal_answer",
+    envelope: source.metadata.securityEnvelope,
+    current
+  }).allowed) return []
   const chunks = await loadChunksForManifestSafely(deps, manifest)
   const center = chunks.findIndex((chunk) => chunk.id === source.metadata.chunkId)
   if (center < 0) return []
@@ -459,6 +577,13 @@ async function expandContextWindow(
     if (index === center) continue
     const chunk = chunks[index]
     if (!chunk) continue
+    if (!evaluateCurrentRagEligibility({
+      actor: user,
+      identityVerified: Boolean(user.userId && user.tenantId),
+      purpose: "normal_answer",
+      envelope: chunk.securityEnvelope,
+      current
+    }).allowed) continue
     const distance = Math.abs(index - center)
     expanded.push({
       key: `${source.metadata.documentId}-${chunk.id}`,
@@ -472,6 +597,7 @@ async function expandContextWindow(
         documentId: source.metadata.documentId,
         fileName: manifest.fileName,
         chunkId: chunk.id,
+        securityEnvelope: chunk.securityEnvelope,
         objectKey: manifest.sourceObjectKey,
         text: chunk.text,
         sources: ["context_window"],
@@ -496,13 +622,13 @@ function findChunkForExpansion(chunks: RetrievedVector[], chunkKey: string): Ret
   return chunks.find((chunk) => chunk.key === chunkKey || chunk.metadata.chunkId === chunkKey)
 }
 
-async function loadManifest(deps: Dependencies, documentId: string): Promise<DocumentManifest | undefined> {
+async function loadManifest(deps: Dependencies, user: AppUser, documentId: string): Promise<DocumentManifest | undefined> {
   try {
-    return JSON.parse(await deps.objectStore.getText(`manifests/${documentId}.json`)) as DocumentManifest
+    const tenantId = user.tenantId?.trim()
+    if (!tenantId) return undefined
+    return await readTenantManifest(deps, tenantId, documentId)
   } catch {
-    const keys = await deps.objectStore.listKeys("manifests/")
-    const key = keys.find((candidate) => candidate.endsWith(".json") && candidate.includes(documentId))
-    return key ? (JSON.parse(await deps.objectStore.getText(key)) as DocumentManifest) : undefined
+    return undefined
   }
 }
 
@@ -580,7 +706,19 @@ function inferSearchComplexity(question: string): ChatOrchestrationState["search
   return "simple"
 }
 
-export async function runChatOrchestration(deps: Dependencies, input: ChatInput, user: AppUser = systemAdminUser, progress?: ProgressSink): Promise<ChatOrchestrationResult> {
+export async function runChatOrchestration(
+  deps: Dependencies,
+  input: ChatInput,
+  user: AppUser = systemAdminUser,
+  progress?: ProgressSink,
+  securityResourceRefs: readonly string[] = []
+): Promise<ChatOrchestrationResult> {
+  assertSafeRagGuardProfile(STANDARD_RAG_GUARD_PROFILE)
+  await assertRagSafetyInterlock({
+    objectStore: deps.objectStore,
+    runtimeProfileVersion: ragRuntimePolicy.profile.version,
+    operation: "chat"
+  })
   const startedAt = new Date()
   const startedMs = Date.now()
   const runId = createRunId(startedAt)
@@ -704,34 +842,87 @@ export async function runChatOrchestration(deps: Dependencies, input: ChatInput,
     trace: []
   })) as ChatOrchestrationState
 
-  const answer = state.answer ?? NO_ANSWER
+  let answer = state.answer ?? NO_ANSWER
   const isClarification = state.clarification.needsClarification
-  const isAnswerable = !isClarification && state.answerability.isAnswerable && answer !== NO_ANSWER
+  const outputSecretDetected = containsSensitiveOutput(answer)
+  const isAnswerable = !isClarification && state.answerability.isAnswerable && answer !== NO_ANSWER && !outputSecretDetected
+  if (outputSecretDetected) answer = NO_ANSWER
   const citations = isAnswerable ? state.citations : []
-  const retrieved = isClarification ? [] : state.retrievedChunks.map(toCitation)
-  const finalEvidence = isAnswerable ? state.selectedChunks.map(toCitation) : []
+  const authorizationEvaluatedAt = new Date().toISOString()
+  const evidenceContext = structuredEvidenceContext(state, authorizationEvaluatedAt)
+  const retrieved = isClarification ? [] : buildFinalEvidenceSet(state.retrievedChunks, evidenceContext)
+  const conflictChunkKeys = new Set(state.retrievalEvaluation.conflictCandidates.flatMap((candidate) => candidate.chunkKeys))
+  const unresolvedConflictEvidence = state.retrievalEvaluation.retrievalQuality === "conflicting"
+    ? state.retrievedChunks.filter((chunk) => conflictChunkKeys.has(chunk.key))
+    : []
+  const finalEvidence = buildFinalEvidenceSet(
+    isAnswerable ? state.selectedChunks : unresolvedConflictEvidence,
+    evidenceContext
+  )
+  const guardOutcomes = measurePartialRuntimeRagGuards(runtimeGuardOutcomes(state, user, outputSecretDetected))
+  const faultDecisions = state.trace
+    .map((step) => (step as typeof step & { degradationDecision?: SafeDegradationDecision }).degradationDecision)
+    .filter((decision): decision is SafeDegradationDecision => decision !== undefined)
+  const decisions = faultDecisions
+  const injectionFindingCount = state.selectedChunks.reduce((count, chunk) => count + inspectPromptEvidence({
+    text: String(chunk.metadata.text ?? ""),
+    fileName: typeof chunk.metadata.fileName === "string" ? chunk.metadata.fileName : undefined
+  }).length, 0)
+  await progress?.authorizeDurableCommit?.()
+  await bestEffortCapture("normal_chat", () => new ProductionRagObservationProducer(deps.objectStore).captureChatOutcome({
+    runId,
+    observedAt: new Date().toISOString(),
+    latencyMs: Math.max(0, Date.now() - startedMs),
+    tenantId: user.tenantId ?? config.localAuthTenantId,
+    roles: user.cognitoGroups,
+    resourceIds: [...new Set([...retrieved, ...finalEvidence, ...citations].map((item) => item.documentId))],
+    securityResourceRefs,
+    pipelineVersions: buildPipelineVersions({ embeddingModelId, embeddingDimensions: config.embeddingDimensions }),
+    modelId,
+    retrievedCount: retrieved.length,
+    finalEvidenceCount: finalEvidence.length,
+    citationCount: citations.length,
+    validCitationCount: citations.filter((citation) => citation.pageStart !== undefined || citation.pageEnd !== undefined || citation.pageOrSheet !== undefined).length,
+    requiredFactCount: state.searchPlan.requiredFacts.length,
+    supportedFactCount: state.retrievalEvaluation.supportedFactIds.length,
+    answerSentenceCount: state.answerSupport.totalSentences,
+    unsupportedSentenceCount: state.answerSupport.unsupportedSentences.length,
+    answerSupportConfidence: state.answerSupport.confidence,
+    isAnswerable,
+    sufficientContextAnswerable: state.sufficientContext.label === "ANSWERABLE",
+    injectionFindingCount,
+    injectionSuccessCount: injectionFindingCount > 0 && isAnswerable && !guardOutcomes.find((outcome) => outcome.guard === "prompt_injection")?.passed ? 1 : 0,
+    guardOutcomes,
+    decisions
+  }))
+  progress?.recordObservationArtifact?.(runId)
   const shouldIncludeDebug = input.includeDebug ?? input.debug ?? false
-  const debug = shouldIncludeDebug
-    ? await persistDebugTrace(deps, {
-        runId,
-        question: input.question,
-        modelId,
-        embeddingModelId,
-        clueModelId,
-        topK,
-        memoryTopK,
-        minScore,
-        startedAt,
-        startedMs,
-        answer,
-        isAnswerable,
-        citations,
-        retrieved,
-        finalEvidence,
-        requesterUserId: user.userId,
-        state
-      })
-    : undefined
+  const replayDecision = answerReplayDecision(state, isAnswerable, outputSecretDetected)
+  const persistedDebug = await persistDebugTrace(deps, {
+    runId,
+    question: input.question,
+    modelId,
+    embeddingModelId,
+    clueModelId,
+    topK,
+    memoryTopK,
+    minScore,
+    startedAt,
+    startedMs,
+    answer,
+    isAnswerable,
+    citations,
+    retrieved,
+    finalEvidence,
+    requesterUserId: user.userId,
+    requesterTenantId: user.tenantId ?? config.localAuthTenantId,
+    requesterRoles: user.cognitoGroups,
+    securityResourceRefs,
+    replayDecision,
+    state
+  })
+  progress?.recordPersistedTrace?.(persistedDebug)
+  const debug = shouldIncludeDebug ? persistedDebug : undefined
 
   return {
     responseType: isClarification ? "clarification" : isAnswerable ? "answer" : "refusal",
@@ -743,6 +934,51 @@ export async function runChatOrchestration(deps: Dependencies, input: ChatInput,
     retrieved,
     finalEvidence,
     debug
+  }
+}
+
+function runtimeGuardOutcomes(
+  state: ChatOrchestrationState,
+  user: AppUser,
+  outputSecretDetected: boolean
+): Partial<Record<MandatoryRagGuard, { passed: boolean; evidence: string }>> {
+  const outcomes: Partial<Record<MandatoryRagGuard, { passed: boolean; evidence: string }>> = {
+    authentication: { passed: user.accountStatus === "active" && Boolean(user.userId && user.tenantId), evidence: "resolved_request_identity" },
+    output_secret: { passed: !outputSecretDetected, evidence: "persisted_output_secret_pattern_scan" },
+    trace_redaction: { passed: true, evidence: "sanitized_trace_and_quality_sample_contract" }
+  }
+  const promptGuardStep = state.trace.some((step) => ["generate_clues", "sufficient_context_gate", "generate_answer", "verify_answer_support"].includes(step.label))
+  if (promptGuardStep) outcomes.prompt_injection = { passed: true, evidence: "executed_prompt_builder_untrusted_content_quarantine" }
+  const reauthorization = state.trace.some((step) => step.label === "reauthorize_evidence" && step.status === "success")
+  if (reauthorization || state.selectedChunks.length === 0) {
+    outcomes.authorization = { passed: state.answerability.reason !== "authorization_revoked", evidence: "current_evidence_reauthorization_node" }
+    outcomes.classification_usage = { passed: state.selectedChunks.every((chunk) => chunk.metadata.lifecycleStatus !== "superseded"), evidence: "current_eligibility_filtered_evidence" }
+  }
+  const toolStep = [...state.trace].reverse().find((step) => step.label === "execute_computation_tools")
+  if (toolStep) outcomes.tool_policy = { passed: toolStep.status !== "error", evidence: "tool_execution_policy_trace" }
+  const supportStep = [...state.trace].reverse().find((step) => step.label === "verify_answer_support")
+  if (supportStep || !state.answerability.isAnswerable) outcomes.grounding = { passed: !state.answerability.isAnswerable || state.answerSupport.supported, evidence: "answer_support_verifier" }
+  const citationStep = [...state.trace].reverse().find((step) => step.label === "validate_citations")
+  if (citationStep || !state.answerability.isAnswerable) outcomes.citation = { passed: !state.answerability.isAnswerable || state.citations.length > 0, evidence: "citation_validator" }
+  return outcomes
+}
+
+function structuredEvidenceContext(state: ChatOrchestrationState, authorizationEvaluatedAt: string) {
+  const topicsByChunkKey = new Map<string, string>()
+  for (const fact of state.searchPlan.requiredFacts) {
+    for (const chunkKey of fact.supportingChunkKeys) topicsByChunkKey.set(chunkKey, fact.description)
+  }
+  for (const candidate of state.retrievalEvaluation.conflictCandidates) {
+    const fact = state.searchPlan.requiredFacts.find((item) => item.id === candidate.factId)
+    const topic = fact?.description ?? `${candidate.subject} ${candidate.predicate}`.trim()
+    for (const chunkKey of candidate.chunkKeys) topicsByChunkKey.set(chunkKey, topic)
+  }
+  return {
+    supportingChunkKeys: state.searchPlan.requiredFacts.flatMap((fact) => fact.supportingChunkKeys),
+    conflictingChunkKeys: state.retrievalEvaluation.conflictCandidates.flatMap((candidate) => candidate.chunkKeys),
+    topicsByChunkKey,
+    asOf: new Date(state.temporalContext?.nowIso ?? authorizationEvaluatedAt),
+    authorizationEvaluatedAt
   }
 }
 
@@ -770,13 +1006,71 @@ async function persistDebugTrace(
     retrieved: DebugTrace["retrieved"]
     finalEvidence: NonNullable<DebugTrace["finalEvidence"]>
     requesterUserId: string
+    requesterTenantId: string
+    requesterRoles: string[]
+    securityResourceRefs: readonly string[]
+    replayDecision: Pick<ReplayVersionManifest["decisions"], "decisionCode" | "reasonCodes">
     state: ChatOrchestrationState
   }
 ): Promise<DebugTrace> {
   const completedAt = new Date()
-  const trace: DebugTrace = {
+  const sourceSnapshots = await loadReplaySourceSnapshots(
+    deps,
+    input.requesterTenantId,
+    input.retrieved
+  )
+  const ragProfile = {
+    id: ragRuntimePolicy.profile.id,
+    version: ragRuntimePolicy.profile.version,
+    retrievalProfileId: ragRuntimePolicy.profile.retrieval.id,
+    retrievalProfileVersion: ragRuntimePolicy.profile.retrieval.version,
+    answerPolicyId: ragRuntimePolicy.profile.answerPolicy.id,
+    answerPolicyVersion: ragRuntimePolicy.profile.answerPolicy.version
+  }
+  const responseStatus = input.isAnswerable
+    ? "success" as const
+    : input.replayDecision.decisionCode === "failed" ? "error" as const : "warning" as const
+  const totalLatencyMs = Math.max(0, Date.now() - input.startedMs)
+  const replayCandidateCounts = answerReplayCandidateCounts(input.state, input.retrieved.length)
+  const replayVersionManifest = buildReplayVersionManifest({
+    citations: input.retrieved,
+    sourceSnapshots,
+    observedVersions: {
+      indexVersion: uniqueVersion(input.state.retrievalDiagnostics?.indexVersions)
+    },
+    ragProfile,
+    modelId: input.modelId,
+    clueModelId: input.clueModelId,
+    policyVersions: {
+      authorization: RESOURCE_OPERATION_AUTHORIZATION_POLICY_VERSION,
+      eligibility: CURRENT_RAG_ELIGIBILITY_POLICY_VERSION,
+      untrustedContent: UNTRUSTED_CONTENT_POLICY_VERSION,
+      traceSanitization: DEBUG_TRACE_SANITIZE_POLICY_VERSION
+    },
+    question: input.question,
+    normalizedQuery: input.state.normalizedQuery,
+    expandedQueries: input.state.expandedQueries,
+    candidateCount: replayCandidateCounts.candidateCount,
+    deniedCandidateCount: replayCandidateCounts.deniedCandidateCount,
+    finalEvidenceCount: input.finalEvidence.length,
+    responseStatus,
+    decisionCode: input.replayDecision.decisionCode,
+    reasonCodes: input.replayDecision.reasonCodes,
+    totalLatencyMs,
+    nondeterministicFactors: [
+      "model-provider-sampling-and-service-revision",
+      "dependency-latency-and-retry-schedule",
+      "concurrent-authorization-and-lifecycle-updates"
+    ]
+  })
+  const trace = sanitizeDebugTraceForPersistence({
     schemaVersion: DEBUG_TRACE_SCHEMA_VERSION,
     runId: input.runId,
+    requestTraceId: input.runId,
+    parentTraceIds: answerParentTraceIds(input.state),
+    tenantPartitionId: tenantPartitionId(input.requesterTenantId),
+    actorPartitionId: tenantPartitionId(`${input.requesterTenantId}:actor:${input.requesterUserId}`),
+    securityResourceRefs: [...new Set(input.securityResourceRefs)].sort(),
     targetType: "rag_run",
     visibility: "operator_sanitized",
     sanitizePolicyVersion: DEBUG_TRACE_SANITIZE_POLICY_VERSION,
@@ -793,18 +1087,9 @@ async function persistDebugTrace(
     modelId: input.modelId,
     embeddingModelId: input.embeddingModelId,
     clueModelId: input.clueModelId,
-    pipelineVersions: buildPipelineVersions({
-      embeddingModelId: input.embeddingModelId,
-      embeddingDimensions: config.embeddingDimensions
-    }),
-    ragProfile: {
-      id: ragRuntimePolicy.profile.id,
-      version: ragRuntimePolicy.profile.version,
-      retrievalProfileId: ragRuntimePolicy.profile.retrieval.id,
-      retrievalProfileVersion: ragRuntimePolicy.profile.retrieval.version,
-      answerPolicyId: ragRuntimePolicy.profile.answerPolicy.id,
-      answerPolicyVersion: ragRuntimePolicy.profile.answerPolicy.version
-    },
+    replayVersionManifest,
+    decision: replayVersionManifest.decisions,
+    ragProfile,
     topK: input.topK,
     memoryTopK: input.memoryTopK,
     minScore: input.minScore,
@@ -815,8 +1100,8 @@ async function persistDebugTrace(
     decontextualizedQuery: input.state.decontextualizedQuery,
     startedAt: input.startedAt.toISOString(),
     completedAt: completedAt.toISOString(),
-    totalLatencyMs: Math.max(0, Date.now() - input.startedMs),
-    status: input.isAnswerable ? "success" : "warning",
+    totalLatencyMs,
+    status: responseStatus,
     answerPreview: input.answer,
     isAnswerable: input.isAnswerable,
     citations: input.citations,
@@ -828,10 +1113,107 @@ async function persistDebugTrace(
       steps: input.state.trace
     }),
     steps: input.state.trace
-  }
+  })
 
-  await deps.objectStore.putText(debugTraceKey(trace), JSON.stringify(trace, null, 2), "application/json")
+  await deps.objectStore.putText(debugTraceObjectKey(trace), JSON.stringify(trace, null, 2), "application/json")
+  await bestEffortCapture("debug_trace", () => new ProductionRagObservationProducer(deps.objectStore).captureDebugTrace(trace, {
+    tenantId: input.requesterTenantId,
+    roles: input.requesterRoles
+  }))
   return trace
+}
+
+export function answerReplayDecision(
+  state: ChatOrchestrationState,
+  isAnswerable: boolean,
+  outputSecretDetected: boolean
+): Pick<ReplayVersionManifest["decisions"], "decisionCode" | "reasonCodes"> {
+  if (isAnswerable) return { decisionCode: "completed", reasonCodes: [] }
+  if (state.answerability.reason === "authorization_revoked") {
+    return { decisionCode: "rejected", reasonCodes: ["permission_revoked"] }
+  }
+  if (outputSecretDetected) {
+    return { decisionCode: "refused", reasonCodes: ["output_secret_detected"] }
+  }
+  const degradationReasonCodes = state.trace.flatMap((step) => {
+    const decision = step.degradationDecision
+    if (!decision) return []
+    return [decision.trigger === "unsafe_profile" ? "safety_interlock" as const : "dependency_error" as const]
+  })
+  if (degradationReasonCodes.length > 0) {
+    return { decisionCode: "failed", reasonCodes: [...new Set(degradationReasonCodes)].sort() }
+  }
+  if (state.clarification.needsClarification) {
+    return { decisionCode: "refused", reasonCodes: ["clarification_required"] }
+  }
+  return { decisionCode: "refused", reasonCodes: ["insufficient_evidence"] }
+}
+
+export function answerReplayCandidateCounts(
+  state: ChatOrchestrationState,
+  finalRetrievedCount: number
+): Pick<ReplayVersionManifest["decisions"], "candidateCount" | "deniedCandidateCount"> {
+  const observed = state.actionHistory
+    .map((action) => action.retrievalDiagnostics)
+    .filter((diagnostics): diagnostics is NonNullable<typeof diagnostics> => diagnostics !== undefined)
+  const candidateCount = observed.reduce((sum, diagnostics) => sum + diagnostics.candidateCount, 0)
+  const deniedCandidateCount = observed.reduce((sum, diagnostics) => sum + diagnostics.deniedCandidateCount, 0)
+  const latestObservedDenied = observed.at(-1)?.deniedCandidateCount ?? 0
+  const currentDenied = state.retrievalDiagnostics?.deniedCandidateCount ?? latestObservedDenied
+  const postSearchDenied = Math.max(0, currentDenied - latestObservedDenied)
+  const totalDenied = deniedCandidateCount + postSearchDenied
+  const totalCandidates = Math.max(candidateCount, Math.max(0, finalRetrievedCount) + totalDenied)
+  return {
+    candidateCount: totalCandidates,
+    deniedCandidateCount: Math.min(totalCandidates, totalDenied)
+  }
+}
+
+function appendCurrentAuthorizationDenials(
+  diagnostics: ChatOrchestrationState["retrievalDiagnostics"],
+  eligibleCount: number,
+  newlyDeniedCount: number
+): ChatOrchestrationState["retrievalDiagnostics"] {
+  if (!diagnostics) return diagnostics
+  const deniedCandidateCount = diagnostics.deniedCandidateCount + Math.max(0, newlyDeniedCount)
+  const candidateCount = Math.max(
+    diagnostics.candidateCount,
+    Math.max(0, eligibleCount) + deniedCandidateCount
+  )
+  return {
+    ...diagnostics,
+    candidateCount,
+    deniedCandidateCount: Math.min(candidateCount, deniedCandidateCount)
+  }
+}
+
+async function loadReplaySourceSnapshots(
+  deps: Dependencies,
+  tenantId: string,
+  citations: Citation[]
+): Promise<ReplaySourceSnapshot[]> {
+  const uniqueCitations = [...new Map(citations.map((citation) => [citation.documentId, citation])).values()]
+  return Promise.all(uniqueCitations.map(async (citation) => {
+    try {
+      const manifest = await readTenantManifest(deps, tenantId, citation.documentId)
+      return replaySourceSnapshotFromManifest(manifest)
+    } catch (error) {
+      if (isMissingObjectError(error)) return emptyReplaySourceSnapshot(citation)
+      throw error
+    }
+  }))
+}
+
+function uniqueVersion(values: string[] | undefined): string | undefined {
+  const observed = [...new Set((values ?? []).map((value) => value.trim()).filter(Boolean))]
+  return observed.length === 1 ? observed[0] : undefined
+}
+
+function answerParentTraceIds(state: ChatOrchestrationState): string[] {
+  return [...new Set([
+    ...(state.retrievalDiagnostics?.traceIds ?? []),
+    ...state.actionHistory.flatMap((action) => action.retrievalDiagnostics?.traceIds ?? [])
+  ])].sort()
 }
 
 function createRunId(startedAt: Date): string {
@@ -839,6 +1221,7 @@ function createRunId(startedAt: Date): string {
   return `run_${stamp}_${randomUUID().slice(0, 8)}`
 }
 
-function debugTraceKey(trace: DebugTrace): string {
-  return `debug-runs/${trace.startedAt.slice(0, 10)}/${trace.runId}.json`
+export function debugTraceObjectKey(trace: DebugTrace): string {
+  if (!trace.tenantPartitionId) throw new Error("Debug trace tenant partition is required")
+  return `debug-runs/${trace.tenantPartitionId}/${trace.startedAt.slice(0, 10)}/${trace.runId}.json`
 }

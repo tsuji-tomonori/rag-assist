@@ -28,6 +28,13 @@ export async function getText(requestPath: string): Promise<string> {
   return response.text()
 }
 
+export async function getBlob(requestPath: string): Promise<{ blob: Blob; headers: Headers }> {
+  const apiBaseUrl = await getApiBaseUrl()
+  const response = await fetch(`${apiBaseUrl}${requestPath}`, { headers: createHeaders() })
+  if (!response.ok) throw new Error(await response.text())
+  return { blob: await response.blob(), headers: response.headers }
+}
+
 export async function post<T>(requestPath: string, body: unknown): Promise<T> {
   const apiBaseUrl = await getApiBaseUrl()
   const response = await fetch(`${apiBaseUrl}${requestPath}`, {
@@ -53,6 +60,18 @@ export async function put<T>(requestPath: string, body: unknown): Promise<T> {
 export async function del<T = void>(requestPath: string, parseJson = false): Promise<T> {
   const apiBaseUrl = await getApiBaseUrl()
   const response = await fetch(`${apiBaseUrl}${requestPath}`, { method: "DELETE", headers: createHeaders() })
+  if (!response.ok) throw new Error(await response.text())
+  if (!parseJson || response.status === 204) return undefined as T
+  return response.json() as Promise<T>
+}
+
+export async function delJson<T = void>(requestPath: string, body: unknown, parseJson = false): Promise<T> {
+  const apiBaseUrl = await getApiBaseUrl()
+  const response = await fetch(`${apiBaseUrl}${requestPath}`, {
+    method: "DELETE",
+    headers: createHeaders(true),
+    body: JSON.stringify(body)
+  })
   if (!response.ok) throw new Error(await response.text())
   if (!parseJson || response.status === 204) return undefined as T
   return response.json() as Promise<T>

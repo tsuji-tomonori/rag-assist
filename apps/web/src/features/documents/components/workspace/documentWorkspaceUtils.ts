@@ -34,10 +34,33 @@ export const emptyOperationState: DocumentOperationState = {
   isUploading: false,
   creatingGroup: false,
   sharingGroupId: null,
+  movingGroupId: null,
+  downloadingDocumentId: null,
   deletingDocumentId: null,
   stagingReindexDocumentId: null,
   cutoverMigrationId: null,
   rollbackMigrationId: null
+}
+
+export function descendantGroupIds(documentGroups: DocumentGroup[], groupId: string): Set<string> {
+  const childrenByParentId = new Map<string, string[]>()
+  for (const group of documentGroups) {
+    if (!group.parentGroupId) continue
+    childrenByParentId.set(group.parentGroupId, [
+      ...(childrenByParentId.get(group.parentGroupId) ?? []),
+      group.groupId
+    ])
+  }
+
+  const descendants = new Set<string>()
+  const pending = [...(childrenByParentId.get(groupId) ?? [])]
+  while (pending.length > 0) {
+    const current = pending.pop()
+    if (!current || current === groupId || descendants.has(current)) continue
+    descendants.add(current)
+    pending.push(...(childrenByParentId.get(current) ?? []))
+  }
+  return descendants
 }
 
 export function fileTypeLabel(document: DocumentManifest): string {
@@ -58,7 +81,7 @@ export function fileTypeClassName(type: string): string {
 export function compareDocuments(left: DocumentManifest, right: DocumentManifest, sort: DocumentSortKey): number {
   if (sort === "updatedAsc") return compareDocumentUpdatedAt(left, right) || left.fileName.localeCompare(right.fileName, "ja")
   if (sort === "fileNameAsc") return left.fileName.localeCompare(right.fileName, "ja")
-  if (sort === "chunkDesc") return right.chunkCount - left.chunkCount
+  if (sort === "chunkDesc") return (right.chunkCount ?? 0) - (left.chunkCount ?? 0)
   if (sort === "typeAsc") return fileTypeLabel(left).localeCompare(fileTypeLabel(right), "ja") || left.fileName.localeCompare(right.fileName, "ja")
   return compareDocumentUpdatedAt(right, left) || left.fileName.localeCompare(right.fileName, "ja")
 }
@@ -90,7 +113,7 @@ export function buildWorkspaceFolders(documentGroups: DocumentGroup[], documents
   const appendGroup = (group: DocumentGroup, depth: number) => {
     if (visited.has(group.groupId)) return
     visited.add(group.groupId)
-    const canonicalPath = group.canonicalPath
+    const canonicalPath = group.canonicalPath ?? `/${group.name}`
     folders.push({
       id: group.groupId,
       name: group.name,
@@ -120,8 +143,8 @@ export function documentGroupNames(document: DocumentManifest, documentGroups: D
 
 export function sharedEntries(group: DocumentGroup): Array<{ kind: string; value: string }> {
   const entries = [
-    ...group.sharedGroups.map((value) => ({ kind: "Cognito group", value })),
-    ...group.sharedUserIds.map((value) => ({ kind: "User ID", value }))
+    ...(group.sharedGroups ?? []).map((value) => ({ kind: "Cognito group", value })),
+    ...(group.sharedUserIds ?? []).map((value) => ({ kind: "User ID", value }))
   ]
   if (group.visibility === "org") entries.unshift({ kind: "公開範囲", value: "組織全体" })
   return entries
@@ -152,7 +175,7 @@ function sortedGroups(groups: DocumentGroup[]): DocumentGroup[] {
 }
 
 export function documentStatusLabel(document: DocumentManifest): string {
-  return document.lifecycleStatus ?? "active"
+  return document.lifecycleStatus ?? "利用不可"
 }
 
 export function parseListInput(value: string): { groups: string[]; duplicates: string[]; hasEmptyToken: boolean } {
@@ -203,7 +226,7 @@ export function visibilityLabel(group: DocumentGroup): string {
   return `${group.name}: private`
 }
 
-export function visibilityLabelValue(visibility: "private" | "shared" | "org"): string {
+export function visibilityLabelValue(visibility: "private" | "shared" | "org" | undefined): string {
   if (visibility === "org") return "組織全体"
   if (visibility === "shared") return "指定 group 共有"
   return "非公開"
@@ -230,7 +253,9 @@ export function buildOperationEvents({
     result: "反映済み" as const,
     detail: `documentId: ${document.documentId}`
   }))
-  const groupEvents = documentGroups.map((group) => ({
+  const groupEvents = documentGroups
+    .filter((group) => group.detailLevel === "manager" || group.effectivePermission === "full")
+    .map((group) => ({
     id: `group-${group.groupId}`,
     actionLabel: group.updatedAt === group.createdAt ? "フォルダ作成" : "フォルダ更新",
     target: group.name,

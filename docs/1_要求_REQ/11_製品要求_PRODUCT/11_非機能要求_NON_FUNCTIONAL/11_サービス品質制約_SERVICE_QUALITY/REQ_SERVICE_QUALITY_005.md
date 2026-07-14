@@ -62,7 +62,7 @@
 | 検証可能性 | OK | multi-user/multi-tenant/revoked/NULL ACL/old index/cache negative corpus で確認できる |
 | ニーズ適合 | OK | 利用者と文書所有者の共有範囲外情報を RAG の全観測点で保護する |
 | 定量性 | OK | fail point と target が 0 件 |
-| 実装適合 | 未検証 | 現行 test は全観測点と race を網羅しない |
+| 実装適合 | OK（confirmed、live/large-scale corpus 未検証） | prefilter/reauthorizer/tenant partition/trace sanitizer と unauthorized-exposure zero-tolerance gate を実装し、negative/focused tests が1件も平均相殺されないことを検証する |
 | 合意 | pending | over-denial は別尺度で閾値を決める |
 
 ## トレース

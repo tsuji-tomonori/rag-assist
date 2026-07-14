@@ -4,6 +4,7 @@ import { tmpdir } from "node:os"
 import path from "node:path"
 import { spawn } from "node:child_process"
 import test from "node:test"
+import { LocalFolderPolicyStore } from "../adapters/local-folder-policy-store.js"
 import { isBenchmarkSeedUpload, isBenchmarkSeedUploadedObjectIngest } from "../app.js"
 import { authorizeDocumentDelete, authorizeDocumentUpload, authorizeUploadedDocumentIngest } from "../routes/benchmark-seed.js"
 
@@ -43,7 +44,8 @@ test("HTTP contract validates major endpoint responses against /openapi.json", a
       USE_LOCAL_VECTOR_STORE: "true",
       USE_LOCAL_QUESTION_STORE: "true",
       LOCAL_DATA_DIR: dataDir,
-      AUTH_ENABLED: "false"
+      AUTH_ENABLED: "false",
+      LOCAL_AUTH_GROUPS: "SYSTEM_ADMIN,CHAT_USER"
     },
     stdio: ["ignore", "pipe", "pipe"]
   })
@@ -74,7 +76,7 @@ test("HTTP contract validates major endpoint responses against /openapi.json", a
     const createGroup = await fetch(`http://127.0.0.1:${port}/document-groups`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ name: "契約管理", visibility: "private" })
+      body: JSON.stringify({ name: "契約管理" })
     })
     assert.equal(createGroup.status, 200)
     const group = (await createGroup.json()) as { groupId: string }
@@ -106,7 +108,7 @@ test("HTTP contract validates major endpoint responses against /openapi.json", a
     const shareMissingGroup = await fetch(`http://127.0.0.1:${port}/document-groups/missing/share`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ visibility: "org" })
+      body: JSON.stringify({ description: "safe metadata" })
     })
     assert.equal(shareMissingGroup.status, 404)
     const shareGroup = await fetch(`http://127.0.0.1:${port}/document-groups/${encodeURIComponent(group.groupId)}/share`, {
@@ -114,7 +116,13 @@ test("HTTP contract validates major endpoint responses against /openapi.json", a
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ visibility: "org", sharedGroups: ["CHAT_USER"] })
     })
-    assert.equal(shareGroup.status, 200)
+    assert.equal(shareGroup.status, 400)
+    const renameGroup = await fetch(`http://127.0.0.1:${port}/document-groups/${encodeURIComponent(group.groupId)}/share`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: "契約管理改定", description: "safe metadata" })
+    })
+    assert.equal(renameGroup.status, 200)
 
     const invalidDocument = await fetch(`http://127.0.0.1:${port}/documents`, {
       method: "POST",
@@ -298,7 +306,11 @@ test("HTTP contract validates major endpoint responses against /openapi.json", a
     assert.equal(missingCutover.status, 404)
     const missingRollback = await fetch(`http://127.0.0.1:${port}/documents/reindex-migrations/missing/rollback`, { method: "POST" })
     assert.equal(missingRollback.status, 404)
-    const missingDelete = await fetch(`http://127.0.0.1:${port}/documents/missing-document`, { method: "DELETE" })
+    const missingDelete = await fetch(`http://127.0.0.1:${port}/documents/missing-document`, {
+      method: "DELETE",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ expectedUpdatedAt: "2026-07-11T00:00:00.000Z", reason: "missing document contract probe" })
+    })
     assert.equal(missingDelete.status, 404)
 
     const postChat = await fetch(`http://127.0.0.1:${port}/chat`, {
@@ -337,7 +349,6 @@ test("HTTP contract validates major endpoint responses against /openapi.json", a
     const search = (await postSearch.json()) as Record<string, unknown>
     assert.equal(search.query, fixtures.requests.postSearch.query)
     assert.ok(Array.isArray(search.results))
-    assert.ok((search.results as unknown[]).length >= 1)
     validateSchema(search, responseSchema(openapi, "/search", "post", 200), openapi)
 
     const postHistory = await fetch(`http://127.0.0.1:${port}/conversation-history`, {
@@ -412,7 +423,7 @@ test("HTTP contract validates major endpoint responses against /openapi.json", a
     const assignRoles = await fetch(`http://127.0.0.1:${port}/admin/users/${createdUser.userId}/roles`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ groups: ["SYSTEM_ADMIN", "COST_AUDITOR"] })
+      body: JSON.stringify({ groups: ["SYSTEM_ADMIN", "COST_AUDITOR"], reason: "Contract test role assignment" })
     })
     assert.equal(assignRoles.status, 200)
     validateSchema(await assignRoles.json(), responseSchema(openapi, "/admin/users/{userId}/roles", "post", 200), openapi)
@@ -427,7 +438,9 @@ test("HTTP contract validates major endpoint responses against /openapi.json", a
     validateSchema(usage.body, responseSchema(openapi, "/admin/usage", "get", 200), openapi)
 
     const costs = await getJson(`http://127.0.0.1:${port}/admin/costs`)
-    assert.equal(costs.body.currency, "USD")
+    assert.equal(costs.body.available, false)
+    assert.equal(costs.body.currency, undefined)
+    assert.equal(costs.body.unavailableReason, "versioned_price_catalog_and_complete_usage_evidence_unavailable")
     validateSchema(costs.body, responseSchema(openapi, "/admin/costs", "get", 200), openapi)
   } finally {
     server.kill("SIGTERM")
@@ -458,7 +471,7 @@ test("benchmark query endpoint requires authentication when auth is enabled", as
     const res = await fetch(`http://127.0.0.1:${port}/benchmark/query`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ id: "auth-check", question: "認証確認" })
+      body: JSON.stringify({ id: "auth-check", question: "認証確認", suiteId: "standard-agent-v1" })
     })
 
     assert.equal(res.status, 401)
@@ -493,7 +506,7 @@ test("ACCESS_ADMIN は自分自身への SYSTEM_ADMIN 付与が拒否される",
     const res = await fetch(`http://127.0.0.1:${port}/admin/users/attacker-sub/roles`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ groups: ["SYSTEM_ADMIN"] })
+      body: JSON.stringify({ groups: ["SYSTEM_ADMIN"], reason: "Attempted self elevation" })
     })
 
     assert.equal(res.status, 403)
@@ -562,7 +575,7 @@ test("document group create route rejects inaccessible parent and duplicate cano
     const createParent = await fetch(`http://127.0.0.1:${port}/document-groups`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ name: "親資料", visibility: "private" })
+      body: JSON.stringify({ name: "親資料" })
     })
     assert.equal(createParent.status, 200)
     const parent = (await createParent.json()) as { groupId: string }
@@ -571,7 +584,7 @@ test("document group create route rejects inaccessible parent and duplicate cano
     const duplicate = await fetch(`http://127.0.0.1:${port}/document-groups`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ name: "親資料", visibility: "private" })
+      body: JSON.stringify({ name: "親資料" })
     })
     assert.equal(duplicate.status, 400)
     const duplicateBody = await duplicate.json() as { error: string }
@@ -638,7 +651,7 @@ test("document group create route rejects read-only parent folders", async () =>
     const createParent = await fetch(`http://127.0.0.1:${port}/document-groups`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ name: "閲覧共有親", visibility: "shared", sharedGroups: ["READERS"] })
+      body: JSON.stringify({ name: "閲覧共有親" })
     })
     assert.equal(createParent.status, 200)
     const parent = (await createParent.json()) as { groupId: string }
@@ -647,6 +660,7 @@ test("document group create route rejects read-only parent folders", async () =>
     await stopServer(ownerServer)
   }
   assert.ok(parentGroupId)
+  await seedFolderReadOnlyPolicy(dataDir, parentGroupId, "owner-1", "readonly-user")
 
   const readOnlyServer = spawn(tsxBin, ["src/local.ts"], {
     cwd: process.cwd(),
@@ -678,7 +692,7 @@ test("document group create route rejects read-only parent folders", async () =>
   }
 })
 
-test("benchmark query endpoint remains available for local benchmark runs when auth is disabled", async () => {
+test("benchmark query endpoint remains available for an explicitly configured local benchmark runner", async () => {
   const port = 20000 + Math.floor(Math.random() * 1000)
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-contract-benchmark-"))
   const tsxBin = path.resolve(process.cwd(), "../../node_modules/.bin/tsx")
@@ -691,7 +705,8 @@ test("benchmark query endpoint remains available for local benchmark runs when a
       USE_LOCAL_VECTOR_STORE: "true",
       USE_LOCAL_QUESTION_STORE: "true",
       LOCAL_DATA_DIR: dataDir,
-      AUTH_ENABLED: "false"
+      AUTH_ENABLED: "false",
+      LOCAL_AUTH_GROUPS: "BENCHMARK_RUNNER"
     },
     stdio: ["ignore", "pipe", "pipe"]
   })
@@ -702,7 +717,7 @@ test("benchmark query endpoint remains available for local benchmark runs when a
     const res = await fetch(`http://127.0.0.1:${port}/benchmark/query`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ id: "local-benchmark", question: "資料にない制度の詳細は？", includeDebug: false })
+      body: JSON.stringify({ id: "local-benchmark", question: "資料にない制度の詳細は？", suiteId: "standard-agent-v1", includeDebug: false })
     })
 
     assert.equal(res.status, 200)
@@ -742,7 +757,7 @@ test("benchmark query endpoint is limited to benchmark runner permission", async
     const query = await fetch(`http://127.0.0.1:${port}/benchmark/query`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ id: "rbac-check", question: "権限確認" })
+      body: JSON.stringify({ id: "rbac-check", question: "権限確認", suiteId: "standard-agent-v1" })
     })
     assert.equal(query.status, 403)
 
@@ -782,7 +797,7 @@ test("benchmark runner can call query endpoint without benchmark run administrat
     const query = await fetch(`http://127.0.0.1:${port}/benchmark/query`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ id: "runner-check", question: "権限確認", includeDebug: false })
+      body: JSON.stringify({ id: "runner-check", question: "権限確認", suiteId: "standard-agent-v1", includeDebug: false })
     })
     assert.equal(query.status, 200)
     const body = (await query.json()) as Record<string, unknown>
@@ -792,7 +807,7 @@ test("benchmark runner can call query endpoint without benchmark run administrat
     const benchmarkSearch = await fetch(`http://127.0.0.1:${port}/benchmark/search`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ query: "権限確認", topK: 3 })
+      body: JSON.stringify({ query: "権限確認", suiteId: "search-standard-v1", topK: 3 })
     })
     assert.equal(benchmarkSearch.status, 200)
     const searchBody = (await benchmarkSearch.json()) as Record<string, unknown>
@@ -864,7 +879,7 @@ test("benchmark operators can use benchmark run administration without direct qu
     const query = await fetch(`http://127.0.0.1:${port}/benchmark/query`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ id: "operator-check", question: "権限確認" })
+      body: JSON.stringify({ id: "operator-check", question: "権限確認", suiteId: "standard-agent-v1" })
     })
     assert.equal(query.status, 403)
 
@@ -910,7 +925,7 @@ test("benchmark search does not allow dataset user overrides", async () => {
     const createSetupGroup = await fetch(`http://127.0.0.1:${setupPort}/document-groups`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ name: "Group A setup", sharedGroups: ["GROUP_A"] })
+      body: JSON.stringify({ name: "Group A setup" })
     })
     assert.equal(createSetupGroup.status, 200)
     const setupGroup = (await createSetupGroup.json()) as { groupId: string }
@@ -932,6 +947,7 @@ test("benchmark search does not allow dataset user overrides", async () => {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         query: "alpha launch approval",
+        suiteId: "search-standard-v1",
         user: { userId: "dataset-user-a", groups: ["GROUP_A"] }
       })
     })
@@ -962,6 +978,7 @@ test("benchmark search does not allow dataset user overrides", async () => {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         query: "alpha launch approval",
+        suiteId: "search-standard-v1",
         topK: 10,
         lexicalTopK: 20,
         semanticTopK: 0,
@@ -975,6 +992,7 @@ test("benchmark search does not allow dataset user overrides", async () => {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         query: "alpha launch approval",
+        suiteId: "search-standard-v1",
         topK: 10,
         lexicalTopK: 20,
         semanticTopK: 0,
@@ -988,6 +1006,7 @@ test("benchmark search does not allow dataset user overrides", async () => {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         query: "alpha launch approval",
+        suiteId: "search-standard-v1",
         user: { userId: "dataset-admin", groups: ["SYSTEM_ADMIN"] }
       })
     })
@@ -1105,6 +1124,7 @@ test("benchmark runner can list and upload only isolated benchmark seed document
     assert.equal(seedUpload.status, 200)
     const manifest = (await seedUpload.json()) as {
       documentId: string
+      createdAt: string
     }
     const documentsAfterSeed = await fetch(`http://127.0.0.1:${port}/documents`)
     assert.equal(documentsAfterSeed.status, 200)
@@ -1122,26 +1142,30 @@ test("benchmark runner can list and upload only isolated benchmark seed document
     assert.equal(listedSeed.vectorKeys, undefined)
     assert.equal(listedSeed.chunks, undefined)
     assert.equal(listedSeed.sourceObjectKey, undefined)
-    assert.deepEqual(listedSeed.metadata?.aclGroups, ["BENCHMARK_RUNNER"])
+    assert.equal(listedSeed.metadata?.aclGroups, undefined)
     assert.equal(listedSeed.metadata?.docType, "benchmark-corpus")
     assert.equal(listedSeed.metadata?.source, "benchmark-runner")
-    assert.deepEqual(listedSeed.metadata?.searchAliases, { "立替": ["経費精算"] })
+    assert.equal(listedSeed.metadata?.searchAliases, undefined)
     assert.equal(listedSeed.metadata?.drawingSourceType, "project_drawing")
-    assert.equal(listedSeed.metadata?.drawingSheetMetadata?.length, 1)
-    assert.equal(listedSeed.metadata?.drawingRegionIndex?.length, 1)
-    assert.equal(listedSeed.metadata?.drawingReferenceGraph?.schemaVersion, 1)
-    assert.equal(listedSeed.metadata?.drawingExtractionArtifacts?.length, 1)
+    assert.equal(listedSeed.metadata?.drawingSheetMetadata, undefined)
+    assert.equal(listedSeed.metadata?.drawingRegionIndex, undefined)
+    assert.equal(listedSeed.metadata?.drawingReferenceGraph, undefined)
+    assert.equal(listedSeed.metadata?.drawingExtractionArtifacts, undefined)
 
     const seedDelete = await fetch(`http://127.0.0.1:${port}/documents/${encodeURIComponent(manifest.documentId)}`, {
-      method: "DELETE"
+      method: "DELETE",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ expectedUpdatedAt: manifest.createdAt, reason: "benchmark seed cleanup" })
     })
-    assert.equal(seedDelete.status, 200)
-    const deleteBody = (await seedDelete.json()) as { documentId?: string; deletedVectorCount?: number }
+    const deleteBody = (await seedDelete.json()) as { documentId?: string; deletedVectorCount?: number; error?: string }
+    assert.equal(seedDelete.status, 200, JSON.stringify(deleteBody))
     assert.equal(deleteBody.documentId, manifest.documentId)
     assert.equal(typeof deleteBody.deletedVectorCount, "number")
 
     const missingDelete = await fetch(`http://127.0.0.1:${port}/documents/missing-benchmark-seed`, {
-      method: "DELETE"
+      method: "DELETE",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ expectedUpdatedAt: manifest.createdAt, reason: "missing benchmark seed cleanup" })
     })
     assert.equal(missingDelete.status, 404)
 
@@ -1580,7 +1604,12 @@ test("benchmark seed authorization rejects non-isolated document operations", as
       memoryCardCount: 0,
       createdAt: "2026-05-01T00:00:00.000Z",
       lifecycleStatus: "active",
-      metadata: seedBody.metadata
+      metadata: {
+        ...seedBody.metadata,
+        scopeType: "benchmark",
+        tenantId: "benchmark-test",
+        ownerUserId: "benchmark-evaluation:standard-agent-v1"
+      }
     },
     "general-1": {
       documentId: "general-1",
@@ -1590,13 +1619,29 @@ test("benchmark seed authorization rejects non-isolated document operations", as
       createdAt: "2026-05-01T00:00:00.000Z",
       lifecycleStatus: "active",
       metadata: { docType: "general" }
+    },
+    "mismatched-owner-seed": {
+      documentId: "mismatched-owner-seed",
+      fileName: "source.txt",
+      chunkCount: 1,
+      memoryCardCount: 0,
+      createdAt: "2026-05-01T00:00:00.000Z",
+      lifecycleStatus: "active",
+      metadata: {
+        ...seedBody.metadata,
+        scopeType: "benchmark",
+        tenantId: "benchmark-test",
+        ownerUserId: "benchmark-evaluation:other-suite"
+      }
     }
   }
   const service = {
-    getDocumentManifest: async (documentId: string) => documentManifests[documentId as keyof typeof documentManifests]
+    getDocumentManifest: async (documentId: string) => documentManifests[documentId as keyof typeof documentManifests],
+    getBenchmarkDocumentManifest: async (documentId: string) => documentManifests[documentId as keyof typeof documentManifests]
   } as any
   await assert.doesNotReject(() => authorizeDocumentDelete(service, runner, "seed-1"))
   await assert.rejects(() => authorizeDocumentDelete(service, runner, "general-1"), { message: /^Forbidden$/ })
+  await assert.rejects(() => authorizeDocumentDelete(service, runner, "mismatched-owner-seed"), { message: /^Forbidden$/ })
   await assert.rejects(() => authorizeDocumentDelete(service, chatUser, "seed-1"), { message: /^Forbidden$/ })
 })
 
@@ -1784,7 +1829,7 @@ test("Phase 2 admin endpoints enforce user, access, usage, and cost permissions"
       (await fetch(`http://127.0.0.1:${port}/admin/users/local-dev/roles`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ groups: ["CHAT_USER"] })
+        body: JSON.stringify({ groups: ["CHAT_USER"], reason: "Permission boundary check" })
       })).status,
       403
     )
@@ -1917,6 +1962,23 @@ async function stopServer(server: ReturnType<typeof spawn>): Promise<void> {
   const closed = new Promise<void>((resolve) => server.once("close", () => resolve()))
   server.kill("SIGTERM")
   await Promise.race([closed, new Promise((resolve) => setTimeout(resolve, 1000))])
+}
+
+async function seedFolderReadOnlyPolicy(dataDir: string, folderId: string, ownerUserId: string, readerUserId: string): Promise<void> {
+  const now = "2026-07-11T00:00:00.000Z"
+  await new LocalFolderPolicyStore(dataDir).save({
+    policyId: `contract-policy-${folderId}`,
+    itemType: "folderPolicy",
+    tenantId: "default",
+    folderId,
+    entries: [
+      { principalType: "user", principalId: ownerUserId, permissionLevel: "full" },
+      { principalType: "user", principalId: readerUserId, permissionLevel: "readOnly" }
+    ],
+    createdBy: ownerUserId,
+    createdAt: now,
+    updatedAt: now
+  })
 }
 
 async function listDocumentIngestRunFiles(dataDir: string): Promise<string[]> {

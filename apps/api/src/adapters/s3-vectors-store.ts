@@ -1,5 +1,6 @@
 import {
   DeleteVectorsCommand,
+  GetVectorsCommand,
   PutVectorsCommand,
   QueryVectorsCommand,
   type QueryVectorsCommandInput,
@@ -36,6 +37,30 @@ export class S3VectorsStore implements VectorStore {
         })
       )
     }
+  }
+
+  async getByKeys(keys: string[]): Promise<VectorRecord[]> {
+    const records: VectorRecord[] = []
+    for (const batch of chunk(keys, 100)) {
+      if (batch.length === 0) continue
+      const response = await this.client.send(new GetVectorsCommand({
+        vectorBucketName: this.vectorBucketName,
+        indexName: this.indexName,
+        keys: batch,
+        returnData: true,
+        returnMetadata: true
+      }))
+      for (const item of response.vectors ?? []) {
+        if (!item.key || !item.data?.float32 || !item.metadata) continue
+        records.push({
+          key: item.key,
+          vector: item.data.float32.map(Number),
+          metadata: item.metadata as VectorRecord["metadata"]
+        })
+      }
+    }
+    const byKey = new Map(records.map((record) => [record.key, record]))
+    return keys.map((key) => byKey.get(key)).filter((record): record is VectorRecord => record !== undefined)
   }
 
   async query(vector: number[], topK: number, filter: VectorFilter = {}): Promise<RetrievedVector[]> {
@@ -110,6 +135,7 @@ function toS3Filter(filter: VectorFilter): QueryVectorsCommandInput["filter"] {
   const clauses: NonNullable<QueryVectorsCommandInput["filter"]>[] = []
   if (filter.kind) clauses.push({ kind: { $eq: filter.kind } })
   if (filter.documentId) clauses.push({ documentId: { $eq: filter.documentId } })
+  if (filter.documentIds) clauses.push({ documentId: { $in: filter.documentIds } } as NonNullable<QueryVectorsCommandInput["filter"]>)
   if (filter.tenantId) clauses.push({ tenantId: { $eq: filter.tenantId } } as NonNullable<QueryVectorsCommandInput["filter"]>)
   if (filter.department) clauses.push({ department: { $eq: filter.department } } as NonNullable<QueryVectorsCommandInput["filter"]>)
   if (filter.source) clauses.push({ source: { $eq: filter.source } } as NonNullable<QueryVectorsCommandInput["filter"]>)

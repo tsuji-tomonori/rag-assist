@@ -28,7 +28,7 @@ source、chunk、embedding、vector、manifest の順次書き込み中に失敗
 | 識別子 | `FR-083` |
 | 説明 | scoped idempotency、checkpoint、attempt fencing、winner-only reconciliation/publish を持つ staged ingest recovery |
 | 根拠 | 再試行時の duplicate、orphan、部分公開を防ぐ |
-| 源泉 | `docs/spec-recovery/15_rag_lifecycle_matrix_202607.md`、`docs/spec-recovery/16_current_state_gap_analysis_202607.md` の `GAP-RD-013` |
+| 源泉 | `docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md` の `GAP-RD-013` |
 | Actor / trigger | ingest worker が stage を commit、retry または recovery するとき |
 | 種類 | 機能要求 / ingest / recovery |
 | 依存関係 | `FR-038`, `FR-069`, `FR-072`, `FR-082` |
@@ -72,9 +72,9 @@ source、chunk、embedding、vector、manifest の順次書き込み中に失敗
 | 実現可能性 | OK | stage ledger、generation/fencing token、conditional commit、stable ID、manifest count/hash、compensation で実現可能 |
 | 検証可能性 | OK | stage 別 failure injection、同一 key の単独/並行 retry、stale worker、orphan/duplicate/winner assertion で確認できる |
 | ニーズ適合 | OK | 一時障害から回復しても検索対象を重複・欠損させない |
-| 実装適合 | NG | durable checkpoint、idempotency、reconciliation が不足する |
+| 実装適合 | OK（confirmed） | ingest/staged publication が scoped checkpoint/idempotency、attempt fencing、winner-only commit/compensation、reconciliation state を実装し、retry/partial/concurrent fault tests を持つ |
 
 ## トレース
 
-- 後方: `GAP-RD-013`、`FR-038`、`docs/spec-recovery/15_rag_lifecycle_matrix_202607.md`。
+- 後方: `GAP-RD-013`、`FR-038`、`docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md`。
 - 前方: ingest stage ledger、idempotency contract、fault-injection suite、`FR-072`。

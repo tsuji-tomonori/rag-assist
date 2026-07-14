@@ -67,7 +67,7 @@ backend、infra、Web が別々の role 一覧を持つと、付与できない 
 | 検証可能性 | OK | backend/infra/Web/worker catalog contract test へ変換できる |
 | ニーズ適合 | OK | 管理者が選択した role と実際の権限を一致させる |
 | 原子性 | OK | role catalog の source of truth を一つにするという一つの invariant を規定する |
-| 実装適合 | NG/conflict | backend 12 role と Cognito 9 group が一致せず複数定義がある |
+| 実装適合 | OK（confirmed） | `packages/contract/src/access-control.ts` を identity/API/Web/infra/worker の canonical catalog とし、role provisioning/access-control contract tests が parity と unknown deny を検証する |
 | 合意 | pending | canonical catalog の owner と version rollout 手順を承認する必要がある |
 
 ## トレース

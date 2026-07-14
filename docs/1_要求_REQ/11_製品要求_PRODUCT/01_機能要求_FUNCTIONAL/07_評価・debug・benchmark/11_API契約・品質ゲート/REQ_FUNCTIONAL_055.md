@@ -2,7 +2,7 @@
 
 - 種別: `REQ_FUNCTIONAL`
 - 状態: planning
-- 仕様参照: `docs/spec/2026-chapter-spec.md` 14D 章
+- 仕様参照: `docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md` 14D 章
 - FR-055: CORS、public endpoint、auth middleware、SSE Last-Event-ID、chat / ingest / benchmark / async agent worker の runId 契約を API 共通処理として管理できること。
 
 ## 要求

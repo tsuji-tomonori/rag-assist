@@ -33,7 +33,7 @@ Every important artifact should be traceable in both directions.
 
 ## Output: traceability matrix
 
-Create or update `docs/spec-recovery/08_traceability_matrix.md`.
+Create or update durable requirement-to-architecture/design/test/task trace in `docs/1_要求_REQ/31_変更管理_CHANGE/REQ_CHANGE_001.md`. Task-specific working rows may remain in the task-scoped analysis report until reviewed.
 
 Use this format:
 
@@ -67,7 +67,7 @@ open_question               未確定事項がある
 
 ## Output: gap analysis
 
-Create or update `docs/spec-recovery/09_gap_analysis.md`.
+Create or update the `現行コードとの主要な不一致` section of the current `docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_*.md`. Every required but incomplete gap must link to an existing or new `tasks/todo/` file.
 
 Use this format:
 
@@ -88,7 +88,7 @@ Use this format:
 
 ## Output: open questions
 
-Create or update `docs/spec-recovery/10_open_questions.md`.
+Create or update the `未確定判断` section of the current requirements baseline. Track decisions that block implementation in an atomic `tasks/todo/` file; do not invent an answer.
 
 Use this format:
 

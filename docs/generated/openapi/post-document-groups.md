@@ -6,7 +6,7 @@
 
 Summary: 文書グループを作成する
 
-文書をスコープごとに整理するための文書グループを作成します。
+文書を整理するフォルダを、作成 actor の user principal が管理する private 状態で作成します。初期共有は受け付けず、作成後に versioned share PUT を使用します。
 
 ## Headers
 
@@ -30,13 +30,7 @@ Media type: `application/json`
 | --- | --- | --- | --- | --- |
 | `name` | `string` | yes | 表示名または項目名。 | minLength=1<br>maxLength=120 |
 | `description` | `string` | no | `data.description` の値。項目名は description を表します。 | maxLength=1000 |
-| `adminPrincipalType` | `enum(user \| group)` | no | `data.adminPrincipalType` の値。項目名は admin principal type を表します。 | enum=user, group |
-| `adminPrincipalId` | `string` | no | `data.adminPrincipalId` の値。項目名は admin principal id を表します。 | minLength=1<br>maxLength=200 |
 | `parentGroupId` | `string` | no | `data.parentGroupId` の値。項目名は parent group id を表します。 | minLength=1 |
-| `visibility` | `enum(private \| shared \| org)` | no | `data.visibility` の値。項目名は visibility を表します。 | enum=private, shared, org |
-| `sharedUserIds` | `array<string>` | no | `data.sharedUserIds` の値。項目名は shared user ids を表します。 | maxItems=50 |
-| `sharedGroups` | `array<string>` | no | `data.sharedGroups` の値。項目名は shared groups を表します。 | maxItems=50 |
-| `managerUserIds` | `array<string>` | no | `data.managerUserIds` の値。項目名は manager user ids を表します。 | maxItems=50 |
 
 ## Authorization
 
@@ -64,7 +58,8 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 29 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 34 field(s) |
+| `400` | リクエスト形式または入力値が不正です。 | `application/json` | 2 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 
@@ -101,8 +96,22 @@ Media type: `application/json`
 | `effectivePermission` | `enum(none \| readOnly \| full)` | no | `response.effectivePermission` の値。項目名は effective permission を表します。 | enum=none, readOnly, full |
 | `policySource` | `enum(explicit \| inherited \| ownerDefault \| none)` | no | `response.policySource` の値。項目名は policy source を表します。 | enum=explicit, inherited, ownerDefault, none |
 | `inheritedFromFolderId` | `string` | no | `response.inheritedFromFolderId` の値。項目名は inherited from folder id を表します。 | - |
+| `inheritedPolicyId` | `string` | no | `response.inheritedPolicyId` の値。項目名は inherited policy id を表します。 | - |
+| `inheritedPolicyVersion` | `string` | no | `response.inheritedPolicyVersion` の値。項目名は inherited policy version を表します。 | - |
+| `folderLocalPolicyVersion` | `string` | no | `response.folderLocalPolicyVersion` の値。項目名は folder local policy version を表します。 | - |
+| `folderProjectionVersion` | `string` | no | `response.folderProjectionVersion` の値。項目名は folder projection version を表します。 | - |
+| `folderMoveOperationId` | `string` | no | `response.folderMoveOperationId` の値。項目名は folder move operation id を表します。 | - |
 | `createdAt` | `string` | yes | レコードを作成した日時。 | - |
 | `updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
+
+##### `400` リクエスト形式または入力値が不正です。
+
+Media type: `application/json`
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ##### `401` 認証が必要です。
 

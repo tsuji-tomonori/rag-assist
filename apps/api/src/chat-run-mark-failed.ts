@@ -2,6 +2,7 @@ import { createDependencies } from "./dependencies.js"
 import { MemoRagService } from "./rag/memorag-service.js"
 
 type ChatRunMarkFailedEvent = {
+  tenantId?: string
   runId?: string
   errorInfo?: {
     Error?: string
@@ -13,8 +14,8 @@ const service = new MemoRagService(createDependencies())
 
 export async function handler(event: ChatRunMarkFailedEvent): Promise<{ runId: string; status: string }> {
   const runId = event.runId
-  if (!runId) throw new Error("runId is required")
-  const run = await service.markChatRunFailed(runId, failureMessage(event.errorInfo))
+  if (!event.tenantId || !runId) throw new Error("tenantId and runId are required")
+  const run = await service.markChatRunFailed(event.tenantId, runId, failureMessage(event.errorInfo))
   return { runId: run.runId, status: run.status }
 }
 

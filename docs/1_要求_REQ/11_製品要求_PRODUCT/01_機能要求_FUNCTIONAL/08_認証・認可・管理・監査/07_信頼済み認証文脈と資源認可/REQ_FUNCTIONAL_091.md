@@ -73,7 +73,7 @@
 | 検証可能性 | OK | existing/absent unauthorized pair、mixed list/search、schema/timing class test で確認できる |
 | ニーズ適合 | OK | 利用者が権限外の資料・共有相手・件数を推測できない |
 | 原子性 | OK | 権限外 caller に返す response の最小化だけを規定する |
-| 実装適合 | partial/conflict | 一部 route は一般拒否するが reader schema、件数、error contract が全経路で統一されていない |
+| 実装適合 | OK（confirmed） | `public-resource-response.ts` と reader/list/worker/debug schema が absent/unauthorized を非列挙化し、authorized-only count/cursor と最小 payload を contract/Web tests が検証する |
 | 合意 | pending | API class ごとの status と non-enumeration timing/size profile を承認する必要がある |
 
 ## トレース

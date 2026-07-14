@@ -1,14 +1,16 @@
 import { useState } from "react"
-import { createDocumentGroup, cutoverReindexMigration, deleteDocument, getDocumentShare, listDocumentGroups, listDocuments, listReindexMigrations, moveDocument, rollbackReindexMigration, stageReindexMigration, updateDocumentGroup, updateDocumentShare, uploadDocumentFile } from "../api/documentsApi.js"
-import type { DocumentShareGrantInput, DocumentShareInfo, DocumentUploadProgress, UpdateDocumentGroupInput } from "../api/documentsApi.js"
+import { createDocumentGroup, cutoverReindexMigration, deleteDocument, getDocumentShare, getFolderSharePolicy, listDocumentGroups, listDocuments, listReindexMigrations, moveDocument, moveDocumentGroup, replaceFolderSharePolicy, requestDocumentExtractedTextDownload, rollbackReindexMigration, saveDocumentExtractedTextDownload, stageReindexMigration, updateDocumentGroup, updateDocumentShare, uploadDocumentFile } from "../api/documentsApi.js"
+import type { DocumentShareGrantInput, DocumentShareInfo, DocumentUploadProgress, FolderPolicyEntry, MoveDocumentGroupInput, UpdateDocumentGroupInput, VersionedFolderPolicy } from "../api/documentsApi.js"
 import type { DocumentGroup, DocumentManifest, ReindexMigration } from "../types.js"
 
 export type DocumentOperationState = {
   isUploading: boolean
   creatingGroup: boolean
   sharingGroupId: string | null
+  movingGroupId?: string | null
   sharingDocumentId?: string | null
   movingDocumentId?: string | null
+  downloadingDocumentId?: string | null
   deletingDocumentId: string | null
   stagingReindexDocumentId: string | null
   cutoverMigrationId: string | null
@@ -37,9 +39,6 @@ export type CreateDocumentGroupInput = {
   name: string
   description?: string
   parentGroupId?: string
-  visibility?: "private" | "shared" | "org"
-  sharedGroups?: string[]
-  managerUserIds?: string[]
 }
 
 export function useDocuments({
@@ -48,6 +47,7 @@ export function useDocuments({
   canWriteDocuments,
   canCreateDocumentGroups,
   canShareDocumentGroups,
+  canMoveDocumentGroups,
   canDeleteDocuments,
   canReindexDocuments,
   setError
@@ -57,6 +57,7 @@ export function useDocuments({
   canWriteDocuments: boolean
   canCreateDocumentGroups: boolean
   canShareDocumentGroups: boolean
+  canMoveDocumentGroups: boolean
   canDeleteDocuments: boolean
   canReindexDocuments: boolean
   setLoading: (loading: boolean) => void
@@ -73,8 +74,10 @@ export function useDocuments({
     isUploading: false,
     creatingGroup: false,
     sharingGroupId: null,
+    movingGroupId: null,
     sharingDocumentId: null,
     movingDocumentId: null,
+    downloadingDocumentId: null,
     deletingDocumentId: null,
     stagingReindexDocumentId: null,
     cutoverMigrationId: null,
@@ -140,14 +143,18 @@ export function useDocuments({
     return { ok: false, error }
   }
 
-  async function onDelete(documentId?: string): Promise<DocumentOperationResult> {
+  async function onDelete(
+    documentId?: string,
+    input?: { expectedUpdatedAt: string; reason: string }
+  ): Promise<DocumentOperationResult> {
     if (!documentId) return { ok: false, error: "削除対象の documentId が未指定です" }
     if (!canDeleteDocuments) return { ok: false, error: "文書を削除する権限がありません" }
+    if (!input?.expectedUpdatedAt || !input.reason.trim()) return { ok: false, error: "文書 version と削除理由が必要です" }
 
     updateOperationState({ deletingDocumentId: documentId })
     setError(null)
     try {
-      await deleteDocument(documentId)
+      await deleteDocument(documentId, { ...input, reason: input.reason.trim() })
       setSelectedDocumentId("all")
       await refreshDocuments()
       return { ok: true }
@@ -155,6 +162,20 @@ export function useDocuments({
       return operationError(err)
     } finally {
       updateOperationState({ deletingDocumentId: null })
+    }
+  }
+
+  async function onDownloadExtractedText(documentId?: string): Promise<DocumentOperationResult> {
+    if (!documentId) return { ok: false, error: "ダウンロード対象の documentId が未指定です" }
+    updateOperationState({ downloadingDocumentId: documentId })
+    setError(null)
+    try {
+      saveDocumentExtractedTextDownload(await requestDocumentExtractedTextDownload(documentId))
+      return { ok: true }
+    } catch (err) {
+      return operationError(err)
+    } finally {
+      updateOperationState({ downloadingDocumentId: null })
     }
   }
 
@@ -180,17 +201,10 @@ export function useDocuments({
 
   async function onCreateDocumentGroup(input: CreateDocumentGroupInput): Promise<DocumentGroup | undefined> {
     if (!canCreateDocumentGroups) return undefined
-    const safeInput: CreateDocumentGroupInput = canShareDocumentGroups
-      ? input
-      : {
-          name: input.name,
-          ...(input.description !== undefined ? { description: input.description } : {}),
-          ...(input.parentGroupId !== undefined ? { parentGroupId: input.parentGroupId } : {})
-        }
     updateOperationState({ creatingGroup: true })
     setError(null)
     try {
-      const group = await createDocumentGroup(safeInput)
+      const group = await createDocumentGroup(input)
       try {
         await refreshDocumentGroups()
       } catch (refreshError) {
@@ -224,6 +238,55 @@ export function useDocuments({
     return onUpdateDocumentGroup(groupId, input)
   }
 
+  async function onMoveDocumentGroup(groupId: string, input: MoveDocumentGroupInput): Promise<DocumentOperationResult> {
+    if (!canMoveDocumentGroups) return { ok: false, error: "フォルダを移動する権限がありません" }
+    updateOperationState({ movingGroupId: groupId })
+    setError(null)
+    try {
+      await moveDocumentGroup(groupId, input)
+      await Promise.all([refreshDocumentGroups(), refreshDocuments()])
+      return { ok: true }
+    } catch (err) {
+      try {
+        await refreshDocumentGroups()
+      } catch {
+        // Keep the move error as the user-visible cause; a later refresh can retry the read.
+      }
+      return operationError(err)
+    } finally {
+      updateOperationState({ movingGroupId: null })
+    }
+  }
+
+  async function onLoadFolderShare(groupId: string): Promise<VersionedFolderPolicy | undefined> {
+    if (!canShareDocumentGroups) return undefined
+    try {
+      return await getFolderSharePolicy(groupId)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+      return undefined
+    }
+  }
+
+  async function onReplaceFolderShare(groupId: string, input: {
+    expectedVersion: string
+    entries: FolderPolicyEntry[]
+    reason: string
+  }): Promise<DocumentOperationResult> {
+    if (!canShareDocumentGroups) return { ok: false, error: "フォルダ共有を更新する権限がありません" }
+    updateOperationState({ sharingGroupId: groupId })
+    setError(null)
+    try {
+      await replaceFolderSharePolicy(groupId, input)
+      await refreshDocumentGroups()
+      return { ok: true }
+    } catch (err) {
+      return operationError(err)
+    } finally {
+      updateOperationState({ sharingGroupId: null })
+    }
+  }
+
   async function onLoadDocumentShare(documentId: string): Promise<DocumentShareInfo | undefined> {
     try {
       return await getDocumentShare(documentId)
@@ -233,7 +296,11 @@ export function useDocuments({
     }
   }
 
-  async function onShareDocument(documentId: string, input: { grants: DocumentShareGrantInput[]; reason: string }): Promise<DocumentOperationResult> {
+  async function onShareDocument(documentId: string, input: {
+    grants: DocumentShareGrantInput[]
+    expectedVersion: string
+    reason: string
+  }): Promise<DocumentOperationResult> {
     updateOperationState({ sharingDocumentId: documentId })
     setError(null)
     try {
@@ -331,12 +398,16 @@ export function useDocuments({
     refreshReindexMigrations,
     ingestDocument,
     onDelete,
+    onDownloadExtractedText,
     onUploadDocumentFile,
     onStageReindex,
     onCutoverReindex,
     onRollbackReindex,
     onCreateDocumentGroup,
     onShareDocumentGroup,
+    onMoveDocumentGroup,
+    onLoadFolderShare,
+    onReplaceFolderShare,
     onLoadDocumentShare,
     onShareDocument,
     onMoveDocument,

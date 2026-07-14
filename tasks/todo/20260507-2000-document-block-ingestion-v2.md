@@ -6,6 +6,8 @@
 
 - todo
 
+関連要件・gap: `FR-068`, `FR-069`, `FR-082`, `FR-083`, `FR-092`, `GAP-RD-012`, `GAP-RD-013`
+
 ## 背景
 
 neoAI Chat から最初に取り入れる価値が高い差分は、チャット UI やモデル追加ではなく、複雑な日本企業文書、表、OCR、画像内テキスト、脚注、注記、別紙、規程文書を RAG に載せる前処理である。rag-assist は RAG runtime、guard、citation validation、benchmark の設計が進んでいるため、正しい根拠を検索可能な chunk として残す ingestion layer が品質ボトルネックになりやすい。

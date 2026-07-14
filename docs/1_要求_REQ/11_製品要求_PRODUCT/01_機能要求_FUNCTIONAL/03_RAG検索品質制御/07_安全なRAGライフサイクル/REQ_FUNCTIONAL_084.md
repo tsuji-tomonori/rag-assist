@@ -66,7 +66,7 @@
 | 実現可能性 | OK | runner route、server-owned suite manifest、subject allowlist、scoped policy で実現可能 |
 | 検証可能性 | OK | runner positive、normal user override negative、cross-tenant/corpus matrix で確認できる |
 | ニーズ適合 | OK | 本番認可を緩めずに再現可能な権限別 benchmark を行える |
-| 実装適合 | partial | runner role と isolated seed はあるが simulated subject の server-side allowlist 契約は未確定 |
+| 実装適合 | OK（confirmed） | benchmark evaluation context が allowlisted suite、server-owned nonprivileged simulated subject/tenant/corpus だけを構築し、request override/cross-suite/cross-tenant を tests で拒否する |
 
 ## トレース
 

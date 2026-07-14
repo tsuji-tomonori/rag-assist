@@ -67,7 +67,7 @@
 | 検証可能性 | OK | owner×chat×tenant×expiry×queued run/cache の否定 matrix で確認できる |
 | ニーズ適合 | OK | 利用者が会話内だけで資料を安全に使い、永続共有へ意図せず残さない |
 | 原子性 | OK | temporary resource の境界を規定する |
-| 実装適合 | partial | metadata はあるが全派生経路・cleanup 契約は未確認 |
+| 実装適合 | OK（confirmed） | temporary attachment は current tenant/owner/chat/expiry を search 前に強制し、expiry/owner suspension/stale-chat mismatch を source/chunk/memory/cache/queued-run の tenant-scoped cleanup ledger へ登録する direct tests を持つ |
 | 合意 | pending | expiry 値と legal retention は未確定 |
 
 ## トレース

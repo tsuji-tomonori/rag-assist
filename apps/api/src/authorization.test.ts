@@ -1,6 +1,16 @@
 import assert from "node:assert/strict"
 import test from "node:test"
-import { canManageFolder, canReadFolder, folderPermissionSatisfies, getPermissionsForGroups, hasPermission, requirePermission } from "./authorization.js"
+import {
+  authorizeAppUserResourceOperation,
+  canManageFolder,
+  canReadFolder,
+  folderPermissionSatisfies,
+  getPermissionsForGroups,
+  hasPermission,
+  requirePermission,
+  resourceAuthorizationActorFromAppUser
+} from "./authorization.js"
+import { RESOURCE_OPERATION_AUTHORIZATION_POLICY_VERSION } from "./security/resource-operation-authorization.js"
 
 test("SYSTEM_ADMIN は任意の権限チェックを通過する", () => {
   const user = { userId: "u1", cognitoGroups: ["SYSTEM_ADMIN"] }
@@ -20,6 +30,98 @@ test("停止・削除アカウントは role があっても権限チェック�
   assert.equal(hasPermission(suspended, "chat:create"), false)
   assert.equal(hasPermission(deleted, "chat:create"), false)
   assert.throws(() => requirePermission(suspended, "chat:create"), /Forbidden/)
+})
+
+test("AppUser adapter は canonical role catalog の exact feature だけを解決する", () => {
+  const actor = resourceAuthorizationActorFromAppUser({
+    userId: "chat-user-1",
+    cognitoGroups: ["CHAT_USER", "resource-group-1", "UNKNOWN_ROLE"],
+    accountStatus: "active",
+    tenantId: "tenant-a"
+  })
+
+  assert.equal(actor.identityVerified, true)
+  assert.equal(actor.accountStatus, "active")
+  assert.equal(actor.tenantId, "tenant-a")
+  assert.deepEqual(actor.roleLabels, ["CHAT_USER"])
+  assert.equal(actor.featurePermissions.includes("document.read"), true)
+  assert.equal(actor.featurePermissions.includes("document.useInSearch"), true)
+  assert.equal(actor.featurePermissions.includes("folder.read"), true)
+  assert.equal(actor.featurePermissions.includes("resourceGroup.useInSearch"), true)
+  assert.equal(actor.featurePermissions.includes("document.update"), false)
+
+  const incomplete = resourceAuthorizationActorFromAppUser({
+    userId: "legacy-user",
+    cognitoGroups: ["CHAT_USER"]
+  })
+  assert.equal(incomplete.identityVerified, false)
+  assert.equal(incomplete.accountStatus, "unknown")
+  assert.equal(incomplete.tenantId, undefined)
+})
+
+test("AppUser adapter 経由でも document.read は document.update を代用しない", () => {
+  const user = {
+    userId: "chat-user-1",
+    cognitoGroups: ["CHAT_USER"],
+    accountStatus: "active" as const,
+    tenantId: "tenant-a"
+  }
+  const commonRequest = {
+    policyVersion: RESOURCE_OPERATION_AUTHORIZATION_POLICY_VERSION,
+    resourceType: "document",
+    authorizationPath: "target",
+    resourceScopes: {
+      target: {
+        tenantId: "tenant-a",
+        lifecycle: "active" as const,
+        integrity: "valid" as const,
+        administrativePrincipal: false,
+        ordinaryPolicy: { status: "allow" as const, permission: "full" as const }
+      }
+    }
+  }
+
+  const read = authorizeAppUserResourceOperation(user, {
+    ...commonRequest,
+    operation: "read",
+    satisfiedGuards: ["responseAllowlistApplied"]
+  })
+  assert.equal(read.allowed, true)
+
+  const update = authorizeAppUserResourceOperation(user, {
+    ...commonRequest,
+    operation: "update",
+    satisfiedGuards: ["serverManagedFieldsProtected"]
+  })
+  assert.equal(update.allowed, false)
+  assert.equal(update.reasonCode, "feature_permission_missing")
+})
+
+test("SYSTEM_ADMIN AppUser adapter は ordinary resource deny を bypass しない", () => {
+  const decision = authorizeAppUserResourceOperation({
+    userId: "system-admin-1",
+    cognitoGroups: ["SYSTEM_ADMIN"],
+    accountStatus: "active",
+    tenantId: "tenant-a"
+  }, {
+    policyVersion: RESOURCE_OPERATION_AUTHORIZATION_POLICY_VERSION,
+    resourceType: "document",
+    operation: "read",
+    authorizationPath: "target",
+    resourceScopes: {
+      target: {
+        tenantId: "tenant-a",
+        lifecycle: "active",
+        integrity: "valid",
+        administrativePrincipal: false,
+        ordinaryPolicy: { status: "deny" }
+      }
+    },
+    satisfiedGuards: ["responseAllowlistApplied"]
+  })
+
+  assert.equal(decision.allowed, false)
+  assert.equal(decision.reasonCode, "ordinary_policy_denied")
 })
 
 test("フォルダ実効権限は none/readOnly/full の順序で評価される", () => {

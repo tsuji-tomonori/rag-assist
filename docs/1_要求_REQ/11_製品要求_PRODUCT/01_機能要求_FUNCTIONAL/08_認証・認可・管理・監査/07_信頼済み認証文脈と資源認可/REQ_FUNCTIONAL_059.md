@@ -67,7 +67,7 @@ list、search、memory、citation、preview が別 helper を使うと同じ act
 | 検証可能性 | OK | 全経路 parity contract test と admin-without-grant negative test で確認できる |
 | ニーズ適合 | OK | 利用経路によらず同じ共有権限が適用され、管理 role だけで本文を閲覧されない |
 | 原子性 | OK | 認可 decision contract の一意性を規定する |
-| 実装適合 | NG/conflict | `document-group-permissions.ts:37-66`, `ARC_ADR_004:26` |
+| 実装適合 | OK（confirmed） | `resource-permission-decision.ts` を document/folder/search/memory/evidence で共有し、ordinary `SYSTEM_ADMIN` の resource bypass を negative tests で拒否する |
 | 合意 | pending | break-glass を導入するか自体が未確定 |
 
 ## トレース

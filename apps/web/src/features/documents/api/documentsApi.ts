@@ -1,22 +1,62 @@
-import { createHeaders, del, get, post, put } from "../../../shared/api/http.js"
+import { createHeaders, delJson, get, getBlob, post, put } from "../../../shared/api/http.js"
 import type { DocumentGroup, DocumentManifest, ReindexMigration } from "../types.js"
 
 export type UpdateDocumentGroupInput = {
   name?: string
   description?: string
-  visibility?: "private" | "shared" | "org"
-  parentGroupId?: string | null
-  sharedUserIds?: string[]
-  sharedGroups?: string[]
-  managerUserIds?: string[]
+}
+
+export type MoveDocumentGroupInput = {
+  destinationParentId: string | null
+  newName?: string
+  reason: string
+  expectedVersion: string
+}
+
+export type MoveDocumentGroupResponse = {
+  operationId: string
+  folder: DocumentGroup
+  subtree: DocumentGroup[]
+  affectedDocumentCount: number
+  directDocumentGrantsPreserved: true
+  folderLocalPoliciesPreserved: true
+  documentVersionsPreserved: true
+}
+
+export type FolderPolicyEntry = {
+  principalType: "user" | "group"
+  principalId: string
+  permissionLevel: "deny" | "readOnly" | "full"
+}
+
+export type FolderPolicy = {
+  policyId: string
+  tenantId: string
+  folderId: string
+  entries: FolderPolicyEntry[]
+  createdBy: string
+  createdAt: string
+  updatedAt: string
+}
+
+export type VersionedFolderPolicy = {
+  policy: FolderPolicy | null
+  version: string
+}
+
+export type ReplacedVersionedFolderPolicy = {
+  policy: FolderPolicy
+  version: string
+  auditIntentId: string
 }
 
 export type DocumentPermissionLevel = "readOnly" | "full"
+export type DocumentPolicyPermissionLevel = "deny" | DocumentPermissionLevel
 
 export type DocumentShareGrantInput = {
   principalType: "user" | "group"
   principalId: string
-  permissionLevel: DocumentPermissionLevel
+  permissionLevel: DocumentPolicyPermissionLevel
 }
 
 export type DocumentShareGrant = DocumentShareGrantInput & {
@@ -33,6 +73,7 @@ export type DocumentShareInfo = {
   inheritedFolderGrants: Array<{ folderId: string; permissionLevel: "none" | DocumentPermissionLevel }>
   directDocumentGrants: DocumentShareGrant[]
   currentUserEffectivePermission: "none" | DocumentPermissionLevel
+  version: string
 }
 
 export async function uploadDocument(input: {
@@ -65,7 +106,7 @@ type UploadSession = {
 
 type DocumentIngestRun = {
   runId: string
-  status: "queued" | "running" | "succeeded" | "failed" | "cancelled"
+  status: "queued" | "running" | "succeeded" | "rejected" | "failed" | "cancelled"
   eventsPath?: string
   manifest?: DocumentManifest
   error?: string
@@ -172,6 +213,7 @@ async function waitForDocumentIngestRun(initialRun: DocumentIngestRun, onProgres
       onProgress?.({ phase: "complete", runId: run.runId })
       return run.manifest
     }
+    if (run.status === "rejected") throw new Error(run.error ?? "文書取り込みは受け入れポリシーにより拒否されました")
     if (run.status === "failed" || run.status === "cancelled") throw new Error(run.error ?? `document ingest run ${run.status}`)
     onProgress?.({ phase: pollPhases[Math.min(pollCount, pollPhases.length - 1)]!, runId: run.runId })
     await sleep(1000)
@@ -185,26 +227,59 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
+type AuthorizedCollectionPage<T, K extends string> = {
+  count: number
+  nextCursor?: string
+  responseProfileVersion: "resource-non-enumeration-v1"
+} & Record<K, T[]>
+
+export type DocumentExtractedTextDownload = {
+  blob: Blob
+  fileName: string
+}
+
+export async function listDocumentsPage(options: { cursor?: string; limit?: number } = {}): Promise<AuthorizedCollectionPage<DocumentManifest, "documents">> {
+  return get<AuthorizedCollectionPage<DocumentManifest, "documents">>(collectionRequestPath("/documents", options))
+}
+
 export async function listDocuments(): Promise<DocumentManifest[]> {
-  const result = await get<{ documents: DocumentManifest[] }>("/documents")
-  return result.documents
+  return collectAuthorizedPages("documents", listDocumentsPage)
+}
+
+export async function listDocumentGroupsPage(options: { cursor?: string; limit?: number } = {}): Promise<AuthorizedCollectionPage<DocumentGroup, "groups">> {
+  return get<AuthorizedCollectionPage<DocumentGroup, "groups">>(collectionRequestPath("/document-groups", options))
 }
 
 export async function listDocumentGroups(): Promise<DocumentGroup[]> {
-  const result = await get<{ groups: DocumentGroup[] }>("/document-groups")
-  return result.groups
+  return collectAuthorizedPages("groups", listDocumentGroupsPage)
+}
+
+export async function requestDocumentExtractedTextDownload(documentId: string): Promise<DocumentExtractedTextDownload> {
+  const response = await getBlob(`/documents/${encodeURIComponent(documentId)}/extracted-text`)
+  const fileName = contentDispositionFileName(response.headers.get("content-disposition"))
+  if (!fileName) throw new Error("抽出テキストのダウンロードファイル名を確認できません")
+  return { blob: response.blob, fileName }
+}
+
+export function saveDocumentExtractedTextDownload(download: DocumentExtractedTextDownload): void {
+  const objectUrl = URL.createObjectURL(download.blob)
+  const anchor = document.createElement("a")
+  anchor.href = objectUrl
+  anchor.download = download.fileName
+  anchor.hidden = true
+  document.body.append(anchor)
+  try {
+    anchor.click()
+  } finally {
+    anchor.remove()
+    URL.revokeObjectURL(objectUrl)
+  }
 }
 
 export async function createDocumentGroup(input: {
   name: string
   description?: string
-  adminPrincipalType?: "user" | "group"
-  adminPrincipalId?: string
   parentGroupId?: string
-  visibility?: "private" | "shared" | "org"
-  sharedUserIds?: string[]
-  sharedGroups?: string[]
-  managerUserIds?: string[]
 }): Promise<DocumentGroup> {
   return post<DocumentGroup>("/document-groups", input)
 }
@@ -213,8 +288,32 @@ export async function updateDocumentGroup(groupId: string, input: UpdateDocument
   return post<DocumentGroup>(`/document-groups/${encodeURIComponent(groupId)}/share`, input)
 }
 
+export async function moveDocumentGroup(groupId: string, input: MoveDocumentGroupInput): Promise<MoveDocumentGroupResponse> {
+  try {
+    return await post<MoveDocumentGroupResponse>(`/document-groups/${encodeURIComponent(groupId)}/move`, input)
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    if (message.includes("Folder move conflict")) {
+      throw new Error("フォルダが他の操作で更新されました。最新状態を再読み込みしてから再実行してください。", { cause: error })
+    }
+    throw error
+  }
+}
+
 export async function shareDocumentGroup(groupId: string, input: UpdateDocumentGroupInput): Promise<DocumentGroup> {
   return updateDocumentGroup(groupId, input)
+}
+
+export async function getFolderSharePolicy(groupId: string): Promise<VersionedFolderPolicy> {
+  return get<VersionedFolderPolicy>(`/document-groups/${encodeURIComponent(groupId)}/share`)
+}
+
+export async function replaceFolderSharePolicy(groupId: string, input: {
+  expectedVersion: string
+  entries: FolderPolicyEntry[]
+  reason: string
+}): Promise<ReplacedVersionedFolderPolicy> {
+  return put<ReplacedVersionedFolderPolicy>(`/document-groups/${encodeURIComponent(groupId)}/share`, input)
 }
 
 export async function getDocumentShare(documentId: string): Promise<DocumentShareInfo> {
@@ -223,6 +322,7 @@ export async function getDocumentShare(documentId: string): Promise<DocumentShar
 
 export async function updateDocumentShare(documentId: string, input: {
   grants: DocumentShareGrantInput[]
+  expectedVersion: string
   reason: string
 }): Promise<DocumentShareInfo> {
   return put<DocumentShareInfo>(`/documents/${encodeURIComponent(documentId)}/share`, input)
@@ -237,8 +337,8 @@ export async function moveDocument(documentId: string, input: {
   return post<{ document: DocumentManifest }>(`/documents/${encodeURIComponent(documentId)}/move`, input)
 }
 
-export async function deleteDocument(documentId: string): Promise<void> {
-  return del(`/documents/${encodeURIComponent(documentId)}`)
+export async function deleteDocument(documentId: string, input: { expectedUpdatedAt: string; reason: string }): Promise<void> {
+  return delJson(`/documents/${encodeURIComponent(documentId)}`, input)
 }
 
 export async function reindexDocument(documentId: string): Promise<DocumentManifest> {
@@ -260,4 +360,44 @@ export async function rollbackReindexMigration(migrationId: string): Promise<Rei
 export async function listReindexMigrations(): Promise<ReindexMigration[]> {
   const result = await get<{ migrations?: ReindexMigration[] }>("/documents/reindex-migrations")
   return result.migrations ?? []
+}
+
+function collectionRequestPath(basePath: string, options: { cursor?: string; limit?: number }): string {
+  const query = new URLSearchParams()
+  if (options.cursor) query.set("cursor", options.cursor)
+  if (options.limit !== undefined) query.set("limit", String(options.limit))
+  const encoded = query.toString()
+  return encoded ? `${basePath}?${encoded}` : basePath
+}
+
+async function collectAuthorizedPages<T, K extends "documents" | "groups">(
+  key: K,
+  loadPage: (options?: { cursor?: string; limit?: number }) => Promise<AuthorizedCollectionPage<T, K>>
+): Promise<T[]> {
+  const items: T[] = []
+  const seenCursors = new Set<string>()
+  let cursor: string | undefined
+  do {
+    const page = await loadPage(cursor ? { cursor } : undefined)
+    items.push(...page[key])
+    cursor = page.nextCursor
+    if (cursor && seenCursors.has(cursor)) throw new Error("文書一覧の cursor が繰り返されました")
+    if (cursor) seenCursors.add(cursor)
+  } while (cursor)
+  return items
+}
+
+function contentDispositionFileName(header: string | null): string | undefined {
+  if (!header) return undefined
+  const encoded = /filename\*=UTF-8''([^;]+)/iu.exec(header)?.[1]
+  const quoted = /filename="([^"]+)"/iu.exec(header)?.[1]
+  let candidate: string | undefined
+  try {
+    candidate = encoded ? decodeURIComponent(encoded) : quoted
+  } catch {
+    return undefined
+  }
+  if (!candidate) return undefined
+  const leaf = candidate.split(/[\\/]/u).filter(Boolean).at(-1)
+  return leaf?.trim() || undefined
 }

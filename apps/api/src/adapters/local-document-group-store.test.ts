@@ -6,20 +6,22 @@ import test from "node:test"
 import { LocalDocumentGroupStore } from "./local-document-group-store.js"
 import type { DocumentGroup } from "../types.js"
 
-test("local document group store preserves legacy reads and basic create/update errors", async () => {
+test("local document group store isolates tenant partitions and fails closed on legacy data", async () => {
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-local-document-groups-"))
   const store = new LocalDocumentGroupStore(dataDir)
 
-  assert.deepEqual(await store.list(), [])
-  assert.deepEqual(await store.updateWithPathLocks([]), [])
+  assert.deepEqual(await store.list("default"), [])
+  assert.deepEqual(await store.updateWithPathLocks("default", []), [])
 
-  await assert.rejects(() => store.update("missing", { name: "Updated" }), /Document group not found/)
+  await assert.rejects(() => store.update("default", "missing", { name: "Updated" }), /Document group not found/)
 
   const created = await store.create(group("docgrp_1", "/team"))
-  assert.equal((await store.get("docgrp_1"))?.groupId, created.groupId)
+  assert.equal((await store.get("default", "docgrp_1"))?.groupId, created.groupId)
+  await store.create(group("docgrp_1", "/other-tenant", { tenantId: "tenant-b" }))
+  assert.equal((await store.get("tenant-b", "docgrp_1"))?.tenantId, "tenant-b")
   await assert.rejects(() => store.create(group("docgrp_1", "/team-copy")), /Document group already exists/)
 
-  const updated = await store.update("docgrp_1", { description: "Updated description", updatedAt: "2026-05-02T00:00:00.000Z" })
+  const updated = await store.update("default", "docgrp_1", { description: "Updated description", updatedAt: "2026-05-02T00:00:00.000Z" })
   assert.equal(updated.description, "Updated description")
   assert.equal(updated.updatedAt, "2026-05-02T00:00:00.000Z")
 
@@ -28,7 +30,7 @@ test("local document group store preserves legacy reads and basic create/update 
     groups: "not-an-array",
     pathLocks: "not-an-array"
   }))
-  assert.deepEqual(await store.list(), [])
+  await assert.rejects(() => store.list("legacy-tenant"), /require tenant migration/)
 })
 
 test("local document group store enforces canonical path locks for create and move", async () => {
@@ -45,19 +47,19 @@ test("local document group store enforces canonical path locks for create and mo
   assert.equal(nestedSameName.normalizedCanonicalPath, "/archive/team")
   assert.equal(otherOwnerSamePath.adminPathPk, "default#user#owner-2")
   assert.equal(otherAdminGroupSamePath.adminPathPk, "default#group#team-admin")
-  await assert.rejects(() => store.updateWithPathLocks([{
+  await assert.rejects(() => store.updateWithPathLocks("default", [{
     current: { ...source, updatedAt: "2026-04-30T00:00:00.000Z" },
     next: group("docgrp_1", "/renamed")
   }]), /changed before path update/)
-  await assert.rejects(() => store.updateWithPathLocks([{
+  await assert.rejects(() => store.updateWithPathLocks("default", [{
     current: source,
     next: { ...group("docgrp_1", "/sibling"), updatedAt: "2026-05-03T00:00:00.000Z" }
   }]), /canonical path already exists/)
 
   const moved = { ...group("docgrp_1", "/renamed"), updatedAt: "2026-05-03T00:00:00.000Z" }
-  assert.deepEqual(await store.updateWithPathLocks([{ current: source, next: moved }]), [moved])
-  assert.equal((await store.findByCanonicalPath("default#user#owner-1", "/renamed"))?.groupId, "docgrp_1")
-  assert.deepEqual((await store.listByAdminPath("default#user#owner-1")).map((item) => item.groupId).sort(), [moved.groupId, sibling.groupId, nestedSameName.groupId].sort())
+  assert.deepEqual(await store.updateWithPathLocks("default", [{ current: source, next: moved }]), [moved])
+  assert.equal((await store.findByCanonicalPath("default", "default#user#owner-1", "/renamed"))?.groupId, "docgrp_1")
+  assert.deepEqual((await store.listByAdminPath("default", "default#user#owner-1")).map((item) => item.groupId).sort(), [moved.groupId, sibling.groupId, nestedSameName.groupId].sort())
   await assert.rejects(() => store.createWithPathLock(group("docgrp_6", "/renamed")), /canonical path already exists/)
 })
 
@@ -68,7 +70,7 @@ test("local document group store detects lock conflicts during path updates", as
   await store.create(source)
   await store.createWithPathLock(group("docgrp_2", "/locked"))
 
-  await assert.rejects(() => store.updateWithPathLocks([{
+  await assert.rejects(() => store.updateWithPathLocks("default", [{
     current: source,
     next: { ...group("docgrp_1", "/locked"), updatedAt: "2026-05-03T00:00:00.000Z" }
   }]), /canonical path already exists/)
@@ -83,7 +85,7 @@ function group(groupId: string, normalizedCanonicalPath: string, input: Partial<
     groupId,
     schemaVersion: 2,
     itemType: "documentGroup",
-    tenantId: "default",
+    tenantId: input.tenantId ?? "default",
     adminPrincipalType,
     adminPrincipalId,
     name,

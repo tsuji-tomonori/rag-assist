@@ -10,6 +10,7 @@ import { registerDebugRoutes } from "./debug-routes.js"
 import { registerDocumentRoutes } from "./document-routes.js"
 import { registerFavoriteRoutes } from "./favorite-routes.js"
 import { registerQuestionRoutes } from "./question-routes.js"
+import { registerResourceGroupRoutes } from "./resource-group-routes.js"
 import { registerSystemRoutes } from "./system-routes.js"
 
 export { isBenchmarkSeedUpload, isBenchmarkSeedUploadedObjectIngest } from "./benchmark-seed.js"
@@ -18,6 +19,7 @@ export function registerApiRoutes(app: OpenAPIHono<AppEnv>, deps: Dependencies, 
   const context = { app, deps, service }
   registerSystemRoutes(context)
   registerAdminRoutes(context)
+  registerResourceGroupRoutes(context)
   registerDocumentRoutes(context)
   registerChatRoutes(context)
   registerQuestionRoutes(context)

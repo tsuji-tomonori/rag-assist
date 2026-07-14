@@ -33,6 +33,8 @@ const chunk: RetrievedVector = {
     documentId: "doc-1",
     fileName: "doc.txt",
     chunkId: "chunk-0001",
+    tenantId: "tenant-a",
+    ownerUserId: "test-user",
     text: "申請期限は翌月5営業日です。金額は5,000円です。申請システムから提出します。",
     createdAt: "2026-04-30T00:00:00.000Z"
   }
@@ -1187,8 +1189,22 @@ test("query nodes handle memory-disabled, fallback, generated clue, and search m
           manifestObjectKey: "manifests/doc-quality-excluded.json",
           vectorKeys: ["doc-quality-excluded-memory-1"],
           lifecycleStatus: "active",
-          metadata: { aclGroup: "GROUP_A" },
+          metadata: { aclGroup: "GROUP_A", tenantId: "tenant-a", ownerUserId: "test-user" },
           qualityProfile: { ragEligibility: "excluded" },
+          chunkCount: 1,
+          memoryCardCount: 1,
+          createdAt: "2026-05-03T00:00:00.000Z"
+        })
+      }
+      if (key === "manifests/doc-forbidden.json") {
+        return JSON.stringify({
+          documentId: "doc-forbidden",
+          fileName: "forbidden.txt",
+          sourceObjectKey: "documents/doc-forbidden/source.txt",
+          manifestObjectKey: "manifests/doc-forbidden.json",
+          vectorKeys: ["forbidden-memory"],
+          lifecycleStatus: "active",
+          metadata: { aclGroup: "GROUP_B", tenantId: "tenant-a", ownerUserId: "group-admin" },
           chunkCount: 1,
           memoryCardCount: 1,
           createdAt: "2026-05-03T00:00:00.000Z"
@@ -1203,11 +1219,28 @@ test("query nodes handle memory-disabled, fallback, generated clue, and search m
       { ...chunk, key: "active-memory", metadata: { ...chunk.metadata, kind: "memory", memoryId: "memory-1", aclGroup: "GROUP_A" } },
       { ...chunk, key: "quality-excluded-memory", metadata: { ...chunk.metadata, documentId: "doc-quality-excluded", kind: "memory", memoryId: "memory-q", aclGroup: "GROUP_A" } },
       { ...chunk, key: "staging-memory", metadata: { ...chunk.metadata, kind: "memory", memoryId: "memory-2", lifecycleStatus: "staging", aclGroup: "GROUP_A" } },
-      { ...chunk, key: "forbidden-memory", metadata: { ...chunk.metadata, kind: "memory", memoryId: "memory-3", aclGroup: "GROUP_B" } }
+      {
+        ...chunk,
+        key: "forbidden-memory",
+        metadata: {
+          ...chunk.metadata,
+          documentId: "doc-forbidden",
+          fileName: "forbidden.txt",
+          ownerUserId: "group-admin",
+          kind: "memory",
+          memoryId: "memory-3",
+          aclGroup: "GROUP_B"
+        }
+      }
     ],
     delete: async () => undefined
   }
-  const guardedMemory = await createRetrieveMemoryNode(guardedDeps, { userId: "user-a", cognitoGroups: ["GROUP_A"] })(state({ memoryTopK: 3 }))
+  const guardedMemory = await createRetrieveMemoryNode(guardedDeps, {
+    userId: "test-user",
+    tenantId: "tenant-a",
+    accountStatus: "active",
+    cognitoGroups: ["GROUP_A"]
+  })(state({ memoryTopK: 3 }))
   assert.deepEqual(guardedMemory.memoryCards?.map((hit) => hit.key), ["active-memory"])
 
   const ownerBypassDeps = createDeps()
@@ -1240,7 +1273,8 @@ test("query nodes handle memory-disabled, fallback, generated clue, and search m
           metadata: {
             scopeType: "group",
             ownerUserId: "uploader",
-            groupIds: [ownerBypassGroup.groupId]
+            groupIds: [ownerBypassGroup.groupId],
+            tenantId: "tenant-a"
           }
         })
       }
@@ -1263,8 +1297,14 @@ test("query nodes handle memory-disabled, fallback, generated clue, and search m
     }],
     delete: async () => undefined
   }
-  const ownerBypassMemory = await createRetrieveMemoryNode(ownerBypassDeps, { userId: "uploader", email: "uploader@example.com", cognitoGroups: ["CHAT_USER"] })(state({ memoryTopK: 5 }))
-  assert.deepEqual(ownerBypassMemory.memoryCards, [])
+  const ownerBypassMemory = await createRetrieveMemoryNode(ownerBypassDeps, {
+    userId: "uploader",
+    email: "uploader@example.com",
+    tenantId: "tenant-a",
+    accountStatus: "active",
+    cognitoGroups: ["CHAT_USER"]
+  })(state({ memoryTopK: 5 }))
+  assert.deepEqual(ownerBypassMemory.memoryCards?.map((hit) => hit.key), ["owner-owned-group-memory"])
 
   const noMemoryClues = await createGenerateCluesNode(deps)(state({ memoryCards: [], expandedQueries: ["standalone question", "retrieval query"] }))
   assert.deepEqual(noMemoryClues, { clues: [], expandedQueries: ["standalone question", "retrieval query", "question"] })
@@ -1278,6 +1318,8 @@ test("query nodes handle memory-disabled, fallback, generated clue, and search m
   const search = await createSearchEvidenceNode(deps, user())(state({ queryEmbeddings: [{ query: "q", vector: [1, 0] }] }))
   assert.deepEqual(search.retrievedChunks?.map((hit) => hit.key), ["doc-1-chunk-0001"])
   assert.equal(search.retrievalDiagnostics?.semanticCount, 2)
+  assert.equal(search.retrievalDiagnostics?.candidateCount, 1)
+  assert.equal(search.retrievalDiagnostics?.deniedCandidateCount, 0)
 
   const multiQuerySearch = await createSearchEvidenceNode(deps, user())(
     state({
@@ -1288,6 +1330,8 @@ test("query nodes handle memory-disabled, fallback, generated clue, and search m
     })
   )
   assert.equal(multiQuerySearch.retrievalDiagnostics?.queryCount, 2)
+  assert.equal(multiQuerySearch.retrievalDiagnostics?.candidateCount, 4)
+  assert.equal(multiQuerySearch.retrievalDiagnostics?.deniedCandidateCount, 0)
   assert.equal(multiQuerySearch.retrievedChunks?.[0]?.metadata.crossQueryRank, 1)
   assert.ok((multiQuerySearch.retrievedChunks?.[0]?.metadata.crossQueryRrfScore ?? 0) > 0)
 
@@ -1310,11 +1354,14 @@ test("query nodes handle memory-disabled, fallback, generated clue, and search m
   assert.deepEqual(capturedVectorFilter, {
     kind: "chunk",
     documentId: undefined,
-    tenantId: undefined,
+    tenantId: "tenant-a",
     department: undefined,
     source: "benchmark-runner",
     docType: "benchmark-corpus",
-    benchmarkSuiteId: undefined
+    benchmarkSuiteId: undefined,
+    lifecycleStatus: "active",
+    ragEligibility: "eligible",
+    documentIds: ["doc-1"]
   })
 
   const memoryExpansionDeps = createDeps()
@@ -1367,8 +1414,9 @@ test("query nodes handle memory-disabled, fallback, generated clue, and search m
           ...manifest,
           metadata: {
             scopeType: "group",
-            ownerUserId: "uploader",
-            groupIds: [ownerBypassGroup.groupId]
+            ownerUserId: "group-admin",
+            groupIds: [ownerBypassGroup.groupId],
+            tenantId: "tenant-a"
           }
         })
       }
@@ -1380,21 +1428,27 @@ test("query nodes handle memory-disabled, fallback, generated clue, and search m
     query: async () => [],
     delete: async () => undefined
   }
-  const unauthorizedMemoryExpanded = await createSearchEvidenceNode(unauthorizedExpansionDeps, { userId: "uploader", email: "uploader@example.com", cognitoGroups: ["CHAT_USER"] })(
+  const unauthorizedMemoryExpanded = await createSearchEvidenceNode(unauthorizedExpansionDeps, {
+    userId: "uploader",
+    email: "uploader@example.com",
+    tenantId: "tenant-a",
+    accountStatus: "active",
+    cognitoGroups: ["CHAT_USER"]
+  })(
     state({
       normalizedQuery: "not-in-document",
       queryEmbeddings: [{ query: "not-in-document", vector: [1, 0] }],
       memoryCards: [{
         ...chunk,
-        key: "doc-1-memory-owner-bypass",
+        key: "doc-1-memory-forbidden",
         score: 0.82,
         metadata: {
           ...chunk.metadata,
           kind: "memory",
           chunkId: undefined,
-          memoryId: "memory-owner-bypass",
+          memoryId: "memory-forbidden",
           scopeType: "group",
-          ownerUserId: "uploader",
+          ownerUserId: "group-admin",
           groupIds: [ownerBypassGroup.groupId],
           sourceChunkIds: ["chunk-0000"],
           text: "Level: section\nSource chunks: chunk-0000"
@@ -2216,6 +2270,8 @@ test("traced node formats debug trace details for major agent updates", async ()
               lexicalCount: 1,
               semanticCount: 1,
               fusedCount: 2,
+              candidateCount: 3,
+              deniedCandidateCount: 1,
               sourceCounts: { lexical: 1, semantic: 1, hybrid: 0 }
             }
           }
@@ -2353,6 +2409,8 @@ test("traced node covers fallback summaries and empty detail branches", async ()
               lexicalCount: 0,
               semanticCount: 0,
               fusedCount: 0,
+              candidateCount: 0,
+              deniedCandidateCount: 0,
               sourceCounts: { lexical: 0, semantic: 0, hybrid: 0 }
             }
           }
@@ -2403,13 +2461,22 @@ function createDeps(): Dependencies {
             manifestObjectKey: "manifests/doc-1.json",
             vectorKeys: ["doc-1-chunk-0001", "doc-1-memory-1"],
             lifecycleStatus: "active",
-            metadata: { aclGroup: "GROUP_A" },
+            metadata: {
+              aclGroup: "GROUP_A",
+              tenantId: "tenant-a",
+              ownerUserId: "test-user",
+              source: "benchmark-runner",
+              docType: "benchmark-corpus"
+            },
             chunkCount: 1,
             memoryCardCount: 1,
             createdAt: "2026-05-03T00:00:00.000Z"
           })
         }
         if (key === "documents/doc-1/source.txt") return chunk.metadata.text ?? ""
+        if (key.endsWith("lexical-index/latest.json")) {
+          throw Object.assign(new Error(`Missing test artifact: ${key}`), { code: "ENOENT" })
+        }
         return ""
       },
       deleteObject: async () => undefined,
@@ -2455,6 +2522,11 @@ function createDeps(): Dependencies {
       list: async () => [],
       get: async () => undefined,
       delete: async () => undefined
+    },
+    localTestIngestAdmissionContext: {
+      mode: "local_test_fixture",
+      fixtureId: "node-units",
+      tenantId: "tenant-a"
     }
   } as unknown as Dependencies
 }
@@ -2463,6 +2535,8 @@ function user() {
   return {
     userId: "test-user",
     email: "test-user@example.com",
+    tenantId: "tenant-a",
+    accountStatus: "active" as const,
     cognitoGroups: ["SYSTEM_ADMIN"]
   }
 }
