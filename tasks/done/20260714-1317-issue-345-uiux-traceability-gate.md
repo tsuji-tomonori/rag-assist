@@ -1,8 +1,8 @@
 # Issue #345 UI/UX 追跡性・品質ゲート基盤を確立する
 
-保存先: `tasks/do/20260714-1317-issue-345-uiux-traceability-gate.md`
+保存先: `tasks/done/20260714-1317-issue-345-uiux-traceability-gate.md`
 
-状態: do
+状態: done
 
 タスク種別: 機能追加
 

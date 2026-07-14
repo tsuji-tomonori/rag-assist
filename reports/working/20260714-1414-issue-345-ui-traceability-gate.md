@@ -1,11 +1,12 @@
 # Issue #345 UI 意味トレーサビリティ・品質 gate 作業完了レポート
 
 - 作業日: 2026-07-14
-- 対象 task: `tasks/do/20260714-1317-issue-345-uiux-traceability-gate.md`
+- 対象 task: `tasks/done/20260714-1317-issue-345-uiux-traceability-gate.md`
 - 対象 branch: `codex/issue-345-uiux-foundation`
 - base: `origin/main` `b9fb39becc9a9cdee65c2cd1bfe593b8f6d0309a`
 - 対象 issue: GitHub Issue #345
-- 本レポートの状態: 第 1 マイルストーンの local implementation/validation complete。Issue 全体は未完了。
+- 本レポートの状態: 第 1 マイルストーンの実装、検証、draft PR、受け入れ条件コメント、セルフレビューまで完了。Issue 全体は未完了。
+- Draft PR: https://github.com/tsuji-tomonori/rag-assist/pull/348
 
 ## 受けた指示
 
@@ -87,4 +88,5 @@ Issue #345 の全体完了まで作業し、repository の worktree/task/validat
 - `FR-094`〜`FR-098`, `NFR-017`, `NFR-018`, `SQ-016` は Draft であり、linked task と evidence が揃うまで実装適合を宣言しない。
 - Firefox/WebKit required/scheduled scope、代表 screen reader/device matrix、visual required set は open question である。
 - existing documents visual snapshot mismatch は別環境で再確認が必要であり、本作業では baseline を変更していない。
-- PR 作成、acceptance comment、self-review、task done 移動、CI 確認は本レポート作成時点では未実施であり、後続 workflow で完了させる。
+- draft PR #348 の作成、`semver:minor` label、日本語 acceptance comment、日本語 self-review、task done 移動は完了した。
+- GitHub Actions の PR CI は task done 更新 commit の push 後に監視し、未成功なら本マイルストーンを完了扱いにしない。

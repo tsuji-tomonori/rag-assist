@@ -17,10 +17,11 @@
     "Implemented fail-closed semantic trace validation with positive and broken-reference classification tests",
     "Integrated semantic trace tests and freshness into Taskfile docs check and pull request CI failure aggregation",
     "Added UI-specific pull request evidence fields and decomposed all remaining issue work into owned tasks",
-    "Passed local docs, trace, Web typecheck/unit, lint, and 8-AppView Chromium smoke validations"
+    "Passed local docs, trace, Web typecheck/unit, lint, and 8-AppView Chromium smoke validations",
+    "Published milestone 1 as draft pull request #348 with semver label, Japanese acceptance results, and Japanese self-review"
   ],
   "remaining_items": [
-    "Publish the UI requirement traceability and stale-detection gate milestone through commit, draft pull request, acceptance comment, self-review, task done update, and CI audit",
+    "Audit pull request #348 CI after the task completion commit is pushed",
     "Implement permission-aware mobile navigation and safe URL/history/deep-link behavior",
     "Implement the shared loading, empty, error, permission, partial-success, stale, and retry contract",
     "Complete document, admin, assignee, chat, and personal-settings user journeys and contextual feedback",
@@ -65,6 +66,6 @@
       "note": "documents snapshot differed by 3%; production/CSS and existing visual test block were unchanged, baseline was not updated"
     }
   ],
-  "next_action": "Run staged pre-commit checks, commit and push milestone 1, create the Japanese draft pull request through GitHub Apps, post acceptance/self-review comments, then move the task to done and monitor CI",
+  "next_action": "Commit and push the task completion update to pull request #348, refresh the self-review, audit CI, then start the permission-aware mobile navigation and URL/history milestones",
   "safe_to_continue_without_user": true
 }
