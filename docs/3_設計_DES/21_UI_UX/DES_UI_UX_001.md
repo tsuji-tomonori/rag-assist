@@ -279,7 +279,7 @@ URL/history/denied-route gap は draft PR #349 と `tasks/done/20260714-issue-34
 
 共通 UI state gap は shared primitive/controller、feature adapter、`E2E-UI-STATE-001` により自動検証範囲を解消した。代表 screen reader、実 browser zoom、real-device は common state 固有の成功として主張せず、manual evidence task と cross-screen task に残す。
 
-documents の操作 hierarchy と state restoration gap は `tasks/do/20260714-issue-345-document-workspace-context.md` と `E2E-UI-DOCUMENTS-001` により自動検証範囲を解消した。代表 screen reader、200%/400% zoom、real-device は documents 固有の成功として主張せず、manual evidence task と cross-screen task に残す。
+documents の操作 hierarchy と state restoration gap は `tasks/done/20260714-issue-345-document-workspace-context.md` と `E2E-UI-DOCUMENTS-001` により自動検証範囲を解消した。代表 screen reader、200%/400% zoom、real-device は documents 固有の成功として主張せず、manual evidence task と cross-screen task に残す。
 
 利用者語彙・semantic status token・status/dialog primitive の代表 gap は `displayMetadata.ts`、`StatusBadge`、共通 `Button` intent、`NONUI-UI-SEMANTIC-001`、`E2E-UI-SEMANTIC-001` により自動検証範囲を解消した。全画面の layout/brand color、ブラウザ横断、manual evidence は上記の後続 task に残す。
 

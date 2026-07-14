@@ -42,7 +42,7 @@
 - routing: `apps/web/src/app/routing/appRoute.ts`、`apps/web/src/app/hooks/useAppShellState.ts`
 - test: component/unit/App integration、`apps/web/e2e/visual-regression.spec.ts`、documents visual snapshot
 - docs/trace: `REQ_FUNCTIONAL_097.md`、`REQ_FUNCTIONAL_098.md`、`DES_UI_UX_001.md`、`tools/web-inventory/ui-traceability.json`、generated web inventory
-- task: `tasks/do/20260714-issue-345-document-workspace-context.md`
+- task: `tasks/done/20260714-issue-345-document-workspace-context.md`
 
 ## 検証結果
 
@@ -65,9 +65,15 @@
 - RAG quality: evidence lifecycle、retrieval、benchmark 期待語句、QA/dataset 固有分岐には変更を加えていない。
 - Documentation: code と `FR-097`、`FR-098`、`DES_UI_UX_001`、traceability、generated inventory を同期した。README/API/運用手順へ影響する契約変更はないため、それらは更新していない。
 
+## PR / lifecycle
+
+- 実装 commit `500cc816` を push し、GitHub Apps で main 向け draft PR `#353` を作成した。
+- `semver:minor` label、受け入れ確認コメント `#issuecomment-4969402704`、セルフレビューコメント `#issuecomment-4969402866` を日本語で記録した。
+- GitHub Actions は `validate-semver-label` と `Lint, type-check, test, build, and synth` が成功した。条件付き `Explicit RAG candidate promotion gate` は skipped で、必須 check は成功している。
+- task を `tasks/done/` へ移し、状態・参照・本レポートを lifecycle commit で更新した。
+
 ## 未対応・制約・リスク
 
 - 200%/400% browser zoom、代表 screen reader、real device は未実施であり、Issue #345 の横断 manual evidence task に残す。
 - Firefox/WebKit の本 E2E は本 milestone で未実施。Chromium と component/unit/axe を証拠とし、browser 横断 gate は後続 task で扱う。
-- draft PR、受け入れ確認コメント、セルフレビュー、CI 確認、task の `done` lifecycle は本レポート作成時点では未完了。実施後に本レポートを更新する。
 - Issue #345 全体は document milestone 後も chat/assignee、admin、cross-screen/manual/gate の後続作業が残る。
