@@ -62,6 +62,8 @@ Issue #345 の全体完了まで作業し、repository の worktree/task/validat
 | `python3 -m unittest scripts.test_validate_docs` | pass | 9 test。 |
 | `npm run typecheck -w @memorag-mvp/web` | pass | 専用 worktree 依存構築後に再実行。 |
 | `npm test -w @memorag-mvp/web` | pass | 37 files、310 tests。 |
+| `node --import tsx --test src/rag/requirements-coverage.test.ts`（`apps/api`） | pass | 新規 9 要件を既存の全要件トレース回帰 test へ登録。 |
+| `npm run test:coverage -w @memorag-mvp/api` | pass | 773 tests、C0 statements 90.23%、C1 branches 80.5%。既存 C1 改善 task は継続。 |
 | targeted ESLint | pass | changed E2E/generator/validator/test。 |
 | `npm exec -w @memorag-mvp/web -- playwright test e2e/visual-regression.spec.ts --grep "全 AppView"` | pass | Chromium、8 `AppView` reachability、1 test。sandbox 外実行は都度承認済み。 |
 | `task docs:check` | pass | docs validator、OpenAPI、95 APIs/570 API docs、UI trace、Web/infra inventory、hidden Unicode。 |
@@ -73,6 +75,7 @@ Issue #345 の全体完了まで作業し、repository の worktree/task/validat
 - 初回 Web typecheck は専用 worktree に `node_modules` がなく、親 worktree の古い contract symlink を参照して失敗した。offline install は cache miss で失敗し、ユーザー承認後に lifecycle script/lockfile update なしで依存を構築して typecheck を再実行し成功した。
 - 初回 8-view E2E は chat locator の部分一致で strict-mode failure となり、exact named region へ修正した。
 - existing `管理系画面の visual regression @visual` は documents snapshot が 3% mismatch して失敗した。production/CSS と既存 visual block は変更していないため baseline は更新せず、view reachability を独立 smoke test に分離して成功を確認した。visual baseline pass は主張しない。
+- PR #348 の初回 GitHub Actions は、新規 `FR-094`〜`FR-098`、`NFR-016`〜`NFR-018`、`SQ-016` が既存 API 正規要件トレース回帰テストの `traceByRequirement` に未登録だったため失敗した。UI trace manifest だけでなく既存の全要件検査にも、実装済み証跡または planned task を区別できる実在参照を追加して修復した。
 
 ## 指示への fit 評価
 
@@ -89,4 +92,4 @@ Issue #345 の全体完了まで作業し、repository の worktree/task/validat
 - Firefox/WebKit required/scheduled scope、代表 screen reader/device matrix、visual required set は open question である。
 - existing documents visual snapshot mismatch は別環境で再確認が必要であり、本作業では baseline を変更していない。
 - draft PR #348 の作成、`semver:minor` label、日本語 acceptance comment、日本語 self-review、task done 移動は完了した。
-- GitHub Actions の PR CI は task done 更新 commit の push 後に監視し、未成功なら本マイルストーンを完了扱いにしない。
+- GitHub Actions の初回 PR CI は要件トレース回帰 test の登録漏れで失敗した。修復後の対象 test、API coverage 773 tests、targeted ESLint、`task docs:check` は local で成功しており、修復 commit push 後の CI を再監視する。

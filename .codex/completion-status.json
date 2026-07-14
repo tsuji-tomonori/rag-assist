@@ -56,6 +56,11 @@
       "note": "37 files, 310 tests"
     },
     {
+      "command": "npm run test:coverage -w @memorag-mvp/api",
+      "result": "pass",
+      "note": "773 tests after registering FR-094 through FR-098, NFR-016 through NFR-018, and SQ-016 in the existing requirements trace regression test"
+    },
+    {
       "command": "npm exec -w @memorag-mvp/web -- playwright test e2e/visual-regression.spec.ts --grep 全 AppView",
       "result": "pass",
       "note": "Chromium 8-view permission-aware reachability smoke"
@@ -64,6 +69,11 @@
       "command": "existing management visual regression",
       "result": "not_passed",
       "note": "documents snapshot differed by 3%; production/CSS and existing visual test block were unchanged, baseline was not updated"
+    },
+    {
+      "command": "GitHub Actions MemoRAG CI run 29308563534",
+      "result": "repaired_pending_rerun",
+      "note": "initial run exposed missing new requirement IDs in requirements-coverage.test.ts; local targeted test, API coverage suite, ESLint, and docs check pass after repair"
     }
   ],
   "next_action": "Commit and push the task completion update to pull request #348, refresh the self-review, audit CI, then start the permission-aware mobile navigation and URL/history milestones",
