@@ -4,9 +4,9 @@
 - 初回基準: `origin/main` / `9cd904d3c5203caf2400eb2ff654096d63f9d8fb`
 - 再検証基準: `origin/main` / `c6eff7deef0d8f3d06d66391be181e45b058aaaf`
 - 作業ブランチ: `codex/admin-ui-audit-spec`
-- タスク: `tasks/do/20260713-2318-admin-ui-problem-audit.md`
+- タスク: `tasks/done/20260713-2318-admin-ui-problem-audit.md`
 - PR: https://github.com/tsuji-tomonori/rag-assist/pull/344
-- 状態: 初回調査を latest main へ再統合し、final validation / PR gate を確認中
+- 状態: 初回調査の latest main 再統合と content validation 完了。task/report のみの metadata head CI を merge gate として確認中
 
 ## 受けた指示
 
@@ -105,4 +105,4 @@ API/Web production codeを変更していないため、lint/typecheck/unit/buil
 
 初回の `python3 scripts/test_validate_docs.py` は package import path を満たさない起動方法だったため `ModuleNotFoundError` となり、module 起動へ修正して 9/9 が成功した。最初の `task docs:check` は親 worktree の古い `@memorag-mvp/contract` を解決して失敗した。専用 worktree で `npm install` を実行して workspace link を current main へ同期し、再実行で全 check が成功した。install audit は 8 vulnerabilities（low 2、moderate 1、high 5）を報告し、本調査 PR では互換性影響を伴う自動修正をしていない。
 
-final GitHub CI、最新 head の受け入れ条件確認、セルフレビュー、task done 更新は未確認であり、ローカル成功と区別する。
+最終 content head `b95274736128d23a512d0511fd8c80a210443dec` の GitHub Actions は、MemoRAG CI run 985 と Semver run 1439 が成功した。PR 本文、`semver:patch`、日本語の受け入れ条件確認（comment `4964510488`）、セルフレビュー（comment `4964510575`）も確認した。本更新で task を `tasks/done/` へ移す。task/report のみを変更する metadata head の GitHub CI と最終コメントは repository 外の merge gate として、merge 直前に別途確認する。
