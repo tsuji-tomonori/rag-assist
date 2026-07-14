@@ -1,9 +1,10 @@
 # 管理画面の問題点・改善方針・受け入れ条件調査
 
-- 状態: done
+- 状態: do
 - タスク種別: 調査
 - 作成日: 2026-07-13
 - 完了日: 2026-07-14
+- 再開日: 2026-07-14
 - ブランチ: `codex/admin-ui-audit-spec`
 
 ## 背景
@@ -92,3 +93,25 @@
 - 「問題点をすべて」は現行リポジトリから観測可能な範囲に限定され、実利用ログや利用者ヒアリングがない UX 問題は未検証として残る。
 - 既存 spec-recovery は全体仕様を扱うため、既存 ID を壊さず管理画面向け成果物を追加する必要がある。
 - 手動の keyboard、screen reader、320px/400% zoom、実端末検証はブラウザ実行環境がなければ未検証となる。
+
+## 2026-07-14 最新 main 再統合
+
+PR #341–#343 の取り込みにより、監査基準 `9cd904d3` から認可・account lifecycle・正規 docs 構造が大きく変わった。旧監査を現行の規範仕様として `docs/spec-recovery/` へ戻さず、履歴証跡として `reports/working/` へ移し、36 gap を最新 main で再判定する。
+
+### 再統合計画
+
+1. PR #343 merge 後の `origin/main` を取り込み、削除済み legacy docs root を復活させない。
+2. 旧監査 bundle は基準 commit と非規範性を明示して `reports/working/admin-ui-audit-202607/` へ移す。
+3. 36 gap を `resolved`、`partially_resolved`、`open` へ再分類し、現行 source/test と PR #339 の状態を根拠として記録する。
+4. 未解決事項を実装可能な `tasks/todo/` へ分割し、確認済み事実と proposed requirement を混同しない。
+5. canonical docs validator、docs freshness、hidden Unicode、pre-commit、差分検査、GitHub CI を実行する。
+
+### 再統合の受け入れ条件
+
+- [ ] R1: PR #343 merge 後の latest main が branch へ統合され、`docs/spec-recovery/` を復活させていない。
+- [ ] R2: 旧 36 gap / 13 task / 158 AC / 17 scenario / 13 proposed requirement / 22 open question が、基準 commit `9cd904d3` の非規範な履歴監査として保存されている。
+- [ ] R3: 36 gap すべてに latest main での状態、現行根拠、残余 action があり、改善済み項目を未実装として扱っていない。
+- [ ] R4: 残余 gap は owner が着手できる `tasks/todo/` と受け入れ条件へ接続され、PR #339 を未検証のまま採用していない。
+- [ ] R5: current canonical docs に昇格できない proposed/inferred/open question を REQ/ARC/DES/OPS へ混入していない。
+- [ ] R6: 適用可能な docs validator/freshness、hidden Unicode、pre-commit、`git diff --check` と final GitHub CI が成功している。
+- [ ] R7: PR 本文、`semver:*` label、日本語の受け入れ条件確認、セルフレビュー、task done 更新が final head で完了している。
