@@ -273,6 +273,19 @@ button:has(.button-spinner) {
   background: #edf4ff;
 }
 
+.mobile-menu-button,
+.mobile-navigation-panel {
+  display: none;
+}
+
+.rail-item:focus-visible,
+.account-button:focus-visible,
+.mobile-menu-button:focus-visible,
+.mobile-account-button:focus-visible {
+  outline: 3px solid #143f8f;
+  outline-offset: 2px;
+}
+
 .main-area {
   height: 100vh;
   min-height: 0;
@@ -446,7 +459,8 @@ button:has(.button-spinner) {
 }
 
 .app-status-stack .loading-status,
-.error-banner {
+.error-banner,
+.route-notice {
   width: fit-content;
   max-width: 100%;
 }
@@ -458,6 +472,22 @@ button:has(.button-spinner) {
   color: #8d1e1e;
   background: #fff3f3;
   font-weight: 800;
+}
+
+.route-notice {
+  border: 1px solid #9bbcf4;
+  border-radius: 8px;
+  padding: 12px 14px;
+  color: #194d9d;
+  background: #f2f7ff;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+.route-notice-permission {
+  border-color: #e4bd72;
+  color: #704a08;
+  background: #fff9e9;
 }
 
 .split-workspace {

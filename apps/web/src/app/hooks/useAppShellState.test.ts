@@ -269,6 +269,7 @@ describe("useAppShellState", () => {
     })
     act(() => result.current.routeProps.adminProps.onOpenBenchmark())
     expect(result.current.railProps.activeView).toBe("benchmark")
+    expect(window.location.search).toBe("?view=benchmark")
 
     await act(async () => {
       result.current.routeProps.benchmarkProps.onRefresh()
@@ -304,6 +305,7 @@ describe("useAppShellState", () => {
     expect(debugMock.setExpandedStepId).toHaveBeenCalled()
 
     act(() => result.current.railProps.onChangeView("profile"))
+    expect(window.location.search).toBe("?view=profile")
     expect(result.current.routeProps.profileProps.authSession.email).toBe("user@example.com")
     result.current.routeProps.profileProps.onSetSubmitShortcut("enter")
     expect(chatMock.setSubmitShortcut).toHaveBeenCalledWith("enter")
@@ -318,6 +320,8 @@ describe("useAppShellState", () => {
     })
 
     expect(result.current.routeProps.activeView).toBe("documents")
+    expect(window.location.pathname).toBe("/documents/reindex-migrations/migration-1")
+    expect(window.location.search).not.toContain("view=")
     expect(result.current.routeProps.documentProps.urlState).toEqual({
       folderId: "group-1",
       documentId: "doc-1",
@@ -342,10 +346,10 @@ describe("useAppShellState", () => {
       })
     })
 
-    expect(window.location.search).toContain("view=documents")
+    expect(window.location.pathname).toBe("/documents/reindex-migrations/migration-2")
     expect(window.location.search).toContain("group=group-2")
     expect(window.location.search).toContain("document=doc-2")
-    expect(window.location.search).toContain("migration=migration-2")
+    expect(window.location.search).not.toContain("migration=")
     expect(window.location.search).toContain("query=policy")
     expect(window.location.search).toContain("type=PDF")
     expect(window.location.search).toContain("status=active")
@@ -368,6 +372,75 @@ describe("useAppShellState", () => {
       groupFilter: undefined,
       sort: undefined
     })
+  })
+
+  it("user navigation は history を push し、popstate で view を復元する", async () => {
+    const pushState = vi.spyOn(window.history, "pushState")
+    const { result } = renderHook(() => useAppShellState({ authSession: session, onSignOut: vi.fn() }))
+
+    await act(async () => {
+      await Promise.resolve()
+    })
+
+    act(() => result.current.railProps.onChangeView("history"))
+    expect(pushState).toHaveBeenLastCalledWith(window.history.state, "", "/?view=history")
+
+    act(() => result.current.railProps.onChangeView("favorites"))
+    expect(window.location.search).toBe("?view=favorites")
+
+    act(() => {
+      window.history.replaceState(null, "", "/?view=history")
+      window.dispatchEvent(new PopStateEvent("popstate"))
+    })
+
+    expect(result.current.routeProps.activeView).toBe("history")
+    expect(result.current.routeNotice).toBeNull()
+    pushState.mockRestore()
+  })
+
+  it("invalid route を明示して canonical URL へ replace する", async () => {
+    window.history.replaceState(null, "", "/?view=obsolete")
+    const replaceState = vi.spyOn(window.history, "replaceState")
+
+    const { result } = renderHook(() => useAppShellState({ authSession: session, onSignOut: vi.fn() }))
+
+    await act(async () => {
+      await Promise.resolve()
+    })
+
+    expect(result.current.routeProps.activeView).toBe("chat")
+    expect(result.current.routeNotice).toEqual({
+      kind: "invalid",
+      message: "URLの画面指定を確認できなかったため、安全な開始画面または正規URLへ移動しました。"
+    })
+    expect(replaceState).toHaveBeenCalled()
+    expect(window.location.pathname).toBe("/")
+    expect(window.location.search).toBe("")
+    replaceState.mockRestore()
+  })
+
+  it("denied deep link は protected loader を呼ばず permission notice と許可済み復帰先を示す", async () => {
+    window.history.replaceState(null, "", "/?view=admin")
+    currentUserMock.useCurrentUser.mockReturnValue({
+      currentUser: { userId: "user-1", email: "user@example.com", groups: [], permissions: [] },
+      currentUserError: null
+    })
+
+    const { result } = renderHook(() => useAppShellState({ authSession: session, onSignOut: vi.fn() }))
+
+    await act(async () => {
+      await Promise.resolve()
+    })
+
+    expect(result.current.routeProps.activeView).toBe("chat")
+    expect(result.current.routeNotice).toEqual({
+      kind: "permission",
+      message: "このURLの画面を表示する権限を確認できなかったため、利用可能な開始画面へ移動しました。"
+    })
+    expect(window.location.pathname).toBe("/")
+    expect(window.location.search).toBe("")
+    expect(adminMock.refreshAdminData).not.toHaveBeenCalled()
+    expect(adminMock.refreshManagedUsers).not.toHaveBeenCalled()
   })
 
   it("document workspace から対象文書スコープで chat へ移動する", async () => {

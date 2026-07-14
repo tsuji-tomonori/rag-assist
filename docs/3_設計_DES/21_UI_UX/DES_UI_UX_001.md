@@ -53,32 +53,26 @@
 
 | View | Canonical URL / accepted pattern | Current route guard | Personas | Primary job | Requirement / AC | Executable evidence | Current |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `chat` | `/`; `/?view=chat` is normalized to `/` | authenticated shell; submit uses `canCreateChat` | `standard-user`, `answer-editor`, `operator`, `system-admin` | `JOB-UI-CHAT`: ask → processing → answer/refusal → citation/follow-up/escalation | `FR-003`〜`FR-005`, `FR-009`, `FR-042`, `FR-043`, `FR-094`, `FR-095`, `SQ-016`; `AC-FR042-001`, `AC-FR043-003`, `AC-FR094-001`, `AC-FR095-001` | `E2E-VIEW-CHAT-001`, planned `E2E-UI-STATE-001` | partial: desktop/390px evidence exists; full state/mobile/a11y journey missing |
-| `assignee` | `/?view=assignee` | `canAnswerQuestions` | `answer-editor`, `system-admin` | `JOB-UI-ASSIGNEE`: filter/select/answer/resolve | `FR-031`〜`FR-033`, `FR-094`〜`FR-098`, `SQ-016`; `AC-FR031-001`, `AC-FR032-004`, `AC-FR094-003` | `E2E-VIEW-ASSIGNEE-001`, planned `E2E-UI-STATE-001` | partial: visual exists; mobile/full handoff/state evidence missing |
-| `history` | `/?view=history` | no `AppRoutes` guard; data uses own-history boundary | all signed-in personas | `JOB-UI-HISTORY`: search/select/resume/delete own conversation | `FR-022`, `FR-030`, `FR-044`, `FR-094`, `FR-095`, `FR-097`, `SQ-016`; `AC-FR022-002`, `AC-FR030-001`, `AC-FR094-002` | `E2E-VIEW-HISTORY-001` | partial: component logic exists; dedicated E2E and explicit denied state missing |
-| `favorites` | `/?view=favorites` | no `AppRoutes` guard; data uses own-history boundary | all signed-in personas | `JOB-UI-FAVORITES`: inspect and resume favorited own conversation | `FR-028`, `FR-094`, `FR-095`, `FR-097`, `SQ-016`; `AC-FR028-004`, `AC-FR094-002` | `E2E-VIEW-FAVORITES-001` | partial: feature exists; dedicated E2E missing |
-| `benchmark` | `/?view=benchmark` | `canReadBenchmarkRuns` | `operator`, `system-admin` | `JOB-UI-BENCHMARK`: start/observe/cancel/download authorized run | `FR-010`, `FR-011`, `FR-048`, `FR-094`〜`FR-098`, `SQ-016`; `AC-FR048-001`, `AC-FR096-001` | `E2E-VIEW-BENCHMARK-001` | partial: desktop visual/smoke exists; mobile/state/a11y evidence missing |
-| `admin` | `/?view=admin`; section/filter state target TBD by task | `canSeeAdminSettings` composite | `system-admin` | `JOB-UI-ADMIN`: navigate authorized governance/observation section | `FR-024`, `FR-027`, `FR-094`〜`FR-098`, `SQ-016`; `AC-FR024-001`, `AC-FR027-011`, `AC-FR096-001`, `AC-FR097-001` | `E2E-VIEW-ADMIN-001` | partial: desktop visual exists; #344 remaining task open |
-| `documents` | `/documents`; `/documents/groups/:id`; `/documents/:id`; `/documents/reindex-migrations/:id`; `?view=documents&...` accepted | `canReadDocuments` | `operator`, `system-admin` | `JOB-UI-DOCUMENTS`: find/select/upload/share/manage/ask within effective permission | `FR-001`, `FR-002`, `FR-038`, `FR-064`, `FR-094`〜`FR-098`, `SQ-016`; `AC-FR001-001`, `AC-FR001-008`, `AC-FR094-002`, `AC-FR097-001` | `E2E-VIEW-DOCUMENTS-001`, planned `E2E-UI-DOCUMENTS-001` | partial: path/query hydration and visual exist; 143-operation IA/full restoration missing |
-| `profile` | `/?view=profile` | authenticated shell | all | `JOB-UI-PROFILE`: inspect/update own settings and sign out | `FR-051`, `FR-094`, `FR-095`, `SQ-016`; `AC-FR094-001`, `AC-FR094-002` | `E2E-VIEW-PROFILE-001` | conflict: desktop view exists; <=720px account button hidden; settings persistence task open |
+| `chat` | `/`; `/?view=chat` is normalized to `/` | authenticated shell; submit uses `canCreateChat` | `standard-user`, `answer-editor`, `operator`, `system-admin` | `JOB-UI-CHAT`: ask → processing → answer/refusal → citation/follow-up/escalation | `FR-003`〜`FR-005`, `FR-009`, `FR-042`, `FR-043`, `FR-094`, `FR-095`, `SQ-016`; `AC-FR042-001`, `AC-FR043-003`, `AC-FR094-001`, `AC-FR095-001` | `E2E-VIEW-CHAT-001`, `E2E-UI-NAV-001`, `E2E-UI-ROUTE-001`, planned `E2E-UI-STATE-001` | partial: mobile route/navigation automation exists; full state and manual a11y journey missing |
+| `assignee` | `/?view=assignee` | `canAnswerQuestions` | `answer-editor`, `system-admin` | `JOB-UI-ASSIGNEE`: filter/select/answer/resolve | `FR-031`〜`FR-033`, `FR-094`〜`FR-098`, `SQ-016`; `AC-FR031-001`, `AC-FR032-004`, `AC-FR094-003` | `E2E-VIEW-ASSIGNEE-001`, `E2E-UI-NAV-002`, `E2E-UI-ROUTE-002`, planned `E2E-UI-STATE-001` | partial: mobile reachability/denied route automation exists; full handoff/state/manual evidence missing |
+| `history` | `/?view=history` | no `AppRoutes` guard; data uses own-history boundary | all signed-in personas | `JOB-UI-HISTORY`: search/select/resume/delete own conversation | `FR-022`, `FR-030`, `FR-044`, `FR-094`, `FR-095`, `FR-097`, `SQ-016`; `AC-FR022-002`, `AC-FR030-001`, `AC-FR094-002` | `E2E-VIEW-HISTORY-001`, `E2E-UI-NAV-001`, `E2E-UI-ROUTE-001` | partial: mobile reachability and browser-history restoration exist; full state journey missing |
+| `favorites` | `/?view=favorites` | no `AppRoutes` guard; data uses own-history boundary | all signed-in personas | `JOB-UI-FAVORITES`: inspect and resume favorited own conversation | `FR-028`, `FR-094`, `FR-095`, `FR-097`, `SQ-016`; `AC-FR028-004`, `AC-FR094-002` | `E2E-VIEW-FAVORITES-001`, `E2E-UI-NAV-001`, `E2E-UI-ROUTE-001` | partial: mobile reachability and browser-history restoration exist; favorite resume journey missing |
+| `benchmark` | `/?view=benchmark` | `canReadBenchmarkRuns` | `operator`, `system-admin` | `JOB-UI-BENCHMARK`: start/observe/cancel/download authorized run | `FR-010`, `FR-011`, `FR-048`, `FR-094`〜`FR-098`, `SQ-016`; `AC-FR048-001`, `AC-FR096-001` | `E2E-VIEW-BENCHMARK-001`, `E2E-UI-NAV-002`, `E2E-UI-ROUTE-002` | partial: mobile reachability/denied route automation exists; state/manual a11y evidence missing |
+| `admin` | `/?view=admin`; section/filter state target TBD by task | `canSeeAdminSettings` composite | `system-admin` | `JOB-UI-ADMIN`: navigate authorized governance/observation section | `FR-024`, `FR-027`, `FR-094`〜`FR-098`, `SQ-016`; `AC-FR024-001`, `AC-FR027-011`, `AC-FR096-001`, `AC-FR097-001` | `E2E-VIEW-ADMIN-001`, `E2E-UI-NAV-002`, `E2E-UI-ROUTE-002` | partial: mobile reachability/non-disclosing denied route exist; #344 remaining task open |
+| `documents` | `/documents`; `/documents/groups/:id`; `/documents/:id`; `/documents/reindex-migrations/:id`; `?view=documents&...` accepted and normalized | `canReadDocuments` | `operator`, `system-admin` | `JOB-UI-DOCUMENTS`: find/select/upload/share/manage/ask within effective permission | `FR-001`, `FR-002`, `FR-038`, `FR-064`, `FR-094`〜`FR-098`, `SQ-016`; `AC-FR001-001`, `AC-FR001-008`, `AC-FR094-002`, `AC-FR097-001` | `E2E-VIEW-DOCUMENTS-001`, `E2E-UI-NAV-002`, `E2E-UI-ROUTE-001`, `E2E-UI-ROUTE-002`, planned `E2E-UI-DOCUMENTS-001` | partial: canonical path/query reload and denied route exist; 143-operation IA/full restoration missing |
+| `profile` | `/?view=profile` | authenticated shell | all | `JOB-UI-PROFILE`: inspect/update own settings and sign out | `FR-051`, `FR-094`, `FR-095`, `SQ-016`; `AC-FR094-001`, `AC-FR094-002` | `E2E-VIEW-PROFILE-001`, `E2E-UI-NAV-001`, `E2E-UI-NAV-002`, `E2E-UI-ROUTE-001` | partial: <=720px menu reachability is automated; settings persistence and manual a11y remain |
 
 ## URL と browser history policy
 
-### Confirmed current behavior
+### Confirmed production behavior
 
-- `readInitialAppViewFromLocation` reads `?view=` and document paths.
-- document URL state reads folder/document/migration/query/type/status/group/sort.
-- `popstate` hydrates view and document URL state.
-- all writes use `history.replaceState`; navigation does not create a user-action history stack.
-
-### Target contract (`inferred`, subject to `FR-094` implementation)
-
-1. Direct user navigation between AppViews uses `pushState` when it creates a meaningful history step.
-2. Normalization, transient filter typing, or equivalent in-place state correction uses `replaceState`.
-3. `popstate` is read-only restoration and must not immediately create a new entry.
-4. Unknown/invalid/unauthorized state is normalized to an explicit safe state; protected data is not fetched first.
-5. Canonical URL remains backward-compatible with `?view=` in the first implementation. A path migration requires an ADR and CloudFront/deploy impact review.
-6. Restorable state must not put secrets, raw prompt/chunk text, internal memo, or unauthorized identifiers into the URL.
+1. `parseAppRoute` reads exact `?view=` values and safe document paths; legacy `?view=chat|documents`、unknown/obsolete/conflicting view、malformed/path-escaping document segment are classified before normalization.
+2. Direct user navigation between AppViews uses `pushState` when it creates a meaningful history step.
+3. Normalization、permission recovery、document filter/selection serialization use `replaceState` and do not create an extra user-action history step.
+4. `popstate` restores view and document URL state without creating a new entry; reload/direct URL are covered by route E2E.
+5. Permissions resolve before a protected view renders. Denied views are replaced with canonical `/`、a programmatic permission notice、and the allowed chat region; protected admin requests are absent in E2E evidence.
+6. Canonical view URL remains backward-compatible with `?view=`. Documents use `/documents`、`/documents/groups/:id`、`/documents/:id`、or `/documents/reindex-migrations/:id` plus approved query state; this change does not alter CloudFront entrypoint behavior.
+7. Route state is limited to existing view/document identifiers and filter values; secrets、raw prompt/chunk text、internal memo are not newly serialized.
 
 ## Common state contract
 
@@ -232,8 +226,8 @@ Checkboxes are checked only for evidence actually obtained.
 
 | Gap | Requirement | Task |
 | --- | --- | --- |
-| mobile account/profile and max-permission navigation unreachable/overflow risk | `FR-094`, `SQ-016` | `tasks/todo/20260714-issue-345-mobile-navigation.md` |
-| replace-only history and denied deep-link behavior | `FR-094` | `tasks/todo/20260714-issue-345-url-history-routing.md` |
+| mobile navigation automation completed; representative screen reader、400% browser zoom、safe-area/virtual-keyboard real-device evidence remains | `FR-094`, `SQ-016` | `tasks/do/20260714-issue-345-mobile-navigation.md`, `tasks/todo/20260714-issue-345-manual-a11y-evidence.md` |
+| URL/history/denied-route automation completed; dependent PR evidence and task lifecycle remain | `FR-094` | `tasks/do/20260714-issue-345-url-history-routing.md` |
 | unstructured global error/common states | `FR-095` | `tasks/todo/20260714-issue-345-shared-ui-state-contract.md` |
 | target/risk/result feedback inconsistent | `FR-096` | `tasks/todo/20260714-issue-345-risky-operation-feedback.md` |
 | documents 143-interaction density and state restoration | `FR-097`, `FR-098` | `tasks/todo/20260714-issue-345-document-workspace-context.md` |
@@ -248,7 +242,7 @@ Checkboxes are checked only for evidence actually obtained.
 
 - `OQ-UI-001`: Firefox/WebKit every-PR vs scheduled scope. Proposed default: desktop/mobile Chromium on PR, representative Firefox/WebKit scheduled until measured stable.
 - `OQ-UI-002`: representative screen readers. Proposed default: NVDA + current Chrome on Windows and VoiceOver + current Safari on iOS/macOS for primary journeys.
-- `OQ-UI-003`: path routing migration. Proposed default: retain backward-compatible `?view=` first; any path migration requires routing/deploy ADR.
+- `OQ-UI-003` resolved 2026-07-14: retain backward-compatible `?view=` for AppView routes and the existing document path family; no CloudFront/deploy routing migration is included.
 - `OQ-UI-004`: visual PR-required set. Proposed default: login, chat empty/answer, documents, questions, admin at desktop and mobile; expand after flake/runtime evidence.
 
 No proposed default is recorded as executed evidence until its task produces the required result.

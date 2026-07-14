@@ -18,7 +18,7 @@
 | 性能テスト | benchmark | /?view=benchmark (query-state) | [性能テスト](web-features/benchmark.md) | BenchmarkWorkspace | canReadBenchmarkRuns | operator, system-admin<br>JOB-UI-BENCHMARK: benchmark run を開始・監視・停止し、成果物を確認する | FR-094: AC-FR094-003<br>FR-095: AC-FR095-001, AC-FR095-005<br>FR-096: AC-FR096-002, AC-FR096-004 | E2E-VIEW-BENCHMARK-001 (implemented) | partial | チャットへ戻る、テスト種別、benchmark suite を取得できません、データセット、モデル / Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku、modelId ほか 4 件 | confirmed |
 | 管理者設定 | admin | /?view=admin (query-state) | [管理](web-features/admin.md) | AdminWorkspace | canSeeAdminSettings | system-admin<br>JOB-UI-ADMIN: 管理対象の source/as-of/context を確認して許可された governance 操作を行う | FR-094: AC-FR094-003<br>FR-095: AC-FR095-004, AC-FR095-005<br>FR-096: AC-FR096-005<br>FR-097: AC-FR097-001, AC-FR097-002<br>FR-098: AC-FR098-003 | E2E-VIEW-ADMIN-001 (implemented) | partial | チャットへ戻る、更新、管理対象ユーザー作成、メール、表示名、任意 ほか 21 件 | confirmed |
 | ドキュメント | documents | /documents (path-query-state) | [ドキュメント](web-features/documents.md) | DocumentWorkspace | canReadDocuments | operator, system-admin<br>JOB-UI-DOCUMENTS: 許可された文書を発見・登録・共有・移動し、取り込みと索引状態を追う | FR-094: AC-FR094-002, AC-FR094-003<br>FR-095: AC-FR095-004, AC-FR095-005<br>FR-096: AC-FR096-001, AC-FR096-002<br>FR-097: AC-FR097-001, AC-FR097-003<br>FR-098: AC-FR098-001, AC-FR098-005 | E2E-VIEW-DOCUMENTS-001 (implemented) | partial | 前の画面へ戻る、フォルダ設定を閉じる、ファイル名: / 現在の権限: / 継承: / 共有先種別 / user / group / 共有先ID / 権限 / deny / readOnly / f…、削除、共有先種別 / user / group、documentSharePrincipalType ほか 101 件 | confirmed |
-| 個人設定 | profile | /?view=profile (query-state) | [アプリケーション枠](web-features/app.md) | PersonalSettingsView | - | standard-user, answer-editor, operator, system-admin<br>JOB-UI-PROFILE: 本人の設定状態を確認・変更し、安全に sign out する | FR-094: AC-FR094-001, AC-FR094-004<br>FR-095: AC-FR095-003 | E2E-VIEW-PROFILE-001 (implemented) | partial | チャットへ戻る、送信キー / Enterで送信 / Ctrl+Enterで送信、submitShortcut、enter、ctrlEnter、サインアウト ほか 11 件 | confirmed |
+| 個人設定 | profile | /?view=profile (query-state) | [アプリケーション枠](web-features/app.md) | PersonalSettingsView | - | standard-user, answer-editor, operator, system-admin<br>JOB-UI-PROFILE: 本人の設定状態を確認・変更し、安全に sign out する | FR-094: AC-FR094-001, AC-FR094-004<br>FR-095: AC-FR095-003 | E2E-VIEW-PROFILE-001 (implemented) | partial | チャットへ戻る、送信キー / Enterで送信 / Ctrl+Enterで送信、submitShortcut、enter、ctrlEnter、サインアウト ほか 4 件 | confirmed |
 
 ## 画面ごとの説明
 
@@ -154,6 +154,6 @@
 - 要件・AC: `FR-094` (`AC-FR094-001`, `AC-FR094-004`) / `FR-095` (`AC-FR095-003`)
 - verification: `E2E-VIEW-PROFILE-001` (implemented)
 - 実装状態: `partial`
-- 未完了 task: `tasks/todo/20260714-issue-345-mobile-navigation.md`, `tasks/todo/20260713-2301-user-preferences.md`
+- 未完了 task: `tasks/todo/20260713-2301-user-preferences.md`
 - 画面の意味: 個人設定。送信ショートカットやサインアウトなど個人単位の設定を扱います。
-- 主要操作: チャットへ戻る、送信キー / Enterで送信 / Ctrl+Enterで送信、submitShortcut、enter、ctrlEnter、サインアウト、ホーム、チャット、担当者対応、履歴 ほか 7 件
+- 主要操作: チャットへ戻る、送信キー / Enterで送信 / Ctrl+Enterで送信、submitShortcut、enter、ctrlEnter、サインアウト、ホーム、個人設定、デバッグモード、新しい会話

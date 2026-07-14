@@ -591,7 +591,6 @@
           "apps/web/src/app/components/PersonalSettingsView.tsx"
         ],
         "gapTasks": [
-          "tasks/todo/20260714-issue-345-mobile-navigation.md",
           "tasks/todo/20260713-2301-user-preferences.md"
         ]
       }
@@ -621,7 +620,7 @@
         "profile"
       ],
       "componentCount": 7,
-      "interactionCount": 18
+      "interactionCount": 15
     },
     {
       "feature": "auth",
@@ -776,10 +775,13 @@
         "RailNav"
       ],
       "jsxUsages": [
+        "AccountButton",
+        "DestinationButtons",
         "Icon",
         "a",
         "aside",
         "button",
+        "div",
         "nav",
         "span"
       ],
@@ -2044,9 +2046,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/app/components/RailNav.tsx:24:a",
+      "id": "apps/web/src/app/components/RailNav.tsx:82:a",
       "file": "apps/web/src/app/components/RailNav.tsx",
-      "line": 24,
+      "line": 82,
       "feature": "app",
       "component": "RailNav",
       "element": "a",
@@ -2071,21 +2073,54 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/app/components/RailNav.tsx:28:button",
+      "id": "apps/web/src/app/components/RailNav.tsx:90:AccountButton",
       "file": "apps/web/src/app/components/RailNav.tsx",
-      "line": 28,
+      "line": 90,
+      "feature": "app",
+      "component": "RailNav",
+      "element": "AccountButton",
+      "isIntrinsic": false,
+      "label": "未推定",
+      "a11y": {
+        "accessibleName": "未推定",
+        "accessibleNameSource": "missing",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onSelect",
+          "value": "() => onChangeView(\"profile\")"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "onSelect",
+          "value": "() => onChangeView(\"profile\")"
+        }
+      ],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/app/components/RailNav.tsx:97:button",
+      "file": "apps/web/src/app/components/RailNav.tsx",
+      "line": 97,
       "feature": "app",
       "component": "RailNav",
       "element": "button",
       "isIntrinsic": true,
-      "label": "チャット",
+      "label": "mobileMenuOpen ? \"メニューを閉じる\" : \"メニューを開く\"",
       "a11y": {
-        "accessibleName": "チャット",
-        "accessibleNameSource": "visible-text",
+        "accessibleName": "mobileMenuOpen ? \"メニューを閉じる\" : \"メニューを開く\"",
+        "accessibleNameSource": "aria-label",
         "descriptionRefs": "-",
         "role": "-",
         "state": [
-          "aria-current=activeView === \"chat\" ? \"page\" : undefined"
+          "aria-expanded=mobileMenuOpen",
+          "aria-controls=mobileMenuId"
         ],
         "status": "ok",
         "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
@@ -2093,7 +2128,89 @@
       "handlers": [
         {
           "name": "onClick",
-          "value": "() => onChangeView(\"chat\")"
+          "value": "() => setMobileMenuOpen((current) => !current)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "aria-controls",
+          "value": "mobileMenuId"
+        },
+        {
+          "name": "aria-expanded",
+          "value": "mobileMenuOpen"
+        },
+        {
+          "name": "aria-label",
+          "value": "mobileMenuOpen ? \"メニューを閉じる\" : \"メニューを開く\""
+        },
+        {
+          "name": "onClick",
+          "value": "() => setMobileMenuOpen((current) => !current)"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/app/components/RailNav.tsx:115:AccountButton",
+      "file": "apps/web/src/app/components/RailNav.tsx",
+      "line": 115,
+      "feature": "app",
+      "component": "RailNav",
+      "element": "AccountButton",
+      "isIntrinsic": false,
+      "label": "未推定",
+      "a11y": {
+        "accessibleName": "未推定",
+        "accessibleNameSource": "missing",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onSelect",
+          "value": "() => selectMobileView(\"profile\")"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "onSelect",
+          "value": "() => selectMobileView(\"profile\")"
+        }
+      ],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/app/components/RailNav.tsx:137:button",
+      "file": "apps/web/src/app/components/RailNav.tsx",
+      "line": 137,
+      "feature": "app",
+      "component": "DestinationButtons",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "destination.label",
+      "a11y": {
+        "accessibleName": "destination.label",
+        "accessibleNameSource": "title",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "aria-current=activeView === destination.view ? \"page\" : undefined"
+        ],
+        "status": "warning",
+        "reason": "アイコン中心の操作は aria-label または aria-labelledby で用途を明示してください。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => onSelect(destination.view)"
         }
       ],
       "attributes": [
@@ -2103,301 +2220,25 @@
         },
         {
           "name": "title",
-          "value": "チャット"
+          "value": "destination.label"
         },
         {
           "name": "aria-current",
-          "value": "activeView === \"chat\" ? \"page\" : undefined"
+          "value": "activeView === destination.view ? \"page\" : undefined"
         },
         {
           "name": "onClick",
-          "value": "() => onChangeView(\"chat\")"
+          "value": "() => onSelect(destination.view)"
         }
       ],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/app/components/RailNav.tsx:33:button",
+      "id": "apps/web/src/app/components/RailNav.tsx:163:button",
       "file": "apps/web/src/app/components/RailNav.tsx",
-      "line": 33,
+      "line": 163,
       "feature": "app",
-      "component": "RailNav",
-      "element": "button",
-      "isIntrinsic": true,
-      "label": "担当者対応",
-      "a11y": {
-        "accessibleName": "担当者対応",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [
-          "aria-current=activeView === \"assignee\" ? \"page\" : undefined"
-        ],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [
-        {
-          "name": "onClick",
-          "value": "() => onChangeView(\"assignee\")"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "type",
-          "value": "button"
-        },
-        {
-          "name": "title",
-          "value": "担当者対応"
-        },
-        {
-          "name": "aria-current",
-          "value": "activeView === \"assignee\" ? \"page\" : undefined"
-        },
-        {
-          "name": "onClick",
-          "value": "() => onChangeView(\"assignee\")"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/app/components/RailNav.tsx:38:button",
-      "file": "apps/web/src/app/components/RailNav.tsx",
-      "line": 38,
-      "feature": "app",
-      "component": "RailNav",
-      "element": "button",
-      "isIntrinsic": true,
-      "label": "履歴",
-      "a11y": {
-        "accessibleName": "履歴",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [
-          "aria-current=activeView === \"history\" ? \"page\" : undefined"
-        ],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [
-        {
-          "name": "onClick",
-          "value": "() => onChangeView(\"history\")"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "type",
-          "value": "button"
-        },
-        {
-          "name": "title",
-          "value": "履歴"
-        },
-        {
-          "name": "aria-current",
-          "value": "activeView === \"history\" ? \"page\" : undefined"
-        },
-        {
-          "name": "onClick",
-          "value": "() => onChangeView(\"history\")"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/app/components/RailNav.tsx:43:button",
-      "file": "apps/web/src/app/components/RailNav.tsx",
-      "line": 43,
-      "feature": "app",
-      "component": "RailNav",
-      "element": "button",
-      "isIntrinsic": true,
-      "label": "性能テスト",
-      "a11y": {
-        "accessibleName": "性能テスト",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [
-          "aria-current=activeView === \"benchmark\" ? \"page\" : undefined"
-        ],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [
-        {
-          "name": "onClick",
-          "value": "() => onChangeView(\"benchmark\")"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "type",
-          "value": "button"
-        },
-        {
-          "name": "title",
-          "value": "性能テスト"
-        },
-        {
-          "name": "aria-current",
-          "value": "activeView === \"benchmark\" ? \"page\" : undefined"
-        },
-        {
-          "name": "onClick",
-          "value": "() => onChangeView(\"benchmark\")"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/app/components/RailNav.tsx:48:button",
-      "file": "apps/web/src/app/components/RailNav.tsx",
-      "line": 48,
-      "feature": "app",
-      "component": "RailNav",
-      "element": "button",
-      "isIntrinsic": true,
-      "label": "お気に入り",
-      "a11y": {
-        "accessibleName": "お気に入り",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [
-          "aria-current=activeView === \"favorites\" ? \"page\" : undefined"
-        ],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [
-        {
-          "name": "onClick",
-          "value": "() => onChangeView(\"favorites\")"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "type",
-          "value": "button"
-        },
-        {
-          "name": "title",
-          "value": "お気に入り"
-        },
-        {
-          "name": "aria-current",
-          "value": "activeView === \"favorites\" ? \"page\" : undefined"
-        },
-        {
-          "name": "onClick",
-          "value": "() => onChangeView(\"favorites\")"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/app/components/RailNav.tsx:53:button",
-      "file": "apps/web/src/app/components/RailNav.tsx",
-      "line": 53,
-      "feature": "app",
-      "component": "RailNav",
-      "element": "button",
-      "isIntrinsic": true,
-      "label": "ドキュメント",
-      "a11y": {
-        "accessibleName": "ドキュメント",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [
-          "aria-current=activeView === \"documents\" ? \"page\" : undefined"
-        ],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [
-        {
-          "name": "onClick",
-          "value": "() => onChangeView(\"documents\")"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "type",
-          "value": "button"
-        },
-        {
-          "name": "title",
-          "value": "ドキュメント"
-        },
-        {
-          "name": "aria-current",
-          "value": "activeView === \"documents\" ? \"page\" : undefined"
-        },
-        {
-          "name": "onClick",
-          "value": "() => onChangeView(\"documents\")"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/app/components/RailNav.tsx:59:button",
-      "file": "apps/web/src/app/components/RailNav.tsx",
-      "line": 59,
-      "feature": "app",
-      "component": "RailNav",
-      "element": "button",
-      "isIntrinsic": true,
-      "label": "管理者設定",
-      "a11y": {
-        "accessibleName": "管理者設定",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [
-          "aria-current=activeView === \"admin\" ? \"page\" : undefined"
-        ],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [
-        {
-          "name": "onClick",
-          "value": "() => onChangeView(\"admin\")"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "type",
-          "value": "button"
-        },
-        {
-          "name": "title",
-          "value": "管理者設定"
-        },
-        {
-          "name": "aria-current",
-          "value": "activeView === \"admin\" ? \"page\" : undefined"
-        },
-        {
-          "name": "onClick",
-          "value": "() => onChangeView(\"admin\")"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/app/components/RailNav.tsx:65:button",
-      "file": "apps/web/src/app/components/RailNav.tsx",
-      "line": 65,
-      "feature": "app",
-      "component": "RailNav",
+      "component": "AccountButton",
       "element": "button",
       "isIntrinsic": true,
       "label": "個人設定",
@@ -2407,7 +2248,7 @@
         "descriptionRefs": "-",
         "role": "-",
         "state": [
-          "aria-current=activeView === \"profile\" ? \"page\" : undefined"
+          "aria-current=active ? \"page\" : undefined"
         ],
         "status": "ok",
         "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
@@ -2415,7 +2256,7 @@
       "handlers": [
         {
           "name": "onClick",
-          "value": "() => onChangeView(\"profile\")"
+          "value": "onSelect"
         }
       ],
       "attributes": [
@@ -2433,11 +2274,11 @@
         },
         {
           "name": "aria-current",
-          "value": "activeView === \"profile\" ? \"page\" : undefined"
+          "value": "active ? \"page\" : undefined"
         },
         {
           "name": "onClick",
-          "value": "() => onChangeView(\"profile\")"
+          "value": "onSelect"
         }
       ],
       "certainty": "confirmed"
@@ -13517,9 +13358,9 @@
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/shared/components/Icon.tsx:28:svg",
+      "id": "apps/web/src/shared/components/Icon.tsx:29:svg",
       "file": "apps/web/src/shared/components/Icon.tsx",
-      "line": 28,
+      "line": 29,
       "feature": "shared",
       "component": "Icon",
       "element": "svg",
@@ -13774,23 +13615,31 @@
       },
       {
         "id": "E2E-UI-NAV-001",
-        "status": "planned",
-        "task": "tasks/todo/20260714-issue-345-mobile-navigation.md"
+        "status": "implemented",
+        "evidence": [
+          "apps/web/e2e/visual-regression.spec.ts"
+        ]
       },
       {
         "id": "E2E-UI-NAV-002",
-        "status": "planned",
-        "task": "tasks/todo/20260714-issue-345-mobile-navigation.md"
+        "status": "implemented",
+        "evidence": [
+          "apps/web/e2e/visual-regression.spec.ts"
+        ]
       },
       {
         "id": "E2E-UI-ROUTE-001",
-        "status": "planned",
-        "task": "tasks/todo/20260714-issue-345-url-history-routing.md"
+        "status": "implemented",
+        "evidence": [
+          "apps/web/e2e/visual-regression.spec.ts"
+        ]
       },
       {
         "id": "E2E-UI-ROUTE-002",
-        "status": "planned",
-        "task": "tasks/todo/20260714-issue-345-url-history-routing.md"
+        "status": "implemented",
+        "evidence": [
+          "apps/web/e2e/visual-regression.spec.ts"
+        ]
       },
       {
         "id": "E2E-UI-STATE-001",

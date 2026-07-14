@@ -25,21 +25,39 @@ import { useDocuments } from "../../features/documents/hooks/useDocuments.js"
 import { useFavorites } from "../../features/favorites/hooks/useFavorites.js"
 import { useConversationHistory } from "../../features/history/hooks/useConversationHistory.js"
 import { useQuestions } from "../../features/questions/hooks/useQuestions.js"
+import {
+  buildAppViewUrl,
+  canAccessAppView,
+  decodeRouteSegment,
+  normalizeAppRouteUrl,
+  parseAppRoute,
+  type AppRouteIssue,
+  type ParsedAppRoute
+} from "../routing/appRoute.js"
 
 const defaultModelId = "amazon.nova-lite-v1:0"
 const defaultEmbeddingModelId = "amazon.titan-embed-text-v2:0"
 
+export type AppRouteNotice = {
+  kind: "permission" | "invalid"
+  message: string
+}
+
 export function useAppShellState({ authSession, onSignOut }: { authSession: AuthSession; onSignOut: () => void }) {
   const { currentUser, currentUserError } = useCurrentUser(authSession)
-  const [activeView, setActiveViewState] = useState<AppView>(() => readInitialAppViewFromLocation())
+  const [initialRoute] = useState<ParsedAppRoute>(() => readAppRouteFromLocation())
+  const [activeView, setActiveViewState] = useState<AppView>(initialRoute.view)
   const [documentUrlState, setDocumentUrlState] = useState<DocumentWorkspaceUrlState>(() => readDocumentWorkspaceUrlStateFromLocation())
+  const [routeNotice, setRouteNotice] = useState<AppRouteNotice | null>(() => routeNoticeForIssue(initialRoute.issue))
   const [chatDocumentScope, setChatDocumentScope] = useState<ChatDocumentScope>(null)
   const setActiveView = useCallback((nextView: AppView) => {
     setActiveViewState(nextView)
-    if (nextView !== "documents") writeNonDocumentViewToLocation(nextView)
+    setRouteNotice(null)
+    writeAppViewToLocation(nextView, "push")
   }, [])
   const onDocumentUrlStateChange = useCallback((nextState: DocumentWorkspaceUrlState) => {
     setDocumentUrlState(nextState)
+    setRouteNotice(null)
     writeDocumentWorkspaceUrlStateToLocation(nextState)
   }, [])
   const [modelId, setModelId] = useState(defaultModelId)
@@ -55,10 +73,20 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
   const loading = pendingApiCalls > 0
 
   useEffect(() => {
+    if (typeof window === "undefined" || !initialRoute.needsNormalization) return
+    writeRelativeUrl(normalizeAppRouteUrl(window.location.href, initialRoute), "replace")
+  }, [initialRoute])
+
+  useEffect(() => {
     if (typeof window === "undefined") return
     const onPopState = () => {
-      setActiveViewState(readInitialAppViewFromLocation())
+      const nextRoute = readAppRouteFromLocation()
+      setActiveViewState(nextRoute.view)
       setDocumentUrlState(readDocumentWorkspaceUrlStateFromLocation())
+      setRouteNotice(routeNoticeForIssue(nextRoute.issue))
+      if (nextRoute.needsNormalization) {
+        writeRelativeUrl(normalizeAppRouteUrl(window.location.href, nextRoute), "replace")
+      }
     }
     window.addEventListener("popstate", onPopState)
     return () => window.removeEventListener("popstate", onPopState)
@@ -351,11 +379,15 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
 
   useEffect(() => {
     if (!currentUser) return
-    if (activeView === "assignee" && !canAnswerQuestions) setActiveView("chat")
-    if (activeView === "benchmark" && !canReadBenchmarkRuns) setActiveView("chat")
-    if (activeView === "documents" && !canReadDocuments) setActiveView("chat")
-    if (activeView === "admin" && !canSeeAdminSettings) setActiveView("chat")
-  }, [activeView, canAnswerQuestions, canReadBenchmarkRuns, canReadDocuments, canSeeAdminSettings, currentUser, setActiveView])
+    const access = { canAnswerQuestions, canReadBenchmarkRuns, canReadDocuments, canSeeAdminSettings }
+    if (canAccessAppView(activeView, access)) return
+    setRouteNotice({
+      kind: "permission",
+      message: "このURLの画面を表示する権限を確認できなかったため、利用可能な開始画面へ移動しました。"
+    })
+    setActiveViewState("chat")
+    writeAppViewToLocation("chat", "replace")
+  }, [activeView, canAnswerQuestions, canReadBenchmarkRuns, canReadDocuments, canSeeAdminSettings, currentUser])
 
   useEffect(() => {
     if (!canReadDebugRuns && debugMode) setDebugMode(false)
@@ -440,6 +472,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
 
   const routeProps: AppRoutesProps = {
     activeView,
+    permissionsResolved: currentUser !== null,
     canAnswerQuestions,
     canReadBenchmarkRuns,
     canReadDocuments,
@@ -653,6 +686,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
   return {
     error,
     loading,
+    routeNotice,
     railProps,
     topBarProps,
     routeProps
@@ -660,14 +694,9 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
 }
 
 const documentSortKeys = new Set(["updatedDesc", "updatedAsc", "fileNameAsc", "chunkDesc", "typeAsc"])
-const appViews = new Set(["chat", "assignee", "history", "favorites", "benchmark", "admin", "documents", "profile"])
-
-function readInitialAppViewFromLocation(): AppView {
-  if (typeof window === "undefined") return "chat"
-  const view = new URLSearchParams(window.location.search).get("view")
-  if (view && appViews.has(view)) return view as AppView
-  if (window.location.pathname === "/documents" || window.location.pathname.startsWith("/documents/")) return "documents"
-  return "chat"
+function readAppRouteFromLocation(): ParsedAppRoute {
+  if (typeof window === "undefined") return { view: "chat", needsNormalization: false }
+  return parseAppRoute(window.location)
 }
 
 function readDocumentWorkspaceUrlStateFromLocation(): DocumentWorkspaceUrlState {
@@ -690,39 +719,68 @@ function readDocumentWorkspaceUrlStateFromLocation(): DocumentWorkspaceUrlState 
 
 function readDocumentWorkspacePathState(pathname: string): Pick<DocumentWorkspaceUrlState, "folderId" | "documentId" | "migrationId"> {
   const groupsMatch = pathname.match(/^\/documents\/groups\/([^/]+)$/)
-  if (groupsMatch?.[1]) return { folderId: decodeURIComponent(groupsMatch[1]) }
+  const folderId = groupsMatch?.[1] ? decodeRouteSegment(groupsMatch[1]) : undefined
+  if (folderId) return { folderId }
   const migrationMatch = pathname.match(/^\/documents\/reindex-migrations\/([^/]+)$/)
-  if (migrationMatch?.[1]) return { migrationId: decodeURIComponent(migrationMatch[1]) }
+  const migrationId = migrationMatch?.[1] ? decodeRouteSegment(migrationMatch[1]) : undefined
+  if (migrationId) return { migrationId }
   const documentMatch = pathname.match(/^\/documents\/([^/]+)$/)
-  if (documentMatch?.[1] && documentMatch[1] !== "reindex-migrations") return { documentId: decodeURIComponent(documentMatch[1]) }
+  const documentId = documentMatch?.[1] ? decodeRouteSegment(documentMatch[1]) : undefined
+  if (documentId && documentMatch?.[1] !== "reindex-migrations" && documentMatch?.[1] !== "groups") return { documentId }
   return {}
 }
 
 function writeDocumentWorkspaceUrlStateToLocation(state: DocumentWorkspaceUrlState) {
   if (typeof window === "undefined") return
   const url = new URL(window.location.href)
-  url.searchParams.set("view", "documents")
-  setSearchParam(url, "group", state.folderId)
-  setSearchParam(url, "document", state.documentId)
-  setSearchParam(url, "migration", state.migrationId)
+  const pathState = documentWorkspacePathState(state)
+  url.pathname = pathState.pathname
+  url.searchParams.delete("view")
+  setSearchParam(url, "group", pathState.pathKey === "folderId" ? undefined : state.folderId)
+  setSearchParam(url, "document", pathState.pathKey === "documentId" ? undefined : state.documentId)
+  setSearchParam(url, "migration", pathState.pathKey === "migrationId" ? undefined : state.migrationId)
   setSearchParam(url, "query", state.query)
   setSearchParam(url, "type", state.type)
   setSearchParam(url, "status", state.status)
   setSearchParam(url, "documentGroup", state.groupFilter)
   setSearchParam(url, "sort", state.sort)
-  replaceBrowserUrl(url)
+  writeBrowserUrl(url, "replace")
 }
 
-function writeNonDocumentViewToLocation(view: AppView) {
-  if (typeof window === "undefined") return
-  const url = new URL(window.location.href)
-  if (url.pathname === "/documents" || url.pathname.startsWith("/documents/")) url.pathname = "/"
-  if (view === "chat") url.searchParams.delete("view")
-  else url.searchParams.set("view", view)
-  for (const param of ["group", "document", "migration", "query", "type", "status", "documentGroup", "sort"]) {
-    url.searchParams.delete(param)
+function documentWorkspacePathState(state: DocumentWorkspaceUrlState): {
+  pathname: string
+  pathKey?: "folderId" | "documentId" | "migrationId"
+} {
+  if (state.migrationId) {
+    const migrationId = encodeDocumentPathSegment(state.migrationId)
+    return migrationId
+      ? { pathname: `/documents/reindex-migrations/${migrationId}`, pathKey: "migrationId" }
+      : { pathname: "/documents" }
   }
-  replaceBrowserUrl(url)
+  if (state.documentId) {
+    const documentId = encodeDocumentPathSegment(state.documentId)
+    return documentId
+      ? { pathname: `/documents/${documentId}`, pathKey: "documentId" }
+      : { pathname: "/documents" }
+  }
+  if (state.folderId) {
+    const folderId = encodeDocumentPathSegment(state.folderId)
+    return folderId
+      ? { pathname: `/documents/groups/${folderId}`, pathKey: "folderId" }
+      : { pathname: "/documents" }
+  }
+  return { pathname: "/documents" }
+}
+
+function encodeDocumentPathSegment(value?: string): string | undefined {
+  if (!value) return undefined
+  const encoded = encodeURIComponent(value)
+  return decodeRouteSegment(encoded) ? encoded : undefined
+}
+
+function writeAppViewToLocation(view: AppView, historyMode: "push" | "replace") {
+  if (typeof window === "undefined") return
+  writeRelativeUrl(buildAppViewUrl(window.location.href, view), historyMode)
 }
 
 function setSearchParam(url: URL, key: string, value?: string) {
@@ -730,8 +788,23 @@ function setSearchParam(url: URL, key: string, value?: string) {
   else url.searchParams.delete(key)
 }
 
-function replaceBrowserUrl(url: URL) {
+function writeRelativeUrl(relativeUrl: string, historyMode: "push" | "replace") {
+  if (typeof window === "undefined") return
+  writeBrowserUrl(new URL(relativeUrl, window.location.href), historyMode)
+}
+
+function writeBrowserUrl(url: URL, historyMode: "push" | "replace") {
   const nextUrl = `${url.pathname}${url.search}${url.hash}`
   const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`
-  if (nextUrl !== currentUrl) window.history.replaceState(window.history.state, "", nextUrl)
+  if (nextUrl === currentUrl) return
+  if (historyMode === "push") window.history.pushState(window.history.state, "", nextUrl)
+  else window.history.replaceState(window.history.state, "", nextUrl)
+}
+
+function routeNoticeForIssue(issue?: AppRouteIssue): AppRouteNotice | null {
+  if (!issue) return null
+  return {
+    kind: "invalid",
+    message: "URLの画面指定を確認できなかったため、安全な開始画面または正規URLへ移動しました。"
+  }
 }
