@@ -4,7 +4,7 @@
 - 対象: Issue #345 第4マイルストーン
 - branch: `codex/issue-345-ui-language-primitives`
 - 依存: draft PR #348〜#350（#350 latest CI-success head `1ceafeab`）
-- task: `tasks/do/20260714-issue-345-ui-language-primitives.md`
+- task: `tasks/done/20260714-issue-345-ui-language-primitives.md`
 
 ## 受けた指示
 
@@ -78,6 +78,7 @@ Issue #345 の全体完了へ向けて作業を継続し、repository の worktr
 - production UI の値は API/props/state/config または正直な unavailable state に由来し、test fixture は production fallback と分離している。
 - API route、authorization middleware、RAG retrieval/citation、schema/store を変更していない。
 - benchmark 期待語句、QA sample 固有値、dataset 固有分岐を product implementation に追加していない。
+- draft PR #351、日本語の受け入れ条件コメント（`issuecomment-4967662322`）、セルフレビュー（`issuecomment-4967662591`）を登録後、task を `tasks/done/` へ移動し、正規要件・API trace を同期した。
 
 ## 未対応・制約・リスク
 
@@ -86,4 +87,4 @@ Issue #345 の全体完了へ向けて作業を継続し、repository の worktr
 - `@axe-core/playwright` は devDependency と lockfile のみを変更し、production bundle には追加していない。
 - npm が報告した既存 dependency tree の vulnerability 8件（low 2 / moderate 1 / high 5）は別 scope で、`audit fix` は実施していない。
 - PR #348〜#350 が未 merge のため、本 branch は依存 commits を含む。default branch merge 前に依存解消が必要である。
-- PR 作成、latest CI、acceptance comment、self-review、task の `done` 移動は lifecycle 後半として未完了である。
+- latest GitHub Actions は lifecycle commit push 後に確認するため未確認。成功確認前は merge 不可である。

@@ -74,4 +74,4 @@
 ## 関連文書・task
 
 - `docs/3_設計_DES/21_UI_UX/DES_UI_UX_001.md`
-- `tasks/do/20260714-issue-345-ui-language-primitives.md`
+- `tasks/done/20260714-issue-345-ui-language-primitives.md`

@@ -1,8 +1,8 @@
 # Issue #345 UI 語彙・token・共通 primitive を統一する
 
-保存先: `tasks/do/20260714-issue-345-ui-language-primitives.md`
+保存先: `tasks/done/20260714-issue-345-ui-language-primitives.md`
 
-状態: do
+状態: done
 
 タスク種別: リファクタリング
 
@@ -47,7 +47,16 @@
 
 - [x] semantic metadata/token/primitive contract と representative feature migration が受け入れ条件を満たす。
 - [x] contrast/state/accessible-name、representative visual/axe、Web full checks、docs/inventory が成功する。
-- [ ] `NFR-017` / `DES_UI_UX_001`、trace/generated docs、report、PR acceptance/self-review が同期する。
+- [x] `NFR-017` / `DES_UI_UX_001`、trace/generated docs、report、PR acceptance/self-review が同期する。
+
+## 完了結果
+
+- implementation head: `331dd813`
+- draft PR: #351
+- 受け入れ条件コメント: `issuecomment-4967662322`
+- セルフレビューコメント: `issuecomment-4967662591`
+- PR 作成と日本語コメント後に task を `tasks/done/` へ移動し、正規要件・API trace・report を同じ branch で同期した。
+- latest GitHub Actions は lifecycle commit push 後に確認するため、現時点では実施済みとしない。
 
 ## ドキュメントメンテナンス計画
 

@@ -257,7 +257,7 @@ Checkboxes are checked only for evidence actually obtained.
 | chat/assignee full journey | existing chat/question requirements, `FR-095` | `tasks/todo/20260714-issue-345-chat-assignee-journey.md` |
 | admin remaining governance/a11y/scale | `FR-096`〜`FR-098`, `SQ-016` | `tasks/todo/20260714-1011-admin-ui-governance-quality.md` |
 | cross-screen a11y/responsive violations | `SQ-016` | `tasks/todo/20260714-issue-345-cross-screen-a11y-responsive.md` |
-| representative wording/token/primitive migration implemented; remaining cross-screen brand/layout color and manual/browser evidence | `NFR-017`, `SQ-016`, `NFR-018` | `tasks/do/20260714-issue-345-ui-language-primitives.md`, `tasks/todo/20260714-issue-345-cross-screen-a11y-responsive.md`, `tasks/todo/20260714-issue-345-ui-automated-quality-gates.md`, `tasks/todo/20260714-issue-345-manual-a11y-evidence.md` |
+| representative wording/token/primitive migration implemented; remaining cross-screen brand/layout color and manual/browser evidence | `NFR-017`, `SQ-016`, `NFR-018` | `tasks/done/20260714-issue-345-ui-language-primitives.md`, `tasks/todo/20260714-issue-345-cross-screen-a11y-responsive.md`, `tasks/todo/20260714-issue-345-ui-automated-quality-gates.md`, `tasks/todo/20260714-issue-345-manual-a11y-evidence.md` |
 | required axe/mobile/visual/browser gate missing | `NFR-018` | `tasks/todo/20260714-issue-345-ui-automated-quality-gates.md` |
 | manual screen-reader/zoom/real-device evidence missing | `SQ-016`, `NFR-018` | `tasks/todo/20260714-issue-345-manual-a11y-evidence.md` |
 
