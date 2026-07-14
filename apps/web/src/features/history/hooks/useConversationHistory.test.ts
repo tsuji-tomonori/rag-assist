@@ -74,13 +74,25 @@ describe("useConversationHistory", () => {
         removeFavorite: vi.fn()
       })
     })
-    act(() => result.current.deleteHistoryItem("conv-1"))
-    await act(async () => {
-      await Promise.resolve()
-    })
+    await act(() => result.current.deleteHistoryItem("conv-1"))
 
-    expect(result.current.history).toEqual([])
+    expect(result.current.history).toEqual([expect.objectContaining({ id: "conv-1" })])
     expect(setError).toHaveBeenCalledWith("favorite failed")
     expect(setError).toHaveBeenCalledWith("delete failed")
+  })
+
+  it("確定応答後だけ対象を削除し、通信断では状態を保持する", async () => {
+    const setError = vi.fn()
+    const { result } = renderHook(() => useConversationHistory({ setError }))
+    await act(() => result.current.refreshHistory())
+
+    vi.mocked(deleteConversationHistory).mockRejectedValueOnce(new TypeError("Failed to fetch"))
+    const unknown = await act(() => result.current.deleteHistoryItem("conv-1"))
+    expect(unknown).toMatchObject({ ok: false, status: "unknown" })
+    expect(result.current.history).toHaveLength(1)
+
+    const success = await act(() => result.current.deleteHistoryItem("conv-1"))
+    expect(success).toMatchObject({ ok: true, status: "success" })
+    expect(result.current.history).toEqual([])
   })
 })

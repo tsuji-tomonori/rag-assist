@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { listAccessRoles } from "../api/accessRolesApi.js"
 import { assignUserRoles, createManagedUser, deleteManagedUser, getManagedUserDeletionPreflight, listManagedUsers, suspendManagedUser, unsuspendManagedUser } from "../api/adminUsersApi.js"
 import { createAlias, disableAlias, listAliasAuditLog, listAliases, publishAliases, reviewAlias, updateAlias } from "../api/aliasesApi.js"
@@ -6,6 +6,13 @@ import { listAdminAuditLog } from "../api/auditLogApi.js"
 import { getCostAuditSummary } from "../api/costApi.js"
 import { listUsageSummaries } from "../api/usageApi.js"
 import type { AccessRoleDefinition, AliasAuditLogItem, AliasDefinition, CostAuditSummary, ManagedUser, ManagedUserAuditLogEntry, ManagedUserDeletionPreflight, UserUsageSummary } from "../types.js"
+import {
+  confirmedOperation,
+  failedOperation,
+  partialOperation,
+  type OperationEvidence,
+  type OperationOutcome
+} from "../../../shared/ui/operationOutcome.js"
 
 export function useAdminData({
   canReadAdminAuditLog,
@@ -41,6 +48,7 @@ export function useAdminData({
   const [costAudit, setCostAudit] = useState<CostAuditSummary | null>(null)
   const [aliases, setAliases] = useState<AliasDefinition[] | null>(null)
   const [aliasAuditLog, setAliasAuditLog] = useState<AliasAuditLogItem[] | null>(null)
+  const pendingMutationKeysRef = useRef(new Set<string>())
 
   async function refreshManagedUsers() {
     setManagedUsers(await listManagedUsers())
@@ -88,16 +96,48 @@ export function useAdminData({
     ])
   }
 
-  async function onAssignUserRoles(userId: string, groups: string[], reason: string) {
+  async function confirmAdminMutation<T>({
+    value,
+    successMessage,
+    partialMessage,
+    evidence
+  }: {
+    value: T
+    successMessage: string
+    partialMessage: string
+    evidence?: OperationEvidence
+  }): Promise<OperationOutcome<T>> {
+    try {
+      await refreshAdminSideEffects()
+      return confirmedOperation(value, { message: successMessage, evidence })
+    } catch (err) {
+      console.warn("Failed to refresh admin state after confirmed mutation", err)
+      setError(partialMessage)
+      return partialOperation(value, partialMessage, evidence)
+    }
+  }
+
+  async function onAssignUserRoles(userId: string, groups: string[], reason: string): Promise<OperationOutcome<ManagedUser>> {
+    const mutationKey = `role:${userId}`
+    if (pendingMutationKeysRef.current.has(mutationKey)) return failedOperation(new Error("このユーザーのロールは変更処理中です"))
+    pendingMutationKeysRef.current.add(mutationKey)
     setLoading(true)
     setError(null)
     try {
       const updated = await assignUserRoles(userId, groups, reason)
       setManagedUsers((prev) => [updated, ...(prev ?? []).filter((user) => user.userId !== userId)].sort((a, b) => a.email.localeCompare(b.email)))
-      await refreshAdminSideEffects()
+      return await confirmAdminMutation({
+        value: updated,
+        successMessage: "API がロール変更を確定し、許可された管理データを更新しました。",
+        partialMessage: "ロール変更は確定しましたが、関連する管理データを更新できませんでした。再実行せず更新してください。",
+        evidence: { resultReference: updated.userId, version: updated.updatedAt }
+      })
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      const outcome = failedOperation(err)
+      setError(outcome.message)
+      return outcome
     } finally {
+      pendingMutationKeysRef.current.delete(mutationKey)
       setLoading(false)
     }
   }
@@ -129,7 +169,10 @@ export function useAdminData({
     }
   }
 
-  async function onSetManagedUserStatus(userId: string, action: "suspend" | "unsuspend" | "delete", successorUserId?: string) {
+  async function onSetManagedUserStatus(userId: string, action: "suspend" | "unsuspend" | "delete", successorUserId?: string): Promise<OperationOutcome<ManagedUser>> {
+    const mutationKey = `status:${userId}`
+    if (pendingMutationKeysRef.current.has(mutationKey)) return failedOperation(new Error("このユーザーの状態は変更処理中です"))
+    pendingMutationKeysRef.current.add(mutationKey)
     setLoading(true)
     setError(null)
     try {
@@ -140,10 +183,18 @@ export function useAdminData({
         if (updated.status === "deleted") return current.filter((user) => user.userId !== userId)
         return [updated, ...current.filter((user) => user.userId !== userId)].sort((a, b) => a.email.localeCompare(b.email))
       })
-      await refreshAdminSideEffects()
+      return await confirmAdminMutation({
+        value: updated,
+        successMessage: "API がユーザー状態の変更を確定しました。",
+        partialMessage: "ユーザー状態の変更は確定しましたが、関連する管理データを更新できませんでした。再実行せず更新してください。",
+        evidence: { resultReference: updated.userId, version: updated.updatedAt }
+      })
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      const outcome = failedOperation(err)
+      setError(outcome.message)
+      return outcome
     } finally {
+      pendingMutationKeysRef.current.delete(mutationKey)
       setLoading(false)
     }
   }
@@ -201,30 +252,53 @@ export function useAdminData({
     }
   }
 
-  async function onDisableAlias(aliasId: string) {
-    if (!canDisableAliases) return
+  async function onDisableAlias(aliasId: string): Promise<OperationOutcome<AliasDefinition>> {
+    if (!canDisableAliases) return failedOperation(new Error("用語展開を無効化する権限がありません"))
+    const mutationKey = `alias-disable:${aliasId}`
+    if (pendingMutationKeysRef.current.has(mutationKey)) return failedOperation(new Error("この用語展開は無効化処理中です"))
+    pendingMutationKeysRef.current.add(mutationKey)
     setLoading(true)
     setError(null)
     try {
-      await disableAlias(aliasId)
-      await refreshAliases()
+      const disabled = await disableAlias(aliasId)
+      setAliases((current) => current?.map((alias) => alias.aliasId === disabled.aliasId ? disabled : alias) ?? current)
+      return await confirmAdminMutation({
+        value: disabled,
+        successMessage: "API が用語展開の無効化を確定しました。",
+        partialMessage: "無効化は確定しましたが、管理データを更新できませんでした。再実行せず更新してください。",
+        evidence: { resultReference: disabled.aliasId, version: disabled.updatedAt }
+      })
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      const outcome = failedOperation(err)
+      setError(outcome.message)
+      return outcome
     } finally {
+      pendingMutationKeysRef.current.delete(mutationKey)
       setLoading(false)
     }
   }
 
-  async function onPublishAliases() {
-    if (!canPublishAliases) return
+  async function onPublishAliases(): Promise<OperationOutcome<{ version: string; publishedAt: string; aliasCount: number }>> {
+    const mutationKey = "alias-publish"
+    if (!canPublishAliases) return failedOperation(new Error("用語展開を公開する権限がありません"))
+    if (pendingMutationKeysRef.current.has(mutationKey)) return failedOperation(new Error("用語展開は公開処理中です"))
+    pendingMutationKeysRef.current.add(mutationKey)
     setLoading(true)
     setError(null)
     try {
-      await publishAliases()
-      await refreshAliases()
+      const published = await publishAliases()
+      return await confirmAdminMutation({
+        value: published,
+        successMessage: "API が用語展開の公開 version を確定しました。",
+        partialMessage: "公開 version は確定しましたが、管理データを更新できませんでした。再実行せず更新してください。",
+        evidence: { resultReference: published.version, version: published.version }
+      })
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      const outcome = failedOperation(err)
+      setError(outcome.message)
+      return outcome
     } finally {
+      pendingMutationKeysRef.current.delete(mutationKey)
       setLoading(false)
     }
   }

@@ -84,14 +84,16 @@ describe("useAdminData", () => {
     await act(() => result.current.onCreateAlias({ term: "rto", expansions: ["復旧時間目標"] }))
     await act(() => result.current.onUpdateAlias("alias-1", { expansions: ["有給休暇"] }))
     await act(() => result.current.onReviewAlias("alias-1", "approve"))
-    await act(() => result.current.onDisableAlias("alias-1"))
-    await act(() => result.current.onPublishAliases())
+    const disableOutcome = await act(() => result.current.onDisableAlias("alias-1"))
+    const publishOutcome = await act(() => result.current.onPublishAliases())
 
     expect(createAlias).toHaveBeenCalledWith({ term: "rto", expansions: ["復旧時間目標"] })
     expect(updateAlias).toHaveBeenCalledWith("alias-1", { expansions: ["有給休暇"] })
     expect(reviewAlias).toHaveBeenCalledWith("alias-1", "approve", undefined)
     expect(disableAlias).toHaveBeenCalledWith("alias-1")
     expect(publishAliases).toHaveBeenCalledTimes(1)
+    expect(disableOutcome).toMatchObject({ ok: true, status: "success", evidence: { resultReference: "alias-1" } })
+    expect(publishOutcome).toMatchObject({ ok: true, status: "success", evidence: { version: "alias-v1" } })
     expect(listAliases).toHaveBeenCalledTimes(5)
     expect(listAliasAuditLog).toHaveBeenCalledTimes(5)
     expect(props.setError).toHaveBeenCalledWith(null)
@@ -178,13 +180,14 @@ describe("useAdminData", () => {
     const props = createProps({ canReadAdminAuditLog: true, canReadUsage: true, canReadCosts: true, canReadAliases: true })
     const { result } = renderHook(() => useAdminData(props))
 
-    await act(() => result.current.onAssignUserRoles("user-1", ["SYSTEM_ADMIN"], "管理担当へ変更"))
+    const roleOutcome = await act(() => result.current.onAssignUserRoles("user-1", ["SYSTEM_ADMIN"], "管理担当へ変更"))
     await act(() => result.current.onCreateManagedUser({ email: "c@example.com", groups: ["CHAT_USER"] }))
     await act(() => result.current.onSetManagedUserStatus("user-1", "suspend"))
     await act(() => result.current.onSetManagedUserStatus("user-1", "unsuspend"))
     await act(() => result.current.onSetManagedUserStatus("user-1", "delete"))
 
     expect(assignUserRoles).toHaveBeenCalledWith("user-1", ["SYSTEM_ADMIN"], "管理担当へ変更")
+    expect(roleOutcome).toMatchObject({ ok: true, status: "success", evidence: { resultReference: "user-1" } })
     expect(createManagedUser).toHaveBeenCalledWith({ email: "c@example.com", groups: ["CHAT_USER"] })
     expect(suspendManagedUser).toHaveBeenCalledWith("user-1")
     expect(unsuspendManagedUser).toHaveBeenCalledWith("user-1")
@@ -216,10 +219,26 @@ describe("useAdminData", () => {
     vi.mocked(assignUserRoles).mockRejectedValueOnce(new Error("assign failed"))
     const { result } = renderHook(() => useAdminData(props))
 
-    await act(() => result.current.onAssignUserRoles("user-1", ["SYSTEM_ADMIN"], "管理担当へ変更"))
+    const outcome = await act(() => result.current.onAssignUserRoles("user-1", ["SYSTEM_ADMIN"], "管理担当へ変更"))
 
     expect(props.setError).toHaveBeenCalledWith("assign failed")
+    expect(outcome).toMatchObject({ ok: false, status: "failure" })
     expect(props.setLoading).toHaveBeenLastCalledWith(false)
+  })
+
+  it("管理 mutation の通信断は結果不明、確定後の副作用更新失敗は partial として返す", async () => {
+    const props = createProps({ canReadAliases: true })
+    vi.mocked(assignUserRoles).mockRejectedValueOnce(new TypeError("Failed to fetch"))
+    const { result } = renderHook(() => useAdminData(props))
+
+    const unknown = await act(() => result.current.onAssignUserRoles("user-1", ["SYSTEM_ADMIN"], "管理担当へ変更"))
+    expect(unknown).toMatchObject({ ok: false, status: "unknown" })
+
+    vi.mocked(listAliasAuditLog).mockRejectedValueOnce(new Error("audit refresh failed"))
+    const partial = await act(() => result.current.onPublishAliases())
+    expect(partial).toMatchObject({ ok: true, status: "partial", evidence: { version: "alias-v1" } })
+    expect(partial.message).toContain("再実行せず更新してください")
+    expect(partial.message).not.toContain("audit refresh failed")
   })
 
   it("管理操作失敗時は文字列エラーも設定する", async () => {

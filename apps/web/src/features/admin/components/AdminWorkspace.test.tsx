@@ -6,6 +6,7 @@ import type { AccessRoleDefinition, AliasAuditLogItem, AliasDefinition, CostAudi
 import { AdminWorkspace } from "./AdminWorkspace.js"
 import { createContentResourceState } from "../../../shared/ui/resourceStateModel.js"
 import { appUiStateTargets } from "../../../app/uiStateTargets.js"
+import { confirmedOperation, failedOperation } from "../../../shared/ui/operationOutcome.js"
 
 const user: CurrentUser = {
   userId: "user-1",
@@ -239,6 +240,7 @@ describe("AdminWorkspace", () => {
       scope: { department: "SRE" }
     })
     expect(onPublishAliases).toHaveBeenCalledTimes(1)
+    expect(screen.getByRole("status", { name: "用語展開公開: 承認済み 1 件" })).toHaveTextContent("完了")
   })
 
   it("Alias API field 未提供または公開対象なしでは公開 control を表示しない", async () => {
@@ -278,6 +280,20 @@ describe("AdminWorkspace", () => {
     expect(onReviewAlias).toHaveBeenCalledWith("alias-1", "approve")
     expect(onReviewAlias).toHaveBeenCalledWith("alias-1", "reject", "画面から差し戻し")
     expect(onDisableAlias).toHaveBeenCalledWith("alias-1")
+    expect(screen.getByRole("status", { name: "用語展開無効化: pto" })).toHaveTextContent("完了")
+  })
+
+  it("Alias 公開の timeout は結果不明として確認 dialog を閉じない", async () => {
+    const onPublishAliases = vi.fn().mockResolvedValue(failedOperation(new Error("publish timed out")))
+    renderAdminWorkspace({ onPublishAliases })
+    await userEvent.click(screen.getByRole("button", { name: "用語展開" }))
+    await userEvent.click(screen.getByRole("button", { name: "公開" }))
+    const dialog = screen.getByRole("dialog", { name: "用語展開を公開しますか？" })
+
+    await userEvent.click(within(dialog).getByRole("button", { name: "公開" }))
+
+    expect(dialog).toBeVisible()
+    expect(screen.getByRole("alert", { name: "用語展開公開: 承認済み 1 件" })).toHaveTextContent("結果未確認")
   })
 
   it("ユーザー停止と削除は確認後に実行する", async () => {
@@ -298,6 +314,7 @@ describe("AdminWorkspace", () => {
     expect(onSetUserStatus).not.toHaveBeenCalled()
     await userEvent.click(within(suspendDialog).getByRole("button", { name: "停止" }))
     expect(onSetUserStatus).toHaveBeenCalledWith("managed-1", "suspend")
+    expect(screen.getByRole("status", { name: "ユーザー停止: 管理対象ユーザー" })).toHaveTextContent("完了")
 
     await userEvent.click(screen.getByRole("button", { name: "削除" }))
     const deleteDialog = await screen.findByRole("dialog", { name: "このユーザーを削除状態にしますか？" })
@@ -365,7 +382,9 @@ describe("AdminWorkspace", () => {
   })
 
   it("ロール付与前に変更前後の差分を表示する", async () => {
-    const onAssignRoles = vi.fn().mockResolvedValue(undefined)
+    const onAssignRoles = vi.fn().mockResolvedValue(confirmedOperation(managedUser, {
+      evidence: { resultReference: "managed-1", version: "2026-05-10T00:00:00.000Z" }
+    }))
 
     renderAdminWorkspace({
       managedUsers: [managedUser],
@@ -387,6 +406,7 @@ describe("AdminWorkspace", () => {
     await userEvent.click(within(dialog).getByRole("button", { name: "付与" }))
 
     expect(onAssignRoles).toHaveBeenCalledWith("managed-1", ["SYSTEM_ADMIN"], "緊急対応担当へ変更")
+    expect(screen.getByRole("status", { name: "ロール変更: 管理対象ユーザー" })).toHaveTextContent("managed-1")
   })
 
   it("ロール API field が未提供のとき fake group を作成・付与しない", async () => {

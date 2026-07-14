@@ -622,3 +622,77 @@ button:has(.button-spinner) {
   background: #fff;
   font-weight: 900;
 }
+
+.operation-feedback {
+  display: grid;
+  gap: 0.65rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--ui-border, #d7dee8);
+  border-inline-start: 0.3rem solid var(--ui-info, #2563eb);
+  border-radius: 0.75rem;
+  background: var(--ui-surface, #fff);
+}
+
+.operation-feedback.is-success {
+  border-inline-start-color: var(--ui-success, #15803d);
+}
+
+.operation-feedback.is-failure {
+  border-inline-start-color: var(--ui-danger, #b91c1c);
+}
+
+.operation-feedback.is-partial,
+.operation-feedback.is-unknown {
+  border-inline-start-color: var(--ui-warning, #b45309);
+}
+
+.operation-feedback > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.operation-feedback > header > div {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.operation-feedback > header span,
+.operation-feedback > p,
+.operation-feedback dl {
+  margin: 0;
+}
+
+.operation-feedback dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 0.45rem 1rem;
+}
+
+.operation-feedback dl div {
+  min-width: 0;
+}
+
+.operation-feedback dt {
+  color: var(--ui-text-muted, #5b6472);
+  font-size: 0.75rem;
+}
+
+.operation-feedback dd {
+  margin: 0.1rem 0 0;
+  overflow-wrap: anywhere;
+}
+
+.document-operation-feedback,
+.admin-operation-feedback,
+.benchmark-operation-feedback {
+  display: grid;
+  gap: 0.75rem;
+  margin-block: 0.75rem;
+}
+
+.history-operation-feedback,
+.benchmark-row-feedback {
+  margin-block: 0.75rem;
+}

@@ -69,7 +69,7 @@
 - 要件・AC: `FR-094` (`AC-FR094-002`) / `FR-095` (`AC-FR095-002`, `AC-FR095-003`) / `FR-096` (`AC-FR096-001`, `AC-FR096-003`)
 - verification: `E2E-VIEW-HISTORY-001` (implemented)
 - 実装状態: `partial`
-- 未完了 task: `tasks/todo/20260714-issue-345-chat-assignee-journey.md`, `tasks/todo/20260714-issue-345-risky-operation-feedback.md`
+- 未完了 task: `tasks/todo/20260714-issue-345-chat-assignee-journey.md`
 - 画面の意味: 履歴。過去の会話を検索、並び替え、再表示、削除します。
 - 主要操作: チャットへ戻る、履歴を検索、履歴の並び順、newest、oldest、messages、お気に入りのみ、削除
 
@@ -103,7 +103,7 @@
 - 要件・AC: `FR-094` (`AC-FR094-003`) / `FR-095` (`AC-FR095-001`, `AC-FR095-005`) / `FR-096` (`AC-FR096-002`, `AC-FR096-004`)
 - verification: `E2E-VIEW-BENCHMARK-001` (implemented)
 - 実装状態: `partial`
-- 未完了 task: `tasks/todo/20260714-issue-345-risky-operation-feedback.md`
+- 未完了 task: `tasks/todo/20260714-issue-345-manual-a11y-evidence.md`
 - 画面の意味: 性能テスト。benchmark suite を選択し、run 起動、キャンセル、結果 download を行います。
 - 主要操作: チャットへ戻る、テスト種別、テスト設定を取得できません、データセット、モデル / Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku、modelId、並列数、concurrency、性能テストを実行、更新
 

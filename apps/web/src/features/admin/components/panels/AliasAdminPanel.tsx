@@ -1,6 +1,17 @@
 import { type FormEvent, useState } from "react"
 import { ConfirmDialog } from "../../../../shared/components/ConfirmDialog.js"
-import { EmptyState, StatusBadge } from "../../../../shared/ui/index.js"
+import {
+  EmptyState,
+  OperationFeedback,
+  StatusBadge,
+  confirmedOperation,
+  failedOperation,
+  feedbackFromOutcome,
+  processingOperationFeedback,
+  upsertOperationFeedback,
+  type OperationFeedbackEntry,
+  type OperationOutcome
+} from "../../../../shared/ui/index.js"
 import { LoadingSpinner } from "../../../../shared/components/LoadingSpinner.js"
 import { formatDateTime } from "../../../../shared/utils/format.js"
 import { aliasAuditActionLabel, aliasStatusPresentation } from "../../../../shared/ui/displayMetadata.js"
@@ -32,14 +43,15 @@ export function AliasAdminPanel({
   onCreate: (input: { term: string; expansions: string[]; scope?: AliasDefinition["scope"] }) => Promise<void>
   onUpdate: (aliasId: string, input: { term?: string; expansions?: string[]; scope?: AliasDefinition["scope"] }) => Promise<void>
   onReview: (aliasId: string, decision: "approve" | "reject", comment?: string) => Promise<void>
-  onDisable: (aliasId: string) => Promise<void>
-  onPublish: () => Promise<void>
+  onDisable: (aliasId: string) => Promise<OperationOutcome<AliasDefinition> | void>
+  onPublish: () => Promise<OperationOutcome<{ version: string; publishedAt: string; aliasCount: number }> | void>
 }) {
   const [term, setTerm] = useState("")
   const [expansions, setExpansions] = useState("")
   const [department, setDepartment] = useState("")
   const [disableCandidate, setDisableCandidate] = useState<AliasDefinition | null>(null)
   const [publishConfirmOpen, setPublishConfirmOpen] = useState(false)
+  const [operationFeedback, setOperationFeedback] = useState<OperationFeedbackEntry[]>([])
   const approvedAliases = aliases?.filter((alias) => alias.status === "approved") ?? []
   const canShowPublish = canPublish && approvedAliases.length > 0
 
@@ -73,6 +85,12 @@ export function AliasAdminPanel({
           )}
         </div>
       </div>
+
+      {operationFeedback.length > 0 && (
+        <div className="admin-operation-feedback" aria-label="用語展開操作結果">
+          {operationFeedback.slice(0, 3).map((entry) => <OperationFeedback key={entry.id} entry={entry} />)}
+        </div>
+      )}
 
       {canWrite && (
         <form className="alias-editor-form" onSubmit={(event) => void onSubmit(event)}>
@@ -139,14 +157,31 @@ export function AliasAdminPanel({
         <ConfirmDialog
           title="用語展開を公開しますか？"
           description="承認済みの用語展開を公開バージョンへ反映します。検索時の用語展開に影響します。"
-          details={[`対象件数: ${approvedAliases.length} 件`, "影響: 公開後の検索結果が変わる可能性があります。"]}
+          details={[
+            `対象件数: ${approvedAliases.length} 件`,
+            "影響: 公開後の検索結果が変わる可能性があります",
+            "回復条件: 以前の公開版へ戻す操作は現行 API で未提供です",
+            "確認が必要な理由: 検索時の用語展開を全体へ反映するため"
+          ]}
           confirmLabel="公開"
           tone="warning"
           loading={loading}
           onCancel={() => setPublishConfirmOpen(false)}
           onConfirm={async () => {
-            await onPublish()
-            setPublishConfirmOpen(false)
+            const base = {
+              id: "alias-publish",
+              actionLabel: "用語展開公開",
+              targetLabel: `承認済み ${approvedAliases.length} 件`,
+              details: [
+                { label: "影響", value: "公開後の検索時用語展開を変更" },
+                { label: "回復条件", value: "以前の公開版へ戻す API は未提供" }
+              ],
+              showUnavailableEvidence: true
+            }
+            setOperationFeedback((current) => upsertOperationFeedback(current, processingOperationFeedback(base)))
+            const outcome = await resolveOperation(onPublish)
+            setOperationFeedback((current) => upsertOperationFeedback(current, feedbackFromOutcome(base, outcome)))
+            if (outcome.ok) setPublishConfirmOpen(false)
           }}
         />
       )}
@@ -155,14 +190,35 @@ export function AliasAdminPanel({
         <ConfirmDialog
           title="この用語展開を無効化しますか？"
           description="無効化した用語展開は検索時に使われなくなります。"
-          details={[`用語: ${disableCandidate.term}`, `展開語: ${disableCandidate.expansions.join(", ")}`, `状態: ${aliasStatusPresentation(disableCandidate.status).label}`]}
+          details={[
+            `用語: ${disableCandidate.term}`,
+            `展開語: ${disableCandidate.expansions.join(", ")}`,
+            `状態: ${aliasStatusPresentation(disableCandidate.status).label}`,
+            "影響: この用語展開は以後の検索で使われません",
+            "回復条件: 再有効化操作は現行 API で未提供です",
+            "確認が必要な理由: 検索挙動から対象を除外するため"
+          ]}
           confirmLabel="無効化"
           tone="danger"
           loading={loading}
           onCancel={() => setDisableCandidate(null)}
           onConfirm={async () => {
-            await onDisable(disableCandidate.aliasId)
-            setDisableCandidate(null)
+            const target = disableCandidate
+            const base = {
+              id: `alias-disable-${target.aliasId}`,
+              actionLabel: "用語展開無効化",
+              targetLabel: target.term,
+              targetId: target.aliasId,
+              details: [
+                { label: "影響", value: "以後の検索時用語展開から除外" },
+                { label: "回復条件", value: "再有効化 API は未提供" }
+              ],
+              showUnavailableEvidence: true
+            }
+            setOperationFeedback((current) => upsertOperationFeedback(current, processingOperationFeedback(base)))
+            const outcome = await resolveOperation(() => onDisable(target.aliasId))
+            setOperationFeedback((current) => upsertOperationFeedback(current, feedbackFromOutcome(base, outcome)))
+            if (outcome.ok) setDisableCandidate(null)
           }}
         />
       )}
@@ -189,4 +245,12 @@ export function AliasAdminPanel({
 
 function parseExpansionList(value: string): string[] {
   return [...new Set(value.split(/[,\n]/).map((item) => item.trim()).filter(Boolean))]
+}
+
+async function resolveOperation<T>(operation: () => Promise<OperationOutcome<T> | void>): Promise<OperationOutcome<T>> {
+  try {
+    return await operation() ?? confirmedOperation<T>()
+  } catch (error) {
+    return failedOperation(error)
+  }
 }

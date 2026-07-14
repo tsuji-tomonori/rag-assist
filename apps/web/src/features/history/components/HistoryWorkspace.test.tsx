@@ -5,6 +5,7 @@ import type { ConversationHistoryItem } from "../types.js"
 import { HistoryWorkspace } from "./HistoryWorkspace.js"
 import { createContentResourceState } from "../../../shared/ui/resourceStateModel.js"
 import { appUiStateTargets } from "../../../app/uiStateTargets.js"
+import { confirmedOperation, failedOperation } from "../../../shared/ui/operationOutcome.js"
 
 const historyItem: ConversationHistoryItem = {
   schemaVersion: 1,
@@ -21,7 +22,7 @@ function renderHistoryWorkspace(overrides: Partial<Parameters<typeof HistoryWork
     dataState: createContentResourceState(appUiStateTargets.history, "2026-05-10T00:00:00.000Z"),
     history: [historyItem],
     onSelect: vi.fn(),
-    onDelete: vi.fn(),
+    onDelete: vi.fn().mockResolvedValue(confirmedOperation()),
     onToggleFavorite: vi.fn(),
     onRetry: vi.fn(),
     onBack: vi.fn(),
@@ -33,7 +34,7 @@ function renderHistoryWorkspace(overrides: Partial<Parameters<typeof HistoryWork
 
 describe("HistoryWorkspace risky actions", () => {
   it("削除は確認ダイアログで対象を確認してから実行する", async () => {
-    const onDelete = vi.fn()
+    const onDelete = vi.fn().mockResolvedValue(confirmedOperation(undefined, { message: "削除を確定しました。" }))
     renderHistoryWorkspace({ onDelete })
 
     await userEvent.click(screen.getByRole("button", { name: "削除" }))
@@ -46,10 +47,45 @@ describe("HistoryWorkspace risky actions", () => {
 
     expect(onDelete).toHaveBeenCalledWith("conv-1")
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+    expect(screen.getByRole("status", { name: "会話履歴削除: 申請期限の確認" })).toHaveTextContent("完了")
+  })
+
+  it("最後の履歴を削除して empty state へ遷移しても確定結果を保持する", async () => {
+    const onDelete = vi.fn().mockResolvedValue(confirmedOperation(undefined, { message: "削除を確定しました。" }))
+    const props: Parameters<typeof HistoryWorkspace>[0] = {
+      dataState: createContentResourceState(appUiStateTargets.history, "2026-05-10T00:00:00.000Z"),
+      history: [historyItem],
+      onSelect: vi.fn(),
+      onDelete,
+      onToggleFavorite: vi.fn(),
+      onRetry: vi.fn(),
+      onBack: vi.fn()
+    }
+    const view = render(<HistoryWorkspace {...props} />)
+
+    await userEvent.click(screen.getByRole("button", { name: "削除" }))
+    await userEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "削除" }))
+    view.rerender(<HistoryWorkspace {...props} history={[]} />)
+
+    expect(screen.getByRole("status", { name: "会話履歴削除: 申請期限の確認" })).toHaveTextContent("完了")
+    expect(screen.getByRole("status", { name: "保存済みの会話履歴はありません。" })).toBeInTheDocument()
+  })
+
+  it("通信断は結果不明として対象を残し、確認 dialog を閉じない", async () => {
+    const onDelete = vi.fn().mockResolvedValue(failedOperation(new TypeError("Failed to fetch")))
+    renderHistoryWorkspace({ onDelete })
+
+    await userEvent.click(screen.getByRole("button", { name: "削除" }))
+    const dialog = screen.getByRole("dialog", { name: "この会話履歴を削除しますか？" })
+    await userEvent.click(within(dialog).getByRole("button", { name: "削除" }))
+
+    expect(dialog).toBeVisible()
+    expect(screen.getByRole("alert", { name: "会話履歴削除: 申請期限の確認" })).toHaveTextContent("結果未確認")
+    expect(screen.getAllByText("申請期限の確認").length).toBeGreaterThan(0)
   })
 
   it("Escape で削除確認を閉じる", async () => {
-    const onDelete = vi.fn()
+    const onDelete = vi.fn().mockResolvedValue(confirmedOperation())
     renderHistoryWorkspace({ onDelete })
 
     await userEvent.click(screen.getByRole("button", { name: "削除" }))

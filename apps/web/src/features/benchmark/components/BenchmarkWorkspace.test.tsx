@@ -5,6 +5,7 @@ import type { BenchmarkRun, BenchmarkSuite } from "../types.js"
 import { BenchmarkWorkspace } from "./BenchmarkWorkspace.js"
 import { createContentResourceState } from "../../../shared/ui/resourceStateModel.js"
 import { appUiStateTargets } from "../../../app/uiStateTargets.js"
+import { confirmedOperation, failedOperation } from "../../../shared/ui/operationOutcome.js"
 
 const suite: BenchmarkSuite = {
   suiteId: "standard-agent-v1",
@@ -42,9 +43,9 @@ function renderBenchmarkWorkspace(overrides: Partial<Parameters<typeof Benchmark
     onSuiteChange: vi.fn(),
     onModelChange: vi.fn(),
     onConcurrencyChange: vi.fn(),
-    onStart: vi.fn().mockResolvedValue(undefined),
+    onStart: vi.fn().mockResolvedValue(confirmedOperation(run)),
     onRefresh: vi.fn(),
-    onCancel: vi.fn().mockResolvedValue(undefined),
+    onCancel: vi.fn().mockResolvedValue(confirmedOperation({ ...run, status: "cancelled" })),
     onBack: vi.fn(),
     ...overrides
   }
@@ -69,7 +70,7 @@ describe("BenchmarkWorkspace", () => {
   })
 
   it("性能テスト起動は確認ダイアログで設定を確認してから実行する", async () => {
-    const onStart = vi.fn().mockResolvedValue(undefined)
+    const onStart = vi.fn().mockResolvedValue(confirmedOperation(run))
     renderBenchmarkWorkspace({ onStart })
 
     await userEvent.click(screen.getByRole("button", { name: "性能テストを実行" }))
@@ -83,5 +84,34 @@ describe("BenchmarkWorkspace", () => {
 
     expect(onStart).toHaveBeenCalledTimes(1)
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+    expect(screen.getByRole("status", { name: "性能テスト起動: Agent standard" })).toHaveTextContent("完了")
+  })
+
+  it("取消は対象・影響・回復条件を確認し、run 行へ結果を関連付ける", async () => {
+    const onCancel = vi.fn().mockResolvedValue(confirmedOperation({ ...run, status: "cancelled" }))
+    renderBenchmarkWorkspace({ onCancel })
+
+    await userEvent.click(screen.getByRole("button", { name: "run-1のジョブをキャンセル" }))
+    const dialog = screen.getByRole("dialog", { name: "この性能テストを取り消しますか？" })
+    expect(dialog).toHaveTextContent("run-1")
+    expect(dialog).toHaveTextContent("取消後は再開できず、新しい実行が必要です")
+    expect(onCancel).not.toHaveBeenCalled()
+
+    await userEvent.click(within(dialog).getByRole("button", { name: "取り消す" }))
+
+    expect(onCancel).toHaveBeenCalledWith("run-1")
+    expect(screen.getByRole("status", { name: "性能テスト取消: Agent standard" })).toHaveTextContent("完了")
+  })
+
+  it("取消 timeout は結果未確認として dialog と対象 run を維持する", async () => {
+    const onCancel = vi.fn().mockResolvedValue(failedOperation(new Error("request timed out")))
+    renderBenchmarkWorkspace({ onCancel })
+
+    await userEvent.click(screen.getByRole("button", { name: "run-1のジョブをキャンセル" }))
+    const dialog = screen.getByRole("dialog", { name: "この性能テストを取り消しますか？" })
+    await userEvent.click(within(dialog).getByRole("button", { name: "取り消す" }))
+
+    expect(dialog).toBeVisible()
+    expect(screen.getByRole("alert", { name: "性能テスト取消: Agent standard" })).toHaveTextContent("結果未確認")
   })
 })

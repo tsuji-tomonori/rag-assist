@@ -59,7 +59,7 @@ describe("useBenchmarkRuns", () => {
 
     await act(() => result.current.refreshBenchmarkSuites())
     act(() => result.current.setBenchmarkConcurrency(3))
-    await act(() => result.current.onStartBenchmark())
+    const outcome = await act(() => result.current.onStartBenchmark())
 
     expect(result.current.benchmarkSuiteId).toBe("search-standard-v1")
     expect(startBenchmarkRun).toHaveBeenCalledWith({
@@ -74,6 +74,7 @@ describe("useBenchmarkRuns", () => {
       concurrency: 3
     })
     expect(result.current.benchmarkRuns[0]?.runId).toBe("run-2")
+    expect(outcome).toMatchObject({ ok: true, status: "success", evidence: { resultReference: "run-2" } })
     expect(props.setLoading).toHaveBeenLastCalledWith(false)
   })
 
@@ -82,13 +83,15 @@ describe("useBenchmarkRuns", () => {
     const { result } = renderHook(() => useBenchmarkRuns(props))
 
     await act(() => result.current.refreshBenchmarkRuns())
-    await act(() => result.current.onCancelBenchmark("run-2"))
+    const cancelOutcome = await act(() => result.current.onCancelBenchmark("run-2"))
     await act(() => result.current.refreshBenchmarkSuites())
     vi.mocked(startBenchmarkRun).mockRejectedValueOnce(new Error("benchmark failed"))
-    await act(() => result.current.onStartBenchmark())
+    const failedOutcome = await act(() => result.current.onStartBenchmark())
 
     expect(result.current.benchmarkRuns[0]).toMatchObject({ runId: "run-2", status: "cancelled" })
     expect(cancelBenchmarkRun).toHaveBeenCalledWith("run-2")
+    expect(cancelOutcome).toMatchObject({ ok: true, status: "success" })
+    expect(failedOutcome).toMatchObject({ ok: false, status: "failure" })
     expect(props.setError).toHaveBeenCalledWith("benchmark failed")
   })
 
@@ -114,11 +117,25 @@ describe("useBenchmarkRuns", () => {
     const { result } = renderHook(() => useBenchmarkRuns(props))
 
     act(() => result.current.setBenchmarkSuiteId("missing-suite"))
-    await act(() => result.current.onStartBenchmark())
+    const outcome = await act(() => result.current.onStartBenchmark())
 
     expect(startBenchmarkRun).not.toHaveBeenCalled()
     expect(props.setError).toHaveBeenCalledWith("実行可能な benchmark suite を取得できていません。更新後に再実行してください。")
     expect(props.setLoading).toHaveBeenLastCalledWith(false)
+    expect(outcome).toMatchObject({ ok: false, status: "failure" })
+  })
+
+  it("取消の通信断は run を変更せず結果不明を返す", async () => {
+    vi.mocked(cancelBenchmarkRun).mockRejectedValueOnce(new TypeError("Failed to fetch"))
+    const props = createProps()
+    const { result } = renderHook(() => useBenchmarkRuns(props))
+    await act(() => result.current.refreshBenchmarkRuns())
+
+    const outcome = await act(() => result.current.onCancelBenchmark("run-1"))
+
+    expect(outcome).toMatchObject({ ok: false, status: "unknown" })
+    expect(result.current.benchmarkRuns[0]).toMatchObject({ runId: "run-1", status: "queued" })
+    expect(props.setError).toHaveBeenCalledWith(expect.stringContaining("処理結果を確認できません"))
   })
 
   it("starts the Japanese public PDF QA suite from the UI selection", async () => {

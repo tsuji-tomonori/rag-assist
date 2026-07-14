@@ -297,6 +297,155 @@ async function installBenchmarkRuns(page: Page, count: number) {
   })
 }
 
+async function installRiskyOperationApi(page: Page) {
+  let historyAvailable = true
+  const requests = {
+    historyDelete: false,
+    documentShare: null as unknown,
+    benchmarkCancel: false,
+    aliasPublish: false
+  }
+  const riskDocument = {
+    detailLevel: 'manager',
+    documentId: 'doc-risk-1',
+    fileName: 'risk-policy.md',
+    chunkCount: 3,
+    memoryCardCount: 2,
+    createdAt: '2026-05-01T00:00:00.000Z',
+    updatedAt: '2026-05-02T00:00:00.000Z',
+    currentUserEffectivePermission: 'full',
+    capabilities: {
+      canRead: true,
+      canShare: true,
+      canMove: false,
+      canDelete: true,
+      canReindex: true
+    }
+  }
+  const runningBenchmark = {
+    runId: 'bench-risk-1',
+    suiteId: 'standard-agent-v1',
+    status: 'running',
+    mode: 'agent',
+    runner: 'codebuild',
+    datasetS3Key: 'datasets/agent/standard-v1.jsonl',
+    createdBy: 'risk-admin',
+    modelId: 'amazon.nova-lite-v1:0',
+    createdAt: '2026-05-02T00:00:00.000Z',
+    updatedAt: '2026-05-02T00:00:30.000Z',
+    startedAt: '2026-05-02T00:00:00.000Z'
+  }
+  const approvedAlias = {
+    aliasId: 'alias-risk-1',
+    term: 'pto',
+    expansions: ['有給休暇'],
+    status: 'approved',
+    createdBy: 'risk-admin',
+    createdAt: '2026-05-01T00:00:00.000Z',
+    updatedAt: '2026-05-02T00:00:00.000Z'
+  }
+
+  await page.route(/http:\/\/(?:api\.visual\.test|127\.0\.0\.1:8787)\/.*/, async (route) => {
+    const request = route.request()
+    const path = new URL(request.url()).pathname
+    const method = request.method()
+
+    if (path === '/conversation-history' && method === 'GET') {
+      await route.fulfill({
+        json: {
+          history: historyAvailable
+            ? [{
+                schemaVersion: 1,
+                id: 'risk-history-1',
+                title: 'Risk review conversation',
+                updatedAt: '2026-05-02T00:00:00.000Z',
+                messages: [{ role: 'user', text: '削除前に確認してください。', createdAt: '2026-05-02T00:00:00.000Z' }]
+              }]
+            : []
+        }
+      })
+      return
+    }
+    if (path === '/conversation-history/risk-history-1' && method === 'DELETE') {
+      requests.historyDelete = true
+      historyAvailable = false
+      await route.fulfill({ status: 204 })
+      return
+    }
+    if (path === '/documents' && method === 'GET') {
+      await route.fulfill({ json: { documents: [riskDocument] } })
+      return
+    }
+    if (path === '/documents/doc-risk-1/share' && method === 'GET') {
+      await route.fulfill({
+        json: {
+          inheritedFolderGrants: [],
+          directDocumentGrants: [],
+          currentUserEffectivePermission: 'full',
+          version: 'document-share-v1'
+        }
+      })
+      return
+    }
+    if (path === '/documents/doc-risk-1/share' && method === 'PUT') {
+      requests.documentShare = request.postDataJSON()
+      await route.fulfill({
+        json: {
+          inheritedFolderGrants: [],
+          directDocumentGrants: [{
+            documentShareGrantId: 'grant-risk-1',
+            tenantId: 'default',
+            documentId: 'doc-risk-1',
+            principalType: 'group',
+            principalId: 'risk-reviewers',
+            permissionLevel: 'readOnly',
+            createdBy: 'risk-admin',
+            reason: 'レビュー担当者へ共有',
+            createdAt: '2026-05-02T00:00:00.000Z',
+            updatedAt: '2026-05-02T00:01:00.000Z'
+          }],
+          currentUserEffectivePermission: 'full',
+          version: 'document-share-v2'
+        }
+      })
+      return
+    }
+    if (path === '/benchmark-runs' && method === 'GET') {
+      await route.fulfill({ json: { benchmarkRuns: [runningBenchmark] } })
+      return
+    }
+    if (path === '/benchmark-runs/bench-risk-1/cancel' && method === 'POST') {
+      requests.benchmarkCancel = true
+      await route.fulfill({
+        json: {
+          ...runningBenchmark,
+          status: 'cancelled',
+          updatedAt: '2026-05-02T00:01:00.000Z',
+          completedAt: '2026-05-02T00:01:00.000Z'
+        }
+      })
+      return
+    }
+    if (path === '/admin/aliases' && method === 'GET') {
+      await route.fulfill({ json: { aliases: [approvedAlias] } })
+      return
+    }
+    if (path === '/admin/aliases/audit-log' && method === 'GET') {
+      await route.fulfill({ json: { auditLog: [] } })
+      return
+    }
+    if (path === '/admin/aliases/publish' && method === 'POST') {
+      requests.aliasPublish = true
+      await route.fulfill({ json: { version: 'alias-risk-v2', publishedAt: '2026-05-02T00:02:00.000Z', aliasCount: 1 } })
+      return
+    }
+
+    await route.fallback()
+  })
+
+  return requests
+}
+
 async function signIn(page: Page) {
   await page.goto('/')
   await page.getByPlaceholder('メールアドレスを入力').fill('visual@example.com')
@@ -385,6 +534,99 @@ test('E2E-UI-SEMANTIC-001: 状態表示と確認ダイアログは axe 違反を
   await expect(page.getByRole('dialog', { name: '性能テストを実行しますか？' })).toBeVisible()
   const dialogScan = await new AxeBuilder({ page }).include('.confirm-dialog').analyze()
   expect(dialogScan.violations, JSON.stringify(dialogScan.violations, null, 2)).toEqual([])
+})
+
+test('E2E-UI-RISK-001: 高影響操作は対象・影響・回復条件と API 根拠を表示する @risky-operation', async ({ page }) => {
+  await installCurrentUserPermissions(page, [
+    ...permissions,
+    'rag:alias:read',
+    'rag:alias:publish:group'
+  ])
+  const requestedOperations = await installRiskyOperationApi(page)
+  await signIn(page)
+
+  await test.step('会話履歴削除は確認内容を示し、API 確定後にだけ対象を除去する', async () => {
+    await page.getByTitle('履歴').click()
+    await expect(page.getByRole('region', { name: '履歴', exact: true })).toBeVisible()
+    await page.getByRole('button', { name: '削除', exact: true }).click()
+    const dialog = page.getByRole('dialog', { name: 'この会話履歴を削除しますか？' })
+    await expect(dialog.getByText('対象', { exact: true })).toBeVisible()
+    await expect(dialog.getByText('Risk review conversation', { exact: true })).toBeVisible()
+    await expect(dialog.getByText('影響', { exact: true })).toBeVisible()
+    await expect(dialog.getByText('この会話履歴と画面から参照するメッセージを削除します', { exact: true })).toBeVisible()
+    await expect(dialog.getByText('回復条件', { exact: true })).toBeVisible()
+    await expect(dialog.getByText('この画面からは復元できません', { exact: true })).toBeVisible()
+    await dialog.getByRole('button', { name: '削除', exact: true }).click()
+
+    const feedback = page.getByRole('status', { name: '会話履歴削除: Risk review conversation' })
+    await expect(feedback).toContainText('完了')
+    await expect(feedback).toContainText('risk-history-1')
+    await expect(page.locator('.history-item', { hasText: 'Risk review conversation' })).toHaveCount(0)
+    expect(requestedOperations.historyDelete).toBe(true)
+  })
+
+  await test.step('文書共有は理由と policy version を対象に紐づける', async () => {
+    await page.getByTitle('ドキュメント').click()
+    await expect(page.getByRole('region', { name: 'ドキュメント管理', exact: true })).toBeVisible()
+    await page.getByRole('button', { name: 'risk-policy.mdを共有' }).click()
+    const dialog = page.getByRole('dialog', { name: 'ファイル共有' })
+    await expect(dialog.getByText('現在の権限: 管理可能')).toBeVisible()
+    await dialog.getByLabel('共有先種別').selectOption('group')
+    await dialog.getByLabel('共有先識別子（管理者向け）').fill('risk-reviewers')
+    await dialog.getByLabel('理由').fill('レビュー担当者へ共有')
+    await dialog.getByRole('button', { name: '保存' }).click()
+
+    const feedback = page.getByRole('status', { name: '文書共有更新: risk-policy.md' })
+    await expect(feedback).toContainText('完了')
+    await expect(feedback).toContainText('レビュー担当者へ共有')
+    await expect(feedback).toContainText('document-share-v2')
+    expect(requestedOperations.documentShare).toEqual({
+      grants: [{ principalType: 'group', principalId: 'risk-reviewers', permissionLevel: 'readOnly' }],
+      expectedVersion: 'document-share-v1',
+      reason: 'レビュー担当者へ共有'
+    })
+  })
+
+  await test.step('性能テスト取消は実行識別子を保持し、API の取消結果を表示する', async () => {
+    await page.getByTitle('性能テスト').click()
+    await expect(page.getByRole('region', { name: '性能テスト', exact: true })).toBeVisible()
+    await page.getByRole('button', { name: 'bench-risk-1のジョブをキャンセル' }).click()
+    const dialog = page.getByRole('dialog', { name: 'この性能テストを取り消しますか？' })
+    await expect(dialog.getByText('実行識別子', { exact: true })).toBeVisible()
+    await expect(dialog.getByText('bench-risk-1', { exact: true })).toBeVisible()
+    await expect(dialog.getByText('影響', { exact: true })).toBeVisible()
+    await expect(dialog.getByText('未完了の測定と成果物生成を停止します', { exact: true })).toBeVisible()
+    await expect(dialog.getByText('回復条件', { exact: true })).toBeVisible()
+    await expect(dialog.getByText('取消後は再開できず、新しい実行が必要です', { exact: true })).toBeVisible()
+    await dialog.getByRole('button', { name: '取り消す' }).click()
+
+    const feedback = page.getByRole('status', { name: '性能テスト取消: Agent standard' })
+    await expect(feedback).toContainText('完了')
+    await expect(feedback).toContainText('risk-admin')
+    await expect(feedback).toContainText('bench-risk-1')
+    expect(requestedOperations.benchmarkCancel).toBe(true)
+  })
+
+  await test.step('用語展開公開は不可逆性を示し、API version を結果根拠として表示する', async () => {
+    await page.getByTitle('管理者設定').click()
+    await expect(page.getByRole('region', { name: '管理者設定', exact: true })).toBeVisible()
+    await page.getByRole('button', { name: '用語展開', exact: true }).click()
+    await page.getByRole('button', { name: '公開', exact: true }).click()
+    const dialog = page.getByRole('dialog', { name: '用語展開を公開しますか？' })
+    await expect(dialog.getByText('影響', { exact: true })).toBeVisible()
+    await expect(dialog.getByText('公開後の検索結果が変わる可能性があります', { exact: true })).toBeVisible()
+    await expect(dialog.getByText('回復条件', { exact: true })).toBeVisible()
+    await expect(dialog.getByText('以前の公開版へ戻す操作は現行 API で未提供です', { exact: true })).toBeVisible()
+    await dialog.getByRole('button', { name: '公開', exact: true }).click()
+
+    const feedback = page.getByRole('status', { name: '用語展開公開: 承認済み 1 件' })
+    await expect(feedback).toContainText('完了')
+    await expect(feedback).toContainText('alias-risk-v2')
+    expect(requestedOperations.aliasPublish).toBe(true)
+
+    const feedbackScan = await new AxeBuilder({ page }).include('.operation-feedback').analyze()
+    expect(feedbackScan.violations, JSON.stringify(feedbackScan.violations, null, 2)).toEqual([])
+  })
 })
 
 test('全 AppView の permission-aware 到達性 @smoke', async ({ page }) => {

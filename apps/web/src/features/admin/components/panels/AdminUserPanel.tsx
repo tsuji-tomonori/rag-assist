@@ -1,6 +1,17 @@
 import { type FormEvent, useEffect, useMemo, useState } from "react"
 import { ConfirmDialog } from "../../../../shared/components/ConfirmDialog.js"
-import { EmptyState, StatusBadge } from "../../../../shared/ui/index.js"
+import {
+  EmptyState,
+  OperationFeedback,
+  StatusBadge,
+  confirmedOperation,
+  failedOperation,
+  feedbackFromOutcome,
+  processingOperationFeedback,
+  upsertOperationFeedback,
+  type OperationFeedbackEntry,
+  type OperationOutcome
+} from "../../../../shared/ui/index.js"
 import { LoadingSpinner } from "../../../../shared/components/LoadingSpinner.js"
 import { managedUserStatusLabel } from "../../../../shared/utils/format.js"
 import { managedUserStatusPresentation } from "../../../../shared/ui/displayMetadata.js"
@@ -34,11 +45,17 @@ export function AdminUserPanel({
   canUnsuspendUsers: boolean
   canDeleteUsers: boolean
   onCreateUser: (input: { email: string; displayName?: string; groups?: string[] }) => Promise<void>
-  onAssignRoles: (userId: string, groups: string[], reason: string) => Promise<void>
+  onAssignRoles: (userId: string, groups: string[], reason: string) => Promise<OperationOutcome<ManagedUser> | void>
   onPrepareUserDelete: (userId: string) => Promise<ManagedUserDeletionPreflight | null>
-  onSetUserStatus: (userId: string, action: "suspend" | "unsuspend" | "delete", successorUserId?: string) => Promise<void>
+  onSetUserStatus: (userId: string, action: "suspend" | "unsuspend" | "delete", successorUserId?: string) => Promise<OperationOutcome<ManagedUser> | void>
   onRefreshAdminData: () => Promise<void>
 }) {
+  const [operationFeedback, setOperationFeedback] = useState<OperationFeedbackEntry[]>([])
+
+  function recordOperationFeedback(entry: OperationFeedbackEntry) {
+    setOperationFeedback((current) => upsertOperationFeedback(current, entry))
+  }
+
   return (
     <section className="admin-section-panel user-admin-panel" aria-label="ユーザー管理一覧">
       <div className="document-list-head">
@@ -50,6 +67,11 @@ export function AdminUserPanel({
       </div>
       {canCreateUsers && (
         <AdminCreateUserForm roles={accessRoles} rolesLoadFailed={rolesLoadFailed} loading={loading} onCreateUser={onCreateUser} />
+      )}
+      {operationFeedback.length > 0 && (
+        <div className="admin-operation-feedback" aria-label="ユーザー管理操作結果">
+          {operationFeedback.slice(0, 3).map((entry) => <OperationFeedback key={entry.id} entry={entry} />)}
+        </div>
       )}
       <div className="admin-data-table" role="table" aria-label="ユーザー一覧">
         <div className="admin-user-row admin-user-head" role="row">
@@ -80,6 +102,7 @@ export function AdminUserPanel({
               onAssignRoles={onAssignRoles}
               onPrepareDelete={onPrepareUserDelete}
               onSetStatus={onSetUserStatus}
+              onOperationFeedback={recordOperationFeedback}
             />
           ))
         )}
@@ -169,7 +192,8 @@ function ManagedUserRow({
   canDelete,
   onAssignRoles,
   onPrepareDelete,
-  onSetStatus
+  onSetStatus,
+  onOperationFeedback
 }: {
   user: ManagedUser
   roles: AccessRoleDefinition[] | null
@@ -179,9 +203,10 @@ function ManagedUserRow({
   canSuspend: boolean
   canUnsuspend: boolean
   canDelete: boolean
-  onAssignRoles: (userId: string, groups: string[], reason: string) => Promise<void>
+  onAssignRoles: (userId: string, groups: string[], reason: string) => Promise<OperationOutcome<ManagedUser> | void>
   onPrepareDelete: (userId: string) => Promise<ManagedUserDeletionPreflight | null>
-  onSetStatus: (userId: string, action: "suspend" | "unsuspend" | "delete", successorUserId?: string) => Promise<void>
+  onSetStatus: (userId: string, action: "suspend" | "unsuspend" | "delete", successorUserId?: string) => Promise<OperationOutcome<ManagedUser> | void>
+  onOperationFeedback: (entry: OperationFeedbackEntry) => void
 }) {
   const availableRoles = useMemo(() => roles ?? [], [roles])
   const [selectedRole, setSelectedRole] = useState(user.groups[0] ?? availableRoles[0]?.role ?? "")
@@ -212,6 +237,33 @@ function ManagedUserRow({
     setStatusCandidate(null)
     setDeletionPreflight(null)
     setSuccessorUserId("")
+  }
+
+  async function applyStatus(action: "suspend" | "unsuspend" | "delete", successor?: string) {
+    const actionLabel = action === "suspend" ? "ユーザー停止" : action === "unsuspend" ? "ユーザー再開" : "ユーザー削除"
+    const impact = action === "suspend"
+      ? "対象ユーザーのアプリ利用を停止"
+      : action === "unsuspend"
+        ? "対象ユーザーのアプリ利用を再開"
+        : "所有資源を確認・移管して恒久削除"
+    const recovery = action === "delete" ? "恒久削除後はこの画面から復元不可" : action === "suspend" ? "再開権限を持つ管理者が再開可能" : "再度停止可能"
+    const base = {
+      id: `admin-user-${action}-${user.userId}`,
+      actionLabel,
+      targetLabel: user.displayName || user.email,
+      targetId: user.userId,
+      details: [
+        { label: "影響", value: impact },
+        { label: "回復条件", value: recovery }
+      ],
+      showUnavailableEvidence: true
+    }
+    onOperationFeedback(processingOperationFeedback(base))
+    const outcome = await resolveOperation(() => successor
+      ? onSetStatus(user.userId, action, successor)
+      : onSetStatus(user.userId, action))
+    onOperationFeedback(feedbackFromOutcome(base, outcome))
+    return outcome
   }
 
   useEffect(() => {
@@ -263,7 +315,7 @@ function ManagedUserRow({
       <span role="cell">
         <div className="user-row-actions">
           {canShowSuspendAction && (user.status === "suspended" ? (
-            <button type="button" disabled={loading} onClick={() => void onSetStatus(user.userId, "unsuspend")}>
+            <button type="button" disabled={loading} onClick={() => void applyStatus("unsuspend")}>
               {loading && <LoadingSpinner className="button-spinner" />}
               <span>再開</span>
             </button>
@@ -292,6 +344,12 @@ function ManagedUserRow({
             `ユーザー: ${user.displayName || user.email}`,
             `メール: ${user.email}`,
             `現在の状態: ${managedUserStatusLabel(user.status)}`,
+            statusCandidate === "suspend"
+              ? "回復条件: 再開権限を持つ管理者が再開できます"
+              : "回復条件: 恒久削除後はこの画面から復元できません",
+            statusCandidate === "suspend"
+              ? "確認が必要な理由: 対象ユーザーの利用を直ちに停止するため"
+              : "確認が必要な理由: 所有資源と管理主体を失わないため",
             ...(statusCandidate === "delete" && deletionPreflight
               ? [
                   `所有フォルダ: ${deletionPreflight.ownedResources.folders}`,
@@ -309,12 +367,8 @@ function ManagedUserRow({
           onCancel={closeStatusDialog}
           onConfirm={async () => {
             if (statusCandidate === "delete" && deletionPreflight?.requiresSuccessor && !successorUserId) return
-            if (statusCandidate === "delete" && successorUserId) {
-              await onSetStatus(user.userId, statusCandidate, successorUserId)
-            } else {
-              await onSetStatus(user.userId, statusCandidate)
-            }
-            closeStatusDialog()
+            const outcome = await applyStatus(statusCandidate, statusCandidate === "delete" ? successorUserId || undefined : undefined)
+            if (outcome.ok) closeStatusDialog()
           }}
         >
           {statusCandidate === "delete" && deletionPreflight?.requiresSuccessor && (
@@ -352,7 +406,10 @@ function ManagedUserRow({
             `メール: ${user.email}`,
             `変更前: ${formatGroupList(user.groups)}`,
             `変更後: ${formatGroupList(nextGroups)}`,
-            `理由: ${roleReason.trim() || "未入力"}`
+            `理由: ${roleReason.trim() || "未入力"}`,
+            "影響: 対象ユーザーの利用可能な管理・操作権限が変わります",
+            "回復条件: 最新 role set を確認し、理由付きで再変更できます",
+            "確認が必要な理由: 自己昇格や管理者不在を server guard で拒否する高権限操作のため"
           ]}
           confirmLabel="付与"
           tone="warning"
@@ -361,9 +418,25 @@ function ManagedUserRow({
           onConfirm={async () => {
             const reason = roleReason.trim()
             if (!reason) return
-            await onAssignRoles(user.userId, nextGroups, reason)
-            setRoleReason("")
-            setRoleAssignOpen(false)
+            const base = {
+              id: `admin-role-${user.userId}`,
+              actionLabel: "ロール変更",
+              targetLabel: user.displayName || user.email,
+              targetId: user.userId,
+              reason,
+              details: [
+                { label: "影響", value: `${formatGroupList(user.groups)} から ${formatGroupList(nextGroups)} へ権限を変更` },
+                { label: "回復条件", value: "最新 role set を確認して理由付きで再変更" }
+              ],
+              showUnavailableEvidence: true
+            }
+            onOperationFeedback(processingOperationFeedback(base))
+            const outcome = await resolveOperation(() => onAssignRoles(user.userId, nextGroups, reason))
+            onOperationFeedback(feedbackFromOutcome(base, outcome))
+            if (outcome.ok) {
+              setRoleReason("")
+              setRoleAssignOpen(false)
+            }
           }}
         />
       )}
@@ -373,4 +446,12 @@ function ManagedUserRow({
 
 function formatGroupList(groups: string[]) {
   return groups.length > 0 ? groups.join(" / ") : "未設定"
+}
+
+async function resolveOperation<T>(operation: () => Promise<OperationOutcome<T> | void>): Promise<OperationOutcome<T>> {
+  try {
+    return await operation() ?? confirmedOperation<T>()
+  } catch (error) {
+    return failedOperation(error)
+  }
 }

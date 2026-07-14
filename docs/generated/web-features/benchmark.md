@@ -21,17 +21,17 @@
 
 | コンポーネント | 説明 | 役割 | ファイル | export | 使用 JSX 要素 |
 | --- | --- | --- | --- | --- | --- |
-| BenchmarkWorkspace | BenchmarkWorkspace は 性能テスト 領域の 画面または画面内 UI コンポーネント です。関連画面: 性能テスト。 | 画面または画面内 UI コンポーネント | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx | BenchmarkWorkspace | BenchmarkMetricCard, BenchmarkMetricChips, ConfirmDialog, Icon, LoadingSpinner, LoadingStatus, ResourceStateBoundary, StatusBadge, article, button, code, div, h2, h3, header, input, label, option, p, section, select, small, span, strong, table, tbody, td, th, thead, tr |
+| BenchmarkWorkspace | BenchmarkWorkspace は 性能テスト 領域の 画面または画面内 UI コンポーネント です。関連画面: 性能テスト。 | 画面または画面内 UI コンポーネント | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx | BenchmarkWorkspace | BenchmarkMetricCard, BenchmarkMetricChips, ConfirmDialog, Icon, LoadingSpinner, LoadingStatus, OperationFeedback, ResourceStateBoundary, StatusBadge, article, button, code, div, h2, h3, header, input, label, option, p, section, select, small, span, strong, table, tbody, td, th, thead, tr |
 
 ## 主なボタン・リンク
 
 | コンポーネント | 要素 | ラベル | 操作説明 | 状態・補足 | ハンドラ | 場所 | 確度 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| BenchmarkWorkspace | button | チャットへ戻る | 「チャットへ戻る」を実行するボタン。 | - | onClick=onBack | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:86 | confirmed |
-| BenchmarkWorkspace | button | 性能テストを実行 | 「性能テストを実行」を実行するボタン。 | 状態: disabled=loading \|\| !canRun \|\| !selectedSuite \|\| !hasSuitesResult | onClick=() => setConfirmStartOpen(true) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:157 | confirmed |
-| BenchmarkWorkspace | button | 更新 | 「更新」を実行するボタン。 | 状態: disabled=loading | onClick=onRefresh | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:161 | confirmed |
-| BenchmarkWorkspace | button | `${artifact.description}をダウンロード` | 「`${artifact.description}をダウンロード`」を実行するボタン。 | 状態: disabled=!canDownload \|\| !canDownloadArtifact(run, artifact.kind) | onClick=() => void downloadBenchmarkArtifact(run.runId, artifact.kind) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:213 | confirmed |
-| BenchmarkWorkspace | button | `${run.runId}のジョブをキャンセル` | 「`${run.runId}のジョブをキャンセル`」を実行するボタン。 | 状態: disabled=!canCancel \|\| loading \|\| !["queued", "running"].includes(run.status) | onClick=() => void onCancel(run.runId) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:225 | confirmed |
+| BenchmarkWorkspace | button | チャットへ戻る | 「チャットへ戻る」を実行するボタン。 | - | onClick=onBack | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:97 | confirmed |
+| BenchmarkWorkspace | button | 性能テストを実行 | 「性能テストを実行」を実行するボタン。 | 状態: disabled=loading \|\| !canRun \|\| !selectedSuite \|\| !hasSuitesResult | onClick=() => setConfirmStartOpen(true) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:174 | confirmed |
+| BenchmarkWorkspace | button | 更新 | 「更新」を実行するボタン。 | 状態: disabled=loading | onClick=onRefresh | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:178 | confirmed |
+| BenchmarkWorkspace | button | `${artifact.description}をダウンロード` | 「`${artifact.description}をダウンロード`」を実行するボタン。 | 状態: disabled=!canDownload \|\| !canDownloadArtifact(run, artifact.kind) | onClick=() => void downloadBenchmarkArtifact(run.runId, artifact.kind) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:230 | confirmed |
+| BenchmarkWorkspace | button | `${run.runId}のジョブをキャンセル` | 「`${run.runId}のジョブをキャンセル`」を実行するボタン。 | 状態: disabled=!canCancel \|\| loading \|\| !["queued", "running"].includes(run.status) | onClick=() => setCancelCandidate(run) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:242 | confirmed |
 
 ## フォーム
 
@@ -41,30 +41,30 @@
 
 | コンポーネント | 要素 | ラベル | 入力項目の説明 | 状態・補足 | ハンドラ | 場所 | 確度 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| BenchmarkWorkspace | select | テスト種別 | 「テスト種別」を選ぶ選択項目。 | 状態: disabled=!hasSuites \|\| !hasSuitesResult | onChange=(event) => onSuiteChange(event.target.value) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:115 | confirmed |
-| BenchmarkWorkspace | input | データセット | 「データセット」を入力または選択する項目。 | - | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:136 | confirmed |
-| BenchmarkWorkspace | select | Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku | 「Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku」を選ぶ選択項目。 | - | onChange=(event) => onModelChange(event.target.value) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:140 | confirmed |
-| BenchmarkWorkspace | input | 並列数 | 「並列数」を入力または選択する項目。 | - | onChange=(event) => onConcurrencyChange(Math.max(1, Math.min(20, Number(event.target.value) \|\| 1))) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:148 | confirmed |
+| BenchmarkWorkspace | select | テスト種別 | 「テスト種別」を選ぶ選択項目。 | 状態: disabled=!hasSuites \|\| !hasSuitesResult | onChange=(event) => onSuiteChange(event.target.value) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:132 | confirmed |
+| BenchmarkWorkspace | input | データセット | 「データセット」を入力または選択する項目。 | - | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:153 | confirmed |
+| BenchmarkWorkspace | select | Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku | 「Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku」を選ぶ選択項目。 | - | onChange=(event) => onModelChange(event.target.value) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:157 | confirmed |
+| BenchmarkWorkspace | input | 並列数 | 「並列数」を入力または選択する項目。 | - | onChange=(event) => onConcurrencyChange(Math.max(1, Math.min(20, Number(event.target.value) \|\| 1))) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:165 | confirmed |
 
 ## UI 操作要素の全量
 
 | コンポーネント | 要素 | ラベル | UI 説明 | 状態・補足 | ハンドラ | 場所 | 確度 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| BenchmarkWorkspace | button | チャットへ戻る | 「チャットへ戻る」を実行するボタン。 | - | onClick=onBack | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:86 | confirmed |
-| BenchmarkWorkspace | label | テスト種別 | 「テスト種別」に紐づく入力ラベル。 | - | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:113 | confirmed |
-| BenchmarkWorkspace | select | テスト種別 | 「テスト種別」を選ぶ選択項目。 | 状態: disabled=!hasSuites \|\| !hasSuitesResult | onChange=(event) => onSuiteChange(event.target.value) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:115 | confirmed |
-| BenchmarkWorkspace | option | テスト設定を取得できません | 「テスト設定を取得できません」を表す option 要素。 | - | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:116 | confirmed |
-| BenchmarkWorkspace | option | テスト種別 | 「テスト種別」を表す option 要素。 | - | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:118 | confirmed |
-| BenchmarkWorkspace | label | データセット | 「データセット」に紐づく入力ラベル。 | - | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:134 | confirmed |
-| BenchmarkWorkspace | input | データセット | 「データセット」を入力または選択する項目。 | - | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:136 | confirmed |
-| BenchmarkWorkspace | label | モデル / Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku | 「モデル / Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku」に紐づく入力ラベル。 | - | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:138 | confirmed |
-| BenchmarkWorkspace | select | Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku | 「Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku」を選ぶ選択項目。 | - | onChange=(event) => onModelChange(event.target.value) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:140 | confirmed |
-| BenchmarkWorkspace | option | Nova Lite v1 | 「Nova Lite v1」を表す option 要素。 | - | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:141 | confirmed |
-| BenchmarkWorkspace | option | Claude 3.5 Sonnet | 「Claude 3.5 Sonnet」を表す option 要素。 | - | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:142 | confirmed |
-| BenchmarkWorkspace | option | Claude 3 Haiku | 「Claude 3 Haiku」を表す option 要素。 | - | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:143 | confirmed |
-| BenchmarkWorkspace | label | 並列数 | 「並列数」に紐づく入力ラベル。 | - | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:146 | confirmed |
-| BenchmarkWorkspace | input | 並列数 | 「並列数」を入力または選択する項目。 | - | onChange=(event) => onConcurrencyChange(Math.max(1, Math.min(20, Number(event.target.value) \|\| 1))) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:148 | confirmed |
-| BenchmarkWorkspace | button | 性能テストを実行 | 「性能テストを実行」を実行するボタン。 | 状態: disabled=loading \|\| !canRun \|\| !selectedSuite \|\| !hasSuitesResult | onClick=() => setConfirmStartOpen(true) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:157 | confirmed |
-| BenchmarkWorkspace | button | 更新 | 「更新」を実行するボタン。 | 状態: disabled=loading | onClick=onRefresh | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:161 | confirmed |
-| BenchmarkWorkspace | button | `${artifact.description}をダウンロード` | 「`${artifact.description}をダウンロード`」を実行するボタン。 | 状態: disabled=!canDownload \|\| !canDownloadArtifact(run, artifact.kind) | onClick=() => void downloadBenchmarkArtifact(run.runId, artifact.kind) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:213 | confirmed |
-| BenchmarkWorkspace | button | `${run.runId}のジョブをキャンセル` | 「`${run.runId}のジョブをキャンセル`」を実行するボタン。 | 状態: disabled=!canCancel \|\| loading \|\| !["queued", "running"].includes(run.status) | onClick=() => void onCancel(run.runId) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:225 | confirmed |
+| BenchmarkWorkspace | button | チャットへ戻る | 「チャットへ戻る」を実行するボタン。 | - | onClick=onBack | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:97 | confirmed |
+| BenchmarkWorkspace | label | テスト種別 | 「テスト種別」に紐づく入力ラベル。 | - | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:130 | confirmed |
+| BenchmarkWorkspace | select | テスト種別 | 「テスト種別」を選ぶ選択項目。 | 状態: disabled=!hasSuites \|\| !hasSuitesResult | onChange=(event) => onSuiteChange(event.target.value) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:132 | confirmed |
+| BenchmarkWorkspace | option | テスト設定を取得できません | 「テスト設定を取得できません」を表す option 要素。 | - | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:133 | confirmed |
+| BenchmarkWorkspace | option | テスト種別 | 「テスト種別」を表す option 要素。 | - | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:135 | confirmed |
+| BenchmarkWorkspace | label | データセット | 「データセット」に紐づく入力ラベル。 | - | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:151 | confirmed |
+| BenchmarkWorkspace | input | データセット | 「データセット」を入力または選択する項目。 | - | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:153 | confirmed |
+| BenchmarkWorkspace | label | モデル / Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku | 「モデル / Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku」に紐づく入力ラベル。 | - | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:155 | confirmed |
+| BenchmarkWorkspace | select | Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku | 「Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku」を選ぶ選択項目。 | - | onChange=(event) => onModelChange(event.target.value) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:157 | confirmed |
+| BenchmarkWorkspace | option | Nova Lite v1 | 「Nova Lite v1」を表す option 要素。 | - | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:158 | confirmed |
+| BenchmarkWorkspace | option | Claude 3.5 Sonnet | 「Claude 3.5 Sonnet」を表す option 要素。 | - | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:159 | confirmed |
+| BenchmarkWorkspace | option | Claude 3 Haiku | 「Claude 3 Haiku」を表す option 要素。 | - | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:160 | confirmed |
+| BenchmarkWorkspace | label | 並列数 | 「並列数」に紐づく入力ラベル。 | - | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:163 | confirmed |
+| BenchmarkWorkspace | input | 並列数 | 「並列数」を入力または選択する項目。 | - | onChange=(event) => onConcurrencyChange(Math.max(1, Math.min(20, Number(event.target.value) \|\| 1))) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:165 | confirmed |
+| BenchmarkWorkspace | button | 性能テストを実行 | 「性能テストを実行」を実行するボタン。 | 状態: disabled=loading \|\| !canRun \|\| !selectedSuite \|\| !hasSuitesResult | onClick=() => setConfirmStartOpen(true) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:174 | confirmed |
+| BenchmarkWorkspace | button | 更新 | 「更新」を実行するボタン。 | 状態: disabled=loading | onClick=onRefresh | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:178 | confirmed |
+| BenchmarkWorkspace | button | `${artifact.description}をダウンロード` | 「`${artifact.description}をダウンロード`」を実行するボタン。 | 状態: disabled=!canDownload \|\| !canDownloadArtifact(run, artifact.kind) | onClick=() => void downloadBenchmarkArtifact(run.runId, artifact.kind) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:230 | confirmed |
+| BenchmarkWorkspace | button | `${run.runId}のジョブをキャンセル` | 「`${run.runId}のジョブをキャンセル`」を実行するボタン。 | 状態: disabled=!canCancel \|\| loading \|\| !["queued", "running"].includes(run.status) | onClick=() => setCancelCandidate(run) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:242 | confirmed |

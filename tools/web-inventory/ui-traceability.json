@@ -98,8 +98,8 @@
     },
     {
       "id": "E2E-UI-RISK-001",
-      "status": "planned",
-      "task": "tasks/todo/20260714-issue-345-risky-operation-feedback.md"
+      "status": "implemented",
+      "evidence": ["apps/web/e2e/visual-regression.spec.ts"]
     },
     {
       "id": "E2E-UI-DOCUMENTS-001",
@@ -179,11 +179,12 @@
         { "id": "E2E-VIEW-HISTORY-001", "status": "implemented", "evidence": ["apps/web/e2e/visual-regression.spec.ts"] }
       ],
       "implementationStatus": "partial",
-      "implementationEvidence": ["apps/web/src/features/history/components/HistoryWorkspace.tsx"],
-      "gapTasks": [
-        "tasks/todo/20260714-issue-345-chat-assignee-journey.md",
-        "tasks/todo/20260714-issue-345-risky-operation-feedback.md"
-      ]
+      "implementationEvidence": [
+        "apps/web/src/features/history/components/HistoryWorkspace.tsx",
+        "apps/web/src/features/history/hooks/useConversationHistory.ts",
+        "apps/web/src/shared/ui/OperationFeedback.tsx"
+      ],
+      "gapTasks": ["tasks/todo/20260714-issue-345-chat-assignee-journey.md"]
     },
     {
       "view": "favorites",
@@ -225,8 +226,12 @@
         { "id": "E2E-VIEW-BENCHMARK-001", "status": "implemented", "evidence": ["apps/web/e2e/visual-regression.spec.ts"] }
       ],
       "implementationStatus": "partial",
-      "implementationEvidence": ["apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx"],
-      "gapTasks": ["tasks/todo/20260714-issue-345-risky-operation-feedback.md"]
+      "implementationEvidence": [
+        "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
+        "apps/web/src/features/benchmark/hooks/useBenchmarkRuns.ts",
+        "apps/web/src/shared/ui/operationOutcome.ts"
+      ],
+      "gapTasks": ["tasks/todo/20260714-issue-345-manual-a11y-evidence.md"]
     },
     {
       "view": "admin",
@@ -249,7 +254,11 @@
         { "id": "E2E-VIEW-ADMIN-001", "status": "implemented", "evidence": ["apps/web/e2e/visual-regression.spec.ts"] }
       ],
       "implementationStatus": "partial",
-      "implementationEvidence": ["apps/web/src/features/admin/components/AdminWorkspace.tsx"],
+      "implementationEvidence": [
+        "apps/web/src/features/admin/components/AdminWorkspace.tsx",
+        "apps/web/src/features/admin/hooks/useAdminData.ts",
+        "apps/web/src/shared/ui/OperationFeedback.tsx"
+      ],
       "gapTasks": ["tasks/todo/20260714-1011-admin-ui-governance-quality.md"]
     },
     {
@@ -279,7 +288,11 @@
         { "id": "E2E-VIEW-DOCUMENTS-001", "status": "implemented", "evidence": ["apps/web/e2e/visual-regression.spec.ts"] }
       ],
       "implementationStatus": "partial",
-      "implementationEvidence": ["apps/web/src/features/documents/components/DocumentWorkspace.tsx"],
+      "implementationEvidence": [
+        "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+        "apps/web/src/features/documents/hooks/useDocuments.ts",
+        "apps/web/src/shared/ui/OperationFeedback.tsx"
+      ],
       "gapTasks": ["tasks/todo/20260714-issue-345-document-workspace-context.md"]
     },
     {

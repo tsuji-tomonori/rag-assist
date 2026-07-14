@@ -12,6 +12,7 @@ import { AdminUserPanel } from "./panels/AdminUserPanel.js"
 import { AliasAdminPanel } from "./panels/AliasAdminPanel.js"
 import { ResourceStateBoundary, type UiResourceState } from "../../../shared/ui/ResourceState.js"
 import { isResourceStateBusy } from "../../../shared/ui/resourceStateModel.js"
+import type { OperationOutcome } from "../../../shared/ui/operationOutcome.js"
 
 type AdminSectionId = "overview" | "users" | "roles" | "usage-cost" | "audit" | "alias"
 
@@ -105,15 +106,15 @@ export function AdminWorkspace({
   onOpenDebug: () => void
   onOpenBenchmark: () => void
   onCreateUser: (input: { email: string; displayName?: string; groups?: string[] }) => Promise<void>
-  onAssignRoles: (userId: string, groups: string[], reason: string) => Promise<void>
+  onAssignRoles: (userId: string, groups: string[], reason: string) => Promise<OperationOutcome<ManagedUser> | void>
   onPrepareUserDelete: (userId: string) => Promise<ManagedUserDeletionPreflight | null>
-  onSetUserStatus: (userId: string, action: "suspend" | "unsuspend" | "delete", successorUserId?: string) => Promise<void>
+  onSetUserStatus: (userId: string, action: "suspend" | "unsuspend" | "delete", successorUserId?: string) => Promise<OperationOutcome<ManagedUser> | void>
   onRefreshAdminData: () => Promise<void>
   onCreateAlias: (input: { term: string; expansions: string[]; scope?: AliasDefinition["scope"] }) => Promise<void>
   onUpdateAlias: (aliasId: string, input: { term?: string; expansions?: string[]; scope?: AliasDefinition["scope"] }) => Promise<void>
   onReviewAlias: (aliasId: string, decision: "approve" | "reject", comment?: string) => Promise<void>
-  onDisableAlias: (aliasId: string) => Promise<void>
-  onPublishAliases: () => Promise<void>
+  onDisableAlias: (aliasId: string) => Promise<OperationOutcome<AliasDefinition> | void>
+  onPublishAliases: () => Promise<OperationOutcome<{ version: string; publishedAt: string; aliasCount: number }> | void>
   onBack: () => void
 }) {
   const [activeSection, setActiveSection] = useState<AdminSectionId>("overview")
