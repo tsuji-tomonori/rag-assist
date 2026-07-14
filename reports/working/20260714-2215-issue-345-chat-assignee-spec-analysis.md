@@ -11,7 +11,7 @@
 | ID | Source | 日付 | 種別 | 信頼度 | 用途 |
 | --- | --- | --- | --- | --- | --- |
 | RPT-001 | GitHub Issue `#345` | 2026-07-13 | issue / completion criteria | confirmed | chat journey、responsive/a11y、traceability の目的と全体完了条件 |
-| RPT-002 | `tasks/do/20260714-issue-345-chat-assignee-journey.md` | 2026-07-14 | task | confirmed | milestone scope と受け入れ条件 |
+| RPT-002 | `tasks/done/20260714-issue-345-chat-assignee-journey.md` | 2026-07-14 | task | confirmed | milestone scope と受け入れ条件 |
 | RPT-003 | 関連する atomic FR / `SQ-016` / `DES_UI_UX_001` | current | canonical requirements/design | confirmed | actor、state、RAG quality、UI contract |
 | RPT-004 | `apps/api/src/routes/chat-routes.ts`、`question-routes.ts`、history/favorite routes | current | runtime API | confirmed | server-authoritative state transition と request/response |
 | RPT-005 | question/history/chat stores と access-control tests | current | runtime data/auth/test | confirmed | owner/assignee boundary、persistence、duplicate/late behavior |

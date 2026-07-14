@@ -280,8 +280,8 @@ Checkboxes are checked only for evidence actually obtained.
 | Gap | Requirement | Task |
 | --- | --- | --- |
 | mobile navigation automation completed; representative screen reader、400% browser zoom、safe-area/virtual-keyboard real-device evidence remains | `FR-094`, `SQ-016` | `tasks/do/20260714-issue-345-mobile-navigation.md`, `tasks/todo/20260714-issue-345-manual-a11y-evidence.md` |
-| representative target/risk/result feedback is automated for questions and the earlier representative operations; exhaustive admin coverage and manual evidence remain | `FR-096`, `SQ-016`, `NFR-018` | `tasks/done/20260714-issue-345-risky-operation-feedback.md`, `tasks/do/20260714-issue-345-chat-assignee-journey.md`, `tasks/todo/20260714-1011-admin-ui-governance-quality.md`, `tasks/todo/20260714-issue-345-manual-a11y-evidence.md` |
-| chat/assignee/requester-history automated journey implemented; representative screen-reader/zoom/real-device evidence remains | existing chat/question requirements, `FR-095`, `SQ-016` | `tasks/do/20260714-issue-345-chat-assignee-journey.md`, `tasks/todo/20260714-issue-345-manual-a11y-evidence.md`, `tasks/todo/20260714-issue-345-cross-screen-a11y-responsive.md` |
+| representative target/risk/result feedback is automated for questions and the earlier representative operations; exhaustive admin coverage and manual evidence remain | `FR-096`, `SQ-016`, `NFR-018` | `tasks/done/20260714-issue-345-risky-operation-feedback.md`, `tasks/done/20260714-issue-345-chat-assignee-journey.md`, `tasks/todo/20260714-1011-admin-ui-governance-quality.md`, `tasks/todo/20260714-issue-345-manual-a11y-evidence.md` |
+| chat/assignee/requester-history automated journey implemented; representative screen-reader/zoom/real-device evidence remains | existing chat/question requirements, `FR-095`, `SQ-016` | `tasks/done/20260714-issue-345-chat-assignee-journey.md`, `tasks/todo/20260714-issue-345-manual-a11y-evidence.md`, `tasks/todo/20260714-issue-345-cross-screen-a11y-responsive.md` |
 | admin remaining governance/a11y/scale | `FR-096`〜`FR-098`, `SQ-016` | `tasks/todo/20260714-1011-admin-ui-governance-quality.md` |
 | cross-screen a11y/responsive violations | `SQ-016` | `tasks/todo/20260714-issue-345-cross-screen-a11y-responsive.md` |
 | representative wording/token/primitive migration implemented; remaining cross-screen brand/layout color and manual/browser evidence | `NFR-017`, `SQ-016`, `NFR-018` | `tasks/done/20260714-issue-345-ui-language-primitives.md`, `tasks/todo/20260714-issue-345-cross-screen-a11y-responsive.md`, `tasks/todo/20260714-issue-345-ui-automated-quality-gates.md`, `tasks/todo/20260714-issue-345-manual-a11y-evidence.md` |
@@ -298,7 +298,7 @@ documents の操作 hierarchy と state restoration gap は `tasks/done/20260714
 
 高影響操作の代表 gap は shared outcome/feedback、feature adapter、`E2E-UI-RISK-001` により delete/share/cancel/publish の自動検証範囲を解消した。全 feature の exhaustive coverage、代表 screen reader、実 browser zoom、real-device、Firefox/WebKit は上記の後続 task に残す。
 
-chat、assignee、requester history の有人対応 journey gap は `tasks/do/20260714-issue-345-chat-assignee-journey.md`、targeted outcome、stable message identity、five-state presenter、`E2E-UI-QUESTION-001` / `002` により自動検証範囲を解消した。代表 screen reader、200%/400% zoom、real-device、Firefox/WebKit はこの task の成功として主張せず、manual/cross-screen/gate task に残す。
+chat、assignee、requester history の有人対応 journey gap は `tasks/done/20260714-issue-345-chat-assignee-journey.md`、targeted outcome、stable message identity、five-state presenter、`E2E-UI-QUESTION-001` / `002` により自動検証範囲を解消した。代表 screen reader、200%/400% zoom、real-device、Firefox/WebKit はこの task の成功として主張せず、manual/cross-screen/gate task に残す。
 
 ## Open decisions
 

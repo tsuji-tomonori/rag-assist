@@ -31,13 +31,15 @@ GitHub Issue #345 の全体完了へ向け、stacked draft PR の第 7 milestone
 
 ## 成果物
 
-- task: `tasks/do/20260714-issue-345-chat-assignee-journey.md`
+- task: `tasks/done/20260714-issue-345-chat-assignee-journey.md`
 - 仕様分析: `reports/working/20260714-2215-issue-345-chat-assignee-spec-analysis.md`
 - E2E: `apps/web/e2e/question-journey.spec.ts`
 - API identity: `apps/api/src/adapters/question-identity.ts`
 - UI presentation: `apps/web/src/features/chat/utils/chatJourney.ts`、`apps/web/src/features/questions/utils/questionJourney.ts`
 - trace: `tools/web-inventory/ui-traceability.json`
-- PR: 未作成（commit/push 後に本レポートへ追記する）
+- draft PR: `#354`（`https://github.com/tsuji-tomonori/rag-assist/pull/354`）
+- PR 受け入れ確認コメント: `4970644364`
+- PR セルフレビューコメント: `4970647911`
 
 ## 検証
 
