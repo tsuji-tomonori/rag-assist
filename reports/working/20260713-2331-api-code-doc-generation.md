@@ -3,7 +3,8 @@
 - 作成日時: 2026-07-13 23:31 JST
 - branch: `codex/api-code-doc-generation`
 - base: `origin/main` (`9cd904d3`)
-- task: `tasks/done/20260713-2237-api-code-doc-generation.md`
+- task: `tasks/do/20260713-2237-api-code-doc-generation.md`
+- 状態: 2026-07-14 最新 main への再統合・再検証中
 
 ## 受けた指示
 
