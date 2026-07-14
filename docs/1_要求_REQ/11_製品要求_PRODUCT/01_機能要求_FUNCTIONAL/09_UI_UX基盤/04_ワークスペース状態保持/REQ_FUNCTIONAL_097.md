@@ -71,6 +71,6 @@
 ## 関連文書・task
 
 - `docs/3_設計_DES/21_UI_UX/DES_UI_UX_001.md`
-- `tasks/do/20260714-issue-345-url-history-routing.md`
+- `tasks/done/20260714-issue-345-url-history-routing.md`
 - `tasks/todo/20260714-issue-345-document-workspace-context.md`
 - `tasks/todo/20260714-1011-admin-ui-governance-quality.md`

@@ -1,8 +1,8 @@
 # Issue #345 URL・history・denied route 復帰を完成する
 
-保存先: `tasks/do/20260714-issue-345-url-history-routing.md`
+保存先: `tasks/done/20260714-issue-345-url-history-routing.md`
 
-状態: do
+状態: done
 
 タスク種別: 機能追加
 
@@ -41,7 +41,7 @@
 - [x] parser/serializer/history/permission recovery と UI notice が unit/E2E で観測可能である。
 - [x] reload/bookmark/back/forward/direct/invalid/obsolete/denied の自動検証が成功する。
 - [x] Web lint/typecheck/test/build、docs/inventory check、pre-commit が成功する。
-- [ ] trace manifest、generated docs、task report、PR acceptance/self-review が同期し、全受け入れ条件を満たす。
+- [x] trace manifest、generated docs、task report、PR acceptance/self-review が同期し、全受け入れ条件を満たす。
 
 ## ドキュメントメンテナンス計画
 
@@ -61,7 +61,8 @@
 - user navigation は `pushState`、legacy/unknown/obsolete/conflicting query/path、permission recovery、document transient state は `replaceState` へ分けた。
 - unknown query、重複 query、空 document state、不正 sort、未定義 hash、path-escaping/malformed segment を canonical URL へ正規化した。
 - permission 解決前に protected view を描画せず、denied admin deep link で protected request が発生しないことを E2E で確認した。
-- `E2E-UI-ROUTE-001` / `002`、route/hook unit、Web 321 tests、build/typecheck/lint、docs/API trace gate が成功した。PR acceptance/self-review と task lifecycle は PR 作成後に同期する。
+- `E2E-UI-ROUTE-001` / `002`、route/hook unit、Web 321 tests、build/typecheck/lint、docs/API trace gate が成功した。
+- draft PR #349 を作成し、日本語の受け入れ条件コメントとセルフレビューを登録したため、本 task を `done` へ移した。PR #348 依存は #349 の merge blocker として継続する。
 
 ## 検証計画
 

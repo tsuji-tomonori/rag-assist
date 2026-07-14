@@ -227,7 +227,6 @@ Checkboxes are checked only for evidence actually obtained.
 | Gap | Requirement | Task |
 | --- | --- | --- |
 | mobile navigation automation completed; representative screen reader、400% browser zoom、safe-area/virtual-keyboard real-device evidence remains | `FR-094`, `SQ-016` | `tasks/do/20260714-issue-345-mobile-navigation.md`, `tasks/todo/20260714-issue-345-manual-a11y-evidence.md` |
-| URL/history/denied-route automation completed; dependent PR evidence and task lifecycle remain | `FR-094` | `tasks/do/20260714-issue-345-url-history-routing.md` |
 | unstructured global error/common states | `FR-095` | `tasks/todo/20260714-issue-345-shared-ui-state-contract.md` |
 | target/risk/result feedback inconsistent | `FR-096` | `tasks/todo/20260714-issue-345-risky-operation-feedback.md` |
 | documents 143-interaction density and state restoration | `FR-097`, `FR-098` | `tasks/todo/20260714-issue-345-document-workspace-context.md` |
@@ -237,6 +236,8 @@ Checkboxes are checked only for evidence actually obtained.
 | wording/token/primitive drift | `NFR-017` | `tasks/todo/20260714-issue-345-ui-language-primitives.md` |
 | required axe/mobile/visual/browser gate missing | `NFR-018` | `tasks/todo/20260714-issue-345-ui-automated-quality-gates.md` |
 | manual screen-reader/zoom/real-device evidence missing | `SQ-016`, `NFR-018` | `tasks/todo/20260714-issue-345-manual-a11y-evidence.md` |
+
+URL/history/denied-route gap は draft PR #349 と `tasks/done/20260714-issue-345-url-history-routing.md` で自動検証まで解消した。PR #348 依存は production behavior の gap ではなく、default branch merge 前に解消する PR lifecycle blocker として扱う。
 
 ## Open decisions
 

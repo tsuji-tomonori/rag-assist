@@ -1,7 +1,7 @@
 # Issue #345 URL/history routing 作業レポート
 
 - 実施日時: 2026-07-14 15:29 JST
-- 対象 task: `tasks/do/20260714-issue-345-url-history-routing.md`
+- 対象 task: `tasks/done/20260714-issue-345-url-history-routing.md`
 - 対象要件: `FR-094`, `FR-097`
 - 依存: draft PR #348 / `codex/issue-345-uiux-foundation` head `8e8cf588`
 
@@ -52,4 +52,4 @@
 - admin/questions の filter/selection/scroll restoration と document 143-operation IA は別 task の残余であり、`FR-097` 全体の完了は主張しない。
 - full API coverage は本マイルストーンでは未実施。API runtime は変更せず、変更した trace table は対象 node test で検証した。PR CI では full coverage が実行される。
 - PR #348 未 merge のため本 branch は foundation head 依存。default branch へ merge する前に依存を解消し、main 差分へ収束させる必要がある。
-- PR 作成、受け入れ条件コメント、セルフレビュー、task lifecycle 更新はこの report 作成後の workflow で行う。
+- draft PR #349 を GitHub Apps で作成し、`semver:minor`、日本語の受け入れ条件コメント、セルフレビューを登録した。task は同一 branch で `tasks/done/` へ移動した。

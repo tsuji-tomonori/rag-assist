@@ -76,4 +76,4 @@
 - `docs/1_要求_REQ/31_変更管理_CHANGE/REQ_CHANGE_001.md`
 - `docs/3_設計_DES/21_UI_UX/DES_UI_UX_001.md`
 - `tasks/do/20260714-issue-345-mobile-navigation.md`
-- `tasks/do/20260714-issue-345-url-history-routing.md`
+- `tasks/done/20260714-issue-345-url-history-routing.md`
