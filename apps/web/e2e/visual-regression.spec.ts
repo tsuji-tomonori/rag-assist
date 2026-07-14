@@ -481,6 +481,127 @@ test('E2E-UI-ROUTE-002: denied・invalid deep link は protected fetch なしで
   await expect(page).toHaveURL(/\?view=history$/)
 })
 
+test('E2E-UI-STATE-001: loading・500・empty・retry recovery を対象 region で区別する @smoke', async ({ page }) => {
+  let historyReads = 0
+  let releaseFirstRead: (() => void) | undefined
+  const firstReadGate = new Promise<void>((resolve) => { releaseFirstRead = resolve })
+  await page.route(/http:\/\/(api\.visual\.test|127\.0\.0\.1:8787)\/conversation-history$/, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.fallback()
+      return
+    }
+    historyReads += 1
+    if (historyReads === 1) {
+      await firstReadGate
+      await route.fulfill({ status: 500, contentType: 'text/plain', body: 'RequestId: private-id at InternalHistory (/srv/history.ts:10)' })
+      return
+    }
+    await route.fulfill({ json: { history: [] } })
+  })
+
+  await signIn(page)
+  await page.getByTitle('履歴').click()
+  const historyRegion = page.getByRole('region', { name: '履歴', exact: true })
+  const dataRegion = page.locator('#history-resource-region')
+  await expect(dataRegion).toHaveAttribute('aria-busy', 'true')
+  await expect(historyRegion).toContainText('会話履歴を読み込んでいます')
+  await expect(historyRegion).not.toContainText('0 件の会話')
+
+  releaseFirstRead?.()
+  const errorState = historyRegion.locator('[data-state-kind="error"]')
+  await expect(errorState).toContainText('会話履歴を取得できませんでした')
+  await expect(errorState).not.toContainText('private-id')
+  await expect(historyRegion).not.toContainText('0 件の会話')
+
+  await errorState.getByRole('button', { name: '再試行' }).click()
+  await expect(historyRegion.locator('[data-state-kind="recovered"]')).toContainText('会話履歴を更新しました')
+  await expect(historyRegion).toContainText('条件に一致する履歴はありません')
+  await expect(historyRegion).toContainText('0 件の会話')
+  expect(historyReads).toBe(2)
+})
+
+test('E2E-UI-STATE-001: HTTP 403 は empty/zero ではなく permission denied として content を隠す @smoke', async ({ page }) => {
+  await page.route(/http:\/\/(api\.visual\.test|127\.0\.0\.1:8787)\/conversation-history$/, async (route) => {
+    if (route.request().method() === 'GET') {
+      await route.fulfill({ status: 403, contentType: 'text/plain', body: 'forbidden private history id' })
+      return
+    }
+    await route.fallback()
+  })
+
+  await signIn(page)
+  await page.getByTitle('履歴').click()
+  const historyRegion = page.getByRole('region', { name: '履歴', exact: true })
+  const permissionState = historyRegion.locator('[data-state-kind="permission"]')
+  await expect(permissionState).toHaveAttribute('role', 'alert')
+  await expect(permissionState).toContainText('会話履歴を表示できません')
+  await expect(permissionState).not.toContainText('private history id')
+  await expect(historyRegion).not.toContainText('0 件の会話')
+  await expect(page.locator('#history-resource-region')).not.toContainText('条件に一致する履歴はありません')
+})
+
+test('E2E-UI-STATE-001: admin partial success は成功・失敗 part を分けて retry recovery する @smoke', async ({ page }) => {
+  let auditReads = 0
+  await page.route(/http:\/\/(api\.visual\.test|127\.0\.0\.1:8787)\/admin\/audit-log$/, async (route) => {
+    auditReads += 1
+    if (auditReads === 1) {
+      await route.fulfill({ status: 500, contentType: 'text/plain', body: 'audit unavailable' })
+      return
+    }
+    await route.fallback()
+  })
+
+  await signIn(page)
+  await page.getByTitle('管理者設定').click()
+  const adminRegion = page.getByRole('region', { name: '管理者設定', exact: true })
+  const partialState = adminRegion.locator('[data-state-kind="partial"]')
+  await expect(partialState).toContainText('管理者設定の一部を取得できませんでした')
+  await expect(partialState).toContainText('取得済み')
+  await expect(partialState).toContainText('管理対象ユーザー')
+  await expect(partialState).toContainText('未更新')
+  await expect(partialState).toContainText('管理操作履歴')
+
+  await adminRegion.getByRole('button', { name: 'Audit' }).click()
+  await expect(adminRegion).toContainText('管理操作履歴を取得できませんでした')
+  await expect(adminRegion).not.toContainText('0 件')
+
+  await partialState.getByRole('button', { name: '失敗した項目を再試行' }).click()
+  await expect(adminRegion.locator('[data-state-kind="recovered"]')).toContainText('管理者設定を更新しました')
+  await expect(adminRegion).toContainText('role:assign')
+  expect(auditReads).toBe(2)
+})
+
+test('E2E-UI-STATE-001: refresh failure は as-of/source 付き stale data を保持して回復する @smoke', async ({ page }) => {
+  const refreshCounts = new Map<string, number>()
+  await page.route(/http:\/\/(api\.visual\.test|127\.0\.0\.1:8787)\/admin\/(users|roles|audit-log|usage|costs)$/, async (route) => {
+    const path = new URL(route.request().url()).pathname
+    const count = (refreshCounts.get(path) ?? 0) + 1
+    refreshCounts.set(path, count)
+    if (count === 2) {
+      await route.fulfill({ status: 500, contentType: 'text/plain', body: 'temporary refresh failure' })
+      return
+    }
+    await route.fallback()
+  })
+
+  await signIn(page)
+  await page.getByTitle('管理者設定').click()
+  const adminRegion = page.getByRole('region', { name: '管理者設定', exact: true })
+  await adminRegion.getByRole('button', { name: 'Users' }).click()
+  await expect(adminRegion).toContainText('Visual Admin')
+  await adminRegion.getByRole('button', { name: '更新', exact: true }).click()
+
+  const staleState = adminRegion.locator('[data-state-kind="stale"]')
+  await expect(staleState).toContainText('管理者設定は最新ではありません')
+  await expect(staleState).toContainText('source: 管理 API')
+  await expect(staleState.locator('time')).toHaveAttribute('dateTime', '2026-05-02T00:00:00.000Z')
+  await expect(adminRegion).toContainText('Visual Admin')
+
+  await staleState.getByRole('button', { name: '最新情報を取得' }).click()
+  await expect(adminRegion.locator('[data-state-kind="recovered"]')).toContainText('管理者設定を更新しました')
+  await expect(adminRegion).toContainText('Visual Admin')
+})
+
 test('性能テストの実行ボタンがサマリーに重ならずクリックできる @smoke', async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 900 })
   await signIn(page)

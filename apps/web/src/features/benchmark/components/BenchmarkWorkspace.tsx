@@ -5,6 +5,15 @@ import { Icon } from "../../../shared/components/Icon.js"
 import { LoadingSpinner, LoadingStatus } from "../../../shared/components/LoadingSpinner.js"
 import { downloadBenchmarkArtifact } from "../../../shared/utils/downloads.js"
 import { formatDateTime, formatMetricLatency, formatPercent, runStatusLabel } from "../../../shared/utils/format.js"
+import {
+  ResourceStateBoundary,
+  type UiResourceState
+} from "../../../shared/ui/ResourceState.js"
+import {
+  hasConfirmedResourceResult,
+  isResourcePartAvailable,
+  isResourceStateBusy
+} from "../../../shared/ui/resourceStateModel.js"
 
 const benchmarkArtifacts = [
   { kind: "report", label: "レポート", description: "レポートMarkdown" },
@@ -14,6 +23,7 @@ const benchmarkArtifacts = [
 ] as const
 
 export function BenchmarkWorkspace({
+  dataState,
   runs,
   suites,
   suiteId,
@@ -31,6 +41,7 @@ export function BenchmarkWorkspace({
   onCancel,
   onBack
 }: {
+  dataState: UiResourceState
   runs: BenchmarkRun[]
   suites: BenchmarkSuite[]
   suiteId: string
@@ -53,6 +64,12 @@ export function BenchmarkWorkspace({
   const runningCount = runs.filter((run) => run.status === "queued" || run.status === "running").length
   const failedCount = runs.filter((run) => run.status === "failed").length
   const hasSuites = suites.length > 0
+  const hasRunsResult = dataState.parts.length === 0
+    ? hasConfirmedResourceResult(dataState)
+    : isResourcePartAvailable(dataState, "runs")
+  const hasSuitesResult = dataState.parts.length === 0
+    ? hasConfirmedResourceResult(dataState)
+    : isResourcePartAvailable(dataState, "suites")
   const [confirmStartOpen, setConfirmStartOpen] = useState(false)
 
   return (
@@ -63,12 +80,13 @@ export function BenchmarkWorkspace({
         </button>
         <div>
           <h2>性能テスト</h2>
-          <span>{runs.length} 件の実行履歴</span>
+          <span>{hasRunsResult ? `${runs.length} 件の実行履歴` : "実行履歴を確認中"}</span>
         </div>
       </header>
-      {loading && <LoadingStatus label="性能テストAPIを処理中" />}
+      {loading && !isResourceStateBusy(dataState) && <LoadingStatus label="性能テストAPIを処理中" />}
 
-      <div className="benchmark-kpi-grid">
+      <ResourceStateBoundary state={dataState} onRetry={onRefresh} onBack={onBack}>
+      {hasRunsResult ? <div className="benchmark-kpi-grid">
         <BenchmarkMetricCard
           title="最新テスト結果"
           value={summary.latestRun ? runStatusLabel(summary.latestRun.status) : "未実行"}
@@ -78,7 +96,7 @@ export function BenchmarkWorkspace({
         <BenchmarkMetricCard title="成功 run" value={String(summary.succeededCount)} subValue="成果物をダウンロード可能" tone="succeeded" />
         <BenchmarkMetricCard title="処理中 run" value={String(runningCount)} subValue="queued / running" tone={runningCount > 0 ? "running" : "queued"} />
         <BenchmarkMetricCard title="失敗 run" value={String(failedCount)} subValue="CodeBuildログで原因確認" tone={failedCount > 0 ? "failed" : "queued"} />
-      </div>
+      </div> : null}
 
       <div className="benchmark-layout">
         <section className="benchmark-run-panel">
@@ -86,8 +104,8 @@ export function BenchmarkWorkspace({
           <p className="benchmark-run-panel-note">ワンクリックで選択 suite を実行します。</p>
           <label>
             <span>テスト種別</span>
-            <select value={selectedSuite?.suiteId ?? ""} disabled={!hasSuites} onChange={(event) => onSuiteChange(event.target.value)}>
-              {!hasSuites && <option value="">benchmark suite を取得できません</option>}
+            <select value={selectedSuite?.suiteId ?? ""} disabled={!hasSuites || !hasSuitesResult} onChange={(event) => onSuiteChange(event.target.value)}>
+              {(!hasSuites || !hasSuitesResult) && <option value="">benchmark suite を取得できません</option>}
               {suites.map((suite) => (
                 <option value={suite.suiteId} key={suite.suiteId}>
                   {suite.label}
@@ -128,7 +146,7 @@ export function BenchmarkWorkspace({
             />
           </label>
           <div className="benchmark-actions">
-            <button type="button" onClick={() => setConfirmStartOpen(true)} disabled={loading || !canRun || !selectedSuite}>
+            <button type="button" onClick={() => setConfirmStartOpen(true)} disabled={loading || !canRun || !selectedSuite || !hasSuitesResult}>
               {loading ? <LoadingSpinner className="button-spinner" /> : <Icon name="send" />}
               <span>性能テストを実行</span>
             </button>
@@ -139,7 +157,7 @@ export function BenchmarkWorkspace({
           </div>
         </section>
 
-        <section className="benchmark-history-panel">
+        {hasRunsResult ? <section className="benchmark-history-panel">
           <div className="history-list-head">
             <h3>実行履歴</h3>
             <span>{runs.length} 件</span>
@@ -208,8 +226,9 @@ export function BenchmarkWorkspace({
               </tbody>
             </table>
           </div>
-        </section>
+        </section> : null}
       </div>
+      </ResourceStateBoundary>
       {confirmStartOpen && (
         <ConfirmDialog
           title="性能テストを実行しますか？"

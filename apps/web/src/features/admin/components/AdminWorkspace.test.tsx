@@ -4,6 +4,8 @@ import { describe, expect, it, vi } from "vitest"
 import type { CurrentUser } from "../../../shared/types/common.js"
 import type { AccessRoleDefinition, AliasAuditLogItem, AliasDefinition, CostAuditSummary, ManagedUser, UserUsageSummary } from "../types.js"
 import { AdminWorkspace } from "./AdminWorkspace.js"
+import { createContentResourceState } from "../../../shared/ui/resourceStateModel.js"
+import { appUiStateTargets } from "../../../app/uiStateTargets.js"
 
 const user: CurrentUser = {
   userId: "user-1",
@@ -104,6 +106,7 @@ const costAudit: CostAuditSummary = {
 
 function renderAdminWorkspace(overrides: Partial<Parameters<typeof AdminWorkspace>[0]> = {}) {
   const props: Parameters<typeof AdminWorkspace>[0] = {
+    dataState: createContentResourceState(appUiStateTargets.admin, "2026-05-10T00:00:00.000Z"),
     user,
     documentsCount: 2,
     openQuestionsCount: 1,

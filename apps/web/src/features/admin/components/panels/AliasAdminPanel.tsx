@@ -8,6 +8,7 @@ import type { AliasAuditLogItem, AliasDefinition } from "../../types.js"
 export function AliasAdminPanel({
   aliases,
   auditLog,
+  loadFailed = false,
   loading,
   canWrite,
   canReview,
@@ -21,6 +22,7 @@ export function AliasAdminPanel({
 }: {
   aliases: AliasDefinition[] | null
   auditLog: AliasAuditLogItem[] | null
+  loadFailed?: boolean
   loading: boolean
   canWrite: boolean
   canReview: boolean
@@ -61,7 +63,7 @@ export function AliasAdminPanel({
       <div className="document-list-head">
         <h3>Alias管理</h3>
         <div className="inline-action-group">
-          <span>{aliases ? `${aliases.length} 件` : "未提供"}</span>
+          <span>{aliases ? `${aliases.length} 件` : loadFailed ? "取得失敗" : "未提供"}</span>
           {canShowPublish && (
             <button type="button" disabled={loading} onClick={() => setPublishConfirmOpen(true)}>
               {loading && <LoadingSpinner className="button-spinner" />}
@@ -94,7 +96,10 @@ export function AliasAdminPanel({
 
       <div className="alias-list">
         {aliases === null ? (
-          <EmptyState title="Alias API field は未提供です。" description="権限内の API response に aliases field がありません。" />
+          <EmptyState
+            title={loadFailed ? "Alias を取得できませんでした。" : "Alias API field は未提供です。"}
+            description={loadFailed ? "画面上部の状態メッセージから再試行してください。" : "権限内の API response に aliases field がありません。"}
+          />
         ) : aliases.length === 0 ? (
           <EmptyState title="登録済み alias はありません。" />
         ) : (
@@ -162,7 +167,10 @@ export function AliasAdminPanel({
 
       <div className="alias-audit-list" aria-label="Alias監査ログ">
         {auditLog === null ? (
-          <EmptyState title="Alias監査ログ API field は未提供です。" description="権限内の API response に auditLog field がありません。" />
+          <EmptyState
+            title={loadFailed ? "Alias監査ログを取得できませんでした。" : "Alias監査ログ API field は未提供です。"}
+            description={loadFailed ? "画面上部の状態メッセージから再試行してください。" : "権限内の API response に auditLog field がありません。"}
+          />
         ) : auditLog.length === 0 ? (
           <EmptyState title="Alias監査ログはありません。" />
         ) : auditLog.slice(0, 8).map((item) => (

@@ -222,7 +222,7 @@ describe("useDocuments", () => {
     expect(result.current.operationState.downloadingDocumentId).toBeNull()
   })
 
-  it("再インデックス失敗時はエラーを設定する", async () => {
+  it("再インデックス失敗時は確認ダイアログで表示する結果を返す", async () => {
     const props = createProps()
     vi.mocked(stageReindexMigration).mockRejectedValueOnce(new Error("stage failed"))
     const { result } = renderHook(() => useDocuments(props))
@@ -230,7 +230,7 @@ describe("useDocuments", () => {
     const operationResult = await act(() => result.current.onStageReindex("doc-1"))
 
     expect(operationResult).toEqual({ ok: false, error: "stage failed" })
-    expect(props.setError).toHaveBeenCalledWith("stage failed")
+    expect(props.setError).not.toHaveBeenCalledWith("stage failed")
     expect(result.current.operationState.stagingReindexDocumentId).toBeNull()
   })
 
@@ -517,7 +517,7 @@ describe("useDocuments", () => {
     expect(props.setError).toHaveBeenCalledWith(rejectionMessage)
   })
 
-  it("削除、cutover、rollback の失敗時は文字列エラーも設定する", async () => {
+  it("確認操作の失敗は局所表示用に返し、その他の失敗は全体にも通知する", async () => {
     const props = createProps()
     vi.spyOn(window, "confirm").mockReturnValue(true)
     vi.mocked(deleteDocument).mockRejectedValueOnce("delete failed")
@@ -545,16 +545,16 @@ describe("useDocuments", () => {
     expect(stageResult).toEqual({ ok: false, error: "stage failed" })
     expect(cutoverResult).toEqual({ ok: false, error: "cutover failed" })
     expect(rollbackResult).toEqual({ ok: false, error: "rollback failed" })
-    expect(props.setError).toHaveBeenCalledWith("delete failed")
+    expect(props.setError).not.toHaveBeenCalledWith("delete failed")
     expect(props.setError).toHaveBeenCalledWith("upload failed")
     expect(props.setError).toHaveBeenCalledWith("create group failed")
     expect(props.setError).toHaveBeenCalledWith("share group failed")
-    expect(props.setError).toHaveBeenCalledWith("stage failed")
-    expect(props.setError).toHaveBeenCalledWith("cutover failed")
-    expect(props.setError).toHaveBeenCalledWith("rollback failed")
+    expect(props.setError).not.toHaveBeenCalledWith("stage failed")
+    expect(props.setError).not.toHaveBeenCalledWith("cutover failed")
+    expect(props.setError).not.toHaveBeenCalledWith("rollback failed")
   })
 
-  it("資料管理操作失敗時は Error の message も設定する", async () => {
+  it("資料管理操作失敗時は Error の message を通知または局所表示用に返す", async () => {
     const props = createProps()
     vi.mocked(uploadDocumentFile).mockRejectedValueOnce(new Error("upload failed"))
     vi.mocked(createDocumentGroup).mockRejectedValueOnce(new Error("create group failed"))
@@ -568,14 +568,16 @@ describe("useDocuments", () => {
     await act(() => result.current.onUploadDocumentFile(file))
     await act(() => result.current.onCreateDocumentGroup({ name: "個人メモ" }))
     await act(() => result.current.onShareDocumentGroup("group-1", { name: "updated" }))
-    await act(() => result.current.onCutoverReindex("migration-1"))
-    await act(() => result.current.onRollbackReindex("migration-1"))
+    const cutoverResult = await act(() => result.current.onCutoverReindex("migration-1"))
+    const rollbackResult = await act(() => result.current.onRollbackReindex("migration-1"))
 
     expect(props.setError).toHaveBeenCalledWith("upload failed")
     expect(props.setError).toHaveBeenCalledWith("create group failed")
     expect(props.setError).toHaveBeenCalledWith("share group failed")
-    expect(props.setError).toHaveBeenCalledWith("cutover failed")
-    expect(props.setError).toHaveBeenCalledWith("rollback failed")
+    expect(cutoverResult).toEqual({ ok: false, error: "cutover failed" })
+    expect(rollbackResult).toEqual({ ok: false, error: "rollback failed" })
+    expect(props.setError).not.toHaveBeenCalledWith("cutover failed")
+    expect(props.setError).not.toHaveBeenCalledWith("rollback failed")
   })
 
   it("共有権限がなくても新規フォルダの安全な作成 payload を送信する", async () => {

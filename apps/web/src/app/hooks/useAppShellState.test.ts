@@ -2,7 +2,7 @@ import { act, renderHook } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import type { AuthSession } from "../../authClient.js"
 import type { Permission } from "../../shared/types/common.js"
-import { useAppShellState } from "./useAppShellState.js"
+import { publicSafeUiError, useAppShellState } from "./useAppShellState.js"
 
 const currentUserMock = vi.hoisted(() => ({ useCurrentUser: vi.fn() }))
 const documentsMock = vi.hoisted(() => ({
@@ -280,8 +280,11 @@ describe("useAppShellState", () => {
     await act(async () => {
       await result.current.routeProps.adminProps.onRefreshAdminData()
     })
-    expect(adminMock.refreshAdminData).toHaveBeenCalled()
-    expect(documentsMock.refreshReindexMigrations).toHaveBeenCalled()
+    expect(adminMock.refreshManagedUsers).toHaveBeenCalled()
+    expect(adminMock.refreshAdminAuditLog).toHaveBeenCalled()
+    expect(adminMock.refreshAccessRoles).toHaveBeenCalled()
+    expect(adminMock.refreshUsageSummaries).toHaveBeenCalled()
+    expect(adminMock.refreshCostAudit).toHaveBeenCalled()
     expect(adminMock.refreshAliases).toHaveBeenCalled()
 
     act(() => result.current.routeProps.adminProps.onOpenDebug())
@@ -476,8 +479,20 @@ describe("useAppShellState", () => {
       await Promise.resolve()
     })
 
-    expect(result.current.error).toBe("user load failed")
+    expect(result.current.error).toEqual({
+      target: expect.objectContaining({ id: "account", label: "アカウント情報" }),
+      message: "user load failed"
+    })
     expect(result.current.routeProps.canSeeAdminSettings).toBe(false)
     expect(documentsMock.setFile).toHaveBeenCalledWith(null)
+  })
+})
+
+describe("publicSafeUiError", () => {
+  it("利用者向け短文は保持し、内部識別子や stack 断片は一般化する", () => {
+    expect(publicSafeUiError("入力内容を確認してください。")).toBe("入力内容を確認してください。")
+    expect(publicSafeUiError("RequestId: secret at InternalService (/srv/app.ts:10)")).toBe(
+      "処理を完了できませんでした。入力内容と権限を確認して、もう一度お試しください。"
+    )
   })
 })

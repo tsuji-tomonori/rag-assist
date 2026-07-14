@@ -10,10 +10,13 @@ import { AdminRolePanel } from "./panels/AdminRolePanel.js"
 import { AdminUsagePanel } from "./panels/AdminUsagePanel.js"
 import { AdminUserPanel } from "./panels/AdminUserPanel.js"
 import { AliasAdminPanel } from "./panels/AliasAdminPanel.js"
+import { ResourceStateBoundary, type UiResourceState } from "../../../shared/ui/ResourceState.js"
+import { isResourceStateBusy } from "../../../shared/ui/resourceStateModel.js"
 
 type AdminSectionId = "overview" | "users" | "roles" | "usage-cost" | "audit" | "alias"
 
 export function AdminWorkspace({
+  dataState,
   user,
   documentsCount,
   openQuestionsCount,
@@ -63,6 +66,7 @@ export function AdminWorkspace({
   onPublishAliases,
   onBack
 }: {
+  dataState: UiResourceState
   user: CurrentUser | null
   documentsCount: number | null
   openQuestionsCount: number | null
@@ -123,6 +127,14 @@ export function AdminWorkspace({
   ]
   const availableSections = sections.filter((section) => section.available)
   const resolvedActiveSection = availableSections.some((section) => section.id === activeSection) ? activeSection : "overview"
+  const failedParts = new Set(dataState.parts.filter((part) => part.status === "failed" || part.status === "permission").map((part) => part.id))
+  const visibleManagedUsers = failedParts.has("users") ? null : managedUsers
+  const visibleAccessRoles = failedParts.has("roles") ? null : accessRoles
+  const visibleUsageSummaries = failedParts.has("usage") ? null : usageSummaries
+  const visibleCostAudit = failedParts.has("cost") ? null : costAudit
+  const visibleAdminAuditLog = failedParts.has("audit") ? null : adminAuditLog
+  const visibleAliases = failedParts.has("aliases") ? null : aliases
+  const visibleAliasAuditLog = failedParts.has("aliases") ? null : aliasAuditLog
 
   return (
     <section className="admin-workspace" aria-label="管理者設定">
@@ -135,8 +147,9 @@ export function AdminWorkspace({
           <span>{user?.groups.join(" / ") || "権限未取得"}</span>
         </div>
       </header>
-      {loading && <LoadingStatus label="管理APIを処理中" />}
+      {loading && !isResourceStateBusy(dataState) && <LoadingStatus label="管理APIを処理中" />}
 
+      <ResourceStateBoundary state={dataState} onRetry={() => { void onRefreshAdminData() }} onBack={onBack}>
       <nav className="admin-section-tabs" aria-label="管理セクション">
         {availableSections.map((section) => (
           <button
@@ -156,11 +169,12 @@ export function AdminWorkspace({
           openQuestionsCount={openQuestionsCount}
           debugRunsCount={debugRunsCount}
           benchmarkRunsCount={benchmarkRunsCount}
-          managedUsers={managedUsers}
-          accessRoles={accessRoles}
-          usageSummaries={usageSummaries}
-          costAudit={costAudit}
-          aliases={aliases}
+          managedUsers={visibleManagedUsers}
+          accessRoles={visibleAccessRoles}
+          usageSummaries={visibleUsageSummaries}
+          costAudit={visibleCostAudit}
+          aliases={visibleAliases}
+          failedParts={failedParts}
           canManageDocuments={canManageDocuments}
           canAnswerQuestions={canAnswerQuestions}
           canReadDebugRuns={canReadDebugRuns}
@@ -181,8 +195,10 @@ export function AdminWorkspace({
         {canReadUsers && (
           <div hidden={resolvedActiveSection !== "users"}>
             <AdminUserPanel
-              managedUsers={managedUsers}
-              accessRoles={accessRoles}
+              managedUsers={visibleManagedUsers}
+              accessRoles={visibleAccessRoles}
+              usersLoadFailed={failedParts.has("users")}
+              rolesLoadFailed={failedParts.has("roles")}
               loading={loading}
               canCreateUsers={canCreateUsers}
               canAssignRoles={canAssignRoles}
@@ -200,28 +216,29 @@ export function AdminWorkspace({
 
         {canOpenAdminSettings && (
           <div hidden={resolvedActiveSection !== "roles"}>
-            <AdminRolePanel accessRoles={accessRoles} />
+            <AdminRolePanel accessRoles={visibleAccessRoles} loadFailed={failedParts.has("roles")} />
           </div>
         )}
 
         {(canReadUsage || canReadCosts) && (
           <div className="admin-combined-section" hidden={resolvedActiveSection !== "usage-cost"}>
-            {canReadUsage && <AdminUsagePanel usageSummaries={usageSummaries} />}
-            {canReadCosts && <AdminCostPanel costAudit={costAudit} />}
+            {canReadUsage && <AdminUsagePanel usageSummaries={visibleUsageSummaries} loadFailed={failedParts.has("usage")} />}
+            {canReadCosts && <AdminCostPanel costAudit={visibleCostAudit} loadFailed={failedParts.has("cost")} />}
           </div>
         )}
 
         {canReadAdminAuditLog && (
           <div hidden={resolvedActiveSection !== "audit"}>
-            <AdminAuditPanel adminAuditLog={adminAuditLog} />
+            <AdminAuditPanel adminAuditLog={visibleAdminAuditLog} loadFailed={failedParts.has("audit")} />
           </div>
         )}
 
         {canReadAliases && (
           <div hidden={resolvedActiveSection !== "alias"}>
             <AliasAdminPanel
-              aliases={aliases}
-              auditLog={aliasAuditLog}
+              aliases={visibleAliases}
+              auditLog={visibleAliasAuditLog}
+              loadFailed={failedParts.has("aliases")}
               loading={loading}
               canWrite={canWriteAliases}
               canReview={canReviewAliases}
@@ -236,6 +253,7 @@ export function AdminWorkspace({
           </div>
         )}
       </div>
+      </ResourceStateBoundary>
     </section>
   )
 }

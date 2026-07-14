@@ -33,6 +33,14 @@
 - component tests: state semantics、live region、target association、false-zero prevention。
 - No Mock Product UI review: missing data を固定 count/date/user/capacity で補わない。
 
+## 実装状況（2026-07-14）
+
+- `apps/web/src/shared/ui/ResourceState.tsx` は `loading`、`content`、`empty`、`error`、`permission`、`partial`、`stale`、`retrying`、`recovered` を discriminated union と native alert/status/busy semantics で表す。
+- `apps/web/src/shared/ui/useResourceStateController.ts` は part 単位の `Promise.allSettled`、401/403 分類、初回失敗、部分成功、取得済み content を保持する stale refresh、retry/recovered、競合 request の破棄を扱う。raw failure detail は表示 state に保存しない。
+- chat、history/favorites、questions、documents、benchmark、admin の adapter は未取得・失敗・permission の値を 0 件/blank/未提供へ変換せず、利用可能 part だけを表示する。
+- `E2E-UI-STATE-001` は Chromium で loading→500→retry→confirmed empty、HTTP 403、admin partial→recovered、refresh failure→source/as-of 付き stale→recovered を検証する。
+- component/controller test は全 variant、focus、target/action、false-zero、partial、permission、stale、retry race を検証する。代表 screen reader と real-device の手動証跡は `tasks/todo/20260714-issue-345-manual-a11y-evidence.md` の未完了範囲である。
+
 ## 要件の源泉・背景
 
 - 源泉: GitHub Issue #345 の common state contract TODO。
@@ -72,4 +80,4 @@
 ## 関連文書・task
 
 - `docs/3_設計_DES/21_UI_UX/DES_UI_UX_001.md`
-- `tasks/todo/20260714-issue-345-shared-ui-state-contract.md`
+- `tasks/do/20260714-issue-345-shared-ui-state-contract.md`

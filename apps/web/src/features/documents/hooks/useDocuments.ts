@@ -137,9 +137,9 @@ export function useDocuments({
     setReindexMigrations(await listReindexMigrations())
   }
 
-  function operationError(err: unknown): DocumentOperationResult {
+  function operationError(err: unknown, announceGlobally = true): DocumentOperationResult {
     const error = err instanceof Error ? err.message : String(err)
-    setError(error)
+    if (announceGlobally) setError(error)
     return { ok: false, error }
   }
 
@@ -159,7 +159,7 @@ export function useDocuments({
       await refreshDocuments()
       return { ok: true }
     } catch (err) {
-      return operationError(err)
+      return operationError(err, false)
     } finally {
       updateOperationState({ deletingDocumentId: null })
     }
@@ -343,7 +343,7 @@ export function useDocuments({
       await Promise.all([refreshDocuments(), refreshReindexMigrations()])
       return { ok: true }
     } catch (err) {
-      return operationError(err)
+      return operationError(err, false)
     } finally {
       updateOperationState({ stagingReindexDocumentId: null })
     }
@@ -358,7 +358,7 @@ export function useDocuments({
       await Promise.all([refreshDocuments(), refreshReindexMigrations()])
       return { ok: true }
     } catch (err) {
-      return operationError(err)
+      return operationError(err, false)
     } finally {
       updateOperationState({ cutoverMigrationId: null })
     }
@@ -373,7 +373,7 @@ export function useDocuments({
       await Promise.all([refreshDocuments(), refreshReindexMigrations()])
       return { ok: true }
     } catch (err) {
-      return operationError(err)
+      return operationError(err, false)
     } finally {
       updateOperationState({ rollbackMigrationId: null })
     }

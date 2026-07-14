@@ -1,6 +1,16 @@
 import { type FormEvent, type ReactNode, useEffect, useMemo, useRef, useState } from "react"
 import { Icon } from "../../../shared/components/Icon.js"
 import { LoadingStatus } from "../../../shared/components/LoadingSpinner.js"
+import {
+  ResourceStateBoundary,
+  type UiResourceState
+} from "../../../shared/ui/ResourceState.js"
+import {
+  createContentResourceState,
+  hasConfirmedResourceResult,
+  isResourcePartAvailable,
+  isResourceStateBusy
+} from "../../../shared/ui/resourceStateModel.js"
 import type { DocumentShareGrantInput, DocumentShareInfo, FolderPolicyEntry, MoveDocumentGroupInput, UpdateDocumentGroupInput, VersionedFolderPolicy } from "../api/documentsApi.js"
 import type { CreateDocumentGroupInput, DocumentOperationResult, DocumentOperationState, DocumentUploadResult, DocumentUploadState } from "../hooks/useDocuments.js"
 import type { DocumentGroup, DocumentManifest, ReindexMigration } from "../types.js"
@@ -43,6 +53,7 @@ export type DocumentWorkspaceUrlState = {
 }
 
 export function DocumentWorkspace({
+  dataState,
   documents,
   documentGroups = [],
   loading,
@@ -59,6 +70,7 @@ export function DocumentWorkspace({
   operationState = emptyOperationState,
   uploadState = null,
   migrations,
+  onRetryLoad,
   onUploadGroupChange,
   onUpload,
   onCreateGroup,
@@ -79,6 +91,7 @@ export function DocumentWorkspace({
   urlState,
   onUrlStateChange
 }: {
+  dataState?: UiResourceState
   documents: DocumentManifest[]
   documentGroups?: DocumentGroup[]
   loading: boolean
@@ -95,6 +108,7 @@ export function DocumentWorkspace({
   operationState?: DocumentOperationState
   uploadState?: DocumentUploadState
   migrations: ReindexMigration[]
+  onRetryLoad?: () => void
   onUploadGroupChange: (groupId: string) => void
   onUpload: (file: File) => Promise<DocumentUploadResult | DocumentOperationResult | void>
   onCreateGroup: (input: CreateDocumentGroupInput) => Promise<DocumentGroup | void>
@@ -115,6 +129,15 @@ export function DocumentWorkspace({
   urlState?: DocumentWorkspaceUrlState
   onUrlStateChange?: (state: DocumentWorkspaceUrlState) => void
 }) {
+  const resolvedDataState = dataState ?? createContentResourceState({
+    id: "documents",
+    label: "文書ワークスペース",
+    regionId: "documents-resource-region",
+    source: "文書 API"
+  })
+  const hasCatalogResult = resolvedDataState.parts.length === 0
+    ? hasConfirmedResourceResult(resolvedDataState)
+    : isResourcePartAvailable(resolvedDataState, "catalog")
   const [uploadFile, setUploadFile] = useState<File | null>(null)
   const [documentAddOpen, setDocumentAddOpen] = useState(false)
   const [quickGroupName, setQuickGroupName] = useState("")
@@ -821,9 +844,11 @@ export function DocumentWorkspace({
             </nav>
           </div>
         </div>
-        {loading && <LoadingStatus label="ドキュメント一覧を更新中" />}
+        {loading && !isResourceStateBusy(resolvedDataState) && <LoadingStatus label="ドキュメント一覧を更新中" />}
       </header>
 
+      <ResourceStateBoundary state={resolvedDataState} onRetry={onRetryLoad} onBack={onBack}>
+      {hasCatalogResult ? (
       <div className="document-management-layout">
         <DocumentFolderTree
           documents={documents}
@@ -902,6 +927,10 @@ export function DocumentWorkspace({
           }}
         />
       </div>
+      ) : (
+        <div className="empty-question-panel">文書とフォルダは未取得です。状態メッセージから再試行してください。</div>
+      )}
+      </ResourceStateBoundary>
 
       {documentAddOpen && hasWorkspaceManagement && (
         <DocumentAddDialog

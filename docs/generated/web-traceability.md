@@ -52,7 +52,7 @@
 | E2E-UI-NAV-002 | implemented | apps/web/e2e/visual-regression.spec.ts | - |
 | E2E-UI-ROUTE-001 | implemented | apps/web/e2e/visual-regression.spec.ts | - |
 | E2E-UI-ROUTE-002 | implemented | apps/web/e2e/visual-regression.spec.ts | - |
-| E2E-UI-STATE-001 | planned | - | tasks/todo/20260714-issue-345-shared-ui-state-contract.md |
+| E2E-UI-STATE-001 | implemented | apps/web/e2e/visual-regression.spec.ts | - |
 | E2E-UI-RISK-001 | planned | - | tasks/todo/20260714-issue-345-risky-operation-feedback.md |
 | E2E-UI-DOCUMENTS-001 | planned | - | tasks/todo/20260714-issue-345-document-workspace-context.md |
 | E2E-UI-MANUAL-001 | manual | - | tasks/todo/20260714-issue-345-manual-a11y-evidence.md |

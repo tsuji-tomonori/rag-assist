@@ -11,8 +11,10 @@ import type { Message } from "../types.js"
 import { ChatComposer } from "./ChatComposer.js"
 import { ChatRunIdBar } from "./ChatRunIdBar.js"
 import { MessageList } from "./MessageList.js"
+import { ResourceStateBoundary, type UiResourceState } from "../../../shared/ui/ResourceState.js"
 
 export function ChatView({
+  dataState,
   messages,
   questions,
   documentsCount,
@@ -50,6 +52,7 @@ export function ChatView({
   onToggleAllDebugSteps,
   onToggleDebugStep
 }: {
+  dataState: UiResourceState
   messages: Message[]
   questions: HumanQuestion[]
   documentsCount: number
@@ -92,6 +95,7 @@ export function ChatView({
   return (
     <section className={`split-workspace ${canShowDebugPanel ? "" : "debug-off"}`}>
       <section className="chat-card" aria-label="チャット">
+        <ResourceStateBoundary state={dataState}>
         <MessageList
           messages={messages}
           questions={questions}
@@ -131,6 +135,7 @@ export function ChatView({
           pending={pendingDebugQuestion !== null}
         />
         <p className="composer-note">本サービスの回答は社内ドキュメントをもとに生成されます。内容の正確性をご確認のうえご利用ください。</p>
+        </ResourceStateBoundary>
       </section>
 
       {canShowDebugPanel && (

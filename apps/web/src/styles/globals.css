@@ -11,7 +11,9 @@
   --color-primary: #2f6fed;
   --color-primary-strong: #1d66ee;
   --color-primary-soft: #edf4ff;
+  --color-info-border: #8cb1ed;
   --color-success: #20a486;
+  --color-success-soft: #effbf8;
   --color-warning: #b17810;
   --color-warning-soft: #fff9eb;
   --color-danger: #b32626;
@@ -124,7 +126,7 @@ button:disabled {
 .ui-badge-success {
   border-color: #b9eadf;
   color: #12725f;
-  background: #effbf8;
+  background: var(--color-success-soft);
 }
 
 .ui-badge-warning {
@@ -156,4 +158,140 @@ button:disabled {
   border-color: var(--color-border);
   color: var(--color-text-muted);
   background: var(--color-surface-subtle);
+}
+
+.ui-resource-boundary {
+  min-width: 0;
+}
+
+.ui-resource-state {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0.75rem 0;
+  border: 1px solid var(--color-border-strong);
+  border-left-width: 5px;
+  border-radius: var(--radius-sm);
+  padding: 0.9rem 1rem;
+  color: var(--color-text);
+  background: var(--color-surface-subtle);
+}
+
+.ui-resource-state:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.ui-resource-state-loading,
+.ui-resource-state-retrying {
+  border-color: var(--color-info-border);
+  background: var(--color-primary-soft);
+}
+
+.ui-resource-state-error,
+.ui-resource-state-permission {
+  border-color: var(--color-danger);
+  background: var(--color-danger-soft);
+}
+
+.ui-resource-state-partial,
+.ui-resource-state-stale {
+  border-color: var(--color-warning);
+  background: var(--color-warning-soft);
+}
+
+.ui-resource-state-recovered {
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+}
+
+.ui-resource-state-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.ui-resource-state-marker {
+  width: 0.8rem;
+  height: 0.8rem;
+  flex: 0 0 auto;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.ui-resource-state-loading .ui-resource-state-marker,
+.ui-resource-state-retrying .ui-resource-state-marker {
+  color: var(--color-primary-strong);
+}
+
+.ui-resource-state-error .ui-resource-state-marker,
+.ui-resource-state-permission .ui-resource-state-marker {
+  border-radius: 2px;
+  color: var(--color-danger);
+  transform: rotate(45deg);
+}
+
+.ui-resource-state-partial .ui-resource-state-marker,
+.ui-resource-state-stale .ui-resource-state-marker {
+  border-radius: 2px;
+  color: var(--color-warning);
+}
+
+.ui-resource-state-recovered .ui-resource-state-marker {
+  border-color: var(--color-success);
+  background: var(--color-success);
+}
+
+.ui-resource-state p,
+.ui-resource-state dl {
+  margin: 0;
+}
+
+.ui-resource-state p,
+.ui-resource-state dd {
+  color: var(--color-text-muted);
+  line-height: 1.55;
+}
+
+.ui-resource-state-meta {
+  font-size: 0.82rem;
+}
+
+.ui-resource-part-summary {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.ui-resource-part-summary > div {
+  display: grid;
+  grid-template-columns: 5.5rem minmax(0, 1fr);
+  gap: 0.5rem;
+}
+
+.ui-resource-part-summary dt {
+  font-weight: 800;
+}
+
+.ui-resource-part-summary dd {
+  margin: 0;
+}
+
+.ui-resource-state-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.ui-resource-state-actions:empty {
+  display: none;
+}
+
+.ui-resource-state-actions button {
+  min-height: 2.75rem;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-xs);
+  padding: 0.5rem 0.85rem;
+  color: var(--color-text-strong);
+  background: var(--color-surface);
+  font-weight: 800;
 }
