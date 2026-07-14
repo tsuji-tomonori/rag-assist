@@ -23,14 +23,14 @@
 | agents | agents | 4 | 「チャットへ戻る」を実行するボタン。<br>「非同期エージェント情報を更新」を実行するボタン。<br>「キャンセル」を実行するボタン。 | [agents.md](web-features/agents.md) |
 | アプリケーション枠 | app | 15 | 「チャットへ戻る」を実行するボタン。<br>「送信キー / Enterで送信 / Ctrl+Enterで送信」に紐づく入力ラベル。<br>「Enterで送信 / Ctrl+Enterで送信」を選ぶ選択項目。<br>「Enterで送信」を表す option 要素。 ほか 8 件 | [app.md](web-features/app.md) |
 | 認証 | auth | 26 | 「title」を入力・送信するフォーム。<br>「新しいパスワード」に紐づく入力ラベル。<br>「新しいパスワード」を入力または選択する項目。<br>「新しいパスワード（確認）」に紐づく入力ラベル。 ほか 14 件 | [auth.md](web-features/auth.md) |
-| 性能テスト | benchmark | 18 | 「チャットへ戻る」を実行するボタン。<br>「テスト種別」に紐づく入力ラベル。<br>「テスト種別」を選ぶ選択項目。<br>「benchmark suite を取得できません」を表す option 要素。 ほか 12 件 | [benchmark.md](web-features/benchmark.md) |
+| 性能テスト | benchmark | 18 | 「チャットへ戻る」を実行するボタン。<br>「テスト種別」に紐づく入力ラベル。<br>「テスト種別」を選ぶ選択項目。<br>「テスト設定を取得できません」を表す option 要素。 ほか 12 件 | [benchmark.md](web-features/benchmark.md) |
 | チャット | chat | 41 | 「回答をコピー済み / 回答をコピー」を実行するボタン。<br>「この候補で質問する」を実行するボタン。<br>「自分で入力」を実行するボタン。<br>「追加質問候補」を実行するボタン。 ほか 36 件 | [chat.md](web-features/chat.md) |
 | デバッグ | debug | 11 | 「拡大デバッグパネルを閉じる」を実行するボタン。<br>「保存JSON」を実行するボタン。<br>「可視化JSON」を実行するボタン。<br>「JSONをアップロード」に紐づく入力ラベル。 ほか 3 件 | [debug.md](web-features/debug.md) |
-| ドキュメント | documents | 143 | 「前の画面へ戻る」を実行するボタン。<br>「フォルダ設定を閉じる」を実行するボタン。<br>「ファイル名: / 現在の権限: / 継承: / 共有先種別 / 共有先ID / 権限 / 理由 / 保存」を入力・送信するフォーム。<br>「削除」を実行するボタン。 ほか 110 件 | [documents.md](web-features/documents.md) |
+| ドキュメント | documents | 143 | 「前の画面へ戻る」を実行するボタン。<br>「フォルダ設定を閉じる」を実行するボタン。<br>「ファイル名: / 現在の権限: / 継承: / 共有先種別 / ユーザー / グループ / 共有先識別子（管理者向け） / 権限 / 権限なし / 閲覧のみ / 管理可能 / 理由 / 保存」を入力・送信するフォーム。<br>「削除」を実行するボタン。 ほか 110 件 | [documents.md](web-features/documents.md) |
 | favorites | favorites | 1 | 「チャットへ戻る」を実行するボタン。 | [favorites.md](web-features/favorites.md) |
 | 履歴 | history | 11 | 「チャットへ戻る」を実行するボタン。<br>「履歴を検索」を入力または選択する項目。<br>「履歴の並び順」を選ぶ選択項目。<br>「新しい順」を表す option 要素。 ほか 5 件 | [history.md](web-features/history.md) |
 | 担当者対応 | questions | 21 | 「チャットへ戻る」を実行するボタン。<br>「ステータス / すべて」に紐づく入力ラベル。<br>「すべて」を選ぶ選択項目。<br>「すべて」を表す option 要素。 ほか 16 件 | [questions.md](web-features/questions.md) |
-| 共通 | shared | 11 | 「キャンセル」を実行するボタン。<br>「label」を実行するボタン。<br>「処理中」を実行するボタン。<br>「戻る」を実行するボタン。 ほか 1 件 | [shared.md](web-features/shared.md) |
+| 共通 | shared | 11 | 「キャンセル」を表す Button 要素。<br>「label」を実行するボタン。<br>「処理中」を実行するボタン。<br>「戻る」を実行するボタン。 ほか 1 件 | [shared.md](web-features/shared.md) |
 
 ## UI 操作説明
 
@@ -54,45 +54,45 @@
 | 管理 | AdminWorkspace | button | チャットへ戻る | 「チャットへ戻る」を実行するボタン。 | - | apps/web/src/features/admin/components/AdminWorkspace.tsx:142 |
 | 管理 | AdminWorkspace | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: aria-current=resolvedActiveSection === section.id ? "page" : undefined | apps/web/src/features/admin/components/AdminWorkspace.tsx:155 |
 | 管理 | AdminOverviewGrid | button | `${card.label}を開く` | 「`${card.label}を開く`」を実行するボタン。 | - | apps/web/src/features/admin/components/panels/AdminOverviewGrid.tsx:191 |
-| 管理 | AdminUserPanel | button | 更新 | 「更新」を実行するボタン。 | 状態: disabled=loading | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:45 |
-| 管理 | AdminUserPanel | AdminCreateUserForm | 未推定 | AdminCreateUserForm 要素。静的解析では具体的な操作名を推定できません。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:51 |
-| 管理 | AdminCreateUserForm | form | 管理対象ユーザー作成 | 「管理対象ユーザー作成」を入力・送信するフォーム。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:129 |
-| 管理 | AdminCreateUserForm | label | メール | 「メール」に紐づく入力ラベル。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:130 |
-| 管理 | AdminCreateUserForm | input | new-user@example.com | 「new-user@example.com」を入力または選択する項目。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:132 |
-| 管理 | AdminCreateUserForm | label | 表示名 | 「表示名」に紐づく入力ラベル。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:134 |
-| 管理 | AdminCreateUserForm | input | 任意 | 「任意」を入力または選択する項目。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:136 |
-| 管理 | AdminCreateUserForm | label | 初期ロール | 「初期ロール」に紐づく入力ラベル。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:138 |
-| 管理 | AdminCreateUserForm | select | 初期ロール | 「初期ロール」を選ぶ選択項目。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:145 |
-| 管理 | AdminCreateUserForm | option | 初期ロール | 「初期ロール」を表す option 要素。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:147 |
-| 管理 | AdminCreateUserForm | button | 作成 | 「作成」を実行するボタン。 | 状態: disabled=loading \|\| email.trim().length === 0 | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:152 |
-| 管理 | ManagedUserRow | select | `${user.email}に付与するロール` | 「`${user.email}に付与するロール`」を選ぶ選択項目。 | 状態: disabled=loading | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:237 |
-| 管理 | ManagedUserRow | option | role.role | 「role.role」を表す option 要素。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:239 |
-| 管理 | ManagedUserRow | button | 付与 | 「付与」を実行するボタン。 | 状態: disabled=loading \|\| !roleChanged \|\| roleReason.trim().length === 0 | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:242 |
-| 管理 | ManagedUserRow | input | `${user.email}のロール変更理由` | 「`${user.email}のロール変更理由`」を入力または選択する項目。 | 状態: disabled=loading | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:246 |
-| 管理 | ManagedUserRow | button | 再開 | 「再開」を実行するボタン。 | 状態: disabled=loading | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:265 |
-| 管理 | ManagedUserRow | button | 停止 | 「停止」を実行するボタン。 | 状態: disabled=loading | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:270 |
-| 管理 | ManagedUserRow | button | 削除 | 「削除」を実行するボタン。 | 状態: disabled=loading | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:275 |
-| 管理 | ManagedUserRow | label | 後継管理者 | 「後継管理者」に紐づく入力ラベル。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:321 |
-| 管理 | ManagedUserRow | select | `${user.email}の後継管理者` | 「`${user.email}の後継管理者`」を選ぶ選択項目。 | 状態: disabled=loading | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:323 |
-| 管理 | ManagedUserRow | option | 選択してください | 「選択してください」を表す option 要素。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:331 |
-| 管理 | ManagedUserRow | option | candidate.userId | 「candidate.userId」を表す option 要素。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:333 |
-| 管理 | AliasAdminPanel | button | 公開 | 「公開」を実行するボタン。 | 状態: disabled=loading | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:68 |
-| 管理 | AliasAdminPanel | form | 用語 / 展開語 / 部署 scope / 追加 | 「用語 / 展開語 / 部署 scope / 追加」を入力・送信するフォーム。 | - | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:77 |
-| 管理 | AliasAdminPanel | label | 用語 | 「用語」に紐づく入力ラベル。 | - | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:78 |
-| 管理 | AliasAdminPanel | input | pto | 「pto」を入力または選択する項目。 | 状態: disabled=loading | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:80 |
-| 管理 | AliasAdminPanel | label | 展開語 | 「展開語」に紐づく入力ラベル。 | - | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:82 |
-| 管理 | AliasAdminPanel | input | 有給休暇, 休暇申請 | 「有給休暇, 休暇申請」を入力または選択する項目。 | 状態: disabled=loading | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:84 |
-| 管理 | AliasAdminPanel | label | 部署 scope | 「部署 scope」に紐づく入力ラベル。 | - | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:86 |
-| 管理 | AliasAdminPanel | input | 任意 | 「任意」を入力または選択する項目。 | 状態: disabled=loading | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:88 |
-| 管理 | AliasAdminPanel | button | 追加 | 「追加」を実行するボタン。 | 状態: disabled=loading \|\| !term.trim() \|\| parseExpansionList(expansions).length === 0 | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:90 |
-| 管理 | AliasAdminPanel | button | 下書き化 | 「下書き化」を実行するボタン。 | 状態: disabled=!canWrite \|\| loading \|\| alias.status === "disabled" | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:114 |
-| 管理 | AliasAdminPanel | button | 承認 | 「承認」を実行するボタン。 | 状態: disabled=!canReview \|\| loading \|\| alias.status === "disabled" | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:118 |
-| 管理 | AliasAdminPanel | button | 差戻 | 「差戻」を実行するボタン。 | 状態: disabled=!canReview \|\| loading \|\| alias.status === "disabled" | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:122 |
-| 管理 | AliasAdminPanel | button | 無効 | 「無効」を実行するボタン。 | 状態: disabled=!canDisable \|\| loading \|\| alias.status === "disabled" | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:126 |
-| agents | AsyncAgentWorkspace | button | チャットへ戻る | 「チャットへ戻る」を実行するボタン。 | - | apps/web/src/features/agents/components/AsyncAgentWorkspace.tsx:33 |
-| agents | AsyncAgentWorkspace | button | 非同期エージェント情報を更新 | 「非同期エージェント情報を更新」を実行するボタン。 | 状態: disabled=loading | apps/web/src/features/agents/components/AsyncAgentWorkspace.tsx:47 |
-| agents | AsyncAgentWorkspace | button | `${run.agentRunId}の詳細` | 「`${run.agentRunId}の詳細`」を実行するボタン。 | 状態: aria-current=selectedRun?.agentRunId === run.agentRunId ? "true" : undefined | apps/web/src/features/agents/components/AsyncAgentWorkspace.tsx:84 |
-| agents | AsyncAgentWorkspace | button | キャンセル | 「キャンセル」を実行するボタン。 | 状態: disabled=!canCancel \|\| !["queued", "preparing_workspace", "running", "waiting_for_approval"].inclu… | apps/web/src/features/agents/components/AsyncAgentWorkspace.tsx:116 |
+| 管理 | AdminUserPanel | button | 更新 | 「更新」を実行するボタン。 | 状態: disabled=loading | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:46 |
+| 管理 | AdminUserPanel | AdminCreateUserForm | 未推定 | AdminCreateUserForm 要素。静的解析では具体的な操作名を推定できません。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:52 |
+| 管理 | AdminCreateUserForm | form | 管理対象ユーザー作成 | 「管理対象ユーザー作成」を入力・送信するフォーム。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:130 |
+| 管理 | AdminCreateUserForm | label | メール | 「メール」に紐づく入力ラベル。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:131 |
+| 管理 | AdminCreateUserForm | input | new-user@example.com | 「new-user@example.com」を入力または選択する項目。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:133 |
+| 管理 | AdminCreateUserForm | label | 表示名 | 「表示名」に紐づく入力ラベル。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:135 |
+| 管理 | AdminCreateUserForm | input | 任意 | 「任意」を入力または選択する項目。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:137 |
+| 管理 | AdminCreateUserForm | label | 初期ロール | 「初期ロール」に紐づく入力ラベル。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:139 |
+| 管理 | AdminCreateUserForm | select | 初期ロール | 「初期ロール」を選ぶ選択項目。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:146 |
+| 管理 | AdminCreateUserForm | option | 初期ロール | 「初期ロール」を表す option 要素。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:148 |
+| 管理 | AdminCreateUserForm | button | 作成 | 「作成」を実行するボタン。 | 状態: disabled=loading \|\| email.trim().length === 0 | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:153 |
+| 管理 | ManagedUserRow | select | `${user.email}に付与するロール` | 「`${user.email}に付与するロール`」を選ぶ選択項目。 | 状態: disabled=loading | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:238 |
+| 管理 | ManagedUserRow | option | role.role | 「role.role」を表す option 要素。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:240 |
+| 管理 | ManagedUserRow | button | 付与 | 「付与」を実行するボタン。 | 状態: disabled=loading \|\| !roleChanged \|\| roleReason.trim().length === 0 | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:243 |
+| 管理 | ManagedUserRow | input | `${user.email}のロール変更理由` | 「`${user.email}のロール変更理由`」を入力または選択する項目。 | 状態: disabled=loading | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:247 |
+| 管理 | ManagedUserRow | button | 再開 | 「再開」を実行するボタン。 | 状態: disabled=loading | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:266 |
+| 管理 | ManagedUserRow | button | 停止 | 「停止」を実行するボタン。 | 状態: disabled=loading | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:271 |
+| 管理 | ManagedUserRow | button | 削除 | 「削除」を実行するボタン。 | 状態: disabled=loading | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:276 |
+| 管理 | ManagedUserRow | label | 後継管理者 | 「後継管理者」に紐づく入力ラベル。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:322 |
+| 管理 | ManagedUserRow | select | `${user.email}の後継管理者` | 「`${user.email}の後継管理者`」を選ぶ選択項目。 | 状態: disabled=loading | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:324 |
+| 管理 | ManagedUserRow | option | 選択してください | 「選択してください」を表す option 要素。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:332 |
+| 管理 | ManagedUserRow | option | candidate.userId | 「candidate.userId」を表す option 要素。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:334 |
+| 管理 | AliasAdminPanel | button | 公開 | 「公開」を実行するボタン。 | 状態: disabled=loading | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:69 |
+| 管理 | AliasAdminPanel | form | 用語 / 展開語 / 適用部署 / 追加 | 「用語 / 展開語 / 適用部署 / 追加」を入力・送信するフォーム。 | - | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:78 |
+| 管理 | AliasAdminPanel | label | 用語 | 「用語」に紐づく入力ラベル。 | - | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:79 |
+| 管理 | AliasAdminPanel | input | pto | 「pto」を入力または選択する項目。 | 状態: disabled=loading | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:81 |
+| 管理 | AliasAdminPanel | label | 展開語 | 「展開語」に紐づく入力ラベル。 | - | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:83 |
+| 管理 | AliasAdminPanel | input | 有給休暇, 休暇申請 | 「有給休暇, 休暇申請」を入力または選択する項目。 | 状態: disabled=loading | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:85 |
+| 管理 | AliasAdminPanel | label | 適用部署 | 「適用部署」に紐づく入力ラベル。 | - | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:87 |
+| 管理 | AliasAdminPanel | input | 任意 | 「任意」を入力または選択する項目。 | 状態: disabled=loading | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:89 |
+| 管理 | AliasAdminPanel | button | 追加 | 「追加」を実行するボタン。 | 状態: disabled=loading \|\| !term.trim() \|\| parseExpansionList(expansions).length === 0 | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:91 |
+| 管理 | AliasAdminPanel | button | 下書き化 | 「下書き化」を実行するボタン。 | 状態: disabled=!canWrite \|\| loading \|\| alias.status === "disabled" | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:116 |
+| 管理 | AliasAdminPanel | button | 承認 | 「承認」を実行するボタン。 | 状態: disabled=!canReview \|\| loading \|\| alias.status === "disabled" | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:120 |
+| 管理 | AliasAdminPanel | button | 差戻 | 「差戻」を実行するボタン。 | 状態: disabled=!canReview \|\| loading \|\| alias.status === "disabled" | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:124 |
+| 管理 | AliasAdminPanel | button | 無効 | 「無効」を実行するボタン。 | 状態: disabled=!canDisable \|\| loading \|\| alias.status === "disabled" | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:128 |
+| agents | AsyncAgentWorkspace | button | チャットへ戻る | 「チャットへ戻る」を実行するボタン。 | - | apps/web/src/features/agents/components/AsyncAgentWorkspace.tsx:40 |
+| agents | AsyncAgentWorkspace | button | 非同期エージェント情報を更新 | 「非同期エージェント情報を更新」を実行するボタン。 | 状態: disabled=loading | apps/web/src/features/agents/components/AsyncAgentWorkspace.tsx:54 |
+| agents | AsyncAgentWorkspace | button | `${providerDisplayName(run)}の非同期実行（${formatDateTime(run.updatedAt)}、識別子: ${run.agentRunId… | 「`${providerDisplayName(run)}の非同期実行（${formatDateTime(run.updatedAt)}、識別子: ${run.agentRunId…」を実行するボタン。 | 状態: aria-current=selectedRun?.agentRunId === run.agentRunId ? "true" : undefined | apps/web/src/features/agents/components/AsyncAgentWorkspace.tsx:91 |
+| agents | AsyncAgentWorkspace | button | キャンセル | 「キャンセル」を実行するボタン。 | 状態: disabled=!canCancel \|\| !["queued", "preparing_workspace", "running", "waiting_for_approval"].inclu… | apps/web/src/features/agents/components/AsyncAgentWorkspace.tsx:124 |
 | 認証 | LoginHeroGraphic | svg | 未推定 | svg 要素。静的解析では具体的な操作名を推定できません。 | role: img | apps/web/src/features/auth/components/LoginHeroGraphic.tsx:3 |
 | 認証 | LoginPage | form | title | 「title」を入力・送信するフォーム。 | 説明参照: error ? "login-error" : notice ? "login-notice" : undefined | apps/web/src/features/auth/components/LoginPage.tsx:213 |
 | 認証 | LoginPage | label | 新しいパスワード | 「新しいパスワード」に紐づく入力ラベル。 | - | apps/web/src/features/auth/components/LoginPage.tsx:220 |
@@ -119,24 +119,24 @@
 | 認証 | LoginPage | button | アカウント作成 | 「アカウント作成」を実行するボタン。 | 状態: disabled=isSubmitting | apps/web/src/features/auth/components/LoginPage.tsx:293 |
 | 認証 | LoginPage | button | 確認コード入力 | 「確認コード入力」を実行するボタン。 | 状態: disabled=isSubmitting | apps/web/src/features/auth/components/LoginPage.tsx:294 |
 | 認証 | LoginPage | button | サインインへ戻る | 「サインインへ戻る」を実行するボタン。 | 状態: disabled=isSubmitting | apps/web/src/features/auth/components/LoginPage.tsx:297 |
-| 性能テスト | BenchmarkWorkspace | button | チャットへ戻る | 「チャットへ戻る」を実行するボタン。 | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:78 |
-| 性能テスト | BenchmarkWorkspace | label | テスト種別 | 「テスト種別」に紐づく入力ラベル。 | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:105 |
-| 性能テスト | BenchmarkWorkspace | select | テスト種別 | 「テスト種別」を選ぶ選択項目。 | 状態: disabled=!hasSuites \|\| !hasSuitesResult | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:107 |
-| 性能テスト | BenchmarkWorkspace | option | benchmark suite を取得できません | 「benchmark suite を取得できません」を表す option 要素。 | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:108 |
-| 性能テスト | BenchmarkWorkspace | option | テスト種別 | 「テスト種別」を表す option 要素。 | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:110 |
-| 性能テスト | BenchmarkWorkspace | label | データセット | 「データセット」に紐づく入力ラベル。 | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:126 |
-| 性能テスト | BenchmarkWorkspace | input | データセット | 「データセット」を入力または選択する項目。 | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:128 |
-| 性能テスト | BenchmarkWorkspace | label | モデル / Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku | 「モデル / Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku」に紐づく入力ラベル。 | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:130 |
-| 性能テスト | BenchmarkWorkspace | select | Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku | 「Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku」を選ぶ選択項目。 | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:132 |
-| 性能テスト | BenchmarkWorkspace | option | Nova Lite v1 | 「Nova Lite v1」を表す option 要素。 | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:133 |
-| 性能テスト | BenchmarkWorkspace | option | Claude 3.5 Sonnet | 「Claude 3.5 Sonnet」を表す option 要素。 | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:134 |
-| 性能テスト | BenchmarkWorkspace | option | Claude 3 Haiku | 「Claude 3 Haiku」を表す option 要素。 | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:135 |
-| 性能テスト | BenchmarkWorkspace | label | 並列数 | 「並列数」に紐づく入力ラベル。 | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:138 |
-| 性能テスト | BenchmarkWorkspace | input | 並列数 | 「並列数」を入力または選択する項目。 | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:140 |
-| 性能テスト | BenchmarkWorkspace | button | 性能テストを実行 | 「性能テストを実行」を実行するボタン。 | 状態: disabled=loading \|\| !canRun \|\| !selectedSuite \|\| !hasSuitesResult | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:149 |
-| 性能テスト | BenchmarkWorkspace | button | 更新 | 「更新」を実行するボタン。 | 状態: disabled=loading | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:153 |
-| 性能テスト | BenchmarkWorkspace | button | `${artifact.description}をダウンロード` | 「`${artifact.description}をダウンロード`」を実行するボタン。 | 状態: disabled=!canDownload \|\| !canDownloadArtifact(run, artifact.kind) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:205 |
-| 性能テスト | BenchmarkWorkspace | button | `${run.runId}のジョブをキャンセル` | 「`${run.runId}のジョブをキャンセル`」を実行するボタン。 | 状態: disabled=!canCancel \|\| loading \|\| !["queued", "running"].includes(run.status) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:217 |
+| 性能テスト | BenchmarkWorkspace | button | チャットへ戻る | 「チャットへ戻る」を実行するボタン。 | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:86 |
+| 性能テスト | BenchmarkWorkspace | label | テスト種別 | 「テスト種別」に紐づく入力ラベル。 | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:113 |
+| 性能テスト | BenchmarkWorkspace | select | テスト種別 | 「テスト種別」を選ぶ選択項目。 | 状態: disabled=!hasSuites \|\| !hasSuitesResult | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:115 |
+| 性能テスト | BenchmarkWorkspace | option | テスト設定を取得できません | 「テスト設定を取得できません」を表す option 要素。 | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:116 |
+| 性能テスト | BenchmarkWorkspace | option | テスト種別 | 「テスト種別」を表す option 要素。 | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:118 |
+| 性能テスト | BenchmarkWorkspace | label | データセット | 「データセット」に紐づく入力ラベル。 | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:134 |
+| 性能テスト | BenchmarkWorkspace | input | データセット | 「データセット」を入力または選択する項目。 | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:136 |
+| 性能テスト | BenchmarkWorkspace | label | モデル / Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku | 「モデル / Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku」に紐づく入力ラベル。 | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:138 |
+| 性能テスト | BenchmarkWorkspace | select | Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku | 「Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku」を選ぶ選択項目。 | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:140 |
+| 性能テスト | BenchmarkWorkspace | option | Nova Lite v1 | 「Nova Lite v1」を表す option 要素。 | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:141 |
+| 性能テスト | BenchmarkWorkspace | option | Claude 3.5 Sonnet | 「Claude 3.5 Sonnet」を表す option 要素。 | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:142 |
+| 性能テスト | BenchmarkWorkspace | option | Claude 3 Haiku | 「Claude 3 Haiku」を表す option 要素。 | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:143 |
+| 性能テスト | BenchmarkWorkspace | label | 並列数 | 「並列数」に紐づく入力ラベル。 | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:146 |
+| 性能テスト | BenchmarkWorkspace | input | 並列数 | 「並列数」を入力または選択する項目。 | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:148 |
+| 性能テスト | BenchmarkWorkspace | button | 性能テストを実行 | 「性能テストを実行」を実行するボタン。 | 状態: disabled=loading \|\| !canRun \|\| !selectedSuite \|\| !hasSuitesResult | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:157 |
+| 性能テスト | BenchmarkWorkspace | button | 更新 | 「更新」を実行するボタン。 | 状態: disabled=loading | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:161 |
+| 性能テスト | BenchmarkWorkspace | button | `${artifact.description}をダウンロード` | 「`${artifact.description}をダウンロード`」を実行するボタン。 | 状態: disabled=!canDownload \|\| !canDownloadArtifact(run, artifact.kind) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:213 |
+| 性能テスト | BenchmarkWorkspace | button | `${run.runId}のジョブをキャンセル` | 「`${run.runId}のジョブをキャンセル`」を実行するボタン。 | 状態: disabled=!canCancel \|\| loading \|\| !["queued", "running"].includes(run.status) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:225 |
 | チャット | AnswerCopyAction | button | 回答をコピー済み / 回答をコピー | 「回答をコピー済み / 回答をコピー」を実行するボタン。 | 状態: disabled=!canCopy | apps/web/src/features/chat/components/answer/AnswerCopyAction.tsx:18 |
 | チャット | CitationList | a | 未推定 | a 要素。静的解析では具体的な操作名を推定できません。 | - | apps/web/src/features/chat/components/answer/CitationList.tsx:13 |
 | チャット | ClarificationOptions | button | この候補で質問する | 「この候補で質問する」を実行するボタン。 | 状態: disabled=disabled | apps/web/src/features/chat/components/answer/ClarificationOptions.tsx:19 |
@@ -179,9 +179,9 @@
 | チャット | QuestionEscalationPanel | button | 担当者へ送信 | 「担当者へ送信」を実行するボタン。 | 状態: disabled=loading \|\| !title.trim() \|\| !body.trim() | apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:100 |
 | チャット | UserPromptBubble | button | プロンプトをコピー済み / プロンプトをコピー | 「プロンプトをコピー済み / プロンプトをコピー」を実行するボタン。 | 状態: disabled=!canCopyPrompt | apps/web/src/features/chat/components/UserPromptBubble.tsx:47 |
 | デバッグ | DebugExpandedDialog | button | 拡大デバッグパネルを閉じる | 「拡大デバッグパネルを閉じる」を実行するボタン。 | - | apps/web/src/features/debug/components/panel/DebugExpandedDialog.tsx:32 |
-| デバッグ | DebugPanelBody | DebugFlowNodeButton | 未推定 | DebugFlowNodeButton 要素。静的解析では具体的な操作名を推定できません。 | - | apps/web/src/features/debug/components/panel/DebugPanelBody.tsx:50 |
-| デバッグ | DebugFlowNodeButton | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: aria-pressed=selected | apps/web/src/features/debug/components/panel/DebugPanelBody.tsx:143 |
-| デバッグ | DebugStepList | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: aria-expanded=expandedStep | apps/web/src/features/debug/components/panel/DebugPanelBody.tsx:216 |
+| デバッグ | DebugPanelBody | DebugFlowNodeButton | 未推定 | DebugFlowNodeButton 要素。静的解析では具体的な操作名を推定できません。 | - | apps/web/src/features/debug/components/panel/DebugPanelBody.tsx:59 |
+| デバッグ | DebugFlowNodeButton | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: aria-pressed=selected | apps/web/src/features/debug/components/panel/DebugPanelBody.tsx:152 |
+| デバッグ | DebugStepList | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: aria-expanded=expandedStep | apps/web/src/features/debug/components/panel/DebugPanelBody.tsx:226 |
 | デバッグ | DebugPanelHeader | button | 保存JSON | 「保存JSON」を実行するボタン。 | 状態: disabled=!activeTrace \|\| pending \|\| Boolean(replayEnvelope) | apps/web/src/features/debug/components/panel/DebugPanelHeader.tsx:39 |
 | デバッグ | DebugPanelHeader | button | 可視化JSON | 「可視化JSON」を実行するボタン。 | 状態: disabled=!envelope \|\| pending | apps/web/src/features/debug/components/panel/DebugPanelHeader.tsx:43 |
 | デバッグ | DebugPanelHeader | label | JSONをアップロード | 「JSONをアップロード」に紐づく入力ラベル。 | - | apps/web/src/features/debug/components/panel/DebugPanelHeader.tsx:47 |
@@ -189,35 +189,35 @@
 | デバッグ | DebugPanelHeader | button | 解除 | 「解除」を実行するボタン。 | - | apps/web/src/features/debug/components/panel/DebugPanelHeader.tsx:53 |
 | デバッグ | DebugPanelHeader | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: aria-expanded=allExpanded | apps/web/src/features/debug/components/panel/DebugPanelHeader.tsx:58 |
 | デバッグ | DebugPanelHeader | button | デバッグパネルを拡大表示 | 「デバッグパネルを拡大表示」を実行するボタン。 | - | apps/web/src/features/debug/components/panel/DebugPanelHeader.tsx:60 |
-| ドキュメント | DocumentWorkspace | button | 前の画面へ戻る | 「前の画面へ戻る」を実行するボタン。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:833 |
-| ドキュメント | DocumentWorkspace | button | フォルダ設定を閉じる | 「フォルダ設定を閉じる」を実行するボタン。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:991 |
-| ドキュメント | DocumentWorkspace | form | ファイル名: / 現在の権限: / 継承: / 共有先種別 / 共有先ID / 権限 / 理由 / 保存 | 「ファイル名: / 現在の権限: / 継承: / 共有先種別 / 共有先ID / 権限 / 理由 / 保存」を入力・送信するフォーム。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1095 |
-| ドキュメント | DocumentWorkspace | button | 削除 | 「削除」を実行するボタン。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1110 |
-| ドキュメント | DocumentWorkspace | label | 共有先種別 | 「共有先種別」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1119 |
-| ドキュメント | DocumentWorkspace | select | user / group | 「user / group」を選ぶ選択項目。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1121 |
-| ドキュメント | DocumentWorkspace | option | user | 「user」を表す option 要素。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1122 |
-| ドキュメント | DocumentWorkspace | option | group | 「group」を表す option 要素。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1123 |
-| ドキュメント | DocumentWorkspace | label | 共有先ID | 「共有先ID」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1126 |
-| ドキュメント | DocumentWorkspace | input | 共有先ID | 「共有先ID」を入力または選択する項目。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1126 |
-| ドキュメント | DocumentWorkspace | label | 権限 | 「権限」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1127 |
-| ドキュメント | DocumentWorkspace | select | deny / readOnly / full | 「deny / readOnly / full」を選ぶ選択項目。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1129 |
-| ドキュメント | DocumentWorkspace | option | deny | 「deny」を表す option 要素。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1130 |
-| ドキュメント | DocumentWorkspace | option | readOnly | 「readOnly」を表す option 要素。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1131 |
-| ドキュメント | DocumentWorkspace | option | full | 「full」を表す option 要素。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1132 |
-| ドキュメント | DocumentWorkspace | label | 理由 | 「理由」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1135 |
-| ドキュメント | DocumentWorkspace | textarea | 理由 | 「理由」を複数行で入力する項目。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1135 |
-| ドキュメント | DocumentWorkspace | button | 保存 | 「保存」を実行するボタン。 | 状態: disabled=documentShareLoading \|\| documentShareInfo === null \|\| !documentShareReason.trim() \|\| oper… | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1136 |
-| ドキュメント | DocumentWorkspace | form | ファイル名: / 移動先フォルダ / 選択してください / 移動後の表示名 / 直接共有は維持され、継承共有は移動先フォルダの設定に変わります。 / 理由 / 移動 | 「ファイル名: / 移動先フォルダ / 選択してください / 移動後の表示名 / 直接共有は維持され、継承共有は移動先フォルダの設定に変わります。 / 理由 / 移動」を入力・送信するフォーム。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1142 |
-| ドキュメント | DocumentWorkspace | label | 移動先フォルダ / 選択してください | 「移動先フォルダ / 選択してください」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1144 |
-| ドキュメント | DocumentWorkspace | select | 選択してください | 「選択してください」を選ぶ選択項目。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1146 |
-| ドキュメント | DocumentWorkspace | option | 選択してください | 「選択してください」を表す option 要素。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1147 |
-| ドキュメント | DocumentWorkspace | option | 移動先フォルダ / 選択してください | 「移動先フォルダ / 選択してください」を表す option 要素。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1149 |
-| ドキュメント | DocumentWorkspace | label | 移動後の表示名 | 「移動後の表示名」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1153 |
-| ドキュメント | DocumentWorkspace | input | 移動後の表示名 | 「移動後の表示名」を入力または選択する項目。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1153 |
-| ドキュメント | DocumentWorkspace | label | 理由 | 「理由」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1156 |
-| ドキュメント | DocumentWorkspace | textarea | 理由 | 「理由」を複数行で入力する項目。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1156 |
-| ドキュメント | DocumentWorkspace | button | 移動 | 「移動」を実行するボタン。 | 状態: disabled=!documentMoveDestinationId \|\| documentMoveNameConflict \|\| !documentMoveReason.trim() \|\| o… | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1157 |
-| ドキュメント | WorkspaceModal | button | `${title}を閉じる` | 「`${title}を閉じる`」を実行するボタン。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1226 |
+| ドキュメント | DocumentWorkspace | button | 前の画面へ戻る | 「前の画面へ戻る」を実行するボタン。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:834 |
+| ドキュメント | DocumentWorkspace | button | フォルダ設定を閉じる | 「フォルダ設定を閉じる」を実行するボタン。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:992 |
+| ドキュメント | DocumentWorkspace | form | ファイル名: / 現在の権限: / 継承: / 共有先種別 / ユーザー / グループ / 共有先識別子（管理者向け） / 権限 / 権限なし / 閲覧のみ / 管理可能 / 理由 / 保存 | 「ファイル名: / 現在の権限: / 継承: / 共有先種別 / ユーザー / グループ / 共有先識別子（管理者向け） / 権限 / 権限なし / 閲覧のみ / 管理可能 / 理由 / 保存」を入力・送信するフォーム。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1096 |
+| ドキュメント | DocumentWorkspace | button | 削除 | 「削除」を実行するボタン。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1111 |
+| ドキュメント | DocumentWorkspace | label | 共有先種別 / ユーザー / グループ | 「共有先種別 / ユーザー / グループ」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1120 |
+| ドキュメント | DocumentWorkspace | select | ユーザー / グループ | 「ユーザー / グループ」を選ぶ選択項目。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1122 |
+| ドキュメント | DocumentWorkspace | option | ユーザー | 「ユーザー」を表す option 要素。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1123 |
+| ドキュメント | DocumentWorkspace | option | グループ | 「グループ」を表す option 要素。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1124 |
+| ドキュメント | DocumentWorkspace | label | 共有先識別子（管理者向け） | 「共有先識別子（管理者向け）」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1127 |
+| ドキュメント | DocumentWorkspace | input | 共有先識別子（管理者向け） | 「共有先識別子（管理者向け）」を入力または選択する項目。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1127 |
+| ドキュメント | DocumentWorkspace | label | 権限 / 権限なし / 閲覧のみ / 管理可能 | 「権限 / 権限なし / 閲覧のみ / 管理可能」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1128 |
+| ドキュメント | DocumentWorkspace | select | 権限なし / 閲覧のみ / 管理可能 | 「権限なし / 閲覧のみ / 管理可能」を選ぶ選択項目。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1130 |
+| ドキュメント | DocumentWorkspace | option | 権限なし | 「権限なし」を表す option 要素。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1131 |
+| ドキュメント | DocumentWorkspace | option | 閲覧のみ | 「閲覧のみ」を表す option 要素。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1132 |
+| ドキュメント | DocumentWorkspace | option | 管理可能 | 「管理可能」を表す option 要素。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1133 |
+| ドキュメント | DocumentWorkspace | label | 理由 | 「理由」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1136 |
+| ドキュメント | DocumentWorkspace | textarea | 理由 | 「理由」を複数行で入力する項目。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1136 |
+| ドキュメント | DocumentWorkspace | button | 保存 | 「保存」を実行するボタン。 | 状態: disabled=documentShareLoading \|\| documentShareInfo === null \|\| !documentShareReason.trim() \|\| oper… | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1137 |
+| ドキュメント | DocumentWorkspace | form | ファイル名: / 移動先フォルダ / 選択してください / 移動後の表示名 / 直接共有は維持され、継承共有は移動先フォルダの設定に変わります。 / 理由 / 移動 | 「ファイル名: / 移動先フォルダ / 選択してください / 移動後の表示名 / 直接共有は維持され、継承共有は移動先フォルダの設定に変わります。 / 理由 / 移動」を入力・送信するフォーム。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1143 |
+| ドキュメント | DocumentWorkspace | label | 移動先フォルダ / 選択してください | 「移動先フォルダ / 選択してください」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1145 |
+| ドキュメント | DocumentWorkspace | select | 選択してください | 「選択してください」を選ぶ選択項目。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1147 |
+| ドキュメント | DocumentWorkspace | option | 選択してください | 「選択してください」を表す option 要素。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1148 |
+| ドキュメント | DocumentWorkspace | option | 移動先フォルダ / 選択してください | 「移動先フォルダ / 選択してください」を表す option 要素。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1150 |
+| ドキュメント | DocumentWorkspace | label | 移動後の表示名 | 「移動後の表示名」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1154 |
+| ドキュメント | DocumentWorkspace | input | 移動後の表示名 | 「移動後の表示名」を入力または選択する項目。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1154 |
+| ドキュメント | DocumentWorkspace | label | 理由 | 「理由」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1157 |
+| ドキュメント | DocumentWorkspace | textarea | 理由 | 「理由」を複数行で入力する項目。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1157 |
+| ドキュメント | DocumentWorkspace | button | 移動 | 「移動」を実行するボタン。 | 状態: disabled=!documentMoveDestinationId \|\| documentMoveNameConflict \|\| !documentMoveReason.trim() \|\| o… | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1158 |
+| ドキュメント | WorkspaceModal | button | `${title}を閉じる` | 「`${title}を閉じる`」を実行するボタン。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:1227 |
 | ドキュメント | DocumentAddDialog | button | ドキュメント追加を閉じる | 「ドキュメント追加を閉じる」を実行するボタン。 | - | apps/web/src/features/documents/components/workspace/DocumentAddDialog.tsx:143 |
 | ドキュメント | DocumentAddDialog | label | 保存先フォルダ（必須） / 選択してください | 「保存先フォルダ（必須） / 選択してください」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/workspace/DocumentAddDialog.tsx:161 |
 | ドキュメント | DocumentAddDialog | select | 選択してください | 「選択してください」を選ぶ選択項目。 | 状態: disabled=operationState.isUploading | apps/web/src/features/documents/components/workspace/DocumentAddDialog.tsx:163 |
@@ -233,14 +233,14 @@
 | ドキュメント | DocumentAddDialog | label | 未推定 | label 要素。静的解析では具体的な操作名を推定できません。 | - | apps/web/src/features/documents/components/workspace/DocumentAddDialog.tsx:234 |
 | ドキュメント | DocumentAddDialog | input | アップロードする文書を選択 | 「アップロードする文書を選択」を入力または選択する項目。 | 状態: disabled=!canUploadToDestination \|\| operationState.isUploading | apps/web/src/features/documents/components/workspace/DocumentAddDialog.tsx:237 |
 | ドキュメント | DocumentAddDialog | button | アップロード | 「アップロード」を実行するボタン。 | 状態: disabled=!canUploadToDestination \|\| !uploadFile \|\| operationState.isUploading | apps/web/src/features/documents/components/workspace/DocumentAddDialog.tsx:247 |
-| ドキュメント | DocumentConfirmDialog | label | 削除理由 | 「削除理由」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/workspace/DocumentConfirmDialog.tsx:41 |
-| ドキュメント | DocumentConfirmDialog | textarea | 削除理由 | 「削除理由」を複数行で入力する項目。 | 状態: disabled=loading | apps/web/src/features/documents/components/workspace/DocumentConfirmDialog.tsx:43 |
-| ドキュメント | DocumentDetailDrawer | button | 文書詳細を閉じる | 「文書詳細を閉じる」を実行するボタン。 | - | apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:67 |
-| ドキュメント | DocumentDetailDrawer | button | この資料に質問する | 「この資料に質問する」を実行するボタン。 | 状態: disabled=!onAskDocument | apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:96 |
-| ドキュメント | DocumentDetailDrawer | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: disabled=isDownloading | apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:100 |
-| ドキュメント | DocumentDetailDrawer | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | - | apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:104 |
-| ドキュメント | DocumentDetailDrawer | button | 再インデックス | 「再インデックス」を実行するボタン。 | - | apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:108 |
-| ドキュメント | DocumentDetailDrawer | button | 削除 | 「削除」を実行するボタン。 | - | apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:112 |
+| ドキュメント | DocumentConfirmDialog | label | 削除理由 | 「削除理由」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/workspace/DocumentConfirmDialog.tsx:42 |
+| ドキュメント | DocumentConfirmDialog | textarea | 削除理由 | 「削除理由」を複数行で入力する項目。 | 状態: disabled=loading | apps/web/src/features/documents/components/workspace/DocumentConfirmDialog.tsx:44 |
+| ドキュメント | DocumentDetailDrawer | button | 文書詳細を閉じる | 「文書詳細を閉じる」を実行するボタン。 | - | apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:70 |
+| ドキュメント | DocumentDetailDrawer | button | この資料に質問する | 「この資料に質問する」を実行するボタン。 | 状態: disabled=!onAskDocument | apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:99 |
+| ドキュメント | DocumentDetailDrawer | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: disabled=isDownloading | apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:103 |
+| ドキュメント | DocumentDetailDrawer | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | - | apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:107 |
+| ドキュメント | DocumentDetailDrawer | button | 再インデックス | 「再インデックス」を実行するボタン。 | - | apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:111 |
+| ドキュメント | DocumentDetailDrawer | button | 削除 | 「削除」を実行するボタン。 | - | apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:115 |
 | ドキュメント | DocumentDetailPanel | form | 共有フォルダ / 選択してください / 共有 resource group ID / 現行 policy の readOnly resource group / 追加: / 削除: / 変更なし: … | 「共有フォルダ / 選択してください / 共有 resource group ID / 現行 policy の readOnly resource group / 追加: / 削除: / 変更なし: …」を入力・送信するフォーム。 | - | apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:210 |
 | ドキュメント | DocumentDetailPanel | label | 共有フォルダ / 選択してください | 「共有フォルダ / 選択してください」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:211 |
 | ドキュメント | DocumentDetailPanel | select | 選択してください | 「選択してください」を選ぶ選択項目。 | 状態: disabled=!canShareGroups \|\| operationState.sharingGroupId !== null | apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:213 |
@@ -253,7 +253,7 @@
 | ドキュメント | DocumentDetailPanel | label | 既存共有をすべて削除することを確認しました | 「既存共有をすべて削除することを確認しました」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:273 |
 | ドキュメント | DocumentDetailPanel | input | 既存共有をすべて削除することを確認しました | 「既存共有をすべて削除することを確認しました」を入力または選択する項目。 | 状態: disabled=!canShareGroups \|\| folderShareLoading \|\| !folderSharePolicyVersion \|\| operationState.shar… | apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:274 |
 | ドキュメント | DocumentDetailPanel | label | 変更理由 | 「変更理由」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:283 |
-| ドキュメント | DocumentDetailPanel | textarea | 共有 policy を変更する理由 | 「共有 policy を変更する理由」を複数行で入力する項目。 | 状態: disabled=!canShareGroups \|\| folderShareLoading \|\| !folderSharePolicyVersion \|\| operationState.shar… | apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:285 |
+| ドキュメント | DocumentDetailPanel | textarea | 共有設定を変更する理由 | 「共有設定を変更する理由」を複数行で入力する項目。 | 状態: disabled=!canShareGroups \|\| folderShareLoading \|\| !folderSharePolicyVersion \|\| operationState.shar… | apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:285 |
 | ドキュメント | DocumentDetailPanel | button | 共有更新 | 「共有更新」を実行するボタン。 | 状態: disabled=!canSubmitShare | apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:293 |
 | ドキュメント | DocumentDetailPanel | form | 編集後フォルダ名 / 移動先フォルダ / ルート / 編集後説明 / フォルダ移動理由 / 現在 path: / 移動先: / folder version: / path 更新: / 説明更新: … | 「編集後フォルダ名 / 移動先フォルダ / ルート / 編集後説明 / フォルダ移動理由 / 現在 path: / 移動先: / folder version: / path 更新: / 説明更新: …」を入力・送信するフォーム。 | - | apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:321 |
 | ドキュメント | DocumentDetailPanel | label | 編集後フォルダ名 | 「編集後フォルダ名」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:322 |
@@ -290,43 +290,43 @@
 | ドキュメント | UploadProgressPanel | button | 詳細を開く | 「詳細を開く」を実行するボタン。 | - | apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:565 |
 | ドキュメント | UploadProgressPanel | button | この資料に質問する | 「この資料に質問する」を実行するボタン。 | - | apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:566 |
 | ドキュメント | UploadProgressPanel | button | フォルダ内で表示 | 「フォルダ内で表示」を実行するボタン。 | - | apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:567 |
-| ドキュメント | DocumentFilePanel | button | ドキュメントを追加 | 「ドキュメントを追加」を実行するボタン。 | 説明参照: addDocumentDisabledReason ? "document-add-disabled-reason" : undefined<br>状態: disabled=!canOpenDocumentAdd | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:135 |
-| ドキュメント | DocumentFilePanel | button | フォルダ設定を開く | 「フォルダ設定を開く」を実行するボタン。 | 状態: disabled=(!canShareGroups && !canMoveGroups && !canCreateGroups && !canWrite) \|\| operationState.sh… | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:146 |
-| ドキュメント | DocumentFilePanel | label | ファイル名検索 | 「ファイル名検索」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:162 |
-| ドキュメント | DocumentFilePanel | input | ファイル名 | 「ファイル名」を入力または選択する項目。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:164 |
-| ドキュメント | DocumentFilePanel | label | 種別 / すべて | 「種別 / すべて」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:166 |
-| ドキュメント | DocumentFilePanel | select | すべて | 「すべて」を選ぶ選択項目。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:168 |
-| ドキュメント | DocumentFilePanel | option | すべて | 「すべて」を表す option 要素。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:169 |
-| ドキュメント | DocumentFilePanel | option | 種別 / すべて | 「種別 / すべて」を表す option 要素。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:171 |
-| ドキュメント | DocumentFilePanel | label | 状態 / すべて | 「状態 / すべて」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:175 |
-| ドキュメント | DocumentFilePanel | select | すべて | 「すべて」を選ぶ選択項目。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:177 |
-| ドキュメント | DocumentFilePanel | option | すべて | 「すべて」を表す option 要素。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:178 |
-| ドキュメント | DocumentFilePanel | option | 状態 / すべて | 「状態 / すべて」を表す option 要素。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:180 |
-| ドキュメント | DocumentFilePanel | label | 所属フォルダ / すべて / 未設定 | 「所属フォルダ / すべて / 未設定」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:184 |
-| ドキュメント | DocumentFilePanel | select | すべて / 未設定 | 「すべて / 未設定」を選ぶ選択項目。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:186 |
-| ドキュメント | DocumentFilePanel | option | すべて | 「すべて」を表す option 要素。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:187 |
-| ドキュメント | DocumentFilePanel | option | 未設定 | 「未設定」を表す option 要素。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:188 |
-| ドキュメント | DocumentFilePanel | option | 所属フォルダ / すべて / 未設定 | 「所属フォルダ / すべて / 未設定」を表す option 要素。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:190 |
-| ドキュメント | DocumentFilePanel | label | 並び替え / 更新日 新しい順 / 更新日 古い順 / ファイル名順 / 種別順 | 「並び替え / 更新日 新しい順 / 更新日 古い順 / ファイル名順 / 種別順」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:194 |
-| ドキュメント | DocumentFilePanel | select | 更新日 新しい順 / 更新日 古い順 / ファイル名順 / 種別順 | 「更新日 新しい順 / 更新日 古い順 / ファイル名順 / 種別順」を選ぶ選択項目。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:196 |
-| ドキュメント | DocumentFilePanel | option | 更新日 新しい順 | 「更新日 新しい順」を表す option 要素。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:197 |
-| ドキュメント | DocumentFilePanel | option | 更新日 古い順 | 「更新日 古い順」を表す option 要素。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:198 |
-| ドキュメント | DocumentFilePanel | option | ファイル名順 | 「ファイル名順」を表す option 要素。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:199 |
-| ドキュメント | DocumentFilePanel | option | チャンク数順 | 「チャンク数順」を表す option 要素。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:200 |
-| ドキュメント | DocumentFilePanel | option | 種別順 | 「種別順」を表す option 要素。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:201 |
-| ドキュメント | DocumentFilePanel | button | ドキュメントを追加 | 「ドキュメントを追加」を実行するボタン。 | 状態: disabled=!canOpenDocumentAdd | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:229 |
-| ドキュメント | DocumentFilePanel | button | 条件をクリア | 「条件をクリア」を実行するボタン。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:236 |
-| ドキュメント | DocumentFilePanel | button | `${document.fileName}を共有` | 「`${document.fileName}を共有`」を実行するボタン。 | 状態: disabled=operationState.sharingDocumentId === document.documentId | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:272 |
-| ドキュメント | DocumentFilePanel | button | `${document.fileName}を移動` | 「`${document.fileName}を移動`」を実行するボタン。 | 状態: disabled=operationState.movingDocumentId === document.documentId | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:286 |
-| ドキュメント | DocumentFilePanel | button | `${document.fileName}の再インデックスをステージング` | 「`${document.fileName}の再インデックスをステージング`」を実行するボタン。 | 状態: disabled=!canReindexRow \|\| operationState.stagingReindexDocumentId === document.documentId | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:299 |
-| ドキュメント | DocumentFilePanel | button | `${document.fileName}を削除` | 「`${document.fileName}を削除`」を実行するボタン。 | 状態: disabled=!canDeleteRow \|\| operationState.deletingDocumentId === document.documentId | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:312 |
-| ドキュメント | DocumentFilePanel | label | 表示件数 | 「表示件数」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:344 |
-| ドキュメント | DocumentFilePanel | select | 表示件数 | 「表示件数」を選ぶ選択項目。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:346 |
-| ドキュメント | DocumentFilePanel | option | 件 | 「件」を表す option 要素。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:348 |
-| ドキュメント | DocumentFilePanel | button | 前のページ | 「前のページ」を実行するボタン。 | 状態: disabled=documentPage <= 1 \|\| filteredDocumentsCount === 0 | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:352 |
-| ドキュメント | DocumentFilePanel | button | 次のページ | 「次のページ」を実行するボタン。 | 状態: disabled=documentPage >= documentPageCount \|\| filteredDocumentsCount === 0 | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:361 |
-| ドキュメント | ReindexMigrationStrip | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: disabled=operationState.cutoverMigrationId === migration.migrationId \|\| migration.status !== "stag… | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:410 |
-| ドキュメント | ReindexMigrationStrip | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: disabled=operationState.rollbackMigrationId === migration.migrationId \|\| migration.status !== "cut… | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:413 |
+| ドキュメント | DocumentFilePanel | button | ドキュメントを追加 | 「ドキュメントを追加」を実行するボタン。 | 説明参照: addDocumentDisabledReason ? "document-add-disabled-reason" : undefined<br>状態: disabled=!canOpenDocumentAdd | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:136 |
+| ドキュメント | DocumentFilePanel | button | フォルダ設定を開く | 「フォルダ設定を開く」を実行するボタン。 | 状態: disabled=(!canShareGroups && !canMoveGroups && !canCreateGroups && !canWrite) \|\| operationState.sh… | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:147 |
+| ドキュメント | DocumentFilePanel | label | ファイル名検索 | 「ファイル名検索」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:163 |
+| ドキュメント | DocumentFilePanel | input | ファイル名 | 「ファイル名」を入力または選択する項目。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:165 |
+| ドキュメント | DocumentFilePanel | label | 種別 / すべて | 「種別 / すべて」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:167 |
+| ドキュメント | DocumentFilePanel | select | すべて | 「すべて」を選ぶ選択項目。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:169 |
+| ドキュメント | DocumentFilePanel | option | すべて | 「すべて」を表す option 要素。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:170 |
+| ドキュメント | DocumentFilePanel | option | 種別 / すべて | 「種別 / すべて」を表す option 要素。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:172 |
+| ドキュメント | DocumentFilePanel | label | 状態 / すべて | 「状態 / すべて」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:176 |
+| ドキュメント | DocumentFilePanel | select | すべて | 「すべて」を選ぶ選択項目。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:178 |
+| ドキュメント | DocumentFilePanel | option | すべて | 「すべて」を表す option 要素。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:179 |
+| ドキュメント | DocumentFilePanel | option | 状態 / すべて | 「状態 / すべて」を表す option 要素。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:181 |
+| ドキュメント | DocumentFilePanel | label | 所属フォルダ / すべて / 未設定 | 「所属フォルダ / すべて / 未設定」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:185 |
+| ドキュメント | DocumentFilePanel | select | すべて / 未設定 | 「すべて / 未設定」を選ぶ選択項目。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:187 |
+| ドキュメント | DocumentFilePanel | option | すべて | 「すべて」を表す option 要素。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:188 |
+| ドキュメント | DocumentFilePanel | option | 未設定 | 「未設定」を表す option 要素。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:189 |
+| ドキュメント | DocumentFilePanel | option | 所属フォルダ / すべて / 未設定 | 「所属フォルダ / すべて / 未設定」を表す option 要素。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:191 |
+| ドキュメント | DocumentFilePanel | label | 並び替え / 更新日 新しい順 / 更新日 古い順 / ファイル名順 / 種別順 | 「並び替え / 更新日 新しい順 / 更新日 古い順 / ファイル名順 / 種別順」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:195 |
+| ドキュメント | DocumentFilePanel | select | 更新日 新しい順 / 更新日 古い順 / ファイル名順 / 種別順 | 「更新日 新しい順 / 更新日 古い順 / ファイル名順 / 種別順」を選ぶ選択項目。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:197 |
+| ドキュメント | DocumentFilePanel | option | 更新日 新しい順 | 「更新日 新しい順」を表す option 要素。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:198 |
+| ドキュメント | DocumentFilePanel | option | 更新日 古い順 | 「更新日 古い順」を表す option 要素。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:199 |
+| ドキュメント | DocumentFilePanel | option | ファイル名順 | 「ファイル名順」を表す option 要素。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:200 |
+| ドキュメント | DocumentFilePanel | option | チャンク数順 | 「チャンク数順」を表す option 要素。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:201 |
+| ドキュメント | DocumentFilePanel | option | 種別順 | 「種別順」を表す option 要素。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:202 |
+| ドキュメント | DocumentFilePanel | button | ドキュメントを追加 | 「ドキュメントを追加」を実行するボタン。 | 状態: disabled=!canOpenDocumentAdd | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:230 |
+| ドキュメント | DocumentFilePanel | button | 条件をクリア | 「条件をクリア」を実行するボタン。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:237 |
+| ドキュメント | DocumentFilePanel | button | `${document.fileName}を共有` | 「`${document.fileName}を共有`」を実行するボタン。 | 状態: disabled=operationState.sharingDocumentId === document.documentId | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:273 |
+| ドキュメント | DocumentFilePanel | button | `${document.fileName}を移動` | 「`${document.fileName}を移動`」を実行するボタン。 | 状態: disabled=operationState.movingDocumentId === document.documentId | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:287 |
+| ドキュメント | DocumentFilePanel | button | `${document.fileName}の再インデックスをステージング` | 「`${document.fileName}の再インデックスをステージング`」を実行するボタン。 | 状態: disabled=!canReindexRow \|\| operationState.stagingReindexDocumentId === document.documentId | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:300 |
+| ドキュメント | DocumentFilePanel | button | `${document.fileName}を削除` | 「`${document.fileName}を削除`」を実行するボタン。 | 状態: disabled=!canDeleteRow \|\| operationState.deletingDocumentId === document.documentId | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:313 |
+| ドキュメント | DocumentFilePanel | label | 表示件数 | 「表示件数」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:345 |
+| ドキュメント | DocumentFilePanel | select | 表示件数 | 「表示件数」を選ぶ選択項目。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:347 |
+| ドキュメント | DocumentFilePanel | option | 件 | 「件」を表す option 要素。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:349 |
+| ドキュメント | DocumentFilePanel | button | 前のページ | 「前のページ」を実行するボタン。 | 状態: disabled=documentPage <= 1 \|\| filteredDocumentsCount === 0 | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:353 |
+| ドキュメント | DocumentFilePanel | button | 次のページ | 「次のページ」を実行するボタン。 | 状態: disabled=documentPage >= documentPageCount \|\| filteredDocumentsCount === 0 | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:362 |
+| ドキュメント | ReindexMigrationStrip | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: disabled=operationState.cutoverMigrationId === migration.migrationId \|\| migration.status !== "stag… | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:411 |
+| ドキュメント | ReindexMigrationStrip | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: disabled=operationState.rollbackMigrationId === migration.migrationId \|\| migration.status !== "cut… | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:414 |
 | ドキュメント | DocumentFolderTree | label | フォルダを検索 | 「フォルダを検索」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/workspace/DocumentFolderTree.tsx:27 |
 | ドキュメント | DocumentFolderTree | input | フォルダを検索 | 「フォルダを検索」を入力または選択する項目。 | - | apps/web/src/features/documents/components/workspace/DocumentFolderTree.tsx:28 |
 | ドキュメント | DocumentFolderTree | button | フォルダ検索をクリア | 「フォルダ検索をクリア」を実行するボタン。 | 状態: disabled=!folderSearch | apps/web/src/features/documents/components/workspace/DocumentFolderTree.tsx:36 |
@@ -365,12 +365,12 @@
 | 担当者対応 | AssigneeWorkspace | input | 質問者へ通知する | 「質問者へ通知する」を入力または選択する項目。 | - | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:255 |
 | 担当者対応 | AssigneeWorkspace | button | 下書き保存 | 「下書き保存」を実行するボタン。 | 状態: disabled=loading \|\| !isDirty | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:262 |
 | 担当者対応 | AssigneeWorkspace | button | 回答を送信 | 「回答を送信」を実行するボタン。 | 状態: disabled=loading \|\| !answerTitle.trim() \|\| !answerBody.trim() | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:263 |
-| 共通 | ConfirmDialog | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: disabled=busy | apps/web/src/shared/components/ConfirmDialog.tsx:72 |
-| 共通 | ConfirmDialog | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: disabled=busy \|\| confirmDisabled | apps/web/src/shared/components/ConfirmDialog.tsx:73 |
+| 共通 | ConfirmDialog | Button | 未推定 | Button 要素。静的解析では具体的な操作名を推定できません。 | 状態: disabled=busy | apps/web/src/shared/components/ConfirmDialog.tsx:111 |
+| 共通 | ConfirmDialog | Button | 未推定 | Button 要素。静的解析では具体的な操作名を推定できません。 | 状態: disabled=busy \|\| confirmDisabled | apps/web/src/shared/components/ConfirmDialog.tsx:112 |
 | 共通 | Icon | svg | 未推定 | svg 要素。静的解析では具体的な操作名を推定できません。 | - | apps/web/src/shared/components/Icon.tsx:29 |
 | 共通 | Button | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | - | apps/web/src/shared/ui/Button.tsx:19 |
-| 共通 | ConfirmDialog | button | キャンセル | 「キャンセル」を実行するボタン。 | 状態: disabled=busy | apps/web/src/shared/ui/ConfirmDialog.tsx:107 |
-| 共通 | ConfirmDialog | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: disabled=busy \|\| confirmDisabled | apps/web/src/shared/ui/ConfirmDialog.tsx:108 |
+| 共通 | ConfirmDialog | Button | キャンセル | 「キャンセル」を表す Button 要素。 | 状態: disabled=busy | apps/web/src/shared/ui/ConfirmDialog.tsx:108 |
+| 共通 | ConfirmDialog | Button | 未推定 | Button 要素。静的解析では具体的な操作名を推定できません。 | 状態: disabled=busy \|\| confirmDisabled | apps/web/src/shared/ui/ConfirmDialog.tsx:109 |
 | 共通 | IconButton | button | label | 「label」を実行するボタン。 | - | apps/web/src/shared/ui/IconButton.tsx:14 |
 | 共通 | ResourceStatePanel | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: aria-controls=state.target.regionId | apps/web/src/shared/ui/ResourceState.tsx:175 |
 | 共通 | ResourceStatePanel | button | 処理中 | 「処理中」を実行するボタン。 | 状態: aria-controls=state.target.regionId, disabled=true | apps/web/src/shared/ui/ResourceState.tsx:177 |

@@ -64,20 +64,21 @@ describe("AsyncAgentWorkspace", () => {
     })
 
     expect(screen.getByText("未設定")).toBeInTheDocument()
-    expect(screen.getByText("provider は未設定です。G1 では本実行、workspace execution、writeback は利用できません。")).toBeInTheDocument()
+    expect(screen.getByText("実行環境は未設定です。非同期実行、作業領域での処理、結果の書き戻しは利用できません。")).toBeInTheDocument()
     expect(screen.getByText("非同期エージェント実行権限がありません。")).toBeInTheDocument()
-    expect(screen.getByText("run はまだありません。")).toBeInTheDocument()
-    expect(screen.getByText("run を選択すると read-only metadata を表示します。")).toBeInTheDocument()
+    expect(screen.getByText("実行履歴はまだありません。")).toBeInTheDocument()
+    expect(screen.getByText("実行を選択すると読み取り専用の詳細を表示します。")).toBeInTheDocument()
     expect(screen.queryByText("artifact-1")).not.toBeInTheDocument()
   })
 
   it("renders read-only blocked run metadata and disables cancel for non-running states", () => {
     renderWorkspace()
 
-    const detail = screen.getByRole("region", { name: "Run詳細" })
+    const detail = screen.getByRole("region", { name: "実行詳細" })
     expect(within(detail).getByText("ブロック")).toBeInTheDocument()
-    expect(within(detail).getByText("provider 未設定")).toBeInTheDocument()
-    expect(within(detail).getByText("credential is missing")).toBeInTheDocument()
+    expect(within(detail).getByText("実行環境が未設定")).toBeInTheDocument()
+    expect(within(detail).getByText("詳細は実行ログを確認してください。")).toBeInTheDocument()
+    expect(within(detail).queryByText("credential is missing")).not.toBeInTheDocument()
     expect(within(detail).getByRole("button", { name: "キャンセル" })).toBeDisabled()
   })
 
@@ -98,12 +99,12 @@ describe("AsyncAgentWorkspace", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "非同期エージェント情報を更新" }))
     await userEvent.click(screen.getByRole("button", { name: "チャットへ戻る" }))
-    await userEvent.click(screen.getByRole("button", { name: "agent-run-2の詳細" }))
+    await userEvent.click(screen.getByRole("button", { name: /識別子: agent-run-2/ }))
     await userEvent.click(screen.getByRole("button", { name: "キャンセル" }))
 
     expect(onRefresh).toHaveBeenCalledTimes(1)
     expect(onBack).toHaveBeenCalledTimes(1)
     expect(onCancel).toHaveBeenCalledWith("agent-run-2")
-    expect(within(screen.getByRole("region", { name: "Run詳細" })).getByText("実行中")).toBeInTheDocument()
+    expect(within(screen.getByRole("region", { name: "実行詳細" })).getByText("実行中")).toBeInTheDocument()
   })
 })

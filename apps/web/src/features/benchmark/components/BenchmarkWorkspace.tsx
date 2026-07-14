@@ -4,7 +4,14 @@ import { ConfirmDialog } from "../../../shared/components/ConfirmDialog.js"
 import { Icon } from "../../../shared/components/Icon.js"
 import { LoadingSpinner, LoadingStatus } from "../../../shared/components/LoadingSpinner.js"
 import { downloadBenchmarkArtifact } from "../../../shared/utils/downloads.js"
-import { formatDateTime, formatMetricLatency, formatPercent, runStatusLabel } from "../../../shared/utils/format.js"
+import { formatDateTime, formatMetricLatency, formatPercent } from "../../../shared/utils/format.js"
+import { StatusBadge } from "../../../shared/ui/StatusBadge.js"
+import {
+  benchmarkModeLabel,
+  benchmarkRunnerLabel,
+  benchmarkRunStatusPresentation,
+  type SemanticTone
+} from "../../../shared/ui/displayMetadata.js"
 import {
   ResourceStateBoundary,
   type UiResourceState
@@ -18,8 +25,8 @@ import {
 const benchmarkArtifacts = [
   { kind: "report", label: "レポート", description: "レポートMarkdown" },
   { kind: "summary", label: "サマリ", description: "サマリJSON" },
-  { kind: "results", label: "結果", description: "Raw results JSONL" },
-  { kind: "logs", label: "ログ", description: "CodeBuildログ" }
+  { kind: "results", label: "結果", description: "未加工の結果 JSONL" },
+  { kind: "logs", label: "ログ", description: "実行ログ" }
 ] as const
 
 export function BenchmarkWorkspace({
@@ -63,6 +70,7 @@ export function BenchmarkWorkspace({
   const summary = summarizeBenchmarkRuns(runs)
   const runningCount = runs.filter((run) => run.status === "queued" || run.status === "running").length
   const failedCount = runs.filter((run) => run.status === "failed").length
+  const latestRunPresentation = summary.latestRun ? benchmarkRunStatusPresentation(summary.latestRun.status) : undefined
   const hasSuites = suites.length > 0
   const hasRunsResult = dataState.parts.length === 0
     ? hasConfirmedResourceResult(dataState)
@@ -89,23 +97,23 @@ export function BenchmarkWorkspace({
       {hasRunsResult ? <div className="benchmark-kpi-grid">
         <BenchmarkMetricCard
           title="最新テスト結果"
-          value={summary.latestRun ? runStatusLabel(summary.latestRun.status) : "未実行"}
-          subValue={summary.latestRun ? `実行ID: ${summary.latestRun.runId}` : "ジョブ起動後に表示"}
-          tone={summary.latestRun?.status ?? "queued"}
+          value={latestRunPresentation?.label ?? "未実行"}
+          subValue={summary.latestRun ? `${benchmarkModeLabel(summary.latestRun.mode)} / ${benchmarkRunnerLabel(summary.latestRun.runner)}` : "ジョブ起動後に表示"}
+          tone={latestRunPresentation?.tone ?? "neutral"}
         />
-        <BenchmarkMetricCard title="成功 run" value={String(summary.succeededCount)} subValue="成果物をダウンロード可能" tone="succeeded" />
-        <BenchmarkMetricCard title="処理中 run" value={String(runningCount)} subValue="queued / running" tone={runningCount > 0 ? "running" : "queued"} />
-        <BenchmarkMetricCard title="失敗 run" value={String(failedCount)} subValue="CodeBuildログで原因確認" tone={failedCount > 0 ? "failed" : "queued"} />
+        <BenchmarkMetricCard title="成功した実行" value={String(summary.succeededCount)} subValue="成果物をダウンロード可能" tone="success" />
+        <BenchmarkMetricCard title="処理中の実行" value={String(runningCount)} subValue="待機中と実行中の合計" tone={runningCount > 0 ? "info" : "neutral"} />
+        <BenchmarkMetricCard title="失敗した実行" value={String(failedCount)} subValue="実行ログで原因を確認" tone={failedCount > 0 ? "danger" : "neutral"} />
       </div> : null}
 
       <div className="benchmark-layout">
         <section className="benchmark-run-panel">
           <h3><Icon name="gauge" />ジョブ起動</h3>
-          <p className="benchmark-run-panel-note">ワンクリックで選択 suite を実行します。</p>
+          <p className="benchmark-run-panel-note">選択したテスト設定でジョブを起動します。</p>
           <label>
             <span>テスト種別</span>
             <select value={selectedSuite?.suiteId ?? ""} disabled={!hasSuites || !hasSuitesResult} onChange={(event) => onSuiteChange(event.target.value)}>
-              {(!hasSuites || !hasSuitesResult) && <option value="">benchmark suite を取得できません</option>}
+              {(!hasSuites || !hasSuitesResult) && <option value="">テスト設定を取得できません</option>}
               {suites.map((suite) => (
                 <option value={suite.suiteId} key={suite.suiteId}>
                   {suite.label}
@@ -116,16 +124,16 @@ export function BenchmarkWorkspace({
           <div className="benchmark-mode-grid">
             <div>
               <span>対象</span>
-              <strong>{selectedSuite ? selectedSuite.mode === "agent" ? "エージェント" : selectedSuite.mode : "未選択"}</strong>
+              <strong>{selectedSuite ? benchmarkModeLabel(selectedSuite.mode) : "未選択"}</strong>
             </div>
             <div>
-              <span>Runner</span>
-              <strong>CodeBuild</strong>
+              <span>実行基盤</span>
+              <strong>{benchmarkRunnerLabel("codebuild")}</strong>
             </div>
           </div>
           <label>
             <span>データセット</span>
-            <input value={selectedSuite?.datasetS3Key ?? "suite 未選択"} readOnly />
+            <input value={selectedSuite?.datasetS3Key ?? "テスト設定を選択してください"} readOnly />
           </label>
           <label>
             <span>モデル</span>
@@ -166,12 +174,12 @@ export function BenchmarkWorkspace({
             <table className="benchmark-table">
               <thead>
                 <tr>
-                  <th>runId</th>
-                  <th>status</th>
+                  <th>実行識別子</th>
+                  <th>状態</th>
                   <th>実行内容</th>
                   <th>時刻</th>
-                  <th>metrics</th>
-                  <th>DL / 操作</th>
+                  <th>測定値</th>
+                  <th>成果物 / 操作</th>
                 </tr>
               </thead>
               <tbody>
@@ -183,11 +191,11 @@ export function BenchmarkWorkspace({
                   runs.map((run) => (
                     <tr key={run.runId} className={run.error ? "has-error" : undefined}>
                       <td><code>{run.runId}</code></td>
-                      <td><span className={`run-status ${run.status}`}>{runStatusLabel(run.status)}</span></td>
+                      <td><StatusBadge presentation={benchmarkRunStatusPresentation(run.status)} /></td>
                       <td>
                         <div className="benchmark-run-summary">
-                          <strong>{run.suiteId}</strong>
-                          <span>{run.mode} / {run.runner}</span>
+                          <strong>{suites.find((suite) => suite.suiteId === run.suiteId)?.label ?? "名称未提供"}</strong>
+                          <span>{benchmarkModeLabel(run.mode)} / {benchmarkRunnerLabel(run.runner)}</span>
                           {run.modelId ? <small>{run.modelId}</small> : null}
                         </div>
                       </td>
@@ -218,7 +226,7 @@ export function BenchmarkWorkspace({
                             {loading ? <LoadingSpinner className="button-spinner" /> : <Icon name="stop" />}
                           </button>
                         </div>
-                        {run.error ? <p className="benchmark-run-error">{summarizeRunError(run.error)}</p> : null}
+                        {run.error ? <p className="benchmark-run-error">実行ログで詳細を確認してください。</p> : null}
                       </td>
                     </tr>
                   ))
@@ -232,15 +240,15 @@ export function BenchmarkWorkspace({
       {confirmStartOpen && (
         <ConfirmDialog
           title="性能テストを実行しますか？"
-          description="CodeBuild runner を起動します。実行中はコストと待ち時間が発生するため、選択内容を確認してください。"
+          description="性能テストの実行基盤を起動します。コストと待ち時間が発生するため、選択内容を確認してください。"
           confirmLabel="実行"
           tone="warning"
           loading={loading}
           details={[
-            `suite:${selectedSuite?.label ?? suiteId}`,
-            `dataset:${selectedSuite?.datasetS3Key ?? "未設定"}`,
-            `model:${modelId}`,
-            `concurrency:${concurrency}`
+            `テスト設定: ${selectedSuite?.label ?? "未設定"}`,
+            `データセット: ${selectedSuite?.datasetS3Key ?? "未設定"}`,
+            `モデル: ${modelId}`,
+            `並列数: ${concurrency}`
           ]}
           onCancel={() => setConfirmStartOpen(false)}
           onConfirm={async () => {
@@ -257,15 +265,15 @@ function BenchmarkMetricCard({
   title,
   value,
   subValue,
-  tone = "succeeded"
+  tone = "neutral"
 }: {
   title: string
   value: string
   subValue: string
-  tone?: BenchmarkRun["status"]
+  tone?: SemanticTone
 }) {
   return (
-    <article className={`benchmark-kpi-card ${tone}`}>
+    <article className={`benchmark-kpi-card tone-${tone}`}>
       <span>{title}</span>
       <strong>{value}</strong>
       <small>{subValue}</small>
@@ -278,14 +286,14 @@ function BenchmarkMetricChips({ run }: { run: BenchmarkRun }) {
     run.metrics?.p50LatencyMs == null ? undefined : `p50 ${formatMetricLatency(run.metrics.p50LatencyMs)}`,
     run.metrics?.p95LatencyMs == null ? undefined : `p95 ${formatMetricLatency(run.metrics.p95LatencyMs)}`,
     run.metrics?.answerableAccuracy == null
-      ? run.metrics?.turnAnswerCorrectRate == null ? undefined : `turn accuracy ${formatPercent(run.metrics.turnAnswerCorrectRate)}`
-      : `accuracy ${formatPercent(run.metrics.answerableAccuracy)}`,
+      ? run.metrics?.turnAnswerCorrectRate == null ? undefined : `ターン正解率 ${formatPercent(run.metrics.turnAnswerCorrectRate)}`
+      : `正解率 ${formatPercent(run.metrics.answerableAccuracy)}`,
     run.metrics?.retrievalRecallAt20 == null
-      ? run.metrics?.retrievalRecallAtK == null ? undefined : `recall ${formatPercent(run.metrics.retrievalRecallAtK)}`
-      : `recall ${formatPercent(run.metrics.retrievalRecallAt20)}`,
-    run.metrics?.historyDependentAccuracy == null ? undefined : `history ${formatPercent(run.metrics.historyDependentAccuracy)}`,
+      ? run.metrics?.retrievalRecallAtK == null ? undefined : `検索再現率 ${formatPercent(run.metrics.retrievalRecallAtK)}`
+      : `検索再現率 ${formatPercent(run.metrics.retrievalRecallAt20)}`,
+    run.metrics?.historyDependentAccuracy == null ? undefined : `履歴依存正解率 ${formatPercent(run.metrics.historyDependentAccuracy)}`,
     run.metrics?.clarificationNeedF1 == null ? undefined : `質問F1 ${formatPercent(run.metrics.clarificationNeedF1)}`,
-    run.metrics?.errorRate == null ? undefined : `error ${formatPercent(run.metrics.errorRate)}`
+    run.metrics?.errorRate == null ? undefined : `エラー率 ${formatPercent(run.metrics.errorRate)}`
   ].filter((chip): chip is string => Boolean(chip))
 
   if (chips.length === 0) return <span className="metric-unavailable">{run.status === "queued" || run.status === "running" ? "完了後に集計" : "-"}</span>
@@ -307,11 +315,6 @@ function canDownloadArtifact(run: BenchmarkRun, artifact: (typeof benchmarkArtif
   if (!artifactKeyForRun(run, artifact)) return false
   if (artifact === "logs") return true
   return run.status === "succeeded"
-}
-
-function summarizeRunError(error: string): string {
-  const compact = error.replace(/\s+/g, " ").trim()
-  return compact.length <= 72 ? compact : `${compact.slice(0, 72)}...`
 }
 
 function summarizeBenchmarkRuns(runs: BenchmarkRun[]): {

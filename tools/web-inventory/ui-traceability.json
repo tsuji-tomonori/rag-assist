@@ -19,7 +19,7 @@
     {
       "id": "system-admin",
       "label": "システム管理者",
-      "jobContext": "許可された管理、監査、利用状況、alias governance を扱う"
+      "jobContext": "許可された管理、監査、利用状況、用語展開 governance を扱う"
     }
   ],
   "qualityRequirements": [
@@ -36,7 +36,7 @@
     },
     {
       "id": "NFR-017",
-      "acceptanceCriteria": ["AC-NFR017-002", "AC-NFR017-003", "AC-NFR017-004"],
+      "acceptanceCriteria": ["AC-NFR017-001", "AC-NFR017-002", "AC-NFR017-003", "AC-NFR017-004", "AC-NFR017-005"],
       "appliesTo": ["*"]
     },
     {
@@ -62,6 +62,11 @@
       "evidence": ["tools/web-inventory/ui-traceability.test.mjs"]
     },
     {
+      "id": "NONUI-UI-SEMANTIC-001",
+      "status": "implemented",
+      "evidence": ["tools/web-inventory/semantic-ui-contract.test.mjs"]
+    },
+    {
       "id": "E2E-UI-NAV-001",
       "status": "implemented",
       "evidence": ["apps/web/e2e/visual-regression.spec.ts"]
@@ -83,6 +88,11 @@
     },
     {
       "id": "E2E-UI-STATE-001",
+      "status": "implemented",
+      "evidence": ["apps/web/e2e/visual-regression.spec.ts"]
+    },
+    {
+      "id": "E2E-UI-SEMANTIC-001",
       "status": "implemented",
       "evidence": ["apps/web/e2e/visual-regression.spec.ts"]
     },

@@ -1,6 +1,15 @@
 import type { DebugStep, DebugTrace } from "../../types.js"
 import { Icon } from "../../../../shared/components/Icon.js"
 import { formatLatency } from "../../../../shared/utils/format.js"
+import { StatusBadge } from "../../../../shared/ui/StatusBadge.js"
+import {
+  debugFailureStageLabel,
+  debugRunStatusPresentation,
+  debugStepStatusPresentation,
+  debugTargetLabel,
+  debugVisibilityLabel,
+  factCoverageStatusPresentation
+} from "../../../../shared/ui/displayMetadata.js"
 import {
   buildEvidenceRows,
   extractAnswerSupport,
@@ -11,7 +20,7 @@ import {
   type DebugReplayEnvelope,
   type FactCoverageRow
 } from "../../utils/debugTraceReplay.js"
-import { formatGraphGroup } from "./debugPanelUtils.js"
+import { formatDebugStepLabel, formatGraphGroup, formatGraphNodeType } from "./debugPanelUtils.js"
 
 export function DebugPanelBody({
   pending,
@@ -83,43 +92,43 @@ function DebugRunSummaryView({ envelope }: { envelope: DebugReplayEnvelope }) {
   return (
     <section className="debug-run-summary" aria-label="実行サマリ">
       <div>
-        <span className={`debug-status-badge ${summary.status}`}>{summary.status}</span>
+        <StatusBadge presentation={debugRunStatusPresentation(summary.status)} />
         <strong>{summary.runId}</strong>
-        <span>{summary.isAnswerable ? "answerable" : "refusal"}</span>
+        <span>{summary.isAnswerable ? "回答可能" : "回答保留"}</span>
       </div>
       <p>{summary.question}</p>
       <dl>
         <div>
-          <dt>latency</dt>
+          <dt>処理時間</dt>
           <dd>{formatLatency(summary.totalLatencyMs)}</dd>
         </div>
         <div>
-          <dt>model</dt>
+          <dt>モデル</dt>
           <dd>{String(versions.modelId ?? "-")}</dd>
         </div>
         <div>
-          <dt>target</dt>
-          <dd>{summary.targetType ?? "未設定"}</dd>
+          <dt>対象</dt>
+          <dd>{debugTargetLabel(summary.targetType)}</dd>
         </div>
         <div>
-          <dt>visibility</dt>
-          <dd>{summary.visibility ?? "未設定"}</dd>
+          <dt>表示範囲</dt>
+          <dd>{debugVisibilityLabel(summary.visibility)}</dd>
         </div>
         <div>
-          <dt>sanitize</dt>
+          <dt>マスキング</dt>
           <dd>{summary.sanitizePolicyVersion ?? "未設定"}</dd>
         </div>
         <div>
-          <dt>embedding</dt>
+          <dt>埋め込み</dt>
           <dd>{String(versions.embeddingModelId ?? "-")}</dd>
         </div>
         <div>
-          <dt>redaction</dt>
-          <dd>{summary.exportRedaction ? `${summary.exportRedaction.redactedFields.length} fields` : "未設定"}</dd>
+          <dt>伏字</dt>
+          <dd>{summary.exportRedaction ? `${summary.exportRedaction.redactedFields.length} 項目` : "未設定"}</dd>
         </div>
         <div>
-          <dt>failure</dt>
-          <dd>{summary.mainFailureStage ?? summary.refusalReason ?? "-"}</dd>
+          <dt>失敗箇所</dt>
+          <dd>{summary.mainFailureStage ? debugFailureStageLabel(summary.mainFailureStage) : summary.refusalReason ?? "なし"}</dd>
         </div>
       </dl>
     </section>
@@ -139,7 +148,7 @@ function DebugFlowNodeButton({
 }) {
   return (
     <div className="debug-flow-item">
-      {edgeLabel && <span className={`debug-flow-edge-label ${edgeLabel === "continue_search" ? "loop" : ""}`}>{edgeLabel}</span>}
+      {edgeLabel && <span className={`debug-flow-edge-label ${edgeLabel === "continue_search" ? "loop" : ""}`}>{edgeLabel === "continue_search" ? "検索継続" : "修復・完了"}</span>}
       <button
         type="button"
         className={`debug-flow-node ${node.status} ${node.type} ${selected ? "selected" : ""}`}
@@ -147,8 +156,9 @@ function DebugFlowNodeButton({
         aria-pressed={selected}
       >
         <span className="debug-flow-group">{formatGraphGroup(node.group)}</span>
-        <strong>{node.label}</strong>
+        <strong>{formatDebugStepLabel(node.label)}</strong>
         <span>{node.iteration ? `#${node.iteration}` : formatLatency(node.latencyMs)}</span>
+        <StatusBadge presentation={debugStepStatusPresentation(node.status)} />
         {node.decision && <em>{node.decision}</em>}
       </button>
     </div>
@@ -160,25 +170,25 @@ function DebugNodeDetailPanel({ node, detail }: { node?: DebugGraphNode; detail:
     <section className="debug-node-detail" aria-label="ノード詳細">
       <div className="debug-node-detail-head">
         <span>ノード詳細</span>
-        <strong>{node?.label ?? "未選択"}</strong>
+        <strong>{node ? formatDebugStepLabel(node.label) : "未選択"}</strong>
       </div>
       {node ? (
         <>
           <dl className="debug-node-meta">
             <div>
-              <dt>status</dt>
-              <dd>{node.status}</dd>
+              <dt>状態</dt>
+              <dd><StatusBadge presentation={debugStepStatusPresentation(node.status)} /></dd>
             </div>
             <div>
-              <dt>type</dt>
-              <dd>{node.type}</dd>
+              <dt>種別</dt>
+              <dd>{formatGraphNodeType(node.type)}</dd>
             </div>
             <div>
-              <dt>group</dt>
+              <dt>グループ</dt>
               <dd>{formatGraphGroup(node.group)}</dd>
             </div>
             <div>
-              <dt>latency</dt>
+              <dt>処理時間</dt>
               <dd>{formatLatency(node.latencyMs)}</dd>
             </div>
           </dl>
@@ -217,7 +227,7 @@ function DebugStepList({
                 <span className="step-state">
                   {pending ? <span className="loading-spinner" aria-hidden="true" /> : <Icon name={step.status === "warning" ? "warning" : "check"} />}
                 </span>
-                <strong>{step.label}</strong>
+                <strong>{formatDebugStepLabel(step.label)}</strong>
                 <span className="step-latency">{formatLatency(step.latencyMs)}</span>
                 {step.modelId && <span className="model-chip">{step.modelId}</span>}
                 {step.hitCount !== undefined && <span className="sub-chip">ヒット数: {step.hitCount}件</span>}
@@ -259,17 +269,17 @@ function DebugDiagnosticsGrid({
 
 function FactCoverageTable({ rows }: { rows: FactCoverageRow[] }) {
   return (
-    <section className="debug-diagnostic-panel" aria-label="Fact coverage">
-      <h3>Fact coverage</h3>
+    <section className="debug-diagnostic-panel" aria-label="根拠項目の充足状況">
+      <h3>根拠項目の充足状況</h3>
       {rows.length === 0 ? (
         <p>retrieval evaluator の fact coverage はありません。</p>
       ) : (
         <table>
           <thead>
             <tr>
-              <th>Fact</th>
-              <th>Status</th>
-              <th>Reason</th>
+              <th>確認項目</th>
+              <th>状態</th>
+              <th>理由</th>
             </tr>
           </thead>
           <tbody>
@@ -280,7 +290,7 @@ function FactCoverageTable({ rows }: { rows: FactCoverageRow[] }) {
                   <span>{row.id}</span>
                 </td>
                 <td>
-                  <span className={`debug-mini-badge ${row.status}`}>{row.status}</span>
+                  <StatusBadge presentation={factCoverageStatusPresentation(row.status)} />
                 </td>
                 <td>{row.reason ?? "-"}</td>
               </tr>

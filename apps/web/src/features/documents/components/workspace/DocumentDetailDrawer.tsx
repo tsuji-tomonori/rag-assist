@@ -1,6 +1,7 @@
 import type { ReactNode } from "react"
 import { Icon } from "../../../../shared/components/Icon.js"
 import { formatDateTime } from "../../../../shared/utils/format.js"
+import { documentLifecycleStatusPresentation } from "../../../../shared/ui/displayMetadata.js"
 import type { DocumentGroup, DocumentManifest } from "../../types.js"
 import {
   documentGroupIds,
@@ -44,7 +45,9 @@ export function DocumentDetailDrawer({
   const groupIds = documentGroupIds(document)
   const owningGroups = groupIds.map((groupId) => documentGroups.find((group) => group.groupId === groupId)).filter((group): group is DocumentGroup => Boolean(group))
   const groupNames = groupIds.map((groupId) => documentGroups.find((group) => group.groupId === groupId)?.name ?? groupId)
-  const latestMigrationStatus = document.reindexMigrationId ? document.lifecycleStatus ?? "利用不可" : "利用不可"
+  const latestMigrationStatus = document.reindexMigrationId && document.lifecycleStatus
+    ? documentLifecycleStatusPresentation(document.lifecycleStatus).label
+    : "利用不可"
   const ingestRunId = metadataString(document, "ingestRunId") ?? metadataString(document, "runId")
   const embeddingModel = metadataString(document, "embeddingModelId") ?? metadataString(document, "embeddingModel")
   const memoryModel = metadataString(document, "memoryModelId") ?? metadataString(document, "memoryModel")
@@ -70,21 +73,21 @@ export function DocumentDetailDrawer({
         </header>
         <dl className="document-detail-list">
           <DetailRow label="所属フォルダ" value={groupNames.join(", ") || "未設定"} />
-          <DetailRow label="mime type" value={document.mimeType ?? "利用不可"} />
+          <DetailRow label="ファイル形式" value={document.mimeType ?? "利用不可"} />
           <DetailRow label="登録日時" value={formatDateTime(document.createdAt)} />
           {canManage && <>
             <DetailRow label="更新日時" value={updatedAt ? formatDateTime(updatedAt) : "利用不可"} />
-            <DetailRow label="lifecycle status" value={documentStatusLabel(document)} />
-            <DetailRow label="documentId" value={document.documentId} />
-            <DetailRow label="visibility" value={owningGroups.map(visibilityLabel).join(", ") || "利用不可"} />
-            <DetailRow label="shared groups" value={owningGroups.flatMap((group) => group.sharedGroups ?? []).join(", ") || "未設定"} />
+            <DetailRow label="利用状態" value={documentStatusLabel(document)} />
+            <DetailRow label="文書識別子" value={document.documentId} />
+            <DetailRow label="公開範囲" value={owningGroups.map(visibilityLabel).join(", ") || "利用不可"} />
+            <DetailRow label="共有グループ" value={owningGroups.flatMap((group) => group.sharedGroups ?? []).join(", ") || "未設定"} />
             <DetailRow label="ファイルサイズ" value={fileSize === undefined ? "利用不可" : formatFileSize(fileSize)} />
-            <DetailRow label="chunk count" value={document.chunkCount === undefined ? "利用不可" : String(document.chunkCount)} />
-            <DetailRow label="memory card count" value={document.memoryCardCount === undefined ? "利用不可" : String(document.memoryCardCount)} />
-            <DetailRow label="ingest run ID" value={ingestRunId ?? "利用不可"} />
-            <DetailRow label="embedding model" value={embeddingModel ?? "利用不可"} />
-            <DetailRow label="memory model" value={memoryModel ?? "利用不可"} />
-            <DetailRow label="最新 reindex 状態" value={latestMigrationStatus} />
+            <DetailRow label="チャンク数" value={document.chunkCount === undefined ? "利用不可" : String(document.chunkCount)} />
+            <DetailRow label="メモリカード数" value={document.memoryCardCount === undefined ? "利用不可" : String(document.memoryCardCount)} />
+            <DetailRow label="取り込み実行識別子" value={ingestRunId ?? "利用不可"} />
+            <DetailRow label="埋め込みモデル" value={embeddingModel ?? "利用不可"} />
+            <DetailRow label="メモリモデル" value={memoryModel ?? "利用不可"} />
+            <DetailRow label="最新の再インデックス状態" value={latestMigrationStatus} />
             <DetailRow label="抽出品質" value={qualityItems.length > 0 ? <InlineList items={qualityItems} /> : "利用不可"} />
             <DetailRow label="抽出警告" value={extractionWarnings && extractionWarnings.length > 0 ? <WarningList warnings={extractionWarnings} /> : extractionWarnings ? "警告はありません。" : "利用不可"} />
             <DetailRow label="抽出カウンター" value={extractionCounters && Object.keys(extractionCounters).length > 0 ? <CounterList counters={extractionCounters} /> : extractionCounters ? "カウンターはありません。" : "利用不可"} />

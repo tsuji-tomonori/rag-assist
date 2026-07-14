@@ -11,6 +11,7 @@ import {
   isResourcePartAvailable,
   isResourceStateBusy
 } from "../../../shared/ui/resourceStateModel.js"
+import { documentPermissionLabel, principalTypeLabel } from "../../../shared/ui/displayMetadata.js"
 import type { DocumentShareGrantInput, DocumentShareInfo, FolderPolicyEntry, MoveDocumentGroupInput, UpdateDocumentGroupInput, VersionedFolderPolicy } from "../api/documentsApi.js"
 import type { CreateDocumentGroupInput, DocumentOperationResult, DocumentOperationState, DocumentUploadResult, DocumentUploadState } from "../hooks/useDocuments.js"
 import type { DocumentGroup, DocumentManifest, ReindexMigration } from "../types.js"
@@ -307,7 +308,7 @@ export function DocumentWorkspace({
   )
   const selectedSharedEntries = folderSharePolicy
     ? folderShareBaseEntries.map((entry) => ({
-        kind: `${entry.principalType} / ${entry.permissionLevel}`,
+        kind: `${principalTypeLabel(entry.principalType)} / ${documentPermissionLabel(entry.permissionLevel)}`,
         value: entry.principalId
       }))
     : selectedFolder.group ? sharedEntries(selectedFolder.group) : []
@@ -1098,15 +1099,15 @@ export function DocumentWorkspace({
               <p className="modal-note" role="alert">共有設定を取得できませんでした。再度開き直してください。</p>
             )}
             <div className="share-diff-preview">
-              <span>現在の権限: {documentShareInfo?.currentUserEffectivePermission ?? "確認中"}</span>
-              <span>継承: {documentShareLoading ? "確認中" : documentShareInfo?.inheritedFolderGrants.map((grant) => `${grant.folderId} ${grant.permissionLevel}`).join(", ") || "なし"}</span>
+              <span>現在の権限: {documentShareInfo?.currentUserEffectivePermission ? documentPermissionLabel(documentShareInfo.currentUserEffectivePermission) : "確認中"}</span>
+              <span>継承: {documentShareLoading ? "確認中" : documentShareInfo?.inheritedFolderGrants.map((grant) => `${grant.folderId} ${documentPermissionLabel(grant.permissionLevel)}`).join(", ") || "なし"}</span>
             </div>
             <ul className="share-grant-list" aria-label="直接共有">
               {documentShareLoading && <li>直接共有を読み込み中です。</li>}
               {!documentShareLoading && documentShareDraftGrants.length === 0 && <li>直接共有はありません。</li>}
               {documentShareDraftGrants.map((grant) => (
                 <li key={`${grant.principalType}:${grant.principalId}`}>
-                  <span>直接: {grant.principalType}:{grant.principalId} {grant.permissionLevel}</span>
+                  <span>直接: {principalTypeLabel(grant.principalType)} {grant.principalId} / {documentPermissionLabel(grant.permissionLevel)}</span>
                   <button
                     type="button"
                     onClick={() => setDocumentShareDraftGrants((current) => current.filter((item) => !(item.principalType === grant.principalType && item.principalId === grant.principalId)))}
@@ -1119,17 +1120,17 @@ export function DocumentWorkspace({
             <label>
               <span>共有先種別</span>
               <select value={documentSharePrincipalType} onChange={(event) => setDocumentSharePrincipalType(event.target.value as "user" | "group")}>
-                <option value="user">user</option>
-                <option value="group">group</option>
+                <option value="user">ユーザー</option>
+                <option value="group">グループ</option>
               </select>
             </label>
-            <label><span>共有先ID</span><input value={documentSharePrincipalId} onChange={(event) => setDocumentSharePrincipalId(event.target.value)} /></label>
+            <label><span>共有先識別子（管理者向け）</span><input value={documentSharePrincipalId} onChange={(event) => setDocumentSharePrincipalId(event.target.value)} /></label>
             <label>
               <span>権限</span>
               <select value={documentSharePermissionLevel} onChange={(event) => setDocumentSharePermissionLevel(event.target.value as "deny" | "readOnly" | "full")}>
-                <option value="deny">deny</option>
-                <option value="readOnly">readOnly</option>
-                <option value="full">full</option>
+                <option value="deny">権限なし</option>
+                <option value="readOnly">閲覧のみ</option>
+                <option value="full">管理可能</option>
               </select>
             </label>
             <label><span>理由</span><textarea value={documentShareReason} onChange={(event) => setDocumentShareReason(event.target.value)} /></label>

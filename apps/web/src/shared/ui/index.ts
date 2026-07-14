@@ -1,5 +1,6 @@
 export { Badge } from "./Badge.js"
 export { Button } from "./Button.js"
+export { StatusBadge } from "./StatusBadge.js"
 export { ConfirmDialog } from "./ConfirmDialog.js"
 export { EmptyState } from "./EmptyState.js"
 export { IconButton } from "./IconButton.js"
@@ -18,3 +19,4 @@ export {
   resourcePartStatus
 } from "./resourceStateModel.js"
 export type { UiResourcePartState, UiResourceState, UiStateTarget } from "./ResourceState.js"
+export type { SemanticPresentation, SemanticTone } from "./displayMetadata.js"

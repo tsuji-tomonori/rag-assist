@@ -1,8 +1,9 @@
 import { type FormEvent, useEffect, useMemo, useState } from "react"
 import { ConfirmDialog } from "../../../../shared/components/ConfirmDialog.js"
-import { EmptyState } from "../../../../shared/ui/index.js"
+import { EmptyState, StatusBadge } from "../../../../shared/ui/index.js"
 import { LoadingSpinner } from "../../../../shared/components/LoadingSpinner.js"
 import { managedUserStatusLabel } from "../../../../shared/utils/format.js"
+import { managedUserStatusPresentation } from "../../../../shared/ui/displayMetadata.js"
 import type { AccessRoleDefinition, ManagedUser, ManagedUserDeletionPreflight } from "../../types.js"
 
 export function AdminUserPanel({
@@ -229,7 +230,7 @@ function ManagedUserRow({
         <small>{user.email}</small>
       </span>
       <span role="cell">
-        <i className={`user-status ${user.status}`}>{managedUserStatusLabel(user.status)}</i>
+        <StatusBadge presentation={managedUserStatusPresentation(user.status)} />
       </span>
       <span role="cell">
         {canShowRoleAssignment && (
@@ -336,7 +337,7 @@ function ManagedUserRow({
                   ))}
                 </select>
               ) : (
-                <span role="status">active かつ同一 tenant の後継候補がありません。削除は実行できません。</span>
+                <span role="status">有効かつ同一テナントの後継候補がありません。削除は実行できません。</span>
               )}
             </div>
           )}

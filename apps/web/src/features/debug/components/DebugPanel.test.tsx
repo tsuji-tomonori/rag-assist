@@ -112,19 +112,19 @@ describe("DebugPanel", () => {
     renderDebugPanel()
 
     expect(screen.getByRole("region", { name: "実行サマリ" })).toHaveTextContent("run-1")
-    expect(screen.getByRole("region", { name: "実行サマリ" })).toHaveTextContent("operator_sanitized")
+    expect(screen.getByRole("region", { name: "実行サマリ" })).toHaveTextContent("運用者向けマスキング済み")
     expect(screen.getByRole("region", { name: "実行サマリ" })).toHaveTextContent("debug-trace-sanitize-v1")
-    expect(screen.getByRole("region", { name: "実行サマリ" })).toHaveTextContent("2 fields")
-    expect(screen.getByRole("button", { name: /retrieval_evaluator/ })).toHaveAttribute("aria-pressed", "false")
-    expect(screen.getByRole("region", { name: "Fact coverage" })).toHaveTextContent("fact-missing")
+    expect(screen.getByRole("region", { name: "実行サマリ" })).toHaveTextContent("2 項目")
+    expect(screen.getByRole("button", { name: /検索結果評価/ })).toHaveAttribute("aria-pressed", "false")
+    expect(screen.getByRole("region", { name: "根拠項目の充足状況" })).toHaveTextContent("fact-missing")
     expect(screen.getByRole("region", { name: "Evidence viewer" })).toHaveTextContent("retrieved 2 / cited 1")
     expect(screen.getByRole("region", { name: "Answer support" })).toHaveTextContent('"supported": true')
     expect(screen.getByRole("region", { name: "Context assembly" })).toHaveTextContent("chunk-1")
 
-    fireEvent.click(screen.getByRole("button", { name: /retrieval_evaluator/ }))
+    fireEvent.click(screen.getByRole("button", { name: /検索結果評価/ }))
 
-    expect(screen.getByRole("button", { name: /retrieval_evaluator/ })).toHaveAttribute("aria-pressed", "true")
-    expect(screen.getByRole("region", { name: "ノード詳細" })).toHaveTextContent("retrieval_evaluator")
+    expect(screen.getByRole("button", { name: /検索結果評価/ })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.getByRole("region", { name: "ノード詳細" })).toHaveTextContent("検索結果評価")
   })
 
   it("拡大ボタンから debug panel dialog を開閉できる", () => {
@@ -135,7 +135,7 @@ describe("DebugPanel", () => {
     const dialog = screen.getByRole("dialog", { name: "拡大デバッグパネル" })
     expect(dialog).toBeInTheDocument()
     expect(dialog).toHaveTextContent("run-1")
-    expect(dialog).toHaveTextContent("Fact coverage")
+    expect(dialog).toHaveTextContent("根拠項目の充足状況")
 
     fireEvent.click(screen.getByRole("button", { name: "拡大デバッグパネルを閉じる" }))
 

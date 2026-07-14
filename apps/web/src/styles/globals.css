@@ -18,6 +18,21 @@
   --color-warning-soft: #fff9eb;
   --color-danger: #b32626;
   --color-danger-soft: #fff8f8;
+  --status-neutral-foreground: #3f4b5f;
+  --status-neutral-background: #f1f4f8;
+  --status-neutral-border: #aeb9c9;
+  --status-info-foreground: #174f9e;
+  --status-info-background: #edf4ff;
+  --status-info-border: #8cb1ed;
+  --status-success-foreground: #0b5d4b;
+  --status-success-background: #effbf8;
+  --status-success-border: #86cbbb;
+  --status-warning-foreground: #6b4300;
+  --status-warning-background: #fff9eb;
+  --status-warning-border: #d6b667;
+  --status-danger-foreground: #8f1d1d;
+  --status-danger-background: #fff2f2;
+  --status-danger-border: #e3a5a5;
   --radius-xs: 6px;
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -96,9 +111,15 @@ button:disabled {
 }
 
 .ui-button-danger {
-  border-color: #ffb5b5;
-  color: var(--color-danger);
-  background: var(--color-danger-soft);
+  border-color: var(--status-danger-border);
+  color: var(--status-danger-foreground);
+  background: var(--status-danger-background);
+}
+
+.ui-button-warning {
+  border-color: var(--status-warning-border);
+  color: var(--status-warning-foreground);
+  background: var(--status-warning-background);
 }
 
 .ui-icon-button {
@@ -119,32 +140,63 @@ button:disabled {
 }
 
 .ui-badge-neutral {
-  color: var(--color-text-muted);
-  background: var(--color-surface-muted);
+  border-color: var(--status-neutral-border);
+  color: var(--status-neutral-foreground);
+  background: var(--status-neutral-background);
 }
 
 .ui-badge-success {
-  border-color: #b9eadf;
-  color: #12725f;
-  background: var(--color-success-soft);
+  border-color: var(--status-success-border);
+  color: var(--status-success-foreground);
+  background: var(--status-success-background);
 }
 
 .ui-badge-warning {
-  border-color: #ead39d;
-  color: var(--color-warning);
-  background: var(--color-warning-soft);
+  border-color: var(--status-warning-border);
+  color: var(--status-warning-foreground);
+  background: var(--status-warning-background);
 }
 
 .ui-badge-danger {
-  border-color: #ffb5b5;
-  color: var(--color-danger);
-  background: var(--color-danger-soft);
+  border-color: var(--status-danger-border);
+  color: var(--status-danger-foreground);
+  background: var(--status-danger-background);
 }
 
 .ui-badge-info {
-  border-color: #bcd2f6;
-  color: var(--color-primary-strong);
-  background: var(--color-primary-soft);
+  border-color: var(--status-info-border);
+  color: var(--status-info-foreground);
+  background: var(--status-info-background);
+}
+
+.ui-status-badge {
+  gap: 0.35rem;
+}
+
+.ui-status-badge-marker {
+  width: 0.52rem;
+  height: 0.52rem;
+  flex: 0 0 auto;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+}
+
+.ui-badge-info .ui-status-badge-marker,
+.ui-badge-success .ui-status-badge-marker {
+  background: currentColor;
+}
+
+.ui-badge-warning .ui-status-badge-marker {
+  border: 0;
+  border-radius: 0;
+  background: currentColor;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+
+.ui-badge-danger .ui-status-badge-marker {
+  border-radius: 1px;
+  background: currentColor;
+  transform: rotate(45deg) scale(0.78);
 }
 
 .ui-panel {

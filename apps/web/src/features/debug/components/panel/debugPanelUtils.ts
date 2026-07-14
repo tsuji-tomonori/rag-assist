@@ -4,18 +4,50 @@ import { stringifyDebugJson, type DebugGraphNode, type DebugReplayEnvelope } fro
 export function formatGraphGroup(group: DebugGraphNode["group"]): string {
   switch (group) {
     case "preprocess":
-      return "preprocess"
+      return "前処理"
     case "search-loop":
-      return "search loop"
+      return "検索ループ"
     case "context":
-      return "context"
+      return "根拠構成"
     case "answer":
-      return "answer"
+      return "回答"
     case "finalize":
-      return "finalize"
+      return "最終処理"
     case "other":
-      return "other"
+      return "その他"
   }
+}
+
+const debugStepLabels: Record<string, string> = {
+  analyze_input: "入力解析",
+  normalize_query: "クエリ正規化",
+  retrieve_memory: "メモリ検索",
+  generate_clues: "検索手掛かり生成",
+  plan_search: "検索計画",
+  execute_search_action: "検索実行",
+  retrieval_evaluator: "検索結果評価",
+  evaluate_search_progress: "検索継続判定",
+  rerank_chunks: "検索結果再ランキング",
+  answerability_gate: "回答可否判定",
+  sufficient_context_gate: "根拠充足判定",
+  generate_answer: "回答生成",
+  validate_citations: "引用検証",
+  verify_answer_support: "回答根拠検証",
+  finalize_response: "回答確定",
+  finalize_refusal: "回答保留確定"
+}
+
+export function formatDebugStepLabel(label: string): string {
+  return debugStepLabels[label] ?? (label.includes("_") ? "その他の処理" : label)
+}
+
+export function formatGraphNodeType(type: DebugGraphNode["type"]): string {
+  if (type === "retrieval") return "検索"
+  if (type === "decision") return "判定"
+  if (type === "answer") return "回答"
+  if (type === "refusal") return "回答保留"
+  if (type === "repair") return "修復"
+  return "処理"
 }
 
 export function downloadDebugReplayEnvelope(envelope?: DebugReplayEnvelope | null) {

@@ -27,8 +27,8 @@
 | AdminOverviewGrid | AdminOverviewGrid は 管理 領域の 画面または画面内 UI コンポーネント です。関連画面: 管理者設定。 | 画面または画面内 UI コンポーネント | apps/web/src/features/admin/components/panels/AdminOverviewGrid.tsx | AdminOverviewGrid | EmptyState, Icon, article, button, div, small, span, strong |
 | AdminRolePanel | AdminRolePanel は 管理 領域の 画面または画面内 UI コンポーネント です。関連画面: 管理者設定。 | 画面または画面内 UI コンポーネント | apps/web/src/features/admin/components/panels/AdminRolePanel.tsx | AdminRolePanel | EmptyState, article, div, h3, p, section, span, strong |
 | AdminUsagePanel | AdminUsagePanel は 管理 領域の 画面または画面内 UI コンポーネント です。関連画面: 管理者設定。 | 画面または画面内 UI コンポーネント | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx | AdminUsagePanel | EmptyState, div, h3, p, section, span |
-| AdminUserPanel | AdminUserPanel は 管理 領域の 画面または画面内 UI コンポーネント です。関連画面: 管理者設定。 | 画面または画面内 UI コンポーネント | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx | AdminUserPanel | AdminCreateUserForm, ConfirmDialog, EmptyState, LoadingSpinner, ManagedUserRow, button, div, form, h3, i, input, label, option, section, select, small, span, strong |
-| AliasAdminPanel | AliasAdminPanel は 管理 領域の 画面または画面内 UI コンポーネント です。関連画面: 管理者設定。 | 画面または画面内 UI コンポーネント | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx | AliasAdminPanel | ConfirmDialog, EmptyState, LoadingSpinner, article, button, div, form, h3, input, label, section, small, span, strong |
+| AdminUserPanel | AdminUserPanel は 管理 領域の 画面または画面内 UI コンポーネント です。関連画面: 管理者設定。 | 画面または画面内 UI コンポーネント | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx | AdminUserPanel | AdminCreateUserForm, ConfirmDialog, EmptyState, LoadingSpinner, ManagedUserRow, StatusBadge, button, div, form, h3, input, label, option, section, select, small, span, strong |
+| AliasAdminPanel | AliasAdminPanel は 管理 領域の 画面または画面内 UI コンポーネント です。関連画面: 管理者設定。 | 画面または画面内 UI コンポーネント | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx | AliasAdminPanel | ConfirmDialog, EmptyState, LoadingSpinner, StatusBadge, article, button, div, form, h3, input, label, section, small, span, strong |
 
 ## 主なボタン・リンク
 
@@ -37,39 +37,39 @@
 | AdminWorkspace | button | チャットへ戻る | 「チャットへ戻る」を実行するボタン。 | - | onClick=onBack | apps/web/src/features/admin/components/AdminWorkspace.tsx:142 | confirmed |
 | AdminWorkspace | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: aria-current=resolvedActiveSection === section.id ? "page" : undefined | onClick=() => setActiveSection(section.id) | apps/web/src/features/admin/components/AdminWorkspace.tsx:155 | unknown |
 | AdminOverviewGrid | button | `${card.label}を開く` | 「`${card.label}を開く`」を実行するボタン。 | - | onClick=card.onSelect | apps/web/src/features/admin/components/panels/AdminOverviewGrid.tsx:191 | confirmed |
-| AdminUserPanel | button | 更新 | 「更新」を実行するボタン。 | 状態: disabled=loading | onClick=() => void onRefreshAdminData() | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:45 | confirmed |
-| AdminCreateUserForm | button | 作成 | 「作成」を実行するボタン。 | 状態: disabled=loading \|\| email.trim().length === 0 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:152 | confirmed |
-| ManagedUserRow | button | 付与 | 「付与」を実行するボタン。 | 状態: disabled=loading \|\| !roleChanged \|\| roleReason.trim().length === 0 | onClick=() => setRoleAssignOpen(true) | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:242 | confirmed |
-| ManagedUserRow | button | 再開 | 「再開」を実行するボタン。 | 状態: disabled=loading | onClick=() => void onSetStatus(user.userId, "unsuspend") | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:265 | confirmed |
-| ManagedUserRow | button | 停止 | 「停止」を実行するボタン。 | 状態: disabled=loading | onClick=() => setStatusCandidate("suspend") | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:270 | confirmed |
-| ManagedUserRow | button | 削除 | 「削除」を実行するボタン。 | 状態: disabled=loading | onClick=() => void prepareDelete() | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:275 | confirmed |
-| AliasAdminPanel | button | 公開 | 「公開」を実行するボタン。 | 状態: disabled=loading | onClick=() => setPublishConfirmOpen(true) | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:68 | confirmed |
-| AliasAdminPanel | button | 追加 | 「追加」を実行するボタン。 | 状態: disabled=loading \|\| !term.trim() \|\| parseExpansionList(expansions).length === 0 | - | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:90 | confirmed |
-| AliasAdminPanel | button | 下書き化 | 「下書き化」を実行するボタン。 | 状態: disabled=!canWrite \|\| loading \|\| alias.status === "disabled" | onClick=() => void onUpdate(alias.aliasId, { expansions: alias.expansions }) | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:114 | confirmed |
-| AliasAdminPanel | button | 承認 | 「承認」を実行するボタン。 | 状態: disabled=!canReview \|\| loading \|\| alias.status === "disabled" | onClick=() => void onReview(alias.aliasId, "approve") | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:118 | confirmed |
-| AliasAdminPanel | button | 差戻 | 「差戻」を実行するボタン。 | 状態: disabled=!canReview \|\| loading \|\| alias.status === "disabled" | onClick=() => void onReview(alias.aliasId, "reject", "Rejected from UI") | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:122 | confirmed |
-| AliasAdminPanel | button | 無効 | 「無効」を実行するボタン。 | 状態: disabled=!canDisable \|\| loading \|\| alias.status === "disabled" | onClick=() => setDisableCandidate(alias) | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:126 | confirmed |
+| AdminUserPanel | button | 更新 | 「更新」を実行するボタン。 | 状態: disabled=loading | onClick=() => void onRefreshAdminData() | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:46 | confirmed |
+| AdminCreateUserForm | button | 作成 | 「作成」を実行するボタン。 | 状態: disabled=loading \|\| email.trim().length === 0 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:153 | confirmed |
+| ManagedUserRow | button | 付与 | 「付与」を実行するボタン。 | 状態: disabled=loading \|\| !roleChanged \|\| roleReason.trim().length === 0 | onClick=() => setRoleAssignOpen(true) | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:243 | confirmed |
+| ManagedUserRow | button | 再開 | 「再開」を実行するボタン。 | 状態: disabled=loading | onClick=() => void onSetStatus(user.userId, "unsuspend") | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:266 | confirmed |
+| ManagedUserRow | button | 停止 | 「停止」を実行するボタン。 | 状態: disabled=loading | onClick=() => setStatusCandidate("suspend") | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:271 | confirmed |
+| ManagedUserRow | button | 削除 | 「削除」を実行するボタン。 | 状態: disabled=loading | onClick=() => void prepareDelete() | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:276 | confirmed |
+| AliasAdminPanel | button | 公開 | 「公開」を実行するボタン。 | 状態: disabled=loading | onClick=() => setPublishConfirmOpen(true) | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:69 | confirmed |
+| AliasAdminPanel | button | 追加 | 「追加」を実行するボタン。 | 状態: disabled=loading \|\| !term.trim() \|\| parseExpansionList(expansions).length === 0 | - | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:91 | confirmed |
+| AliasAdminPanel | button | 下書き化 | 「下書き化」を実行するボタン。 | 状態: disabled=!canWrite \|\| loading \|\| alias.status === "disabled" | onClick=() => void onUpdate(alias.aliasId, { expansions: alias.expansions }) | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:116 | confirmed |
+| AliasAdminPanel | button | 承認 | 「承認」を実行するボタン。 | 状態: disabled=!canReview \|\| loading \|\| alias.status === "disabled" | onClick=() => void onReview(alias.aliasId, "approve") | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:120 | confirmed |
+| AliasAdminPanel | button | 差戻 | 「差戻」を実行するボタン。 | 状態: disabled=!canReview \|\| loading \|\| alias.status === "disabled" | onClick=() => void onReview(alias.aliasId, "reject", "画面から差し戻し") | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:124 | confirmed |
+| AliasAdminPanel | button | 無効 | 「無効」を実行するボタン。 | 状態: disabled=!canDisable \|\| loading \|\| alias.status === "disabled" | onClick=() => setDisableCandidate(alias) | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:128 | confirmed |
 
 ## フォーム
 
 | コンポーネント | ラベル | フォーム説明 | 状態・補足 | 送信ハンドラ | 場所 | 確度 |
 | --- | --- | --- | --- | --- | --- | --- |
-| AdminCreateUserForm | 管理対象ユーザー作成 | 「管理対象ユーザー作成」を入力・送信するフォーム。 | - | onSubmit=(event) => void submit(event) | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:129 | confirmed |
-| AliasAdminPanel | 用語 / 展開語 / 部署 scope / 追加 | 「用語 / 展開語 / 部署 scope / 追加」を入力・送信するフォーム。 | - | onSubmit=(event) => void onSubmit(event) | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:77 | confirmed |
+| AdminCreateUserForm | 管理対象ユーザー作成 | 「管理対象ユーザー作成」を入力・送信するフォーム。 | - | onSubmit=(event) => void submit(event) | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:130 | confirmed |
+| AliasAdminPanel | 用語 / 展開語 / 適用部署 / 追加 | 「用語 / 展開語 / 適用部署 / 追加」を入力・送信するフォーム。 | - | onSubmit=(event) => void onSubmit(event) | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:78 | confirmed |
 
 ## 入力項目
 
 | コンポーネント | 要素 | ラベル | 入力項目の説明 | 状態・補足 | ハンドラ | 場所 | 確度 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| AdminCreateUserForm | input | new-user@example.com | 「new-user@example.com」を入力または選択する項目。 | - | onChange=(event) => setEmail(event.target.value) | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:132 | confirmed |
-| AdminCreateUserForm | input | 任意 | 「任意」を入力または選択する項目。 | - | onChange=(event) => setDisplayName(event.target.value) | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:136 | confirmed |
-| AdminCreateUserForm | select | 初期ロール | 「初期ロール」を選ぶ選択項目。 | - | onChange=(event) => setRole(event.target.value) | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:145 | confirmed |
-| ManagedUserRow | select | `${user.email}に付与するロール` | 「`${user.email}に付与するロール`」を選ぶ選択項目。 | 状態: disabled=loading | onChange=(event) => setSelectedRole(event.target.value) | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:237 | confirmed |
-| ManagedUserRow | input | `${user.email}のロール変更理由` | 「`${user.email}のロール変更理由`」を入力または選択する項目。 | 状態: disabled=loading | onChange=(event) => setRoleReason(event.target.value) | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:246 | confirmed |
-| ManagedUserRow | select | `${user.email}の後継管理者` | 「`${user.email}の後継管理者`」を選ぶ選択項目。 | 状態: disabled=loading | onChange=(event) => setSuccessorUserId(event.target.value) | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:323 | confirmed |
-| AliasAdminPanel | input | pto | 「pto」を入力または選択する項目。 | 状態: disabled=loading | onChange=(event) => setTerm(event.target.value) | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:80 | confirmed |
-| AliasAdminPanel | input | 有給休暇, 休暇申請 | 「有給休暇, 休暇申請」を入力または選択する項目。 | 状態: disabled=loading | onChange=(event) => setExpansions(event.target.value) | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:84 | confirmed |
-| AliasAdminPanel | input | 任意 | 「任意」を入力または選択する項目。 | 状態: disabled=loading | onChange=(event) => setDepartment(event.target.value) | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:88 | confirmed |
+| AdminCreateUserForm | input | new-user@example.com | 「new-user@example.com」を入力または選択する項目。 | - | onChange=(event) => setEmail(event.target.value) | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:133 | confirmed |
+| AdminCreateUserForm | input | 任意 | 「任意」を入力または選択する項目。 | - | onChange=(event) => setDisplayName(event.target.value) | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:137 | confirmed |
+| AdminCreateUserForm | select | 初期ロール | 「初期ロール」を選ぶ選択項目。 | - | onChange=(event) => setRole(event.target.value) | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:146 | confirmed |
+| ManagedUserRow | select | `${user.email}に付与するロール` | 「`${user.email}に付与するロール`」を選ぶ選択項目。 | 状態: disabled=loading | onChange=(event) => setSelectedRole(event.target.value) | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:238 | confirmed |
+| ManagedUserRow | input | `${user.email}のロール変更理由` | 「`${user.email}のロール変更理由`」を入力または選択する項目。 | 状態: disabled=loading | onChange=(event) => setRoleReason(event.target.value) | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:247 | confirmed |
+| ManagedUserRow | select | `${user.email}の後継管理者` | 「`${user.email}の後継管理者`」を選ぶ選択項目。 | 状態: disabled=loading | onChange=(event) => setSuccessorUserId(event.target.value) | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:324 | confirmed |
+| AliasAdminPanel | input | pto | 「pto」を入力または選択する項目。 | 状態: disabled=loading | onChange=(event) => setTerm(event.target.value) | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:81 | confirmed |
+| AliasAdminPanel | input | 有給休暇, 休暇申請 | 「有給休暇, 休暇申請」を入力または選択する項目。 | 状態: disabled=loading | onChange=(event) => setExpansions(event.target.value) | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:85 | confirmed |
+| AliasAdminPanel | input | 任意 | 「任意」を入力または選択する項目。 | 状態: disabled=loading | onChange=(event) => setDepartment(event.target.value) | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:89 | confirmed |
 
 ## UI 操作要素の全量
 
@@ -78,38 +78,38 @@
 | AdminWorkspace | button | チャットへ戻る | 「チャットへ戻る」を実行するボタン。 | - | onClick=onBack | apps/web/src/features/admin/components/AdminWorkspace.tsx:142 | confirmed |
 | AdminWorkspace | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: aria-current=resolvedActiveSection === section.id ? "page" : undefined | onClick=() => setActiveSection(section.id) | apps/web/src/features/admin/components/AdminWorkspace.tsx:155 | unknown |
 | AdminOverviewGrid | button | `${card.label}を開く` | 「`${card.label}を開く`」を実行するボタン。 | - | onClick=card.onSelect | apps/web/src/features/admin/components/panels/AdminOverviewGrid.tsx:191 | confirmed |
-| AdminUserPanel | button | 更新 | 「更新」を実行するボタン。 | 状態: disabled=loading | onClick=() => void onRefreshAdminData() | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:45 | confirmed |
-| AdminUserPanel | AdminCreateUserForm | 未推定 | AdminCreateUserForm 要素。静的解析では具体的な操作名を推定できません。 | - | onCreateUser=onCreateUser | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:51 | unknown |
-| AdminCreateUserForm | form | 管理対象ユーザー作成 | 「管理対象ユーザー作成」を入力・送信するフォーム。 | - | onSubmit=(event) => void submit(event) | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:129 | confirmed |
-| AdminCreateUserForm | label | メール | 「メール」に紐づく入力ラベル。 | - | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:130 | confirmed |
-| AdminCreateUserForm | input | new-user@example.com | 「new-user@example.com」を入力または選択する項目。 | - | onChange=(event) => setEmail(event.target.value) | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:132 | confirmed |
-| AdminCreateUserForm | label | 表示名 | 「表示名」に紐づく入力ラベル。 | - | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:134 | confirmed |
-| AdminCreateUserForm | input | 任意 | 「任意」を入力または選択する項目。 | - | onChange=(event) => setDisplayName(event.target.value) | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:136 | confirmed |
-| AdminCreateUserForm | label | 初期ロール | 「初期ロール」に紐づく入力ラベル。 | - | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:138 | confirmed |
-| AdminCreateUserForm | select | 初期ロール | 「初期ロール」を選ぶ選択項目。 | - | onChange=(event) => setRole(event.target.value) | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:145 | confirmed |
-| AdminCreateUserForm | option | 初期ロール | 「初期ロール」を表す option 要素。 | - | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:147 | confirmed |
-| AdminCreateUserForm | button | 作成 | 「作成」を実行するボタン。 | 状態: disabled=loading \|\| email.trim().length === 0 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:152 | confirmed |
-| ManagedUserRow | select | `${user.email}に付与するロール` | 「`${user.email}に付与するロール`」を選ぶ選択項目。 | 状態: disabled=loading | onChange=(event) => setSelectedRole(event.target.value) | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:237 | confirmed |
-| ManagedUserRow | option | role.role | 「role.role」を表す option 要素。 | - | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:239 | confirmed |
-| ManagedUserRow | button | 付与 | 「付与」を実行するボタン。 | 状態: disabled=loading \|\| !roleChanged \|\| roleReason.trim().length === 0 | onClick=() => setRoleAssignOpen(true) | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:242 | confirmed |
-| ManagedUserRow | input | `${user.email}のロール変更理由` | 「`${user.email}のロール変更理由`」を入力または選択する項目。 | 状態: disabled=loading | onChange=(event) => setRoleReason(event.target.value) | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:246 | confirmed |
-| ManagedUserRow | button | 再開 | 「再開」を実行するボタン。 | 状態: disabled=loading | onClick=() => void onSetStatus(user.userId, "unsuspend") | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:265 | confirmed |
-| ManagedUserRow | button | 停止 | 「停止」を実行するボタン。 | 状態: disabled=loading | onClick=() => setStatusCandidate("suspend") | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:270 | confirmed |
-| ManagedUserRow | button | 削除 | 「削除」を実行するボタン。 | 状態: disabled=loading | onClick=() => void prepareDelete() | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:275 | confirmed |
-| ManagedUserRow | label | 後継管理者 | 「後継管理者」に紐づく入力ラベル。 | - | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:321 | confirmed |
-| ManagedUserRow | select | `${user.email}の後継管理者` | 「`${user.email}の後継管理者`」を選ぶ選択項目。 | 状態: disabled=loading | onChange=(event) => setSuccessorUserId(event.target.value) | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:323 | confirmed |
-| ManagedUserRow | option | 選択してください | 「選択してください」を表す option 要素。 | - | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:331 | confirmed |
-| ManagedUserRow | option | candidate.userId | 「candidate.userId」を表す option 要素。 | - | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:333 | confirmed |
-| AliasAdminPanel | button | 公開 | 「公開」を実行するボタン。 | 状態: disabled=loading | onClick=() => setPublishConfirmOpen(true) | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:68 | confirmed |
-| AliasAdminPanel | form | 用語 / 展開語 / 部署 scope / 追加 | 「用語 / 展開語 / 部署 scope / 追加」を入力・送信するフォーム。 | - | onSubmit=(event) => void onSubmit(event) | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:77 | confirmed |
-| AliasAdminPanel | label | 用語 | 「用語」に紐づく入力ラベル。 | - | - | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:78 | confirmed |
-| AliasAdminPanel | input | pto | 「pto」を入力または選択する項目。 | 状態: disabled=loading | onChange=(event) => setTerm(event.target.value) | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:80 | confirmed |
-| AliasAdminPanel | label | 展開語 | 「展開語」に紐づく入力ラベル。 | - | - | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:82 | confirmed |
-| AliasAdminPanel | input | 有給休暇, 休暇申請 | 「有給休暇, 休暇申請」を入力または選択する項目。 | 状態: disabled=loading | onChange=(event) => setExpansions(event.target.value) | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:84 | confirmed |
-| AliasAdminPanel | label | 部署 scope | 「部署 scope」に紐づく入力ラベル。 | - | - | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:86 | confirmed |
-| AliasAdminPanel | input | 任意 | 「任意」を入力または選択する項目。 | 状態: disabled=loading | onChange=(event) => setDepartment(event.target.value) | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:88 | confirmed |
-| AliasAdminPanel | button | 追加 | 「追加」を実行するボタン。 | 状態: disabled=loading \|\| !term.trim() \|\| parseExpansionList(expansions).length === 0 | - | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:90 | confirmed |
-| AliasAdminPanel | button | 下書き化 | 「下書き化」を実行するボタン。 | 状態: disabled=!canWrite \|\| loading \|\| alias.status === "disabled" | onClick=() => void onUpdate(alias.aliasId, { expansions: alias.expansions }) | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:114 | confirmed |
-| AliasAdminPanel | button | 承認 | 「承認」を実行するボタン。 | 状態: disabled=!canReview \|\| loading \|\| alias.status === "disabled" | onClick=() => void onReview(alias.aliasId, "approve") | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:118 | confirmed |
-| AliasAdminPanel | button | 差戻 | 「差戻」を実行するボタン。 | 状態: disabled=!canReview \|\| loading \|\| alias.status === "disabled" | onClick=() => void onReview(alias.aliasId, "reject", "Rejected from UI") | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:122 | confirmed |
-| AliasAdminPanel | button | 無効 | 「無効」を実行するボタン。 | 状態: disabled=!canDisable \|\| loading \|\| alias.status === "disabled" | onClick=() => setDisableCandidate(alias) | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:126 | confirmed |
+| AdminUserPanel | button | 更新 | 「更新」を実行するボタン。 | 状態: disabled=loading | onClick=() => void onRefreshAdminData() | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:46 | confirmed |
+| AdminUserPanel | AdminCreateUserForm | 未推定 | AdminCreateUserForm 要素。静的解析では具体的な操作名を推定できません。 | - | onCreateUser=onCreateUser | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:52 | unknown |
+| AdminCreateUserForm | form | 管理対象ユーザー作成 | 「管理対象ユーザー作成」を入力・送信するフォーム。 | - | onSubmit=(event) => void submit(event) | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:130 | confirmed |
+| AdminCreateUserForm | label | メール | 「メール」に紐づく入力ラベル。 | - | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:131 | confirmed |
+| AdminCreateUserForm | input | new-user@example.com | 「new-user@example.com」を入力または選択する項目。 | - | onChange=(event) => setEmail(event.target.value) | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:133 | confirmed |
+| AdminCreateUserForm | label | 表示名 | 「表示名」に紐づく入力ラベル。 | - | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:135 | confirmed |
+| AdminCreateUserForm | input | 任意 | 「任意」を入力または選択する項目。 | - | onChange=(event) => setDisplayName(event.target.value) | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:137 | confirmed |
+| AdminCreateUserForm | label | 初期ロール | 「初期ロール」に紐づく入力ラベル。 | - | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:139 | confirmed |
+| AdminCreateUserForm | select | 初期ロール | 「初期ロール」を選ぶ選択項目。 | - | onChange=(event) => setRole(event.target.value) | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:146 | confirmed |
+| AdminCreateUserForm | option | 初期ロール | 「初期ロール」を表す option 要素。 | - | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:148 | confirmed |
+| AdminCreateUserForm | button | 作成 | 「作成」を実行するボタン。 | 状態: disabled=loading \|\| email.trim().length === 0 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:153 | confirmed |
+| ManagedUserRow | select | `${user.email}に付与するロール` | 「`${user.email}に付与するロール`」を選ぶ選択項目。 | 状態: disabled=loading | onChange=(event) => setSelectedRole(event.target.value) | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:238 | confirmed |
+| ManagedUserRow | option | role.role | 「role.role」を表す option 要素。 | - | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:240 | confirmed |
+| ManagedUserRow | button | 付与 | 「付与」を実行するボタン。 | 状態: disabled=loading \|\| !roleChanged \|\| roleReason.trim().length === 0 | onClick=() => setRoleAssignOpen(true) | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:243 | confirmed |
+| ManagedUserRow | input | `${user.email}のロール変更理由` | 「`${user.email}のロール変更理由`」を入力または選択する項目。 | 状態: disabled=loading | onChange=(event) => setRoleReason(event.target.value) | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:247 | confirmed |
+| ManagedUserRow | button | 再開 | 「再開」を実行するボタン。 | 状態: disabled=loading | onClick=() => void onSetStatus(user.userId, "unsuspend") | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:266 | confirmed |
+| ManagedUserRow | button | 停止 | 「停止」を実行するボタン。 | 状態: disabled=loading | onClick=() => setStatusCandidate("suspend") | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:271 | confirmed |
+| ManagedUserRow | button | 削除 | 「削除」を実行するボタン。 | 状態: disabled=loading | onClick=() => void prepareDelete() | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:276 | confirmed |
+| ManagedUserRow | label | 後継管理者 | 「後継管理者」に紐づく入力ラベル。 | - | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:322 | confirmed |
+| ManagedUserRow | select | `${user.email}の後継管理者` | 「`${user.email}の後継管理者`」を選ぶ選択項目。 | 状態: disabled=loading | onChange=(event) => setSuccessorUserId(event.target.value) | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:324 | confirmed |
+| ManagedUserRow | option | 選択してください | 「選択してください」を表す option 要素。 | - | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:332 | confirmed |
+| ManagedUserRow | option | candidate.userId | 「candidate.userId」を表す option 要素。 | - | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:334 | confirmed |
+| AliasAdminPanel | button | 公開 | 「公開」を実行するボタン。 | 状態: disabled=loading | onClick=() => setPublishConfirmOpen(true) | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:69 | confirmed |
+| AliasAdminPanel | form | 用語 / 展開語 / 適用部署 / 追加 | 「用語 / 展開語 / 適用部署 / 追加」を入力・送信するフォーム。 | - | onSubmit=(event) => void onSubmit(event) | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:78 | confirmed |
+| AliasAdminPanel | label | 用語 | 「用語」に紐づく入力ラベル。 | - | - | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:79 | confirmed |
+| AliasAdminPanel | input | pto | 「pto」を入力または選択する項目。 | 状態: disabled=loading | onChange=(event) => setTerm(event.target.value) | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:81 | confirmed |
+| AliasAdminPanel | label | 展開語 | 「展開語」に紐づく入力ラベル。 | - | - | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:83 | confirmed |
+| AliasAdminPanel | input | 有給休暇, 休暇申請 | 「有給休暇, 休暇申請」を入力または選択する項目。 | 状態: disabled=loading | onChange=(event) => setExpansions(event.target.value) | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:85 | confirmed |
+| AliasAdminPanel | label | 適用部署 | 「適用部署」に紐づく入力ラベル。 | - | - | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:87 | confirmed |
+| AliasAdminPanel | input | 任意 | 「任意」を入力または選択する項目。 | 状態: disabled=loading | onChange=(event) => setDepartment(event.target.value) | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:89 | confirmed |
+| AliasAdminPanel | button | 追加 | 「追加」を実行するボタン。 | 状態: disabled=loading \|\| !term.trim() \|\| parseExpansionList(expansions).length === 0 | - | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:91 | confirmed |
+| AliasAdminPanel | button | 下書き化 | 「下書き化」を実行するボタン。 | 状態: disabled=!canWrite \|\| loading \|\| alias.status === "disabled" | onClick=() => void onUpdate(alias.aliasId, { expansions: alias.expansions }) | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:116 | confirmed |
+| AliasAdminPanel | button | 承認 | 「承認」を実行するボタン。 | 状態: disabled=!canReview \|\| loading \|\| alias.status === "disabled" | onClick=() => void onReview(alias.aliasId, "approve") | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:120 | confirmed |
+| AliasAdminPanel | button | 差戻 | 「差戻」を実行するボタン。 | 状態: disabled=!canReview \|\| loading \|\| alias.status === "disabled" | onClick=() => void onReview(alias.aliasId, "reject", "画面から差し戻し") | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:124 | confirmed |
+| AliasAdminPanel | button | 無効 | 「無効」を実行するボタン。 | 状態: disabled=!canDisable \|\| loading \|\| alias.status === "disabled" | onClick=() => setDisableCandidate(alias) | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:128 | confirmed |

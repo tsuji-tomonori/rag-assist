@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react"
+import { Button } from "./Button.js"
 
 export function ConfirmDialog({
   title,
@@ -104,10 +105,10 @@ export function ConfirmDialog({
         {children}
         {errorMessage && <p id={errorId} className="confirm-dialog-error" role="alert">{errorMessage}</p>}
         <div className="confirm-dialog-actions">
-          <button ref={cancelButtonRef} type="button" onClick={onCancel} disabled={busy}>キャンセル</button>
-          <button type="button" className={danger ? "danger" : ""} onClick={() => void confirm()} disabled={busy || confirmDisabled}>
+          <Button ref={cancelButtonRef} type="button" onClick={onCancel} disabled={busy}>キャンセル</Button>
+          <Button type="button" variant={danger ? "danger" : "warning"} onClick={() => void confirm()} disabled={busy || confirmDisabled}>
             {busy ? "処理中" : confirmLabel}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

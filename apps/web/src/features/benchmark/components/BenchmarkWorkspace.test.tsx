@@ -62,7 +62,7 @@ describe("BenchmarkWorkspace", () => {
     })
 
     expect(screen.getByLabelText("テスト種別")).toBeDisabled()
-    expect(screen.getByLabelText("データセット")).toHaveValue("suite 未選択")
+    expect(screen.getByLabelText("データセット")).toHaveValue("テスト設定を選択してください")
     expect(screen.getByRole("button", { name: "性能テストを実行" })).toBeDisabled()
     expect(screen.queryByText("standard-agent-v1")).not.toBeInTheDocument()
     expect(screen.queryByDisplayValue("datasets/agent/standard-v1.jsonl")).not.toBeInTheDocument()

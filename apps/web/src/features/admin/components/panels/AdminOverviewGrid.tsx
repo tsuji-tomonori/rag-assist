@@ -126,8 +126,8 @@ export function AdminOverviewGrid({
             kind: "kpi" as const,
             id: "access",
             label: "アクセス管理",
-            value: accessRoles ? `${accessRoles.length} role` : failedParts.has("roles") ? "取得失敗" : "未提供",
-            note: accessRoles ? "ロール定義は読み取り専用" : failedParts.has("roles") ? "状態メッセージから再試行できます" : "ロール定義 API field は未提供",
+            value: accessRoles ? `${accessRoles.length} 件` : failedParts.has("roles") ? "取得失敗" : "未提供",
+            note: accessRoles ? "ロール定義は読み取り専用" : failedParts.has("roles") ? "状態メッセージから再試行できます" : "ロール定義データは未提供",
             icon: "settings" as const
           }
         ]
@@ -138,8 +138,8 @@ export function AdminOverviewGrid({
             kind: "kpi" as const,
             id: "users",
             label: "ユーザー管理",
-            value: managedUsers ? `${managedUsers.length} users` : failedParts.has("users") ? "取得失敗" : "未提供",
-            note: managedUsers ? "現行 API の管理対象ユーザー" : failedParts.has("users") ? "状態メッセージから再試行できます" : "管理対象ユーザー API field は未提供",
+            value: managedUsers ? `${managedUsers.length} 人` : failedParts.has("users") ? "取得失敗" : "未提供",
+            note: managedUsers ? "管理対象ユーザー" : failedParts.has("users") ? "状態メッセージから再試行できます" : "管理対象ユーザーデータは未提供",
             icon: "settings" as const
           }
         ]
@@ -150,8 +150,8 @@ export function AdminOverviewGrid({
             kind: "kpi" as const,
             id: "usage",
             label: "利用状況",
-            value: usageSummaries ? `${usageSummaries.length} users` : failedParts.has("usage") ? "取得失敗" : "未提供",
-            note: usageSummaries ? "ユーザー別 summary のみ" : failedParts.has("usage") ? "状態メッセージから再試行できます" : "利用状況 API field は未提供",
+            value: usageSummaries ? `${usageSummaries.length} 人` : failedParts.has("usage") ? "取得失敗" : "未提供",
+            note: usageSummaries ? "ユーザー別の集計" : failedParts.has("usage") ? "状態メッセージから再試行できます" : "利用状況データは未提供",
             icon: "gauge" as const
           }
         ]
@@ -163,7 +163,7 @@ export function AdminOverviewGrid({
             id: "cost",
             label: "コスト監査",
             value: costAudit?.available && costAudit.totalEstimatedUsd !== undefined ? formatCurrency(costAudit.totalEstimatedUsd) : failedParts.has("cost") ? "取得失敗" : "利用不可",
-            note: costAudit?.available ? "承認済み catalog に基づく summary" : failedParts.has("cost") ? "状態メッセージから再試行できます" : "price catalog または usage evidence は未提供",
+            note: costAudit?.available ? "承認済み料金表に基づく集計" : failedParts.has("cost") ? "状態メッセージから再試行できます" : "料金表または利用実績は未提供",
             icon: "warning" as const
           }
         ]
@@ -173,9 +173,9 @@ export function AdminOverviewGrid({
           {
             kind: "kpi" as const,
             id: "alias",
-            label: "Alias管理",
-            value: aliases ? `${aliases.length} aliases` : failedParts.has("aliases") ? "取得失敗" : "未提供",
-            note: aliases ? "review / publish は別 section" : failedParts.has("aliases") ? "状態メッセージから再試行できます" : "Alias API field は未提供",
+            label: "用語展開管理",
+            value: aliases ? `${aliases.length} 件` : failedParts.has("aliases") ? "取得失敗" : "未提供",
+            note: aliases ? "レビューと公開は用語展開セクションで操作" : failedParts.has("aliases") ? "状態メッセージから再試行できます" : "用語展開データは未提供",
             icon: "settings" as const
           }
         ]

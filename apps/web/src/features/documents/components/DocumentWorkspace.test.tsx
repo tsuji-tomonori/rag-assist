@@ -378,7 +378,7 @@ describe("DocumentWorkspace", () => {
 
     await userEvent.click(screen.getByTitle("requirements.mdを削除"))
     expect(screen.getByRole("dialog", { name: "文書を削除しますか" })).toBeInTheDocument()
-    expect(screen.getByText("documentId")).toBeInTheDocument()
+    expect(screen.getByText("文書識別子")).toBeInTheDocument()
     await userEvent.type(screen.getByRole("textbox", { name: "削除理由" }), "obsolete document")
     await userEvent.click(screen.getByRole("button", { name: "削除" }))
 
@@ -465,12 +465,12 @@ describe("DocumentWorkspace", () => {
     await userEvent.click(screen.getByRole("button", { name: "requirements.mdを共有" }))
     const dialog = await screen.findByRole("dialog", { name: "ファイル共有" })
     expect(onLoadDocumentShare).toHaveBeenCalledWith("doc-1")
-    expect(await within(dialog).findByText("現在の権限: full")).toBeInTheDocument()
-    expect(within(dialog).getByText("継承: group-1 readOnly")).toBeInTheDocument()
+    expect(await within(dialog).findByText("現在の権限: 管理可能")).toBeInTheDocument()
+    expect(within(dialog).getByText("継承: group-1 閲覧のみ")).toBeInTheDocument()
 
     await userEvent.click(within(dialog).getByRole("button", { name: "削除" }))
     await userEvent.selectOptions(within(dialog).getByLabelText("共有先種別"), "group")
-    await userEvent.type(within(dialog).getByLabelText("共有先ID"), "HR")
+    await userEvent.type(within(dialog).getByLabelText("共有先識別子（管理者向け）"), "HR")
     await userEvent.selectOptions(within(dialog).getByLabelText("権限"), "full")
     await userEvent.type(within(dialog).getByLabelText("理由"), "チームレビュー")
     await userEvent.click(within(dialog).getByRole("button", { name: "保存" }))
@@ -527,13 +527,13 @@ describe("DocumentWorkspace", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "doc-a.mdを共有" }))
     let dialog = await screen.findByRole("dialog", { name: "ファイル共有" })
-    expect(await within(dialog).findByText("直接: user:user-old readOnly")).toBeInTheDocument()
+    expect(await within(dialog).findByText("直接: ユーザー user-old / 閲覧のみ")).toBeInTheDocument()
 
     await userEvent.click(within(dialog).getByRole("button", { name: "ファイル共有を閉じる" }))
     await userEvent.click(screen.getByRole("button", { name: "doc-b.mdを共有" }))
     dialog = screen.getByRole("dialog", { name: "ファイル共有" })
 
-    expect(within(dialog).queryByText("直接: user:user-old readOnly")).not.toBeInTheDocument()
+    expect(within(dialog).queryByText("直接: ユーザー user-old / 閲覧のみ")).not.toBeInTheDocument()
     expect(within(dialog).getByText("直接共有を読み込み中です。")).toBeInTheDocument()
     expect(within(dialog).getByRole("button", { name: "保存" })).toBeDisabled()
   })
@@ -563,9 +563,9 @@ describe("DocumentWorkspace", () => {
     await userEvent.click(screen.getByRole("button", { name: "doc-b.mdを共有" }))
     const dialog = await screen.findByRole("dialog", { name: "ファイル共有" })
     docBLoad.resolve(shareInfo("doc-b", []))
-    expect(await within(dialog).findByText("現在の権限: full")).toBeInTheDocument()
+    expect(await within(dialog).findByText("現在の権限: 管理可能")).toBeInTheDocument()
 
-    await userEvent.type(within(dialog).getByLabelText("共有先ID"), "userB")
+    await userEvent.type(within(dialog).getByLabelText("共有先識別子（管理者向け）"), "userB")
     await userEvent.selectOptions(within(dialog).getByLabelText("権限"), "readOnly")
     await userEvent.type(within(dialog).getByLabelText("理由"), "docBだけ共有")
     await userEvent.click(within(dialog).getByRole("button", { name: "保存" }))
@@ -608,8 +608,8 @@ describe("DocumentWorkspace", () => {
       }
     ]))
 
-    await waitFor(() => expect(within(dialog).queryByText("直接: user:user-old readOnly")).not.toBeInTheDocument())
-    expect(within(dialog).getByText("現在の権限: full")).toBeInTheDocument()
+    await waitFor(() => expect(within(dialog).queryByText("直接: ユーザー user-old / 閲覧のみ")).not.toBeInTheDocument())
+    expect(within(dialog).getByText("現在の権限: 管理可能")).toBeInTheDocument()
   })
 
   it("共有モーダルは共有設定取得失敗時に alert を表示し保存を無効化する", async () => {
@@ -667,7 +667,7 @@ describe("DocumentWorkspace", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "doc-a.mdを共有" }))
     dialog = await screen.findByRole("dialog", { name: "ファイル共有" })
-    expect(await within(dialog).findByText("直接: user:user-restored readOnly")).toBeInTheDocument()
+    expect(await within(dialog).findByText("直接: ユーザー user-restored / 閲覧のみ")).toBeInTheDocument()
 
     await userEvent.type(within(dialog).getByLabelText("理由"), "正常取得後の保存")
     await userEvent.click(within(dialog).getByRole("button", { name: "保存" }))
@@ -1852,11 +1852,14 @@ describe("DocumentWorkspace", () => {
       />
     )
 
+    await userEvent.click(screen.getByRole("button", { name: /社内規定 0件/ }))
     await openFolderSettings()
     await userEvent.selectOptions(screen.getByLabelText("共有フォルダ"), "group-1")
 
     const selector = await screen.findByRole("group", { name: "共有 resource group 候補" })
     const hrOption = within(selector).getByRole("checkbox", { name: "HR" })
+    expect(screen.getByText("ユーザー / 管理可能")).toBeInTheDocument()
+    expect(screen.getByText("グループ / 閲覧のみ")).toBeInTheDocument()
     expect(screen.getByLabelText("共有 resource group ID")).toHaveValue("HR")
     expect(hrOption).toBeChecked()
     expect(screen.getByText("変更なし: HR")).toBeInTheDocument()

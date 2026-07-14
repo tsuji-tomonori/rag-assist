@@ -179,8 +179,10 @@ describe("AdminWorkspace", () => {
     })
 
     expect(screen.getByRole("button", { name: /ドキュメント管理/ })).toBeInTheDocument()
-    expect(screen.getByLabelText("ユーザー管理")).toHaveTextContent("1 users")
+    expect(screen.getByLabelText("ユーザー管理")).toHaveTextContent("1 人")
+    expect(screen.getByRole("article", { name: "利用状況" })).toHaveTextContent("1 人")
     expect(screen.getByLabelText("コスト監査")).toHaveTextContent("$12.3400")
+    expect(screen.getByLabelText("用語展開管理")).toHaveTextContent("2 件")
     expect(screen.queryByRole("button", { name: /ユーザー管理/ })).not.toBeInTheDocument()
   })
 
@@ -203,8 +205,8 @@ describe("AdminWorkspace", () => {
     expect(screen.queryByRole("button", { name: /デバッグ/ })).not.toBeInTheDocument()
     expect(screen.queryByRole("button", { name: /性能テスト/ })).not.toBeInTheDocument()
     expect(screen.getByLabelText("ユーザー管理")).toHaveTextContent("未提供")
-    expect(screen.getByLabelText("アクセス管理")).toHaveTextContent("ロール定義 API field は未提供")
-    expect(screen.getByLabelText("Alias管理")).toHaveTextContent("Alias API field は未提供")
+    expect(screen.getByLabelText("アクセス管理")).toHaveTextContent("ロール定義データは未提供")
+    expect(screen.getByLabelText("用語展開管理")).toHaveTextContent("用語展開データは未提供")
     expect(screen.queryByText("0 users")).not.toBeInTheDocument()
     expect(screen.queryByText("0 aliases")).not.toBeInTheDocument()
   })
@@ -214,19 +216,19 @@ describe("AdminWorkspace", () => {
     const onPublishAliases = vi.fn().mockResolvedValue(undefined)
 
     renderAdminWorkspace({ onCreateAlias, onPublishAliases })
-    await userEvent.click(screen.getByRole("button", { name: "Alias" }))
+    await userEvent.click(screen.getByRole("button", { name: "用語展開" }))
 
-    const panel = screen.getByLabelText("Alias管理一覧")
+    const panel = screen.getByLabelText("用語展開管理一覧")
     expect(panel).toHaveTextContent("2 件")
     expect(within(panel).getByText("pto")).toBeInTheDocument()
-    expect(within(panel).getByText("create")).toBeInTheDocument()
+    expect(within(panel).getByText("作成")).toBeInTheDocument()
 
     await userEvent.type(within(panel).getByLabelText("用語"), "rto")
     await userEvent.type(within(panel).getByLabelText("展開語"), "復旧時間目標, 障害復旧")
-    await userEvent.type(within(panel).getByLabelText("部署 scope"), "SRE")
+    await userEvent.type(within(panel).getByLabelText("適用部署"), "SRE")
     await userEvent.click(within(panel).getByRole("button", { name: "追加" }))
     await userEvent.click(within(panel).getByRole("button", { name: "公開" }))
-    const dialog = screen.getByRole("dialog", { name: "Alias を公開しますか？" })
+    const dialog = screen.getByRole("dialog", { name: "用語展開を公開しますか？" })
     expect(dialog).toHaveTextContent("承認済み")
     expect(onPublishAliases).not.toHaveBeenCalled()
     await userEvent.click(within(dialog).getByRole("button", { name: "公開" }))
@@ -241,15 +243,15 @@ describe("AdminWorkspace", () => {
 
   it("Alias API field 未提供または公開対象なしでは公開 control を表示しない", async () => {
     renderAdminWorkspace({ aliases: null, aliasAuditLog: null })
-    await userEvent.click(screen.getByRole("button", { name: "Alias" }))
+    await userEvent.click(screen.getByRole("button", { name: "用語展開" }))
 
-    expect(screen.getByText("Alias API field は未提供です。")).toBeInTheDocument()
-    expect(screen.getByText("Alias監査ログ API field は未提供です。")).toBeInTheDocument()
+    expect(screen.getByText("用語展開データは未提供です。")).toBeInTheDocument()
+    expect(screen.getByText("用語展開の監査ログは未提供です。")).toBeInTheDocument()
     expect(screen.queryByRole("button", { name: "公開" })).not.toBeInTheDocument()
 
     cleanup()
     renderAdminWorkspace({ aliases: aliases.filter((alias) => alias.status !== "approved"), aliasAuditLog: [] })
-    await userEvent.click(screen.getByRole("button", { name: "Alias" }))
+    await userEvent.click(screen.getByRole("button", { name: "用語展開" }))
     expect(screen.queryByRole("button", { name: "公開" })).not.toBeInTheDocument()
   })
 
@@ -259,22 +261,22 @@ describe("AdminWorkspace", () => {
     const onDisableAlias = vi.fn().mockResolvedValue(undefined)
 
     renderAdminWorkspace({ onUpdateAlias, onReviewAlias, onDisableAlias })
-    await userEvent.click(screen.getByRole("button", { name: "Alias" }))
+    await userEvent.click(screen.getByRole("button", { name: "用語展開" }))
 
-    const panel = screen.getByLabelText("Alias管理一覧")
+    const panel = screen.getByLabelText("用語展開管理一覧")
 
     await userEvent.click(within(panel).getAllByRole("button", { name: "下書き化" })[0]!)
     await userEvent.click(within(panel).getAllByRole("button", { name: "承認" })[0]!)
     await userEvent.click(within(panel).getAllByRole("button", { name: "差戻" })[0]!)
     await userEvent.click(within(panel).getAllByRole("button", { name: "無効" })[0]!)
-    const dialog = screen.getByRole("dialog", { name: "この alias を無効化しますか？" })
+    const dialog = screen.getByRole("dialog", { name: "この用語展開を無効化しますか？" })
     expect(dialog).toHaveTextContent("pto")
     expect(onDisableAlias).not.toHaveBeenCalled()
     await userEvent.click(within(dialog).getByRole("button", { name: "無効化" }))
 
     expect(onUpdateAlias).toHaveBeenCalledWith("alias-1", { expansions: ["有給休暇", "休暇申請"] })
     expect(onReviewAlias).toHaveBeenCalledWith("alias-1", "approve")
-    expect(onReviewAlias).toHaveBeenCalledWith("alias-1", "reject", "Rejected from UI")
+    expect(onReviewAlias).toHaveBeenCalledWith("alias-1", "reject", "画面から差し戻し")
     expect(onDisableAlias).toHaveBeenCalledWith("alias-1")
   })
 
@@ -288,7 +290,7 @@ describe("AdminWorkspace", () => {
       canDeleteUsers: true,
       onSetUserStatus
     })
-    await userEvent.click(screen.getByRole("button", { name: "Users" }))
+    await userEvent.click(screen.getByRole("button", { name: "ユーザー" }))
 
     await userEvent.click(screen.getByRole("button", { name: "停止" }))
     const suspendDialog = screen.getByRole("dialog", { name: "このユーザーを停止しますか？" })
@@ -325,7 +327,7 @@ describe("AdminWorkspace", () => {
       onPrepareUserDelete,
       onSetUserStatus
     })
-    await userEvent.click(screen.getByRole("button", { name: "Users" }))
+    await userEvent.click(screen.getByRole("button", { name: "ユーザー" }))
     await userEvent.click(screen.getByRole("button", { name: "削除" }))
 
     const dialog = await screen.findByRole("dialog", { name: "このユーザーを削除状態にしますか？" })
@@ -353,11 +355,11 @@ describe("AdminWorkspace", () => {
         eligibleSuccessors: []
       })
     })
-    await userEvent.click(screen.getByRole("button", { name: "Users" }))
+    await userEvent.click(screen.getByRole("button", { name: "ユーザー" }))
     await userEvent.click(screen.getAllByRole("button", { name: "削除" })[0]!)
 
     const dialog = await screen.findByRole("dialog", { name: "このユーザーを削除状態にしますか？" })
-    expect(dialog).toHaveTextContent("active かつ同一 tenant の後継候補がありません")
+    expect(dialog).toHaveTextContent("有効かつ同一テナントの後継候補がありません")
     expect(dialog).not.toHaveTextContent("unverified@example.com")
     expect(within(dialog).getByRole("button", { name: "削除" })).toBeDisabled()
   })
@@ -371,7 +373,7 @@ describe("AdminWorkspace", () => {
       canAssignRoles: true,
       onAssignRoles
     })
-    await userEvent.click(screen.getByRole("button", { name: "Users" }))
+    await userEvent.click(screen.getByRole("button", { name: "ユーザー" }))
 
     await userEvent.selectOptions(screen.getByLabelText("managed@example.comに付与するロール"), "SYSTEM_ADMIN")
     await userEvent.type(screen.getByLabelText("managed@example.comのロール変更理由"), "緊急対応担当へ変更")
@@ -400,7 +402,7 @@ describe("AdminWorkspace", () => {
       onCreateUser,
       onAssignRoles
     })
-    await userEvent.click(screen.getByRole("button", { name: "Users" }))
+    await userEvent.click(screen.getByRole("button", { name: "ユーザー" }))
 
     expect(screen.getAllByText("未提供").length).toBeGreaterThan(0)
     expect(screen.getByText("ロール定義は未提供")).toBeInTheDocument()
@@ -428,10 +430,10 @@ describe("AdminWorkspace", () => {
       adminAuditLog: []
     })
 
-    await userEvent.click(screen.getByRole("button", { name: "Usage / Cost" }))
+    await userEvent.click(screen.getByRole("button", { name: "利用状況・コスト" }))
     expect(screen.getByText("利用状況はありません。")).toBeInTheDocument()
     expect(screen.getByText("コスト summary は未提供です。")).toBeInTheDocument()
-    await userEvent.click(screen.getByRole("button", { name: "Audit" }))
+    await userEvent.click(screen.getByRole("button", { name: "監査" }))
     expect(screen.getByText(/横断 audit、reason、export は未提供です。/)).toBeInTheDocument()
     expect(screen.getByText("管理操作履歴はありません。")).toBeInTheDocument()
   })
@@ -444,10 +446,10 @@ describe("AdminWorkspace", () => {
       adminAuditLog: null
     })
 
-    await userEvent.click(screen.getByRole("button", { name: "Usage / Cost" }))
+    await userEvent.click(screen.getByRole("button", { name: "利用状況・コスト" }))
     expect(screen.getByText("利用状況 API field は未提供です。")).toBeInTheDocument()
     expect(screen.queryByText("0 users")).not.toBeInTheDocument()
-    await userEvent.click(screen.getByRole("button", { name: "Audit" }))
+    await userEvent.click(screen.getByRole("button", { name: "監査" }))
     expect(screen.getByText("管理操作履歴 API field は未提供です。")).toBeInTheDocument()
     expect(screen.queryByText("0 件")).not.toBeInTheDocument()
   })
