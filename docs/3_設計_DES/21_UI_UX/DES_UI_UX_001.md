@@ -59,7 +59,7 @@
 | `favorites` | `/?view=favorites` | no `AppRoutes` guard; data uses own-history boundary | all signed-in personas | `JOB-UI-FAVORITES`: inspect and resume favorited own conversation | `FR-028`, `FR-094`, `FR-095`, `FR-097`, `SQ-016`; `AC-FR028-004`, `AC-FR094-002` | `E2E-VIEW-FAVORITES-001`, `E2E-UI-NAV-001`, `E2E-UI-ROUTE-001` | partial: mobile reachability and browser-history restoration exist; favorite resume journey missing |
 | `benchmark` | `/?view=benchmark` | `canReadBenchmarkRuns` | `operator`, `system-admin` | `JOB-UI-BENCHMARK`: start/observe/cancel/download authorized run | `FR-010`, `FR-011`, `FR-048`, `FR-094`〜`FR-098`, `SQ-016`; `AC-FR048-001`, `AC-FR096-001` | `E2E-VIEW-BENCHMARK-001`, `E2E-UI-NAV-002`, `E2E-UI-ROUTE-002`, `E2E-UI-RISK-001` | partial: target-attached start/cancel result, run/suite part state and false-zero prevention exist; manual evidence missing |
 | `admin` | `/?view=admin`; section/filter state target TBD by task | `canSeeAdminSettings` composite | `system-admin` | `JOB-UI-ADMIN`: navigate authorized governance/observation section | `FR-024`, `FR-027`, `FR-094`〜`FR-098`, `SQ-016`; `AC-FR024-001`, `AC-FR027-011`, `AC-FR096-001`, `AC-FR097-001` | `E2E-VIEW-ADMIN-001`, `E2E-UI-NAV-002`, `E2E-UI-ROUTE-002`, `E2E-UI-STATE-001`, `E2E-UI-RISK-001` | partial: representative user/role/alias result, part-level recovery and non-disclosing denied route exist; #344 remaining task open |
-| `documents` | `/documents`; `/documents/groups/:id`; `/documents/:id`; `/documents/reindex-migrations/:id`; `?view=documents&...` accepted and normalized | `canReadDocuments` | `operator`, `system-admin` | `JOB-UI-DOCUMENTS`: find/select/upload/share/manage/ask within effective permission | `FR-001`, `FR-002`, `FR-038`, `FR-064`, `FR-094`〜`FR-098`, `SQ-016`; `AC-FR001-001`, `AC-FR001-008`, `AC-FR094-002`, `AC-FR097-001` | `E2E-VIEW-DOCUMENTS-001`, `E2E-UI-NAV-002`, `E2E-UI-ROUTE-001`, `E2E-UI-ROUTE-002`, `E2E-UI-RISK-001`, planned `E2E-UI-DOCUMENTS-001` | partial: representative share/delete/reindex result, catalog/reindex part state, canonical route, denied recovery exist; 143-operation IA/full restoration missing |
+| `documents` | `/documents`; `/documents/groups/:id`; `/documents/:id`; `/documents/reindex-migrations/:id`; `?view=documents&...` accepted and normalized | `canReadDocuments` | `operator`, `system-admin` | `JOB-UI-DOCUMENTS`: find/select/upload/share/manage/ask within effective permission | `FR-001`, `FR-002`, `FR-038`, `FR-064`, `FR-094`〜`FR-098`, `SQ-016`; `AC-FR001-001`, `AC-FR001-008`, `AC-FR094-002`, `AC-FR097-001`〜`005`, `AC-FR098-001`〜`005` | `E2E-VIEW-DOCUMENTS-001`, `E2E-UI-NAV-002`, `E2E-UI-ROUTE-001`, `E2E-UI-ROUTE-002`, `E2E-UI-RISK-001`, `E2E-UI-DOCUMENTS-001` | implemented: authorized current context、page restoration、safe normalization、progressive disclosure、keyboard/axe、many/long/320〜1280px evidence exist; manual screen-reader/zoom/real-device evidence remains cross-screen scope |
 | `profile` | `/?view=profile` | authenticated shell | all | `JOB-UI-PROFILE`: inspect/update own settings and sign out | `FR-051`, `FR-094`, `FR-095`, `SQ-016`; `AC-FR094-001`, `AC-FR094-002` | `E2E-VIEW-PROFILE-001`, `E2E-UI-NAV-001`, `E2E-UI-NAV-002`, `E2E-UI-ROUTE-001` | partial: <=720px menu reachability is automated; settings persistence and manual a11y remain |
 
 ## URL と browser history policy
@@ -164,6 +164,13 @@ The UI does not infer success from a dismissed dialog or timeout and does not re
 - Long/many/zero/error cases keep current target and primary recovery visible.
 - Permission and critical status are never hidden only to reduce visual density.
 
+### Documents confirmed implementation（2026-07-14）
+
+- folder/document/migration selection and page change use `pushState`; text/filter/sort/page-size correction and authorized normalization use `replaceState`. `folderQuery`、query/filter/sort、page/pageSize are restored from canonical document URLs.
+- current target、selection、result count、source、as-of、active filter are grouped in one visible context region. Catalog confirmation precedes page clamping and authorization-aware normalization, so an unrelated loading transition does not silently discard a valid page.
+- each row exposes detail as the ordinary primary action. Technical/quality metadata and management actions use `aria-expanded`/`aria-controls`; share/move and high-impact reindex/delete are separated while consequence and permission boundaries remain visible.
+- `E2E-UI-DOCUMENTS-001` verifies reload/back/forward/detail return、protected-value-free normalization、long/many data、320/375/768/1280px overflow、focus/Escape、and axe in Chromium. It does not claim 200%/400% zoom、representative screen reader、or real-device completion.
+
 ## Accessibility and responsive matrix
 
 | Dimension | Required scope | Evidence kind |
@@ -260,8 +267,7 @@ Checkboxes are checked only for evidence actually obtained.
 | Gap | Requirement | Task |
 | --- | --- | --- |
 | mobile navigation automation completed; representative screen reader、400% browser zoom、safe-area/virtual-keyboard real-device evidence remains | `FR-094`, `SQ-016` | `tasks/do/20260714-issue-345-mobile-navigation.md`, `tasks/todo/20260714-issue-345-manual-a11y-evidence.md` |
-| representative target/risk/result feedback is automated; exhaustive questions/documents/admin coverage and manual evidence remain | `FR-096`, `SQ-016`, `NFR-018` | `tasks/done/20260714-issue-345-risky-operation-feedback.md`, `tasks/todo/20260714-issue-345-chat-assignee-journey.md`, `tasks/todo/20260714-issue-345-document-workspace-context.md`, `tasks/todo/20260714-1011-admin-ui-governance-quality.md`, `tasks/todo/20260714-issue-345-manual-a11y-evidence.md` |
-| documents 143-interaction density and state restoration | `FR-097`, `FR-098` | `tasks/todo/20260714-issue-345-document-workspace-context.md` |
+| representative target/risk/result feedback is automated; exhaustive questions/admin coverage and manual evidence remain | `FR-096`, `SQ-016`, `NFR-018` | `tasks/done/20260714-issue-345-risky-operation-feedback.md`, `tasks/todo/20260714-issue-345-chat-assignee-journey.md`, `tasks/todo/20260714-1011-admin-ui-governance-quality.md`, `tasks/todo/20260714-issue-345-manual-a11y-evidence.md` |
 | chat/assignee full journey | existing chat/question requirements, `FR-095` | `tasks/todo/20260714-issue-345-chat-assignee-journey.md` |
 | admin remaining governance/a11y/scale | `FR-096`〜`FR-098`, `SQ-016` | `tasks/todo/20260714-1011-admin-ui-governance-quality.md` |
 | cross-screen a11y/responsive violations | `SQ-016` | `tasks/todo/20260714-issue-345-cross-screen-a11y-responsive.md` |
@@ -272,6 +278,8 @@ Checkboxes are checked only for evidence actually obtained.
 URL/history/denied-route gap は draft PR #349 と `tasks/done/20260714-issue-345-url-history-routing.md` で自動検証まで解消した。PR #348 依存は production behavior の gap ではなく、default branch merge 前に解消する PR lifecycle blocker として扱う。
 
 共通 UI state gap は shared primitive/controller、feature adapter、`E2E-UI-STATE-001` により自動検証範囲を解消した。代表 screen reader、実 browser zoom、real-device は common state 固有の成功として主張せず、manual evidence task と cross-screen task に残す。
+
+documents の操作 hierarchy と state restoration gap は `tasks/do/20260714-issue-345-document-workspace-context.md` と `E2E-UI-DOCUMENTS-001` により自動検証範囲を解消した。代表 screen reader、200%/400% zoom、real-device は documents 固有の成功として主張せず、manual evidence task と cross-screen task に残す。
 
 利用者語彙・semantic status token・status/dialog primitive の代表 gap は `displayMetadata.ts`、`StatusBadge`、共通 `Button` intent、`NONUI-UI-SEMANTIC-001`、`E2E-UI-SEMANTIC-001` により自動検証範囲を解消した。全画面の layout/brand color、ブラウザ横断、manual evidence は上記の後続 task に残す。
 

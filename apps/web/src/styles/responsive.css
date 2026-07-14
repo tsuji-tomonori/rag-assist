@@ -331,6 +331,24 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .document-context-summary dl {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .document-active-filters,
+  .document-drawer-primary-actions,
+  .document-management-actions > div {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .document-active-filters button,
+  .document-drawer-actions button,
+  .document-management-disclosure > button {
+    width: 100%;
+    justify-content: center;
+  }
+
   .document-add-modal-backdrop {
     padding: 8px;
   }

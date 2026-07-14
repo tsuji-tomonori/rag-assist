@@ -65,10 +65,10 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     setRouteNotice(null)
     writeAppViewToLocation(nextView, "push")
   }, [])
-  const onDocumentUrlStateChange = useCallback((nextState: DocumentWorkspaceUrlState) => {
+  const onDocumentUrlStateChange = useCallback((nextState: DocumentWorkspaceUrlState, historyMode: "push" | "replace" = "replace") => {
     setDocumentUrlState(nextState)
     setRouteNotice(null)
-    writeDocumentWorkspaceUrlStateToLocation(nextState)
+    writeDocumentWorkspaceUrlStateToLocation(nextState, historyMode)
   }, [])
   const [modelId, setModelId] = useState(defaultModelId)
   const [embeddingModelId] = useState(defaultEmbeddingModelId)
@@ -761,16 +761,21 @@ function readDocumentWorkspaceUrlStateFromLocation(): DocumentWorkspaceUrlState 
   const params = new URLSearchParams(window.location.search)
   const pathState = readDocumentWorkspacePathState(window.location.pathname)
   const sort = params.get("sort")
+  const page = parseDocumentPage(params.get("page"))
+  const pageSize = parseDocumentPageSize(params.get("pageSize"))
   return {
     ...pathState,
     folderId: params.get("group") || pathState.folderId,
     documentId: params.get("document") || pathState.documentId,
     migrationId: params.get("migration") || pathState.migrationId,
+    folderQuery: params.get("folderQuery") || undefined,
     query: params.get("query") || undefined,
     type: params.get("type") || undefined,
     status: params.get("status") || undefined,
     groupFilter: params.get("documentGroup") || undefined,
-    sort: sort && documentSortKeys.has(sort) ? sort as DocumentWorkspaceUrlState["sort"] : undefined
+    sort: sort && documentSortKeys.has(sort) ? sort as DocumentWorkspaceUrlState["sort"] : undefined,
+    page,
+    pageSize
   }
 }
 
@@ -787,7 +792,7 @@ function readDocumentWorkspacePathState(pathname: string): Pick<DocumentWorkspac
   return {}
 }
 
-function writeDocumentWorkspaceUrlStateToLocation(state: DocumentWorkspaceUrlState) {
+function writeDocumentWorkspaceUrlStateToLocation(state: DocumentWorkspaceUrlState, historyMode: "push" | "replace") {
   if (typeof window === "undefined") return
   const url = new URL(window.location.href)
   const pathState = documentWorkspacePathState(state)
@@ -796,12 +801,25 @@ function writeDocumentWorkspaceUrlStateToLocation(state: DocumentWorkspaceUrlSta
   setSearchParam(url, "group", pathState.pathKey === "folderId" ? undefined : state.folderId)
   setSearchParam(url, "document", pathState.pathKey === "documentId" ? undefined : state.documentId)
   setSearchParam(url, "migration", pathState.pathKey === "migrationId" ? undefined : state.migrationId)
+  setSearchParam(url, "folderQuery", state.folderQuery)
   setSearchParam(url, "query", state.query)
   setSearchParam(url, "type", state.type)
   setSearchParam(url, "status", state.status)
   setSearchParam(url, "documentGroup", state.groupFilter)
   setSearchParam(url, "sort", state.sort)
-  writeBrowserUrl(url, "replace")
+  setSearchParam(url, "page", state.page && state.page > 1 ? String(state.page) : undefined)
+  setSearchParam(url, "pageSize", state.pageSize && state.pageSize !== 25 ? String(state.pageSize) : undefined)
+  writeBrowserUrl(url, historyMode)
+}
+
+function parseDocumentPage(value: string | null): number | undefined {
+  if (!value || !/^[1-9]\d{0,5}$/.test(value)) return undefined
+  return Number(value)
+}
+
+function parseDocumentPageSize(value: string | null): number | undefined {
+  if (value !== "25" && value !== "50" && value !== "100") return undefined
+  return Number(value)
 }
 
 function documentWorkspacePathState(state: DocumentWorkspaceUrlState): {

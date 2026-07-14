@@ -35,7 +35,7 @@
 ## 要件の源泉・背景
 
 - 源泉: GitHub Issue #345 の document 132-operation analysis、progressive disclosure、user vocabulary TODO。
-- current evidence: current main inventory では documents feature が 143 interactions を持つ。
+- current evidence: documents は row primary action を詳細へ集約し、technical metadata と管理操作を semantic disclosure、再インデックス・削除を高影響 group として分離した。permission/critical/risk label は常時可視の説明に残し、keyboard focus trap/Escape/return、long/many/zero、axe、320/375/768/1280px を自動検証済み。admin/questions の高密度 variant は後続 task に残る。
 - 分析: `FACT-345-013` と `TASK-345-06`。
 
 ## 要件の目的・意図
@@ -71,5 +71,5 @@
 ## 関連文書・task
 
 - `docs/3_設計_DES/21_UI_UX/DES_UI_UX_001.md`
-- `tasks/todo/20260714-issue-345-document-workspace-context.md`
+- `tasks/do/20260714-issue-345-document-workspace-context.md`
 - `tasks/done/20260714-issue-345-ui-language-primitives.md`

@@ -297,6 +297,70 @@ async function installBenchmarkRuns(page: Page, count: number) {
   })
 }
 
+async function installDocumentWorkspaceApi(page: Page) {
+  const longFileName = `policy-26-${'long-title-'.repeat(12)}.pdf`
+  const workspaceDocuments = Array.from({ length: 30 }, (_, index) => {
+    const serial = String(index + 1).padStart(2, '0')
+    return {
+      detailLevel: 'manager',
+      documentId: `doc-workspace-${serial}`,
+      fileName: serial === '26' ? longFileName : `policy-${serial}.pdf`,
+      mimeType: 'application/pdf',
+      chunkCount: index + 1,
+      memoryCardCount: index % 4,
+      createdAt: `2026-05-${serial}T00:00:00.000Z`,
+      updatedAt: `2026-05-${serial}T01:00:00.000Z`,
+      metadata: { groupIds: ['group-workspace'] },
+      currentUserEffectivePermission: 'full',
+      capabilities: {
+        canRead: true,
+        canShare: true,
+        canMove: true,
+        canDelete: true,
+        canReindex: true
+      }
+    }
+  })
+  const workspaceGroup = {
+    schemaVersion: 2,
+    itemType: 'documentGroup',
+    tenantId: 'default',
+    groupId: 'group-workspace',
+    name: '運用規定',
+    normalizedName: '運用規定',
+    canonicalPath: '/運用規定',
+    normalizedCanonicalPath: '/運用規定',
+    adminPrincipalType: 'user',
+    adminPrincipalId: 'visual-admin',
+    adminPathPk: 'default#user#visual-admin',
+    parentPathPk: 'default#user#visual-admin#ROOT',
+    visibility: 'private',
+    ownerUserId: 'visual-admin',
+    sharedUserIds: [],
+    sharedGroups: [],
+    managerUserIds: ['visual-admin'],
+    effectivePermission: 'full',
+    detailLevel: 'manager',
+    createdAt: '2026-05-01T00:00:00.000Z',
+    updatedAt: '2026-05-02T00:00:00.000Z'
+  }
+
+  await page.route(/http:\/\/(?:api\.visual\.test|127\.0\.0\.1:8787)\/(?:documents(?:\/reindex-migrations)?|document-groups)$/, async (route) => {
+    const path = new URL(route.request().url()).pathname
+    if (path === '/documents') {
+      await route.fulfill({ json: { documents: workspaceDocuments } })
+      return
+    }
+    if (path === '/document-groups') {
+      await route.fulfill({ json: { groups: [workspaceGroup] } })
+      return
+    }
+    await route.fulfill({ json: { migrations: [] } })
+  })
+
+  return { longFileName }
+}
+
 async function installRiskyOperationApi(page: Page) {
   let historyAvailable = true
   const requests = {
@@ -536,6 +600,74 @@ test('E2E-UI-SEMANTIC-001: 状態表示と確認ダイアログは axe 違反を
   expect(dialogScan.violations, JSON.stringify(dialogScan.violations, null, 2)).toEqual([])
 })
 
+test('E2E-UI-DOCUMENTS-001: 文書の表示条件・詳細・履歴・権限外URL・狭幅表示を一貫して扱う @documents-workspace', async ({ page }) => {
+  const { longFileName } = await installDocumentWorkspaceApi(page)
+  await signIn(page)
+  await page.goto('/documents/groups/group-workspace?query=policy&sort=fileNameAsc&page=2&pageSize=25')
+
+  const workspace = page.getByRole('region', { name: 'ドキュメント管理', exact: true })
+  await expect(workspace).toBeVisible()
+  const context = page.getByRole('region', { name: '現在の文書表示条件' })
+  await expect(context.getByText('運用規定', { exact: true })).toBeVisible()
+  await expect(context.getByText('文書 API', { exact: true })).toBeVisible()
+  await expect(context.getByText('取得済み', { exact: true })).toBeVisible()
+  await expect(context.locator('time')).toHaveAttribute('datetime', /2026-05-02/)
+  await expect(context.getByText('検索: policy', { exact: true })).toBeVisible()
+  await expect(context.getByText('並び替え: ファイル名順', { exact: true })).toBeVisible()
+  await expect(page.getByText('26-30 / 30 件を表示（フォルダ内 30 件 / 全体 30 件）')).toBeVisible()
+
+  const detailButton = page.getByRole('button', { name: `${longFileName}の詳細を表示` })
+  await detailButton.click()
+  await expect(page).toHaveURL(/\/documents\/doc-workspace-26/)
+  expect(new URL(page.url()).searchParams.get('group')).toBe('group-workspace')
+  expect(new URL(page.url()).searchParams.get('page')).toBe('2')
+  const drawer = page.getByRole('dialog', { name: longFileName })
+  await expect(drawer).toBeVisible()
+  await expect(drawer.getByRole('button', { name: '文書詳細を閉じる' })).toBeFocused()
+  const managementToggle = drawer.getByRole('button', { name: '管理操作を表示' })
+  await expect(managementToggle).toHaveAttribute('aria-expanded', 'false')
+  await managementToggle.click()
+  await expect(drawer.getByRole('button', { name: '管理操作を閉じる' })).toHaveAttribute('aria-expanded', 'true')
+  await expect(drawer.getByRole('group', { name: '高影響操作' })).toBeVisible()
+
+  const drawerScan = await new AxeBuilder({ page }).include('.document-detail-drawer').analyze()
+  expect(drawerScan.violations, JSON.stringify(drawerScan.violations, null, 2)).toEqual([])
+
+  await page.goBack()
+  await expect(page.getByRole('dialog', { name: longFileName })).toHaveCount(0)
+  await expect(page.getByText('ページ 2 / 2')).toBeVisible()
+  await page.goForward()
+  await expect(page.getByRole('dialog', { name: longFileName })).toBeVisible()
+  await page.getByRole('button', { name: '文書詳細を閉じる' }).click()
+  await page.getByRole('button', { name: `${longFileName}の詳細を表示` }).click()
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('dialog', { name: longFileName })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: `${longFileName}の詳細を表示` })).toBeFocused()
+
+  await page.getByRole('button', { name: `${longFileName}の詳細を表示` }).click()
+  await page.reload()
+  await expect(page.getByRole('dialog', { name: longFileName })).toBeVisible()
+
+  await page.goto('/documents/secret-document?group=secret-folder&documentGroup=secret-group&status=secret-status&page=0')
+  const normalizationNotice = page.getByRole('status').filter({ hasText: '許可された既定値へ戻しました' })
+  await expect(normalizationNotice).toBeVisible()
+  await expect(page).not.toHaveURL(/secret-(?:document|folder|group|status)/)
+  await expect(page.locator('body')).not.toContainText('secret-document')
+  await expect(page.locator('body')).not.toContainText('secret-folder')
+
+  await page.goto('/documents/groups/group-workspace?query=policy&sort=fileNameAsc&page=2&pageSize=25')
+  await expect(page.getByText('ページ 2 / 2')).toBeVisible()
+  for (const width of [320, 375, 768, 1280]) {
+    await page.setViewportSize({ width, height: 900 })
+    await expect(context).toBeVisible()
+    const hasViewportOverflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)
+    expect(hasViewportOverflow, `${width}px でページ全体の横スクロールが発生しています`).toBe(false)
+  }
+
+  const workspaceScan = await new AxeBuilder({ page }).include('.document-workspace').analyze()
+  expect(workspaceScan.violations, JSON.stringify(workspaceScan.violations, null, 2)).toEqual([])
+})
+
 test('E2E-UI-RISK-001: 高影響操作は対象・影響・回復条件と API 根拠を表示する @risky-operation', async ({ page }) => {
   await installCurrentUserPermissions(page, [
     ...permissions,
@@ -568,7 +700,10 @@ test('E2E-UI-RISK-001: 高影響操作は対象・影響・回復条件と API �
   await test.step('文書共有は理由と policy version を対象に紐づける', async () => {
     await page.getByTitle('ドキュメント').click()
     await expect(page.getByRole('region', { name: 'ドキュメント管理', exact: true })).toBeVisible()
-    await page.getByRole('button', { name: 'risk-policy.mdを共有' }).click()
+    await page.getByRole('button', { name: 'risk-policy.mdの詳細を表示' }).click()
+    const drawer = page.getByRole('dialog', { name: 'risk-policy.md' })
+    await drawer.getByRole('button', { name: '管理操作を表示' }).click()
+    await drawer.getByRole('button', { name: '共有', exact: true }).click()
     const dialog = page.getByRole('dialog', { name: 'ファイル共有' })
     await expect(dialog.getByText('現在の権限: 管理可能')).toBeVisible()
     await dialog.getByLabel('共有先種別').selectOption('group')

@@ -30,11 +30,14 @@ export const documentStateSearchParams = [
   "group",
   "document",
   "migration",
+  "folderQuery",
   "query",
   "type",
   "status",
   "documentGroup",
-  "sort"
+  "sort",
+  "page",
+  "pageSize"
 ] as const
 
 const documentSortKeys = new Set(["updatedDesc", "updatedAsc", "fileNameAsc", "chunkDesc", "typeAsc"])
@@ -166,7 +169,7 @@ function hasInvalidDocumentQuery(params: URLSearchParams): boolean {
     if (!documentSearchParamSet.has(key)) return true
     const values = params.getAll(key)
     if (values.length !== 1 || values[0] === "") return true
-    return key === "sort" && !documentSortKeys.has(values[0]!)
+    return !isValidDocumentStateParam(key, values[0]!)
   })
 }
 
@@ -178,11 +181,18 @@ function sanitizeDocumentSearchParams(params: URLSearchParams): void {
       !documentSearchParamSet.has(key)
       || values.length !== 1
       || values[0] === ""
-      || (key === "sort" && !documentSortKeys.has(values[0]!))
+      || !isValidDocumentStateParam(key, values[0]!)
     ) {
       params.delete(key)
     }
   }
+}
+
+function isValidDocumentStateParam(key: string, value: string): boolean {
+  if (key === "sort") return documentSortKeys.has(value)
+  if (key === "page") return /^[1-9]\d{0,5}$/.test(value)
+  if (key === "pageSize") return value === "25" || value === "50" || value === "100"
+  return true
 }
 
 function relativeUrl(url: URL): string {

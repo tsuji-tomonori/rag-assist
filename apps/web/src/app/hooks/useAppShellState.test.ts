@@ -315,7 +315,7 @@ describe("useAppShellState", () => {
   })
 
   it("hydrates and writes document workspace state through URL query parameters", async () => {
-    window.history.replaceState(null, "", "/documents/reindex-migrations/migration-1?view=documents&group=group-1&document=doc-1&query=handbook&sort=fileNameAsc")
+    window.history.replaceState(null, "", "/documents/reindex-migrations/migration-1?view=documents&group=group-1&document=doc-1&folderQuery=規定&query=handbook&sort=fileNameAsc&page=2&pageSize=50")
     const { result } = renderHook(() => useAppShellState({ authSession: session, onSignOut: vi.fn() }))
 
     await act(async () => {
@@ -329,35 +329,46 @@ describe("useAppShellState", () => {
       folderId: "group-1",
       documentId: "doc-1",
       migrationId: "migration-1",
+      folderQuery: "規定",
       query: "handbook",
       sort: "fileNameAsc",
       type: undefined,
       status: undefined,
-      groupFilter: undefined
+      groupFilter: undefined,
+      page: 2,
+      pageSize: 50
     })
 
+    const pushState = vi.spyOn(window.history, "pushState")
     act(() => {
       result.current.routeProps.documentProps.onUrlStateChange?.({
         folderId: "group-2",
         documentId: "doc-2",
         migrationId: "migration-2",
+        folderQuery: "手順",
         query: "policy",
         type: "PDF",
         status: "active",
         groupFilter: "group-2",
-        sort: "chunkDesc"
-      })
+        sort: "chunkDesc",
+        page: 3,
+        pageSize: 100
+      }, "push")
     })
 
     expect(window.location.pathname).toBe("/documents/reindex-migrations/migration-2")
     expect(window.location.search).toContain("group=group-2")
     expect(window.location.search).toContain("document=doc-2")
     expect(window.location.search).not.toContain("migration=")
+    expect(window.location.search).toContain("folderQuery=%E6%89%8B%E9%A0%86")
     expect(window.location.search).toContain("query=policy")
     expect(window.location.search).toContain("type=PDF")
     expect(window.location.search).toContain("status=active")
     expect(window.location.search).toContain("documentGroup=group-2")
     expect(window.location.search).toContain("sort=chunkDesc")
+    expect(window.location.search).toContain("page=3")
+    expect(window.location.search).toContain("pageSize=100")
+    expect(pushState).toHaveBeenCalled()
 
     act(() => {
       window.history.pushState(null, "", "/?view=documents&query=戻る")
@@ -369,12 +380,16 @@ describe("useAppShellState", () => {
       folderId: undefined,
       documentId: undefined,
       migrationId: undefined,
+      folderQuery: undefined,
       query: "戻る",
       type: undefined,
       status: undefined,
       groupFilter: undefined,
-      sort: undefined
+      sort: undefined,
+      page: undefined,
+      pageSize: undefined
     })
+    pushState.mockRestore()
   })
 
   it("user navigation は history を push し、popstate で view を復元する", async () => {

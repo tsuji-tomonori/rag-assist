@@ -507,13 +507,19 @@
             "id": "FR-097",
             "acceptanceCriteria": [
               "AC-FR097-001",
-              "AC-FR097-003"
+              "AC-FR097-002",
+              "AC-FR097-003",
+              "AC-FR097-004",
+              "AC-FR097-005"
             ]
           },
           {
             "id": "FR-098",
             "acceptanceCriteria": [
               "AC-FR098-001",
+              "AC-FR098-002",
+              "AC-FR098-003",
+              "AC-FR098-004",
               "AC-FR098-005"
             ]
           }
@@ -527,15 +533,18 @@
             ]
           }
         ],
-        "implementationStatus": "partial",
+        "implementationStatus": "implemented",
         "implementationEvidence": [
+          "apps/web/src/app/hooks/useAppShellState.ts",
+          "apps/web/src/app/routing/appRoute.ts",
           "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+          "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx",
+          "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
+          "apps/web/src/features/documents/components/workspace/documentWorkspaceState.ts",
           "apps/web/src/features/documents/hooks/useDocuments.ts",
           "apps/web/src/shared/ui/OperationFeedback.tsx"
         ],
-        "gapTasks": [
-          "tasks/todo/20260714-issue-345-document-workspace-context.md"
-        ]
+        "gapTasks": []
       }
     },
     {
@@ -668,7 +677,7 @@
         "documents"
       ],
       "componentCount": 7,
-      "interactionCount": 143
+      "interactionCount": 145
     },
     {
       "feature": "favorites",
@@ -1561,16 +1570,19 @@
         "InlineList",
         "ParsedDocumentSummary",
         "WarningList",
-        "aside",
         "button",
         "dd",
         "div",
         "dl",
         "dt",
+        "footer",
         "h3",
         "header",
         "li",
+        "p",
+        "section",
         "span",
+        "strong",
         "ul"
       ],
       "certainty": "confirmed"
@@ -1628,16 +1640,24 @@
         "StatusBadge",
         "article",
         "button",
+        "dd",
         "div",
+        "dl",
+        "dt",
         "footer",
         "h3",
+        "h4",
+        "header",
         "input",
         "label",
+        "li",
         "option",
         "p",
         "section",
         "select",
-        "span"
+        "span",
+        "time",
+        "ul"
       ],
       "certainty": "confirmed"
     },
@@ -7463,9 +7483,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:897:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1006:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 897,
+      "line": 1006,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "button",
@@ -7507,9 +7527,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1061:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1193:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1061,
+      "line": 1193,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "button",
@@ -7547,9 +7567,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1165:form",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1297:form",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1165,
+      "line": 1297,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "form",
@@ -7579,9 +7599,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1180:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1312:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1180,
+      "line": 1312,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "button",
@@ -7615,9 +7635,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1189:label",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1321:label",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1189,
+      "line": 1321,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "label",
@@ -7637,9 +7657,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1191:select",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1323:select",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1191,
+      "line": 1323,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "select",
@@ -7673,9 +7693,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1192:option",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1324:option",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1192,
+      "line": 1324,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "option",
@@ -7700,9 +7720,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1193:option",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1325:option",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1193,
+      "line": 1325,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "option",
@@ -7727,9 +7747,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1196:label",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1328:label",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1196,
+      "line": 1328,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "label",
@@ -7749,9 +7769,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1196:input",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1328:input",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1196,
+      "line": 1328,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "input",
@@ -7785,9 +7805,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1197:label",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1329:label",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1197,
+      "line": 1329,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "label",
@@ -7807,9 +7827,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1199:select",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1331:select",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1199,
+      "line": 1331,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "select",
@@ -7843,9 +7863,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1200:option",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1332:option",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1200,
+      "line": 1332,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "option",
@@ -7870,9 +7890,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1201:option",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1333:option",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1201,
+      "line": 1333,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "option",
@@ -7897,9 +7917,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1202:option",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1334:option",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1202,
+      "line": 1334,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "option",
@@ -7924,9 +7944,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1205:label",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1337:label",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1205,
+      "line": 1337,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "label",
@@ -7946,9 +7966,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1205:textarea",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1337:textarea",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1205,
+      "line": 1337,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "textarea",
@@ -7982,9 +8002,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1206:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1338:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1206,
+      "line": 1338,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "button",
@@ -8015,9 +8035,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1212:form",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1344:form",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1212,
+      "line": 1344,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "form",
@@ -8047,9 +8067,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1214:label",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1346:label",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1214,
+      "line": 1346,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "label",
@@ -8069,9 +8089,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1216:select",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1348:select",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1216,
+      "line": 1348,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "select",
@@ -8105,9 +8125,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1217:option",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1349:option",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1217,
+      "line": 1349,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "option",
@@ -8132,9 +8152,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1219:option",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1351:option",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1219,
+      "line": 1351,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "option",
@@ -8159,9 +8179,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1223:label",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1355:label",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1223,
+      "line": 1355,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "label",
@@ -8181,9 +8201,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1223:input",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1355:input",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1223,
+      "line": 1355,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "input",
@@ -8217,9 +8237,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1226:label",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1358:label",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1226,
+      "line": 1358,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "label",
@@ -8239,9 +8259,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1226:textarea",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1358:textarea",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1226,
+      "line": 1358,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "textarea",
@@ -8275,9 +8295,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1227:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1359:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1227,
+      "line": 1359,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "button",
@@ -8308,9 +8328,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1298:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1467:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1298,
+      "line": 1467,
       "feature": "documents",
       "component": "WorkspaceModal",
       "element": "button",
@@ -8908,9 +8928,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:70:button",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:129:button",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx",
-      "line": 70,
+      "line": 129,
       "feature": "documents",
       "component": "DocumentDetailDrawer",
       "element": "button",
@@ -8952,9 +8972,92 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:99:button",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:147:button",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx",
-      "line": 99,
+      "line": 147,
+      "feature": "documents",
+      "component": "DocumentDetailDrawer",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "未推定",
+      "a11y": {
+        "accessibleName": "未推定",
+        "accessibleNameSource": "missing",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "aria-expanded=technicalExpanded",
+          "aria-controls=technicalRegionId"
+        ],
+        "status": "missing",
+        "reason": "アクセシブル名が静的解析で確認できません。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => setTechnicalExpanded((current) => !current)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "aria-expanded",
+          "value": "technicalExpanded"
+        },
+        {
+          "name": "aria-controls",
+          "value": "technicalRegionId"
+        },
+        {
+          "name": "onClick",
+          "value": "() => setTechnicalExpanded((current) => !current)"
+        }
+      ],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:172:button",
+      "file": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx",
+      "line": 172,
+      "feature": "documents",
+      "component": "DocumentDetailDrawer",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "未推定",
+      "a11y": {
+        "accessibleName": "未推定",
+        "accessibleNameSource": "missing",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "missing",
+        "reason": "アクセシブル名が静的解析で確認できません。 アイコン中心の操作は aria-label または aria-labelledby で用途を明示してください。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "onCopyDocumentId"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "onClick",
+          "value": "onCopyDocumentId"
+        }
+      ],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:181:button",
+      "file": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx",
+      "line": 181,
       "feature": "documents",
       "component": "DocumentDetailDrawer",
       "element": "button",
@@ -8994,9 +9097,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:103:button",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:185:button",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx",
-      "line": 103,
+      "line": 185,
       "feature": "documents",
       "component": "DocumentDetailDrawer",
       "element": "button",
@@ -9036,9 +9139,9 @@
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:107:button",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:193:button",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx",
-      "line": 107,
+      "line": 193,
       "feature": "documents",
       "component": "DocumentDetailDrawer",
       "element": "button",
@@ -9049,14 +9152,17 @@
         "accessibleNameSource": "missing",
         "descriptionRefs": "-",
         "role": "-",
-        "state": [],
+        "state": [
+          "aria-expanded=managementExpanded",
+          "aria-controls=managementRegionId"
+        ],
         "status": "missing",
-        "reason": "アクセシブル名が静的解析で確認できません。 アイコン中心の操作は aria-label または aria-labelledby で用途を明示してください。"
+        "reason": "アクセシブル名が静的解析で確認できません。"
       },
       "handlers": [
         {
           "name": "onClick",
-          "value": "onCopyDocumentId"
+          "value": "() => setManagementExpanded((current) => !current)"
         }
       ],
       "attributes": [
@@ -9065,16 +9171,108 @@
           "value": "button"
         },
         {
+          "name": "aria-expanded",
+          "value": "managementExpanded"
+        },
+        {
+          "name": "aria-controls",
+          "value": "managementRegionId"
+        },
+        {
           "name": "onClick",
-          "value": "onCopyDocumentId"
+          "value": "() => setManagementExpanded((current) => !current)"
         }
       ],
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:111:button",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:205:button",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx",
-      "line": 111,
+      "line": 205,
+      "feature": "documents",
+      "component": "DocumentDetailDrawer",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "共有",
+      "a11y": {
+        "accessibleName": "共有",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=shareBusy"
+        ],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "onShare"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "shareBusy"
+        },
+        {
+          "name": "onClick",
+          "value": "onShare"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:206:button",
+      "file": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx",
+      "line": 206,
+      "feature": "documents",
+      "component": "DocumentDetailDrawer",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "移動",
+      "a11y": {
+        "accessibleName": "移動",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=moveBusy"
+        ],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "onMove"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "moveBusy"
+        },
+        {
+          "name": "onClick",
+          "value": "onMove"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:210:button",
+      "file": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx",
+      "line": 210,
       "feature": "documents",
       "component": "DocumentDetailDrawer",
       "element": "button",
@@ -9085,7 +9283,9 @@
         "accessibleNameSource": "visible-text",
         "descriptionRefs": "-",
         "role": "-",
-        "state": [],
+        "state": [
+          "disabled=reindexBusy"
+        ],
         "status": "ok",
         "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
       },
@@ -9101,6 +9301,10 @@
           "value": "button"
         },
         {
+          "name": "disabled",
+          "value": "reindexBusy"
+        },
+        {
           "name": "onClick",
           "value": "onStageReindex"
         }
@@ -9108,9 +9312,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:115:button",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:214:button",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx",
-      "line": 115,
+      "line": 214,
       "feature": "documents",
       "component": "DocumentDetailDrawer",
       "element": "button",
@@ -9121,7 +9325,9 @@
         "accessibleNameSource": "visible-text",
         "descriptionRefs": "-",
         "role": "-",
-        "state": [],
+        "state": [
+          "disabled=deleteBusy"
+        ],
         "status": "warning",
         "reason": "削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。"
       },
@@ -9135,6 +9341,10 @@
         {
           "name": "type",
           "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "deleteBusy"
         },
         {
           "name": "onClick",
@@ -10766,9 +10976,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:136:button",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:140:button",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 136,
+      "line": 140,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "button",
@@ -10816,9 +11026,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:147:button",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:151:button",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 147,
+      "line": 151,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "button",
@@ -10866,9 +11076,45 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:163:label",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:182:button",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 163,
+      "line": 182,
+      "feature": "documents",
+      "component": "DocumentFilePanel",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "絞り込みをリセット",
+      "a11y": {
+        "accessibleName": "絞り込みをリセット",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "onClearFilters"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "onClick",
+          "value": "onClearFilters"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:187:label",
+      "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
+      "line": 187,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "label",
@@ -10888,9 +11134,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:165:input",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:189:input",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 165,
+      "line": 189,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "input",
@@ -10932,9 +11178,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:167:label",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:191:label",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 167,
+      "line": 191,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "label",
@@ -10954,9 +11200,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:169:select",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:193:select",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 169,
+      "line": 193,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "select",
@@ -10990,9 +11236,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:170:option",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:194:option",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 170,
+      "line": 194,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "option",
@@ -11017,9 +11263,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:172:option",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:196:option",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 172,
+      "line": 196,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "option",
@@ -11044,9 +11290,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:176:label",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:200:label",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 176,
+      "line": 200,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "label",
@@ -11066,9 +11312,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:178:select",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:202:select",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 178,
+      "line": 202,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "select",
@@ -11102,9 +11348,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:179:option",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:203:option",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 179,
+      "line": 203,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "option",
@@ -11129,9 +11375,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:181:option",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:205:option",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 181,
+      "line": 205,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "option",
@@ -11156,9 +11402,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:185:label",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:209:label",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 185,
+      "line": 209,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "label",
@@ -11178,9 +11424,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:187:select",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:211:select",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 187,
+      "line": 211,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "select",
@@ -11214,9 +11460,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:188:option",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:212:option",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 188,
+      "line": 212,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "option",
@@ -11241,9 +11487,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:189:option",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:213:option",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 189,
+      "line": 213,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "option",
@@ -11268,9 +11514,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:191:option",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:215:option",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 191,
+      "line": 215,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "option",
@@ -11295,9 +11541,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:195:label",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:219:label",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 195,
+      "line": 219,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "label",
@@ -11317,9 +11563,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:197:select",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:221:select",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 197,
+      "line": 221,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "select",
@@ -11353,9 +11599,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:198:option",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:222:option",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 198,
+      "line": 222,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "option",
@@ -11380,9 +11626,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:199:option",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:223:option",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 199,
+      "line": 223,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "option",
@@ -11407,9 +11653,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:200:option",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:224:option",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 200,
+      "line": 224,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "option",
@@ -11434,9 +11680,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:201:option",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:225:option",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 201,
+      "line": 225,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "option",
@@ -11461,9 +11707,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:202:option",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:226:option",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 202,
+      "line": 226,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "option",
@@ -11488,9 +11734,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:230:button",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:254:button",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 230,
+      "line": 254,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "button",
@@ -11530,9 +11776,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:237:button",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:261:button",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 237,
+      "line": 261,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "button",
@@ -11566,29 +11812,27 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:273:button",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:283:button",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 273,
+      "line": 283,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "button",
       "isIntrinsic": true,
-      "label": "`${document.fileName}を共有`",
+      "label": "`${document.fileName}の詳細を表示`",
       "a11y": {
-        "accessibleName": "`${document.fileName}を共有`",
+        "accessibleName": "`${document.fileName}の詳細を表示`",
         "accessibleNameSource": "aria-label",
         "descriptionRefs": "-",
         "role": "-",
-        "state": [
-          "disabled=operationState.sharingDocumentId === document.documentId"
-        ],
+        "state": [],
         "status": "ok",
         "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
       },
       "handlers": [
         {
           "name": "onClick",
-          "value": "(event) => { event.stopPropagation() onShareDocument(document) }"
+          "value": "() => onSelectDocument(document)"
         }
       ],
       "attributes": [
@@ -11597,178 +11841,20 @@
           "value": "button"
         },
         {
-          "name": "title",
-          "value": "`${document.fileName}を共有`"
-        },
-        {
           "name": "aria-label",
-          "value": "`${document.fileName}を共有`"
-        },
-        {
-          "name": "disabled",
-          "value": "operationState.sharingDocumentId === document.documentId"
+          "value": "`${document.fileName}の詳細を表示`"
         },
         {
           "name": "onClick",
-          "value": "(event) => { event.stopPropagation() onShareDocument(document) }"
+          "value": "() => onSelectDocument(document)"
         }
       ],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:287:button",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:308:label",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 287,
-      "feature": "documents",
-      "component": "DocumentFilePanel",
-      "element": "button",
-      "isIntrinsic": true,
-      "label": "`${document.fileName}を移動`",
-      "a11y": {
-        "accessibleName": "`${document.fileName}を移動`",
-        "accessibleNameSource": "aria-label",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [
-          "disabled=operationState.movingDocumentId === document.documentId"
-        ],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [
-        {
-          "name": "onClick",
-          "value": "(event) => { event.stopPropagation() onMoveDocument(document) }"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "type",
-          "value": "button"
-        },
-        {
-          "name": "title",
-          "value": "`${document.fileName}を移動`"
-        },
-        {
-          "name": "aria-label",
-          "value": "`${document.fileName}を移動`"
-        },
-        {
-          "name": "disabled",
-          "value": "operationState.movingDocumentId === document.documentId"
-        },
-        {
-          "name": "onClick",
-          "value": "(event) => { event.stopPropagation() onMoveDocument(document) }"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:300:button",
-      "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 300,
-      "feature": "documents",
-      "component": "DocumentFilePanel",
-      "element": "button",
-      "isIntrinsic": true,
-      "label": "`${document.fileName}の再インデックスをステージング`",
-      "a11y": {
-        "accessibleName": "`${document.fileName}の再インデックスをステージング`",
-        "accessibleNameSource": "aria-label",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [
-          "disabled=!canReindexRow || operationState.stagingReindexDocumentId === document.documentId"
-        ],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [
-        {
-          "name": "onClick",
-          "value": "(event) => { event.stopPropagation() if (!canReindexRow) return onConfirmAction({ kind: \"…"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "type",
-          "value": "button"
-        },
-        {
-          "name": "title",
-          "value": "`${document.fileName}の再インデックスをステージング`"
-        },
-        {
-          "name": "aria-label",
-          "value": "`${document.fileName}の再インデックスをステージング`"
-        },
-        {
-          "name": "disabled",
-          "value": "!canReindexRow || operationState.stagingReindexDocumentId === document.documentId"
-        },
-        {
-          "name": "onClick",
-          "value": "(event) => { event.stopPropagation() if (!canReindexRow) return onConfirmAction({ kind: \"…"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:313:button",
-      "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 313,
-      "feature": "documents",
-      "component": "DocumentFilePanel",
-      "element": "button",
-      "isIntrinsic": true,
-      "label": "`${document.fileName}を削除`",
-      "a11y": {
-        "accessibleName": "`${document.fileName}を削除`",
-        "accessibleNameSource": "aria-label",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [
-          "disabled=!canDeleteRow || operationState.deletingDocumentId === document.documentId"
-        ],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [
-        {
-          "name": "onClick",
-          "value": "(event) => { event.stopPropagation() if (!canDeleteRow) return onConfirmAction({ kind: \"d…"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "type",
-          "value": "button"
-        },
-        {
-          "name": "title",
-          "value": "`${document.fileName}を削除`"
-        },
-        {
-          "name": "aria-label",
-          "value": "`${document.fileName}を削除`"
-        },
-        {
-          "name": "disabled",
-          "value": "!canDeleteRow || operationState.deletingDocumentId === document.documentId"
-        },
-        {
-          "name": "onClick",
-          "value": "(event) => { event.stopPropagation() if (!canDeleteRow) return onConfirmAction({ kind: \"d…"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:345:label",
-      "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 345,
+      "line": 308,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "label",
@@ -11788,9 +11874,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:347:select",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:310:select",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 347,
+      "line": 310,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "select",
@@ -11824,9 +11910,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:349:option",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:312:option",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 349,
+      "line": 312,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "option",
@@ -11851,9 +11937,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:353:button",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:316:button",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 353,
+      "line": 316,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "button",
@@ -11901,9 +11987,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:362:button",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:325:button",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 362,
+      "line": 325,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "button",
@@ -11951,9 +12037,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:411:button",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:382:button",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 411,
+      "line": 382,
       "feature": "documents",
       "component": "ReindexMigrationStrip",
       "element": "button",
@@ -11993,9 +12079,9 @@
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:414:button",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:385:button",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 414,
+      "line": 385,
       "feature": "documents",
       "component": "ReindexMigrationStrip",
       "element": "button",
@@ -13909,8 +13995,10 @@
       },
       {
         "id": "E2E-UI-DOCUMENTS-001",
-        "status": "planned",
-        "task": "tasks/todo/20260714-issue-345-document-workspace-context.md"
+        "status": "implemented",
+        "evidence": [
+          "apps/web/e2e/visual-regression.spec.ts"
+        ]
       },
       {
         "id": "E2E-UI-MANUAL-001",
