@@ -18,11 +18,9 @@
 | M003 | OpenAPI contract | `403` | 対象操作を実行する権限がありません。 | OpenAPI で宣言された HTTP 403 response | runtime OpenAPI |
 | M004 | OpenAPI contract | `404` | 指定したリソースが見つかりません。 | OpenAPI で宣言された HTTP 404 response | runtime OpenAPI |
 | M005 | OpenAPI contract | `500` | サーバー内部で処理エラーが発生しました。 | OpenAPI で宣言された HTTP 500 response | runtime OpenAPI |
-| M006 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:267 (requirePermission)` |
-| M007 | HTTP 実装応答 | `404` | Chat run not found | `run` が存在しない、または偽である | `apps/api/src/routes/chat-routes.ts:95 (GET /chat-runs/{runId}/events handler)` |
-| M008 | HTTP 実装応答 | `403` | Forbidden | `run.createdBy` が `user.userId` と異なる、かつ `canReadAll` が存在しない、または偽である | `apps/api/src/routes/chat-routes.ts:98 (GET /chat-runs/{runId}/events handler)` |
-| M009 | SSE/Event | `heartbeat` | SSE event: heartbeat | `Date.now() - lastHeartbeat` が `15_000` より大きい | `apps/api/src/routes/chat-routes.ts:119 (GET /chat-runs/{runId}/events handler)` |
-| M010 | SSE/Event | `timeout` | stream timeout. reconnect with Last-Event-ID. | 当該処理へ到達した場合 | `apps/api/src/routes/chat-routes.ts:129 (GET /chat-runs/{runId}/events handler)` |
+| M006 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| M007 | SSE/Event | `heartbeat` | SSE event: heartbeat | `Date.now() - lastHeartbeat` が `15_000` より大きい | `apps/api/src/routes/chat-routes.ts:129 (GET /chat-runs/{runId}/events handler)` |
+| M008 | SSE/Event | `timeout` | stream timeout. reconnect with Last-Event-ID. | 当該処理へ到達した場合 | `apps/api/src/routes/chat-routes.ts:139 (GET /chat-runs/{runId}/events handler)` |
 
 ## 読み方
 

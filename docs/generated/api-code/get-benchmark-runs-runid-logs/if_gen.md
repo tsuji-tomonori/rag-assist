@@ -2,7 +2,7 @@
 
 # GET /benchmark-runs/{runId}/logs IF仕様
 
-- 実装 route: `apps/api/src/routes/benchmark-routes.ts:217 (GET /benchmark-runs/{runId}/logs)`
+- 実装 route: `apps/api/src/routes/benchmark-routes.ts:226 (GET /benchmark-runs/{runId}/logs)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: CodeBuild ログをテキストで取得する

@@ -8,33 +8,33 @@
 
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
-| 到達 symbol | service manages reviewed alias artifacts and audit log | `apps/api/src/rag/memorag-service.test.ts:1090 (service manages reviewed alias artifacts and audit log)` |
-| 到達 symbol | service creates search improvement candidates as draft review items | `apps/api/src/rag/memorag-service.test.ts:1119 (service creates search improvement candidates as draft review items)` |
-| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:2316 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
-| 到達 symbol | service search expands published reviewed aliases without returning alias details | `apps/api/src/search/hybrid-search.test.ts:791 (service search expands published reviewed aliases without returning alias details)` |
+| 到達 symbol | service manages reviewed alias artifacts and audit log | `apps/api/src/rag/memorag-service.test.ts:1380 (service manages reviewed alias artifacts and audit log)` |
+| 到達 symbol | service creates search improvement candidates as draft review items | `apps/api/src/rag/memorag-service.test.ts:1409 (service creates search improvement candidates as draft review items)` |
+| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:3117 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
+| 到達 symbol | service search expands published reviewed aliases without returning alias details | `apps/api/src/search/hybrid-search.test.ts:1030 (service search expands published reviewed aliases without returning alias details)` |
 
 ## 2. 実装分岐から導くテスト要因
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:267 (requirePermission)` |
-| F002 | `MemoRagService.publishAliases` | loop | `ledger.aliases` が存在し、真である | `apps/api/src/rag/memorag-service.ts:827 (MemoRagService.publishAliases)` |
-| F003 | `MemoRagService.publishAliases` | if | `alias.status` が `"approved"` と等しい | `apps/api/src/rag/memorag-service.ts:828 (MemoRagService.publishAliases)` |
-| F004 | `MemoRagService.publishAliases` | if | `alias.searchImprovement` が存在し、真である | `apps/api/src/rag/memorag-service.ts:830 (MemoRagService.publishAliases)` |
+| F001 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| F002 | `MemoRagService.publishAliases` | loop | `ledger.aliases` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1294 (MemoRagService.publishAliases)` |
+| F003 | `MemoRagService.publishAliases` | if | `alias.status` が `"approved"` と等しい | `apps/api/src/rag/memorag-service.ts:1295 (MemoRagService.publishAliases)` |
+| F004 | `MemoRagService.publishAliases` | if | `alias.searchImprovement` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1297 (MemoRagService.publishAliases)` |
 
 ## 3. コード由来テストケース
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | 検索 alias を公開する が成功 response を返す。 | `apps/api/src/routes/admin-routes.ts:355 (POST /admin/aliases/publish handler)` |
-| TC002 | F001: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:267 (requirePermission)` |
-| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:267 (requirePermission)` |
-| TC004 | F002: 0件 | 反復対象が空でも不正な副作用や例外を生じない。 | `apps/api/src/rag/memorag-service.ts:827 (MemoRagService.publishAliases)` |
-| TC005 | F002: 複数件 | 各要素を順に処理し、順序・終了条件を守る。 | `apps/api/src/rag/memorag-service.ts:827 (MemoRagService.publishAliases)` |
-| TC006 | F003: 条件成立 | `alias.status` が `"approved"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:828 (MemoRagService.publishAliases)` |
-| TC007 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:828 (MemoRagService.publishAliases)` |
-| TC008 | F004: 条件成立 | `alias.searchImprovement` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:830 (MemoRagService.publishAliases)` |
-| TC009 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:830 (MemoRagService.publishAliases)` |
+| TC001 | 正常系 | 検索 alias を公開する が成功 response を返す。 | `apps/api/src/routes/admin-routes.ts:447 (POST /admin/aliases/publish handler)` |
+| TC002 | F001: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| TC004 | F002: 0件 | 反復対象が空でも不正な副作用や例外を生じない。 | `apps/api/src/rag/memorag-service.ts:1294 (MemoRagService.publishAliases)` |
+| TC005 | F002: 複数件 | 各要素を順に処理し、順序・終了条件を守る。 | `apps/api/src/rag/memorag-service.ts:1294 (MemoRagService.publishAliases)` |
+| TC006 | F003: 条件成立 | `alias.status` が `"approved"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1295 (MemoRagService.publishAliases)` |
+| TC007 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1295 (MemoRagService.publishAliases)` |
+| TC008 | F004: 条件成立 | `alias.searchImprovement` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1297 (MemoRagService.publishAliases)` |
+| TC009 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1297 (MemoRagService.publishAliases)` |
 | TC010 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC011 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC012 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

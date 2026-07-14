@@ -2,7 +2,7 @@
 
 # POST /documents/uploads/{uploadId}/content IF仕様
 
-- 実装 route: `apps/api/src/routes/document-routes.ts:497 (POST /documents/uploads/{uploadId}/content)`
+- 実装 route: `apps/api/src/routes/document-routes.ts:1058 (POST /documents/uploads/{uploadId}/content)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 文書アップロード内容を保存する

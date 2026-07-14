@@ -3,6 +3,10 @@ import { spawnSync } from "node:child_process"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
 import type { BenchmarkUseCase } from "@memorag-mvp/contract"
+import {
+  createBenchmarkAuthorizationCheck,
+  type BenchmarkAuthorizationCheck
+} from "./run-authorization.js"
 
 type CodeBuildSuiteManifest = {
   version: 1
@@ -83,7 +87,10 @@ export function createRunnerEnv(manifest: CodeBuildSuiteManifest, suite: CodeBui
   return suite.prepare?.env ? withTemplateEnv(runnerEnv, suite.prepare.env) : runnerEnv
 }
 
-export async function prepareCodeBuildSuite(env: NodeJS.ProcessEnv = process.env): Promise<void> {
+export async function prepareCodeBuildSuite(
+  env: NodeJS.ProcessEnv = process.env,
+  authorize: BenchmarkAuthorizationCheck = createBenchmarkAuthorizationCheck({ env })
+): Promise<void> {
   const manifest = await loadCodeBuildSuiteManifest()
   const suite = resolveCodeBuildSuite(manifest, env.SUITE_ID ?? env.BENCHMARK_SUITE_ID ?? "standard-agent-v1")
   const runnerEnv = createRunnerEnv(manifest, suite, env)
@@ -98,8 +105,8 @@ export async function prepareCodeBuildSuite(env: NodeJS.ProcessEnv = process.env
   }
 
   if (suite.dataset.source === "codebuild-input") {
-    await copyCodeBuildInputDataset(runnerEnv)
-    await copyCodeBuildInputCorpus(suite, runnerEnv)
+    await copyCodeBuildInputDataset(runnerEnv, authorize)
+    await copyCodeBuildInputCorpus(suite, runnerEnv, authorize)
     return
   }
 
@@ -125,15 +132,20 @@ export async function runCodeBuildSuite(env: NodeJS.ProcessEnv = process.env): P
   runNpmScript(script, runnerEnv)
 }
 
-async function copyCodeBuildInputDataset(env: RunnerEnv): Promise<void> {
+async function copyCodeBuildInputDataset(env: RunnerEnv, authorize: BenchmarkAuthorizationCheck): Promise<void> {
   if (env.DATASET_S3_URI) {
+    await authorize("protected_read")
     runCommand("aws", ["s3", "cp", env.DATASET_S3_URI, env.DATASET], env)
     return
   }
   throw new Error("DATASET_S3_URI is required for a codebuild-input benchmark dataset")
 }
 
-async function copyCodeBuildInputCorpus(suite: CodeBuildSuite, env: RunnerEnv): Promise<void> {
+async function copyCodeBuildInputCorpus(
+  suite: CodeBuildSuite,
+  env: RunnerEnv,
+  authorize: BenchmarkAuthorizationCheck
+): Promise<void> {
   if (suite.corpus?.source !== "codebuild-bucket") return
   if (!suite.corpus.dir) throw new Error(`Suite ${suite.suiteId} uses codebuild-bucket corpus without dir`)
   if (!suite.corpus.s3Prefix) throw new Error(`Suite ${suite.suiteId} uses codebuild-bucket corpus without s3Prefix`)
@@ -144,6 +156,7 @@ async function copyCodeBuildInputCorpus(suite: CodeBuildSuite, env: RunnerEnv): 
   const corpusDir = path.resolve(repoRoot, suite.corpus.dir)
   await rm(corpusDir, { recursive: true, force: true })
   await mkdir(corpusDir, { recursive: true })
+  await authorize("protected_read")
   runCommand("aws", ["s3", "cp", "--recursive", corpusS3Uri, suite.corpus.dir], env)
 }
 

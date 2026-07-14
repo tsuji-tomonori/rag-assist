@@ -17,10 +17,10 @@
 | M002 | OpenAPI contract | `401` | 認証が必要です。 | OpenAPI で宣言された HTTP 401 response | runtime OpenAPI |
 | M003 | OpenAPI contract | `403` | 対象操作を実行する権限がありません。 | OpenAPI で宣言された HTTP 403 response | runtime OpenAPI |
 | M004 | OpenAPI contract | `503` | export 保存先が設定されていません | OpenAPI で宣言された HTTP 503 response | runtime OpenAPI |
-| M005 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:267 (requirePermission)` |
-| M006 | 例外 | `-` | DEBUG_DOWNLOAD_BUCKET_NAME is not configured | `config.debugDownloadBucketName` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:991 (MemoRagService.createAdminExportDownloadUrl)` |
-| M007 | ログ | `-` | Skipping missing document manifest listed by object store | is missing object error の判定結果が真である | `apps/api/src/rag/memorag-service.ts:365 (MemoRagService.listDocuments)` |
-| M008 | HTTP 実装応答 | `503` | Export storage is not configured | `err` が `Error` の instance である、かつ `err.message` が "DEBUG_DOWNLOAD_BUCKET_NAME" を含む | `apps/api/src/routes/admin-routes.ts:114 (POST /admin/audit-log/export handler)` |
+| M005 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| M006 | 例外 | `-` | DEBUG_DOWNLOAD_BUCKET_NAME is not configured | `config.debugDownloadBucketName` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1752 (MemoRagService.createAdminExportDownloadUrl)` |
+| M007 | 例外 | `-` | Authoritative directory identity is unavailable during reconciliation | `this.deps.verifiedIdentityProvider` が存在し、真である、かつ `currentIdentity` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:2920 (MemoRagService.syncUserDirectory)` |
+| M008 | HTTP 実装応答 | `503` | Export storage is not configured | `err` が `Error` の instance である、かつ `err.message` が "DEBUG_DOWNLOAD_BUCKET_NAME" を含む | `apps/api/src/routes/admin-routes.ts:197 (POST /admin/audit-log/export handler)` |
 
 ## 読み方
 

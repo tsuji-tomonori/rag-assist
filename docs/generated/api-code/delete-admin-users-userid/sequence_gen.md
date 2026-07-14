@@ -24,8 +24,60 @@ sequenceDiagram
   Service->>Store: this.deps.objectStore に対して get text を実行する。
   Service->>External: this へ sync user directory を実行する。
   Service->>External: this.deps.userDirectory へ list users を実行する。
+  Service->>External: this.deps.verifiedIdentityProvider へ get current identity by subject を実行する。
+  Service->>External: this.deps.verifiedIdentityProvider へ get current identity by subject を実行する。
+  Service->>External: this.deps.verifiedIdentityProvider へ get current identity by subject を実行する。
+  Service->>External: this.deps.verifiedIdentityProvider へ get current identity by subject を実行する。
+  Service->>Store: this.deps.documentGroupStore に対して list を実行する。
+  Service->>Store: this.deps.userGroupStore に対して list を実行する。
+  Service->>Store: this.deps.objectStore に対して list keys を実行する。
+  Service->>Store: this.deps.objectStore に対して get text with version を実行する。
+  Service->>Store: this.deps.objectStore に対して get text with version を実行する。
+  Service->>Store: [...stored.value.documents] に対して reverse を実行する。
+  Service->>Store: deps.objectStore に対して get text with version を実行する。
+  Service->>Store: store に対して get by keys を実行する。
+  Service->>Store: store に対して put を実行する。
+  Service->>Store: this.deps.objectStore に対して put text if version を実行する。
+  Service->>Store: [...stored.value.resourceGroups] に対して reverse を実行する。
+  Service->>Store: this.deps.userGroupStore に対して get を実行する。
+  Service->>Store: this.deps.userGroupStore に対して replace を実行する。
+  Service->>Store: [...stored.value.folders] に対して reverse を実行する。
+  Service->>Store: this.deps.documentGroupStore に対して get を実行する。
+  Service->>Store: this.deps.documentGroupStore に対して update with path locks を実行する。
+  Service->>Store: this.deps.objectStore に対して put text if version を実行する。
+  Service->>Store: this.deps.objectStore に対して get text with version を実行する。
+  Service->>Store: stored.value.folders に対して map を実行する。
+  Service->>Store: stored.value.resourceGroups に対して map を実行する。
+  Service->>Store: stored.value.documents に対して map を実行する。
+  Service->>Store: this.deps.documentGroupStore に対して get を実行する。
+  Service->>Store: this.deps.documentGroupStore に対して update with path locks を実行する。
+  Service->>Store: this.deps.userGroupStore に対して get を実行する。
+  Service->>Store: this.deps.userGroupStore に対して replace を実行する。
+  Service->>Store: this.deps.objectStore に対して put text if version を実行する。
+  Service->>Store: this.objectStore に対して list keys を実行する。
+  Service->>Store: this.objectStore に対して get text with version を実行する。
+  Service->>Store: validateStored に対して validate stored を実行する。
+  Service->>External: this.deps.userDirectory へ enable user を実行する。
+  Service->>External: this.deps.userDirectory へ revoke sessions を実行する。
+  Service->>Store: administrativeTransfer に対して release permanent delete fence after account restore を実行する。
+  Service->>Store: this.transferFence に対して release after account restore を実行する。
+  Service->>Store: new ObjectStoreRevocationCleanupTenantRegistry(this.objectStore) に対して register を実行する。
+  Service->>Store: this.objectStore に対して get text を実行する。
+  Service->>Store: this.objectStore に対して put text if version を実行する。
+  Service->>Store: this.objectStore に対して put text if version を実行する。
+  Service->>Store: this.objectStore に対して put text if version を実行する。
   Service->>Store: this に対して save admin ledger を実行する。
   Service->>Store: this.deps.objectStore に対して put text を実行する。
+  Service->>Store: new ObjectStoreRevocationCleanupCoordinator(this.deps.objectStore) に対して register を実行する。
+  Service->>Store: new ObjectStoreRevocationCleanupTenantRegistry(this.objectStore, this.now) に対して register を実行する。
+  Service->>Store: objectStore に対して get text with version を実行する。
+  Service->>Store: this.objectStore に対して put text if version を実行する。
+  Service->>External: this.deps.userDirectory へ disable user を実行する。
+  Service->>External: this.deps.userDirectory へ revoke sessions を実行する。
+  Service->>External: this.deps.userDirectory へ delete user を実行する。
+  Service->>Store: this に対して save admin ledger を実行する。
+  Service->>External: this.deps.verifiedIdentityProvider へ get current identity by subject を実行する。
+  Service->>Store: this に対して save admin ledger を実行する。
   API-->>Client: HTTP 404 で JSON response を返す。
   API-->>Client: HTTP 200 で JSON response を返す。
 ```
@@ -34,23 +86,75 @@ sequenceDiagram
 
 | # | Caller | 境界 | 処理 | コード | 実装位置 |
 | ---: | --- | --- | --- | --- | --- |
-| 1 | `DELETE /admin/users/{userId} handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/admin-routes.ts:207 (DELETE /admin/users/{userId} handler)` |
-| 2 | `DELETE /admin/users/{userId} handler` | Auth | "user:delete" permission を必須条件として確認する。 | `requirePermission(actor, "user:delete")` | `apps/api/src/routes/admin-routes.ts:208 (DELETE /admin/users/{userId} handler)` |
-| 3 | `DELETE /admin/users/{userId} handler` | Validation | schema 検証済みの path parameter を取得する。 | `validParam<{ userId: string }>(c)` | `apps/api/src/routes/admin-routes.ts:209 (DELETE /admin/users/{userId} handler)` |
-| 4 | `DELETE /admin/users/{userId} handler` | Service | service の delete managed user 処理を呼び出す。 | `service.deleteManagedUser(actor, userId)` | `apps/api/src/routes/admin-routes.ts:210 (DELETE /admin/users/{userId} handler)` |
-| 5 | `MemoRagService.deleteManagedUser` | Service | service の update managed user status 処理を呼び出す。 | `this.updateManagedUserStatus(actor, userId, "deleted")` | `apps/api/src/rag/memorag-service.ts:913 (MemoRagService.deleteManagedUser)` |
-| 6 | `MemoRagService.updateManagedUserStatus` | Store | `this` に対して load admin ledger を実行する。 | `this.loadAdminLedger(actor, { syncUserDirectory: true })` | `apps/api/src/rag/memorag-service.ts:1499 (MemoRagService.updateManagedUserStatus)` |
-| 7 | `MemoRagService.loadAdminLedger` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(adminLedgerKey)` | `apps/api/src/rag/memorag-service.ts:1515 (MemoRagService.loadAdminLedger)` |
-| 8 | `MemoRagService.loadAdminLedger` | External | `this` へ sync user directory を実行する。 | `this.syncUserDirectory(db)` | `apps/api/src/rag/memorag-service.ts:1556 (MemoRagService.loadAdminLedger)` |
-| 9 | `MemoRagService.syncUserDirectory` | External | `this.deps.userDirectory` へ list users を実行する。 | `this.deps.userDirectory.listUsers()` | `apps/api/src/rag/memorag-service.ts:1563 (MemoRagService.syncUserDirectory)` |
-| 10 | `MemoRagService.updateManagedUserStatus` | Store | `this` に対して save admin ledger を実行する。 | `this.saveAdminLedger(db)` | `apps/api/src/rag/memorag-service.ts:1508 (MemoRagService.updateManagedUserStatus)` |
-| 11 | `MemoRagService.saveAdminLedger` | Store | `this.deps.objectStore` に対して put text を実行する。 | `this.deps.objectStore.putText(adminLedgerKey, JSON.stringify(db, null, 2), "application/json")` | `apps/api/src/rag/memorag-service.ts:1598 (MemoRagService.saveAdminLedger)` |
-| 12 | `DELETE /admin/users/{userId} handler` | HTTP/SSE | HTTP 404 で JSON response を返す。 | `c.json({ error: "User not found" }, 404)` | `apps/api/src/routes/admin-routes.ts:211 (DELETE /admin/users/{userId} handler)` |
-| 13 | `DELETE /admin/users/{userId} handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json(user, 200)` | `apps/api/src/routes/admin-routes.ts:212 (DELETE /admin/users/{userId} handler)` |
+| 1 | `DELETE /admin/users/{userId} handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/admin-routes.ts:298 (DELETE /admin/users/{userId} handler)` |
+| 2 | `DELETE /admin/users/{userId} handler` | Auth | "user:delete" permission を必須条件として確認する。 | `requirePermission(actor, "user:delete")` | `apps/api/src/routes/admin-routes.ts:299 (DELETE /admin/users/{userId} handler)` |
+| 3 | `DELETE /admin/users/{userId} handler` | Validation | schema 検証済みの path parameter を取得する。 | `validParam<{ userId: string }>(c)` | `apps/api/src/routes/admin-routes.ts:300 (DELETE /admin/users/{userId} handler)` |
+| 4 | `DELETE /admin/users/{userId} handler` | Service | service の delete managed user 処理を呼び出す。 | `service.deleteManagedUser(actor, userId, { successorUserId })` | `apps/api/src/routes/admin-routes.ts:302 (DELETE /admin/users/{userId} handler)` |
+| 5 | `MemoRagService.deleteManagedUser` | Service | service の update managed user status 処理を呼び出す。 | `this.updateManagedUserStatus(actor, userId, "deleted", input)` | `apps/api/src/rag/memorag-service.ts:1689 (MemoRagService.deleteManagedUser)` |
+| 6 | `MemoRagService.updateManagedUserStatus` | Store | `this` に対して load admin ledger を実行する。 | `this.loadAdminLedger(actor, { syncUserDirectory: true })` | `apps/api/src/rag/memorag-service.ts:2622 (MemoRagService.updateManagedUserStatus)` |
+| 7 | `MemoRagService.loadAdminLedger` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(adminLedgerKey)` | `apps/api/src/rag/memorag-service.ts:2864 (MemoRagService.loadAdminLedger)` |
+| 8 | `MemoRagService.loadAdminLedger` | External | `this` へ sync user directory を実行する。 | `this.syncUserDirectory(db)` | `apps/api/src/rag/memorag-service.ts:2905 (MemoRagService.loadAdminLedger)` |
+| 9 | `MemoRagService.syncUserDirectory` | External | `this.deps.userDirectory` へ list users を実行する。 | `this.deps.userDirectory.listUsers()` | `apps/api/src/rag/memorag-service.ts:2912 (MemoRagService.syncUserDirectory)` |
+| 10 | `MemoRagService.syncUserDirectory` | External | `this.deps.verifiedIdentityProvider` へ get current identity by subject を実行する。 | `this.deps.verifiedIdentityProvider.getCurrentIdentityBySubject(directoryUser.userId)` | `apps/api/src/rag/memorag-service.ts:2917 (MemoRagService.syncUserDirectory)` |
+| 11 | `MemoRagService.updateManagedUserStatus` | External | `this.deps.verifiedIdentityProvider` へ get current identity by subject を実行する。 | `this.deps.verifiedIdentityProvider.getCurrentIdentityBySubject(actor.userId)` | `apps/api/src/rag/memorag-service.ts:2630 (MemoRagService.updateManagedUserStatus)` |
+| 12 | `MemoRagService.updateManagedUserStatus` | External | `this.deps.verifiedIdentityProvider` へ get current identity by subject を実行する。 | `this.deps.verifiedIdentityProvider.getCurrentIdentityBySubject(userId)` | `apps/api/src/rag/memorag-service.ts:2631 (MemoRagService.updateManagedUserStatus)` |
+| 13 | `MemoRagService.updateManagedUserStatus` | External | `this.deps.verifiedIdentityProvider` へ get current identity by subject を実行する。 | `this.deps.verifiedIdentityProvider.getCurrentIdentityBySubject(input.successorUserId)` | `apps/api/src/rag/memorag-service.ts:2669 (MemoRagService.updateManagedUserStatus)` |
+| 14 | `AdministrativePrincipalTransferService.inventory` | Store | `this.deps.documentGroupStore` に対して list を実行する。 | `this.deps.documentGroupStore.list(tenantId)` | `apps/api/src/security/administrative-principal-transfer-service.ts:529 (AdministrativePrincipalTransferService.inventory)` |
+| 15 | `AdministrativePrincipalTransferService.inventory` | Store | `this.deps.userGroupStore` に対して list を実行する。 | `this.deps.userGroupStore.list(tenantId)` | `apps/api/src/security/administrative-principal-transfer-service.ts:530 (AdministrativePrincipalTransferService.inventory)` |
+| 16 | `AdministrativePrincipalTransferService.inventory` | Store | `this.deps.objectStore` に対して list keys を実行する。 | `this.deps.objectStore.listKeys(tenantManifestPrefix(this.deps, tenantId))` | `apps/api/src/security/administrative-principal-transfer-service.ts:531 (AdministrativePrincipalTransferService.inventory)` |
+| 17 | `AdministrativePrincipalTransferService.inventory` | Store | `this.deps.objectStore` に対して get text with version を実行する。 | `this.deps.objectStore.getTextWithVersion(key)` | `apps/api/src/security/administrative-principal-transfer-service.ts:537 (AdministrativePrincipalTransferService.inventory)` |
+| 18 | `AdministrativePrincipalTransferService.readState` | Store | `this.deps.objectStore` に対して get text with version を実行する。 | `this.deps.objectStore.getTextWithVersion(key)` | `apps/api/src/security/administrative-principal-transfer-service.ts:702 (AdministrativePrincipalTransferService.readState)` |
+| 19 | `AdministrativePrincipalTransferService.rollback` | Store | `[...stored.value.documents]` に対して reverse を実行する。 | `[...stored.value.documents].reverse()` | `apps/api/src/security/administrative-principal-transfer-service.ts:610 (AdministrativePrincipalTransferService.rollback)` |
+| 20 | `readManifest` | Store | `deps.objectStore` に対して get text with version を実行する。 | `deps.objectStore.getTextWithVersion(key)` | `apps/api/src/security/administrative-principal-transfer-service.ts:796 (readManifest)` |
+| 21 | `rewriteVectorOwners` | Store | `store` に対して get by keys を実行する。 | `store.getByKeys(keys)` | `apps/api/src/security/administrative-principal-transfer-service.ts:779 (rewriteVectorOwners)` |
+| 22 | `rewriteVectorOwners` | Store | `store` に対して put を実行する。 | `store.put(records.map((record): VectorRecord => ({ ...record, metadata: transferVectorOwner(record.metadata, ownerUserId, manifest) })))` | `apps/api/src/security/administrative-principal-transfer-service.ts:782 (rewriteVectorOwners)` |
+| 23 | `AdministrativePrincipalTransferService.rollbackDocument` | Store | `this.deps.objectStore` に対して put text if version を実行する。 | `this.deps.objectStore.putTextIfVersion( transfer.source.manifestObjectKey, JSON.stringify(transfer.source, null, 2), current.version, "application/json" )` | `apps/api/src/security/administrative-principal-transfer-service.ts:662 (AdministrativePrincipalTransferService.rollbackDocument)` |
+| 24 | `AdministrativePrincipalTransferService.rollback` | Store | `[...stored.value.resourceGroups]` に対して reverse を実行する。 | `[...stored.value.resourceGroups].reverse()` | `apps/api/src/security/administrative-principal-transfer-service.ts:613 (AdministrativePrincipalTransferService.rollback)` |
+| 25 | `AdministrativePrincipalTransferService.rollbackResourceGroup` | Store | `this.deps.userGroupStore` に対して get を実行する。 | `this.deps.userGroupStore.get(requiredUserGroupTenantId(transfer.source), transfer.source.groupId)` | `apps/api/src/security/administrative-principal-transfer-service.ts:643 (AdministrativePrincipalTransferService.rollbackResourceGroup)` |
+| 26 | `AdministrativePrincipalTransferService.rollbackResourceGroup` | Store | `this.deps.userGroupStore` に対して replace を実行する。 | `this.deps.userGroupStore.replace(transfer.source, transfer.target.updatedAt)` | `apps/api/src/security/administrative-principal-transfer-service.ts:648 (AdministrativePrincipalTransferService.rollbackResourceGroup)` |
+| 27 | `AdministrativePrincipalTransferService.rollback` | Store | `[...stored.value.folders]` に対して reverse を実行する。 | `[...stored.value.folders].reverse()` | `apps/api/src/security/administrative-principal-transfer-service.ts:616 (AdministrativePrincipalTransferService.rollback)` |
+| 28 | `AdministrativePrincipalTransferService.rollbackFolder` | Store | `this.deps.documentGroupStore` に対して get を実行する。 | `this.deps.documentGroupStore.get(transfer.source.tenantId, transfer.source.groupId)` | `apps/api/src/security/administrative-principal-transfer-service.ts:636 (AdministrativePrincipalTransferService.rollbackFolder)` |
+| 29 | `AdministrativePrincipalTransferService.rollbackFolder` | Store | `this.deps.documentGroupStore` に対して update with path locks を実行する。 | `this.deps.documentGroupStore.updateWithPathLocks(transfer.source.tenantId, [{ current, next: transfer.source }])` | `apps/api/src/security/administrative-principal-transfer-service.ts:639 (AdministrativePrincipalTransferService.rollbackFolder)` |
+| 30 | `AdministrativePrincipalTransferService.writeState` | Store | `this.deps.objectStore` に対して put text if version を実行する。 | `this.deps.objectStore.putTextIfVersion(key, JSON.stringify(value, null, 2), expectedVersion, "application/json")` | `apps/api/src/security/administrative-principal-transfer-service.ts:711 (AdministrativePrincipalTransferService.writeState)` |
+| 31 | `AdministrativePrincipalTransferService.writeState` | Store | `this.deps.objectStore` に対して get text with version を実行する。 | `this.deps.objectStore.getTextWithVersion(key)` | `apps/api/src/security/administrative-principal-transfer-service.ts:712 (AdministrativePrincipalTransferService.writeState)` |
+| 32 | `AdministrativePrincipalTransferService.mergeInventory` | Store | `stored.value.folders` に対して map を実行する。 | `stored.value.folders.map((entry) => entry.source.groupId)` | `apps/api/src/security/administrative-principal-transfer-service.ts:473 (AdministrativePrincipalTransferService.mergeInventory)` |
+| 33 | `AdministrativePrincipalTransferService.mergeInventory` | Store | `stored.value.resourceGroups` に対して map を実行する。 | `stored.value.resourceGroups.map((entry) => entry.source.groupId)` | `apps/api/src/security/administrative-principal-transfer-service.ts:474 (AdministrativePrincipalTransferService.mergeInventory)` |
+| 34 | `AdministrativePrincipalTransferService.mergeInventory` | Store | `stored.value.documents` に対して map を実行する。 | `stored.value.documents.map((entry) => entry.source.manifestObjectKey)` | `apps/api/src/security/administrative-principal-transfer-service.ts:475 (AdministrativePrincipalTransferService.mergeInventory)` |
+| 35 | `AdministrativePrincipalTransferService.applyFolder` | Store | `this.deps.documentGroupStore` に対して get を実行する。 | `this.deps.documentGroupStore.get(transfer.source.tenantId, transfer.source.groupId)` | `apps/api/src/security/administrative-principal-transfer-service.ts:561 (AdministrativePrincipalTransferService.applyFolder)` |
+| 36 | `AdministrativePrincipalTransferService.applyFolder` | Store | `this.deps.documentGroupStore` に対して update with path locks を実行する。 | `this.deps.documentGroupStore.updateWithPathLocks(transfer.source.tenantId, [{ current, next: transfer.target }])` | `apps/api/src/security/administrative-principal-transfer-service.ts:567 (AdministrativePrincipalTransferService.applyFolder)` |
+| 37 | `AdministrativePrincipalTransferService.applyResourceGroup` | Store | `this.deps.userGroupStore` に対して get を実行する。 | `this.deps.userGroupStore.get(requiredUserGroupTenantId(transfer.source), transfer.source.groupId)` | `apps/api/src/security/administrative-principal-transfer-service.ts:571 (AdministrativePrincipalTransferService.applyResourceGroup)` |
+| 38 | `AdministrativePrincipalTransferService.applyResourceGroup` | Store | `this.deps.userGroupStore` に対して replace を実行する。 | `this.deps.userGroupStore.replace(transfer.target, transfer.source.updatedAt)` | `apps/api/src/security/administrative-principal-transfer-service.ts:577 (AdministrativePrincipalTransferService.applyResourceGroup)` |
+| 39 | `AdministrativePrincipalTransferService.applyDocument` | Store | `this.deps.objectStore` に対して put text if version を実行する。 | `this.deps.objectStore.putTextIfVersion( transfer.target.manifestObjectKey, JSON.stringify(transfer.target, null, 2), transfer.sourceVersion, "application/json" )` | `apps/api/src/security/administrative-principal-transfer-service.ts:591 (AdministrativePrincipalTransferService.applyDocument)` |
+| 40 | `ObjectStoreRevocationCleanupRepairOutbox.assertResourceFenceReleased` | Store | `this.objectStore` に対して list keys を実行する。 | `this.objectStore.listKeys(prefix)` | `apps/api/src/rag/_shared/security/revocation-cleanup-repair-outbox.ts:109 (ObjectStoreRevocationCleanupRepairOutbox.assertResourceFenceReleased)` |
+| 41 | `ObjectStoreRevocationCleanupRepairOutbox.read` | Store | `this.objectStore` に対して get text with version を実行する。 | `this.objectStore.getTextWithVersion(key)` | `apps/api/src/rag/_shared/security/revocation-cleanup-repair-outbox.ts:163 (ObjectStoreRevocationCleanupRepairOutbox.read)` |
+| 42 | `ObjectStoreRevocationCleanupRepairOutbox.read` | Store | `validateStored` に対して validate stored を実行する。 | `validateStored(value)` | `apps/api/src/rag/_shared/security/revocation-cleanup-repair-outbox.ts:165 (ObjectStoreRevocationCleanupRepairOutbox.read)` |
+| 43 | `MemoRagService.updateManagedUserStatus` | External | `this.deps.userDirectory` へ enable user を実行する。 | `this.deps.userDirectory.enableUser(currentTarget.username)` | `apps/api/src/rag/memorag-service.ts:2710 (MemoRagService.updateManagedUserStatus)` |
+| 44 | `MemoRagService.updateManagedUserStatus` | External | `this.deps.userDirectory` へ revoke sessions を実行する。 | `this.deps.userDirectory.revokeSessions(currentTarget.username)` | `apps/api/src/rag/memorag-service.ts:2711 (MemoRagService.updateManagedUserStatus)` |
+| 45 | `MemoRagService.updateManagedUserStatus` | Store | `administrativeTransfer` に対して release permanent delete fence after account restore を実行する。 | `administrativeTransfer.releasePermanentDeleteFenceAfterAccountRestore({ tenantId: currentTarget.tenantId, sourceUserId: currentTarget.userId })` | `apps/api/src/rag/memorag-service.ts:2719 (MemoRagService.updateManagedUserStatus)` |
+| 46 | `AdministrativePrincipalTransferService.releasePermanentDeleteFenceAfterAccountRestore` | Store | `this.transferFence` に対して release after account restore を実行する。 | `this.transferFence.releaseAfterAccountRestore(input)` | `apps/api/src/security/administrative-principal-transfer-service.ts:147 (AdministrativePrincipalTransferService.releasePermanentDeleteFenceAfterAccountRestore)` |
+| 47 | `ObjectStoreRevocationCleanupRepairOutbox.prepare` | Store | `new ObjectStoreRevocationCleanupTenantRegistry(this.objectStore)` に対して register を実行する。 | `new ObjectStoreRevocationCleanupTenantRegistry(this.objectStore).register(registration.tenantId)` | `apps/api/src/rag/_shared/security/revocation-cleanup-repair-outbox.ts:54 (ObjectStoreRevocationCleanupRepairOutbox.prepare)` |
+| 48 | `ObjectStoreRevocationCleanupTenantRegistry.read` | Store | `this.objectStore` に対して get text を実行する。 | `this.objectStore.getText(key)` | `apps/api/src/rag/_shared/security/revocation-cleanup-tenant-registry.ts:116 (ObjectStoreRevocationCleanupTenantRegistry.read)` |
+| 49 | `ObjectStoreRevocationCleanupTenantRegistry.register` | Store | `this.objectStore` に対して put text if version を実行する。 | `this.objectStore.putTextIfVersion(key, JSON.stringify(record, null, 2), undefined, "application/json")` | `apps/api/src/rag/_shared/security/revocation-cleanup-tenant-registry.ts:41 (ObjectStoreRevocationCleanupTenantRegistry.register)` |
+| 50 | `ObjectStoreRevocationCleanupRepairOutbox.prepare` | Store | `this.objectStore` に対して put text if version を実行する。 | `this.objectStore.putTextIfVersion(key, JSON.stringify(intent, null, 2), undefined, "application/json")` | `apps/api/src/rag/_shared/security/revocation-cleanup-repair-outbox.ts:74 (ObjectStoreRevocationCleanupRepairOutbox.prepare)` |
+| 51 | `ObjectStoreRevocationCleanupRepairOutbox.transition` | Store | `this.objectStore` に対して put text if version を実行する。 | `this.objectStore.putTextIfVersion(key, JSON.stringify(next, null, 2), stored.version, "application/json")` | `apps/api/src/rag/_shared/security/revocation-cleanup-repair-outbox.ts:152 (ObjectStoreRevocationCleanupRepairOutbox.transition)` |
+| 52 | `MemoRagService.updateManagedUserStatus` | Store | `this` に対して save admin ledger を実行する。 | `this.saveAdminLedger(db)` | `apps/api/src/rag/memorag-service.ts:2788 (MemoRagService.updateManagedUserStatus)` |
+| 53 | `MemoRagService.saveAdminLedger` | Store | `this.deps.objectStore` に対して put text を実行する。 | `this.deps.objectStore.putText(adminLedgerKey, JSON.stringify(db, null, 2), "application/json")` | `apps/api/src/rag/memorag-service.ts:2960 (MemoRagService.saveAdminLedger)` |
+| 54 | `MemoRagService.updateManagedUserStatus` | Store | `new ObjectStoreRevocationCleanupCoordinator(this.deps.objectStore)` に対して register を実行する。 | `new ObjectStoreRevocationCleanupCoordinator(this.deps.objectStore).register(committedRepair.cleanupRegistration)` | `apps/api/src/rag/memorag-service.ts:2789 (MemoRagService.updateManagedUserStatus)` |
+| 55 | `ObjectStoreRevocationCleanupCoordinator.register` | Store | `new ObjectStoreRevocationCleanupTenantRegistry(this.objectStore, this.now)` に対して register を実行する。 | `new ObjectStoreRevocationCleanupTenantRegistry(this.objectStore, this.now).register(normalized.tenantId)` | `apps/api/src/rag/_shared/security/revocation-cleanup-coordinator.ts:137 (ObjectStoreRevocationCleanupCoordinator.register)` |
+| 56 | `readManifest` | Store | `objectStore` に対して get text with version を実行する。 | `objectStore.getTextWithVersion(key)` | `apps/api/src/rag/_shared/security/revocation-cleanup-coordinator.ts:636 (readManifest)` |
+| 57 | `ObjectStoreRevocationCleanupCoordinator.register` | Store | `this.objectStore` に対して put text if version を実行する。 | `this.objectStore.putTextIfVersion(key, JSON.stringify(manifest, null, 2), undefined, "application/json")` | `apps/api/src/rag/_shared/security/revocation-cleanup-coordinator.ts:169 (ObjectStoreRevocationCleanupCoordinator.register)` |
+| 58 | `MemoRagService.updateManagedUserStatus` | External | `this.deps.userDirectory` へ disable user を実行する。 | `this.deps.userDirectory.disableUser(currentTarget.username)` | `apps/api/src/rag/memorag-service.ts:2794 (MemoRagService.updateManagedUserStatus)` |
+| 59 | `MemoRagService.updateManagedUserStatus` | External | `this.deps.userDirectory` へ revoke sessions を実行する。 | `this.deps.userDirectory.revokeSessions(currentTarget.username)` | `apps/api/src/rag/memorag-service.ts:2795 (MemoRagService.updateManagedUserStatus)` |
+| 60 | `MemoRagService.updateManagedUserStatus` | External | `this.deps.userDirectory` へ delete user を実行する。 | `this.deps.userDirectory.deleteUser(currentTarget.username)` | `apps/api/src/rag/memorag-service.ts:2798 (MemoRagService.updateManagedUserStatus)` |
+| 61 | `MemoRagService.updateManagedUserStatus` | Store | `this` に対して save admin ledger を実行する。 | `this.saveAdminLedger(db)` | `apps/api/src/rag/memorag-service.ts:2805 (MemoRagService.updateManagedUserStatus)` |
+| 62 | `MemoRagService.updateManagedUserStatus` | External | `this.deps.verifiedIdentityProvider` へ get current identity by subject を実行する。 | `this.deps.verifiedIdentityProvider.getCurrentIdentityBySubject(userId)` | `apps/api/src/rag/memorag-service.ts:2814 (MemoRagService.updateManagedUserStatus)` |
+| 63 | `MemoRagService.updateManagedUserStatus` | Store | `this` に対して save admin ledger を実行する。 | `this.saveAdminLedger(db)` | `apps/api/src/rag/memorag-service.ts:2850 (MemoRagService.updateManagedUserStatus)` |
+| 64 | `DELETE /admin/users/{userId} handler` | HTTP/SSE | HTTP 404 で JSON response を返す。 | `c.json({ error: "User not found" }, 404)` | `apps/api/src/routes/admin-routes.ts:303 (DELETE /admin/users/{userId} handler)` |
+| 65 | `DELETE /admin/users/{userId} handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json(user, 200)` | `apps/api/src/routes/admin-routes.ts:304 (DELETE /admin/users/{userId} handler)` |
 
 ## 分岐
 
 | ID | Function | 条件 | 実装位置 |
 | --- | --- | --- | --- |
-| B001 | `DELETE /admin/users/{userId} handler` | `user` が存在しない、または偽である | `apps/api/src/routes/admin-routes.ts:211 (DELETE /admin/users/{userId} handler)` |
-| B002 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:267 (requirePermission)` |
+| B001 | `DELETE /admin/users/{userId} handler` | `user` が存在しない、または偽である | `apps/api/src/routes/admin-routes.ts:303 (DELETE /admin/users/{userId} handler)` |
+| B002 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |

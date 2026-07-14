@@ -59,7 +59,7 @@
 | 実現可能性 | OK | claim/span annotation で測定可能 |
 | 検証可能性 | OK | missing/wrong/valid citation fixture |
 | ニーズ適合 | OK | 回答根拠を原文へ遡れる |
-| 実装適合 | partial | citation はあるが completeness gate が不足 |
+| 実装適合 | OK（measurement/gate contract、閾値未承認） | claim↔citation ID、relevance/support/locator から precision/completeness/validity と required-claim miss zero-tolerance count を導出し、無関係 citation の代用を拒否する |
 
 ## トレース
 

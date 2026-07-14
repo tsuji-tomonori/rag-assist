@@ -294,7 +294,7 @@ function analyzeRoute(route: RouteNode, api: OpenApiDocument, tests: TestNode[],
   const functionNodes: FunctionNode[] = []
   const calls: CallSite[] = []
   const messages: MessageSpec[] = []
-  const visited = new Set<string>()
+  const visited = new Map<string, FunctionNode>()
   visitFunction({ node: route.handler, name: route.handlerName, depth: 0 }, functionNodes, calls, messages, visited, context)
 
   const functions = functionNodes.map<FunctionReference>(({ node, name, depth }) => ({
@@ -345,13 +345,19 @@ function visitFunction(
   functions: FunctionNode[],
   calls: CallSite[],
   messages: MessageSpec[],
-  visited: Set<string>,
+  visited: Map<string, FunctionNode>,
   context: AnalysisContext
 ): void {
   const key = `${current.node.getSourceFile().fileName}:${current.node.pos}`
-  if (visited.has(key)) return
-  visited.add(key)
-  functions.push(current)
+  const previous = visited.get(key)
+  if (previous && previous.depth <= current.depth) return
+  if (previous) {
+    previous.depth = current.depth
+    previous.name = current.name
+  } else {
+    visited.set(key, current)
+    functions.push(current)
+  }
   const body = current.node.body
   if (!body) return
   walkPostOrder(body, (node) => {

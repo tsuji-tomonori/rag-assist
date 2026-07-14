@@ -1,11 +1,11 @@
 import { useState } from "react"
 import { listAccessRoles } from "../api/accessRolesApi.js"
-import { assignUserRoles, createManagedUser, deleteManagedUser, listManagedUsers, suspendManagedUser, unsuspendManagedUser } from "../api/adminUsersApi.js"
+import { assignUserRoles, createManagedUser, deleteManagedUser, getManagedUserDeletionPreflight, listManagedUsers, suspendManagedUser, unsuspendManagedUser } from "../api/adminUsersApi.js"
 import { createAlias, disableAlias, listAliasAuditLog, listAliases, publishAliases, reviewAlias, updateAlias } from "../api/aliasesApi.js"
 import { listAdminAuditLog } from "../api/auditLogApi.js"
 import { getCostAuditSummary } from "../api/costApi.js"
 import { listUsageSummaries } from "../api/usageApi.js"
-import type { AccessRoleDefinition, AliasAuditLogItem, AliasDefinition, CostAuditSummary, ManagedUser, ManagedUserAuditLogEntry, UserUsageSummary } from "../types.js"
+import type { AccessRoleDefinition, AliasAuditLogItem, AliasDefinition, CostAuditSummary, ManagedUser, ManagedUserAuditLogEntry, ManagedUserDeletionPreflight, UserUsageSummary } from "../types.js"
 
 export function useAdminData({
   canReadAdminAuditLog,
@@ -88,11 +88,11 @@ export function useAdminData({
     ])
   }
 
-  async function onAssignUserRoles(userId: string, groups: string[]) {
+  async function onAssignUserRoles(userId: string, groups: string[], reason: string) {
     setLoading(true)
     setError(null)
     try {
-      const updated = await assignUserRoles(userId, groups)
+      const updated = await assignUserRoles(userId, groups, reason)
       setManagedUsers((prev) => [updated, ...(prev ?? []).filter((user) => user.userId !== userId)].sort((a, b) => a.email.localeCompare(b.email)))
       await refreshAdminSideEffects()
     } catch (err) {
@@ -116,12 +116,25 @@ export function useAdminData({
     }
   }
 
-  async function onSetManagedUserStatus(userId: string, action: "suspend" | "unsuspend" | "delete") {
+  async function onPrepareManagedUserDelete(userId: string): Promise<ManagedUserDeletionPreflight | null> {
+    setLoading(true)
+    setError(null)
+    try {
+      return await getManagedUserDeletionPreflight(userId)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+      return null
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function onSetManagedUserStatus(userId: string, action: "suspend" | "unsuspend" | "delete", successorUserId?: string) {
     setLoading(true)
     setError(null)
     try {
       const updated =
-        action === "suspend" ? await suspendManagedUser(userId) : action === "unsuspend" ? await unsuspendManagedUser(userId) : await deleteManagedUser(userId)
+        action === "suspend" ? await suspendManagedUser(userId) : action === "unsuspend" ? await unsuspendManagedUser(userId) : await deleteManagedUser(userId, successorUserId)
       setManagedUsers((prev) => {
         const current = prev ?? []
         if (updated.status === "deleted") return current.filter((user) => user.userId !== userId)
@@ -233,6 +246,7 @@ export function useAdminData({
     refreshAdminData,
     onAssignUserRoles,
     onCreateManagedUser,
+    onPrepareManagedUserDelete,
     onSetManagedUserStatus,
     onCreateAlias,
     onUpdateAlias,

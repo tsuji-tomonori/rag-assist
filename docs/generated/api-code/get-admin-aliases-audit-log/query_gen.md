@@ -8,10 +8,10 @@
 
 | # | CRUD/実行 | Target | Method | 自然言語での目的 | Caller | コード根拠 |
 | ---: | --- | --- | --- | --- | --- | --- |
-| 1 | 参照 | `this` | `loadAliasLedger` | `this` に対して load alias ledger を実行する。 | `MemoRagService.listAliasAuditLog` | `apps/api/src/rag/memorag-service.ts:849 (MemoRagService.listAliasAuditLog)` |
-| 2 | 参照 | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `MemoRagService.loadAliasLedger` | `apps/api/src/rag/memorag-service.ts:1603 (MemoRagService.loadAliasLedger)` |
-| 3 | 実行 | `ledger.auditLog` | `sort` | `ledger.auditLog` に対して sort を実行する。 | `MemoRagService.listAliasAuditLog` | `apps/api/src/rag/memorag-service.ts:850 (MemoRagService.listAliasAuditLog)` |
-| 4 | 実行 | `ledger.auditLog.sort((a, b) => b.createdAt.localeCompare(a.createdAt))` | `slice` | `ledger.auditLog.sort((a, b) => b.createdAt.localeCompare(a.createdAt))` に対して slice を実行する。 | `MemoRagService.listAliasAuditLog` | `apps/api/src/rag/memorag-service.ts:850 (MemoRagService.listAliasAuditLog)` |
+| 1 | 参照 | `this` | `loadAliasLedger` | `this` に対して load alias ledger を実行する。 | `MemoRagService.listAliasAuditLog` | `apps/api/src/rag/memorag-service.ts:1316 (MemoRagService.listAliasAuditLog)` |
+| 2 | 参照 | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `MemoRagService.loadAliasLedger` | `apps/api/src/rag/memorag-service.ts:2979 (MemoRagService.loadAliasLedger)` |
+| 3 | 実行 | `ledger.auditLog` | `sort` | `ledger.auditLog` に対して sort を実行する。 | `MemoRagService.listAliasAuditLog` | `apps/api/src/rag/memorag-service.ts:1317 (MemoRagService.listAliasAuditLog)` |
+| 4 | 実行 | `ledger.auditLog.sort((a, b) => b.createdAt.localeCompare(a.createdAt))` | `slice` | `ledger.auditLog.sort((a, b) => b.createdAt.localeCompare(a.createdAt))` に対して slice を実行する。 | `MemoRagService.listAliasAuditLog` | `apps/api/src/rag/memorag-service.ts:1317 (MemoRagService.listAliasAuditLog)` |
 
 ## 外部サービス操作
 

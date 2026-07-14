@@ -59,7 +59,7 @@
 | 実現可能性 | OK | claim/span annotation と evaluator で測定可能 |
 | 検証可能性 | OK | 支持・非支持 fixture で判定できる |
 | ニーズ適合 | OK | 利用者が根拠に反する回答を受けない |
-| 実装適合 | partial | faithfulness metric はあるが重大度 gate が不足 |
+| 実装適合 | OK（measurement/gate contract、閾値未承認） | claim severity/support span/locator 由来の faithfulness/unsupported rate と critical/high unsupported claim zero-tolerance count を導出・独立 gate する focused tests が pass |
 
 ## トレース
 

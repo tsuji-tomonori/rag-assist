@@ -36,6 +36,22 @@ await Promise.all([
     outfile: path.join(outDir, "document-ingest-run-mark-failed/index.js")
   }),
   bundle({
+    entry: path.join(repoRoot, "apps/api/src/benchmark-run-authorization-worker.ts"),
+    outfile: path.join(outDir, "benchmark-run-authorization-worker/index.js")
+  }),
+  bundle({
+    entry: path.join(repoRoot, "apps/api/src/rag-quality-monitor-worker.ts"),
+    outfile: path.join(outDir, "rag-quality-monitor-worker/index.js")
+  }),
+  bundle({
+    entry: path.join(repoRoot, "apps/api/src/security-mutation-audit-reconciliation-worker.ts"),
+    outfile: path.join(outDir, "security-mutation-audit-reconciliation-worker/index.js")
+  }),
+  bundle({
+    entry: path.join(repoRoot, "apps/api/src/revocation-cleanup-worker.ts"),
+    outfile: path.join(outDir, "revocation-cleanup-worker/index.js")
+  }),
+  bundle({
     entry: path.join(infraDir, "functions/s3-vectors-custom-resource.ts"),
     outfile: path.join(outDir, "s3-vectors-provider/index.js")
   }),

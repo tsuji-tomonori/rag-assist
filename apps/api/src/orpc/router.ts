@@ -2,9 +2,13 @@ import { implement, ORPCError } from "@orpc/server"
 import { apiContract } from "@memorag-mvp/contract"
 import type { AppUser } from "../auth.js"
 import { hasPermission } from "../authorization.js"
+import {
+  BenchmarkEvaluationContextError,
+  prepareBenchmarkQueryInvocation,
+  prepareBenchmarkSearchInvocation
+} from "../benchmark/evaluation-context.js"
 import type { Dependencies } from "../dependencies.js"
 import type { MemoRagService } from "../rag/memorag-service.js"
-import type { BenchmarkSearchRequest } from "@memorag-mvp/contract"
 
 export type OrpcContext = {
   deps: Dependencies
@@ -41,34 +45,14 @@ export const orpcRouter = api.router({
   benchmark: {
     query: api.benchmark.query.handler(async ({ input, context }) => {
       requireOrpcPermission(context.user, "benchmark:query")
-      const result = await context.service.chat({
-        ...input,
-        includeDebug: input.includeDebug ?? true,
-        searchFilters: {
-          source: "benchmark-runner",
-          docType: "benchmark-corpus",
-          benchmarkSuiteId: input.benchmarkSuiteId
-        }
-      }, context.user)
-      return { id: input.id, ...result }
+      const invocation = benchmarkOrpc(() => prepareBenchmarkQueryInvocation(input, context.user))
+      const result = await context.service.chat(invocation.serviceInput, invocation.subject)
+      return { id: invocation.id, ...result }
     }),
     search: api.benchmark.search.handler(async ({ input, context }) => {
       requireOrpcPermission(context.user, "benchmark:query")
-      const { user: requestUser, benchmarkSuiteId, ...searchInput } = input
-      if (requestUser) {
-        throw new ORPCError("BAD_REQUEST", { message: "Benchmark search user override is not supported" })
-      }
-
-      const benchmarkFilterSuiteId = benchmarkSuiteId ?? searchInput.filters?.benchmarkSuiteId
-      if (benchmarkFilterSuiteId) {
-        searchInput.filters = {
-          ...(searchInput.filters ?? {}),
-          source: "benchmark-runner",
-          docType: "benchmark-corpus",
-          benchmarkSuiteId: benchmarkFilterSuiteId
-        }
-      }
-      return context.service.search(searchInput, benchmarkSearchUser(context.user, requestUser))
+      const invocation = benchmarkOrpc(() => prepareBenchmarkSearchInvocation(input, context.user))
+      return context.service.search(invocation.serviceInput, invocation.subject)
     })
   }
 })
@@ -79,7 +63,13 @@ function requireOrpcPermission(user: AppUser, permission: Parameters<typeof hasP
   }
 }
 
-function benchmarkSearchUser(runnerUser: AppUser, requestUser: BenchmarkSearchRequest["user"]): AppUser {
-  if (!requestUser) return runnerUser
-  throw new ORPCError("BAD_REQUEST", { message: "Benchmark search user override is not supported" })
+function benchmarkOrpc<T>(resolve: () => T): T {
+  try {
+    return resolve()
+  } catch (error) {
+    if (!(error instanceof BenchmarkEvaluationContextError)) throw error
+    if (error.status === 400) throw new ORPCError("BAD_REQUEST", { message: error.message })
+    if (error.status === 403) throw new ORPCError("FORBIDDEN", { message: error.message })
+    throw new ORPCError("SERVICE_UNAVAILABLE", { message: error.message })
+  }
 }

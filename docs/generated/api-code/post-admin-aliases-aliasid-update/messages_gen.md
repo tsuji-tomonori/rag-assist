@@ -17,8 +17,8 @@
 | M002 | OpenAPI contract | `401` | 認証が必要です。 | OpenAPI で宣言された HTTP 401 response | runtime OpenAPI |
 | M003 | OpenAPI contract | `403` | 対象操作を実行する権限がありません。 | OpenAPI で宣言された HTTP 403 response | runtime OpenAPI |
 | M004 | OpenAPI contract | `404` | 指定したリソースが見つかりません。 | OpenAPI で宣言された HTTP 404 response | runtime OpenAPI |
-| M005 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:267 (requirePermission)` |
-| M006 | HTTP 実装応答 | `404` | Alias not found | `alias` が存在しない、または偽である | `apps/api/src/routes/admin-routes.ts:292 (POST /admin/aliases/{aliasId}/update handler)` |
+| M005 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| M006 | HTTP 実装応答 | `404` | Alias not found | `alias` が存在しない、または偽である | `apps/api/src/routes/admin-routes.ts:384 (POST /admin/aliases/{aliasId}/update handler)` |
 
 ## 読み方
 

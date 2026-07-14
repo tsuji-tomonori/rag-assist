@@ -49,7 +49,7 @@
 | 識別子 | `FR-086` |
 | 説明 | security-impacting mutation の結果を横断可能にする共通 audit event |
 | 根拠 | 権限変更の追跡、インシデント調査、否認防止、policy decision の再現性を確保する |
-| 源泉 | RAG ガイド（PDF pp.188–189）、`docs/spec-recovery/14_authorization_sharing_matrix_202607.md` §§7–8、`ARC_ADR_004` follow-up、current document/admin audit |
+| 源泉 | RAG ガイド（PDF pp.188–189）、`docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md` の Authorization/Sharing 不変条件と `GAP-RD-022`、`ARC_ADR_004` follow-up、current document/admin audit |
 | Actor / trigger | share/membership/administrative-principal-transfer/classification/usage/quality-approval/move/delete/account/role mutation が success/denied/conflict/failed のいずれかで終了するとき |
 | 種類 | 機能要求 / security audit |
 | 依存関係 | `FR-056`, `FR-057`, `FR-076`, `FR-078`, `FR-081`, `FR-085`, authoritative audit store |
@@ -94,6 +94,7 @@
 | 実現可能性 | OK | transaction、durable publication intent、または mutation result と相関可能な event store で実現可能 |
 | 検証可能性 | OK | 操作×結果の matrix、必須 field schema、audit-write failure injection、state/event correlation で検証できる |
 | ニーズ適合 | OK | 管理者・監査担当が権限変更の主体、対象、理由、結果を横断調査できる |
+| 実装適合 | OK（confirmed） | `security-mutation-audit-outbox.ts` と各 mutation service/coordinator が state/audit intent を相関可能に確定し、success/reject/write-failure/reconciliation tests を持つ |
 
 ## トレース
 

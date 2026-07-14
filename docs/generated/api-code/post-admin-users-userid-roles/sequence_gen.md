@@ -14,24 +14,53 @@ sequenceDiagram
   participant Store as Store
   participant External as External
   Client->>API: POST /admin/users/{userId}/roles
-  Note over API: 分岐 actor.userId が userId と等しい
-  Note over API: 分岐 wantsSystemAdmin が存在し、真である、かつ isSystemAdmin が存在しない、または偽である
+  Note over API: 分岐 例外が発生した場合に catch 処理へ移る
+  Note over API: 分岐 error が ApplicationRoleMutationError の instance である
+  Note over API: 分岐 error.result が "denied" と等しい
   Note over API: 分岐 user が存在しない、または偽である
   API->>Auth: 認証済み利用者を request context から取得する。
   API->>Auth: "access：role：assign" permission を必須条件として確認する。
   API->>Auth: schema 検証済みの path parameter を取得する。
   API->>Auth: schema 検証済みの JSON request body を取得する。
-  API-->>Client: HTTP 403 で JSON response を返す。
-  API-->>Client: HTTP 403 で JSON response を返す。
   API->>Service: service の assign user roles 処理を呼び出す。
   Service->>Store: this に対して load admin ledger を実行する。
   Service->>Store: this.deps.objectStore に対して get text を実行する。
   Service->>External: this へ sync user directory を実行する。
   Service->>External: this.deps.userDirectory へ list users を実行する。
-  Service->>External: this.deps.userDirectory? へ set user groups を実行する。
+  Service->>External: this.deps.verifiedIdentityProvider へ get current identity by subject を実行する。
   API->>Service: service の append admin audit log 処理を呼び出す。
   Service->>Store: this に対して save admin ledger を実行する。
   Service->>Store: this.deps.objectStore に対して put text を実行する。
+  Service->>External: this.deps.identityProvider へ get current identity by subject を実行する。
+  Service->>External: this.deps.userDirectory へ list users を実行する。
+  Service->>External: (await this.deps.userDirectory.listUsers()) へ filter を実行する。
+  Service->>Store: this.objectStore に対して get text with version を実行する。
+  Service->>Store: this.objectStore に対して put text if version を実行する。
+  Service->>Store: this.objectStore に対して get text with version を実行する。
+  Service->>External: this.deps.userDirectory へ revoke sessions を実行する。
+  Service->>External: this.deps.userDirectory へ replace application roles を実行する。
+  Service->>Store: this.objectStore に対して get text with version を実行する。
+  Service->>Store: validateStored に対して validate stored を実行する。
+  Service->>Store: this.objectStore に対して put text if version を実行する。
+  Service->>Store: this.objectStore に対して list keys を実行する。
+  Service->>Store: new ObjectStoreRevocationCleanupTenantRegistry(this.objectStore) に対して register を実行する。
+  Service->>Store: this.objectStore に対して get text を実行する。
+  Service->>Store: this.objectStore に対して put text if version を実行する。
+  Service->>Store: this.objectStore に対して put text if version を実行する。
+  Service->>External: this.deps.userDirectory へ revoke sessions を実行する。
+  Service->>External: this.deps.userDirectory へ replace application roles を実行する。
+  Service->>Store: new ObjectStoreRevocationCleanupTenantRegistry(this.objectStore, this.now) に対して register を実行する。
+  Service->>Store: objectStore に対して get text with version を実行する。
+  Service->>Store: this.objectStore に対して put text if version を実行する。
+  Service->>External: this.deps.userDirectory へ revoke sessions を実行する。
+  Service->>External: this.deps.userDirectory へ replace application roles を実行する。
+  Service->>External: this.deps.userDirectory へ revoke sessions を実行する。
+  Service->>External: this.deps.userDirectory.revokeSessions(target.username) へ catch を実行する。
+  Service->>External: this.deps.identityProvider へ get current identity by subject を実行する。
+  Service->>External: this.deps.userDirectory? へ set user groups を実行する。
+  API->>Service: service の append admin audit log 処理を呼び出す。
+  Service->>Store: this に対して save admin ledger を実行する。
+  API-->>Client: HTTP error.result === "denied" ? 403 ： 503 で JSON response を返す。
   API-->>Client: HTTP 404 で JSON response を返す。
   API-->>Client: HTTP 200 で JSON response を返す。
 ```
@@ -40,31 +69,65 @@ sequenceDiagram
 
 | # | Caller | 境界 | 処理 | コード | 実装位置 |
 | ---: | --- | --- | --- | --- | --- |
-| 1 | `POST /admin/users/{userId}/roles handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/admin-routes.ts:139 (POST /admin/users/{userId}/roles handler)` |
-| 2 | `POST /admin/users/{userId}/roles handler` | Auth | "access:role:assign" permission を必須条件として確認する。 | `requirePermission(actor, "access:role:assign")` | `apps/api/src/routes/admin-routes.ts:140 (POST /admin/users/{userId}/roles handler)` |
-| 3 | `POST /admin/users/{userId}/roles handler` | Validation | schema 検証済みの path parameter を取得する。 | `validParam<{ userId: string }>(c)` | `apps/api/src/routes/admin-routes.ts:141 (POST /admin/users/{userId}/roles handler)` |
-| 4 | `POST /admin/users/{userId}/roles handler` | Validation | schema 検証済みの JSON request body を取得する。 | `validJson<z.infer<typeof AssignUserRolesRequestSchema>>(c)` | `apps/api/src/routes/admin-routes.ts:142 (POST /admin/users/{userId}/roles handler)` |
-| 5 | `POST /admin/users/{userId}/roles handler` | HTTP/SSE | HTTP 403 で JSON response を返す。 | `c.json({ error: "Self role assignment is forbidden" }, 403)` | `apps/api/src/routes/admin-routes.ts:143 (POST /admin/users/{userId}/roles handler)` |
-| 6 | `POST /admin/users/{userId}/roles handler` | HTTP/SSE | HTTP 403 で JSON response を返す。 | `c.json({ error: "Forbidden role assignment" }, 403)` | `apps/api/src/routes/admin-routes.ts:146 (POST /admin/users/{userId}/roles handler)` |
-| 7 | `POST /admin/users/{userId}/roles handler` | Service | service の assign user roles 処理を呼び出す。 | `service.assignUserRoles(actor, userId, body.groups)` | `apps/api/src/routes/admin-routes.ts:147 (POST /admin/users/{userId}/roles handler)` |
-| 8 | `MemoRagService.assignUserRoles` | Store | `this` に対して load admin ledger を実行する。 | `this.loadAdminLedger(actor, { syncUserDirectory: true })` | `apps/api/src/rag/memorag-service.ts:891 (MemoRagService.assignUserRoles)` |
-| 9 | `MemoRagService.loadAdminLedger` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(adminLedgerKey)` | `apps/api/src/rag/memorag-service.ts:1515 (MemoRagService.loadAdminLedger)` |
-| 10 | `MemoRagService.loadAdminLedger` | External | `this` へ sync user directory を実行する。 | `this.syncUserDirectory(db)` | `apps/api/src/rag/memorag-service.ts:1556 (MemoRagService.loadAdminLedger)` |
-| 11 | `MemoRagService.syncUserDirectory` | External | `this.deps.userDirectory` へ list users を実行する。 | `this.deps.userDirectory.listUsers()` | `apps/api/src/rag/memorag-service.ts:1563 (MemoRagService.syncUserDirectory)` |
-| 12 | `MemoRagService.assignUserRoles` | External | `this.deps.userDirectory?` へ set user groups を実行する。 | `this.deps.userDirectory?.setUserGroups?.(user.email, user.groups)` | `apps/api/src/rag/memorag-service.ts:898 (MemoRagService.assignUserRoles)` |
-| 13 | `MemoRagService.assignUserRoles` | Service | service の append admin audit log 処理を呼び出す。 | `this.appendAdminAuditLog(db, actor, user, "role:assign", user.status, user.status, beforeGroups, user.groups, user.updatedAt)` | `apps/api/src/rag/memorag-service.ts:899 (MemoRagService.assignUserRoles)` |
-| 14 | `MemoRagService.assignUserRoles` | Store | `this` に対して save admin ledger を実行する。 | `this.saveAdminLedger(db)` | `apps/api/src/rag/memorag-service.ts:900 (MemoRagService.assignUserRoles)` |
-| 15 | `MemoRagService.saveAdminLedger` | Store | `this.deps.objectStore` に対して put text を実行する。 | `this.deps.objectStore.putText(adminLedgerKey, JSON.stringify(db, null, 2), "application/json")` | `apps/api/src/rag/memorag-service.ts:1598 (MemoRagService.saveAdminLedger)` |
-| 16 | `POST /admin/users/{userId}/roles handler` | HTTP/SSE | HTTP 404 で JSON response を返す。 | `c.json({ error: "User not found" }, 404)` | `apps/api/src/routes/admin-routes.ts:148 (POST /admin/users/{userId}/roles handler)` |
-| 17 | `POST /admin/users/{userId}/roles handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json(user, 200)` | `apps/api/src/routes/admin-routes.ts:149 (POST /admin/users/{userId}/roles handler)` |
+| 1 | `POST /admin/users/{userId}/roles handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/admin-routes.ts:223 (POST /admin/users/{userId}/roles handler)` |
+| 2 | `POST /admin/users/{userId}/roles handler` | Auth | "access:role:assign" permission を必須条件として確認する。 | `requirePermission(actor, "access:role:assign")` | `apps/api/src/routes/admin-routes.ts:224 (POST /admin/users/{userId}/roles handler)` |
+| 3 | `POST /admin/users/{userId}/roles handler` | Validation | schema 検証済みの path parameter を取得する。 | `validParam<{ userId: string }>(c)` | `apps/api/src/routes/admin-routes.ts:225 (POST /admin/users/{userId}/roles handler)` |
+| 4 | `POST /admin/users/{userId}/roles handler` | Validation | schema 検証済みの JSON request body を取得する。 | `validJson<z.infer<typeof AssignUserRolesRequestSchema>>(c)` | `apps/api/src/routes/admin-routes.ts:226 (POST /admin/users/{userId}/roles handler)` |
+| 5 | `POST /admin/users/{userId}/roles handler` | Service | service の assign user roles 処理を呼び出す。 | `service.assignUserRoles(actor, userId, body.groups, body.reason)` | `apps/api/src/routes/admin-routes.ts:229 (POST /admin/users/{userId}/roles handler)` |
+| 6 | `MemoRagService.assignUserRoles` | Store | `this` に対して load admin ledger を実行する。 | `this.loadAdminLedger(actor, { syncUserDirectory: true })` | `apps/api/src/rag/memorag-service.ts:1632 (MemoRagService.assignUserRoles)` |
+| 7 | `MemoRagService.loadAdminLedger` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(adminLedgerKey)` | `apps/api/src/rag/memorag-service.ts:2864 (MemoRagService.loadAdminLedger)` |
+| 8 | `MemoRagService.loadAdminLedger` | External | `this` へ sync user directory を実行する。 | `this.syncUserDirectory(db)` | `apps/api/src/rag/memorag-service.ts:2905 (MemoRagService.loadAdminLedger)` |
+| 9 | `MemoRagService.syncUserDirectory` | External | `this.deps.userDirectory` へ list users を実行する。 | `this.deps.userDirectory.listUsers()` | `apps/api/src/rag/memorag-service.ts:2912 (MemoRagService.syncUserDirectory)` |
+| 10 | `MemoRagService.syncUserDirectory` | External | `this.deps.verifiedIdentityProvider` へ get current identity by subject を実行する。 | `this.deps.verifiedIdentityProvider.getCurrentIdentityBySubject(directoryUser.userId)` | `apps/api/src/rag/memorag-service.ts:2917 (MemoRagService.syncUserDirectory)` |
+| 11 | `MemoRagService.assignUserRoles` | Service | service の append admin audit log 処理を呼び出す。 | `this.appendAdminAuditLog(db, actor, user, "role:assign", user.status, user.status, beforeGroups, user.groups, user.updatedAt)` | `apps/api/src/rag/memorag-service.ts:1655 (MemoRagService.assignUserRoles)` |
+| 12 | `MemoRagService.assignUserRoles` | Store | `this` に対して save admin ledger を実行する。 | `this.saveAdminLedger(db)` | `apps/api/src/rag/memorag-service.ts:1656 (MemoRagService.assignUserRoles)` |
+| 13 | `MemoRagService.saveAdminLedger` | Store | `this.deps.objectStore` に対して put text を実行する。 | `this.deps.objectStore.putText(adminLedgerKey, JSON.stringify(db, null, 2), "application/json")` | `apps/api/src/rag/memorag-service.ts:2960 (MemoRagService.saveAdminLedger)` |
+| 14 | `ApplicationRoleMutationService.resolveIdentity` | External | `this.deps.identityProvider` へ get current identity by subject を実行する。 | `this.deps.identityProvider.getCurrentIdentityBySubject(subject)` | `apps/api/src/security/application-role-mutation-service.ts:335 (ApplicationRoleMutationService.resolveIdentity)` |
+| 15 | `ApplicationRoleMutationService.validate` | External | `this.deps.userDirectory` へ list users を実行する。 | `this.deps.userDirectory.listUsers()` | `apps/api/src/security/application-role-mutation-service.ts:310 (ApplicationRoleMutationService.validate)` |
+| 16 | `ApplicationRoleMutationService.validate` | External | `(await this.deps.userDirectory.listUsers())` へ filter を実行する。 | `(await this.deps.userDirectory.listUsers()).filter((candidate) => ( candidate.userId !== target.userId && candidate.status === "active" && candidate.groups.includes("SYSTEM_ADMIN") ))` | `apps/api/src/security/application-role-mutation-service.ts:310 (ApplicationRoleMutationService.validate)` |
+| 17 | `ObjectStoreApplicationRoleMutationLock.read` | Store | `this.objectStore` に対して get text with version を実行する。 | `this.objectStore.getTextWithVersion(key)` | `apps/api/src/security/application-role-mutation-lock.ts:248 (ObjectStoreApplicationRoleMutationLock.read)` |
+| 18 | `ObjectStoreApplicationRoleMutationLock.write` | Store | `this.objectStore` に対して put text if version を実行する。 | `this.objectStore.putTextIfVersion(key, JSON.stringify(record, null, 2), expectedVersion, "application/json")` | `apps/api/src/security/application-role-mutation-lock.ts:264 (ObjectStoreApplicationRoleMutationLock.write)` |
+| 19 | `ObjectStoreApplicationRoleMutationLock.write` | Store | `this.objectStore` に対して get text with version を実行する。 | `this.objectStore.getTextWithVersion(key)` | `apps/api/src/security/application-role-mutation-lock.ts:265 (ObjectStoreApplicationRoleMutationLock.write)` |
+| 20 | `ApplicationRoleMutationService.recoverExpiredMutation` | External | `this.deps.userDirectory` へ revoke sessions を実行する。 | `this.deps.userDirectory.revokeSessions(record.targetUsername)` | `apps/api/src/security/application-role-mutation-service.ts:406 (ApplicationRoleMutationService.recoverExpiredMutation)` |
+| 21 | `ApplicationRoleMutationService.recoverExpiredMutation` | External | `this.deps.userDirectory` へ replace application roles を実行する。 | `this.deps.userDirectory.replaceApplicationRoles(record.targetUsername, { expectedRoles: currentRoles, desiredRoles: record.expectedRoles, operationId: record.operationId, fencingToken: recoveryLease.record.fencingToken,…` | `apps/api/src/security/application-role-mutation-service.ts:407 (ApplicationRoleMutationService.recoverExpiredMutation)` |
+| 22 | `ObjectStoreRevocationCleanupRepairOutbox.read` | Store | `this.objectStore` に対して get text with version を実行する。 | `this.objectStore.getTextWithVersion(key)` | `apps/api/src/rag/_shared/security/revocation-cleanup-repair-outbox.ts:163 (ObjectStoreRevocationCleanupRepairOutbox.read)` |
+| 23 | `ObjectStoreRevocationCleanupRepairOutbox.read` | Store | `validateStored` に対して validate stored を実行する。 | `validateStored(value)` | `apps/api/src/rag/_shared/security/revocation-cleanup-repair-outbox.ts:165 (ObjectStoreRevocationCleanupRepairOutbox.read)` |
+| 24 | `ObjectStoreRevocationCleanupRepairOutbox.transition` | Store | `this.objectStore` に対して put text if version を実行する。 | `this.objectStore.putTextIfVersion(key, JSON.stringify(next, null, 2), stored.version, "application/json")` | `apps/api/src/rag/_shared/security/revocation-cleanup-repair-outbox.ts:152 (ObjectStoreRevocationCleanupRepairOutbox.transition)` |
+| 25 | `ObjectStoreRevocationCleanupRepairOutbox.assertResourceFenceReleased` | Store | `this.objectStore` に対して list keys を実行する。 | `this.objectStore.listKeys(prefix)` | `apps/api/src/rag/_shared/security/revocation-cleanup-repair-outbox.ts:109 (ObjectStoreRevocationCleanupRepairOutbox.assertResourceFenceReleased)` |
+| 26 | `ObjectStoreRevocationCleanupRepairOutbox.prepare` | Store | `new ObjectStoreRevocationCleanupTenantRegistry(this.objectStore)` に対して register を実行する。 | `new ObjectStoreRevocationCleanupTenantRegistry(this.objectStore).register(registration.tenantId)` | `apps/api/src/rag/_shared/security/revocation-cleanup-repair-outbox.ts:54 (ObjectStoreRevocationCleanupRepairOutbox.prepare)` |
+| 27 | `ObjectStoreRevocationCleanupTenantRegistry.read` | Store | `this.objectStore` に対して get text を実行する。 | `this.objectStore.getText(key)` | `apps/api/src/rag/_shared/security/revocation-cleanup-tenant-registry.ts:116 (ObjectStoreRevocationCleanupTenantRegistry.read)` |
+| 28 | `ObjectStoreRevocationCleanupTenantRegistry.register` | Store | `this.objectStore` に対して put text if version を実行する。 | `this.objectStore.putTextIfVersion(key, JSON.stringify(record, null, 2), undefined, "application/json")` | `apps/api/src/rag/_shared/security/revocation-cleanup-tenant-registry.ts:41 (ObjectStoreRevocationCleanupTenantRegistry.register)` |
+| 29 | `ObjectStoreRevocationCleanupRepairOutbox.prepare` | Store | `this.objectStore` に対して put text if version を実行する。 | `this.objectStore.putTextIfVersion(key, JSON.stringify(intent, null, 2), undefined, "application/json")` | `apps/api/src/rag/_shared/security/revocation-cleanup-repair-outbox.ts:74 (ObjectStoreRevocationCleanupRepairOutbox.prepare)` |
+| 30 | `ApplicationRoleMutationService.replaceRoles` | External | `this.deps.userDirectory` へ revoke sessions を実行する。 | `this.deps.userDirectory.revokeSessions(target.username)` | `apps/api/src/security/application-role-mutation-service.ts:215 (ApplicationRoleMutationService.replaceRoles)` |
+| 31 | `ApplicationRoleMutationService.replaceRoles` | External | `this.deps.userDirectory` へ replace application roles を実行する。 | `this.deps.userDirectory.replaceApplicationRoles(target.username, { expectedRoles: beforeRoles, desiredRoles: afterRoles, operationId: lease.record.operationId, fencingToken: lease.record.fencingToken, assertFence })` | `apps/api/src/security/application-role-mutation-service.ts:216 (ApplicationRoleMutationService.replaceRoles)` |
+| 32 | `ObjectStoreRevocationCleanupCoordinator.register` | Store | `new ObjectStoreRevocationCleanupTenantRegistry(this.objectStore, this.now)` に対して register を実行する。 | `new ObjectStoreRevocationCleanupTenantRegistry(this.objectStore, this.now).register(normalized.tenantId)` | `apps/api/src/rag/_shared/security/revocation-cleanup-coordinator.ts:137 (ObjectStoreRevocationCleanupCoordinator.register)` |
+| 33 | `readManifest` | Store | `objectStore` に対して get text with version を実行する。 | `objectStore.getTextWithVersion(key)` | `apps/api/src/rag/_shared/security/revocation-cleanup-coordinator.ts:636 (readManifest)` |
+| 34 | `ObjectStoreRevocationCleanupCoordinator.register` | Store | `this.objectStore` に対して put text if version を実行する。 | `this.objectStore.putTextIfVersion(key, JSON.stringify(manifest, null, 2), undefined, "application/json")` | `apps/api/src/rag/_shared/security/revocation-cleanup-coordinator.ts:169 (ObjectStoreRevocationCleanupCoordinator.register)` |
+| 35 | `ApplicationRoleMutationService.rollbackUnderFence` | External | `this.deps.userDirectory` へ revoke sessions を実行する。 | `this.deps.userDirectory.revokeSessions(target.username)` | `apps/api/src/security/application-role-mutation-service.ts:461 (ApplicationRoleMutationService.rollbackUnderFence)` |
+| 36 | `ApplicationRoleMutationService.rollbackUnderFence` | External | `this.deps.userDirectory` へ replace application roles を実行する。 | `this.deps.userDirectory.replaceApplicationRoles(target.username, { expectedRoles: currentRoles, desiredRoles: beforeRoles, operationId: lease.record.operationId, fencingToken: lease.record.fencingToken, assertFence })` | `apps/api/src/security/application-role-mutation-service.ts:462 (ApplicationRoleMutationService.rollbackUnderFence)` |
+| 37 | `ApplicationRoleMutationService.rollbackUnderFence` | External | `this.deps.userDirectory` へ revoke sessions を実行する。 | `this.deps.userDirectory.revokeSessions(target.username)` | `apps/api/src/security/application-role-mutation-service.ts:478 (ApplicationRoleMutationService.rollbackUnderFence)` |
+| 38 | `ApplicationRoleMutationService.rollbackUnderFence` | External | `this.deps.userDirectory.revokeSessions(target.username)` へ catch を実行する。 | `this.deps.userDirectory.revokeSessions(target.username).catch(() => undefined)` | `apps/api/src/security/application-role-mutation-service.ts:478 (ApplicationRoleMutationService.rollbackUnderFence)` |
+| 39 | `ApplicationRoleMutationService.resolveIdentityBestEffort` | External | `this.deps.identityProvider` へ get current identity by subject を実行する。 | `this.deps.identityProvider.getCurrentIdentityBySubject(subject)` | `apps/api/src/security/application-role-mutation-service.ts:343 (ApplicationRoleMutationService.resolveIdentityBestEffort)` |
+| 40 | `MemoRagService.assignUserRoles` | External | `this.deps.userDirectory?` へ set user groups を実行する。 | `this.deps.userDirectory?.setUserGroups?.(user.email, user.groups)` | `apps/api/src/rag/memorag-service.ts:1674 (MemoRagService.assignUserRoles)` |
+| 41 | `MemoRagService.assignUserRoles` | Service | service の append admin audit log 処理を呼び出す。 | `this.appendAdminAuditLog(db, actor, user, "role:assign", user.status, user.status, beforeGroups, user.groups, user.updatedAt)` | `apps/api/src/rag/memorag-service.ts:1675 (MemoRagService.assignUserRoles)` |
+| 42 | `MemoRagService.assignUserRoles` | Store | `this` に対して save admin ledger を実行する。 | `this.saveAdminLedger(db)` | `apps/api/src/rag/memorag-service.ts:1676 (MemoRagService.assignUserRoles)` |
+| 43 | `POST /admin/users/{userId}/roles handler` | HTTP/SSE | HTTP error.result === "denied" ? 403 : 503 で JSON response を返す。 | `c.json({ error: error.result === "denied" ? "Forbidden role assignment" : "Role mutation unavailable" }, error.result === "denied" ? 403 : 503)` | `apps/api/src/routes/admin-routes.ts:232 (POST /admin/users/{userId}/roles handler)` |
+| 44 | `POST /admin/users/{userId}/roles handler` | HTTP/SSE | HTTP 404 で JSON response を返す。 | `c.json({ error: "User not found" }, 404)` | `apps/api/src/routes/admin-routes.ts:236 (POST /admin/users/{userId}/roles handler)` |
+| 45 | `POST /admin/users/{userId}/roles handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json(user, 200)` | `apps/api/src/routes/admin-routes.ts:237 (POST /admin/users/{userId}/roles handler)` |
 
 ## 分岐
 
 | ID | Function | 条件 | 実装位置 |
 | --- | --- | --- | --- |
-| B001 | `POST /admin/users/{userId}/roles handler` | `actor.userId` が `userId` と等しい | `apps/api/src/routes/admin-routes.ts:143 (POST /admin/users/{userId}/roles handler)` |
-| B002 | `POST /admin/users/{userId}/roles handler` | `wantsSystemAdmin` が存在し、真である、かつ `isSystemAdmin` が存在しない、または偽である | `apps/api/src/routes/admin-routes.ts:146 (POST /admin/users/{userId}/roles handler)` |
-| B003 | `POST /admin/users/{userId}/roles handler` | `user` が存在しない、または偽である | `apps/api/src/routes/admin-routes.ts:148 (POST /admin/users/{userId}/roles handler)` |
-| B004 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:267 (requirePermission)` |
-| B005 | `MemoRagService.assignUserRoles` | `user` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:893 (MemoRagService.assignUserRoles)` |
-| B006 | `MemoRagService.assignUserRoles` | `user.groups.length` が `0` と等しい | `apps/api/src/rag/memorag-service.ts:896 (MemoRagService.assignUserRoles)` |
+| B001 | `POST /admin/users/{userId}/roles handler` | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/admin-routes.ts:230 (POST /admin/users/{userId}/roles handler)` |
+| B002 | `POST /admin/users/{userId}/roles handler` | `error` が `ApplicationRoleMutationError` の instance である | `apps/api/src/routes/admin-routes.ts:231 (POST /admin/users/{userId}/roles handler)` |
+| B003 | `POST /admin/users/{userId}/roles handler` | `error.result` が `"denied"` と等しい | `apps/api/src/routes/admin-routes.ts:232 (POST /admin/users/{userId}/roles handler)` |
+| B004 | `POST /admin/users/{userId}/roles handler` | `user` が存在しない、または偽である | `apps/api/src/routes/admin-routes.ts:236 (POST /admin/users/{userId}/roles handler)` |
+| B005 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| B006 | `MemoRagService.assignUserRoles` | `user` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1634 (MemoRagService.assignUserRoles)` |
+| B007 | `MemoRagService.assignUserRoles` | `this.deps.verifiedIdentityProvider` が存在し、真である、かつ `this.deps.userDirectory` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1637 (MemoRagService.assignUserRoles)` |
+| B008 | `MemoRagService.assignUserRoles` | `config.authEnabled` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1663 (MemoRagService.assignUserRoles)` |
+| B009 | `MemoRagService.assignUserRoles` | `actor.userId` が `userId` と等しい | `apps/api/src/rag/memorag-service.ts:1664 (MemoRagService.assignUserRoles)` |
+| B010 | `MemoRagService.assignUserRoles` | `normalizedGroups` が "SYSTEM_ADMIN" を含む、かつ `actor.cognitoGroups` が "SYSTEM_ADMIN" を含まない | `apps/api/src/rag/memorag-service.ts:1665 (MemoRagService.assignUserRoles)` |
+| B011 | `MemoRagService.assignUserRoles` | `beforeGroups` が "SYSTEM_ADMIN" を含む、かつ `normalizedGroups` が "SYSTEM_ADMIN" を含まない、かつ some の判定結果が真ではない | `apps/api/src/rag/memorag-service.ts:1667 (MemoRagService.assignUserRoles)` |
+| B012 | `MemoRagService.assignUserRoles` | `user.groups.length` が `0` と等しい | `apps/api/src/rag/memorag-service.ts:1672 (MemoRagService.assignUserRoles)` |

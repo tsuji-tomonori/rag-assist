@@ -72,6 +72,6 @@
 
 ## 関連文書
 
-- `docs/OPERATIONS.md`
+- `docs/4_運用_OPS/21_監視_MONITORING/OPS_MONITORING_001.md`
 - `docs/3_設計_DES/41_API_API/DES_API_001.md`
 - `docs/1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/07_評価・debug・benchmark/05_benchmark指標/REQ_FUNCTIONAL_019.md`

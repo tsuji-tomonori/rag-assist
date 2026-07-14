@@ -15,13 +15,10 @@ AWS では API Gateway、Lambda、Amazon Bedrock、Amazon S3、Amazon S3 Vectors
 
 ## 主要ドキュメント
 
-- [Requirements](docs/REQUIREMENTS.md): 要件仕様の索引
-- [Architecture](docs/ARCHITECTURE.md): AWS 構成、MemoRAG runtime、no-answer 制御
-- [API Examples](docs/API_EXAMPLES.md): curl での API 実行例
-- [Operations](docs/OPERATIONS.md): ローカル運用、環境変数、AWS デプロイ前チェック
-- [Local Verification](docs/LOCAL_VERIFICATION.md): ローカル検証手順
-- [GitHub Actions Deploy](docs/GITHUB_ACTIONS_DEPLOY.md): GitHub Actions からの CDK deploy 手順
-- [Docs Structure](docs/DOCS_STRUCTURE.md): `docs/` の構成方針
+- [Requirements](docs/1_要求_REQ/README.md): 要件、実装 gap、todo trace の入口
+- [Architecture and docs structure](docs/2_アーキテクチャ_ARC/README.md): アーキテクチャ索引と `docs/` 配置規則
+- [API design](docs/3_設計_DES/41_API_API/DES_API_001.md): API 契約と生成 OpenAPI の位置づけ
+- [Monitoring and verification](docs/4_運用_OPS/21_監視_MONITORING/OPS_MONITORING_001.md): 現行の観測点、初動、docs check
 - [OpenAPI Docs](docs/generated/openapi.md): 生成済み OpenAPI Markdown
 - [API Code Docs](docs/generated/api-code/index.md): API ごとの詳細設計、IF、メッセージ、query、sequence、unit test 自動生成文書
 - [Web UI Inventory](docs/generated/web-overview.md): Web UI 自動生成インベントリ
@@ -64,7 +61,7 @@ task memorag:verify
 
 ## デプロイ
 
-詳細は [GitHub Actions Deploy](docs/GITHUB_ACTIONS_DEPLOY.md) と [Operations](docs/OPERATIONS.md) を参照してください。
+実行定義は [memorag-deploy.yml](.github/workflows/memorag-deploy.yml) と `Taskfile.yml`、デプロイ後の確認は [監視・検証ランブック](docs/4_運用_OPS/21_監視_MONITORING/OPS_MONITORING_001.md) を正とします。
 
 ```bash
 npm install
@@ -73,3 +70,10 @@ npm run build -w @memorag-mvp/infra
 npm run cdk -w @memorag-mvp/infra -- bootstrap
 npm run cdk -w @memorag-mvp/infra -- deploy
 ```
+
+## Ingest / reindex publication invariants
+
+- 通常 RAG へ公開できるのは、authoritative admission が approved で、抽出・chunk・派生 record の整合性検証を通過した artifact だけです。unknown、partial、quarantined の入力は staging に留まり、vector を公開しません。
+- reindex は tenant、actor、source/version、purpose で一意な run / artifact を使います。各 attempt は lease generation と fencing token を持ち、期限切れ worker の commit は拒否されます。
+- source、block ledger、memory ledger、vector、manifest は attempt 固有 namespace に staging し、全件を再読込・検証してから generation 固有の published namespace へ昇格します。
+- 読み取り経路は durable active pointer を正として current artifact だけを採用します。pointer の conditional write が cutover の単一 winner を決めるため、再試行・並行実行・rollback・reconcile 中も旧版と新版を同時に根拠へ混在させません。

@@ -2,12 +2,12 @@
 
 # POST /document-groups/{groupId}/share IF仕様
 
-- 実装 route: `apps/api/src/routes/document-routes.ts:264 (POST /document-groups/{groupId}/share)`
+- 実装 route: `apps/api/src/routes/document-routes.ts:692 (POST /document-groups/{groupId}/share)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 文書グループ設定を更新する
 
-指定した文書グループの名前、説明、親フォルダ、共有先、権限範囲を更新します。
+legacy compatibility として指定した文書グループの名前と説明だけを更新します。path mutation は dedicated move endpoint、共有先と権限範囲は versioned PUT endpoint を使用します。
 
 ## Headers
 
@@ -33,11 +33,6 @@ Media type: `application/json`
 | --- | --- | --- | --- | --- |
 | `name` | `string` | no | 表示名または項目名。 | minLength=1<br>maxLength=120 |
 | `description` | `string` | no | `data.description` の値。項目名は description を表します。 | maxLength=1000 |
-| `visibility` | `enum(private \| shared \| org)` | no | `data.visibility` の値。項目名は visibility を表します。 | enum=private, shared, org |
-| `parentGroupId` | `string` | no | `data.parentGroupId` の値。項目名は parent group id を表します。 | nullable<br>minLength=1 |
-| `sharedUserIds` | `array<string>` | no | `data.sharedUserIds` の値。項目名は shared user ids を表します。 | maxItems=50 |
-| `sharedGroups` | `array<string>` | no | `data.sharedGroups` の値。項目名は shared groups を表します。 | maxItems=50 |
-| `managerUserIds` | `array<string>` | no | `data.managerUserIds` の値。項目名は manager user ids を表します。 | maxItems=50 |
 
 ## Authorization
 
@@ -49,6 +44,9 @@ Media type: `application/json`
 | 実行可能 role | `RAG_GROUP_MANAGER`, `SYSTEM_ADMIN` |
 | エラーになる role | `CHAT_USER`, `ANSWER_EDITOR`, `BENCHMARK_OPERATOR`, `BENCHMARK_RUNNER`, `ASYNC_AGENT_USER`, `SKILL_PROFILE_ADMIN`, `ASYNC_AGENT_ADMIN`, `USER_ADMIN`, `ACCESS_ADMIN`, `COST_AUDITOR` |
 | 条件付きでエラーになる role | なし |
+
+補足:
+- legacy compatibility route。name / description だけを更新し、move と共有 ACL fields は受理しません。
 
 認証・認可エラー:
 
@@ -65,11 +63,11 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 29 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 34 field(s) |
 | `400` | リクエスト形式または入力値が不正です。 | `application/json` | 2 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
-| `404` | 指定したリソースが見つかりません。 | `application/json` | 2 field(s) |
+| `404` | 指定したリソースが見つかりません。 | `application/json` | 3 field(s) |
 
 ##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
@@ -104,6 +102,11 @@ Media type: `application/json`
 | `effectivePermission` | `enum(none \| readOnly \| full)` | no | `response.effectivePermission` の値。項目名は effective permission を表します。 | enum=none, readOnly, full |
 | `policySource` | `enum(explicit \| inherited \| ownerDefault \| none)` | no | `response.policySource` の値。項目名は policy source を表します。 | enum=explicit, inherited, ownerDefault, none |
 | `inheritedFromFolderId` | `string` | no | `response.inheritedFromFolderId` の値。項目名は inherited from folder id を表します。 | - |
+| `inheritedPolicyId` | `string` | no | `response.inheritedPolicyId` の値。項目名は inherited policy id を表します。 | - |
+| `inheritedPolicyVersion` | `string` | no | `response.inheritedPolicyVersion` の値。項目名は inherited policy version を表します。 | - |
+| `folderLocalPolicyVersion` | `string` | no | `response.folderLocalPolicyVersion` の値。項目名は folder local policy version を表します。 | - |
+| `folderProjectionVersion` | `string` | no | `response.folderProjectionVersion` の値。項目名は folder projection version を表します。 | - |
+| `folderMoveOperationId` | `string` | no | `response.folderMoveOperationId` の値。項目名は folder move operation id を表します。 | - |
 | `createdAt` | `string` | yes | レコードを作成した日時。 | - |
 | `updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
 
@@ -140,5 +143,6 @@ Media type: `application/json`
 
 | 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
-| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
-| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
+| `error` | `enum(Resource unavailable)` | yes | エラー内容を表すメッセージ。 | enum=Resource unavailable |
+| `code` | `enum(RESOURCE_UNAVAILABLE)` | yes | `response.code` の値。項目名は code を表します。 | enum=RESOURCE_UNAVAILABLE |
+| `responseProfileVersion` | `enum(resource-non-enumeration-v1)` | yes | `response.responseProfileVersion` の値。項目名は response profile version を表します。 | enum=resource-non-enumeration-v1 |

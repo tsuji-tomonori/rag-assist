@@ -12,15 +12,15 @@ _静的に直接対応を確認できた test case はありません。`unit-te
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `ALL /rpc/* handler` | if | `result.matched` が存在し、真である | `apps/api/src/app.ts:60 (ALL /rpc/* handler)` |
+| F001 | `ALL /rpc/* handler` | if | `result.matched` が存在し、真である | `apps/api/src/app.ts:62 (ALL /rpc/* handler)` |
 
 ## 3. コード由来テストケース
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | ALL /rpc/* を処理する が成功 response を返す。 | `apps/api/src/app.ts:50 (ALL /rpc/* handler)` |
-| TC002 | F001: 条件成立 | `result.matched` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/app.ts:60 (ALL /rpc/* handler)` |
-| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/app.ts:60 (ALL /rpc/* handler)` |
+| TC001 | 正常系 | ALL /rpc/* を処理する が成功 response を返す。 | `apps/api/src/app.ts:52 (ALL /rpc/* handler)` |
+| TC002 | F001: 条件成立 | `result.matched` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/app.ts:62 (ALL /rpc/* handler)` |
+| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/app.ts:62 (ALL /rpc/* handler)` |
 | TC004 | HTTP 404 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 
 ## 4. 検証方針

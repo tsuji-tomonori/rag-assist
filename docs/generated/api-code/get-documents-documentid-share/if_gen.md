@@ -2,12 +2,12 @@
 
 # GET /documents/{documentId}/share IF仕様
 
-- 実装 route: `apps/api/src/routes/document-routes.ts:323 (GET /documents/{documentId}/share)`
+- 実装 route: `apps/api/src/routes/document-routes.ts:867 (GET /documents/{documentId}/share)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 文書共有設定を取得する
 
-指定した文書の直接共有とフォルダ由来の継承共有を取得します。文書の実効 full 権限と document share permission を持つユーザーだけが共有先一覧を取得できます。
+指定した文書の直接共有、フォルダ由来の継承共有、次回更新で expectedVersion に指定する現在の opaque policy version を取得します。文書の実効 full 権限と document share permission を持つユーザーだけが共有先一覧を取得できます。
 
 ## Headers
 
@@ -55,10 +55,10 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 16 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 17 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
-| `404` | 指定したリソースが見つかりません。 | `application/json` | 2 field(s) |
+| `404` | 指定したリソースが見つかりません。 | `application/json` | 3 field(s) |
 
 ##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
@@ -76,12 +76,13 @@ Media type: `application/json`
 | `directDocumentGrants[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
 | `directDocumentGrants[].principalType` | `enum(user \| group)` | yes | `response.directDocumentGrants[].principalType` の値。項目名は principal type を表します。 | enum=user, group |
 | `directDocumentGrants[].principalId` | `string` | yes | `response.directDocumentGrants[].principalId` の値。項目名は principal id を表します。 | - |
-| `directDocumentGrants[].permissionLevel` | `enum(readOnly \| full)` | yes | `response.directDocumentGrants[].permissionLevel` の値。項目名は permission level を表します。 | enum=readOnly, full |
+| `directDocumentGrants[].permissionLevel` | `enum(deny \| readOnly \| full)` | yes | `response.directDocumentGrants[].permissionLevel` の値。項目名は permission level を表します。 | enum=deny, readOnly, full |
 | `directDocumentGrants[].createdBy` | `string` | yes | `response.directDocumentGrants[].createdBy` の値。項目名は created by を表します。 | - |
 | `directDocumentGrants[].reason` | `string` | yes | 判断や失敗の理由。 | - |
 | `directDocumentGrants[].createdAt` | `string` | yes | レコードを作成した日時。 | - |
 | `directDocumentGrants[].updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
 | `currentUserEffectivePermission` | `enum(none \| readOnly \| full)` | yes | `response.currentUserEffectivePermission` の値。項目名は current user effective permission を表します。 | enum=none, readOnly, full |
+| `version` | `string` | yes | `response.version` の値。項目名は version を表します。 | minLength=1 |
 
 ##### `401` 認証が必要です。
 
@@ -107,5 +108,6 @@ Media type: `application/json`
 
 | 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
-| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
-| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
+| `error` | `enum(Resource unavailable)` | yes | エラー内容を表すメッセージ。 | enum=Resource unavailable |
+| `code` | `enum(RESOURCE_UNAVAILABLE)` | yes | `response.code` の値。項目名は code を表します。 | enum=RESOURCE_UNAVAILABLE |
+| `responseProfileVersion` | `enum(resource-non-enumeration-v1)` | yes | `response.responseProfileVersion` の値。項目名は response profile version を表します。 | enum=resource-non-enumeration-v1 |

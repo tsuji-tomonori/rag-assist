@@ -23,11 +23,11 @@ sequenceDiagram
 
 | # | Caller | 境界 | 処理 | コード | 実装位置 |
 | ---: | --- | --- | --- | --- | --- |
-| 1 | `ALL /rpc/* handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/app.ts:56 (ALL /rpc/* handler)` |
-| 2 | `ALL /rpc/* handler` | HTTP/SSE | HTTP 404 で JSON response を返す。 | `c.json({ error: "oRPC procedure not found" }, 404)` | `apps/api/src/app.ts:61 (ALL /rpc/* handler)` |
+| 1 | `ALL /rpc/* handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/app.ts:58 (ALL /rpc/* handler)` |
+| 2 | `ALL /rpc/* handler` | HTTP/SSE | HTTP 404 で JSON response を返す。 | `c.json({ error: "oRPC procedure not found" }, 404)` | `apps/api/src/app.ts:63 (ALL /rpc/* handler)` |
 
 ## 分岐
 
 | ID | Function | 条件 | 実装位置 |
 | --- | --- | --- | --- |
-| B001 | `ALL /rpc/* handler` | `result.matched` が存在し、真である | `apps/api/src/app.ts:60 (ALL /rpc/* handler)` |
+| B001 | `ALL /rpc/* handler` | `result.matched` が存在し、真である | `apps/api/src/app.ts:62 (ALL /rpc/* handler)` |

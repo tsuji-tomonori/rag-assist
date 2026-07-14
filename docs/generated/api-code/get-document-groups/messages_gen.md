@@ -14,10 +14,15 @@
 | ID | 種別 | Status/Event | メッセージ | 発生条件 | 実装根拠 |
 | --- | --- | --- | --- | --- | --- |
 | M001 | OpenAPI contract | `200` | リクエストは成功し、レスポンス body に結果を返します。 | OpenAPI で宣言された HTTP 200 response | runtime OpenAPI |
-| M002 | OpenAPI contract | `401` | 認証が必要です。 | OpenAPI で宣言された HTTP 401 response | runtime OpenAPI |
-| M003 | OpenAPI contract | `403` | 対象操作を実行する権限がありません。 | OpenAPI で宣言された HTTP 403 response | runtime OpenAPI |
-| M004 | OpenAPI contract | `500` | サーバー内部で処理エラーが発生しました。 | OpenAPI で宣言された HTTP 500 response | runtime OpenAPI |
-| M005 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:267 (requirePermission)` |
+| M002 | OpenAPI contract | `400` | リクエスト形式または入力値が不正です。 | OpenAPI で宣言された HTTP 400 response | runtime OpenAPI |
+| M003 | OpenAPI contract | `401` | 認証が必要です。 | OpenAPI で宣言された HTTP 401 response | runtime OpenAPI |
+| M004 | OpenAPI contract | `403` | 対象操作を実行する権限がありません。 | OpenAPI で宣言された HTTP 403 response | runtime OpenAPI |
+| M005 | OpenAPI contract | `500` | サーバー内部で処理エラーが発生しました。 | OpenAPI で宣言された HTTP 500 response | runtime OpenAPI |
+| M006 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| M007 | 例外 | `-` | invalid cursor payload | test の判定結果が真ではない | `apps/api/src/routes/document-routes.ts:283 (decodeCollectionCursor)` |
+| M008 | 例外 | `-` | non-canonical cursor | `Buffer.from(decoded, "utf-8").toString("base64url")` が `normalized` と異なる | `apps/api/src/routes/document-routes.ts:284 (decodeCollectionCursor)` |
+| M009 | 例外 | `-` | cursor offset overflow | is safe integer の判定結果が真ではない | `apps/api/src/routes/document-routes.ts:286 (decodeCollectionCursor)` |
+| M010 | 例外 | `400` | Invalid cursor | 例外を捕捉した場合 | `apps/api/src/routes/document-routes.ts:289 (decodeCollectionCursor)` |
 
 ## 読み方
 

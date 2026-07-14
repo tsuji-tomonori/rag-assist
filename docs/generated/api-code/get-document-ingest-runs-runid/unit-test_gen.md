@@ -12,25 +12,35 @@ _静的に直接対応を確認できた test case はありません。`unit-te
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `GET /document-ingest-runs/{runId} handler` | if | `run` が存在しない、または偽である | `apps/api/src/routes/document-routes.ts:618 (GET /document-ingest-runs/{runId} handler)` |
-| F002 | `GET /document-ingest-runs/{runId} handler` | if | can read document ingest run の判定結果が真ではない | `apps/api/src/routes/document-routes.ts:619 (GET /document-ingest-runs/{runId} handler)` |
-| F003 | `canReadDocumentIngestRun` | if | 利用者が "chat:read:own" permission を持つ、かつ can read owned run の判定結果が真である | `apps/api/src/routes/document-routes.ts:56 (canReadDocumentIngestRun)` |
+| F001 | `GET /document-ingest-runs/{runId} handler` | if | `run` が存在しない、または偽である、または can read document ingest run の判定結果が真ではない | `apps/api/src/routes/document-routes.ts:1211 (GET /document-ingest-runs/{runId} handler)` |
+| F002 | `uploadTenantId` | if | `purpose` が `"benchmarkSeed"` と等しい | `apps/api/src/routes/document-routes.ts:156 (uploadTenantId)` |
+| F003 | `uploadTenantId` | if | `config.benchmarkEvaluationEnabled` が存在しない、または偽である、または trim の判定結果が真ではない | `apps/api/src/routes/document-routes.ts:157 (uploadTenantId)` |
+| F004 | `uploadTenantId` | 三項条件 | `config.authEnabled` が存在しない、または偽である | `apps/api/src/routes/document-routes.ts:162 (uploadTenantId)` |
+| F005 | `uploadTenantId` | if | `tenantId` が存在しない、または偽である | `apps/api/src/routes/document-routes.ts:163 (uploadTenantId)` |
+| F006 | `canReadDocumentIngestRun` | if | 利用者が "chat:read:own" permission を持つ、かつ can read owned run の判定結果が真である | `apps/api/src/routes/document-routes.ts:97 (canReadDocumentIngestRun)` |
 
 ## 3. コード由来テストケース
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | 文書取り込み run を取得する が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:614 (GET /document-ingest-runs/{runId} handler)` |
-| TC002 | F001: 条件成立 | `run` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:618 (GET /document-ingest-runs/{runId} handler)` |
-| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:618 (GET /document-ingest-runs/{runId} handler)` |
-| TC004 | F002: 条件成立 | can read document ingest run の判定結果が真ではない 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:619 (GET /document-ingest-runs/{runId} handler)` |
-| TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:619 (GET /document-ingest-runs/{runId} handler)` |
-| TC006 | F003: 条件成立 | 利用者が "chat:read:own" permission を持つ、かつ can read owned run の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:56 (canReadDocumentIngestRun)` |
-| TC007 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:56 (canReadDocumentIngestRun)` |
-| TC008 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
-| TC009 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
-| TC010 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
-| TC011 | HTTP 404 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC001 | 正常系 | 文書取り込み run を取得する が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:1205 (GET /document-ingest-runs/{runId} handler)` |
+| TC002 | F001: 条件成立 | `run` が存在しない、または偽である、または can read document ingest run の判定結果が真ではない 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1211 (GET /document-ingest-runs/{runId} handler)` |
+| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1211 (GET /document-ingest-runs/{runId} handler)` |
+| TC004 | F002: 条件成立 | `purpose` が `"benchmarkSeed"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:156 (uploadTenantId)` |
+| TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:156 (uploadTenantId)` |
+| TC006 | F003: 条件成立 | `config.benchmarkEvaluationEnabled` が存在しない、または偽である、または trim の判定結果が真ではない 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:157 (uploadTenantId)` |
+| TC007 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:157 (uploadTenantId)` |
+| TC008 | F004: 条件成立 | `config.authEnabled` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:162 (uploadTenantId)` |
+| TC009 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:162 (uploadTenantId)` |
+| TC010 | F005: 条件成立 | `tenantId` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:163 (uploadTenantId)` |
+| TC011 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:163 (uploadTenantId)` |
+| TC012 | F006: 条件成立 | 利用者が "chat:read:own" permission を持つ、かつ can read owned run の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:97 (canReadDocumentIngestRun)` |
+| TC013 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:97 (canReadDocumentIngestRun)` |
+| TC014 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC015 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC016 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC017 | HTTP 404 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC018 | HTTP 503 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 
 ## 4. 検証方針
 

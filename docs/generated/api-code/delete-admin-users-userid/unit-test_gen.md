@@ -8,25 +8,27 @@
 
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
-| 到達 symbol | service lists all Cognito directory users in the managed user ledger | `apps/api/src/rag/memorag-service.test.ts:1924 (service lists all Cognito directory users in the managed user ledger)` |
-| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:2316 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
+| 到達 symbol | service lists all Cognito directory users in the managed user ledger | `apps/api/src/rag/memorag-service.test.ts:2756 (service lists all Cognito directory users in the managed user ledger)` |
+| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:3117 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
+| 到達 symbol | delete is deny-first and signs out before authoritative deletion | `apps/api/src/security/account-lifecycle-current-identity.test.ts:151 (delete is deny-first and signs out before authoritative deletion)` |
+| 到達 symbol | delete blocks orphan creation and transfers owned folders before authoritative account deletion | `apps/api/src/security/account-lifecycle-current-identity.test.ts:161 (delete blocks orphan creation and transfers owned folders before authoritative account deletion)` |
 
 ## 2. 実装分岐から導くテスト要因
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `DELETE /admin/users/{userId} handler` | if | `user` が存在しない、または偽である | `apps/api/src/routes/admin-routes.ts:211 (DELETE /admin/users/{userId} handler)` |
-| F002 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:267 (requirePermission)` |
+| F001 | `DELETE /admin/users/{userId} handler` | if | `user` が存在しない、または偽である | `apps/api/src/routes/admin-routes.ts:303 (DELETE /admin/users/{userId} handler)` |
+| F002 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
 
 ## 3. コード由来テストケース
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | ユーザーを削除する が成功 response を返す。 | `apps/api/src/routes/admin-routes.ts:206 (DELETE /admin/users/{userId} handler)` |
-| TC002 | F001: 条件成立 | `user` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:211 (DELETE /admin/users/{userId} handler)` |
-| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:211 (DELETE /admin/users/{userId} handler)` |
-| TC004 | F002: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:267 (requirePermission)` |
-| TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:267 (requirePermission)` |
+| TC001 | 正常系 | ユーザーを削除する が成功 response を返す。 | `apps/api/src/routes/admin-routes.ts:297 (DELETE /admin/users/{userId} handler)` |
+| TC002 | F001: 条件成立 | `user` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:303 (DELETE /admin/users/{userId} handler)` |
+| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:303 (DELETE /admin/users/{userId} handler)` |
+| TC004 | F002: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
 | TC006 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC007 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC008 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

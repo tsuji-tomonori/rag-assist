@@ -8,33 +8,42 @@
 
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
-| 到達 symbol | service ingests text, lists manifests, persists debug traces, and deletes all document vectors | `apps/api/src/rag/memorag-service.test.ts:36 (service ingests text, lists manifests, persists debug traces, and deletes all document vectors)` |
-| 到達 symbol | service rejects empty uploads and missing documents | `apps/api/src/rag/memorag-service.test.ts:86 (service rejects empty uploads and missing documents)` |
-| 到達 symbol | asynchronous chat run stores debug trace by reference | `apps/api/src/rag/memorag-service.test.ts:1861 (asynchronous chat run stores debug trace by reference)` |
+| 到達 symbol | FR-074 answer replay carries measured pre/post authorization candidate counts | `apps/api/src/chat-orchestration/graph.test.ts:105 (FR-074 answer replay carries measured pre/post authorization candidate counts)` |
+| 到達 symbol | service ingests text, lists manifests, persists debug traces, and deletes all document vectors | `apps/api/src/rag/memorag-service.test.ts:47 (service ingests text, lists manifests, persists debug traces, and deletes all document vectors)` |
+| 到達 symbol | service rejects empty uploads and missing documents | `apps/api/src/rag/memorag-service.test.ts:127 (service rejects empty uploads and missing documents)` |
+| 到達 symbol | FR-090 chat run treats an authorized final append as the last success boundary | `apps/api/src/rag/memorag-service.test.ts:2206 (FR-090 chat run treats an authorized final append as the last success boundary)` |
+| 到達 symbol | asynchronous chat run stores debug trace by reference | `apps/api/src/rag/memorag-service.test.ts:2445 (asynchronous chat run stores debug trace by reference)` |
+| 到達 symbol | FR-074 asynchronous document ingest success persists tenant-scoped replay evidence | `apps/api/src/rag/memorag-service.test.ts:2483 (FR-074 asynchronous document ingest success persists tenant-scoped replay evidence)` |
+| 到達 symbol | FR-074 rejected document ingest persists observed replay evidence without publishing success | `apps/api/src/rag/memorag-service.test.ts:2520 (FR-074 rejected document ingest persists observed replay evidence without publishing success)` |
+| 到達 symbol | FR-074 worker failure persists an unknown-null replay manifest and a redacted trace | `apps/api/src/rag/memorag-service.test.ts:2561 (FR-074 worker failure persists an unknown-null replay manifest and a redacted trace)` |
+| 到達 symbol | FR-074 cancelled document ingest persists replay evidence without accepting caller trace correlation | `apps/api/src/rag/memorag-service.test.ts:2596 (FR-074 cancelled document ingest persists replay evidence without accepting caller trace correlation)` |
 
 ## 2. 実装分岐から導くテスト要因
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `GET /debug-runs/{runId} handler` | if | `trace` が存在しない、または偽である | `apps/api/src/routes/debug-routes.ts:66 (GET /debug-runs/{runId} handler)` |
-| F002 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:267 (requirePermission)` |
-| F003 | `MemoRagService.getDebugRun` | if | `key` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1047 (MemoRagService.getDebugRun)` |
+| F001 | `GET /debug-runs/{runId} handler` | if | `trace` が存在しない、または偽である | `apps/api/src/routes/debug-routes.ts:70 (GET /debug-runs/{runId} handler)` |
+| F002 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| F003 | `MemoRagService.getDebugRun` | if | `key` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1810 (MemoRagService.getDebugRun)` |
+| F004 | `settleNonEnumerationTiming` | if | `remaining` が `0` より大きい | `apps/api/src/security/public-resource-response.ts:42 (settleNonEnumerationTiming)` |
 
 ## 3. コード由来テストケース
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | debug trace 詳細を取得する が成功 response を返す。 | `apps/api/src/routes/debug-routes.ts:62 (GET /debug-runs/{runId} handler)` |
-| TC002 | F001: 条件成立 | `trace` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/debug-routes.ts:66 (GET /debug-runs/{runId} handler)` |
-| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/debug-routes.ts:66 (GET /debug-runs/{runId} handler)` |
-| TC004 | F002: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:267 (requirePermission)` |
-| TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:267 (requirePermission)` |
-| TC006 | F003: 条件成立 | `key` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1047 (MemoRagService.getDebugRun)` |
-| TC007 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1047 (MemoRagService.getDebugRun)` |
-| TC008 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
-| TC009 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
-| TC010 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
-| TC011 | HTTP 404 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC001 | 正常系 | debug trace 詳細を取得する が成功 response を返す。 | `apps/api/src/routes/debug-routes.ts:64 (GET /debug-runs/{runId} handler)` |
+| TC002 | F001: 条件成立 | `trace` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/debug-routes.ts:70 (GET /debug-runs/{runId} handler)` |
+| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/debug-routes.ts:70 (GET /debug-runs/{runId} handler)` |
+| TC004 | F002: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| TC006 | F003: 条件成立 | `key` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1810 (MemoRagService.getDebugRun)` |
+| TC007 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1810 (MemoRagService.getDebugRun)` |
+| TC008 | F004: 条件成立 | `remaining` が `0` より大きい 場合の response / side effect が実装どおりである。 | `apps/api/src/security/public-resource-response.ts:42 (settleNonEnumerationTiming)` |
+| TC009 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/security/public-resource-response.ts:42 (settleNonEnumerationTiming)` |
+| TC010 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC011 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC012 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC013 | HTTP 404 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 
 ## 4. 検証方針
 

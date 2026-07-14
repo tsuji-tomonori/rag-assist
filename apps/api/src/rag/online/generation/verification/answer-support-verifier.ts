@@ -72,7 +72,7 @@ async function repairUnsupportedAnswer(
   if (!repairedJudgement.supported) return undefined
   return {
     answer: repaired.answer.trim(),
-    citations: repairedChunks.map(toCitation),
+    citations: repairedChunks.map((hit) => toCitation(hit)),
     answerSupport: {
       ...repairedJudgement,
       reason: `unsupported sentence を除去して supported-only 再生成に成功しました。${repairedJudgement.reason}`

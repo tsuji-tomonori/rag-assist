@@ -28,7 +28,7 @@
 | 根拠 | 1 ファイルに複数のプロジェクト運営要求が混在すると、受け入れ条件、検証、PR コメントとの対応を追跡しづらくなるため。 |
 | 源泉 | `AGENTS.md`、repository-local skills、`reports/bugs/20260506-1947-worktree-task-flow-miss.md`、関連作業レポート。 |
 | 種類 | プロジェクト要求、プロセス制約、品質保証制約。 |
-| 依存関係 | `docs/DOCS_STRUCTURE.md`、`skills/docs-swebok-template-writer/SKILL.md`、`skills/worktree-task-pr-flow/SKILL.md`。 |
+| 依存関係 | `docs/2_アーキテクチャ_ARC/README.md`、`skills/docs-swebok-template-writer/SKILL.md`、`skills/worktree-task-pr-flow/SKILL.md`。 |
 | 衝突 | 純粋な質問回答、計画のみの依頼、ユーザーが明示的に worktree / commit / PR を禁止した依頼では、実施範囲に合わせて workflow を調整する。 |
 | 受け入れ基準 | 本文の「受け入れ条件」を正とする。 |
 | 優先度 | High |

@@ -14,11 +14,22 @@
 | ID | 種別 | Status/Event | メッセージ | 発生条件 | 実装根拠 |
 | --- | --- | --- | --- | --- | --- |
 | M001 | OpenAPI contract | `200` | リクエストは成功し、レスポンス body に結果を返します。 | OpenAPI で宣言された HTTP 200 response | runtime OpenAPI |
-| M002 | OpenAPI contract | `401` | 認証が必要です。 | OpenAPI で宣言された HTTP 401 response | runtime OpenAPI |
-| M003 | OpenAPI contract | `403` | 対象操作を実行する権限がありません。 | OpenAPI で宣言された HTTP 403 response | runtime OpenAPI |
-| M004 | OpenAPI contract | `500` | サーバー内部で処理エラーが発生しました。 | OpenAPI で宣言された HTTP 500 response | runtime OpenAPI |
-| M005 | 例外 | `403` | Forbidden | 利用者が "rag:doc:read" permission を持たない、かつ 利用者が "benchmark:seed_corpus" permission を持たない | `apps/api/src/routes/document-routes.ts:316 (GET /documents handler)` |
-| M006 | ログ | `-` | Skipping missing document manifest listed by object store | is missing object error の判定結果が真である | `apps/api/src/rag/memorag-service.ts:365 (MemoRagService.listDocuments)` |
+| M002 | OpenAPI contract | `400` | リクエスト形式または入力値が不正です。 | OpenAPI で宣言された HTTP 400 response | runtime OpenAPI |
+| M003 | OpenAPI contract | `401` | 認証が必要です。 | OpenAPI で宣言された HTTP 401 response | runtime OpenAPI |
+| M004 | OpenAPI contract | `403` | 対象操作を実行する権限がありません。 | OpenAPI で宣言された HTTP 403 response | runtime OpenAPI |
+| M005 | OpenAPI contract | `500` | サーバー内部で処理エラーが発生しました。 | OpenAPI で宣言された HTTP 500 response | runtime OpenAPI |
+| M006 | 例外 | `403` | Forbidden | 利用者が "rag:doc:read" permission を持たない、かつ 利用者が "benchmark:seed_corpus" permission を持たない | `apps/api/src/routes/document-routes.ts:838 (GET /documents handler)` |
+| M007 | 例外 | `-` | Artifact key is invalid | `normalized` が存在しない、または偽である、または `normalized` が ".." を含む | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:127 (normalizeRelativeKey)` |
+| M008 | 例外 | `-` | Authoritative tenant is required | `normalized` が存在しない、または偽である | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:121 (requiredTenantId)` |
+| M009 | 例外 | `-` | Authoritative tenant is required | `normalized` が存在しない、または偽である | `apps/api/src/security/tenant-partition.ts:5 (tenantPartitionId)` |
+| M010 | 例外 | `-` | `Document manifest tenant mismatch${key ? `: ${key}` : ""}` | `manifestTenantId` が存在しない、または偽である、かつ `options.allowMissingTenant` が存在しない、または偽である、または `manifestTenantId` が存在し、真である、かつ `manifestTenantId` が `normalizedTenantId` と異なる | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:111 (assertManifestTenant)` |
+| M011 | 例外 | `-` | Document manifest escaped its authoritative tenant partition | uses legacy global document artifacts の判定結果が真ではない、かつ starts with の判定結果が真ではない | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:96 (readTenantManifestByKey)` |
+| M012 | ログ | `-` | Skipping missing document manifest listed by object store | is missing object error の判定結果が真である | `apps/api/src/rag/memorag-service.ts:760 (MemoRagService.listDocuments)` |
+| M013 | 例外 | `-` | Benchmark evaluation tenant is not configured | `config.benchmarkEvaluationEnabled` が存在しない、または偽である、または `tenantId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:807 (MemoRagService.listBenchmarkDocumentManifests)` |
+| M014 | 例外 | `-` | invalid cursor payload | test の判定結果が真ではない | `apps/api/src/routes/document-routes.ts:283 (decodeCollectionCursor)` |
+| M015 | 例外 | `-` | non-canonical cursor | `Buffer.from(decoded, "utf-8").toString("base64url")` が `normalized` と異なる | `apps/api/src/routes/document-routes.ts:284 (decodeCollectionCursor)` |
+| M016 | 例外 | `-` | cursor offset overflow | is safe integer の判定結果が真ではない | `apps/api/src/routes/document-routes.ts:286 (decodeCollectionCursor)` |
+| M017 | 例外 | `400` | Invalid cursor | 例外を捕捉した場合 | `apps/api/src/routes/document-routes.ts:289 (decodeCollectionCursor)` |
 
 ## 読み方
 

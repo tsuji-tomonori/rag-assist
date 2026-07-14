@@ -8,13 +8,13 @@
 
 | # | CRUD/実行 | Target | Method | 自然言語での目的 | Caller | コード根拠 |
 | ---: | --- | --- | --- | --- | --- | --- |
-| 1 | 参照 | `this.deps.questionStore` | `get` | `this.deps.questionStore` に対して get を実行する。 | `MemoRagService.getQuestion` | `apps/api/src/rag/memorag-service.ts:1484 (MemoRagService.getQuestion)` |
-| 2 | 参照 | `this` | `loadAliasLedger` | `this` に対して load alias ledger を実行する。 | `MemoRagService.createSearchImprovementCandidate` | `apps/api/src/rag/memorag-service.ts:747 (MemoRagService.createSearchImprovementCandidate)` |
-| 3 | 参照 | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `MemoRagService.loadAliasLedger` | `apps/api/src/rag/memorag-service.ts:1603 (MemoRagService.loadAliasLedger)` |
-| 4 | 実行 | `ledger.aliases` | `push` | `ledger.aliases` に対して push を実行する。 | `MemoRagService.createSearchImprovementCandidate` | `apps/api/src/rag/memorag-service.ts:772 (MemoRagService.createSearchImprovementCandidate)` |
-| 5 | 実行 | `ledger.auditLog` | `push` | `ledger.auditLog` に対して push を実行する。 | `appendAliasAudit` | `apps/api/src/rag/memorag-service.ts:2815 (appendAliasAudit)` |
-| 6 | 作成・追記 | `this` | `saveAliasLedger` | `this` に対して save alias ledger を実行する。 | `MemoRagService.createSearchImprovementCandidate` | `apps/api/src/rag/memorag-service.ts:774 (MemoRagService.createSearchImprovementCandidate)` |
-| 7 | 作成・追記 | `this.deps.objectStore` | `putText` | `this.deps.objectStore` に対して put text を実行する。 | `MemoRagService.saveAliasLedger` | `apps/api/src/rag/memorag-service.ts:1616 (MemoRagService.saveAliasLedger)` |
+| 1 | 参照 | `this.deps.questionStore` | `get` | `this.deps.questionStore` に対して get を実行する。 | `MemoRagService.getQuestion` | `apps/api/src/rag/memorag-service.ts:2602 (MemoRagService.getQuestion)` |
+| 2 | 参照 | `this` | `loadAliasLedger` | `this` に対して load alias ledger を実行する。 | `MemoRagService.createSearchImprovementCandidate` | `apps/api/src/rag/memorag-service.ts:1214 (MemoRagService.createSearchImprovementCandidate)` |
+| 3 | 参照 | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `MemoRagService.loadAliasLedger` | `apps/api/src/rag/memorag-service.ts:2979 (MemoRagService.loadAliasLedger)` |
+| 4 | 実行 | `ledger.aliases` | `push` | `ledger.aliases` に対して push を実行する。 | `MemoRagService.createSearchImprovementCandidate` | `apps/api/src/rag/memorag-service.ts:1239 (MemoRagService.createSearchImprovementCandidate)` |
+| 5 | 実行 | `ledger.auditLog` | `push` | `ledger.auditLog` に対して push を実行する。 | `appendAliasAudit` | `apps/api/src/rag/memorag-service.ts:5060 (appendAliasAudit)` |
+| 6 | 作成・追記 | `this` | `saveAliasLedger` | `this` に対して save alias ledger を実行する。 | `MemoRagService.createSearchImprovementCandidate` | `apps/api/src/rag/memorag-service.ts:1241 (MemoRagService.createSearchImprovementCandidate)` |
+| 7 | 作成・追記 | `this.deps.objectStore` | `putText` | `this.deps.objectStore` に対して put text を実行する。 | `MemoRagService.saveAliasLedger` | `apps/api/src/rag/memorag-service.ts:2992 (MemoRagService.saveAliasLedger)` |
 
 ## 外部サービス操作
 

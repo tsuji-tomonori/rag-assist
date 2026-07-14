@@ -10,13 +10,14 @@
 
 用途概要: Lambda function
 
-リソース数: 11
+リソース数: 15
 
 ## Logical ID 一覧
 
 | 論理ID | Logical ID | 用途推定 |
 | --- | --- | --- |
 | [Api Function](#api-function) | `ApiFunctionCE271BD4` | Api Function (Lambda function) |
+| [Benchmark Run Authorization Function](#benchmark-run-authorization-function) | `BenchmarkRunAuthorizationFunction16D4CD86` | Benchmark Run Authorization Function (Lambda function) |
 | [Chat Run Events Stream Function](#chat-run-events-stream-function) | `ChatRunEventsStreamFunctionA12E11AC` | Chat Run Events Stream Function (Lambda function) |
 | [Chat Run Mark Failed Function](#chat-run-mark-failed-function) | `ChatRunMarkFailedFunction23223E28` | Chat Run Mark Failed Function (Lambda function) |
 | [Chat Run Worker Function](#chat-run-worker-function) | `ChatRunWorkerFunction3C85A553` | Chat Run Worker Function (Lambda function) |
@@ -25,8 +26,11 @@
 | [Document Ingest Run Mark Failed Function](#document-ingest-run-mark-failed-function) | `DocumentIngestRunMarkFailedFunction41F16DD3` | Document Ingest Run Mark Failed Function (Lambda function) |
 | [Document Ingest Run Worker Function](#document-ingest-run-worker-function) | `DocumentIngestRunWorkerFunctionBBDBF694` | Document Ingest Run Worker Function (Lambda function) |
 | [Heavy Api Function](#heavy-api-function) | `HeavyApiFunction4BC152A5` | Heavy Api Function (Lambda function) |
+| [Rag Quality Monitor Function](#rag-quality-monitor-function) | `RagQualityMonitorFunction9BE8E903` | Rag Quality Monitor Function (Lambda function) |
+| [Revocation Cleanup Function](#revocation-cleanup-function) | `RevocationCleanupFunctionE7C00D6D` | Revocation Cleanup Function (Lambda function) |
 | [S3Vectors Provider Fn](#s3vectors-provider-fn) | `S3VectorsProviderFn215E3A4E` | S3Vectors Provider Fn (Lambda function) |
 | [S3Vectors Providerframeworkon Event](#s3vectors-providerframeworkon-event) | `S3VectorsProviderframeworkonEventEB240CE8` | S3Vectors Providerframeworkon Event (Lambda function) |
+| [Security Audit Reconciliation Function](#security-audit-reconciliation-function) | `SecurityAuditReconciliationFunction9A53A79D` | Security Audit Reconciliation Function (Lambda function) |
 
 ## Logical ID 別設定
 
@@ -49,10 +53,14 @@ Logical ID: `ApiFunctionCE271BD4`
 
 | Key | Value |
 | --- | --- |
+| `ACTIVE_RUN_AUTHORIZATION_INDEX_TABLE_NAME` | Ref:ActiveRunAuthorizationIndexTable2D018C99 |
 | `AUTH_ENABLED` | true |
+| `AUTH_TENANT_ID` | Ref:AWS::AccountId |
 | `BENCHMARK_BUCKET_NAME` | Ref:BenchmarkBucketDD7D1D2F |
 | `BENCHMARK_DEFAULT_DATASET_KEY` | datasets/agent/standard-v1.jsonl |
 | `BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS` | 900 |
+| `BENCHMARK_EVALUATION_ENABLED` | true |
+| `BENCHMARK_EVALUATION_TENANT_ID` | Join:["",["benchmark-",{"Ref":"AWS::AccountId"}]] |
 | `BENCHMARK_RUNS_TABLE_NAME` | Ref:BenchmarkRunsTableD0841636 |
 | `BENCHMARK_STATE_MACHINE_ARN` | Ref:BenchmarkStateMachine8C582B8A |
 | `BENCHMARK_TARGET_API_BASE_URL` | Join:["",["https://",{"Ref":"RestApi0C43BF4B"},".execute-api.",{"Ref":"AWS::Region"},".",{"Ref":"AWS::URLSuffix"},"/prod/"]] |
@@ -85,6 +93,68 @@ Logical ID: `ApiFunctionCE271BD4`
 | `PDF_OCR_FALLBACK_ENABLED` | true |
 | `PDF_OCR_FALLBACK_TIMEOUT_MS` | 45000 |
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
+| `RAG_MONITORING_REQUIRED` | 1 |
+| `RAG_SAFETY_STATE_TTL_SECONDS` | 600 |
+| `USE_LOCAL_BENCHMARK_RUN_STORE` | false |
+| `USE_LOCAL_CHAT_RUN_STORE` | false |
+| `USE_LOCAL_VECTOR_STORE` | false |
+| `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |
+
+### Benchmark Run Authorization Function
+
+Logical ID: `BenchmarkRunAuthorizationFunction16D4CD86`
+
+用途推定: Benchmark Run Authorization Function (Lambda function)
+
+| 設定項目 | 値 |
+| --- | --- |
+| `handler` | index.handler |
+| `runtime` | nodejs22.x |
+| `architectures` | [arm64] |
+| `memorySize` | 512 |
+| `timeoutSeconds` | 29 |
+| `role` | [Benchmark Run Authorization Function Service Role](aws-iam-role.md#benchmark-run-authorization-function-service-role) (`BenchmarkRunAuthorizationFunctionServiceRole23F15ADE`) |
+
+#### Environment variables
+
+| Key | Value |
+| --- | --- |
+| `ACTIVE_RUN_AUTHORIZATION_INDEX_TABLE_NAME` | Ref:ActiveRunAuthorizationIndexTable2D018C99 |
+| `AUTH_ENABLED` | true |
+| `AUTH_TENANT_ID` | Ref:AWS::AccountId |
+| `BENCHMARK_BUCKET_NAME` | Ref:BenchmarkBucketDD7D1D2F |
+| `BENCHMARK_DEFAULT_DATASET_KEY` | datasets/agent/standard-v1.jsonl |
+| `BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS` | 900 |
+| `BENCHMARK_EVALUATION_ENABLED` | true |
+| `BENCHMARK_EVALUATION_TENANT_ID` | Join:["",["benchmark-",{"Ref":"AWS::AccountId"}]] |
+| `BENCHMARK_RUNS_TABLE_NAME` | Ref:BenchmarkRunsTableD0841636 |
+| `CHAT_RUN_EVENTS_TABLE_NAME` | Ref:ChatRunEventsTable7455A50E |
+| `CHAT_RUNS_TABLE_NAME` | Ref:ChatRunsTable8446CD95 |
+| `COGNITO_APP_CLIENT_ID` | Ref:UserPoolWebClient4C9370B0 |
+| `COGNITO_REGION` | Ref:AWS::Region |
+| `COGNITO_USER_POOL_ID` | Ref:UserPool6BA7E5F2 |
+| `CONVERSATION_HISTORY_TABLE_NAME` | Ref:ConversationHistoryTable59A3534C |
+| `CORS_ALLOWED_ORIGINS` | * |
+| `DEBUG_DOWNLOAD_BUCKET_NAME` | Ref:DebugDownloadBucketAB6A16BE |
+| `DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS` | 900 |
+| `DEFAULT_MEMORY_MODEL_ID` | amazon.nova-lite-v1:0 |
+| `DEFAULT_MODEL_ID` | amazon.nova-lite-v1:0 |
+| `DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID` | ANSWER_EDITOR |
+| `DOCS_BUCKET_NAME` | Ref:DocumentsBucket9EC9DEB9 |
+| `DOCUMENT_GROUPS_TABLE_NAME` | Ref:DocumentGroupsTableA5108040 |
+| `DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME` | Ref:DocumentIngestRunEventsTableF4692EBE |
+| `DOCUMENT_INGEST_RUNS_TABLE_NAME` | Ref:DocumentIngestRunsTableEA8F8CCA |
+| `EMBEDDING_DIMENSIONS` | 1024 |
+| `EMBEDDING_MODEL_ID` | amazon.titan-embed-text-v2:0 |
+| `EVIDENCE_VECTOR_INDEX_NAME` | evidence-index |
+| `FAVORITES_TABLE_NAME` | Ref:FavoritesTable4DA8A306 |
+| `MEMORY_VECTOR_INDEX_NAME` | memory-index |
+| `MIN_RETRIEVAL_SCORE` | 0.20 |
+| `MOCK_BEDROCK` | false |
+| `NODE_ENV` | production |
+| `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
+| `RAG_MONITORING_REQUIRED` | 1 |
+| `RAG_SAFETY_STATE_TTL_SECONDS` | 600 |
 | `USE_LOCAL_BENCHMARK_RUN_STORE` | false |
 | `USE_LOCAL_CHAT_RUN_STORE` | false |
 | `USE_LOCAL_VECTOR_STORE` | false |
@@ -109,10 +179,14 @@ Logical ID: `ChatRunEventsStreamFunctionA12E11AC`
 
 | Key | Value |
 | --- | --- |
+| `ACTIVE_RUN_AUTHORIZATION_INDEX_TABLE_NAME` | Ref:ActiveRunAuthorizationIndexTable2D018C99 |
 | `AUTH_ENABLED` | true |
+| `AUTH_TENANT_ID` | Ref:AWS::AccountId |
 | `BENCHMARK_BUCKET_NAME` | Ref:BenchmarkBucketDD7D1D2F |
 | `BENCHMARK_DEFAULT_DATASET_KEY` | datasets/agent/standard-v1.jsonl |
 | `BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS` | 900 |
+| `BENCHMARK_EVALUATION_ENABLED` | true |
+| `BENCHMARK_EVALUATION_TENANT_ID` | Join:["",["benchmark-",{"Ref":"AWS::AccountId"}]] |
 | `BENCHMARK_RUNS_TABLE_NAME` | Ref:BenchmarkRunsTableD0841636 |
 | `CHAT_RUN_EVENTS_TABLE_NAME` | Ref:ChatRunEventsTable7455A50E |
 | `CHAT_RUNS_TABLE_NAME` | Ref:ChatRunsTable8446CD95 |
@@ -139,6 +213,8 @@ Logical ID: `ChatRunEventsStreamFunctionA12E11AC`
 | `MOCK_BEDROCK` | false |
 | `NODE_ENV` | production |
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
+| `RAG_MONITORING_REQUIRED` | 1 |
+| `RAG_SAFETY_STATE_TTL_SECONDS` | 600 |
 | `USE_LOCAL_BENCHMARK_RUN_STORE` | false |
 | `USE_LOCAL_CHAT_RUN_STORE` | false |
 | `USE_LOCAL_VECTOR_STORE` | false |
@@ -163,10 +239,14 @@ Logical ID: `ChatRunMarkFailedFunction23223E28`
 
 | Key | Value |
 | --- | --- |
+| `ACTIVE_RUN_AUTHORIZATION_INDEX_TABLE_NAME` | Ref:ActiveRunAuthorizationIndexTable2D018C99 |
 | `AUTH_ENABLED` | true |
+| `AUTH_TENANT_ID` | Ref:AWS::AccountId |
 | `BENCHMARK_BUCKET_NAME` | Ref:BenchmarkBucketDD7D1D2F |
 | `BENCHMARK_DEFAULT_DATASET_KEY` | datasets/agent/standard-v1.jsonl |
 | `BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS` | 900 |
+| `BENCHMARK_EVALUATION_ENABLED` | true |
+| `BENCHMARK_EVALUATION_TENANT_ID` | Join:["",["benchmark-",{"Ref":"AWS::AccountId"}]] |
 | `BENCHMARK_RUNS_TABLE_NAME` | Ref:BenchmarkRunsTableD0841636 |
 | `CHAT_RUN_EVENTS_TABLE_NAME` | Ref:ChatRunEventsTable7455A50E |
 | `CHAT_RUNS_TABLE_NAME` | Ref:ChatRunsTable8446CD95 |
@@ -193,6 +273,8 @@ Logical ID: `ChatRunMarkFailedFunction23223E28`
 | `MOCK_BEDROCK` | false |
 | `NODE_ENV` | production |
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
+| `RAG_MONITORING_REQUIRED` | 1 |
+| `RAG_SAFETY_STATE_TTL_SECONDS` | 600 |
 | `USE_LOCAL_BENCHMARK_RUN_STORE` | false |
 | `USE_LOCAL_CHAT_RUN_STORE` | false |
 | `USE_LOCAL_VECTOR_STORE` | false |
@@ -217,10 +299,14 @@ Logical ID: `ChatRunWorkerFunction3C85A553`
 
 | Key | Value |
 | --- | --- |
+| `ACTIVE_RUN_AUTHORIZATION_INDEX_TABLE_NAME` | Ref:ActiveRunAuthorizationIndexTable2D018C99 |
 | `AUTH_ENABLED` | true |
+| `AUTH_TENANT_ID` | Ref:AWS::AccountId |
 | `BENCHMARK_BUCKET_NAME` | Ref:BenchmarkBucketDD7D1D2F |
 | `BENCHMARK_DEFAULT_DATASET_KEY` | datasets/agent/standard-v1.jsonl |
 | `BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS` | 900 |
+| `BENCHMARK_EVALUATION_ENABLED` | true |
+| `BENCHMARK_EVALUATION_TENANT_ID` | Join:["",["benchmark-",{"Ref":"AWS::AccountId"}]] |
 | `BENCHMARK_RUNS_TABLE_NAME` | Ref:BenchmarkRunsTableD0841636 |
 | `CHAT_RUN_EVENTS_TABLE_NAME` | Ref:ChatRunEventsTable7455A50E |
 | `CHAT_RUNS_TABLE_NAME` | Ref:ChatRunsTable8446CD95 |
@@ -247,6 +333,8 @@ Logical ID: `ChatRunWorkerFunction3C85A553`
 | `MOCK_BEDROCK` | false |
 | `NODE_ENV` | production |
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
+| `RAG_MONITORING_REQUIRED` | 1 |
+| `RAG_SAFETY_STATE_TTL_SECONDS` | 600 |
 | `USE_LOCAL_BENCHMARK_RUN_STORE` | false |
 | `USE_LOCAL_CHAT_RUN_STORE` | false |
 | `USE_LOCAL_VECTOR_STORE` | false |
@@ -305,10 +393,14 @@ Logical ID: `DocumentIngestRunMarkFailedFunction41F16DD3`
 
 | Key | Value |
 | --- | --- |
+| `ACTIVE_RUN_AUTHORIZATION_INDEX_TABLE_NAME` | Ref:ActiveRunAuthorizationIndexTable2D018C99 |
 | `AUTH_ENABLED` | true |
+| `AUTH_TENANT_ID` | Ref:AWS::AccountId |
 | `BENCHMARK_BUCKET_NAME` | Ref:BenchmarkBucketDD7D1D2F |
 | `BENCHMARK_DEFAULT_DATASET_KEY` | datasets/agent/standard-v1.jsonl |
 | `BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS` | 900 |
+| `BENCHMARK_EVALUATION_ENABLED` | true |
+| `BENCHMARK_EVALUATION_TENANT_ID` | Join:["",["benchmark-",{"Ref":"AWS::AccountId"}]] |
 | `BENCHMARK_RUNS_TABLE_NAME` | Ref:BenchmarkRunsTableD0841636 |
 | `CHAT_RUN_EVENTS_TABLE_NAME` | Ref:ChatRunEventsTable7455A50E |
 | `CHAT_RUNS_TABLE_NAME` | Ref:ChatRunsTable8446CD95 |
@@ -335,6 +427,8 @@ Logical ID: `DocumentIngestRunMarkFailedFunction41F16DD3`
 | `MOCK_BEDROCK` | false |
 | `NODE_ENV` | production |
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
+| `RAG_MONITORING_REQUIRED` | 1 |
+| `RAG_SAFETY_STATE_TTL_SECONDS` | 600 |
 | `USE_LOCAL_BENCHMARK_RUN_STORE` | false |
 | `USE_LOCAL_CHAT_RUN_STORE` | false |
 | `USE_LOCAL_VECTOR_STORE` | false |
@@ -360,10 +454,14 @@ Logical ID: `DocumentIngestRunWorkerFunctionBBDBF694`
 
 | Key | Value |
 | --- | --- |
+| `ACTIVE_RUN_AUTHORIZATION_INDEX_TABLE_NAME` | Ref:ActiveRunAuthorizationIndexTable2D018C99 |
 | `AUTH_ENABLED` | true |
+| `AUTH_TENANT_ID` | Ref:AWS::AccountId |
 | `BENCHMARK_BUCKET_NAME` | Ref:BenchmarkBucketDD7D1D2F |
 | `BENCHMARK_DEFAULT_DATASET_KEY` | datasets/agent/standard-v1.jsonl |
 | `BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS` | 900 |
+| `BENCHMARK_EVALUATION_ENABLED` | true |
+| `BENCHMARK_EVALUATION_TENANT_ID` | Join:["",["benchmark-",{"Ref":"AWS::AccountId"}]] |
 | `BENCHMARK_RUNS_TABLE_NAME` | Ref:BenchmarkRunsTableD0841636 |
 | `CHAT_RUN_EVENTS_TABLE_NAME` | Ref:ChatRunEventsTable7455A50E |
 | `CHAT_RUNS_TABLE_NAME` | Ref:ChatRunsTable8446CD95 |
@@ -392,6 +490,8 @@ Logical ID: `DocumentIngestRunWorkerFunctionBBDBF694`
 | `PDF_OCR_FALLBACK_ENABLED` | true |
 | `PDF_OCR_FALLBACK_TIMEOUT_MS` | 45000 |
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
+| `RAG_MONITORING_REQUIRED` | 1 |
+| `RAG_SAFETY_STATE_TTL_SECONDS` | 600 |
 | `USE_LOCAL_BENCHMARK_RUN_STORE` | false |
 | `USE_LOCAL_CHAT_RUN_STORE` | false |
 | `USE_LOCAL_VECTOR_STORE` | false |
@@ -416,10 +516,14 @@ Logical ID: `HeavyApiFunction4BC152A5`
 
 | Key | Value |
 | --- | --- |
+| `ACTIVE_RUN_AUTHORIZATION_INDEX_TABLE_NAME` | Ref:ActiveRunAuthorizationIndexTable2D018C99 |
 | `AUTH_ENABLED` | true |
+| `AUTH_TENANT_ID` | Ref:AWS::AccountId |
 | `BENCHMARK_BUCKET_NAME` | Ref:BenchmarkBucketDD7D1D2F |
 | `BENCHMARK_DEFAULT_DATASET_KEY` | datasets/agent/standard-v1.jsonl |
 | `BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS` | 900 |
+| `BENCHMARK_EVALUATION_ENABLED` | true |
+| `BENCHMARK_EVALUATION_TENANT_ID` | Join:["",["benchmark-",{"Ref":"AWS::AccountId"}]] |
 | `BENCHMARK_RUNS_TABLE_NAME` | Ref:BenchmarkRunsTableD0841636 |
 | `BENCHMARK_STATE_MACHINE_ARN` | Ref:BenchmarkStateMachine8C582B8A |
 | `BENCHMARK_TARGET_API_BASE_URL` | Join:["",["https://",{"Ref":"RestApi0C43BF4B"},".execute-api.",{"Ref":"AWS::Region"},".",{"Ref":"AWS::URLSuffix"},"/prod/"]] |
@@ -452,6 +556,129 @@ Logical ID: `HeavyApiFunction4BC152A5`
 | `PDF_OCR_FALLBACK_ENABLED` | true |
 | `PDF_OCR_FALLBACK_TIMEOUT_MS` | 45000 |
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
+| `RAG_MONITORING_REQUIRED` | 1 |
+| `RAG_SAFETY_STATE_TTL_SECONDS` | 600 |
+| `USE_LOCAL_BENCHMARK_RUN_STORE` | false |
+| `USE_LOCAL_CHAT_RUN_STORE` | false |
+| `USE_LOCAL_VECTOR_STORE` | false |
+| `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |
+
+### Rag Quality Monitor Function
+
+Logical ID: `RagQualityMonitorFunction9BE8E903`
+
+用途推定: Rag Quality Monitor Function (Lambda function)
+
+| 設定項目 | 値 |
+| --- | --- |
+| `handler` | index.handler |
+| `runtime` | nodejs22.x |
+| `architectures` | [arm64] |
+| `memorySize` | 512 |
+| `timeoutSeconds` | 300 |
+| `role` | [Rag Quality Monitor Function Service Role](aws-iam-role.md#rag-quality-monitor-function-service-role) (`RagQualityMonitorFunctionServiceRole1754DFBD`) |
+
+#### Environment variables
+
+| Key | Value |
+| --- | --- |
+| `ACTIVE_RUN_AUTHORIZATION_INDEX_TABLE_NAME` | Ref:ActiveRunAuthorizationIndexTable2D018C99 |
+| `AUTH_ENABLED` | true |
+| `AUTH_TENANT_ID` | Ref:AWS::AccountId |
+| `BENCHMARK_BUCKET_NAME` | Ref:BenchmarkBucketDD7D1D2F |
+| `BENCHMARK_DEFAULT_DATASET_KEY` | datasets/agent/standard-v1.jsonl |
+| `BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS` | 900 |
+| `BENCHMARK_EVALUATION_ENABLED` | true |
+| `BENCHMARK_EVALUATION_TENANT_ID` | Join:["",["benchmark-",{"Ref":"AWS::AccountId"}]] |
+| `BENCHMARK_RUNS_TABLE_NAME` | Ref:BenchmarkRunsTableD0841636 |
+| `CHAT_RUN_EVENTS_TABLE_NAME` | Ref:ChatRunEventsTable7455A50E |
+| `CHAT_RUNS_TABLE_NAME` | Ref:ChatRunsTable8446CD95 |
+| `COGNITO_APP_CLIENT_ID` | Ref:UserPoolWebClient4C9370B0 |
+| `COGNITO_REGION` | Ref:AWS::Region |
+| `COGNITO_USER_POOL_ID` | Ref:UserPool6BA7E5F2 |
+| `CONVERSATION_HISTORY_TABLE_NAME` | Ref:ConversationHistoryTable59A3534C |
+| `CORS_ALLOWED_ORIGINS` | * |
+| `DEBUG_DOWNLOAD_BUCKET_NAME` | Ref:DebugDownloadBucketAB6A16BE |
+| `DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS` | 900 |
+| `DEFAULT_MEMORY_MODEL_ID` | amazon.nova-lite-v1:0 |
+| `DEFAULT_MODEL_ID` | amazon.nova-lite-v1:0 |
+| `DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID` | ANSWER_EDITOR |
+| `DOCS_BUCKET_NAME` | Ref:DocumentsBucket9EC9DEB9 |
+| `DOCUMENT_GROUPS_TABLE_NAME` | Ref:DocumentGroupsTableA5108040 |
+| `DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME` | Ref:DocumentIngestRunEventsTableF4692EBE |
+| `DOCUMENT_INGEST_RUNS_TABLE_NAME` | Ref:DocumentIngestRunsTableEA8F8CCA |
+| `EMBEDDING_DIMENSIONS` | 1024 |
+| `EMBEDDING_MODEL_ID` | amazon.titan-embed-text-v2:0 |
+| `EVIDENCE_VECTOR_INDEX_NAME` | evidence-index |
+| `FAVORITES_TABLE_NAME` | Ref:FavoritesTable4DA8A306 |
+| `MEMORY_VECTOR_INDEX_NAME` | memory-index |
+| `MIN_RETRIEVAL_SCORE` | 0.20 |
+| `MOCK_BEDROCK` | false |
+| `NODE_ENV` | production |
+| `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
+| `RAG_ALERT_TOPIC_ARN` | Ref:RagQualityAlertTopic3AFB5A32 |
+| `RAG_MONITORING_REQUIRED` | 1 |
+| `RAG_SAFETY_STATE_TTL_SECONDS` | 600 |
+| `USE_LOCAL_BENCHMARK_RUN_STORE` | false |
+| `USE_LOCAL_CHAT_RUN_STORE` | false |
+| `USE_LOCAL_VECTOR_STORE` | false |
+| `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |
+
+### Revocation Cleanup Function
+
+Logical ID: `RevocationCleanupFunctionE7C00D6D`
+
+用途推定: Revocation Cleanup Function (Lambda function)
+
+| 設定項目 | 値 |
+| --- | --- |
+| `handler` | index.handler |
+| `runtime` | nodejs22.x |
+| `architectures` | [arm64] |
+| `memorySize` | 1024 |
+| `timeoutSeconds` | 300 |
+| `role` | [Revocation Cleanup Function Service Role](aws-iam-role.md#revocation-cleanup-function-service-role) (`RevocationCleanupFunctionServiceRole15557E81`) |
+
+#### Environment variables
+
+| Key | Value |
+| --- | --- |
+| `ACTIVE_RUN_AUTHORIZATION_INDEX_TABLE_NAME` | Ref:ActiveRunAuthorizationIndexTable2D018C99 |
+| `AUTH_ENABLED` | true |
+| `AUTH_TENANT_ID` | Ref:AWS::AccountId |
+| `BENCHMARK_BUCKET_NAME` | Ref:BenchmarkBucketDD7D1D2F |
+| `BENCHMARK_DEFAULT_DATASET_KEY` | datasets/agent/standard-v1.jsonl |
+| `BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS` | 900 |
+| `BENCHMARK_EVALUATION_ENABLED` | true |
+| `BENCHMARK_EVALUATION_TENANT_ID` | Join:["",["benchmark-",{"Ref":"AWS::AccountId"}]] |
+| `BENCHMARK_RUNS_TABLE_NAME` | Ref:BenchmarkRunsTableD0841636 |
+| `CHAT_RUN_EVENTS_TABLE_NAME` | Ref:ChatRunEventsTable7455A50E |
+| `CHAT_RUNS_TABLE_NAME` | Ref:ChatRunsTable8446CD95 |
+| `COGNITO_APP_CLIENT_ID` | Ref:UserPoolWebClient4C9370B0 |
+| `COGNITO_REGION` | Ref:AWS::Region |
+| `COGNITO_USER_POOL_ID` | Ref:UserPool6BA7E5F2 |
+| `CONVERSATION_HISTORY_TABLE_NAME` | Ref:ConversationHistoryTable59A3534C |
+| `CORS_ALLOWED_ORIGINS` | * |
+| `DEBUG_DOWNLOAD_BUCKET_NAME` | Ref:DebugDownloadBucketAB6A16BE |
+| `DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS` | 900 |
+| `DEFAULT_MEMORY_MODEL_ID` | amazon.nova-lite-v1:0 |
+| `DEFAULT_MODEL_ID` | amazon.nova-lite-v1:0 |
+| `DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID` | ANSWER_EDITOR |
+| `DOCS_BUCKET_NAME` | Ref:DocumentsBucket9EC9DEB9 |
+| `DOCUMENT_GROUPS_TABLE_NAME` | Ref:DocumentGroupsTableA5108040 |
+| `DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME` | Ref:DocumentIngestRunEventsTableF4692EBE |
+| `DOCUMENT_INGEST_RUNS_TABLE_NAME` | Ref:DocumentIngestRunsTableEA8F8CCA |
+| `EMBEDDING_DIMENSIONS` | 1024 |
+| `EMBEDDING_MODEL_ID` | amazon.titan-embed-text-v2:0 |
+| `EVIDENCE_VECTOR_INDEX_NAME` | evidence-index |
+| `FAVORITES_TABLE_NAME` | Ref:FavoritesTable4DA8A306 |
+| `MEMORY_VECTOR_INDEX_NAME` | memory-index |
+| `MIN_RETRIEVAL_SCORE` | 0.20 |
+| `MOCK_BEDROCK` | false |
+| `NODE_ENV` | production |
+| `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
+| `RAG_MONITORING_REQUIRED` | 1 |
+| `RAG_SAFETY_STATE_TTL_SECONDS` | 600 |
 | `USE_LOCAL_BENCHMARK_RUN_STORE` | false |
 | `USE_LOCAL_CHAT_RUN_STORE` | false |
 | `USE_LOCAL_VECTOR_STORE` | false |
@@ -489,3 +716,63 @@ Logical ID: `S3VectorsProviderframeworkonEventEB240CE8`
 | Key | Value |
 | --- | --- |
 | `USER_ON_EVENT_FUNCTION_ARN` | GetAtt:S3VectorsProviderFn215E3A4E.Arn |
+
+### Security Audit Reconciliation Function
+
+Logical ID: `SecurityAuditReconciliationFunction9A53A79D`
+
+用途推定: Security Audit Reconciliation Function (Lambda function)
+
+| 設定項目 | 値 |
+| --- | --- |
+| `handler` | index.handler |
+| `runtime` | nodejs22.x |
+| `architectures` | [arm64] |
+| `memorySize` | 512 |
+| `timeoutSeconds` | 60 |
+| `role` | [Security Audit Reconciliation Function Service Role](aws-iam-role.md#security-audit-reconciliation-function-service-role) (`SecurityAuditReconciliationFunctionServiceRoleF4787D99`) |
+
+#### Environment variables
+
+| Key | Value |
+| --- | --- |
+| `ACTIVE_RUN_AUTHORIZATION_INDEX_TABLE_NAME` | Ref:ActiveRunAuthorizationIndexTable2D018C99 |
+| `AUTH_ENABLED` | true |
+| `AUTH_TENANT_ID` | Ref:AWS::AccountId |
+| `BENCHMARK_BUCKET_NAME` | Ref:BenchmarkBucketDD7D1D2F |
+| `BENCHMARK_DEFAULT_DATASET_KEY` | datasets/agent/standard-v1.jsonl |
+| `BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS` | 900 |
+| `BENCHMARK_EVALUATION_ENABLED` | true |
+| `BENCHMARK_EVALUATION_TENANT_ID` | Join:["",["benchmark-",{"Ref":"AWS::AccountId"}]] |
+| `BENCHMARK_RUNS_TABLE_NAME` | Ref:BenchmarkRunsTableD0841636 |
+| `CHAT_RUN_EVENTS_TABLE_NAME` | Ref:ChatRunEventsTable7455A50E |
+| `CHAT_RUNS_TABLE_NAME` | Ref:ChatRunsTable8446CD95 |
+| `COGNITO_APP_CLIENT_ID` | Ref:UserPoolWebClient4C9370B0 |
+| `COGNITO_REGION` | Ref:AWS::Region |
+| `COGNITO_USER_POOL_ID` | Ref:UserPool6BA7E5F2 |
+| `CONVERSATION_HISTORY_TABLE_NAME` | Ref:ConversationHistoryTable59A3534C |
+| `CORS_ALLOWED_ORIGINS` | * |
+| `DEBUG_DOWNLOAD_BUCKET_NAME` | Ref:DebugDownloadBucketAB6A16BE |
+| `DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS` | 900 |
+| `DEFAULT_MEMORY_MODEL_ID` | amazon.nova-lite-v1:0 |
+| `DEFAULT_MODEL_ID` | amazon.nova-lite-v1:0 |
+| `DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID` | ANSWER_EDITOR |
+| `DOCS_BUCKET_NAME` | Ref:DocumentsBucket9EC9DEB9 |
+| `DOCUMENT_GROUPS_TABLE_NAME` | Ref:DocumentGroupsTableA5108040 |
+| `DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME` | Ref:DocumentIngestRunEventsTableF4692EBE |
+| `DOCUMENT_INGEST_RUNS_TABLE_NAME` | Ref:DocumentIngestRunsTableEA8F8CCA |
+| `EMBEDDING_DIMENSIONS` | 1024 |
+| `EMBEDDING_MODEL_ID` | amazon.titan-embed-text-v2:0 |
+| `EVIDENCE_VECTOR_INDEX_NAME` | evidence-index |
+| `FAVORITES_TABLE_NAME` | Ref:FavoritesTable4DA8A306 |
+| `MEMORY_VECTOR_INDEX_NAME` | memory-index |
+| `MIN_RETRIEVAL_SCORE` | 0.20 |
+| `MOCK_BEDROCK` | false |
+| `NODE_ENV` | production |
+| `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
+| `RAG_MONITORING_REQUIRED` | 1 |
+| `RAG_SAFETY_STATE_TTL_SECONDS` | 600 |
+| `USE_LOCAL_BENCHMARK_RUN_STORE` | false |
+| `USE_LOCAL_CHAT_RUN_STORE` | false |
+| `USE_LOCAL_VECTOR_STORE` | false |
+| `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |

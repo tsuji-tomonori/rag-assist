@@ -8,39 +8,60 @@
 
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
-| 到達 symbol | service does not allow group scoped document owner to delete or reindex without folder full permission | `apps/api/src/rag/memorag-service.test.ts:891 (service does not allow group scoped document owner to delete or reindex without folder full permission)` |
-| 到達 symbol | service enforces full document group permission for delete and reindex operations | `apps/api/src/rag/memorag-service.test.ts:952 (service enforces full document group permission for delete and reindex operations)` |
-| 到達 symbol | service stages and rolls back structured blue-green reindex migrations | `apps/api/src/rag/memorag-service.test.ts:1008 (service stages and rolls back structured blue-green reindex migrations)` |
-| 到達 symbol | service restores staging state when cutover vector activation fails after partial write | `apps/api/src/rag/memorag-service.test.ts:1058 (service restores staging state when cutover vector activation fails after partial write)` |
+| 到達 symbol | document administrative principal retains delete and reindex authority despite ordinary folder denial | `apps/api/src/rag/memorag-service.test.ts:1052 (document administrative principal retains delete and reindex authority despite ordinary folder denial)` |
+| 到達 symbol | service enforces full document group permission for delete and reindex operations | `apps/api/src/rag/memorag-service.test.ts:1101 (service enforces full document group permission for delete and reindex operations)` |
+| 到達 symbol | service stages and rolls back structured blue-green reindex migrations | `apps/api/src/rag/memorag-service.test.ts:1164 (service stages and rolls back structured blue-green reindex migrations)` |
+| 到達 symbol | service restores staging state when cutover vector activation fails after partial write | `apps/api/src/rag/memorag-service.test.ts:1214 (service restores staging state when cutover vector activation fails after partial write)` |
+| 到達 symbol | FR-090 reindex cutover compensates publication when current authorization is revoked before ledger commit | `apps/api/src/rag/memorag-service.test.ts:1246 (FR-090 reindex cutover compensates publication when current authorization is revoked before ledger commit)` |
+| 到達 symbol | FR-090 failed cutover compensation persists a durable intent and an authorized retry converges it | `apps/api/src/rag/memorag-service.test.ts:1280 (FR-090 failed cutover compensation persists a durable intent and an authorized retry converges it)` |
+| 到達 symbol | FR-090 revoked rollback persists ledger reconciliation and retries only after current authorization | `apps/api/src/rag/memorag-service.test.ts:1335 (FR-090 revoked rollback persists ledger reconciliation and retries only after current authorization)` |
 
 ## 2. 実装分岐から導くテスト要因
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `POST /documents/{documentId}/reindex/stage handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:756 (POST /documents/{documentId}/reindex/stage handler)` |
-| F002 | `POST /documents/{documentId}/reindex/stage handler` | if | is forbidden error の判定結果が真である | `apps/api/src/routes/document-routes.ts:757 (POST /documents/{documentId}/reindex/stage handler)` |
-| F003 | `POST /documents/{documentId}/reindex/stage handler` | if | `err` が `Error` の instance である、かつ `err.message` が "ENOENT" を含む、または `err.message` が "NoSuchKey" を含む | `apps/api/src/routes/document-routes.ts:758 (POST /documents/{documentId}/reindex/stage handler)` |
-| F004 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:267 (requirePermission)` |
-| F005 | `MemoRagService.stageReindexMigration` | if | `(manifest.lifecycleStatus ?? stringValue(manifest.metadata?.lifecycleStatus) ?? "active")` が `"active"` と異なる | `apps/api/src/rag/memorag-service.ts:252 (MemoRagService.stageReindexMigration)` |
+| F001 | `POST /documents/{documentId}/reindex/stage handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:1435 (POST /documents/{documentId}/reindex/stage handler)` |
+| F002 | `POST /documents/{documentId}/reindex/stage handler` | if | is forbidden error の判定結果が真である | `apps/api/src/routes/document-routes.ts:1436 (POST /documents/{documentId}/reindex/stage handler)` |
+| F003 | `POST /documents/{documentId}/reindex/stage handler` | if | `err` が `Error` の instance である、かつ `err.message` が "ENOENT" を含む、または `err.message` が "NoSuchKey" を含む | `apps/api/src/routes/document-routes.ts:1437 (POST /documents/{documentId}/reindex/stage handler)` |
+| F004 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| F005 | `MemoRagService.stageReindexMigration` | if | `(manifest.lifecycleStatus ?? stringValue(manifest.metadata?.lifecycleStatus) ?? "active")` が `"active"` と異なる | `apps/api/src/rag/memorag-service.ts:429 (MemoRagService.stageReindexMigration)` |
+| F006 | `MemoRagService.stageReindexMigration` | if | `manifest.publicationEligible` が `false` と等しい、または `manifest.derivedIntegrity?.verified` が `false` と等しい | `apps/api/src/rag/memorag-service.ts:432 (MemoRagService.stageReindexMigration)` |
+| F007 | `MemoRagService.stageReindexMigration` | if | `begun.alreadyStaged` が存在し、真である | `apps/api/src/rag/memorag-service.ts:446 (MemoRagService.stageReindexMigration)` |
+| F008 | `MemoRagService.stageReindexMigration` | if | `existingMigration` が存在し、真である | `apps/api/src/rag/memorag-service.ts:447 (MemoRagService.stageReindexMigration)` |
+| F009 | `MemoRagService.stageReindexMigration` | if | `begun.run.stagedArtifact` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:448 (MemoRagService.stageReindexMigration)` |
+| F010 | `MemoRagService.stageReindexMigration` | if | `begun.lease` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:454 (MemoRagService.stageReindexMigration)` |
+| F011 | `MemoRagService.stageReindexMigration` | 三項条件 | `this.deps.localTestIngestAdmissionContext` が存在し、真である | `apps/api/src/rag/memorag-service.ts:456 (MemoRagService.stageReindexMigration)` |
 
 ## 3. コード由来テストケース
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | 再インデックスを stage する が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:749 (POST /documents/{documentId}/reindex/stage handler)` |
-| TC002 | F001: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/document-routes.ts:756 (POST /documents/{documentId}/reindex/stage handler)` |
-| TC003 | F002: 条件成立 | is forbidden error の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:757 (POST /documents/{documentId}/reindex/stage handler)` |
-| TC004 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:757 (POST /documents/{documentId}/reindex/stage handler)` |
-| TC005 | F003: 条件成立 | `err` が `Error` の instance である、かつ `err.message` が "ENOENT" を含む、または `err.message` が "NoSuchKey" を含む 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:758 (POST /documents/{documentId}/reindex/stage handler)` |
-| TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:758 (POST /documents/{documentId}/reindex/stage handler)` |
-| TC007 | F004: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:267 (requirePermission)` |
-| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:267 (requirePermission)` |
-| TC009 | F005: 条件成立 | `(manifest.lifecycleStatus ?? stringValue(manifest.metadata?.lifecycleStatus) ?? "active")` が `"active"` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:252 (MemoRagService.stageReindexMigration)` |
-| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:252 (MemoRagService.stageReindexMigration)` |
-| TC011 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
-| TC012 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
-| TC013 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
-| TC014 | HTTP 404 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC001 | 正常系 | 再インデックスを stage する が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:1427 (POST /documents/{documentId}/reindex/stage handler)` |
+| TC002 | F001: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/document-routes.ts:1435 (POST /documents/{documentId}/reindex/stage handler)` |
+| TC003 | F002: 条件成立 | is forbidden error の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1436 (POST /documents/{documentId}/reindex/stage handler)` |
+| TC004 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1436 (POST /documents/{documentId}/reindex/stage handler)` |
+| TC005 | F003: 条件成立 | `err` が `Error` の instance である、かつ `err.message` が "ENOENT" を含む、または `err.message` が "NoSuchKey" を含む 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1437 (POST /documents/{documentId}/reindex/stage handler)` |
+| TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1437 (POST /documents/{documentId}/reindex/stage handler)` |
+| TC007 | F004: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| TC009 | F005: 条件成立 | `(manifest.lifecycleStatus ?? stringValue(manifest.metadata?.lifecycleStatus) ?? "active")` が `"active"` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:429 (MemoRagService.stageReindexMigration)` |
+| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:429 (MemoRagService.stageReindexMigration)` |
+| TC011 | F006: 条件成立 | `manifest.publicationEligible` が `false` と等しい、または `manifest.derivedIntegrity?.verified` が `false` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:432 (MemoRagService.stageReindexMigration)` |
+| TC012 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:432 (MemoRagService.stageReindexMigration)` |
+| TC013 | F007: 条件成立 | `begun.alreadyStaged` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:446 (MemoRagService.stageReindexMigration)` |
+| TC014 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:446 (MemoRagService.stageReindexMigration)` |
+| TC015 | F008: 条件成立 | `existingMigration` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:447 (MemoRagService.stageReindexMigration)` |
+| TC016 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:447 (MemoRagService.stageReindexMigration)` |
+| TC017 | F009: 条件成立 | `begun.run.stagedArtifact` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:448 (MemoRagService.stageReindexMigration)` |
+| TC018 | F009: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:448 (MemoRagService.stageReindexMigration)` |
+| TC019 | F010: 条件成立 | `begun.lease` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:454 (MemoRagService.stageReindexMigration)` |
+| TC020 | F010: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:454 (MemoRagService.stageReindexMigration)` |
+| TC021 | F011: 条件成立 | `this.deps.localTestIngestAdmissionContext` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:456 (MemoRagService.stageReindexMigration)` |
+| TC022 | F011: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:456 (MemoRagService.stageReindexMigration)` |
+| TC023 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC024 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC025 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC026 | HTTP 404 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 
 ## 4. 検証方針
 

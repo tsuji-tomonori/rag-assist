@@ -34,6 +34,14 @@ on:
         description: Vector index dimension. Must match the embedding model output.
         required: true
         default: "1024"
+      rag-quality-policy-s3-uri:
+        description: S3 URI of the versioned stakeholder-approved RAG quality policy JSON.
+        required: false
+        default: ""
+      rag-quality-observations-s3-uri:
+        description: S3 URI of the versioned candidate observations JSON including release-audit evidence.
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -57,6 +65,8 @@ jobs:
       EMBEDDING_MODEL_ID: ${{ inputs.embedding-model-id || 'amazon.titan-embed-text-v2:0' }}
       EMBEDDING_DIMENSIONS: ${{ inputs.embedding-dimensions || '1024' }}
       DEPLOYMENT_ENVIRONMENT: ${{ inputs.environment || 'dev' }}
+      RAG_QUALITY_POLICY_S3_URI: ${{ inputs.rag-quality-policy-s3-uri || vars.RAG_QUALITY_POLICY_S3_URI }}
+      RAG_QUALITY_OBSERVATIONS_S3_URI: ${{ inputs.rag-quality-observations-s3-uri || vars.RAG_QUALITY_OBSERVATIONS_S3_URI }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -81,12 +91,37 @@ jobs:
           [[ "$EMBEDDING_MODEL_ID" =~ ^[A-Za-z0-9._:/-]+$ ]] || { echo "Invalid embedding-model-id"; exit 1; }
           [[ "$EMBEDDING_DIMENSIONS" =~ ^[0-9]{1,5}$ ]] || { echo "Invalid embedding-dimensions"; exit 1; }
           [[ "$DEPLOYMENT_ENVIRONMENT" =~ ^(dev)$ ]] || { echo "Invalid environment"; exit 1; }
+          [ -n "$RAG_QUALITY_POLICY_S3_URI" ] || { echo "RAG_QUALITY_POLICY_S3_URI is required; deployment is fail-closed without an approved policy artifact"; exit 1; }
+          [ -n "$RAG_QUALITY_OBSERVATIONS_S3_URI" ] || { echo "RAG_QUALITY_OBSERVATIONS_S3_URI is required; deployment is fail-closed without candidate observations"; exit 1; }
+          [[ "$RAG_QUALITY_POLICY_S3_URI" =~ ^s3://[A-Za-z0-9._-]+/.+\.json$ ]] || { echo "Invalid RAG quality policy S3 URI"; exit 1; }
+          [[ "$RAG_QUALITY_OBSERVATIONS_S3_URI" =~ ^s3://[A-Za-z0-9._-]+/.+\.json$ ]] || { echo "Invalid RAG quality observations S3 URI"; exit 1; }
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
+
+      - name: Download explicit RAG promotion evidence
+        run: |
+          mkdir -p artifacts/rag-promotion
+          aws s3 cp "$RAG_QUALITY_POLICY_S3_URI" artifacts/rag-promotion/policy.json
+          aws s3 cp "$RAG_QUALITY_OBSERVATIONS_S3_URI" artifacts/rag-promotion/observations.json
+
+      - name: Enforce RAG promotion gate before deployment
+        run: >-
+          npm run rag:promotion:check --
+          --policy artifacts/rag-promotion/policy.json
+          --observations artifacts/rag-promotion/observations.json
+          --output artifacts/rag-promotion/decision.json
+
+      - name: Upload RAG promotion evidence and decision
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: memorag-rag-promotion-${{ github.run_id }}
+          path: artifacts/rag-promotion/
+          if-no-files-found: error
 
       - name: Build deployment artifacts
         run: |

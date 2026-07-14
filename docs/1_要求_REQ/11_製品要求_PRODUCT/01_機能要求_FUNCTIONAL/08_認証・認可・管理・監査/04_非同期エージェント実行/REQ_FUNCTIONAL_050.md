@@ -2,7 +2,7 @@
 
 - 種別: `REQ_FUNCTIONAL`
 - 状態: planning
-- 仕様参照: `docs/spec/2026-chapter-spec.md` 4C 章
+- 仕様参照: `docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md` 4C 章
 - FR-050: Claude Code、Codex、OpenCode、custom provider を選択し、共有フォルダ内の original file、skills、agent profile を利用する非同期エージェント実行を管理できること。
 
 ## 要求

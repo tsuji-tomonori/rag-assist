@@ -59,7 +59,7 @@
 | 実現可能性 | OK | versioned scenario と rubric で評価可能 |
 | 検証可能性 | OK | outcome label と reviewer agreement を測定できる |
 | ニーズ適合 | OK | RAG が実際の利用目的を達成するかを判定する |
-| 実装適合 | partial | 工程 metric はあるが業務 scenario gate は不足 |
+| 実装適合 | OK（measurement/gate contract、閾値未承認） | actor/goal/success criteria/allowed handoff/severity を持つ task scenario から completion/outcome accuracy と critical/high failure zero-tolerance count を導出・gate する |
 
 ## トレース
 

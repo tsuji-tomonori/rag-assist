@@ -190,8 +190,8 @@
 .benchmark-history-panel {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  height: min(620px, calc(100vh - 260px));
-  min-height: 420px;
+  height: min(380px, calc(100vh - 260px));
+  min-height: 300px;
   padding: 18px;
 }
 

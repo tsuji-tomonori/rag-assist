@@ -14,6 +14,7 @@ sequenceDiagram
   participant Store as Store
   participant External as External
   Client->>API: GET /chat-runs/{runId}/events
+  Note over API: 分岐 tenantId が存在しない、または偽である
   Note over API: 分岐 run が存在しない、または偽である
   Note over API: 分岐 run.createdBy が user.userId と異なる、かつ canReadAll が存在しない、または偽である
   Note over API: 分岐 is finite の判定結果が真である
@@ -25,10 +26,8 @@ sequenceDiagram
   API->>Auth: "chat：read：own" permission を必須条件として確認する。
   API->>Auth: schema 検証済みの path parameter を取得する。
   Service->>Store: deps.chatRunStore に対して get を実行する。
-  API-->>Client: HTTP 404 で JSON response を返す。
   API->>Auth: get permissions for groups により認証・認可条件を確認する。
   API->>Auth: includes により認証・認可条件を確認する。
-  API-->>Client: HTTP 403 で JSON response を返す。
   API->>Auth: "Last-Event-ID" header を取得する。
   Service->>Store: deps.chatRunEventStore に対して list after を実行する。
   API-->>Client: SSE event を client へ送信する。
@@ -41,34 +40,36 @@ sequenceDiagram
 
 | # | Caller | 境界 | 処理 | コード | 実装位置 |
 | ---: | --- | --- | --- | --- | --- |
-| 1 | `GET /chat-runs/{runId}/events handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/chat-routes.ts:91 (GET /chat-runs/{runId}/events handler)` |
-| 2 | `GET /chat-runs/{runId}/events handler` | Auth | "chat:read:own" permission を必須条件として確認する。 | `requirePermission(user, "chat:read:own")` | `apps/api/src/routes/chat-routes.ts:92 (GET /chat-runs/{runId}/events handler)` |
-| 3 | `GET /chat-runs/{runId}/events handler` | Validation | schema 検証済みの path parameter を取得する。 | `c.req.param("runId")` | `apps/api/src/routes/chat-routes.ts:93 (GET /chat-runs/{runId}/events handler)` |
-| 4 | `GET /chat-runs/{runId}/events handler` | Store | `deps.chatRunStore` に対して get を実行する。 | `deps.chatRunStore.get(runId)` | `apps/api/src/routes/chat-routes.ts:94 (GET /chat-runs/{runId}/events handler)` |
-| 5 | `GET /chat-runs/{runId}/events handler` | HTTP/SSE | HTTP 404 で JSON response を返す。 | `c.json({ error: "Chat run not found" }, 404)` | `apps/api/src/routes/chat-routes.ts:95 (GET /chat-runs/{runId}/events handler)` |
-| 6 | `GET /chat-runs/{runId}/events handler` | Auth | get permissions for groups により認証・認可条件を確認する。 | `getPermissionsForGroups(user.cognitoGroups)` | `apps/api/src/routes/chat-routes.ts:97 (GET /chat-runs/{runId}/events handler)` |
-| 7 | `GET /chat-runs/{runId}/events handler` | Auth | includes により認証・認可条件を確認する。 | `getPermissionsForGroups(user.cognitoGroups).includes("chat:admin:read_all")` | `apps/api/src/routes/chat-routes.ts:97 (GET /chat-runs/{runId}/events handler)` |
-| 8 | `GET /chat-runs/{runId}/events handler` | HTTP/SSE | HTTP 403 で JSON response を返す。 | `c.json({ error: "Forbidden" }, 403)` | `apps/api/src/routes/chat-routes.ts:98 (GET /chat-runs/{runId}/events handler)` |
-| 9 | `GET /chat-runs/{runId}/events handler` | Validation | "Last-Event-ID" header を取得する。 | `c.req.header("Last-Event-ID")` | `apps/api/src/routes/chat-routes.ts:101 (GET /chat-runs/{runId}/events handler)` |
-| 10 | `GET /chat-runs/{runId}/events handler` | Store | `deps.chatRunEventStore` に対して list after を実行する。 | `deps.chatRunEventStore.listAfter(runId, afterSeq)` | `apps/api/src/routes/chat-routes.ts:107 (GET /chat-runs/{runId}/events handler)` |
-| 11 | `GET /chat-runs/{runId}/events handler` | HTTP/SSE | SSE event を client へ送信する。 | `stream.writeSSE({ id: String(item.seq), event: item.type, data: JSON.stringify(eventPayload(item)) })` | `apps/api/src/routes/chat-routes.ts:109 (GET /chat-runs/{runId}/events handler)` |
-| 12 | `GET /chat-runs/{runId}/events handler` | HTTP/SSE | SSE event を client へ送信する。 | `stream.writeSSE({ event: "heartbeat", data: JSON.stringify({ ts: new Date().toISOString(), nextSeq: afterSeq + 1 }) })` | `apps/api/src/routes/chat-routes.ts:119 (GET /chat-runs/{runId}/events handler)` |
-| 13 | `GET /chat-runs/{runId}/events handler` | HTTP/SSE | SSE event を client へ送信する。 | `stream.writeSSE({ event: "timeout", data: JSON.stringify({ message: "stream timeout. reconnect with Last-Event-ID.", nextSeq: afterSeq + 1 }) })` | `apps/api/src/routes/chat-routes.ts:129 (GET /chat-runs/{runId}/events handler)` |
-| 14 | `GET /chat-runs/{runId}/events handler` | HTTP/SSE | stream sse を実行する。 | `streamSSE(c, async (stream) => { const lastEventId = Number(c.req.header("Last-Event-ID") ?? 0) let afterSeq = Number.isFinite(lastEventId) ? lastEventId : 0 const deadline = Date.now() + 14 * 60 * 1000 let lastHeartbea…` | `apps/api/src/routes/chat-routes.ts:100 (GET /chat-runs/{runId}/events handler)` |
+| 1 | `GET /chat-runs/{runId}/events handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/chat-routes.ts:93 (GET /chat-runs/{runId}/events handler)` |
+| 2 | `GET /chat-runs/{runId}/events handler` | Auth | "chat:read:own" permission を必須条件として確認する。 | `requirePermission(user, "chat:read:own")` | `apps/api/src/routes/chat-routes.ts:96 (GET /chat-runs/{runId}/events handler)` |
+| 3 | `GET /chat-runs/{runId}/events handler` | Validation | schema 検証済みの path parameter を取得する。 | `c.req.param("runId")` | `apps/api/src/routes/chat-routes.ts:97 (GET /chat-runs/{runId}/events handler)` |
+| 4 | `GET /chat-runs/{runId}/events handler` | Store | `deps.chatRunStore` に対して get を実行する。 | `deps.chatRunStore.get(tenantId, runId)` | `apps/api/src/routes/chat-routes.ts:98 (GET /chat-runs/{runId}/events handler)` |
+| 5 | `GET /chat-runs/{runId}/events handler` | Auth | get permissions for groups により認証・認可条件を確認する。 | `getPermissionsForGroups(user.cognitoGroups)` | `apps/api/src/routes/chat-routes.ts:104 (GET /chat-runs/{runId}/events handler)` |
+| 6 | `GET /chat-runs/{runId}/events handler` | Auth | includes により認証・認可条件を確認する。 | `getPermissionsForGroups(user.cognitoGroups).includes("chat:admin:read_all")` | `apps/api/src/routes/chat-routes.ts:104 (GET /chat-runs/{runId}/events handler)` |
+| 7 | `GET /chat-runs/{runId}/events handler` | Validation | "Last-Event-ID" header を取得する。 | `c.req.header("Last-Event-ID")` | `apps/api/src/routes/chat-routes.ts:111 (GET /chat-runs/{runId}/events handler)` |
+| 8 | `GET /chat-runs/{runId}/events handler` | Store | `deps.chatRunEventStore` に対して list after を実行する。 | `deps.chatRunEventStore.listAfter(tenantId, runId, afterSeq)` | `apps/api/src/routes/chat-routes.ts:117 (GET /chat-runs/{runId}/events handler)` |
+| 9 | `GET /chat-runs/{runId}/events handler` | HTTP/SSE | SSE event を client へ送信する。 | `stream.writeSSE({ id: String(item.seq), event: item.type, data: JSON.stringify(eventPayload(item)) })` | `apps/api/src/routes/chat-routes.ts:119 (GET /chat-runs/{runId}/events handler)` |
+| 10 | `GET /chat-runs/{runId}/events handler` | HTTP/SSE | SSE event を client へ送信する。 | `stream.writeSSE({ event: "heartbeat", data: JSON.stringify({ ts: new Date().toISOString(), nextSeq: afterSeq + 1 }) })` | `apps/api/src/routes/chat-routes.ts:129 (GET /chat-runs/{runId}/events handler)` |
+| 11 | `GET /chat-runs/{runId}/events handler` | HTTP/SSE | SSE event を client へ送信する。 | `stream.writeSSE({ event: "timeout", data: JSON.stringify({ message: "stream timeout. reconnect with Last-Event-ID.", nextSeq: afterSeq + 1 }) })` | `apps/api/src/routes/chat-routes.ts:139 (GET /chat-runs/{runId}/events handler)` |
+| 12 | `GET /chat-runs/{runId}/events handler` | HTTP/SSE | stream sse を実行する。 | `streamSSE(c, async (stream) => { const lastEventId = Number(c.req.header("Last-Event-ID") ?? 0) let afterSeq = Number.isFinite(lastEventId) ? lastEventId : 0 const deadline = Date.now() + 14 * 60 * 1000 let lastHeartbea…` | `apps/api/src/routes/chat-routes.ts:110 (GET /chat-runs/{runId}/events handler)` |
 
 ## 分岐
 
 | ID | Function | 条件 | 実装位置 |
 | --- | --- | --- | --- |
-| B001 | `GET /chat-runs/{runId}/events handler` | `run` が存在しない、または偽である | `apps/api/src/routes/chat-routes.ts:95 (GET /chat-runs/{runId}/events handler)` |
-| B002 | `GET /chat-runs/{runId}/events handler` | `run.createdBy` が `user.userId` と異なる、かつ `canReadAll` が存在しない、または偽である | `apps/api/src/routes/chat-routes.ts:98 (GET /chat-runs/{runId}/events handler)` |
-| B003 | `GET /chat-runs/{runId}/events handler` | is finite の判定結果が真である | `apps/api/src/routes/chat-routes.ts:102 (GET /chat-runs/{runId}/events handler)` |
-| B004 | `GET /chat-runs/{runId}/events handler` | `Date.now()` が `deadline` より小さい | `apps/api/src/routes/chat-routes.ts:106 (GET /chat-runs/{runId}/events handler)` |
-| B005 | `GET /chat-runs/{runId}/events handler` | `events` が存在し、真である | `apps/api/src/routes/chat-routes.ts:108 (GET /chat-runs/{runId}/events handler)` |
-| B006 | `GET /chat-runs/{runId}/events handler` | `item.type` が `"final"` と等しい、または `item.type` が `"error"` と等しい | `apps/api/src/routes/chat-routes.ts:115 (GET /chat-runs/{runId}/events handler)` |
-| B007 | `GET /chat-runs/{runId}/events handler` | `Date.now() - lastHeartbeat` が `15_000` より大きい | `apps/api/src/routes/chat-routes.ts:118 (GET /chat-runs/{runId}/events handler)` |
-| B008 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:267 (requirePermission)` |
-| B009 | `eventPayload` | `item.stage` が `undefined` と異なる | `apps/api/src/chat-run-events-stream.ts:124 (eventPayload)` |
-| B010 | `eventPayload` | `item.message` が `undefined` と異なる | `apps/api/src/chat-run-events-stream.ts:125 (eventPayload)` |
-| B011 | `eventPayload` | `item.data` が存在し、真である、かつ `typeof item.data` が `"object"` と等しい、かつ is array の判定結果が真ではない | `apps/api/src/chat-run-events-stream.ts:127 (eventPayload)` |
-| B012 | `eventPayload` | `item.data` が `undefined` と等しい | `apps/api/src/chat-run-events-stream.ts:131 (eventPayload)` |
+| B001 | `GET /chat-runs/{runId}/events handler` | `tenantId` が存在しない、または偽である | `apps/api/src/routes/chat-routes.ts:95 (GET /chat-runs/{runId}/events handler)` |
+| B002 | `GET /chat-runs/{runId}/events handler` | `run` が存在しない、または偽である | `apps/api/src/routes/chat-routes.ts:99 (GET /chat-runs/{runId}/events handler)` |
+| B003 | `GET /chat-runs/{runId}/events handler` | `run.createdBy` が `user.userId` と異なる、かつ `canReadAll` が存在しない、または偽である | `apps/api/src/routes/chat-routes.ts:105 (GET /chat-runs/{runId}/events handler)` |
+| B004 | `GET /chat-runs/{runId}/events handler` | is finite の判定結果が真である | `apps/api/src/routes/chat-routes.ts:112 (GET /chat-runs/{runId}/events handler)` |
+| B005 | `GET /chat-runs/{runId}/events handler` | `Date.now()` が `deadline` より小さい | `apps/api/src/routes/chat-routes.ts:116 (GET /chat-runs/{runId}/events handler)` |
+| B006 | `GET /chat-runs/{runId}/events handler` | `events` が存在し、真である | `apps/api/src/routes/chat-routes.ts:118 (GET /chat-runs/{runId}/events handler)` |
+| B007 | `GET /chat-runs/{runId}/events handler` | `item.type` が `"final"` と等しい、または `item.type` が `"error"` と等しい | `apps/api/src/routes/chat-routes.ts:125 (GET /chat-runs/{runId}/events handler)` |
+| B008 | `GET /chat-runs/{runId}/events handler` | `Date.now() - lastHeartbeat` が `15_000` より大きい | `apps/api/src/routes/chat-routes.ts:128 (GET /chat-runs/{runId}/events handler)` |
+| B009 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| B010 | `getPermissionsForGroups` | `groups` が存在し、真である | `apps/api/src/authorization.ts:108 (getPermissionsForGroups)` |
+| B011 | `getPermissionsForGroups` | `rolePermissions[group as Role]` が `[]` の条件を満たす | `apps/api/src/authorization.ts:109 (getPermissionsForGroups)` |
+| B012 | `settleNonEnumerationTiming` | `remaining` が `0` より大きい | `apps/api/src/security/public-resource-response.ts:42 (settleNonEnumerationTiming)` |
+| B013 | `eventPayload` | `item.stage` が `undefined` と異なる | `apps/api/src/chat-run-events-stream.ts:139 (eventPayload)` |
+| B014 | `eventPayload` | `item.message` が `undefined` と異なる | `apps/api/src/chat-run-events-stream.ts:140 (eventPayload)` |
+| B015 | `eventPayload` | `item.data` が存在し、真である、かつ `typeof item.data` が `"object"` と等しい、かつ is array の判定結果が真ではない | `apps/api/src/chat-run-events-stream.ts:142 (eventPayload)` |
+| B016 | `eventPayload` | `item.data` が `undefined` と等しい | `apps/api/src/chat-run-events-stream.ts:146 (eventPayload)` |

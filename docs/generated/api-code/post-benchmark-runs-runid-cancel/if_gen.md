@@ -2,7 +2,7 @@
 
 # POST /benchmark-runs/{runId}/cancel IF仕様
 
-- 実装 route: `apps/api/src/routes/benchmark-routes.ts:168 (POST /benchmark-runs/{runId}/cancel)`
+- 実装 route: `apps/api/src/routes/benchmark-routes.ts:173 (POST /benchmark-runs/{runId}/cancel)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: benchmark run をキャンセルする
@@ -55,7 +55,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 58 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 150 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 | `404` | 指定したリソースが見つかりません。 | `application/json` | 2 field(s) |
@@ -73,6 +73,7 @@ Media type: `application/json`
 | `suiteId` | `string` | yes | benchmark suite を識別する ID。 | - |
 | `datasetS3Key` | `string` | yes | `response.datasetS3Key` の値。項目名は dataset s3 key を表します。 | - |
 | `createdBy` | `string` | yes | `response.createdBy` の値。項目名は created by を表します。 | - |
+| `tenantId` | `string` | no | `response.tenantId` の値。項目名は tenant id を表します。 | - |
 | `createdAt` | `string` | yes | レコードを作成した日時。 | - |
 | `updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
 | `startedAt` | `string` | no | 処理を開始した日時。 | - |
@@ -117,13 +118,104 @@ Media type: `application/json`
 | `metrics.abstentionAccuracy` | `number` | no | `response.metrics.abstentionAccuracy` の値。項目名は abstention accuracy を表します。 | nullable |
 | `metrics.citationHitRate` | `number` | no | `response.metrics.citationHitRate` の値。項目名は citation hit rate を表します。 | nullable |
 | `metrics.expectedFileHitRate` | `number` | no | `response.metrics.expectedFileHitRate` の値。項目名は expected file hit rate を表します。 | nullable |
+| `metrics.extractionAccuracy` | `number` | no | `response.metrics.extractionAccuracy` の値。項目名は extraction accuracy を表します。 | nullable |
+| `metrics.admissionCorrectness` | `number` | no | `response.metrics.admissionCorrectness` の値。項目名は admission correctness を表します。 | nullable |
 | `metrics.retrievalRecallAt20` | `number` | no | `response.metrics.retrievalRecallAt20` の値。項目名は retrieval recall at20 を表します。 | nullable |
 | `metrics.retrievalRecallAtK` | `number` | no | `response.metrics.retrievalRecallAtK` の値。項目名は retrieval recall at k を表します。 | nullable |
+| `metrics.falseDenialRate` | `number` | no | `response.metrics.falseDenialRate` の値。項目名は false denial rate を表します。 | nullable |
+| `metrics.faithfulness` | `number` | no | `response.metrics.faithfulness` の値。項目名は faithfulness を表します。 | nullable |
+| `metrics.unsupportedClaimRate` | `number` | no | `response.metrics.unsupportedClaimRate` の値。項目名は unsupported claim rate を表します。 | nullable |
+| `metrics.unsupportedSentenceRate` | `number` | no | `response.metrics.unsupportedSentenceRate` の値。項目名は unsupported sentence rate を表します。 | nullable |
+| `metrics.unsupportedAnswerRate` | `number` | no | `response.metrics.unsupportedAnswerRate` の値。項目名は unsupported answer rate を表します。 | nullable |
+| `metrics.citationPrecision` | `number` | no | `response.metrics.citationPrecision` の値。項目名は citation precision を表します。 | nullable |
+| `metrics.citationSupportPassRate` | `number` | no | `response.metrics.citationSupportPassRate` の値。項目名は citation support pass rate を表します。 | nullable |
+| `metrics.citationCompleteness` | `number` | no | `response.metrics.citationCompleteness` の値。項目名は citation completeness を表します。 | nullable |
+| `metrics.citationLocatorValidity` | `number` | no | `response.metrics.citationLocatorValidity` の値。項目名は citation locator validity を表します。 | nullable |
+| `metrics.requiredClaimMissCount` | `integer` | no | `response.metrics.requiredClaimMissCount` の値。項目名は required claim miss count を表します。 | nullable<br>minimum=0 |
+| `metrics.falseAnswerRate` | `number` | no | `response.metrics.falseAnswerRate` の値。項目名は false answer rate を表します。 | nullable |
+| `metrics.falseRefusalRate` | `number` | no | `response.metrics.falseRefusalRate` の値。項目名は false refusal rate を表します。 | nullable |
+| `metrics.taskCompletionRate` | `number` | no | `response.metrics.taskCompletionRate` の値。項目名は task completion rate を表します。 | nullable |
+| `metrics.taskOutcomeAccuracy` | `number` | no | `response.metrics.taskOutcomeAccuracy` の値。項目名は task outcome accuracy を表します。 | nullable |
+| `metrics.criticalTaskFailureCount` | `integer` | no | `response.metrics.criticalTaskFailureCount` の値。項目名は critical task failure count を表します。 | nullable<br>minimum=0 |
+| `metrics.criticalUnsupportedClaimCount` | `integer` | no | `response.metrics.criticalUnsupportedClaimCount` の値。項目名は critical unsupported claim count を表します。 | nullable<br>minimum=0 |
+| `metrics.noAccessLeakCount` | `integer` | no | `response.metrics.noAccessLeakCount` の値。項目名は no access leak count を表します。 | nullable<br>minimum=0 |
+| `metrics.injectionSuccessCount` | `integer` | no | `response.metrics.injectionSuccessCount` の値。項目名は injection success count を表します。 | nullable<br>minimum=0 |
+| `metrics.secretExposureCount` | `integer` | no | `response.metrics.secretExposureCount` の値。項目名は secret exposure count を表します。 | nullable<br>minimum=0 |
+| `metrics.eligibilityPropagationP99Ms` | `number` | no | `response.metrics.eligibilityPropagationP99Ms` の値。項目名は eligibility propagation p99 ms を表します。 | nullable<br>minimum=0 |
+| `metrics.eligibilityPropagationP50Ms` | `number` | no | `response.metrics.eligibilityPropagationP50Ms` の値。項目名は eligibility propagation p50 ms を表します。 | nullable<br>minimum=0 |
+| `metrics.eligibilityPropagationP95Ms` | `number` | no | `response.metrics.eligibilityPropagationP95Ms` の値。項目名は eligibility propagation p95 ms を表します。 | nullable<br>minimum=0 |
+| `metrics.eligibilityPropagationMaxMs` | `number` | no | `response.metrics.eligibilityPropagationMaxMs` の値。項目名は eligibility propagation max ms を表します。 | nullable<br>minimum=0 |
+| `metrics.eligibilityProbeSampleCount` | `integer` | no | `response.metrics.eligibilityProbeSampleCount` の値。項目名は eligibility probe sample count を表します。 | nullable<br>minimum=0 |
+| `metrics.eligibilityMatrixCoverage` | `number` | no | `response.metrics.eligibilityMatrixCoverage` の値。項目名は eligibility matrix coverage を表します。 | nullable<br>minimum=0<br>maximum=1 |
+| `metrics.eligibilityUnreconciledResourceCount` | `integer` | no | `response.metrics.eligibilityUnreconciledResourceCount` の値。項目名は eligibility unreconciled resource count を表します。 | nullable<br>minimum=0 |
+| `metrics.mttrMs` | `number` | no | `response.metrics.mttrMs` の値。項目名は mttr ms を表します。 | nullable<br>minimum=0 |
+| `metrics.recoveryP95Ms` | `number` | no | `response.metrics.recoveryP95Ms` の値。項目名は recovery p95 ms を表します。 | nullable<br>minimum=0 |
+| `metrics.recoveryWithoutLossRate` | `number` | no | `response.metrics.recoveryWithoutLossRate` の値。項目名は recovery without loss rate を表します。 | nullable<br>minimum=0<br>maximum=1 |
+| `metrics.recoveryLossCount` | `integer` | no | `response.metrics.recoveryLossCount` の値。項目名は recovery loss count を表します。 | nullable<br>minimum=0 |
+| `metrics.recoveryScenarioCoverage` | `number` | no | `response.metrics.recoveryScenarioCoverage` の値。項目名は recovery scenario coverage を表します。 | nullable<br>minimum=0<br>maximum=1 |
+| `metrics.recoverySampleCount` | `integer` | no | `response.metrics.recoverySampleCount` の値。項目名は recovery sample count を表します。 | nullable<br>minimum=0 |
+| `metrics.backlogAgeP99Ms` | `number` | no | `response.metrics.backlogAgeP99Ms` の値。項目名は backlog age p99 ms を表します。 | nullable<br>minimum=0 |
+| `metrics.backlogAgeSampleCount` | `integer` | no | `response.metrics.backlogAgeSampleCount` の値。項目名は backlog age sample count を表します。 | nullable<br>minimum=0 |
+| `metrics.timeoutRate` | `number` | no | `response.metrics.timeoutRate` の値。項目名は timeout rate を表します。 | nullable<br>minimum=0<br>maximum=1 |
+| `metrics.retryExhaustionCount` | `integer` | no | `response.metrics.retryExhaustionCount` の値。項目名は retry exhaustion count を表します。 | nullable<br>minimum=0 |
 | `metrics.p50LatencyMs` | `number` | no | `response.metrics.p50LatencyMs` の値。項目名は p50 latency ms を表します。 | nullable |
 | `metrics.p95LatencyMs` | `number` | no | `response.metrics.p95LatencyMs` の値。項目名は p95 latency ms を表します。 | nullable |
+| `metrics.p99LatencyMs` | `number` | no | `response.metrics.p99LatencyMs` の値。項目名は p99 latency ms を表します。 | nullable |
 | `metrics.averageLatencyMs` | `number` | no | `response.metrics.averageLatencyMs` の値。項目名は average latency ms を表します。 | nullable |
 | `metrics.errorRate` | `number` | no | `response.metrics.errorRate` の値。項目名は error rate を表します。 | nullable |
+| `metrics.datasetVersion` | `string` | no | `response.metrics.datasetVersion` の値。項目名は dataset version を表します。 | minLength=1 |
+| `metrics.workloadProfileVersion` | `string` | no | `response.metrics.workloadProfileVersion` の値。項目名は workload profile version を表します。 | minLength=1 |
+| `metrics.runtimeProfileVersion` | `string` | no | `response.metrics.runtimeProfileVersion` の値。項目名は runtime profile version を表します。 | minLength=1 |
+| `metrics.priceCatalogVersion` | `string` | no | `response.metrics.priceCatalogVersion` の値。項目名は price catalog version を表します。 | minLength=1 |
+| `metrics.indexVersion` | `string` | no | `response.metrics.indexVersion` の値。項目名は index version を表します。 | minLength=1 |
+| `metrics.promptVersion` | `string` | no | `response.metrics.promptVersion` の値。項目名は prompt version を表します。 | minLength=1 |
+| `metrics.pipelineVersion` | `string` | no | `response.metrics.pipelineVersion` の値。項目名は pipeline version を表します。 | minLength=1 |
+| `metrics.parserVersion` | `string` | no | `response.metrics.parserVersion` の値。項目名は parser version を表します。 | minLength=1 |
+| `metrics.chunkerVersion` | `string` | no | `response.metrics.chunkerVersion` の値。項目名は chunker version を表します。 | minLength=1 |
+| `metrics.corpusProfileVersion` | `string` | no | `response.metrics.corpusProfileVersion` の値。項目名は corpus profile version を表します。 | minLength=1 |
+| `metrics.aclDistributionVersion` | `string` | no | `response.metrics.aclDistributionVersion` の値。項目名は acl distribution version を表します。 | minLength=1 |
+| `metrics.workloadConcurrency` | `integer` | no | `response.metrics.workloadConcurrency` の値。項目名は workload concurrency を表します。 | minimum=0 |
+| `metrics.documentSizeProfileVersion` | `string` | no | `response.metrics.documentSizeProfileVersion` の値。項目名は document size profile version を表します。 | minLength=1 |
+| `metrics.dependencyLatencyProfileVersion` | `string` | no | `response.metrics.dependencyLatencyProfileVersion` の値。項目名は dependency latency profile version を表します。 | minLength=1 |
+| `metrics.qualitySliceMeasurements` | `array<object>` | no | `response.metrics.qualitySliceMeasurements` の値。項目名は quality slice measurements を表します。 | - |
+| `metrics.qualitySliceMeasurements[].slice` | `string` | yes | `response.metrics.qualitySliceMeasurements[].slice` の値。項目名は slice を表します。 | minLength=1 |
+| `metrics.qualitySliceMeasurements[].sampleCount` | `integer` | yes | `response.metrics.qualitySliceMeasurements[].sampleCount` の値。項目名は sample count を表します。 | minimum=0 |
+| `metrics.qualitySliceMeasurements[].measurements` | `object` | yes | `response.metrics.qualitySliceMeasurements[].measurements` の値。項目名は measurements を表します。 | - |
+| `metrics.eligibilityMatrixReport` | `object` | no | `response.metrics.eligibilityMatrixReport` の値。項目名は eligibility matrix report を表します。 | - |
+| `metrics.eligibilityMatrixReport.schemaVersion` | `enum(1)` | yes | `response.metrics.eligibilityMatrixReport.schemaVersion` の値。項目名は schema version を表します。 | enum=1 |
+| `metrics.eligibilityMatrixReport.triggerCount` | `integer` | yes | `response.metrics.eligibilityMatrixReport.triggerCount` の値。項目名は trigger count を表します。 | minimum=0 |
+| `metrics.eligibilityMatrixReport.pathCount` | `integer` | yes | `response.metrics.eligibilityMatrixReport.pathCount` の値。項目名は path count を表します。 | minimum=0 |
+| `metrics.eligibilityMatrixReport.probeCount` | `integer` | yes | `response.metrics.eligibilityMatrixReport.probeCount` の値。項目名は probe count を表します。 | minimum=0 |
+| `metrics.eligibilityMatrixReport.p50Ms` | `number` | no | `response.metrics.eligibilityMatrixReport.p50Ms` の値。項目名は p50 ms を表します。 | minimum=0 |
+| `metrics.eligibilityMatrixReport.p95Ms` | `number` | no | `response.metrics.eligibilityMatrixReport.p95Ms` の値。項目名は p95 ms を表します。 | minimum=0 |
+| `metrics.eligibilityMatrixReport.p99Ms` | `number` | no | `response.metrics.eligibilityMatrixReport.p99Ms` の値。項目名は p99 ms を表します。 | minimum=0 |
+| `metrics.eligibilityMatrixReport.maxMs` | `number` | no | `response.metrics.eligibilityMatrixReport.maxMs` の値。項目名は max ms を表します。 | minimum=0 |
+| `metrics.eligibilityMatrixReport.unreflectedResourceIds` | `array<string>` | yes | `response.metrics.eligibilityMatrixReport.unreflectedResourceIds` の値。項目名は unreflected resource ids を表します。 | - |
+| `metrics.eligibilityMatrixReport.probes` | `array<object>` | yes | `response.metrics.eligibilityMatrixReport.probes` の値。項目名は probes を表します。 | - |
+| `metrics.eligibilityMatrixReport.probes[].trigger` | `string` | yes | `response.metrics.eligibilityMatrixReport.probes[].trigger` の値。項目名は trigger を表します。 | minLength=1 |
+| `metrics.eligibilityMatrixReport.probes[].path` | `string` | yes | API path または参照先 path。 | minLength=1 |
+| `metrics.eligibilityMatrixReport.probes[].propagationMs` | `number` | no | `response.metrics.eligibilityMatrixReport.probes[].propagationMs` の値。項目名は propagation ms を表します。 | minimum=0 |
+| `metrics.eligibilityMatrixReport.probes[].unreflectedResourceIds` | `array<string>` | yes | `response.metrics.eligibilityMatrixReport.probes[].unreflectedResourceIds` の値。項目名は unreflected resource ids を表します。 | - |
+| `metrics.modelCostPerUnit` | `number` | no | `response.metrics.modelCostPerUnit` の値。項目名は model cost per unit を表します。 | nullable<br>minimum=0 |
+| `metrics.embeddingCostPerUnit` | `number` | no | `response.metrics.embeddingCostPerUnit` の値。項目名は embedding cost per unit を表します。 | nullable<br>minimum=0 |
+| `metrics.storageCostPerUnit` | `number` | no | `response.metrics.storageCostPerUnit` の値。項目名は storage cost per unit を表します。 | nullable<br>minimum=0 |
+| `metrics.workerCostPerUnit` | `number` | no | `response.metrics.workerCostPerUnit` の値。項目名は worker cost per unit を表します。 | nullable<br>minimum=0 |
+| `metrics.egressCostPerUnit` | `number` | no | `response.metrics.egressCostPerUnit` の値。項目名は egress cost per unit を表します。 | nullable<br>minimum=0 |
+| `metrics.totalCostPerUnit` | `number` | no | `response.metrics.totalCostPerUnit` の値。項目名は total cost per unit を表します。 | nullable<br>minimum=0 |
+| `metrics.costEvidenceSampleCount` | `integer` | no | `response.metrics.costEvidenceSampleCount` の値。項目名は cost evidence sample count を表します。 | nullable<br>minimum=0 |
+| `metrics.chatCostEvidenceSampleCount` | `integer` | no | `response.metrics.chatCostEvidenceSampleCount` の値。項目名は chat cost evidence sample count を表します。 | nullable<br>minimum=0 |
+| `metrics.searchCostEvidenceSampleCount` | `integer` | no | `response.metrics.searchCostEvidenceSampleCount` の値。項目名は search cost evidence sample count を表します。 | nullable<br>minimum=0 |
+| `metrics.ingestCostEvidenceSampleCount` | `integer` | no | `response.metrics.ingestCostEvidenceSampleCount` の値。項目名は ingest cost evidence sample count を表します。 | nullable<br>minimum=0 |
+| `metrics.unitCostKind` | `enum(chat_request \| search_request \| ingest_document)` | no | `response.metrics.unitCostKind` の値。項目名は unit cost kind を表します。 | enum=chat_request, search_request, ingest_document |
+| `metrics.chatCostPerRequest` | `number` | no | `response.metrics.chatCostPerRequest` の値。項目名は chat cost per request を表します。 | nullable<br>minimum=0 |
+| `metrics.searchCostPerRequest` | `number` | no | `response.metrics.searchCostPerRequest` の値。項目名は search cost per request を表します。 | nullable<br>minimum=0 |
+| `metrics.ingestCostPerDocument` | `number` | no | `response.metrics.ingestCostPerDocument` の値。項目名は ingest cost per document を表します。 | nullable<br>minimum=0 |
+| `metrics.releaseAuditVersion` | `string` | no | `response.metrics.releaseAuditVersion` の値。項目名は release audit version を表します。 | minLength=1 |
+| `metrics.releaseAuditId` | `string` | no | `response.metrics.releaseAuditId` の値。項目名は release audit id を表します。 | minLength=1 |
+| `metrics.datasetSpecificBranchCount` | `integer` | no | `response.metrics.datasetSpecificBranchCount` の値。項目名は dataset specific branch count を表します。 | nullable<br>minimum=0 |
+| `metrics.artifactManifestMismatchCount` | `integer` | no | `response.metrics.artifactManifestMismatchCount` の値。項目名は artifact manifest mismatch count を表します。 | nullable<br>minimum=0 |
 | `error` | `string` | no | エラー内容を表すメッセージ。 | - |
+| `errorCode` | `enum(validation_error \| not_found \| permission_revoked \| execution_error)` | no | `response.errorCode` の値。項目名は error code を表します。 | enum=validation_error, not_found, permission_revoked, execution_error |
 
 ##### `401` 認証が必要です。
 

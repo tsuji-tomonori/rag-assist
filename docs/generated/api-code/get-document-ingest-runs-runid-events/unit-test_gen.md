@@ -8,61 +8,80 @@
 
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
-| 到達 symbol | service preserves asynchronous chat run options and can mark worker failures | `apps/api/src/rag/memorag-service.test.ts:1300 (service preserves asynchronous chat run options and can mark worker failures)` |
-| 到達 symbol | asynchronous chat run stores debug trace by reference | `apps/api/src/rag/memorag-service.test.ts:1861 (asynchronous chat run stores debug trace by reference)` |
-| 到達 symbol | service executes asynchronous document ingest runs from uploaded object | `apps/api/src/rag/memorag-service.test.ts:1898 (service executes asynchronous document ingest runs from uploaded object)` |
-| 到達 symbol | chat and document ingest SSE routes keep Last-Event-ID reconnect and event format | `apps/api/src/security/access-control-policy.test.ts:358 (chat and document ingest SSE routes keep Last-Event-ID reconnect and event format)` |
+| 到達 symbol | DynamoDB run event stores partition identical raw run IDs by tenant and query only the physical key | `apps/api/src/adapters/dynamodb-tenant-run-stores.test.ts:101 (DynamoDB run event stores partition identical raw run IDs by tenant and query only the physical key)` |
+| 到達 symbol | local run and event stores allow the same raw run ID without cross-tenant reads | `apps/api/src/adapters/tenant-scoped-run-stores.test.ts:13 (local run and event stores allow the same raw run ID without cross-tenant reads)` |
+| 到達 symbol | service preserves asynchronous chat run options and can mark worker failures | `apps/api/src/rag/memorag-service.test.ts:1590 (service preserves asynchronous chat run options and can mark worker failures)` |
+| 到達 symbol | FR-090 chat run treats an authorized final append as the last success boundary | `apps/api/src/rag/memorag-service.test.ts:2206 (FR-090 chat run treats an authorized final append as the last success boundary)` |
+| 到達 symbol | FR-090 chat trace precommit denial writes no debug artifact, observation, final event, or success | `apps/api/src/rag/memorag-service.test.ts:2289 (FR-090 chat trace precommit denial writes no debug artifact, observation, final event, or success)` |
+| 到達 symbol | FR-090 ordinary chat final-event denial compensates its always-persisted redacted trace and observations | `apps/api/src/rag/memorag-service.test.ts:2341 (FR-090 ordinary chat final-event denial compensates its always-persisted redacted trace and observations)` |
+| 到達 symbol | asynchronous chat run stores debug trace by reference | `apps/api/src/rag/memorag-service.test.ts:2445 (asynchronous chat run stores debug trace by reference)` |
+| 到達 symbol | FR-074 asynchronous document ingest success persists tenant-scoped replay evidence | `apps/api/src/rag/memorag-service.test.ts:2483 (FR-074 asynchronous document ingest success persists tenant-scoped replay evidence)` |
+| 到達 symbol | FR-074 rejected document ingest persists observed replay evidence without publishing success | `apps/api/src/rag/memorag-service.test.ts:2520 (FR-074 rejected document ingest persists observed replay evidence without publishing success)` |
+| 到達 symbol | FR-074 worker failure persists an unknown-null replay manifest and a redacted trace | `apps/api/src/rag/memorag-service.test.ts:2561 (FR-074 worker failure persists an unknown-null replay manifest and a redacted trace)` |
+| 到達 symbol | FR-090 ingest reauthorizes after the final event and compensates before persisting success | `apps/api/src/rag/memorag-service.test.ts:2630 (FR-090 ingest reauthorizes after the final event and compensates before persisting success)` |
+| 到達 symbol | FR-090 revoke after governance creation compensates all ingest artifacts and never publishes success | `apps/api/src/rag/memorag-service.test.ts:2690 (FR-090 revoke after governance creation compensates all ingest artifacts and never publishes success)` |
+| 到達 symbol | chat and document ingest SSE routes keep Last-Event-ID reconnect and event format | `apps/api/src/security/access-control-policy.test.ts:539 (chat and document ingest SSE routes keep Last-Event-ID reconnect and event format)` |
 
 ## 2. 実装分岐から導くテスト要因
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `GET /document-ingest-runs/{runId}/events handler` | if | `run` が存在しない、または偽である | `apps/api/src/routes/document-routes.ts:642 (GET /document-ingest-runs/{runId}/events handler)` |
-| F002 | `GET /document-ingest-runs/{runId}/events handler` | if | can read document ingest run の判定結果が真ではない | `apps/api/src/routes/document-routes.ts:643 (GET /document-ingest-runs/{runId}/events handler)` |
-| F003 | `GET /document-ingest-runs/{runId}/events handler` | 三項条件 | is finite の判定結果が真である | `apps/api/src/routes/document-routes.ts:647 (GET /document-ingest-runs/{runId}/events handler)` |
-| F004 | `GET /document-ingest-runs/{runId}/events handler` | loop | `Date.now()` が `deadline` より小さい | `apps/api/src/routes/document-routes.ts:651 (GET /document-ingest-runs/{runId}/events handler)` |
-| F005 | `GET /document-ingest-runs/{runId}/events handler` | loop | `events` が存在し、真である | `apps/api/src/routes/document-routes.ts:653 (GET /document-ingest-runs/{runId}/events handler)` |
-| F006 | `GET /document-ingest-runs/{runId}/events handler` | if | `item.type` が `"final"` と等しい、または `item.type` が `"error"` と等しい | `apps/api/src/routes/document-routes.ts:660 (GET /document-ingest-runs/{runId}/events handler)` |
-| F007 | `GET /document-ingest-runs/{runId}/events handler` | if | `Date.now() - lastHeartbeat` が `15_000` より大きい | `apps/api/src/routes/document-routes.ts:663 (GET /document-ingest-runs/{runId}/events handler)` |
-| F008 | `canReadDocumentIngestRun` | if | 利用者が "chat:read:own" permission を持つ、かつ can read owned run の判定結果が真である | `apps/api/src/routes/document-routes.ts:56 (canReadDocumentIngestRun)` |
-| F009 | `eventPayload` | if | `item.stage` が `undefined` と異なる | `apps/api/src/chat-run-events-stream.ts:124 (eventPayload)` |
-| F010 | `eventPayload` | if | `item.message` が `undefined` と異なる | `apps/api/src/chat-run-events-stream.ts:125 (eventPayload)` |
-| F011 | `eventPayload` | if | `item.data` が存在し、真である、かつ `typeof item.data` が `"object"` と等しい、かつ is array の判定結果が真ではない | `apps/api/src/chat-run-events-stream.ts:127 (eventPayload)` |
-| F012 | `eventPayload` | 三項条件 | `item.data` が `undefined` と等しい | `apps/api/src/chat-run-events-stream.ts:131 (eventPayload)` |
+| F001 | `GET /document-ingest-runs/{runId}/events handler` | if | `run` が存在しない、または偽である、または can read document ingest run の判定結果が真ではない | `apps/api/src/routes/document-routes.ts:1236 (GET /document-ingest-runs/{runId}/events handler)` |
+| F002 | `GET /document-ingest-runs/{runId}/events handler` | 三項条件 | is finite の判定結果が真である | `apps/api/src/routes/document-routes.ts:1240 (GET /document-ingest-runs/{runId}/events handler)` |
+| F003 | `GET /document-ingest-runs/{runId}/events handler` | loop | `Date.now()` が `deadline` より小さい | `apps/api/src/routes/document-routes.ts:1244 (GET /document-ingest-runs/{runId}/events handler)` |
+| F004 | `GET /document-ingest-runs/{runId}/events handler` | loop | `events` が存在し、真である | `apps/api/src/routes/document-routes.ts:1246 (GET /document-ingest-runs/{runId}/events handler)` |
+| F005 | `GET /document-ingest-runs/{runId}/events handler` | if | `item.type` が `"final"` と等しい、または `item.type` が `"error"` と等しい | `apps/api/src/routes/document-routes.ts:1253 (GET /document-ingest-runs/{runId}/events handler)` |
+| F006 | `GET /document-ingest-runs/{runId}/events handler` | if | `Date.now() - lastHeartbeat` が `15_000` より大きい | `apps/api/src/routes/document-routes.ts:1256 (GET /document-ingest-runs/{runId}/events handler)` |
+| F007 | `uploadTenantId` | if | `purpose` が `"benchmarkSeed"` と等しい | `apps/api/src/routes/document-routes.ts:156 (uploadTenantId)` |
+| F008 | `uploadTenantId` | if | `config.benchmarkEvaluationEnabled` が存在しない、または偽である、または trim の判定結果が真ではない | `apps/api/src/routes/document-routes.ts:157 (uploadTenantId)` |
+| F009 | `uploadTenantId` | 三項条件 | `config.authEnabled` が存在しない、または偽である | `apps/api/src/routes/document-routes.ts:162 (uploadTenantId)` |
+| F010 | `uploadTenantId` | if | `tenantId` が存在しない、または偽である | `apps/api/src/routes/document-routes.ts:163 (uploadTenantId)` |
+| F011 | `canReadDocumentIngestRun` | if | 利用者が "chat:read:own" permission を持つ、かつ can read owned run の判定結果が真である | `apps/api/src/routes/document-routes.ts:97 (canReadDocumentIngestRun)` |
+| F012 | `eventPayload` | if | `item.stage` が `undefined` と異なる | `apps/api/src/chat-run-events-stream.ts:139 (eventPayload)` |
+| F013 | `eventPayload` | if | `item.message` が `undefined` と異なる | `apps/api/src/chat-run-events-stream.ts:140 (eventPayload)` |
+| F014 | `eventPayload` | if | `item.data` が存在し、真である、かつ `typeof item.data` が `"object"` と等しい、かつ is array の判定結果が真ではない | `apps/api/src/chat-run-events-stream.ts:142 (eventPayload)` |
+| F015 | `eventPayload` | 三項条件 | `item.data` が `undefined` と等しい | `apps/api/src/chat-run-events-stream.ts:146 (eventPayload)` |
 
 ## 3. コード由来テストケース
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | 文書取り込みイベントを購読する が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:638 (GET /document-ingest-runs/{runId}/events handler)` |
-| TC002 | F001: 条件成立 | `run` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:642 (GET /document-ingest-runs/{runId}/events handler)` |
-| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:642 (GET /document-ingest-runs/{runId}/events handler)` |
-| TC004 | F002: 条件成立 | can read document ingest run の判定結果が真ではない 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:643 (GET /document-ingest-runs/{runId}/events handler)` |
-| TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:643 (GET /document-ingest-runs/{runId}/events handler)` |
-| TC006 | F003: 条件成立 | is finite の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:647 (GET /document-ingest-runs/{runId}/events handler)` |
-| TC007 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:647 (GET /document-ingest-runs/{runId}/events handler)` |
-| TC008 | F004: 0件 | 反復対象が空でも不正な副作用や例外を生じない。 | `apps/api/src/routes/document-routes.ts:651 (GET /document-ingest-runs/{runId}/events handler)` |
-| TC009 | F004: 複数件 | 各要素を順に処理し、順序・終了条件を守る。 | `apps/api/src/routes/document-routes.ts:651 (GET /document-ingest-runs/{runId}/events handler)` |
-| TC010 | F005: 0件 | 反復対象が空でも不正な副作用や例外を生じない。 | `apps/api/src/routes/document-routes.ts:653 (GET /document-ingest-runs/{runId}/events handler)` |
-| TC011 | F005: 複数件 | 各要素を順に処理し、順序・終了条件を守る。 | `apps/api/src/routes/document-routes.ts:653 (GET /document-ingest-runs/{runId}/events handler)` |
-| TC012 | F006: 条件成立 | `item.type` が `"final"` と等しい、または `item.type` が `"error"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:660 (GET /document-ingest-runs/{runId}/events handler)` |
-| TC013 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:660 (GET /document-ingest-runs/{runId}/events handler)` |
-| TC014 | F007: 条件成立 | `Date.now() - lastHeartbeat` が `15_000` より大きい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:663 (GET /document-ingest-runs/{runId}/events handler)` |
-| TC015 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:663 (GET /document-ingest-runs/{runId}/events handler)` |
-| TC016 | F008: 条件成立 | 利用者が "chat:read:own" permission を持つ、かつ can read owned run の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:56 (canReadDocumentIngestRun)` |
-| TC017 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:56 (canReadDocumentIngestRun)` |
-| TC018 | F009: 条件成立 | `item.stage` が `undefined` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/chat-run-events-stream.ts:124 (eventPayload)` |
-| TC019 | F009: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/chat-run-events-stream.ts:124 (eventPayload)` |
-| TC020 | F010: 条件成立 | `item.message` が `undefined` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/chat-run-events-stream.ts:125 (eventPayload)` |
-| TC021 | F010: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/chat-run-events-stream.ts:125 (eventPayload)` |
-| TC022 | F011: 条件成立 | `item.data` が存在し、真である、かつ `typeof item.data` が `"object"` と等しい、かつ is array の判定結果が真ではない 場合の response / side effect が実装どおりである。 | `apps/api/src/chat-run-events-stream.ts:127 (eventPayload)` |
-| TC023 | F011: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/chat-run-events-stream.ts:127 (eventPayload)` |
-| TC024 | F012: 条件成立 | `item.data` が `undefined` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/chat-run-events-stream.ts:131 (eventPayload)` |
-| TC025 | F012: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/chat-run-events-stream.ts:131 (eventPayload)` |
-| TC026 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
-| TC027 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
-| TC028 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
-| TC029 | HTTP 404 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC001 | 正常系 | 文書取り込みイベントを購読する が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:1230 (GET /document-ingest-runs/{runId}/events handler)` |
+| TC002 | F001: 条件成立 | `run` が存在しない、または偽である、または can read document ingest run の判定結果が真ではない 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1236 (GET /document-ingest-runs/{runId}/events handler)` |
+| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1236 (GET /document-ingest-runs/{runId}/events handler)` |
+| TC004 | F002: 条件成立 | is finite の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1240 (GET /document-ingest-runs/{runId}/events handler)` |
+| TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1240 (GET /document-ingest-runs/{runId}/events handler)` |
+| TC006 | F003: 0件 | 反復対象が空でも不正な副作用や例外を生じない。 | `apps/api/src/routes/document-routes.ts:1244 (GET /document-ingest-runs/{runId}/events handler)` |
+| TC007 | F003: 複数件 | 各要素を順に処理し、順序・終了条件を守る。 | `apps/api/src/routes/document-routes.ts:1244 (GET /document-ingest-runs/{runId}/events handler)` |
+| TC008 | F004: 0件 | 反復対象が空でも不正な副作用や例外を生じない。 | `apps/api/src/routes/document-routes.ts:1246 (GET /document-ingest-runs/{runId}/events handler)` |
+| TC009 | F004: 複数件 | 各要素を順に処理し、順序・終了条件を守る。 | `apps/api/src/routes/document-routes.ts:1246 (GET /document-ingest-runs/{runId}/events handler)` |
+| TC010 | F005: 条件成立 | `item.type` が `"final"` と等しい、または `item.type` が `"error"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1253 (GET /document-ingest-runs/{runId}/events handler)` |
+| TC011 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1253 (GET /document-ingest-runs/{runId}/events handler)` |
+| TC012 | F006: 条件成立 | `Date.now() - lastHeartbeat` が `15_000` より大きい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1256 (GET /document-ingest-runs/{runId}/events handler)` |
+| TC013 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1256 (GET /document-ingest-runs/{runId}/events handler)` |
+| TC014 | F007: 条件成立 | `purpose` が `"benchmarkSeed"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:156 (uploadTenantId)` |
+| TC015 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:156 (uploadTenantId)` |
+| TC016 | F008: 条件成立 | `config.benchmarkEvaluationEnabled` が存在しない、または偽である、または trim の判定結果が真ではない 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:157 (uploadTenantId)` |
+| TC017 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:157 (uploadTenantId)` |
+| TC018 | F009: 条件成立 | `config.authEnabled` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:162 (uploadTenantId)` |
+| TC019 | F009: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:162 (uploadTenantId)` |
+| TC020 | F010: 条件成立 | `tenantId` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:163 (uploadTenantId)` |
+| TC021 | F010: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:163 (uploadTenantId)` |
+| TC022 | F011: 条件成立 | 利用者が "chat:read:own" permission を持つ、かつ can read owned run の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:97 (canReadDocumentIngestRun)` |
+| TC023 | F011: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:97 (canReadDocumentIngestRun)` |
+| TC024 | F012: 条件成立 | `item.stage` が `undefined` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/chat-run-events-stream.ts:139 (eventPayload)` |
+| TC025 | F012: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/chat-run-events-stream.ts:139 (eventPayload)` |
+| TC026 | F013: 条件成立 | `item.message` が `undefined` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/chat-run-events-stream.ts:140 (eventPayload)` |
+| TC027 | F013: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/chat-run-events-stream.ts:140 (eventPayload)` |
+| TC028 | F014: 条件成立 | `item.data` が存在し、真である、かつ `typeof item.data` が `"object"` と等しい、かつ is array の判定結果が真ではない 場合の response / side effect が実装どおりである。 | `apps/api/src/chat-run-events-stream.ts:142 (eventPayload)` |
+| TC029 | F014: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/chat-run-events-stream.ts:142 (eventPayload)` |
+| TC030 | F015: 条件成立 | `item.data` が `undefined` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/chat-run-events-stream.ts:146 (eventPayload)` |
+| TC031 | F015: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/chat-run-events-stream.ts:146 (eventPayload)` |
+| TC032 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC033 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC034 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC035 | HTTP 404 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC036 | HTTP 503 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 
 ## 4. 検証方針
 

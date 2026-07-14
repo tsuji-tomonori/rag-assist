@@ -2,7 +2,7 @@
 
 # GET /admin/aliases IF仕様
 
-- 実装 route: `apps/api/src/routes/admin-routes.ts:231 (GET /admin/aliases)`
+- 実装 route: `apps/api/src/routes/admin-routes.ts:323 (GET /admin/aliases)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 検索 alias 一覧を取得する

@@ -1,6 +1,6 @@
 import { act, renderHook } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { createDocumentGroup, cutoverReindexMigration, deleteDocument, getDocumentShare, listDocumentGroups, listDocuments, listReindexMigrations, moveDocument, rollbackReindexMigration, stageReindexMigration, updateDocumentGroup, updateDocumentShare, uploadDocumentFile } from "../api/documentsApi.js"
+import { createDocumentGroup, cutoverReindexMigration, deleteDocument, getDocumentShare, getFolderSharePolicy, listDocumentGroups, listDocuments, listReindexMigrations, moveDocument, moveDocumentGroup, replaceFolderSharePolicy, requestDocumentExtractedTextDownload, rollbackReindexMigration, saveDocumentExtractedTextDownload, stageReindexMigration, updateDocumentGroup, updateDocumentShare, uploadDocumentFile } from "../api/documentsApi.js"
 import type { DocumentGroup } from "../types.js"
 import { useDocuments } from "./useDocuments.js"
 
@@ -9,11 +9,16 @@ vi.mock("../api/documentsApi.js", () => ({
   cutoverReindexMigration: vi.fn(),
   deleteDocument: vi.fn(),
   getDocumentShare: vi.fn(),
+  getFolderSharePolicy: vi.fn(),
   listDocumentGroups: vi.fn(),
   listDocuments: vi.fn(),
   listReindexMigrations: vi.fn(),
   moveDocument: vi.fn(),
+  moveDocumentGroup: vi.fn(),
+  replaceFolderSharePolicy: vi.fn(),
+  requestDocumentExtractedTextDownload: vi.fn(),
   rollbackReindexMigration: vi.fn(),
+  saveDocumentExtractedTextDownload: vi.fn(),
   stageReindexMigration: vi.fn(),
   updateDocumentGroup: vi.fn(),
   updateDocumentShare: vi.fn(),
@@ -27,6 +32,7 @@ function createProps(overrides: Partial<Parameters<typeof useDocuments>[0]> = {}
     canWriteDocuments: true,
     canCreateDocumentGroups: true,
     canShareDocumentGroups: true,
+    canMoveDocumentGroups: true,
     canDeleteDocuments: true,
     canReindexDocuments: true,
     setLoading: vi.fn(),
@@ -67,6 +73,8 @@ function documentGroupFixture(overrides: Partial<DocumentGroup> = {}): DocumentG
 }
 
 describe("useDocuments", () => {
+  const deleteInput = { expectedUpdatedAt: "now", reason: "test cleanup" }
+
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(listDocumentGroups).mockResolvedValue([documentGroupFixture()])
@@ -84,7 +92,22 @@ describe("useDocuments", () => {
       visibility: "shared",
       sharedGroups: ["HR"]
     }))
+    vi.mocked(getFolderSharePolicy).mockResolvedValue({ policy: null, version: "folder-version-1" })
+    vi.mocked(replaceFolderSharePolicy).mockResolvedValue({
+      policy: {
+        policyId: "folder-policy-1",
+        tenantId: "default",
+        folderId: "group-1",
+        entries: [{ principalType: "user", principalId: "user-1", permissionLevel: "full" }],
+        createdBy: "user-1",
+        createdAt: "now",
+        updatedAt: "now"
+      },
+      version: "folder-version-2",
+      auditIntentId: "audit-1"
+    })
     vi.mocked(deleteDocument).mockResolvedValue(undefined)
+    vi.mocked(requestDocumentExtractedTextDownload).mockResolvedValue({ blob: new Blob(["extracted"]), fileName: "a.txt" })
     vi.mocked(stageReindexMigration).mockResolvedValue({
       migrationId: "migration-1",
       sourceDocumentId: "doc-1",
@@ -121,15 +144,26 @@ describe("useDocuments", () => {
     vi.mocked(getDocumentShare).mockResolvedValue({
       inheritedFolderGrants: [],
       directDocumentGrants: [],
-      currentUserEffectivePermission: "full"
+      currentUserEffectivePermission: "full",
+      version: "share-version-1"
     })
     vi.mocked(updateDocumentShare).mockResolvedValue({
       inheritedFolderGrants: [],
       directDocumentGrants: [],
-      currentUserEffectivePermission: "full"
+      currentUserEffectivePermission: "full",
+      version: "share-version-2"
     })
     vi.mocked(moveDocument).mockResolvedValue({
       document: { documentId: "doc-1", fileName: "a.txt", chunkCount: 1, memoryCardCount: 1, createdAt: "now", metadata: { groupId: "group-2" } }
+    })
+    vi.mocked(moveDocumentGroup).mockResolvedValue({
+      operationId: "folder-move-1",
+      folder: documentGroupFixture({ groupId: "group-1", parentGroupId: "group-2", updatedAt: "after" }),
+      subtree: [documentGroupFixture({ groupId: "group-1", parentGroupId: "group-2", updatedAt: "after" })],
+      affectedDocumentCount: 1,
+      directDocumentGrantsPreserved: true,
+      folderLocalPoliciesPreserved: true,
+      documentVersionsPreserved: true
     })
   })
 
@@ -170,10 +204,22 @@ describe("useDocuments", () => {
   it("削除権限がない場合は削除 API を呼ばない", async () => {
     const { result } = renderHook(() => useDocuments(createProps({ canDeleteDocuments: false })))
 
-    const deleteResult = await act(() => result.current.onDelete("doc-1"))
+    const deleteResult = await act(() => result.current.onDelete("doc-1", deleteInput))
 
     expect(deleteDocument).not.toHaveBeenCalled()
     expect(deleteResult).toEqual({ ok: false, error: "文書を削除する権限がありません" })
+  })
+
+  it("閲覧可能文書の抽出テキストを実 API から取得して保存する", async () => {
+    const props = createProps()
+    const { result } = renderHook(() => useDocuments(props))
+
+    const downloadResult = await act(() => result.current.onDownloadExtractedText("doc-1"))
+
+    expect(requestDocumentExtractedTextDownload).toHaveBeenCalledWith("doc-1")
+    expect(saveDocumentExtractedTextDownload).toHaveBeenCalledWith(expect.objectContaining({ fileName: "a.txt" }))
+    expect(downloadResult).toEqual({ ok: true })
+    expect(result.current.operationState.downloadingDocumentId).toBeNull()
   })
 
   it("再インデックス失敗時はエラーを設定する", async () => {
@@ -235,20 +281,20 @@ describe("useDocuments", () => {
     const readonlyUpload = renderHook(() => useDocuments(createProps({ canWriteDocuments: false })))
     const readonlyUploadResult = await act(() => readonlyUpload.result.current.onUploadDocumentFile(file))
     const readonlyCreate = renderHook(() => useDocuments(createProps({ canCreateDocumentGroups: false })))
-    await act(() => readonlyCreate.result.current.onCreateDocumentGroup({ name: "readonly", visibility: "private" }))
+    await act(() => readonlyCreate.result.current.onCreateDocumentGroup({ name: "readonly" }))
     const readonlyShare = renderHook(() => useDocuments(createProps({ canShareDocumentGroups: false })))
-    const readonlyShareResult = await act(() => readonlyShare.result.current.onShareDocumentGroup("group-1", { visibility: "shared" }))
+    const readonlyShareResult = await act(() => readonlyShare.result.current.onShareDocumentGroup("group-1", { name: "updated" }))
     expect(uploadDocumentFile).toHaveBeenCalledTimes(1)
     expect(createDocumentGroup).not.toHaveBeenCalled()
     expect(updateDocumentGroup).not.toHaveBeenCalled()
     expect(readonlyUploadResult).toEqual({ ok: false, error: "文書をアップロードする権限がありません" })
     expect(readonlyShareResult).toEqual({ ok: false, error: "フォルダ設定を更新する権限がありません" })
 
-    const missingTargetResult = await act(() => result.current.onDelete(undefined))
-    const deleteResult = await act(() => result.current.onDelete("doc-1"))
-    await act(() => result.current.onDelete("missing-doc"))
+    const missingTargetResult = await act(() => result.current.onDelete(undefined, deleteInput))
+    const deleteResult = await act(() => result.current.onDelete("doc-1", deleteInput))
+    await act(() => result.current.onDelete("missing-doc", deleteInput))
 
-    expect(deleteDocument).toHaveBeenCalledWith("missing-doc")
+    expect(deleteDocument).toHaveBeenCalledWith("missing-doc", deleteInput)
     expect(missingTargetResult).toEqual({ ok: false, error: "削除対象の documentId が未指定です" })
     expect(deleteResult).toEqual({ ok: true })
     expect(result.current.selectedDocumentId).toBe("all")
@@ -288,13 +334,23 @@ describe("useDocuments", () => {
     }))
     expect(result.current.selectedDocumentId).toBe("all")
 
-    await act(() => result.current.onCreateDocumentGroup({ name: "個人メモ", visibility: "private" }))
-    await act(() => result.current.onShareDocumentGroup("group-1", { visibility: "shared", sharedGroups: ["HR"] }))
-    await act(() => result.current.onUpdateDocumentGroup("group-1", { name: "社内規定改定", description: "", parentGroupId: null }))
+    await act(() => result.current.onCreateDocumentGroup({ name: "個人メモ" }))
+    const folderShare = await act(() => result.current.onLoadFolderShare("group-1"))
+    await act(() => result.current.onReplaceFolderShare("group-1", {
+      expectedVersion: "folder-version-1",
+      entries: [{ principalType: "user", principalId: "user-1", permissionLevel: "full" }],
+      reason: "共有方針の更新"
+    }))
+    await act(() => result.current.onUpdateDocumentGroup("group-1", { name: "社内規定改定", description: "" }))
 
-    expect(createDocumentGroup).toHaveBeenCalledWith({ name: "個人メモ", visibility: "private" })
-    expect(updateDocumentGroup).toHaveBeenCalledWith("group-1", { visibility: "shared", sharedGroups: ["HR"] })
-    expect(updateDocumentGroup).toHaveBeenCalledWith("group-1", { name: "社内規定改定", description: "", parentGroupId: null })
+    expect(createDocumentGroup).toHaveBeenCalledWith({ name: "個人メモ" })
+    expect(folderShare).toEqual({ policy: null, version: "folder-version-1" })
+    expect(replaceFolderSharePolicy).toHaveBeenCalledWith("group-1", {
+      expectedVersion: "folder-version-1",
+      entries: [{ principalType: "user", principalId: "user-1", permissionLevel: "full" }],
+      reason: "共有方針の更新"
+    })
+    expect(updateDocumentGroup).toHaveBeenCalledWith("group-1", { name: "社内規定改定", description: "" })
     expect(listDocumentGroups).toHaveBeenCalledTimes(4)
   })
 
@@ -305,6 +361,7 @@ describe("useDocuments", () => {
     const shareInfo = await act(() => result.current.onLoadDocumentShare("doc-1"))
     const shareResult = await act(() => result.current.onShareDocument("doc-1", {
       grants: [{ principalType: "user", principalId: "user-b", permissionLevel: "readOnly" }],
+      expectedVersion: "share-version-1",
       reason: "確認依頼"
     }))
     act(() => result.current.setSelectedDocumentId("doc-1"))
@@ -318,6 +375,7 @@ describe("useDocuments", () => {
     expect(shareInfo).toEqual(expect.objectContaining({ currentUserEffectivePermission: "full" }))
     expect(updateDocumentShare).toHaveBeenCalledWith("doc-1", {
       grants: [{ principalType: "user", principalId: "user-b", permissionLevel: "readOnly" }],
+      expectedVersion: "share-version-1",
       reason: "確認依頼"
     })
     expect(moveDocument).toHaveBeenCalledWith("doc-1", {
@@ -332,6 +390,74 @@ describe("useDocuments", () => {
     expect(result.current.operationState.sharingDocumentId).toBeNull()
     expect(result.current.operationState.movingDocumentId).toBeNull()
     expect(listDocuments).toHaveBeenCalledTimes(2)
+  })
+
+  it("フォルダ移動を version と理由付きで実行し、フォルダと文書を再取得する", async () => {
+    const props = createProps()
+    const { result } = renderHook(() => useDocuments(props))
+    const input = {
+      destinationParentId: "group-2",
+      newName: "改定規定",
+      reason: "部門構成の変更",
+      expectedVersion: "now"
+    }
+
+    const moveResult = await act(() => result.current.onMoveDocumentGroup("group-1", input))
+
+    expect(moveDocumentGroup).toHaveBeenCalledWith("group-1", input)
+    expect(moveResult).toEqual({ ok: true })
+    expect(listDocumentGroups).toHaveBeenCalledTimes(1)
+    expect(listDocuments).toHaveBeenCalledTimes(1)
+    expect(result.current.operationState.movingGroupId).toBeNull()
+    expect(props.setError).toHaveBeenCalledWith(null)
+  })
+
+  it("フォルダ移動権限を分離し、競合時は再読込後も競合理由を表示する", async () => {
+    const denied = renderHook(() => useDocuments(createProps({ canMoveDocumentGroups: false })))
+    const input = {
+      destinationParentId: null,
+      reason: "ルートへ整理",
+      expectedVersion: "stale"
+    }
+
+    const deniedResult = await act(() => denied.result.current.onMoveDocumentGroup("group-1", input))
+    expect(deniedResult).toEqual({ ok: false, error: "フォルダを移動する権限がありません" })
+    expect(moveDocumentGroup).not.toHaveBeenCalled()
+
+    const props = createProps()
+    vi.mocked(moveDocumentGroup).mockRejectedValueOnce(new Error("フォルダが他の操作で更新されました。最新状態を再読み込みしてから再実行してください。"))
+    const allowed = renderHook(() => useDocuments(props))
+    const conflictResult = await act(() => allowed.result.current.onMoveDocumentGroup("group-1", input))
+
+    expect(conflictResult).toEqual({
+      ok: false,
+      error: "フォルダが他の操作で更新されました。最新状態を再読み込みしてから再実行してください。"
+    })
+    expect(listDocumentGroups).toHaveBeenCalledTimes(1)
+    expect(listDocuments).not.toHaveBeenCalled()
+    expect(props.setError).toHaveBeenLastCalledWith("フォルダが他の操作で更新されました。最新状態を再読み込みしてから再実行してください。")
+    expect(allowed.result.current.operationState.movingGroupId).toBeNull()
+  })
+
+  it("文書共有の stale version エラーを返し、一覧を再取得しない", async () => {
+    const props = createProps()
+    vi.mocked(updateDocumentShare).mockRejectedValueOnce(new Error("document share policy version conflict"))
+    const { result } = renderHook(() => useDocuments(props))
+
+    const shareResult = await act(() => result.current.onShareDocument("doc-1", {
+      grants: [],
+      expectedVersion: "share-version-stale",
+      reason: "stale update"
+    }))
+
+    expect(updateDocumentShare).toHaveBeenCalledWith("doc-1", {
+      grants: [],
+      expectedVersion: "share-version-stale",
+      reason: "stale update"
+    })
+    expect(shareResult).toEqual({ ok: false, error: "document share policy version conflict" })
+    expect(listDocuments).not.toHaveBeenCalled()
+    expect(result.current.operationState.sharingDocumentId).toBeNull()
   })
 
   it("アップロード進捗と失敗原因を操作単位の状態に反映する", async () => {
@@ -372,6 +498,25 @@ describe("useDocuments", () => {
     expect(failedUploadResult).toEqual({ ok: false, error: "document ingest run timed out" })
   })
 
+  it("受け入れ拒否をtimeoutへ置換せず正直な失敗状態として表示する", async () => {
+    const props = createProps()
+    const rejectionMessage = "文書取り込みは受け入れポリシーにより拒否されました"
+    vi.mocked(uploadDocumentFile).mockRejectedValueOnce(new Error(rejectionMessage))
+    const { result } = renderHook(() => useDocuments(props))
+    act(() => result.current.setUploadGroupId("group-1"))
+
+    const uploadResult = await act(() => result.current.onUploadDocumentFile(
+      new File(["body"], "rejected.pdf", { type: "application/pdf" })
+    ))
+
+    expect(result.current.uploadState).toEqual(expect.objectContaining({
+      phase: "failed",
+      errorMessage: rejectionMessage
+    }))
+    expect(uploadResult).toEqual({ ok: false, error: rejectionMessage })
+    expect(props.setError).toHaveBeenCalledWith(rejectionMessage)
+  })
+
   it("削除、cutover、rollback の失敗時は文字列エラーも設定する", async () => {
     const props = createProps()
     vi.spyOn(window, "confirm").mockReturnValue(true)
@@ -386,10 +531,10 @@ describe("useDocuments", () => {
     const file = new File(["body"], "error.txt", { type: "text/plain" })
 
     act(() => result.current.setUploadGroupId("group-1"))
-    const deleteResult = await act(() => result.current.onDelete("doc-1"))
+    const deleteResult = await act(() => result.current.onDelete("doc-1", deleteInput))
     const uploadResult = await act(() => result.current.onUploadDocumentFile(file))
-    await act(() => result.current.onCreateDocumentGroup({ name: "個人メモ", visibility: "private" }))
-    const shareResult = await act(() => result.current.onShareDocumentGroup("group-1", { visibility: "shared" }))
+    await act(() => result.current.onCreateDocumentGroup({ name: "個人メモ" }))
+    const shareResult = await act(() => result.current.onShareDocumentGroup("group-1", { name: "updated" }))
     const stageResult = await act(() => result.current.onStageReindex("doc-1"))
     const cutoverResult = await act(() => result.current.onCutoverReindex("migration-1"))
     const rollbackResult = await act(() => result.current.onRollbackReindex("migration-1"))
@@ -421,8 +566,8 @@ describe("useDocuments", () => {
 
     act(() => result.current.setUploadGroupId("group-1"))
     await act(() => result.current.onUploadDocumentFile(file))
-    await act(() => result.current.onCreateDocumentGroup({ name: "個人メモ", visibility: "private" }))
-    await act(() => result.current.onShareDocumentGroup("group-1", { visibility: "shared" }))
+    await act(() => result.current.onCreateDocumentGroup({ name: "個人メモ" }))
+    await act(() => result.current.onShareDocumentGroup("group-1", { name: "updated" }))
     await act(() => result.current.onCutoverReindex("migration-1"))
     await act(() => result.current.onRollbackReindex("migration-1"))
 
@@ -433,7 +578,7 @@ describe("useDocuments", () => {
     expect(props.setError).toHaveBeenCalledWith("rollback failed")
   })
 
-  it("共有権限がない新規フォルダ作成では共有・管理者 payload を除外する", async () => {
+  it("共有権限がなくても新規フォルダの安全な作成 payload を送信する", async () => {
     const props = createProps({ canCreateDocumentGroups: true, canShareDocumentGroups: false })
     vi.mocked(createDocumentGroup).mockResolvedValueOnce(documentGroupFixture({ groupId: "group-created" }))
     const { result } = renderHook(() => useDocuments(props))
@@ -441,10 +586,7 @@ describe("useDocuments", () => {
     await act(() => result.current.onCreateDocumentGroup({
       name: "作成のみ",
       description: "説明",
-      parentGroupId: "parent-1",
-      visibility: "shared",
-      sharedGroups: ["HR"],
-      managerUserIds: ["manager-1"]
+      parentGroupId: "parent-1"
     }))
 
     expect(createDocumentGroup).toHaveBeenCalledWith({

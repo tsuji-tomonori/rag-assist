@@ -21,7 +21,6 @@ sequenceDiagram
   API->>Auth: schema 検証済みの JSON request body を取得する。
   API->>Service: service の create benchmark artifact download url 処理を呼び出す。
   Service->>Store: this.deps.benchmarkRunStore に対して get を実行する。
-  API-->>Client: HTTP 404 で JSON response を返す。
   API-->>Client: HTTP 200 で JSON response を返す。
 ```
 
@@ -29,25 +28,24 @@ sequenceDiagram
 
 | # | Caller | 境界 | 処理 | コード | 実装位置 |
 | ---: | --- | --- | --- | --- | --- |
-| 1 | `POST /benchmark-runs/{runId}/download handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/benchmark-routes.ts:208 (POST /benchmark-runs/{runId}/download handler)` |
-| 2 | `POST /benchmark-runs/{runId}/download handler` | Auth | "benchmark:download" permission を必須条件として確認する。 | `requirePermission(c.get("user"), "benchmark:download")` | `apps/api/src/routes/benchmark-routes.ts:208 (POST /benchmark-runs/{runId}/download handler)` |
-| 3 | `POST /benchmark-runs/{runId}/download handler` | Validation | schema 検証済みの path parameter を取得する。 | `validParam<{ runId: string }>(c)` | `apps/api/src/routes/benchmark-routes.ts:209 (POST /benchmark-runs/{runId}/download handler)` |
-| 4 | `POST /benchmark-runs/{runId}/download handler` | Validation | schema 検証済みの JSON request body を取得する。 | `validJson<{ artifact?: "report" \| "summary" \| "results" \| "logs" } \| undefined>(c)` | `apps/api/src/routes/benchmark-routes.ts:210 (POST /benchmark-runs/{runId}/download handler)` |
-| 5 | `POST /benchmark-runs/{runId}/download handler` | Service | service の create benchmark artifact download url 処理を呼び出す。 | `service.createBenchmarkArtifactDownloadUrl(runId, body.artifact ?? "report")` | `apps/api/src/routes/benchmark-routes.ts:211 (POST /benchmark-runs/{runId}/download handler)` |
-| 6 | `MemoRagService.createBenchmarkArtifactDownloadUrl` | Store | `this.deps.benchmarkRunStore` に対して get を実行する。 | `this.deps.benchmarkRunStore.get(runId)` | `apps/api/src/rag/memorag-service.ts:2273 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
-| 7 | `POST /benchmark-runs/{runId}/download handler` | HTTP/SSE | HTTP 404 で JSON response を返す。 | `c.json({ error: "Benchmark run not found" }, 404)` | `apps/api/src/routes/benchmark-routes.ts:212 (POST /benchmark-runs/{runId}/download handler)` |
-| 8 | `POST /benchmark-runs/{runId}/download handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json(download, 200)` | `apps/api/src/routes/benchmark-routes.ts:213 (POST /benchmark-runs/{runId}/download handler)` |
+| 1 | `POST /benchmark-runs/{runId}/download handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/benchmark-routes.ts:216 (POST /benchmark-runs/{runId}/download handler)` |
+| 2 | `POST /benchmark-runs/{runId}/download handler` | Auth | "benchmark:download" permission を必須条件として確認する。 | `requirePermission(actor, "benchmark:download")` | `apps/api/src/routes/benchmark-routes.ts:217 (POST /benchmark-runs/{runId}/download handler)` |
+| 3 | `POST /benchmark-runs/{runId}/download handler` | Validation | schema 検証済みの path parameter を取得する。 | `validParam<{ runId: string }>(c)` | `apps/api/src/routes/benchmark-routes.ts:218 (POST /benchmark-runs/{runId}/download handler)` |
+| 4 | `POST /benchmark-runs/{runId}/download handler` | Validation | schema 検証済みの JSON request body を取得する。 | `validJson<{ artifact?: "report" \| "summary" \| "results" \| "logs" } \| undefined>(c)` | `apps/api/src/routes/benchmark-routes.ts:219 (POST /benchmark-runs/{runId}/download handler)` |
+| 5 | `POST /benchmark-runs/{runId}/download handler` | Service | service の create benchmark artifact download url 処理を呼び出す。 | `service.createBenchmarkArtifactDownloadUrl(actor, runId, body.artifact ?? "report")` | `apps/api/src/routes/benchmark-routes.ts:220 (POST /benchmark-runs/{runId}/download handler)` |
+| 6 | `MemoRagService.createBenchmarkArtifactDownloadUrl` | Store | `this.deps.benchmarkRunStore` に対して get を実行する。 | `this.deps.benchmarkRunStore.get(authoritativeActorTenantId(actor), runId)` | `apps/api/src/rag/memorag-service.ts:4078 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
+| 7 | `POST /benchmark-runs/{runId}/download handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json(download, 200)` | `apps/api/src/routes/benchmark-routes.ts:222 (POST /benchmark-runs/{runId}/download handler)` |
 
 ## 分岐
 
 | ID | Function | 条件 | 実装位置 |
 | --- | --- | --- | --- |
-| B001 | `POST /benchmark-runs/{runId}/download handler` | `download` が存在しない、または偽である | `apps/api/src/routes/benchmark-routes.ts:212 (POST /benchmark-runs/{runId}/download handler)` |
-| B002 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:267 (requirePermission)` |
-| B003 | `MemoRagService.createBenchmarkArtifactDownloadUrl` | `run` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:2274 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
-| B004 | `MemoRagService.createBenchmarkArtifactDownloadUrl` | `artifact` が `"logs"` と等しい | `apps/api/src/rag/memorag-service.ts:2275 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
-| B005 | `MemoRagService.createBenchmarkArtifactDownloadUrl` | `run.codeBuildLogUrl` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:2276 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
-| B006 | `MemoRagService.createBenchmarkArtifactDownloadUrl` | `config.benchmarkBucketName` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:2283 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
-| B007 | `MemoRagService.createBenchmarkArtifactDownloadUrl` | `artifact` が `"summary"` と等しい | `apps/api/src/rag/memorag-service.ts:2284 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
-| B008 | `MemoRagService.createBenchmarkArtifactDownloadUrl` | `artifact` が `"results"` と等しい | `apps/api/src/rag/memorag-service.ts:2284 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
-| B009 | `MemoRagService.createBenchmarkArtifactDownloadUrl` | `objectKey` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:2285 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
+| B001 | `POST /benchmark-runs/{runId}/download handler` | `download` が存在しない、または偽である | `apps/api/src/routes/benchmark-routes.ts:221 (POST /benchmark-runs/{runId}/download handler)` |
+| B002 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| B003 | `MemoRagService.createBenchmarkArtifactDownloadUrl` | `run` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4079 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
+| B004 | `MemoRagService.createBenchmarkArtifactDownloadUrl` | `artifact` が `"logs"` と等しい | `apps/api/src/rag/memorag-service.ts:4080 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
+| B005 | `MemoRagService.createBenchmarkArtifactDownloadUrl` | `run.codeBuildLogUrl` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4081 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
+| B006 | `MemoRagService.createBenchmarkArtifactDownloadUrl` | `config.benchmarkBucketName` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4088 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
+| B007 | `MemoRagService.createBenchmarkArtifactDownloadUrl` | `artifact` が `"summary"` と等しい | `apps/api/src/rag/memorag-service.ts:4089 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
+| B008 | `MemoRagService.createBenchmarkArtifactDownloadUrl` | `artifact` が `"results"` と等しい | `apps/api/src/rag/memorag-service.ts:4089 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
+| B009 | `MemoRagService.createBenchmarkArtifactDownloadUrl` | `objectKey` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4090 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |

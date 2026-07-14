@@ -2,7 +2,7 @@
 
 # POST /admin/aliases/{aliasId}/review IF仕様
 
-- 実装 route: `apps/api/src/routes/admin-routes.ts:297 (POST /admin/aliases/{aliasId}/review)`
+- 実装 route: `apps/api/src/routes/admin-routes.ts:389 (POST /admin/aliases/{aliasId}/review)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 検索 alias をレビューする

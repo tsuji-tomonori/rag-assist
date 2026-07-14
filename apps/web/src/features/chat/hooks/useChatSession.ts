@@ -145,6 +145,7 @@ export function useChatSession({
   const [pendingActivity, setPendingActivity] = useState<string | null>(null)
   const [pendingDebugQuestion, setPendingDebugQuestion] = useState<string | null>(null)
   const [pendingClarificationFreeform, setPendingClarificationFreeform] = useState<PendingClarificationFreeform | null>(null)
+  const [temporaryAttachmentScopeIds, setTemporaryAttachmentScopeIds] = useState<Set<string>>(() => new Set())
   const [conversationKey, setConversationKey] = useState(0)
   const [submitShortcut, setSubmitShortcut] = useState<SubmitShortcut>("enter")
   const canAsk = useMemo(
@@ -198,6 +199,7 @@ export function useChatSession({
       selectedValue?: string
     }
   ) {
+    const includeTemporary = hasAttachment || temporaryAttachmentScopeIds.has(currentConversationId)
     setQuestion("")
     setMessages((prev) => [...prev, { role: "user", text: userQuestion, createdAt: new Date().toISOString() }])
     setLoading(true)
@@ -211,6 +213,7 @@ export function useChatSession({
     try {
       if (hasAttachment && file && canWriteDocuments) {
         await ingestDocument(file, { purpose: "chatAttachment", temporaryScopeId: currentConversationId })
+        setTemporaryAttachmentScopeIds((current) => new Set(current).add(currentConversationId))
         setFile(null)
       }
 
@@ -219,15 +222,15 @@ export function useChatSession({
           ? {
               mode: "documents" as const,
               documentIds: [documentScope.documentId],
-              includeTemporary: hasAttachment,
-              temporaryScopeId: hasAttachment ? currentConversationId : undefined
+              includeTemporary,
+              temporaryScopeId: includeTemporary ? currentConversationId : undefined
             }
-          : selectedGroupId !== "all" || hasAttachment
+          : selectedGroupId !== "all" || includeTemporary
             ? {
                 mode: selectedGroupId !== "all" ? "groups" as const : undefined,
                 groupIds: selectedGroupId !== "all" ? [selectedGroupId] : undefined,
-                includeTemporary: hasAttachment,
-                temporaryScopeId: hasAttachment ? currentConversationId : undefined
+                includeTemporary,
+                temporaryScopeId: includeTemporary ? currentConversationId : undefined
               }
             : undefined
         const started = await startChatRun({

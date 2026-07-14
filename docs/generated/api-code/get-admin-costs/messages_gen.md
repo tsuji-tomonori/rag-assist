@@ -16,8 +16,8 @@
 | M001 | OpenAPI contract | `200` | リクエストは成功し、レスポンス body に結果を返します。 | OpenAPI で宣言された HTTP 200 response | runtime OpenAPI |
 | M002 | OpenAPI contract | `401` | 認証が必要です。 | OpenAPI で宣言された HTTP 401 response | runtime OpenAPI |
 | M003 | OpenAPI contract | `403` | 対象操作を実行する権限がありません。 | OpenAPI で宣言された HTTP 403 response | runtime OpenAPI |
-| M004 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:267 (requirePermission)` |
-| M005 | ログ | `-` | Skipping missing document manifest listed by object store | is missing object error の判定結果が真である | `apps/api/src/rag/memorag-service.ts:365 (MemoRagService.listDocuments)` |
+| M004 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| M005 | 例外 | `-` | Authoritative directory identity is unavailable during reconciliation | `this.deps.verifiedIdentityProvider` が存在し、真である、かつ `currentIdentity` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:2920 (MemoRagService.syncUserDirectory)` |
 
 ## 読み方
 

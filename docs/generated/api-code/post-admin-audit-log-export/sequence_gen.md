@@ -24,26 +24,9 @@ sequenceDiagram
   Service->>Store: this.deps.objectStore に対して get text を実行する。
   Service->>External: this へ sync user directory を実行する。
   Service->>External: this.deps.userDirectory へ list users を実行する。
+  Service->>External: this.deps.verifiedIdentityProvider へ get current identity by subject を実行する。
   API->>Service: service の get cost audit summary 処理を呼び出す。
   Service->>Store: this に対して load admin ledger を実行する。
-  Service->>Store: this.deps.objectStore に対して list keys を実行する。
-  Service->>Store: this.deps.objectStore に対して get text を実行する。
-  Service->>Store: this.deps.documentGroupStore に対して list を実行する。
-  Service->>Store: this.deps.documentGroupStore に対して list を実行する。
-  Service->>Store: this.deps.folderPolicyStore に対して get を実行する。
-  Service->>Store: this.deps.userGroupStore に対して get を実行する。
-  Service->>Store: this.deps.groupMembershipStore に対して list by group id を実行する。
-  Service->>Store: objectStore に対して get text with version を実行する。
-  Service->>Store: objectStore に対して get text を実行する。
-  Service->>Store: this.deps.objectStore に対して get text を実行する。
-  Service->>Store: this.deps.userGroupStore に対して get を実行する。
-  Service->>Store: this.deps.groupMembershipStore に対して list by group id を実行する。
-  Service->>Store: this.deps.benchmarkRunStore に対して list を実行する。
-  Service->>Store: this.deps.objectStore に対して list keys を実行する。
-  Service->>Store: this.deps.objectStore に対して get text を実行する。
-  Service->>Store: [           stored.lastActivityAt,           ...userBenchmarkRuns.map((run) =＞ run.updatedAt),           ...debugRuns.map((run) =＞ run.completedAt)         ] に対して filter を実行する。
-  Service->>Store: [           stored.lastActivityAt,           ...userBenchmarkRuns.map((run) =＞ run.updatedAt),           ...debugRuns.map((run) =＞ run.completedAt)         ].filter(Boolean) に対して …
-  Service->>Store: [           stored.lastActivityAt,           ...userBenchmarkRuns.map((run) =＞ run.updatedAt),           ...debugRuns.map((run) =＞ run.completedAt)         ].filter(Boolean).sort(…
   API-->>Client: HTTP 200 で JSON response を返す。
   API-->>Client: HTTP 503 で JSON response を返す。
 ```
@@ -52,43 +35,26 @@ sequenceDiagram
 
 | # | Caller | 境界 | 処理 | コード | 実装位置 |
 | ---: | --- | --- | --- | --- | --- |
-| 1 | `POST /admin/audit-log/export handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/admin-routes.ts:109 (POST /admin/audit-log/export handler)` |
-| 2 | `POST /admin/audit-log/export handler` | Auth | "access:policy:read" permission を必須条件として確認する。 | `requirePermission(user, "access:policy:read")` | `apps/api/src/routes/admin-routes.ts:110 (POST /admin/audit-log/export handler)` |
-| 3 | `POST /admin/audit-log/export handler` | Service | service の create admin export download url 処理を呼び出す。 | `service.createAdminExportDownloadUrl(user, "audit_log")` | `apps/api/src/routes/admin-routes.ts:112 (POST /admin/audit-log/export handler)` |
-| 4 | `MemoRagService.createAdminExportDownloadUrl` | Service | service の list admin audit log 処理を呼び出す。 | `this.listAdminAuditLog(actor)` | `apps/api/src/rag/memorag-service.ts:1003 (MemoRagService.createAdminExportDownloadUrl)` |
-| 5 | `MemoRagService.listAdminAuditLog` | Store | `this` に対して load admin ledger を実行する。 | `this.loadAdminLedger(actor)` | `apps/api/src/rag/memorag-service.ts:885 (MemoRagService.listAdminAuditLog)` |
-| 6 | `MemoRagService.loadAdminLedger` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(adminLedgerKey)` | `apps/api/src/rag/memorag-service.ts:1515 (MemoRagService.loadAdminLedger)` |
-| 7 | `MemoRagService.loadAdminLedger` | External | `this` へ sync user directory を実行する。 | `this.syncUserDirectory(db)` | `apps/api/src/rag/memorag-service.ts:1556 (MemoRagService.loadAdminLedger)` |
-| 8 | `MemoRagService.syncUserDirectory` | External | `this.deps.userDirectory` へ list users を実行する。 | `this.deps.userDirectory.listUsers()` | `apps/api/src/rag/memorag-service.ts:1563 (MemoRagService.syncUserDirectory)` |
-| 9 | `MemoRagService.createAdminExportDownloadUrl` | Service | service の get cost audit summary 処理を呼び出す。 | `this.getCostAuditSummary(actor)` | `apps/api/src/rag/memorag-service.ts:1009 (MemoRagService.createAdminExportDownloadUrl)` |
-| 10 | `MemoRagService.listUsageSummaries` | Store | `this` に対して load admin ledger を実行する。 | `this.loadAdminLedger(actor, { syncUserDirectory: true })` | `apps/api/src/rag/memorag-service.ts:917 (MemoRagService.listUsageSummaries)` |
-| 11 | `MemoRagService.listDocuments` | Store | `this.deps.objectStore` に対して list keys を実行する。 | `this.deps.objectStore.listKeys("manifests/")` | `apps/api/src/rag/memorag-service.ts:359 (MemoRagService.listDocuments)` |
-| 12 | `MemoRagService.getManifestByKey` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(key)` | `apps/api/src/rag/memorag-service.ts:1638 (MemoRagService.getManifestByKey)` |
-| 13 | `MemoRagService.listDocuments` | Store | `this.deps.documentGroupStore` に対して list を実行する。 | `this.deps.documentGroupStore.list()` | `apps/api/src/rag/memorag-service.ts:371 (MemoRagService.listDocuments)` |
-| 14 | `FolderPermissionService.resolveEffectiveFolderPermissionDetail` | Store | `this.deps.documentGroupStore` に対して list を実行する。 | `this.deps.documentGroupStore.list()` | `apps/api/src/folders/folder-permission-service.ts:47 (FolderPermissionService.resolveEffectiveFolderPermissionDetail)` |
-| 15 | `FolderPermissionService.resolvePolicyContext` | Store | `this.deps.folderPolicyStore` に対して get を実行する。 | `this.deps.folderPolicyStore.get(current.policyId)` | `apps/api/src/folders/folder-permission-service.ts:128 (FolderPermissionService.resolvePolicyContext)` |
-| 16 | `FolderPermissionService.resolveUserMembershipPermission` | Store | `this.deps.userGroupStore` に対して get を実行する。 | `this.deps.userGroupStore.get(groupId)` | `apps/api/src/folders/folder-permission-service.ts:166 (FolderPermissionService.resolveUserMembershipPermission)` |
-| 17 | `FolderPermissionService.resolveUserMembershipPermission` | Store | `this.deps.groupMembershipStore` に対して list by group id を実行する。 | `this.deps.groupMembershipStore.listByGroupId(groupId)` | `apps/api/src/folders/folder-permission-service.ts:171 (FolderPermissionService.resolveUserMembershipPermission)` |
-| 18 | `getTextWithVersion` | Store | `objectStore` に対して get text with version を実行する。 | `objectStore.getTextWithVersion(key)` | `apps/api/src/documents/document-permission-service.ts:418 (getTextWithVersion)` |
-| 19 | `getTextWithVersion` | Store | `objectStore` に対して get text を実行する。 | `objectStore.getText(key)` | `apps/api/src/documents/document-permission-service.ts:419 (getTextWithVersion)` |
-| 20 | `DocumentPermissionService.loadLegacyDocumentGrants` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(documentShareLegacyLedgerKey)` | `apps/api/src/documents/document-permission-service.ts:193 (DocumentPermissionService.loadLegacyDocumentGrants)` |
-| 21 | `DocumentPermissionService.resolveUserMembershipPermission` | Store | `this.deps.userGroupStore` に対して get を実行する。 | `this.deps.userGroupStore.get(groupId)` | `apps/api/src/documents/document-permission-service.ts:287 (DocumentPermissionService.resolveUserMembershipPermission)` |
-| 22 | `DocumentPermissionService.resolveUserMembershipPermission` | Store | `this.deps.groupMembershipStore` に対して list by group id を実行する。 | `this.deps.groupMembershipStore.listByGroupId(groupId)` | `apps/api/src/documents/document-permission-service.ts:291 (DocumentPermissionService.resolveUserMembershipPermission)` |
-| 23 | `MemoRagService.listBenchmarkRuns` | Store | `this.deps.benchmarkRunStore` に対して list を実行する。 | `this.deps.benchmarkRunStore.list()` | `apps/api/src/rag/memorag-service.ts:2249 (MemoRagService.listBenchmarkRuns)` |
-| 24 | `MemoRagService.listDebugRuns` | Store | `this.deps.objectStore` に対して list keys を実行する。 | `this.deps.objectStore.listKeys("debug-runs/")` | `apps/api/src/rag/memorag-service.ts:1035 (MemoRagService.listDebugRuns)` |
-| 25 | `MemoRagService.listDebugRuns` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(key)` | `apps/api/src/rag/memorag-service.ts:1039 (MemoRagService.listDebugRuns)` |
-| 26 | `MemoRagService.listUsageSummaries` | Store | `[<br>          stored.lastActivityAt,<br>          ...userBenchmarkRuns.map((run) => run.updatedAt),<br>          ...debugRuns.map((run) => run.completedAt)<br>        ]` に対して filter を実行する。 | `[ stored.lastActivityAt, ...userBenchmarkRuns.map((run) => run.updatedAt), ...debugRuns.map((run) => run.completedAt) ].filter(Boolean)` | `apps/api/src/rag/memorag-service.ts:927 (MemoRagService.listUsageSummaries)` |
-| 27 | `MemoRagService.listUsageSummaries` | Store | `[<br>          stored.lastActivityAt,<br>          ...userBenchmarkRuns.map((run) => run.updatedAt),<br>          ...debugRuns.map((run) => run.completedAt)<br>        ].filter(Boolean)` に対して sort を実行する。 | `[ stored.lastActivityAt, ...userBenchmarkRuns.map((run) => run.updatedAt), ...debugRuns.map((run) => run.completedAt) ].filter(Boolean).sort()` | `apps/api/src/rag/memorag-service.ts:927 (MemoRagService.listUsageSummaries)` |
-| 28 | `MemoRagService.listUsageSummaries` | Store | `[<br>          stored.lastActivityAt,<br>          ...userBenchmarkRuns.map((run) => run.updatedAt),<br>          ...debugRuns.map((run) => run.completedAt)<br>        ].filter(Boolean).sort()` に対して at を実行する。 | `[ stored.lastActivityAt, ...userBenchmarkRuns.map((run) => run.updatedAt), ...debugRuns.map((run) => run.completedAt) ].filter(Boolean).sort().at(-1)` | `apps/api/src/rag/memorag-service.ts:927 (MemoRagService.listUsageSummaries)` |
-| 29 | `POST /admin/audit-log/export handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json(await service.createAdminExportDownloadUrl(user, "audit_log"), 200)` | `apps/api/src/routes/admin-routes.ts:112 (POST /admin/audit-log/export handler)` |
-| 30 | `POST /admin/audit-log/export handler` | HTTP/SSE | HTTP 503 で JSON response を返す。 | `c.json({ error: "Export storage is not configured" }, 503)` | `apps/api/src/routes/admin-routes.ts:114 (POST /admin/audit-log/export handler)` |
+| 1 | `POST /admin/audit-log/export handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/admin-routes.ts:192 (POST /admin/audit-log/export handler)` |
+| 2 | `POST /admin/audit-log/export handler` | Auth | "access:policy:read" permission を必須条件として確認する。 | `requirePermission(user, "access:policy:read")` | `apps/api/src/routes/admin-routes.ts:193 (POST /admin/audit-log/export handler)` |
+| 3 | `POST /admin/audit-log/export handler` | Service | service の create admin export download url 処理を呼び出す。 | `service.createAdminExportDownloadUrl(user, "audit_log")` | `apps/api/src/routes/admin-routes.ts:195 (POST /admin/audit-log/export handler)` |
+| 4 | `MemoRagService.createAdminExportDownloadUrl` | Service | service の list admin audit log 処理を呼び出す。 | `this.listAdminAuditLog(actor)` | `apps/api/src/rag/memorag-service.ts:1764 (MemoRagService.createAdminExportDownloadUrl)` |
+| 5 | `MemoRagService.listAdminAuditLog` | Store | `this` に対して load admin ledger を実行する。 | `this.loadAdminLedger(actor)` | `apps/api/src/rag/memorag-service.ts:1626 (MemoRagService.listAdminAuditLog)` |
+| 6 | `MemoRagService.loadAdminLedger` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(adminLedgerKey)` | `apps/api/src/rag/memorag-service.ts:2864 (MemoRagService.loadAdminLedger)` |
+| 7 | `MemoRagService.loadAdminLedger` | External | `this` へ sync user directory を実行する。 | `this.syncUserDirectory(db)` | `apps/api/src/rag/memorag-service.ts:2905 (MemoRagService.loadAdminLedger)` |
+| 8 | `MemoRagService.syncUserDirectory` | External | `this.deps.userDirectory` へ list users を実行する。 | `this.deps.userDirectory.listUsers()` | `apps/api/src/rag/memorag-service.ts:2912 (MemoRagService.syncUserDirectory)` |
+| 9 | `MemoRagService.syncUserDirectory` | External | `this.deps.verifiedIdentityProvider` へ get current identity by subject を実行する。 | `this.deps.verifiedIdentityProvider.getCurrentIdentityBySubject(directoryUser.userId)` | `apps/api/src/rag/memorag-service.ts:2917 (MemoRagService.syncUserDirectory)` |
+| 10 | `MemoRagService.createAdminExportDownloadUrl` | Service | service の get cost audit summary 処理を呼び出す。 | `this.getCostAuditSummary(actor)` | `apps/api/src/rag/memorag-service.ts:1770 (MemoRagService.createAdminExportDownloadUrl)` |
+| 11 | `MemoRagService.getCostAuditSummary` | Store | `this` に対して load admin ledger を実行する。 | `this.loadAdminLedger(actor, { syncUserDirectory: false })` | `apps/api/src/rag/memorag-service.ts:1729 (MemoRagService.getCostAuditSummary)` |
+| 12 | `POST /admin/audit-log/export handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json(await service.createAdminExportDownloadUrl(user, "audit_log"), 200)` | `apps/api/src/routes/admin-routes.ts:195 (POST /admin/audit-log/export handler)` |
+| 13 | `POST /admin/audit-log/export handler` | HTTP/SSE | HTTP 503 で JSON response を返す。 | `c.json({ error: "Export storage is not configured" }, 503)` | `apps/api/src/routes/admin-routes.ts:197 (POST /admin/audit-log/export handler)` |
 
 ## 分岐
 
 | ID | Function | 条件 | 実装位置 |
 | --- | --- | --- | --- |
-| B001 | `POST /admin/audit-log/export handler` | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/admin-routes.ts:113 (POST /admin/audit-log/export handler)` |
-| B002 | `POST /admin/audit-log/export handler` | `err` が `Error` の instance である、かつ `err.message` が "DEBUG_DOWNLOAD_BUCKET_NAME" を含む | `apps/api/src/routes/admin-routes.ts:114 (POST /admin/audit-log/export handler)` |
-| B003 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:267 (requirePermission)` |
-| B004 | `MemoRagService.createAdminExportDownloadUrl` | `config.debugDownloadBucketName` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:991 (MemoRagService.createAdminExportDownloadUrl)` |
-| B005 | `MemoRagService.createAdminExportDownloadUrl` | `exportType` が `"audit_log"` と等しい | `apps/api/src/rag/memorag-service.ts:998 (MemoRagService.createAdminExportDownloadUrl)` |
+| B001 | `POST /admin/audit-log/export handler` | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/admin-routes.ts:196 (POST /admin/audit-log/export handler)` |
+| B002 | `POST /admin/audit-log/export handler` | `err` が `Error` の instance である、かつ `err.message` が "DEBUG_DOWNLOAD_BUCKET_NAME" を含む | `apps/api/src/routes/admin-routes.ts:197 (POST /admin/audit-log/export handler)` |
+| B003 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| B004 | `MemoRagService.createAdminExportDownloadUrl` | `config.debugDownloadBucketName` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1752 (MemoRagService.createAdminExportDownloadUrl)` |
+| B005 | `MemoRagService.createAdminExportDownloadUrl` | `exportType` が `"audit_log"` と等しい | `apps/api/src/rag/memorag-service.ts:1759 (MemoRagService.createAdminExportDownloadUrl)` |

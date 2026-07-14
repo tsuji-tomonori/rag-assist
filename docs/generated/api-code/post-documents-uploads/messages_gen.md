@@ -16,9 +16,11 @@
 | M001 | OpenAPI contract | `200` | リクエストは成功し、レスポンス body に結果を返します。 | OpenAPI で宣言された HTTP 200 response | runtime OpenAPI |
 | M002 | OpenAPI contract | `401` | 認証が必要です。 | OpenAPI で宣言された HTTP 401 response | runtime OpenAPI |
 | M003 | OpenAPI contract | `403` | 対象操作を実行する権限がありません。 | OpenAPI で宣言された HTTP 403 response | runtime OpenAPI |
-| M004 | 例外 | `403` | Forbidden | `purpose` が `"chatAttachment"` と等しい | `apps/api/src/routes/document-routes.ts:66 (authorizeDocumentUploadSession)` |
-| M005 | 例外 | `403` | Forbidden | `purpose` が `"benchmarkSeed"` と等しい | `apps/api/src/routes/document-routes.ts:70 (authorizeDocumentUploadSession)` |
-| M006 | 例外 | `403` | Forbidden | 当該処理へ到達した場合 | `apps/api/src/routes/document-routes.ts:73 (authorizeDocumentUploadSession)` |
+| M004 | 例外 | `403` | Forbidden | `purpose` が `"chatAttachment"` と等しい | `apps/api/src/routes/document-routes.ts:125 (authorizeDocumentUploadSession)` |
+| M005 | 例外 | `403` | Forbidden | `purpose` が `"benchmarkSeed"` と等しい | `apps/api/src/routes/document-routes.ts:129 (authorizeDocumentUploadSession)` |
+| M006 | 例外 | `403` | Forbidden | 当該処理へ到達した場合 | `apps/api/src/routes/document-routes.ts:132 (authorizeDocumentUploadSession)` |
+| M007 | 例外 | `503` | Benchmark evaluation is unavailable | `config.benchmarkEvaluationEnabled` が存在しない、または偽である、または trim の判定結果が真ではない | `apps/api/src/routes/document-routes.ts:158 (uploadTenantId)` |
+| M008 | 例外 | `403` | Forbidden | `tenantId` が存在しない、または偽である | `apps/api/src/routes/document-routes.ts:163 (uploadTenantId)` |
 
 ## 読み方
 

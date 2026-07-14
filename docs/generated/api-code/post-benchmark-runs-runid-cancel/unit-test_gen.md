@@ -8,30 +8,30 @@
 
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
-| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:2316 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
+| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:3117 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
 
 ## 2. 実装分岐から導くテスト要因
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `POST /benchmark-runs/{runId}/cancel handler` | if | `run` が存在しない、または偽である | `apps/api/src/routes/benchmark-routes.ts:185 (POST /benchmark-runs/{runId}/cancel handler)` |
-| F002 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:267 (requirePermission)` |
-| F003 | `MemoRagService.cancelBenchmarkRun` | if | `run` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:2258 (MemoRagService.cancelBenchmarkRun)` |
-| F004 | `MemoRagService.cancelBenchmarkRun` | if | `run.executionArn` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2259 (MemoRagService.cancelBenchmarkRun)` |
+| F001 | `POST /benchmark-runs/{runId}/cancel handler` | if | `run` が存在しない、または偽である | `apps/api/src/routes/benchmark-routes.ts:192 (POST /benchmark-runs/{runId}/cancel handler)` |
+| F002 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| F003 | `MemoRagService.cancelBenchmarkRun` | if | `run` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4063 (MemoRagService.cancelBenchmarkRun)` |
+| F004 | `MemoRagService.cancelBenchmarkRun` | if | `run.executionArn` が存在し、真である | `apps/api/src/rag/memorag-service.ts:4064 (MemoRagService.cancelBenchmarkRun)` |
 
 ## 3. コード由来テストケース
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | benchmark run をキャンセルする が成功 response を返す。 | `apps/api/src/routes/benchmark-routes.ts:181 (POST /benchmark-runs/{runId}/cancel handler)` |
-| TC002 | F001: 条件成立 | `run` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/benchmark-routes.ts:185 (POST /benchmark-runs/{runId}/cancel handler)` |
-| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/benchmark-routes.ts:185 (POST /benchmark-runs/{runId}/cancel handler)` |
-| TC004 | F002: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:267 (requirePermission)` |
-| TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:267 (requirePermission)` |
-| TC006 | F003: 条件成立 | `run` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2258 (MemoRagService.cancelBenchmarkRun)` |
-| TC007 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2258 (MemoRagService.cancelBenchmarkRun)` |
-| TC008 | F004: 条件成立 | `run.executionArn` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2259 (MemoRagService.cancelBenchmarkRun)` |
-| TC009 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2259 (MemoRagService.cancelBenchmarkRun)` |
+| TC001 | 正常系 | benchmark run をキャンセルする が成功 response を返す。 | `apps/api/src/routes/benchmark-routes.ts:186 (POST /benchmark-runs/{runId}/cancel handler)` |
+| TC002 | F001: 条件成立 | `run` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/benchmark-routes.ts:192 (POST /benchmark-runs/{runId}/cancel handler)` |
+| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/benchmark-routes.ts:192 (POST /benchmark-runs/{runId}/cancel handler)` |
+| TC004 | F002: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| TC006 | F003: 条件成立 | `run` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:4063 (MemoRagService.cancelBenchmarkRun)` |
+| TC007 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:4063 (MemoRagService.cancelBenchmarkRun)` |
+| TC008 | F004: 条件成立 | `run.executionArn` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:4064 (MemoRagService.cancelBenchmarkRun)` |
+| TC009 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:4064 (MemoRagService.cancelBenchmarkRun)` |
 | TC010 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC011 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC012 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

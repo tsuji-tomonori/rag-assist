@@ -1,6 +1,6 @@
 import assert from "node:assert/strict"
 import test from "node:test"
-import { ChatResponseSchema, ConversationHistoryItemSchema, DebugTraceSchema, DocumentUploadRequestSchema, SearchResponseSchema, WorkerEventSchema, WorkerResultSchema } from "../schemas.js"
+import { ChatResponseSchema, ConversationHistoryItemSchema, DebugTraceSchema, DocumentIngestRunSchema, DocumentUploadRequestSchema, SearchResponseSchema, WorkerEventSchema, WorkerResultSchema } from "../schemas.js"
 
 test("document metadata schema accepts recursive JSON alias metadata", () => {
   const result = DocumentUploadRequestSchema.safeParse({
@@ -23,8 +23,32 @@ test("document metadata schema accepts recursive JSON alias metadata", () => {
   assert.equal(result.success, true)
 })
 
+test("FR-074 document ingest run schema exposes terminal replay correlation", () => {
+  const result = DocumentIngestRunSchema.safeParse({
+    runId: "ingest-rejected-1",
+    status: "rejected",
+    createdBy: "user-1",
+    tenantId: "tenant-a",
+    uploadId: "upload-1",
+    objectKey: "uploads/rejected.txt",
+    purpose: "document",
+    fileName: "rejected.txt",
+    traceId: "ingest:document-1:version-1",
+    replayVersionManifest: { schemaVersion: 1, parserVersion: "text-extractor-v1", ocrVersion: null },
+    createdAt: "2026-07-12T00:00:00.000Z",
+    updatedAt: "2026-07-12T00:00:01.000Z",
+    completedAt: "2026-07-12T00:00:01.000Z"
+  })
+
+  assert.equal(result.success, true)
+  if (!result.success) return
+  assert.equal(result.data.status, "rejected")
+  assert.equal(result.data.traceId, "ingest:document-1:version-1")
+  assert.equal(result.data.replayVersionManifest?.ocrVersion, null)
+})
+
 test("search response diagnostics includes index and alias versions", () => {
-  const result = SearchResponseSchema.safeParse({
+  const response = {
     query: "pto",
     results: [],
     diagnostics: {
@@ -33,11 +57,90 @@ test("search response diagnostics includes index and alias versions", () => {
       lexicalCount: 0,
       semanticCount: 0,
       fusedCount: 0,
-      latencyMs: 1
+      latencyMs: 1,
+      traceId: "search-trace-1",
+      replayVersionManifest: {
+        schemaVersion: 1,
+        sourceSnapshots: [],
+        parserVersion: null,
+        ocrVersion: null,
+        chunkerVersion: null,
+        chunkingPolicyVersion: null,
+        embedding: { modelId: "embed-v1", dimensions: 1024 },
+        policyVersions: {
+          ragProfile: "rag-v1",
+          retrieval: "retrieval-v1",
+          answer: null,
+          authorization: "auth-v1",
+          eligibility: "eligibility-v1",
+          untrustedContent: "untrusted-v1",
+          traceSanitization: "trace-v1"
+        },
+        indexVersion: "lexical:00000000",
+        modelVersions: { answer: null, clue: null },
+        promptVersion: null,
+        pipelineVersion: null,
+        datasetVersion: null,
+        queryTransformation: {
+          originalQuestionHash: "hash",
+          normalizedQueryHash: "hash",
+          expandedQuerySetHash: null
+        },
+        decisions: {
+          candidateCount: 0,
+          deniedCandidateCount: 0,
+          finalEvidenceCount: 0,
+          responseStatus: "success",
+          decisionCode: "completed",
+          reasonCodes: [],
+          totalLatencyMs: 1
+        },
+        nondeterministicFactors: [],
+        missingVersions: ["sourceSnapshots"]
+      },
+      index: {
+        visibleManifestCount: 1,
+        indexedChunkCount: 1,
+        cache: "artifact" as const,
+        loadMs: 1,
+        degradationDecision: {
+          policyVersion: "rag-safe-degradation-v1" as const,
+          trigger: "dependency_error" as const,
+          stage: "lexical_index",
+          action: "refuse" as const,
+          enforcedGuards: ["authentication", "authorization"] as const,
+          missingGuards: ["grounding"] as const,
+          safeToReturnContent: false,
+          guardOutcomes: [{
+            guard: "authentication" as const,
+            observed: true,
+            passed: true,
+            evidence: "runtime_identity_check",
+            observedAt: "2026-07-12T00:00:00.000Z"
+          }]
+        }
+      }
     }
-  })
+  }
+  const result = SearchResponseSchema.safeParse(response)
 
   assert.equal(result.success, true)
+  if (!result.success) return
+  assert.deepEqual(result.data.diagnostics.index?.degradationDecision?.guardOutcomes, response.diagnostics.index.degradationDecision.guardOutcomes)
+
+  const missingOutcomes = structuredClone(response)
+  delete (missingOutcomes.diagnostics.index.degradationDecision as Partial<typeof response.diagnostics.index.degradationDecision>).guardOutcomes
+  assert.equal(SearchResponseSchema.safeParse(missingOutcomes).success, false)
+
+  for (const field of ["guard", "observed", "passed", "evidence", "observedAt"] as const) {
+    const missingField = structuredClone(response)
+    delete (missingField.diagnostics.index.degradationDecision.guardOutcomes[0] as Record<string, unknown>)[field]
+    assert.equal(
+      SearchResponseSchema.safeParse(missingField).success,
+      false,
+      `guardOutcomes[].${field} must be required by the API schema`
+    )
+  }
 })
 
 test("chat response clarification schema strips internal rejected options", () => {
@@ -73,6 +176,8 @@ test("chat debug trace schema exposes only profile identifiers", () => {
     debug: {
       schemaVersion: 1,
       runId: "run_20260508_000000Z_abcdef12",
+      requestTraceId: "request-1",
+      parentTraceIds: ["search-1"],
       question: "質問",
       modelId: "amazon.nova-lite-v1:0",
       embeddingModelId: "amazon.titan-embed-text-v2:0",
@@ -110,6 +215,8 @@ test("chat debug trace schema exposes only profile identifiers", () => {
     answerPolicyId: "default-answer-policy",
     answerPolicyVersion: "1"
   })
+  assert.equal(result.data.debug?.requestTraceId, "request-1")
+  assert.deepEqual(result.data.debug?.parentTraceIds, ["search-1"])
 })
 
 test("debug trace schema accepts legacy RAG traces and adds J2 visibility defaults", () => {
@@ -142,7 +249,7 @@ test("debug trace schema accepts legacy RAG traces and adds J2 visibility defaul
 })
 
 test("worker contract keeps runId required while allowing target-specific metadata", () => {
-  const event = WorkerEventSchema.safeParse({ runId: "run-1", targetType: "chat_run", stepFunctionsRetry: 1 })
+  const event = WorkerEventSchema.safeParse({ runId: "run-1", tenantId: "tenant-a", targetType: "chat_run", stepFunctionsRetry: 1 })
   assert.equal(event.success, true)
   if (!event.success) return
   assert.equal(event.data.runId, "run-1")
@@ -150,6 +257,7 @@ test("worker contract keeps runId required while allowing target-specific metada
 
   assert.equal(WorkerEventSchema.safeParse({ targetType: "chat_run" }).success, false)
   assert.equal(WorkerEventSchema.safeParse({ runId: "" }).success, false)
+  assert.equal(WorkerEventSchema.safeParse({ runId: "run-1", targetType: "chat_run" }).success, false)
 
   const result = WorkerResultSchema.safeParse({
     runId: "run-1",

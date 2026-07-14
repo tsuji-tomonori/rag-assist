@@ -2,12 +2,12 @@
 
 # POST /benchmark/search IF仕様
 
-- 実装 route: `apps/api/src/routes/benchmark-routes.ts:57 (POST /benchmark/search)`
+- 実装 route: `apps/api/src/routes/benchmark-routes.ts:60 (POST /benchmark/search)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 検索ベンチマークを実行する
 
-ベンチマーク runner が `/search` 相当の検索処理を実行し、検索評価用の結果を取得します。
+BENCHMARK_RUNNER が必須の suiteId を指定し、request の user/group/tenant/filter override を使わず server allowlist の隔離 scope だけで検索評価を実行します。
 
 ## Headers
 
@@ -34,23 +34,7 @@ Media type: `application/json`
 | `lexicalTopK` | `integer` | no | `data.lexicalTopK` の値。項目名は lexical top k を表します。 | minimum=0<br>maximum=100 |
 | `semanticTopK` | `integer` | no | `data.semanticTopK` の値。項目名は semantic top k を表します。 | minimum=0<br>maximum=100 |
 | `embeddingModelId` | `string` | no | embedding 生成に利用する model ID。 | - |
-| `filters` | `object` | no | 検索対象を絞り込む条件。 | - |
-| `filters.tenantId` | `string` | no | `data.filters.tenantId` の値。項目名は tenant id を表します。 | - |
-| `filters.department` | `string` | no | `data.filters.department` の値。項目名は department を表します。 | - |
-| `filters.source` | `string` | no | `data.filters.source` の値。項目名は source を表します。 | - |
-| `filters.docType` | `string` | no | `data.filters.docType` の値。項目名は doc type を表します。 | - |
-| `filters.benchmarkSuiteId` | `string` | no | `data.filters.benchmarkSuiteId` の値。項目名は benchmark suite id を表します。 | - |
-| `filters.documentId` | `string` | no | 対象文書を一意に識別する ID。 | - |
-| `scope` | `object` | no | `data.scope` の値。項目名は scope を表します。 | - |
-| `scope.mode` | `enum(all \| groups \| documents \| temporary)` | no | benchmark 実行モード。 | enum=all, groups, documents, temporary |
-| `scope.groupIds` | `array<string>` | no | `data.scope.groupIds` の値。項目名は group ids を表します。 | maxItems=20 |
-| `scope.documentIds` | `array<string>` | no | `data.scope.documentIds` の値。項目名は document ids を表します。 | maxItems=100 |
-| `scope.includeTemporary` | `boolean` | no | `data.scope.includeTemporary` の値。項目名は include temporary を表します。 | - |
-| `scope.temporaryScopeId` | `string` | no | `data.scope.temporaryScopeId` の値。項目名は temporary scope id を表します。 | minLength=1 |
-| `benchmarkSuiteId` | `string` | no | `data.benchmarkSuiteId` の値。項目名は benchmark suite id を表します。 | - |
-| `user` | `object` | no | `data.user` の値。項目名は user を表します。 | - |
-| `user.userId` | `string` | no | 対象ユーザーを一意に識別する ID。 | minLength=1<br>maxLength=160 |
-| `user.groups` | `array<string>` | no | ユーザーが所属する Cognito group または検証用 group。 | maxItems=20 |
+| `suiteId` | `string` | yes | benchmark suite を識別する ID。 | minLength=1 |
 
 ## Authorization
 
@@ -59,9 +43,12 @@ Media type: `application/json`
 | 認可モード | `required` |
 | 必須 permission | `benchmark:query` |
 | 条件付き permission | - |
-| 実行可能 role | `BENCHMARK_RUNNER`, `SYSTEM_ADMIN` |
-| エラーになる role | `CHAT_USER`, `ANSWER_EDITOR`, `RAG_GROUP_MANAGER`, `BENCHMARK_OPERATOR`, `ASYNC_AGENT_USER`, `SKILL_PROFILE_ADMIN`, `ASYNC_AGENT_ADMIN`, `USER_ADMIN`, `ACCESS_ADMIN`, `COST_AUDITOR` |
+| 実行可能 role | `BENCHMARK_RUNNER` |
+| エラーになる role | `CHAT_USER`, `ANSWER_EDITOR`, `RAG_GROUP_MANAGER`, `BENCHMARK_OPERATOR`, `ASYNC_AGENT_USER`, `SKILL_PROFILE_ADMIN`, `ASYNC_AGENT_ADMIN`, `USER_ADMIN`, `ACCESS_ADMIN`, `COST_AUDITOR`, `SYSTEM_ADMIN` |
 | 条件付きでエラーになる role | なし |
+
+補足:
+- request の user/group/tenant/filter override は拒否し、suite registry の scope だけを使う。
 
 認証・認可エラー:
 
@@ -78,11 +65,12 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 29 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 46 field(s) |
 | `400` | リクエスト形式または入力値が不正です。 | `application/json` | 2 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 | `500` | サーバー内部で処理エラーが発生しました。 | `application/json` | 2 field(s) |
+| `503` | benchmark 評価が無効または設定不備のため利用できません | `application/json` | 2 field(s) |
 
 ##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
@@ -94,6 +82,7 @@ Media type: `application/json`
 | `results` | `array<object>` | yes | `response.results` の値。項目名は results を表します。 | - |
 | `results[].id` | `string` | yes | リソースを一意に識別する ID。 | - |
 | `results[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `results[].documentVersion` | `string` | no | `response.results[].documentVersion` の値。項目名は document version を表します。 | - |
 | `results[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
 | `results[].chunkId` | `string` | no | `response.results[].chunkId` の値。項目名は chunk id を表します。 | - |
 | `results[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
@@ -114,11 +103,27 @@ Media type: `application/json`
 | `diagnostics.semanticCount` | `integer` | yes | `response.diagnostics.semanticCount` の値。項目名は semantic count を表します。 | - |
 | `diagnostics.fusedCount` | `integer` | yes | `response.diagnostics.fusedCount` の値。項目名は fused count を表します。 | - |
 | `diagnostics.latencyMs` | `integer` | yes | `response.diagnostics.latencyMs` の値。項目名は latency ms を表します。 | - |
+| `diagnostics.traceId` | `string` | yes | `response.diagnostics.traceId` の値。項目名は trace id を表します。 | - |
+| `diagnostics.replayVersionManifest` | `object` | yes | `response.diagnostics.replayVersionManifest` の値。項目名は replay version manifest を表します。 | - |
 | `diagnostics.index` | `object` | no | `response.diagnostics.index` の値。項目名は index を表します。 | - |
 | `diagnostics.index.visibleManifestCount` | `integer` | yes | `response.diagnostics.index.visibleManifestCount` の値。項目名は visible manifest count を表します。 | minimum=0 |
 | `diagnostics.index.indexedChunkCount` | `integer` | yes | `response.diagnostics.index.indexedChunkCount` の値。項目名は indexed chunk count を表します。 | minimum=0 |
 | `diagnostics.index.cache` | `enum(memory \| artifact \| built)` | yes | `response.diagnostics.index.cache` の値。項目名は cache を表します。 | enum=memory, artifact, built |
 | `diagnostics.index.loadMs` | `integer` | yes | `response.diagnostics.index.loadMs` の値。項目名は load ms を表します。 | minimum=0 |
+| `diagnostics.index.degradationDecision` | `object` | no | `response.diagnostics.index.degradationDecision` の値。項目名は degradation decision を表します。 | - |
+| `diagnostics.index.degradationDecision.policyVersion` | `enum(rag-safe-degradation-v1)` | yes | `response.diagnostics.index.degradationDecision.policyVersion` の値。項目名は policy version を表します。 | enum=rag-safe-degradation-v1 |
+| `diagnostics.index.degradationDecision.trigger` | `enum(dependency_error \| timeout \| overload \| cost_limit \| circuit_open \| unsafe_profile)` | yes | `response.diagnostics.index.degradationDecision.trigger` の値。項目名は trigger を表します。 | enum=dependency_error, timeout, overload, cost_limit, circuit_open, unsafe_profile |
+| `diagnostics.index.degradationDecision.stage` | `string` | yes | `response.diagnostics.index.degradationDecision.stage` の値。項目名は stage を表します。 | - |
+| `diagnostics.index.degradationDecision.action` | `enum(limited_answer \| refuse \| fail)` | yes | `response.diagnostics.index.degradationDecision.action` の値。項目名は action を表します。 | enum=limited_answer, refuse, fail |
+| `diagnostics.index.degradationDecision.enforcedGuards` | `array<enum(authentication \| authorization \| classification_usage \| prompt_injection \| tool_policy \| grounding \| citation \| output_secret \| trace_redaction)>` | yes | `response.diagnostics.index.degradationDecision.enforcedGuards` の値。項目名は enforced guards を表します。 | - |
+| `diagnostics.index.degradationDecision.missingGuards` | `array<enum(authentication \| authorization \| classification_usage \| prompt_injection \| tool_policy \| grounding \| citation \| output_secret \| trace_redaction)>` | yes | `response.diagnostics.index.degradationDecision.missingGuards` の値。項目名は missing guards を表します。 | - |
+| `diagnostics.index.degradationDecision.safeToReturnContent` | `boolean` | yes | `response.diagnostics.index.degradationDecision.safeToReturnContent` の値。項目名は safe to return content を表します。 | - |
+| `diagnostics.index.degradationDecision.guardOutcomes` | `array<object>` | yes | `response.diagnostics.index.degradationDecision.guardOutcomes` の値。項目名は guard outcomes を表します。 | - |
+| `diagnostics.index.degradationDecision.guardOutcomes[].guard` | `enum(authentication \| authorization \| classification_usage \| prompt_injection \| tool_policy \| grounding \| citation \| output_secret \| trace_redaction)` | yes | `response.diagnostics.index.degradationDecision.guardOutcomes[].guard` の値。項目名は guard を表します。 | enum=authentication, authorization, classification_usage, prompt_injection, tool_policy, grounding, citation, output_secret, trace_redaction |
+| `diagnostics.index.degradationDecision.guardOutcomes[].observed` | `boolean` | yes | `response.diagnostics.index.degradationDecision.guardOutcomes[].observed` の値。項目名は observed を表します。 | - |
+| `diagnostics.index.degradationDecision.guardOutcomes[].passed` | `boolean` | yes | `response.diagnostics.index.degradationDecision.guardOutcomes[].passed` の値。項目名は passed を表します。 | - |
+| `diagnostics.index.degradationDecision.guardOutcomes[].evidence` | `string` | yes | `response.diagnostics.index.degradationDecision.guardOutcomes[].evidence` の値。項目名は evidence を表します。 | - |
+| `diagnostics.index.degradationDecision.guardOutcomes[].observedAt` | `string:date-time` | yes | `response.diagnostics.index.degradationDecision.guardOutcomes[].observedAt` の値。項目名は observed at を表します。 | - |
 
 ##### `400` リクエスト形式または入力値が不正です。
 
@@ -148,6 +153,15 @@ Media type: `application/json`
 | `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ##### `500` サーバー内部で処理エラーが発生しました。
+
+Media type: `application/json`
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
+
+##### `503` benchmark 評価が無効または設定不備のため利用できません
 
 Media type: `application/json`
 

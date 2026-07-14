@@ -2,12 +2,12 @@
 
 # PUT /documents/{documentId}/share IF仕様
 
-- 実装 route: `apps/api/src/routes/document-routes.ts:351 (PUT /documents/{documentId}/share)`
+- 実装 route: `apps/api/src/routes/document-routes.ts:895 (PUT /documents/{documentId}/share)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 文書共有設定を更新する
 
-指定した文書の直接共有 grant を置き換えます。フォルダ由来権限は打ち消さず、文書の実効 full 権限、document share permission、理由入力を要求します。
+指定した文書の直接共有 grant を、GET で取得した expectedVersion と理由を使って置き換えます。文書の実効 full 権限、document share permission、active な同一 tenant principal を検証し、競合または不正な principal では state を変更せず security audit を記録します。
 
 ## Headers
 
@@ -34,7 +34,8 @@ Media type: `application/json`
 | `grants` | `array<object>` | yes | `data.grants` の値。項目名は grants を表します。 | - |
 | `grants[].principalType` | `enum(user \| group)` | yes | `data.grants[].principalType` の値。項目名は principal type を表します。 | enum=user, group |
 | `grants[].principalId` | `string` | yes | `data.grants[].principalId` の値。項目名は principal id を表します。 | minLength=1 |
-| `grants[].permissionLevel` | `enum(readOnly \| full)` | yes | `data.grants[].permissionLevel` の値。項目名は permission level を表します。 | enum=readOnly, full |
+| `grants[].permissionLevel` | `enum(deny \| readOnly \| full)` | yes | `data.grants[].permissionLevel` の値。項目名は permission level を表します。 | enum=deny, readOnly, full |
+| `expectedVersion` | `string` | yes | `data.expectedVersion` の値。項目名は expected version を表します。 | minLength=1 |
 | `reason` | `string` | yes | 判断や失敗の理由。 | minLength=1 |
 
 ## Authorization
@@ -63,11 +64,11 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 16 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 17 field(s) |
 | `400` | リクエスト形式または入力値が不正です。 | `application/json` | 2 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
-| `404` | 指定したリソースが見つかりません。 | `application/json` | 2 field(s) |
+| `404` | 指定したリソースが見つかりません。 | `application/json` | 3 field(s) |
 | `409` | 現在のリソース状態と要求された操作が競合しています。 | `application/json` | 2 field(s) |
 
 ##### `200` リクエストは成功し、レスポンス body に結果を返します。
@@ -86,12 +87,13 @@ Media type: `application/json`
 | `directDocumentGrants[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
 | `directDocumentGrants[].principalType` | `enum(user \| group)` | yes | `response.directDocumentGrants[].principalType` の値。項目名は principal type を表します。 | enum=user, group |
 | `directDocumentGrants[].principalId` | `string` | yes | `response.directDocumentGrants[].principalId` の値。項目名は principal id を表します。 | - |
-| `directDocumentGrants[].permissionLevel` | `enum(readOnly \| full)` | yes | `response.directDocumentGrants[].permissionLevel` の値。項目名は permission level を表します。 | enum=readOnly, full |
+| `directDocumentGrants[].permissionLevel` | `enum(deny \| readOnly \| full)` | yes | `response.directDocumentGrants[].permissionLevel` の値。項目名は permission level を表します。 | enum=deny, readOnly, full |
 | `directDocumentGrants[].createdBy` | `string` | yes | `response.directDocumentGrants[].createdBy` の値。項目名は created by を表します。 | - |
 | `directDocumentGrants[].reason` | `string` | yes | 判断や失敗の理由。 | - |
 | `directDocumentGrants[].createdAt` | `string` | yes | レコードを作成した日時。 | - |
 | `directDocumentGrants[].updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
 | `currentUserEffectivePermission` | `enum(none \| readOnly \| full)` | yes | `response.currentUserEffectivePermission` の値。項目名は current user effective permission を表します。 | enum=none, readOnly, full |
+| `version` | `string` | yes | `response.version` の値。項目名は version を表します。 | minLength=1 |
 
 ##### `400` リクエスト形式または入力値が不正です。
 
@@ -126,8 +128,9 @@ Media type: `application/json`
 
 | 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
-| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
-| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
+| `error` | `enum(Resource unavailable)` | yes | エラー内容を表すメッセージ。 | enum=Resource unavailable |
+| `code` | `enum(RESOURCE_UNAVAILABLE)` | yes | `response.code` の値。項目名は code を表します。 | enum=RESOURCE_UNAVAILABLE |
+| `responseProfileVersion` | `enum(resource-non-enumeration-v1)` | yes | `response.responseProfileVersion` の値。項目名は response profile version を表します。 | enum=resource-non-enumeration-v1 |
 
 ##### `409` 現在のリソース状態と要求された操作が競合しています。
 

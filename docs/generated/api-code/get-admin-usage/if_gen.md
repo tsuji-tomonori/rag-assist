@@ -2,7 +2,7 @@
 
 # GET /admin/usage IF仕様
 
-- 実装 route: `apps/api/src/routes/admin-routes.ts:400 (GET /admin/usage)`
+- 実装 route: `apps/api/src/routes/admin-routes.ts:492 (GET /admin/usage)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 利用状況を取得する
@@ -53,7 +53,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 11 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 13 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 
@@ -67,12 +67,14 @@ Media type: `application/json`
 | `users[].userId` | `string` | yes | 対象ユーザーを一意に識別する ID。 | - |
 | `users[].email` | `string` | yes | ユーザーのメールアドレス。 | - |
 | `users[].displayName` | `string` | no | 画面に表示するユーザー名。 | - |
-| `users[].chatMessages` | `integer` | yes | `response.users[].chatMessages` の値。項目名は chat messages を表します。 | minimum=0 |
-| `users[].conversationCount` | `integer` | yes | `response.users[].conversationCount` の値。項目名は conversation count を表します。 | minimum=0 |
-| `users[].questionCount` | `integer` | yes | `response.users[].questionCount` の値。項目名は question count を表します。 | minimum=0 |
-| `users[].documentCount` | `integer` | yes | `response.users[].documentCount` の値。項目名は document count を表します。 | minimum=0 |
-| `users[].benchmarkRunCount` | `integer` | yes | `response.users[].benchmarkRunCount` の値。項目名は benchmark run count を表します。 | minimum=0 |
-| `users[].debugRunCount` | `integer` | yes | `response.users[].debugRunCount` の値。項目名は debug run count を表します。 | minimum=0 |
+| `users[].chatMessages` | `integer` | no | `response.users[].chatMessages` の値。項目名は chat messages を表します。 | minimum=0 |
+| `users[].conversationCount` | `integer` | no | `response.users[].conversationCount` の値。項目名は conversation count を表します。 | minimum=0 |
+| `users[].questionCount` | `integer` | no | `response.users[].questionCount` の値。項目名は question count を表します。 | minimum=0 |
+| `users[].documentCount` | `integer` | no | `response.users[].documentCount` の値。項目名は document count を表します。 | minimum=0 |
+| `users[].benchmarkRunCount` | `integer` | no | `response.users[].benchmarkRunCount` の値。項目名は benchmark run count を表します。 | minimum=0 |
+| `users[].debugRunCount` | `integer` | no | `response.users[].debugRunCount` の値。項目名は debug run count を表します。 | minimum=0 |
+| `users[].availableMetrics` | `array<enum(chatMessages \| conversationCount \| questionCount \| documentCount \| benchmarkRunCount \| debugRunCount)>` | yes | `response.users[].availableMetrics` の値。項目名は available metrics を表します。 | - |
+| `users[].unavailableMetrics` | `array<enum(chatMessages \| conversationCount \| questionCount \| documentCount \| benchmarkRunCount \| debugRunCount)>` | yes | `response.users[].unavailableMetrics` の値。項目名は unavailable metrics を表します。 | - |
 | `users[].lastActivityAt` | `string` | no | `response.users[].lastActivityAt` の値。項目名は last activity at を表します。 | - |
 
 ##### `401` 認証が必要です。

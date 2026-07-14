@@ -12,26 +12,26 @@ _静的に直接対応を確認できた test case はありません。`unit-te
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `POST /admin/costs/export handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/admin-routes.ts:454 (POST /admin/costs/export handler)` |
-| F002 | `POST /admin/costs/export handler` | if | `err` が `Error` の instance である、かつ `err.message` が "DEBUG_DOWNLOAD_BUCKET_NAME" を含む | `apps/api/src/routes/admin-routes.ts:455 (POST /admin/costs/export handler)` |
-| F003 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:267 (requirePermission)` |
-| F004 | `MemoRagService.createAdminExportDownloadUrl` | if | `config.debugDownloadBucketName` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:991 (MemoRagService.createAdminExportDownloadUrl)` |
-| F005 | `MemoRagService.createAdminExportDownloadUrl` | 三項条件 | `exportType` が `"audit_log"` と等しい | `apps/api/src/rag/memorag-service.ts:998 (MemoRagService.createAdminExportDownloadUrl)` |
+| F001 | `POST /admin/costs/export handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/admin-routes.ts:546 (POST /admin/costs/export handler)` |
+| F002 | `POST /admin/costs/export handler` | if | `err` が `Error` の instance である、かつ `err.message` が "DEBUG_DOWNLOAD_BUCKET_NAME" を含む | `apps/api/src/routes/admin-routes.ts:547 (POST /admin/costs/export handler)` |
+| F003 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| F004 | `MemoRagService.createAdminExportDownloadUrl` | if | `config.debugDownloadBucketName` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1752 (MemoRagService.createAdminExportDownloadUrl)` |
+| F005 | `MemoRagService.createAdminExportDownloadUrl` | 三項条件 | `exportType` が `"audit_log"` と等しい | `apps/api/src/rag/memorag-service.ts:1759 (MemoRagService.createAdminExportDownloadUrl)` |
 
 ## 3. コード由来テストケース
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | 概算コスト export URL を作成する が成功 response を返す。 | `apps/api/src/routes/admin-routes.ts:449 (POST /admin/costs/export handler)` |
-| TC002 | F001: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/admin-routes.ts:454 (POST /admin/costs/export handler)` |
-| TC003 | F002: 条件成立 | `err` が `Error` の instance である、かつ `err.message` が "DEBUG_DOWNLOAD_BUCKET_NAME" を含む 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:455 (POST /admin/costs/export handler)` |
-| TC004 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:455 (POST /admin/costs/export handler)` |
-| TC005 | F003: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:267 (requirePermission)` |
-| TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:267 (requirePermission)` |
-| TC007 | F004: 条件成立 | `config.debugDownloadBucketName` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:991 (MemoRagService.createAdminExportDownloadUrl)` |
-| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:991 (MemoRagService.createAdminExportDownloadUrl)` |
-| TC009 | F005: 条件成立 | `exportType` が `"audit_log"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:998 (MemoRagService.createAdminExportDownloadUrl)` |
-| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:998 (MemoRagService.createAdminExportDownloadUrl)` |
+| TC001 | 正常系 | 概算コスト export URL を作成する が成功 response を返す。 | `apps/api/src/routes/admin-routes.ts:541 (POST /admin/costs/export handler)` |
+| TC002 | F001: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/admin-routes.ts:546 (POST /admin/costs/export handler)` |
+| TC003 | F002: 条件成立 | `err` が `Error` の instance である、かつ `err.message` が "DEBUG_DOWNLOAD_BUCKET_NAME" を含む 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:547 (POST /admin/costs/export handler)` |
+| TC004 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:547 (POST /admin/costs/export handler)` |
+| TC005 | F003: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| TC007 | F004: 条件成立 | `config.debugDownloadBucketName` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1752 (MemoRagService.createAdminExportDownloadUrl)` |
+| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1752 (MemoRagService.createAdminExportDownloadUrl)` |
+| TC009 | F005: 条件成立 | `exportType` が `"audit_log"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1759 (MemoRagService.createAdminExportDownloadUrl)` |
+| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1759 (MemoRagService.createAdminExportDownloadUrl)` |
 | TC011 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC012 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC013 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

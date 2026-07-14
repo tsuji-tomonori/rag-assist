@@ -4,9 +4,17 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import App from "./App.js"
 import type { AliasAuditLogItem, AliasDefinition, BenchmarkRun, ConversationHistoryItem, FavoriteItem, HumanQuestion, Permission } from "./api.js"
 
+const fullDocumentCapabilities = {
+  canRead: true,
+  canShare: true,
+  canMove: true,
+  canDelete: true,
+  canReindex: true
+} as const
+
 const documents = [
-  { documentId: "doc-1", fileName: "requirements.md", chunkCount: 2, memoryCardCount: 1, createdAt: "2026-04-30T00:00:00.000Z" },
-  { documentId: "doc-2", fileName: "policy.md", chunkCount: 1, memoryCardCount: 1, createdAt: "2026-04-29T00:00:00.000Z" }
+  { documentId: "doc-1", fileName: "requirements.md", chunkCount: 2, memoryCardCount: 1, createdAt: "2026-04-30T00:00:00.000Z", capabilities: fullDocumentCapabilities },
+  { documentId: "doc-2", fileName: "policy.md", chunkCount: 1, memoryCardCount: 1, createdAt: "2026-04-29T00:00:00.000Z", capabilities: fullDocumentCapabilities }
 ]
 
 const documentGroups = [
@@ -274,10 +282,10 @@ function mockAppFetch(groups = ["SYSTEM_ADMIN"], initialHistory: ConversationHis
     if (requestUrl.endsWith("/admin/audit-log") && isGet(init)) return Promise.resolve(response({ auditLog: adminAuditLog }))
     if (requestUrl.endsWith("/admin/roles") && isGet(init)) return Promise.resolve(response({ roles }))
     if (requestUrl.endsWith("/admin/usage") && isGet(init)) {
-      return Promise.resolve(response({ users: [{ userId: "local-dev", email: "tester@example.com", chatMessages: 12, conversationCount: 3, questionCount: 1, documentCount: 2, benchmarkRunCount: 0, debugRunCount: 0, lastActivityAt: "2026-05-02T00:00:00.000Z" }] }))
+      return Promise.resolve(response({ users: [{ userId: "local-dev", email: "tester@example.com", chatMessages: 12, conversationCount: 3, questionCount: 1, documentCount: 2, benchmarkRunCount: 0, debugRunCount: 0, availableMetrics: ["chatMessages", "conversationCount", "questionCount", "documentCount", "benchmarkRunCount", "debugRunCount"], unavailableMetrics: [], lastActivityAt: "2026-05-02T00:00:00.000Z" }] }))
     }
     if (requestUrl.endsWith("/admin/costs") && isGet(init)) {
-      return Promise.resolve(response({ periodStart: "2026-05-01T00:00:00.000Z", periodEnd: "2026-05-02T00:00:00.000Z", currency: "USD", totalEstimatedUsd: 0.0123, pricingCatalogUpdatedAt: "2026-05-02T00:00:00.000Z", users: [{ userId: "local-dev", email: "tester@example.com", estimatedCostUsd: 0.0123 }], items: [{ service: "Bedrock", category: "chat completion", usage: 12, unit: "message", unitCostUsd: 0.0008, estimatedCostUsd: 0.0096, confidence: "estimated_usage" }] }))
+      return Promise.resolve(response({ available: true, periodStart: "2026-05-01T00:00:00.000Z", periodEnd: "2026-05-02T00:00:00.000Z", currency: "USD", totalEstimatedUsd: 0.0123, pricingCatalogUpdatedAt: "2026-05-02T00:00:00.000Z", users: [{ userId: "local-dev", email: "tester@example.com", estimatedCostUsd: 0.0123 }], items: [{ service: "Bedrock", category: "chat completion", usage: 12, unit: "message", unitCostUsd: 0.0008, estimatedCostUsd: 0.0096, confidence: "estimated_usage" }] }))
     }
     if (requestUrl.endsWith("/admin/aliases") && isGet(init)) return Promise.resolve(response({ aliases }))
     if (requestUrl.endsWith("/admin/aliases/audit-log") && isGet(init)) return Promise.resolve(response({ auditLog: aliasAuditLog }))
@@ -327,6 +335,14 @@ function mockAppFetch(groups = ["SYSTEM_ADMIN"], initialHistory: ConversationHis
       managedUsers = managedUsers.map((user) => (user.userId === "local-dev" ? { ...user, status: "active", updatedAt: "2026-05-02T00:02:00.000Z" } : user))
       adminAuditLog = [{ auditId: "audit-unsuspend", action: "user:unsuspend", actorUserId: "local-dev", actorEmail: "tester@example.com", targetUserId: "local-dev", targetEmail: "tester@example.com", beforeStatus: "suspended", afterStatus: "active", beforeGroups: groups, afterGroups: groups, createdAt: "2026-05-02T00:02:00.000Z" }, ...adminAuditLog]
       return Promise.resolve(response(managedUsers[0]))
+    }
+    if (requestUrl.endsWith("/admin/users/local-dev/deletion-preflight") && isGet(init)) {
+      return Promise.resolve(response({
+        targetUserId: "local-dev",
+        requiresSuccessor: false,
+        ownedResources: { folders: 0, resourceGroups: 0, documents: 0, total: 0 },
+        eligibleSuccessors: []
+      }))
     }
     if (requestUrl.endsWith("/admin/users/local-dev") && init?.method === "DELETE") {
       const deleted = { ...managedUsers.find((user) => user.userId === "local-dev")!, status: "deleted", updatedAt: "2026-05-02T00:04:00.000Z" }
@@ -559,12 +575,20 @@ describe("App document management", () => {
     await userEvent.click(await screen.findByTitle("ドキュメント"))
     await userEvent.click(screen.getByTitle("requirements.mdを削除"))
     expect(screen.getByRole("dialog", { name: "文書を削除しますか" })).toHaveTextContent("元資料、manifest、検索ベクトル")
+    await userEvent.type(screen.getByRole("textbox", { name: "削除理由" }), "obsolete document")
     await userEvent.click(screen.getByRole("button", { name: "削除" }))
 
     await waitFor(() =>
       expect(fetchMock).toHaveBeenCalledWith(
         "http://api.test/documents/doc-1",
-        expect.objectContaining({ method: "DELETE", headers: { Authorization: "Bearer local-dev-token" } })
+        expect.objectContaining({
+          method: "DELETE",
+          headers: expect.objectContaining({ Authorization: "Bearer local-dev-token" }),
+          body: JSON.stringify({
+            expectedUpdatedAt: "2026-04-30T00:00:00.000Z",
+            reason: "obsolete document"
+          })
+        })
       )
     )
   })
@@ -598,6 +622,7 @@ describe("App document management", () => {
 
     await userEvent.click(await screen.findByTitle("ドキュメント"))
     await userEvent.click(screen.getByTitle("requirements.mdを削除"))
+    await userEvent.type(screen.getByRole("textbox", { name: "削除理由" }), "obsolete document")
     await userEvent.click(screen.getByRole("button", { name: "削除" }))
 
     expect(await screen.findByRole("alert")).toHaveTextContent("delete failed")
@@ -1385,8 +1410,8 @@ describe("App chat and upload flow", () => {
   it.each([
     {
       groups: ["CHAT_USER"],
-      visible: ["チャット", "履歴", "お気に入り"],
-      hidden: ["担当者対応", "性能テスト", "非同期エージェント", "ドキュメント", "管理者設定"],
+      visible: ["チャット", "履歴", "お気に入り", "ドキュメント"],
+      hidden: ["担当者対応", "性能テスト", "非同期エージェント", "管理者設定"],
       expectedGetSuffixes: ["/me", "/documents", "/conversation-history"],
       forbiddenGetSuffixes: ["/questions", "/debug-runs", "/benchmark-runs", "/agents/runs", "/agents/providers", "/admin/users", "/admin/roles", "/admin/usage", "/admin/costs"]
     },
@@ -1454,7 +1479,7 @@ describe("App chat and upload flow", () => {
     await screen.findByTitle("チャット")
 
     for (const title of visible) {
-      expect(screen.getByTitle(title)).toBeInTheDocument()
+      expect(await screen.findByTitle(title)).toBeInTheDocument()
     }
     for (const title of hidden) {
       expect(screen.queryByTitle(title)).not.toBeInTheDocument()
@@ -1521,6 +1546,7 @@ describe("App chat and upload flow", () => {
 
     await userEvent.click(within(adminWorkspace).getByRole("button", { name: "Users" }))
     await userEvent.selectOptions(screen.getByDisplayValue("SYSTEM_ADMIN"), "COST_AUDITOR")
+    await userEvent.type(screen.getByLabelText("tester@example.comのロール変更理由"), "コスト監査担当へ変更")
     const assignButton = screen.getAllByRole("button", { name: "付与" }).find((button) => !button.hasAttribute("disabled"))
     expect(assignButton).toBeDefined()
     await userEvent.click(assignButton!)
@@ -1592,7 +1618,7 @@ describe("App chat and upload flow", () => {
     await userEvent.click(within(screen.getByRole("dialog", { name: "再インデックス結果へ切り替えますか" })).getByRole("button", { name: "切替" }))
     expect(await screen.findByLabelText("再インデックス移行一覧")).toHaveTextContent("cutover")
 
-    await userEvent.click(screen.getByTitle("管理者設定へ戻る"))
+    await userEvent.click(screen.getByTitle("前の画面へ戻る"))
     await userEvent.click(within(await screen.findByLabelText("管理者設定")).getByRole("button", { name: /担当者対応/ }))
     expect(await screen.findByLabelText("担当者対応")).toBeInTheDocument()
 

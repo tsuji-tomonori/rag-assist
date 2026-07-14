@@ -2,7 +2,7 @@
 
 # POST /chat-runs IF仕様
 
-- 実装 route: `apps/api/src/routes/chat-routes.ts:47 (POST /chat-runs)`
+- 実装 route: `apps/api/src/routes/chat-routes.ts:48 (POST /chat-runs)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 非同期チャット run を開始する

@@ -24,13 +24,13 @@ sequenceDiagram
 
 | # | Caller | 境界 | 処理 | コード | 実装位置 |
 | ---: | --- | --- | --- | --- | --- |
-| 1 | `GET /benchmark-suites handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/benchmark-routes.ts:102 (GET /benchmark-suites handler)` |
-| 2 | `GET /benchmark-suites handler` | Auth | "benchmark:read" permission を必須条件として確認する。 | `requirePermission(c.get("user"), "benchmark:read")` | `apps/api/src/routes/benchmark-routes.ts:102 (GET /benchmark-suites handler)` |
-| 3 | `GET /benchmark-suites handler` | Service | service の list benchmark suites 処理を呼び出す。 | `service.listBenchmarkSuites()` | `apps/api/src/routes/benchmark-routes.ts:103 (GET /benchmark-suites handler)` |
-| 4 | `GET /benchmark-suites handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json({ suites: service.listBenchmarkSuites() }, 200)` | `apps/api/src/routes/benchmark-routes.ts:103 (GET /benchmark-suites handler)` |
+| 1 | `GET /benchmark-suites handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/benchmark-routes.ts:104 (GET /benchmark-suites handler)` |
+| 2 | `GET /benchmark-suites handler` | Auth | "benchmark:read" permission を必須条件として確認する。 | `requirePermission(c.get("user"), "benchmark:read")` | `apps/api/src/routes/benchmark-routes.ts:104 (GET /benchmark-suites handler)` |
+| 3 | `GET /benchmark-suites handler` | Service | service の list benchmark suites 処理を呼び出す。 | `service.listBenchmarkSuites()` | `apps/api/src/routes/benchmark-routes.ts:105 (GET /benchmark-suites handler)` |
+| 4 | `GET /benchmark-suites handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json({ suites: service.listBenchmarkSuites() }, 200)` | `apps/api/src/routes/benchmark-routes.ts:105 (GET /benchmark-suites handler)` |
 
 ## 分岐
 
 | ID | Function | 条件 | 実装位置 |
 | --- | --- | --- | --- |
-| B001 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:267 (requirePermission)` |
+| B001 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |

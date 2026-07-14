@@ -2,7 +2,7 @@
 
 # GET /openapi.json IF仕様
 
-- 実装 route: `apps/api/src/app.ts:73 (GET /openapi.json)`
+- 実装 route: `apps/api/src/app.ts:75 (GET /openapi.json)`
 - contract source: route 実装のみ（OpenAPI 未登録）
 
 Summary: GET /openapi.json を処理する
@@ -29,4 +29,4 @@ OpenAPI schema 未登録のため、request body schema は確定できません
 
 | Status | Body/処理 | 根拠 |
 | --- | --- | --- |
-| `default` | `enrichOpenApiDocument(app.getOpenAPIDocument(openApiConfig) as OpenApiDocument)` | `apps/api/src/app.ts:74 (GET /openapi.json handler)` |
+| `default` | `enrichOpenApiDocument(app.getOpenAPIDocument(openApiConfig) as OpenApiDocument)` | `apps/api/src/app.ts:76 (GET /openapi.json handler)` |

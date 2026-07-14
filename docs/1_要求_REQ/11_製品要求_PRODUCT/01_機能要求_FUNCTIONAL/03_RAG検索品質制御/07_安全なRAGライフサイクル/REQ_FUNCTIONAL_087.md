@@ -28,7 +28,7 @@ manifest や folder record だけを更新して vector/index/path/inherited pol
 | 識別子 | `FR-087` |
 | 説明 | document/folder move 時の manifest/subtree/vector/index/path/explicit-inherited-policy/grant coherence |
 | 根拠 | 文書移動後の stale search scope、grant 消失、旧 path 再露出を防ぐ |
-| 源泉 | `FR-061`, `FR-065`、`reports/working/20260521-0912-document-share-move-ui.md`、`docs/spec-recovery/16_current_state_gap_analysis_202607.md` の `GAP-RD-023` |
+| 源泉 | `FR-061`, `FR-065`、`reports/working/20260521-0912-document-share-move-ui.md`、`docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md` の `GAP-RD-023` |
 | Actor / trigger | move coordinator が認可済み document/folder move を commit、retry または reconcile するとき |
 | 種類 | 機能要求 / resource lifecycle / consistency |
 | 依存関係 | `FR-061`, `FR-063`, `FR-065`, `FR-069`, `FR-072`, `FR-076` |
@@ -66,9 +66,9 @@ manifest や folder record だけを更新して vector/index/path/inherited pol
 | 実現可能性 | OK | move coordinator、versioned manifest、outbox/reconciliation で実現可能 |
 | 検証可能性 | OK | resource type/stage 別 failure injection、subtree cycle、old/new path search、direct/inherited grant preservation で確認できる |
 | ニーズ適合 | OK | 共有状態を失わず文書を別 container へ安全に移動できる |
-| 実装適合 | partial | document の local manifest/vector と folder subtree path は部分更新するが、外部 index・配下文書・policy と失敗時一貫性が未保証 |
+| 実装適合 | OK（confirmed） | document/folder lifecycle coordinators が subtree path、folder-local policy version、inherited policy reference、配下文書 manifest と evidence chunk/memory vector metadata・lexical index projection を versioned intent で staging/commit/reconcile し、fault/retry/concurrency/cycle tests が旧・新 active 状態の混在防止を確認する |
 
 ## トレース
 
 - 後方: `FR-061`, `FR-065`、`reports/working/20260521-0912-document-share-move-ui.md`、`GAP-RD-005`, `GAP-RD-023`。
-- 前方: document/folder move coordinator、reconciliation、external index adapter contract、subtree fault-injection tests。
+- 前方: `apps/api/src/documents/document-lifecycle-mutation-coordinator.ts`、`apps/api/src/folders/folder-lifecycle-mutation-coordinator.ts`、`apps/api/src/folders/folder-lifecycle-mutation-coordinator.test.ts`、`apps/api/src/folder-move-routes.test.ts`、`apps/api/src/search/hybrid-search.test.ts`、`apps/web/src/features/documents/components/DocumentWorkspace.test.tsx`。

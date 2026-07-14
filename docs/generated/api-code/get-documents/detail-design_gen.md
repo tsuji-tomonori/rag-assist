@@ -13,94 +13,132 @@
 | Method | `GET` |
 | Path | `/documents` |
 | OpenAPI contract | あり（runtime `/openapi.json`） |
-| Route 定義 | `apps/api/src/routes/document-routes.ts:300 (GET /documents)` |
-| Handler | `apps/api/src/routes/document-routes.ts:313 (GET /documents handler)` |
+| Route 定義 | `apps/api/src/routes/document-routes.ts:820 (GET /documents)` |
+| Handler | `apps/api/src/routes/document-routes.ts:835 (GET /documents handler)` |
 
 ## 2. 主処理
 
 | # | 深さ | 種別 | 自然言語での処理 | コード根拠 | 実装位置 |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 0 | 認証・認可 | 認証済み利用者を request context から取得する。 | `user = c.get("user")` | `apps/api/src/routes/document-routes.ts:314` |
-| 2 | 0 | 分岐 | 分岐: 利用者が "rag:doc:read" permission を持たない、かつ 利用者が "benchmark:seed_corpus" permission を持たない。 | `!hasPermission(user, "rag:doc:read") && !hasPermission(user, "benchmark:seed_corpus")` | `apps/api/src/routes/document-routes.ts:315` |
-| 3 | 1 | 例外 | HTTPException (403) を送出して通常処理を中断する。 | `throw new HTTPException(403, { message: "Forbidden" })` | `apps/api/src/routes/document-routes.ts:316` |
-| 4 | 0 | 呼び出し | map を実行する。 | `documents = (await service.listDocuments(user)).map(documentListItemSummary)` | `apps/api/src/routes/document-routes.ts:318` |
-| 5 | 0 | 応答 | 処理結果を HTTP 200 の JSON response として返す。 | `return c.json({ documents }, 200)` | `apps/api/src/routes/document-routes.ts:319` |
+| 1 | 0 | 認証・認可 | 認証済み利用者を request context から取得する。 | `user = c.get("user")` | `apps/api/src/routes/document-routes.ts:836` |
+| 2 | 0 | 分岐 | 分岐: 利用者が "rag:doc:read" permission を持たない、かつ 利用者が "benchmark:seed_corpus" permission を持たない。 | `!hasPermission(user, "rag:doc:read") && !hasPermission(user, "benchmark:seed_corpus")` | `apps/api/src/routes/document-routes.ts:837` |
+| 3 | 1 | 例外 | HTTPException (403) を送出して通常処理を中断する。 | `throw new HTTPException(403, { message: "Forbidden" })` | `apps/api/src/routes/document-routes.ts:838` |
+| 4 | 0 | 呼び出し | valid query を実行する。 | `query = validQuery<CollectionListQuery>(c)` | `apps/api/src/routes/document-routes.ts:840` |
+| 5 | 0 | 状態 | candidates を計算して後続処理へ保持する。 | `candidates = hasPermission(user, "rag:doc:read") ? await service.listDocuments(user) : (await service.listBenchmarkDocumentManifests()) .filter(isBenchmarkSeedDocumentManifest) .map((manifest) => ({ ...manifest, current…` | `apps/api/src/routes/document-routes.ts:841` |
+| 6 | 0 | 認証・認可 | authorized only page により認証・認可条件を確認する。 | `page = authorizedOnlyPage({ candidates, authorized: () => true, project: documentListItemSummary, offset: decodeCollectionCursor(query.cursor), limit: query.limit })` | `apps/api/src/routes/document-routes.ts:856` |
+| 7 | 0 | 応答 | 処理結果を HTTP 200 の JSON response として返す。 | `return c.json({ documents: page.items, count: page.count, nextCursor: page.nextCursor, responseProfileVersion: page.responseProfileVersion }, 200)` | `apps/api/src/routes/document-routes.ts:863` |
 
 ## 3. 条件分岐・例外
 
 | # | 所属関数 | 種別 | 条件の意味 | 根拠式 | 実装位置 |
 | ---: | --- | --- | --- | --- | --- |
-| B001 | `GET /documents handler` | if | 利用者が "rag:doc:read" permission を持たない、かつ 利用者が "benchmark:seed_corpus" permission を持たない | `!hasPermission(user, "rag:doc:read") && !hasPermission(user, "benchmark:seed_corpus")` | `apps/api/src/routes/document-routes.ts:315 (GET /documents handler)` |
-| B002 | `MemoRagService.listDocuments` | if | is missing object error の判定結果が真である | `isMissingObjectError(error)` | `apps/api/src/rag/memorag-service.ts:364 (MemoRagService.listDocuments)` |
-| B003 | `MemoRagService.listDocuments` | 三項条件 | `user` が存在し、真である | `user` | `apps/api/src/rag/memorag-service.ts:371 (MemoRagService.listDocuments)` |
-| B004 | `MemoRagService.listDocuments` | 三項条件 | `user` が存在し、真である | `user` | `apps/api/src/rag/memorag-service.ts:376 (MemoRagService.listDocuments)` |
-| B005 | `MemoRagService.listDocuments` | 三項条件 | `user` が存在し、真である | `user` | `apps/api/src/rag/memorag-service.ts:379 (MemoRagService.listDocuments)` |
-| B006 | `MemoRagService.listDocuments` | if | `user` が存在しない、または偽である、または `permissionService` が存在しない、または偽である | `!user \|\| !permissionService` | `apps/api/src/rag/memorag-service.ts:384 (MemoRagService.listDocuments)` |
+| B001 | `GET /documents handler` | if | 利用者が "rag:doc:read" permission を持たない、かつ 利用者が "benchmark:seed_corpus" permission を持たない | `!hasPermission(user, "rag:doc:read") && !hasPermission(user, "benchmark:seed_corpus")` | `apps/api/src/routes/document-routes.ts:837 (GET /documents handler)` |
+| B002 | `GET /documents handler` | 三項条件 | 利用者が "rag:doc:read" permission を持つ | `hasPermission(user, "rag:doc:read")` | `apps/api/src/routes/document-routes.ts:841 (GET /documents handler)` |
+| B003 | `MemoRagService.listDocuments` | if | is missing object error の判定結果が真である | `isMissingObjectError(error)` | `apps/api/src/rag/memorag-service.ts:759 (MemoRagService.listDocuments)` |
+| B004 | `MemoRagService.listDocuments` | 三項条件 | `user` が存在し、真である | `user` | `apps/api/src/rag/memorag-service.ts:773 (MemoRagService.listDocuments)` |
+| B005 | `MemoRagService.listDocuments` | 三項条件 | `user` が存在し、真である | `user` | `apps/api/src/rag/memorag-service.ts:776 (MemoRagService.listDocuments)` |
+| B006 | `MemoRagService.listDocuments` | if | `user` が存在しない、または偽である、または `permissionService` が存在しない、または偽である | `!user \|\| !permissionService` | `apps/api/src/rag/memorag-service.ts:781 (MemoRagService.listDocuments)` |
+| B007 | `MemoRagService.listBenchmarkDocumentManifests` | if | `config.benchmarkEvaluationEnabled` が存在しない、または偽である、または `tenantId` が存在しない、または偽である | `!config.benchmarkEvaluationEnabled \|\| !tenantId` | `apps/api/src/rag/memorag-service.ts:806 (MemoRagService.listBenchmarkDocumentManifests)` |
+| B008 | `MemoRagService.listBenchmarkDocumentManifests` | if | is missing object error の判定結果が真である | `isMissingObjectError(error)` | `apps/api/src/rag/memorag-service.ts:813 (MemoRagService.listBenchmarkDocumentManifests)` |
+| B009 | `decodeCollectionCursor` | if | `cursor` が存在しない、または偽である | `!cursor` | `apps/api/src/routes/document-routes.ts:279 (decodeCollectionCursor)` |
+| B010 | `decodeCollectionCursor` | if | test の判定結果が真ではない | `!/^(0\|[1-9][0-9]*)$/u.test(decoded)` | `apps/api/src/routes/document-routes.ts:283 (decodeCollectionCursor)` |
+| B011 | `decodeCollectionCursor` | if | `Buffer.from(decoded, "utf-8").toString("base64url")` が `normalized` と異なる | `Buffer.from(decoded, "utf-8").toString("base64url") !== normalized` | `apps/api/src/routes/document-routes.ts:284 (decodeCollectionCursor)` |
+| B012 | `decodeCollectionCursor` | if | is safe integer の判定結果が真ではない | `!Number.isSafeInteger(offset)` | `apps/api/src/routes/document-routes.ts:286 (decodeCollectionCursor)` |
+| B013 | `decodeCollectionCursor` | catch | 例外が発生した場合に catch 処理へ移る | `error` | `apps/api/src/routes/document-routes.ts:288 (decodeCollectionCursor)` |
+| B014 | `authorizedOnlyPage` | 三項条件 | `nextOffset` が `authorized.length` より小さい | `nextOffset < authorized.length` | `apps/api/src/security/public-resource-response.ts:71 (authorizedOnlyPage)` |
 
 ## 4. 到達する主要実装
 
-handler を起点に TypeScript symbol を解決し、深さ 2 までの主要関数・method を列挙しています。深い helper を含む全到達関数は 63 件で、永続化・外部接続は深さにかかわらず次節へ集約しています。
+handler を起点に TypeScript symbol を解決し、深さ 2 までの主要関数・method を列挙しています。深い helper を含む全到達関数は 102 件で、永続化・外部接続は深さにかかわらず次節へ集約しています。
 
 | 深さ | Symbol | 責務 | 実装位置 |
 | ---: | --- | --- | --- |
-| 0 | `GET /documents handler` | GET /documents の request を受け、検証・認可・service 呼び出し・HTTP 応答を調整する。 | `apps/api/src/routes/document-routes.ts:313 (GET /documents handler)` |
-| 1 | `hasPermission` | has permission の実装処理を担当する。 | `apps/api/src/authorization.ts:270 (hasPermission)` |
-| 2 | `isActiveAccount` | is active account の実装処理を担当する。 | `apps/api/src/authorization.ts:274 (isActiveAccount)` |
-| 2 | `getPermissionsForGroups` | get permissions for groups の実装処理を担当する。 | `apps/api/src/authorization.ts:212 (getPermissionsForGroups)` |
-| 1 | `MemoRagService.listDocuments` | list documents の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:358 (MemoRagService.listDocuments)` |
-| 2 | `MemoRagService.getManifestByKey` | get manifest by key の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1637 (MemoRagService.getManifestByKey)` |
-| 2 | `isMissingObjectError` | is missing object error の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:2856 (isMissingObjectError)` |
-| 2 | `normalizeDocumentGroups` | normalize document groups の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3172 (normalizeDocumentGroups)` |
-| 2 | `stringValue` | string value の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3315 (stringValue)` |
-| 2 | `MemoRagService.canAccessDocumentManifest` | can access document manifest の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:645 (MemoRagService.canAccessDocumentManifest)` |
-| 2 | `MemoRagService.sanitizeDirectSharedManifestForList` | sanitize direct shared manifest for list の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:657 (MemoRagService.sanitizeDirectSharedManifestForList)` |
-| 2 | `documentCapabilities` | document capabilities の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3021 (documentCapabilities)` |
+| 0 | `GET /documents handler` | GET /documents の request を受け、検証・認可・service 呼び出し・HTTP 応答を調整する。 | `apps/api/src/routes/document-routes.ts:835 (GET /documents handler)` |
+| 1 | `hasPermission` | has permission の実装処理を担当する。 | `apps/api/src/authorization.ts:187 (hasPermission)` |
+| 2 | `isActiveAccount` | is active account の実装処理を担当する。 | `apps/api/src/authorization.ts:191 (isActiveAccount)` |
+| 2 | `getPermissionsForGroups` | get permissions for groups の実装処理を担当する。 | `apps/api/src/authorization.ts:106 (getPermissionsForGroups)` |
+| 1 | `validQuery` | valid query の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:28 (validQuery)` |
+| 2 | `validRequest` | valid request の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:36 (validRequest)` |
+| 1 | `MemoRagService.listDocuments` | list documents の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:752 (MemoRagService.listDocuments)` |
+| 2 | `MemoRagService.documentAccessTenantId` | document access tenant id の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3274 (MemoRagService.documentAccessTenantId)` |
+| 2 | `tenantManifestPrefix` | tenant manifest prefix の実装処理を担当する。 | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:57 (tenantManifestPrefix)` |
+| 2 | `readTenantManifestByKey` | read tenant manifest by key の実装処理を担当する。 | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:88 (readTenantManifestByKey)` |
+| 2 | `isMissingObjectError` | is missing object error の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5121 (isMissingObjectError)` |
+| 2 | `createPublicationPointerSnapshot` | create publication pointer snapshot の実装処理を担当する。 | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:142 (createPublicationPointerSnapshot)` |
+| 2 | `isManifestCurrentPublication` | is manifest current publication の実装処理を担当する。 | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1500 (isManifestCurrentPublication)` |
+| 2 | `stringValue` | string value の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5519 (stringValue)` |
+| 2 | `MemoRagService.canAccessDocumentManifest` | can access document manifest の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1079 (MemoRagService.canAccessDocumentManifest)` |
+| 2 | `DocumentPermissionService.resolveEffectiveDocumentPermission` | resolve effective document permission の実装処理を担当する。 | `apps/api/src/documents/document-permission-service.ts:122 (DocumentPermissionService.resolveEffectiveDocumentPermission)` |
+| 2 | `MemoRagService.sanitizeDirectSharedManifestForList` | sanitize direct shared manifest for list の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1097 (MemoRagService.sanitizeDirectSharedManifestForList)` |
+| 2 | `documentCapabilities` | document capabilities の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5261 (documentCapabilities)` |
+| 1 | `MemoRagService.listBenchmarkDocumentManifests` | list benchmark document manifests の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:804 (MemoRagService.listBenchmarkDocumentManifests)` |
+| 1 | `decodeCollectionCursor` | decode collection cursor の実装処理を担当する。 | `apps/api/src/routes/document-routes.ts:278 (decodeCollectionCursor)` |
+| 1 | `authorizedOnlyPage` | authorized only page の実装処理を担当する。 | `apps/api/src/security/public-resource-response.ts:56 (authorizedOnlyPage)` |
 
 ## 5. データ・外部境界
 
 | 種別 | 境界 | Target | Operation | 目的 | Caller | 実装位置 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 参照 | Store | `this.deps.objectStore` | `listKeys` | `this.deps.objectStore` に対して list keys を実行する。 | `MemoRagService.listDocuments` | `apps/api/src/rag/memorag-service.ts:359 (MemoRagService.listDocuments)` |
-| 参照 | Store | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `MemoRagService.getManifestByKey` | `apps/api/src/rag/memorag-service.ts:1638 (MemoRagService.getManifestByKey)` |
-| 参照 | Store | `this.deps.documentGroupStore` | `list` | `this.deps.documentGroupStore` に対して list を実行する。 | `MemoRagService.listDocuments` | `apps/api/src/rag/memorag-service.ts:371 (MemoRagService.listDocuments)` |
-| 参照 | Store | `this.deps.documentGroupStore` | `list` | `this.deps.documentGroupStore` に対して list を実行する。 | `FolderPermissionService.resolveEffectiveFolderPermissionDetail` | `apps/api/src/folders/folder-permission-service.ts:47 (FolderPermissionService.resolveEffectiveFolderPermissionDetail)` |
-| 参照 | Store | `this.deps.folderPolicyStore` | `get` | `this.deps.folderPolicyStore` に対して get を実行する。 | `FolderPermissionService.resolvePolicyContext` | `apps/api/src/folders/folder-permission-service.ts:128 (FolderPermissionService.resolvePolicyContext)` |
-| 参照 | Store | `this.deps.userGroupStore` | `get` | `this.deps.userGroupStore` に対して get を実行する。 | `FolderPermissionService.resolveUserMembershipPermission` | `apps/api/src/folders/folder-permission-service.ts:166 (FolderPermissionService.resolveUserMembershipPermission)` |
-| 参照 | Store | `this.deps.groupMembershipStore` | `listByGroupId` | `this.deps.groupMembershipStore` に対して list by group id を実行する。 | `FolderPermissionService.resolveUserMembershipPermission` | `apps/api/src/folders/folder-permission-service.ts:171 (FolderPermissionService.resolveUserMembershipPermission)` |
-| 参照 | Store | `objectStore` | `getTextWithVersion` | `objectStore` に対して get text with version を実行する。 | `getTextWithVersion` | `apps/api/src/documents/document-permission-service.ts:418 (getTextWithVersion)` |
-| 参照 | Store | `objectStore` | `getText` | `objectStore` に対して get text を実行する。 | `getTextWithVersion` | `apps/api/src/documents/document-permission-service.ts:419 (getTextWithVersion)` |
-| 参照 | Store | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `DocumentPermissionService.loadLegacyDocumentGrants` | `apps/api/src/documents/document-permission-service.ts:193 (DocumentPermissionService.loadLegacyDocumentGrants)` |
-| 参照 | Store | `this.deps.userGroupStore` | `get` | `this.deps.userGroupStore` に対して get を実行する。 | `DocumentPermissionService.resolveUserMembershipPermission` | `apps/api/src/documents/document-permission-service.ts:287 (DocumentPermissionService.resolveUserMembershipPermission)` |
-| 参照 | Store | `this.deps.groupMembershipStore` | `listByGroupId` | `this.deps.groupMembershipStore` に対して list by group id を実行する。 | `DocumentPermissionService.resolveUserMembershipPermission` | `apps/api/src/documents/document-permission-service.ts:291 (DocumentPermissionService.resolveUserMembershipPermission)` |
+| 参照 | Store | `this.deps.objectStore` | `listKeys` | `this.deps.objectStore` に対して list keys を実行する。 | `MemoRagService.listDocuments` | `apps/api/src/rag/memorag-service.ts:754 (MemoRagService.listDocuments)` |
+| 参照 | Store | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `readTenantManifestByKey` | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:93 (readTenantManifestByKey)` |
+| 参照 | Store | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `loadPublicationPointer` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1809 (loadPublicationPointer)` |
+| 参照 | Store | `this.deps.documentGroupStore` | `list` | `this.deps.documentGroupStore` に対して list を実行する。 | `FolderPermissionService.resolveEffectiveFolderPermissionDetail` | `apps/api/src/folders/folder-permission-service.ts:145 (FolderPermissionService.resolveEffectiveFolderPermissionDetail)` |
+| 参照 | Store | `this.deps.userGroupStore` | `get` | `this.deps.userGroupStore` に対して get を実行する。 | `FolderPermissionService.resolveUserMembershipPermission` | `apps/api/src/folders/folder-permission-service.ts:780 (FolderPermissionService.resolveUserMembershipPermission)` |
+| 参照 | Store | `this.deps.groupMembershipStore` | `listByGroupId` | `this.deps.groupMembershipStore` に対して list by group id を実行する。 | `FolderPermissionService.resolveUserMembershipPermission` | `apps/api/src/folders/folder-permission-service.ts:781 (FolderPermissionService.resolveUserMembershipPermission)` |
+| 参照 | Store | `this.deps.folderPolicyStore` | `findByFolderId` | `this.deps.folderPolicyStore` に対して find by folder id を実行する。 | `FolderPermissionService.resolvePolicyContext` | `apps/api/src/folders/folder-permission-service.ts:695 (FolderPermissionService.resolvePolicyContext)` |
+| 参照 | Store | `this.deps.folderPolicyStore` | `get` | `this.deps.folderPolicyStore` に対して get を実行する。 | `FolderPermissionService.resolvePolicyContext` | `apps/api/src/folders/folder-permission-service.ts:711 (FolderPermissionService.resolvePolicyContext)` |
+| 参照 | Store | `objectStore` | `getTextWithVersion` | `objectStore` に対して get text with version を実行する。 | `getTextWithVersion` | `apps/api/src/documents/document-permission-service.ts:946 (getTextWithVersion)` |
+| 参照 | Store | `objectStore` | `getText` | `objectStore` に対して get text を実行する。 | `getTextWithVersion` | `apps/api/src/documents/document-permission-service.ts:947 (getTextWithVersion)` |
+| 参照 | Store | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `DocumentPermissionService.loadLegacyDocumentGrants` | `apps/api/src/documents/document-permission-service.ts:537 (DocumentPermissionService.loadLegacyDocumentGrants)` |
+| 参照 | Store | `this.deps.userGroupStore` | `get` | `this.deps.userGroupStore` に対して get を実行する。 | `DocumentPermissionService.resolveUserMembershipPermission` | `apps/api/src/documents/document-permission-service.ts:683 (DocumentPermissionService.resolveUserMembershipPermission)` |
+| 参照 | Store | `this.deps.groupMembershipStore` | `listByGroupId` | `this.deps.groupMembershipStore` に対して list by group id を実行する。 | `DocumentPermissionService.resolveUserMembershipPermission` | `apps/api/src/documents/document-permission-service.ts:684 (DocumentPermissionService.resolveUserMembershipPermission)` |
+| 参照 | Store | `this.deps.objectStore` | `listKeys` | `this.deps.objectStore` に対して list keys を実行する。 | `MemoRagService.listBenchmarkDocumentManifests` | `apps/api/src/rag/memorag-service.ts:809 (MemoRagService.listBenchmarkDocumentManifests)` |
 
 ## 6. 応答・メッセージ
 
 | 種別 | Status/Event | 内容 | 発生条件 |
 | --- | --- | --- | --- |
 | OpenAPI contract | `200` | リクエストは成功し、レスポンス body に結果を返します。 | OpenAPI で宣言された HTTP 200 response |
+| OpenAPI contract | `400` | リクエスト形式または入力値が不正です。 | OpenAPI で宣言された HTTP 400 response |
 | OpenAPI contract | `401` | 認証が必要です。 | OpenAPI で宣言された HTTP 401 response |
 | OpenAPI contract | `403` | 対象操作を実行する権限がありません。 | OpenAPI で宣言された HTTP 403 response |
 | OpenAPI contract | `500` | サーバー内部で処理エラーが発生しました。 | OpenAPI で宣言された HTTP 500 response |
 | 例外 | `403` | Forbidden | 利用者が "rag:doc:read" permission を持たない、かつ 利用者が "benchmark:seed_corpus" permission を持たない |
+| 例外 | `-` | Artifact key is invalid | `normalized` が存在しない、または偽である、または `normalized` が ".." を含む |
+| 例外 | `-` | Authoritative tenant is required | `normalized` が存在しない、または偽である |
+| 例外 | `-` | Authoritative tenant is required | `normalized` が存在しない、または偽である |
+| 例外 | `-` | `Document manifest tenant mismatch${key ? `: ${key}` : ""}` | `manifestTenantId` が存在しない、または偽である、かつ `options.allowMissingTenant` が存在しない、または偽である、または `manifestTenantId` が存在し、真である、かつ `manifestTenantId` が `normalizedTenantId` と異なる |
+| 例外 | `-` | Document manifest escaped its authoritative tenant partition | uses legacy global document artifacts の判定結果が真ではない、かつ starts with の判定結果が真ではない |
 | ログ | `-` | Skipping missing document manifest listed by object store | is missing object error の判定結果が真である |
+| 例外 | `-` | Benchmark evaluation tenant is not configured | `config.benchmarkEvaluationEnabled` が存在しない、または偽である、または `tenantId` が存在しない、または偽である |
+| 例外 | `-` | invalid cursor payload | test の判定結果が真ではない |
+| 例外 | `-` | non-canonical cursor | `Buffer.from(decoded, "utf-8").toString("base64url")` が `normalized` と異なる |
+| 例外 | `-` | cursor offset overflow | is safe integer の判定結果が真ではない |
+| 例外 | `400` | Invalid cursor | 例外を捕捉した場合 |
 
 ## 7. テスト対応
 
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
-| 到達 symbol | service ingests text, lists manifests, persists debug traces, and deletes all document vectors | `apps/api/src/rag/memorag-service.test.ts:36 (service ingests text, lists manifests, persists debug traces, and deletes all document vectors)` |
-| 到達 symbol | service listDocuments filters manifests by ACL for callers | `apps/api/src/rag/memorag-service.test.ts:225 (service listDocuments filters manifests by ACL for callers)` |
-| 到達 symbol | service listDocuments hides normal manifests without group owner or ACL from callers | `apps/api/src/rag/memorag-service.test.ts:253 (service listDocuments hides normal manifests without group owner or ACL from callers)` |
-| 到達 symbol | service persists document quality profile and excludes ineligible documents from normal RAG search | `apps/api/src/rag/memorag-service.test.ts:267 (service persists document quality profile and excludes ineligible documents from normal RAG search)` |
-| 到達 symbol | service listDocuments skips a manifest that disappeared after listing | `apps/api/src/rag/memorag-service.test.ts:305 (service listDocuments skips a manifest that disappeared after listing)` |
-| 到達 symbol | service listDocuments denies group-scoped manifests to non-members without legacy ACLs | `apps/api/src/rag/memorag-service.test.ts:412 (service listDocuments denies group-scoped manifests to non-members without legacy ACLs)` |
-| 到達 symbol | service inherits parent document group sharing unless child has explicit policy | `apps/api/src/rag/memorag-service.test.ts:673 (service inherits parent document group sharing unless child has explicit policy)` |
-| 到達 symbol | service preserves legacy explicit shared child policy when hasExplicitPolicy is false | `apps/api/src/rag/memorag-service.test.ts:745 (service preserves legacy explicit shared child policy when hasExplicitPolicy is false)` |
-| 到達 symbol | service preserves legacy explicit private child policy and does not leak parent sharing | `apps/api/src/rag/memorag-service.test.ts:789 (service preserves legacy explicit private child policy and does not leak parent sharing)` |
-| 到達 symbol | service does not expose group scoped documents to ownerUserId without folder read permission | `apps/api/src/rag/memorag-service.test.ts:867 (service does not expose group scoped documents to ownerUserId without folder read permission)` |
-| 到達 symbol | service reindexes documents through embedding cache compatible pipeline versions | `apps/api/src/rag/memorag-service.test.ts:986 (service reindexes documents through embedding cache compatible pipeline versions)` |
-| 到達 symbol | service stages and rolls back structured blue-green reindex migrations | `apps/api/src/rag/memorag-service.test.ts:1008 (service stages and rolls back structured blue-green reindex migrations)` |
-| 到達 symbol | service restores staging state when cutover vector activation fails after partial write | `apps/api/src/rag/memorag-service.test.ts:1058 (service restores staging state when cutover vector activation fails after partial write)` |
+| 到達 symbol | service ingests text, lists manifests, persists debug traces, and deletes all document vectors | `apps/api/src/rag/memorag-service.test.ts:47 (service ingests text, lists manifests, persists debug traces, and deletes all document vectors)` |
+| 到達 symbol | FR-066 failed ingest compensation persists a tenant-scoped cleanup reconciliation manifest | `apps/api/src/rag/memorag-service.test.ts:138 (FR-066 failed ingest compensation persists a tenant-scoped cleanup reconciliation manifest)` |
+| 到達 symbol | service listDocuments filters manifests by ACL for callers | `apps/api/src/rag/memorag-service.test.ts:363 (service listDocuments filters manifests by ACL for callers)` |
+| 到達 symbol | service listDocuments hides normal manifests without group owner or ACL from callers | `apps/api/src/rag/memorag-service.test.ts:399 (service listDocuments hides normal manifests without group owner or ACL from callers)` |
+| 到達 symbol | service persists document quality profile and excludes ineligible documents from normal RAG search | `apps/api/src/rag/memorag-service.test.ts:414 (service persists document quality profile and excludes ineligible documents from normal RAG search)` |
+| 到達 symbol | service listDocuments skips a manifest that disappeared after listing | `apps/api/src/rag/memorag-service.test.ts:452 (service listDocuments skips a manifest that disappeared after listing)` |
+| 到達 symbol | service listDocuments denies group-scoped manifests to non-members without legacy ACLs | `apps/api/src/rag/memorag-service.test.ts:569 (service listDocuments denies group-scoped manifests to non-members without legacy ACLs)` |
+| 到達 symbol | service inherits parent document group sharing unless child has explicit policy | `apps/api/src/rag/memorag-service.test.ts:827 (service inherits parent document group sharing unless child has explicit policy)` |
+| 到達 symbol | service preserves legacy explicit shared child policy when hasExplicitPolicy is false | `apps/api/src/rag/memorag-service.test.ts:902 (service preserves legacy explicit shared child policy when hasExplicitPolicy is false)` |
+| 到達 symbol | service preserves legacy explicit private child policy and does not leak parent sharing | `apps/api/src/rag/memorag-service.test.ts:948 (service preserves legacy explicit private child policy and does not leak parent sharing)` |
+| 到達 symbol | document administrative principal retains read access despite ordinary folder denial | `apps/api/src/rag/memorag-service.test.ts:1031 (document administrative principal retains read access despite ordinary folder denial)` |
+| 到達 symbol | service reindexes documents through embedding cache compatible pipeline versions | `apps/api/src/rag/memorag-service.test.ts:1136 (service reindexes documents through embedding cache compatible pipeline versions)` |
+| 到達 symbol | service stages and rolls back structured blue-green reindex migrations | `apps/api/src/rag/memorag-service.test.ts:1164 (service stages and rolls back structured blue-green reindex migrations)` |
+| 到達 symbol | service restores staging state when cutover vector activation fails after partial write | `apps/api/src/rag/memorag-service.test.ts:1214 (service restores staging state when cutover vector activation fails after partial write)` |
+| 到達 symbol | FR-090 reindex cutover compensates publication when current authorization is revoked before ledger commit | `apps/api/src/rag/memorag-service.test.ts:1246 (FR-090 reindex cutover compensates publication when current authorization is revoked before ledger commit)` |
+| 到達 symbol | FR-090 failed cutover compensation persists a durable intent and an authorized retry converges it | `apps/api/src/rag/memorag-service.test.ts:1280 (FR-090 failed cutover compensation persists a durable intent and an authorized retry converges it)` |
+| 到達 symbol | FR-090 ingest reauthorizes after the final event and compensates before persisting success | `apps/api/src/rag/memorag-service.test.ts:2630 (FR-090 ingest reauthorizes after the final event and compensates before persisting success)` |
+| 到達 symbol | FR-090 revoke after governance creation compensates all ingest artifacts and never publishes success | `apps/api/src/rag/memorag-service.test.ts:2690 (FR-090 revoke after governance creation compensates all ingest artifacts and never publishes success)` |
+| 到達 symbol | FR-060 same documentId is physically partitioned and never reveals the other tenant body or candidates | `apps/api/src/rag/tenant-artifact-partition.test.ts:27 (FR-060 same documentId is physically partitioned and never reveals the other tenant body or candidates)` |
 
 ## 8. 解析上の注意
 

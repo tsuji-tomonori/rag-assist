@@ -17,9 +17,8 @@
 | M002 | OpenAPI contract | `401` | 認証が必要です。 | OpenAPI で宣言された HTTP 401 response | runtime OpenAPI |
 | M003 | OpenAPI contract | `403` | 対象操作を実行する権限がありません。 | OpenAPI で宣言された HTTP 403 response | runtime OpenAPI |
 | M004 | OpenAPI contract | `404` | 指定したリソースが見つかりません。 | OpenAPI で宣言された HTTP 404 response | runtime OpenAPI |
-| M005 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:267 (requirePermission)` |
-| M006 | 例外 | `-` | BENCHMARK_BUCKET_NAME is not configured | `config.benchmarkBucketName` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:2283 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
-| M007 | HTTP 実装応答 | `404` | Benchmark run not found | `download` が存在しない、または偽である | `apps/api/src/routes/benchmark-routes.ts:212 (POST /benchmark-runs/{runId}/download handler)` |
+| M005 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| M006 | 例外 | `-` | BENCHMARK_BUCKET_NAME is not configured | `config.benchmarkBucketName` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4088 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
 
 ## 読み方
 

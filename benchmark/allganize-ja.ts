@@ -2,6 +2,7 @@ import { existsSync } from "node:fs"
 import { mkdir, readFile, writeFile } from "node:fs/promises"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
+import { createCurrentAuthorizedFetch } from "./run-authorization.js"
 
 type CsvRecord = Record<string, string>
 
@@ -38,6 +39,7 @@ const documentUrlFallbacks = new Map<string, string[]>([
 ])
 const benchmarkDir = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(benchmarkDir, "..")
+const authorizedFetch = createCurrentAuthorizedFetch()
 
 if (isMainModule()) {
   await prepareAllganizeJaBenchmark(process.env)
@@ -180,7 +182,7 @@ async function downloadAllganizeDocuments(rows: CsvRecord[], corpusDir: string, 
 
 async function readText(filePath: string | undefined, url: string): Promise<string> {
   if (filePath) return readFile(resolveExisting(filePath), "utf-8")
-  const response = await fetch(url)
+  const response = await authorizedFetch(url)
   if (!response.ok) throw new Error(`Failed to download ${url}: HTTP ${response.status}`)
   return response.text()
 }
@@ -205,7 +207,7 @@ async function downloadBinary(urls: string[], outputPath: string, fileName: stri
 async function tryDownloadBinary(url: string, outputPath: string, failures: string[]): Promise<string | undefined> {
   let response: Response
   try {
-    response = await fetch(url)
+    response = await authorizedFetch(url)
   } catch (error) {
     failures.push(`${url}: ${downloadErrorMessage(error)}`)
     return undefined
@@ -266,7 +268,7 @@ async function resolveWarpLatestUrl(url: string, failures: string[]): Promise<st
   const lookupUrl = `https://warp.ndl.go.jp/web/latest/${url}`
   let response: Response
   try {
-    response = await fetch(lookupUrl)
+    response = await authorizedFetch(lookupUrl)
   } catch (error) {
     failures.push(`${lookupUrl}: ${downloadErrorMessage(error)}`)
     return undefined

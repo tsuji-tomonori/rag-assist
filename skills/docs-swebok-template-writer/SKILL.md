@@ -48,8 +48,7 @@ Keep shared filenames, directory mapping, and template assets here. Put document
 
 ## Project-specific routing
 
-When editing `docs/`, follow `docs/DOCS_STRUCTURE.md` first.
-If legacy flat files (e.g. `REQUIREMENTS.md`, `ARCHITECTURE.md`) must be updated, keep them aligned with SWEBOK-lite metadata and atomic requirement style to ease incremental migration.
+When editing `docs/`, follow `docs/2_アーキテクチャ_ARC/README.md` first. Only the five canonical top-level directories are allowed; do not create flat root docs or a parallel specification hierarchy.
 
 ## Naming
 
@@ -100,4 +99,4 @@ The script copies the matching template from `assets/templates/` and writes it u
 
 - 要件ドキュメントは **1要件1ファイル** を必須とする。
 - 各要件ファイルには、その要件専用の **受け入れ条件** を同一ファイル内に必ず記載する。
-- `docs/REQUIREMENTS.md` はインデックス用途とし、要求本文は分割ファイルを正とする。
+- `docs/1_要求_REQ/README.md` はインデックス用途とし、要求本文は分割ファイルを正とする。

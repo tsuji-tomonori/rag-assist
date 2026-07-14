@@ -12,18 +12,18 @@ _静的に直接対応を確認できた test case はありません。`unit-te
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `getPermissionsForGroups` | loop | `groups` が存在し、真である | `apps/api/src/authorization.ts:214 (getPermissionsForGroups)` |
-| F002 | `getPermissionsForGroups` | loop | `rolePermissions[group as Role]` が `[]` の条件を満たす | `apps/api/src/authorization.ts:215 (getPermissionsForGroups)` |
+| F001 | `getPermissionsForGroups` | loop | `groups` が存在し、真である | `apps/api/src/authorization.ts:108 (getPermissionsForGroups)` |
+| F002 | `getPermissionsForGroups` | loop | `rolePermissions[group as Role]` が `[]` の条件を満たす | `apps/api/src/authorization.ts:109 (getPermissionsForGroups)` |
 
 ## 3. コード由来テストケース
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
 | TC001 | 正常系 | ログインユーザー情報を取得する が成功 response を返す。 | `apps/api/src/routes/system-routes.ts:32 (GET /me handler)` |
-| TC002 | F001: 0件 | 反復対象が空でも不正な副作用や例外を生じない。 | `apps/api/src/authorization.ts:214 (getPermissionsForGroups)` |
-| TC003 | F001: 複数件 | 各要素を順に処理し、順序・終了条件を守る。 | `apps/api/src/authorization.ts:214 (getPermissionsForGroups)` |
-| TC004 | F002: 0件 | 反復対象が空でも不正な副作用や例外を生じない。 | `apps/api/src/authorization.ts:215 (getPermissionsForGroups)` |
-| TC005 | F002: 複数件 | 各要素を順に処理し、順序・終了条件を守る。 | `apps/api/src/authorization.ts:215 (getPermissionsForGroups)` |
+| TC002 | F001: 0件 | 反復対象が空でも不正な副作用や例外を生じない。 | `apps/api/src/authorization.ts:108 (getPermissionsForGroups)` |
+| TC003 | F001: 複数件 | 各要素を順に処理し、順序・終了条件を守る。 | `apps/api/src/authorization.ts:108 (getPermissionsForGroups)` |
+| TC004 | F002: 0件 | 反復対象が空でも不正な副作用や例外を生じない。 | `apps/api/src/authorization.ts:109 (getPermissionsForGroups)` |
+| TC005 | F002: 複数件 | 各要素を順に処理し、順序・終了条件を守る。 | `apps/api/src/authorization.ts:109 (getPermissionsForGroups)` |
 | TC006 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC007 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 

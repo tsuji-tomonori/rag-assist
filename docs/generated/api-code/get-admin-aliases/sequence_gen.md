@@ -27,16 +27,16 @@ sequenceDiagram
 
 | # | Caller | 境界 | 処理 | コード | 実装位置 |
 | ---: | --- | --- | --- | --- | --- |
-| 1 | `GET /admin/aliases handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/admin-routes.ts:241 (GET /admin/aliases handler)` |
-| 2 | `GET /admin/aliases handler` | Auth | "rag:alias:read" permission を必須条件として確認する。 | `requirePermission(c.get("user"), "rag:alias:read")` | `apps/api/src/routes/admin-routes.ts:241 (GET /admin/aliases handler)` |
-| 3 | `GET /admin/aliases handler` | Service | service の list aliases 処理を呼び出す。 | `service.listAliases()` | `apps/api/src/routes/admin-routes.ts:242 (GET /admin/aliases handler)` |
-| 4 | `MemoRagService.listAliases` | Store | `this` に対して load alias ledger を実行する。 | `this.loadAliasLedger()` | `apps/api/src/rag/memorag-service.ts:721 (MemoRagService.listAliases)` |
-| 5 | `MemoRagService.loadAliasLedger` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(aliasLedgerKey)` | `apps/api/src/rag/memorag-service.ts:1603 (MemoRagService.loadAliasLedger)` |
-| 6 | `MemoRagService.listAliases` | Store | `ledger.aliases` に対して sort を実行する。 | `ledger.aliases.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))` | `apps/api/src/rag/memorag-service.ts:722 (MemoRagService.listAliases)` |
-| 7 | `GET /admin/aliases handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json({ aliases: await service.listAliases() }, 200)` | `apps/api/src/routes/admin-routes.ts:242 (GET /admin/aliases handler)` |
+| 1 | `GET /admin/aliases handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/admin-routes.ts:333 (GET /admin/aliases handler)` |
+| 2 | `GET /admin/aliases handler` | Auth | "rag:alias:read" permission を必須条件として確認する。 | `requirePermission(c.get("user"), "rag:alias:read")` | `apps/api/src/routes/admin-routes.ts:333 (GET /admin/aliases handler)` |
+| 3 | `GET /admin/aliases handler` | Service | service の list aliases 処理を呼び出す。 | `service.listAliases()` | `apps/api/src/routes/admin-routes.ts:334 (GET /admin/aliases handler)` |
+| 4 | `MemoRagService.listAliases` | Store | `this` に対して load alias ledger を実行する。 | `this.loadAliasLedger()` | `apps/api/src/rag/memorag-service.ts:1188 (MemoRagService.listAliases)` |
+| 5 | `MemoRagService.loadAliasLedger` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(aliasLedgerKey)` | `apps/api/src/rag/memorag-service.ts:2979 (MemoRagService.loadAliasLedger)` |
+| 6 | `MemoRagService.listAliases` | Store | `ledger.aliases` に対して sort を実行する。 | `ledger.aliases.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))` | `apps/api/src/rag/memorag-service.ts:1189 (MemoRagService.listAliases)` |
+| 7 | `GET /admin/aliases handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json({ aliases: await service.listAliases() }, 200)` | `apps/api/src/routes/admin-routes.ts:334 (GET /admin/aliases handler)` |
 
 ## 分岐
 
 | ID | Function | 条件 | 実装位置 |
 | --- | --- | --- | --- |
-| B001 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:267 (requirePermission)` |
+| B001 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |

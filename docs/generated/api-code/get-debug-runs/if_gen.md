@@ -2,7 +2,7 @@
 
 # GET /debug-runs IF仕様
 
-- 実装 route: `apps/api/src/routes/debug-routes.ts:31 (GET /debug-runs)`
+- 実装 route: `apps/api/src/routes/debug-routes.ts:32 (GET /debug-runs)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: debug trace 一覧を取得する
@@ -57,7 +57,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 129 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 216 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 
@@ -70,6 +70,10 @@ Media type: `application/json`
 | `debugRuns` | `array<object>` | yes | `response.debugRuns` の値。項目名は debug runs を表します。 | - |
 | `debugRuns[].schemaVersion` | `enum(1)` | no | `response.debugRuns[].schemaVersion` の値。項目名は schema version を表します。 | enum=1 |
 | `debugRuns[].runId` | `string` | yes | 非同期 run または debug trace を識別する ID。 | - |
+| `debugRuns[].requestTraceId` | `string` | no | `response.debugRuns[].requestTraceId` の値。項目名は request trace id を表します。 | - |
+| `debugRuns[].parentTraceIds` | `array<string>` | no | `response.debugRuns[].parentTraceIds` の値。項目名は parent trace ids を表します。 | - |
+| `debugRuns[].tenantPartitionId` | `string` | no | `response.debugRuns[].tenantPartitionId` の値。項目名は tenant partition id を表します。 | - |
+| `debugRuns[].actorPartitionId` | `string` | no | `response.debugRuns[].actorPartitionId` の値。項目名は actor partition id を表します。 | - |
 | `debugRuns[].targetType` | `enum(rag_run \| ingest_run \| chat_orchestration_run \| async_agent_run \| tool_invocation)` | no | `response.debugRuns[].targetType` の値。項目名は target type を表します。 | enum=rag_run, ingest_run, chat_orchestration_run, async_agent_run, tool_invocation |
 | `debugRuns[].visibility` | `enum(user_safe \| support_sanitized \| operator_sanitized \| internal_restricted)` | no | `response.debugRuns[].visibility` の値。項目名は visibility を表します。 | enum=user_safe, support_sanitized, operator_sanitized, internal_restricted |
 | `debugRuns[].sanitizePolicyVersion` | `enum(debug-trace-sanitize-v1)` | no | `response.debugRuns[].sanitizePolicyVersion` の値。項目名は sanitize policy version を表します。 | enum=debug-trace-sanitize-v1 |
@@ -103,6 +107,15 @@ Media type: `application/json`
 | `debugRuns[].pipelineVersions.indexVersion` | `string` | yes | `response.debugRuns[].pipelineVersions.indexVersion` の値。項目名は index version を表します。 | - |
 | `debugRuns[].pipelineVersions.embeddingModelId` | `string` | yes | embedding 生成に利用する model ID。 | - |
 | `debugRuns[].pipelineVersions.embeddingDimensions` | `integer` | yes | `response.debugRuns[].pipelineVersions.embeddingDimensions` の値。項目名は embedding dimensions を表します。 | minimum=0 |
+| `debugRuns[].replayVersionManifest` | `object` | no | `response.debugRuns[].replayVersionManifest` の値。項目名は replay version manifest を表します。 | - |
+| `debugRuns[].decision` | `object` | no | `response.debugRuns[].decision` の値。項目名は decision を表します。 | - |
+| `debugRuns[].decision.candidateCount` | `integer` | yes | `response.debugRuns[].decision.candidateCount` の値。項目名は candidate count を表します。 | minimum=0 |
+| `debugRuns[].decision.deniedCandidateCount` | `integer` | yes | `response.debugRuns[].decision.deniedCandidateCount` の値。項目名は denied candidate count を表します。 | minimum=0 |
+| `debugRuns[].decision.finalEvidenceCount` | `integer` | yes | `response.debugRuns[].decision.finalEvidenceCount` の値。項目名は final evidence count を表します。 | minimum=0 |
+| `debugRuns[].decision.responseStatus` | `enum(success \| warning \| error)` | yes | `response.debugRuns[].decision.responseStatus` の値。項目名は response status を表します。 | enum=success, warning, error |
+| `debugRuns[].decision.decisionCode` | `enum(completed \| refused \| rejected \| failed \| cancelled)` | yes | `response.debugRuns[].decision.decisionCode` の値。項目名は decision code を表します。 | enum=completed, refused, rejected, failed, cancelled |
+| `debugRuns[].decision.reasonCodes` | `array<enum(authorization_denied \| safety_interlock \| dependency_error \| admission_rejected \| publication_not_eligible \| permission_revoked \| execution_error \| insufficient_evidence \| clarification_required \| output_secret_detected \| cancelled)>` | yes | `response.debugRuns[].decision.reasonCodes` の値。項目名は reason codes を表します。 | - |
+| `debugRuns[].decision.totalLatencyMs` | `number` | yes | `response.debugRuns[].decision.totalLatencyMs` の値。項目名は total latency ms を表します。 | minimum=0 |
 | `debugRuns[].ragProfile` | `object` | no | `response.debugRuns[].ragProfile` の値。項目名は rag profile を表します。 | - |
 | `debugRuns[].ragProfile.id` | `string` | yes | リソースを一意に識別する ID。 | - |
 | `debugRuns[].ragProfile.version` | `string` | yes | `response.debugRuns[].ragProfile.version` の値。項目名は version を表します。 | - |
@@ -121,6 +134,7 @@ Media type: `application/json`
 | `debugRuns[].isAnswerable` | `boolean` | yes | 資料から回答可能と判断されたかどうか。 | - |
 | `debugRuns[].citations` | `array<object>` | yes | 回答根拠として提示する引用情報。 | - |
 | `debugRuns[].citations[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `debugRuns[].citations[].documentVersion` | `string` | no | `response.debugRuns[].citations[].documentVersion` の値。項目名は document version を表します。 | - |
 | `debugRuns[].citations[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
 | `debugRuns[].citations[].chunkId` | `string` | no | `response.debugRuns[].citations[].chunkId` の値。項目名は chunk id を表します。 | - |
 | `debugRuns[].citations[].pageStart` | `integer` | no | `response.debugRuns[].citations[].pageStart` の値。項目名は page start を表します。 | minimum=0 |
@@ -135,8 +149,28 @@ Media type: `application/json`
 | `debugRuns[].citations[].bbox` | `object` | no | `response.debugRuns[].citations[].bbox` の値。項目名は bbox を表します。 | nullable |
 | `debugRuns[].citations[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
 | `debugRuns[].citations[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `debugRuns[].citations[].topic` | `string` | no | `response.debugRuns[].citations[].topic` の値。項目名は topic を表します。 | - |
+| `debugRuns[].citations[].evidenceRole` | `enum(supporting \| conflicting \| outdated \| background)` | no | `response.debugRuns[].citations[].evidenceRole` の値。項目名は evidence role を表します。 | enum=supporting, conflicting, outdated, background |
+| `debugRuns[].citations[].authorityStatus` | `enum(authoritative \| secondary \| unknown)` | no | `response.debugRuns[].citations[].authorityStatus` の値。項目名は authority status を表します。 | enum=authoritative, secondary, unknown |
+| `debugRuns[].citations[].effectiveFrom` | `string` | no | `response.debugRuns[].citations[].effectiveFrom` の値。項目名は effective from を表します。 | - |
+| `debugRuns[].citations[].effectiveUntil` | `string` | no | `response.debugRuns[].citations[].effectiveUntil` の値。項目名は effective until を表します。 | - |
+| `debugRuns[].citations[].sourceLocator` | `object` | no | `response.debugRuns[].citations[].sourceLocator` の値。項目名は source locator を表します。 | - |
+| `debugRuns[].citations[].sourceLocator.page` | `integer` | no | `response.debugRuns[].citations[].sourceLocator.page` の値。項目名は page を表します。 | minimum=0 |
+| `debugRuns[].citations[].sourceLocator.pageStart` | `integer` | no | `response.debugRuns[].citations[].sourceLocator.pageStart` の値。項目名は page start を表します。 | minimum=0 |
+| `debugRuns[].citations[].sourceLocator.pageEnd` | `integer` | no | `response.debugRuns[].citations[].sourceLocator.pageEnd` の値。項目名は page end を表します。 | minimum=0 |
+| `debugRuns[].citations[].sourceLocator.bbox` | `object` | no | `response.debugRuns[].citations[].sourceLocator.bbox` の値。項目名は bbox を表します。 | nullable |
+| `debugRuns[].citations[].sourceLocator.unit` | `enum(normalized_page \| pdf_point \| pixel \| unknown)` | no | `response.debugRuns[].citations[].sourceLocator.unit` の値。項目名は unit を表します。 | enum=normalized_page, pdf_point, pixel, unknown |
+| `debugRuns[].citations[].sourceLocator.source` | `string` | no | `response.debugRuns[].citations[].sourceLocator.source` の値。項目名は source を表します。 | - |
+| `debugRuns[].citations[].sourceLocator.sectionPath` | `array<string>` | no | `response.debugRuns[].citations[].sourceLocator.sectionPath` の値。項目名は section path を表します。 | - |
+| `debugRuns[].citations[].sourceLocator.startChar` | `integer` | no | `response.debugRuns[].citations[].sourceLocator.startChar` の値。項目名は start char を表します。 | minimum=0 |
+| `debugRuns[].citations[].sourceLocator.endChar` | `integer` | no | `response.debugRuns[].citations[].sourceLocator.endChar` の値。項目名は end char を表します。 | minimum=0 |
+| `debugRuns[].citations[].sourceLocator.sourceBlockId` | `string` | no | `response.debugRuns[].citations[].sourceLocator.sourceBlockId` の値。項目名は source block id を表します。 | - |
+| `debugRuns[].citations[].sourceLocator.sourceChunkIds` | `array<string>` | no | `response.debugRuns[].citations[].sourceLocator.sourceChunkIds` の値。項目名は source chunk ids を表します。 | - |
+| `debugRuns[].citations[].authorizationDecision` | `enum(allowed)` | no | `response.debugRuns[].citations[].authorizationDecision` の値。項目名は authorization decision を表します。 | enum=allowed |
+| `debugRuns[].citations[].authorizationEvaluatedAt` | `string` | no | `response.debugRuns[].citations[].authorizationEvaluatedAt` の値。項目名は authorization evaluated at を表します。 | - |
 | `debugRuns[].retrieved` | `array<object>` | yes | 検索直後の候補チャンク一覧。 | - |
 | `debugRuns[].retrieved[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `debugRuns[].retrieved[].documentVersion` | `string` | no | `response.debugRuns[].retrieved[].documentVersion` の値。項目名は document version を表します。 | - |
 | `debugRuns[].retrieved[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
 | `debugRuns[].retrieved[].chunkId` | `string` | no | `response.debugRuns[].retrieved[].chunkId` の値。項目名は chunk id を表します。 | - |
 | `debugRuns[].retrieved[].pageStart` | `integer` | no | `response.debugRuns[].retrieved[].pageStart` の値。項目名は page start を表します。 | minimum=0 |
@@ -151,8 +185,28 @@ Media type: `application/json`
 | `debugRuns[].retrieved[].bbox` | `object` | no | `response.debugRuns[].retrieved[].bbox` の値。項目名は bbox を表します。 | nullable |
 | `debugRuns[].retrieved[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
 | `debugRuns[].retrieved[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `debugRuns[].retrieved[].topic` | `string` | no | `response.debugRuns[].retrieved[].topic` の値。項目名は topic を表します。 | - |
+| `debugRuns[].retrieved[].evidenceRole` | `enum(supporting \| conflicting \| outdated \| background)` | no | `response.debugRuns[].retrieved[].evidenceRole` の値。項目名は evidence role を表します。 | enum=supporting, conflicting, outdated, background |
+| `debugRuns[].retrieved[].authorityStatus` | `enum(authoritative \| secondary \| unknown)` | no | `response.debugRuns[].retrieved[].authorityStatus` の値。項目名は authority status を表します。 | enum=authoritative, secondary, unknown |
+| `debugRuns[].retrieved[].effectiveFrom` | `string` | no | `response.debugRuns[].retrieved[].effectiveFrom` の値。項目名は effective from を表します。 | - |
+| `debugRuns[].retrieved[].effectiveUntil` | `string` | no | `response.debugRuns[].retrieved[].effectiveUntil` の値。項目名は effective until を表します。 | - |
+| `debugRuns[].retrieved[].sourceLocator` | `object` | no | `response.debugRuns[].retrieved[].sourceLocator` の値。項目名は source locator を表します。 | - |
+| `debugRuns[].retrieved[].sourceLocator.page` | `integer` | no | `response.debugRuns[].retrieved[].sourceLocator.page` の値。項目名は page を表します。 | minimum=0 |
+| `debugRuns[].retrieved[].sourceLocator.pageStart` | `integer` | no | `response.debugRuns[].retrieved[].sourceLocator.pageStart` の値。項目名は page start を表します。 | minimum=0 |
+| `debugRuns[].retrieved[].sourceLocator.pageEnd` | `integer` | no | `response.debugRuns[].retrieved[].sourceLocator.pageEnd` の値。項目名は page end を表します。 | minimum=0 |
+| `debugRuns[].retrieved[].sourceLocator.bbox` | `object` | no | `response.debugRuns[].retrieved[].sourceLocator.bbox` の値。項目名は bbox を表します。 | nullable |
+| `debugRuns[].retrieved[].sourceLocator.unit` | `enum(normalized_page \| pdf_point \| pixel \| unknown)` | no | `response.debugRuns[].retrieved[].sourceLocator.unit` の値。項目名は unit を表します。 | enum=normalized_page, pdf_point, pixel, unknown |
+| `debugRuns[].retrieved[].sourceLocator.source` | `string` | no | `response.debugRuns[].retrieved[].sourceLocator.source` の値。項目名は source を表します。 | - |
+| `debugRuns[].retrieved[].sourceLocator.sectionPath` | `array<string>` | no | `response.debugRuns[].retrieved[].sourceLocator.sectionPath` の値。項目名は section path を表します。 | - |
+| `debugRuns[].retrieved[].sourceLocator.startChar` | `integer` | no | `response.debugRuns[].retrieved[].sourceLocator.startChar` の値。項目名は start char を表します。 | minimum=0 |
+| `debugRuns[].retrieved[].sourceLocator.endChar` | `integer` | no | `response.debugRuns[].retrieved[].sourceLocator.endChar` の値。項目名は end char を表します。 | minimum=0 |
+| `debugRuns[].retrieved[].sourceLocator.sourceBlockId` | `string` | no | `response.debugRuns[].retrieved[].sourceLocator.sourceBlockId` の値。項目名は source block id を表します。 | - |
+| `debugRuns[].retrieved[].sourceLocator.sourceChunkIds` | `array<string>` | no | `response.debugRuns[].retrieved[].sourceLocator.sourceChunkIds` の値。項目名は source chunk ids を表します。 | - |
+| `debugRuns[].retrieved[].authorizationDecision` | `enum(allowed)` | no | `response.debugRuns[].retrieved[].authorizationDecision` の値。項目名は authorization decision を表します。 | enum=allowed |
+| `debugRuns[].retrieved[].authorizationEvaluatedAt` | `string` | no | `response.debugRuns[].retrieved[].authorizationEvaluatedAt` の値。項目名は authorization evaluated at を表します。 | - |
 | `debugRuns[].finalEvidence` | `array<object>` | no | 回答生成へ渡した最終根拠候補。 | - |
 | `debugRuns[].finalEvidence[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `debugRuns[].finalEvidence[].documentVersion` | `string` | no | `response.debugRuns[].finalEvidence[].documentVersion` の値。項目名は document version を表します。 | - |
 | `debugRuns[].finalEvidence[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
 | `debugRuns[].finalEvidence[].chunkId` | `string` | no | `response.debugRuns[].finalEvidence[].chunkId` の値。項目名は chunk id を表します。 | - |
 | `debugRuns[].finalEvidence[].pageStart` | `integer` | no | `response.debugRuns[].finalEvidence[].pageStart` の値。項目名は page start を表します。 | minimum=0 |
@@ -167,6 +221,25 @@ Media type: `application/json`
 | `debugRuns[].finalEvidence[].bbox` | `object` | no | `response.debugRuns[].finalEvidence[].bbox` の値。項目名は bbox を表します。 | nullable |
 | `debugRuns[].finalEvidence[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
 | `debugRuns[].finalEvidence[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `debugRuns[].finalEvidence[].topic` | `string` | no | `response.debugRuns[].finalEvidence[].topic` の値。項目名は topic を表します。 | - |
+| `debugRuns[].finalEvidence[].evidenceRole` | `enum(supporting \| conflicting \| outdated \| background)` | no | `response.debugRuns[].finalEvidence[].evidenceRole` の値。項目名は evidence role を表します。 | enum=supporting, conflicting, outdated, background |
+| `debugRuns[].finalEvidence[].authorityStatus` | `enum(authoritative \| secondary \| unknown)` | no | `response.debugRuns[].finalEvidence[].authorityStatus` の値。項目名は authority status を表します。 | enum=authoritative, secondary, unknown |
+| `debugRuns[].finalEvidence[].effectiveFrom` | `string` | no | `response.debugRuns[].finalEvidence[].effectiveFrom` の値。項目名は effective from を表します。 | - |
+| `debugRuns[].finalEvidence[].effectiveUntil` | `string` | no | `response.debugRuns[].finalEvidence[].effectiveUntil` の値。項目名は effective until を表します。 | - |
+| `debugRuns[].finalEvidence[].sourceLocator` | `object` | no | `response.debugRuns[].finalEvidence[].sourceLocator` の値。項目名は source locator を表します。 | - |
+| `debugRuns[].finalEvidence[].sourceLocator.page` | `integer` | no | `response.debugRuns[].finalEvidence[].sourceLocator.page` の値。項目名は page を表します。 | minimum=0 |
+| `debugRuns[].finalEvidence[].sourceLocator.pageStart` | `integer` | no | `response.debugRuns[].finalEvidence[].sourceLocator.pageStart` の値。項目名は page start を表します。 | minimum=0 |
+| `debugRuns[].finalEvidence[].sourceLocator.pageEnd` | `integer` | no | `response.debugRuns[].finalEvidence[].sourceLocator.pageEnd` の値。項目名は page end を表します。 | minimum=0 |
+| `debugRuns[].finalEvidence[].sourceLocator.bbox` | `object` | no | `response.debugRuns[].finalEvidence[].sourceLocator.bbox` の値。項目名は bbox を表します。 | nullable |
+| `debugRuns[].finalEvidence[].sourceLocator.unit` | `enum(normalized_page \| pdf_point \| pixel \| unknown)` | no | `response.debugRuns[].finalEvidence[].sourceLocator.unit` の値。項目名は unit を表します。 | enum=normalized_page, pdf_point, pixel, unknown |
+| `debugRuns[].finalEvidence[].sourceLocator.source` | `string` | no | `response.debugRuns[].finalEvidence[].sourceLocator.source` の値。項目名は source を表します。 | - |
+| `debugRuns[].finalEvidence[].sourceLocator.sectionPath` | `array<string>` | no | `response.debugRuns[].finalEvidence[].sourceLocator.sectionPath` の値。項目名は section path を表します。 | - |
+| `debugRuns[].finalEvidence[].sourceLocator.startChar` | `integer` | no | `response.debugRuns[].finalEvidence[].sourceLocator.startChar` の値。項目名は start char を表します。 | minimum=0 |
+| `debugRuns[].finalEvidence[].sourceLocator.endChar` | `integer` | no | `response.debugRuns[].finalEvidence[].sourceLocator.endChar` の値。項目名は end char を表します。 | minimum=0 |
+| `debugRuns[].finalEvidence[].sourceLocator.sourceBlockId` | `string` | no | `response.debugRuns[].finalEvidence[].sourceLocator.sourceBlockId` の値。項目名は source block id を表します。 | - |
+| `debugRuns[].finalEvidence[].sourceLocator.sourceChunkIds` | `array<string>` | no | `response.debugRuns[].finalEvidence[].sourceLocator.sourceChunkIds` の値。項目名は source chunk ids を表します。 | - |
+| `debugRuns[].finalEvidence[].authorizationDecision` | `enum(allowed)` | no | `response.debugRuns[].finalEvidence[].authorizationDecision` の値。項目名は authorization decision を表します。 | enum=allowed |
+| `debugRuns[].finalEvidence[].authorizationEvaluatedAt` | `string` | no | `response.debugRuns[].finalEvidence[].authorizationEvaluatedAt` の値。項目名は authorization evaluated at を表します。 | - |
 | `debugRuns[].toolInvocations` | `array<object>` | no | `response.debugRuns[].toolInvocations` の値。項目名は tool invocations を表します。 | - |
 | `debugRuns[].toolInvocations[].invocationId` | `string` | yes | `response.debugRuns[].toolInvocations[].invocationId` の値。項目名は invocation id を表します。 | minLength=1 |
 | `debugRuns[].toolInvocations[].orchestrationRunId` | `string` | yes | `response.debugRuns[].toolInvocations[].orchestrationRunId` の値。項目名は orchestration run id を表します。 | minLength=1 |
@@ -194,6 +267,20 @@ Media type: `application/json`
 | `debugRuns[].steps[].output` | `object` | no | `response.debugRuns[].steps[].output` の値。項目名は output を表します。 | - |
 | `debugRuns[].steps[].hitCount` | `number` | no | `response.debugRuns[].steps[].hitCount` の値。項目名は hit count を表します。 | - |
 | `debugRuns[].steps[].tokenCount` | `number` | no | `response.debugRuns[].steps[].tokenCount` の値。項目名は token count を表します。 | - |
+| `debugRuns[].steps[].degradationDecision` | `object` | no | `response.debugRuns[].steps[].degradationDecision` の値。項目名は degradation decision を表します。 | - |
+| `debugRuns[].steps[].degradationDecision.policyVersion` | `enum(rag-safe-degradation-v1)` | yes | `response.debugRuns[].steps[].degradationDecision.policyVersion` の値。項目名は policy version を表します。 | enum=rag-safe-degradation-v1 |
+| `debugRuns[].steps[].degradationDecision.trigger` | `enum(dependency_error \| timeout \| overload \| cost_limit \| circuit_open \| unsafe_profile)` | yes | `response.debugRuns[].steps[].degradationDecision.trigger` の値。項目名は trigger を表します。 | enum=dependency_error, timeout, overload, cost_limit, circuit_open, unsafe_profile |
+| `debugRuns[].steps[].degradationDecision.stage` | `string` | yes | `response.debugRuns[].steps[].degradationDecision.stage` の値。項目名は stage を表します。 | - |
+| `debugRuns[].steps[].degradationDecision.action` | `enum(limited_answer \| refuse \| fail)` | yes | `response.debugRuns[].steps[].degradationDecision.action` の値。項目名は action を表します。 | enum=limited_answer, refuse, fail |
+| `debugRuns[].steps[].degradationDecision.enforcedGuards` | `array<enum(authentication \| authorization \| classification_usage \| prompt_injection \| tool_policy \| grounding \| citation \| output_secret \| trace_redaction)>` | yes | `response.debugRuns[].steps[].degradationDecision.enforcedGuards` の値。項目名は enforced guards を表します。 | - |
+| `debugRuns[].steps[].degradationDecision.missingGuards` | `array<enum(authentication \| authorization \| classification_usage \| prompt_injection \| tool_policy \| grounding \| citation \| output_secret \| trace_redaction)>` | yes | `response.debugRuns[].steps[].degradationDecision.missingGuards` の値。項目名は missing guards を表します。 | - |
+| `debugRuns[].steps[].degradationDecision.safeToReturnContent` | `boolean` | yes | `response.debugRuns[].steps[].degradationDecision.safeToReturnContent` の値。項目名は safe to return content を表します。 | - |
+| `debugRuns[].steps[].degradationDecision.guardOutcomes` | `array<object>` | yes | `response.debugRuns[].steps[].degradationDecision.guardOutcomes` の値。項目名は guard outcomes を表します。 | - |
+| `debugRuns[].steps[].degradationDecision.guardOutcomes[].guard` | `enum(authentication \| authorization \| classification_usage \| prompt_injection \| tool_policy \| grounding \| citation \| output_secret \| trace_redaction)` | yes | `response.debugRuns[].steps[].degradationDecision.guardOutcomes[].guard` の値。項目名は guard を表します。 | enum=authentication, authorization, classification_usage, prompt_injection, tool_policy, grounding, citation, output_secret, trace_redaction |
+| `debugRuns[].steps[].degradationDecision.guardOutcomes[].observed` | `boolean` | yes | `response.debugRuns[].steps[].degradationDecision.guardOutcomes[].observed` の値。項目名は observed を表します。 | - |
+| `debugRuns[].steps[].degradationDecision.guardOutcomes[].passed` | `boolean` | yes | `response.debugRuns[].steps[].degradationDecision.guardOutcomes[].passed` の値。項目名は passed を表します。 | - |
+| `debugRuns[].steps[].degradationDecision.guardOutcomes[].evidence` | `string` | yes | `response.debugRuns[].steps[].degradationDecision.guardOutcomes[].evidence` の値。項目名は evidence を表します。 | - |
+| `debugRuns[].steps[].degradationDecision.guardOutcomes[].observedAt` | `string:date-time` | yes | `response.debugRuns[].steps[].degradationDecision.guardOutcomes[].observedAt` の値。項目名は observed at を表します。 | - |
 | `debugRuns[].steps[].startedAt` | `string` | yes | 処理を開始した日時。 | - |
 | `debugRuns[].steps[].completedAt` | `string` | yes | 処理が完了した日時。 | - |
 

@@ -59,7 +59,7 @@
 | 実現可能性 | OK | answerability label 付き dataset で測定可能 |
 | 検証可能性 | OK | answerable/unanswerable confusion matrix |
 | ニーズ適合 | OK | 答えられる質問を拒否せず、不明を断定しない |
-| 実装適合 | partial | refusal はあるが false-refusal gate が不足 |
+| 実装適合 | OK（confirmed、閾値未承認） | versioned expected/actual answerability/response type から false-answer/false-refusal を導出し、answer/refusal/clarification/handoff の mandatory gate と direct tests を持つ |
 
 ## トレース
 

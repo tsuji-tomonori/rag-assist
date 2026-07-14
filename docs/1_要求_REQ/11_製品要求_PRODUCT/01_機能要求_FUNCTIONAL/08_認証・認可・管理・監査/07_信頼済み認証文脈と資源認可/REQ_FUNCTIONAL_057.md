@@ -67,7 +67,7 @@
 | 検証可能性 | OK | account×role×tenant×none/readOnly/full の否定 matrix で確認できる |
 | ニーズ適合 | OK | 正当な利用者だけが必要な操作を行える |
 | 原子性 | OK | 許可判定の結合規則を規定する |
-| 実装適合 | partial | route permission と active check はあるが tenant と全経路統一はない |
+| 実装適合 | OK（confirmed） | `resource-operation-authorization.ts` が account/feature/tenant/resource/guard の論理積を fail closed 評価し、行列 test が各層欠損と別 permission 代用を拒否する |
 | 合意 | pending | 403/404/一般拒否の API 別表現は別途決定する |
 
 ## トレース

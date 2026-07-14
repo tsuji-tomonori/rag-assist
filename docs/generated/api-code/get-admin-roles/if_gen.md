@@ -2,7 +2,7 @@
 
 # GET /admin/roles IF仕様
 
-- 実装 route: `apps/api/src/routes/admin-routes.ts:216 (GET /admin/roles)`
+- 実装 route: `apps/api/src/routes/admin-routes.ts:308 (GET /admin/roles)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 利用可能なロール一覧を取得する

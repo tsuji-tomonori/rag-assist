@@ -4,6 +4,7 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 import test from "node:test"
 import { loadRuntimeOpenApiDocument } from "../generate-openapi-docs.js"
+import { analyzeApiCode } from "./analyzer.js"
 import {
   apiSourceRoot,
   buildApiCodeAnalysis,
@@ -34,6 +35,46 @@ test("operation slugs are stable for parameters, root paths, and wildcards", () 
   assert.equal(operationSlug("POST", "/questions/{questionId}/answer"), "post-questions-questionid-answer")
   assert.equal(operationSlug("GET", "/"), "get-root")
   assert.equal(operationSlug("ALL", "/rpc/*"), "all-rpc-wildcard")
+})
+
+test("call graph keeps the shortest depth when a function is reached indirectly first", async () => {
+  const repoRoot = await mkdtemp(join(tmpdir(), "memorag-api-code-depth-"))
+  const sourceRoot = join(repoRoot, "src")
+  try {
+    await mkdir(sourceRoot, { recursive: true })
+    await writeFile(join(repoRoot, "tsconfig.json"), JSON.stringify({
+      compilerOptions: {
+        module: "NodeNext",
+        moduleResolution: "NodeNext",
+        strict: true,
+        target: "ES2022"
+      },
+      include: ["src/**/*.ts"]
+    }), "utf8")
+    await writeFile(join(sourceRoot, "app.ts"), `
+const app = { get(_path: string, _handler: () => unknown): void {} }
+function leaf(): string { return "leaf" }
+function shared(): string { return leaf() }
+function indirect(): string { return shared() }
+app.get("/depth", () => {
+  indirect()
+  return shared()
+})
+`, "utf8")
+
+    const analysis = analyzeApiCode({
+      api: { paths: { "/depth": { get: { summary: "Depth fixture" } } } },
+      repoRoot,
+      sourceRoot,
+      tsconfigPath: join(repoRoot, "tsconfig.json")
+    })
+    const operation = analysis.operations.find((item) => item.slug === "get-depth")
+    assert.ok(operation)
+    assert.equal(operation.functions.find((item) => item.name === "shared")?.depth, 1)
+    assert.equal(operation.functions.find((item) => item.name === "leaf")?.depth, 2)
+  } finally {
+    await rm(repoRoot, { force: true, recursive: true })
+  }
 })
 
 test("analysis IR links route, handler, calls, branches, messages, data boundaries, and tests", async () => {

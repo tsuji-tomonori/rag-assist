@@ -28,9 +28,9 @@
 
 ## 要件の源泉・背景
 
-- 源泉: `docs/spec-recovery/06_requirements.md` の `REQ-SRCH-002`
-- 源泉: `docs/spec-recovery/03_acceptance_criteria.md` の `AC-SRCH-002`
-- 源泉: `docs/spec-recovery/07_specifications.md` の `SPEC-SRCH-002`
+- 源泉: `docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md` の `REQ-SRCH-002`
+- 源泉: `docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md` の `AC-SRCH-002`
+- 源泉: `docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md` の `SPEC-SRCH-002`
 - 背景: 復元仕様では semantic chunking、hybrid retrieval、retrieval evaluator の結果を採用 gate で選別することが求められている。
 
 ## 要件の目的・意図

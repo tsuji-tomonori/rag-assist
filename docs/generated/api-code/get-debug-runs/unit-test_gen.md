@@ -8,22 +8,24 @@
 
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
-| 到達 symbol | service ingests text, lists manifests, persists debug traces, and deletes all document vectors | `apps/api/src/rag/memorag-service.test.ts:36 (service ingests text, lists manifests, persists debug traces, and deletes all document vectors)` |
-| 到達 symbol | service chat returns refusal and error debug trace when external dependencies fail | `apps/api/src/rag/memorag-service.test.ts:2008 (service chat returns refusal and error debug trace when external dependencies fail)` |
+| 到達 symbol | service ingests text, lists manifests, persists debug traces, and deletes all document vectors | `apps/api/src/rag/memorag-service.test.ts:47 (service ingests text, lists manifests, persists debug traces, and deletes all document vectors)` |
+| 到達 symbol | FR-090 chat trace precommit denial writes no debug artifact, observation, final event, or success | `apps/api/src/rag/memorag-service.test.ts:2289 (FR-090 chat trace precommit denial writes no debug artifact, observation, final event, or success)` |
+| 到達 symbol | FR-090 ordinary chat final-event denial compensates its always-persisted redacted trace and observations | `apps/api/src/rag/memorag-service.test.ts:2341 (FR-090 ordinary chat final-event denial compensates its always-persisted redacted trace and observations)` |
+| 到達 symbol | service chat returns refusal and error debug trace when external dependencies fail | `apps/api/src/rag/memorag-service.test.ts:2840 (service chat returns refusal and error debug trace when external dependencies fail)` |
 
 ## 2. 実装分岐から導くテスト要因
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:267 (requirePermission)` |
+| F001 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
 
 ## 3. コード由来テストケース
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | debug trace 一覧を取得する が成功 response を返す。 | `apps/api/src/routes/debug-routes.ts:43 (GET /debug-runs handler)` |
-| TC002 | F001: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:267 (requirePermission)` |
-| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:267 (requirePermission)` |
+| TC001 | 正常系 | debug trace 一覧を取得する が成功 response を返す。 | `apps/api/src/routes/debug-routes.ts:44 (GET /debug-runs handler)` |
+| TC002 | F001: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
 | TC004 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC005 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC006 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

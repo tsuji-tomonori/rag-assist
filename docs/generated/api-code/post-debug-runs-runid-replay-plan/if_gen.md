@@ -2,7 +2,7 @@
 
 # POST /debug-runs/{runId}/replay-plan IF仕様
 
-- 実装 route: `apps/api/src/routes/debug-routes.ts:72 (POST /debug-runs/{runId}/replay-plan)`
+- 実装 route: `apps/api/src/routes/debug-routes.ts:79 (POST /debug-runs/{runId}/replay-plan)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: debug replay plan を作成する
@@ -59,10 +59,10 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 19 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 21 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
-| `404` | 指定したリソースが見つかりません。 | `application/json` | 2 field(s) |
+| `404` | 指定したリソースが見つかりません。 | `application/json` | 3 field(s) |
 
 ##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
@@ -75,7 +75,9 @@ Media type: `application/json`
 | `sourceTraceVisibility` | `enum(user_safe \| support_sanitized \| operator_sanitized \| internal_restricted)` | yes | `response.sourceTraceVisibility` の値。項目名は source trace visibility を表します。 | enum=user_safe, support_sanitized, operator_sanitized, internal_restricted |
 | `createdAt` | `string` | yes | レコードを作成した日時。 | - |
 | `replayable` | `boolean` | yes | `response.replayable` の値。項目名は replayable を表します。 | - |
+| `versionComplete` | `boolean` | yes | `response.versionComplete` の値。項目名は version complete を表します。 | - |
 | `blockedReason` | `string` | no | `response.blockedReason` の値。項目名は blocked reason を表します。 | - |
+| `versionManifest` | `object` | no | `response.versionManifest` の値。項目名は version manifest を表します。 | - |
 | `inputSummary` | `object` | yes | `response.inputSummary` の値。項目名は input summary を表します。 | - |
 | `inputSummary.question` | `string` | yes | ユーザーまたは benchmark dataset から渡される質問文。 | - |
 | `inputSummary.modelId` | `string` | yes | 回答生成に利用する Bedrock model ID。 | - |
@@ -114,5 +116,6 @@ Media type: `application/json`
 
 | 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
-| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
-| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
+| `error` | `enum(Resource unavailable)` | yes | エラー内容を表すメッセージ。 | enum=Resource unavailable |
+| `code` | `enum(RESOURCE_UNAVAILABLE)` | yes | `response.code` の値。項目名は code を表します。 | enum=RESOURCE_UNAVAILABLE |
+| `responseProfileVersion` | `enum(resource-non-enumeration-v1)` | yes | `response.responseProfileVersion` の値。項目名は response profile version を表します。 | enum=resource-non-enumeration-v1 |

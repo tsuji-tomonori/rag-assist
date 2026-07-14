@@ -2,7 +2,7 @@
 
 # GET /chat-tools IF仕様
 
-- 実装 route: `apps/api/src/routes/chat-routes.ts:140 (GET /chat-tools)`
+- 実装 route: `apps/api/src/routes/chat-routes.ts:150 (GET /chat-tools)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: チャット tool registry を取得する

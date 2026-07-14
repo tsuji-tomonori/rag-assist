@@ -68,7 +68,7 @@ API slug は method と path から機械的に作る。例えば `POST /questio
 2. API package の `tsconfig.json` から TypeScript `Program` と `TypeChecker` を作る。
 3. `app.openapi(...)` と `app.get/post/.../all(...)` を探索し、route config、method、path、handler symbol を解決する。
 4. runtime OpenAPI の各 operation に対応する source route が一件だけ存在することを検査する。
-5. handler を起点に repository 内 symbol の到達 graph を cycle guard 付きで走査する。
+5. handler を起点に repository 内 symbol の到達 graph を cycle guard 付きで走査する。同じ symbol に複数経路がある場合は最短 depth を保持し、深い経路を先に見つけても handler 直下の主要実装・分岐を投影から落とさない。
 6. handler flow、function、call、branch、message、data access、related test を共通中間表現へ格納する。
 7. 中間表現を API ごとの 6 Markdown と index/manifest へ決定的に render する。
 8. 通常実行では生成 directory を置換する。`--check` では期待ファイルの欠落・内容差分・余剰 stale file をすべて列挙し、差分があれば失敗する。
@@ -112,6 +112,7 @@ npm run docs:api-code:check
 - 複雑な問い合わせ回答 API で contract、認可、service、store、message、sequence、既存 route test が対応する。
 - SSE API の複数 store access が query 文書へ対応する。
 - 同一中間表現の再 render が byte-for-byte で一致する。
+- 同じ関数へ間接経路が先に、直接経路が後に現れる場合も、関数と子孫の depth が最短経路へ更新される。
 - freshness check が missing、changed、stale file をそれぞれ検出する。
 - production route/app/service に生成専用 metadata が存在しない。
 

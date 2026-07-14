@@ -2,7 +2,7 @@
 
 # POST /admin/aliases/{aliasId}/update IF仕様
 
-- 実装 route: `apps/api/src/routes/admin-routes.ts:269 (POST /admin/aliases/{aliasId}/update)`
+- 実装 route: `apps/api/src/routes/admin-routes.ts:361 (POST /admin/aliases/{aliasId}/update)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 検索 alias draft を更新する

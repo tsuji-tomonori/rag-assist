@@ -63,7 +63,7 @@ export function registerFavoriteRoutes({ app, service }: ApiRouteContext) {
       const user = c.get("user")
       requirePermission(user, "chat:delete:own")
       const { targetType, targetId } = validParam<z.infer<typeof FavoriteTargetTypeParamSchema>>(c)
-      await service.deleteFavorite(user.userId, targetType, targetId)
+      await service.deleteFavorite(user, targetType, targetId)
       return c.json({ targetType, targetId }, 200)
     }
   )

@@ -2,7 +2,7 @@
 
 # ALL /rpc/* IF仕様
 
-- 実装 route: `apps/api/src/app.ts:50 (ALL /rpc/*)`
+- 実装 route: `apps/api/src/app.ts:52 (ALL /rpc/*)`
 - contract source: route 実装のみ（OpenAPI 未登録）
 
 Summary: ALL /rpc/* を処理する
@@ -29,4 +29,4 @@ OpenAPI schema 未登録のため、request body schema は確定できません
 
 | Status | Body/処理 | 根拠 |
 | --- | --- | --- |
-| `404` | `{ error: "oRPC procedure not found" }` | `apps/api/src/app.ts:61 (ALL /rpc/* handler)` |
+| `404` | `{ error: "oRPC procedure not found" }` | `apps/api/src/app.ts:63 (ALL /rpc/* handler)` |

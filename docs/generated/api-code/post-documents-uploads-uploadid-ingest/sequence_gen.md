@@ -17,74 +17,296 @@ sequenceDiagram
   Note over API: 分岐 objectSize が config.documentUploadMaxBytes より大きい
   Note over API: 分岐 contentBytes.length が 0 と等しい
   Note over API: 分岐 config.docsBucketName が存在し、真である
+  Note over API: 分岐 purpose が "document" と等しい
+  Note over API: 分岐 例外が発生した場合に catch 処理へ移る
+  Note over API: 分岐 manifest が存在し、真である
+  Note over API: 分岐 is permission revoked error の判定結果が真である
   API->>Auth: 認証済み利用者を request context から取得する。
   API->>Auth: schema 検証済みの path parameter を取得する。
   API->>Auth: schema 検証済みの JSON request body を取得する。
   API->>Auth: authorize scoped ingest により認証・認可条件を確認する。
   Service->>Store: this.deps.documentGroupStore に対して list を実行する。
+  Service->>Store: this.deps.userGroupStore に対して get を実行する。
+  Service->>Store: this.deps.groupMembershipStore に対して list by group id を実行する。
+  Service->>Store: this.deps.folderPolicyStore に対して find by folder id を実行する。
+  Service->>Store: this.deps.folderPolicyStore に対して get を実行する。
+  API->>Service: service の assert document groups writable 処理を呼び出す。
+  API->>Auth: create current document ingest authorization により認証・認可条件を確認する。
+  Service->>External: this.identityProvider へ get current identity by subject を実行する。
+  API->>Auth: authorize start により認証・認可条件を確認する。
   Service->>Store: deps.objectStore に対して get object size を実行する。
+  API->>Auth: authorize external side effect により認証・認可条件を確認する。
   Service->>Store: deps.objectStore に対して delete object を実行する。
   API-->>Client: HTTP 400 で JSON response を返す。
+  API->>Auth: authorize protected read により認証・認可条件を確認する。
   Service->>Store: deps.objectStore に対して get bytes を実行する。
   API-->>Client: HTTP 400 で JSON response を返す。
   API->>Service: service の ingest 処理を呼び出す。
   API->>Service: service の create memory cards 処理を呼び出す。
   Service->>External: this.deps.textModel へ generate を実行する。
-  Service->>Store: deps.objectStore に対して put text を実行する。
-  Service->>Store: deps.objectStore に対して put text を実行する。
-  Service->>Store: deps.objectStore に対して put text を実行する。
+  Service->>Store: input.objectStore に対して get text を実行する。
+  Service->>Store: (() =＞ {         const structuredText = input.text ?? input.structuredBlocks.map((block) =＞ block.text).join("\n\n")         return limitDocument({           text： structuredText,…
   Service->>Store: deps.objectStore に対して get text を実行する。
   Service->>External: deps.textModel へ embed を実行する。
+  Service->>Store: deps.objectStore に対して put text を実行する。
+  Service->>Store: deps.objectStore に対して put text を実行する。
+  Service->>Store: deps.objectStore に対して put text を実行する。
   Service->>Store: deps.objectStore に対して put text を実行する。
   Service->>Store: deps.evidenceVectorStore に対して put を実行する。
   Service->>Store: deps.memoryVectorStore に対して put を実行する。
   Service->>Store: deps.objectStore に対して put text を実行する。
+  Service->>Store: deps.evidenceVectorStore に対して delete を実行する。
+  Service->>Store: deps.memoryVectorStore に対して delete を実行する。
+  Service->>Store: deps.objectStore に対して delete object を実行する。
+  Service->>Store: new ObjectStoreRevocationCleanupCoordinator(deps.objectStore) に対して register を実行する。
+  Service->>Store: new ObjectStoreRevocationCleanupTenantRegistry(this.objectStore, this.now) に対して register を実行する。
+  Service->>Store: this.objectStore に対して get text を実行する。
+  Service->>Store: this.objectStore に対して put text if version を実行する。
+  Service->>Store: objectStore に対して get text with version を実行する。
+  Service->>Store: this.objectStore に対して put text if version を実行する。
+  Service->>Store: new ProductionRagObservationProducer(deps.objectStore) に対して capture ingest manifest を実行する。
+  Service->>Store: this.objectStore に対して get text を実行する。
+  Service->>Store: this.objectStore に対して put text を実行する。
+  API->>Auth: authorize durable commit により認証・認可条件を確認する。
+  API->>Service: service の register source governance 処理を呼び出す。
+  API->>Service: service の source governance approval service 処理を呼び出す。
+  Service->>Store: deps.objectStore に対して get text with version を実行する。
+  Service->>Store: this.deps.objectStore に対して put text if version を実行する。
+  Service->>Store: this.deps.objectStore に対して put text if version を実行する。
+  Service->>Store: this.deps.objectStore に対して put text if version を実行する。
+  Service->>Store: this.deps.objectStore に対して put text if version を実行する。
+  Service->>Store: deps.objectStore に対して get text を実行する。
+  Service->>Store: this.deps.objectStore に対して get text を実行する。
+  Service->>Store: deps.objectStore に対して get text を実行する。
+  Service->>Store: this.deps.objectStore に対して get text を実行する。
+  Service->>Store: this.deps.objectStore に対して get text を実行する。
+  Service->>Store: this.deps.evidenceVectorStore に対して get by keys を実行する。
+  Service->>Store: this.deps.memoryVectorStore に対して get by keys を実行する。
+  Service->>Store: this.deps.objectStore に対して put text if version を実行する。
+  Service->>Store: this.deps.objectStore に対して get text を実行する。
+  Service->>Store: this.deps.objectStore に対して get text を実行する。
+  Service->>Store: this.deps.objectStore に対して get text を実行する。
+  Service->>Store: this.deps.objectStore に対して put text if version を実行する。
+  Service->>Store: this.deps.evidenceVectorStore に対して put を実行する。
+  Service->>Store: this.deps.memoryVectorStore に対して put を実行する。
+  Service->>Store: this.deps.objectStore に対して put text を実行する。
+  Service->>Store: this.loadManifest(stored.value.stagedArtifact.manifestObjectKey) に対して catch を実行する。
+  Service->>Store: this.deps.evidenceVectorStore に対して delete を実行する。
+  Service->>Store: this.deps.memoryVectorStore に対して delete を実行する。
+  Service->>Store: this.deps.objectStore に対して delete object を実行する。
+  Service->>Store: this.deps.objectStore に対して put text if version を実行する。
+  Service->>Store: this.deps.evidenceVectorStore に対して delete を実行する。
+  Service->>Store: this.deps.memoryVectorStore に対して delete を実行する。
+  Service->>Store: this.deps.objectStore に対して delete object を実行する。
+  Service->>Store: this.deps.objectStore に対して list keys を実行する。
+  Service->>Store: this.deps.objectStore に対して delete object を実行する。
+  Service->>Store: (await this.deps.objectStore.listKeys(${prepared.namespace}/)) に対して map を実行する。
+  Service->>Store: this.deps.objectStore に対して put text if version を実行する。
+  Service->>Store: this.deps.objectStore に対して list keys を実行する。
+  Service->>Store: this.deps.objectStore.listKeys(${prepared.namespace}/) に対して catch を実行する。
+  Service->>Store: this.deps.evidenceVectorStore に対して delete を実行する。
+  Service->>Store: this.deps.memoryVectorStore に対して delete を実行する。
+  Service->>Store: this.deps.objectStore に対して delete object を実行する。
+  Service->>Store: this.deps.objectStore に対して delete object を実行する。
+  Service->>Store: this.deps.objectStore に対して put text if version を実行する。
+  Service->>Store: this.deps.objectStore に対して get text を実行する。
+  Service->>Store: this.deps.objectStore に対して put text を実行する。
+  Service->>Store: this.deps.objectStore に対して get text を実行する。
+  Service->>Store: this.deps.evidenceVectorStore に対して put を実行する。
+  Service->>Store: this.deps.memoryVectorStore に対して put を実行する。
+  Service->>Store: this.deps.objectStore に対して put text を実行する。
+  Service->>Store: this.deps.objectStore に対して put text if version を実行する。
+  Service->>Store: this.deps.evidenceVectorStore に対して delete を実行する。
+  Service->>Store: this.deps.memoryVectorStore に対して delete を実行する。
+  Service->>Store: this.deps.objectStore に対して delete object を実行する。
+  API->>Service: service の ensure initial record 処理を呼び出す。
+  Service->>Store: objectStore に対して get text with version を実行する。
+  Service->>Store: this.deps.objectStore に対して put text if version を実行する。
+  API->>Auth: authorize external side effect により認証・認可条件を確認する。
   Service->>Store: deps.objectStore に対して delete object を実行する。
   API-->>Client: HTTP 200 で JSON response を返す。
+  API->>Service: service の discard uncommitted ingest 処理を呼び出す。
+  Service->>Store: deps.evidenceVectorStore に対して delete を実行する。
+  Service->>Store: deps.memoryVectorStore に対して delete を実行する。
+  Service->>Store: deps.objectStore に対して delete object を実行する。
+  Service->>Store: deps.objectStore に対して delete object を実行する。
+  Service->>Store: deps.objectStore に対して delete object を実行する。
+  Service->>Store: deps.objectStore に対して delete object を実行する。
+  Service->>Store: objectStore に対して delete object を実行する。
+  API->>Auth: is permission revoked error により認証・認可条件を確認する。
 ```
 
 ## 処理順とコード対応
 
 | # | Caller | 境界 | 処理 | コード | 実装位置 |
 | ---: | --- | --- | --- | --- | --- |
-| 1 | `POST /documents/uploads/{uploadId}/ingest handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/document-routes.ts:547 (POST /documents/uploads/{uploadId}/ingest handler)` |
-| 2 | `POST /documents/uploads/{uploadId}/ingest handler` | Validation | schema 検証済みの path parameter を取得する。 | `validParam<{ uploadId: string }>(c)` | `apps/api/src/routes/document-routes.ts:548 (POST /documents/uploads/{uploadId}/ingest handler)` |
-| 3 | `POST /documents/uploads/{uploadId}/ingest handler` | Validation | schema 検証済みの JSON request body を取得する。 | `validJson<z.infer<typeof IngestUploadedDocumentRequestSchema>>(c)` | `apps/api/src/routes/document-routes.ts:549 (POST /documents/uploads/{uploadId}/ingest handler)` |
-| 4 | `POST /documents/uploads/{uploadId}/ingest handler` | Auth | authorize scoped ingest により認証・認可条件を確認する。 | `authorizeScopedIngest(service, user, purpose, body)` | `apps/api/src/routes/document-routes.ts:552 (POST /documents/uploads/{uploadId}/ingest handler)` |
-| 5 | `MemoRagService.assertDocumentGroupsWritable` | Store | `this.deps.documentGroupStore` に対して list を実行する。 | `this.deps.documentGroupStore.list()` | `apps/api/src/rag/memorag-service.ts:555 (MemoRagService.assertDocumentGroupsWritable)` |
-| 6 | `POST /documents/uploads/{uploadId}/ingest handler` | Store | `deps.objectStore` に対して get object size を実行する。 | `deps.objectStore.getObjectSize(objectKey)` | `apps/api/src/routes/document-routes.ts:553 (POST /documents/uploads/{uploadId}/ingest handler)` |
-| 7 | `POST /documents/uploads/{uploadId}/ingest handler` | Store | `deps.objectStore` に対して delete object を実行する。 | `deps.objectStore.deleteObject(objectKey)` | `apps/api/src/routes/document-routes.ts:555 (POST /documents/uploads/{uploadId}/ingest handler)` |
-| 8 | `POST /documents/uploads/{uploadId}/ingest handler` | HTTP/SSE | HTTP 400 で JSON response を返す。 | `c.json({ error: \`Uploaded object exceeds ${config.documentUploadMaxBytes} bytes\` }, 400)` | `apps/api/src/routes/document-routes.ts:556 (POST /documents/uploads/{uploadId}/ingest handler)` |
-| 9 | `POST /documents/uploads/{uploadId}/ingest handler` | Store | `deps.objectStore` に対して get bytes を実行する。 | `deps.objectStore.getBytes(objectKey)` | `apps/api/src/routes/document-routes.ts:558 (POST /documents/uploads/{uploadId}/ingest handler)` |
-| 10 | `POST /documents/uploads/{uploadId}/ingest handler` | HTTP/SSE | HTTP 400 で JSON response を返す。 | `c.json({ error: "Uploaded object is empty" }, 400)` | `apps/api/src/routes/document-routes.ts:559 (POST /documents/uploads/{uploadId}/ingest handler)` |
-| 11 | `POST /documents/uploads/{uploadId}/ingest handler` | Service | service の ingest 処理を呼び出す。 | `service.ingest({ ...body, metadata, contentBytes, sourceS3Object })` | `apps/api/src/routes/document-routes.ts:565 (POST /documents/uploads/{uploadId}/ingest handler)` |
-| 12 | `MemoRagService.ingest` | Service | service の create memory cards 処理を呼び出す。 | `this.createMemoryCards(memoryInput)` | `apps/api/src/rag/memorag-service.ts:239 (MemoRagService.ingest)` |
-| 13 | `MemoRagService.createMemoryCards` | External | `this.deps.textModel` へ generate を実行する。 | `this.deps.textModel.generate( buildMemoryCardPrompt(input.fileName, input.text), llmOptions("memoryCard", input.modelId ?? config.defaultMemoryModelId) )` | `apps/api/src/rag/memorag-service.ts:2467 (MemoRagService.createMemoryCards)` |
-| 14 | `runIngestPipeline` | Store | `deps.objectStore` に対して put text を実行する。 | `deps.objectStore.putText(sourceObjectKey, text, "text/plain; charset=utf-8")` | `apps/api/src/rag/offline/pre-retrieval/ingestion/ingest-run.service.ts:80 (runIngestPipeline)` |
-| 15 | `runIngestPipeline` | Store | `deps.objectStore` に対して put text を実行する。 | `deps.objectStore.putText( structuredBlocksObjectKey, JSON.stringify({ schemaVersion: 2, blocks: extracted.blocks, parsedDocument: extracted.parsedDocument }, null, 2), "application/json" )` | `apps/api/src/rag/offline/pre-retrieval/ingestion/ingest-run.service.ts:82 (runIngestPipeline)` |
-| 16 | `runIngestPipeline` | Store | `deps.objectStore` に対して put text を実行する。 | `deps.objectStore.putText(memoryCardsObjectKey, JSON.stringify({ schemaVersion: 1, memoryCards }, null, 2), "application/json")` | `apps/api/src/rag/offline/pre-retrieval/ingestion/ingest-run.service.ts:100 (runIngestPipeline)` |
-| 17 | `embedWithCache` | Store | `deps.objectStore` に対して get text を実行する。 | `deps.objectStore.getText(key)` | `apps/api/src/rag/offline/pre-retrieval/embedding/embedding-cache.ts:20 (embedWithCache)` |
-| 18 | `embedWithCache` | External | `deps.textModel` へ embed を実行する。 | `deps.textModel.embed(input.text, { modelId: input.modelId, dimensions: input.dimensions })` | `apps/api/src/rag/offline/pre-retrieval/embedding/embedding-cache.ts:28 (embedWithCache)` |
-| 19 | `embedWithCache` | Store | `deps.objectStore` に対して put text を実行する。 | `deps.objectStore.putText(key, JSON.stringify(record), "application/json")` | `apps/api/src/rag/offline/pre-retrieval/embedding/embedding-cache.ts:37 (embedWithCache)` |
-| 20 | `runIngestPipeline` | Store | `deps.evidenceVectorStore` に対して put を実行する。 | `deps.evidenceVectorStore.put(evidenceRecords)` | `apps/api/src/rag/offline/pre-retrieval/ingestion/ingest-run.service.ts:189 (runIngestPipeline)` |
-| 21 | `runIngestPipeline` | Store | `deps.memoryVectorStore` に対して put を実行する。 | `deps.memoryVectorStore.put(memoryRecords)` | `apps/api/src/rag/offline/pre-retrieval/ingestion/ingest-run.service.ts:190 (runIngestPipeline)` |
-| 22 | `runIngestPipeline` | Store | `deps.objectStore` に対して put text を実行する。 | `deps.objectStore.putText(manifestObjectKey, JSON.stringify(manifest, null, 2), "application/json")` | `apps/api/src/rag/offline/pre-retrieval/ingestion/ingest-run.service.ts:228 (runIngestPipeline)` |
-| 23 | `POST /documents/uploads/{uploadId}/ingest handler` | Store | `deps.objectStore` に対して delete object を実行する。 | `deps.objectStore.deleteObject(objectKey)` | `apps/api/src/routes/document-routes.ts:566 (POST /documents/uploads/{uploadId}/ingest handler)` |
-| 24 | `POST /documents/uploads/{uploadId}/ingest handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json(documentManifestSummary(manifest), 200)` | `apps/api/src/routes/document-routes.ts:567 (POST /documents/uploads/{uploadId}/ingest handler)` |
+| 1 | `POST /documents/uploads/{uploadId}/ingest handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/document-routes.ts:1108 (POST /documents/uploads/{uploadId}/ingest handler)` |
+| 2 | `POST /documents/uploads/{uploadId}/ingest handler` | Validation | schema 検証済みの path parameter を取得する。 | `validParam<{ uploadId: string }>(c)` | `apps/api/src/routes/document-routes.ts:1109 (POST /documents/uploads/{uploadId}/ingest handler)` |
+| 3 | `POST /documents/uploads/{uploadId}/ingest handler` | Validation | schema 検証済みの JSON request body を取得する。 | `validJson<z.infer<typeof IngestUploadedDocumentRequestSchema>>(c)` | `apps/api/src/routes/document-routes.ts:1110 (POST /documents/uploads/{uploadId}/ingest handler)` |
+| 4 | `POST /documents/uploads/{uploadId}/ingest handler` | Auth | authorize scoped ingest により認証・認可条件を確認する。 | `authorizeScopedIngest(service, user, purpose, body)` | `apps/api/src/routes/document-routes.ts:1113 (POST /documents/uploads/{uploadId}/ingest handler)` |
+| 5 | `FolderPermissionService.resolveEffectiveFolderPermissionDetail` | Store | `this.deps.documentGroupStore` に対して list を実行する。 | `this.deps.documentGroupStore.list(actorTenantId)` | `apps/api/src/folders/folder-permission-service.ts:145 (FolderPermissionService.resolveEffectiveFolderPermissionDetail)` |
+| 6 | `FolderPermissionService.resolveUserMembershipPermission` | Store | `this.deps.userGroupStore` に対して get を実行する。 | `this.deps.userGroupStore.get(tenantId, groupId)` | `apps/api/src/folders/folder-permission-service.ts:780 (FolderPermissionService.resolveUserMembershipPermission)` |
+| 7 | `FolderPermissionService.resolveUserMembershipPermission` | Store | `this.deps.groupMembershipStore` に対して list by group id を実行する。 | `this.deps.groupMembershipStore.listByGroupId(tenantId, groupId)` | `apps/api/src/folders/folder-permission-service.ts:781 (FolderPermissionService.resolveUserMembershipPermission)` |
+| 8 | `FolderPermissionService.resolvePolicyContext` | Store | `this.deps.folderPolicyStore` に対して find by folder id を実行する。 | `this.deps.folderPolicyStore.findByFolderId(folder.tenantId, current.groupId)` | `apps/api/src/folders/folder-permission-service.ts:695 (FolderPermissionService.resolvePolicyContext)` |
+| 9 | `FolderPermissionService.resolvePolicyContext` | Store | `this.deps.folderPolicyStore` に対して get を実行する。 | `this.deps.folderPolicyStore.get(folder.tenantId, current.policyId)` | `apps/api/src/folders/folder-permission-service.ts:711 (FolderPermissionService.resolvePolicyContext)` |
+| 10 | `enforceDocumentCreateOperation` | Service | service の assert document groups writable 処理を呼び出す。 | `service.assertDocumentGroupsWritable(actor, groupIds)` | `apps/api/src/routes/document-routes.ts:482 (enforceDocumentCreateOperation)` |
+| 11 | `POST /documents/uploads/{uploadId}/ingest handler` | Auth | create current document ingest authorization により認証・認可条件を確認する。 | `service.createCurrentDocumentIngestAuthorization({ actor: user, admissionContext, purpose, operationId: \`sync-upload-ingest:${randomUUID()}\` })` | `apps/api/src/routes/document-routes.ts:1117 (POST /documents/uploads/{uploadId}/ingest handler)` |
+| 12 | `CurrentWorkerAuthorization.assertAuthorized` | External | `this.identityProvider` へ get current identity by subject を実行する。 | `this.identityProvider.getCurrentIdentityBySubject(request.subject)` | `apps/api/src/security/current-worker-authorization.ts:51 (CurrentWorkerAuthorization.assertAuthorized)` |
+| 13 | `POST /documents/uploads/{uploadId}/ingest handler` | Auth | authorize start により認証・認可条件を確認する。 | `currentAuthorization.authorizeStart()` | `apps/api/src/routes/document-routes.ts:1123 (POST /documents/uploads/{uploadId}/ingest handler)` |
+| 14 | `POST /documents/uploads/{uploadId}/ingest handler` | Store | `deps.objectStore` に対して get object size を実行する。 | `deps.objectStore.getObjectSize(objectKey)` | `apps/api/src/routes/document-routes.ts:1124 (POST /documents/uploads/{uploadId}/ingest handler)` |
+| 15 | `POST /documents/uploads/{uploadId}/ingest handler` | Auth | authorize external side effect により認証・認可条件を確認する。 | `currentAuthorization.currentAuthorization.authorizeExternalSideEffect()` | `apps/api/src/routes/document-routes.ts:1126 (POST /documents/uploads/{uploadId}/ingest handler)` |
+| 16 | `POST /documents/uploads/{uploadId}/ingest handler` | Store | `deps.objectStore` に対して delete object を実行する。 | `deps.objectStore.deleteObject(objectKey)` | `apps/api/src/routes/document-routes.ts:1127 (POST /documents/uploads/{uploadId}/ingest handler)` |
+| 17 | `POST /documents/uploads/{uploadId}/ingest handler` | HTTP/SSE | HTTP 400 で JSON response を返す。 | `c.json({ error: \`Uploaded object exceeds ${config.documentUploadMaxBytes} bytes\` }, 400)` | `apps/api/src/routes/document-routes.ts:1128 (POST /documents/uploads/{uploadId}/ingest handler)` |
+| 18 | `POST /documents/uploads/{uploadId}/ingest handler` | Auth | authorize protected read により認証・認可条件を確認する。 | `currentAuthorization.authorizeProtectedRead()` | `apps/api/src/routes/document-routes.ts:1130 (POST /documents/uploads/{uploadId}/ingest handler)` |
+| 19 | `POST /documents/uploads/{uploadId}/ingest handler` | Store | `deps.objectStore` に対して get bytes を実行する。 | `deps.objectStore.getBytes(objectKey)` | `apps/api/src/routes/document-routes.ts:1131 (POST /documents/uploads/{uploadId}/ingest handler)` |
+| 20 | `POST /documents/uploads/{uploadId}/ingest handler` | HTTP/SSE | HTTP 400 で JSON response を返す。 | `c.json({ error: "Uploaded object is empty" }, 400)` | `apps/api/src/routes/document-routes.ts:1132 (POST /documents/uploads/{uploadId}/ingest handler)` |
+| 21 | `POST /documents/uploads/{uploadId}/ingest handler` | Service | service の ingest 処理を呼び出す。 | `service.ingest({ ...body, metadata, contentBytes, sourceS3Object, admissionContext, currentAuthorization: currentAuthorization.currentAuthorization })` | `apps/api/src/routes/document-routes.ts:1139 (POST /documents/uploads/{uploadId}/ingest handler)` |
+| 22 | `MemoRagService.ingest` | Service | service の create memory cards 処理を呼び出す。 | `this.createMemoryCards(memoryInput)` | `apps/api/src/rag/memorag-service.ts:330 (MemoRagService.ingest)` |
+| 23 | `MemoRagService.createMemoryCards` | External | `this.deps.textModel` へ generate を実行する。 | `this.deps.textModel.generate( buildMemoryCardPrompt(input.fileName, input.text), llmOptions("memoryCard", input.modelId ?? config.defaultMemoryModelId) )` | `apps/api/src/rag/memorag-service.ts:4470 (MemoRagService.createMemoryCards)` |
+| 24 | `assertRagSafetyInterlock` | Store | `input.objectStore` に対して get text を実行する。 | `input.objectStore.getText(RAG_SAFETY_STATE_KEY)` | `apps/api/src/rag/quality-control/production-rag-monitor.ts:311 (assertRagSafetyInterlock)` |
+| 25 | `runIngestPipeline` | Store | `(() => {<br>        const structuredText = input.text ?? input.structuredBlocks.map((block) => block.text).join("\n\n")<br>        return limitDocument({<br>          text: structuredText,<br>          blocks: input.structuredBlocks,<br>          sourceExtractorVersion: input` に対して source extractor version ?? "structured blocks ledger v1"<br>        })<br>      }) を実行する。 | `(() => { const structuredText = input.text ?? input.structuredBlocks.map((block) => block.text).join("\n\n") return limitDocument({ text: structuredText, blocks: input.structuredBlocks, sourceExtractorVersion: input.sou…` | `apps/api/src/rag/offline/pre-retrieval/ingestion/ingest-run.service.ts:93 (runIngestPipeline)` |
+| 26 | `embedWithCache` | Store | `deps.objectStore` に対して get text を実行する。 | `deps.objectStore.getText(key)` | `apps/api/src/rag/offline/pre-retrieval/embedding/embedding-cache.ts:21 (embedWithCache)` |
+| 27 | `embedWithCache` | External | `deps.textModel` へ embed を実行する。 | `deps.textModel.embed(input.text, { modelId: input.modelId, dimensions: input.dimensions })` | `apps/api/src/rag/offline/pre-retrieval/embedding/embedding-cache.ts:29 (embedWithCache)` |
+| 28 | `embedWithCache` | Store | `deps.objectStore` に対して put text を実行する。 | `deps.objectStore.putText(key, JSON.stringify(record), "application/json")` | `apps/api/src/rag/offline/pre-retrieval/embedding/embedding-cache.ts:38 (embedWithCache)` |
+| 29 | `runIngestPipeline` | Store | `deps.objectStore` に対して put text を実行する。 | `deps.objectStore.putText(sourceObjectKey, text, "text/plain; charset=utf-8")` | `apps/api/src/rag/offline/pre-retrieval/ingestion/ingest-run.service.ts:475 (runIngestPipeline)` |
+| 30 | `runIngestPipeline` | Store | `deps.objectStore` に対して put text を実行する。 | `deps.objectStore.putText(structuredBlocksObjectKey, structuredBlocksLedger, "application/json")` | `apps/api/src/rag/offline/pre-retrieval/ingestion/ingest-run.service.ts:478 (runIngestPipeline)` |
+| 31 | `runIngestPipeline` | Store | `deps.objectStore` に対して put text を実行する。 | `deps.objectStore.putText(memoryCardsObjectKey, memoryCardsLedger, "application/json")` | `apps/api/src/rag/offline/pre-retrieval/ingestion/ingest-run.service.ts:482 (runIngestPipeline)` |
+| 32 | `runIngestPipeline` | Store | `deps.evidenceVectorStore` に対して put を実行する。 | `deps.evidenceVectorStore.put(evidenceRecords)` | `apps/api/src/rag/offline/pre-retrieval/ingestion/ingest-run.service.ts:487 (runIngestPipeline)` |
+| 33 | `runIngestPipeline` | Store | `deps.memoryVectorStore` に対して put を実行する。 | `deps.memoryVectorStore.put(memoryRecords)` | `apps/api/src/rag/offline/pre-retrieval/ingestion/ingest-run.service.ts:488 (runIngestPipeline)` |
+| 34 | `runIngestPipeline` | Store | `deps.objectStore` に対して put text を実行する。 | `deps.objectStore.putText(manifestObjectKey, JSON.stringify(manifest, null, 2), "application/json")` | `apps/api/src/rag/offline/pre-retrieval/ingestion/ingest-run.service.ts:491 (runIngestPipeline)` |
+| 35 | `runIngestPipeline` | Store | `deps.evidenceVectorStore` に対して delete を実行する。 | `deps.evidenceVectorStore.delete(evidenceRecords.map((record) => record.key))` | `apps/api/src/rag/offline/pre-retrieval/ingestion/ingest-run.service.ts:498 (runIngestPipeline)` |
+| 36 | `runIngestPipeline` | Store | `deps.memoryVectorStore` に対して delete を実行する。 | `deps.memoryVectorStore.delete(memoryRecords.map((record) => record.key))` | `apps/api/src/rag/offline/pre-retrieval/ingestion/ingest-run.service.ts:499 (runIngestPipeline)` |
+| 37 | `runIngestPipeline` | Store | `deps.objectStore` に対して delete object を実行する。 | `deps.objectStore.deleteObject(key)` | `apps/api/src/rag/offline/pre-retrieval/ingestion/ingest-run.service.ts:500 (runIngestPipeline)` |
+| 38 | `registerUncommittedIngestCleanupReconciliation` | Store | `new ObjectStoreRevocationCleanupCoordinator(deps.objectStore)` に対して register を実行する。 | `new ObjectStoreRevocationCleanupCoordinator(deps.objectStore).register({ operationId: \`ingest-compensation:${manifest.documentId}:${manifest.documentVersion ?? manifest.createdAt}\`, tenantId, resourceType: manifest.meta…` | `apps/api/src/rag/offline/pre-retrieval/ingestion/ingest-run.service.ts:549 (registerUncommittedIngestCleanupReconciliation)` |
+| 39 | `ObjectStoreRevocationCleanupCoordinator.register` | Store | `new ObjectStoreRevocationCleanupTenantRegistry(this.objectStore, this.now)` に対して register を実行する。 | `new ObjectStoreRevocationCleanupTenantRegistry(this.objectStore, this.now).register(normalized.tenantId)` | `apps/api/src/rag/_shared/security/revocation-cleanup-coordinator.ts:137 (ObjectStoreRevocationCleanupCoordinator.register)` |
+| 40 | `ObjectStoreRevocationCleanupTenantRegistry.read` | Store | `this.objectStore` に対して get text を実行する。 | `this.objectStore.getText(key)` | `apps/api/src/rag/_shared/security/revocation-cleanup-tenant-registry.ts:116 (ObjectStoreRevocationCleanupTenantRegistry.read)` |
+| 41 | `ObjectStoreRevocationCleanupTenantRegistry.register` | Store | `this.objectStore` に対して put text if version を実行する。 | `this.objectStore.putTextIfVersion(key, JSON.stringify(record, null, 2), undefined, "application/json")` | `apps/api/src/rag/_shared/security/revocation-cleanup-tenant-registry.ts:41 (ObjectStoreRevocationCleanupTenantRegistry.register)` |
+| 42 | `readManifest` | Store | `objectStore` に対して get text with version を実行する。 | `objectStore.getTextWithVersion(key)` | `apps/api/src/rag/_shared/security/revocation-cleanup-coordinator.ts:636 (readManifest)` |
+| 43 | `ObjectStoreRevocationCleanupCoordinator.register` | Store | `this.objectStore` に対して put text if version を実行する。 | `this.objectStore.putTextIfVersion(key, JSON.stringify(manifest, null, 2), undefined, "application/json")` | `apps/api/src/rag/_shared/security/revocation-cleanup-coordinator.ts:169 (ObjectStoreRevocationCleanupCoordinator.register)` |
+| 44 | `runIngestPipeline` | Store | `new ProductionRagObservationProducer(deps.objectStore)` に対して capture ingest manifest を実行する。 | `new ProductionRagObservationProducer(deps.objectStore).captureIngestManifest({ manifest, latencyMs: Math.max(0, Date.now() - pipelineStartedMs) })` | `apps/api/src/rag/offline/pre-retrieval/ingestion/ingest-run.service.ts:504 (runIngestPipeline)` |
+| 45 | `ProductionRagObservationProducer.loadActivePolicy` | Store | `this.objectStore` に対して get text を実行する。 | `this.objectStore.getText(ACTIVE_RAG_QUALITY_POLICY_KEY)` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:783 (ProductionRagObservationProducer.loadActivePolicy)` |
+| 46 | `ProductionRagObservationProducer.persistSample` | Store | `this.objectStore` に対して put text を実行する。 | `this.objectStore.putText(key, \`${JSON.stringify(sample, null, 2)}\n\`, "application/json; charset=utf-8")` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:762 (ProductionRagObservationProducer.persistSample)` |
+| 47 | `POST /documents/uploads/{uploadId}/ingest handler` | Auth | authorize durable commit により認証・認可条件を確認する。 | `currentAuthorization.currentAuthorization.authorizeDurableCommit()` | `apps/api/src/routes/document-routes.ts:1147 (POST /documents/uploads/{uploadId}/ingest handler)` |
+| 48 | `POST /documents/uploads/{uploadId}/ingest handler` | Service | service の register source governance 処理を呼び出す。 | `service.registerSourceGovernance(manifest)` | `apps/api/src/routes/document-routes.ts:1148 (POST /documents/uploads/{uploadId}/ingest handler)` |
+| 49 | `MemoRagService.registerSourceGovernance` | Service | service の source governance approval service 処理を呼び出す。 | `this.sourceGovernanceApprovalService()` | `apps/api/src/rag/memorag-service.ts:379 (MemoRagService.registerSourceGovernance)` |
+| 50 | `readVersionedJson` | Store | `deps.objectStore` に対して get text with version を実行する。 | `deps.objectStore.getTextWithVersion(key)` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1796 (readVersionedJson)` |
+| 51 | `StagedPublicationCoordinator.ensureBootstrapPointer` | Store | `this.deps.objectStore` に対して put text if version を実行する。 | `this.deps.objectStore.putTextIfVersion(key, JSON.stringify(bootstrap, null, 2), undefined, "application/json")` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:930 (StagedPublicationCoordinator.ensureBootstrapPointer)` |
+| 52 | `StagedPublicationCoordinator.annotateManifestWithPublicationControl` | Store | `this.deps.objectStore` に対して put text if version を実行する。 | `this.deps.objectStore.putTextIfVersion(manifest.manifestObjectKey, JSON.stringify(next, null, 2), stored.version, "application/json")` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:964 (StagedPublicationCoordinator.annotateManifestWithPublicationControl)` |
+| 53 | `StagedPublicationCoordinator.begin` | Store | `this.deps.objectStore` に対して put text if version を実行する。 | `this.deps.objectStore.putTextIfVersion(runKey, JSON.stringify(initial, null, 2), undefined, "application/json")` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:222 (StagedPublicationCoordinator.begin)` |
+| 54 | `StagedPublicationCoordinator.acquireLease` | Store | `this.deps.objectStore` に対して put text if version を実行する。 | `this.deps.objectStore.putTextIfVersion(runKey, JSON.stringify(next, null, 2), stored.version, "application/json")` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:617 (StagedPublicationCoordinator.acquireLease)` |
+| 55 | `readTenantManifestByKey` | Store | `deps.objectStore` に対して get text を実行する。 | `deps.objectStore.getText(key)` | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:93 (readTenantManifestByKey)` |
+| 56 | `MemoRagService.stageApprovedSourceGovernancePublication` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(input.source.sourceObjectKey)` | `apps/api/src/rag/memorag-service.ts:3198 (MemoRagService.stageApprovedSourceGovernancePublication)` |
+| 57 | `loadStructuredBlocksForManifest` | Store | `deps.objectStore` に対して get text を実行する。 | `deps.objectStore.getText(manifest.structuredBlocksObjectKey)` | `apps/api/src/rag/_shared/storage/manifest-chunks.ts:35 (loadStructuredBlocksForManifest)` |
+| 58 | `StagedPublicationCoordinator.loadManifest` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(key)` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1490 (StagedPublicationCoordinator.loadManifest)` |
+| 59 | `StagedPublicationCoordinator.validateStagedManifest` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(key)` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:733 (StagedPublicationCoordinator.validateStagedManifest)` |
+| 60 | `StagedPublicationCoordinator.loadVectorRecords` | Store | `this.deps.evidenceVectorStore` に対して get by keys を実行する。 | `this.deps.evidenceVectorStore.getByKeys(evidenceKeys)` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1475 (StagedPublicationCoordinator.loadVectorRecords)` |
+| 61 | `StagedPublicationCoordinator.loadVectorRecords` | Store | `this.deps.memoryVectorStore` に対して get by keys を実行する。 | `this.deps.memoryVectorStore.getByKeys(memoryKeys)` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1476 (StagedPublicationCoordinator.loadVectorRecords)` |
+| 62 | `StagedPublicationCoordinator.updateWithFence` | Store | `this.deps.objectStore` に対して put text if version を実行する。 | `this.deps.objectStore.putTextIfVersion(runKey, JSON.stringify(next, null, 2), stored.version, "application/json")` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:690 (StagedPublicationCoordinator.updateWithFence)` |
+| 63 | `StagedPublicationCoordinator.validatePreparedRollbackArtifact` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(prepared.sourceObjectKey)` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1322 (StagedPublicationCoordinator.validatePreparedRollbackArtifact)` |
+| 64 | `StagedPublicationCoordinator.validatePreparedRollbackArtifact` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(prepared.structuredBlocksObjectKey)` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1323 (StagedPublicationCoordinator.validatePreparedRollbackArtifact)` |
+| 65 | `StagedPublicationCoordinator.validatePreparedRollbackArtifact` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(prepared.memoryCardsObjectKey)` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1324 (StagedPublicationCoordinator.validatePreparedRollbackArtifact)` |
+| 66 | `StagedPublicationCoordinator.reconcile` | Store | `this.deps.objectStore` に対して put text if version を実行する。 | `this.deps.objectStore.putTextIfVersion(publicationRunKey(runId), JSON.stringify(rolledBack, null, 2), stored.version, "application/json")` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:394 (StagedPublicationCoordinator.reconcile)` |
+| 67 | `StagedPublicationCoordinator.rewriteVectorLifecycle` | Store | `this.deps.evidenceVectorStore` に対して put を実行する。 | `this.deps.evidenceVectorStore.put(evidence)` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1423 (StagedPublicationCoordinator.rewriteVectorLifecycle)` |
+| 68 | `StagedPublicationCoordinator.rewriteVectorLifecycle` | Store | `this.deps.memoryVectorStore` に対して put を実行する。 | `this.deps.memoryVectorStore.put(memory)` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1424 (StagedPublicationCoordinator.rewriteVectorLifecycle)` |
+| 69 | `StagedPublicationCoordinator.supersedePreviousArtifact` | Store | `this.deps.objectStore` に対して put text を実行する。 | `this.deps.objectStore.putText(previous.manifestObjectKey, JSON.stringify({ ...previous, lifecycleStatus: "superseded", metadata: { ...(previous.metadata ?? {}), lifecycleStatus: "superseded" }, updatedAt: this.clock().t…` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:977 (StagedPublicationCoordinator.supersedePreviousArtifact)` |
+| 70 | `StagedPublicationCoordinator.reconcile` | Store | `this.loadManifest(stored.value.stagedArtifact.manifestObjectKey)` に対して catch を実行する。 | `this.loadManifest(stored.value.stagedArtifact.manifestObjectKey).catch(() => undefined)` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:408 (StagedPublicationCoordinator.reconcile)` |
+| 71 | `StagedPublicationCoordinator.cleanupStagedArtifact` | Store | `this.deps.evidenceVectorStore` に対して delete を実行する。 | `this.deps.evidenceVectorStore.delete(manifest.evidenceVectorKeys ?? [])` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1429 (StagedPublicationCoordinator.cleanupStagedArtifact)` |
+| 72 | `StagedPublicationCoordinator.cleanupStagedArtifact` | Store | `this.deps.memoryVectorStore` に対して delete を実行する。 | `this.deps.memoryVectorStore.delete(manifest.memoryVectorKeys ?? [])` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1430 (StagedPublicationCoordinator.cleanupStagedArtifact)` |
+| 73 | `StagedPublicationCoordinator.cleanupStagedArtifact` | Store | `this.deps.objectStore` に対して delete object を実行する。 | `this.deps.objectStore.deleteObject(key)` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1433 (StagedPublicationCoordinator.cleanupStagedArtifact)` |
+| 74 | `StagedPublicationCoordinator.reconcile` | Store | `this.deps.objectStore` に対して put text if version を実行する。 | `this.deps.objectStore.putTextIfVersion(publicationRunKey(runId), JSON.stringify(committed, null, 2), stored.version, "application/json")` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:421 (StagedPublicationCoordinator.reconcile)` |
+| 75 | `StagedPublicationCoordinator.cleanupPreparedRecord` | Store | `this.deps.evidenceVectorStore` に対して delete を実行する。 | `this.deps.evidenceVectorStore.delete(prepared.evidenceVectorKeys)` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1449 (StagedPublicationCoordinator.cleanupPreparedRecord)` |
+| 76 | `StagedPublicationCoordinator.cleanupPreparedRecord` | Store | `this.deps.memoryVectorStore` に対して delete を実行する。 | `this.deps.memoryVectorStore.delete(prepared.memoryVectorKeys)` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1450 (StagedPublicationCoordinator.cleanupPreparedRecord)` |
+| 77 | `StagedPublicationCoordinator.cleanupPreparedRecord` | Store | `this.deps.objectStore` に対して delete object を実行する。 | `this.deps.objectStore.deleteObject(prepared.manifestObjectKey)` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1451 (StagedPublicationCoordinator.cleanupPreparedRecord)` |
+| 78 | `StagedPublicationCoordinator.cleanupPreparedRecord` | Store | `this.deps.objectStore` に対して list keys を実行する。 | `this.deps.objectStore.listKeys(\`${prepared.namespace}/\`)` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1452 (StagedPublicationCoordinator.cleanupPreparedRecord)` |
+| 79 | `StagedPublicationCoordinator.cleanupPreparedRecord` | Store | `this.deps.objectStore` に対して delete object を実行する。 | `this.deps.objectStore.deleteObject(key)` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1452 (StagedPublicationCoordinator.cleanupPreparedRecord)` |
+| 80 | `StagedPublicationCoordinator.cleanupPreparedRecord` | Store | `(await this.deps.objectStore.listKeys(`${prepared.namespace}/`))` に対して map を実行する。 | `(await this.deps.objectStore.listKeys(\`${prepared.namespace}/\`)).map((key) => this.deps.objectStore.deleteObject(key))` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1452 (StagedPublicationCoordinator.cleanupPreparedRecord)` |
+| 81 | `StagedPublicationCoordinator.reconcile` | Store | `this.deps.objectStore` に対して put text if version を実行する。 | `this.deps.objectStore.putTextIfVersion(publicationRunKey(runId), JSON.stringify(retryable, null, 2), stored.version, "application/json")` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:441 (StagedPublicationCoordinator.reconcile)` |
+| 82 | `StagedPublicationCoordinator.cleanupPreparedRollback` | Store | `this.deps.objectStore` に対して list keys を実行する。 | `this.deps.objectStore.listKeys(\`${prepared.namespace}/\`)` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1457 (StagedPublicationCoordinator.cleanupPreparedRollback)` |
+| 83 | `StagedPublicationCoordinator.cleanupPreparedRollback` | Store | `this.deps.objectStore.listKeys(`${prepared.namespace}/`)` に対して catch を実行する。 | `this.deps.objectStore.listKeys(\`${prepared.namespace}/\`).catch(() => [])` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1457 (StagedPublicationCoordinator.cleanupPreparedRollback)` |
+| 84 | `StagedPublicationCoordinator.cleanupPreparedRollback` | Store | `this.deps.evidenceVectorStore` に対して delete を実行する。 | `this.deps.evidenceVectorStore.delete(prepared.evidenceVectorKeys)` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1459 (StagedPublicationCoordinator.cleanupPreparedRollback)` |
+| 85 | `StagedPublicationCoordinator.cleanupPreparedRollback` | Store | `this.deps.memoryVectorStore` に対して delete を実行する。 | `this.deps.memoryVectorStore.delete(prepared.memoryVectorKeys)` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1460 (StagedPublicationCoordinator.cleanupPreparedRollback)` |
+| 86 | `StagedPublicationCoordinator.cleanupPreparedRollback` | Store | `this.deps.objectStore` に対して delete object を実行する。 | `this.deps.objectStore.deleteObject(prepared.manifestObjectKey)` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1461 (StagedPublicationCoordinator.cleanupPreparedRollback)` |
+| 87 | `StagedPublicationCoordinator.cleanupPreparedRollback` | Store | `this.deps.objectStore` に対して delete object を実行する。 | `this.deps.objectStore.deleteObject(key)` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1462 (StagedPublicationCoordinator.cleanupPreparedRollback)` |
+| 88 | `StagedPublicationCoordinator.reconcile` | Store | `this.deps.objectStore` に対して put text if version を実行する。 | `this.deps.objectStore.putTextIfVersion(publicationRunKey(runId), JSON.stringify(retryable, null, 2), stored.version, "application/json")` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:465 (StagedPublicationCoordinator.reconcile)` |
+| 89 | `StagedPublicationCoordinator.copyText` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(sourceKey)` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1484 (StagedPublicationCoordinator.copyText)` |
+| 90 | `StagedPublicationCoordinator.copyText` | Store | `this.deps.objectStore` に対して put text を実行する。 | `this.deps.objectStore.putText(targetKey, source, "application/octet-stream")` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1485 (StagedPublicationCoordinator.copyText)` |
+| 91 | `StagedPublicationCoordinator.copyText` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(targetKey)` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1486 (StagedPublicationCoordinator.copyText)` |
+| 92 | `StagedPublicationCoordinator.prepareCommitArtifacts` | Store | `this.deps.evidenceVectorStore` に対して put を実行する。 | `this.deps.evidenceVectorStore.put(evidenceRecords)` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:807 (StagedPublicationCoordinator.prepareCommitArtifacts)` |
+| 93 | `StagedPublicationCoordinator.prepareCommitArtifacts` | Store | `this.deps.memoryVectorStore` に対して put を実行する。 | `this.deps.memoryVectorStore.put(memoryRecords)` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:808 (StagedPublicationCoordinator.prepareCommitArtifacts)` |
+| 94 | `StagedPublicationCoordinator.prepareCommitArtifacts` | Store | `this.deps.objectStore` に対して put text を実行する。 | `this.deps.objectStore.putText(manifestObjectKey, JSON.stringify(manifest, null, 2), "application/json")` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:861 (StagedPublicationCoordinator.prepareCommitArtifacts)` |
+| 95 | `StagedPublicationCoordinator.commit` | Store | `this.deps.objectStore` に対して put text if version を実行する。 | `this.deps.objectStore.putTextIfVersion( lease.run.activePointerKey, JSON.stringify(pointer, null, 2), pointerStored.version, "application/json" )` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:346 (StagedPublicationCoordinator.commit)` |
+| 96 | `StagedPublicationCoordinator.cleanupPreparedCommit` | Store | `this.deps.evidenceVectorStore` に対して delete を実行する。 | `this.deps.evidenceVectorStore.delete(manifest.evidenceVectorKeys ?? [])` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1439 (StagedPublicationCoordinator.cleanupPreparedCommit)` |
+| 97 | `StagedPublicationCoordinator.cleanupPreparedCommit` | Store | `this.deps.memoryVectorStore` に対して delete を実行する。 | `this.deps.memoryVectorStore.delete(manifest.memoryVectorKeys ?? [])` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1440 (StagedPublicationCoordinator.cleanupPreparedCommit)` |
+| 98 | `StagedPublicationCoordinator.cleanupPreparedCommit` | Store | `this.deps.objectStore` に対して delete object を実行する。 | `this.deps.objectStore.deleteObject(key)` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1443 (StagedPublicationCoordinator.cleanupPreparedCommit)` |
+| 99 | `MemoRagService.registerSourceGovernance` | Service | service の ensure initial record 処理を呼び出す。 | `this.sourceGovernanceApprovalService().ensureInitialRecord(manifest)` | `apps/api/src/rag/memorag-service.ts:379 (MemoRagService.registerSourceGovernance)` |
+| 100 | `readVersionedRecord` | Store | `objectStore` に対して get text with version を実行する。 | `objectStore.getTextWithVersion(key)` | `apps/api/src/rag/offline/pre-retrieval/admission/source-governance-approval-service.ts:1066 (readVersionedRecord)` |
+| 101 | `SourceGovernanceApprovalService.ensureInitialRecord` | Store | `this.deps.objectStore` に対して put text if version を実行する。 | `this.deps.objectStore.putTextIfVersion(key, JSON.stringify(initial, null, 2), undefined, "application/json")` | `apps/api/src/rag/offline/pre-retrieval/admission/source-governance-approval-service.ts:244 (SourceGovernanceApprovalService.ensureInitialRecord)` |
+| 102 | `POST /documents/uploads/{uploadId}/ingest handler` | Auth | authorize external side effect により認証・認可条件を確認する。 | `currentAuthorization.currentAuthorization.authorizeExternalSideEffect()` | `apps/api/src/routes/document-routes.ts:1149 (POST /documents/uploads/{uploadId}/ingest handler)` |
+| 103 | `POST /documents/uploads/{uploadId}/ingest handler` | Store | `deps.objectStore` に対して delete object を実行する。 | `deps.objectStore.deleteObject(objectKey)` | `apps/api/src/routes/document-routes.ts:1150 (POST /documents/uploads/{uploadId}/ingest handler)` |
+| 104 | `POST /documents/uploads/{uploadId}/ingest handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json(documentManifestSummary(manifest), 200)` | `apps/api/src/routes/document-routes.ts:1151 (POST /documents/uploads/{uploadId}/ingest handler)` |
+| 105 | `POST /documents/uploads/{uploadId}/ingest handler` | Service | service の discard uncommitted ingest 処理を呼び出す。 | `service.discardUncommittedIngest(manifest)` | `apps/api/src/routes/document-routes.ts:1153 (POST /documents/uploads/{uploadId}/ingest handler)` |
+| 106 | `deleteUncommittedIngestArtifacts` | Store | `deps.evidenceVectorStore` に対して delete を実行する。 | `deps.evidenceVectorStore.delete(manifest.evidenceVectorKeys ?? [])` | `apps/api/src/rag/offline/pre-retrieval/ingestion/ingest-run.service.ts:513 (deleteUncommittedIngestArtifacts)` |
+| 107 | `deleteUncommittedIngestArtifacts` | Store | `deps.memoryVectorStore` に対して delete を実行する。 | `deps.memoryVectorStore.delete(manifest.memoryVectorKeys ?? [])` | `apps/api/src/rag/offline/pre-retrieval/ingestion/ingest-run.service.ts:514 (deleteUncommittedIngestArtifacts)` |
+| 108 | `deleteUncommittedIngestArtifacts` | Store | `deps.objectStore` に対して delete object を実行する。 | `deps.objectStore.deleteObject(manifest.manifestObjectKey)` | `apps/api/src/rag/offline/pre-retrieval/ingestion/ingest-run.service.ts:515 (deleteUncommittedIngestArtifacts)` |
+| 109 | `deleteUncommittedIngestArtifacts` | Store | `deps.objectStore` に対して delete object を実行する。 | `deps.objectStore.deleteObject(manifest.sourceObjectKey)` | `apps/api/src/rag/offline/pre-retrieval/ingestion/ingest-run.service.ts:516 (deleteUncommittedIngestArtifacts)` |
+| 110 | `deleteUncommittedIngestArtifacts` | Store | `deps.objectStore` に対して delete object を実行する。 | `deps.objectStore.deleteObject(manifest.structuredBlocksObjectKey)` | `apps/api/src/rag/offline/pre-retrieval/ingestion/ingest-run.service.ts:517 (deleteUncommittedIngestArtifacts)` |
+| 111 | `deleteUncommittedIngestArtifacts` | Store | `deps.objectStore` に対して delete object を実行する。 | `deps.objectStore.deleteObject(manifest.memoryCardsObjectKey)` | `apps/api/src/rag/offline/pre-retrieval/ingestion/ingest-run.service.ts:518 (deleteUncommittedIngestArtifacts)` |
+| 112 | `discardUncommittedSourceGovernanceRecord` | Store | `objectStore` に対して delete object を実行する。 | `objectStore.deleteObject(key)` | `apps/api/src/rag/offline/pre-retrieval/admission/source-governance-approval-service.ts:924 (discardUncommittedSourceGovernanceRecord)` |
+| 113 | `POST /documents/uploads/{uploadId}/ingest handler` | Auth | is permission revoked error により認証・認可条件を確認する。 | `isPermissionRevokedError(error)` | `apps/api/src/routes/document-routes.ts:1154 (POST /documents/uploads/{uploadId}/ingest handler)` |
 
 ## 分岐
 
 | ID | Function | 条件 | 実装位置 |
 | --- | --- | --- | --- |
-| B001 | `POST /documents/uploads/{uploadId}/ingest handler` | `objectSize` が `config.documentUploadMaxBytes` より大きい | `apps/api/src/routes/document-routes.ts:554 (POST /documents/uploads/{uploadId}/ingest handler)` |
-| B002 | `POST /documents/uploads/{uploadId}/ingest handler` | `contentBytes.length` が `0` と等しい | `apps/api/src/routes/document-routes.ts:559 (POST /documents/uploads/{uploadId}/ingest handler)` |
-| B003 | `POST /documents/uploads/{uploadId}/ingest handler` | `config.docsBucketName` が存在し、真である | `apps/api/src/routes/document-routes.ts:561 (POST /documents/uploads/{uploadId}/ingest handler)` |
-| B004 | `decodeUploadId` | starts with の判定結果が真ではない、または `objectKey` が ".." を含む | `apps/api/src/routes/document-routes.ts:102 (decodeUploadId)` |
-| B005 | `decodeUploadId` | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:104 (decodeUploadId)` |
-| B006 | `uploadPurposeForKey` | starts with の判定結果が真である | `apps/api/src/routes/document-routes.ts:89 (uploadPurposeForKey)` |
-| B007 | `uploadPurposeForKey` | starts with の判定結果が真である | `apps/api/src/routes/document-routes.ts:90 (uploadPurposeForKey)` |
-| B008 | `uploadPurposeForKey` | starts with の判定結果が真である | `apps/api/src/routes/document-routes.ts:91 (uploadPurposeForKey)` |
-| B009 | `authorizeScopedIngest` | `purpose` が `"chatAttachment"` と等しい | `apps/api/src/routes/document-routes.ts:205 (authorizeScopedIngest)` |
-| B010 | `authorizeScopedIngest` | 利用者が "chat:create" permission を持たない | `apps/api/src/routes/document-routes.ts:206 (authorizeScopedIngest)` |
-| B011 | `authorizeScopedIngest` | `body.scope?.scopeType` が存在し、真である、かつ `body.scope.scopeType` が `"chat"` と異なる | `apps/api/src/routes/document-routes.ts:207 (authorizeScopedIngest)` |
-| B012 | `authorizeScopedIngest` | `body.scope?.temporaryScopeId` が存在しない、または偽である | `apps/api/src/routes/document-routes.ts:208 (authorizeScopedIngest)` |
+| B001 | `POST /documents/uploads/{uploadId}/ingest handler` | `objectSize` が `config.documentUploadMaxBytes` より大きい | `apps/api/src/routes/document-routes.ts:1125 (POST /documents/uploads/{uploadId}/ingest handler)` |
+| B002 | `POST /documents/uploads/{uploadId}/ingest handler` | `contentBytes.length` が `0` と等しい | `apps/api/src/routes/document-routes.ts:1132 (POST /documents/uploads/{uploadId}/ingest handler)` |
+| B003 | `POST /documents/uploads/{uploadId}/ingest handler` | `config.docsBucketName` が存在し、真である | `apps/api/src/routes/document-routes.ts:1134 (POST /documents/uploads/{uploadId}/ingest handler)` |
+| B004 | `POST /documents/uploads/{uploadId}/ingest handler` | `purpose` が `"document"` と等しい | `apps/api/src/routes/document-routes.ts:1148 (POST /documents/uploads/{uploadId}/ingest handler)` |
+| B005 | `POST /documents/uploads/{uploadId}/ingest handler` | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:1152 (POST /documents/uploads/{uploadId}/ingest handler)` |
+| B006 | `POST /documents/uploads/{uploadId}/ingest handler` | `manifest` が存在し、真である | `apps/api/src/routes/document-routes.ts:1153 (POST /documents/uploads/{uploadId}/ingest handler)` |
+| B007 | `POST /documents/uploads/{uploadId}/ingest handler` | is permission revoked error の判定結果が真である | `apps/api/src/routes/document-routes.ts:1154 (POST /documents/uploads/{uploadId}/ingest handler)` |
+| B008 | `decodeUploadId` | starts with の判定結果が真ではない、または `objectKey` が ".." を含む | `apps/api/src/routes/document-routes.ts:174 (decodeUploadId)` |
+| B009 | `decodeUploadId` | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:176 (decodeUploadId)` |
+| B010 | `uploadPurposeForKey` | starts with の判定結果が真である | `apps/api/src/routes/document-routes.ts:149 (uploadPurposeForKey)` |
+| B011 | `uploadPurposeForKey` | starts with の判定結果が真である | `apps/api/src/routes/document-routes.ts:150 (uploadPurposeForKey)` |
+| B012 | `uploadPurposeForKey` | starts with の判定結果が真である | `apps/api/src/routes/document-routes.ts:151 (uploadPurposeForKey)` |
+| B013 | `authorizeScopedIngest` | `purpose` が `"chatAttachment"` と等しい | `apps/api/src/routes/document-routes.ts:459 (authorizeScopedIngest)` |
+| B014 | `authorizeScopedIngest` | 利用者が "chat:create" permission を持たない | `apps/api/src/routes/document-routes.ts:460 (authorizeScopedIngest)` |
+| B015 | `authorizeScopedIngest` | `body.scope?.scopeType` が存在し、真である、かつ `body.scope.scopeType` が `"chat"` と異なる | `apps/api/src/routes/document-routes.ts:461 (authorizeScopedIngest)` |
+| B016 | `authorizeScopedIngest` | `body.scope?.temporaryScopeId` が存在しない、または偽である | `apps/api/src/routes/document-routes.ts:462 (authorizeScopedIngest)` |
+| B017 | `scopedMetadata` | `purpose` が `"chatAttachment"` と等しい | `apps/api/src/routes/document-routes.ts:322 (scopedMetadata)` |
+| B018 | `scopedMetadata` | `temporaryScopeId` が存在しない、または偽である | `apps/api/src/routes/document-routes.ts:324 (scopedMetadata)` |
+| B019 | `scopedMetadata` | `user.email` が存在し、真である | `apps/api/src/routes/document-routes.ts:329 (scopedMetadata)` |
+| B020 | `scopedMetadata` | `purpose` が `"document"` と等しい | `apps/api/src/routes/document-routes.ts:335 (scopedMetadata)` |
+| B021 | `scopedMetadata` | `scope` が存在しない、または偽である、または `scope.scopeType` が `"group"` と異なる、または `scope.groupIds?.length` が存在しない、または偽である | `apps/api/src/routes/document-routes.ts:336 (scopedMetadata)` |
+| B022 | `scopedMetadata` | `scope` が存在しない、または偽である | `apps/api/src/routes/document-routes.ts:343 (scopedMetadata)` |
+| B023 | `scopedMetadata` | `scope.scopeType` が `"group"` と等しい、かつ `groupIds.length` が `0` と等しい | `apps/api/src/routes/document-routes.ts:345 (scopedMetadata)` |
+| B024 | `scopedMetadata` | `groupIds.length` が `0` より大きい | `apps/api/src/routes/document-routes.ts:346 (scopedMetadata)` |
+| B025 | `scopedMetadata` | `groupIds.length` が `0` より大きい、または `scope.scopeType` が `"group"` と等しい | `apps/api/src/routes/document-routes.ts:347 (scopedMetadata)` |
+| B026 | `scopedMetadata` | `scope.scopeType` が `"personal"` と等しい | `apps/api/src/routes/document-routes.ts:350 (scopedMetadata)` |
+| B027 | `scopedMetadata` | `user.email` が存在し、真である | `apps/api/src/routes/document-routes.ts:351 (scopedMetadata)` |
+| B028 | `scopedMetadata` | `Object.keys(base).length` が `0` より大きい | `apps/api/src/routes/document-routes.ts:353 (scopedMetadata)` |
+| B029 | `authoritativeAdmissionContext` | `purpose` が `"chatAttachment"` と等しい | `apps/api/src/routes/document-routes.ts:366 (authoritativeAdmissionContext)` |
+| B030 | `authoritativeAdmissionContext` | `purpose` が `"benchmarkSeed"` と等しい | `apps/api/src/routes/document-routes.ts:377 (authoritativeAdmissionContext)` |
+| B031 | `authoritativeAdmissionContext` | `suiteId` が存在しない、または偽である | `apps/api/src/routes/document-routes.ts:379 (authoritativeAdmissionContext)` |
+| B032 | `authoritativeAdmissionContext` | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:393 (authoritativeAdmissionContext)` |
+| B033 | `authoritativeAdmissionContext` | `error` が `BenchmarkEvaluationContextError` の instance である | `apps/api/src/routes/document-routes.ts:394 (authoritativeAdmissionContext)` |
+| B034 | `authoritativeAdmissionContext` | `purpose` が `"chatAttachment"` と等しい | `apps/api/src/routes/document-routes.ts:400 (authoritativeAdmissionContext)` |
+| B035 | `authoritativeAdmissionContext` | `user.email` が存在し、真である | `apps/api/src/routes/document-routes.ts:403 (authoritativeAdmissionContext)` |
+| B036 | `authoritativeAdmissionContext` | `purpose` が `"benchmarkSeed"` と等しい | `apps/api/src/routes/document-routes.ts:407 (authoritativeAdmissionContext)` |
+| B037 | `authoritativeAdmissionContext` | `scope?.scopeType` が `"group"` と等しい | `apps/api/src/routes/document-routes.ts:409 (authoritativeAdmissionContext)` |
+| B038 | `authoritativeAdmissionContext` | `user.email` が存在し、真である | `apps/api/src/routes/document-routes.ts:411 (authoritativeAdmissionContext)` |
+| B039 | `authoritativeAdmissionContext` | `purpose` が `"benchmarkSeed"` と等しい | `apps/api/src/routes/document-routes.ts:418 (authoritativeAdmissionContext)` |
+| B040 | `authoritativeAdmissionContext` | `purpose` が `"chatAttachment"` と等しい | `apps/api/src/routes/document-routes.ts:420 (authoritativeAdmissionContext)` |
+| B041 | `authoritativeAdmissionContext` | `purpose` が `"benchmarkSeed"` と等しい | `apps/api/src/routes/document-routes.ts:423 (authoritativeAdmissionContext)` |
+| B042 | `authoritativeAdmissionContext` | `purpose` が `"chatAttachment"` と等しい | `apps/api/src/routes/document-routes.ts:425 (authoritativeAdmissionContext)` |
+| B043 | `authoritativeAdmissionContext` | `qualityProfile` が存在し、真である | `apps/api/src/routes/document-routes.ts:429 (authoritativeAdmissionContext)` |
+| B044 | `authoritativeAdmissionContext` | `purpose` が `"benchmarkSeed"` と等しい、または `purpose` が `"chatAttachment"` と等しい | `apps/api/src/routes/document-routes.ts:442 (authoritativeAdmissionContext)` |
+| B045 | `enforceDocumentCreateOperation` | `purpose` が `"chatAttachment"` と等しい | `apps/api/src/routes/document-routes.ts:476 (enforceDocumentCreateOperation)` |
+| B046 | `enforceDocumentCreateOperation` | `purpose` が `"benchmarkSeed"` と等しい | `apps/api/src/routes/document-routes.ts:477 (enforceDocumentCreateOperation)` |
+| B047 | `enforceDocumentCreateOperation` | `scope?.scopeType` が `"group"` と等しい | `apps/api/src/routes/document-routes.ts:480 (enforceDocumentCreateOperation)` |
+| B048 | `enforceDocumentCreateOperation` | `groupIds.length` が `0` より大きい | `apps/api/src/routes/document-routes.ts:481 (enforceDocumentCreateOperation)` |
+| B049 | `enforceDocumentCreateOperation` | `groupIds` が存在し、真である | `apps/api/src/routes/document-routes.ts:483 (enforceDocumentCreateOperation)` |
+| B050 | `MemoRagService.createCurrentDocumentIngestAuthorization` | `input.purpose` が `"benchmarkSeed"` と等しい | `apps/api/src/rag/memorag-service.ts:339 (MemoRagService.createCurrentDocumentIngestAuthorization)` |
+| B051 | `MemoRagService.createCurrentDocumentIngestAuthorization` | `input.purpose` が `"chatAttachment"` と等しい | `apps/api/src/rag/memorag-service.ts:341 (MemoRagService.createCurrentDocumentIngestAuthorization)` |
+| B052 | `MemoRagService.discardUncommittedIngest` | some の判定結果が真である | `apps/api/src/rag/memorag-service.ts:373 (MemoRagService.discardUncommittedIngest)` |

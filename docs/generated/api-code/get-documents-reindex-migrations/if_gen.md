@@ -2,7 +2,7 @@
 
 # GET /documents/reindex-migrations IF仕様
 
-- 実装 route: `apps/api/src/routes/document-routes.ts:717 (GET /documents/reindex-migrations)`
+- 実装 route: `apps/api/src/routes/document-routes.ts:1395 (GET /documents/reindex-migrations)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 再インデックス移行一覧を取得する
@@ -53,7 +53,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 13 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 20 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 
@@ -76,6 +76,13 @@ Media type: `application/json`
 | `migrations[].rolledBackAt` | `string` | no | `response.migrations[].rolledBackAt` の値。項目名は rolled back at を表します。 | - |
 | `migrations[].previousManifestObjectKey` | `string` | yes | `response.migrations[].previousManifestObjectKey` の値。項目名は previous manifest object key を表します。 | - |
 | `migrations[].stagedManifestObjectKey` | `string` | yes | `response.migrations[].stagedManifestObjectKey` の値。項目名は staged manifest object key を表します。 | - |
+| `migrations[].publicationRunId` | `string` | no | `response.migrations[].publicationRunId` の値。項目名は publication run id を表します。 | - |
+| `migrations[].publicationArtifactId` | `string` | no | `response.migrations[].publicationArtifactId` の値。項目名は publication artifact id を表します。 | - |
+| `migrations[].publicationIdempotencyKey` | `string` | no | `response.migrations[].publicationIdempotencyKey` の値。項目名は publication idempotency key を表します。 | - |
+| `migrations[].activePointerKey` | `string` | no | `response.migrations[].activePointerKey` の値。項目名は active pointer key を表します。 | - |
+| `migrations[].generation` | `integer` | no | `response.migrations[].generation` の値。項目名は generation を表します。 | minimum=0 |
+| `migrations[].fencingToken` | `string` | no | `response.migrations[].fencingToken` の値。項目名は fencing token を表します。 | - |
+| `migrations[].checkpoint` | `string` | no | `response.migrations[].checkpoint` の値。項目名は checkpoint を表します。 | - |
 
 ##### `401` 認証が必要です。
 

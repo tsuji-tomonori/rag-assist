@@ -28,6 +28,8 @@ Grounded internal-document QA API. Answers only from uploaded documents; otherwi
 | `POST` | `/admin/users` | 管理対象ユーザーを作成する | [詳細](openapi/post-admin-users.md) |
 | `GET` | `/admin/users` | 管理対象ユーザー一覧を取得する | [詳細](openapi/get-admin-users.md) |
 | `DELETE` | `/admin/users/{userId}` | ユーザーを削除する | [詳細](openapi/delete-admin-users-userid.md) |
+| `POST` | `/admin/users/{userId}/administrative-principal-transfer` | 管理主体の所有資源を後継へ移管する | [詳細](openapi/post-admin-users-userid-administrative-principal-transfer.md) |
+| `GET` | `/admin/users/{userId}/deletion-preflight` | ユーザー削除前の移管条件を取得する | [詳細](openapi/get-admin-users-userid-deletion-preflight.md) |
 | `POST` | `/admin/users/{userId}/roles` | ユーザーのロールを更新する | [詳細](openapi/post-admin-users-userid-roles.md) |
 | `POST` | `/admin/users/{userId}/suspend` | ユーザーを停止する | [詳細](openapi/post-admin-users-userid-suspend.md) |
 | `POST` | `/admin/users/{userId}/unsuspend` | ユーザー停止を解除する | [詳細](openapi/post-admin-users-userid-unsuspend.md) |
@@ -54,6 +56,10 @@ Grounded internal-document QA API. Answers only from uploaded documents; otherwi
 | `POST` | `/debug-runs/{runId}/replay-plan` | debug replay plan を作成する | [詳細](openapi/post-debug-runs-runid-replay-plan.md) |
 | `GET` | `/document-groups` | 文書グループ一覧を取得する | [詳細](openapi/get-document-groups.md) |
 | `POST` | `/document-groups` | 文書グループを作成する | [詳細](openapi/post-document-groups.md) |
+| `DELETE` | `/document-groups/{groupId}` | 空のフォルダをアーカイブする | [詳細](openapi/delete-document-groups-groupid.md) |
+| `POST` | `/document-groups/{groupId}/move` | フォルダ subtree を整合状態で移動する | [詳細](openapi/post-document-groups-groupid-move.md) |
+| `GET` | `/document-groups/{groupId}/share` | フォルダ共有 policy を取得する | [詳細](openapi/get-document-groups-groupid-share.md) |
+| `PUT` | `/document-groups/{groupId}/share` | フォルダ共有 policy を置き換える | [詳細](openapi/put-document-groups-groupid-share.md) |
 | `POST` | `/document-groups/{groupId}/share` | 文書グループ設定を更新する | [詳細](openapi/post-document-groups-groupid-share.md) |
 | `POST` | `/document-ingest-runs` | 非同期文書取り込みを開始する | [詳細](openapi/post-document-ingest-runs.md) |
 | `GET` | `/document-ingest-runs/{runId}` | 文書取り込み run を取得する | [詳細](openapi/get-document-ingest-runs-runid.md) |
@@ -61,12 +67,16 @@ Grounded internal-document QA API. Answers only from uploaded documents; otherwi
 | `GET` | `/documents` | 登録文書一覧を取得する | [詳細](openapi/get-documents.md) |
 | `POST` | `/documents` | 文書を同期登録する（非推奨） | [詳細](openapi/post-documents.md) |
 | `DELETE` | `/documents/{documentId}` | 文書を削除する | [詳細](openapi/delete-documents-documentid.md) |
+| `GET` | `/documents/{documentId}/extracted-text` | 文書の抽出テキストを取得する | [詳細](openapi/get-documents-documentid-extracted-text.md) |
 | `POST` | `/documents/{documentId}/move` | 文書を別フォルダへ移動する | [詳細](openapi/post-documents-documentid-move.md) |
 | `GET` | `/documents/{documentId}/parsed-preview` | ParsedDocument preview を取得する | [詳細](openapi/get-documents-documentid-parsed-preview.md) |
 | `POST` | `/documents/{documentId}/reindex` | 文書を再インデックスする | [詳細](openapi/post-documents-documentid-reindex.md) |
 | `POST` | `/documents/{documentId}/reindex/stage` | 再インデックスを stage する | [詳細](openapi/post-documents-documentid-reindex-stage.md) |
 | `GET` | `/documents/{documentId}/share` | 文書共有設定を取得する | [詳細](openapi/get-documents-documentid-share.md) |
 | `PUT` | `/documents/{documentId}/share` | 文書共有設定を更新する | [詳細](openapi/put-documents-documentid-share.md) |
+| `GET` | `/documents/{documentId}/source-governance` | 情報源の審査状態を取得する | [詳細](openapi/get-documents-documentid-source-governance.md) |
+| `POST` | `/documents/{documentId}/source-governance/approve` | 情報源を審査して公開する | [詳細](openapi/post-documents-documentid-source-governance-approve.md) |
+| `POST` | `/documents/{documentId}/source-governance/restrict` | 公開済み情報源の利用を制限する | [詳細](openapi/post-documents-documentid-source-governance-restrict.md) |
 | `GET` | `/documents/reindex-migrations` | 再インデックス移行一覧を取得する | [詳細](openapi/get-documents-reindex-migrations.md) |
 | `POST` | `/documents/reindex-migrations/{migrationId}/cutover` | 再インデックス結果へ切り替える | [詳細](openapi/post-documents-reindex-migrations-migrationid-cutover.md) |
 | `POST` | `/documents/reindex-migrations/{migrationId}/rollback` | 再インデックス切替を戻す | [詳細](openapi/post-documents-reindex-migrations-migrationid-rollback.md) |
@@ -84,4 +94,13 @@ Grounded internal-document QA API. Answers only from uploaded documents; otherwi
 | `POST` | `/questions/{questionId}/answer` | 担当者回答を登録する | [詳細](openapi/post-questions-questionid-answer.md) |
 | `POST` | `/questions/{questionId}/resolve` | 問い合わせを解決済みにする | [詳細](openapi/post-questions-questionid-resolve.md) |
 | `POST` | `/questions/{questionId}/search-improvement-candidates` | 検索改善候補を作成する | [詳細](openapi/post-questions-questionid-search-improvement-candidates.md) |
+| `GET` | `/resource-groups` | 参照可能な resource group 一覧を取得する | [詳細](openapi/get-resource-groups.md) |
+| `POST` | `/resource-groups` | resource group を作成する | [詳細](openapi/post-resource-groups.md) |
+| `GET` | `/resource-groups/{groupId}` | resource group を取得する | [詳細](openapi/get-resource-groups-groupid.md) |
+| `PUT` | `/resource-groups/{groupId}` | resource group を更新する | [詳細](openapi/put-resource-groups-groupid.md) |
+| `DELETE` | `/resource-groups/{groupId}` | resource group をアーカイブする | [詳細](openapi/delete-resource-groups-groupid.md) |
+| `GET` | `/resource-groups/{groupId}/memberships` | resource group の membership state を取得する | [詳細](openapi/get-resource-groups-groupid-memberships.md) |
+| `PUT` | `/resource-groups/{groupId}/memberships` | resource group の membership state を置き換える | [詳細](openapi/put-resource-groups-groupid-memberships.md) |
+| `POST` | `/resource-groups/{groupId}/move` | resource group の未対応 move を拒否する | [詳細](openapi/post-resource-groups-groupid-move.md) |
+| `POST` | `/resource-groups/{groupId}/share` | resource group の未対応 share を拒否する | [詳細](openapi/post-resource-groups-groupid-share.md) |
 | `POST` | `/search` | ハイブリッド検索を実行する | [詳細](openapi/post-search.md) |

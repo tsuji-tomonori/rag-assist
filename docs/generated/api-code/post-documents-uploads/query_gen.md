@@ -8,7 +8,7 @@
 
 | # | CRUD/実行 | Target | Method | 自然言語での目的 | Caller | コード根拠 |
 | ---: | --- | --- | --- | --- | --- | --- |
-| 1 | 作成・追記 | `deps.objectStore` | `createUploadUrl` | `deps.objectStore` に対して create upload url を実行する。 | `POST /documents/uploads handler` | `apps/api/src/routes/document-routes.ts:482 (POST /documents/uploads handler)` |
+| 1 | 作成・追記 | `deps.objectStore` | `createUploadUrl` | `deps.objectStore` に対して create upload url を実行する。 | `POST /documents/uploads handler` | `apps/api/src/routes/document-routes.ts:1043 (POST /documents/uploads handler)` |
 
 ## 外部サービス操作
 

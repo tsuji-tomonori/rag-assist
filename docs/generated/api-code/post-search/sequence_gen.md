@@ -20,19 +20,34 @@ sequenceDiagram
   API->>Service: service の search 処理を呼び出す。
   API->>Service: service の assert search scope readable 処理を呼び出す。
   Service->>Store: this.deps.documentGroupStore に対して list を実行する。
-  Service->>Store: deps.objectStore に対して list keys を実行する。
-  Service->>Store: (await deps.objectStore.listKeys("manifests/")) に対して filter を実行する。
-  Service->>Store: (await deps.objectStore.listKeys("manifests/")).filter((key) =＞ key.endsWith(".json")) に対して sort を実行する。
-  Service->>Store: deps.objectStore に対して get text を実行する。
-  Service->>Store: this.deps.documentGroupStore に対して list を実行する。
-  Service->>Store: this.deps.folderPolicyStore に対して get を実行する。
   Service->>Store: this.deps.userGroupStore に対して get を実行する。
   Service->>Store: this.deps.groupMembershipStore に対して list by group id を実行する。
+  Service->>Store: this.deps.folderPolicyStore に対して find by folder id を実行する。
+  Service->>Store: this.deps.folderPolicyStore に対して get を実行する。
+  Service->>Store: input.objectStore に対して get text を実行する。
+  Service->>Store: deps.objectStore に対して list keys を実行する。
+  Service->>Store: (await deps.objectStore.listKeys(tenantManifestPrefix(deps, tenantId))) に対して filter を実行する。
+  Service->>Store: (await deps.objectStore.listKeys(tenantManifestPrefix(deps, tenantId))).filter((key) =＞ key.endsWith(".json")) に対して sort を実行する。
+  Service->>Store: deps.objectStore に対して get text を実行する。
+  Service->>Store: new ObjectStoreRevocationCleanupTenantRegistry(this.objectStore, this.now) に対して register を実行する。
+  Service->>Store: this.objectStore に対して get text を実行する。
+  Service->>Store: this.objectStore に対して put text if version を実行する。
+  Service->>Store: objectStore に対して get text with version を実行する。
+  Service->>Store: this.objectStore に対して put text if version を実行する。
+  Service->>Store: deps.objectStore に対して get text を実行する。
   Service->>Store: objectStore に対して get text with version を実行する。
   Service->>Store: objectStore に対して get text を実行する。
   Service->>Store: this.deps.objectStore に対して get text を実行する。
   Service->>Store: this.deps.userGroupStore に対して get を実行する。
   Service->>Store: this.deps.groupMembershipStore に対して list by group id を実行する。
+  Service->>Store: objectStore に対して get text with version を実行する。
+  Service->>Store: new ProductionRagObservationProducer(input.objectStore)          に対して capture eligibility probe once を実行する。
+  Service->>Store: this.objectStore に対して get text with version を実行する。
+  Service->>Store: this.objectStore に対して put text if version を実行する。
+  Service->>Store: this.objectStore に対して get text with version を実行する。
+  Service->>Store: this.objectStore に対して get text を実行する。
+  Service->>Store: this.objectStore に対して put text を実行する。
+  Service->>Store: this.objectStore に対して put text if version を実行する。
   Service->>Store: deps.objectStore に対して get text を実行する。
   Service->>Store: deps.objectStore に対して get text を実行する。
   Service->>Store: deps.objectStore に対して get text を実行する。
@@ -42,9 +57,13 @@ sequenceDiagram
   Service->>Store: deps.objectStore に対して put text を実行する。
   Service->>Store: deps.objectStore に対して put text を実行する。
   Service->>External: deps.textModel へ embed を実行する。
-  Service->>Store: deps.evidenceVectorStore に対して query を実行する。
+  Service->>Store: store に対して query を実行する。
+  Service->>Store: (await Promise.all(     batches.map((documentIds) =＞ store.query(vector, topK, { ...filter, documentIds }))   )) に対して flat を実行する。
   Service->>Store: deps.objectStore に対して get text を実行する。
-  Service->>Store: (           await filterAccessibleVectorHits(             deps,             await deps.evidenceVectorStore.query(               input.semanticVector ??                 (await deps…
+  Service->>Store: this.deps.documentGroupStore に対して get を実行する。
+  Service->>Store: deps.objectStore に対して put text を実行する。
+  Service->>Store: new ProductionRagObservationProducer(deps.objectStore) に対して capture search runtime を実行する。
+  Service->>Store: new ProductionRagObservationProducer(deps.objectStore) に対して capture search runtime を実行する。
   API-->>Client: HTTP 200 で JSON response を返す。
 ```
 
@@ -52,41 +71,60 @@ sequenceDiagram
 
 | # | Caller | 境界 | 処理 | コード | 実装位置 |
 | ---: | --- | --- | --- | --- | --- |
-| 1 | `POST /search handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/chat-routes.ts:203 (POST /search handler)` |
-| 2 | `POST /search handler` | Auth | "rag:doc:read" permission を必須条件として確認する。 | `requirePermission(user, "rag:doc:read")` | `apps/api/src/routes/chat-routes.ts:204 (POST /search handler)` |
-| 3 | `POST /search handler` | Validation | schema 検証済みの JSON request body を取得する。 | `validJson<z.infer<typeof SearchRequestSchema>>(c)` | `apps/api/src/routes/chat-routes.ts:205 (POST /search handler)` |
-| 4 | `POST /search handler` | Service | service の search 処理を呼び出す。 | `service.search(body, user)` | `apps/api/src/routes/chat-routes.ts:206 (POST /search handler)` |
-| 5 | `MemoRagService.search` | Service | service の assert search scope readable 処理を呼び出す。 | `this.assertSearchScopeReadable(user, input.scope)` | `apps/api/src/rag/memorag-service.ts:1452 (MemoRagService.search)` |
-| 6 | `MemoRagService.assertSearchScopeReadable` | Store | `this.deps.documentGroupStore` に対して list を実行する。 | `this.deps.documentGroupStore.list()` | `apps/api/src/rag/memorag-service.ts:670 (MemoRagService.assertSearchScopeReadable)` |
-| 7 | `getLexicalIndex` | Store | `deps.objectStore` に対して list keys を実行する。 | `deps.objectStore.listKeys("manifests/")` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:267 (getLexicalIndex)` |
-| 8 | `getLexicalIndex` | Store | `(await deps.objectStore.listKeys("manifests/"))` に対して filter を実行する。 | `(await deps.objectStore.listKeys("manifests/")).filter((key) => key.endsWith(".json"))` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:267 (getLexicalIndex)` |
-| 9 | `getLexicalIndex` | Store | `(await deps.objectStore.listKeys("manifests/")).filter((key) => key.endsWith(".json"))` に対して sort を実行する。 | `(await deps.objectStore.listKeys("manifests/")).filter((key) => key.endsWith(".json")).sort()` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:267 (getLexicalIndex)` |
-| 10 | `getLexicalIndex` | Store | `deps.objectStore` に対して get text を実行する。 | `deps.objectStore.getText(key)` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:268 (getLexicalIndex)` |
-| 11 | `FolderPermissionService.resolveEffectiveFolderPermissionDetail` | Store | `this.deps.documentGroupStore` に対して list を実行する。 | `this.deps.documentGroupStore.list()` | `apps/api/src/folders/folder-permission-service.ts:47 (FolderPermissionService.resolveEffectiveFolderPermissionDetail)` |
-| 12 | `FolderPermissionService.resolvePolicyContext` | Store | `this.deps.folderPolicyStore` に対して get を実行する。 | `this.deps.folderPolicyStore.get(current.policyId)` | `apps/api/src/folders/folder-permission-service.ts:128 (FolderPermissionService.resolvePolicyContext)` |
-| 13 | `FolderPermissionService.resolveUserMembershipPermission` | Store | `this.deps.userGroupStore` に対して get を実行する。 | `this.deps.userGroupStore.get(groupId)` | `apps/api/src/folders/folder-permission-service.ts:166 (FolderPermissionService.resolveUserMembershipPermission)` |
-| 14 | `FolderPermissionService.resolveUserMembershipPermission` | Store | `this.deps.groupMembershipStore` に対して list by group id を実行する。 | `this.deps.groupMembershipStore.listByGroupId(groupId)` | `apps/api/src/folders/folder-permission-service.ts:171 (FolderPermissionService.resolveUserMembershipPermission)` |
-| 15 | `getTextWithVersion` | Store | `objectStore` に対して get text with version を実行する。 | `objectStore.getTextWithVersion(key)` | `apps/api/src/documents/document-permission-service.ts:418 (getTextWithVersion)` |
-| 16 | `getTextWithVersion` | Store | `objectStore` に対して get text を実行する。 | `objectStore.getText(key)` | `apps/api/src/documents/document-permission-service.ts:419 (getTextWithVersion)` |
-| 17 | `DocumentPermissionService.loadLegacyDocumentGrants` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(documentShareLegacyLedgerKey)` | `apps/api/src/documents/document-permission-service.ts:193 (DocumentPermissionService.loadLegacyDocumentGrants)` |
-| 18 | `DocumentPermissionService.resolveUserMembershipPermission` | Store | `this.deps.userGroupStore` に対して get を実行する。 | `this.deps.userGroupStore.get(groupId)` | `apps/api/src/documents/document-permission-service.ts:287 (DocumentPermissionService.resolveUserMembershipPermission)` |
-| 19 | `DocumentPermissionService.resolveUserMembershipPermission` | Store | `this.deps.groupMembershipStore` に対して list by group id を実行する。 | `this.deps.groupMembershipStore.listByGroupId(groupId)` | `apps/api/src/documents/document-permission-service.ts:291 (DocumentPermissionService.resolveUserMembershipPermission)` |
-| 20 | `loadPublishedAliasArtifact` | Store | `deps.objectStore` に対して get text を実行する。 | `deps.objectStore.getText(aliasArtifactLatestKey)` | `apps/api/src/search/alias-artifacts.ts:12 (loadPublishedAliasArtifact)` |
-| 21 | `loadPublishedAliasArtifact` | Store | `deps.objectStore` に対して get text を実行する。 | `deps.objectStore.getText(latest.objectKey)` | `apps/api/src/search/alias-artifacts.ts:14 (loadPublishedAliasArtifact)` |
-| 22 | `loadLexicalIndexArtifact` | Store | `deps.objectStore` に対して get text を実行する。 | `deps.objectStore.getText("lexical-index/latest.json")` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:944 (loadLexicalIndexArtifact)` |
-| 23 | `loadLexicalIndexArtifact` | Store | `deps.objectStore` に対して get text を実行する。 | `deps.objectStore.getText(latest.objectKey)` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:946 (loadLexicalIndexArtifact)` |
-| 24 | `loadStructuredBlocksForManifest` | Store | `deps.objectStore` に対して get text を実行する。 | `deps.objectStore.getText(manifest.structuredBlocksObjectKey)` | `apps/api/src/rag/_shared/storage/manifest-chunks.ts:21 (loadStructuredBlocksForManifest)` |
-| 25 | `loadChunksForManifest` | Store | `deps.objectStore` に対して get text を実行する。 | `deps.objectStore.getText(manifest.sourceObjectKey)` | `apps/api/src/rag/_shared/storage/manifest-chunks.ts:11 (loadChunksForManifest)` |
-| 26 | `publishLexicalIndexArtifact` | Store | `deps.objectStore` に対して put text を実行する。 | `deps.objectStore.putText(objectKey, JSON.stringify(artifact), "application/json")` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:963 (publishLexicalIndexArtifact)` |
-| 27 | `publishLexicalIndexArtifact` | Store | `deps.objectStore` に対して put text を実行する。 | `deps.objectStore.putText("lexical-index/latest.json", JSON.stringify({ signature, objectKey, indexVersion: index.version, aliasVersion: index.aliasVersion }, null, 2), "application/json")` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:964 (publishLexicalIndexArtifact)` |
-| 28 | `searchRag` | External | `deps.textModel` へ embed を実行する。 | `deps.textModel.embed(input.query, { modelId: input.embeddingModelId ?? config.embeddingModelId, dimensions: config.embeddingDimensions })` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:193 (searchRag)` |
-| 29 | `searchRag` | Store | `deps.evidenceVectorStore` に対して query を実行する。 | `deps.evidenceVectorStore.query( input.semanticVector ?? (await deps.textModel.embed(input.query, { modelId: input.embeddingModelId ?? config.embeddingModelId, dimensions: config.embeddingDimensions })), semanticQueryTop…` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:191 (searchRag)` |
-| 30 | `getCachedManifest` | Store | `deps.objectStore` に対して get text を実行する。 | `deps.objectStore.getText(\`manifests/${documentId}.json\`)` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:777 (getCachedManifest)` |
-| 31 | `searchRag` | Store | `(<br>          await filterAccessibleVectorHits(<br>            deps,<br>            await deps.evidenceVectorStore.query(<br>              input.semanticVector ??<br>                (await deps.textModel.embed(input.query, {<br>                  modelId: input.embeddingModelId ?? config.embeddingModelId,<br>                  dimensions: config.embeddingDimensions<br>                })),<br>              semanticQueryTopK,<br>              vectorFilter<br>            ),<br>            user,<br>            input.scope<br>          )<br>        )` に対して slice を実行する。 | `( await filterAccessibleVectorHits( deps, await deps.evidenceVectorStore.query( input.semanticVector ?? (await deps.textModel.embed(input.query, { modelId: input.embeddingModelId ?? config.embeddingModelId, dimensions: …` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:188 (searchRag)` |
-| 32 | `POST /search handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json(await service.search(body, user), 200)` | `apps/api/src/routes/chat-routes.ts:206 (POST /search handler)` |
+| 1 | `POST /search handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/chat-routes.ts:213 (POST /search handler)` |
+| 2 | `POST /search handler` | Auth | "rag:doc:read" permission を必須条件として確認する。 | `requirePermission(user, "rag:doc:read")` | `apps/api/src/routes/chat-routes.ts:214 (POST /search handler)` |
+| 3 | `POST /search handler` | Validation | schema 検証済みの JSON request body を取得する。 | `validJson<z.infer<typeof SearchRequestSchema>>(c)` | `apps/api/src/routes/chat-routes.ts:215 (POST /search handler)` |
+| 4 | `POST /search handler` | Service | service の search 処理を呼び出す。 | `service.search(body, user)` | `apps/api/src/routes/chat-routes.ts:216 (POST /search handler)` |
+| 5 | `MemoRagService.search` | Service | service の assert search scope readable 処理を呼び出す。 | `this.assertSearchScopeReadable(user, input.scope)` | `apps/api/src/rag/memorag-service.ts:2570 (MemoRagService.search)` |
+| 6 | `FolderPermissionService.resolveEffectiveFolderPermissionDetail` | Store | `this.deps.documentGroupStore` に対して list を実行する。 | `this.deps.documentGroupStore.list(actorTenantId)` | `apps/api/src/folders/folder-permission-service.ts:145 (FolderPermissionService.resolveEffectiveFolderPermissionDetail)` |
+| 7 | `FolderPermissionService.resolveUserMembershipPermission` | Store | `this.deps.userGroupStore` に対して get を実行する。 | `this.deps.userGroupStore.get(tenantId, groupId)` | `apps/api/src/folders/folder-permission-service.ts:780 (FolderPermissionService.resolveUserMembershipPermission)` |
+| 8 | `FolderPermissionService.resolveUserMembershipPermission` | Store | `this.deps.groupMembershipStore` に対して list by group id を実行する。 | `this.deps.groupMembershipStore.listByGroupId(tenantId, groupId)` | `apps/api/src/folders/folder-permission-service.ts:781 (FolderPermissionService.resolveUserMembershipPermission)` |
+| 9 | `FolderPermissionService.resolvePolicyContext` | Store | `this.deps.folderPolicyStore` に対して find by folder id を実行する。 | `this.deps.folderPolicyStore.findByFolderId(folder.tenantId, current.groupId)` | `apps/api/src/folders/folder-permission-service.ts:695 (FolderPermissionService.resolvePolicyContext)` |
+| 10 | `FolderPermissionService.resolvePolicyContext` | Store | `this.deps.folderPolicyStore` に対して get を実行する。 | `this.deps.folderPolicyStore.get(folder.tenantId, current.policyId)` | `apps/api/src/folders/folder-permission-service.ts:711 (FolderPermissionService.resolvePolicyContext)` |
+| 11 | `assertRagSafetyInterlock` | Store | `input.objectStore` に対して get text を実行する。 | `input.objectStore.getText(RAG_SAFETY_STATE_KEY)` | `apps/api/src/rag/quality-control/production-rag-monitor.ts:311 (assertRagSafetyInterlock)` |
+| 12 | `getLexicalIndex` | Store | `deps.objectStore` に対して list keys を実行する。 | `deps.objectStore.listKeys(tenantManifestPrefix(deps, tenantId))` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:603 (getLexicalIndex)` |
+| 13 | `getLexicalIndex` | Store | `(await deps.objectStore.listKeys(tenantManifestPrefix(deps, tenantId)))` に対して filter を実行する。 | `(await deps.objectStore.listKeys(tenantManifestPrefix(deps, tenantId))).filter((key) => key.endsWith(".json"))` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:603 (getLexicalIndex)` |
+| 14 | `getLexicalIndex` | Store | `(await deps.objectStore.listKeys(tenantManifestPrefix(deps, tenantId))).filter((key) => key.endsWith(".json"))` に対して sort を実行する。 | `(await deps.objectStore.listKeys(tenantManifestPrefix(deps, tenantId))).filter((key) => key.endsWith(".json")).sort()` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:603 (getLexicalIndex)` |
+| 15 | `readTenantManifestByKey` | Store | `deps.objectStore` に対して get text を実行する。 | `deps.objectStore.getText(key)` | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:93 (readTenantManifestByKey)` |
+| 16 | `ObjectStoreRevocationCleanupCoordinator.register` | Store | `new ObjectStoreRevocationCleanupTenantRegistry(this.objectStore, this.now)` に対して register を実行する。 | `new ObjectStoreRevocationCleanupTenantRegistry(this.objectStore, this.now).register(normalized.tenantId)` | `apps/api/src/rag/_shared/security/revocation-cleanup-coordinator.ts:137 (ObjectStoreRevocationCleanupCoordinator.register)` |
+| 17 | `ObjectStoreRevocationCleanupTenantRegistry.read` | Store | `this.objectStore` に対して get text を実行する。 | `this.objectStore.getText(key)` | `apps/api/src/rag/_shared/security/revocation-cleanup-tenant-registry.ts:116 (ObjectStoreRevocationCleanupTenantRegistry.read)` |
+| 18 | `ObjectStoreRevocationCleanupTenantRegistry.register` | Store | `this.objectStore` に対して put text if version を実行する。 | `this.objectStore.putTextIfVersion(key, JSON.stringify(record, null, 2), undefined, "application/json")` | `apps/api/src/rag/_shared/security/revocation-cleanup-tenant-registry.ts:41 (ObjectStoreRevocationCleanupTenantRegistry.register)` |
+| 19 | `readManifest` | Store | `objectStore` に対して get text with version を実行する。 | `objectStore.getTextWithVersion(key)` | `apps/api/src/rag/_shared/security/revocation-cleanup-coordinator.ts:636 (readManifest)` |
+| 20 | `ObjectStoreRevocationCleanupCoordinator.register` | Store | `this.objectStore` に対して put text if version を実行する。 | `this.objectStore.putTextIfVersion(key, JSON.stringify(manifest, null, 2), undefined, "application/json")` | `apps/api/src/rag/_shared/security/revocation-cleanup-coordinator.ts:169 (ObjectStoreRevocationCleanupCoordinator.register)` |
+| 21 | `loadPublicationPointer` | Store | `deps.objectStore` に対して get text を実行する。 | `deps.objectStore.getText(key)` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1809 (loadPublicationPointer)` |
+| 22 | `getTextWithVersion` | Store | `objectStore` に対して get text with version を実行する。 | `objectStore.getTextWithVersion(key)` | `apps/api/src/documents/document-permission-service.ts:946 (getTextWithVersion)` |
+| 23 | `getTextWithVersion` | Store | `objectStore` に対して get text を実行する。 | `objectStore.getText(key)` | `apps/api/src/documents/document-permission-service.ts:947 (getTextWithVersion)` |
+| 24 | `DocumentPermissionService.loadLegacyDocumentGrants` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(documentShareLegacyLedgerKey)` | `apps/api/src/documents/document-permission-service.ts:537 (DocumentPermissionService.loadLegacyDocumentGrants)` |
+| 25 | `DocumentPermissionService.resolveUserMembershipPermission` | Store | `this.deps.userGroupStore` に対して get を実行する。 | `this.deps.userGroupStore.get(tenantId, groupId)` | `apps/api/src/documents/document-permission-service.ts:683 (DocumentPermissionService.resolveUserMembershipPermission)` |
+| 26 | `DocumentPermissionService.resolveUserMembershipPermission` | Store | `this.deps.groupMembershipStore` に対して list by group id を実行する。 | `this.deps.groupMembershipStore.listByGroupId(tenantId, groupId)` | `apps/api/src/documents/document-permission-service.ts:684 (DocumentPermissionService.resolveUserMembershipPermission)` |
+| 27 | `readVersionedRecord` | Store | `objectStore` に対して get text with version を実行する。 | `objectStore.getTextWithVersion(key)` | `apps/api/src/rag/offline/pre-retrieval/admission/source-governance-approval-service.ts:1066 (readVersionedRecord)` |
+| 28 | `currentEligibilitySnapshotFromAuthoritativeState` | Store | `new ProductionRagObservationProducer(input.objectStore)<br>        ` に対して capture eligibility probe once を実行する。 | `new ProductionRagObservationProducer(input.objectStore) .captureEligibilityProbeOnce({ probeId: \`source-governance:${record.tenantId}:${record.sourceId}:${record.revision}:${sourcePurpose}\`, detectedAt, propagationMs: M…` | `apps/api/src/rag/_shared/security/current-rag-eligibility.ts:246 (currentEligibilitySnapshotFromAuthoritativeState)` |
+| 29 | `ProductionRagObservationProducer.captureEligibilityProbeOnce` | Store | `this.objectStore` に対して get text with version を実行する。 | `this.objectStore.getTextWithVersion(key)` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:613 (ProductionRagObservationProducer.captureEligibilityProbeOnce)` |
+| 30 | `ProductionRagObservationProducer.captureEligibilityProbeOnce` | Store | `this.objectStore` に対して put text if version を実行する。 | `this.objectStore.putTextIfVersion(key, \`${JSON.stringify(marker, null, 2)}\n\`, undefined, "application/json; charset=utf-8")` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:632 (ProductionRagObservationProducer.captureEligibilityProbeOnce)` |
+| 31 | `ProductionRagObservationProducer.captureEligibilityProbeOnce` | Store | `this.objectStore` に対して get text with version を実行する。 | `this.objectStore.getTextWithVersion(key)` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:636 (ProductionRagObservationProducer.captureEligibilityProbeOnce)` |
+| 32 | `ProductionRagObservationProducer.loadActivePolicy` | Store | `this.objectStore` に対して get text を実行する。 | `this.objectStore.getText(ACTIVE_RAG_QUALITY_POLICY_KEY)` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:783 (ProductionRagObservationProducer.loadActivePolicy)` |
+| 33 | `ProductionRagObservationProducer.persistSample` | Store | `this.objectStore` に対して put text を実行する。 | `this.objectStore.putText(key, \`${JSON.stringify(sample, null, 2)}\n\`, "application/json; charset=utf-8")` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:762 (ProductionRagObservationProducer.persistSample)` |
+| 34 | `ProductionRagObservationProducer.captureEligibilityProbeOnce` | Store | `this.objectStore` に対して put text if version を実行する。 | `this.objectStore.putTextIfVersion( key, \`${JSON.stringify(recorded, null, 2)}\n\`, stored.version, "application/json; charset=utf-8" )` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:656 (ProductionRagObservationProducer.captureEligibilityProbeOnce)` |
+| 35 | `loadPublishedAliasArtifact` | Store | `deps.objectStore` に対して get text を実行する。 | `deps.objectStore.getText(aliasArtifactLatestKey)` | `apps/api/src/search/alias-artifacts.ts:12 (loadPublishedAliasArtifact)` |
+| 36 | `loadPublishedAliasArtifact` | Store | `deps.objectStore` に対して get text を実行する。 | `deps.objectStore.getText(latest.objectKey)` | `apps/api/src/search/alias-artifacts.ts:14 (loadPublishedAliasArtifact)` |
+| 37 | `loadLexicalIndexArtifact` | Store | `deps.objectStore` に対して get text を実行する。 | `deps.objectStore.getText(\`${prefix}latest.json\`)` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:1552 (loadLexicalIndexArtifact)` |
+| 38 | `loadLexicalIndexArtifact` | Store | `deps.objectStore` に対して get text を実行する。 | `deps.objectStore.getText(latest.objectKey)` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:1554 (loadLexicalIndexArtifact)` |
+| 39 | `loadStructuredBlocksForManifest` | Store | `deps.objectStore` に対して get text を実行する。 | `deps.objectStore.getText(manifest.structuredBlocksObjectKey)` | `apps/api/src/rag/_shared/storage/manifest-chunks.ts:35 (loadStructuredBlocksForManifest)` |
+| 40 | `loadChunksForManifest` | Store | `deps.objectStore` に対して get text を実行する。 | `deps.objectStore.getText(manifest.sourceObjectKey)` | `apps/api/src/rag/_shared/storage/manifest-chunks.ts:10 (loadChunksForManifest)` |
+| 41 | `publishLexicalIndexArtifact` | Store | `deps.objectStore` に対して put text を実行する。 | `deps.objectStore.putText(objectKey, JSON.stringify(artifact), "application/json")` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:1594 (publishLexicalIndexArtifact)` |
+| 42 | `publishLexicalIndexArtifact` | Store | `deps.objectStore` に対して put text を実行する。 | `deps.objectStore.putText(\`${prefix}latest.json\`, JSON.stringify({ signature, objectKey, indexVersion: index.version, aliasVersion: index.aliasVersion }, null, 2), "application/json")` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:1595 (publishLexicalIndexArtifact)` |
+| 43 | `searchRag` | External | `deps.textModel` へ embed を実行する。 | `deps.textModel.embed(input.query, { modelId: observedEmbeddingModelId, dimensions: observedEmbeddingDimensions })` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:268 (searchRag)` |
+| 44 | `queryAuthorizedSemanticHits` | Store | `store` に対して query を実行する。 | `store.query(vector, topK, { ...filter, documentIds })` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:1351 (queryAuthorizedSemanticHits)` |
+| 45 | `queryAuthorizedSemanticHits` | Store | `(await Promise.all(<br>    batches.map((documentIds) => store.query(vector, topK, { ...filter, documentIds }))<br>  ))` に対して flat を実行する。 | `(await Promise.all( batches.map((documentIds) => store.query(vector, topK, { ...filter, documentIds })) )).flat()` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:1350 (queryAuthorizedSemanticHits)` |
+| 46 | `readTenantManifest` | Store | `deps.objectStore` に対して get text を実行する。 | `deps.objectStore.getText(key)` | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:83 (readTenantManifest)` |
+| 47 | `FolderPermissionService.assertFolderOperation` | Store | `this.deps.documentGroupStore` に対して get を実行する。 | `this.deps.documentGroupStore.get(actorTenantId, folderId)` | `apps/api/src/folders/folder-permission-service.ts:110 (FolderPermissionService.assertFolderOperation)` |
+| 48 | `persistSearchDebugTrace` | Store | `deps.objectStore` に対して put text を実行する。 | `deps.objectStore.putText(key, JSON.stringify(trace, null, 2), "application/json")` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:591 (persistSearchDebugTrace)` |
+| 49 | `searchRag` | Store | `new ProductionRagObservationProducer(deps.objectStore)` に対して capture search runtime を実行する。 | `new ProductionRagObservationProducer(deps.objectStore).captureSearchRuntime({ latencyMs: response.diagnostics.latencyMs, indexVersion: response.diagnostics.indexVersion, profileId: response.diagnostics.profileId, profil…` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:376 (searchRag)` |
+| 50 | `searchRag` | Store | `new ProductionRagObservationProducer(deps.objectStore)` に対して capture search runtime を実行する。 | `new ProductionRagObservationProducer(deps.objectStore).captureSearchRuntime({ latencyMs, indexVersion: observedIndexVersion, profileId: ragRuntimePolicy.retrieval.profileId, profileVersion: ragRuntimePolicy.retrieval.pr…` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:425 (searchRag)` |
+| 51 | `POST /search handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json(await service.search(body, user), 200)` | `apps/api/src/routes/chat-routes.ts:216 (POST /search handler)` |
 
 ## 分岐
 
 | ID | Function | 条件 | 実装位置 |
 | --- | --- | --- | --- |
-| B001 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:267 (requirePermission)` |
+| B001 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |

@@ -28,7 +28,7 @@
 | 識別子 | `FR-093` |
 | 説明 | production RAG quality/security signal の versioned aggregation、drift detection、safe response |
 | 根拠 | release 後の corpus/model/policy/dependency drift と critical security regression を検出・封じ込める |
-| 源泉 | RAG ガイド §7、§8.4–8.8（PDF pp.156–185, 195–208）、`docs/spec-recovery/15_rag_lifecycle_matrix_202607.md` |
+| 源泉 | RAG ガイド §7、§8.4–8.8（PDF pp.156–185, 195–208）、`docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md` |
 | Actor / trigger | monitoring window 終了、critical event 発生、model/index/policy/corpus version 変更時 |
 | 種類 | 機能要求 / production monitoring / safety control loop |
 | 依存関係 | `FR-074`, `FR-075`, `FR-088`, `FR-089`, `SQ-005`–`SQ-015`, approved runbook |
@@ -67,7 +67,7 @@
 | 検証可能性 | OK | synthetic drift/critical event、missing-signal、alert/action correlation、rollback drill で確認できる |
 | ニーズ適合 | OK | 利用者・運用者が公開後も品質と非漏えいを継続監視できる |
 | 原子性 | OK | production signal の違反検出から承認済み安全 action までの control loop を規定する |
-| 実装適合 | missing/partial | run trace と一部 metric はあるが、production aggregation/drift/action contract が不足する |
+| 実装適合 | OK（confirmed、live AWS 未検証） | production producer/monitor/worker が versioned observations、missing-unavailable、alert/runbook、freeze/quarantine/rollback/limited/refuse interlock を実装した。governance restriction→current deny→実 role と全 provenance dimension 付き probe→aggregate→monitor の一貫 test で source validity と gate 判定を確認した。 |
 | 合意 | pending | monitoring window、slice、閾値、severity、on-call、auto/manual action を承認する必要がある |
 
 ## トレース

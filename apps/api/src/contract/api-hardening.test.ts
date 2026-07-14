@@ -1,6 +1,5 @@
 import assert from "node:assert/strict"
 import { spawnSync } from "node:child_process"
-import path from "node:path"
 import test from "node:test"
 import app from "../app.js"
 
@@ -22,12 +21,14 @@ test("HTTPException responses return the JSON error contract", async () => {
       "content-type": "application/json",
       Origin: "http://localhost:5173"
     },
-    body: JSON.stringify({ query: "benchmark", user: { userId: "request-user", groups: ["CHAT_USER"] } })
+    body: JSON.stringify({ query: "benchmark", suiteId: "search-standard-v1", user: { userId: "request-user", groups: ["CHAT_USER"] } })
   })
 
   assert.equal(response.status, 400)
   assert.match(response.headers.get("content-type") ?? "", /application\/json/)
-  assert.deepEqual(await response.json(), { error: "Benchmark search user override is not supported" })
+  const body = await response.json() as { error?: string; details?: unknown }
+  assert.equal(body.error, "Validation failed")
+  assert.ok(body.details)
 })
 
 test("production config rejects fail-open auth", () => {
@@ -52,7 +53,9 @@ test("production config temporarily allows wildcard CORS origins", () => {
     FAVORITES_TABLE_NAME: "favorites-table",
     COGNITO_REGION: "ap-northeast-1",
     COGNITO_USER_POOL_ID: "ap-northeast-1_example",
-    COGNITO_APP_CLIENT_ID: "client-id"
+    COGNITO_APP_CLIENT_ID: "client-id",
+    AUTH_TENANT_ID: "tenant-production",
+    BENCHMARK_EVALUATION_ENABLED: "false"
   })
 
   assert.equal(result.status, 0, result.stderr)
@@ -69,7 +72,8 @@ test("production config requires Cognito settings when auth is enabled", () => {
     FAVORITES_TABLE_NAME: "favorites-table",
     COGNITO_REGION: "ap-northeast-1",
     COGNITO_USER_POOL_ID: "",
-    COGNITO_APP_CLIENT_ID: ""
+    COGNITO_APP_CLIENT_ID: "",
+    AUTH_TENANT_ID: "tenant-production"
   })
 
   assert.notEqual(result.status, 0)
@@ -86,6 +90,9 @@ test("production config parses explicit runtime environment values", () => {
     FAVORITES_TABLE_NAME: "favorites-table",
     COGNITO_USER_POOL_ID: "us-west-2_example",
     COGNITO_APP_CLIENT_ID: "client-id",
+    AUTH_TENANT_ID: "tenant-production",
+    BENCHMARK_EVALUATION_ENABLED: "true",
+    BENCHMARK_EVALUATION_TENANT_ID: "benchmark-production",
     PORT: "9000.5",
     MOCK_BEDROCK: "yes",
     USE_LOCAL_VECTOR_STORE: "0",
@@ -106,6 +113,9 @@ test("production config parses explicit runtime environment values", () => {
   assert.equal(result.status, 0, result.stderr)
   const config = JSON.parse(result.stdout)
   assert.equal(config.region, "us-west-2")
+  assert.equal(config.authTenantId, "tenant-production")
+  assert.equal(config.benchmarkEvaluationEnabled, true)
+  assert.equal(config.benchmarkEvaluationTenantId, "benchmark-production")
   assert.equal(config.port, 9000.5)
   assert.deepEqual(config.corsAllowedOrigins, ["https://app.example.com", "https://admin.example.com"])
   assert.equal(config.mockBedrock, true)
@@ -133,7 +143,10 @@ test("production config rejects missing docs bucket and invalid scalar values", 
     FAVORITES_TABLE_NAME: "favorites-table",
     COGNITO_REGION: "ap-northeast-1",
     COGNITO_USER_POOL_ID: "ap-northeast-1_example",
-    COGNITO_APP_CLIENT_ID: "client-id"
+    COGNITO_APP_CLIENT_ID: "client-id",
+    AUTH_TENANT_ID: "tenant-production",
+    BENCHMARK_EVALUATION_ENABLED: "true",
+    BENCHMARK_EVALUATION_TENANT_ID: "benchmark-production"
   }
   const missingDocsBucket = importConfigInSubprocess({
     ...requiredProductionEnv,
@@ -155,6 +168,27 @@ test("production config rejects missing docs bucket and invalid scalar values", 
     ...requiredProductionEnv,
     FAVORITES_TABLE_NAME: ""
   })
+  const missingTenant = importConfigInSubprocess({
+    ...requiredProductionEnv,
+    AUTH_TENANT_ID: ""
+  })
+  const missingBenchmarkToggle = importConfigInSubprocess({
+    ...requiredProductionEnv,
+    BENCHMARK_EVALUATION_ENABLED: undefined
+  })
+  const missingBenchmarkTenant = importConfigInSubprocess({
+    ...requiredProductionEnv,
+    BENCHMARK_EVALUATION_TENANT_ID: ""
+  })
+  const sharedBenchmarkTenant = importConfigInSubprocess({
+    ...requiredProductionEnv,
+    BENCHMARK_EVALUATION_TENANT_ID: "tenant-production"
+  })
+  const explicitlyDisabledBenchmark = importConfigInSubprocess({
+    ...requiredProductionEnv,
+    BENCHMARK_EVALUATION_ENABLED: "false",
+    BENCHMARK_EVALUATION_TENANT_ID: ""
+  })
 
   assert.notEqual(missingDocsBucket.status, 0)
   assert.match(missingDocsBucket.stderr, /DOCS_BUCKET_NAME is required in production/)
@@ -166,6 +200,15 @@ test("production config rejects missing docs bucket and invalid scalar values", 
   assert.match(missingAppClient.stderr, /COGNITO_APP_CLIENT_ID is required in production/)
   assert.notEqual(missingFavoritesTable.status, 0)
   assert.match(missingFavoritesTable.stderr, /FAVORITES_TABLE_NAME is required in production/)
+  assert.notEqual(missingTenant.status, 0)
+  assert.match(missingTenant.stderr, /AUTH_TENANT_ID is required in production/)
+  assert.notEqual(missingBenchmarkToggle.status, 0)
+  assert.match(missingBenchmarkToggle.stderr, /BENCHMARK_EVALUATION_ENABLED must be explicitly configured in production/)
+  assert.notEqual(missingBenchmarkTenant.status, 0)
+  assert.match(missingBenchmarkTenant.stderr, /BENCHMARK_EVALUATION_TENANT_ID is required in production/)
+  assert.notEqual(sharedBenchmarkTenant.status, 0)
+  assert.match(sharedBenchmarkTenant.stderr, /BENCHMARK_EVALUATION_TENANT_ID must be isolated from AUTH_TENANT_ID/)
+  assert.equal(explicitlyDisabledBenchmark.status, 0, explicitlyDisabledBenchmark.stderr)
 })
 
 test("development config falls back for invalid scalar values", () => {
@@ -190,8 +233,7 @@ test("development config falls back for invalid scalar values", () => {
 })
 
 function importConfigInSubprocess(env: NodeJS.ProcessEnv) {
-  const tsxBin = path.resolve(process.cwd(), "../../node_modules/.bin/tsx")
-  return spawnSync(tsxBin, ["--eval", "import './src/config.ts'"], {
+  return spawnSync(process.execPath, ["--import", "tsx", "--eval", "import './src/config.ts'"], {
     cwd: process.cwd(),
     env: {
       ...process.env,
@@ -202,10 +244,11 @@ function importConfigInSubprocess(env: NodeJS.ProcessEnv) {
 }
 
 function importConfigJsonInSubprocess(env: NodeJS.ProcessEnv) {
-  const tsxBin = path.resolve(process.cwd(), "../../node_modules/.bin/tsx")
   return spawnSync(
-    tsxBin,
+    process.execPath,
     [
+      "--import",
+      "tsx",
       "--eval",
       "import { config } from './src/config.ts'; console.log(JSON.stringify(config))"
     ],

@@ -2,7 +2,8 @@
 
 - 作成日時: 2026-07-13 23:31 JST
 - branch: `codex/api-code-doc-generation`
-- base: `origin/main` (`9cd904d3`)
+- initial base: `origin/main` (`9cd904d3`)
+- integration base: `origin/main` (`2b3fdb85`、PR #341 merge 後)
 - task: `tasks/do/20260713-2237-api-code-doc-generation.md`
 - 状態: 2026-07-14 最新 main への再統合・再検証中
 
@@ -23,8 +24,8 @@
 
 - `app.openapi(looseRoute(...), handler)` と直接登録された Hono route を source から検出し、schema、handler、到達関数、分岐、message、data boundary、test を関連付ける中間表現を実装した。
 - API ごとの 6 Markdown renderer、全体 index、manifest、生成 command、`--check` による freshness 検証を実装した。
-- 76 API に対して 456 文書を `docs/generated/api-code/` へ生成した。index と manifest を含む生成ファイル総数は 458 である。
-- route 対応、6 renderer、全 API 網羅性、代表的な複雑 API、SSE の store 操作、code-only route、決定性、missing/changed/stale 検知、生成メタデータ非混入を 7 test で検証した。
+- 最新 main の 95 API に対して 570 文書を `docs/generated/api-code/` へ生成した。index と manifest を含む生成ファイル総数は 572 である。
+- route 対応、6 renderer、全 API 網羅性、代表的な複雑 API、SSE の store 操作、code-only route、決定性、missing/changed/stale 検知、生成メタデータ非混入、call graph 最短 depth を 8 test で検証した。
 - API package、repository root、Taskfile、CI、API docs generation workflow に生成と check の導線を追加した。
 - lazunex との対応、入力、処理、出力、エラー、制約、セキュリティ方針を `DES_DLD_011.md` に記録し、既存設計索引、README、ローカル検証手順を同期した。
 
@@ -39,14 +40,16 @@
 - `docs/3_設計_DES/11_詳細設計_DLD/DES_DLD_011.md`
 - `docs/3_設計_DES/41_API_API/DES_API_001.md`
 - `docs/3_設計_DES/01_上位設計_HLD/DES_HLD_001.md`
+- `docs/4_運用_OPS/21_監視_MONITORING/OPS_MONITORING_001.md`
 - `README.md`
-- `docs/LOCAL_VERIFICATION.md`
 - `.github/workflows/memorag-ci.yml`
 - `.github/workflows/memorag-openapi-docs.yml`
 - `Taskfile.yml`
 - root / API `package.json`
+- `scripts/validate_docs.py`
+- `scripts/test_validate_docs.py`
 
-## 検証結果
+## 2026-07-13 初回検証結果
 
 次の最終実行は pass した。
 
@@ -64,10 +67,22 @@
 
 最初の root alias 実行は shell が repository 指定の npm ではなく未導入の proto npm 10.9.2 を解決したため失敗した。最終的に PATH を固定した repository root alias と workspace command の両方で freshness check が pass した。API test の初回は dedicated worktree に `node_modules` がなく、既存 contract test の子プロセス起動 23 件が `ENOENT` となった。repository root の既存依存を参照する一時 symlink を worktree 環境へ置いた後、sandbox 外実行の都度確認を経て全 362 test が pass した。一時 symlink は検証後に削除しており成果物には含めていない。通常 sandbox 内では `tsx` IPC が `EPERM` となるため、API 全 test の最終実行だけ明示的な権限委譲を使用した。
 
+## 2026-07-14 最新 main 再統合・修復結果
+
+- PR #341・#342 の main を merge し、CI は API code docs、canonical docs structure、RAG release source audit の三つを独立 gate として保持した。明示的な RAG promotion job も維持した。
+- 旧 `docs/LOCAL_VERIFICATION.md` は復活させず、再生成・freshness 手順を正規 `DES_DLD_011.md`、`DES_API_001.md`、`OPS_MONITORING_001.md`、README へ統合した。
+- `scripts/validate_docs.py` は `api-code/index.md`、`manifest.json`、operation slug、6 種類の文書だけを許可し、未登録階層・ファイル・provenance 欠落を拒否する。unit test 9/9 は pass。
+- call graph は最初に発見した経路ではなく最短 depth を保持し、より浅い経路を後から発見した場合は子孫も再走査する。直接・間接経路の回帰 fixture を含む generator test 8/8 は pass。
+- 最新 runtime から 95 APIs / 570 documents / 572 generated files を再生成し、`task docs:check` と `docs:api-code:check` は pass。
+- 対象 ESLint、API typecheck、API build、check-yaml、`git diff --check` は pass。
+- `npm run rag:release:source-audit` は dataset-specific branch 0、artifact manifest mismatch 0 で pass。
+- 初回 generator test は worktree が親 worktree の古い `@memorag-mvp/contract` symlink を参照して失敗した。worktree 内で `npm install` を実行して workspace link を統合 head に同期し、再実行で解消した。install audit は 8 vulnerabilities（low 2、moderate 1、high 5）を報告し、本 PR では互換性影響を伴う自動修正を行っていない。
+- final GitHub Actions は未確認であり、ローカル pass と区別する。
+
 ## 指示への fit 評価
 
 - lazunex の「一次情報解析 → 共通中間表現 → 独立文書投影 → stale check」の水平展開: fit
-- 各 API について指定された 6 文書を自動生成: fit（76 APIs、456 documents）
+- 各 API について指定された 6 文書を自動生成: fit（95 APIs、570 documents）
 - route/schema/handler/service/store/query/message/test と生成文書の対応: fit
 - ソースを開かず主要処理を理解できる内容と根拠位置: fit
 - 実装コードへの生成専用メタデータ追加禁止: fit
@@ -77,8 +92,8 @@
 ## ドキュメント保守評価
 
 - generator の設計と保守手順を新規 DLD へ、API 設計との関係を `DES_API_001.md` へ、索引を `DES_HLD_001.md` へ反映した。
-- README と `docs/LOCAL_VERIFICATION.md` に生成・check command を追記した。
-- API の挙動や利用例は変更していないため `docs/API_EXAMPLES.md` は更新不要と判断した。
+- README、正規 DES/OPS 文書に生成・check command を追記し、canonical docs validator へ生成物 shape と provenance を追加した。
+- API の挙動や利用例は変更していない。削除済み legacy 文書は復活させず、正規 docs だけを更新した。
 - repository agent rule は変更していないため `AGENTS.md` は更新不要と判断した。
 
 ## 未対応・制約・リスク
@@ -86,9 +101,9 @@
 - TypeScript の任意の動的構成を完全に静的復元するものではない。source route を解決できない runtime OpenAPI operation は黙って省略せず generation error にする。
 - `query_gen.md` は SQL 文ではなく、現在の application architecture に即した store/service/external operation の論理データ操作を記載する。
 - branch と call graph は静的構造を示し、runtime path coverage や business correctness を証明しない。既存 test の対応有無と追加推奨観点を `unit-test_gen.md` で区別する。
-- 生成物は約 4.2 MB である。完全な IF schema を保持しつつ、その他の文書は主要 call depth と data boundary を優先している。
+- 生成物は最新 main で約 8.4 MB である。完全な IF schema を保持しつつ、その他の文書は主要 call depth と data boundary を優先している。
 - 本タスクは API behavior、RAG retrieval、認証・認可 policy を変更していない。access-control policy test の更新対象となる route 変更もない。
-- GitHub Actions の PR CI は publication 完了時点では未確認であり、ローカル検証の pass と区別する。
+- GitHub Actions の final head は未確認であり、ローカル検証の pass と区別する。
 
 ## Publication
 

@@ -8,12 +8,12 @@
 
 | # | CRUD/実行 | Target | Method | 自然言語での目的 | Caller | コード根拠 |
 | ---: | --- | --- | --- | --- | --- | --- |
-| 1 | 参照 | `this` | `loadAliasLedger` | `this` に対して load alias ledger を実行する。 | `MemoRagService.updateAlias` | `apps/api/src/rag/memorag-service.ts:779 (MemoRagService.updateAlias)` |
-| 2 | 参照 | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `MemoRagService.loadAliasLedger` | `apps/api/src/rag/memorag-service.ts:1603 (MemoRagService.loadAliasLedger)` |
-| 3 | 参照 | `ledger.aliases` | `find` | `ledger.aliases` に対して find を実行する。 | `MemoRagService.updateAlias` | `apps/api/src/rag/memorag-service.ts:780 (MemoRagService.updateAlias)` |
-| 4 | 実行 | `ledger.auditLog` | `push` | `ledger.auditLog` に対して push を実行する。 | `appendAliasAudit` | `apps/api/src/rag/memorag-service.ts:2815 (appendAliasAudit)` |
-| 5 | 作成・追記 | `this` | `saveAliasLedger` | `this` に対して save alias ledger を実行する。 | `MemoRagService.updateAlias` | `apps/api/src/rag/memorag-service.ts:792 (MemoRagService.updateAlias)` |
-| 6 | 作成・追記 | `this.deps.objectStore` | `putText` | `this.deps.objectStore` に対して put text を実行する。 | `MemoRagService.saveAliasLedger` | `apps/api/src/rag/memorag-service.ts:1616 (MemoRagService.saveAliasLedger)` |
+| 1 | 参照 | `this` | `loadAliasLedger` | `this` に対して load alias ledger を実行する。 | `MemoRagService.updateAlias` | `apps/api/src/rag/memorag-service.ts:1246 (MemoRagService.updateAlias)` |
+| 2 | 参照 | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `MemoRagService.loadAliasLedger` | `apps/api/src/rag/memorag-service.ts:2979 (MemoRagService.loadAliasLedger)` |
+| 3 | 参照 | `ledger.aliases` | `find` | `ledger.aliases` に対して find を実行する。 | `MemoRagService.updateAlias` | `apps/api/src/rag/memorag-service.ts:1247 (MemoRagService.updateAlias)` |
+| 4 | 実行 | `ledger.auditLog` | `push` | `ledger.auditLog` に対して push を実行する。 | `appendAliasAudit` | `apps/api/src/rag/memorag-service.ts:5060 (appendAliasAudit)` |
+| 5 | 作成・追記 | `this` | `saveAliasLedger` | `this` に対して save alias ledger を実行する。 | `MemoRagService.updateAlias` | `apps/api/src/rag/memorag-service.ts:1259 (MemoRagService.updateAlias)` |
+| 6 | 作成・追記 | `this.deps.objectStore` | `putText` | `this.deps.objectStore` に対して put text を実行する。 | `MemoRagService.saveAliasLedger` | `apps/api/src/rag/memorag-service.ts:2992 (MemoRagService.saveAliasLedger)` |
 
 ## 外部サービス操作
 

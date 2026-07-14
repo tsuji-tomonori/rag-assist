@@ -28,7 +28,7 @@
 | 識別子 | `FR-085` |
 | 説明 | expected version に基づく share policy の compare-and-replace と integrity gate |
 | 根拠 | lost update、partial policy、self-lockout、last administrator 喪失を防ぐ |
-| 源泉 | `docs/spec-recovery/14_authorization_sharing_matrix_202607.md` §7、`ARC_ADR_004`、current document share conditional write |
+| 源泉 | `docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md` の Sharing 不変条件と `GAP-RD-007`、`ARC_ADR_004`、current document share conditional write |
 | Actor / trigger | share manager が document または folder の共有 policy を置換するとき。resource group membership は `FR-081`、`resourceGroup.share` は `FR-076` の explicit deny に従う |
 | 種類 | 機能要求 / concurrency / authorization integrity |
 | 依存関係 | `FR-076`, `FR-077`, versioned document/folder share policy store |
@@ -67,6 +67,7 @@
 | 実現可能性 | OK | ETag/version と conditional transaction または同等の compare-and-swap で実現可能 |
 | 検証可能性 | OK | matching/stale version、同時 writer、last-admin violation、partial-write absence を検証できる |
 | ニーズ適合 | OK | 管理者が他者の更新を失わず、安全に共有状態を編集するニーズに対応する |
+| 実装適合 | OK（confirmed） | folder/document share の versioned replace が expected-version CAS、complete next state、administrative-principal invariant を不可分に検証し、stale/concurrent writer tests を持つ |
 
 ## トレース
 

@@ -10,7 +10,7 @@
 
 用途概要: IAM role
 
-リソース数: 16
+リソース数: 20
 
 ## Logical ID 一覧
 
@@ -18,6 +18,7 @@
 | --- | --- | --- |
 | [Api Function Service Role](#api-function-service-role) | `ApiFunctionServiceRole52B9747B` | Api Function Service Role (IAM role) |
 | [Benchmark Project Role](#benchmark-project-role) | `BenchmarkProjectRole31C9ABBD` | Benchmark Project Role (IAM role) |
+| [Benchmark Run Authorization Function Service Role](#benchmark-run-authorization-function-service-role) | `BenchmarkRunAuthorizationFunctionServiceRole23F15ADE` | Benchmark Run Authorization Function Service Role (IAM role) |
 | [Benchmark State Machine Role](#benchmark-state-machine-role) | `BenchmarkStateMachineRole9EC7E298` | Benchmark State Machine Role (IAM role) |
 | [Chat Run Events Stream Function Service Role](#chat-run-events-stream-function-service-role) | `ChatRunEventsStreamFunctionServiceRole41BBFB5A` | Chat Run Events Stream Function Service Role (IAM role) |
 | [Chat Run Mark Failed Function Service Role](#chat-run-mark-failed-function-service-role) | `ChatRunMarkFailedFunctionServiceRoleAAD50CA8` | Chat Run Mark Failed Function Service Role (IAM role) |
@@ -29,9 +30,12 @@
 | [Document Ingest Run State Machine Role](#document-ingest-run-state-machine-role) | `DocumentIngestRunStateMachineRole10EA8277` | Document Ingest Run State Machine Role (IAM role) |
 | [Document Ingest Run Worker Function Service Role](#document-ingest-run-worker-function-service-role) | `DocumentIngestRunWorkerFunctionServiceRole7BEAC0ED` | Document Ingest Run Worker Function Service Role (IAM role) |
 | [Heavy Api Function Service Role](#heavy-api-function-service-role) | `HeavyApiFunctionServiceRole25A7AE5E` | Heavy Api Function Service Role (IAM role) |
+| [Rag Quality Monitor Function Service Role](#rag-quality-monitor-function-service-role) | `RagQualityMonitorFunctionServiceRole1754DFBD` | Rag Quality Monitor Function Service Role (IAM role) |
 | [Rest Api Cloud Watch Role](#rest-api-cloud-watch-role) | `RestApiCloudWatchRoleE3ED6605` | Rest Api Cloud Watch Role (IAM role) |
+| [Revocation Cleanup Function Service Role](#revocation-cleanup-function-service-role) | `RevocationCleanupFunctionServiceRole15557E81` | Revocation Cleanup Function Service Role (IAM role) |
 | [S3Vectors Provider Fn Service Role](#s3vectors-provider-fn-service-role) | `S3VectorsProviderFnServiceRoleFEC97124` | S3Vectors Provider Fn Service Role (IAM role) |
 | [S3Vectors Providerframeworkon Event Service Role](#s3vectors-providerframeworkon-event-service-role) | `S3VectorsProviderframeworkonEventServiceRole5255E58B` | S3Vectors Providerframeworkon Event Service Role (IAM role) |
+| [Security Audit Reconciliation Function Service Role](#security-audit-reconciliation-function-service-role) | `SecurityAuditReconciliationFunctionServiceRoleF4787D99` | Security Audit Reconciliation Function Service Role (IAM role) |
 
 ## Logical ID 別設定
 
@@ -56,6 +60,18 @@ Logical ID: `BenchmarkProjectRole31C9ABBD`
 | 設定項目 | 値 |
 | --- | --- |
 | `assumedBy` | [Service:codebuild.amazonaws.com] |
+| `inlinePolicyCount` | 0 |
+
+### Benchmark Run Authorization Function Service Role
+
+Logical ID: `BenchmarkRunAuthorizationFunctionServiceRole23F15ADE`
+
+用途推定: Benchmark Run Authorization Function Service Role (IAM role)
+
+| 設定項目 | 値 |
+| --- | --- |
+| `assumedBy` | [Service:lambda.amazonaws.com] |
+| `managedPolicyArns` | [Join:["",["arn:",{"Ref":"AWS::Partition"},":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]]] |
 | `inlinePolicyCount` | 0 |
 
 ### Benchmark State Machine Role
@@ -187,6 +203,18 @@ Logical ID: `HeavyApiFunctionServiceRole25A7AE5E`
 | `managedPolicyArns` | [Join:["",["arn:",{"Ref":"AWS::Partition"},":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]]] |
 | `inlinePolicyCount` | 0 |
 
+### Rag Quality Monitor Function Service Role
+
+Logical ID: `RagQualityMonitorFunctionServiceRole1754DFBD`
+
+用途推定: Rag Quality Monitor Function Service Role (IAM role)
+
+| 設定項目 | 値 |
+| --- | --- |
+| `assumedBy` | [Service:lambda.amazonaws.com] |
+| `managedPolicyArns` | [Join:["",["arn:",{"Ref":"AWS::Partition"},":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]]] |
+| `inlinePolicyCount` | 0 |
+
 ### Rest Api Cloud Watch Role
 
 Logical ID: `RestApiCloudWatchRoleE3ED6605`
@@ -197,6 +225,18 @@ Logical ID: `RestApiCloudWatchRoleE3ED6605`
 | --- | --- |
 | `assumedBy` | [Service:apigateway.amazonaws.com] |
 | `managedPolicyArns` | [Join:["",["arn:",{"Ref":"AWS::Partition"},":iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"]]] |
+| `inlinePolicyCount` | 0 |
+
+### Revocation Cleanup Function Service Role
+
+Logical ID: `RevocationCleanupFunctionServiceRole15557E81`
+
+用途推定: Revocation Cleanup Function Service Role (IAM role)
+
+| 設定項目 | 値 |
+| --- | --- |
+| `assumedBy` | [Service:lambda.amazonaws.com] |
+| `managedPolicyArns` | [Join:["",["arn:",{"Ref":"AWS::Partition"},":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]]] |
 | `inlinePolicyCount` | 0 |
 
 ### S3Vectors Provider Fn Service Role
@@ -216,6 +256,18 @@ Logical ID: `S3VectorsProviderFnServiceRoleFEC97124`
 Logical ID: `S3VectorsProviderframeworkonEventServiceRole5255E58B`
 
 用途推定: S3Vectors Providerframeworkon Event Service Role (IAM role)
+
+| 設定項目 | 値 |
+| --- | --- |
+| `assumedBy` | [Service:lambda.amazonaws.com] |
+| `managedPolicyArns` | [Join:["",["arn:",{"Ref":"AWS::Partition"},":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]]] |
+| `inlinePolicyCount` | 0 |
+
+### Security Audit Reconciliation Function Service Role
+
+Logical ID: `SecurityAuditReconciliationFunctionServiceRoleF4787D99`
+
+用途推定: Security Audit Reconciliation Function Service Role (IAM role)
 
 | 設定項目 | 値 |
 | --- | --- |

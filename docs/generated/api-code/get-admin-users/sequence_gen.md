@@ -21,6 +21,7 @@ sequenceDiagram
   Service->>Store: this.deps.objectStore に対して get text を実行する。
   Service->>External: this へ sync user directory を実行する。
   Service->>External: this.deps.userDirectory へ list users を実行する。
+  Service->>External: this.deps.verifiedIdentityProvider へ get current identity by subject を実行する。
   API-->>Client: HTTP 200 で JSON response を返す。
 ```
 
@@ -28,17 +29,18 @@ sequenceDiagram
 
 | # | Caller | 境界 | 処理 | コード | 実装位置 |
 | ---: | --- | --- | --- | --- | --- |
-| 1 | `GET /admin/users handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/admin-routes.ts:69 (GET /admin/users handler)` |
-| 2 | `GET /admin/users handler` | Auth | "user:read" permission を必須条件として確認する。 | `requirePermission(user, "user:read")` | `apps/api/src/routes/admin-routes.ts:70 (GET /admin/users handler)` |
-| 3 | `GET /admin/users handler` | Service | service の list managed users 処理を呼び出す。 | `service.listManagedUsers(user)` | `apps/api/src/routes/admin-routes.ts:71 (GET /admin/users handler)` |
-| 4 | `MemoRagService.listManagedUsers` | Store | `this` に対して load admin ledger を実行する。 | `this.loadAdminLedger(actor, { syncUserDirectory: true })` | `apps/api/src/rag/memorag-service.ts:854 (MemoRagService.listManagedUsers)` |
-| 5 | `MemoRagService.loadAdminLedger` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(adminLedgerKey)` | `apps/api/src/rag/memorag-service.ts:1515 (MemoRagService.loadAdminLedger)` |
-| 6 | `MemoRagService.loadAdminLedger` | External | `this` へ sync user directory を実行する。 | `this.syncUserDirectory(db)` | `apps/api/src/rag/memorag-service.ts:1556 (MemoRagService.loadAdminLedger)` |
-| 7 | `MemoRagService.syncUserDirectory` | External | `this.deps.userDirectory` へ list users を実行する。 | `this.deps.userDirectory.listUsers()` | `apps/api/src/rag/memorag-service.ts:1563 (MemoRagService.syncUserDirectory)` |
-| 8 | `GET /admin/users handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json({ users: await service.listManagedUsers(user) }, 200)` | `apps/api/src/routes/admin-routes.ts:71 (GET /admin/users handler)` |
+| 1 | `GET /admin/users handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/admin-routes.ts:125 (GET /admin/users handler)` |
+| 2 | `GET /admin/users handler` | Auth | "user:read" permission を必須条件として確認する。 | `requirePermission(user, "user:read")` | `apps/api/src/routes/admin-routes.ts:126 (GET /admin/users handler)` |
+| 3 | `GET /admin/users handler` | Service | service の list managed users 処理を呼び出す。 | `service.listManagedUsers(user)` | `apps/api/src/routes/admin-routes.ts:127 (GET /admin/users handler)` |
+| 4 | `MemoRagService.listManagedUsers` | Store | `this` に対して load admin ledger を実行する。 | `this.loadAdminLedger(actor, { syncUserDirectory: true })` | `apps/api/src/rag/memorag-service.ts:1321 (MemoRagService.listManagedUsers)` |
+| 5 | `MemoRagService.loadAdminLedger` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(adminLedgerKey)` | `apps/api/src/rag/memorag-service.ts:2864 (MemoRagService.loadAdminLedger)` |
+| 6 | `MemoRagService.loadAdminLedger` | External | `this` へ sync user directory を実行する。 | `this.syncUserDirectory(db)` | `apps/api/src/rag/memorag-service.ts:2905 (MemoRagService.loadAdminLedger)` |
+| 7 | `MemoRagService.syncUserDirectory` | External | `this.deps.userDirectory` へ list users を実行する。 | `this.deps.userDirectory.listUsers()` | `apps/api/src/rag/memorag-service.ts:2912 (MemoRagService.syncUserDirectory)` |
+| 8 | `MemoRagService.syncUserDirectory` | External | `this.deps.verifiedIdentityProvider` へ get current identity by subject を実行する。 | `this.deps.verifiedIdentityProvider.getCurrentIdentityBySubject(directoryUser.userId)` | `apps/api/src/rag/memorag-service.ts:2917 (MemoRagService.syncUserDirectory)` |
+| 9 | `GET /admin/users handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json({ users: await service.listManagedUsers(user) }, 200)` | `apps/api/src/routes/admin-routes.ts:127 (GET /admin/users handler)` |
 
 ## 分岐
 
 | ID | Function | 条件 | 実装位置 |
 | --- | --- | --- | --- |
-| B001 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:267 (requirePermission)` |
+| B001 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |

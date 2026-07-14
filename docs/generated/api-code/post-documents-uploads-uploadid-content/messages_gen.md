@@ -17,14 +17,16 @@
 | M002 | OpenAPI contract | `400` | リクエスト形式または入力値が不正です。 | OpenAPI で宣言された HTTP 400 response | runtime OpenAPI |
 | M003 | OpenAPI contract | `401` | 認証が必要です。 | OpenAPI で宣言された HTTP 401 response | runtime OpenAPI |
 | M004 | OpenAPI contract | `403` | 対象操作を実行する権限がありません。 | OpenAPI で宣言された HTTP 403 response | runtime OpenAPI |
-| M005 | 例外 | `-` | invalid upload object key | starts with の判定結果が真ではない、または `objectKey` が ".." を含む | `apps/api/src/routes/document-routes.ts:102 (decodeUploadId)` |
-| M006 | 例外 | `400` | Invalid uploadId | 例外を捕捉した場合 | `apps/api/src/routes/document-routes.ts:105 (decodeUploadId)` |
-| M007 | 例外 | `403` | Forbidden | 当該処理へ到達した場合 | `apps/api/src/routes/document-routes.ts:92 (uploadPurposeForKey)` |
-| M008 | 例外 | `403` | Forbidden | `purpose` が `"chatAttachment"` と等しい | `apps/api/src/routes/document-routes.ts:66 (authorizeDocumentUploadSession)` |
-| M009 | 例外 | `403` | Forbidden | `purpose` が `"benchmarkSeed"` と等しい | `apps/api/src/routes/document-routes.ts:70 (authorizeDocumentUploadSession)` |
-| M010 | 例外 | `403` | Forbidden | 当該処理へ到達した場合 | `apps/api/src/routes/document-routes.ts:73 (authorizeDocumentUploadSession)` |
-| M011 | HTTP 実装応答 | `400` | Local upload content endpoint is disabled when S3 upload URLs are available | `deps.objectStore.createUploadUrl` が存在し、真である | `apps/api/src/routes/document-routes.ts:518 (POST /documents/uploads/{uploadId}/content handler)` |
-| M012 | HTTP 実装応答 | `400` | `Uploaded object exceeds ${config.documentUploadMaxBytes} bytes` | `uploaded.length` が `config.documentUploadMaxBytes` より大きい | `apps/api/src/routes/document-routes.ts:522 (POST /documents/uploads/{uploadId}/content handler)` |
+| M005 | 例外 | `-` | invalid upload object key | starts with の判定結果が真ではない、または `objectKey` が ".." を含む | `apps/api/src/routes/document-routes.ts:174 (decodeUploadId)` |
+| M006 | 例外 | `400` | Invalid uploadId | 例外を捕捉した場合 | `apps/api/src/routes/document-routes.ts:177 (decodeUploadId)` |
+| M007 | 例外 | `503` | Benchmark evaluation is unavailable | `config.benchmarkEvaluationEnabled` が存在しない、または偽である、または trim の判定結果が真ではない | `apps/api/src/routes/document-routes.ts:158 (uploadTenantId)` |
+| M008 | 例外 | `403` | Forbidden | `tenantId` が存在しない、または偽である | `apps/api/src/routes/document-routes.ts:163 (uploadTenantId)` |
+| M009 | 例外 | `403` | Forbidden | 当該処理へ到達した場合 | `apps/api/src/routes/document-routes.ts:152 (uploadPurposeForKey)` |
+| M010 | 例外 | `403` | Forbidden | `purpose` が `"chatAttachment"` と等しい | `apps/api/src/routes/document-routes.ts:125 (authorizeDocumentUploadSession)` |
+| M011 | 例外 | `403` | Forbidden | `purpose` が `"benchmarkSeed"` と等しい | `apps/api/src/routes/document-routes.ts:129 (authorizeDocumentUploadSession)` |
+| M012 | 例外 | `403` | Forbidden | 当該処理へ到達した場合 | `apps/api/src/routes/document-routes.ts:132 (authorizeDocumentUploadSession)` |
+| M013 | HTTP 実装応答 | `400` | Local upload content endpoint is disabled when S3 upload URLs are available | `deps.objectStore.createUploadUrl` が存在し、真である | `apps/api/src/routes/document-routes.ts:1079 (POST /documents/uploads/{uploadId}/content handler)` |
+| M014 | HTTP 実装応答 | `400` | `Uploaded object exceeds ${config.documentUploadMaxBytes} bytes` | `uploaded.length` が `config.documentUploadMaxBytes` より大きい | `apps/api/src/routes/document-routes.ts:1083 (POST /documents/uploads/{uploadId}/content handler)` |
 
 ## 読み方
 

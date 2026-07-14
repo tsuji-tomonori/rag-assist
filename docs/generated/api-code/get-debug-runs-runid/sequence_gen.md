@@ -21,7 +21,6 @@ sequenceDiagram
   API->>Service: service の get debug run 処理を呼び出す。
   Service->>Store: this.deps.objectStore に対して list keys を実行する。
   Service->>Store: this.deps.objectStore に対して get text を実行する。
-  API-->>Client: HTTP 404 で JSON response を返す。
   API-->>Client: HTTP 200 で JSON response を返す。
 ```
 
@@ -29,19 +28,19 @@ sequenceDiagram
 
 | # | Caller | 境界 | 処理 | コード | 実装位置 |
 | ---: | --- | --- | --- | --- | --- |
-| 1 | `GET /debug-runs/{runId} handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/debug-routes.ts:63 (GET /debug-runs/{runId} handler)` |
-| 2 | `GET /debug-runs/{runId} handler` | Auth | "chat:admin:read_all" permission を必須条件として確認する。 | `requirePermission(c.get("user"), "chat:admin:read_all")` | `apps/api/src/routes/debug-routes.ts:63 (GET /debug-runs/{runId} handler)` |
-| 3 | `GET /debug-runs/{runId} handler` | Validation | schema 検証済みの path parameter を取得する。 | `validParam<{ runId: string }>(c)` | `apps/api/src/routes/debug-routes.ts:64 (GET /debug-runs/{runId} handler)` |
-| 4 | `GET /debug-runs/{runId} handler` | Service | service の get debug run 処理を呼び出す。 | `service.getDebugRun(runId)` | `apps/api/src/routes/debug-routes.ts:65 (GET /debug-runs/{runId} handler)` |
-| 5 | `MemoRagService.getDebugRun` | Store | `this.deps.objectStore` に対して list keys を実行する。 | `this.deps.objectStore.listKeys("debug-runs/")` | `apps/api/src/rag/memorag-service.ts:1045 (MemoRagService.getDebugRun)` |
-| 6 | `MemoRagService.getDebugRun` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(key)` | `apps/api/src/rag/memorag-service.ts:1048 (MemoRagService.getDebugRun)` |
-| 7 | `GET /debug-runs/{runId} handler` | HTTP/SSE | HTTP 404 で JSON response を返す。 | `c.json({ error: "Debug run not found" }, 404)` | `apps/api/src/routes/debug-routes.ts:66 (GET /debug-runs/{runId} handler)` |
-| 8 | `GET /debug-runs/{runId} handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json(trace, 200)` | `apps/api/src/routes/debug-routes.ts:67 (GET /debug-runs/{runId} handler)` |
+| 1 | `GET /debug-runs/{runId} handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/debug-routes.ts:65 (GET /debug-runs/{runId} handler)` |
+| 2 | `GET /debug-runs/{runId} handler` | Auth | "chat:admin:read_all" permission を必須条件として確認する。 | `requirePermission(user, "chat:admin:read_all")` | `apps/api/src/routes/debug-routes.ts:66 (GET /debug-runs/{runId} handler)` |
+| 3 | `GET /debug-runs/{runId} handler` | Validation | schema 検証済みの path parameter を取得する。 | `validParam<{ runId: string }>(c)` | `apps/api/src/routes/debug-routes.ts:67 (GET /debug-runs/{runId} handler)` |
+| 4 | `GET /debug-runs/{runId} handler` | Service | service の get debug run 処理を呼び出す。 | `service.getDebugRun(runId, user)` | `apps/api/src/routes/debug-routes.ts:69 (GET /debug-runs/{runId} handler)` |
+| 5 | `MemoRagService.getDebugRun` | Store | `this.deps.objectStore` に対して list keys を実行する。 | `this.deps.objectStore.listKeys(prefix)` | `apps/api/src/rag/memorag-service.ts:1808 (MemoRagService.getDebugRun)` |
+| 6 | `MemoRagService.getDebugRun` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(key)` | `apps/api/src/rag/memorag-service.ts:1811 (MemoRagService.getDebugRun)` |
+| 7 | `GET /debug-runs/{runId} handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json(trace, 200)` | `apps/api/src/routes/debug-routes.ts:74 (GET /debug-runs/{runId} handler)` |
 
 ## 分岐
 
 | ID | Function | 条件 | 実装位置 |
 | --- | --- | --- | --- |
-| B001 | `GET /debug-runs/{runId} handler` | `trace` が存在しない、または偽である | `apps/api/src/routes/debug-routes.ts:66 (GET /debug-runs/{runId} handler)` |
-| B002 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:267 (requirePermission)` |
-| B003 | `MemoRagService.getDebugRun` | `key` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1047 (MemoRagService.getDebugRun)` |
+| B001 | `GET /debug-runs/{runId} handler` | `trace` が存在しない、または偽である | `apps/api/src/routes/debug-routes.ts:70 (GET /debug-runs/{runId} handler)` |
+| B002 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| B003 | `MemoRagService.getDebugRun` | `key` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1810 (MemoRagService.getDebugRun)` |
+| B004 | `settleNonEnumerationTiming` | `remaining` が `0` より大きい | `apps/api/src/security/public-resource-response.ts:42 (settleNonEnumerationTiming)` |

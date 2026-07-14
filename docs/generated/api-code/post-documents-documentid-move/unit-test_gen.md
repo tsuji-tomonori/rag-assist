@@ -6,59 +6,47 @@
 
 次の関連付けは test body 内の request path または到達 symbol 参照を静的に照合した結果です。assertion の完全充足を意味しません。
 
-_静的に直接対応を確認できた test case はありません。`unit-test_gen.md` のコード由来ケースは未実装テスト候補として扱います。_
+| 関連 | Test case | 実装位置 |
+| --- | --- | --- |
+| 到達 symbol | move requires current full permission on every source folder and the destination | `apps/api/src/documents/document-lifecycle-mutation-coordinator.test.ts:30 (move requires current full permission on every source folder and the destination)` |
+| 到達 symbol | missing document move and stale version attempts persist completed denial/conflict audits | `apps/api/src/documents/document-lifecycle-mutation-coordinator.test.ts:46 (missing document move and stale version attempts persist completed denial/conflict audits)` |
+| 到達 symbol | move audit persistence failure prevents projection and manifest mutation | `apps/api/src/documents/document-lifecycle-mutation-coordinator.test.ts:73 (move audit persistence failure prevents projection and manifest mutation)` |
+| 到達 symbol | move operation guard honors an ordinary source-folder deny over a group full allow | `apps/api/src/documents/document-lifecycle-mutation-coordinator.test.ts:96 (move operation guard honors an ordinary source-folder deny over a group full allow)` |
+| 到達 symbol | move stages projections, commits the manifest with CAS, and preserves direct grants | `apps/api/src/documents/document-lifecycle-mutation-coordinator.test.ts:143 (move stages projections, commits the manifest with CAS, and preserves direct grants)` |
+| 到達 symbol | move retry converges a manifest-committed partial projection failure to the new state | `apps/api/src/documents/document-lifecycle-mutation-coordinator.test.ts:175 (move retry converges a manifest-committed partial projection failure to the new state)` |
+| 到達 symbol | move reauthorizes immediately before manifest commit and rolls projections back when source access is revoked | `apps/api/src/documents/document-lifecycle-mutation-coordinator.test.ts:205 (move reauthorizes immediately before manifest commit and rolls projections back when source access is revoked)` |
+| 到達 symbol | concurrent moves serialize on the durable document intent and leave one coherent winner | `apps/api/src/documents/document-lifecycle-mutation-coordinator.test.ts:235 (concurrent moves serialize on the durable document intent and leave one coherent winner)` |
 
 ## 2. 実装分岐から導くテスト要因
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `POST /documents/{documentId}/move handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:415 (POST /documents/{documentId}/move handler)` |
-| F002 | `POST /documents/{documentId}/move handler` | if | `err` が `Error` の instance である、かつ `err.message` が "required" を含む | `apps/api/src/routes/document-routes.ts:416 (POST /documents/{documentId}/move handler)` |
-| F003 | `POST /documents/{documentId}/move handler` | if | is forbidden error の判定結果が真である | `apps/api/src/routes/document-routes.ts:417 (POST /documents/{documentId}/move handler)` |
-| F004 | `POST /documents/{documentId}/move handler` | if | `err` が `Error` の instance である、かつ `err.message` が "Destination folder not found" を含む、または `err.message` が "ENOENT" を含む、または `err.message` が "NoSuchKey" を含む | `apps/api/src/routes/document-routes.ts:418 (POST /documents/{documentId}/move handler)` |
-| F005 | `POST /documents/{documentId}/move handler` | if | `err` が `Error` の instance である、かつ `err.message` が "changed before move" を含む、または `err.message` が "same file name" を含む | `apps/api/src/routes/document-routes.ts:419 (POST /documents/{documentId}/move handler)` |
-| F006 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:267 (requirePermission)` |
-| F007 | `MemoRagService.moveDocument` | if | `input.expectedUpdatedAt` が存在し、真である、かつ `input.expectedUpdatedAt` が `currentUpdatedAt` と異なる | `apps/api/src/rag/memorag-service.ts:599 (MemoRagService.moveDocument)` |
-| F008 | `MemoRagService.moveDocument` | if | `destination` が存在しない、または偽である、または `destination.status` が `"archived"` と等しい | `apps/api/src/rag/memorag-service.ts:605 (MemoRagService.moveDocument)` |
-| F009 | `MemoRagService.moveDocument` | if | can move document の判定結果が真ではない | `apps/api/src/rag/memorag-service.ts:609 (MemoRagService.moveDocument)` |
-| F010 | `MemoRagService.moveDocument` | if | `candidate.documentId` が `manifest.documentId` と等しい | `apps/api/src/rag/memorag-service.ts:614 (MemoRagService.moveDocument)` |
-| F011 | `MemoRagService.moveDocument` | if | `candidate.fileName` が `nextFileName` と異なる | `apps/api/src/rag/memorag-service.ts:615 (MemoRagService.moveDocument)` |
-| F012 | `MemoRagService.moveDocument` | if | `siblingConflict` が存在し、真である | `apps/api/src/rag/memorag-service.ts:618 (MemoRagService.moveDocument)` |
+| F001 | `POST /documents/{documentId}/move handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:957 (POST /documents/{documentId}/move handler)` |
+| F002 | `POST /documents/{documentId}/move handler` | if | `err` が `Error` の instance である、かつ `err.message` が "required" を含む | `apps/api/src/routes/document-routes.ts:958 (POST /documents/{documentId}/move handler)` |
+| F003 | `POST /documents/{documentId}/move handler` | if | is forbidden error の判定結果が真である | `apps/api/src/routes/document-routes.ts:959 (POST /documents/{documentId}/move handler)` |
+| F004 | `POST /documents/{documentId}/move handler` | if | `err` が `Error` の instance である、かつ `err.message` が "Destination folder not found" を含む、または `err.message` が "ENOENT" を含む、または `err.message` が "NoSuchKey" を含む | `apps/api/src/routes/document-routes.ts:960 (POST /documents/{documentId}/move handler)` |
+| F005 | `POST /documents/{documentId}/move handler` | if | `err` が `DocumentMutationConflictError` の instance である、または `err` が `Error` の instance である、かつ `err.message` が "changed before move" を含む、または `err.message` が "same file name" を含む | `apps/api/src/routes/document-routes.ts:961 (POST /documents/{documentId}/move handler)` |
 
 ## 3. コード由来テストケース
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | 文書を別フォルダへ移動する が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:408 (POST /documents/{documentId}/move handler)` |
-| TC002 | F001: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/document-routes.ts:415 (POST /documents/{documentId}/move handler)` |
-| TC003 | F002: 条件成立 | `err` が `Error` の instance である、かつ `err.message` が "required" を含む 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:416 (POST /documents/{documentId}/move handler)` |
-| TC004 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:416 (POST /documents/{documentId}/move handler)` |
-| TC005 | F003: 条件成立 | is forbidden error の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:417 (POST /documents/{documentId}/move handler)` |
-| TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:417 (POST /documents/{documentId}/move handler)` |
-| TC007 | F004: 条件成立 | `err` が `Error` の instance である、かつ `err.message` が "Destination folder not found" を含む、または `err.message` が "ENOENT" を含む、または `err.message` が "NoSuchKey" を含む 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:418 (POST /documents/{documentId}/move handler)` |
-| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:418 (POST /documents/{documentId}/move handler)` |
-| TC009 | F005: 条件成立 | `err` が `Error` の instance である、かつ `err.message` が "changed before move" を含む、または `err.message` が "same file name" を含む 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:419 (POST /documents/{documentId}/move handler)` |
-| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:419 (POST /documents/{documentId}/move handler)` |
-| TC011 | F006: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:267 (requirePermission)` |
-| TC012 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:267 (requirePermission)` |
-| TC013 | F007: 条件成立 | `input.expectedUpdatedAt` が存在し、真である、かつ `input.expectedUpdatedAt` が `currentUpdatedAt` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:599 (MemoRagService.moveDocument)` |
-| TC014 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:599 (MemoRagService.moveDocument)` |
-| TC015 | F008: 条件成立 | `destination` が存在しない、または偽である、または `destination.status` が `"archived"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:605 (MemoRagService.moveDocument)` |
-| TC016 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:605 (MemoRagService.moveDocument)` |
-| TC017 | F009: 条件成立 | can move document の判定結果が真ではない 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:609 (MemoRagService.moveDocument)` |
-| TC018 | F009: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:609 (MemoRagService.moveDocument)` |
-| TC019 | F010: 条件成立 | `candidate.documentId` が `manifest.documentId` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:614 (MemoRagService.moveDocument)` |
-| TC020 | F010: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:614 (MemoRagService.moveDocument)` |
-| TC021 | F011: 条件成立 | `candidate.fileName` が `nextFileName` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:615 (MemoRagService.moveDocument)` |
-| TC022 | F011: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:615 (MemoRagService.moveDocument)` |
-| TC023 | F012: 条件成立 | `siblingConflict` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:618 (MemoRagService.moveDocument)` |
-| TC024 | F012: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:618 (MemoRagService.moveDocument)` |
-| TC025 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
-| TC026 | HTTP 400 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
-| TC027 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
-| TC028 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
-| TC029 | HTTP 404 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
-| TC030 | HTTP 409 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC001 | 正常系 | 文書を別フォルダへ移動する が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:950 (POST /documents/{documentId}/move handler)` |
+| TC002 | F001: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/document-routes.ts:957 (POST /documents/{documentId}/move handler)` |
+| TC003 | F002: 条件成立 | `err` が `Error` の instance である、かつ `err.message` が "required" を含む 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:958 (POST /documents/{documentId}/move handler)` |
+| TC004 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:958 (POST /documents/{documentId}/move handler)` |
+| TC005 | F003: 条件成立 | is forbidden error の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:959 (POST /documents/{documentId}/move handler)` |
+| TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:959 (POST /documents/{documentId}/move handler)` |
+| TC007 | F004: 条件成立 | `err` が `Error` の instance である、かつ `err.message` が "Destination folder not found" を含む、または `err.message` が "ENOENT" を含む、または `err.message` が "NoSuchKey" を含む 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:960 (POST /documents/{documentId}/move handler)` |
+| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:960 (POST /documents/{documentId}/move handler)` |
+| TC009 | F005: 条件成立 | `err` が `DocumentMutationConflictError` の instance である、または `err` が `Error` の instance である、かつ `err.message` が "changed before move" を含む、または `err.message` が "same file name" を含む 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:961 (POST /documents/{documentId}/move handler)` |
+| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:961 (POST /documents/{documentId}/move handler)` |
+| TC011 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC012 | HTTP 400 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC013 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC014 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC015 | HTTP 404 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC016 | HTTP 409 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 
 ## 4. 検証方針
 

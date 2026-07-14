@@ -34,28 +34,28 @@ sequenceDiagram
 
 | # | Caller | 境界 | 処理 | コード | 実装位置 |
 | ---: | --- | --- | --- | --- | --- |
-| 1 | `POST /admin/aliases/{aliasId}/update handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/admin-routes.ts:287 (POST /admin/aliases/{aliasId}/update handler)` |
-| 2 | `POST /admin/aliases/{aliasId}/update handler` | Auth | "rag:alias:write:group" permission を必須条件として確認する。 | `requirePermission(user, "rag:alias:write:group")` | `apps/api/src/routes/admin-routes.ts:288 (POST /admin/aliases/{aliasId}/update handler)` |
-| 3 | `POST /admin/aliases/{aliasId}/update handler` | Validation | schema 検証済みの path parameter を取得する。 | `validParam<{ aliasId: string }>(c)` | `apps/api/src/routes/admin-routes.ts:289 (POST /admin/aliases/{aliasId}/update handler)` |
-| 4 | `POST /admin/aliases/{aliasId}/update handler` | Validation | schema 検証済みの JSON request body を取得する。 | `validJson<z.infer<typeof UpdateAliasRequestSchema>>(c)` | `apps/api/src/routes/admin-routes.ts:290 (POST /admin/aliases/{aliasId}/update handler)` |
-| 5 | `POST /admin/aliases/{aliasId}/update handler` | Service | service の update alias 処理を呼び出す。 | `service.updateAlias(user, aliasId, body)` | `apps/api/src/routes/admin-routes.ts:291 (POST /admin/aliases/{aliasId}/update handler)` |
-| 6 | `MemoRagService.updateAlias` | Store | `this` に対して load alias ledger を実行する。 | `this.loadAliasLedger()` | `apps/api/src/rag/memorag-service.ts:779 (MemoRagService.updateAlias)` |
-| 7 | `MemoRagService.loadAliasLedger` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(aliasLedgerKey)` | `apps/api/src/rag/memorag-service.ts:1603 (MemoRagService.loadAliasLedger)` |
-| 8 | `MemoRagService.updateAlias` | Store | `ledger.aliases` に対して find を実行する。 | `ledger.aliases.find((candidate) => candidate.aliasId === aliasId)` | `apps/api/src/rag/memorag-service.ts:780 (MemoRagService.updateAlias)` |
-| 9 | `appendAliasAudit` | Store | `ledger.auditLog` に対して push を実行する。 | `ledger.auditLog.push({ auditId: \`audit_${randomUUID().slice(0, 12)}\`, aliasId, action, actorUserId: actor.userId, createdAt: new Date().toISOString(), detail })` | `apps/api/src/rag/memorag-service.ts:2815 (appendAliasAudit)` |
-| 10 | `MemoRagService.updateAlias` | Store | `this` に対して save alias ledger を実行する。 | `this.saveAliasLedger(ledger)` | `apps/api/src/rag/memorag-service.ts:792 (MemoRagService.updateAlias)` |
-| 11 | `MemoRagService.saveAliasLedger` | Store | `this.deps.objectStore` に対して put text を実行する。 | `this.deps.objectStore.putText(aliasLedgerKey, JSON.stringify(ledger, null, 2), "application/json")` | `apps/api/src/rag/memorag-service.ts:1616 (MemoRagService.saveAliasLedger)` |
-| 12 | `POST /admin/aliases/{aliasId}/update handler` | HTTP/SSE | HTTP 404 で JSON response を返す。 | `c.json({ error: "Alias not found" }, 404)` | `apps/api/src/routes/admin-routes.ts:292 (POST /admin/aliases/{aliasId}/update handler)` |
-| 13 | `POST /admin/aliases/{aliasId}/update handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json(alias, 200)` | `apps/api/src/routes/admin-routes.ts:293 (POST /admin/aliases/{aliasId}/update handler)` |
+| 1 | `POST /admin/aliases/{aliasId}/update handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/admin-routes.ts:379 (POST /admin/aliases/{aliasId}/update handler)` |
+| 2 | `POST /admin/aliases/{aliasId}/update handler` | Auth | "rag:alias:write:group" permission を必須条件として確認する。 | `requirePermission(user, "rag:alias:write:group")` | `apps/api/src/routes/admin-routes.ts:380 (POST /admin/aliases/{aliasId}/update handler)` |
+| 3 | `POST /admin/aliases/{aliasId}/update handler` | Validation | schema 検証済みの path parameter を取得する。 | `validParam<{ aliasId: string }>(c)` | `apps/api/src/routes/admin-routes.ts:381 (POST /admin/aliases/{aliasId}/update handler)` |
+| 4 | `POST /admin/aliases/{aliasId}/update handler` | Validation | schema 検証済みの JSON request body を取得する。 | `validJson<z.infer<typeof UpdateAliasRequestSchema>>(c)` | `apps/api/src/routes/admin-routes.ts:382 (POST /admin/aliases/{aliasId}/update handler)` |
+| 5 | `POST /admin/aliases/{aliasId}/update handler` | Service | service の update alias 処理を呼び出す。 | `service.updateAlias(user, aliasId, body)` | `apps/api/src/routes/admin-routes.ts:383 (POST /admin/aliases/{aliasId}/update handler)` |
+| 6 | `MemoRagService.updateAlias` | Store | `this` に対して load alias ledger を実行する。 | `this.loadAliasLedger()` | `apps/api/src/rag/memorag-service.ts:1246 (MemoRagService.updateAlias)` |
+| 7 | `MemoRagService.loadAliasLedger` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(aliasLedgerKey)` | `apps/api/src/rag/memorag-service.ts:2979 (MemoRagService.loadAliasLedger)` |
+| 8 | `MemoRagService.updateAlias` | Store | `ledger.aliases` に対して find を実行する。 | `ledger.aliases.find((candidate) => candidate.aliasId === aliasId)` | `apps/api/src/rag/memorag-service.ts:1247 (MemoRagService.updateAlias)` |
+| 9 | `appendAliasAudit` | Store | `ledger.auditLog` に対して push を実行する。 | `ledger.auditLog.push({ auditId: \`audit_${randomUUID().slice(0, 12)}\`, aliasId, action, actorUserId: actor.userId, createdAt: new Date().toISOString(), detail })` | `apps/api/src/rag/memorag-service.ts:5060 (appendAliasAudit)` |
+| 10 | `MemoRagService.updateAlias` | Store | `this` に対して save alias ledger を実行する。 | `this.saveAliasLedger(ledger)` | `apps/api/src/rag/memorag-service.ts:1259 (MemoRagService.updateAlias)` |
+| 11 | `MemoRagService.saveAliasLedger` | Store | `this.deps.objectStore` に対して put text を実行する。 | `this.deps.objectStore.putText(aliasLedgerKey, JSON.stringify(ledger, null, 2), "application/json")` | `apps/api/src/rag/memorag-service.ts:2992 (MemoRagService.saveAliasLedger)` |
+| 12 | `POST /admin/aliases/{aliasId}/update handler` | HTTP/SSE | HTTP 404 で JSON response を返す。 | `c.json({ error: "Alias not found" }, 404)` | `apps/api/src/routes/admin-routes.ts:384 (POST /admin/aliases/{aliasId}/update handler)` |
+| 13 | `POST /admin/aliases/{aliasId}/update handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json(alias, 200)` | `apps/api/src/routes/admin-routes.ts:385 (POST /admin/aliases/{aliasId}/update handler)` |
 
 ## 分岐
 
 | ID | Function | 条件 | 実装位置 |
 | --- | --- | --- | --- |
-| B001 | `POST /admin/aliases/{aliasId}/update handler` | `alias` が存在しない、または偽である | `apps/api/src/routes/admin-routes.ts:292 (POST /admin/aliases/{aliasId}/update handler)` |
-| B002 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:267 (requirePermission)` |
-| B003 | `MemoRagService.updateAlias` | `alias` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:781 (MemoRagService.updateAlias)` |
-| B004 | `MemoRagService.updateAlias` | `input.term` が `undefined` と異なる | `apps/api/src/rag/memorag-service.ts:782 (MemoRagService.updateAlias)` |
-| B005 | `MemoRagService.updateAlias` | `input.expansions` が `undefined` と異なる | `apps/api/src/rag/memorag-service.ts:783 (MemoRagService.updateAlias)` |
-| B006 | `MemoRagService.updateAlias` | `input.scope` が `undefined` と異なる | `apps/api/src/rag/memorag-service.ts:784 (MemoRagService.updateAlias)` |
-| B007 | `MemoRagService.updateAlias` | `alias.status` が `"disabled"` と等しい | `apps/api/src/rag/memorag-service.ts:785 (MemoRagService.updateAlias)` |
+| B001 | `POST /admin/aliases/{aliasId}/update handler` | `alias` が存在しない、または偽である | `apps/api/src/routes/admin-routes.ts:384 (POST /admin/aliases/{aliasId}/update handler)` |
+| B002 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| B003 | `MemoRagService.updateAlias` | `alias` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1248 (MemoRagService.updateAlias)` |
+| B004 | `MemoRagService.updateAlias` | `input.term` が `undefined` と異なる | `apps/api/src/rag/memorag-service.ts:1249 (MemoRagService.updateAlias)` |
+| B005 | `MemoRagService.updateAlias` | `input.expansions` が `undefined` と異なる | `apps/api/src/rag/memorag-service.ts:1250 (MemoRagService.updateAlias)` |
+| B006 | `MemoRagService.updateAlias` | `input.scope` が `undefined` と異なる | `apps/api/src/rag/memorag-service.ts:1251 (MemoRagService.updateAlias)` |
+| B007 | `MemoRagService.updateAlias` | `alias.status` が `"disabled"` と等しい | `apps/api/src/rag/memorag-service.ts:1252 (MemoRagService.updateAlias)` |

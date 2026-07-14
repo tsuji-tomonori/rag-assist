@@ -21,7 +21,7 @@ export function registerConversationHistoryRoutes({ app, service }: ApiRouteCont
     async (c) => {
       const user = c.get("user")
       requirePermission(user, "chat:read:own")
-      const history = (await service.listConversationHistory(user.userId)).map((item) => ConversationHistoryItemSchema.parse(item))
+      const history = (await service.listConversationHistory(user)).map((item) => ConversationHistoryItemSchema.parse(item))
       return c.json({ history }, 200)
     }
   )
@@ -47,7 +47,7 @@ export function registerConversationHistoryRoutes({ app, service }: ApiRouteCont
       const user = c.get("user")
       requirePermission(user, "chat:create")
       const body = validJson<z.infer<typeof ConversationHistoryItemSchema>>(c)
-      return c.json(ConversationHistoryItemSchema.parse(await service.saveConversationHistory(user.userId, body)), 200)
+      return c.json(ConversationHistoryItemSchema.parse(await service.saveConversationHistory(user, body)), 200)
     }
   )
 
@@ -68,7 +68,7 @@ export function registerConversationHistoryRoutes({ app, service }: ApiRouteCont
       const user = c.get("user")
       requirePermission(user, "chat:delete:own")
       const { id } = validParam<{ id: string }>(c)
-      await service.deleteConversationHistory(user.userId, id)
+      await service.deleteConversationHistory(user, id)
       return c.json({ id }, 200)
     }
   )

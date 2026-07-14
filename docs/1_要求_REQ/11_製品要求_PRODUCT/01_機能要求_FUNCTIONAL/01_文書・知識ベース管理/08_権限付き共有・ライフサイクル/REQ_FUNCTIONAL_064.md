@@ -67,7 +67,7 @@
 | 検証可能性 | OK | owner↔CHAT_USER の direct/folder share Web E2E で確認できる |
 | ニーズ適合 | OK | 一般利用者が管理権限なしで許可資料を RAG の根拠として利用できる |
 | 原子性 | OK | read-only resource 利用導線を規定する |
-| 実装適合 | NG | `usePermissions.ts:39-49`, `AppRoutes.tsx:43-50` |
+| 実装適合 | OK（confirmed） | authorized reader summary/download/chat scope と server capability gating を API/Web に接続し、`DocumentWorkspace.test.tsx` が read-only 発見・閲覧・管理操作非表示を検証する |
 | 合意 | pending | download 可否と summary allowlist を承認する |
 
 ## トレース

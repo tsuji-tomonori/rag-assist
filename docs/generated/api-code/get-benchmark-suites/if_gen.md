@@ -2,7 +2,7 @@
 
 # GET /benchmark-suites IF仕様
 
-- 実装 route: `apps/api/src/routes/benchmark-routes.ts:92 (GET /benchmark-suites)`
+- 実装 route: `apps/api/src/routes/benchmark-routes.ts:94 (GET /benchmark-suites)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: ベンチマーク suite 一覧を取得する

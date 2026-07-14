@@ -9,7 +9,8 @@ export function usePermissions(currentUser: CurrentUser | null) {
     const canWriteDocuments = hasPermission("rag:doc:write:group")
     const canDeleteDocuments = hasPermission("rag:doc:delete:group")
     const canCreateDocumentGroups = hasPermission("rag:group:create")
-    const canShareDocumentGroups = hasPermission("rag:group:assign_manager")
+    const canShareDocumentGroups = hasPermission("folder.share")
+    const canMoveDocumentGroups = hasPermission("folder.move")
     const canReindexDocuments = hasPermission("rag:index:rebuild:group")
     const canReadAliases = hasPermission("rag:alias:read")
     const canWriteAliases = hasPermission("rag:alias:write:group")
@@ -41,6 +42,7 @@ export function usePermissions(currentUser: CurrentUser | null) {
       canDeleteDocuments ||
       canCreateDocumentGroups ||
       canShareDocumentGroups ||
+      canMoveDocumentGroups ||
       canReindexDocuments
     const canManageAliases = canReadAliases || canWriteAliases || canReviewAliases || canDisableAliases || canPublishAliases
     const canManageUsers = canReadUsers || canCreateUsers || canAssignRoles || canSuspendUsers || canUnsuspendUsers || canDeleteUsers
@@ -55,6 +57,7 @@ export function usePermissions(currentUser: CurrentUser | null) {
       canDeleteDocuments,
       canCreateDocumentGroups,
       canShareDocumentGroups,
+      canMoveDocumentGroups,
       canReindexDocuments,
       canReadAliases,
       canWriteAliases,

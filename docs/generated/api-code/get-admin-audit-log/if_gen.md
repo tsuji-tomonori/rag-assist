@@ -2,7 +2,7 @@
 
 # GET /admin/audit-log IF仕様
 
-- 実装 route: `apps/api/src/routes/admin-routes.ts:75 (GET /admin/audit-log)`
+- 実装 route: `apps/api/src/routes/admin-routes.ts:158 (GET /admin/audit-log)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 管理操作履歴を取得する

@@ -8,51 +8,78 @@
 
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
-| 到達 symbol | service ingests text, lists manifests, persists debug traces, and deletes all document vectors | `apps/api/src/rag/memorag-service.test.ts:36 (service ingests text, lists manifests, persists debug traces, and deletes all document vectors)` |
-| 到達 symbol | service rejects empty uploads and missing documents | `apps/api/src/rag/memorag-service.test.ts:86 (service rejects empty uploads and missing documents)` |
+| 到達 symbol | delete writes the authoritative deny tombstone before cleanup and retry completes idempotently | `apps/api/src/documents/document-lifecycle-mutation-coordinator.test.ts:259 (delete writes the authoritative deny tombstone before cleanup and retry completes idempotently)` |
+| 到達 symbol | delete denial persists a completed common audit and leaves every protected projection unchanged | `apps/api/src/documents/document-lifecycle-mutation-coordinator.test.ts:312 (delete denial persists a completed common audit and leaves every protected projection unchanged)` |
+| 到達 symbol | delete stale version persists conflict audit and does not create a tombstone | `apps/api/src/documents/document-lifecycle-mutation-coordinator.test.ts:340 (delete stale version persists conflict audit and does not create a tombstone)` |
+| 到達 symbol | delete audit persistence failure prevents tombstone and projection cleanup | `apps/api/src/documents/document-lifecycle-mutation-coordinator.test.ts:359 (delete audit persistence failure prevents tombstone and projection cleanup)` |
+| 到達 symbol | benchmark deletion authorizes through its resource subject but attributes audit and tombstone to the verified runner | `apps/api/src/documents/document-lifecycle-mutation-coordinator.test.ts:378 (benchmark deletion authorizes through its resource subject but attributes audit and tombstone to the verified runner)` |
+| 到達 symbol | service ingests text, lists manifests, persists debug traces, and deletes all document vectors | `apps/api/src/rag/memorag-service.test.ts:47 (service ingests text, lists manifests, persists debug traces, and deletes all document vectors)` |
+| 到達 symbol | service rejects empty uploads and missing documents | `apps/api/src/rag/memorag-service.test.ts:127 (service rejects empty uploads and missing documents)` |
 
 ## 2. 実装分岐から導くテスト要因
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `DELETE /documents/{documentId} handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:871 (DELETE /documents/{documentId} handler)` |
-| F002 | `DELETE /documents/{documentId} handler` | 三項条件 | `err` が `Error` の instance である | `apps/api/src/routes/document-routes.ts:872 (DELETE /documents/{documentId} handler)` |
-| F003 | `DELETE /documents/{documentId} handler` | if | `message` が "ENOENT" を含む、または `message` が "NoSuchKey" を含む、または `message` が "NotFound" を含む | `apps/api/src/routes/document-routes.ts:873 (DELETE /documents/{documentId} handler)` |
-| F004 | `authorizeDocumentDelete` | if | 利用者が "rag:doc:delete:group" permission を持つ | `apps/api/src/routes/benchmark-seed.ts:395 (authorizeDocumentDelete)` |
-| F005 | `authorizeDocumentDelete` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/benchmark-seed.ts:399 (authorizeDocumentDelete)` |
-| F006 | `authorizeDocumentDelete` | if | `err` が `Error` の instance である、かつ starts with の判定結果が真である | `apps/api/src/routes/benchmark-seed.ts:400 (authorizeDocumentDelete)` |
-| F007 | `authorizeDocumentDelete` | if | 利用者が "benchmark:seed_corpus" permission を持たない | `apps/api/src/routes/benchmark-seed.ts:406 (authorizeDocumentDelete)` |
-| F008 | `authorizeDocumentDelete` | if | is benchmark seed document manifest の判定結果が真ではない | `apps/api/src/routes/benchmark-seed.ts:410 (authorizeDocumentDelete)` |
-| F009 | `MemoRagService.deleteDocument` | if | `manifest.structuredBlocksObjectKey` が存在し、真である | `apps/api/src/rag/memorag-service.ts:708 (MemoRagService.deleteDocument)` |
-| F010 | `MemoRagService.deleteDocument` | if | `manifest.memoryCardsObjectKey` が存在し、真である | `apps/api/src/rag/memorag-service.ts:709 (MemoRagService.deleteDocument)` |
+| F001 | `DELETE /documents/{documentId} handler` | if | 利用者が "rag:doc:delete:group" permission を持たない | `apps/api/src/routes/document-routes.ts:1598 (DELETE /documents/{documentId} handler)` |
+| F002 | `DELETE /documents/{documentId} handler` | if | `tenantId` が存在しない、または偽である、または `ownerUserId` が存在しない、または偽である | `apps/api/src/routes/document-routes.ts:1602 (DELETE /documents/{documentId} handler)` |
+| F003 | `DELETE /documents/{documentId} handler` | 三項条件 | `auditActorId` が存在し、真である | `apps/api/src/routes/document-routes.ts:1612 (DELETE /documents/{documentId} handler)` |
+| F004 | `DELETE /documents/{documentId} handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:1614 (DELETE /documents/{documentId} handler)` |
+| F005 | `DELETE /documents/{documentId} handler` | 三項条件 | `err` が `Error` の instance である | `apps/api/src/routes/document-routes.ts:1615 (DELETE /documents/{documentId} handler)` |
+| F006 | `DELETE /documents/{documentId} handler` | if | is forbidden error の判定結果が真である、または `err` が `HTTPException` の instance である、かつ `err.status` が `403` と等しい | `apps/api/src/routes/document-routes.ts:1616 (DELETE /documents/{documentId} handler)` |
+| F007 | `DELETE /documents/{documentId} handler` | if | `message` が "ENOENT" を含む、または `message` が "NoSuchKey" を含む、または `message` が "NotFound" を含む | `apps/api/src/routes/document-routes.ts:1617 (DELETE /documents/{documentId} handler)` |
+| F008 | `DELETE /documents/{documentId} handler` | if | `err` が `DocumentMutationConflictError` の instance である | `apps/api/src/routes/document-routes.ts:1618 (DELETE /documents/{documentId} handler)` |
+| F009 | `authorizeDocumentDelete` | if | 利用者が "rag:doc:delete:group" permission を持つ | `apps/api/src/routes/benchmark-seed.ts:398 (authorizeDocumentDelete)` |
+| F010 | `authorizeDocumentDelete` | if | is document deletion tombstone の判定結果が真である | `apps/api/src/routes/benchmark-seed.ts:399 (authorizeDocumentDelete)` |
+| F011 | `authorizeDocumentDelete` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/benchmark-seed.ts:403 (authorizeDocumentDelete)` |
+| F012 | `authorizeDocumentDelete` | if | `err` が `Error` の instance である、かつ starts with の判定結果が真である | `apps/api/src/routes/benchmark-seed.ts:404 (authorizeDocumentDelete)` |
+| F013 | `authorizeDocumentDelete` | if | 利用者が "benchmark:seed_corpus" permission を持たない | `apps/api/src/routes/benchmark-seed.ts:410 (authorizeDocumentDelete)` |
+| F014 | `authorizeDocumentDelete` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/benchmark-seed.ts:416 (authorizeDocumentDelete)` |
+| F015 | `authorizeDocumentDelete` | if | is benchmark seed document manifest の判定結果が真ではない、かつ 「`deletionRetry` が存在し、真である、かつ is benchmark seed document identity の判定結果が真である」ではない | `apps/api/src/routes/benchmark-seed.ts:420 (authorizeDocumentDelete)` |
+| F016 | `MemoRagService.getBenchmarkDocumentManifest` | if | `tenantId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:800 (MemoRagService.getBenchmarkDocumentManifest)` |
+| F017 | `stringValue` | 三項条件 | `typeof value` が `"string"` と等しい | `apps/api/src/routes/document-routes.ts:450 (stringValue)` |
 
 ## 3. コード由来テストケース
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | 文書を削除する が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:865 (DELETE /documents/{documentId} handler)` |
-| TC002 | F001: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/document-routes.ts:871 (DELETE /documents/{documentId} handler)` |
-| TC003 | F002: 条件成立 | `err` が `Error` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:872 (DELETE /documents/{documentId} handler)` |
-| TC004 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:872 (DELETE /documents/{documentId} handler)` |
-| TC005 | F003: 条件成立 | `message` が "ENOENT" を含む、または `message` が "NoSuchKey" を含む、または `message` が "NotFound" を含む 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:873 (DELETE /documents/{documentId} handler)` |
-| TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:873 (DELETE /documents/{documentId} handler)` |
-| TC007 | F004: 条件成立 | 利用者が "rag:doc:delete:group" permission を持つ 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/benchmark-seed.ts:395 (authorizeDocumentDelete)` |
-| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/benchmark-seed.ts:395 (authorizeDocumentDelete)` |
-| TC009 | F005: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/benchmark-seed.ts:399 (authorizeDocumentDelete)` |
-| TC010 | F006: 条件成立 | `err` が `Error` の instance である、かつ starts with の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/benchmark-seed.ts:400 (authorizeDocumentDelete)` |
-| TC011 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/benchmark-seed.ts:400 (authorizeDocumentDelete)` |
-| TC012 | F007: 条件成立 | 利用者が "benchmark:seed_corpus" permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/benchmark-seed.ts:406 (authorizeDocumentDelete)` |
-| TC013 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/benchmark-seed.ts:406 (authorizeDocumentDelete)` |
-| TC014 | F008: 条件成立 | is benchmark seed document manifest の判定結果が真ではない 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/benchmark-seed.ts:410 (authorizeDocumentDelete)` |
-| TC015 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/benchmark-seed.ts:410 (authorizeDocumentDelete)` |
-| TC016 | F009: 条件成立 | `manifest.structuredBlocksObjectKey` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:708 (MemoRagService.deleteDocument)` |
-| TC017 | F009: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:708 (MemoRagService.deleteDocument)` |
-| TC018 | F010: 条件成立 | `manifest.memoryCardsObjectKey` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:709 (MemoRagService.deleteDocument)` |
-| TC019 | F010: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:709 (MemoRagService.deleteDocument)` |
-| TC020 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
-| TC021 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
-| TC022 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
-| TC023 | HTTP 404 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC001 | 正常系 | 文書を削除する が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:1589 (DELETE /documents/{documentId} handler)` |
+| TC002 | F001: 条件成立 | 利用者が "rag:doc:delete:group" permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1598 (DELETE /documents/{documentId} handler)` |
+| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1598 (DELETE /documents/{documentId} handler)` |
+| TC004 | F002: 条件成立 | `tenantId` が存在しない、または偽である、または `ownerUserId` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1602 (DELETE /documents/{documentId} handler)` |
+| TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1602 (DELETE /documents/{documentId} handler)` |
+| TC006 | F003: 条件成立 | `auditActorId` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1612 (DELETE /documents/{documentId} handler)` |
+| TC007 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1612 (DELETE /documents/{documentId} handler)` |
+| TC008 | F004: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/document-routes.ts:1614 (DELETE /documents/{documentId} handler)` |
+| TC009 | F005: 条件成立 | `err` が `Error` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1615 (DELETE /documents/{documentId} handler)` |
+| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1615 (DELETE /documents/{documentId} handler)` |
+| TC011 | F006: 条件成立 | is forbidden error の判定結果が真である、または `err` が `HTTPException` の instance である、かつ `err.status` が `403` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1616 (DELETE /documents/{documentId} handler)` |
+| TC012 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1616 (DELETE /documents/{documentId} handler)` |
+| TC013 | F007: 条件成立 | `message` が "ENOENT" を含む、または `message` が "NoSuchKey" を含む、または `message` が "NotFound" を含む 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1617 (DELETE /documents/{documentId} handler)` |
+| TC014 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1617 (DELETE /documents/{documentId} handler)` |
+| TC015 | F008: 条件成立 | `err` が `DocumentMutationConflictError` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1618 (DELETE /documents/{documentId} handler)` |
+| TC016 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1618 (DELETE /documents/{documentId} handler)` |
+| TC017 | F009: 条件成立 | 利用者が "rag:doc:delete:group" permission を持つ 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/benchmark-seed.ts:398 (authorizeDocumentDelete)` |
+| TC018 | F009: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/benchmark-seed.ts:398 (authorizeDocumentDelete)` |
+| TC019 | F010: 条件成立 | is document deletion tombstone の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/benchmark-seed.ts:399 (authorizeDocumentDelete)` |
+| TC020 | F010: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/benchmark-seed.ts:399 (authorizeDocumentDelete)` |
+| TC021 | F011: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/benchmark-seed.ts:403 (authorizeDocumentDelete)` |
+| TC022 | F012: 条件成立 | `err` が `Error` の instance である、かつ starts with の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/benchmark-seed.ts:404 (authorizeDocumentDelete)` |
+| TC023 | F012: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/benchmark-seed.ts:404 (authorizeDocumentDelete)` |
+| TC024 | F013: 条件成立 | 利用者が "benchmark:seed_corpus" permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/benchmark-seed.ts:410 (authorizeDocumentDelete)` |
+| TC025 | F013: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/benchmark-seed.ts:410 (authorizeDocumentDelete)` |
+| TC026 | F014: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/benchmark-seed.ts:416 (authorizeDocumentDelete)` |
+| TC027 | F015: 条件成立 | is benchmark seed document manifest の判定結果が真ではない、かつ 「`deletionRetry` が存在し、真である、かつ is benchmark seed document identity の判定結果が真である」ではない 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/benchmark-seed.ts:420 (authorizeDocumentDelete)` |
+| TC028 | F015: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/benchmark-seed.ts:420 (authorizeDocumentDelete)` |
+| TC029 | F016: 条件成立 | `tenantId` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:800 (MemoRagService.getBenchmarkDocumentManifest)` |
+| TC030 | F016: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:800 (MemoRagService.getBenchmarkDocumentManifest)` |
+| TC031 | F017: 条件成立 | `typeof value` が `"string"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:450 (stringValue)` |
+| TC032 | F017: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:450 (stringValue)` |
+| TC033 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC034 | HTTP 400 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC035 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC036 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC037 | HTTP 404 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC038 | HTTP 409 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 
 ## 4. 検証方針
 

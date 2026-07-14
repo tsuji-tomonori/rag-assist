@@ -2,7 +2,7 @@
 
 # GET /benchmark-runs IF仕様
 
-- 実装 route: `apps/api/src/routes/benchmark-routes.ts:131 (GET /benchmark-runs)`
+- 実装 route: `apps/api/src/routes/benchmark-routes.ts:133 (GET /benchmark-runs)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: benchmark run 一覧を取得する
@@ -53,7 +53,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 59 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 151 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 
@@ -71,6 +71,7 @@ Media type: `application/json`
 | `benchmarkRuns[].suiteId` | `string` | yes | benchmark suite を識別する ID。 | - |
 | `benchmarkRuns[].datasetS3Key` | `string` | yes | `response.benchmarkRuns[].datasetS3Key` の値。項目名は dataset s3 key を表します。 | - |
 | `benchmarkRuns[].createdBy` | `string` | yes | `response.benchmarkRuns[].createdBy` の値。項目名は created by を表します。 | - |
+| `benchmarkRuns[].tenantId` | `string` | no | `response.benchmarkRuns[].tenantId` の値。項目名は tenant id を表します。 | - |
 | `benchmarkRuns[].createdAt` | `string` | yes | レコードを作成した日時。 | - |
 | `benchmarkRuns[].updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
 | `benchmarkRuns[].startedAt` | `string` | no | 処理を開始した日時。 | - |
@@ -115,13 +116,104 @@ Media type: `application/json`
 | `benchmarkRuns[].metrics.abstentionAccuracy` | `number` | no | `response.benchmarkRuns[].metrics.abstentionAccuracy` の値。項目名は abstention accuracy を表します。 | nullable |
 | `benchmarkRuns[].metrics.citationHitRate` | `number` | no | `response.benchmarkRuns[].metrics.citationHitRate` の値。項目名は citation hit rate を表します。 | nullable |
 | `benchmarkRuns[].metrics.expectedFileHitRate` | `number` | no | `response.benchmarkRuns[].metrics.expectedFileHitRate` の値。項目名は expected file hit rate を表します。 | nullable |
+| `benchmarkRuns[].metrics.extractionAccuracy` | `number` | no | `response.benchmarkRuns[].metrics.extractionAccuracy` の値。項目名は extraction accuracy を表します。 | nullable |
+| `benchmarkRuns[].metrics.admissionCorrectness` | `number` | no | `response.benchmarkRuns[].metrics.admissionCorrectness` の値。項目名は admission correctness を表します。 | nullable |
 | `benchmarkRuns[].metrics.retrievalRecallAt20` | `number` | no | `response.benchmarkRuns[].metrics.retrievalRecallAt20` の値。項目名は retrieval recall at20 を表します。 | nullable |
 | `benchmarkRuns[].metrics.retrievalRecallAtK` | `number` | no | `response.benchmarkRuns[].metrics.retrievalRecallAtK` の値。項目名は retrieval recall at k を表します。 | nullable |
+| `benchmarkRuns[].metrics.falseDenialRate` | `number` | no | `response.benchmarkRuns[].metrics.falseDenialRate` の値。項目名は false denial rate を表します。 | nullable |
+| `benchmarkRuns[].metrics.faithfulness` | `number` | no | `response.benchmarkRuns[].metrics.faithfulness` の値。項目名は faithfulness を表します。 | nullable |
+| `benchmarkRuns[].metrics.unsupportedClaimRate` | `number` | no | `response.benchmarkRuns[].metrics.unsupportedClaimRate` の値。項目名は unsupported claim rate を表します。 | nullable |
+| `benchmarkRuns[].metrics.unsupportedSentenceRate` | `number` | no | `response.benchmarkRuns[].metrics.unsupportedSentenceRate` の値。項目名は unsupported sentence rate を表します。 | nullable |
+| `benchmarkRuns[].metrics.unsupportedAnswerRate` | `number` | no | `response.benchmarkRuns[].metrics.unsupportedAnswerRate` の値。項目名は unsupported answer rate を表します。 | nullable |
+| `benchmarkRuns[].metrics.citationPrecision` | `number` | no | `response.benchmarkRuns[].metrics.citationPrecision` の値。項目名は citation precision を表します。 | nullable |
+| `benchmarkRuns[].metrics.citationSupportPassRate` | `number` | no | `response.benchmarkRuns[].metrics.citationSupportPassRate` の値。項目名は citation support pass rate を表します。 | nullable |
+| `benchmarkRuns[].metrics.citationCompleteness` | `number` | no | `response.benchmarkRuns[].metrics.citationCompleteness` の値。項目名は citation completeness を表します。 | nullable |
+| `benchmarkRuns[].metrics.citationLocatorValidity` | `number` | no | `response.benchmarkRuns[].metrics.citationLocatorValidity` の値。項目名は citation locator validity を表します。 | nullable |
+| `benchmarkRuns[].metrics.requiredClaimMissCount` | `integer` | no | `response.benchmarkRuns[].metrics.requiredClaimMissCount` の値。項目名は required claim miss count を表します。 | nullable<br>minimum=0 |
+| `benchmarkRuns[].metrics.falseAnswerRate` | `number` | no | `response.benchmarkRuns[].metrics.falseAnswerRate` の値。項目名は false answer rate を表します。 | nullable |
+| `benchmarkRuns[].metrics.falseRefusalRate` | `number` | no | `response.benchmarkRuns[].metrics.falseRefusalRate` の値。項目名は false refusal rate を表します。 | nullable |
+| `benchmarkRuns[].metrics.taskCompletionRate` | `number` | no | `response.benchmarkRuns[].metrics.taskCompletionRate` の値。項目名は task completion rate を表します。 | nullable |
+| `benchmarkRuns[].metrics.taskOutcomeAccuracy` | `number` | no | `response.benchmarkRuns[].metrics.taskOutcomeAccuracy` の値。項目名は task outcome accuracy を表します。 | nullable |
+| `benchmarkRuns[].metrics.criticalTaskFailureCount` | `integer` | no | `response.benchmarkRuns[].metrics.criticalTaskFailureCount` の値。項目名は critical task failure count を表します。 | nullable<br>minimum=0 |
+| `benchmarkRuns[].metrics.criticalUnsupportedClaimCount` | `integer` | no | `response.benchmarkRuns[].metrics.criticalUnsupportedClaimCount` の値。項目名は critical unsupported claim count を表します。 | nullable<br>minimum=0 |
+| `benchmarkRuns[].metrics.noAccessLeakCount` | `integer` | no | `response.benchmarkRuns[].metrics.noAccessLeakCount` の値。項目名は no access leak count を表します。 | nullable<br>minimum=0 |
+| `benchmarkRuns[].metrics.injectionSuccessCount` | `integer` | no | `response.benchmarkRuns[].metrics.injectionSuccessCount` の値。項目名は injection success count を表します。 | nullable<br>minimum=0 |
+| `benchmarkRuns[].metrics.secretExposureCount` | `integer` | no | `response.benchmarkRuns[].metrics.secretExposureCount` の値。項目名は secret exposure count を表します。 | nullable<br>minimum=0 |
+| `benchmarkRuns[].metrics.eligibilityPropagationP99Ms` | `number` | no | `response.benchmarkRuns[].metrics.eligibilityPropagationP99Ms` の値。項目名は eligibility propagation p99 ms を表します。 | nullable<br>minimum=0 |
+| `benchmarkRuns[].metrics.eligibilityPropagationP50Ms` | `number` | no | `response.benchmarkRuns[].metrics.eligibilityPropagationP50Ms` の値。項目名は eligibility propagation p50 ms を表します。 | nullable<br>minimum=0 |
+| `benchmarkRuns[].metrics.eligibilityPropagationP95Ms` | `number` | no | `response.benchmarkRuns[].metrics.eligibilityPropagationP95Ms` の値。項目名は eligibility propagation p95 ms を表します。 | nullable<br>minimum=0 |
+| `benchmarkRuns[].metrics.eligibilityPropagationMaxMs` | `number` | no | `response.benchmarkRuns[].metrics.eligibilityPropagationMaxMs` の値。項目名は eligibility propagation max ms を表します。 | nullable<br>minimum=0 |
+| `benchmarkRuns[].metrics.eligibilityProbeSampleCount` | `integer` | no | `response.benchmarkRuns[].metrics.eligibilityProbeSampleCount` の値。項目名は eligibility probe sample count を表します。 | nullable<br>minimum=0 |
+| `benchmarkRuns[].metrics.eligibilityMatrixCoverage` | `number` | no | `response.benchmarkRuns[].metrics.eligibilityMatrixCoverage` の値。項目名は eligibility matrix coverage を表します。 | nullable<br>minimum=0<br>maximum=1 |
+| `benchmarkRuns[].metrics.eligibilityUnreconciledResourceCount` | `integer` | no | `response.benchmarkRuns[].metrics.eligibilityUnreconciledResourceCount` の値。項目名は eligibility unreconciled resource count を表します。 | nullable<br>minimum=0 |
+| `benchmarkRuns[].metrics.mttrMs` | `number` | no | `response.benchmarkRuns[].metrics.mttrMs` の値。項目名は mttr ms を表します。 | nullable<br>minimum=0 |
+| `benchmarkRuns[].metrics.recoveryP95Ms` | `number` | no | `response.benchmarkRuns[].metrics.recoveryP95Ms` の値。項目名は recovery p95 ms を表します。 | nullable<br>minimum=0 |
+| `benchmarkRuns[].metrics.recoveryWithoutLossRate` | `number` | no | `response.benchmarkRuns[].metrics.recoveryWithoutLossRate` の値。項目名は recovery without loss rate を表します。 | nullable<br>minimum=0<br>maximum=1 |
+| `benchmarkRuns[].metrics.recoveryLossCount` | `integer` | no | `response.benchmarkRuns[].metrics.recoveryLossCount` の値。項目名は recovery loss count を表します。 | nullable<br>minimum=0 |
+| `benchmarkRuns[].metrics.recoveryScenarioCoverage` | `number` | no | `response.benchmarkRuns[].metrics.recoveryScenarioCoverage` の値。項目名は recovery scenario coverage を表します。 | nullable<br>minimum=0<br>maximum=1 |
+| `benchmarkRuns[].metrics.recoverySampleCount` | `integer` | no | `response.benchmarkRuns[].metrics.recoverySampleCount` の値。項目名は recovery sample count を表します。 | nullable<br>minimum=0 |
+| `benchmarkRuns[].metrics.backlogAgeP99Ms` | `number` | no | `response.benchmarkRuns[].metrics.backlogAgeP99Ms` の値。項目名は backlog age p99 ms を表します。 | nullable<br>minimum=0 |
+| `benchmarkRuns[].metrics.backlogAgeSampleCount` | `integer` | no | `response.benchmarkRuns[].metrics.backlogAgeSampleCount` の値。項目名は backlog age sample count を表します。 | nullable<br>minimum=0 |
+| `benchmarkRuns[].metrics.timeoutRate` | `number` | no | `response.benchmarkRuns[].metrics.timeoutRate` の値。項目名は timeout rate を表します。 | nullable<br>minimum=0<br>maximum=1 |
+| `benchmarkRuns[].metrics.retryExhaustionCount` | `integer` | no | `response.benchmarkRuns[].metrics.retryExhaustionCount` の値。項目名は retry exhaustion count を表します。 | nullable<br>minimum=0 |
 | `benchmarkRuns[].metrics.p50LatencyMs` | `number` | no | `response.benchmarkRuns[].metrics.p50LatencyMs` の値。項目名は p50 latency ms を表します。 | nullable |
 | `benchmarkRuns[].metrics.p95LatencyMs` | `number` | no | `response.benchmarkRuns[].metrics.p95LatencyMs` の値。項目名は p95 latency ms を表します。 | nullable |
+| `benchmarkRuns[].metrics.p99LatencyMs` | `number` | no | `response.benchmarkRuns[].metrics.p99LatencyMs` の値。項目名は p99 latency ms を表します。 | nullable |
 | `benchmarkRuns[].metrics.averageLatencyMs` | `number` | no | `response.benchmarkRuns[].metrics.averageLatencyMs` の値。項目名は average latency ms を表します。 | nullable |
 | `benchmarkRuns[].metrics.errorRate` | `number` | no | `response.benchmarkRuns[].metrics.errorRate` の値。項目名は error rate を表します。 | nullable |
+| `benchmarkRuns[].metrics.datasetVersion` | `string` | no | `response.benchmarkRuns[].metrics.datasetVersion` の値。項目名は dataset version を表します。 | minLength=1 |
+| `benchmarkRuns[].metrics.workloadProfileVersion` | `string` | no | `response.benchmarkRuns[].metrics.workloadProfileVersion` の値。項目名は workload profile version を表します。 | minLength=1 |
+| `benchmarkRuns[].metrics.runtimeProfileVersion` | `string` | no | `response.benchmarkRuns[].metrics.runtimeProfileVersion` の値。項目名は runtime profile version を表します。 | minLength=1 |
+| `benchmarkRuns[].metrics.priceCatalogVersion` | `string` | no | `response.benchmarkRuns[].metrics.priceCatalogVersion` の値。項目名は price catalog version を表します。 | minLength=1 |
+| `benchmarkRuns[].metrics.indexVersion` | `string` | no | `response.benchmarkRuns[].metrics.indexVersion` の値。項目名は index version を表します。 | minLength=1 |
+| `benchmarkRuns[].metrics.promptVersion` | `string` | no | `response.benchmarkRuns[].metrics.promptVersion` の値。項目名は prompt version を表します。 | minLength=1 |
+| `benchmarkRuns[].metrics.pipelineVersion` | `string` | no | `response.benchmarkRuns[].metrics.pipelineVersion` の値。項目名は pipeline version を表します。 | minLength=1 |
+| `benchmarkRuns[].metrics.parserVersion` | `string` | no | `response.benchmarkRuns[].metrics.parserVersion` の値。項目名は parser version を表します。 | minLength=1 |
+| `benchmarkRuns[].metrics.chunkerVersion` | `string` | no | `response.benchmarkRuns[].metrics.chunkerVersion` の値。項目名は chunker version を表します。 | minLength=1 |
+| `benchmarkRuns[].metrics.corpusProfileVersion` | `string` | no | `response.benchmarkRuns[].metrics.corpusProfileVersion` の値。項目名は corpus profile version を表します。 | minLength=1 |
+| `benchmarkRuns[].metrics.aclDistributionVersion` | `string` | no | `response.benchmarkRuns[].metrics.aclDistributionVersion` の値。項目名は acl distribution version を表します。 | minLength=1 |
+| `benchmarkRuns[].metrics.workloadConcurrency` | `integer` | no | `response.benchmarkRuns[].metrics.workloadConcurrency` の値。項目名は workload concurrency を表します。 | minimum=0 |
+| `benchmarkRuns[].metrics.documentSizeProfileVersion` | `string` | no | `response.benchmarkRuns[].metrics.documentSizeProfileVersion` の値。項目名は document size profile version を表します。 | minLength=1 |
+| `benchmarkRuns[].metrics.dependencyLatencyProfileVersion` | `string` | no | `response.benchmarkRuns[].metrics.dependencyLatencyProfileVersion` の値。項目名は dependency latency profile version を表します。 | minLength=1 |
+| `benchmarkRuns[].metrics.qualitySliceMeasurements` | `array<object>` | no | `response.benchmarkRuns[].metrics.qualitySliceMeasurements` の値。項目名は quality slice measurements を表します。 | - |
+| `benchmarkRuns[].metrics.qualitySliceMeasurements[].slice` | `string` | yes | `response.benchmarkRuns[].metrics.qualitySliceMeasurements[].slice` の値。項目名は slice を表します。 | minLength=1 |
+| `benchmarkRuns[].metrics.qualitySliceMeasurements[].sampleCount` | `integer` | yes | `response.benchmarkRuns[].metrics.qualitySliceMeasurements[].sampleCount` の値。項目名は sample count を表します。 | minimum=0 |
+| `benchmarkRuns[].metrics.qualitySliceMeasurements[].measurements` | `object` | yes | `response.benchmarkRuns[].metrics.qualitySliceMeasurements[].measurements` の値。項目名は measurements を表します。 | - |
+| `benchmarkRuns[].metrics.eligibilityMatrixReport` | `object` | no | `response.benchmarkRuns[].metrics.eligibilityMatrixReport` の値。項目名は eligibility matrix report を表します。 | - |
+| `benchmarkRuns[].metrics.eligibilityMatrixReport.schemaVersion` | `enum(1)` | yes | `response.benchmarkRuns[].metrics.eligibilityMatrixReport.schemaVersion` の値。項目名は schema version を表します。 | enum=1 |
+| `benchmarkRuns[].metrics.eligibilityMatrixReport.triggerCount` | `integer` | yes | `response.benchmarkRuns[].metrics.eligibilityMatrixReport.triggerCount` の値。項目名は trigger count を表します。 | minimum=0 |
+| `benchmarkRuns[].metrics.eligibilityMatrixReport.pathCount` | `integer` | yes | `response.benchmarkRuns[].metrics.eligibilityMatrixReport.pathCount` の値。項目名は path count を表します。 | minimum=0 |
+| `benchmarkRuns[].metrics.eligibilityMatrixReport.probeCount` | `integer` | yes | `response.benchmarkRuns[].metrics.eligibilityMatrixReport.probeCount` の値。項目名は probe count を表します。 | minimum=0 |
+| `benchmarkRuns[].metrics.eligibilityMatrixReport.p50Ms` | `number` | no | `response.benchmarkRuns[].metrics.eligibilityMatrixReport.p50Ms` の値。項目名は p50 ms を表します。 | minimum=0 |
+| `benchmarkRuns[].metrics.eligibilityMatrixReport.p95Ms` | `number` | no | `response.benchmarkRuns[].metrics.eligibilityMatrixReport.p95Ms` の値。項目名は p95 ms を表します。 | minimum=0 |
+| `benchmarkRuns[].metrics.eligibilityMatrixReport.p99Ms` | `number` | no | `response.benchmarkRuns[].metrics.eligibilityMatrixReport.p99Ms` の値。項目名は p99 ms を表します。 | minimum=0 |
+| `benchmarkRuns[].metrics.eligibilityMatrixReport.maxMs` | `number` | no | `response.benchmarkRuns[].metrics.eligibilityMatrixReport.maxMs` の値。項目名は max ms を表します。 | minimum=0 |
+| `benchmarkRuns[].metrics.eligibilityMatrixReport.unreflectedResourceIds` | `array<string>` | yes | `response.benchmarkRuns[].metrics.eligibilityMatrixReport.unreflectedResourceIds` の値。項目名は unreflected resource ids を表します。 | - |
+| `benchmarkRuns[].metrics.eligibilityMatrixReport.probes` | `array<object>` | yes | `response.benchmarkRuns[].metrics.eligibilityMatrixReport.probes` の値。項目名は probes を表します。 | - |
+| `benchmarkRuns[].metrics.eligibilityMatrixReport.probes[].trigger` | `string` | yes | `response.benchmarkRuns[].metrics.eligibilityMatrixReport.probes[].trigger` の値。項目名は trigger を表します。 | minLength=1 |
+| `benchmarkRuns[].metrics.eligibilityMatrixReport.probes[].path` | `string` | yes | API path または参照先 path。 | minLength=1 |
+| `benchmarkRuns[].metrics.eligibilityMatrixReport.probes[].propagationMs` | `number` | no | `response.benchmarkRuns[].metrics.eligibilityMatrixReport.probes[].propagationMs` の値。項目名は propagation ms を表します。 | minimum=0 |
+| `benchmarkRuns[].metrics.eligibilityMatrixReport.probes[].unreflectedResourceIds` | `array<string>` | yes | `response.benchmarkRuns[].metrics.eligibilityMatrixReport.probes[].unreflectedResourceIds` の値。項目名は unreflected resource ids を表します。 | - |
+| `benchmarkRuns[].metrics.modelCostPerUnit` | `number` | no | `response.benchmarkRuns[].metrics.modelCostPerUnit` の値。項目名は model cost per unit を表します。 | nullable<br>minimum=0 |
+| `benchmarkRuns[].metrics.embeddingCostPerUnit` | `number` | no | `response.benchmarkRuns[].metrics.embeddingCostPerUnit` の値。項目名は embedding cost per unit を表します。 | nullable<br>minimum=0 |
+| `benchmarkRuns[].metrics.storageCostPerUnit` | `number` | no | `response.benchmarkRuns[].metrics.storageCostPerUnit` の値。項目名は storage cost per unit を表します。 | nullable<br>minimum=0 |
+| `benchmarkRuns[].metrics.workerCostPerUnit` | `number` | no | `response.benchmarkRuns[].metrics.workerCostPerUnit` の値。項目名は worker cost per unit を表します。 | nullable<br>minimum=0 |
+| `benchmarkRuns[].metrics.egressCostPerUnit` | `number` | no | `response.benchmarkRuns[].metrics.egressCostPerUnit` の値。項目名は egress cost per unit を表します。 | nullable<br>minimum=0 |
+| `benchmarkRuns[].metrics.totalCostPerUnit` | `number` | no | `response.benchmarkRuns[].metrics.totalCostPerUnit` の値。項目名は total cost per unit を表します。 | nullable<br>minimum=0 |
+| `benchmarkRuns[].metrics.costEvidenceSampleCount` | `integer` | no | `response.benchmarkRuns[].metrics.costEvidenceSampleCount` の値。項目名は cost evidence sample count を表します。 | nullable<br>minimum=0 |
+| `benchmarkRuns[].metrics.chatCostEvidenceSampleCount` | `integer` | no | `response.benchmarkRuns[].metrics.chatCostEvidenceSampleCount` の値。項目名は chat cost evidence sample count を表します。 | nullable<br>minimum=0 |
+| `benchmarkRuns[].metrics.searchCostEvidenceSampleCount` | `integer` | no | `response.benchmarkRuns[].metrics.searchCostEvidenceSampleCount` の値。項目名は search cost evidence sample count を表します。 | nullable<br>minimum=0 |
+| `benchmarkRuns[].metrics.ingestCostEvidenceSampleCount` | `integer` | no | `response.benchmarkRuns[].metrics.ingestCostEvidenceSampleCount` の値。項目名は ingest cost evidence sample count を表します。 | nullable<br>minimum=0 |
+| `benchmarkRuns[].metrics.unitCostKind` | `enum(chat_request \| search_request \| ingest_document)` | no | `response.benchmarkRuns[].metrics.unitCostKind` の値。項目名は unit cost kind を表します。 | enum=chat_request, search_request, ingest_document |
+| `benchmarkRuns[].metrics.chatCostPerRequest` | `number` | no | `response.benchmarkRuns[].metrics.chatCostPerRequest` の値。項目名は chat cost per request を表します。 | nullable<br>minimum=0 |
+| `benchmarkRuns[].metrics.searchCostPerRequest` | `number` | no | `response.benchmarkRuns[].metrics.searchCostPerRequest` の値。項目名は search cost per request を表します。 | nullable<br>minimum=0 |
+| `benchmarkRuns[].metrics.ingestCostPerDocument` | `number` | no | `response.benchmarkRuns[].metrics.ingestCostPerDocument` の値。項目名は ingest cost per document を表します。 | nullable<br>minimum=0 |
+| `benchmarkRuns[].metrics.releaseAuditVersion` | `string` | no | `response.benchmarkRuns[].metrics.releaseAuditVersion` の値。項目名は release audit version を表します。 | minLength=1 |
+| `benchmarkRuns[].metrics.releaseAuditId` | `string` | no | `response.benchmarkRuns[].metrics.releaseAuditId` の値。項目名は release audit id を表します。 | minLength=1 |
+| `benchmarkRuns[].metrics.datasetSpecificBranchCount` | `integer` | no | `response.benchmarkRuns[].metrics.datasetSpecificBranchCount` の値。項目名は dataset specific branch count を表します。 | nullable<br>minimum=0 |
+| `benchmarkRuns[].metrics.artifactManifestMismatchCount` | `integer` | no | `response.benchmarkRuns[].metrics.artifactManifestMismatchCount` の値。項目名は artifact manifest mismatch count を表します。 | nullable<br>minimum=0 |
 | `benchmarkRuns[].error` | `string` | no | エラー内容を表すメッセージ。 | - |
+| `benchmarkRuns[].errorCode` | `enum(validation_error \| not_found \| permission_revoked \| execution_error)` | no | `response.benchmarkRuns[].errorCode` の値。項目名は error code を表します。 | enum=validation_error, not_found, permission_revoked, execution_error |
 
 ##### `401` 認証が必要です。
 

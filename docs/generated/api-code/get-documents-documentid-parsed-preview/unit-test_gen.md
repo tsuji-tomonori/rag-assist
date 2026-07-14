@@ -8,38 +8,38 @@
 
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
-| 到達 symbol | service does not expose group scoped documents to ownerUserId without folder read permission | `apps/api/src/rag/memorag-service.test.ts:867 (service does not expose group scoped documents to ownerUserId without folder read permission)` |
+| 到達 symbol | document administrative principal retains read access despite ordinary folder denial | `apps/api/src/rag/memorag-service.test.ts:1031 (document administrative principal retains read access despite ordinary folder denial)` |
 
 ## 2. 実装分岐から導くテスト要因
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `GET /documents/{documentId}/parsed-preview handler` | if | `preview` が存在しない、または偽である | `apps/api/src/routes/document-routes.ts:840 (GET /documents/{documentId}/parsed-preview handler)` |
-| F002 | `GET /documents/{documentId}/parsed-preview handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:842 (GET /documents/{documentId}/parsed-preview handler)` |
-| F003 | `GET /documents/{documentId}/parsed-preview handler` | if | `err` が `Error` の instance である、かつ starts with の判定結果が真である | `apps/api/src/routes/document-routes.ts:843 (GET /documents/{documentId}/parsed-preview handler)` |
-| F004 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:267 (requirePermission)` |
-| F005 | `MemoRagService.getParsedDocumentPreview` | if | is missing object error の判定結果が真である | `apps/api/src/rag/memorag-service.ts:409 (MemoRagService.getParsedDocumentPreview)` |
-| F006 | `MemoRagService.getParsedDocumentPreview` | if | `manifest` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:412 (MemoRagService.getParsedDocumentPreview)` |
-| F007 | `MemoRagService.getParsedDocumentPreview` | if | 条件式 `await this.canAccessDocumentManifest(user, manifest, documentGroups)` が成立しない | `apps/api/src/rag/memorag-service.ts:414 (MemoRagService.getParsedDocumentPreview)` |
+| F001 | `GET /documents/{documentId}/parsed-preview handler` | if | `preview` が存在しない、または偽である | `apps/api/src/routes/document-routes.ts:1558 (GET /documents/{documentId}/parsed-preview handler)` |
+| F002 | `GET /documents/{documentId}/parsed-preview handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:1560 (GET /documents/{documentId}/parsed-preview handler)` |
+| F003 | `GET /documents/{documentId}/parsed-preview handler` | if | `err` が `Error` の instance である、かつ starts with の判定結果が真である | `apps/api/src/routes/document-routes.ts:1561 (GET /documents/{documentId}/parsed-preview handler)` |
+| F004 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| F005 | `MemoRagService.getParsedDocumentPreview` | if | is missing object error の判定結果が真である | `apps/api/src/rag/memorag-service.ts:834 (MemoRagService.getParsedDocumentPreview)` |
+| F006 | `MemoRagService.getParsedDocumentPreview` | if | `manifest` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:837 (MemoRagService.getParsedDocumentPreview)` |
+| F007 | `MemoRagService.getParsedDocumentPreview` | if | 条件式 `await this.canAccessDocumentManifest(user, manifest)` が成立しない | `apps/api/src/rag/memorag-service.ts:838 (MemoRagService.getParsedDocumentPreview)` |
 
 ## 3. コード由来テストケース
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | ParsedDocument preview を取得する が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:834 (GET /documents/{documentId}/parsed-preview handler)` |
-| TC002 | F001: 条件成立 | `preview` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:840 (GET /documents/{documentId}/parsed-preview handler)` |
-| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:840 (GET /documents/{documentId}/parsed-preview handler)` |
-| TC004 | F002: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/document-routes.ts:842 (GET /documents/{documentId}/parsed-preview handler)` |
-| TC005 | F003: 条件成立 | `err` が `Error` の instance である、かつ starts with の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:843 (GET /documents/{documentId}/parsed-preview handler)` |
-| TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:843 (GET /documents/{documentId}/parsed-preview handler)` |
-| TC007 | F004: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:267 (requirePermission)` |
-| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:267 (requirePermission)` |
-| TC009 | F005: 条件成立 | is missing object error の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:409 (MemoRagService.getParsedDocumentPreview)` |
-| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:409 (MemoRagService.getParsedDocumentPreview)` |
-| TC011 | F006: 条件成立 | `manifest` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:412 (MemoRagService.getParsedDocumentPreview)` |
-| TC012 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:412 (MemoRagService.getParsedDocumentPreview)` |
-| TC013 | F007: 条件成立 | 条件式 `await this.canAccessDocumentManifest(user, manifest, documentGroups)` が成立しない 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:414 (MemoRagService.getParsedDocumentPreview)` |
-| TC014 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:414 (MemoRagService.getParsedDocumentPreview)` |
+| TC001 | 正常系 | ParsedDocument preview を取得する が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:1551 (GET /documents/{documentId}/parsed-preview handler)` |
+| TC002 | F001: 条件成立 | `preview` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1558 (GET /documents/{documentId}/parsed-preview handler)` |
+| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1558 (GET /documents/{documentId}/parsed-preview handler)` |
+| TC004 | F002: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/document-routes.ts:1560 (GET /documents/{documentId}/parsed-preview handler)` |
+| TC005 | F003: 条件成立 | `err` が `Error` の instance である、かつ starts with の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1561 (GET /documents/{documentId}/parsed-preview handler)` |
+| TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1561 (GET /documents/{documentId}/parsed-preview handler)` |
+| TC007 | F004: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| TC009 | F005: 条件成立 | is missing object error の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:834 (MemoRagService.getParsedDocumentPreview)` |
+| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:834 (MemoRagService.getParsedDocumentPreview)` |
+| TC011 | F006: 条件成立 | `manifest` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:837 (MemoRagService.getParsedDocumentPreview)` |
+| TC012 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:837 (MemoRagService.getParsedDocumentPreview)` |
+| TC013 | F007: 条件成立 | 条件式 `await this.canAccessDocumentManifest(user, manifest)` が成立しない 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:838 (MemoRagService.getParsedDocumentPreview)` |
+| TC014 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:838 (MemoRagService.getParsedDocumentPreview)` |
 | TC015 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC016 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC017 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

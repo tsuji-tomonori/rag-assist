@@ -40,11 +40,11 @@ DOCS = {
     "DES_UI_UX": ("docs/3_設計_DES/21_UI_UX", "UI/UX Design"),
     "DES_DATA": ("docs/3_設計_DES/31_データ_DATA", "Data Design"),
     "DES_API": ("docs/3_設計_DES/41_API_API", "API Design"),
-    "OPS_PLAN": ("docs/4_運用_OPS/01_運用計画_PLAN", "Operations Plan"),
-    "OPS_RELEASE": ("docs/4_運用_OPS/11_リリース_RELEASE", "Release Plan"),
+    "OPS_PLAN": ("docs/4_運用_OPS/21_監視_MONITORING", "Operations Plan"),
+    "OPS_RELEASE": ("docs/4_運用_OPS/21_監視_MONITORING", "Release Plan"),
     "OPS_MONITORING": ("docs/4_運用_OPS/21_監視_MONITORING", "Monitoring Plan"),
-    "OPS_INCIDENT": ("docs/4_運用_OPS/31_インシデント_INCIDENT", "Incident Report"),
-    "OPS_MAINTENANCE": ("docs/4_運用_OPS/41_保守_MAINTENANCE", "Maintenance Plan"),
+    "OPS_INCIDENT": ("docs/4_運用_OPS/21_監視_MONITORING", "Incident Response Plan"),
+    "OPS_MAINTENANCE": ("docs/4_運用_OPS/21_監視_MONITORING", "Maintenance Plan"),
 }
 
 

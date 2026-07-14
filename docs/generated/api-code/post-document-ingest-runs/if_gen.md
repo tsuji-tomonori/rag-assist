@@ -2,7 +2,7 @@
 
 # POST /document-ingest-runs IF仕様
 
-- 実装 route: `apps/api/src/routes/document-routes.ts:571 (POST /document-ingest-runs)`
+- 実装 route: `apps/api/src/routes/document-routes.ts:1160 (POST /document-ingest-runs)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 非同期文書取り込みを開始する
@@ -84,7 +84,7 @@ Media type: `application/json`
 | 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
 | `runId` | `string` | yes | 非同期 run または debug trace を識別する ID。 | - |
-| `status` | `enum(queued \| running \| succeeded \| failed \| cancelled)` | yes | 現在の処理状態または管理状態。 | enum=queued, running, succeeded, failed, cancelled |
+| `status` | `enum(queued \| running \| succeeded \| rejected \| failed \| cancelled)` | yes | 現在の処理状態または管理状態。 | enum=queued, running, succeeded, rejected, failed, cancelled |
 | `eventsPath` | `string` | yes | SSE イベントを購読する API path。 | - |
 
 ##### `400` リクエスト形式または入力値が不正です。

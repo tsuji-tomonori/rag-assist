@@ -28,7 +28,7 @@
 | 識別子 | `FR-089` |
 | 説明 | retry/fallback/degradation path の safety guard invariant |
 | 根拠 | 障害・高負荷・費用上限時の security/grounding bypass を防ぐ |
-| 源泉 | `SQ-008`、RAG ガイド §8.5–8.6（PDF pp.198–203）、`docs/spec-recovery/15_rag_lifecycle_matrix_202607.md` |
+| 源泉 | `SQ-008`、RAG ガイド §8.5–8.6（PDF pp.198–203）、`docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md` |
 | Actor / trigger | runtime が timeout、circuit open、dependency failure、overload、cost limit を検出するとき |
 | 種類 | 機能要求 / resilience / security / RAG safety |
 | 依存関係 | `FR-068`, `FR-070`, `FR-071`, `FR-073`, `FR-075`, `FR-088`, `SQ-008` |
@@ -66,7 +66,7 @@
 | 実現可能性 | OK | guard 共通 pipeline、profile validation、fail-closed routing で実現可能 |
 | 検証可能性 | OK | dependency fault injection と guard-bypass profile negative test で確認できる |
 | ニーズ適合 | OK | 可用性を追求して機密性・根拠性・引用正確性を犠牲にしない |
-| 実装適合 | partial | 個別 timeout はあるが全 fallback path の guard parity 契約は不足する |
+| 実装適合 | OK（confirmed） | `safe-degradation-policy.ts` が dependency timeout/error/cost/circuit state と auth/classification/usage/injection/tool/grounding/citation/secret/redaction invariants を同時強制する matrix test を持つ |
 
 ## トレース
 

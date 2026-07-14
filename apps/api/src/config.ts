@@ -42,12 +42,21 @@ function requireProductionValue(name: string, value: string): void {
 }
 
 const authEnabled = boolEnv("AUTH_ENABLED", isProduction)
+const benchmarkEvaluationEnabledRaw = process.env.BENCHMARK_EVALUATION_ENABLED
+const benchmarkEvaluationEnabled = boolEnv("BENCHMARK_EVALUATION_ENABLED", false)
 const corsAllowedOrigins = csvEnv("CORS_ALLOWED_ORIGINS", isProduction ? [] : ["*"])
 const docsBucketName = process.env.DOCS_BUCKET_NAME ?? ""
 const favoritesTableName = process.env.FAVORITES_TABLE_NAME ?? ""
 const cognitoRegion = process.env.COGNITO_REGION ?? region
 const cognitoUserPoolId = process.env.COGNITO_USER_POOL_ID ?? ""
 const cognitoAppClientId = process.env.COGNITO_APP_CLIENT_ID ?? ""
+const authTenantId = process.env.AUTH_TENANT_ID ?? ""
+const benchmarkEvaluationTenantId = process.env.BENCHMARK_EVALUATION_TENANT_ID ?? ""
+const localAuthUserId = process.env.LOCAL_AUTH_USER_ID ?? ""
+const localAuthEmail = process.env.LOCAL_AUTH_EMAIL ?? ""
+const localAuthGroups = csvEnv("LOCAL_AUTH_GROUPS")
+const localAuthAccountStatus = process.env.LOCAL_AUTH_ACCOUNT_STATUS ?? ""
+const localAuthTenantId = process.env.LOCAL_AUTH_TENANT_ID ?? ""
 
 if (isProduction && !authEnabled) throw new Error("AUTH_ENABLED must be true in production")
 if (isProduction && corsAllowedOrigins.length === 0) throw new Error("CORS_ALLOWED_ORIGINS is required in production")
@@ -57,6 +66,16 @@ if (authEnabled) {
   requireProductionValue("COGNITO_REGION", cognitoRegion)
   requireProductionValue("COGNITO_USER_POOL_ID", cognitoUserPoolId)
   requireProductionValue("COGNITO_APP_CLIENT_ID", cognitoAppClientId)
+  requireProductionValue("AUTH_TENANT_ID", authTenantId)
+}
+if (isProduction && benchmarkEvaluationEnabledRaw === undefined) {
+  throw new Error("BENCHMARK_EVALUATION_ENABLED must be explicitly configured in production")
+}
+if (benchmarkEvaluationEnabled) {
+  requireProductionValue("BENCHMARK_EVALUATION_TENANT_ID", benchmarkEvaluationTenantId)
+  if (isProduction && benchmarkEvaluationTenantId === authTenantId) {
+    throw new Error("BENCHMARK_EVALUATION_TENANT_ID must be isolated from AUTH_TENANT_ID in production")
+  }
 }
 
 export const config = {
@@ -81,6 +100,7 @@ export const config = {
   favoritesTableName: favoritesTableName || "memorag-favorites",
   dynamoDbEndpoint: process.env.DYNAMODB_ENDPOINT ?? "",
   benchmarkRunsTableName: process.env.BENCHMARK_RUNS_TABLE_NAME ?? "memorag-benchmark-runs",
+  activeRunAuthorizationIndexTableName: process.env.ACTIVE_RUN_AUTHORIZATION_INDEX_TABLE_NAME ?? "memorag-active-run-authorization-index",
   chatRunsTableName: process.env.CHAT_RUNS_TABLE_NAME ?? "memorag-chat-runs",
   chatRunEventsTableName: process.env.CHAT_RUN_EVENTS_TABLE_NAME ?? "memorag-chat-run-events",
   chatRunStateMachineArn: process.env.CHAT_RUN_STATE_MACHINE_ARN ?? "",
@@ -215,5 +235,13 @@ export const config = {
   debugDownloadExpiresInSeconds: numberEnv("DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS", 900),
   cognitoRegion,
   cognitoUserPoolId,
-  cognitoAppClientId
+  cognitoAppClientId,
+  authTenantId,
+  benchmarkEvaluationEnabled,
+  benchmarkEvaluationTenantId,
+  localAuthUserId,
+  localAuthEmail,
+  localAuthGroups,
+  localAuthAccountStatus,
+  localAuthTenantId
 } as const

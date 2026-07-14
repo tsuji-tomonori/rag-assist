@@ -72,6 +72,6 @@
 
 ## 関連文書
 
-- `docs/LOCAL_VERIFICATION.md`
-- `docs/OPERATIONS.md`
+- `docs/4_運用_OPS/21_監視_MONITORING/OPS_MONITORING_001.md`
+- `docs/4_運用_OPS/21_監視_MONITORING/OPS_MONITORING_001.md`
 - `docs/3_設計_DES/41_API_API/DES_API_001.md`

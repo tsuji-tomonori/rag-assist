@@ -2,7 +2,7 @@
 
 # GET /admin/costs IF仕様
 
-- 実装 route: `apps/api/src/routes/admin-routes.ts:416 (GET /admin/costs)`
+- 実装 route: `apps/api/src/routes/admin-routes.ts:508 (GET /admin/costs)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 概算コストを取得する
@@ -53,7 +53,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 17 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 19 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 
@@ -63,11 +63,13 @@ Media type: `application/json`
 
 | 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
+| `available` | `boolean` | yes | `response.available` の値。項目名は available を表します。 | - |
+| `unavailableReason` | `string` | no | `response.unavailableReason` の値。項目名は unavailable reason を表します。 | - |
 | `periodStart` | `string` | yes | `response.periodStart` の値。項目名は period start を表します。 | - |
 | `periodEnd` | `string` | yes | `response.periodEnd` の値。項目名は period end を表します。 | - |
-| `currency` | `enum(USD)` | yes | `response.currency` の値。項目名は currency を表します。 | enum=USD |
-| `totalEstimatedUsd` | `number` | yes | `response.totalEstimatedUsd` の値。項目名は total estimated usd を表します。 | minimum=0 |
-| `items` | `array<object>` | yes | 一覧レスポンスに含まれる item 配列。 | - |
+| `currency` | `enum(USD)` | no | `response.currency` の値。項目名は currency を表します。 | enum=USD |
+| `totalEstimatedUsd` | `number` | no | `response.totalEstimatedUsd` の値。項目名は total estimated usd を表します。 | minimum=0 |
+| `items` | `array<object>` | no | 一覧レスポンスに含まれる item 配列。 | - |
 | `items[].service` | `string` | yes | `response.items[].service` の値。項目名は service を表します。 | - |
 | `items[].category` | `string` | yes | 問い合わせや文書の分類。 | - |
 | `items[].usage` | `number` | yes | 利用状況の集計。 | minimum=0 |
@@ -75,11 +77,11 @@ Media type: `application/json`
 | `items[].unitCostUsd` | `number` | yes | `response.items[].unitCostUsd` の値。項目名は unit cost usd を表します。 | minimum=0 |
 | `items[].estimatedCostUsd` | `number` | yes | `response.items[].estimatedCostUsd` の値。項目名は estimated cost usd を表します。 | minimum=0 |
 | `items[].confidence` | `enum(actual_usage \| estimated_usage \| manual_estimate)` | yes | `response.items[].confidence` の値。項目名は confidence を表します。 | enum=actual_usage, estimated_usage, manual_estimate |
-| `users` | `array<object>` | yes | `response.users` の値。項目名は users を表します。 | - |
+| `users` | `array<object>` | no | `response.users` の値。項目名は users を表します。 | - |
 | `users[].userId` | `string` | yes | 対象ユーザーを一意に識別する ID。 | - |
 | `users[].email` | `string` | yes | ユーザーのメールアドレス。 | - |
 | `users[].estimatedCostUsd` | `number` | yes | `response.users[].estimatedCostUsd` の値。項目名は estimated cost usd を表します。 | minimum=0 |
-| `pricingCatalogUpdatedAt` | `string` | yes | `response.pricingCatalogUpdatedAt` の値。項目名は pricing catalog updated at を表します。 | - |
+| `pricingCatalogUpdatedAt` | `string` | no | `response.pricingCatalogUpdatedAt` の値。項目名は pricing catalog updated at を表します。 | - |
 
 ##### `401` 認証が必要です。
 

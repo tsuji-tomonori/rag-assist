@@ -17,9 +17,12 @@
 | M002 | OpenAPI contract | `401` | 認証が必要です。 | OpenAPI で宣言された HTTP 401 response | runtime OpenAPI |
 | M003 | OpenAPI contract | `403` | 対象操作を実行する権限がありません。 | OpenAPI で宣言された HTTP 403 response | runtime OpenAPI |
 | M004 | OpenAPI contract | `404` | 指定したリソースが見つかりません。 | OpenAPI で宣言された HTTP 404 response | runtime OpenAPI |
-| M005 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:267 (requirePermission)` |
-| M006 | HTTP 実装応答 | `404` | Document not found | `preview` が存在しない、または偽である | `apps/api/src/routes/document-routes.ts:840 (GET /documents/{documentId}/parsed-preview handler)` |
-| M007 | 例外 | `403` | Forbidden | `err` が `Error` の instance である、かつ starts with の判定結果が真である | `apps/api/src/routes/document-routes.ts:843 (GET /documents/{documentId}/parsed-preview handler)` |
+| M005 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| M006 | 例外 | `-` | Document identifier is required | `normalized` が存在しない、または偽である | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:133 (encodeIdentifier)` |
+| M007 | 例外 | `-` | Artifact key is invalid | `normalized` が存在しない、または偽である、または `normalized` が ".." を含む | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:127 (normalizeRelativeKey)` |
+| M008 | 例外 | `-` | Authoritative tenant is required | `normalized` が存在しない、または偽である | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:121 (requiredTenantId)` |
+| M009 | 例外 | `-` | Authoritative tenant is required | `normalized` が存在しない、または偽である | `apps/api/src/security/tenant-partition.ts:5 (tenantPartitionId)` |
+| M010 | 例外 | `-` | `Document manifest tenant mismatch${key ? `: ${key}` : ""}` | `manifestTenantId` が存在しない、または偽である、かつ `options.allowMissingTenant` が存在しない、または偽である、または `manifestTenantId` が存在し、真である、かつ `manifestTenantId` が `normalizedTenantId` と異なる | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:111 (assertManifestTenant)` |
 
 ## 読み方
 

@@ -2,7 +2,7 @@
 
 # GET /chat-runs/{runId}/events IF仕様
 
-- 実装 route: `apps/api/src/routes/chat-routes.ts:75 (GET /chat-runs/{runId}/events)`
+- 実装 route: `apps/api/src/routes/chat-routes.ts:76 (GET /chat-runs/{runId}/events)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: チャット run イベントを購読する

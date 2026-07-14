@@ -1,9 +1,11 @@
 import assert from "node:assert/strict"
-import { mkdtemp, readFile, writeFile } from "node:fs/promises"
+import { mkdtemp } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import path from "node:path"
 import test from "node:test"
+import { RAG_QUALITY_SIGNAL_CATALOG_VERSION } from "@memorag-mvp/contract/rag-quality-control"
 import type { AppUser } from "../auth.js"
+import { ragRuntimePolicy } from "../chat-orchestration/runtime-policy.js"
 import { LocalObjectStore } from "../adapters/local-object-store.js"
 import { LocalQuestionStore } from "../adapters/local-question-store.js"
 import { LocalConversationHistoryStore } from "../adapters/local-conversation-history-store.js"
@@ -21,9 +23,117 @@ import { LocalVectorStore } from "../adapters/local-vector-store.js"
 import { MockBedrockTextModel } from "../adapters/mock-bedrock.js"
 import type { Dependencies } from "../dependencies.js"
 import { DocumentPermissionService } from "../documents/document-permission-service.js"
+import { FolderPermissionService } from "../folders/folder-permission-service.js"
 import { MemoRagService } from "../rag/memorag-service.js"
+import { tenantPartitionId } from "../security/tenant-partition.js"
+import { ACTIVE_RAG_QUALITY_POLICY_KEY, RAG_SAFETY_STATE_KEY, type RagSafetyState } from "../rag/quality-control/production-rag-monitor.js"
 import { adaptiveEffectiveMinScore, bm25Score, bm25Search, buildLexicalIndex, getLexicalIndex, rrfFuse, searchRag, tokenizeQuery } from "./hybrid-search.js"
-import type { DocumentGroup, FolderPolicy, GroupMembership, JsonValue, UserGroup } from "../types.js"
+import type { DocumentGroup, DocumentManifest, FolderPolicy, GroupMembership, JsonValue, UserGroup } from "../types.js"
+
+test("FR-093 direct search rejects a runtime that monitoring rolled back before retrieval reads", async () => {
+  const store = new LocalObjectStore(await mkdtemp(path.join(tmpdir(), "rag-search-failure-observation-")))
+  const safetyState: RagSafetyState = {
+    schemaVersion: 1,
+    stateVersion: 1,
+    policyId: "production-rag",
+    policyVersion: "approved-1",
+    activeRuntimeProfileVersion: `${ragRuntimePolicy.profile.version}-last-known-safe`,
+    quarantinedRuntimeProfileVersions: [],
+    promotionFrozen: false,
+    documentQuarantineRequired: false,
+    responseMode: "normal",
+    updatedAt: "2026-07-11T00:00:00.000Z",
+    validUntil: "2099-01-01T00:00:00.000Z"
+  }
+  await store.putText(RAG_SAFETY_STATE_KEY, JSON.stringify(safetyState))
+  await store.putText(ACTIVE_RAG_QUALITY_POLICY_KEY, JSON.stringify({
+    signalCatalogVersion: RAG_QUALITY_SIGNAL_CATALOG_VERSION,
+    profileId: "production-rag",
+    version: "approved-1",
+    workloadProfileVersion: "workload-v1",
+    runtimeProfileVersion: ragRuntimePolicy.profile.version,
+    priceCatalogVersion: "price-v1",
+    evidenceVersions: {
+      dataset: "dataset-v1", model: "model-v1", index: "index-v1", prompt: "prompt-v1",
+      pipeline: "pipeline-v1", parser: "parser-v1", chunker: "chunker-v1"
+    },
+    workloadDimensions: {},
+    requiredCaseSlices: {},
+    changeControl: {},
+    responsePolicy: { allowedActions: [] }
+  }))
+  const deps = { objectStore: store } as unknown as Dependencies
+  const user: AppUser = {
+    userId: "search-user",
+    tenantId: "tenant-search",
+    accountStatus: "active",
+    cognitoGroups: ["CHAT_USER"]
+  }
+
+  await assert.rejects(
+    () => searchRag(deps, { query: "must not read indexes" }, user),
+    /not the active monitored runtime/
+  )
+  const samples = await Promise.all((await store.listKeys("quality-control/source-samples/")).map(async (key) => (
+    JSON.parse(await store.getText(key)) as {
+      sourceType: string
+      slice: string
+      measurements: Record<string, { value: number | null }>
+    }
+  )))
+  const failureSamples = samples.filter((sample) => sample.sourceType === "search_runtime")
+  assert.ok(failureSamples.some((sample) => sample.slice === "outcome=failure"))
+  assert.ok(failureSamples.some((sample) => sample.slice === "failure=safety_interlock"))
+  assert.ok(failureSamples.every((sample) => sample.measurements["reliability.error_rate"]?.value === 1))
+  const [failureTraceKey] = await store.listKeys(`debug-runs/${tenantPartitionId("tenant-search")}/`)
+  assert.ok(failureTraceKey)
+  const failureTrace = JSON.parse(await store.getText(failureTraceKey!)) as {
+    status?: string
+    tenantPartitionId?: string
+    question?: string
+    replayVersionManifest?: {
+      decisions?: { responseStatus?: string; decisionCode?: string; reasonCodes?: string[] }
+      missingVersions?: string[]
+    }
+  }
+  assert.equal(failureTrace.status, "error")
+  assert.equal(failureTrace.tenantPartitionId, tenantPartitionId("tenant-search"))
+  assert.match(failureTrace.question ?? "", /^sha256:[a-f0-9]{64}$/)
+  assert.equal(failureTrace.replayVersionManifest?.decisions?.responseStatus, "error")
+  assert.equal(failureTrace.replayVersionManifest?.decisions?.decisionCode, "failed")
+  assert.deepEqual(failureTrace.replayVersionManifest?.decisions?.reasonCodes, ["safety_interlock"])
+  assert.ok(failureTrace.replayVersionManifest?.missingVersions?.includes("sourceSnapshots"))
+})
+
+test("FR-074 rejected cross-tenant search persists only an actor-tenant redacted trace", async () => {
+  const store = new LocalObjectStore(await mkdtemp(path.join(tmpdir(), "rag-search-denied-trace-")))
+  const user: AppUser = {
+    userId: "search-user",
+    tenantId: "tenant-search",
+    accountStatus: "active",
+    cognitoGroups: ["CHAT_USER"]
+  }
+  await assert.rejects(
+    () => searchRag(
+      { objectStore: store } as unknown as Dependencies,
+      { query: "cross tenant secret", filters: { tenantId: "tenant-other" } },
+      user
+    ),
+    /Forbidden/
+  )
+
+  const ownKeys = await store.listKeys(`debug-runs/${tenantPartitionId("tenant-search")}/`)
+  assert.equal(ownKeys.length, 1)
+  assert.deepEqual(await store.listKeys(`debug-runs/${tenantPartitionId("tenant-other")}/`), [])
+  const trace = JSON.parse(await store.getText(ownKeys[0]!)) as {
+    status?: string
+    question?: string
+    steps?: Array<{ summary?: string }>
+  }
+  assert.equal(trace.status, "error")
+  assert.match(trace.question ?? "", /^sha256:[a-f0-9]{64}$/)
+  assert.doesNotMatch(JSON.stringify(trace), /cross tenant secret|tenant-other/)
+})
 
 test("tokenizeQuery normalizes Japanese and ASCII terms with n-grams", () => {
   const tokens = tokenizeQuery("  申請承認 Workflow  ")
@@ -129,7 +239,7 @@ test("lexical index and search handle empty inputs, scoped manifests, artifact m
       scopeType: "chat",
       temporaryScopeId: "tmp-1",
       expiresAt: "2999-01-01T00:00:00.000Z",
-      allowedUsers: ["user@example.com"],
+      allowedUsers: ["user-1"],
       aliases: { PTO: ["休暇"] }
     },
     chunks: [{ id: "chunk-0000", text: "休暇申請は3日前までです。" }]
@@ -161,30 +271,60 @@ test("lexical index and search handle empty inputs, scoped manifests, artifact m
       tenantId: "tenant-a",
       scopeType: "chat",
       temporaryScopeId: "tmp-1",
-      allowedUsers: ["user@example.com"]
+      allowedUsers: ["user-1"]
     },
     qualityProfile: { ragEligibility: "excluded", verificationStatus: "verified" },
     chunks: [{ id: "chunk-0000", text: "品質除外資料です。" }]
   }))
 
+  const originalGetText = objectStore.getText.bind(objectStore)
+  objectStore.getText = async (key: string) => {
+    if (key.endsWith("lexical-index/latest.json")) throw new Error("cache timeout")
+    return originalGetText(key)
+  }
+  await assert.rejects(() => getLexicalIndex(
+    deps,
+    { userId: "user-1", email: "user@example.com", tenantId: "tenant-a", accountStatus: "active", cognitoGroups: ["CHAT_USER"] },
+    { tenantId: "tenant-a" },
+    { mode: "temporary", temporaryScopeId: "tmp-1", includeTemporary: true }
+  ), /mandatory guard outcomes were not observed/)
+  objectStore.getText = originalGetText
   const index = await getLexicalIndex(
     deps,
-    { userId: "user-1", email: "user@example.com", cognitoGroups: ["CHAT_USER"] },
+    { userId: "user-1", email: "user@example.com", tenantId: "tenant-a", accountStatus: "active", cognitoGroups: ["CHAT_USER"] },
     { tenantId: "tenant-a" },
     { mode: "temporary", temporaryScopeId: "tmp-1", includeTemporary: true }
   )
   assert.equal(index.docs.length, 1)
   assert.equal(index.docs[0]?.documentId, "active")
   assert.equal(index.diagnostics?.cache, "built")
+  assert.equal(index.diagnostics?.degradationDecision, undefined)
   assert.match(index.aliasVersion, /^alias:/)
 
   const memoryIndex = await getLexicalIndex(
     deps,
-    { userId: "user-1", email: "user@example.com", cognitoGroups: ["CHAT_USER"] },
+    { userId: "user-1", email: "user@example.com", tenantId: "tenant-a", accountStatus: "active", cognitoGroups: ["CHAT_USER"] },
     { tenantId: "tenant-a" },
     { mode: "temporary", temporaryScopeId: "tmp-1", includeTemporary: true }
   )
   assert.equal(memoryIndex.diagnostics?.cache, "memory")
+  assert.equal(memoryIndex.diagnostics?.degradationDecision, undefined)
+
+  const wrongConversationIndex = await getLexicalIndex(
+    deps,
+    { userId: "user-1", email: "user@example.com", tenantId: "tenant-a", accountStatus: "active", cognitoGroups: ["CHAT_USER"] },
+    { tenantId: "tenant-a" },
+    { mode: "temporary", temporaryScopeId: "tmp-other-conversation", includeTemporary: true }
+  )
+  assert.equal(wrongConversationIndex.docs.length, 0)
+
+  const wrongOwnerIndex = await getLexicalIndex(
+    deps,
+    { userId: "user-2", email: "other@example.com", tenantId: "tenant-a", accountStatus: "active", cognitoGroups: ["CHAT_USER"] },
+    { tenantId: "tenant-a" },
+    { mode: "temporary", temporaryScopeId: "tmp-1", includeTemporary: true }
+  )
+  assert.equal(wrongOwnerIndex.docs.length, 0)
 
   const semanticDeps = {
     ...deps,
@@ -257,12 +397,12 @@ test("lexical index and search handle empty inputs, scoped manifests, artifact m
   const semanticOnly = await searchRag(
     semanticDeps,
     { query: "休暇", topK: 5, lexicalTopK: 0, semanticTopK: 5, semanticVector: [1, 0], filters: { tenantId: "tenant-a" }, scope: { mode: "temporary", temporaryScopeId: "tmp-1", includeTemporary: true } },
-    { userId: "user-1", email: "user@example.com", cognitoGroups: ["CHAT_USER"] }
+    { userId: "user-1", email: "user@example.com", tenantId: "tenant-a", accountStatus: "active", cognitoGroups: ["CHAT_USER"] }
   )
   assert.equal(semanticOnly.results.length, 1)
   assert.equal(semanticOnly.results[0]?.id, "semantic-only")
   assert.deepEqual(semanticOnly.results[0]?.sources, ["semantic"])
-  assert.deepEqual(semanticOnly.results[0]?.metadata, { tenantId: "tenant-a" })
+  assert.equal(semanticOnly.results[0]?.metadata, undefined)
 })
 
 test("service search applies ACL and metadata filters across lexical and vector results", async () => {
@@ -296,12 +436,11 @@ test("service search applies ACL and metadata filters across lexical and vector 
       tenantId: "tenant-a",
       source: "confluence",
       docType: "policy",
-      aclGroup: "GROUP_B"
+      aclGroup: "GROUP_B",
+      allowedUsers: ["user-2"]
     }
   })
-  await removeLifecycleStatusFromLocalVectors(dataDir)
-
-  const groupAUser = user(["GROUP_A"])
+  const groupAUser = user(["CHAT_USER", "GROUP_A"])
   const groupASearch = await service.search({ query: "policy approval", topK: 10, filters: { tenantId: "tenant-a", source: "notion" } }, groupAUser)
   assert.equal(groupASearch.results.length, 1)
   assert.equal(groupASearch.results[0]?.fileName, "group-a-policy.md")
@@ -310,7 +449,6 @@ test("service search applies ACL and metadata filters across lexical and vector 
   assert.equal(typeof groupASearch.diagnostics.lexicalSemanticOverlap, "number")
   assert.ok(groupASearch.diagnostics.scoreDistribution.top !== null)
   assert.deepEqual(groupASearch.results[0]?.metadata, {
-    tenantId: "tenant-a",
     source: "notion",
     docType: "policy",
     department: "hr"
@@ -335,21 +473,37 @@ test("service search applies ACL and metadata filters across lexical and vector 
   assert.ok(lexicalOnlySearch.diagnostics.lexicalCount > 0)
   assert.equal(lexicalOnlySearch.diagnostics.semanticCount, 0)
 
-  const groupBOnlySearch = await service.search({ query: "申請承認", topK: 10 }, user(["GROUP_B"]))
+  const groupBOnlySearch = await service.search({ query: "申請承認", topK: 10 }, {
+    userId: "user-2",
+    email: "user-2@example.com",
+    tenantId: "tenant-a",
+    accountStatus: "active",
+    cognitoGroups: ["CHAT_USER", "GROUP_B"]
+  })
   assert.equal(groupBOnlySearch.results.some((result) => result.fileName === "group-a-policy.md"), false)
 })
 
 test("service search denies group-scoped manifests to non-members without legacy ACLs", async () => {
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-group-scope-search-"))
-  const service = new MemoRagService(createLocalDeps(dataDir))
-  const owner: AppUser = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["CHAT_USER"] }
-  const member: AppUser = { userId: "member-1", email: "member@example.com", cognitoGroups: ["CHAT_USER"] }
-  const outsider: AppUser = { userId: "outsider-1", email: "outsider@example.com", cognitoGroups: ["CHAT_USER"] }
+  const deps = createLocalDeps(dataDir)
+  const service = new MemoRagService(deps)
+  const owner: AppUser = { userId: "owner-1", email: "owner@example.com", tenantId: "tenant-a", accountStatus: "active", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const member: AppUser = { userId: "member-1", email: "member@example.com", tenantId: "tenant-a", accountStatus: "active", cognitoGroups: ["CHAT_USER"] }
+  const outsider: AppUser = { userId: "outsider-1", email: "outsider@example.com", tenantId: "tenant-a", accountStatus: "active", cognitoGroups: ["CHAT_USER"] }
   const group = await service.createDocumentGroup(owner, {
-    name: "Private search group",
-    sharedUserIds: [member.userId]
+    name: "Private search group"
   })
-  await service.ingest({
+  const policyId = `policy-${group.groupId}`
+  await deps.documentGroupStore.update(group.tenantId, group.groupId, { hasExplicitPolicy: true, policyId })
+  await deps.folderPolicyStore.save(policy(policyId, group.groupId, [
+    { principalType: "user", principalId: owner.userId, permissionLevel: "full" },
+    { principalType: "user", principalId: member.userId, permissionLevel: "readOnly" }
+  ]))
+  const folderPermissions = new FolderPermissionService(deps)
+  assert.equal(await folderPermissions.resolveEffectiveFolderPermission(owner, group.groupId), "full")
+  assert.equal(await folderPermissions.resolveEffectiveFolderPermission(member, group.groupId), "readOnly")
+  assert.equal(await folderPermissions.resolveEffectiveFolderPermission(outsider, group.groupId), "none")
+  const manifest = await service.ingest({
     fileName: "group-secret.md",
     text: "TOPSECRET dragonfruit launch plan is restricted to the private group.",
     skipMemory: true,
@@ -359,6 +513,8 @@ test("service search denies group-scoped manifests to non-members without legacy
       groupIds: [group.groupId]
     }
   })
+  assert.equal(manifest.metadata?.tenantId, "tenant-a")
+  assert.deepEqual(manifest.metadata?.groupIds, [group.groupId])
 
   const outsiderSearch = await service.search({ query: "dragonfruit launch", topK: 10 }, outsider)
   assert.equal(outsiderSearch.results.some((result) => result.fileName === "group-secret.md"), false)
@@ -371,7 +527,7 @@ test("search removes folder policy documents immediately after group membership 
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-folder-policy-search-"))
   const deps = createLocalDeps(dataDir)
   const objectStore = deps.objectStore as LocalObjectStore
-  const member: AppUser = { userId: "member-1", email: "member@example.com", cognitoGroups: ["CHAT_USER"] }
+  const member: AppUser = { userId: "member-1", email: "member@example.com", tenantId: "tenant-a", accountStatus: "active", cognitoGroups: ["CHAT_USER"] }
 
   await deps.userGroupStore.save(userGroup("team-a"))
   await deps.groupMembershipStore.save(membership("team-a", "user", member.userId, "full"))
@@ -395,7 +551,7 @@ test("search removes folder policy documents immediately after group membership 
     lifecycleStatus: "active",
     metadata: {
       scopeType: "group",
-      ownerUserId: member.userId,
+      ownerUserId: "owner-1",
       groupIds: ["folder-secret"],
       tenantId: "tenant-a"
     }
@@ -404,7 +560,7 @@ test("search removes folder policy documents immediately after group membership 
   const allowed = await searchRag(deps, { query: "kiwifruit launch", topK: 10, lexicalTopK: 10, semanticTopK: 0 }, member)
   assert.equal(allowed.results[0]?.fileName, "folder-policy-secret.md")
 
-  await deps.groupMembershipStore.delete("team-a", "user", member.userId)
+  await deps.groupMembershipStore.delete("tenant-a", "team-a", "user", member.userId)
   const revoked = await searchRag(deps, { query: "kiwifruit launch", topK: 10, lexicalTopK: 10, semanticTopK: 0 }, member)
   assert.equal(revoked.results.some((result) => result.fileName === "folder-policy-secret.md"), false)
   assert.equal(revoked.diagnostics.index?.visibleManifestCount, 0)
@@ -445,12 +601,12 @@ test("search removes folder policy documents immediately after group membership 
   assert.equal(semanticRevoked.diagnostics.semanticCount, 0)
 })
 
-test("direct document grants do not expand folder-scoped RAG search without folder permission", async () => {
+test("direct grants require folder scope permission and an ordinary deny overrides both search allow paths", async () => {
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-direct-share-scope-"))
   const deps = createLocalDeps(dataDir)
   const objectStore = deps.objectStore as LocalObjectStore
-  const reader: AppUser = { userId: "reader-1", email: "reader@example.com", cognitoGroups: ["CHAT_USER"] }
-  const manager: AppUser = { userId: "manager-1", email: "manager@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const reader: AppUser = { userId: "reader-1", email: "reader@example.com", tenantId: "tenant-a", accountStatus: "active", cognitoGroups: ["CHAT_USER"] }
+  const manager: AppUser = { userId: "manager-1", email: "manager@example.com", tenantId: "tenant-a", accountStatus: "active", cognitoGroups: ["RAG_GROUP_MANAGER"] }
 
   await deps.documentGroupStore.create(folder("folder-a", "/folder-a", { hasExplicitPolicy: true, policyId: "policy-folder-a" }))
   await deps.folderPolicyStore.save(policy("policy-folder-a", "folder-a", [
@@ -498,6 +654,17 @@ test("direct document grants do not expand folder-scoped RAG search without fold
   }, reader)
   assert.equal(documentScope.results[0]?.fileName, "direct-shared-doc.md")
 
+  await new DocumentPermissionService(deps).replaceDocumentShareGrants(manager, manifest, [
+    { principalType: "user", principalId: reader.userId, permissionLevel: "deny" }
+  ], "ordinary deny overrides direct and folder allow paths")
+  const explicitlyDenied = await searchRag(deps, {
+    query: "nectarine direct",
+    topK: 10,
+    lexicalTopK: 10,
+    semanticTopK: 0
+  }, reader)
+  assert.equal(explicitlyDenied.results.some((result) => result.fileName === "direct-shared-doc.md"), false)
+
   await deps.folderPolicyStore.save(policy("policy-folder-a", "folder-a", [
     { principalType: "user", principalId: "owner-1", permissionLevel: "full" },
     { principalType: "user", principalId: reader.userId, permissionLevel: "readOnly" }
@@ -509,14 +676,14 @@ test("direct document grants do not expand folder-scoped RAG search without fold
     semanticTopK: 0,
     scope: { mode: "groups", groupIds: ["folder-a"] }
   }, reader)
-  assert.equal(folderScopeWithFolderPermission.results[0]?.fileName, "direct-shared-doc.md")
+  assert.equal(folderScopeWithFolderPermission.results.some((result) => result.fileName === "direct-shared-doc.md"), false)
 })
 
 test("folder-scoped search includes manifests that use folderId metadata", async () => {
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-folder-id-scope-include-"))
   const deps = createLocalDeps(dataDir)
   const objectStore = deps.objectStore as LocalObjectStore
-  const member: AppUser = { userId: "member-1", email: "member@example.com", cognitoGroups: ["CHAT_USER"] }
+  const member: AppUser = { userId: "member-1", email: "member@example.com", tenantId: "tenant-a", accountStatus: "active", cognitoGroups: ["CHAT_USER"] }
 
   await deps.documentGroupStore.create(folder("folder-secret", "/secret", { hasExplicitPolicy: true, policyId: "policy-secret" }))
   await deps.folderPolicyStore.save(policy("policy-secret", "folder-secret", [
@@ -547,7 +714,7 @@ test("folder-scoped search includes manifests that use folderIds metadata", asyn
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-folder-ids-scope-include-"))
   const deps = createLocalDeps(dataDir)
   const objectStore = deps.objectStore as LocalObjectStore
-  const member: AppUser = { userId: "member-1", email: "member@example.com", cognitoGroups: ["CHAT_USER"] }
+  const member: AppUser = { userId: "member-1", email: "member@example.com", tenantId: "tenant-a", accountStatus: "active", cognitoGroups: ["CHAT_USER"] }
 
   await deps.documentGroupStore.create(folder("folder-secret", "/secret", { hasExplicitPolicy: true, policyId: "policy-secret" }))
   await deps.folderPolicyStore.save(policy("policy-secret", "folder-secret", [
@@ -578,7 +745,7 @@ test("folder-scoped search excludes folderId manifests outside requested scope",
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-folder-id-scope-exclude-"))
   const deps = createLocalDeps(dataDir)
   const objectStore = deps.objectStore as LocalObjectStore
-  const member: AppUser = { userId: "member-1", email: "member@example.com", cognitoGroups: ["CHAT_USER"] }
+  const member: AppUser = { userId: "member-1", email: "member@example.com", tenantId: "tenant-a", accountStatus: "active", cognitoGroups: ["CHAT_USER"] }
 
   await deps.documentGroupStore.create(folder("folder-secret", "/secret", { hasExplicitPolicy: true, policyId: "policy-secret" }))
   await deps.folderPolicyStore.save(policy("policy-secret", "folder-secret", [
@@ -610,7 +777,7 @@ test("semantic-only search includes folderId metadata when requested folder scop
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-folder-id-semantic-scope-"))
   const deps = createLocalDeps(dataDir)
   const objectStore = deps.objectStore as LocalObjectStore
-  const member: AppUser = { userId: "member-1", email: "member@example.com", cognitoGroups: ["CHAT_USER"] }
+  const member: AppUser = { userId: "member-1", email: "member@example.com", tenantId: "tenant-a", accountStatus: "active", cognitoGroups: ["CHAT_USER"] }
 
   await deps.documentGroupStore.create(folder("folder-secret", "/secret", { hasExplicitPolicy: true, policyId: "policy-secret" }))
   await deps.folderPolicyStore.save(policy("policy-secret", "folder-secret", [
@@ -666,7 +833,7 @@ test("search does not expose child legacy explicit private folder under parent F
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-legacy-explicit-child-search-"))
   const deps = createLocalDeps(dataDir)
   const objectStore = deps.objectStore as LocalObjectStore
-  const reader: AppUser = { userId: "reader-1", email: "reader-1@example.com", cognitoGroups: ["CHAT_USER"] }
+  const reader: AppUser = { userId: "reader-1", email: "reader-1@example.com", tenantId: "tenant-a", accountStatus: "active", cognitoGroups: ["CHAT_USER"] }
 
   await deps.documentGroupStore.create(folder("parent", "/parent", { hasExplicitPolicy: true, policyId: "policy-parent" }))
   await deps.folderPolicyStore.save(policy("policy-parent", "parent", [
@@ -708,16 +875,51 @@ test("service search publishes and reuses immutable lexical index artifacts", as
   const objectStore = new LocalObjectStore(dataDir)
   const service = new MemoRagService({ ...createLocalDeps(dataDir), objectStore })
 
-  await service.ingest({
+  const manifest = await service.ingest({
     fileName: "policy.md",
     text: "申請承認ワークフローの確認条件は責任者承認です。approval policy.",
     skipMemory: true,
-    metadata: { tenantId: "tenant-a", aclGroup: "GROUP_A" }
+    metadata: { tenantId: "tenant-a", ownerUserId: "user-1", aclGroup: "GROUP_A", allowedUsers: ["user-1"] }
   })
+  assert.equal(manifest.traceId, `ingest:${manifest.documentId}:${manifest.documentVersion}`)
+  assert.equal(manifest.replayVersionManifest?.sourceSnapshots[0]?.documentVersion, manifest.documentVersion)
+  assert.ok(manifest.replayVersionManifest?.missingVersions.includes("modelVersions.answer"))
 
   const first = await service.search({ query: "approval", topK: 10 }, user(["GROUP_A"]))
   assert.ok(first.results.length >= 1)
   assert.match(first.diagnostics.indexVersion, /^lexical:[a-f0-9]{8}$/)
+  assert.match(first.diagnostics.traceId, /^search_/)
+  assert.equal(first.results[0]?.documentVersion, manifest.documentVersion)
+  assert.equal(first.diagnostics.replayVersionManifest.sourceSnapshots[0]?.documentVersion, manifest.documentVersion)
+  assert.equal(first.diagnostics.replayVersionManifest.parserVersion, manifest.sourceExtractorVersion)
+  assert.equal(first.diagnostics.replayVersionManifest.ocrVersion, null)
+  assert.ok(first.diagnostics.replayVersionManifest.missingVersions.includes("ocrVersion"))
+  assert.equal(first.diagnostics.replayVersionManifest.chunkerVersion, manifest.chunkerVersion)
+  assert.equal(first.diagnostics.replayVersionManifest.chunkingPolicyVersion, manifest.chunkingPolicy?.version)
+  assert.equal(first.diagnostics.replayVersionManifest.promptVersion, manifest.pipelineVersions?.promptVersion)
+  assert.equal(first.diagnostics.replayVersionManifest.pipelineVersion, manifest.pipelineVersions?.chatOrchestrationWorkflowVersion)
+  assert.equal(first.diagnostics.replayVersionManifest.sourceSnapshots[0]?.ingestTraceId, manifest.traceId)
+  assert.ok(first.diagnostics.replayVersionManifest.missingVersions.includes("modelVersions.answer"))
+
+  const traceKeys = await objectStore.listKeys("debug-runs/")
+  const traceKey = traceKeys.find((key) => key.endsWith(`/${first.diagnostics.traceId}.json`))
+  assert.ok(traceKey)
+  const trace = JSON.parse(await objectStore.getText(traceKey)) as {
+    runId?: string
+    tenantPartitionId?: string
+    actorPartitionId?: string
+    requestTraceId?: string
+    parentTraceIds?: string[]
+    question?: string
+    replayVersionManifest?: { indexVersion?: string; missingVersions?: string[] }
+  }
+  assert.equal(trace.runId, first.diagnostics.traceId)
+  assert.equal(trace.requestTraceId, first.diagnostics.traceId)
+  assert.deepEqual(trace.parentTraceIds, [manifest.traceId])
+  assert.match(trace.tenantPartitionId ?? "", /^tenant:[a-f0-9]{24}$/)
+  assert.match(trace.actorPartitionId ?? "", /^tenant:[a-f0-9]{24}$/)
+  assert.match(trace.question ?? "", /^sha256:[a-f0-9]{64}$/)
+  assert.equal(trace.replayVersionManifest?.indexVersion, first.diagnostics.indexVersion)
 
   const keys = await objectStore.listKeys("lexical-index/")
   assert.ok(keys.includes("lexical-index/latest.json"))
@@ -727,6 +929,42 @@ test("service search publishes and reuses immutable lexical index artifacts", as
 
   const second = await service.search({ query: "申請承認", topK: 10 }, user(["GROUP_A"]))
   assert.equal(second.diagnostics.indexVersion, first.diagnostics.indexVersion)
+})
+
+test("lexical index cache rebuilds from the active manifest when a folder move projection version changes", async () => {
+  const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-folder-move-lexical-index-"))
+  const deps = createLocalDeps(dataDir)
+  const service = new MemoRagService(deps)
+  const manifest = await service.ingest({
+    fileName: "folder-move.md",
+    text: "Folder move lexical index reconciliation evidence.",
+    skipMemory: true,
+    metadata: {
+      tenantId: "tenant-a",
+      allowedUsers: ["user-1"],
+      folderCanonicalPaths: ["/Old/Source"],
+      folderPolicyRefs: ["old-policy"],
+      folderProjectionVersion: "before-move"
+    }
+  })
+  const before = await getLexicalIndex(deps, user([]))
+  assert.deepEqual(before.docs[0]?.metadata?.folderCanonicalPaths, ["/Old/Source"])
+
+  const stored = JSON.parse(await deps.objectStore.getText(manifest.manifestObjectKey)) as DocumentManifest
+  await deps.objectStore.putText(manifest.manifestObjectKey, JSON.stringify({
+    ...stored,
+    metadata: {
+      ...(stored.metadata ?? {}),
+      folderCanonicalPaths: ["/Destination/Source"],
+      folderPolicyRefs: ["destination-policy"],
+      folderProjectionVersion: "folder-move-operation-1"
+    }
+  }, null, 2), "application/json")
+
+  const after = await getLexicalIndex(deps, user([]))
+  assert.notEqual(after.version, before.version)
+  assert.deepEqual(after.docs[0]?.metadata?.folderCanonicalPaths, ["/Destination/Source"])
+  assert.deepEqual(after.docs[0]?.metadata?.folderPolicyRefs, ["destination-policy"])
 })
 
 test("service search scopes benchmark corpus by suite metadata", async () => {
@@ -746,6 +984,7 @@ test("service search scopes benchmark corpus by suite metadata", async () => {
       benchmarkCorpusSkipMemory: true,
       benchmarkEmbeddingModelId: "api-default",
       aclGroups: ["BENCHMARK_RUNNER"],
+      allowedUsers: [runner.userId],
       docType: "benchmark-corpus",
       lifecycleStatus: "active",
       source: "benchmark-runner",
@@ -797,7 +1036,7 @@ test("service search expands published reviewed aliases without returning alias 
     fileName: "vacation.md",
     text: "年次有給休暇の申請期限は取得日の3営業日前です。",
     skipMemory: true,
-    metadata: { tenantId: "tenant-a", aclGroup: "GROUP_A" }
+    metadata: { tenantId: "tenant-a", aclGroup: "GROUP_A", allowedUsers: ["user-1"] }
   })
   const alias = await service.createAlias(manager, {
     term: "pto",
@@ -848,7 +1087,12 @@ function createLocalDeps(dataDir: string): Dependencies {
     documentGroupStore: new LocalDocumentGroupStore(dataDir),
     folderPolicyStore: new LocalFolderPolicyStore(dataDir),
     userGroupStore: new LocalUserGroupStore(dataDir),
-    groupMembershipStore: new LocalGroupMembershipStore(dataDir)
+    groupMembershipStore: new LocalGroupMembershipStore(dataDir),
+    localTestIngestAdmissionContext: {
+      mode: "local_test_fixture",
+      fixtureId: "hybrid-search-test",
+      tenantId: "tenant-a"
+    }
   }
 }
 
@@ -856,7 +1100,9 @@ function user(cognitoGroups: string[]): AppUser {
   return {
     userId: "user-1",
     email: "user-1@example.com",
-    cognitoGroups
+    tenantId: "tenant-a",
+    accountStatus: "active",
+    cognitoGroups: [...new Set(["CHAT_USER", ...cognitoGroups])]
   }
 }
 
@@ -869,15 +1115,15 @@ function folder(groupId: string, normalizedCanonicalPath: string, input: Partial
     groupId,
     schemaVersion: 2,
     itemType: "documentGroup",
-    tenantId: "default",
+    tenantId: "tenant-a",
     adminPrincipalType,
     adminPrincipalId,
     name,
     normalizedName: name,
     canonicalPath: normalizedCanonicalPath,
     normalizedCanonicalPath,
-    adminPathPk: `default#${adminPrincipalType}#${adminPrincipalId}`,
-    parentPathPk: `default#${adminPrincipalType}#${adminPrincipalId}#ROOT`,
+    adminPathPk: `tenant-a#${adminPrincipalType}#${adminPrincipalId}`,
+    parentPathPk: `tenant-a#${adminPrincipalType}#${adminPrincipalId}#ROOT`,
     parentGroupId: input.parentGroupId,
     ancestorGroupIds: input.ancestorGroupIds ?? [],
     ownerUserId,
@@ -898,7 +1144,7 @@ function policy(policyId: string, folderId: string, entries: FolderPolicy["entri
   return {
     policyId,
     itemType: "folderPolicy",
-    tenantId: "default",
+    tenantId: "tenant-a",
     folderId,
     entries,
     createdBy: "owner-1",
@@ -937,6 +1183,7 @@ function userGroup(groupId: string): UserGroup {
   return {
     groupId,
     itemType: "userGroup",
+    tenantId: "tenant-a",
     name: groupId,
     type: "team",
     ancestorGroupIds: [],
@@ -950,6 +1197,7 @@ function userGroup(groupId: string): UserGroup {
 function membership(groupId: string, memberType: GroupMembership["memberType"], memberId: string, permissionLevel: GroupMembership["permissionLevel"]): GroupMembership {
   return {
     groupId,
+    tenantId: "tenant-a",
     memberType,
     memberId,
     permissionLevel,
@@ -957,13 +1205,4 @@ function membership(groupId: string, memberType: GroupMembership["memberType"], 
     createdAt: "2026-05-17T00:00:00.000Z",
     updatedAt: "2026-05-17T00:00:00.000Z"
   }
-}
-
-async function removeLifecycleStatusFromLocalVectors(dataDir: string): Promise<void> {
-  const vectorPath = path.join(dataDir, "evidence-vectors.json")
-  const raw = JSON.parse(await readFile(vectorPath, "utf-8")) as { records: Array<{ metadata?: { lifecycleStatus?: string } }> }
-  for (const record of raw.records) {
-    if (record.metadata) delete record.metadata.lifecycleStatus
-  }
-  await writeFile(vectorPath, JSON.stringify(raw, null, 2))
 }

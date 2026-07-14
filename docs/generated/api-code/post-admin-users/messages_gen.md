@@ -17,9 +17,14 @@
 | M002 | OpenAPI contract | `401` | 認証が必要です。 | OpenAPI で宣言された HTTP 401 response | runtime OpenAPI |
 | M003 | OpenAPI contract | `403` | 対象操作を実行する権限がありません。 | OpenAPI で宣言された HTTP 403 response | runtime OpenAPI |
 | M004 | OpenAPI contract | `409` | 現在のリソース状態と要求された操作が競合しています。 | OpenAPI で宣言された HTTP 409 response | runtime OpenAPI |
-| M005 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:267 (requirePermission)` |
-| M006 | 例外 | `-` | Managed user already exists | `existing` が存在し、真である | `apps/api/src/rag/memorag-service.ts:866 (MemoRagService.createManagedUser)` |
-| M007 | HTTP 実装応答 | `409` | Managed user already exists | `err` が `Error` の instance である、かつ `err.message` が `"Managed user already exists"` と等しい | `apps/api/src/routes/admin-routes.ts:51 (POST /admin/users handler)` |
+| M005 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| M006 | 例外 | `-` | Authoritative account creation is not configured | `this.deps.userDirectory.createUser` が存在しない、または偽である、または `this.deps.userDirectory.setUserGroups` が存在しない、または偽である、または `this.deps.userDirectory.deleteUser` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1549 (MemoRagService.createManagedUser)` |
+| M007 | 例外 | `-` | Authoritative directory identity is unavailable during reconciliation | `this.deps.verifiedIdentityProvider` が存在し、真である、かつ `currentIdentity` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:2920 (MemoRagService.syncUserDirectory)` |
+| M008 | 例外 | `-` | Managed user already exists | some の判定結果が真である | `apps/api/src/rag/memorag-service.ts:1553 (MemoRagService.createManagedUser)` |
+| M009 | 例外 | `-` | Authoritative identity was not created active | `created.status` が `"active"` と異なる | `apps/api/src/rag/memorag-service.ts:1556 (MemoRagService.createManagedUser)` |
+| M010 | 例外 | `-` | Authoritative account creation is not configured | `config.authEnabled` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1606 (MemoRagService.createManagedUser)` |
+| M011 | 例外 | `-` | Managed user already exists | `existing` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1609 (MemoRagService.createManagedUser)` |
+| M012 | HTTP 実装応答 | `409` | Managed user already exists | `err` が `Error` の instance である、かつ `err.message` が `"Managed user already exists"` と等しい | `apps/api/src/routes/admin-routes.ts:57 (POST /admin/users handler)` |
 
 ## 読み方
 

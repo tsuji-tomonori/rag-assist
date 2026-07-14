@@ -1,5 +1,19 @@
 import { HTTPException } from "hono/http-exception"
+import {
+  APPLICATION_ROLES,
+  ROLE_CATALOG_VERSION,
+  ROLE_PERMISSION_CATALOG,
+  isApplicationRole,
+  type ApplicationPermission,
+  type ApplicationRole
+} from "@memorag-mvp/contract/access-control"
 import type { AppUser } from "./auth.js"
+import {
+  authorizeResourceOperation,
+  type ActorResourceAuthorizationContext,
+  type ResourceOperationAuthorizationDecision,
+  type ResourceOperationAuthorizationRequest
+} from "./security/resource-operation-authorization.js"
 
 export type AccountStatus = "active" | "suspended" | "deleted"
 
@@ -15,10 +29,15 @@ export type AuthorizationResourceCondition =
   | "agentWritebackFull"
   | "documentGroupRead"
   | "documentGroupFull"
+  | "resourceGroupFull"
   | "documentEffectiveFull"
   | "documentMove"
+  | "folderMove"
   | "documentUploadSession"
+  | "tenantCollection"
+  | "tenantRun"
   | "benchmarkSeedScope"
+  | "benchmarkEvaluationScope"
   | "documentIngestRun"
   | "adminManagedUser"
   | "roleAssignment"
@@ -26,99 +45,11 @@ export type AuthorizationResourceCondition =
 
 export type AuthorizationErrorDisclosure = "generic" | "resource-hidden" | "permission-detail"
 
-export type Permission =
-  | "chat:create"
-  | "chat:read:own"
-  | "chat:read:shared"
-  | "chat:share:own"
-  | "chat:delete:own"
-  | "chat:admin:read_all"
-  | "answer:edit"
-  | "answer:publish"
-  | "support:ticket:read:all"
-  | "rag:group:create"
-  | "rag:group:assign_manager"
-  | "rag:doc:read"
-  | "rag:doc:share"
-  | "rag:doc:move"
-  | "rag:doc:write:group"
-  | "rag:doc:delete:group"
-  | "rag:index:rebuild:group"
-  | "rag:alias:read"
-  | "rag:alias:write:group"
-  | "rag:alias:review:group"
-  | "rag:alias:disable:group"
-  | "rag:alias:publish:group"
-  | "benchmark:read"
-  | "benchmark:query"
-  | "benchmark:run"
-  | "benchmark:seed_corpus"
-  | "benchmark:cancel"
-  | "benchmark:download"
-  | "debug:trace:read:self"
-  | "debug:trace:read:sanitized"
-  | "debug:trace:read:internal"
-  | "debug:trace:export"
-  | "debug:ingest:read"
-  | "debug:chunk:read"
-  | "debug:replay"
-  | "debug:settings:update"
-  | "debug:answer_generation:read"
-  | "debug:answer_generation:export"
-  | "agent:run"
-  | "agent:cancel"
-  | "agent:read:self"
-  | "agent:read:managed"
-  | "agent:trace:read:self"
-  | "agent:trace:read:sanitized"
-  | "agent:trace:read:internal"
-  | "agent:artifact:download"
-  | "agent:artifact:writeback"
-  | "agent:settings:manage"
-  | "agent:provider:manage"
-  | "skill:read"
-  | "skill:create"
-  | "skill:update"
-  | "skill:delete"
-  | "skill:share"
-  | "skill:generate_with_ai"
-  | "agent_profile:read"
-  | "agent_profile:create"
-  | "agent_profile:update"
-  | "agent_profile:delete"
-  | "agent_profile:share"
-  | "agent_profile:generate_with_ai"
-  | "agent_preset:read:self"
-  | "agent_preset:create:self"
-  | "agent_preset:update:self"
-  | "agent_preset:delete:self"
-  | "usage:read:own"
-  | "usage:read:all_users"
-  | "cost:read:own"
-  | "cost:read:all"
-  | "user:create"
-  | "user:read"
-  | "user:suspend"
-  | "user:unsuspend"
-  | "user:delete"
-  | "access:role:create"
-  | "access:role:update"
-  | "access:role:assign"
-  | "access:policy:read"
+export type Permission = ApplicationPermission
 
-export type Role =
-  | "CHAT_USER"
-  | "ANSWER_EDITOR"
-  | "RAG_GROUP_MANAGER"
-  | "BENCHMARK_OPERATOR"
-  | "BENCHMARK_RUNNER"
-  | "ASYNC_AGENT_USER"
-  | "SKILL_PROFILE_ADMIN"
-  | "ASYNC_AGENT_ADMIN"
-  | "USER_ADMIN"
-  | "ACCESS_ADMIN"
-  | "COST_AUDITOR"
-  | "SYSTEM_ADMIN"
+export type Role = ApplicationRole
+
+export { ROLE_CATALOG_VERSION }
 
 export type RouteAuthorizationMode =
   | "public"
@@ -137,6 +68,7 @@ export type RouteAuthorizationPolicy = {
   permission?: Permission
   permissions?: Permission[]
   conditionalPermissions?: Permission[]
+  allowedRoles?: Role[]
   operationKey?: string
   resourceCondition?: AuthorizationResourceCondition
   errorDisclosure?: AuthorizationErrorDisclosure
@@ -161,47 +93,9 @@ export type RouteAuthorizationMetadata = {
   }>
 }
 
-export const rolePermissions: Record<Role, Permission[]> = {
-  CHAT_USER: ["chat:create", "chat:read:own", "chat:read:shared", "chat:share:own", "chat:delete:own", "usage:read:own", "cost:read:own", "rag:doc:read"],
-  ANSWER_EDITOR: ["answer:edit", "answer:publish"],
-  RAG_GROUP_MANAGER: [
-    "rag:group:create","rag:group:assign_manager","rag:doc:read","rag:doc:share","rag:doc:move","rag:doc:write:group","rag:doc:delete:group","rag:index:rebuild:group",
-    "rag:alias:read","rag:alias:write:group","rag:alias:review:group","rag:alias:disable:group","rag:alias:publish:group",
-    "benchmark:read","benchmark:run"
-  ],
-  BENCHMARK_OPERATOR: ["benchmark:read", "benchmark:run"],
-  BENCHMARK_RUNNER: ["benchmark:query", "benchmark:seed_corpus"],
-  ASYNC_AGENT_USER: [
-    "agent:cancel","agent:read:self","agent:trace:read:self","agent:artifact:download",
-    "skill:read","agent_profile:read","agent_preset:read:self","agent_preset:create:self","agent_preset:update:self","agent_preset:delete:self"
-  ],
-  SKILL_PROFILE_ADMIN: [
-    "skill:read","skill:create","skill:update","skill:delete","skill:share","skill:generate_with_ai",
-    "agent_profile:read","agent_profile:create","agent_profile:update","agent_profile:delete","agent_profile:share","agent_profile:generate_with_ai"
-  ],
-  ASYNC_AGENT_ADMIN: [
-    "agent:cancel","agent:read:self","agent:read:managed","agent:trace:read:self","agent:trace:read:sanitized","agent:artifact:download","agent:settings:manage",
-    "skill:read","agent_profile:read","agent_preset:read:self"
-  ],
-  USER_ADMIN: ["user:create", "user:read", "user:suspend", "user:unsuspend", "user:delete", "usage:read:all_users"],
-  ACCESS_ADMIN: ["access:role:create", "access:role:update", "access:role:assign", "access:policy:read"],
-  COST_AUDITOR: ["cost:read:all"],
-  SYSTEM_ADMIN: [
-    "chat:create","chat:read:own","chat:read:shared","chat:share:own","chat:delete:own","chat:admin:read_all",
-    "answer:edit","answer:publish","support:ticket:read:all","rag:group:create","rag:group:assign_manager","rag:doc:read","rag:doc:share","rag:doc:move","rag:doc:write:group","rag:doc:delete:group","rag:index:rebuild:group",
-    "rag:alias:read","rag:alias:write:group","rag:alias:review:group","rag:alias:disable:group","rag:alias:publish:group",
-    "benchmark:read","benchmark:query","benchmark:run","benchmark:seed_corpus","benchmark:cancel","benchmark:download",
-    "debug:trace:read:self","debug:trace:read:sanitized","debug:trace:read:internal","debug:trace:export","debug:ingest:read","debug:chunk:read","debug:replay","debug:settings:update","debug:answer_generation:read","debug:answer_generation:export",
-    "agent:cancel","agent:read:self","agent:read:managed","agent:trace:read:self","agent:trace:read:sanitized","agent:trace:read:internal","agent:artifact:download","agent:settings:manage",
-    "skill:read","skill:create","skill:update","skill:delete","skill:share","skill:generate_with_ai",
-    "agent_profile:read","agent_profile:create","agent_profile:update","agent_profile:delete","agent_profile:share","agent_profile:generate_with_ai",
-    "agent_preset:read:self","agent_preset:create:self","agent_preset:update:self","agent_preset:delete:self",
-    "usage:read:own","usage:read:all_users","cost:read:own","cost:read:all","user:create","user:read","user:suspend","user:unsuspend","user:delete",
-    "access:role:create","access:role:update","access:role:assign","access:policy:read"
-  ]
-}
+export const rolePermissions: Readonly<Record<Role, readonly Permission[]>> = ROLE_PERMISSION_CATALOG
 
-export const applicationRoles = Object.keys(rolePermissions) as Role[]
+export const applicationRoles: Role[] = [...APPLICATION_ROLES]
 
 const folderPermissionRank: Record<EffectiveFolderPermission, number> = {
   none: 0,
@@ -219,22 +113,45 @@ export function getPermissionsForGroups(groups: string[]): Permission[] {
   return [...permissions]
 }
 
+/** Maps only a middleware-verified AppUser shape into the canonical resource kernel context. */
+export function resourceAuthorizationActorFromAppUser(user: AppUser): ActorResourceAuthorizationContext {
+  return {
+    identityVerified: isCanonicalIdentifier(user.userId) && user.accountStatus !== undefined,
+    accountStatus: user.accountStatus ?? "unknown",
+    tenantId: user.tenantId,
+    featurePermissions: getPermissionsForGroups(user.cognitoGroups),
+    roleLabels: user.cognitoGroups.filter(isApplicationRole)
+  }
+}
+
+export function authorizeAppUserResourceOperation(
+  user: AppUser,
+  request: Omit<ResourceOperationAuthorizationRequest, "actor">
+): ResourceOperationAuthorizationDecision {
+  return authorizeResourceOperation({
+    ...request,
+    actor: resourceAuthorizationActorFromAppUser(user)
+  })
+}
+
 export function rolesWithAnyPermission(permissions: Permission[]): Role[] {
   if (permissions.length === 0) return []
-  return applicationRoles.filter((role) => permissions.some((permission) => rolePermissions[role].includes(permission)))
+  return applicationRoles.filter((role) => permissions.some((permission) => rolePermissions[role]?.includes(permission) ?? false))
 }
 
 export function routeAuthorization(policy: RouteAuthorizationPolicy): RouteAuthorizationMetadata {
   const requiredPermissions = policy.permissions ?? (policy.permission ? [policy.permission] : [])
   const conditionalPermissions = policy.conditionalPermissions ?? []
   const effectivePermissions = [...requiredPermissions, ...conditionalPermissions]
-  const allowedRoles = policy.mode === "public" || policy.mode === "authenticated"
-    ? [...applicationRoles]
-    : rolesWithAnyPermission(effectivePermissions)
+  const allowedRoles = policy.allowedRoles
+    ? [...policy.allowedRoles]
+    : policy.mode === "public" || policy.mode === "authenticated"
+      ? [...applicationRoles]
+      : rolesWithAnyPermission(effectivePermissions)
   const deniedRoles = applicationRoles.filter((role) => !allowedRoles.includes(role))
   const conditionalDeniedRoles = conditionalPermissions.length === 0
     ? []
-    : allowedRoles.filter((role) => !conditionalPermissions.some((permission) => rolePermissions[role].includes(permission)))
+    : allowedRoles.filter((role) => !conditionalPermissions.some((permission) => rolePermissions[role]?.includes(permission) ?? false))
   const errors: RouteAuthorizationMetadata["errors"] = []
   if (policy.mode !== "public") {
     errors.push({ status: 401, when: "Authorization header がない、または Bearer token を検証できない場合。", body: { error: "Unauthorized" } })
@@ -299,4 +216,8 @@ function defaultResourceCondition(mode: RouteAuthorizationMode): AuthorizationRe
   if (mode === "benchmarkSeedOrPermission" || mode === "benchmarkSeedListOrPermission" || mode === "benchmarkSeedDeleteOrPermission") return "benchmarkSeedScope"
   if (mode === "documentUploadSession") return "documentUploadSession"
   return "none"
+}
+
+function isCanonicalIdentifier(value: string | undefined): value is string {
+  return typeof value === "string" && value.length > 0 && value.trim() === value
 }

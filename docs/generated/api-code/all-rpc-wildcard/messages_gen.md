@@ -13,7 +13,7 @@
 
 | ID | 種別 | Status/Event | メッセージ | 発生条件 | 実装根拠 |
 | --- | --- | --- | --- | --- | --- |
-| M001 | HTTP 実装応答 | `404` | oRPC procedure not found | 当該処理へ到達した場合 | `apps/api/src/app.ts:61 (ALL /rpc/* handler)` |
+| M001 | HTTP 実装応答 | `404` | oRPC procedure not found | 当該処理へ到達した場合 | `apps/api/src/app.ts:63 (ALL /rpc/* handler)` |
 
 ## 読み方
 

@@ -2,7 +2,7 @@
 
 # POST /documents IF仕様
 
-- 実装 route: `apps/api/src/routes/document-routes.ts:425 (POST /documents)`
+- 実装 route: `apps/api/src/routes/document-routes.ts:967 (POST /documents)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 文書を同期登録する（非推奨）

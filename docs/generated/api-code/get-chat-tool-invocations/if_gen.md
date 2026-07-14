@@ -2,7 +2,7 @@
 
 # GET /chat-tool-invocations IF仕様
 
-- 実装 route: `apps/api/src/routes/chat-routes.ts:162 (GET /chat-tool-invocations)`
+- 実装 route: `apps/api/src/routes/chat-routes.ts:172 (GET /chat-tool-invocations)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: チャット tool invocation 監査一覧を取得する

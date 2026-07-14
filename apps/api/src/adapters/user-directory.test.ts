@@ -1,7 +1,18 @@
 import assert from "node:assert/strict"
 import { setTimeout as delay } from "node:timers/promises"
 import test from "node:test"
-import { AdminAddUserToGroupCommand, AdminListGroupsForUserCommand, AdminRemoveUserFromGroupCommand, ListUsersCommand } from "@aws-sdk/client-cognito-identity-provider"
+import {
+  AdminAddUserToGroupCommand,
+  AdminCreateUserCommand,
+  AdminDeleteUserCommand,
+  AdminDisableUserCommand,
+  AdminEnableUserCommand,
+  AdminListGroupsForUserCommand,
+  AdminRemoveUserFromGroupCommand,
+  AdminUpdateUserAttributesCommand,
+  AdminUserGlobalSignOutCommand,
+  ListUsersCommand
+} from "@aws-sdk/client-cognito-identity-provider"
 import { CognitoUserDirectory } from "./user-directory.js"
 
 test("Cognito user directory paginates users and groups while tolerating per-user group failures", async () => {
@@ -135,6 +146,138 @@ test("Cognito user directory syncs managed role groups while preserving external
   assert.deepEqual(addCommands.map((command) => (command as any).input.GroupName), ["ANSWER_EDITOR", "BENCHMARK_OPERATOR"])
   assert.deepEqual(removeCommands.map((command) => (command as any).input.GroupName), ["CHAT_USER"])
   assert.equal(removeCommands.some((command) => (command as any).input.GroupName === "EXTERNAL_GROUP"), false)
+  assert.ok(commands.indexOf(removeCommands[0]) < commands.indexOf(addCommands[0]))
+})
+
+test("FR-080 Cognito role replacement enforces expected roles and revalidates the durable fence at each identity write", async () => {
+  const commands: unknown[] = []
+  const groups = new Set(["SYSTEM_ADMIN", "EXTERNAL_GROUP"])
+  const directory = new CognitoUserDirectory("pool-1", {
+    send: async (command) => {
+      commands.push(command)
+      if (command instanceof AdminListGroupsForUserCommand) {
+        return { Groups: [...groups].map((GroupName) => ({ GroupName })) }
+      }
+      if (command instanceof AdminRemoveUserFromGroupCommand) {
+        groups.delete((command as any).input.GroupName)
+        return {}
+      }
+      if (command instanceof AdminAddUserToGroupCommand) {
+        groups.add((command as any).input.GroupName)
+        return {}
+      }
+      throw new Error("unexpected command")
+    }
+  })
+  let fenceAssertions = 0
+
+  await directory.replaceApplicationRoles?.("admin-user", {
+    expectedRoles: ["SYSTEM_ADMIN"],
+    desiredRoles: ["CHAT_USER"],
+    operationId: "application-role:audit-1",
+    fencingToken: "fence-1",
+    assertFence: async () => { fenceAssertions += 1 }
+  })
+
+  assert.deepEqual([...groups].sort(), ["CHAT_USER", "EXTERNAL_GROUP"])
+  assert.equal(fenceAssertions, 4)
+  const writes = commands.filter((command) => (
+    command instanceof AdminRemoveUserFromGroupCommand || command instanceof AdminAddUserToGroupCommand
+  ))
+  assert.deepEqual(writes.map((command) => (command as any).input.GroupName), ["SYSTEM_ADMIN", "CHAT_USER"])
+
+  await assert.rejects(() => directory.replaceApplicationRoles!("admin-user", {
+    expectedRoles: ["SYSTEM_ADMIN"],
+    desiredRoles: ["ANSWER_EDITOR"],
+    operationId: "application-role:audit-2",
+    fencingToken: "fence-2",
+    assertFence: async () => undefined
+  }), /changed before fenced mutation/)
+})
+
+test("Cognito user directory applies account lifecycle and global session revocation authoritatively", async () => {
+  const commands: unknown[] = []
+  const directory = new CognitoUserDirectory("pool-1", {
+    send: async (command) => {
+      commands.push(command)
+      return {}
+    }
+  }, () => new Date("2026-07-11T00:00:00.123Z"))
+
+  await directory.disableUser("cognito-user")
+  await directory.revokeSessions("cognito-user")
+  await directory.enableUser("cognito-user")
+  await directory.deleteUser("cognito-user")
+
+  assert.deepEqual(commands.map((command) => (command as object).constructor), [
+    AdminDisableUserCommand,
+    AdminUpdateUserAttributesCommand,
+    AdminUserGlobalSignOutCommand,
+    AdminEnableUserCommand,
+    AdminDeleteUserCommand
+  ])
+  assert.deepEqual(commands.map((command) => (command as any).input), [
+    { UserPoolId: "pool-1", Username: "cognito-user" },
+    {
+      UserPoolId: "pool-1",
+      Username: "cognito-user",
+      UserAttributes: [{ Name: "custom:session_invalid_after", Value: "1783728000123" }]
+    },
+    { UserPoolId: "pool-1", Username: "cognito-user" },
+    { UserPoolId: "pool-1", Username: "cognito-user" },
+    { UserPoolId: "pool-1", Username: "cognito-user" }
+  ])
+})
+
+test("Cognito user directory creates an authoritative identity before role assignment", async () => {
+  const commands: unknown[] = []
+  const directory = new CognitoUserDirectory("pool-1", {
+    send: async (command) => {
+      commands.push(command)
+      if (command instanceof AdminCreateUserCommand) {
+        return {
+          User: {
+            Username: "managed-001",
+            Attributes: [
+              { Name: "sub", Value: "subject-001" },
+              { Name: "email", Value: "worker@example.com" },
+              { Name: "name", Value: "Worker One" }
+            ],
+            Enabled: true,
+            UserCreateDate: new Date("2026-07-11T00:00:00.000Z"),
+            UserLastModifiedDate: new Date("2026-07-11T00:00:01.000Z")
+          }
+        }
+      }
+      throw new Error("unexpected command")
+    }
+  })
+
+  const created = await directory.createUser?.({
+    username: "managed-001",
+    email: "worker@example.com",
+    displayName: "Worker One"
+  })
+
+  assert.deepEqual(created, {
+    username: "managed-001",
+    userId: "subject-001",
+    email: "worker@example.com",
+    displayName: "Worker One",
+    status: "active",
+    groups: [],
+    createdAt: "2026-07-11T00:00:00.000Z",
+    updatedAt: "2026-07-11T00:00:01.000Z"
+  })
+  assert.deepEqual((commands[0] as any).input, {
+    UserPoolId: "pool-1",
+    Username: "managed-001",
+    UserAttributes: [
+      { Name: "email", Value: "worker@example.com" },
+      { Name: "name", Value: "Worker One" }
+    ],
+    DesiredDeliveryMediums: ["EMAIL"]
+  })
 })
 
 test("Cognito user directory handles empty pools, fallback attributes, and empty usernames", async () => {

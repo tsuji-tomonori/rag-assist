@@ -8,52 +8,82 @@
 
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
-| 到達 symbol | service ingests text, lists manifests, persists debug traces, and deletes all document vectors | `apps/api/src/rag/memorag-service.test.ts:36 (service ingests text, lists manifests, persists debug traces, and deletes all document vectors)` |
-| 到達 symbol | service listDocuments filters manifests by ACL for callers | `apps/api/src/rag/memorag-service.test.ts:225 (service listDocuments filters manifests by ACL for callers)` |
-| 到達 symbol | service listDocuments hides normal manifests without group owner or ACL from callers | `apps/api/src/rag/memorag-service.test.ts:253 (service listDocuments hides normal manifests without group owner or ACL from callers)` |
-| 到達 symbol | service persists document quality profile and excludes ineligible documents from normal RAG search | `apps/api/src/rag/memorag-service.test.ts:267 (service persists document quality profile and excludes ineligible documents from normal RAG search)` |
-| 到達 symbol | service listDocuments skips a manifest that disappeared after listing | `apps/api/src/rag/memorag-service.test.ts:305 (service listDocuments skips a manifest that disappeared after listing)` |
-| 到達 symbol | service listDocuments denies group-scoped manifests to non-members without legacy ACLs | `apps/api/src/rag/memorag-service.test.ts:412 (service listDocuments denies group-scoped manifests to non-members without legacy ACLs)` |
-| 到達 symbol | service inherits parent document group sharing unless child has explicit policy | `apps/api/src/rag/memorag-service.test.ts:673 (service inherits parent document group sharing unless child has explicit policy)` |
-| 到達 symbol | service preserves legacy explicit shared child policy when hasExplicitPolicy is false | `apps/api/src/rag/memorag-service.test.ts:745 (service preserves legacy explicit shared child policy when hasExplicitPolicy is false)` |
-| 到達 symbol | service preserves legacy explicit private child policy and does not leak parent sharing | `apps/api/src/rag/memorag-service.test.ts:789 (service preserves legacy explicit private child policy and does not leak parent sharing)` |
-| 到達 symbol | service does not expose group scoped documents to ownerUserId without folder read permission | `apps/api/src/rag/memorag-service.test.ts:867 (service does not expose group scoped documents to ownerUserId without folder read permission)` |
-| 到達 symbol | service reindexes documents through embedding cache compatible pipeline versions | `apps/api/src/rag/memorag-service.test.ts:986 (service reindexes documents through embedding cache compatible pipeline versions)` |
-| 到達 symbol | service stages and rolls back structured blue-green reindex migrations | `apps/api/src/rag/memorag-service.test.ts:1008 (service stages and rolls back structured blue-green reindex migrations)` |
-| 到達 symbol | service restores staging state when cutover vector activation fails after partial write | `apps/api/src/rag/memorag-service.test.ts:1058 (service restores staging state when cutover vector activation fails after partial write)` |
+| 到達 symbol | service ingests text, lists manifests, persists debug traces, and deletes all document vectors | `apps/api/src/rag/memorag-service.test.ts:47 (service ingests text, lists manifests, persists debug traces, and deletes all document vectors)` |
+| 到達 symbol | FR-066 failed ingest compensation persists a tenant-scoped cleanup reconciliation manifest | `apps/api/src/rag/memorag-service.test.ts:138 (FR-066 failed ingest compensation persists a tenant-scoped cleanup reconciliation manifest)` |
+| 到達 symbol | service listDocuments filters manifests by ACL for callers | `apps/api/src/rag/memorag-service.test.ts:363 (service listDocuments filters manifests by ACL for callers)` |
+| 到達 symbol | service listDocuments hides normal manifests without group owner or ACL from callers | `apps/api/src/rag/memorag-service.test.ts:399 (service listDocuments hides normal manifests without group owner or ACL from callers)` |
+| 到達 symbol | service persists document quality profile and excludes ineligible documents from normal RAG search | `apps/api/src/rag/memorag-service.test.ts:414 (service persists document quality profile and excludes ineligible documents from normal RAG search)` |
+| 到達 symbol | service listDocuments skips a manifest that disappeared after listing | `apps/api/src/rag/memorag-service.test.ts:452 (service listDocuments skips a manifest that disappeared after listing)` |
+| 到達 symbol | service listDocuments denies group-scoped manifests to non-members without legacy ACLs | `apps/api/src/rag/memorag-service.test.ts:569 (service listDocuments denies group-scoped manifests to non-members without legacy ACLs)` |
+| 到達 symbol | service inherits parent document group sharing unless child has explicit policy | `apps/api/src/rag/memorag-service.test.ts:827 (service inherits parent document group sharing unless child has explicit policy)` |
+| 到達 symbol | service preserves legacy explicit shared child policy when hasExplicitPolicy is false | `apps/api/src/rag/memorag-service.test.ts:902 (service preserves legacy explicit shared child policy when hasExplicitPolicy is false)` |
+| 到達 symbol | service preserves legacy explicit private child policy and does not leak parent sharing | `apps/api/src/rag/memorag-service.test.ts:948 (service preserves legacy explicit private child policy and does not leak parent sharing)` |
+| 到達 symbol | document administrative principal retains read access despite ordinary folder denial | `apps/api/src/rag/memorag-service.test.ts:1031 (document administrative principal retains read access despite ordinary folder denial)` |
+| 到達 symbol | service reindexes documents through embedding cache compatible pipeline versions | `apps/api/src/rag/memorag-service.test.ts:1136 (service reindexes documents through embedding cache compatible pipeline versions)` |
+| 到達 symbol | service stages and rolls back structured blue-green reindex migrations | `apps/api/src/rag/memorag-service.test.ts:1164 (service stages and rolls back structured blue-green reindex migrations)` |
+| 到達 symbol | service restores staging state when cutover vector activation fails after partial write | `apps/api/src/rag/memorag-service.test.ts:1214 (service restores staging state when cutover vector activation fails after partial write)` |
+| 到達 symbol | FR-090 reindex cutover compensates publication when current authorization is revoked before ledger commit | `apps/api/src/rag/memorag-service.test.ts:1246 (FR-090 reindex cutover compensates publication when current authorization is revoked before ledger commit)` |
+| 到達 symbol | FR-090 failed cutover compensation persists a durable intent and an authorized retry converges it | `apps/api/src/rag/memorag-service.test.ts:1280 (FR-090 failed cutover compensation persists a durable intent and an authorized retry converges it)` |
+| 到達 symbol | FR-090 ingest reauthorizes after the final event and compensates before persisting success | `apps/api/src/rag/memorag-service.test.ts:2630 (FR-090 ingest reauthorizes after the final event and compensates before persisting success)` |
+| 到達 symbol | FR-090 revoke after governance creation compensates all ingest artifacts and never publishes success | `apps/api/src/rag/memorag-service.test.ts:2690 (FR-090 revoke after governance creation compensates all ingest artifacts and never publishes success)` |
+| 到達 symbol | FR-060 same documentId is physically partitioned and never reveals the other tenant body or candidates | `apps/api/src/rag/tenant-artifact-partition.test.ts:27 (FR-060 same documentId is physically partitioned and never reveals the other tenant body or candidates)` |
 
 ## 2. 実装分岐から導くテスト要因
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `GET /documents handler` | if | 利用者が "rag:doc:read" permission を持たない、かつ 利用者が "benchmark:seed_corpus" permission を持たない | `apps/api/src/routes/document-routes.ts:315 (GET /documents handler)` |
-| F002 | `MemoRagService.listDocuments` | if | is missing object error の判定結果が真である | `apps/api/src/rag/memorag-service.ts:364 (MemoRagService.listDocuments)` |
-| F003 | `MemoRagService.listDocuments` | 三項条件 | `user` が存在し、真である | `apps/api/src/rag/memorag-service.ts:371 (MemoRagService.listDocuments)` |
-| F004 | `MemoRagService.listDocuments` | 三項条件 | `user` が存在し、真である | `apps/api/src/rag/memorag-service.ts:376 (MemoRagService.listDocuments)` |
-| F005 | `MemoRagService.listDocuments` | 三項条件 | `user` が存在し、真である | `apps/api/src/rag/memorag-service.ts:379 (MemoRagService.listDocuments)` |
-| F006 | `MemoRagService.listDocuments` | if | `user` が存在しない、または偽である、または `permissionService` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:384 (MemoRagService.listDocuments)` |
+| F001 | `GET /documents handler` | if | 利用者が "rag:doc:read" permission を持たない、かつ 利用者が "benchmark:seed_corpus" permission を持たない | `apps/api/src/routes/document-routes.ts:837 (GET /documents handler)` |
+| F002 | `GET /documents handler` | 三項条件 | 利用者が "rag:doc:read" permission を持つ | `apps/api/src/routes/document-routes.ts:841 (GET /documents handler)` |
+| F003 | `MemoRagService.listDocuments` | if | is missing object error の判定結果が真である | `apps/api/src/rag/memorag-service.ts:759 (MemoRagService.listDocuments)` |
+| F004 | `MemoRagService.listDocuments` | 三項条件 | `user` が存在し、真である | `apps/api/src/rag/memorag-service.ts:773 (MemoRagService.listDocuments)` |
+| F005 | `MemoRagService.listDocuments` | 三項条件 | `user` が存在し、真である | `apps/api/src/rag/memorag-service.ts:776 (MemoRagService.listDocuments)` |
+| F006 | `MemoRagService.listDocuments` | if | `user` が存在しない、または偽である、または `permissionService` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:781 (MemoRagService.listDocuments)` |
+| F007 | `MemoRagService.listBenchmarkDocumentManifests` | if | `config.benchmarkEvaluationEnabled` が存在しない、または偽である、または `tenantId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:806 (MemoRagService.listBenchmarkDocumentManifests)` |
+| F008 | `MemoRagService.listBenchmarkDocumentManifests` | if | is missing object error の判定結果が真である | `apps/api/src/rag/memorag-service.ts:813 (MemoRagService.listBenchmarkDocumentManifests)` |
+| F009 | `decodeCollectionCursor` | if | `cursor` が存在しない、または偽である | `apps/api/src/routes/document-routes.ts:279 (decodeCollectionCursor)` |
+| F010 | `decodeCollectionCursor` | if | test の判定結果が真ではない | `apps/api/src/routes/document-routes.ts:283 (decodeCollectionCursor)` |
+| F011 | `decodeCollectionCursor` | if | `Buffer.from(decoded, "utf-8").toString("base64url")` が `normalized` と異なる | `apps/api/src/routes/document-routes.ts:284 (decodeCollectionCursor)` |
+| F012 | `decodeCollectionCursor` | if | is safe integer の判定結果が真ではない | `apps/api/src/routes/document-routes.ts:286 (decodeCollectionCursor)` |
+| F013 | `decodeCollectionCursor` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:288 (decodeCollectionCursor)` |
+| F014 | `authorizedOnlyPage` | 三項条件 | `nextOffset` が `authorized.length` より小さい | `apps/api/src/security/public-resource-response.ts:71 (authorizedOnlyPage)` |
 
 ## 3. コード由来テストケース
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | 登録文書一覧を取得する が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:313 (GET /documents handler)` |
-| TC002 | F001: 条件成立 | 利用者が "rag:doc:read" permission を持たない、かつ 利用者が "benchmark:seed_corpus" permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:315 (GET /documents handler)` |
-| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:315 (GET /documents handler)` |
-| TC004 | F002: 条件成立 | is missing object error の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:364 (MemoRagService.listDocuments)` |
-| TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:364 (MemoRagService.listDocuments)` |
-| TC006 | F003: 条件成立 | `user` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:371 (MemoRagService.listDocuments)` |
-| TC007 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:371 (MemoRagService.listDocuments)` |
-| TC008 | F004: 条件成立 | `user` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:376 (MemoRagService.listDocuments)` |
-| TC009 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:376 (MemoRagService.listDocuments)` |
-| TC010 | F005: 条件成立 | `user` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:379 (MemoRagService.listDocuments)` |
-| TC011 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:379 (MemoRagService.listDocuments)` |
-| TC012 | F006: 条件成立 | `user` が存在しない、または偽である、または `permissionService` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:384 (MemoRagService.listDocuments)` |
-| TC013 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:384 (MemoRagService.listDocuments)` |
-| TC014 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
-| TC015 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
-| TC016 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
-| TC017 | HTTP 500 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC001 | 正常系 | 登録文書一覧を取得する が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:835 (GET /documents handler)` |
+| TC002 | F001: 条件成立 | 利用者が "rag:doc:read" permission を持たない、かつ 利用者が "benchmark:seed_corpus" permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:837 (GET /documents handler)` |
+| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:837 (GET /documents handler)` |
+| TC004 | F002: 条件成立 | 利用者が "rag:doc:read" permission を持つ 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:841 (GET /documents handler)` |
+| TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:841 (GET /documents handler)` |
+| TC006 | F003: 条件成立 | is missing object error の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:759 (MemoRagService.listDocuments)` |
+| TC007 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:759 (MemoRagService.listDocuments)` |
+| TC008 | F004: 条件成立 | `user` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:773 (MemoRagService.listDocuments)` |
+| TC009 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:773 (MemoRagService.listDocuments)` |
+| TC010 | F005: 条件成立 | `user` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:776 (MemoRagService.listDocuments)` |
+| TC011 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:776 (MemoRagService.listDocuments)` |
+| TC012 | F006: 条件成立 | `user` が存在しない、または偽である、または `permissionService` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:781 (MemoRagService.listDocuments)` |
+| TC013 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:781 (MemoRagService.listDocuments)` |
+| TC014 | F007: 条件成立 | `config.benchmarkEvaluationEnabled` が存在しない、または偽である、または `tenantId` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:806 (MemoRagService.listBenchmarkDocumentManifests)` |
+| TC015 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:806 (MemoRagService.listBenchmarkDocumentManifests)` |
+| TC016 | F008: 条件成立 | is missing object error の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:813 (MemoRagService.listBenchmarkDocumentManifests)` |
+| TC017 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:813 (MemoRagService.listBenchmarkDocumentManifests)` |
+| TC018 | F009: 条件成立 | `cursor` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:279 (decodeCollectionCursor)` |
+| TC019 | F009: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:279 (decodeCollectionCursor)` |
+| TC020 | F010: 条件成立 | test の判定結果が真ではない 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:283 (decodeCollectionCursor)` |
+| TC021 | F010: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:283 (decodeCollectionCursor)` |
+| TC022 | F011: 条件成立 | `Buffer.from(decoded, "utf-8").toString("base64url")` が `normalized` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:284 (decodeCollectionCursor)` |
+| TC023 | F011: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:284 (decodeCollectionCursor)` |
+| TC024 | F012: 条件成立 | is safe integer の判定結果が真ではない 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:286 (decodeCollectionCursor)` |
+| TC025 | F012: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:286 (decodeCollectionCursor)` |
+| TC026 | F013: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/document-routes.ts:288 (decodeCollectionCursor)` |
+| TC027 | F014: 条件成立 | `nextOffset` が `authorized.length` より小さい 場合の response / side effect が実装どおりである。 | `apps/api/src/security/public-resource-response.ts:71 (authorizedOnlyPage)` |
+| TC028 | F014: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/security/public-resource-response.ts:71 (authorizedOnlyPage)` |
+| TC029 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC030 | HTTP 400 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC031 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC032 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC033 | HTTP 500 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 
 ## 4. 検証方針
 

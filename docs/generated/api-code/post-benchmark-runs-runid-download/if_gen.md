@@ -2,7 +2,7 @@
 
 # POST /benchmark-runs/{runId}/download IF仕様
 
-- 実装 route: `apps/api/src/routes/benchmark-routes.ts:190 (POST /benchmark-runs/{runId}/download)`
+- 実装 route: `apps/api/src/routes/benchmark-routes.ts:197 (POST /benchmark-runs/{runId}/download)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: benchmark artifact ダウンロード URL を作成する

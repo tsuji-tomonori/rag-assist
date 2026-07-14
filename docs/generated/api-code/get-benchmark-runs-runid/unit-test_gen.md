@@ -6,24 +6,27 @@
 
 次の関連付けは test body 内の request path または到達 symbol 参照を静的に照合した結果です。assertion の完全充足を意味しません。
 
-_静的に直接対応を確認できた test case はありません。`unit-test_gen.md` のコード由来ケースは未実装テスト候補として扱います。_
+| 関連 | Test case | 実装位置 |
+| --- | --- | --- |
+| route request | benchmark service and routes resolve identical raw run IDs only inside the current actor tenant | `apps/api/src/routes/benchmark-tenant-boundary.test.ts:19 (benchmark service and routes resolve identical raw run IDs only inside the current actor tenant)` |
+| 到達 symbol | benchmark get/cancel/download/log paths give cross-tenant and absent IDs the same non-enumeration response | `apps/api/src/routes/benchmark-tenant-boundary.test.ts:40 (benchmark get/cancel/download/log paths give cross-tenant and absent IDs the same non-enumeration response)` |
 
 ## 2. 実装分岐から導くテスト要因
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `GET /benchmark-runs/{runId} handler` | if | `run` が存在しない、または偽である | `apps/api/src/routes/benchmark-routes.ts:163 (GET /benchmark-runs/{runId} handler)` |
-| F002 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:267 (requirePermission)` |
+| F001 | `GET /benchmark-runs/{runId} handler` | if | `run` が存在しない、または偽である | `apps/api/src/routes/benchmark-routes.ts:168 (GET /benchmark-runs/{runId} handler)` |
+| F002 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
 
 ## 3. コード由来テストケース
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | benchmark run 詳細を取得する が成功 response を返す。 | `apps/api/src/routes/benchmark-routes.ts:159 (GET /benchmark-runs/{runId} handler)` |
-| TC002 | F001: 条件成立 | `run` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/benchmark-routes.ts:163 (GET /benchmark-runs/{runId} handler)` |
-| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/benchmark-routes.ts:163 (GET /benchmark-runs/{runId} handler)` |
-| TC004 | F002: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:267 (requirePermission)` |
-| TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:267 (requirePermission)` |
+| TC001 | 正常系 | benchmark run 詳細を取得する が成功 response を返す。 | `apps/api/src/routes/benchmark-routes.ts:162 (GET /benchmark-runs/{runId} handler)` |
+| TC002 | F001: 条件成立 | `run` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/benchmark-routes.ts:168 (GET /benchmark-runs/{runId} handler)` |
+| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/benchmark-routes.ts:168 (GET /benchmark-runs/{runId} handler)` |
+| TC004 | F002: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
 | TC006 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC007 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC008 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

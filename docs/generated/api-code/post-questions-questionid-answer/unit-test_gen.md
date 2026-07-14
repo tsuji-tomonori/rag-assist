@@ -8,7 +8,7 @@
 
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
-| 到達 symbol | service delegates human question lifecycle to the question store | `apps/api/src/rag/memorag-service.test.ts:1167 (service delegates human question lifecycle to the question store)` |
+| 到達 symbol | service delegates human question lifecycle to the question store | `apps/api/src/rag/memorag-service.test.ts:1457 (service delegates human question lifecycle to the question store)` |
 | route request | questionRoute_answerRejectsUnassignedAnswerEditor | `apps/api/src/routes/question-routes.test.ts:80 (questionRoute_answerRejectsUnassignedAnswerEditor)` |
 | route request | questionRoute_answerAllowsAssignedUser | `apps/api/src/routes/question-routes.test.ts:105 (questionRoute_answerAllowsAssignedUser)` |
 | route request | questionRoute_answerAllowsAssignedGroupMember | `apps/api/src/routes/question-routes.test.ts:119 (questionRoute_answerAllowsAssignedGroupMember)` |
@@ -23,7 +23,7 @@
 | F003 | `POST /questions/{questionId}/answer handler` | if | can read all tickets の判定結果が真ではない、かつ can access assigned ticket の判定結果が真ではない | `apps/api/src/routes/question-routes.ts:118 (POST /questions/{questionId}/answer handler)` |
 | F004 | `POST /questions/{questionId}/answer handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/question-routes.ts:123 (POST /questions/{questionId}/answer handler)` |
 | F005 | `POST /questions/{questionId}/answer handler` | if | `err` が `Error` の instance である、かつ `err.message` が "Question not found" を含む | `apps/api/src/routes/question-routes.ts:124 (POST /questions/{questionId}/answer handler)` |
-| F006 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:267 (requirePermission)` |
+| F006 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
 | F007 | `canAccessAssignedTicket` | if | 利用者が "answer:edit" permission を持たない | `apps/api/src/routes/question-routes.ts:198 (canAccessAssignedTicket)` |
 | F008 | `canAccessAssignedTicket` | if | `question.assigneeUserId` が `user.userId` と等しい | `apps/api/src/routes/question-routes.ts:199 (canAccessAssignedTicket)` |
 
@@ -41,8 +41,8 @@
 | TC008 | F004: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/question-routes.ts:123 (POST /questions/{questionId}/answer handler)` |
 | TC009 | F005: 条件成立 | `err` が `Error` の instance である、かつ `err.message` が "Question not found" を含む 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/question-routes.ts:124 (POST /questions/{questionId}/answer handler)` |
 | TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/question-routes.ts:124 (POST /questions/{questionId}/answer handler)` |
-| TC011 | F006: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:267 (requirePermission)` |
-| TC012 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:267 (requirePermission)` |
+| TC011 | F006: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| TC012 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
 | TC013 | F007: 条件成立 | 利用者が "answer:edit" permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/question-routes.ts:198 (canAccessAssignedTicket)` |
 | TC014 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/question-routes.ts:198 (canAccessAssignedTicket)` |
 | TC015 | F008: 条件成立 | `question.assigneeUserId` が `user.userId` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/question-routes.ts:199 (canAccessAssignedTicket)` |

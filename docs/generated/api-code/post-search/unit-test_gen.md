@@ -8,28 +8,29 @@
 
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
-| 到達 symbol | service persists document quality profile and excludes ineligible documents from normal RAG search | `apps/api/src/rag/memorag-service.test.ts:267 (service persists document quality profile and excludes ineligible documents from normal RAG search)` |
-| 到達 symbol | service inherits parent document group sharing unless child has explicit policy | `apps/api/src/rag/memorag-service.test.ts:673 (service inherits parent document group sharing unless child has explicit policy)` |
-| 到達 symbol | search excludes owner-owned group scoped documents when folder permission is none | `apps/api/src/rag/memorag-service.test.ts:921 (search excludes owner-owned group scoped documents when folder permission is none)` |
-| 到達 symbol | service search applies ACL and metadata filters across lexical and vector results | `apps/api/src/search/hybrid-search.test.ts:268 (service search applies ACL and metadata filters across lexical and vector results)` |
-| 到達 symbol | service search denies group-scoped manifests to non-members without legacy ACLs | `apps/api/src/search/hybrid-search.test.ts:342 (service search denies group-scoped manifests to non-members without legacy ACLs)` |
-| 到達 symbol | service search publishes and reuses immutable lexical index artifacts | `apps/api/src/search/hybrid-search.test.ts:706 (service search publishes and reuses immutable lexical index artifacts)` |
-| 到達 symbol | service search scopes benchmark corpus by suite metadata | `apps/api/src/search/hybrid-search.test.ts:732 (service search scopes benchmark corpus by suite metadata)` |
-| 到達 symbol | service search expands published reviewed aliases without returning alias details | `apps/api/src/search/hybrid-search.test.ts:791 (service search expands published reviewed aliases without returning alias details)` |
+| 到達 symbol | service persists document quality profile and excludes ineligible documents from normal RAG search | `apps/api/src/rag/memorag-service.test.ts:414 (service persists document quality profile and excludes ineligible documents from normal RAG search)` |
+| 到達 symbol | service inherits parent document group sharing unless child has explicit policy | `apps/api/src/rag/memorag-service.test.ts:827 (service inherits parent document group sharing unless child has explicit policy)` |
+| 到達 symbol | search includes owner-owned group scoped documents despite ordinary folder denial | `apps/api/src/rag/memorag-service.test.ts:1074 (search includes owner-owned group scoped documents despite ordinary folder denial)` |
+| 到達 symbol | FR-068 production path re-ingests quarantine into a fenced candidate and publishes only the approved artifact | `apps/api/src/rag/offline/pre-retrieval/admission/source-governance-approval-service.test.ts:374 (FR-068 production path re-ingests quarantine into a fenced candidate and publishes only the approved artifact)` |
+| 到達 symbol | service search applies ACL and metadata filters across lexical and vector results | `apps/api/src/search/hybrid-search.test.ts:408 (service search applies ACL and metadata filters across lexical and vector results)` |
+| 到達 symbol | service search denies group-scoped manifests to non-members without legacy ACLs | `apps/api/src/search/hybrid-search.test.ts:486 (service search denies group-scoped manifests to non-members without legacy ACLs)` |
+| 到達 symbol | service search publishes and reuses immutable lexical index artifacts | `apps/api/src/search/hybrid-search.test.ts:873 (service search publishes and reuses immutable lexical index artifacts)` |
+| 到達 symbol | service search scopes benchmark corpus by suite metadata | `apps/api/src/search/hybrid-search.test.ts:970 (service search scopes benchmark corpus by suite metadata)` |
+| 到達 symbol | service search expands published reviewed aliases without returning alias details | `apps/api/src/search/hybrid-search.test.ts:1030 (service search expands published reviewed aliases without returning alias details)` |
 
 ## 2. 実装分岐から導くテスト要因
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:267 (requirePermission)` |
+| F001 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
 
 ## 3. コード由来テストケース
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | ハイブリッド検索を実行する が成功 response を返す。 | `apps/api/src/routes/chat-routes.ts:202 (POST /search handler)` |
-| TC002 | F001: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:267 (requirePermission)` |
-| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:267 (requirePermission)` |
+| TC001 | 正常系 | ハイブリッド検索を実行する が成功 response を返す。 | `apps/api/src/routes/chat-routes.ts:212 (POST /search handler)` |
+| TC002 | F001: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
 | TC004 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC005 | HTTP 400 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC006 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

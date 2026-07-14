@@ -18,7 +18,7 @@
 | M003 | OpenAPI contract | `401` | 認証が必要です。 | OpenAPI で宣言された HTTP 401 response | runtime OpenAPI |
 | M004 | OpenAPI contract | `403` | 対象操作を実行する権限がありません。 | OpenAPI で宣言された HTTP 403 response | runtime OpenAPI |
 | M005 | OpenAPI contract | `404` | 指定したリソースが見つかりません。 | OpenAPI で宣言された HTTP 404 response | runtime OpenAPI |
-| M006 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:267 (requirePermission)` |
+| M006 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
 | M007 | HTTP 実装応答 | `404` | Question not found | `question` が存在しない、または偽である | `apps/api/src/routes/question-routes.ts:117 (POST /questions/{questionId}/answer handler)` |
 | M008 | HTTP 実装応答 | `404` | Question not found | can read all tickets の判定結果が真ではない、かつ can access assigned ticket の判定結果が真ではない | `apps/api/src/routes/question-routes.ts:119 (POST /questions/{questionId}/answer handler)` |
 | M009 | HTTP 実装応答 | `404` | Question not found | `err` が `Error` の instance である、かつ `err.message` が "Question not found" を含む | `apps/api/src/routes/question-routes.ts:124 (POST /questions/{questionId}/answer handler)` |

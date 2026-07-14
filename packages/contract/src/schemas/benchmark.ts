@@ -3,43 +3,18 @@ import { JsonValueSchema } from "../json.js"
 import { ChatRequestSchema, ChatResponseSchema } from "./chat.js"
 import { SearchRequestSchema, SearchResponseSchema } from "./search.js"
 
-const BenchmarkSearchForbiddenUserGroups = new Set([
-  "SYSTEM_ADMIN",
-  "RAG_GROUP_MANAGER",
-  "BENCHMARK_OPERATOR",
-  "BENCHMARK_RUNNER",
-  "ANSWER_EDITOR",
-  "USER_ADMIN",
-  "ACCESS_ADMIN",
-  "COST_AUDITOR"
-])
-
-export const BenchmarkQueryRequestSchema = ChatRequestSchema.extend({
+export const BenchmarkQueryRequestSchema = ChatRequestSchema.omit({ searchScope: true }).extend({
   id: z.string().optional(),
-  benchmarkSuiteId: z.string().optional()
-})
+  suiteId: z.string().min(1)
+}).strict()
 
 export const BenchmarkQueryResponseSchema = ChatResponseSchema.extend({
   id: z.string().optional()
 })
 
-export const BenchmarkSearchRequestSchema = SearchRequestSchema.extend({
-  benchmarkSuiteId: z.string().optional(),
-  user: z.object({
-    userId: z.string().min(1).max(160).optional(),
-    groups: z.array(z.string().min(1).max(160)).max(20).optional()
-  }).optional()
-}).superRefine((value, ctx) => {
-  for (const group of value.user?.groups ?? []) {
-    if (BenchmarkSearchForbiddenUserGroups.has(group)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["user", "groups"],
-        message: `Benchmark search user cannot include privileged group ${group}`
-      })
-    }
-  }
-})
+export const BenchmarkSearchRequestSchema = SearchRequestSchema.omit({ filters: true, scope: true }).extend({
+  suiteId: z.string().min(1)
+}).strict()
 
 export const BenchmarkSearchResponseSchema = SearchResponseSchema
 
@@ -129,7 +104,20 @@ export const BenchmarkTargetConfigSchema = z.object({
   minScore: z.number().optional(),
   evaluatorProfile: z.string().min(1),
   benchmarkSuiteId: z.string().min(1),
-  runner: BenchmarkRunnerSchema
+  runner: BenchmarkRunnerSchema,
+  runtimeProfileVersion: z.string().min(1).optional(),
+  workloadProfileVersion: z.string().min(1).optional(),
+  corpusProfileVersion: z.string().min(1).optional(),
+  aclDistributionVersion: z.string().min(1).optional(),
+  workloadConcurrency: z.number().int().positive().optional(),
+  documentSizeProfileVersion: z.string().min(1).optional(),
+  dependencyLatencyProfileVersion: z.string().min(1).optional(),
+  priceCatalogVersion: z.string().min(1).optional(),
+  indexVersion: z.string().min(1).optional(),
+  promptVersion: z.string().min(1).optional(),
+  pipelineVersion: z.string().min(1).optional(),
+  parserVersion: z.string().min(1).optional(),
+  chunkerVersion: z.string().min(1).optional()
 })
 
 export const BenchmarkCaseResultSchema = z.object({
@@ -137,6 +125,15 @@ export const BenchmarkCaseResultSchema = z.object({
   status: z.number().int(),
   passed: z.boolean(),
   failureReasons: z.array(z.string()),
+  slice: z.object({
+    questionType: z.string().min(1),
+    tenantRole: z.string().min(1),
+    ocrMode: z.enum(["none", "native", "ocr", "mixed"]),
+    language: z.string().min(1),
+    multiEvidence: z.boolean(),
+    answerability: z.enum(["answerable", "refusal", "clarification", "handoff"]),
+    severity: z.enum(["critical", "high", "medium", "low"])
+  }).strict().optional(),
   retrieval: z.object({
     retrievedCount: z.number().int().nonnegative().optional(),
     recallAtK: z.number().nullable().optional(),
@@ -151,16 +148,136 @@ export const BenchmarkCaseResultSchema = z.object({
     expectedFileHit: z.boolean().nullable().optional(),
     expectedPageHit: z.boolean().nullable().optional()
   }).default(() => ({})),
+  claims: z.array(z.object({
+    claimId: z.string().min(1),
+    severity: z.enum(["critical", "high", "medium", "low"]),
+    requiresCitation: z.boolean(),
+    supported: z.boolean(),
+    supportSpans: z.array(z.object({
+      documentId: z.string().min(1),
+      documentVersion: z.string().min(1),
+      spanId: z.string().min(1),
+      locatorValid: z.boolean()
+    }).strict()),
+    citationIds: z.array(z.string().min(1))
+  }).strict()).optional(),
+  citations: z.array(z.object({
+    citationId: z.string().min(1),
+    claimIds: z.array(z.string().min(1)),
+    relevant: z.boolean(),
+    supportValid: z.boolean(),
+    locatorValid: z.boolean()
+  }).strict()).optional(),
+  answerability: z.object({
+    expectedAnswerable: z.boolean().optional(),
+    actualAnswerable: z.boolean().optional(),
+    expectedResponseType: z.enum(["answer", "refusal", "clarification", "handoff"]).optional(),
+    actualResponseType: z.enum(["answer", "refusal", "clarification", "handoff"]).optional()
+  }).default(() => ({})),
+  task: z.object({
+    expectedOutcome: z.enum(["complete", "partial", "handoff"]).optional(),
+    actualOutcome: z.enum(["complete", "partial", "handoff", "failed"]).optional(),
+    scenario: z.object({
+      actor: z.string().min(1),
+      goal: z.string().min(1),
+      successCriteria: z.array(z.string().min(1)).min(1),
+      allowedHandoffs: z.array(z.enum(["partial", "handoff"])),
+      severity: z.enum(["critical", "high", "medium", "low"])
+    }).strict().optional()
+  }).default(() => ({})),
+  generation: z.object({
+    supportedClaimCount: z.number().int().nonnegative().optional(),
+    unsupportedClaimCount: z.number().int().nonnegative().optional(),
+    evaluatedClaimCount: z.number().int().nonnegative().optional()
+  }).default(() => ({})),
   latency: z.object({
     latencyMs: z.number().int().nonnegative().optional(),
-    taskLatencyMs: z.number().int().nonnegative().optional()
+    taskLatencyMs: z.number().int().nonnegative().optional(),
+    stages: z.array(z.object({
+      endpoint: z.enum(["chat", "search", "ingest"]),
+      stage: z.string().min(1),
+      latencyMs: z.number().int().nonnegative(),
+      backlogAgeMs: z.number().int().nonnegative(),
+      outcome: z.enum(["success", "timeout", "error"]),
+      retryExhausted: z.boolean()
+    }).strict()).optional()
   }).default(() => ({})),
   cost: z.object({
     inputTokens: z.number().int().nonnegative().optional(),
     outputTokens: z.number().int().nonnegative().optional(),
-    estimatedCostUsd: z.number().nonnegative().optional()
-  }).default(() => ({}))
+    embeddingInputTokens: z.number().int().nonnegative().optional(),
+    storageByteHours: z.number().nonnegative().optional(),
+    workerMilliseconds: z.number().nonnegative().optional(),
+    egressBytes: z.number().nonnegative().optional(),
+    estimatedCostUsd: z.number().nonnegative().optional(),
+    unitKind: z.enum(["chat_request", "search_request", "ingest_document"]).optional(),
+    usageComplete: z.boolean().default(false)
+  }).default(() => ({ usageComplete: false }))
 })
+
+export const BenchmarkWorkloadEvidenceSchema = z.object({
+  schemaVersion: z.literal(1),
+  profileId: z.string().min(1),
+  version: z.string().min(1),
+  approvedBy: z.string().min(1),
+  approvedAt: z.string().datetime(),
+  datasetVersion: z.string().min(1),
+  runtimeProfileVersion: z.string().min(1),
+  dimensions: z.object({
+    corpusProfileVersion: z.string().min(1),
+    aclDistributionVersion: z.string().min(1),
+    concurrency: z.number().int().positive(),
+    documentSizeProfileVersion: z.string().min(1),
+    dependencyLatencyProfileVersion: z.string().min(1)
+  }).strict(),
+  eligibilityProbes: z.array(z.object({
+    probeId: z.string().min(1),
+    trigger: z.enum(["share", "account", "role", "group", "classification", "usage", "quality", "expiry", "archive", "delete"]),
+    path: z.enum(["active", "staged", "old_index", "cache", "session", "memory", "queued_worker"]),
+    committedAt: z.string().datetime(),
+    deniedAt: z.string().datetime(),
+    unreflectedResourceIds: z.array(z.string().min(1))
+  }).strict()),
+  recoveryScenarios: z.array(z.object({
+    scenarioId: z.string().min(1),
+    dependency: z.enum(["vector", "llm", "ocr", "queue"]),
+    failedAt: z.string().datetime(),
+    recoveredAt: z.string().datetime(),
+    retryExhausted: z.boolean(),
+    reconciledWithoutLoss: z.boolean(),
+    duplicateOrLostArtifactCount: z.number().int().nonnegative()
+  }).strict()),
+  endpointStageSamples: z.array(z.object({
+    sampleId: z.string().min(1),
+    endpoint: z.enum(["chat", "search", "ingest"]),
+    stage: z.string().min(1),
+    createdAt: z.string().datetime(),
+    startedAt: z.string().datetime(),
+    completedAt: z.string().datetime(),
+    outcome: z.enum(["success", "timeout", "error"]),
+    retryExhausted: z.boolean()
+  }).strict())
+}).strict()
+
+export const BenchmarkPriceCatalogSchema = z.object({
+  schemaVersion: z.literal(1),
+  catalogId: z.string().min(1),
+  version: z.string().min(1),
+  approvedBy: z.string().min(1),
+  approvedAt: z.string().datetime(),
+  region: z.string().min(1),
+  currency: z.literal("USD"),
+  modelRates: z.record(z.string(), z.object({
+    inputUsdPerMillionTokens: z.number().nonnegative(),
+    outputUsdPerMillionTokens: z.number().nonnegative()
+  }).strict()),
+  embeddingRates: z.record(z.string(), z.object({
+    usdPerMillionTokens: z.number().nonnegative()
+  }).strict()),
+  storageUsdPerGbHour: z.number().nonnegative(),
+  workerUsdPerSecond: z.number().nonnegative(),
+  egressUsdPerGb: z.number().nonnegative()
+}).strict()
 
 export const BenchmarkSeedManifestEntrySchema = z.object({
   fileName: z.string(),
@@ -218,3 +335,5 @@ export type BenchmarkTargetConfig = z.output<typeof BenchmarkTargetConfigSchema>
 export type BenchmarkCaseResult = z.output<typeof BenchmarkCaseResultSchema>
 export type BenchmarkDatasetPrepareRun = z.output<typeof BenchmarkDatasetPrepareRunSchema>
 export type BenchmarkRun = z.output<typeof BenchmarkRunSchema>
+export type BenchmarkWorkloadEvidence = z.output<typeof BenchmarkWorkloadEvidenceSchema>
+export type BenchmarkPriceCatalog = z.output<typeof BenchmarkPriceCatalogSchema>

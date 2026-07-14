@@ -5,7 +5,6 @@ import { formatDateTime } from "../../../../shared/utils/format.js"
 import type { DocumentGroup, DocumentManifest } from "../../types.js"
 import type { DocumentOperationState, DocumentUploadState } from "../../hooks/useDocuments.js"
 import { operationResultClassName, rootFolderParentValue, uploadErrorLabel, uploadStepClassName, type DocumentOperationEvent, type WorkspaceFolder } from "./documentWorkspaceUtils.js"
-import type { sharedEntries } from "./documentWorkspaceUtils.js"
 
 export function DocumentDetailPanel({
   documentGroups,
@@ -34,34 +33,35 @@ export function DocumentDetailPanel({
   groupName,
   groupDescription,
   groupParentId,
-  groupVisibility,
-  groupSharedGroups,
-  groupManagerUserIds,
   moveToCreatedGroup,
-  createSharedDraft,
-  createShareGroupOptions,
-  createManagerDraft,
-  validatesCreateSharedGroups,
-  validatesCreateManagers,
-  createHasValidationError,
   createParentGroup,
   canCreateGroup,
   createGroupDisabledReason,
-  createVisibilityLabel,
   shareGroupId,
   shareGroups,
+  folderSharePolicyVersion,
+  folderSharePolicyInitialized,
+  folderShareLoading,
+  folderShareLoadError,
+  folderShareReason,
   editTargetGroup,
   editGroupName,
   editGroupDescription,
   editGroupParentId,
+  editGroupMoveReason,
   editMoveTargetGroups,
+  editDestinationLabel,
   editParentInvalid,
+  editPathHasChanges,
+  editDescriptionChanged,
+  editVersionAvailable,
   editHasChanges,
   editCanSubmit,
-  editDestinationLabel,
   canWrite,
   canCreateGroups,
   canShareGroups,
+  canMoveGroups,
+  canManageSelectedFolder,
   canSubmitShare,
   canUploadToDestination,
   uploadDisabledReason,
@@ -73,18 +73,16 @@ export function DocumentDetailPanel({
   onGroupNameChange,
   onGroupDescriptionChange,
   onGroupParentIdChange,
-  onGroupVisibilityChange,
-  onGroupSharedGroupsChange,
-  onGroupManagerUserIdsChange,
   onMoveToCreatedGroupChange,
   onShareGroupIdChange,
   onShareGroupsChange,
+  onFolderShareReasonChange,
   onShareClearConfirmedChange,
   onShareGroupOptionChange,
-  onCreateShareGroupOptionChange,
   onEditGroupNameChange,
   onEditGroupDescriptionChange,
   onEditGroupParentIdChange,
+  onEditGroupMoveReasonChange,
   onUploadGroupChange,
   onUploadSubmit,
   onOpenUploadedDocument,
@@ -97,7 +95,7 @@ export function DocumentDetailPanel({
   documentGroups: DocumentGroup[]
   selectedFolder: WorkspaceFolder
   selectedGroupId: string
-  selectedSharedEntries: ReturnType<typeof sharedEntries>
+  selectedSharedEntries: Array<{ kind: string; value: string }>
   shareHasValidationError: boolean
   shareHasEmptyToken: boolean
   shareHasDuplicate: boolean
@@ -120,34 +118,35 @@ export function DocumentDetailPanel({
   groupName: string
   groupDescription: string
   groupParentId: string
-  groupVisibility: "inherit" | "private" | "shared" | "org"
-  groupSharedGroups: string
-  groupManagerUserIds: string
   moveToCreatedGroup: boolean
-  createSharedDraft: { groups: string[]; duplicates: string[]; hasEmptyToken: boolean }
-  createShareGroupOptions: string[]
-  createManagerDraft: { groups: string[]; duplicates: string[]; hasEmptyToken: boolean }
-  validatesCreateSharedGroups: boolean
-  validatesCreateManagers: boolean
-  createHasValidationError: boolean
   createParentGroup?: DocumentGroup
   canCreateGroup: boolean
   createGroupDisabledReason: string | null
-  createVisibilityLabel: string
   shareGroupId: string
   shareGroups: string
+  folderSharePolicyVersion?: string
+  folderSharePolicyInitialized: boolean
+  folderShareLoading: boolean
+  folderShareLoadError: string | null
+  folderShareReason: string
   editTargetGroup?: DocumentGroup
   editGroupName: string
   editGroupDescription: string
   editGroupParentId: string
+  editGroupMoveReason: string
   editMoveTargetGroups: DocumentGroup[]
+  editDestinationLabel: string
   editParentInvalid: boolean
+  editPathHasChanges: boolean
+  editDescriptionChanged: boolean
+  editVersionAvailable: boolean
   editHasChanges: boolean
   editCanSubmit: boolean
-  editDestinationLabel: string
   canWrite: boolean
   canCreateGroups: boolean
   canShareGroups: boolean
+  canMoveGroups: boolean
+  canManageSelectedFolder: boolean
   canSubmitShare: boolean
   canUploadToDestination: boolean
   uploadDisabledReason: string | null
@@ -159,18 +158,16 @@ export function DocumentDetailPanel({
   onGroupNameChange: (value: string) => void
   onGroupDescriptionChange: (value: string) => void
   onGroupParentIdChange: (value: string) => void
-  onGroupVisibilityChange: (value: "inherit" | "private" | "shared" | "org") => void
-  onGroupSharedGroupsChange: (value: string) => void
-  onGroupManagerUserIdsChange: (value: string) => void
   onMoveToCreatedGroupChange: (value: boolean) => void
   onShareGroupIdChange: (value: string) => void
   onShareGroupsChange: (value: string) => void
+  onFolderShareReasonChange: (value: string) => void
   onShareClearConfirmedChange: (value: boolean) => void
   onShareGroupOptionChange: (groupName: string, checked: boolean) => void
-  onCreateShareGroupOptionChange: (groupName: string, checked: boolean) => void
   onEditGroupNameChange: (value: string) => void
   onEditGroupDescriptionChange: (value: string) => void
   onEditGroupParentIdChange: (value: string) => void
+  onEditGroupMoveReasonChange: (value: string) => void
   onUploadGroupChange: (groupId: string) => void
   onUploadSubmit: (event: FormEvent) => void
   onOpenUploadedDocument: (document: DocumentManifest) => void
@@ -180,10 +177,12 @@ export function DocumentDetailPanel({
   onShareSubmit: (event: FormEvent) => void
   onEditGroupSubmit: (event: FormEvent) => void
 }) {
+  const editBusy = operationState.sharingGroupId !== null || (operationState.movingGroupId ?? null) !== null
+
   return (
     <aside className="document-detail-panel" aria-label="フォルダ情報と共有設定">
       <section className="folder-info-card">
-        <h3>フォルダ情報 / 共有設定</h3>
+        <h3>{canManageSelectedFolder ? "フォルダ情報 / 共有設定" : "フォルダ情報"}</h3>
         <div className="folder-info-box">
           <Icon name="folder" />
           <div>
@@ -203,6 +202,7 @@ export function DocumentDetailPanel({
         </dl>
       </section>
 
+      {canManageSelectedFolder && <>
       <section className="sharing-card">
         <div className="card-title-row">
           <h3>共有設定（フォルダレベル）</h3>
@@ -217,13 +217,20 @@ export function DocumentDetailPanel({
               ))}
             </select>
           </label>
+          {folderShareLoading && <p className="field-hint" aria-live="polite">versioned 共有 policy を読み込み中です。</p>}
+          {folderShareLoadError && <p className="error" role="alert">{folderShareLoadError}</p>}
+          {folderSharePolicyVersion && (
+            <p className="field-hint">
+              policy version: {folderSharePolicyVersion} / {folderSharePolicyInitialized ? "明示 policy" : "未設定（管理 principal の full grant から初期化）"}
+            </p>
+          )}
           <label>
-            <span>共有 Cognito group</span>
+            <span>共有 resource group ID</span>
             <input
               value={shareGroups}
-              disabled={!canShareGroups || operationState.sharingGroupId !== null}
+              disabled={!canShareGroups || folderShareLoading || !folderSharePolicyVersion || operationState.sharingGroupId !== null}
               onChange={(event) => onShareGroupsChange(event.target.value)}
-              placeholder="Cognito group をカンマ区切りで入力"
+              placeholder="resource group ID をカンマ区切りで入力"
               aria-invalid={shareHasValidationError || undefined}
               aria-describedby="share-groups-validation share-groups-diff"
             />
@@ -232,12 +239,12 @@ export function DocumentDetailPanel({
             {shareHasEmptyToken && <p className="error">空の group 指定があります。余分なカンマを削除してください。</p>}
             {shareHasDuplicate && <p className="error">重複している group: {shareDuplicates.join(", ")}</p>}
             {!shareHasValidationError && !shareHasChanges && <p>既存の共有設定から変更はありません。</p>}
-            {!shareHasValidationError && <p>入力された group 名だけを共有先として送信します。存在確認は API 更新時に行われます。</p>}
+            {!shareHasValidationError && <p>入力した readOnly resource group と、表示中の user/full/deny entry を complete policy として送信します。active・同一 tenant の存在確認は API 更新時に行われます。</p>}
           </div>
-          <fieldset className="share-group-selector" aria-label="共有 group 候補">
-            <legend>既存 shared group 候補</legend>
+          <fieldset className="share-group-selector" aria-label="共有 resource group 候補">
+            <legend>現行 policy の readOnly resource group</legend>
             {shareGroupOptions.length === 0 ? (
-              <p>候補はありません。必要な group 名を入力してください。</p>
+              <p>候補はありません。必要な resource group ID を入力してください。</p>
             ) : (
               <div className="share-group-options">
                 {shareGroupOptions.map((groupName) => {
@@ -247,7 +254,7 @@ export function DocumentDetailPanel({
                       <input
                         type="checkbox"
                         checked={checked}
-                        disabled={!canShareGroups || operationState.sharingGroupId !== null}
+                        disabled={!canShareGroups || folderShareLoading || !folderSharePolicyVersion || operationState.sharingGroupId !== null}
                         onChange={(event) => onShareGroupOptionChange(groupName, event.target.checked)}
                       />
                       <span>{groupName}</span>
@@ -267,12 +274,22 @@ export function DocumentDetailPanel({
               <input
                 type="checkbox"
                 checked={shareClearConfirmed}
-                disabled={!canShareGroups || operationState.sharingGroupId !== null}
+                disabled={!canShareGroups || folderShareLoading || !folderSharePolicyVersion || operationState.sharingGroupId !== null}
                 onChange={(event) => onShareClearConfirmedChange(event.target.checked)}
               />
               <span>既存共有をすべて削除することを確認しました</span>
             </label>
           )}
+          <label>
+            <span>変更理由</span>
+            <textarea
+              value={folderShareReason}
+              disabled={!canShareGroups || folderShareLoading || !folderSharePolicyVersion || operationState.sharingGroupId !== null}
+              onChange={(event) => onFolderShareReasonChange(event.target.value)}
+              placeholder="共有 policy を変更する理由"
+              required
+            />
+          </label>
           <button type="submit" disabled={!canSubmitShare}>
             {operationState.sharingGroupId !== null && <LoadingSpinner className="button-spinner" />}
             共有更新
@@ -306,7 +323,7 @@ export function DocumentDetailPanel({
             <span>編集後フォルダ名</span>
             <input
               value={editGroupName}
-              disabled={!canShareGroups || !editTargetGroup || operationState.sharingGroupId !== null}
+              disabled={!canMoveGroups || !editTargetGroup || editBusy}
               onChange={(event) => onEditGroupNameChange(event.target.value)}
               placeholder="フォルダ名"
               aria-invalid={(Boolean(editTargetGroup) && !editGroupName.trim()) || undefined}
@@ -314,47 +331,70 @@ export function DocumentDetailPanel({
             />
           </label>
           <label>
-            <span>編集後説明</span>
-            <textarea
-              value={editGroupDescription}
-              disabled={!canShareGroups || !editTargetGroup || operationState.sharingGroupId !== null}
-              onChange={(event) => onEditGroupDescriptionChange(event.target.value)}
-              placeholder="フォルダの用途や対象資料"
-              aria-describedby="edit-folder-preview"
-            />
-          </label>
-          <label>
             <span>移動先フォルダ</span>
             <select
               value={editGroupParentId}
-              disabled={!canShareGroups || !editTargetGroup || operationState.sharingGroupId !== null}
+              disabled={!canMoveGroups || !editTargetGroup || editBusy}
               onChange={(event) => onEditGroupParentIdChange(event.target.value)}
               aria-invalid={editParentInvalid || undefined}
               aria-describedby="edit-folder-validation edit-folder-preview"
             >
               <option value={rootFolderParentValue}>ルート</option>
               {editMoveTargetGroups.map((group) => (
-                <option value={group.groupId} key={group.groupId}>{group.canonicalPath}</option>
+                <option
+                  value={group.groupId}
+                  key={group.groupId}
+                  disabled={group.effectivePermission !== "full"}
+                >
+                  {group.canonicalPath ?? group.name}
+                </option>
               ))}
             </select>
           </label>
+          <label>
+            <span>編集後説明</span>
+            <textarea
+              value={editGroupDescription}
+              disabled={!canShareGroups || !editTargetGroup || editBusy}
+              onChange={(event) => onEditGroupDescriptionChange(event.target.value)}
+              placeholder="フォルダの用途や対象資料"
+              aria-describedby="edit-folder-preview"
+            />
+          </label>
+          <label>
+            <span>フォルダ移動理由</span>
+            <textarea
+              value={editGroupMoveReason}
+              disabled={!canMoveGroups || !editTargetGroup || !editPathHasChanges || editBusy}
+              onChange={(event) => onEditGroupMoveReasonChange(event.target.value)}
+              placeholder="名前または格納先を変更する理由"
+              required={editPathHasChanges}
+              aria-describedby="edit-folder-validation"
+            />
+          </label>
           <div className="share-validation" id="edit-folder-validation" aria-live="polite">
-            {!editTargetGroup && <p>フォルダを選択すると名前、説明、移動先を更新できます。</p>}
+            {!editTargetGroup && <p>フォルダを選択すると名前、格納先、説明を更新できます。</p>}
             {editTargetGroup && !editGroupName.trim() && <p className="error">フォルダ名を入力してください。</p>}
-            {editParentInvalid && <p className="error">自分自身または子孫フォルダ配下へは移動できません。</p>}
-            {editTargetGroup && !editParentInvalid && !editHasChanges && <p>選択フォルダの設定から変更はありません。</p>}
+            {editTargetGroup && editPathHasChanges && !canMoveGroups && <p className="error">フォルダを移動する権限がありません。</p>}
+            {editTargetGroup && editPathHasChanges && !editGroupMoveReason.trim() && <p className="error">フォルダ移動理由を入力してください。</p>}
+            {editTargetGroup && editPathHasChanges && !editVersionAvailable && <p className="error">フォルダ version を取得できないため移動できません。</p>}
+            {editTargetGroup && editPathHasChanges && editParentInvalid && <p className="error">移動先フォルダの full 権限が必要です。</p>}
+            {editTargetGroup && !editHasChanges && <p>選択フォルダの設定から変更はありません。</p>}
           </div>
           <div className="share-diff-preview" id="edit-folder-preview" aria-label="フォルダ更新プレビュー">
             <span>現在 path: {editTargetGroup?.canonicalPath ?? "未選択"}</span>
             <span>移動先: {editDestinationLabel}</span>
-            <span>子孫: {editTargetGroup ? "path は API 更新後に再計算" : "未選択"}</span>
+            <span>folder version: {editTargetGroup?.updatedAt ?? "未取得"}</span>
+            <span>path 更新: {editPathHasChanges ? "専用 folder.move API" : "なし"}</span>
+            <span>説明更新: {editDescriptionChanged ? "あり" : "なし"}</span>
           </div>
           <button type="submit" disabled={!editCanSubmit}>
-            {operationState.sharingGroupId !== null && <LoadingSpinner className="button-spinner" />}
+            {editBusy && <LoadingSpinner className="button-spinner" />}
             フォルダ更新
           </button>
         </form>
       </section>
+      </>}
 
       <section className="folder-operation-card">
         <h3>フォルダ操作</h3>
@@ -408,77 +448,19 @@ export function DocumentDetailPanel({
               ))}
             </select>
           </label>
-          <label>
-            <span>公開範囲</span>
-            <select value={groupVisibility} disabled={!canCreateGroups || !canShareGroups || operationState.creatingGroup} onChange={(event) => onGroupVisibilityChange(event.target.value as "inherit" | "private" | "shared" | "org")}>
-              <option value="inherit">親フォルダから継承</option>
-              <option value="private">非公開</option>
-              <option value="shared">指定 group 共有</option>
-              <option value="org">組織全体</option>
-            </select>
-          </label>
-          <label>
-            <span>初期 shared groups</span>
-            <input
-              value={groupSharedGroups}
-              disabled={!canCreateGroups || !canShareGroups || operationState.creatingGroup || groupVisibility !== "shared"}
-              onChange={(event) => onGroupSharedGroupsChange(event.target.value)}
-              placeholder="Cognito group をカンマ区切りで入力"
-              aria-invalid={(validatesCreateSharedGroups && (createSharedDraft.hasEmptyToken || createSharedDraft.duplicates.length > 0)) || undefined}
-              aria-describedby="create-group-validation create-group-preview"
-            />
-          </label>
-          <fieldset className="share-group-selector" aria-label="初期 shared group 候補">
-            <legend>既存 shared group 候補</legend>
-            {createShareGroupOptions.length === 0 ? (
-              <p>候補はありません。必要な group 名を入力してください。</p>
-            ) : (
-              <div className="share-group-options">
-                {createShareGroupOptions.map((groupName) => {
-                  const checked = createSharedDraft.groups.includes(groupName)
-                  return (
-                    <label key={groupName}>
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        disabled={!canCreateGroups || !canShareGroups || operationState.creatingGroup || groupVisibility !== "shared"}
-                        onChange={(event) => onCreateShareGroupOptionChange(groupName, event.target.checked)}
-                      />
-                      <span>{groupName}</span>
-                    </label>
-                  )
-                })}
-              </div>
-            )}
-          </fieldset>
-          <label>
-            <span>管理者 user IDs</span>
-            <input
-              value={groupManagerUserIds}
-              disabled={!canCreateGroups || !canShareGroups || operationState.creatingGroup || groupVisibility === "inherit"}
-              onChange={(event) => onGroupManagerUserIdsChange(event.target.value)}
-              placeholder="User ID をカンマ区切りで入力"
-              aria-invalid={(createManagerDraft.hasEmptyToken || createManagerDraft.duplicates.length > 0) || undefined}
-              aria-describedby="create-group-validation create-group-preview"
-            />
-          </label>
           <label className="compact-checkbox">
             <input type="checkbox" checked={moveToCreatedGroup} disabled={!canCreateGroups || operationState.creatingGroup} onChange={(event) => onMoveToCreatedGroupChange(event.target.checked)} />
             <span>作成後にこのフォルダへ移動</span>
           </label>
           <div className="share-validation" id="create-group-validation" aria-live="polite">
-            {validatesCreateSharedGroups && createSharedDraft.hasEmptyToken && <p className="error">shared groups に空の指定があります。余分なカンマを削除してください。</p>}
-            {validatesCreateSharedGroups && createSharedDraft.duplicates.length > 0 && <p className="error">重複している shared group: {createSharedDraft.duplicates.join(", ")}</p>}
-            {validatesCreateManagers && createManagerDraft.hasEmptyToken && <p className="error">管理者 user IDs に空の指定があります。余分なカンマを削除してください。</p>}
-            {validatesCreateManagers && createManagerDraft.duplicates.length > 0 && <p className="error">重複している管理者 user ID: {createManagerDraft.duplicates.join(", ")}</p>}
             {createGroupDisabledReason && createGroupDisabledReason !== "新規フォルダ名を入力してください。" && <p className="error">{createGroupDisabledReason}</p>}
-            {!createHasValidationError && <p>入力値だけを作成 payload に含めます。group / user の存在確認は API 作成時に行われます。</p>}
+            <p>新規フォルダは作成者が管理する非公開状態で作成されます。共有は作成後に共有設定から更新してください。</p>
           </div>
           <div className="share-diff-preview" id="create-group-preview" aria-label="新規フォルダ作成プレビュー">
-            <span>公開範囲: {createVisibilityLabel}</span>
+            <span>公開範囲: 非公開</span>
             <span>親フォルダ: {createParentGroup?.name ?? "なし"}</span>
-            <span>共有先: {groupVisibility === "inherit" ? "親フォルダから継承" : groupVisibility === "shared" && createSharedDraft.groups.length > 0 ? createSharedDraft.groups.join(", ") : "なし"}</span>
-            <span>管理者: {groupVisibility === "inherit" ? "親フォルダから継承" : createManagerDraft.groups.length > 0 ? createManagerDraft.groups.join(", ") : "未指定"}</span>
+            <span>共有先: 作成後に設定</span>
+            <span>管理者: 作成者</span>
             <span>作成後移動: {moveToCreatedGroup ? "する" : "しない"}</span>
           </div>
           <button type="submit" disabled={!canCreateGroup}>

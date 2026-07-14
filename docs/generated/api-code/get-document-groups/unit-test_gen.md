@@ -8,32 +8,58 @@
 
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
-| 到達 symbol | service recalculates descendant canonical paths and local lock items on move and rename | `apps/api/src/rag/memorag-service.test.ts:517 (service recalculates descendant canonical paths and local lock items on move and rename)` |
-| 到達 symbol | service moves a document group subtree back to root with path locks | `apps/api/src/rag/memorag-service.test.ts:543 (service moves a document group subtree back to root with path locks)` |
-| 到達 symbol | service normalizes legacy document groups on read | `apps/api/src/rag/memorag-service.test.ts:573 (service normalizes legacy document groups on read)` |
-| 到達 symbol | service inherits parent document group sharing unless child has explicit policy | `apps/api/src/rag/memorag-service.test.ts:673 (service inherits parent document group sharing unless child has explicit policy)` |
-| 到達 symbol | service preserves legacy explicit shared child policy when hasExplicitPolicy is false | `apps/api/src/rag/memorag-service.test.ts:745 (service preserves legacy explicit shared child policy when hasExplicitPolicy is false)` |
-| 到達 symbol | service preserves legacy explicit private child policy and does not leak parent sharing | `apps/api/src/rag/memorag-service.test.ts:789 (service preserves legacy explicit private child policy and does not leak parent sharing)` |
-| 到達 symbol | service annotates visible document groups with effective permission and inheritance source | `apps/api/src/rag/memorag-service.test.ts:836 (service annotates visible document groups with effective permission and inheritance source)` |
-| 到達 symbol | service does not expose group scoped documents to ownerUserId without folder read permission | `apps/api/src/rag/memorag-service.test.ts:867 (service does not expose group scoped documents to ownerUserId without folder read permission)` |
+| 到達 symbol | service recalculates descendant canonical paths and local lock items on rename | `apps/api/src/rag/memorag-service.test.ts:674 (service recalculates descendant canonical paths and local lock items on rename)` |
+| 到達 symbol | service legacy metadata update ignores runtime parent mutation fields | `apps/api/src/rag/memorag-service.test.ts:701 (service legacy metadata update ignores runtime parent mutation fields)` |
+| 到達 symbol | service normalizes legacy document groups on read | `apps/api/src/rag/memorag-service.test.ts:739 (service normalizes legacy document groups on read)` |
+| 到達 symbol | service inherits parent document group sharing unless child has explicit policy | `apps/api/src/rag/memorag-service.test.ts:827 (service inherits parent document group sharing unless child has explicit policy)` |
+| 到達 symbol | service preserves legacy explicit shared child policy when hasExplicitPolicy is false | `apps/api/src/rag/memorag-service.test.ts:902 (service preserves legacy explicit shared child policy when hasExplicitPolicy is false)` |
+| 到達 symbol | service preserves legacy explicit private child policy and does not leak parent sharing | `apps/api/src/rag/memorag-service.test.ts:948 (service preserves legacy explicit private child policy and does not leak parent sharing)` |
+| 到達 symbol | service annotates visible document groups with effective permission and inheritance source | `apps/api/src/rag/memorag-service.test.ts:997 (service annotates visible document groups with effective permission and inheritance source)` |
+| 到達 symbol | document administrative principal retains read access despite ordinary folder denial | `apps/api/src/rag/memorag-service.test.ts:1031 (document administrative principal retains read access despite ordinary folder denial)` |
 
 ## 2. 実装分岐から導くテスト要因
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:267 (requirePermission)` |
+| F001 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| F002 | `MemoRagService.listDocumentGroups` | if | `detail.permission` が `"none"` と異なる | `apps/api/src/rag/memorag-service.ts:874 (MemoRagService.listDocumentGroups)` |
+| F003 | `MemoRagService.listDocumentGroups` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/rag/memorag-service.ts:877 (MemoRagService.listDocumentGroups)` |
+| F004 | `MemoRagService.listDocumentGroups` | if | `error` が `ResourceOperationAuthorizationError` の instance である | `apps/api/src/rag/memorag-service.ts:878 (MemoRagService.listDocumentGroups)` |
+| F005 | `decodeCollectionCursor` | if | `cursor` が存在しない、または偽である | `apps/api/src/routes/document-routes.ts:279 (decodeCollectionCursor)` |
+| F006 | `decodeCollectionCursor` | if | test の判定結果が真ではない | `apps/api/src/routes/document-routes.ts:283 (decodeCollectionCursor)` |
+| F007 | `decodeCollectionCursor` | if | `Buffer.from(decoded, "utf-8").toString("base64url")` が `normalized` と異なる | `apps/api/src/routes/document-routes.ts:284 (decodeCollectionCursor)` |
+| F008 | `decodeCollectionCursor` | if | is safe integer の判定結果が真ではない | `apps/api/src/routes/document-routes.ts:286 (decodeCollectionCursor)` |
+| F009 | `decodeCollectionCursor` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:288 (decodeCollectionCursor)` |
+| F010 | `authorizedOnlyPage` | 三項条件 | `nextOffset` が `authorized.length` より小さい | `apps/api/src/security/public-resource-response.ts:71 (authorizedOnlyPage)` |
 
 ## 3. コード由来テストケース
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | 文書グループ一覧を取得する が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:226 (GET /document-groups handler)` |
-| TC002 | F001: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:267 (requirePermission)` |
-| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:267 (requirePermission)` |
-| TC004 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
-| TC005 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
-| TC006 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
-| TC007 | HTTP 500 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC001 | 正常系 | 文書グループ一覧を取得する が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:520 (GET /document-groups handler)` |
+| TC002 | F001: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| TC004 | F002: 条件成立 | `detail.permission` が `"none"` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:874 (MemoRagService.listDocumentGroups)` |
+| TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:874 (MemoRagService.listDocumentGroups)` |
+| TC006 | F003: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/rag/memorag-service.ts:877 (MemoRagService.listDocumentGroups)` |
+| TC007 | F004: 条件成立 | `error` が `ResourceOperationAuthorizationError` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:878 (MemoRagService.listDocumentGroups)` |
+| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:878 (MemoRagService.listDocumentGroups)` |
+| TC009 | F005: 条件成立 | `cursor` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:279 (decodeCollectionCursor)` |
+| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:279 (decodeCollectionCursor)` |
+| TC011 | F006: 条件成立 | test の判定結果が真ではない 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:283 (decodeCollectionCursor)` |
+| TC012 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:283 (decodeCollectionCursor)` |
+| TC013 | F007: 条件成立 | `Buffer.from(decoded, "utf-8").toString("base64url")` が `normalized` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:284 (decodeCollectionCursor)` |
+| TC014 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:284 (decodeCollectionCursor)` |
+| TC015 | F008: 条件成立 | is safe integer の判定結果が真ではない 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:286 (decodeCollectionCursor)` |
+| TC016 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:286 (decodeCollectionCursor)` |
+| TC017 | F009: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/document-routes.ts:288 (decodeCollectionCursor)` |
+| TC018 | F010: 条件成立 | `nextOffset` が `authorized.length` より小さい 場合の response / side effect が実装どおりである。 | `apps/api/src/security/public-resource-response.ts:71 (authorizedOnlyPage)` |
+| TC019 | F010: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/security/public-resource-response.ts:71 (authorizedOnlyPage)` |
+| TC020 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC021 | HTTP 400 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC022 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC023 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC024 | HTTP 500 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 
 ## 4. 検証方針
 

@@ -2,7 +2,7 @@
 
 # GET /admin/quality-actions IF仕様
 
-- 実装 route: `apps/api/src/routes/admin-routes.ts:377 (GET /admin/quality-actions)`
+- 実装 route: `apps/api/src/routes/admin-routes.ts:469 (GET /admin/quality-actions)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 文書品質 action card 一覧を取得する

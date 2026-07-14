@@ -32,6 +32,9 @@
     "benchmark": "npm run start -w @memorag-mvp/benchmark",
     "benchmark:search": "npm run start:search -w @memorag-mvp/benchmark",
     "benchmark:conversation": "npm run start:conversation -w @memorag-mvp/benchmark",
+    "rag:release:audit": "npm run release:audit -w @memorag-mvp/benchmark",
+    "rag:release:source-audit": "npm run release:audit -w @memorag-mvp/benchmark -- --source-audit-only --source-root apps/api/src --source-root apps/web/src --output /tmp/memorag-release-source-audit.json",
+    "rag:promotion:check": "npm run promotion:check -w @memorag-mvp/benchmark",
     "cdk": "npm run cdk -w @memorag-mvp/infra"
   },
   "devDependencies": {

@@ -8,45 +8,46 @@
 
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
-| 到達 symbol | S3 upload URLs do not require a max-size Content-Length header | `apps/api/src/adapters/s3-object-store.test.ts:5 (S3 upload URLs do not require a max-size Content-Length header)` |
+| 到達 symbol | S3ObjectStore handles empty bodies and creates an offline signed upload URL | `apps/api/src/adapters/s3-object-store.test.ts:50 (S3ObjectStore handles empty bodies and creates an offline signed upload URL)` |
 
 ## 2. 実装分岐から導くテスト要因
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `POST /documents/uploads handler` | 三項条件 | `s3Upload` が存在し、真である | `apps/api/src/routes/document-routes.ts:488 (POST /documents/uploads handler)` |
-| F002 | `authorizeDocumentUploadSession` | if | `purpose` が `"chatAttachment"` と等しい | `apps/api/src/routes/document-routes.ts:64 (authorizeDocumentUploadSession)` |
-| F003 | `authorizeDocumentUploadSession` | if | 利用者が "chat:create" permission を持つ | `apps/api/src/routes/document-routes.ts:65 (authorizeDocumentUploadSession)` |
-| F004 | `authorizeDocumentUploadSession` | if | `purpose` が `"benchmarkSeed"` と等しい | `apps/api/src/routes/document-routes.ts:68 (authorizeDocumentUploadSession)` |
-| F005 | `authorizeDocumentUploadSession` | if | 利用者が "benchmark:seed_corpus" permission を持つ | `apps/api/src/routes/document-routes.ts:69 (authorizeDocumentUploadSession)` |
-| F006 | `authorizeDocumentUploadSession` | if | 利用者が "rag:doc:write:group" permission を持つ | `apps/api/src/routes/document-routes.ts:72 (authorizeDocumentUploadSession)` |
-| F007 | `buildUploadObjectKey` | 三項条件 | `purpose` が `"benchmarkSeed"` と等しい | `apps/api/src/routes/document-routes.ts:79 (buildUploadObjectKey)` |
-| F008 | `buildUploadObjectKey` | 三項条件 | `purpose` が `"chatAttachment"` と等しい | `apps/api/src/routes/document-routes.ts:79 (buildUploadObjectKey)` |
+| F001 | `POST /documents/uploads handler` | 三項条件 | `s3Upload` が存在し、真である | `apps/api/src/routes/document-routes.ts:1049 (POST /documents/uploads handler)` |
+| F002 | `authorizeDocumentUploadSession` | if | `purpose` が `"chatAttachment"` と等しい | `apps/api/src/routes/document-routes.ts:123 (authorizeDocumentUploadSession)` |
+| F003 | `authorizeDocumentUploadSession` | if | 利用者が "chat:create" permission を持つ | `apps/api/src/routes/document-routes.ts:124 (authorizeDocumentUploadSession)` |
+| F004 | `authorizeDocumentUploadSession` | if | `purpose` が `"benchmarkSeed"` と等しい | `apps/api/src/routes/document-routes.ts:127 (authorizeDocumentUploadSession)` |
+| F005 | `authorizeDocumentUploadSession` | if | 利用者が "benchmark:seed_corpus" permission を持つ | `apps/api/src/routes/document-routes.ts:128 (authorizeDocumentUploadSession)` |
+| F006 | `authorizeDocumentUploadSession` | if | 利用者が "rag:doc:write:group" permission を持つ | `apps/api/src/routes/document-routes.ts:131 (authorizeDocumentUploadSession)` |
+| F007 | `buildUploadObjectKey` | 三項条件 | `purpose` が `"benchmarkSeed"` と等しい | `apps/api/src/routes/document-routes.ts:138 (buildUploadObjectKey)` |
+| F008 | `buildUploadObjectKey` | 三項条件 | `purpose` が `"chatAttachment"` と等しい | `apps/api/src/routes/document-routes.ts:138 (buildUploadObjectKey)` |
 
 ## 3. コード由来テストケース
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | 文書アップロード URL を作成する が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:473 (POST /documents/uploads handler)` |
-| TC002 | F001: 条件成立 | `s3Upload` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:488 (POST /documents/uploads handler)` |
-| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:488 (POST /documents/uploads handler)` |
-| TC004 | F002: 条件成立 | `purpose` が `"chatAttachment"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:64 (authorizeDocumentUploadSession)` |
-| TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:64 (authorizeDocumentUploadSession)` |
-| TC006 | F003: 条件成立 | 利用者が "chat:create" permission を持つ 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:65 (authorizeDocumentUploadSession)` |
-| TC007 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:65 (authorizeDocumentUploadSession)` |
-| TC008 | F004: 条件成立 | `purpose` が `"benchmarkSeed"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:68 (authorizeDocumentUploadSession)` |
-| TC009 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:68 (authorizeDocumentUploadSession)` |
-| TC010 | F005: 条件成立 | 利用者が "benchmark:seed_corpus" permission を持つ 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:69 (authorizeDocumentUploadSession)` |
-| TC011 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:69 (authorizeDocumentUploadSession)` |
-| TC012 | F006: 条件成立 | 利用者が "rag:doc:write:group" permission を持つ 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:72 (authorizeDocumentUploadSession)` |
-| TC013 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:72 (authorizeDocumentUploadSession)` |
-| TC014 | F007: 条件成立 | `purpose` が `"benchmarkSeed"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:79 (buildUploadObjectKey)` |
-| TC015 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:79 (buildUploadObjectKey)` |
-| TC016 | F008: 条件成立 | `purpose` が `"chatAttachment"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:79 (buildUploadObjectKey)` |
-| TC017 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:79 (buildUploadObjectKey)` |
+| TC001 | 正常系 | 文書アップロード URL を作成する が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:1034 (POST /documents/uploads handler)` |
+| TC002 | F001: 条件成立 | `s3Upload` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1049 (POST /documents/uploads handler)` |
+| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1049 (POST /documents/uploads handler)` |
+| TC004 | F002: 条件成立 | `purpose` が `"chatAttachment"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:123 (authorizeDocumentUploadSession)` |
+| TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:123 (authorizeDocumentUploadSession)` |
+| TC006 | F003: 条件成立 | 利用者が "chat:create" permission を持つ 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:124 (authorizeDocumentUploadSession)` |
+| TC007 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:124 (authorizeDocumentUploadSession)` |
+| TC008 | F004: 条件成立 | `purpose` が `"benchmarkSeed"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:127 (authorizeDocumentUploadSession)` |
+| TC009 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:127 (authorizeDocumentUploadSession)` |
+| TC010 | F005: 条件成立 | 利用者が "benchmark:seed_corpus" permission を持つ 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:128 (authorizeDocumentUploadSession)` |
+| TC011 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:128 (authorizeDocumentUploadSession)` |
+| TC012 | F006: 条件成立 | 利用者が "rag:doc:write:group" permission を持つ 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:131 (authorizeDocumentUploadSession)` |
+| TC013 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:131 (authorizeDocumentUploadSession)` |
+| TC014 | F007: 条件成立 | `purpose` が `"benchmarkSeed"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:138 (buildUploadObjectKey)` |
+| TC015 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:138 (buildUploadObjectKey)` |
+| TC016 | F008: 条件成立 | `purpose` が `"chatAttachment"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:138 (buildUploadObjectKey)` |
+| TC017 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:138 (buildUploadObjectKey)` |
 | TC018 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC019 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC020 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC021 | HTTP 503 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 
 ## 4. 検証方針
 

@@ -8,8 +8,8 @@
 
 | # | CRUD/実行 | Target | Method | 自然言語での目的 | Caller | コード根拠 |
 | ---: | --- | --- | --- | --- | --- | --- |
-| 1 | 参照 | `deps.chatRunStore` | `get` | `deps.chatRunStore` に対して get を実行する。 | `GET /chat-runs/{runId}/events handler` | `apps/api/src/routes/chat-routes.ts:94 (GET /chat-runs/{runId}/events handler)` |
-| 2 | 参照 | `deps.chatRunEventStore` | `listAfter` | `deps.chatRunEventStore` に対して list after を実行する。 | `GET /chat-runs/{runId}/events handler` | `apps/api/src/routes/chat-routes.ts:107 (GET /chat-runs/{runId}/events handler)` |
+| 1 | 参照 | `deps.chatRunStore` | `get` | `deps.chatRunStore` に対して get を実行する。 | `GET /chat-runs/{runId}/events handler` | `apps/api/src/routes/chat-routes.ts:98 (GET /chat-runs/{runId}/events handler)` |
+| 2 | 参照 | `deps.chatRunEventStore` | `listAfter` | `deps.chatRunEventStore` に対して list after を実行する。 | `GET /chat-runs/{runId}/events handler` | `apps/api/src/routes/chat-routes.ts:117 (GET /chat-runs/{runId}/events handler)` |
 
 ## 外部サービス操作
 
