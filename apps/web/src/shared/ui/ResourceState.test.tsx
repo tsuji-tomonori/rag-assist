@@ -7,7 +7,15 @@ import {
   type UiResourceState,
   type UiStateTarget
 } from "./ResourceState.js"
-import { createContentResourceState } from "./resourceStateModel.js"
+import {
+  canShowResourceContent,
+  createContentResourceState,
+  createEmptyResourceState,
+  hasConfirmedResourceResult,
+  isResourcePartAvailable,
+  isResourceStateBusy,
+  resourcePartStatus
+} from "./resourceStateModel.js"
 
 const target: UiStateTarget = {
   id: "history",
@@ -18,6 +26,50 @@ const target: UiStateTarget = {
 const asOf = "2026-07-14T06:00:00.000Z"
 
 describe("ResourceStateBoundary", () => {
+  it("state model は確認済み結果、保持可能 content、busy、part availability を別々に判定する", () => {
+    const content = createContentResourceState(target, asOf)
+    const empty = createEmptyResourceState(target, "保存済み会話", asOf)
+    const loading: UiResourceState = {
+      kind: "loading",
+      target,
+      parts: [{ id: "items", label: "会話一覧", status: "loading" }],
+      operation: "初回取得中",
+      retainContent: false
+    }
+    const retrying: UiResourceState = {
+      kind: "retrying",
+      target,
+      parts: [{ id: "items", label: "会話一覧", status: "retrying", asOf }],
+      operation: "再取得中",
+      retainContent: true
+    }
+    const partial: UiResourceState = {
+      kind: "partial",
+      target,
+      parts: [
+        { id: "items", label: "会話一覧", status: "ready", asOf },
+        { id: "tickets", label: "問い合わせ状態", status: "stale", asOf },
+        { id: "audit", label: "監査", status: "failed" }
+      ],
+      message: "取得できた内容を表示します。",
+      asOf
+    }
+
+    expect(hasConfirmedResourceResult(content)).toBe(true)
+    expect(hasConfirmedResourceResult(empty)).toBe(true)
+    expect(hasConfirmedResourceResult(partial)).toBe(true)
+    expect(hasConfirmedResourceResult(loading)).toBe(false)
+    expect(canShowResourceContent(loading)).toBe(false)
+    expect(canShowResourceContent(retrying)).toBe(true)
+    expect(isResourceStateBusy(loading)).toBe(true)
+    expect(isResourceStateBusy(content)).toBe(false)
+    expect(resourcePartStatus(partial, "items")).toBe("ready")
+    expect(resourcePartStatus(partial, "missing")).toBeUndefined()
+    expect(isResourcePartAvailable(partial, "items")).toBe(true)
+    expect(isResourcePartAvailable(partial, "tickets")).toBe(true)
+    expect(isResourcePartAvailable(partial, "audit")).toBe(false)
+  })
+
   it("loading は対象 region を busy にして未確認の zero/content を表示しない", () => {
     const state: UiResourceState = {
       kind: "loading",

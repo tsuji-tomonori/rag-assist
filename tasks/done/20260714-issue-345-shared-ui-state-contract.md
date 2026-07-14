@@ -53,6 +53,13 @@
 - セルフレビューコメント: `issuecomment-4966526903`
 - representative screen reader、実 touch/zoom/device、axe、Firefox/WebKit は本 task の実施済み証跡に含めず、Issue #345 の manual/automated/cross-screen tasks に維持する。
 
+### PR CI 修復（2026-07-14）
+
+- GitHub Actions run `29315153717` で、完了後に移動した task の旧 `tasks/todo/` trace と、Web branch coverage 84.99% を検出した。
+- `FR-095` の trace を実在する `tasks/done/` path へ更新し、shared resource state helper の confirmed/unconfirmed、content retention、busy、part availability 分岐を振る舞いテストで補った。coverage threshold は変更していない。
+- API full coverage は 773 tests pass、Web full coverage は 40 files / 338 tests pass、Web branch coverage は 85.08% で成功した。
+- API/Web typecheck、repository lint、`task docs:check` も再実行して成功した。
+
 ## ドキュメントメンテナンス計画
 
 `FR-095`, `NFR-017`, `DES_UI_UX_001`、feature docs と generated a11y inventory を同期する。API error schema を変更する場合は API docs/test を同一 scope で更新する。

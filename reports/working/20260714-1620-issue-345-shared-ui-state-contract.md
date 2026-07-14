@@ -64,6 +64,23 @@ Issue #345 の全体完了へ向けて作業を継続し、repository の worktr
 - `git diff --check`: pass
 - staged-file pre-commit（secrets、hidden Unicode、whitespace、EOF、large file、conflict、debug statement、line ending）: pass
 
+### PR #350 CI 修復
+
+GitHub Actions run `29315153717` は次の2点を検出して失敗した。
+
+- API requirements trace test: task lifecycle 完了後も `FR-095` が旧 `tasks/todo/20260714-issue-345-shared-ui-state-contract.md` を参照していた。
+- Web coverage: 全 338 tests は成功したが、branch coverage が 84.99% で 85% gate を 0.01 point 下回った。
+
+trace を実在する `tasks/done/` path へ更新し、shared resource state model の confirmed result、content retention、busy、part availability を振る舞いテストで補った。coverage threshold は変更していない。修復後の再検証結果は次のとおり。
+
+- API focused requirements trace: 1/1 pass
+- API full coverage: 773 tests pass、statements/lines 90.23%、branches 80.50%、functions 92.69%
+- Web focused shared state: 1 file / 10 tests pass
+- Web full coverage: 40 files / 338 tests pass、statements 91.14%、branches 85.08%、functions 91.92%、lines 94.03%
+- API/Web typecheck: pass
+- repository ESLint: pass
+- `task docs:check`: pass
+
 `pre-commit run --all-files` の初回試行は本 task 外の既存レポート `reports/working/20260501-0419-architecture-diagram-review.md` の意図的な Markdown hard break を trailing-whitespace hook が変更して失敗した。その task 外変更を元に戻し、今回の staged files に限定した正規 gate を再実行して全 hook が成功した。
 
 初回 full Web test は旧 generic loading 期待と dialog/global error の二重 alert を検出した。chat を架空の initial loading にしない実装、target-specific loading 期待、confirmation error の局所通知へ修正後、失敗入口と full suite を再実行して成功した。初回 lint は component file から非 component export を検出し、model helper を別 module へ分離後に再実行して成功した。
@@ -74,6 +91,7 @@ Issue #345 の全体完了へ向けて作業を継続し、repository の worktr
 - API/RAG/authorization behavior、benchmark expected phrase、QA/dataset 固有分岐を変更していない。
 - production UI の値は API/props/state/config または明示的 unavailable/loading/error/permission state に由来し、test fixture は production fallback と分離されている。
 - task lifecycle、PR #350 の日本語 acceptance comment（`issuecomment-4966526682`）、self-review（`issuecomment-4966526903`）を完了し、task を `done` へ移動した。
+- PR CI が検出した lifecycle trace drift と branch coverage gap を、閾値緩和や production 分岐の追加なしに修復した。
 
 ## 未対応・制約・リスク
 
