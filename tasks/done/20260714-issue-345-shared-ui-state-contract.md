@@ -1,8 +1,8 @@
 # Issue #345 共通 UI state と回復契約を実装する
 
-保存先: `tasks/do/20260714-issue-345-shared-ui-state-contract.md`
+保存先: `tasks/done/20260714-issue-345-shared-ui-state-contract.md`
 
-状態: do
+状態: done
 
 タスク種別: 機能追加
 
@@ -43,7 +43,15 @@
 - [x] shared state model/primitive と feature adapter が loading/empty/error/permission/partial/stale/retrying/recovered を型・semantics・操作で区別する。
 - [x] representative six-view behavior と retry/partial/false-zero prevention が component/E2E で観測可能である。
 - [x] Web lint/typecheck/test/build、target E2E、docs/inventory、pre-commit が成功する。
-- [ ] FR-095/NFR-017/DES、trace/generated docs、report、PR acceptance/self-review が同期し、全受け入れ条件を満たす。
+- [x] FR-095/NFR-017/DES、trace/generated docs、report、PR acceptance/self-review が同期し、全受け入れ条件を満たす。
+
+## 完了結果
+
+- code-validation head: `4d2777ef`
+- draft PR: #350
+- 受け入れ条件コメント: `issuecomment-4966526682`
+- セルフレビューコメント: `issuecomment-4966526903`
+- representative screen reader、実 touch/zoom/device、axe、Firefox/WebKit は本 task の実施済み証跡に含めず、Issue #345 の manual/automated/cross-screen tasks に維持する。
 
 ## ドキュメントメンテナンス計画
 

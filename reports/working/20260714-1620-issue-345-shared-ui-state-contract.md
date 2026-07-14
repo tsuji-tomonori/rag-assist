@@ -4,7 +4,7 @@
 - 対象: Issue #345 第3マイルストーン
 - branch: `codex/issue-345-shared-ui-states`
 - 依存: draft PR #348、draft PR #349
-- task: `tasks/do/20260714-issue-345-shared-ui-state-contract.md`
+- task: `tasks/done/20260714-issue-345-shared-ui-state-contract.md`
 
 ## 受けた指示
 
@@ -73,7 +73,7 @@ Issue #345 の全体完了へ向けて作業を継続し、repository の worktr
 - shared state と recovery、false-zero prevention、public-safe controller、representative E2E、docs/trace 同期は受け入れ条件に適合する。
 - API/RAG/authorization behavior、benchmark expected phrase、QA/dataset 固有分岐を変更していない。
 - production UI の値は API/props/state/config または明示的 unavailable/loading/error/permission state に由来し、test fixture は production fallback と分離されている。
-- task lifecycle、PR acceptance comment、PR self-review は PR 作成後に実施するため、本レポート作成時点では task を `do` に維持する。
+- task lifecycle、PR #350 の日本語 acceptance comment（`issuecomment-4966526682`）、self-review（`issuecomment-4966526903`）を完了し、task を `done` へ移動した。
 
 ## 未対応・制約・リスク
 
