@@ -4,7 +4,7 @@
 - 対象 repository: `tsuji-tomonori/rag-assist`
 - 対象 branch: `codex/pr-merge-audit-final-20260714`
 - 基点: `origin/main` `748f5bd97eea4a02c3f798e16fecb7b8854fb550`
-- 状態: ユーザー承認範囲の `#342`、`#341`、`#343`、`#344`、`#346` を merge 済み。既存 open PR `#341` 以降は 0 件
+- 状態: ユーザー承認範囲の `#342`、`#341`、`#343`、`#344`、`#346` を merge 済み。監査記録 PR `#347` の content CI／コメント完了、task done 更新中
 
 ## 受けた指示
 
@@ -75,10 +75,19 @@ docs baseline、production source、source-backed docs、再検証監査、UI on
 
 ## 実施作業・成果物
 
-- 監査 task: `tasks/do/20260714-0037-open-pr-merge-audit.md`
+- 監査 task: `tasks/done/20260714-0037-open-pr-merge-audit.md`
 - 本レポート: `reports/working/20260714-0045-open-pr-merge-audit.md`
 - GitHub 上の状態変更: `#341`、`#343`、`#346` を Draft 解除し、各 PR 本文・semver label・日本語コメントを final evidence に合わせて更新した。`#344` も本文・label・コメントを更新した。`#346` の最終受け入れ条件コメントは `4964756880`、セルフレビューコメントは `4964756985`。
 - merge: `#342`、`#341`、`#343`、`#344`、`#346` を exact expected head SHA の merge commit 方式で実施した。
+
+## 監査記録 PR の検証
+
+- PR `#347`: content head `b1aff1077a38c6b1bee598090f8ceb1bff732b2b`、MemoRAG CI run 990 成功、Semver run 1446 成功。
+- Semver run 1445 は PR 作成直後のラベル未付与状態で失敗した。`semver:patch` 付与後の run 1446 は成功した。
+- 受け入れ条件コメント `4964861926` とセルフレビューコメント `4964862025` を投稿し、blocking / should-fix なしと判定した。
+- `task docs:check` の初回は task 内の禁止済み legacy path 引用を検出して失敗し、説明表現へ修正した。
+- 2回目は clean worktree が親 worktree の古い contract package を参照して失敗した。専用 worktree で `npm install` して workspace link を同期後、canonical docs、OpenAPI、API code 95 APIs / 570 documents、Web／infra inventory、hidden Unicode の全 check が成功した。
+- 対象2ファイルの pre-commit と `git diff --check` は成功した。`npm install` は tracked file を変更せず、audit は 8 vulnerabilities（low 2 / moderate 1 / high 5）を報告した。互換性影響を伴う自動修正は実施していない。
 
 ## 指示への fit 評価
 
@@ -86,11 +95,11 @@ docs baseline、production source、source-backed docs、再検証監査、UI on
 - green でも current requirement や concurrent PR と両立しない #339/#344 を merge-ready から除外した。
 - 不可逆操作前の確認を残し、確認後に一件ずつ再検証する状態にした。
 
-現時点の fit: partially complete。ユーザー承認範囲の修正・検証・merge と、既存 open PR `#341` 以降が 0 件であることの再取得は完了した。残るのは本 task/report 自体の PR、CI、受け入れ条件コメント、セルフレビュー、task done 更新、exact head merge、最終再走査である。
+現時点の fit: partially complete。ユーザー承認範囲の修正・検証・merge、既存 open PR `#341` 以降が 0 件であることの再取得、PR `#347` の content CI／コメント、task done 更新まで完了した。残るのは metadata head の CI、exact head merge、最終再走査である。
 
 ## 未対応・制約・リスク
 
 - `#346` merge 直後の再走査では、既存 open PR `#341` 以降は 0 件だった。
-- 本監査記録を載せる PR は未作成であり、CI・コメント・task done 更新・merge を完了後にもう一度 open PR を再走査する。
+- 本監査記録 PR `#347` の metadata head CI と exact head merge を完了後、もう一度 open PR を再走査する。
 - `#339`、`#338`、`#286`、`#76` は最新ユーザー指定の merge 範囲外であり、close、修正、merge は実施していない。
 - branch delete、deploy、release は実施していない。
