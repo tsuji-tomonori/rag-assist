@@ -5,6 +5,7 @@ import type { DocumentShareGrantInput, DocumentShareInfo, FolderPolicyEntry, Mov
 import type { CreateDocumentGroupInput, DocumentOperationResult, DocumentOperationState, DocumentUploadResult, DocumentUploadState } from "../hooks/useDocuments.js"
 import type { DocumentGroup, DocumentManifest, ReindexMigration } from "../types.js"
 import { DocumentConfirmDialog } from "./workspace/DocumentConfirmDialog.js"
+import { DocumentAddDialog, type DocumentUploadDestination } from "./workspace/DocumentAddDialog.js"
 import { DocumentDetailDrawer } from "./workspace/DocumentDetailDrawer.js"
 import { DocumentDetailPanel } from "./workspace/DocumentDetailPanel.js"
 import { DocumentFilePanel } from "./workspace/DocumentFilePanel.js"
@@ -115,6 +116,13 @@ export function DocumentWorkspace({
   onUrlStateChange?: (state: DocumentWorkspaceUrlState) => void
 }) {
   const [uploadFile, setUploadFile] = useState<File | null>(null)
+  const [documentAddOpen, setDocumentAddOpen] = useState(false)
+  const [quickGroupName, setQuickGroupName] = useState("")
+  const [quickCreateExpanded, setQuickCreateExpanded] = useState(false)
+  const [quickCreateMessage, setQuickCreateMessage] = useState<string | null>(null)
+  const [quickCreateError, setQuickCreateError] = useState<string | null>(null)
+  const [uploadSubmissionError, setUploadSubmissionError] = useState<string | null>(null)
+  const [quickCreatedDestination, setQuickCreatedDestination] = useState<DocumentUploadDestination | null>(null)
   const [groupName, setGroupName] = useState("")
   const [groupDescription, setGroupDescription] = useState("")
   const [groupParentId, setGroupParentId] = useState("")
@@ -183,18 +191,52 @@ export function DocumentWorkspace({
     : folders
   const selectedFolder = selectedFolderId === "all" ? allDocumentsFolder : folders.find((folder) => folder.id === selectedFolderId) ?? allDocumentsFolder
   const selectedGroupId = selectedFolder.group?.groupId ?? ""
+  const uploadableDocumentGroups = documentGroups.filter(canManageDocumentGroup)
+  const uploadDestinations: DocumentUploadDestination[] = uploadableDocumentGroups.map((group) => ({
+    groupId: group.groupId,
+    name: group.name,
+    label: group.canonicalPath || group.name
+  }))
+  const authoritativeQuickCreatedGroup = quickCreatedDestination
+    ? documentGroups.find((group) => group.groupId === quickCreatedDestination.groupId)
+    : undefined
+  const hasPendingQuickCreatedDestination = Boolean(quickCreatedDestination && !authoritativeQuickCreatedGroup)
+  if (quickCreatedDestination && hasPendingQuickCreatedDestination) {
+    uploadDestinations.push(quickCreatedDestination)
+  }
   const uploadDestination = uploadGroupId ? documentGroups.find((group) => group.groupId === uploadGroupId) : undefined
-  const uploadDestinationLabel = uploadDestination?.name ?? "未選択"
+  const isQuickCreatedUploadDestination = Boolean(
+    quickCreatedDestination && hasPendingQuickCreatedDestination && uploadGroupId === quickCreatedDestination.groupId
+  )
+  const uploadDestinationLabel = uploadDestination?.name ?? (isQuickCreatedUploadDestination ? quickCreatedDestination?.name : undefined) ?? "未選択"
   const selectedFolderCanManage = !selectedFolder.group || canManageDocumentGroup(selectedFolder.group)
   const canWriteSelectedFolder = canWrite && selectedFolderCanManage
   const canDeleteSelectedFolder = canDelete && selectedFolderCanManage
   const canReindexSelectedFolder = canReindex && selectedFolderCanManage
-  const canUploadToDestination = canWrite && Boolean(uploadGroupId) && Boolean(uploadDestination && canManageDocumentGroup(uploadDestination))
+  const canUploadToDestination = canWrite && Boolean(uploadGroupId) && Boolean(
+    (uploadDestination && canManageDocumentGroup(uploadDestination)) || isQuickCreatedUploadDestination
+  )
   const uploadDisabledReason = getUploadDisabledReason({
     canUpload: canWrite,
     uploadGroupId,
-    uploadDestination,
+    hasUploadDestination: Boolean(uploadDestination || isQuickCreatedUploadDestination),
     canUploadToDestination,
+    isUploading: operationState.isUploading
+  })
+  const documentAddUploadGroupId = canUploadToDestination ? uploadGroupId : ""
+  const documentAddUploadDestinationLabel = documentAddUploadGroupId ? uploadDestinationLabel : "未選択"
+  const documentAddUploadDisabledReason = getUploadDisabledReason({
+    canUpload: canWrite,
+    uploadGroupId: documentAddUploadGroupId,
+    hasUploadDestination: Boolean(documentAddUploadGroupId),
+    canUploadToDestination,
+    isUploading: operationState.isUploading
+  })
+  const canOpenDocumentAdd = canWrite && !operationState.isUploading && (canCreateGroups || uploadDestinations.length > 0)
+  const addDocumentDisabledReason = getAddDocumentDisabledReason({
+    canUpload: canWrite,
+    canCreateGroups,
+    uploadDestinationCount: uploadDestinations.length,
     isUploading: operationState.isUploading
   })
   const folderDocuments = selectedGroupId ? documents.filter((document) => documentGroupIds(document).includes(selectedGroupId)) : documents
@@ -285,7 +327,6 @@ export function DocumentWorkspace({
     hasValidationError: false,
     creatingGroup: operationState.creatingGroup
   })
-  const canOpenCreateFolderForm = canCreateGroups && !operationState.creatingGroup
   const canCreateGroup = createGroupDisabledReason === null
   const editTargetGroup = selectedFolder.group
   const editName = editGroupName.trim()
@@ -411,6 +452,7 @@ export function DocumentWorkspace({
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
     if (!uploadFile || !canUploadToDestination) return
+    setUploadSubmissionError(null)
     const fileName = uploadFile.name
     const destination = uploadDestinationLabel
     const result = normalizeUploadResult(await onUpload(uploadFile))
@@ -418,23 +460,28 @@ export function DocumentWorkspace({
       setLastUploadedDocument(result.document ?? null)
       recordSessionOperation("アップロード", fileName, `保存先: ${destination}`, "反映済み")
       setUploadFile(null)
+      if (uploadInputRef.current) uploadInputRef.current.value = ""
     } else {
       setLastUploadedDocument(null)
+      setUploadSubmissionError(result.error)
       recordSessionOperation("アップロード", fileName, `保存先: ${destination} / error: ${result.error}`, "失敗")
     }
   }
 
   function onUploadFileChange(file: File | null) {
     setUploadFile(file)
+    setUploadSubmissionError(null)
     if (file) setLastUploadedDocument(null)
   }
 
   function openUploadedDocument(document: DocumentManifest) {
+    setDocumentAddOpen(false)
     setSelectedDocumentId(document.documentId)
     setSelectedMigrationId("")
   }
 
   function showUploadedFolder(groupId: string) {
+    setDocumentAddOpen(false)
     setSelectedFolderId(groupId)
     setDocumentGroupFilter("all")
     setDocumentPage(1)
@@ -490,6 +537,32 @@ export function DocumentWorkspace({
     } finally {
       if (folderShareRequestRef.current === requestId) setFolderShareLoading(false)
     }
+  }
+
+  async function onQuickCreateGroupSubmit(event: FormEvent) {
+    event.preventDefault()
+    const name = quickGroupName.trim()
+    if (!canCreateGroups || !name || operationState.creatingGroup) return
+    setQuickCreateMessage(null)
+    setQuickCreateError(null)
+    const createdGroup = await onCreateGroup({ name })
+    if (!createdGroup?.groupId) {
+      setQuickCreateError("フォルダを作成できませんでした。入力内容と権限を確認して、もう一度お試しください。")
+      recordSessionOperation("フォルダ作成", name, "簡易作成 / ルート直下", "失敗")
+      return
+    }
+    const destination: DocumentUploadDestination = {
+      groupId: createdGroup.groupId,
+      name: createdGroup.name || name,
+      label: createdGroup.canonicalPath || createdGroup.name || name
+    }
+    setQuickCreatedDestination(destination)
+    onUploadGroupChange(createdGroup.groupId)
+    setQuickGroupName("")
+    setQuickCreateExpanded(false)
+    setQuickCreateMessage(`${destination.name}を作成し、保存先に選択しました。次にファイルを選んでください。`)
+    recordSessionOperation("フォルダ作成", destination.name, "簡易作成 / ルート直下 / 非公開", "反映済み")
+    window.setTimeout(() => uploadInputRef.current?.focus(), 0)
   }
 
   async function onShareSubmit(event: FormEvent) {
@@ -631,20 +704,18 @@ export function DocumentWorkspace({
     onUploadGroupChange(groupId)
   }
 
-  function openCreateFolderModal() {
-    setGroupParentId(selectedGroupId)
-    setFolderSettingsOpen(true)
-    window.setTimeout(() => createGroupNameRef.current?.focus(), 0)
-  }
-
   function openFolderSettingsModal() {
     setFolderSettingsOpen(true)
     setShareGroupId(selectedGroupId)
     if (selectedGroupId) void loadFolderShare(selectedGroupId)
   }
 
-  function openUploadPicker() {
-    setFolderSettingsOpen(true)
+  function openDocumentAddDialog() {
+    setQuickCreateExpanded(uploadDestinations.length === 0)
+    setQuickCreateMessage(null)
+    setQuickCreateError(null)
+    setUploadSubmissionError(null)
+    setDocumentAddOpen(true)
   }
 
   async function openDocumentShare(document: DocumentManifest) {
@@ -794,9 +865,8 @@ export function DocumentWorkspace({
           canShareGroups={canShareGroups}
           canMoveGroups={canMoveGroups}
           canReindex={canReindexSelectedFolder}
-          canUploadToDestination={canUploadToDestination}
-          uploadDisabledReason={uploadDisabledReason}
-          canOpenCreateFolderForm={canOpenCreateFolderForm}
+          canOpenDocumentAdd={canOpenDocumentAdd}
+          addDocumentDisabledReason={addDocumentDisabledReason}
           showManagementControls={hasWorkspaceManagement}
           canDeleteDocument={(document) => canDelete && canDeleteDocument(document)}
           canReindexDocument={(document) => canReindex && canReindexDocument(document)}
@@ -821,11 +891,59 @@ export function DocumentWorkspace({
           onConfirmAction={onDocumentConfirmAction}
           onShareDocument={(document) => void openDocumentShare(document)}
           onMoveDocument={openDocumentMove}
-          onOpenCreateFolder={openCreateFolderModal}
           onOpenFolderSettings={openFolderSettingsModal}
-          onOpenUploadPicker={openUploadPicker}
+          onOpenDocumentAdd={openDocumentAddDialog}
+          onClearFilters={() => {
+            setDocumentQuery("")
+            setDocumentTypeFilter("all")
+            setDocumentStatusFilter("all")
+            setDocumentGroupFilter("all")
+            setDocumentPage(1)
+          }}
         />
       </div>
+
+      {documentAddOpen && hasWorkspaceManagement && (
+        <DocumentAddDialog
+          destinations={uploadDestinations}
+          uploadGroupId={documentAddUploadGroupId}
+          uploadDestinationLabel={documentAddUploadDestinationLabel}
+          uploadFile={uploadFile}
+          uploadState={uploadState}
+          uploadedDocument={lastUploadedDocument}
+          uploadedDocumentGroupId={uploadedDocumentGroupId(lastUploadedDocument, uploadState?.groupId, documentAddUploadGroupId)}
+          quickGroupName={quickGroupName}
+          quickCreateExpanded={quickCreateExpanded}
+          quickCreateMessage={quickCreateMessage}
+          quickCreateError={quickCreateError}
+          uploadSubmissionError={uploadSubmissionError}
+          canCreateGroups={canCreateGroups}
+          canUploadToDestination={canUploadToDestination}
+          uploadDisabledReason={documentAddUploadDisabledReason}
+          operationState={operationState}
+          uploadInputRef={uploadInputRef}
+          onClose={() => setDocumentAddOpen(false)}
+          onUploadGroupChange={(groupId) => {
+            setQuickCreateMessage(null)
+            setQuickCreateError(null)
+            setUploadSubmissionError(null)
+            onUploadGroupChange(groupId)
+          }}
+          onUploadFileChange={onUploadFileChange}
+          onQuickGroupNameChange={setQuickGroupName}
+          onQuickCreateExpandedChange={setQuickCreateExpanded}
+          onQuickCreateSubmit={(event) => void onQuickCreateGroupSubmit(event)}
+          onUploadSubmit={(event) => void onSubmit(event)}
+          onOpenUploadedDocument={openUploadedDocument}
+          onAskUploadedDocument={onAskDocument
+            ? (document) => {
+                setDocumentAddOpen(false)
+                onAskDocument(document)
+              }
+            : undefined}
+          onShowUploadedFolder={showUploadedFolder}
+        />
+      )}
 
       {folderSettingsOpen && hasWorkspaceManagement && (
         <div
@@ -1115,20 +1233,37 @@ function canReindexDocument(document: DocumentManifest): boolean {
 function getUploadDisabledReason({
   canUpload,
   uploadGroupId,
-  uploadDestination,
+  hasUploadDestination,
   canUploadToDestination,
   isUploading
 }: {
   canUpload: boolean
   uploadGroupId: string
-  uploadDestination?: DocumentGroup
+  hasUploadDestination: boolean
   canUploadToDestination: boolean
   isUploading: boolean
 }): string | null {
   if (!canUpload) return "文書をアップロードする権限がありません。"
   if (isUploading) return "アップロード中です。"
   if (!uploadGroupId) return "保存先フォルダを選択するとアップロードできます。"
-  if (!uploadDestination) return "保存先フォルダを選択してください。"
+  if (!hasUploadDestination) return "保存先フォルダを選択してください。"
   if (!canUploadToDestination) return "保存先フォルダの管理権限が必要です。"
+  return null
+}
+
+function getAddDocumentDisabledReason({
+  canUpload,
+  canCreateGroups,
+  uploadDestinationCount,
+  isUploading
+}: {
+  canUpload: boolean
+  canCreateGroups: boolean
+  uploadDestinationCount: number
+  isUploading: boolean
+}): string | null {
+  if (!canUpload) return "文書をアップロードする権限がありません。"
+  if (isUploading) return "アップロード中です。"
+  if (!canCreateGroups && uploadDestinationCount === 0) return "アップロード可能なフォルダがありません。フォルダ管理者へ権限を依頼してください。"
   return null
 }

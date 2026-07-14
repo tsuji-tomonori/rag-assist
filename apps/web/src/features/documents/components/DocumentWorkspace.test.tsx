@@ -1,5 +1,6 @@
 import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
+import { useState } from "react"
 import { describe, expect, it, vi } from "vitest"
 import type { DocumentShareGrantInput, DocumentShareInfo, FolderPolicyEntry, VersionedFolderPolicy } from "../api/documentsApi.js"
 import type { DocumentGroup, DocumentManifest, ReindexMigration } from "../types.js"
@@ -204,10 +205,152 @@ async function openFolderSettings() {
 
 async function openCreateFolderSettings() {
   if (screen.queryByRole("dialog", { name: "フォルダ設定" })) return
-  await userEvent.click(screen.getByRole("button", { name: "フォルダを作成" }))
+  await userEvent.click(screen.getByRole("button", { name: "フォルダ設定を開く" }))
 }
 
 describe("DocumentWorkspace", () => {
+  it("初期状態から名称だけで保存先を作成し、単一ファイルをアップロードする", async () => {
+    const onUploadGroupChange = vi.fn()
+    const createdGroup: DocumentGroup = {
+      ...documentGroups[0]!,
+      groupId: "group-project",
+      name: "プロジェクト資料",
+      ...canonicalGroupFields("プロジェクト資料"),
+      sharedGroups: [],
+      managerUserIds: ["user-1"],
+      effectivePermission: "full"
+    }
+    const uploadedDocument: DocumentManifest = {
+      ...documents[0]!,
+      documentId: "doc-guide",
+      fileName: "guide.pdf",
+      mimeType: "application/pdf",
+      metadata: { groupIds: [createdGroup.groupId] }
+    }
+    const onCreateGroup = vi.fn().mockResolvedValue(createdGroup)
+    const onUpload = vi.fn().mockResolvedValue({ ok: true, document: uploadedDocument })
+
+    function InitialDocumentWorkspace() {
+      const [uploadGroupId, setUploadGroupId] = useState("")
+      return (
+        <DocumentWorkspace
+          documents={[]}
+          documentGroups={[]}
+          uploadGroupId={uploadGroupId}
+          loading={false}
+          canWrite={true}
+          canDelete={true}
+          canCreateGroups={true}
+          canShareGroups={true}
+          canReindex={true}
+          migrations={[]}
+          onUploadGroupChange={(groupId) => {
+            onUploadGroupChange(groupId)
+            setUploadGroupId(groupId)
+          }}
+          onUpload={onUpload}
+          onCreateGroup={onCreateGroup}
+          onShareGroup={vi.fn()}
+          onDelete={vi.fn()}
+          onStageReindex={vi.fn()}
+          onCutoverReindex={vi.fn()}
+          onRollbackReindex={vi.fn()}
+          onBack={vi.fn()}
+        />
+      )
+    }
+
+    render(<InitialDocumentWorkspace />)
+
+    expect(screen.getByText("ドキュメントを登録しましょう")).toBeInTheDocument()
+    expect(screen.getByText("1. 保存先を用意 → 2. ファイルを選択、の順に登録できます。")).toBeInTheDocument()
+    expect(screen.queryByLabelText("ファイル名検索")).not.toBeInTheDocument()
+
+    const addButton = screen.getAllByRole("button", { name: "ドキュメントを追加" })[0]!
+    await userEvent.click(addButton)
+
+    expect(screen.getByRole("dialog", { name: "ドキュメントを追加" })).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "保存先を用意" })).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "ファイルを選択" })).toBeInTheDocument()
+    expect(screen.getByLabelText("新しいフォルダ名（必須）")).toHaveFocus()
+    expect(screen.queryByLabelText("説明")).not.toBeInTheDocument()
+    expect(screen.queryByLabelText("公開範囲")).not.toBeInTheDocument()
+
+    await userEvent.type(screen.getByLabelText("新しいフォルダ名（必須）"), "プロジェクト資料")
+    await userEvent.click(screen.getByRole("button", { name: "フォルダを作成" }))
+
+    await waitFor(() => expect(onCreateGroup).toHaveBeenCalledWith({ name: "プロジェクト資料" }))
+    expect(onUploadGroupChange).toHaveBeenCalledWith("group-project")
+    expect(screen.getByText("プロジェクト資料を作成し、保存先に選択しました。次にファイルを選んでください。")).toBeInTheDocument()
+    const fileInput = screen.getByLabelText("アップロードする文書を選択")
+    await waitFor(() => expect(fileInput).toHaveFocus())
+
+    const file = new File(["guide"], "guide.pdf", { type: "application/pdf" })
+    await userEvent.upload(fileInput, file)
+    await userEvent.click(screen.getByRole("button", { name: "アップロード" }))
+    await waitFor(() => expect(onUpload).toHaveBeenCalledWith(file))
+
+    await userEvent.keyboard("{Escape}")
+    expect(screen.queryByRole("dialog", { name: "ドキュメントを追加" })).not.toBeInTheDocument()
+    expect(addButton).toHaveFocus()
+  })
+
+  it("簡易作成した保存先が authoritative response で readOnly になった場合は一時 full 扱いを解除する", async () => {
+    const createdGroup: DocumentGroup = {
+      ...documentGroups[0]!,
+      groupId: "group-project",
+      name: "プロジェクト資料",
+      ...canonicalGroupFields("プロジェクト資料"),
+      sharedGroups: [],
+      managerUserIds: ["user-1"],
+      effectivePermission: "full"
+    }
+    const onCreateGroup = vi.fn().mockResolvedValue(createdGroup)
+    const onUpload = vi.fn()
+
+    function QuickDestinationHarness({ groups }: { groups: DocumentGroup[] }) {
+      const [uploadGroupId, setUploadGroupId] = useState("")
+      return (
+        <DocumentWorkspace
+          documents={[]}
+          documentGroups={groups}
+          uploadGroupId={uploadGroupId}
+          loading={false}
+          canWrite={true}
+          canDelete={true}
+          canCreateGroups={true}
+          canShareGroups={true}
+          canReindex={true}
+          migrations={[]}
+          onUploadGroupChange={setUploadGroupId}
+          onUpload={onUpload}
+          onCreateGroup={onCreateGroup}
+          onShareGroup={vi.fn()}
+          onDelete={vi.fn()}
+          onStageReindex={vi.fn()}
+          onCutoverReindex={vi.fn()}
+          onRollbackReindex={vi.fn()}
+          onBack={vi.fn()}
+        />
+      )
+    }
+
+    const { rerender } = render(<QuickDestinationHarness groups={[]} />)
+    await userEvent.click(screen.getAllByRole("button", { name: "ドキュメントを追加" })[0]!)
+    await userEvent.type(screen.getByLabelText("新しいフォルダ名（必須）"), "プロジェクト資料")
+    await userEvent.click(screen.getByRole("button", { name: "フォルダを作成" }))
+    await waitFor(() => expect(onCreateGroup).toHaveBeenCalledWith({ name: "プロジェクト資料" }))
+    expect(screen.getByText("プロジェクト資料を作成し、保存先に選択しました。次にファイルを選んでください。")).toBeInTheDocument()
+
+    rerender(<QuickDestinationHarness groups={[{ ...createdGroup, effectivePermission: "readOnly" }]} />)
+
+    const dialog = screen.getByRole("dialog", { name: "ドキュメントを追加" })
+    expect(within(dialog).queryByRole("option", { name: "プロジェクト資料" })).not.toBeInTheDocument()
+    expect(within(dialog).getByText("未選択")).toBeInTheDocument()
+    expect(within(dialog).getByLabelText("アップロードする文書を選択")).toBeDisabled()
+    expect(onUpload).not.toHaveBeenCalled()
+  })
+
   it("登録文書を表示し、削除操作を通知する", async () => {
     const onDelete = vi.fn().mockResolvedValue(undefined)
 
@@ -1966,6 +2109,9 @@ describe("DocumentWorkspace", () => {
     await userEvent.selectOptions(screen.getByLabelText("所属フォルダ"), "すべて")
     await userEvent.type(screen.getByLabelText("ファイル名検索"), "not-found-document")
     expect(screen.getByText("条件に一致するドキュメントはありません。")).toBeInTheDocument()
+    await userEvent.click(screen.getByRole("button", { name: "条件をクリア" }))
+    expect(screen.getByLabelText("ファイル名検索")).toHaveValue("")
+    expect(within(documentTable).getAllByText("security_policy.bin").length).toBeGreaterThanOrEqual(1)
   })
 
   it("URL由来のフォルダ、検索条件、文書詳細を初期状態に反映する", () => {
@@ -2174,8 +2320,7 @@ describe("DocumentWorkspace", () => {
       />
     )
 
-    expect(screen.getByRole("button", { name: "ファイルをアップロード" })).toBeDisabled()
-    expect(screen.getByText("保存先フォルダを選択するとアップロードできます。")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "ドキュメントを追加" })).toBeEnabled()
 
     await userEvent.click(screen.getByRole("button", { name: /社内規定/ }))
     expect(onUploadGroupChange).toHaveBeenCalledWith("group-1")
@@ -2205,10 +2350,11 @@ describe("DocumentWorkspace", () => {
     await userEvent.click(screen.getByRole("button", { name: /社内規定/ }))
     expect(screen.getByText((_, element) => element?.textContent === "保存先: 社内規定")).toBeInTheDocument()
 
-    await userEvent.click(screen.getByTitle("ファイルをアップロード: 社内規定"))
-    expect(screen.getByRole("dialog", { name: "フォルダ設定" })).toBeInTheDocument()
+    await userEvent.click(screen.getByTitle("ドキュメントを追加"))
+    expect(screen.getByRole("dialog", { name: "ドキュメントを追加" })).toBeInTheDocument()
+    expect(screen.getByLabelText("保存先フォルダ（必須）")).toHaveValue("group-1")
     expect(screen.getByLabelText("アップロードする文書を選択")).toBeInTheDocument()
-    await userEvent.click(screen.getByRole("button", { name: "フォルダ設定を閉じる" }))
+    await userEvent.click(screen.getByRole("button", { name: "ドキュメント追加を閉じる" }))
 
     await userEvent.click(screen.getByTitle("フォルダ設定を開く"))
     expect(screen.getByRole("dialog", { name: "フォルダ設定" })).toBeInTheDocument()
@@ -2274,7 +2420,7 @@ describe("DocumentWorkspace", () => {
 
     await userEvent.click(screen.getByRole("button", { name: /社内規定/ }))
 
-    expect(screen.getByText("利用できるドキュメントはありません。")).toBeInTheDocument()
+    expect(screen.getByText("社内規定にドキュメントはありません")).toBeInTheDocument()
     await openFolderSettings()
     expect(screen.getByText("共有先は設定されていません。")).toBeInTheDocument()
     expect(screen.getByText("0 / 0 件を表示（全体 0 件）")).toBeInTheDocument()
@@ -2472,7 +2618,15 @@ describe("DocumentWorkspace", () => {
 
     await userEvent.click(screen.getByRole("button", { name: /閲覧のみフォルダ/ }))
 
-    expect(screen.getByRole("button", { name: "ファイルをアップロード" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "ドキュメントを追加" })).toBeEnabled()
+    await userEvent.click(screen.getByTitle("ドキュメントを追加"))
+    const addDialog = screen.getByRole("dialog", { name: "ドキュメントを追加" })
+    expect(within(addDialog).queryByRole("option", { name: "閲覧のみフォルダ" })).not.toBeInTheDocument()
+    expect(within(addDialog).queryByText("選択済み")).not.toBeInTheDocument()
+    expect(within(addDialog).getByText("未選択")).toBeInTheDocument()
+    expect(within(addDialog).getByLabelText("アップロードする文書を選択")).toBeDisabled()
+    expect(screen.getByLabelText("新しいフォルダ名（必須）")).toBeInTheDocument()
+    await userEvent.click(screen.getByRole("button", { name: "ドキュメント追加を閉じる" }))
     expect(screen.getByTitle("フォルダ設定を開く")).toBeEnabled()
     expect(screen.queryByTitle("requirements.mdを削除")).not.toBeInTheDocument()
     expect(screen.queryByTitle("requirements.mdの再インデックスをステージング")).not.toBeInTheDocument()
@@ -2749,8 +2903,8 @@ describe("DocumentWorkspace", () => {
       />
     )
 
-    expect(screen.getByRole("button", { name: "ファイルをアップロード" })).toBeDisabled()
-    await userEvent.click(screen.getByRole("button", { name: "ファイルをアップロード" }))
+    expect(screen.getByRole("button", { name: "ドキュメントを追加" })).toBeDisabled()
+    await userEvent.click(screen.getByRole("button", { name: "ドキュメントを追加" }))
     expect(onUpload).not.toHaveBeenCalled()
   })
 
@@ -3209,5 +3363,37 @@ describe("DocumentWorkspace", () => {
 
     await userEvent.click(within(drawer).getByRole("button", { name: "この資料に質問する" }))
     expect(onAskDocument).toHaveBeenCalledWith(readOnlyDocument)
+  })
+
+  it("read-only の空 response は共有文書の空状態を表示し、作成 CTA を出さない", () => {
+    render(
+      <DocumentWorkspace
+        documents={[]}
+        documentGroups={[]}
+        loading={false}
+        canWrite={false}
+        canDelete={false}
+        canCreateGroups={false}
+        canShareGroups={false}
+        canReindex={false}
+        migrations={[]}
+        uploadGroupId=""
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={vi.fn()}
+        onShareGroup={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    expect(screen.getByRole("heading", { name: "共有ドキュメント" })).toBeInTheDocument()
+    expect(screen.getByText("利用できるドキュメントはありません。")).toBeInTheDocument()
+    expect(screen.getByText("現在の権限で閲覧できる共有ドキュメントはありません。")).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "ドキュメントを追加" })).not.toBeInTheDocument()
+    expect(screen.queryByText(/^保存先:/)).not.toBeInTheDocument()
   })
 })

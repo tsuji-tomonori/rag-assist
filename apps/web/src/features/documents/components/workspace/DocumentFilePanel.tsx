@@ -45,9 +45,8 @@ export function DocumentFilePanel({
   canShareGroups,
   canMoveGroups,
   canReindex,
-  canUploadToDestination,
-  uploadDisabledReason,
-  canOpenCreateFolderForm,
+  canOpenDocumentAdd,
+  addDocumentDisabledReason,
   showManagementControls,
   canDeleteDocument,
   canReindexDocument,
@@ -66,9 +65,9 @@ export function DocumentFilePanel({
   onConfirmAction,
   onShareDocument,
   onMoveDocument,
-  onOpenCreateFolder,
   onOpenFolderSettings,
-  onOpenUploadPicker
+  onOpenDocumentAdd,
+  onClearFilters
 }: {
   documents: DocumentManifest[]
   documentGroups: DocumentGroup[]
@@ -99,9 +98,8 @@ export function DocumentFilePanel({
   canShareGroups: boolean
   canMoveGroups: boolean
   canReindex: boolean
-  canUploadToDestination: boolean
-  uploadDisabledReason: string | null
-  canOpenCreateFolderForm: boolean
+  canOpenDocumentAdd: boolean
+  addDocumentDisabledReason: string | null
   showManagementControls: boolean
   canDeleteDocument: (document: DocumentManifest) => boolean
   canReindexDocument: (document: DocumentManifest) => boolean
@@ -120,37 +118,30 @@ export function DocumentFilePanel({
   onConfirmAction: (action: ConfirmAction) => void
   onShareDocument: (document: DocumentManifest) => void
   onMoveDocument: (document: DocumentManifest) => void
-  onOpenCreateFolder: () => void
   onOpenFolderSettings: () => void
-  onOpenUploadPicker: () => void
+  onOpenDocumentAdd: () => void
+  onClearFilters: () => void
 }) {
   return (
     <section className="document-file-panel" aria-label="登録文書一覧">
       <div className="document-file-panel-head">
         <div>
           <h3>{selectedFolder.name}</h3>
-          <span className={uploadGroupId ? "upload-destination-chip" : "upload-destination-chip missing"}>保存先: {uploadDestinationLabel}</span>
+          {showManagementControls && <span className={uploadGroupId ? "upload-destination-chip" : "upload-destination-chip missing"}>保存先: {uploadDestinationLabel}</span>}
+          {showManagementControls && addDocumentDisabledReason && <p className="field-hint" id="document-add-disabled-reason">{addDocumentDisabledReason}</p>}
         </div>
         <span className="sr-only">登録文書</span>
         {showManagementControls && <div className="document-folder-actions" aria-label="フォルダ操作ショートカット">
           <button
+            className="document-add-button"
             type="button"
-            title={uploadDisabledReason ?? `ファイルをアップロード: ${uploadDestinationLabel}`}
-            aria-label="ファイルをアップロード"
-            aria-describedby={uploadDisabledReason ? "upload-shortcut-disabled-reason" : undefined}
-            disabled={!canUploadToDestination || operationState.isUploading}
-            onClick={onOpenUploadPicker}
+            title={addDocumentDisabledReason ?? "ドキュメントを追加"}
+            aria-describedby={addDocumentDisabledReason ? "document-add-disabled-reason" : undefined}
+            disabled={!canOpenDocumentAdd}
+            onClick={onOpenDocumentAdd}
           >
-            <Icon name="download" />
-          </button>
-          <button
-            type="button"
-            title={operationState.creatingGroup ? "フォルダを作成中です。" : "フォルダを作成"}
-            aria-label="フォルダを作成"
-            disabled={!canOpenCreateFolderForm}
-            onClick={onOpenCreateFolder}
-          >
-            <Icon name="plus" />
+            <Icon name="upload" />
+            <span>ドキュメントを追加</span>
           </button>
           <button
             type="button"
@@ -163,13 +154,11 @@ export function DocumentFilePanel({
             }
             onClick={onOpenFolderSettings}
           >
-            <Icon name="share" />
+            <Icon name="settings" />
           </button>
         </div>}
       </div>
-      {showManagementControls && uploadDisabledReason && <p className="field-hint" id="upload-shortcut-disabled-reason">{uploadDisabledReason}</p>}
-
-      <div className="document-filter-bar" aria-label="文書検索と絞り込み">
+      {documents.length > 0 && <div className="document-filter-bar" aria-label="文書検索と絞り込み">
         <label>
           <span>ファイル名検索</span>
           <input type="search" value={documentQuery} onChange={(event) => onDocumentQueryChange(event.target.value)} placeholder="ファイル名 / documentId" autoComplete="off" />
@@ -212,10 +201,10 @@ export function DocumentFilePanel({
             <option value="typeAsc">種別順</option>
           </select>
         </label>
-      </div>
+      </div>}
 
-      <div className="document-file-table" role="table" aria-label="登録文書">
-        <div className="document-file-row document-file-head" role="row">
+      <div className="document-file-table" role={folderDocumentsCount > 0 ? "table" : undefined} aria-label={folderDocumentsCount > 0 ? "登録文書" : undefined}>
+        {folderDocumentsCount > 0 && <div className="document-file-row document-file-head" role="row">
           <span role="columnheader">ファイル名</span>
           <span role="columnheader">種別</span>
           <span role="columnheader">更新日</span>
@@ -223,19 +212,28 @@ export function DocumentFilePanel({
           {showManagementControls && <span role="columnheader">状態</span>}
           <span role="columnheader">所属フォルダ</span>
           {showManagementControls && <span role="columnheader">操作</span>}
-        </div>
+        </div>}
         {folderDocumentsCount === 0 ? (
           <EmptyState
-            title="利用できるドキュメントはありません。"
+            title={showManagementControls
+              ? documents.length === 0 && documentGroups.length === 0
+                ? "ドキュメントを登録しましょう"
+                : `${selectedFolder.name}にドキュメントはありません`
+              : "利用できるドキュメントはありません。"}
             description={showManagementControls
-              ? documentGroups.length === 0 ? "まずフォルダを作成し、保存先を選択してからファイルをアップロードしてください。" : "保存先フォルダを選択してファイルをアップロードしてください。"
+              ? documents.length === 0 && documentGroups.length === 0
+                ? "1. 保存先を用意 → 2. ファイルを選択、の順に登録できます。"
+                : "保存先を確認してドキュメントを追加してください。"
               : "現在の権限で閲覧できる共有ドキュメントはありません。"}
-            action={showManagementControls ? <button type="button" disabled={!canUploadToDestination} onClick={onOpenUploadPicker}>ファイルをアップロード</button> : undefined}
+            action={showManagementControls
+              ? <button className="ui-button-primary" type="button" disabled={!canOpenDocumentAdd} onClick={onOpenDocumentAdd}>ドキュメントを追加</button>
+              : undefined}
           />
         ) : filteredDocumentsCount === 0 ? (
           <EmptyState
             title="条件に一致するドキュメントはありません。"
             description="検索語、種別、状態、所属フォルダの条件を変更してください。"
+            action={<button type="button" onClick={onClearFilters}>条件をクリア</button>}
           />
         ) : (
           pagedDocuments.map((document) => {

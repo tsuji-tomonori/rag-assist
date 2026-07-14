@@ -409,7 +409,7 @@ export function DocumentDetailPanel({
             </select>
           </label>
           <label className="compact-file-input" aria-label="文書アップロード">
-            <Icon name="download" />
+            <Icon name="upload" />
             <span>{uploadFile ? `一時選択: ${uploadFile.name} / 保存先: ${uploadDestinationLabel}` : "ファイルをアップロード"}</span>
             <input ref={uploadInputRef} type="file" aria-label="アップロードする文書を選択" disabled={!canUploadToDestination || operationState.isUploading} onChange={(event) => onUploadFileChange(event.target.files?.[0] ?? null)} />
           </label>
@@ -510,7 +510,7 @@ export function DocumentDetailPanel({
   )
 }
 
-function UploadProgressPanel({
+export function UploadProgressPanel({
   uploadState,
   destinationLabel,
   uploadedDocument,

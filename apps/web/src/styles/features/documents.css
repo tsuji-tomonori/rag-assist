@@ -265,18 +265,25 @@
 .document-file-panel {
   min-height: 0;
   display: grid;
+  grid-template-areas:
+    "head"
+    "filter"
+    "table"
+    "footer"
+    "migration";
   grid-template-rows: auto auto minmax(0, 1fr) auto auto;
   overflow: hidden;
 }
 
 .document-file-panel-head {
+  grid-area: head;
   min-height: 74px;
   border-bottom: 1px solid #e3e9f2;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 0 20px;
+  padding: 12px 20px;
 }
 
 .document-file-panel-head h3,
@@ -301,7 +308,28 @@
 .document-folder-actions {
   flex: 0 0 auto;
   display: flex;
+  align-items: center;
   gap: 8px;
+}
+
+.document-file-panel-head .document-add-button {
+  width: auto;
+  min-width: 0;
+  height: 44px;
+  padding: 0 14px;
+  display: inline-flex;
+  gap: 8px;
+  color: #fff;
+  background: #1267ee;
+  border-color: #1267ee;
+  font-size: 13px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.document-file-panel-head .document-add-button .icon {
+  width: 18px;
+  height: 18px;
 }
 
 .document-settings-modal-backdrop {
@@ -315,7 +343,7 @@
 }
 
 .document-settings-modal {
-  width: min(1040px, 100%);
+  width: min(760px, 100%);
   max-height: min(86vh, 940px);
   min-height: 0;
   border: 1px solid #d5dfed;
@@ -379,7 +407,305 @@
 
 .document-settings-modal .document-detail-panel {
   padding: 16px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+}
+
+.document-add-modal-backdrop {
+  position: fixed;
+  z-index: 60;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgb(15 23 42 / 52%);
+}
+
+.document-add-modal {
+  width: min(700px, 100%);
+  max-height: min(90vh, 900px);
+  min-width: 0;
+  border: 1px solid #d5dfed;
+  border-radius: var(--radius-sm);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+  background: var(--color-surface);
+  box-shadow: 0 24px 70px rgb(15 23 42 / 24%);
+}
+
+.document-add-modal > header {
+  min-width: 0;
+  border-bottom: 1px solid #e3e9f2;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px 18px;
+  background: #fbfcfe;
+}
+
+.document-add-modal > header > div {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.document-add-modal > header h3,
+.document-add-modal > header p,
+.document-add-step-heading h4,
+.document-add-step-heading p {
+  margin: 0;
+}
+
+.document-add-modal > header h3 {
+  color: #13223d;
+  font-size: 18px;
+}
+
+.document-add-modal > header p,
+.document-add-step-heading p {
+  color: #60708a;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.document-add-modal > header button {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  border: 1px solid #d4deeb;
+  border-radius: var(--radius-xs);
+  display: grid;
+  place-items: center;
+  color: #314769;
+  background: var(--color-surface);
+}
+
+.document-add-modal > header button .icon {
+  width: 17px;
+  height: 17px;
+}
+
+.document-add-steps {
+  min-width: 0;
+  margin: 0;
+  padding: 18px;
+  overflow: auto;
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  list-style: none;
+}
+
+.document-add-steps > li {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+}
+
+.document-add-step-number {
+  width: 34px;
+  height: 34px;
+  border: 2px solid #aab9ce;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #51647f;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.document-add-steps > li.current .document-add-step-number {
+  border-color: #1267ee;
+  color: #1267ee;
+  background: #edf5ff;
+}
+
+.document-add-steps > li.complete .document-add-step-number {
+  border-color: #168353;
+  color: #fff;
+  background: #168353;
+}
+
+.document-add-steps > li > section {
+  min-width: 0;
+  border: 1px solid #dce4ee;
+  border-radius: var(--radius-sm);
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  background: #fff;
+}
+
+.document-add-step-heading {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.document-add-step-heading > div {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.document-add-step-heading h4 {
+  color: #172945;
+  font-size: 15px;
+}
+
+.document-add-step-status {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 4px 8px;
+  color: #116d45;
+  background: #eaf8f1;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.document-add-field {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+  color: #4d607c;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.document-add-field input,
+.document-add-field select {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid #c6d4e5;
+  border-radius: 7px;
+  padding: 0 11px;
+  color: #223551;
+  background: #fff;
+  font: inherit;
+}
+
+.document-add-secondary-action {
+  width: fit-content;
+  min-height: 40px;
+  border: 1px solid #bdd1f4;
+  border-radius: var(--radius-xs);
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #1f62dc;
+  background: #f6f9ff;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.document-add-secondary-action .icon {
+  width: 16px;
+  height: 16px;
+}
+
+.document-quick-folder-form,
+.document-add-upload-form {
+  min-width: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.document-quick-folder-form {
+  border: 1px solid #dce5f1;
+  border-radius: 8px;
+  padding: 12px;
+  background: #f8fbff;
+}
+
+.document-quick-folder-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.document-quick-folder-actions button,
+.document-add-submit {
+  min-height: 44px;
+  border: 1px solid #c6d4e5;
+  border-radius: var(--radius-xs);
+  padding: 0 14px;
+  color: #2d415f;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.document-quick-folder-actions .ui-button-primary,
+.document-add-submit.ui-button-primary {
+  border-color: #1267ee;
+  color: #fff;
+  background: #1267ee;
+}
+
+.document-add-success,
+.document-add-error {
+  margin: 0;
+  border-radius: 7px;
+  padding: 9px 10px;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.document-add-success {
+  color: #11653f;
+  background: #eaf8f1;
+}
+
+.document-add-error {
+  color: #a52323;
+  background: #fff0f0;
+}
+
+.document-add-destination-summary {
+  min-width: 0;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 10px;
+  color: #274365;
+  background: #edf5ff;
+  font-size: 12px;
+}
+
+.document-add-destination-summary strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.document-add-destination-summary.missing {
+  color: #765319;
+  background: #fff8e8;
+}
+
+.document-add-file-input {
+  min-height: 44px;
+  display: grid;
+}
+
+.document-add-file-input:focus-within {
+  outline: 3px solid rgb(18 103 238 / 28%);
+  outline-offset: 2px;
+}
+
+.document-add-submit {
+  justify-self: end;
 }
 
 .document-modal-backdrop {
@@ -486,6 +812,7 @@
 }
 
 .document-filter-bar {
+  grid-area: filter;
   border-bottom: 1px solid #e3e9f2;
   display: grid;
   grid-template-columns: minmax(180px, 1.5fr) repeat(4, minmax(120px, 1fr));
@@ -534,8 +861,32 @@
 }
 
 .document-file-table {
+  grid-area: table;
   min-width: 0;
   overflow: auto;
+}
+
+.document-file-table > .ui-empty-state {
+  min-height: 100%;
+  align-content: center;
+  padding: 28px;
+}
+
+.document-file-table > .ui-empty-state button {
+  width: fit-content;
+  min-height: 44px;
+  border: 1px solid #bdd1f4;
+  border-radius: var(--radius-xs);
+  padding: 0 14px;
+  color: #1f62dc;
+  background: #f6f9ff;
+  font-weight: 900;
+}
+
+.document-file-table > .ui-empty-state button.ui-button-primary {
+  border-color: #1267ee;
+  color: #fff;
+  background: #1267ee;
 }
 
 .document-file-row {
@@ -698,6 +1049,7 @@
 }
 
 .document-table-footer {
+  grid-area: footer;
   min-height: 70px;
   border-top: 1px solid #e3e9f2;
   display: flex;
@@ -787,6 +1139,7 @@
 }
 
 .migration-strip {
+  grid-area: migration;
   border-top: 1px solid #e3e9f2;
   display: flex;
   gap: 8px;

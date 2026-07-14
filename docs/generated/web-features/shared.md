@@ -54,7 +54,7 @@
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | ConfirmDialog | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: disabled=busy | onClick=onCancel | apps/web/src/shared/components/ConfirmDialog.tsx:72 | unknown |
 | ConfirmDialog | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: disabled=busy \|\| confirmDisabled | onClick=() => void confirm() | apps/web/src/shared/components/ConfirmDialog.tsx:73 | unknown |
-| Icon | svg | 未推定 | svg 要素。静的解析では具体的な操作名を推定できません。 | - | - | apps/web/src/shared/components/Icon.tsx:27 | unknown |
+| Icon | svg | 未推定 | svg 要素。静的解析では具体的な操作名を推定できません。 | - | - | apps/web/src/shared/components/Icon.tsx:28 | unknown |
 | Button | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | - | - | apps/web/src/shared/ui/Button.tsx:19 | unknown |
 | ConfirmDialog | button | キャンセル | 「キャンセル」を実行するボタン。 | 状態: disabled=busy | onClick=onCancel | apps/web/src/shared/ui/ConfirmDialog.tsx:107 | confirmed |
 | ConfirmDialog | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: disabled=busy \|\| confirmDisabled | onClick=() => void confirm() | apps/web/src/shared/ui/ConfirmDialog.tsx:108 | unknown |
