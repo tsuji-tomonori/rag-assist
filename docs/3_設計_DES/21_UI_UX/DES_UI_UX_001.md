@@ -260,7 +260,7 @@ Checkboxes are checked only for evidence actually obtained.
 | Gap | Requirement | Task |
 | --- | --- | --- |
 | mobile navigation automation completed; representative screen reader、400% browser zoom、safe-area/virtual-keyboard real-device evidence remains | `FR-094`, `SQ-016` | `tasks/do/20260714-issue-345-mobile-navigation.md`, `tasks/todo/20260714-issue-345-manual-a11y-evidence.md` |
-| representative target/risk/result feedback is automated; exhaustive questions/documents/admin coverage and manual evidence remain | `FR-096`, `SQ-016`, `NFR-018` | `tasks/do/20260714-issue-345-risky-operation-feedback.md`, `tasks/todo/20260714-issue-345-chat-assignee-journey.md`, `tasks/todo/20260714-issue-345-document-workspace-context.md`, `tasks/todo/20260714-1011-admin-ui-governance-quality.md`, `tasks/todo/20260714-issue-345-manual-a11y-evidence.md` |
+| representative target/risk/result feedback is automated; exhaustive questions/documents/admin coverage and manual evidence remain | `FR-096`, `SQ-016`, `NFR-018` | `tasks/done/20260714-issue-345-risky-operation-feedback.md`, `tasks/todo/20260714-issue-345-chat-assignee-journey.md`, `tasks/todo/20260714-issue-345-document-workspace-context.md`, `tasks/todo/20260714-1011-admin-ui-governance-quality.md`, `tasks/todo/20260714-issue-345-manual-a11y-evidence.md` |
 | documents 143-interaction density and state restoration | `FR-097`, `FR-098` | `tasks/todo/20260714-issue-345-document-workspace-context.md` |
 | chat/assignee full journey | existing chat/question requirements, `FR-095` | `tasks/todo/20260714-issue-345-chat-assignee-journey.md` |
 | admin remaining governance/a11y/scale | `FR-096`〜`FR-098`, `SQ-016` | `tasks/todo/20260714-1011-admin-ui-governance-quality.md` |

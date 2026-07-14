@@ -1,6 +1,6 @@
 # Issue #345 高影響操作の対象・影響・結果表示を統一する
 
-状態: do
+状態: done
 
 タスク種別: 機能追加
 
@@ -51,7 +51,7 @@ documents、questions、benchmark、admin の代表操作へ `FR-096` の confir
 - [x] authorization と情報非開示境界を弱めていないことを API/access-control review で確認している。
 - [x] `FR-096`、`DES_UI_UX_001`、traceability、必要な domain/API docs が実装と同期している。
 - [x] 選定した lint、typecheck、test、build、E2E、docs check が成功し、未実施検証は理由付きで記録されている。
-- [ ] 日本語 commit、draft PR、受け入れ確認コメント、セルフレビュー、作業レポート、task の `done` 移動と lifecycle commit/push が完了している。
+- [x] 日本語 commit、draft PR、受け入れ確認コメント、セルフレビュー、作業レポート、task の `done` 移動と lifecycle commit/push が完了している。
 
 ## 実行計画
 
@@ -105,6 +105,14 @@ documents、questions、benchmark、admin の代表操作へ `FR-096` の confir
 ## PR レビュー観点
 
 対象取り違え、不可逆性、permission 非開示、audit detail、No Mock Product UI を確認する。
+
+## PR / lifecycle
+
+- draft PR: `#352`（GitHub Apps、`semver:minor`）
+- 受け入れ条件確認 comment: `4968540205`
+- セルフレビュー comment: `4968542992`
+- implementation commit: `3532c29b`
+- 本 task の `done` 移動を lifecycle commit として同 branch へ push する。
 
 ## 未決事項・リスク
 

@@ -3,8 +3,9 @@
 - 実施日時: 2026-07-14 20:08 JST
 - 対象 issue: `https://github.com/tsuji-tomonori/rag-assist/issues/345`
 - branch: `codex/issue-345-risky-operation-feedback`
-- task: `tasks/do/20260714-issue-345-risky-operation-feedback.md`
+- task: `tasks/done/20260714-issue-345-risky-operation-feedback.md`
 - 依存 draft PR: `#348`, `#349`, `#350`, `#351`
+- draft PR: `#352`（GitHub Apps で作成、`semver:minor`）
 
 ## 受けた指示
 
@@ -71,5 +72,6 @@ Issue #345 全体完了へ向け、専用 worktree / task / commit / draft PR wo
 
 - 代表 screen reader、200%/400% browser zoom、real device、Firefox/WebKit は未実施であり、manual/cross-screen task に残る。
 - questions、documents の全操作、admin remaining governance を含む exhaustive coverage は未主張で、既存後続 task に trace した。
-- draft PR 作成、受け入れ確認・セルフレビューコメント、CI 結果、task の `done` 移動は workflow 後半で追記する。
+- draft PR #352 を GitHub Apps で作成し、受け入れ条件確認（comment `4968540205`）とセルフレビュー（comment `4968542992`）を日本語の top-level comment として記録した。
+- task は `tasks/done/` へ移動し、本 lifecycle commit で反映する。CI は lifecycle push 後に最終結果を確認し、PR 本文・コメントへ反映する。
 - dependent draft PR #348〜#351 が未 merge のため、本 PR も依存解消までは draft とする。
