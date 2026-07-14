@@ -24,7 +24,8 @@ describe("usePermissions", () => {
       "chat:create",
       "rag:doc:write:group",
       "rag:group:create",
-      "rag:group:assign_manager",
+      "folder.share",
+      "folder.move",
       "rag:alias:read",
       "benchmark:read",
       "benchmark:run",
@@ -39,6 +40,7 @@ describe("usePermissions", () => {
     expect(result.current.canCreateChat).toBe(true)
     expect(result.current.canCreateDocumentGroups).toBe(true)
     expect(result.current.canShareDocumentGroups).toBe(true)
+    expect(result.current.canMoveDocumentGroups).toBe(true)
     expect(result.current.canManageDocuments).toBe(true)
     expect(result.current.canManageAliases).toBe(true)
     expect(result.current.canReadBenchmarkRuns).toBe(true)
@@ -52,7 +54,7 @@ describe("usePermissions", () => {
     expect(result.current.canCancelAgent).toBe(false)
   })
 
-  it("separates document upload, group create, and group share permissions", () => {
+  it("separates document upload, group create, group share, and group move permissions", () => {
     const createOnly = renderHook(() => usePermissions(user(["rag:group:create"])))
     expect(createOnly.result.current.canCreateDocumentGroups).toBe(true)
     expect(createOnly.result.current.canWriteDocuments).toBe(false)
@@ -62,5 +64,10 @@ describe("usePermissions", () => {
     expect(uploadOnly.result.current.canCreateDocumentGroups).toBe(false)
     expect(uploadOnly.result.current.canWriteDocuments).toBe(true)
     expect(uploadOnly.result.current.canManageDocuments).toBe(true)
+
+    const moveOnly = renderHook(() => usePermissions(user(["folder.move"])))
+    expect(moveOnly.result.current.canMoveDocumentGroups).toBe(true)
+    expect(moveOnly.result.current.canShareDocumentGroups).toBe(false)
+    expect(moveOnly.result.current.canManageDocuments).toBe(true)
   })
 })

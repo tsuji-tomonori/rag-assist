@@ -15,6 +15,7 @@ import {
 } from "../schemas.js"
 import type { ApiRouteContext } from "./route-context.js"
 import { looseRoute, routeAuthorization, sleep, validJson } from "./route-utils.js"
+import { ResourceUnavailableError, settleNonEnumerationTiming } from "../security/public-resource-response.js"
 
 export function registerChatRoutes({ app, deps, service }: ApiRouteContext) {
   const chatRoute = looseRoute({
@@ -88,14 +89,23 @@ export function registerChatRoutes({ app, deps, service }: ApiRouteContext) {
       }
     }),
     async (c) => {
+      const lookupStartedAt = Date.now()
       const user = c.get("user")
+      const tenantId = user.tenantId?.trim()
+      if (!tenantId) throw new ResourceUnavailableError()
       requirePermission(user, "chat:read:own")
       const runId = c.req.param("runId") ?? ""
-      const run = await deps.chatRunStore.get(runId)
-      if (!run) return c.json({ error: "Chat run not found" }, 404)
+      const run = await deps.chatRunStore.get(tenantId, runId)
+      if (!run) {
+        await settleNonEnumerationTiming(lookupStartedAt)
+        throw new ResourceUnavailableError()
+      }
 
       const canReadAll = getPermissionsForGroups(user.cognitoGroups).includes("chat:admin:read_all")
-      if (run.createdBy !== user.userId && !canReadAll) return c.json({ error: "Forbidden" }, 403)
+      if (run.createdBy !== user.userId && !canReadAll) {
+        await settleNonEnumerationTiming(lookupStartedAt)
+        throw new ResourceUnavailableError()
+      }
 
       return streamSSE(c, async (stream) => {
         const lastEventId = Number(c.req.header("Last-Event-ID") ?? 0)
@@ -104,7 +114,7 @@ export function registerChatRoutes({ app, deps, service }: ApiRouteContext) {
         let lastHeartbeat = 0
 
         while (Date.now() < deadline) {
-          const events = await deps.chatRunEventStore.listAfter(runId, afterSeq)
+          const events = await deps.chatRunEventStore.listAfter(tenantId, runId, afterSeq)
           for (const item of events) {
             await stream.writeSSE({
               id: String(item.seq),
@@ -178,7 +188,7 @@ export function registerChatRoutes({ app, deps, service }: ApiRouteContext) {
     }),
     async (c) => {
       requirePermission(c.get("user"), "chat:admin:read_all")
-      return c.json({ invocations: await service.listChatToolInvocations() }, 200)
+      return c.json({ invocations: await service.listChatToolInvocations(c.get("user")) }, 200)
     }
   )
 

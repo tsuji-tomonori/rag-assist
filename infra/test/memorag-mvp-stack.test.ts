@@ -4,6 +4,7 @@ import path from "node:path"
 import test from "node:test"
 import * as cdk from "aws-cdk-lib"
 import { Match, Template } from "aws-cdk-lib/assertions"
+import { APPLICATION_ROLES } from "@memorag-mvp/contract/access-control"
 import { MemoRagMvpStack } from "../lib/memorag-mvp-stack"
 
 function synthesize(context?: Record<string, string>) {
@@ -65,7 +66,7 @@ test("implements the designed serverless resources", () => {
   template.resourceCountIs("AWS::S3::Bucket", 5)
   template.resourceCountIs("AWS::Cognito::UserPool", 1)
   template.resourceCountIs("AWS::Cognito::UserPoolClient", 1)
-  template.resourceCountIs("AWS::Cognito::UserPoolGroup", 9)
+  template.resourceCountIs("AWS::Cognito::UserPoolGroup", APPLICATION_ROLES.length)
   template.hasResourceProperties("AWS::Cognito::UserPool", {
     AdminCreateUserConfig: { AllowAdminCreateUserOnly: true }
   })
@@ -242,17 +243,7 @@ test("implements the designed serverless resources", () => {
     ]),
     PointInTimeRecoverySpecification: { PointInTimeRecoveryEnabled: true }
   })
-  for (const groupName of [
-    "CHAT_USER",
-    "ANSWER_EDITOR",
-    "RAG_GROUP_MANAGER",
-    "BENCHMARK_OPERATOR",
-    "BENCHMARK_RUNNER",
-    "USER_ADMIN",
-    "ACCESS_ADMIN",
-    "COST_AUDITOR",
-    "SYSTEM_ADMIN"
-  ]) {
+  for (const groupName of APPLICATION_ROLES) {
     template.hasResourceProperties("AWS::Cognito::UserPoolGroup", {
       GroupName: groupName,
       UserPoolId: Match.anyValue()
@@ -275,17 +266,48 @@ test("implements the designed serverless resources", () => {
         USE_LOCAL_BENCHMARK_RUN_STORE: "false",
         USE_LOCAL_CHAT_RUN_STORE: "false",
         AUTH_ENABLED: "true",
+        AUTH_TENANT_ID: Match.anyValue(),
+        BENCHMARK_EVALUATION_ENABLED: "true",
+        BENCHMARK_EVALUATION_TENANT_ID: Match.anyValue(),
         CORS_ALLOWED_ORIGINS: "*",
         COGNITO_USER_POOL_ID: Match.anyValue(),
         COGNITO_APP_CLIENT_ID: Match.anyValue(),
         DEBUG_DOWNLOAD_BUCKET_NAME: Match.anyValue(),
         DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS: "900",
+        RAG_MONITORING_REQUIRED: "1",
+        RAG_SAFETY_STATE_TTL_SECONDS: "600",
         PDF_OCR_FALLBACK_ENABLED: "true",
         PDF_OCR_FALLBACK_TIMEOUT_MS: "45000"
       })
     })
   })
   template.resourceCountIs("AWS::CloudFront::OriginAccessControl", 1)
+  template.hasResourceProperties("AWS::Events::Rule", {
+    ScheduleExpression: "rate(5 minutes)",
+    State: "ENABLED"
+  })
+  template.hasResourceProperties("AWS::Lambda::Function", {
+    Timeout: 300,
+    MemorySize: 512,
+    Environment: Match.objectLike({ Variables: Match.objectLike({
+      RAG_MONITORING_REQUIRED: "1",
+      RAG_ALERT_TOPIC_ARN: Match.anyValue()
+    }) })
+  })
+  template.resourceCountIs("AWS::SNS::Topic", 1)
+  template.resourceCountIs("AWS::CloudWatch::Alarm", 4)
+  const qualityMonitorPolicy = Object.entries(template.toJSON().Resources ?? {}).find(([logicalId, resource]) => (
+    logicalId.startsWith("RagQualityMonitorFunctionServiceRoleDefaultPolicy")
+    && (resource as any).Type === "AWS::IAM::Policy"
+  ))?.[1]
+  assert.ok(qualityMonitorPolicy)
+  assert.match(JSON.stringify((qualityMonitorPolicy as any).Properties.PolicyDocument), /sns:Publish/)
+  template.hasResourceProperties("AWS::CloudWatch::Alarm", {
+    Namespace: "MemoRAG/QualityControl",
+    MetricName: "CriticalAlertCount",
+    Threshold: 1,
+    AlarmActions: Match.anyValue()
+  })
   template.hasResourceProperties("AWS::CloudFormation::CustomResource", {
     vectorBucketName: Match.anyValue(),
     indexNames: ["memory-index", "evidence-index"],
@@ -303,7 +325,8 @@ test("implements the designed serverless resources", () => {
         Match.objectLike({ Name: "BENCHMARK_AUTH_SECRET_ID" }),
         Match.objectLike({ Name: "BENCHMARK_RUNNER_GROUP", Value: "BENCHMARK_RUNNER" }),
         Match.objectLike({ Name: "BENCHMARK_RUNS_TABLE_NAME" }),
-        Match.objectLike({ Name: "BENCHMARK_CODEBUILD_LOG_GROUP_NAME" })
+        Match.objectLike({ Name: "BENCHMARK_CODEBUILD_LOG_GROUP_NAME" }),
+        Match.objectLike({ Name: "BENCHMARK_AUTHORIZATION_FUNCTION_NAME" })
       ])
     }),
     TimeoutInMinutes: 180
@@ -340,9 +363,15 @@ test("implements the designed serverless resources", () => {
         Match.objectLike({
           Action: Match.arrayWith([
             "cognito-idp:ListUsers",
+            "cognito-idp:AdminGetUser",
             "cognito-idp:AdminListGroupsForUser",
             "cognito-idp:AdminAddUserToGroup",
-            "cognito-idp:AdminRemoveUserFromGroup"
+            "cognito-idp:AdminRemoveUserFromGroup",
+            "cognito-idp:AdminDisableUser",
+            "cognito-idp:AdminEnableUser",
+            "cognito-idp:AdminUpdateUserAttributes",
+            "cognito-idp:AdminUserGlobalSignOut",
+            "cognito-idp:AdminDeleteUser"
           ]),
           Resource: Match.anyValue()
         })
@@ -396,6 +425,11 @@ test("implements the designed serverless resources", () => {
   assert.ok(benchmarkStateMachine)
   const benchmarkDefinition = JSON.stringify((benchmarkStateMachine as any).Properties.DefinitionString)
   assert.match(benchmarkDefinition, /TimeoutSeconds\\":32400/)
+  assert.match(benchmarkDefinition, /BenchmarkAuthorizeStart/)
+  assert.match(benchmarkDefinition, /BenchmarkAuthorizeCommit/)
+  assert.match(benchmarkDefinition, /ConditionExpression\\":\\"#status = :queued/)
+  assert.match(benchmarkDefinition, /ConditionExpression\\":\\"#status = :running/)
+  assert.match(benchmarkDefinition, /if_not_exists\(#error, :error\)/)
   const documentIngestRunStateMachine = stateMachines.find((stateMachine: any) => JSON.stringify(stateMachine.Properties.DefinitionString).includes("DocumentIngestRunWorkerTask"))
   assert.ok(documentIngestRunStateMachine)
   const documentIngestRunDefinition = JSON.stringify((documentIngestRunStateMachine as any).Properties.DefinitionString)
@@ -404,6 +438,74 @@ test("implements the designed serverless resources", () => {
   for (const stateMachine of stateMachines) {
     assert.equal((stateMachine as any).Properties.TracingConfiguration, undefined)
   }
+})
+
+test("deploys a scheduled least-privilege revocation reconciliation worker", () => {
+  const template = synthesize()
+  const worker = getResourceByLogicalIdPrefix(template, "RevocationCleanupFunction")
+  assert.equal(worker.Properties.Timeout, 300)
+  assert.equal(worker.Properties.MemorySize, 1024)
+
+  template.hasResourceProperties("AWS::Events::Rule", {
+    ScheduleExpression: "rate(1 minute)",
+    State: "ENABLED",
+    Targets: Match.arrayWith([Match.objectLike({ Input: "{\"limitPerTenant\":100}" })])
+  })
+  const resources = template.toJSON().Resources ?? {}
+  const policyResources = Object.entries(resources)
+    .filter(([logicalId, resource]) => logicalId.startsWith("RevocationCleanupFunctionServiceRoleDefaultPolicy") && (resource as any).Type === "AWS::IAM::Policy")
+    .map(([, resource]) => resource as any)
+  const policies = policyResources
+    .map((resource) => JSON.stringify(resource.Properties.PolicyDocument))
+    .join("\n")
+  assert.match(policies, /s3:ListBucket/)
+  assert.match(policies, /s3:DeleteObject/)
+  assert.match(policies, /s3vectors:GetVectors/)
+  assert.match(policies, /s3vectors:DeleteVectors/)
+  assert.match(policies, /dynamodb:Query/)
+  assert.match(policies, /dynamodb:UpdateItem/)
+  assert.doesNotMatch(policies, /dynamodb:Scan/)
+  assert.match(policies, /cognito-idp:AdminUserGlobalSignOut/)
+  assert.match(policies, /security\/revocation-cleanup-tenants/)
+  assert.match(policies, /security\/revocation-cleanup-tenant-registry-state/)
+  assert.doesNotMatch(policies, /bedrock:InvokeModel/)
+  assert.doesNotMatch(policies, /s3vectors:PutVectors/)
+  const putStatements = policyResources.flatMap((resource) => resource.Properties.PolicyDocument.Statement)
+    .filter((statement: any) => [statement.Action].flat().includes("s3:PutObject"))
+  assert.ok(putStatements.length > 0)
+  for (const statement of putStatements) {
+    const serialized = JSON.stringify(statement.Resource)
+    assert.match(serialized, /security\/revocation-cleanup/)
+    assert.doesNotMatch(serialized, /BenchmarkBucket/)
+  }
+  const deleteStatements = policyResources.flatMap((resource) => resource.Properties.PolicyDocument.Statement)
+    .filter((statement: any) => [statement.Action].flat().includes("s3:DeleteObject"))
+  for (const statement of deleteStatements) {
+    const serialized = JSON.stringify(statement.Resource)
+    assert.doesNotMatch(serialized, /security\/revocation-cleanup(?:\/|-(?:repairs|tenants|tenant-registry-state))/)
+  }
+})
+
+test("production monitoring requires an explicit quality and safety owner notification target", () => {
+  assert.throws(
+    () => synthesize({ deploymentEnvironment: "prod" }),
+    /ragAlertTopicArn or ragAlertEmail/
+  )
+  const template = synthesize({ deploymentEnvironment: "prod", ragAlertEmail: "rag-on-call@example.com" })
+  template.hasResourceProperties("AWS::SNS::Subscription", {
+    Protocol: "email",
+    Endpoint: "rag-on-call@example.com"
+  })
+  template.hasResourceProperties("AWS::SNS::TopicPolicy", {
+    PolicyDocument: Match.objectLike({
+      Statement: Match.arrayWith([Match.objectLike({
+        Action: "sns:Publish",
+        Effect: "Deny",
+        Principal: { AWS: "*" },
+        Condition: { Bool: { "aws:SecureTransport": "false" } }
+      })])
+    })
+  })
 })
 
 test("stackProvidesDefaultSupportAssigneeGroupIdToApiFunctions", () => {
@@ -572,19 +674,162 @@ test("keeps benchmark CodeBuild runner generic and fails when auth token resolut
   for (const phase of ["install", "pre_build", "build", "post_build"]) {
     assert.equal(buildSpec.phases[phase].commands[0], "set -euo pipefail")
   }
+  const buildMetadataUpdate = buildSpec.phases.install.commands.find((command: string) => command.includes("aws dynamodb update-item"))
+  assert.ok(buildMetadataUpdate?.includes("$STORAGE_RUN_ID"))
+  assert.equal(buildMetadataUpdate?.includes('"$RUN_ID"'), false)
+  assert.ok(buildMetadataUpdate?.includes("#status = :running"))
+  assert.ok(buildSpec.phases.install.commands.includes("node infra/scripts/authorize-benchmark-boundary.mjs durable_commit build-metadata"))
   assert.ok(buildSpec.phases.pre_build.commands.includes("API_AUTH_TOKEN=\"$(node infra/scripts/resolve-benchmark-auth-token.mjs)\""))
   assert.ok(buildSpec.phases.pre_build.commands.includes("export API_AUTH_TOKEN"))
   assert.ok(buildSpec.phases.pre_build.commands.includes("export BENCHMARK_SUITE_ID=\"$SUITE_ID\""))
   assert.ok(buildSpec.phases.pre_build.commands.includes("npm run codebuild:prepare -w @memorag-mvp/benchmark"))
+  const preBuildCommands = buildSpec.phases.pre_build.commands as string[]
+  const protectedReadPayload = preBuildCommands.findIndex((command) => command.includes('boundary: "protected_read"'))
+  const protectedReadInvoke = preBuildCommands.findIndex((command) => command.includes("aws lambda invoke") && command.includes("benchmark-authorize-protected-read"))
+  const protectedReadGuard = preBuildCommands.findIndex((command, index) => index > protectedReadInvoke && command.includes("AUTHORIZATION_FUNCTION_ERROR") && command.includes("exit 1"))
+  const protectedReadResponseCheck = preBuildCommands.findIndex((command) => command.includes("benchmark-authorize-protected-read-response.json") && command.includes("value.authorized !== true"))
+  const firstProtectedRead = preBuildCommands.findIndex((command) => command.includes("RAG_WORKLOAD_EVIDENCE_S3_KEY") && command.includes("aws s3 cp"))
+  const prepareExternalPayload = preBuildCommands.findIndex((command) => command.includes('boundary: "external_side_effect"') && command.includes("benchmark-authorize-prepare"))
+  const prepareExternalInvoke = preBuildCommands.findIndex((command) => command.includes("aws lambda invoke") && command.includes("benchmark-authorize-prepare-external-side-effect"))
+  const prepareExternalGuard = preBuildCommands.findIndex((command, index) => index > prepareExternalInvoke && command.includes("AUTHORIZATION_FUNCTION_ERROR") && command.includes("exit 1"))
+  const prepareExternalResponseCheck = preBuildCommands.findIndex((command) => command.includes("benchmark-authorize-prepare-external-side-effect-response.json") && command.includes("value.authorized !== true"))
+  const prepareCommand = preBuildCommands.indexOf("npm run codebuild:prepare -w @memorag-mvp/benchmark")
+  assert.ok(protectedReadPayload >= 0)
+  assert.ok(protectedReadPayload < protectedReadInvoke)
+  assert.ok(protectedReadInvoke < protectedReadGuard)
+  assert.ok(protectedReadGuard < protectedReadResponseCheck)
+  assert.ok(protectedReadResponseCheck < firstProtectedRead)
+  assert.ok(preBuildCommands.filter((command) => command.includes("authorize-benchmark-boundary.mjs protected_read")).length >= 3)
+  for (const label of ["workload-evidence", "price-catalog"]) {
+    const guardedRead = preBuildCommands.find((command) => command.includes(`protected_read ${label}`))
+    assert.ok(guardedRead?.includes("aws s3 cp"), `${label} authorization must be in the same fail-closed shell command as its read`)
+  }
+  assert.ok(firstProtectedRead < prepareExternalPayload)
+  assert.ok(prepareExternalPayload < prepareExternalInvoke)
+  assert.ok(prepareExternalInvoke < prepareExternalGuard)
+  assert.ok(prepareExternalGuard < prepareExternalResponseCheck)
+  assert.ok(prepareExternalResponseCheck < prepareCommand)
+
+  const buildCommands = buildSpec.phases.build.commands as string[]
+  const runExternalPayload = buildCommands.findIndex((command) => command.includes('boundary: "external_side_effect"') && command.includes("benchmark-authorize-run"))
+  const runExternalInvoke = buildCommands.findIndex((command) => command.includes("aws lambda invoke") && command.includes("benchmark-authorize-run-external-side-effect"))
+  const runExternalGuard = buildCommands.findIndex((command, index) => index > runExternalInvoke && command.includes("AUTHORIZATION_FUNCTION_ERROR") && command.includes("exit 1"))
+  const runExternalResponseCheck = buildCommands.findIndex((command) => command.includes("benchmark-authorize-run-external-side-effect-response.json") && command.includes("value.authorized !== true"))
+  const runnerCommand = buildCommands.indexOf("npm run codebuild:run -w @memorag-mvp/benchmark")
+  assert.ok(runExternalPayload >= 0)
+  assert.ok(runExternalPayload < runExternalInvoke)
+  assert.ok(runExternalInvoke < runExternalGuard)
+  assert.ok(runExternalGuard < runExternalResponseCheck)
+  assert.ok(runExternalResponseCheck < runnerCommand)
   assert.ok(buildSpec.phases.post_build.commands.includes("if [ ! -f \"$OUTPUT\" ]; then printf '' > \"$OUTPUT\"; fi"))
   assert.ok(buildSpec.phases.post_build.commands.includes("if [ ! -f \"$SUMMARY\" ]; then printf '{\"total\":0,\"succeeded\":0,\"failedHttp\":0,\"metrics\":{\"errorRate\":1}}\\n' > \"$SUMMARY\"; fi"))
+  assert.ok(buildSpec.phases.post_build.commands.includes("export RELEASE_AUDIT=./benchmark/.release-audit.json"))
+  assert.ok(buildSpec.phases.post_build.commands.includes("npm run release:audit -w @memorag-mvp/benchmark -- --summary \"$SUMMARY\" --source-root apps/api/src --source-root apps/web/src --output \"$RELEASE_AUDIT\" --report-only"))
+  assert.ok(buildSpec.phases.post_build.commands.includes("aws s3 cp \"$RELEASE_AUDIT\" \"$OUTPUT_S3_PREFIX/release-audit.json\""))
   assert.ok(buildSpec.phases.post_build.commands.includes("node infra/scripts/update-benchmark-run-metrics.mjs"))
+  const durableCommitPayload = buildSpec.phases.post_build.commands.findIndex((command: string) => command.includes('boundary: "durable_commit"') && command.includes("benchmark-authorize-artifact"))
+  const durableCommitInvoke = buildSpec.phases.post_build.commands.findIndex((command: string) => command.includes("aws lambda invoke") && command.includes("benchmark-authorize-artifact-durable-commit"))
+  const durableCommitGuard = buildSpec.phases.post_build.commands.findIndex((command: string) => command.includes("AUTHORIZATION_FUNCTION_ERROR") && command.includes("exit 1"))
+  const durableCommitResponseCheck = buildSpec.phases.post_build.commands.findIndex((command: string) => command.includes("benchmark-authorize-artifact-durable-commit-response.json") && command.includes("value.authorized !== true"))
+  const artifactUploadIndexes = ["results.jsonl", "summary.json", "report.md", "release-audit.json"].map((fileName) => (
+    buildSpec.phases.post_build.commands.findIndex((command: string) => command.includes("aws s3 cp") && command.includes(fileName))
+  ))
+  assert.ok(durableCommitPayload >= 0)
+  assert.ok(durableCommitPayload < durableCommitInvoke)
+  assert.ok(durableCommitInvoke < durableCommitGuard)
+  assert.ok(durableCommitGuard < durableCommitResponseCheck)
+  assert.ok(artifactUploadIndexes.every((index) => durableCommitResponseCheck < index))
+  for (const [label, uploadIndex] of ["results-artifact", "summary-artifact", "report-artifact", "release-audit-artifact"].map((label, index) => [label, artifactUploadIndexes[index]!] as const)) {
+    const authorizationIndex = buildSpec.phases.post_build.commands.indexOf(`node infra/scripts/authorize-benchmark-boundary.mjs durable_commit ${label}`)
+    assert.equal(authorizationIndex + 1, uploadIndex)
+  }
+  const metricsUpdateIndex = buildSpec.phases.post_build.commands.indexOf("node infra/scripts/update-benchmark-run-metrics.mjs")
+  assert.equal(
+    buildSpec.phases.post_build.commands.indexOf("node infra/scripts/authorize-benchmark-boundary.mjs durable_commit metrics-update") + 1,
+    metricsUpdateIndex
+  )
+  assert.ok(buildSpec.phases.post_build.commands.indexOf("npm run release:audit -w @memorag-mvp/benchmark -- --summary \"$SUMMARY\" --source-root apps/api/src --source-root apps/web/src --output \"$RELEASE_AUDIT\" --report-only") < buildSpec.phases.post_build.commands.indexOf("node infra/scripts/update-benchmark-run-metrics.mjs"))
   assert.ok(buildSpec.phases.build.commands.includes("npm run codebuild:run -w @memorag-mvp/benchmark"))
   assert.doesNotMatch(JSON.stringify(buildSpec), /standard-agent-v1|allganize-rag-evaluation-ja-v1|mtrag-v1|chatrag-bench-v1|mlit-pdf-figure-table-rag-seed-v1/)
   assert.equal(
     buildSpec.phases.pre_build.commands.includes("export API_AUTH_TOKEN=\"$(node infra/scripts/resolve-benchmark-auth-token.mjs)\""),
     false
   )
+
+  const resources = template.Resources ?? {}
+  const projectPolicy = Object.entries(resources).find(([logicalId, resource]) => (
+    logicalId.startsWith("BenchmarkProjectRoleDefaultPolicy") && (resource as any).Type === "AWS::IAM::Policy"
+  ))?.[1]
+  assert.ok(projectPolicy)
+  assert.match(JSON.stringify((projectPolicy as any).Properties.PolicyDocument), /lambda:InvokeFunction/)
+  assert.match(JSON.stringify((projectPolicy as any).Properties.PolicyDocument), /BenchmarkRunAuthorizationFunction/)
+
+  const authorizationPolicy = Object.entries(resources).find(([logicalId, resource]) => (
+    logicalId.startsWith("BenchmarkRunAuthorizationFunctionServiceRoleDefaultPolicy") && (resource as any).Type === "AWS::IAM::Policy"
+  ))?.[1]
+  assert.ok(authorizationPolicy)
+  const authorizationPolicyJson = JSON.stringify((authorizationPolicy as any).Properties.PolicyDocument)
+  assert.match(authorizationPolicyJson, /security\/revocation-cleanup/)
+  assert.match(authorizationPolicyJson, /runs\/\*/)
+  assert.match(authorizationPolicyJson, /s3:DeleteObject/)
+})
+
+test("deploys the tenant-scoped security audit reconciliation worker with bounded S3 authority", () => {
+  const template = synthesize()
+  const worker = getResourceByLogicalIdPrefix(template, "SecurityAuditReconciliationFunction")
+  assert.equal(worker.Properties.Timeout, 60)
+  assert.equal(worker.Properties.MemorySize, 512)
+  assert.deepEqual(worker.Properties.Environment.Variables.AUTH_TENANT_ID, { Ref: "AWS::AccountId" })
+
+  const resources = template.toJSON().Resources ?? {}
+  const schedule = Object.entries(resources).find(([logicalId, resource]) => (
+    logicalId.startsWith("SecurityAuditReconciliationSchedule") && (resource as any).Type === "AWS::Events::Rule"
+  ))?.[1] as any
+  assert.ok(schedule)
+  assert.equal(schedule.Properties.ScheduleExpression, "rate(1 minute)")
+  assert.equal(schedule.Properties.State, "ENABLED")
+  assert.match(JSON.stringify(schedule.Properties.Targets), /tenantId.*AWS::AccountId.*limit.*100/)
+
+  const policies = Object.entries(resources)
+    .filter(([logicalId, resource]) => logicalId.startsWith("SecurityAuditReconciliationFunctionServiceRoleDefaultPolicy") && (resource as any).Type === "AWS::IAM::Policy")
+    .map(([, resource]) => JSON.stringify((resource as any).Properties.PolicyDocument))
+    .join("\n")
+  assert.match(policies, /s3:ListBucket/)
+  assert.match(policies, /s3:GetObject/)
+  assert.match(policies, /s3:PutObject/)
+  assert.match(policies, /security-audit\/intents/)
+  assert.match(policies, /source-governance/)
+  assert.doesNotMatch(policies, /s3:DeleteObject/)
+  assert.doesNotMatch(policies, /bedrock:InvokeModel/)
+  assert.doesNotMatch(policies, /dynamodb:/)
+})
+
+test("passes only explicitly configured versioned workload and price evidence into benchmark CodeBuild", () => {
+  const template = synthesize({
+    ragWorkloadEvidenceS3Key: "quality/workload-v3.json",
+    ragPriceCatalogS3Key: "quality/price-v6.json",
+    ragRuntimeProfileVersion: "runtime-v9",
+    ragWorkloadProfileVersion: "workload-v3",
+    ragPriceCatalogVersion: "price-v6",
+    ragIndexVersion: "index-v7",
+    ragPromptVersion: "prompt-v5",
+    ragPipelineVersion: "pipeline-v8",
+    ragParserVersion: "parser-v4",
+    ragChunkerVersion: "chunker-v2"
+  })
+  const variables = getBenchmarkProject(template).Properties.Environment.EnvironmentVariables
+  const environment = Object.fromEntries(variables.map((item: any) => [item.Name, item.Value]))
+
+  assert.equal(environment.RAG_WORKLOAD_EVIDENCE_S3_KEY, "quality/workload-v3.json")
+  assert.equal(environment.RAG_PRICE_CATALOG_S3_KEY, "quality/price-v6.json")
+  assert.equal(environment.RAG_RUNTIME_PROFILE_VERSION, "runtime-v9")
+  assert.equal(environment.RAG_WORKLOAD_PROFILE_VERSION, "workload-v3")
+  assert.equal(environment.RAG_PRICE_CATALOG_VERSION, "price-v6")
+  assert.equal(environment.RAG_INDEX_VERSION, "index-v7")
+  assert.equal(environment.RAG_PROMPT_VERSION, "prompt-v5")
+  assert.equal(environment.RAG_PIPELINE_VERSION, "pipeline-v8")
+  assert.equal(environment.RAG_PARSER_VERSION, "parser-v4")
+  assert.equal(environment.RAG_CHUNKER_VERSION, "chunker-v2")
 })
 
 test("deploys conversation benchmark corpus to the benchmark bucket", () => {
@@ -601,6 +846,35 @@ test("keeps document ingest worker within Lambda deployment limits", () => {
 
   assert.equal(workerFunction.Properties.MemorySize, 3008)
   assert.equal(workerFunction.Properties.Timeout, 900)
+})
+
+test("provisions tenant query indexes and uses the physical benchmark run key in every durable update", () => {
+  const resources = synthesize().toJSON().Resources ?? {}
+  for (const logicalIdPrefix of ["BenchmarkRunsTable", "ChatRunsTable", "DocumentIngestRunsTable", "DocumentGroupsTable"]) {
+    const matches = Object.entries(resources).filter(([logicalId, resource]) => (
+      logicalId.startsWith(logicalIdPrefix) && (resource as any).Type === "AWS::DynamoDB::Table"
+    ))
+    assert.equal(matches.length, 1, `${logicalIdPrefix} must synthesize exactly once`)
+    const table = matches[0]?.[1] as any
+    const tenantIndex = table.Properties.GlobalSecondaryIndexes?.find((index: any) => index.IndexName === "TenantItemIndex")
+    assert.ok(tenantIndex, `${logicalIdPrefix} must expose TenantItemIndex`)
+    assert.deepEqual(tenantIndex.KeySchema, [
+      { AttributeName: "tenantPartitionId", KeyType: "HASH" },
+      { AttributeName: "tenantItemId", KeyType: "RANGE" }
+    ])
+    assert.deepEqual(tenantIndex.Projection, { ProjectionType: "ALL" })
+  }
+
+  const stateMachines = Object.entries(resources).filter(([logicalId, resource]) => (
+    logicalId.startsWith("BenchmarkStateMachine") && (resource as any).Type === "AWS::StepFunctions::StateMachine"
+  ))
+  assert.equal(stateMachines.length, 1)
+  const definition = collectStringFragments((stateMachines[0]?.[1] as any).Properties.DefinitionString)
+  const physicalKey = '"Key":{"runId":{"S.$":"$.storageRunId"}}'
+  assert.equal(definition.split(physicalKey).length - 1, 3)
+  assert.equal(definition.includes('"Key":{"runId":{"S.$":"$.runId"}}'), false)
+  assert.match(definition, /"Name":"STORAGE_RUN_ID","Value\.\$":"\$\.storageRunId"/)
+  assert.match(definition, /"Name":"TENANT_ID","Value\.\$":"\$\.tenantId"/)
 })
 
 test("matches the synthesized CloudFormation snapshot", () => {
@@ -632,6 +906,13 @@ function stabilizeScalar(value: unknown): unknown {
   return value
     .replace(/asset\.[0-9a-f]{64}/g, "asset.<hash>")
     .replace(/[0-9a-f]{64}\.zip/g, "<asset-hash>.zip")
+}
+
+function collectStringFragments(value: unknown): string {
+  if (typeof value === "string") return value
+  if (Array.isArray(value)) return value.map(collectStringFragments).join("")
+  if (!value || typeof value !== "object") return ""
+  return Object.values(value).map(collectStringFragments).join("")
 }
 
 function assertResourceTags(logicalId: string, resource: unknown, expectedTags: Record<string, string>) {

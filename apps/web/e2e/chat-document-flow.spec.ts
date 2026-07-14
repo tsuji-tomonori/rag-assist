@@ -13,6 +13,9 @@ async function deleteDocumentByName(page: Page, filename: string) {
   await page.getByTitle('ドキュメント').click()
   await expect(page.getByLabel('ドキュメント管理')).toBeVisible()
   await page.getByTitle(`${filename}を削除`).click()
+  const dialog = page.getByRole('dialog', { name: '文書を削除しますか' })
+  await dialog.getByRole('textbox', { name: '削除理由' }).fill('E2E cleanup')
+  await dialog.getByRole('button', { name: '削除', exact: true }).click()
   await expect(page.getByTitle(`${filename}を削除`)).toHaveCount(0)
   await page.getByTitle('チャット').click()
   await expect(page.locator('section[aria-label="チャット"]')).toBeVisible()
@@ -24,7 +27,7 @@ test('根拠不足質問で no-answer メッセージになる', async ({ page }
   await expect(page.getByText('資料からは回答できません。')).toBeVisible()
 })
 
-test('資料アップロード後に一覧へ反映される @smoke', async ({ page }) => {
+test('一時添付の取り込み後も永続文書一覧へ混入しない @smoke', async ({ page }) => {
   const filename = `e2e-upload-${Date.now()}.txt`
   const fileInput = page.locator('input[type="file"]')
 
@@ -37,8 +40,7 @@ test('資料アップロード後に一覧へ反映される @smoke', async ({ p
   await page.getByRole('button', { name: '送信' }).click()
   await expect(page.getByText('資料を取り込みました。知りたいことを入力してください。')).toBeVisible()
 
-  await expect(page.locator('#document-select option').filter({ hasText: filename })).toHaveCount(1)
-  await deleteDocumentByName(page, filename)
+  await expect(page.locator('#document-select option').filter({ hasText: filename })).toHaveCount(0)
 })
 
 test('質問送信で回答と citations が表示される @smoke', async ({ page }) => {
@@ -53,12 +55,22 @@ test('質問送信で回答と citations が表示される @smoke', async ({ pa
   await page.getByRole('button', { name: '送信' }).click()
   await expect(page.getByText('資料を取り込みました。知りたいことを入力してください。')).toBeVisible()
 
-  await page.getByLabel('質問').fill(question)
+  await page.getByRole('textbox', { name: '質問', exact: true }).fill(question)
+  const chatRunRequestPromise = page.waitForRequest((request) => request.method() === 'POST' && new URL(request.url()).pathname.replace(/\/$/, '') !== '/conversation-history')
   await page.getByRole('button', { name: '送信' }).click()
+  const chatRunRequest = await chatRunRequestPromise
+  expect(new URL(chatRunRequest.url()).pathname.replace(/\/$/, '')).toBe('/rpc/chat/startRun')
+  expect(chatRunRequest.postDataJSON()).toMatchObject({
+    json: {
+      searchScope: {
+        includeTemporary: true,
+        temporaryScopeId: expect.any(String)
+      }
+    }
+  })
 
   await expect(page.getByText(/MVP-2026|資料では次のように記載されています。/)).toBeVisible()
   await expect(page.getByText('参照元')).toBeVisible()
-  await deleteDocumentByName(page, filename)
 })
 
 test('資料削除で再質問時の挙動が変わる', async ({ page }) => {

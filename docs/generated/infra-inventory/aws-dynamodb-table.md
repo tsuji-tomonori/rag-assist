@@ -10,12 +10,13 @@
 
 用途概要: DynamoDB table
 
-リソース数: 9
+リソース数: 10
 
 ## Logical ID 一覧
 
 | 論理ID | Logical ID | 用途推定 |
 | --- | --- | --- |
+| [Active Run Authorization Index Table](#active-run-authorization-index-table) | `ActiveRunAuthorizationIndexTable2D018C99` | Active Run Authorization Index Table (DynamoDB table) |
 | [Benchmark Runs Table](#benchmark-runs-table) | `BenchmarkRunsTableD0841636` | Benchmark Runs Table (DynamoDB table) |
 | [Chat Run Events Table](#chat-run-events-table) | `ChatRunEventsTable7455A50E` | Chat Run Events Table (DynamoDB table) |
 | [Chat Runs Table](#chat-runs-table) | `ChatRunsTable8446CD95` | Chat Runs Table (DynamoDB table) |
@@ -28,6 +29,19 @@
 
 ## Logical ID 別設定
 
+### Active Run Authorization Index Table
+
+Logical ID: `ActiveRunAuthorizationIndexTable2D018C99`
+
+用途推定: Active Run Authorization Index Table (DynamoDB table)
+
+| 設定項目 | 値 |
+| --- | --- |
+| `keySchema` | [{"AttributeName":"tenantPartitionId","KeyType":"HASH"},{"AttributeName":"runKey","KeyType":"RANGE"}] |
+| `attributeDefinitions` | [{"AttributeName":"tenantPartitionId","AttributeType":"S"},{"AttributeName":"runKey","AttributeType":"S"}] |
+| `billingMode` | PAY_PER_REQUEST |
+| `pointInTimeRecoveryEnabled` | true |
+
 ### Benchmark Runs Table
 
 Logical ID: `BenchmarkRunsTableD0841636`
@@ -37,7 +51,7 @@ Logical ID: `BenchmarkRunsTableD0841636`
 | 設定項目 | 値 |
 | --- | --- |
 | `keySchema` | [{"AttributeName":"runId","KeyType":"HASH"}] |
-| `attributeDefinitions` | [{"AttributeName":"runId","AttributeType":"S"}] |
+| `attributeDefinitions` | [{"AttributeName":"runId","AttributeType":"S"},{"AttributeName":"tenantPartitionId","AttributeType":"S"},{"AttributeName":"tenantItemId","AttributeType":"S"}] |
 | `billingMode` | PAY_PER_REQUEST |
 | `pointInTimeRecoveryEnabled` | true |
 
@@ -64,7 +78,7 @@ Logical ID: `ChatRunsTable8446CD95`
 | 設定項目 | 値 |
 | --- | --- |
 | `keySchema` | [{"AttributeName":"runId","KeyType":"HASH"}] |
-| `attributeDefinitions` | [{"AttributeName":"runId","AttributeType":"S"}] |
+| `attributeDefinitions` | [{"AttributeName":"runId","AttributeType":"S"},{"AttributeName":"tenantPartitionId","AttributeType":"S"},{"AttributeName":"tenantItemId","AttributeType":"S"}] |
 | `billingMode` | PAY_PER_REQUEST |
 | `pointInTimeRecoveryEnabled` | true |
 | `timeToLive` | {"AttributeName":"ttl","Enabled":true} |
@@ -91,7 +105,7 @@ Logical ID: `DocumentGroupsTableA5108040`
 | 設定項目 | 値 |
 | --- | --- |
 | `keySchema` | [{"AttributeName":"groupId","KeyType":"HASH"}] |
-| `attributeDefinitions` | [{"AttributeName":"groupId","AttributeType":"S"},{"AttributeName":"adminPathPk","AttributeType":"S"},{"AttributeName":"normalizedCanonicalPath","AttributeType":"S"}] |
+| `attributeDefinitions` | [{"AttributeName":"groupId","AttributeType":"S"},{"AttributeName":"adminPathPk","AttributeType":"S"},{"AttributeName":"normalizedCanonicalPath","AttributeType":"S"},{"AttributeName":"tenantPartitionId","AttributeType":"S"},{"AttributeName":"tenantItemId","AttributeType":"S"}] |
 | `billingMode` | PAY_PER_REQUEST |
 | `pointInTimeRecoveryEnabled` | true |
 
@@ -118,7 +132,7 @@ Logical ID: `DocumentIngestRunsTableEA8F8CCA`
 | 設定項目 | 値 |
 | --- | --- |
 | `keySchema` | [{"AttributeName":"runId","KeyType":"HASH"}] |
-| `attributeDefinitions` | [{"AttributeName":"runId","AttributeType":"S"}] |
+| `attributeDefinitions` | [{"AttributeName":"runId","AttributeType":"S"},{"AttributeName":"tenantPartitionId","AttributeType":"S"},{"AttributeName":"tenantItemId","AttributeType":"S"}] |
 | `billingMode` | PAY_PER_REQUEST |
 | `pointInTimeRecoveryEnabled` | true |
 | `timeToLive` | {"AttributeName":"ttl","Enabled":true} |

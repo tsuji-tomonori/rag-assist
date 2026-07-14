@@ -95,6 +95,7 @@
 | 実現可能性 | OK | route operation key と中央 authorization service の versioned decision table で実現可能 |
 | 検証可能性 | OK | 21 セルの enabled allow/deny、unsupported、別セル代用禁止、missing-cell deny を contract test で検証できる |
 | ニーズ適合 | OK | read-only 利用と危険な管理操作を明確に分離する利用者・管理者ニーズに対応する |
+| 実装適合 | OK（confirmed） | canonical resource-operation matrix と production authorizer/route wiring が exact cell を強制し、enabled/unsupported/missing-cell の contract tests を持つ |
 
 ## トレース
 

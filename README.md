@@ -20,6 +20,7 @@ AWS では API Gateway、Lambda、Amazon Bedrock、Amazon S3、Amazon S3 Vectors
 - [API design](docs/3_設計_DES/41_API_API/DES_API_001.md): API 契約と生成 OpenAPI の位置づけ
 - [Monitoring and verification](docs/4_運用_OPS/21_監視_MONITORING/OPS_MONITORING_001.md): 現行の観測点、初動、docs check
 - [OpenAPI Docs](docs/generated/openapi.md): 生成済み OpenAPI Markdown
+- [API Code Docs](docs/generated/api-code/index.md): API ごとの詳細設計、IF、メッセージ、query、sequence、unit test 自動生成文書
 - [Web UI Inventory](docs/generated/web-overview.md): Web UI 自動生成インベントリ
 - [AWS Resource Inventory](docs/generated/infra-inventory.md): CDK snapshot 由来の AWS リソースインベントリ
 
@@ -48,6 +49,7 @@ docker compose up --build
 npm test --workspaces --if-present
 npm run typecheck --workspaces --if-present
 npm run docs:openapi:check
+npm run docs:api-code:check
 ```
 
 Taskfile を使う場合:
@@ -68,3 +70,10 @@ npm run build -w @memorag-mvp/infra
 npm run cdk -w @memorag-mvp/infra -- bootstrap
 npm run cdk -w @memorag-mvp/infra -- deploy
 ```
+
+## Ingest / reindex publication invariants
+
+- 通常 RAG へ公開できるのは、authoritative admission が approved で、抽出・chunk・派生 record の整合性検証を通過した artifact だけです。unknown、partial、quarantined の入力は staging に留まり、vector を公開しません。
+- reindex は tenant、actor、source/version、purpose で一意な run / artifact を使います。各 attempt は lease generation と fencing token を持ち、期限切れ worker の commit は拒否されます。
+- source、block ledger、memory ledger、vector、manifest は attempt 固有 namespace に staging し、全件を再読込・検証してから generation 固有の published namespace へ昇格します。
+- 読み取り経路は durable active pointer を正として current artifact だけを採用します。pointer の conditional write が cutover の単一 winner を決めるため、再試行・並行実行・rollback・reconcile 中も旧版と新版を同時に根拠へ混在させません。

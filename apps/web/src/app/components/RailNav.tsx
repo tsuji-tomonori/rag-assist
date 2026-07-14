@@ -7,7 +7,7 @@ export function RailNav({
   authSession,
   canAnswerQuestions,
   canReadBenchmarkRuns,
-  canManageDocuments,
+  canReadDocuments,
   canSeeAdminSettings,
   onChangeView
 }: {
@@ -15,7 +15,7 @@ export function RailNav({
   authSession: AuthSession
   canAnswerQuestions: boolean
   canReadBenchmarkRuns: boolean
-  canManageDocuments: boolean
+  canReadDocuments: boolean
   canSeeAdminSettings: boolean
   onChangeView: (view: AppView) => void
 }) {
@@ -49,7 +49,7 @@ export function RailNav({
           <Icon name="star" />
           <span>お気に入り</span>
         </button>
-        {canManageDocuments && (
+        {canReadDocuments && (
           <button className={`rail-item ${activeView === "documents" ? "active" : ""}`} type="button" title="ドキュメント" aria-current={activeView === "documents" ? "page" : undefined} onClick={() => onChangeView("documents")}>
             <Icon name="document" />
             <span>ドキュメント</span>

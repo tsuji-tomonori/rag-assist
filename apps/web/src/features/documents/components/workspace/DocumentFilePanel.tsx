@@ -43,9 +43,11 @@ export function DocumentFilePanel({
   canDelete,
   canCreateGroups,
   canShareGroups,
+  canMoveGroups,
   canReindex,
   canOpenDocumentAdd,
   addDocumentDisabledReason,
+  showManagementControls,
   canDeleteDocument,
   canReindexDocument,
   canShareDocument,
@@ -94,9 +96,11 @@ export function DocumentFilePanel({
   canDelete: boolean
   canCreateGroups: boolean
   canShareGroups: boolean
+  canMoveGroups: boolean
   canReindex: boolean
   canOpenDocumentAdd: boolean
   addDocumentDisabledReason: string | null
+  showManagementControls: boolean
   canDeleteDocument: (document: DocumentManifest) => boolean
   canReindexDocument: (document: DocumentManifest) => boolean
   canShareDocument: (document: DocumentManifest) => boolean
@@ -124,10 +128,10 @@ export function DocumentFilePanel({
         <div>
           <h3>{selectedFolder.name}</h3>
           <span className={uploadGroupId ? "upload-destination-chip" : "upload-destination-chip missing"}>保存先: {uploadDestinationLabel}</span>
-          {addDocumentDisabledReason && <p className="field-hint" id="document-add-disabled-reason">{addDocumentDisabledReason}</p>}
+          {showManagementControls && addDocumentDisabledReason && <p className="field-hint" id="document-add-disabled-reason">{addDocumentDisabledReason}</p>}
         </div>
         <span className="sr-only">登録文書</span>
-        <div className="document-folder-actions" aria-label="フォルダ操作ショートカット">
+        {showManagementControls && <div className="document-folder-actions" aria-label="フォルダ操作ショートカット">
           <button
             className="document-add-button"
             type="button"
@@ -143,14 +147,17 @@ export function DocumentFilePanel({
             type="button"
             title="フォルダ設定を開く"
             aria-label="フォルダ設定を開く"
-            disabled={(!canShareGroups && !canCreateGroups && !canWrite) || operationState.sharingGroupId !== null}
+            disabled={
+              (!canShareGroups && !canMoveGroups && !canCreateGroups && !canWrite) ||
+              operationState.sharingGroupId !== null ||
+              (operationState.movingGroupId ?? null) !== null
+            }
             onClick={onOpenFolderSettings}
           >
             <Icon name="settings" />
           </button>
-        </div>
+        </div>}
       </div>
-
       {documents.length > 0 && <div className="document-filter-bar" aria-label="文書検索と絞り込み">
         <label>
           <span>ファイル名検索</span>
@@ -165,7 +172,7 @@ export function DocumentFilePanel({
             ))}
           </select>
         </label>
-        <label>
+        {showManagementControls && <label>
           <span>状態</span>
           <select value={documentStatusFilter} onChange={(event) => onDocumentStatusFilterChange(event.target.value)}>
             <option value="all">すべて</option>
@@ -173,7 +180,7 @@ export function DocumentFilePanel({
               <option value={status} key={status}>{status}</option>
             ))}
           </select>
-        </label>
+        </label>}
         <label>
           <span>所属フォルダ</span>
           <select value={documentGroupFilter} onChange={(event) => onDocumentGroupFilterChange(event.target.value)}>
@@ -190,7 +197,7 @@ export function DocumentFilePanel({
             <option value="updatedDesc">更新日 新しい順</option>
             <option value="updatedAsc">更新日 古い順</option>
             <option value="fileNameAsc">ファイル名順</option>
-            <option value="chunkDesc">チャンク数順</option>
+            {showManagementControls && <option value="chunkDesc">チャンク数順</option>}
             <option value="typeAsc">種別順</option>
           </select>
         </label>
@@ -201,18 +208,26 @@ export function DocumentFilePanel({
           <span role="columnheader">ファイル名</span>
           <span role="columnheader">種別</span>
           <span role="columnheader">更新日</span>
-          <span role="columnheader">チャンク数</span>
-          <span role="columnheader">状態</span>
+          {showManagementControls && <span role="columnheader">チャンク数</span>}
+          {showManagementControls && <span role="columnheader">状態</span>}
           <span role="columnheader">所属フォルダ</span>
-          <span role="columnheader">操作</span>
+          {showManagementControls && <span role="columnheader">操作</span>}
         </div>}
         {folderDocumentsCount === 0 ? (
           <EmptyState
-            title={documents.length === 0 && documentGroups.length === 0 ? "ドキュメントを登録しましょう" : `${selectedFolder.name}にドキュメントはありません`}
-            description={documents.length === 0 && documentGroups.length === 0
-              ? "1. 保存先を用意 → 2. ファイルを選択、の順に登録できます。"
-              : "保存先を確認してドキュメントを追加してください。"}
-            action={<button className="ui-button-primary" type="button" disabled={!canOpenDocumentAdd} onClick={onOpenDocumentAdd}>ドキュメントを追加</button>}
+            title={showManagementControls
+              ? documents.length === 0 && documentGroups.length === 0
+                ? "ドキュメントを登録しましょう"
+                : `${selectedFolder.name}にドキュメントはありません`
+              : "利用できるドキュメントはありません。"}
+            description={showManagementControls
+              ? documents.length === 0 && documentGroups.length === 0
+                ? "1. 保存先を用意 → 2. ファイルを選択、の順に登録できます。"
+                : "保存先を確認してドキュメントを追加してください。"
+              : "現在の権限で閲覧できる共有ドキュメントはありません。"}
+            action={showManagementControls
+              ? <button className="ui-button-primary" type="button" disabled={!canOpenDocumentAdd} onClick={onOpenDocumentAdd}>ドキュメントを追加</button>
+              : undefined}
           />
         ) : filteredDocumentsCount === 0 ? (
           <EmptyState
@@ -248,10 +263,10 @@ export function DocumentFilePanel({
                 </span>
                 <span role="cell" data-label="種別">{fileTypeLabel(document)}</span>
                 <span role="cell" data-label="更新日">{formatDateTime(documentUpdatedAt(document))}</span>
-                <span role="cell" data-label="チャンク数">{document.chunkCount}</span>
-                <span role="cell" data-label="状態">{documentStatusLabel(document)}</span>
+                {showManagementControls && <span role="cell" data-label="チャンク数">{document.chunkCount ?? "利用不可"}</span>}
+                {showManagementControls && <span role="cell" data-label="状態">{documentStatusLabel(document)}</span>}
                 <span role="cell" data-label="所属フォルダ">{groupLabel}</span>
-                <span role="cell" className="document-actions-cell" data-label="操作">
+                {showManagementControls && <span role="cell" className="document-actions-cell" data-label="操作">
                   <span className="document-action-buttons">
                     {canShareRow && (
                       <button
@@ -281,7 +296,7 @@ export function DocumentFilePanel({
                         移動
                       </button>
                     )}
-                    <button
+                    {canReindexRow && <button
                       type="button"
                       title={`${document.fileName}の再インデックスをステージング`}
                       aria-label={`${document.fileName}の再インデックスをステージング`}
@@ -293,8 +308,8 @@ export function DocumentFilePanel({
                       }}
                     >
                       {operationState.stagingReindexDocumentId === document.documentId ? <LoadingSpinner className="button-spinner" /> : <Icon name="gauge" />}
-                    </button>
-                    <button
+                    </button>}
+                    {canDeleteRow && <button
                       type="button"
                       className="delete-document-button"
                       title={`${document.fileName}を削除`}
@@ -307,9 +322,9 @@ export function DocumentFilePanel({
                       }}
                     >
                       {operationState.deletingDocumentId === document.documentId ? <LoadingSpinner className="button-spinner" /> : <Icon name="trash" />}
-                    </button>
+                    </button>}
                   </span>
-                </span>
+                </span>}
               </div>
             )
           })

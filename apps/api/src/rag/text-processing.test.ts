@@ -1,10 +1,20 @@
 import assert from "node:assert/strict"
 import test from "node:test"
 import { MockBedrockTextModel } from "../adapters/mock-bedrock.js"
+import { config } from "../config.js"
 import { buildSearchClues, clamp, compactDetail, estimateTokenCount, toCitation, unique } from "../chat-orchestration/utils.js"
 import { chunkStructuredBlocks, chunkText, summarizeDocumentStatistics } from "./chunk.js"
 import { parseJsonObject } from "./json.js"
-import { extractDocumentFromUpload, extractTextFromUpload } from "./text-extract.js"
+import {
+  aggregateTextractDetectionResponses,
+  docxHtmlToStructuredBlocks,
+  extractDocumentFromUpload,
+  extractTextFromUpload,
+  limitDocument,
+  selectNativePdfText,
+  textractDetectionDocument
+} from "./text-extract.js"
+import { buildNativeTextPdf } from "./test-support/native-text-pdf.js"
 
 test("chunking normalizes whitespace and prefers semantic boundaries", () => {
   assert.deepEqual(chunkText(" \n\n "), [])
@@ -203,7 +213,7 @@ test("chunking keeps atomic structured blocks unsplit", () => {
 test("upload text extraction handles direct text, base64, limits, and missing payloads", async () => {
   assert.equal(await extractTextFromUpload({ fileName: "a.txt", text: "\u0000 body \u0000" }), "body")
   assert.equal(await extractTextFromUpload({ fileName: "a.txt", contentBase64: Buffer.from("hello").toString("base64") }), "hello")
-  assert.equal(await extractTextFromUpload({ fileName: "a.bin", contentBytes: Buffer.from("bytes body") }), "bytes body")
+  assert.equal(await extractTextFromUpload({ fileName: "a.md", contentBytes: Buffer.from("bytes body") }), "bytes body")
   assert.equal(
     await extractTextFromUpload({
       fileName: "layout.textract.json",
@@ -212,6 +222,120 @@ test("upload text extraction handles direct text, base64, limits, and missing pa
     "本文"
   )
   await assert.rejects(() => extractTextFromUpload({ fileName: "missing.txt" }), /Either text or contentBase64/)
+})
+
+test("FR-082 unsupported spreadsheet bytes fail closed instead of being treated as complete UTF-8", async () => {
+  const extracted = await extractDocumentFromUpload({
+    fileName: "budget.xlsx",
+    contentBytes: Buffer.from("spreadsheet payload"),
+    mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  })
+
+  assert.equal(extracted.sourceExtractorVersion, "unsupported-format-v1")
+  assert.equal(extracted.extractionStatus, "partial")
+  assert.notEqual(extracted.text, "spreadsheet payload")
+  assert.equal(extracted.counters?.unsupportedInputBytes, Buffer.byteLength("spreadsheet payload"))
+  assert.ok(extracted.warnings?.some((warning) => (
+    warning.code === "unsupported_document_format" && warning.severity === "error"
+  )))
+})
+
+test("FR-082 Mammoth conversion messages are retained as loss warnings and force partial status", async () => {
+  const extracted = await extractDocumentFromUpload({
+    fileName: "policy.docx",
+    contentBytes: Buffer.from("docx fixture"),
+    docxConverter: {
+      convertToHtml: async () => ({
+        value: "<h1>Policy</h1><p>Approval is required.</p>",
+        messages: [{ type: "warning", message: "An unrecognised element was ignored." }]
+      }),
+      extractRawText: async () => {
+        throw new Error("raw fallback should not run")
+      }
+    }
+  })
+
+  assert.equal(extracted.text, "Policy\n\nApproval is required.")
+  assert.equal(extracted.extractionStatus, "partial")
+  assert.equal(extracted.counters?.docxConversionMessageCount, 1)
+  assert.ok(extracted.warnings?.some((warning) => (
+    warning.code === "docx_conversion_warning"
+      && warning.severity === "error"
+      && warning.message.includes("unrecognised element")
+  )))
+})
+
+test("FR-082 Textract PARTIAL_SUCCESS retains status, warnings, and expected-page loss metadata", () => {
+  const result = aggregateTextractDetectionResponses([
+    {
+      JobStatus: "PARTIAL_SUCCESS",
+      StatusMessage: "Page 2 could not be processed.",
+      DocumentMetadata: { Pages: 2 },
+      Warnings: [{ ErrorCode: "INTERNAL_SERVER_ERROR", Pages: [2] }],
+      Blocks: [{ Id: "line-1", BlockType: "LINE", Text: "Page one text", Page: 1 }]
+    }
+  ])
+  const extracted = limitDocument(textractDetectionDocument(result))
+
+  assert.equal(result.statusMessage, "Page 2 could not be processed.")
+  assert.equal(extracted.extractionStatus, "partial")
+  assert.equal(extracted.counters?.textractExpectedPageCount, 2)
+  assert.equal(extracted.counters?.textractObservedPageCount, 1)
+  assert.equal(extracted.counters?.textractMissingPageCount, 1)
+  assert.deepEqual(extracted.parsedDocument?.pages?.map((page) => page.pageNumber), [1, 2])
+  assert.ok(extracted.warnings?.some((warning) => (
+    warning.code === "textract_partial_success"
+      && warning.message.includes("Page 2 could not be processed")
+  )))
+  assert.ok(extracted.warnings?.some((warning) => (
+    warning.code === "textract_service_warning" && warning.page === 2 && warning.severity === "error"
+  )))
+  assert.ok(extracted.warnings?.some((warning) => (
+    warning.code === "textract_page_text_missing" && warning.page === 2 && warning.severity === "error"
+  )))
+})
+
+test("FR-082 DOCX blocks retain section and character-span locators", () => {
+  const blocks = docxHtmlToStructuredBlocks(
+    "<h1>運用手順</h1><p>申請します。</p><h2>承認</h2><li>上長が確認します。</li><li>監査者が確認します。</li>",
+    "docx-test-v1"
+  )
+
+  assert.deepEqual(blocks[1]?.sectionPath, ["運用手順"])
+  assert.deepEqual(blocks[2]?.sourceLocation?.sectionPath, ["運用手順", "承認"])
+  assert.equal(blocks[1]?.sourceLocation?.source, "docx")
+  assert.equal(blocks[1]?.sourceLocation?.sourceBlockId, blocks[1]?.id)
+  assert.ok((blocks[1]?.sourceLocation?.endChar ?? 0) > (blocks[1]?.sourceLocation?.startChar ?? 0))
+  assert.equal(blocks[3]?.kind, "list")
+  assert.ok((blocks[3]?.sourceLocation?.endChar ?? 0) > (blocks[3]?.sourceLocation?.startChar ?? 0))
+})
+
+test("FR-082 structured truncation identifies the affected section and narrows the retained locator", () => {
+  const text = "x".repeat(config.maxUploadChars + 17)
+  const limited = limitDocument({
+    text,
+    sourceExtractorVersion: "structured-test-v1",
+    blocks: [{
+      id: "block-1",
+      kind: "text",
+      text,
+      sectionPath: ["大量データ", "明細"],
+      sourceBlockId: "source-block-1",
+      sourceLocation: {
+        source: "docx",
+        sectionPath: ["大量データ", "明細"],
+        startChar: 0,
+        endChar: text.length,
+        sourceBlockId: "source-block-1"
+      }
+    }]
+  })
+
+  const warning = limited.warnings?.find((candidate) => candidate.code === "extraction_content_truncated")
+  assert.deepEqual(warning?.sectionPath, ["大量データ", "明細"])
+  assert.equal(warning?.sourceBlockId, "source-block-1")
+  assert.equal(limited.blocks?.[0]?.sourceLocation?.endChar, config.maxUploadChars)
+  assert.equal(limited.parsedDocument?.blocks?.[0]?.sourceLocation?.endChar, config.maxUploadChars)
 })
 
 test("upload extraction parses Textract JSON tables and lines into structured blocks", async () => {
@@ -260,6 +384,7 @@ test("upload extraction parses Textract JSON tables and lines into structured bl
   assert.equal(table?.confidence, 88)
   assert.equal(extracted.blocks?.find((block) => block.id === "table-1")?.tableId, "table-1")
   assert.equal(extracted.blocks?.find((block) => block.id === "line-2")?.figureId, "line-2")
+  assert.equal(extracted.blocks?.find((block) => block.id === "line-2")?.sourceLocation?.sourceBlockId, "line-2")
   assert.deepEqual(extracted.blocks?.find((block) => block.id === "line-2")?.bbox, { unit: "normalized_page", x: 0.1, y: 0.2, width: 0.3, height: 0.4 })
 })
 
@@ -273,8 +398,11 @@ test("upload extraction handles PDF embedded text and OCR fallback outcomes", as
       throw new Error("OCR should not run when embedded text is usable")
     }
   })
-  assert.equal(embedded.sourceExtractorVersion, "pdf-layout-v2")
+  assert.equal(embedded.sourceExtractorVersion, "pdf-layout-v3")
   assert.equal(embedded.text, "申請期限は翌月5営業日です。")
+  assert.equal(embedded.blocks?.[0]?.pageStart, 1)
+  assert.equal(embedded.blocks?.[0]?.sourceLocation?.source, "pdf-native")
+  assert.equal(embedded.blocks?.[0]?.sourceLocation?.sourceBlockId, embedded.blocks?.[0]?.id)
 
   const noFallback = await extractDocumentFromUpload({
     fileName: "policy.pdf",
@@ -283,8 +411,17 @@ test("upload extraction handles PDF embedded text and OCR fallback outcomes", as
     pdfTextExtractor: async () => "   ",
     ocrDetector: async () => undefined
   })
-  assert.equal(noFallback.sourceExtractorVersion, "pdf-layout-v2")
+  assert.equal(noFallback.sourceExtractorVersion, "pdf-layout-v3")
   assert.equal(noFallback.text, "")
+
+  await assert.rejects(() => extractDocumentFromUpload({
+    fileName: "guarded-policy.pdf",
+    contentBytes: Buffer.from("%PDF-1.4 scanned sample"),
+    mimeType: "application/pdf",
+    pdfTextExtractor: async () => "   ",
+    ocrDetector: async () => ({ text: "must not be reached", sourceExtractorVersion: "ocr-test-v1" }),
+    enforceObservedFallbackGuards: true
+  }), /mandatory guard outcomes were not observed/)
 
   let fallbackCalled = false
   const extracted = await extractDocumentFromUpload({
@@ -321,6 +458,10 @@ test("upload extraction handles PDF embedded text and OCR fallback outcomes", as
   assert.equal(extracted.sourceExtractorVersion, "textract-detect-document-text-v1")
   assert.equal(extracted.text, "食品表示基準について")
   assert.equal(extracted.blocks?.[0]?.pageStart, 1)
+  const ocrFallback = extracted.warnings?.find((warning) => warning.code === "pdf_ocr_fallback")
+  assert.equal(ocrFallback?.degradationDecision?.stage, "pdf_ocr_fallback")
+  assert.equal(ocrFallback?.degradationDecision?.safeToReturnContent, false)
+  assert.ok((ocrFallback?.degradationDecision?.missingGuards.length ?? 0) > 0)
 
   await assert.rejects(
     () => extractDocumentFromUpload({
@@ -334,6 +475,111 @@ test("upload extraction handles PDF embedded text and OCR fallback outcomes", as
     }),
     /textract unavailable/
   )
+})
+
+test("FR-082 a two-page scanned PDF with OCR text only on page one is partial with page-two loss", async () => {
+  const extracted = await extractDocumentFromUpload({
+    fileName: "two-page-scan.pdf",
+    contentBytes: buildNativeTextPdf([[], []]),
+    mimeType: "application/pdf",
+    ocrDetector: async () => ({
+      text: "Page one OCR text",
+      sourceExtractorVersion: "textract-detect-document-text-v1",
+      blocks: [{
+        id: "line-1",
+        kind: "text",
+        text: "Page one OCR text",
+        pageStart: 1,
+        pageEnd: 1,
+        sourceBlockId: "line-1",
+        normalizedFrom: "textract-line",
+        extractionMethod: "textract-detect-document-text-v1"
+      }]
+    })
+  })
+
+  assert.equal(extracted.extractionStatus, "partial")
+  assert.equal(extracted.counters?.pdfExpectedPageCount, 2)
+  assert.equal(extracted.counters?.pdfOcrObservedPageCount, 1)
+  assert.equal(extracted.counters?.pdfOcrMissingPageCount, 1)
+  assert.deepEqual(extracted.parsedDocument?.pages?.map((page) => page.pageNumber), [1, 2])
+  assert.ok(extracted.warnings?.some((warning) => (
+    warning.code === "pdf_ocr_page_text_missing"
+      && warning.severity === "error"
+      && warning.page === 2
+      && warning.pageStart === 2
+      && warning.pageEnd === 2
+  )))
+})
+
+test("FR-082 native PDF blocks retain page, block, and character-span locators", async () => {
+  const extracted = await extractDocumentFromUpload({
+    fileName: "policy.pdf",
+    contentBytes: Buffer.from("%PDF-1.4 native text"),
+    mimeType: "application/pdf",
+    pdfTextExtractor: async () => "第1章 方針\n\n申請期限です。\f第2章 例外\n\n承認が必要です。"
+  })
+
+  assert.equal(extracted.sourceExtractorVersion, "pdf-layout-v3")
+  assert.equal(extracted.blocks?.length, 4)
+  assert.deepEqual(extracted.blocks?.map((block) => block.pageStart), [1, 1, 2, 2])
+  assert.deepEqual(extracted.blocks?.map((block) => block.sectionPath), [["方針"], ["方針"], ["例外"], ["例外"]])
+  for (const block of extracted.blocks ?? []) {
+    assert.equal(block.pageStart, block.sourceLocation?.page)
+    assert.equal(block.sourceBlockId, block.sourceLocation?.sourceBlockId)
+    assert.equal(extracted.text.slice(block.sourceLocation?.startChar, block.sourceLocation?.endChar), block.text)
+  }
+})
+
+test("FR-082 production PDF selection preserves pdftotext page boundaries on equal native quality", () => {
+  const parsed = "第一頁の本文\n第二頁の本文"
+  const layout = "第一頁の本文\f第二頁の本文"
+  assert.equal(selectNativePdfText(parsed, layout), layout)
+  assert.equal(selectNativePdfText(parsed, ""), parsed)
+})
+
+test("FR-082 production PDF parser preserves two real native pages, locators, and inherited sections", async () => {
+  const extracted = await extractDocumentFromUpload({
+    fileName: "two-page-policy.pdf",
+    contentBytes: buildNativeTextPdf([
+      ["1. Policy", "Deadline applies."],
+      ["2. Exception", "Approval is required."]
+    ]),
+    mimeType: "application/pdf"
+  })
+
+  assert.equal(extracted.extractionStatus, "complete")
+  assert.deepEqual(extracted.blocks?.map((block) => block.pageStart), [1, 1, 2, 2])
+  assert.deepEqual(extracted.blocks?.map((block) => block.sectionPath), [["Policy"], ["Policy"], ["Exception"], ["Exception"]])
+  for (const block of extracted.blocks ?? []) {
+    assert.equal(block.pageStart, block.sourceLocation?.page)
+    assert.equal(block.pageEnd, block.sourceLocation?.pageEnd)
+    assert.equal(block.sourceBlockId, block.sourceLocation?.sourceBlockId)
+    assert.equal(extracted.text.slice(block.sourceLocation?.startChar, block.sourceLocation?.endChar), block.text)
+  }
+})
+
+test("FR-082 production PDF parser marks a mixed native/empty PDF partial with the missing page locator", async () => {
+  const extracted = await extractDocumentFromUpload({
+    fileName: "mixed-policy.pdf",
+    contentBytes: buildNativeTextPdf([
+      ["1. Policy", "Native text remains available."],
+      []
+    ]),
+    mimeType: "application/pdf"
+  })
+
+  assert.equal(extracted.fileProfile, "mixed")
+  assert.equal(extracted.extractionStatus, "partial")
+  assert.equal(extracted.counters?.pdfNativePageCount, 2)
+  assert.equal(extracted.counters?.pdfNativeEmptyPageCount, 1)
+  assert.ok(extracted.warnings?.some((warning) => (
+    warning.code === "pdf_native_page_text_missing"
+      && warning.severity === "error"
+      && warning.page === 2
+      && warning.pageStart === 2
+      && warning.pageEnd === 2
+  )))
 })
 
 test("json parser accepts raw JSON, fenced JSON, embedded JSON, and invalid inputs", () => {
@@ -471,6 +717,9 @@ test("agent utility helpers normalize citations, clues, tokens, ranges, and trac
       regionId: "s02-titleblock-001",
       regionType: "titleblock",
       sourceType: "titleblock_ocr",
+      evidenceRole: "background",
+      authorityStatus: "unknown",
+      sourceLocator: undefined,
       bbox: { unit: "normalized_page", x: 0.55, y: 0.72, width: 0.45, height: 0.28 },
       score: 0.1235,
       text: "body"

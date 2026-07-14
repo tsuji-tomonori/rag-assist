@@ -67,7 +67,7 @@
 | 検証可能性 | OK | forged filter、claim 欠損、worker context の否定試験で確認する |
 | ニーズ適合 | OK | 利用者が許可された tenant・role・group の範囲だけで資源を利用できる |
 | 原子性 | OK | 認可文脈の源泉だけを規定する |
-| 実装適合 | NG | `apps/api/src/auth.ts:7-12,51-56`、`hybrid-retriever.ts:173-180` |
+| 実装適合 | OK（confirmed） | `resolveVerifiedAppUser` が current identity/account/tenant/role/group を server-side で再構築し、`auth.test.ts` が forged/missing/inactive context を既定拒否する |
 | 合意 | pending | authoritative tenant source は未確定 |
 
 ## トレース

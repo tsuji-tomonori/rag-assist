@@ -6,6 +6,7 @@ export function ConfirmDialog({
   rows,
   confirmLabel,
   loading = false,
+  confirmDisabled = false,
   errorMessage,
   danger = false,
   onCancel,
@@ -17,6 +18,7 @@ export function ConfirmDialog({
   rows?: Array<{ label: string; value: string }>
   confirmLabel: string
   loading?: boolean
+  confirmDisabled?: boolean
   errorMessage?: string | null
   danger?: boolean
   onCancel: () => void
@@ -103,7 +105,7 @@ export function ConfirmDialog({
         {errorMessage && <p id={errorId} className="confirm-dialog-error" role="alert">{errorMessage}</p>}
         <div className="confirm-dialog-actions">
           <button ref={cancelButtonRef} type="button" onClick={onCancel} disabled={busy}>キャンセル</button>
-          <button type="button" className={danger ? "danger" : ""} onClick={() => void confirm()} disabled={busy}>
+          <button type="button" className={danger ? "danger" : ""} onClick={() => void confirm()} disabled={busy || confirmDisabled}>
             {busy ? "処理中" : confirmLabel}
           </button>
         </div>

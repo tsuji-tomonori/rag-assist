@@ -60,7 +60,7 @@
 | 実現可能性 | OK | load/soak suite と stage trace で測定可能 |
 | 検証可能性 | OK | approved/mismatched workload の比較試験 |
 | ニーズ適合 | OK | 利用者の対話待ち時間と運用者の取り込み計画に対応する |
-| 実装適合 | partial | timeout は一部あるが versioned SLO profile は不足 |
+| 実装適合 | OK（measurement contract、閾値未承認） | corpus/ACL/concurrency/document-size/dependency-latency dimensions と chat/search/ingest stage 別 p50/p95/p99/sample gate を実装し、dimension/stage 欠損を unavailable にする |
 
 ## トレース
 

@@ -13,6 +13,23 @@ export type ManagedUser = {
   lastLoginAt?: string
 }
 
+export type ManagedUserDeletionPreflight = {
+  targetUserId: string
+  requiresSuccessor: boolean
+  ownedResources: {
+    folders: number
+    resourceGroups: number
+    documents: number
+    total: number
+  }
+  eligibleSuccessors: Array<{
+    userId: string
+    email: string
+    displayName?: string
+    status: "active"
+  }>
+}
+
 export type ManagedUserAuditAction = "user:create" | "role:assign" | "user:suspend" | "user:unsuspend" | "user:delete"
 
 export type ManagedUserAuditLogEntry = {
@@ -38,12 +55,14 @@ export type UserUsageSummary = {
   userId: string
   email: string
   displayName?: string
-  chatMessages: number
-  conversationCount: number
-  questionCount: number
-  documentCount: number
-  benchmarkRunCount: number
-  debugRunCount: number
+  chatMessages?: number
+  conversationCount?: number
+  questionCount?: number
+  documentCount?: number
+  benchmarkRunCount?: number
+  debugRunCount?: number
+  availableMetrics: Array<"chatMessages" | "conversationCount" | "questionCount" | "documentCount" | "benchmarkRunCount" | "debugRunCount">
+  unavailableMetrics: Array<"chatMessages" | "conversationCount" | "questionCount" | "documentCount" | "benchmarkRunCount" | "debugRunCount">
   lastActivityAt?: string
 }
 
@@ -64,13 +83,15 @@ export type UserCostSummary = {
 }
 
 export type CostAuditSummary = {
+  available: boolean
+  unavailableReason?: string
   periodStart: string
   periodEnd: string
-  currency: "USD"
-  totalEstimatedUsd: number
-  items: CostAuditItem[]
-  users: UserCostSummary[]
-  pricingCatalogUpdatedAt: string
+  currency?: "USD"
+  totalEstimatedUsd?: number
+  items?: CostAuditItem[]
+  users?: UserCostSummary[]
+  pricingCatalogUpdatedAt?: string
 }
 
 export type AliasDefinition = {

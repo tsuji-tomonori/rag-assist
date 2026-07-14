@@ -67,7 +67,7 @@
 | 検証可能性 | OK | version/time/source-priority/conflict dataset と citation locator assertion で確認できる |
 | ニーズ適合 | OK | 利用者が適用時点と矛盾を把握した根拠付き回答または正直な保留を得られる |
 | 原子性 | OK | final evidence set の情報保持を規定する |
-| 実装適合 | partial | citation/support gate はあるが authority/time/conflict contract は限定的 |
+| 実装適合 | OK（confirmed） | `final-evidence-set.ts` が evidence role/version/effective period/locator/current authorization を保持し、同格 conflict を refusal/clarification へ送る direct tests を持つ |
 | 合意 | pending | source priority と業務基準日時が未確定 |
 
 ## トレース

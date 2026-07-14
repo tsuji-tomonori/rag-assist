@@ -60,7 +60,7 @@
 | 実現可能性 | OK | versioned benchmark manifest で評価可能 |
 | 検証可能性 | OK | missing metric、failed slice、unapproved threshold の否定試験 |
 | ニーズ適合 | OK | 利用者が必要とする検索・根拠・引用・回答判断を同時に守る |
-| 実装適合 | partial | 一部 metric はあるが executable gate/slice 完備ではない |
+| 実装適合 | OK（gate contract、閾値未承認） | question/tenant-role/OCR/language/multi-evidence/answerability/severity の case slice と全必須 stage/slice gate を実装し、missing/unapproved/non-regression/baseline 欠損を独立 fail にする |
 
 ## トレース
 

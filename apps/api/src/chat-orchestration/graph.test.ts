@@ -20,9 +20,9 @@ import { LocalGroupMembershipStore } from "../adapters/local-group-membership-st
 import { LocalVectorStore } from "../adapters/local-vector-store.js"
 import { MockBedrockTextModel } from "../adapters/mock-bedrock.js"
 import { MemoRagService } from "../rag/memorag-service.js"
-import { applyChatOrchestrationUpdate } from "./graph.js"
+import { answerReplayCandidateCounts, answerReplayDecision, applyChatOrchestrationUpdate, runChatOrchestration } from "./graph.js"
 import type { ChatOrchestrationState } from "./state.js"
-import type { DebugStep } from "../types.js"
+import type { DebugStep, DebugTrace } from "../types.js"
 
 test("fixed MemoRAG workflow answers from selected evidence and records fixed trace steps", async () => {
   const service = new MemoRagService(await createTestDeps())
@@ -60,32 +60,28 @@ test("fixed MemoRAG workflow answers from selected evidence and records fixed tr
       "clarification_gate",
       "evaluate_search_progress",
       "rerank_chunks",
+      "reauthorize_evidence",
       "answerability_gate",
       "sufficient_context_gate",
       "generate_answer",
+      "reauthorize_evidence",
       "validate_citations",
       "verify_answer_support",
+      "reauthorize_evidence",
       "finalize_response"
     ]
   )
   const planStep = result.debug?.steps.find((step) => step.label === "plan_search")
   const actionStep = result.debug?.steps.find((step) => step.label === "execute_search_action")
-  assert.match(planStep?.detail ?? "", /requiredFacts:/)
-  assert.match(planStep?.detail ?? "", /actions:/)
-  assert.match(actionStep?.detail ?? "", /action=evidence_search/)
-  assert.match(actionStep?.detail ?? "", /newEvidenceCount=/)
-  assert.match(actionStep?.detail ?? "", /retrievalDiagnostics:/)
-  assert.match(actionStep?.detail ?? "", /lexicalCount=/)
-  assert.match(actionStep?.detail ?? "", /sources=lexical:/)
+  assertSafeDebugStep(planStep, "plan_search")
+  assertSafeDebugStep(actionStep, "execute_search_action")
   const sufficientContextStep = result.debug?.steps.find((step) => step.label === "sufficient_context_gate")
-  assert.match(sufficientContextStep?.detail ?? "", /label=ANSWERABLE/)
-  assert.match(sufficientContextStep?.detail ?? "", /supportingChunkIds:/)
+  assertSafeDebugStep(sufficientContextStep, "sufficient_context_gate")
   const retrievalStep = result.debug?.steps.find((step) => step.label === "retrieval_evaluator")
-  assert.match(retrievalStep?.detail ?? "", /retrievalQuality=sufficient/)
-  assert.match(retrievalStep?.detail ?? "", /nextAction=rerank/)
+  assertSafeDebugStep(retrievalStep, "retrieval_evaluator")
   const supportStep = result.debug?.steps.find((step) => step.label === "verify_answer_support")
-  assert.match(supportStep?.detail ?? "", /supported=true/)
-  assert.deepEqual(supportStep?.output?.answerSupport && typeof supportStep.output.answerSupport === "object" ? (supportStep.output.answerSupport as Record<string, unknown>).unsupportedSentences : undefined, [])
+  assertSafeDebugStep(supportStep, "verify_answer_support")
+  assertSanitizedDebugTrace(result.debug)
 })
 
 test("fixed MemoRAG workflow clamps minScore before debug trace persistence", async () => {
@@ -106,9 +102,144 @@ test("fixed MemoRAG workflow clamps minScore before debug trace persistence", as
   assert.equal(result.debug?.minScore, 1)
 })
 
+test("FR-074 answer replay carries measured pre/post authorization candidate counts", async () => {
+  const deps = await createTestDeps()
+  const service = new MemoRagService(deps)
+  const reader = {
+    userId: "answer-trace-reader",
+    email: "answer-trace-reader@example.com",
+    cognitoGroups: ["CHAT_USER"],
+    accountStatus: "active" as const,
+    tenantId: "default"
+  }
+  const manifest = await service.ingest({
+    fileName: "reader-policy.txt",
+    text: "orchard access review requires the approved reader policy.",
+    skipMemory: true,
+    metadata: { tenantId: "default", ownerUserId: reader.userId, allowedUsers: [reader.userId] }
+  })
+  let protectedReadCount = 0
+  const result = await runChatOrchestration(deps, {
+    question: "What does the orchard access review require?",
+    includeDebug: true,
+    useMemory: false,
+    minScore: 0.01,
+    maxIterations: 1
+  }, reader, {
+    emit: async () => undefined,
+    authorizeProtectedRead: async () => {
+      protectedReadCount += 1
+      if (protectedReadCount !== 3) return
+      const current = JSON.parse(await deps.objectStore.getText(manifest.manifestObjectKey)) as Record<string, unknown>
+      const metadata = current.metadata as Record<string, unknown> | undefined
+      await deps.objectStore.putText(manifest.manifestObjectKey, JSON.stringify({
+        ...current,
+        metadata: {
+          ...metadata,
+          ownerUserId: "another-user",
+          allowedUsers: ["another-user"]
+        }
+      }), "application/json")
+    }
+  })
+
+  assert.ok(result.debug)
+  const searchTraces = (await Promise.all(
+    (result.debug?.parentTraceIds ?? []).map((traceId) => service.getDebugRun(traceId))
+  )).filter((trace): trace is DebugTrace => trace?.targetType === "rag_run" && trace.runId.startsWith("search_"))
+  const measuredCandidateCount = searchTraces.reduce((sum, trace) => sum + (trace.decision?.candidateCount ?? 0), 0)
+  const measuredDeniedCandidateCount = searchTraces.reduce((sum, trace) => sum + (trace.decision?.deniedCandidateCount ?? 0), 0)
+  assert.ok(measuredCandidateCount > 0)
+  assert.equal(measuredDeniedCandidateCount, 0)
+  assert.equal(result.debug?.decision?.candidateCount, measuredCandidateCount)
+  assert.equal(result.debug?.decision?.deniedCandidateCount, measuredDeniedCandidateCount + 1)
+  assert.equal(result.debug?.decision?.finalEvidenceCount, 0)
+  assert.equal(result.debug?.decision?.decisionCode, "rejected")
+  assert.deepEqual(result.debug?.decision?.reasonCodes, ["permission_revoked"])
+})
+
+test("FR-074 answer replay derives canonical failure decisions without exposing raw error content", () => {
+  const authorizationDecision = answerReplayDecision(state({
+    answerability: { isAnswerable: false, reason: "authorization_revoked", confidence: 1 }
+  }), false, false)
+  assert.deepEqual(authorizationDecision, {
+    decisionCode: "rejected",
+    reasonCodes: ["permission_revoked"]
+  })
+
+  const dependencyDecision = answerReplayDecision(state({
+    trace: [{
+      ...debugStep(1, "generate_answer"),
+      status: "error",
+      detail: "Bearer raw-secret-must-not-leak",
+      output: { error: "Bearer raw-secret-must-not-leak" },
+      degradationDecision: {
+        policyVersion: "rag-safe-degradation-v1",
+        trigger: "timeout",
+        stage: "generate_answer",
+        action: "refuse",
+        enforcedGuards: [],
+        missingGuards: [],
+        safeToReturnContent: false,
+        guardOutcomes: []
+      }
+    } as unknown as DebugStep]
+  }), false, false)
+  assert.deepEqual(dependencyDecision, {
+    decisionCode: "failed",
+    reasonCodes: ["dependency_error"]
+  })
+  assert.doesNotMatch(JSON.stringify(dependencyDecision), /raw-secret-must-not-leak/)
+})
+
+test("FR-074 answer dependency failure persists only canonical failure codes", async () => {
+  const deps = await createTestDeps()
+  const service = new MemoRagService(deps)
+  await service.ingest({
+    fileName: "dependency-failure-policy.txt",
+    text: "Dependency failure answers must persist canonical replay decisions.",
+    skipMemory: true
+  })
+  deps.textModel = new MockBedrockTextModel({
+    generate: new Error("Bearer dependency-raw-canary-must-not-leak")
+  })
+
+  const result = await service.chat({
+    question: "How are dependency failures recorded?",
+    includeDebug: true,
+    useMemory: false,
+    minScore: 0.01,
+    maxIterations: 1
+  })
+
+  assert.equal(result.debug?.decision?.responseStatus, "error")
+  assert.equal(result.debug?.decision?.decisionCode, "failed")
+  assert.deepEqual(result.debug?.decision?.reasonCodes, ["dependency_error"])
+  assert.doesNotMatch(JSON.stringify(result.debug), /dependency-raw-canary-must-not-leak/)
+})
+
+test("FR-074 answer replay adds late current-authorization denials to measured search diagnostics", () => {
+  const firstDiagnostics = replayDiagnostics(5, 2)
+  const secondDiagnostics = replayDiagnostics(4, 1)
+  const counts = answerReplayCandidateCounts(state({
+    actionHistory: [
+      { action: { type: "evidence_search", query: "first", topK: 4 }, hitCount: 3, newEvidenceCount: 3, retrievalDiagnostics: firstDiagnostics, summary: "first" },
+      { action: { type: "evidence_search", query: "second", topK: 4 }, hitCount: 3, newEvidenceCount: 2, retrievalDiagnostics: secondDiagnostics, summary: "second" }
+    ],
+    retrievalDiagnostics: { ...secondDiagnostics, deniedCandidateCount: 2 }
+  }), 5)
+
+  assert.deepEqual(counts, { candidateCount: 9, deniedCandidateCount: 4 })
+})
+
 test("benchmark search filters keep agent retrieval scoped to isolated benchmark corpus", async () => {
   const service = new MemoRagService(await createTestDeps())
-  const runner = { userId: "benchmark-runner", cognitoGroups: ["BENCHMARK_RUNNER"] }
+  const runner = {
+    userId: "local-dev",
+    cognitoGroups: ["BENCHMARK_RUNNER"],
+    accountStatus: "active" as const,
+    tenantId: "default"
+  }
 
   await service.ingest({
     fileName: "software_requirements_chapter01_ja_A4_final.tex",
@@ -179,7 +310,7 @@ test("benchmark search filters keep agent retrieval scoped to isolated benchmark
   const labels = result.debug?.steps.map((step) => step.label) ?? []
   assert.equal(labels.filter((label) => label === "execute_search_action").length, 2)
   assert.equal(labels.filter((label) => label === "execute_search_action").length < 3, true)
-  assert.match(result.debug?.steps.find((step) => step.label === "sufficient_context_gate")?.detail ?? "", /label=ANSWERABLE/)
+  assertSafeDebugStep(result.debug?.steps.find((step) => step.label === "sufficient_context_gate"), "sufficient_context_gate")
 })
 
 test("fixed workflow executes nodes in the declared order", async () => {
@@ -215,11 +346,14 @@ test("fixed workflow executes nodes in the declared order", async () => {
       "clarification_gate",
       "evaluate_search_progress",
       "rerank_chunks",
+      "reauthorize_evidence",
       "answerability_gate",
       "sufficient_context_gate",
       "generate_answer",
+      "reauthorize_evidence",
       "validate_citations",
       "verify_answer_support",
+      "reauthorize_evidence",
       "finalize_response"
     ]
   )
@@ -254,12 +388,9 @@ test("fixed workflow answers explicit temporal calculations from computed facts 
     ]
   )
   const computationStep = result.debug?.steps.find((step) => step.label === "execute_computation_tools")
-  const computedFacts = computationStep?.output?.computedFacts as Array<Record<string, unknown>> | undefined
-  assert.equal(computedFacts?.[0]?.kind, "days_until")
-  assert.equal(computedFacts?.[0]?.daysRemaining, 7)
+  assertSafeDebugStep(computationStep, "execute_computation_tools")
   const supportStep = result.debug?.steps.find((step) => step.label === "verify_answer_support")
-  const answerSupport = supportStep?.output?.answerSupport as Record<string, unknown> | undefined
-  assert.deepEqual(answerSupport?.supportingComputedFactIds, ["date-001"])
+  assertSafeDebugStep(supportStep, "verify_answer_support")
 })
 
 test("fixed workflow uses injected asOfDate for test and benchmark temporal contexts", async () => {
@@ -275,9 +406,7 @@ test("fixed workflow uses injected asOfDate for test and benchmark temporal cont
   assert.equal(result.isAnswerable, true)
   assert.match(result.answer, /7日/)
   const temporalStep = result.debug?.steps.find((step) => step.label === "build_temporal_context")
-  const temporalContext = temporalStep?.output?.temporalContext as Record<string, unknown> | undefined
-  assert.equal(temporalContext?.today, "2026-05-03")
-  assert.equal(temporalContext?.source, "test")
+  assertSafeDebugStep(temporalStep, "build_temporal_context")
 })
 
 test("fixed workflow fails fast for invalid injected asOfDate before retrieval", async () => {
@@ -302,10 +431,7 @@ test("fixed workflow fails fast for invalid injected asOfDate before retrieval",
   assert.equal(result.debug?.steps.some((step) => step.label === "retrieve_memory"), false)
   assert.equal(result.debug?.steps.some((step) => step.label === "execute_search_action"), false)
   const temporalStep = result.debug?.steps.find((step) => step.label === "build_temporal_context")
-  assert.equal(temporalStep?.status, "error")
-  assert.match(temporalStep?.detail ?? "", /Invalid asOfDate/)
-  const answerability = temporalStep?.output?.answerability as Record<string, unknown> | undefined
-  assert.equal(answerability?.reason, "invalid_temporal_context")
+  assertSafeDebugStep(temporalStep, "build_temporal_context", "error")
 })
 
 test("fixed workflow answers polite current date questions from temporal context", async () => {
@@ -321,8 +447,7 @@ test("fixed workflow answers polite current date questions from temporal context
   assert.equal(result.isAnswerable, true)
   assert.match(result.answer, /2026-05-03/)
   const computationStep = result.debug?.steps.find((step) => step.label === "execute_computation_tools")
-  const computedFacts = computationStep?.output?.computedFacts as Array<Record<string, unknown>> | undefined
-  assert.equal(computedFacts?.[0]?.kind, "current_date")
+  assertSafeDebugStep(computationStep, "execute_computation_tools")
   assert.equal(result.debug?.steps.some((step) => step.label === "retrieve_memory"), false)
 })
 
@@ -412,15 +537,9 @@ test("fixed workflow answers document-grounded threshold comparison questions", 
   assert.match(result.answer, /該当しません|必要条件に該当しません/)
   assert.ok(result.citations.length > 0)
   const extractionStep = result.debug?.steps.find((step) => step.label === "extract_policy_computations")
-  const computedFacts = extractionStep?.output?.computedFacts as Array<Record<string, unknown>> | undefined
-  assert.equal(computedFacts?.[0]?.kind, "threshold_comparison")
-  assert.equal(computedFacts?.[0]?.source, "llm_policy_extraction")
-  assert.equal(computedFacts?.[0]?.questionAmount, 5200)
-  assert.equal(computedFacts?.[0]?.thresholdAmount, 10000)
-  assert.equal(computedFacts?.[0]?.satisfiesCondition, false)
+  assertSafeDebugStep(extractionStep, "extract_policy_computations")
   const supportStep = result.debug?.steps.find((step) => step.label === "verify_answer_support")
-  const answerSupport = supportStep?.output?.answerSupport as Record<string, unknown> | undefined
-  assert.deepEqual(answerSupport?.supportingComputedFactIds, ["threshold-001"])
+  assertSafeDebugStep(supportStep, "verify_answer_support")
 })
 
 test("fixed workflow keeps not-required threshold rules from becoming required answers", async () => {
@@ -443,10 +562,7 @@ test("fixed workflow keeps not-required threshold rules from becoming required a
   assert.match(result.answer, /不要/)
   assert.doesNotMatch(result.answer, /^必要です。/)
   const extractionStep = result.debug?.steps.find((step) => step.label === "extract_policy_computations")
-  const computedFacts = extractionStep?.output?.computedFacts as Array<Record<string, unknown>> | undefined
-  assert.equal(computedFacts?.[0]?.kind, "threshold_comparison")
-  assert.equal(computedFacts?.[0]?.effect, "not_required")
-  assert.equal(computedFacts?.[0]?.satisfiesCondition, true)
+  assertSafeDebugStep(extractionStep, "extract_policy_computations")
 })
 
 test("fixed workflow binds threshold polarity at clause level", async () => {
@@ -469,10 +585,7 @@ test("fixed workflow binds threshold polarity at clause level", async () => {
   assert.match(result.answer, /必要/)
   assert.doesNotMatch(result.answer, /^不要です。/)
   const extractionStep = result.debug?.steps.find((step) => step.label === "extract_policy_computations")
-  const computedFacts = extractionStep?.output?.computedFacts as Array<Record<string, unknown>> | undefined
-  assert.equal(computedFacts?.[0]?.kind, "threshold_comparison")
-  assert.equal(computedFacts?.[0]?.effect, "required")
-  assert.equal(computedFacts?.[0]?.satisfiesCondition, true)
+  assertSafeDebugStep(extractionStep, "extract_policy_computations")
 })
 
 test("fixed workflow answers self-contained arithmetic verification from computed facts", async () => {
@@ -486,8 +599,7 @@ test("fixed workflow answers self-contained arithmetic verification from compute
   assert.equal(result.isAnswerable, true)
   assert.match(result.answer, /216,000円|216000円/)
   const computationStep = result.debug?.steps.find((step) => step.label === "execute_computation_tools")
-  const computedFacts = computationStep?.output?.computedFacts as Array<Record<string, unknown>> | undefined
-  assert.equal(computedFacts?.[0]?.kind, "arithmetic")
+  assertSafeDebugStep(computationStep, "execute_computation_tools")
   assert.equal(result.debug?.steps.some((step) => step.label === "retrieve_memory"), false)
 })
 
@@ -624,7 +736,8 @@ test("fixed workflow branches on evaluate_search_progress decisions", async () =
   assert.equal(labels.at(-1), "finalize_refusal")
 
   const evaluationSteps = result.debug?.steps.filter((step) => step.label === "evaluate_search_progress") ?? []
-  assert.deepEqual(evaluationSteps.map((step) => step.output?.searchDecision), ["continue_search", "done"])
+  assert.equal(evaluationSteps.length, 2)
+  for (const step of evaluationSteps) assertSafeDebugStep(step, "evaluate_search_progress")
 })
 
 test("fixed workflow refuses unresolved conflicting evidence when search budget ends", async () => {
@@ -645,8 +758,7 @@ test("fixed workflow refuses unresolved conflicting evidence when search budget 
   assert.equal(result.answer, "資料からは回答できません。")
   assert.equal(labels.includes("generate_answer"), false)
   const evaluateStep = result.debug?.steps.find((step) => step.label === "evaluate_search_progress")
-  const evaluation = evaluateStep?.output?.retrievalEvaluation as Record<string, unknown> | undefined
-  assert.equal(evaluation?.retrievalQuality, "conflicting")
+  assertSafeDebugStep(evaluateStep, "evaluate_search_progress")
   assert.equal(result.debug?.steps.at(-1)?.label, "finalize_refusal")
 })
 
@@ -677,10 +789,8 @@ test("fixed workflow returns corpus-grounded clarification before answer generat
   assert.ok(labels.includes("execute_search_action"))
   assert.equal(labels.includes("generate_answer"), false)
   assert.equal(labels.at(-1), "finalize_clarification")
-  const clarificationStep = result.debug?.steps.find((step) => step.label === "clarification_gate" && step.output?.clarification)
-  assert.match(clarificationStep?.detail ?? "", /ambiguityScore=/)
-  assert.match(clarificationStep?.detail ?? "", /groundedOptionCount=/)
-  assert.match(clarificationStep?.detail ?? "", /rejectedOptions:/)
+  const clarificationStep = result.debug?.steps.filter((step) => step.label === "clarification_gate").at(-1)
+  assertSafeDebugStep(clarificationStep, "clarification_gate")
 })
 
 test("fixed workflow answers explicit scoped questions instead of clarifying from memory candidates", async () => {
@@ -702,7 +812,7 @@ test("fixed workflow answers explicit scoped questions instead of clarifying fro
   assert.match(result.answer, /30日以内/)
   assert.ok(result.retrieved.length > 0)
   const firstClarification = result.debug?.steps.find((step) => step.label === "clarification_gate")
-  assert.match(firstClarification?.detail ?? "", /needsClarification=false/)
+  assertSafeDebugStep(firstClarification, "clarification_gate")
 })
 
 test("fixed workflow answers parental leave deadline questions with abbreviation and start date", async () => {
@@ -728,9 +838,7 @@ test("fixed workflow answers parental leave deadline questions with abbreviation
   assert.equal(labels.at(-1), "finalize_response")
   assert.equal(labels.includes("finalize_clarification"), false)
   const computationStep = result.debug?.steps.find((step) => step.label === "execute_computation_tools")
-  const computedFacts = computationStep?.output?.computedFacts as Array<Record<string, unknown>> | undefined
-  assert.equal(computedFacts?.[0]?.kind, "relative_policy_deadline")
-  assert.equal(computedFacts?.[0]?.resultDate, "2026-07-01")
+  assertSafeDebugStep(computationStep, "execute_computation_tools")
 })
 
 test("fixed workflow derives relative policy deadlines for deadline wording variants without unavailable facts", async () => {
@@ -757,9 +865,7 @@ test("fixed workflow derives relative policy deadlines for deadline wording vari
     assert.equal(result.needsClarification, false)
     assert.match(result.answer, /2026-07-01|7月1日|7\/1/)
     const computationStep = result.debug?.steps.find((step) => step.label === "execute_computation_tools")
-    const computedFacts = computationStep?.output?.computedFacts as Array<Record<string, unknown>> | undefined
-    assert.deepEqual(computedFacts?.map((fact) => fact.kind), ["relative_policy_deadline"])
-    assert.equal(computedFacts?.[0]?.resultDate, "2026-07-01")
+    assertSafeDebugStep(computationStep, "execute_computation_tools")
   }
 })
 
@@ -802,7 +908,7 @@ test("fixed workflow appends multiple trace entries without replacing existing t
   )
 })
 
-test("fixed workflow debug trace keeps the full finalize response detail", async () => {
+test("fixed workflow returns the full answer while public debug redacts finalize response content", async () => {
   const deps = await createTestDeps()
   const baseTextModel = deps.textModel
   const longAnswer = `在宅勤務手当の申請期限は翌月5営業日までです。${"詳細説明。".repeat(220)}END_OF_FINALIZE_RESPONSE`
@@ -830,9 +936,9 @@ test("fixed workflow debug trace keeps the full finalize response detail", async
 
   const finalizeStep = result.debug?.steps.find((step) => step.label === "finalize_response")
   assert.equal(result.answer.endsWith("END_OF_FINALIZE_RESPONSE"), true)
-  assert.equal(result.debug?.answerPreview, longAnswer)
-  assert.equal(finalizeStep?.detail, longAnswer)
-  assert.deepEqual(finalizeStep?.output, { answer: longAnswer })
+  assert.equal(result.debug?.answerPreview, "[redacted:document-content]")
+  assertSafeDebugStep(finalizeStep, "finalize_response")
+  assert.doesNotMatch(JSON.stringify(result.debug), /END_OF_FINALIZE_RESPONSE/)
 })
 
 test("fixed MemoRAG workflow refuses before answer generation when evidence is missing", async () => {
@@ -851,10 +957,7 @@ test("fixed MemoRAG workflow refuses before answer generation when evidence is m
   assert.equal(result.debug.steps.some((step) => step.label === "generate_answer"), false)
   assert.equal(result.debug.steps.some((step) => step.label === "sufficient_context_gate"), false)
   assert.equal(result.debug.steps.at(-1)?.label, "finalize_refusal")
-  assert.deepEqual(result.debug.steps.at(-1)?.output, {
-    answer: "資料からは回答できません。",
-    citations: []
-  })
+  assertSafeDebugStep(result.debug.steps.at(-1), "finalize_refusal")
 })
 
 test("fixed workflow continues when sufficient context judge returns partial with supported primary evidence", async () => {
@@ -896,9 +999,7 @@ test("fixed workflow continues when sufficient context judge returns partial wit
   assert.notEqual(result.answer, "資料からは回答できません。")
   assert.equal(result.debug?.steps.some((step) => step.label === "generate_answer"), true)
   const gateStep = result.debug?.steps.find((step) => step.label === "sufficient_context_gate")
-  assert.match(gateStep?.detail ?? "", /label=PARTIAL/)
-  assert.match(gateStep?.detail ?? "", /例外承認者/)
-  assert.match(gateStep?.summary ?? "", /sufficient_context=PARTIAL/)
+  assertSafeDebugStep(gateStep, "sufficient_context_gate")
 })
 
 test("fixed workflow answers English ChatRAG VPN follow-up without refusal contamination", async () => {
@@ -925,7 +1026,12 @@ test("fixed workflow answers English ChatRAG VPN follow-up without refusal conta
     }
   })
 
-  const runner = { userId: "benchmark-runner", cognitoGroups: ["BENCHMARK_RUNNER"] }
+  const runner = {
+    userId: "local-dev",
+    cognitoGroups: ["BENCHMARK_RUNNER"],
+    accountStatus: "active" as const,
+    tenantId: "default"
+  }
   const first = await service.chat(
     {
       question: "Who can request VPN access?",
@@ -978,14 +1084,12 @@ test("fixed workflow answers English ChatRAG VPN follow-up without refusal conta
   assert.equal(second.debug?.steps.filter((step) => step.label === "execute_search_action").length, 1)
   assert.equal(second.debug?.steps.some((step) => step.label === "extract_policy_computations"), false)
   const clueStep = second.debug?.steps.find((step) => step.label === "generate_clues")
-  const clueOutput = clueStep?.output as { expandedQueries?: string[] } | undefined
-  assert.ok((clueOutput?.expandedQueries?.length ?? 99) <= 3)
+  assertSafeDebugStep(clueStep, "generate_clues")
   const actionStep = second.debug?.steps.find((step) => step.label === "execute_search_action")
-  assert.match(actionStep?.detail ?? "", /queries=[123]\b/)
+  assertSafeDebugStep(actionStep, "execute_search_action")
   const rewriteStep = second.debug?.steps.find((step) => step.label === "decontextualize_query")
-  assert.match(rewriteStep?.detail ?? "", /contractors/i)
-  assert.match(rewriteStep?.detail ?? "", /VPN access/i)
-  assert.doesNotMatch(rewriteStep?.detail ?? "", /資料|回答できません|Who can/)
+  assertSafeDebugStep(rewriteStep, "decontextualize_query")
+  assert.doesNotMatch(JSON.stringify(second.debug), /What about contractors|Who can request VPN access|sponsor review/)
 })
 
 async function createTestDeps(): Promise<Dependencies> {
@@ -1006,7 +1110,13 @@ async function createTestDeps(): Promise<Dependencies> {
     documentGroupStore: new LocalDocumentGroupStore(dataDir),
     folderPolicyStore: new LocalFolderPolicyStore(dataDir),
     userGroupStore: new LocalUserGroupStore(dataDir),
-    groupMembershipStore: new LocalGroupMembershipStore(dataDir)
+    groupMembershipStore: new LocalGroupMembershipStore(dataDir),
+    localTestIngestAdmissionContext: {
+      mode: "local_test_fixture",
+      fixtureId: "chat-orchestration-test",
+      tenantId: "default",
+      ownerUserId: "local-dev"
+    }
   }
 }
 
@@ -1036,11 +1146,8 @@ test("fixed workflow search cycle loops until maxIterations when retrieval score
   assert.equal(labels.at(-1), "finalize_refusal")
 
   const actionSteps = result.debug?.steps.filter((step) => step.label === "execute_search_action") ?? []
-  assert.match(actionSteps[0]?.summary ?? "", /action=evidence_search, hits=1, new=1/)
-  assert.match(actionSteps[0]?.detail ?? "", /newEvidenceCount=1 topScore=/)
-  assert.match(actionSteps[1]?.summary ?? "", /action=(query_rewrite|evidence_search), hits=1, new=0/)
-  assert.match(actionSteps[1]?.detail ?? "", /newEvidenceCount=0 topScore=/)
-  assert.match(actionSteps[1]?.detail ?? "", /hybrid検索で1件取得し、新規根拠は0件でした。/)
+  assert.equal(actionSteps.length, 2)
+  for (const step of actionSteps) assertSafeDebugStep(step, "execute_search_action")
 })
 
 test("fixed workflow search cycle stops after two consecutive no-new-evidence iterations", async () => {
@@ -1060,7 +1167,7 @@ test("fixed workflow search cycle stops after two consecutive no-new-evidence it
   assert.equal(labels.at(-1), "finalize_refusal")
 })
 
-test("fixed workflow search plan trace records complexity, facts, actions, and stop criteria from input", async () => {
+test("fixed workflow search plan trace retains safe status without exposing input or plan bodies", async () => {
   const service = new MemoRagService(await createTestDeps())
 
   await service.ingest({
@@ -1079,13 +1186,40 @@ test("fixed workflow search plan trace records complexity, facts, actions, and s
 
   const planStep = result.debug?.steps.find((step) => step.label === "plan_search")
 
-  assert.equal(planStep?.summary, "plan actions=1, facts=1")
-  assert.match(planStep?.detail ?? "", /complexity=procedure/)
-  assert.match(planStep?.detail ?? "", /intent=経費精算の申請手順と期限は/)
-  assert.match(planStep?.detail ?? "", /stop=maxIterations:2, minTopScore:0.07, minEvidenceCount:3, maxNoNewEvidenceStreak:2/)
-  assert.match(planStep?.detail ?? "", /- fact-1 priority=1 necessity=primary status=missing: .*経費精算.*申請手順.*期限/)
-  assert.match(planStep?.detail ?? "", /- evidence_search query="経費精算の申請手順と期限は" topK=3/)
+  assertSafeDebugStep(planStep, "plan_search")
+  assert.doesNotMatch(JSON.stringify(result.debug), /経費精算の申請手順と期限|complexity=procedure|requiredFacts/)
 })
+
+function assertSafeDebugStep(
+  step: DebugStep | undefined,
+  label: string,
+  expectedStatus?: DebugStep["status"]
+): asserts step is DebugStep {
+  assert.ok(step)
+  assert.equal(step.label, label)
+  if (expectedStatus) assert.equal(step.status, expectedStatus)
+  assert.equal(step.summary, `${step.label}:${step.status}`)
+  assert.equal(step.detail, undefined)
+  assert.equal(step.output, undefined)
+}
+
+function assertSanitizedDebugTrace(trace: DebugTrace | undefined): asserts trace is DebugTrace {
+  assert.ok(trace)
+  assert.equal(trace.visibility, "operator_sanitized")
+  assert.match(trace.question, /^sha256:[0-9a-f]{64}$/)
+  assert.equal(trace.answerPreview, "[redacted:document-content]")
+  assert.equal(trace.conversationHistory, undefined)
+  assert.equal(trace.conversation, undefined)
+  assert.equal(trace.conversationState, undefined)
+  assert.equal(trace.decontextualizedQuery, undefined)
+  assert.ok(trace.citations.every((citation) => citation.text === "[redacted:document-content]"))
+  assert.ok(trace.retrieved.every((citation) => citation.text === "[redacted:document-content]"))
+  assert.ok(trace.steps.every((step) => (
+    step.summary === `${step.label}:${step.status}` &&
+    step.detail === undefined &&
+    step.output === undefined
+  )))
+}
 
 function state(overrides: Partial<ChatOrchestrationState> = {}): ChatOrchestrationState {
   return {
@@ -1203,5 +1337,25 @@ function debugStep(id: number, label: string): DebugStep {
     summary: `${label} completed`,
     startedAt: "2026-05-02T00:00:00.000Z",
     completedAt: "2026-05-02T00:00:00.000Z"
+  }
+}
+
+function replayDiagnostics(candidateCount: number, deniedCandidateCount: number) {
+  return {
+    queryCount: 1,
+    traceIds: [],
+    indexVersions: ["index-v1"],
+    aliasVersions: ["alias-v1"],
+    lexicalCount: candidateCount,
+    semanticCount: 0,
+    fusedCount: candidateCount - deniedCandidateCount,
+    candidateCount,
+    deniedCandidateCount,
+    sourceCounts: {
+      lexical: candidateCount - deniedCandidateCount,
+      semantic: 0,
+      hybrid: 0,
+      memory: 0
+    }
   }
 }

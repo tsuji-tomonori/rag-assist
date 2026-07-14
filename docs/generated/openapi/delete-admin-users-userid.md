@@ -22,7 +22,9 @@ Summary: ユーザーを削除する
 
 ## Query Parameters
 
-_なし_
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `successorUserId` | `string` | no | `successorUserId` の値。項目名は successor user id を表します。 クエリ文字列で検索または一覧条件を指定します。 | minLength=1 |
 
 ## Data
 

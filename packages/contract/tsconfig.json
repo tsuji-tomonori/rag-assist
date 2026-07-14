@@ -9,5 +9,5 @@
     "declarationMap": true,
     "sourceMap": true
   },
-  "include": ["src/**/*.ts", "infra.d.ts"]
+  "include": ["src/**/*.ts", "*.d.ts"]
 }

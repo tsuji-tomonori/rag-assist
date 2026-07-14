@@ -101,7 +101,7 @@ test("search runner seeds benchmark corpus before search rows when configured", 
     assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`)
     assert.deepEqual(calls.map((call) => `${call.method} ${call.path}`), ["GET /documents", "DELETE /documents/stale-seed", "POST /documents", "POST /rpc/benchmark/search"])
     assert.equal((calls[2]?.body as { metadata?: { benchmarkSuiteId?: string } }).metadata?.benchmarkSuiteId, "standard-agent-v1")
-    assert.equal(unwrapRpcBody(calls[3]?.body)?.benchmarkSuiteId, "standard-agent-v1")
+    assert.equal(unwrapRpcBody(calls[3]?.body)?.suiteId, "standard-agent-v1")
     const summary = readSummary(paths.summary)
     assert.equal(summary.total, 1)
     assert.equal(summary.failures.length, 0)
@@ -220,7 +220,7 @@ async function readRequestJson(req: IncomingMessage): Promise<unknown> {
   return text ? JSON.parse(text) : undefined
 }
 
-function unwrapRpcBody(body: unknown): { benchmarkSuiteId?: string } | undefined {
-  if (typeof body === "object" && body !== null && "json" in body) return (body as { json?: { benchmarkSuiteId?: string } }).json
-  return body as { benchmarkSuiteId?: string } | undefined
+function unwrapRpcBody(body: unknown): { suiteId?: string } | undefined {
+  if (typeof body === "object" && body !== null && "json" in body) return (body as { json?: { suiteId?: string } }).json
+  return body as { suiteId?: string } | undefined
 }

@@ -5,7 +5,6 @@ export type UpdateDocumentGroupInput = Partial<Pick<
   DocumentGroup,
   | "schemaVersion"
   | "itemType"
-  | "tenantId"
   | "adminPrincipalType"
   | "adminPrincipalId"
   | "name"
@@ -28,10 +27,16 @@ export type UpdateDocumentGroupInput = Partial<Pick<
   | "effectivePermission"
   | "policySource"
   | "inheritedFromFolderId"
+  | "inheritedPolicyId"
+  | "inheritedPolicyVersion"
+  | "folderLocalPolicyVersion"
+  | "folderProjectionVersion"
+  | "folderMoveOperationId"
   | "updatedAt"
 >>
 
 export type DocumentGroupPathLock = {
+  tenantId: string
   groupId: string
   itemType: "documentGroupPathLock"
   adminPathPk: string
@@ -47,12 +52,12 @@ export type DocumentGroupPathUpdate = {
 }
 
 export interface DocumentGroupStore {
-  list(): Promise<DocumentGroup[]>
-  get(groupId: string): Promise<DocumentGroup | undefined>
+  list(tenantId: string): Promise<DocumentGroup[]>
+  get(tenantId: string, groupId: string): Promise<DocumentGroup | undefined>
   create(input: CreateDocumentGroupInput): Promise<DocumentGroup>
   createWithPathLock(input: CreateDocumentGroupInput): Promise<DocumentGroup>
-  update(groupId: string, input: UpdateDocumentGroupInput): Promise<DocumentGroup>
-  updateWithPathLocks(updates: DocumentGroupPathUpdate[]): Promise<DocumentGroup[]>
-  findByCanonicalPath(adminPathPk: string, normalizedCanonicalPath: string): Promise<DocumentGroup | undefined>
-  listByAdminPath(adminPathPk: string): Promise<DocumentGroup[]>
+  update(tenantId: string, groupId: string, input: UpdateDocumentGroupInput): Promise<DocumentGroup>
+  updateWithPathLocks(tenantId: string, updates: DocumentGroupPathUpdate[]): Promise<DocumentGroup[]>
+  findByCanonicalPath(tenantId: string, adminPathPk: string, normalizedCanonicalPath: string): Promise<DocumentGroup | undefined>
+  listByAdminPath(tenantId: string, adminPathPk: string): Promise<DocumentGroup[]>
 }

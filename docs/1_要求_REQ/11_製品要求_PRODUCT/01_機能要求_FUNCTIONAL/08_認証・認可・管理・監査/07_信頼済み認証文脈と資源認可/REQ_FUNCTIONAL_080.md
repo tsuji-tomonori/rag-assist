@@ -67,7 +67,7 @@
 | 検証可能性 | OK | grant/revoke × actor/target/tenant/self/last-admin の mutation matrix test へ変換できる |
 | ニーズ適合 | OK | 管理者が意図した role 変更を安全かつ実効状態へ反映できる |
 | 原子性 | OK | role mutation を許可・確定する単一 contract を規定する |
-| 実装適合 | NG/partial | ledger と Cognito/JWT の同期、revoke、last-admin guard が不足する |
+| 実装適合 | OK（confirmed） | `application-role-mutation-service.ts` が same-tenant/canonical/self/last-admin/reason/session revoke を一括 guard し、mutation tests が grant/revoke failure を検証する |
 | 合意 | pending | administrative recovery role と session revoke SLO を承認する必要がある |
 
 ## トレース

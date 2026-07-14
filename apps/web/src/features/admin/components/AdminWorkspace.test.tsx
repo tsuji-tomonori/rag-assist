@@ -76,10 +76,13 @@ const usageSummary: UserUsageSummary = {
   questionCount: 1,
   documentCount: 4,
   benchmarkRunCount: 0,
-  debugRunCount: 1
+  debugRunCount: 1,
+  availableMetrics: ["chatMessages", "conversationCount", "questionCount", "documentCount", "benchmarkRunCount", "debugRunCount"],
+  unavailableMetrics: []
 }
 
 const costAudit: CostAuditSummary = {
+  available: true,
   periodStart: "2026-05-01T00:00:00.000Z",
   periodEnd: "2026-05-31T00:00:00.000Z",
   currency: "USD",
@@ -140,6 +143,12 @@ function renderAdminWorkspace(overrides: Partial<Parameters<typeof AdminWorkspac
     onOpenBenchmark: vi.fn(),
     onCreateUser: vi.fn().mockResolvedValue(undefined),
     onAssignRoles: vi.fn().mockResolvedValue(undefined),
+    onPrepareUserDelete: vi.fn().mockResolvedValue({
+      targetUserId: "managed-1",
+      requiresSuccessor: false,
+      ownedResources: { folders: 0, resourceGroups: 0, documents: 0, total: 0 },
+      eligibleSuccessors: []
+    }),
     onSetUserStatus: vi.fn().mockResolvedValue(undefined),
     onRefreshAdminData: vi.fn().mockResolvedValue(undefined),
     onCreateAlias: vi.fn().mockResolvedValue(undefined),
@@ -286,10 +295,68 @@ describe("AdminWorkspace", () => {
     expect(onSetUserStatus).toHaveBeenCalledWith("managed-1", "suspend")
 
     await userEvent.click(screen.getByRole("button", { name: "削除" }))
-    const deleteDialog = screen.getByRole("dialog", { name: "このユーザーを削除状態にしますか？" })
+    const deleteDialog = await screen.findByRole("dialog", { name: "このユーザーを削除状態にしますか？" })
     expect(deleteDialog).toHaveTextContent("管理対象ユーザー")
     await userEvent.click(within(deleteDialog).getByRole("button", { name: "削除" }))
     expect(onSetUserStatus).toHaveBeenCalledWith("managed-1", "delete")
+  })
+
+  it("所有資源があるユーザーは検証済みの後継管理者を明示選択してから削除する", async () => {
+    const onPrepareUserDelete = vi.fn().mockResolvedValue({
+      targetUserId: "managed-1",
+      requiresSuccessor: true,
+      ownedResources: { folders: 2, resourceGroups: 1, documents: 3, total: 6 },
+      eligibleSuccessors: [{
+        userId: "successor-1",
+        email: "successor@example.com",
+        displayName: "後継 管理者",
+        status: "active"
+      }]
+    })
+    const onSetUserStatus = vi.fn().mockResolvedValue(undefined)
+
+    renderAdminWorkspace({
+      managedUsers: [managedUser],
+      canReadUsers: true,
+      canDeleteUsers: true,
+      onPrepareUserDelete,
+      onSetUserStatus
+    })
+    await userEvent.click(screen.getByRole("button", { name: "Users" }))
+    await userEvent.click(screen.getByRole("button", { name: "削除" }))
+
+    const dialog = await screen.findByRole("dialog", { name: "このユーザーを削除状態にしますか？" })
+    expect(onPrepareUserDelete).toHaveBeenCalledWith("managed-1")
+    expect(dialog).toHaveTextContent("所有フォルダ2")
+    expect(dialog).toHaveTextContent("所有リソースグループ1")
+    expect(dialog).toHaveTextContent("所有文書3")
+    expect(within(dialog).getByRole("button", { name: "削除" })).toBeDisabled()
+
+    await userEvent.selectOptions(screen.getByLabelText("managed@example.comの後継管理者"), "successor-1")
+    await userEvent.click(within(dialog).getByRole("button", { name: "削除" }))
+
+    expect(onSetUserStatus).toHaveBeenCalledWith("managed-1", "delete", "successor-1")
+  })
+
+  it("所有資源があるのに検証済み後継候補がない場合は架空候補を補わず削除を無効化する", async () => {
+    renderAdminWorkspace({
+      managedUsers: [managedUser, { ...managedUser, userId: "unverified-1", email: "unverified@example.com" }],
+      canReadUsers: true,
+      canDeleteUsers: true,
+      onPrepareUserDelete: vi.fn().mockResolvedValue({
+        targetUserId: "managed-1",
+        requiresSuccessor: true,
+        ownedResources: { folders: 1, resourceGroups: 0, documents: 0, total: 1 },
+        eligibleSuccessors: []
+      })
+    })
+    await userEvent.click(screen.getByRole("button", { name: "Users" }))
+    await userEvent.click(screen.getAllByRole("button", { name: "削除" })[0]!)
+
+    const dialog = await screen.findByRole("dialog", { name: "このユーザーを削除状態にしますか？" })
+    expect(dialog).toHaveTextContent("active かつ同一 tenant の後継候補がありません")
+    expect(dialog).not.toHaveTextContent("unverified@example.com")
+    expect(within(dialog).getByRole("button", { name: "削除" })).toBeDisabled()
   })
 
   it("ロール付与前に変更前後の差分を表示する", async () => {
@@ -304,16 +371,17 @@ describe("AdminWorkspace", () => {
     await userEvent.click(screen.getByRole("button", { name: "Users" }))
 
     await userEvent.selectOptions(screen.getByLabelText("managed@example.comに付与するロール"), "SYSTEM_ADMIN")
+    await userEvent.type(screen.getByLabelText("managed@example.comのロール変更理由"), "緊急対応担当へ変更")
     expect(screen.getByText("変更前: CHAT_USER / 変更後: SYSTEM_ADMIN")).toBeInTheDocument()
     await userEvent.click(screen.getByRole("button", { name: "付与" }))
     const dialog = screen.getByRole("dialog", { name: "ロールを付与しますか？" })
     expect(dialog).toHaveTextContent("変更前")
     expect(dialog).toHaveTextContent("SYSTEM_ADMIN")
-    expect(dialog).toHaveTextContent("理由入力と保存は API 未対応")
+    expect(dialog).toHaveTextContent("緊急対応担当へ変更")
     expect(onAssignRoles).not.toHaveBeenCalled()
     await userEvent.click(within(dialog).getByRole("button", { name: "付与" }))
 
-    expect(onAssignRoles).toHaveBeenCalledWith("managed-1", ["SYSTEM_ADMIN"])
+    expect(onAssignRoles).toHaveBeenCalledWith("managed-1", ["SYSTEM_ADMIN"], "緊急対応担当へ変更")
   })
 
   it("ロール API field が未提供のとき fake group を作成・付与しない", async () => {

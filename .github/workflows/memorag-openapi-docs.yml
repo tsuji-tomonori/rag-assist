@@ -1,4 +1,4 @@
-name: Generate MemoRAG OpenAPI Docs
+name: Generate MemoRAG API Docs
 
 on:
   push:
@@ -22,7 +22,7 @@ concurrency:
 
 jobs:
   generate:
-    name: Generate OpenAPI Markdown
+    name: Generate API Markdown
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -45,20 +45,28 @@ jobs:
       - name: Check OpenAPI contract docs
         run: npm run docs:openapi:check
 
+      - name: Generate source-backed API docs
+        run: npm run docs:api-code
+
+      - name: Check source-backed API docs
+        run: npm run docs:api-code:check
+
       - name: Create pull request
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.OPENAPI_DOCS_PR_TOKEN || github.token }}
           branch: chore/memorag-openapi-docs
           delete-branch: true
-          commit-message: "📝 docs(api): OpenAPI 生成ドキュメントを更新"
-          title: "📝 docs(api): OpenAPI 生成ドキュメントを更新"
+          commit-message: "📝 docs(api): API 生成ドキュメントを更新"
+          title: "📝 docs(api): API 生成ドキュメントを更新"
           body: |
-            Hono の OpenAPI 定義から `docs/generated/openapi.md` と API ごとの Markdown を再生成しました。
+            Hono の OpenAPI 定義から contract Markdown を再生成し、TypeScript 実装から API ごとの詳細設計、IF、メッセージ、query、sequence、unit test 仕様を再生成しました。
 
             ### 生成コマンド
 
             - `npm run docs:openapi`
+            - `npm run docs:api-code`
           add-paths: |
             docs/generated/openapi.md
             docs/generated/openapi
+            docs/generated/api-code

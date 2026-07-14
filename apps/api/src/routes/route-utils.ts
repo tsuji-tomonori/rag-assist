@@ -25,6 +25,10 @@ export function validParam<T>(c: Context): T {
   return validRequest(c, "param") as T
 }
 
+export function validQuery<T>(c: Context): T {
+  return validRequest(c, "query") as T
+}
+
 export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }

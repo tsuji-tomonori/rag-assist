@@ -2,7 +2,7 @@ import { useState } from "react"
 import type { CurrentUser } from "../../../shared/types/common.js"
 import { Icon } from "../../../shared/components/Icon.js"
 import { LoadingStatus } from "../../../shared/components/LoadingSpinner.js"
-import type { AccessRoleDefinition, AliasAuditLogItem, AliasDefinition, CostAuditSummary, ManagedUser, ManagedUserAuditLogEntry, UserUsageSummary } from "../types.js"
+import type { AccessRoleDefinition, AliasAuditLogItem, AliasDefinition, CostAuditSummary, ManagedUser, ManagedUserAuditLogEntry, ManagedUserDeletionPreflight, UserUsageSummary } from "../types.js"
 import { AdminAuditPanel } from "./panels/AdminAuditPanel.js"
 import { AdminCostPanel } from "./panels/AdminCostPanel.js"
 import { AdminOverviewGrid } from "./panels/AdminOverviewGrid.js"
@@ -53,6 +53,7 @@ export function AdminWorkspace({
   onOpenBenchmark,
   onCreateUser,
   onAssignRoles,
+  onPrepareUserDelete,
   onSetUserStatus,
   onRefreshAdminData,
   onCreateAlias,
@@ -100,8 +101,9 @@ export function AdminWorkspace({
   onOpenDebug: () => void
   onOpenBenchmark: () => void
   onCreateUser: (input: { email: string; displayName?: string; groups?: string[] }) => Promise<void>
-  onAssignRoles: (userId: string, groups: string[]) => Promise<void>
-  onSetUserStatus: (userId: string, action: "suspend" | "unsuspend" | "delete") => Promise<void>
+  onAssignRoles: (userId: string, groups: string[], reason: string) => Promise<void>
+  onPrepareUserDelete: (userId: string) => Promise<ManagedUserDeletionPreflight | null>
+  onSetUserStatus: (userId: string, action: "suspend" | "unsuspend" | "delete", successorUserId?: string) => Promise<void>
   onRefreshAdminData: () => Promise<void>
   onCreateAlias: (input: { term: string; expansions: string[]; scope?: AliasDefinition["scope"] }) => Promise<void>
   onUpdateAlias: (aliasId: string, input: { term?: string; expansions?: string[]; scope?: AliasDefinition["scope"] }) => Promise<void>
@@ -189,6 +191,7 @@ export function AdminWorkspace({
               canDeleteUsers={canDeleteUsers}
               onCreateUser={onCreateUser}
               onAssignRoles={onAssignRoles}
+              onPrepareUserDelete={onPrepareUserDelete}
               onSetUserStatus={onSetUserStatus}
               onRefreshAdminData={onRefreshAdminData}
             />

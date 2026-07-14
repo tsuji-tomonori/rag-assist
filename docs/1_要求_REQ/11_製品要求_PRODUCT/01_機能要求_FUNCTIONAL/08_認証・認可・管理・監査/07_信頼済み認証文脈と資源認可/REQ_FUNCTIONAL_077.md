@@ -67,7 +67,7 @@
 | 検証可能性 | OK | owner/adminPrincipal × policy entry × explicit deny の matrix test へ変換できる |
 | ニーズ適合 | OK | 文書所有者・共有管理者が自資源を継続管理できる |
 | 原子性 | OK | 管理主体の `full` を policy で剥奪できないという一つの invariant を規定する |
-| 実装適合 | partial/conflict | document owner と folder adminPrincipal の判定経路が一致していない |
+| 実装適合 | OK（confirmed） | folder/document permission services が active same-tenant administrative principal の full と mandatory deny 優先を同一 decision で強制し、invariant tests を持つ |
 | 合意 | pending | owner/adminPrincipal の正規 ID と global deny の詳細を承認する必要がある |
 
 ## トレース

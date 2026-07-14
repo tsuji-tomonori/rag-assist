@@ -3,6 +3,7 @@ import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
 import { parseCsv } from "./allganize-ja.js"
+import { createCurrentAuthorizedFetch } from "./run-authorization.js"
 
 type SourceDocRow = {
   source_doc_id: string
@@ -33,6 +34,7 @@ const defaultDatasetSource = path.join(suiteDir, "qa.jsonl")
 const defaultSourceDocsPath = path.join(suiteDir, "source_docs.csv")
 const defaultDatasetOutput = ".local-data/mlit-pdf-figure-table-rag-seed-v1/dataset.jsonl"
 const defaultCorpusDir = ".local-data/mlit-pdf-figure-table-rag-seed-v1/corpus"
+const currentAuthorizedFetch = createCurrentAuthorizedFetch()
 
 if (isMainModule()) {
   await prepareMlitPdfFigureTableRagBenchmark(process.env)
@@ -40,7 +42,7 @@ if (isMainModule()) {
 
 export async function prepareMlitPdfFigureTableRagBenchmark(
   env: NodeJS.ProcessEnv,
-  fetchImpl: typeof fetch = fetch
+  fetchImpl: typeof fetch = currentAuthorizedFetch
 ): Promise<PreparedMlitPdfBenchmark> {
   const datasetSource = resolveExisting(env.MLIT_PDF_RAG_DATASET_SOURCE ?? defaultDatasetSource)
   const sourceDocsPath = resolveExisting(env.MLIT_PDF_RAG_SOURCE_DOCS_PATH ?? defaultSourceDocsPath)

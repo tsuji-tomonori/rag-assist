@@ -10,7 +10,7 @@
 
 用途概要: IAM inline policy
 
-リソース数: 14
+リソース数: 18
 
 ## Logical ID 一覧
 
@@ -18,6 +18,7 @@
 | --- | --- | --- |
 | [Api Function Service Role Default Policy](#api-function-service-role-default-policy) | `ApiFunctionServiceRoleDefaultPolicy20A32B8D` | Api Function Service Role Default Policy (IAM inline policy) |
 | [Benchmark Project Role Default Policy](#benchmark-project-role-default-policy) | `BenchmarkProjectRoleDefaultPolicyCFB0FA8E` | Benchmark Project Role Default Policy (IAM inline policy) |
+| [Benchmark Run Authorization Function Service Role Default Policy](#benchmark-run-authorization-function-service-role-default-policy) | `BenchmarkRunAuthorizationFunctionServiceRoleDefaultPolicyD7F09778` | Benchmark Run Authorization Function Service Role Default Policy (IAM inline policy) |
 | [Benchmark State Machine Role Default Policy](#benchmark-state-machine-role-default-policy) | `BenchmarkStateMachineRoleDefaultPolicyED2C1461` | Benchmark State Machine Role Default Policy (IAM inline policy) |
 | [Chat Run Events Stream Function Service Role Default Policy](#chat-run-events-stream-function-service-role-default-policy) | `ChatRunEventsStreamFunctionServiceRoleDefaultPolicyA6AD23F2` | Chat Run Events Stream Function Service Role Default Policy (IAM inline policy) |
 | [Chat Run Mark Failed Function Service Role Default Policy](#chat-run-mark-failed-function-service-role-default-policy) | `ChatRunMarkFailedFunctionServiceRoleDefaultPolicyDCCB4617` | Chat Run Mark Failed Function Service Role Default Policy (IAM inline policy) |
@@ -28,8 +29,11 @@
 | [Document Ingest Run State Machine Role Default Policy](#document-ingest-run-state-machine-role-default-policy) | `DocumentIngestRunStateMachineRoleDefaultPolicy40421B5F` | Document Ingest Run State Machine Role Default Policy (IAM inline policy) |
 | [Document Ingest Run Worker Function Service Role Default Policy](#document-ingest-run-worker-function-service-role-default-policy) | `DocumentIngestRunWorkerFunctionServiceRoleDefaultPolicyE7C95FCE` | Document Ingest Run Worker Function Service Role Default Policy (IAM inline policy) |
 | [Heavy Api Function Service Role Default Policy](#heavy-api-function-service-role-default-policy) | `HeavyApiFunctionServiceRoleDefaultPolicyC207D4DE` | Heavy Api Function Service Role Default Policy (IAM inline policy) |
+| [Rag Quality Monitor Function Service Role Default Policy](#rag-quality-monitor-function-service-role-default-policy) | `RagQualityMonitorFunctionServiceRoleDefaultPolicy28D810D0` | Rag Quality Monitor Function Service Role Default Policy (IAM inline policy) |
+| [Revocation Cleanup Function Service Role Default Policy](#revocation-cleanup-function-service-role-default-policy) | `RevocationCleanupFunctionServiceRoleDefaultPolicy688B596B` | Revocation Cleanup Function Service Role Default Policy (IAM inline policy) |
 | [S3Vectors Provider Fn Service Role Default Policy](#s3vectors-provider-fn-service-role-default-policy) | `S3VectorsProviderFnServiceRoleDefaultPolicy0DE2AFB7` | S3Vectors Provider Fn Service Role Default Policy (IAM inline policy) |
 | [S3Vectors Providerframeworkon Event Service Role Default Policy](#s3vectors-providerframeworkon-event-service-role-default-policy) | `S3VectorsProviderframeworkonEventServiceRoleDefaultPolicy486C3756` | S3Vectors Providerframeworkon Event Service Role Default Policy (IAM inline policy) |
+| [Security Audit Reconciliation Function Service Role Default Policy](#security-audit-reconciliation-function-service-role-default-policy) | `SecurityAuditReconciliationFunctionServiceRoleDefaultPolicy77DBBA3A` | Security Audit Reconciliation Function Service Role Default Policy (IAM inline policy) |
 
 ## Logical ID 別設定
 
@@ -45,7 +49,7 @@ Logical ID: `ApiFunctionServiceRoleDefaultPolicy20A32B8D`
 | `roles` | [Ref:ApiFunctionServiceRole52B9747B] |
 | `statementCount` | 21 |
 | `actions` | [bedrock:InvokeModel, bedrock:InvokeModelWithResponseStream, dynamodb:BatchGetItem, dynamodb:BatchWriteItem, dynamodb:ConditionCheckItem, dynamodb:DeleteItem, dynamodb:DescribeTable, dynamodb:GetItem, dynamodb:GetRecords, dynamodb:GetShardIterator, dynamodb:PutItem, dynamodb:Query, dynamodb:Scan, dynamodb:UpdateItem, s3:Abort*, s3:DeleteObject*, s3:GetBucket*, s3:GetObject*, s3:List*, s3:PutObject, s3:PutObjectLegalHold, s3:PutObjectRetention, s3:PutObjectTagging, s3:PutObjectVersionTagging] |
-| `resources` | [*, GetAtt:BenchmarkBucketDD7D1D2F.Arn, GetAtt:BenchmarkRunsTableD0841636.Arn, GetAtt:ChatRunEventsTable7455A50E.Arn, GetAtt:ChatRunsTable8446CD95.Arn, GetAtt:ConversationHistoryTable59A3534C.Arn, GetAtt:DebugDownloadBucketAB6A16BE.Arn, GetAtt:DocumentGroupsTableA5108040.Arn, GetAtt:DocumentIngestRunEventsTableF4692EBE.Arn, GetAtt:DocumentIngestRunsTableEA8F8CCA.Arn, GetAtt:DocumentsBucket9EC9DEB9.Arn, GetAtt:FavoritesTable4DA8A306.Arn, GetAtt:HumanQuestionsTable5DA9688B.Arn, Join:["",[{"Fn::GetAtt":["BenchmarkBucketDD7D1D2F","Arn"]},"/*"]], Join:["",[{"Fn::GetAtt":["DebugDownloadBucketAB6A16BE","Arn"]},"/*"]], Join:["",[{"Fn::GetAtt":["DocumentGroupsTableA5108040","Arn"]},"/index/*"]], Join:["",[{"Fn::GetAtt":["DocumentsBucket9EC9DEB9","Arn"]},"/*"]], Join:["",[{"Fn::GetAtt":["HumanQuestionsTable5DA9688B","Arn"]},"/index/*"]]] |
+| `resources` | [*, GetAtt:BenchmarkBucketDD7D1D2F.Arn, GetAtt:BenchmarkRunsTableD0841636.Arn, GetAtt:ChatRunEventsTable7455A50E.Arn, GetAtt:ChatRunsTable8446CD95.Arn, GetAtt:ConversationHistoryTable59A3534C.Arn, GetAtt:DebugDownloadBucketAB6A16BE.Arn, GetAtt:DocumentGroupsTableA5108040.Arn, GetAtt:DocumentIngestRunEventsTableF4692EBE.Arn, GetAtt:DocumentIngestRunsTableEA8F8CCA.Arn, GetAtt:DocumentsBucket9EC9DEB9.Arn, GetAtt:FavoritesTable4DA8A306.Arn, GetAtt:HumanQuestionsTable5DA9688B.Arn, Join:["",[{"Fn::GetAtt":["BenchmarkBucketDD7D1D2F","Arn"]},"/*"]], Join:["",[{"Fn::GetAtt":["BenchmarkRunsTableD0841636","Arn"]},"/index/*"]], Join:["",[{"Fn::GetAtt":["ChatRunsTable8446CD95","Arn"]},"/index/*"]], Join:["",[{"Fn::GetAtt":["DebugDownloadBucketAB6A16BE","Arn"]},"/*"]], Join:["",[{"Fn::GetAtt":["DocumentGroupsTableA5108040","Arn"]},"/index/*"]], Join:["",[{"Fn::GetAtt":["DocumentIngestRunsTableEA8F8CCA","Arn"]},"/index/*"]], Join:["",[{"Fn::GetAtt":["DocumentsBucket9EC9DEB9","Arn"]},"/*"]], Join:["",[{"Fn::GetAtt":["HumanQuestionsTable5DA9688B","Arn"]},"/index/*"]]] |
 
 ### Benchmark Project Role Default Policy
 
@@ -57,9 +61,23 @@ Logical ID: `BenchmarkProjectRoleDefaultPolicyCFB0FA8E`
 | --- | --- |
 | `policyName` | BenchmarkProjectRoleDefaultPolicyCFB0FA8E |
 | `roles` | [Ref:BenchmarkProjectRole31C9ABBD] |
+| `statementCount` | 10 |
+| `actions` | [codebuild:BatchPutCodeCoverages, codebuild:BatchPutTestCases, codebuild:CreateReport, codebuild:CreateReportGroup, codebuild:UpdateReport, cognito-idp:AdminAddUserToGroup, cognito-idp:AdminCreateUser, cognito-idp:AdminGetUser, cognito-idp:AdminSetUserPassword, cognito-idp:InitiateAuth, dynamodb:UpdateItem, kms:Decrypt, kms:Encrypt, kms:GenerateDataKey*, kms:ReEncrypt*, lambda:InvokeFunction, logs:CreateLogGroup, logs:CreateLogStream, logs:PutLogEvents, s3:Abort*, s3:DeleteObject*, s3:GetBucket*, s3:GetObject*, s3:List*, s3:PutObject, s3:PutObjectLegalHold, s3:PutObjectRetention, s3:PutObjectTagging, s3:PutObjectVersionTagging, secretsmanager:DescribeSecret, secretsmanager:GetSecretValue] |
+| `resources` | [*, GetAtt:BenchmarkBucketDD7D1D2F.Arn, GetAtt:BenchmarkProjectKeyB840011B.Arn, GetAtt:BenchmarkProjectLogGroup395F719E.Arn, GetAtt:BenchmarkRunAuthorizationFunction16D4CD86.Arn, GetAtt:BenchmarkRunsTableD0841636.Arn, GetAtt:UserPool6BA7E5F2.Arn, Join:["",["arn:",{"Ref":"AWS::Partition"},":codebuild:ap-northeast-1:111111111111:report-group/",{"Ref":"BenchmarkProject1593465D"},"-*"]], Join:["",["arn:",{"Ref":"AWS::Partition"},":logs:ap-northeast-1:111111111111:log-group:/aws/codebuild/",{"Ref":"BenchmarkProject1593465D"},":*"]], Join:["",["arn:",{"Ref":"AWS::Partition"},":logs:ap-northeast-1:111111111111:log-group:/aws/codebuild/",{"Ref":"BenchmarkProject1593465D"}]], Join:["",[{"Fn::GetAtt":["BenchmarkBucketDD7D1D2F","Arn"]},"/*"]], Join:["",[{"Fn::GetAtt":["BenchmarkRunAuthorizationFunction16D4CD86","Arn"]},":*"]], Ref:BenchmarkRunnerAuthSecret035EF8F2] |
+
+### Benchmark Run Authorization Function Service Role Default Policy
+
+Logical ID: `BenchmarkRunAuthorizationFunctionServiceRoleDefaultPolicyD7F09778`
+
+用途推定: Benchmark Run Authorization Function Service Role Default Policy (IAM inline policy)
+
+| 設定項目 | 値 |
+| --- | --- |
+| `policyName` | BenchmarkRunAuthorizationFunctionServiceRoleDefaultPolicyD7F09778 |
+| `roles` | [Ref:BenchmarkRunAuthorizationFunctionServiceRole23F15ADE] |
 | `statementCount` | 9 |
-| `actions` | [codebuild:BatchPutCodeCoverages, codebuild:BatchPutTestCases, codebuild:CreateReport, codebuild:CreateReportGroup, codebuild:UpdateReport, cognito-idp:AdminAddUserToGroup, cognito-idp:AdminCreateUser, cognito-idp:AdminGetUser, cognito-idp:AdminSetUserPassword, cognito-idp:InitiateAuth, dynamodb:UpdateItem, kms:Decrypt, kms:Encrypt, kms:GenerateDataKey*, kms:ReEncrypt*, logs:CreateLogGroup, logs:CreateLogStream, logs:PutLogEvents, s3:Abort*, s3:DeleteObject*, s3:GetBucket*, s3:GetObject*, s3:List*, s3:PutObject, s3:PutObjectLegalHold, s3:PutObjectRetention, s3:PutObjectTagging, s3:PutObjectVersionTagging, secretsmanager:DescribeSecret, secretsmanager:GetSecretValue] |
-| `resources` | [*, GetAtt:BenchmarkBucketDD7D1D2F.Arn, GetAtt:BenchmarkProjectKeyB840011B.Arn, GetAtt:BenchmarkProjectLogGroup395F719E.Arn, GetAtt:BenchmarkRunsTableD0841636.Arn, GetAtt:UserPool6BA7E5F2.Arn, Join:["",["arn:",{"Ref":"AWS::Partition"},":codebuild:ap-northeast-1:111111111111:report-group/",{"Ref":"BenchmarkProject1593465D"},"-*"]], Join:["",["arn:",{"Ref":"AWS::Partition"},":logs:ap-northeast-1:111111111111:log-group:/aws/codebuild/",{"Ref":"BenchmarkProject1593465D"},":*"]], Join:["",["arn:",{"Ref":"AWS::Partition"},":logs:ap-northeast-1:111111111111:log-group:/aws/codebuild/",{"Ref":"BenchmarkProject1593465D"}]], Join:["",[{"Fn::GetAtt":["BenchmarkBucketDD7D1D2F","Arn"]},"/*"]], Ref:BenchmarkRunnerAuthSecret035EF8F2] |
+| `actions` | [cognito-idp:AdminGetUser, cognito-idp:AdminListGroupsForUser, cognito-idp:ListUsers, dynamodb:BatchGetItem, dynamodb:BatchWriteItem, dynamodb:ConditionCheckItem, dynamodb:DeleteItem, dynamodb:DescribeTable, dynamodb:GetItem, dynamodb:GetRecords, dynamodb:GetShardIterator, dynamodb:PutItem, dynamodb:Query, dynamodb:Scan, dynamodb:UpdateItem, s3:Abort*, s3:DeleteObject*, s3:GetBucket*, s3:GetObject*, s3:List*, s3:PutObject, s3:PutObjectLegalHold, s3:PutObjectRetention, s3:PutObjectTagging, s3:PutObjectVersionTagging] |
+| `resources` | [GetAtt:ActiveRunAuthorizationIndexTable2D018C99.Arn, GetAtt:BenchmarkBucketDD7D1D2F.Arn, GetAtt:BenchmarkRunsTableD0841636.Arn, GetAtt:DocumentsBucket9EC9DEB9.Arn, GetAtt:UserPool6BA7E5F2.Arn, Join:["",[{"Fn::GetAtt":["BenchmarkBucketDD7D1D2F","Arn"]},"/runs/*"]], Join:["",[{"Fn::GetAtt":["BenchmarkRunsTableD0841636","Arn"]},"/index/*"]], Join:["",[{"Fn::GetAtt":["DocumentsBucket9EC9DEB9","Arn"]},"/security/revocation-cleanup/*"]]] |
 
 ### Benchmark State Machine Role Default Policy
 
@@ -71,9 +89,9 @@ Logical ID: `BenchmarkStateMachineRoleDefaultPolicyED2C1461`
 | --- | --- |
 | `policyName` | BenchmarkStateMachineRoleDefaultPolicyED2C1461 |
 | `roles` | [Ref:BenchmarkStateMachineRole9EC7E298] |
-| `statementCount` | 4 |
-| `actions` | [codebuild:BatchGetBuilds, codebuild:StartBuild, codebuild:StopBuild, dynamodb:BatchWriteItem, dynamodb:DeleteItem, dynamodb:DescribeTable, dynamodb:PutItem, dynamodb:UpdateItem, events:DescribeRule, events:PutRule, events:PutTargets, logs:CreateLogDelivery, logs:DeleteLogDelivery, logs:DescribeLogGroups, logs:DescribeResourcePolicies, logs:GetLogDelivery, logs:ListLogDeliveries, logs:PutResourcePolicy, logs:UpdateLogDelivery] |
-| `resources` | [*, GetAtt:BenchmarkProject1593465D.Arn, GetAtt:BenchmarkRunsTableD0841636.Arn] |
+| `statementCount` | 5 |
+| `actions` | [codebuild:BatchGetBuilds, codebuild:StartBuild, codebuild:StopBuild, dynamodb:BatchWriteItem, dynamodb:DeleteItem, dynamodb:DescribeTable, dynamodb:PutItem, dynamodb:UpdateItem, events:DescribeRule, events:PutRule, events:PutTargets, lambda:InvokeFunction, logs:CreateLogDelivery, logs:DeleteLogDelivery, logs:DescribeLogGroups, logs:DescribeResourcePolicies, logs:GetLogDelivery, logs:ListLogDeliveries, logs:PutResourcePolicy, logs:UpdateLogDelivery] |
+| `resources` | [*, GetAtt:BenchmarkProject1593465D.Arn, GetAtt:BenchmarkRunAuthorizationFunction16D4CD86.Arn, GetAtt:BenchmarkRunsTableD0841636.Arn, Join:["",[{"Fn::GetAtt":["BenchmarkRunAuthorizationFunction16D4CD86","Arn"]},":*"]], Join:["",[{"Fn::GetAtt":["BenchmarkRunsTableD0841636","Arn"]},"/index/*"]]] |
 
 ### Chat Run Events Stream Function Service Role Default Policy
 
@@ -87,7 +105,7 @@ Logical ID: `ChatRunEventsStreamFunctionServiceRoleDefaultPolicyA6AD23F2`
 | `roles` | [Ref:ChatRunEventsStreamFunctionServiceRole41BBFB5A] |
 | `statementCount` | 4 |
 | `actions` | [dynamodb:BatchGetItem, dynamodb:ConditionCheckItem, dynamodb:DescribeTable, dynamodb:GetItem, dynamodb:GetRecords, dynamodb:GetShardIterator, dynamodb:Query, dynamodb:Scan] |
-| `resources` | [GetAtt:ChatRunEventsTable7455A50E.Arn, GetAtt:ChatRunsTable8446CD95.Arn] |
+| `resources` | [GetAtt:ChatRunEventsTable7455A50E.Arn, GetAtt:ChatRunsTable8446CD95.Arn, Join:["",[{"Fn::GetAtt":["ChatRunsTable8446CD95","Arn"]},"/index/*"]]] |
 
 ### Chat Run Mark Failed Function Service Role Default Policy
 
@@ -99,9 +117,9 @@ Logical ID: `ChatRunMarkFailedFunctionServiceRoleDefaultPolicyDCCB4617`
 | --- | --- |
 | `policyName` | ChatRunMarkFailedFunctionServiceRoleDefaultPolicyDCCB4617 |
 | `roles` | [Ref:ChatRunMarkFailedFunctionServiceRoleAAD50CA8] |
-| `statementCount` | 4 |
+| `statementCount` | 6 |
 | `actions` | [dynamodb:BatchGetItem, dynamodb:BatchWriteItem, dynamodb:ConditionCheckItem, dynamodb:DeleteItem, dynamodb:DescribeTable, dynamodb:GetItem, dynamodb:GetRecords, dynamodb:GetShardIterator, dynamodb:PutItem, dynamodb:Query, dynamodb:Scan, dynamodb:UpdateItem] |
-| `resources` | [GetAtt:ChatRunEventsTable7455A50E.Arn, GetAtt:ChatRunsTable8446CD95.Arn] |
+| `resources` | [GetAtt:ActiveRunAuthorizationIndexTable2D018C99.Arn, GetAtt:ChatRunEventsTable7455A50E.Arn, GetAtt:ChatRunsTable8446CD95.Arn, Join:["",[{"Fn::GetAtt":["ChatRunsTable8446CD95","Arn"]},"/index/*"]]] |
 
 ### Chat Run State Machine Role Default Policy
 
@@ -127,9 +145,9 @@ Logical ID: `ChatRunWorkerFunctionServiceRoleDefaultPolicy17EAA0D3`
 | --- | --- |
 | `policyName` | ChatRunWorkerFunctionServiceRoleDefaultPolicy17EAA0D3 |
 | `roles` | [Ref:ChatRunWorkerFunctionServiceRoleBED42CDB] |
-| `statementCount` | 10 |
-| `actions` | [bedrock:InvokeModel, bedrock:InvokeModelWithResponseStream, dynamodb:BatchGetItem, dynamodb:BatchWriteItem, dynamodb:ConditionCheckItem, dynamodb:DeleteItem, dynamodb:DescribeTable, dynamodb:GetItem, dynamodb:GetRecords, dynamodb:GetShardIterator, dynamodb:PutItem, dynamodb:Query, dynamodb:Scan, dynamodb:UpdateItem, s3:Abort*, s3:DeleteObject*, s3:GetBucket*, s3:GetObject*, s3:List*, s3:PutObject, s3:PutObjectLegalHold, s3:PutObjectRetention, s3:PutObjectTagging, s3:PutObjectVersionTagging, s3vectors:DeleteVectors, s3vectors:GetVectors, s3vectors:ListVectors, s3vectors:PutVectors, s3vectors:QueryVectors] |
-| `resources` | [*, GetAtt:ChatRunEventsTable7455A50E.Arn, GetAtt:ChatRunsTable8446CD95.Arn, GetAtt:DebugDownloadBucketAB6A16BE.Arn, GetAtt:DocumentGroupsTableA5108040.Arn, GetAtt:DocumentsBucket9EC9DEB9.Arn, Join:["",[{"Fn::GetAtt":["DebugDownloadBucketAB6A16BE","Arn"]},"/*"]], Join:["",[{"Fn::GetAtt":["DocumentGroupsTableA5108040","Arn"]},"/index/*"]], Join:["",[{"Fn::GetAtt":["DocumentsBucket9EC9DEB9","Arn"]},"/*"]]] |
+| `statementCount` | 13 |
+| `actions` | [bedrock:InvokeModel, bedrock:InvokeModelWithResponseStream, cognito-idp:AdminGetUser, cognito-idp:AdminListGroupsForUser, cognito-idp:ListUsers, dynamodb:BatchGetItem, dynamodb:BatchWriteItem, dynamodb:ConditionCheckItem, dynamodb:DeleteItem, dynamodb:DescribeTable, dynamodb:GetItem, dynamodb:GetRecords, dynamodb:GetShardIterator, dynamodb:PutItem, dynamodb:Query, dynamodb:Scan, dynamodb:UpdateItem, s3:Abort*, s3:DeleteObject*, s3:GetBucket*, s3:GetObject*, s3:List*, s3:PutObject, s3:PutObjectLegalHold, s3:PutObjectRetention, s3:PutObjectTagging, s3:PutObjectVersionTagging, s3vectors:DeleteVectors, s3vectors:GetVectors, s3vectors:ListVectors, s3vectors:PutVectors, s3vectors:QueryVectors] |
+| `resources` | [*, GetAtt:ActiveRunAuthorizationIndexTable2D018C99.Arn, GetAtt:ChatRunEventsTable7455A50E.Arn, GetAtt:ChatRunsTable8446CD95.Arn, GetAtt:DebugDownloadBucketAB6A16BE.Arn, GetAtt:DocumentGroupsTableA5108040.Arn, GetAtt:DocumentsBucket9EC9DEB9.Arn, GetAtt:UserPool6BA7E5F2.Arn, Join:["",[{"Fn::GetAtt":["ChatRunsTable8446CD95","Arn"]},"/index/*"]], Join:["",[{"Fn::GetAtt":["DebugDownloadBucketAB6A16BE","Arn"]},"/*"]], Join:["",[{"Fn::GetAtt":["DocumentGroupsTableA5108040","Arn"]},"/index/*"]], Join:["",[{"Fn::GetAtt":["DocumentsBucket9EC9DEB9","Arn"]},"/*"]]] |
 
 ### Custom CDK Bucket Deployment8693BB64968944B69AAFB0CC9EB8756C Service Role Default Policy
 
@@ -155,9 +173,9 @@ Logical ID: `DocumentIngestRunMarkFailedFunctionServiceRoleDefaultPolicy6B2C079B
 | --- | --- |
 | `policyName` | DocumentIngestRunMarkFailedFunctionServiceRoleDefaultPolicy6B2C079B |
 | `roles` | [Ref:DocumentIngestRunMarkFailedFunctionServiceRole8A5F469D] |
-| `statementCount` | 4 |
+| `statementCount` | 6 |
 | `actions` | [dynamodb:BatchGetItem, dynamodb:BatchWriteItem, dynamodb:ConditionCheckItem, dynamodb:DeleteItem, dynamodb:DescribeTable, dynamodb:GetItem, dynamodb:GetRecords, dynamodb:GetShardIterator, dynamodb:PutItem, dynamodb:Query, dynamodb:Scan, dynamodb:UpdateItem] |
-| `resources` | [GetAtt:DocumentIngestRunEventsTableF4692EBE.Arn, GetAtt:DocumentIngestRunsTableEA8F8CCA.Arn] |
+| `resources` | [GetAtt:ActiveRunAuthorizationIndexTable2D018C99.Arn, GetAtt:DocumentIngestRunEventsTableF4692EBE.Arn, GetAtt:DocumentIngestRunsTableEA8F8CCA.Arn, Join:["",[{"Fn::GetAtt":["DocumentIngestRunsTableEA8F8CCA","Arn"]},"/index/*"]]] |
 
 ### Document Ingest Run State Machine Role Default Policy
 
@@ -183,9 +201,9 @@ Logical ID: `DocumentIngestRunWorkerFunctionServiceRoleDefaultPolicyE7C95FCE`
 | --- | --- |
 | `policyName` | DocumentIngestRunWorkerFunctionServiceRoleDefaultPolicyE7C95FCE |
 | `roles` | [Ref:DocumentIngestRunWorkerFunctionServiceRole7BEAC0ED] |
-| `statementCount` | 10 |
-| `actions` | [bedrock:InvokeModel, bedrock:InvokeModelWithResponseStream, dynamodb:BatchGetItem, dynamodb:BatchWriteItem, dynamodb:ConditionCheckItem, dynamodb:DeleteItem, dynamodb:DescribeTable, dynamodb:GetItem, dynamodb:GetRecords, dynamodb:GetShardIterator, dynamodb:PutItem, dynamodb:Query, dynamodb:Scan, dynamodb:UpdateItem, s3:Abort*, s3:DeleteObject*, s3:GetBucket*, s3:GetObject*, s3:List*, s3:PutObject, s3:PutObjectLegalHold, s3:PutObjectRetention, s3:PutObjectTagging, s3:PutObjectVersionTagging, s3vectors:DeleteVectors, s3vectors:GetVectors, s3vectors:ListVectors, s3vectors:PutVectors, s3vectors:QueryVectors, textract:DetectDocumentText, textract:GetDocumentTextDetection, textract:StartDocumentTextDetection] |
-| `resources` | [*, GetAtt:DocumentGroupsTableA5108040.Arn, GetAtt:DocumentIngestRunEventsTableF4692EBE.Arn, GetAtt:DocumentIngestRunsTableEA8F8CCA.Arn, GetAtt:DocumentsBucket9EC9DEB9.Arn, Join:["",[{"Fn::GetAtt":["DocumentGroupsTableA5108040","Arn"]},"/index/*"]], Join:["",[{"Fn::GetAtt":["DocumentsBucket9EC9DEB9","Arn"]},"/*"]]] |
+| `statementCount` | 13 |
+| `actions` | [bedrock:InvokeModel, bedrock:InvokeModelWithResponseStream, cognito-idp:AdminGetUser, cognito-idp:AdminListGroupsForUser, cognito-idp:ListUsers, dynamodb:BatchGetItem, dynamodb:BatchWriteItem, dynamodb:ConditionCheckItem, dynamodb:DeleteItem, dynamodb:DescribeTable, dynamodb:GetItem, dynamodb:GetRecords, dynamodb:GetShardIterator, dynamodb:PutItem, dynamodb:Query, dynamodb:Scan, dynamodb:UpdateItem, s3:Abort*, s3:DeleteObject*, s3:GetBucket*, s3:GetObject*, s3:List*, s3:PutObject, s3:PutObjectLegalHold, s3:PutObjectRetention, s3:PutObjectTagging, s3:PutObjectVersionTagging, s3vectors:DeleteVectors, s3vectors:GetVectors, s3vectors:ListVectors, s3vectors:PutVectors, s3vectors:QueryVectors, textract:DetectDocumentText, textract:GetDocumentTextDetection, textract:StartDocumentTextDetection] |
+| `resources` | [*, GetAtt:ActiveRunAuthorizationIndexTable2D018C99.Arn, GetAtt:DocumentGroupsTableA5108040.Arn, GetAtt:DocumentIngestRunEventsTableF4692EBE.Arn, GetAtt:DocumentIngestRunsTableEA8F8CCA.Arn, GetAtt:DocumentsBucket9EC9DEB9.Arn, GetAtt:UserPool6BA7E5F2.Arn, Join:["",[{"Fn::GetAtt":["DocumentGroupsTableA5108040","Arn"]},"/index/*"]], Join:["",[{"Fn::GetAtt":["DocumentIngestRunsTableEA8F8CCA","Arn"]},"/index/*"]], Join:["",[{"Fn::GetAtt":["DocumentsBucket9EC9DEB9","Arn"]},"/*"]]] |
 
 ### Heavy Api Function Service Role Default Policy
 
@@ -199,7 +217,35 @@ Logical ID: `HeavyApiFunctionServiceRoleDefaultPolicyC207D4DE`
 | `roles` | [Ref:HeavyApiFunctionServiceRole25A7AE5E] |
 | `statementCount` | 21 |
 | `actions` | [bedrock:InvokeModel, bedrock:InvokeModelWithResponseStream, dynamodb:BatchGetItem, dynamodb:BatchWriteItem, dynamodb:ConditionCheckItem, dynamodb:DeleteItem, dynamodb:DescribeTable, dynamodb:GetItem, dynamodb:GetRecords, dynamodb:GetShardIterator, dynamodb:PutItem, dynamodb:Query, dynamodb:Scan, dynamodb:UpdateItem, s3:Abort*, s3:DeleteObject*, s3:GetBucket*, s3:GetObject*, s3:List*, s3:PutObject, s3:PutObjectLegalHold, s3:PutObjectRetention, s3:PutObjectTagging, s3:PutObjectVersionTagging] |
-| `resources` | [*, GetAtt:BenchmarkBucketDD7D1D2F.Arn, GetAtt:BenchmarkRunsTableD0841636.Arn, GetAtt:ChatRunEventsTable7455A50E.Arn, GetAtt:ChatRunsTable8446CD95.Arn, GetAtt:ConversationHistoryTable59A3534C.Arn, GetAtt:DebugDownloadBucketAB6A16BE.Arn, GetAtt:DocumentGroupsTableA5108040.Arn, GetAtt:DocumentIngestRunEventsTableF4692EBE.Arn, GetAtt:DocumentIngestRunsTableEA8F8CCA.Arn, GetAtt:DocumentsBucket9EC9DEB9.Arn, GetAtt:FavoritesTable4DA8A306.Arn, GetAtt:HumanQuestionsTable5DA9688B.Arn, Join:["",[{"Fn::GetAtt":["BenchmarkBucketDD7D1D2F","Arn"]},"/*"]], Join:["",[{"Fn::GetAtt":["DebugDownloadBucketAB6A16BE","Arn"]},"/*"]], Join:["",[{"Fn::GetAtt":["DocumentGroupsTableA5108040","Arn"]},"/index/*"]], Join:["",[{"Fn::GetAtt":["DocumentsBucket9EC9DEB9","Arn"]},"/*"]], Join:["",[{"Fn::GetAtt":["HumanQuestionsTable5DA9688B","Arn"]},"/index/*"]]] |
+| `resources` | [*, GetAtt:BenchmarkBucketDD7D1D2F.Arn, GetAtt:BenchmarkRunsTableD0841636.Arn, GetAtt:ChatRunEventsTable7455A50E.Arn, GetAtt:ChatRunsTable8446CD95.Arn, GetAtt:ConversationHistoryTable59A3534C.Arn, GetAtt:DebugDownloadBucketAB6A16BE.Arn, GetAtt:DocumentGroupsTableA5108040.Arn, GetAtt:DocumentIngestRunEventsTableF4692EBE.Arn, GetAtt:DocumentIngestRunsTableEA8F8CCA.Arn, GetAtt:DocumentsBucket9EC9DEB9.Arn, GetAtt:FavoritesTable4DA8A306.Arn, GetAtt:HumanQuestionsTable5DA9688B.Arn, Join:["",[{"Fn::GetAtt":["BenchmarkBucketDD7D1D2F","Arn"]},"/*"]], Join:["",[{"Fn::GetAtt":["BenchmarkRunsTableD0841636","Arn"]},"/index/*"]], Join:["",[{"Fn::GetAtt":["ChatRunsTable8446CD95","Arn"]},"/index/*"]], Join:["",[{"Fn::GetAtt":["DebugDownloadBucketAB6A16BE","Arn"]},"/*"]], Join:["",[{"Fn::GetAtt":["DocumentGroupsTableA5108040","Arn"]},"/index/*"]], Join:["",[{"Fn::GetAtt":["DocumentIngestRunsTableEA8F8CCA","Arn"]},"/index/*"]], Join:["",[{"Fn::GetAtt":["DocumentsBucket9EC9DEB9","Arn"]},"/*"]], Join:["",[{"Fn::GetAtt":["HumanQuestionsTable5DA9688B","Arn"]},"/index/*"]]] |
+
+### Rag Quality Monitor Function Service Role Default Policy
+
+Logical ID: `RagQualityMonitorFunctionServiceRoleDefaultPolicy28D810D0`
+
+用途推定: Rag Quality Monitor Function Service Role Default Policy (IAM inline policy)
+
+| 設定項目 | 値 |
+| --- | --- |
+| `policyName` | RagQualityMonitorFunctionServiceRoleDefaultPolicy28D810D0 |
+| `roles` | [Ref:RagQualityMonitorFunctionServiceRole1754DFBD] |
+| `statementCount` | 2 |
+| `actions` | [s3:Abort*, s3:DeleteObject*, s3:GetBucket*, s3:GetObject*, s3:List*, s3:PutObject, s3:PutObjectLegalHold, s3:PutObjectRetention, s3:PutObjectTagging, s3:PutObjectVersionTagging, sns:Publish] |
+| `resources` | [GetAtt:DocumentsBucket9EC9DEB9.Arn, Join:["",[{"Fn::GetAtt":["DocumentsBucket9EC9DEB9","Arn"]},"/*"]], Ref:RagQualityAlertTopic3AFB5A32] |
+
+### Revocation Cleanup Function Service Role Default Policy
+
+Logical ID: `RevocationCleanupFunctionServiceRoleDefaultPolicy688B596B`
+
+用途推定: Revocation Cleanup Function Service Role Default Policy (IAM inline policy)
+
+| 設定項目 | 値 |
+| --- | --- |
+| `policyName` | RevocationCleanupFunctionServiceRoleDefaultPolicy688B596B |
+| `roles` | [Ref:RevocationCleanupFunctionServiceRole15557E81] |
+| `statementCount` | 17 |
+| `actions` | [cognito-idp:AdminGetUser, cognito-idp:AdminListGroupsForUser, cognito-idp:AdminUpdateUserAttributes, cognito-idp:AdminUserGlobalSignOut, cognito-idp:ListUsers, dynamodb:DeleteItem, dynamodb:DescribeTable, dynamodb:GetItem, dynamodb:PutItem, dynamodb:Query, dynamodb:UpdateItem, s3:Abort*, s3:DeleteObject, s3:GetObject, s3:ListBucket, s3:PutObject, s3:PutObjectLegalHold, s3:PutObjectRetention, s3:PutObjectTagging, s3:PutObjectVersionTagging, s3vectors:DeleteVectors, s3vectors:GetVectors] |
+| `resources` | [*, GetAtt:ActiveRunAuthorizationIndexTable2D018C99.Arn, GetAtt:BenchmarkBucketDD7D1D2F.Arn, GetAtt:BenchmarkRunsTableD0841636.Arn, GetAtt:ChatRunsTable8446CD95.Arn, GetAtt:DocumentGroupsTableA5108040.Arn, GetAtt:DocumentIngestRunsTableEA8F8CCA.Arn, GetAtt:DocumentsBucket9EC9DEB9.Arn, GetAtt:UserPool6BA7E5F2.Arn, Join:["",[{"Fn::GetAtt":["BenchmarkBucketDD7D1D2F","Arn"]},"/runs/*"]], Join:["",[{"Fn::GetAtt":["BenchmarkRunsTableD0841636","Arn"]},"/index/*"]], Join:["",[{"Fn::GetAtt":["ChatRunsTable8446CD95","Arn"]},"/index/*"]], Join:["",[{"Fn::GetAtt":["DocumentGroupsTableA5108040","Arn"]},"/index/*"]], Join:["",[{"Fn::GetAtt":["DocumentIngestRunsTableEA8F8CCA","Arn"]},"/index/*"]], Join:["",[{"Fn::GetAtt":["DocumentsBucket9EC9DEB9","Arn"]},"/debug-runs/*"]], Join:["",[{"Fn::GetAtt":["DocumentsBucket9EC9DEB9","Arn"]},"/documents/share-grants/*"]], Join:["",[{"Fn::GetAtt":["DocumentsBucket9EC9DEB9","Arn"]},"/embedding-cache/*"]], Join:["",[{"Fn::GetAtt":["DocumentsBucket9EC9DEB9","Arn"]},"/publication/active/*"]], Join:["",[{"Fn::GetAtt":["DocumentsBucket9EC9DEB9","Arn"]},"/quality-control/source-samples/*"]], Join:["",[{"Fn::GetAtt":["DocumentsBucket9EC9DEB9","Arn"]},"/security/account-revocations/*"]], Join:["",[{"Fn::GetAtt":["DocumentsBucket9EC9DEB9","Arn"]},"/security/revocation-cleanup-repairs/*"]], Join:["",[{"Fn::GetAtt":["DocumentsBucket9EC9DEB9","Arn"]},"/security/revocation-cleanup-tenant-registry-state/*"]], Join:["",[{"Fn::GetAtt":["DocumentsBucket9EC9DEB9","Arn"]},"/security/revocation-cleanup-tenants/*"]], Join:["",[{"Fn::GetAtt":["DocumentsBucket9EC9DEB9","Arn"]},"/security/revocation-cleanup/*"]], Join:["",[{"Fn::GetAtt":["DocumentsBucket9EC9DEB9","Arn"]},"/source-governance/*"]], Join:["",[{"Fn::GetAtt":["DocumentsBucket9EC9DEB9","Arn"]},"/tenant-artifacts/*"]]] |
 
 ### S3Vectors Provider Fn Service Role Default Policy
 
@@ -228,3 +274,17 @@ Logical ID: `S3VectorsProviderframeworkonEventServiceRoleDefaultPolicy486C3756`
 | `statementCount` | 2 |
 | `actions` | [lambda:GetFunction, lambda:InvokeFunction] |
 | `resources` | [GetAtt:S3VectorsProviderFn215E3A4E.Arn, Join:["",[{"Fn::GetAtt":["S3VectorsProviderFn215E3A4E","Arn"]},":*"]]] |
+
+### Security Audit Reconciliation Function Service Role Default Policy
+
+Logical ID: `SecurityAuditReconciliationFunctionServiceRoleDefaultPolicy77DBBA3A`
+
+用途推定: Security Audit Reconciliation Function Service Role Default Policy (IAM inline policy)
+
+| 設定項目 | 値 |
+| --- | --- |
+| `policyName` | SecurityAuditReconciliationFunctionServiceRoleDefaultPolicy77DBBA3A |
+| `roles` | [Ref:SecurityAuditReconciliationFunctionServiceRoleF4787D99] |
+| `statementCount` | 2 |
+| `actions` | [s3:GetObject, s3:ListBucket, s3:PutObject] |
+| `resources` | [GetAtt:DocumentsBucket9EC9DEB9.Arn, Join:["",[{"Fn::GetAtt":["DocumentsBucket9EC9DEB9","Arn"]},"/security-audit/intents/",{"Ref":"AWS::AccountId"},"/*"]], Join:["",[{"Fn::GetAtt":["DocumentsBucket9EC9DEB9","Arn"]},"/source-governance/",{"Ref":"AWS::AccountId"},"/*"]]] |

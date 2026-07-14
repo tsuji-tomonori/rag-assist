@@ -1,5 +1,6 @@
 import { z } from "zod"
 import { ragRuntimePolicy } from "./runtime-policy.js"
+import type { SafeDegradationDecision } from "../rag/_shared/security/safe-degradation-policy.js"
 
 export const NO_ANSWER = "資料からは回答できません。"
 
@@ -10,6 +11,7 @@ export const RetrievedChunkSchema = z.object({
   metadata: z.object({
     kind: z.enum(["chunk", "memory"]),
     documentId: z.string(),
+    documentVersion: z.string().optional(),
     fileName: z.string(),
     chunkId: z.string().optional(),
     memoryId: z.string().optional(),
@@ -109,6 +111,7 @@ export const AnswerabilitySchema = z.object({
       "structured_index_unavailable",
       "invalid_temporal_context",
       "citation_validation_failed",
+      "authorization_revoked",
       "unsupported_answer"
     ])
     .default("not_checked"),
@@ -269,6 +272,7 @@ export const DebugStepSchema = z.object({
   output: z.record(z.string(), z.unknown()).optional(),
   hitCount: z.number().optional(),
   tokenCount: z.number().optional(),
+  degradationDecision: z.custom<SafeDegradationDecision>().optional(),
   startedAt: z.string(),
   completedAt: z.string()
 })
@@ -373,11 +377,14 @@ export const ActionObservationSchema = z.object({
   retrievalDiagnostics: z
     .object({
       queryCount: z.number().int().min(0),
+      traceIds: z.array(z.string()).optional(),
       indexVersions: z.array(z.string()).default(() => []),
       aliasVersions: z.array(z.string()).default(() => []),
       lexicalCount: z.number().int().min(0),
       semanticCount: z.number().int().min(0),
       fusedCount: z.number().int().min(0),
+      candidateCount: z.number().int().min(0),
+      deniedCandidateCount: z.number().int().min(0),
       profileId: z.string().optional(),
       profileVersion: z.string().optional(),
       topGap: z.number().optional(),

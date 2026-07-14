@@ -59,7 +59,7 @@
 | 実現可能性 | OK | usage trace と price profile で算出可能 |
 | 検証可能性 | OK | representative workload の cost report |
 | ニーズ適合 | OK | 品質を犠牲にせず予算内運用を判断できる |
-| 実装適合 | partial | usage は一部あるが価格 version と gate が不足 |
+| 実装適合 | OK（measurement/gate contract、price/ceiling 未承認） | approved versioned price catalog と complete usage から component/total unit cost を導出し、price mismatch/incomplete usage を unavailable、他 SQ 失敗時を総合 fail とする |
 
 ## トレース
 
