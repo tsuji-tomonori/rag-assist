@@ -67,7 +67,7 @@
 | 検証可能性 | OK | stage failure injection、concurrent read、exactly-one-active、rollback ACL/delete test で確認できる |
 | ニーズ適合 | OK | 索引更新中も利用可能な正しい版を検索し、削除・失効済み資料を復活させない |
 | 原子性 | OK | index version transition の安全条件を規定する |
-| 実装適合 | partial/NG | migration はあるが compensation と current deny invariant が不足 |
+| 実装適合 | OK（confirmed） | staged publication coordinator が isolated namespace、reconciliation、fencing、CAS active pointer、rollback を実装し、fault/concurrency test が exactly-one-active を検証する |
 | 合意 | pending | retention と rollback window は未確定 |
 
 ## トレース

@@ -76,7 +76,7 @@
 | 検証可能性 | OK | direct×folder×deny×multi-folder×operation の matrix test で確認できる |
 | ニーズ適合 | OK | 共有方法や利用経路が変わっても文書権限を予測可能にする |
 | 原子性 | OK | document permission の合成規則だけを規定する |
-| 実装適合 | partial/conflict | max 合成はあるが全経路・deny・操作範囲が未統一 |
+| 実装適合 | OK（confirmed） | `document-permission-service.ts` が mandatory deny→ordinary deny→administrative principal→direct/folder allow の合成順を固定し、contribution 付き matrix test を持つ |
 | 合意 | pending | direct `full` の操作範囲と max/min を承認する必要がある |
 
 ## トレース

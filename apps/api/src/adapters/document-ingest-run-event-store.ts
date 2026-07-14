@@ -6,6 +6,6 @@ export type CreateDocumentIngestRunEventInput = Omit<DocumentIngestRunEvent, "se
 }
 
 export interface DocumentIngestRunEventStore {
-  append(input: CreateDocumentIngestRunEventInput): Promise<DocumentIngestRunEvent>
-  listAfter(runId: string, afterSeq: number, limit?: number): Promise<DocumentIngestRunEvent[]>
+  append(tenantId: string, input: CreateDocumentIngestRunEventInput): Promise<DocumentIngestRunEvent>
+  listAfter(tenantId: string, runId: string, afterSeq: number, limit?: number): Promise<DocumentIngestRunEvent[]>
 }

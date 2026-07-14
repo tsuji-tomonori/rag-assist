@@ -73,7 +73,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 29 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 46 field(s) |
 | `400` | リクエスト形式または入力値が不正です。 | `application/json` | 2 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
@@ -89,6 +89,7 @@ Media type: `application/json`
 | `results` | `array<object>` | yes | `response.results` の値。項目名は results を表します。 | - |
 | `results[].id` | `string` | yes | リソースを一意に識別する ID。 | - |
 | `results[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `results[].documentVersion` | `string` | no | `response.results[].documentVersion` の値。項目名は document version を表します。 | - |
 | `results[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
 | `results[].chunkId` | `string` | no | `response.results[].chunkId` の値。項目名は chunk id を表します。 | - |
 | `results[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
@@ -109,11 +110,27 @@ Media type: `application/json`
 | `diagnostics.semanticCount` | `integer` | yes | `response.diagnostics.semanticCount` の値。項目名は semantic count を表します。 | - |
 | `diagnostics.fusedCount` | `integer` | yes | `response.diagnostics.fusedCount` の値。項目名は fused count を表します。 | - |
 | `diagnostics.latencyMs` | `integer` | yes | `response.diagnostics.latencyMs` の値。項目名は latency ms を表します。 | - |
+| `diagnostics.traceId` | `string` | yes | `response.diagnostics.traceId` の値。項目名は trace id を表します。 | - |
+| `diagnostics.replayVersionManifest` | `object` | yes | `response.diagnostics.replayVersionManifest` の値。項目名は replay version manifest を表します。 | - |
 | `diagnostics.index` | `object` | no | `response.diagnostics.index` の値。項目名は index を表します。 | - |
 | `diagnostics.index.visibleManifestCount` | `integer` | yes | `response.diagnostics.index.visibleManifestCount` の値。項目名は visible manifest count を表します。 | minimum=0 |
 | `diagnostics.index.indexedChunkCount` | `integer` | yes | `response.diagnostics.index.indexedChunkCount` の値。項目名は indexed chunk count を表します。 | minimum=0 |
 | `diagnostics.index.cache` | `enum(memory \| artifact \| built)` | yes | `response.diagnostics.index.cache` の値。項目名は cache を表します。 | enum=memory, artifact, built |
 | `diagnostics.index.loadMs` | `integer` | yes | `response.diagnostics.index.loadMs` の値。項目名は load ms を表します。 | minimum=0 |
+| `diagnostics.index.degradationDecision` | `object` | no | `response.diagnostics.index.degradationDecision` の値。項目名は degradation decision を表します。 | - |
+| `diagnostics.index.degradationDecision.policyVersion` | `enum(rag-safe-degradation-v1)` | yes | `response.diagnostics.index.degradationDecision.policyVersion` の値。項目名は policy version を表します。 | enum=rag-safe-degradation-v1 |
+| `diagnostics.index.degradationDecision.trigger` | `enum(dependency_error \| timeout \| overload \| cost_limit \| circuit_open \| unsafe_profile)` | yes | `response.diagnostics.index.degradationDecision.trigger` の値。項目名は trigger を表します。 | enum=dependency_error, timeout, overload, cost_limit, circuit_open, unsafe_profile |
+| `diagnostics.index.degradationDecision.stage` | `string` | yes | `response.diagnostics.index.degradationDecision.stage` の値。項目名は stage を表します。 | - |
+| `diagnostics.index.degradationDecision.action` | `enum(limited_answer \| refuse \| fail)` | yes | `response.diagnostics.index.degradationDecision.action` の値。項目名は action を表します。 | enum=limited_answer, refuse, fail |
+| `diagnostics.index.degradationDecision.enforcedGuards` | `array<enum(authentication \| authorization \| classification_usage \| prompt_injection \| tool_policy \| grounding \| citation \| output_secret \| trace_redaction)>` | yes | `response.diagnostics.index.degradationDecision.enforcedGuards` の値。項目名は enforced guards を表します。 | - |
+| `diagnostics.index.degradationDecision.missingGuards` | `array<enum(authentication \| authorization \| classification_usage \| prompt_injection \| tool_policy \| grounding \| citation \| output_secret \| trace_redaction)>` | yes | `response.diagnostics.index.degradationDecision.missingGuards` の値。項目名は missing guards を表します。 | - |
+| `diagnostics.index.degradationDecision.safeToReturnContent` | `boolean` | yes | `response.diagnostics.index.degradationDecision.safeToReturnContent` の値。項目名は safe to return content を表します。 | - |
+| `diagnostics.index.degradationDecision.guardOutcomes` | `array<object>` | yes | `response.diagnostics.index.degradationDecision.guardOutcomes` の値。項目名は guard outcomes を表します。 | - |
+| `diagnostics.index.degradationDecision.guardOutcomes[].guard` | `enum(authentication \| authorization \| classification_usage \| prompt_injection \| tool_policy \| grounding \| citation \| output_secret \| trace_redaction)` | yes | `response.diagnostics.index.degradationDecision.guardOutcomes[].guard` の値。項目名は guard を表します。 | enum=authentication, authorization, classification_usage, prompt_injection, tool_policy, grounding, citation, output_secret, trace_redaction |
+| `diagnostics.index.degradationDecision.guardOutcomes[].observed` | `boolean` | yes | `response.diagnostics.index.degradationDecision.guardOutcomes[].observed` の値。項目名は observed を表します。 | - |
+| `diagnostics.index.degradationDecision.guardOutcomes[].passed` | `boolean` | yes | `response.diagnostics.index.degradationDecision.guardOutcomes[].passed` の値。項目名は passed を表します。 | - |
+| `diagnostics.index.degradationDecision.guardOutcomes[].evidence` | `string` | yes | `response.diagnostics.index.degradationDecision.guardOutcomes[].evidence` の値。項目名は evidence を表します。 | - |
+| `diagnostics.index.degradationDecision.guardOutcomes[].observedAt` | `string:date-time` | yes | `response.diagnostics.index.degradationDecision.guardOutcomes[].observedAt` の値。項目名は observed at を表します。 | - |
 
 ##### `400` リクエスト形式または入力値が不正です。
 

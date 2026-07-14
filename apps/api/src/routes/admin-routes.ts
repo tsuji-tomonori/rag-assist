@@ -1,7 +1,10 @@
 import { z } from "@hono/zod-openapi"
+import { HTTPException } from "hono/http-exception"
 import { requirePermission } from "../authorization.js"
 import {
   AccessRoleListResponseSchema,
+  AdministrativePrincipalTransferRequestSchema,
+  AdministrativePrincipalTransferResponseSchema,
   AdminExportResponseSchema,
   AdminAuditLogResponseSchema,
   AliasAuditLogResponseSchema,
@@ -12,6 +15,7 @@ import {
   CreateAliasRequestSchema,
   CreateManagedUserRequestSchema,
   ErrorResponseSchema,
+  ManagedUserDeletionPreflightSchema,
   ManagedUserListResponseSchema,
   ManagedUserSchema,
   PublishAliasesResponseSchema,
@@ -21,7 +25,9 @@ import {
   UsageSummaryListResponseSchema
 } from "../schemas.js"
 import type { ApiRouteContext } from "./route-context.js"
-import { looseRoute, routeAuthorization, validJson, validParam } from "./route-utils.js"
+import { looseRoute, routeAuthorization, validJson, validParam, validQuery } from "./route-utils.js"
+import { ApplicationRoleMutationError } from "../security/application-role-mutation-service.js"
+import { AdministrativePrincipalTransferError } from "../security/administrative-principal-transfer-service.js"
 
 export function registerAdminRoutes({ app, service }: ApiRouteContext) {
   app.openapi(
@@ -57,6 +63,56 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
 
   app.openapi(
     looseRoute({
+      method: "post",
+      path: "/admin/users/{userId}/administrative-principal-transfer",
+      "x-memorag-authorization": routeAuthorization({
+        mode: "required",
+        permission: "user:delete",
+        operationKey: "administrative_principal.transfer",
+        resourceCondition: "adminManagedUser",
+        notes: ["owner/adminPrincipal 変更、tenant 離脱、恒久削除を確定する前に全所有資源を同一 tenant の active 後継へ移管します。"]
+      }),
+      request: {
+        params: z.object({ userId: z.string().min(1) }),
+        body: { required: true, content: { "application/json": { schema: AdministrativePrincipalTransferRequestSchema } } }
+      },
+      responses: {
+        200: { description: "移管結果", content: { "application/json": { schema: AdministrativePrincipalTransferResponseSchema } } },
+        400: { description: "移管条件が不正", content: { "application/json": { schema: ErrorResponseSchema } } },
+        403: { description: "Forbidden", content: { "application/json": { schema: ErrorResponseSchema } } },
+        404: { description: "対象ユーザーが見つかりません", content: { "application/json": { schema: ErrorResponseSchema } } },
+        409: { description: "別の移管と競合", content: { "application/json": { schema: ErrorResponseSchema } } },
+        503: { description: "移管 reconciliation が必要", content: { "application/json": { schema: ErrorResponseSchema } } }
+      }
+    }),
+    async (c) => {
+      const actor = c.get("user")
+      requirePermission(actor, "user:delete")
+      const { userId } = validParam<{ userId: string }>(c)
+      const body = validJson<z.infer<typeof AdministrativePrincipalTransferRequestSchema>>(c)
+      try {
+        const result = await service.transferManagedUserAdministrativePrincipal(actor, userId, body)
+        if (!result) return c.json({ error: "User not found" }, 404)
+        return c.json(result, 200)
+      } catch (error) {
+        if (error instanceof Error && error.message.startsWith("Forbidden")) {
+          throw new HTTPException(403, { message: "Forbidden" })
+        }
+        if (error instanceof AdministrativePrincipalTransferError) {
+          if (error.reconciliationRequired) return c.json({ error: "Administrative principal transfer unavailable" }, 503)
+          if (/conflict|already transferred|in progress|CAS race/i.test(error.message)) {
+            return c.json({ error: "Administrative principal transfer conflict" }, 409)
+          }
+          return c.json({ error: error.message }, 400)
+        }
+        if (error instanceof Error && error.message.includes("Transfer reason")) return c.json({ error: error.message }, 400)
+        throw error
+      }
+    }
+  )
+
+  app.openapi(
+    looseRoute({
       method: "get",
       path: "/admin/users",
       "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "user:read", operationKey: "user.read", resourceCondition: "adminManagedUser" }),
@@ -69,6 +125,33 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
       const user = c.get("user")
       requirePermission(user, "user:read")
       return c.json({ users: await service.listManagedUsers(user) }, 200)
+    }
+  )
+
+  app.openapi(
+    looseRoute({
+      method: "get",
+      path: "/admin/users/{userId}/deletion-preflight",
+      "x-memorag-authorization": routeAuthorization({
+        mode: "required",
+        permission: "user:delete",
+        operationKey: "user.delete.preflight",
+        resourceCondition: "adminManagedUser",
+        notes: ["所有資源の件数と、正本 identity で active・同一 tenant と確認できた後継候補だけを返します。"]
+      }),
+      request: { params: z.object({ userId: z.string().min(1) }) },
+      responses: {
+        200: { description: "削除前の所有資源と後継候補", content: { "application/json": { schema: ManagedUserDeletionPreflightSchema } } },
+        404: { description: "対象ユーザーが見つかりません", content: { "application/json": { schema: ErrorResponseSchema } } }
+      }
+    }),
+    async (c) => {
+      const actor = c.get("user")
+      requirePermission(actor, "user:delete")
+      const { userId } = validParam<{ userId: string }>(c)
+      const preflight = await service.getManagedUserDeletionPreflight(actor, userId)
+      if (!preflight) return c.json({ error: "User not found" }, 404)
+      return c.json(preflight, 200)
     }
   )
 
@@ -132,7 +215,8 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
       responses: {
         200: { description: "Assigned user roles", content: { "application/json": { schema: ManagedUserSchema } } },
         403: { description: "Forbidden role assignment", content: { "application/json": { schema: ErrorResponseSchema } } },
-        404: { description: "User not found", content: { "application/json": { schema: ErrorResponseSchema } } }
+        404: { description: "User not found", content: { "application/json": { schema: ErrorResponseSchema } } },
+        503: { description: "正本 role の更新または session 失効に失敗しました", content: { "application/json": { schema: ErrorResponseSchema } } }
       }
     }),
     async (c) => {
@@ -140,11 +224,15 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
       requirePermission(actor, "access:role:assign")
       const { userId } = validParam<{ userId: string }>(c)
       const body = validJson<z.infer<typeof AssignUserRolesRequestSchema>>(c)
-      if (actor.userId === userId) return c.json({ error: "Self role assignment is forbidden" }, 403)
-      const wantsSystemAdmin = body.groups.some((group) => group.trim() === "SYSTEM_ADMIN")
-      const isSystemAdmin = actor.cognitoGroups.includes("SYSTEM_ADMIN")
-      if (wantsSystemAdmin && !isSystemAdmin) return c.json({ error: "Forbidden role assignment" }, 403)
-      const user = await service.assignUserRoles(actor, userId, body.groups)
+      let user
+      try {
+        user = await service.assignUserRoles(actor, userId, body.groups, body.reason)
+      } catch (error) {
+        if (error instanceof ApplicationRoleMutationError) {
+          return c.json({ error: error.result === "denied" ? "Forbidden role assignment" : "Role mutation unavailable" }, error.result === "denied" ? 403 : 503)
+        }
+        throw error
+      }
       if (!user) return c.json({ error: "User not found" }, 404)
       return c.json(user, 200)
     }
@@ -197,7 +285,10 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
       method: "delete",
       path: "/admin/users/{userId}",
       "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "user:delete", operationKey: "user.delete", resourceCondition: "adminManagedUser" }),
-      request: { params: z.object({ userId: z.string().min(1) }) },
+      request: {
+        params: z.object({ userId: z.string().min(1) }),
+        query: z.object({ successorUserId: z.string().min(1).optional() })
+      },
       responses: {
         200: { description: "Deleted user from management ledger", content: { "application/json": { schema: ManagedUserSchema } } },
         404: { description: "User not found", content: { "application/json": { schema: ErrorResponseSchema } } }
@@ -207,7 +298,8 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
       const actor = c.get("user")
       requirePermission(actor, "user:delete")
       const { userId } = validParam<{ userId: string }>(c)
-      const user = await service.deleteManagedUser(actor, userId)
+      const { successorUserId } = validQuery<{ successorUserId?: string }>(c)
+      const user = await service.deleteManagedUser(actor, userId, { successorUserId })
       if (!user) return c.json({ error: "User not found" }, 404)
       return c.json(user, 200)
     }

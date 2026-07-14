@@ -60,7 +60,7 @@
 | 実現可能性 | OK | ACL 付き正解 dataset で測定可能 |
 | 検証可能性 | OK | grant 経路別 benchmark で判定できる |
 | ニーズ適合 | OK | read-only 利用者が共有資料を実際に発見できる |
-| 実装適合 | partial | unauthorized gate/authorized recall の統合計測が不足 |
+| 実装適合 | OK（confirmed、閾値未承認） | versioned case から authorized Recall@k/false-denial を導出し、unauthorized exposure と独立 mandatory gate で同時評価する。optional aggregate のみで availability を作らない |
 
 ## トレース
 

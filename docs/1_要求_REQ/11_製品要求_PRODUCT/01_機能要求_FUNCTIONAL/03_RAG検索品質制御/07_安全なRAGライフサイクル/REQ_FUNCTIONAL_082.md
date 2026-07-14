@@ -66,7 +66,7 @@
 | 実現可能性 | OK | parser result schema と publication gate で実現可能 |
 | 検証可能性 | OK | 境界 corpus、OCR/unsupported fixture、locator/warning assertion で確認できる |
 | ニーズ適合 | OK | 不完全な抽出を完全な回答根拠として利用しない |
-| 実装適合 | NG/conflict | 固定文字数での切り詰めと詳細 locator/warning 不足がある |
+| 実装適合 | OK（confirmed） | text extractor/ingest manifest が page/section/span、section 継承、OCR/source method、input/output count、loss warning を保持する。実2ページ native PDF と native/empty mixed PDF の production parser tests により、page/span round-trip と欠落 page の partial/quarantine/no-vector-publication を確認した。 |
 
 ## トレース
 

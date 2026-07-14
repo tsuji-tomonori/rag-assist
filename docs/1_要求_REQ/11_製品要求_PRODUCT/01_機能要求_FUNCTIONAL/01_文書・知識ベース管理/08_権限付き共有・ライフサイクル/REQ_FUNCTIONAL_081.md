@@ -71,6 +71,7 @@
 | 実現可能性 | OK | directory lookup、tenant comparison、graph cycle detection、conditional write で実現可能 |
 | 検証可能性 | OK | user/group、active/inactive、same/cross tenant、acyclic/cycle、permission 有無の組合せで検証できる |
 | ニーズ適合 | OK | 管理者が安全に group membership を委任し、利用者の実効権限を予測可能にする |
+| 実装適合 | OK（confirmed） | `resource-group-membership-service.ts` が actor authority、same-tenant active principal、stale-edge cleanup、nested cycle、all-or-nothing state を検証し、対応 test を持つ |
 
 ## トレース
 

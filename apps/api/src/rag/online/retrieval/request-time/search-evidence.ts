@@ -1,12 +1,17 @@
 import type { AppUser } from "../../../../auth.js"
 import type { Dependencies } from "../../../../dependencies.js"
-import { canAccessDocumentGroup } from "../../../../folders/document-group-permissions.js"
+import { DocumentPermissionService } from "../../../../documents/document-permission-service.js"
+import { FolderPermissionService } from "../../../../folders/folder-permission-service.js"
+import { ResourceOperationAuthorizationError } from "../../../../security/production-resource-operation-authorizer.js"
 import { loadChunksForManifest } from "../../../_shared/storage/manifest-chunks.js"
 import { isQualityApprovedForNormalRag } from "../../../_shared/policies/quality-policy.js"
+import { createPublicationPointerSnapshot, isManifestCurrentPublication, type PublicationPointerSnapshot } from "../../../_shared/publication/staged-publication-coordinator.js"
+import { currentEligibilitySnapshotFromAuthoritativeState, evaluateCurrentRagEligibility } from "../../../_shared/security/current-rag-eligibility.js"
 import { rrfFuse, searchRag, type SearchResult, type SearchResponse } from "../hybrid/hybrid-retriever.js"
-import type { Chunk, DocumentGroup, DocumentManifest, JsonValue, RetrievedVector, VectorMetadata } from "../../../../types.js"
+import type { Chunk, DocumentManifest, RetrievedVector, VectorMetadata } from "../../../../types.js"
 import { expandedSearchTopK, ragRuntimePolicy } from "../../../../chat-orchestration/runtime-policy.js"
 import type { ChatOrchestrationState, ChatOrchestrationUpdate } from "../../../../chat-orchestration/state.js"
+import { readTenantManifest } from "../../../_shared/storage/tenant-artifacts.js"
 
 export function createSearchEvidenceNode(deps: Dependencies, user: AppUser) {
   return async function searchEvidence(state: ChatOrchestrationState): Promise<ChatOrchestrationUpdate> {
@@ -23,6 +28,7 @@ export function createSearchEvidenceNode(deps: Dependencies, user: AppUser) {
     const resultLists: SearchResult[][] = []
     const bestResultById = new Map<string, SearchResult>()
     const diagnostics: SearchResponse["diagnostics"][] = []
+    const publicationSnapshot = createPublicationPointerSnapshot()
 
     for (const item of queryEmbeddings) {
       const response = await searchRag(
@@ -37,7 +43,9 @@ export function createSearchEvidenceNode(deps: Dependencies, user: AppUser) {
           filters: state.searchFilters,
           scope: state.searchScope
         },
-        user
+        user,
+        publicationSnapshot,
+        { requestTraceId: state.runId }
       )
       diagnostics.push(response.diagnostics)
       resultLists.push(response.results)
@@ -56,7 +64,7 @@ export function createSearchEvidenceNode(deps: Dependencies, user: AppUser) {
       })
       .filter((hit): hit is RetrievedVector => hit !== undefined)
       .slice(0, expandedSearchTopK(state.topK))
-    const memorySourceChunks = await expandMemorySourceChunks(deps, state, user, expandedSearchTopK(state.topK))
+    const memorySourceChunks = await expandMemorySourceChunks(deps, state, user, expandedSearchTopK(state.topK), publicationSnapshot)
     const retrievedChunks = mergeRetrievedChunks([...hybridChunks, ...memorySourceChunks], expandedSearchTopK(state.topK))
     return { retrievedChunks, retrievalDiagnostics: summarizeDiagnostics(diagnostics, retrievedChunks) }
   }
@@ -69,6 +77,7 @@ function toRetrievedVector(result: SearchResult, crossQueryRrfScore: number, cro
     metadata: {
       kind: "chunk",
       documentId: result.documentId,
+      documentVersion: result.documentVersion,
       fileName: result.fileName,
       chunkId: result.chunkId,
       text: result.text,
@@ -114,14 +123,25 @@ function summarizeDiagnostics(diagnostics: SearchResponse["diagnostics"][], retr
     else if (sources.includes("lexical")) sourceCounts.lexical += 1
     else if (sources.includes("semantic")) sourceCounts.semantic += 1
   }
+  const candidateCount = diagnostics.reduce(
+    (sum, item) => sum + item.replayVersionManifest.decisions.candidateCount,
+    0
+  )
+  const deniedCandidateCount = diagnostics.reduce(
+    (sum, item) => sum + item.replayVersionManifest.decisions.deniedCandidateCount,
+    0
+  )
 
   return {
     queryCount: diagnostics.length,
+    traceIds: [...new Set(diagnostics.map((item) => item.traceId))],
     indexVersions: [...new Set(diagnostics.map((item) => item.indexVersion))],
     aliasVersions: [...new Set(diagnostics.map((item) => item.aliasVersion))],
     lexicalCount: diagnostics.reduce((sum, item) => sum + item.lexicalCount, 0),
     semanticCount: diagnostics.reduce((sum, item) => sum + item.semanticCount, 0),
     fusedCount: diagnostics.reduce((sum, item) => sum + item.fusedCount, 0),
+    candidateCount: Math.max(candidateCount, retrievedChunks.length + deniedCandidateCount),
+    deniedCandidateCount,
     profileId: diagnostics[0]?.profileId,
     profileVersion: diagnostics[0]?.profileVersion,
     topGap: minNumber(diagnostics.map((item) => item.topGap)),
@@ -146,7 +166,13 @@ function sourceList(chunk: RetrievedVector): string[] {
   return Array.isArray(raw) ? raw.filter((item): item is string => typeof item === "string") : []
 }
 
-async function expandMemorySourceChunks(deps: Dependencies, state: ChatOrchestrationState, user: AppUser, limit: number): Promise<RetrievedVector[]> {
+async function expandMemorySourceChunks(
+  deps: Dependencies,
+  state: ChatOrchestrationState,
+  user: AppUser,
+  limit: number,
+  publicationSnapshot: PublicationPointerSnapshot
+): Promise<RetrievedVector[]> {
   if (!state.useMemory || state.memoryCards.length === 0) return []
   const queryTokens = tokenizeQueries([
     state.normalizedQuery,
@@ -156,16 +182,56 @@ async function expandMemorySourceChunks(deps: Dependencies, state: ChatOrchestra
   ])
   const manifestCache = new Map<string, DocumentManifest | undefined>()
   const chunkCache = new Map<string, Chunk[]>()
-  const groups = await loadDocumentGroups(deps)
+  const documentAccess = new DocumentPermissionService(deps)
+  const allowLocalFixture = Boolean(deps.localTestIngestAdmissionContext)
   const expanded: RetrievedVector[] = []
   for (const memoryHit of state.memoryCards) {
     const memoryMetadata = memoryHit.metadata as VectorMetadata
     const documentId = memoryHit.metadata.documentId
     if (!documentId) continue
-    const manifest = await loadManifest(deps, manifestCache, documentId)
-    if (!manifest || !canAccessManifest(manifest, user, groups) || !isQualityApprovedForNormalRag(manifest)) continue
+    const manifest = await loadManifest(deps, manifestCache, user, documentId)
+    if (!manifest || !(await isManifestCurrentPublication(deps, manifest, publicationSnapshot))) continue
+    const permissionDecision = await documentAccess.resolveEffectiveDocumentPermissionDecision(user, manifest)
+    const authorizationAllowed = permissionDecision.permission === "readOnly" || permissionDecision.permission === "full"
+    const qualityAllowed = isQualityApprovedForNormalRag(manifest, {
+      allowLegacyLocalTestFixture: Boolean(deps.localTestIngestAdmissionContext)
+    })
+    const current = await currentEligibilitySnapshotFromAuthoritativeState({
+      objectStore: deps.objectStore,
+      manifest,
+      authorizationAllowed,
+      qualityAllowed,
+      purpose: "normal_answer",
+      roles: user.cognitoGroups,
+      allowLocalTestFixture: allowLocalFixture
+    })
+    const memoryEligibility = evaluateCurrentRagEligibility({
+      actor: user,
+      identityVerified: Boolean(user.userId && user.tenantId),
+      purpose: "normal_answer",
+      envelope: memoryMetadata.securityEnvelope,
+      current
+    })
+    const localFixtureEligible = authorizationAllowed && qualityAllowed
+    if (!memoryEligibility.allowed && !isExplicitLocalEligibilityFixture(allowLocalFixture, localFixtureEligible, manifest, memoryMetadata)) continue
+    try {
+      await documentAccess.assertDocumentOperation(user, manifest, "searchUse", ["currentEligibilityConfirmed"])
+    } catch (error) {
+      if (error instanceof ResourceOperationAuthorizationError) continue
+      throw error
+    }
+    if (!(await authorizeFolderScopeForMemory(deps, state, user, manifest))) continue
     const chunks = await loadManifestChunks(deps, chunkCache, manifest)
-    const candidates = candidateChunksForMemory(memoryHit, chunks)
+    const candidates = candidateChunksForMemory(memoryHit, chunks).filter((chunk) => {
+      const eligibility = evaluateCurrentRagEligibility({
+        actor: user,
+        identityVerified: Boolean(user.userId && user.tenantId),
+        purpose: "normal_answer",
+        envelope: chunk.securityEnvelope,
+        current
+      })
+      return eligibility.allowed || isExplicitLocalEligibilityFixture(allowLocalFixture, localFixtureEligible, manifest, chunk)
+    })
     const selected = rankMemorySourceChunks(candidates, memoryHit, queryTokens).slice(0, Math.max(1, Math.min(limit, state.topK)))
     for (const { chunk, score } of selected) {
       expanded.push({
@@ -194,6 +260,7 @@ async function expandMemorySourceChunks(deps: Dependencies, state: ChatOrchestra
           codeLanguage: chunk.codeLanguage,
           figureCaption: chunk.figureCaption,
           extractionMethod: chunk.extractionMethod,
+          securityEnvelope: chunk.securityEnvelope,
           lifecycleStatus: manifest.lifecycleStatus,
           tenantId: stringMetadata(memoryMetadata.tenantId),
           department: stringMetadata(memoryMetadata.department),
@@ -223,60 +290,53 @@ async function expandMemorySourceChunks(deps: Dependencies, state: ChatOrchestra
   return expanded
 }
 
-async function loadDocumentGroups(deps: Pick<Dependencies, "documentGroupStore">): Promise<DocumentGroup[]> {
-  try {
-    return await deps.documentGroupStore.list()
-  } catch {
-    return []
+async function authorizeFolderScopeForMemory(
+  deps: Dependencies,
+  state: ChatOrchestrationState,
+  user: AppUser,
+  manifest: DocumentManifest
+): Promise<boolean> {
+  if (state.searchScope?.mode !== "groups") return true
+  const requested = new Set(state.searchScope.groupIds ?? [])
+  const rawFolderIds = manifest.metadata?.folderIds ?? manifest.metadata?.folderId ?? manifest.metadata?.groupIds ?? manifest.metadata?.groupId
+  const folderIds = (typeof rawFolderIds === "string" ? [rawFolderIds] : Array.isArray(rawFolderIds) ? rawFolderIds : [])
+    .filter((value): value is string => typeof value === "string" && requested.has(value))
+  const access = new FolderPermissionService(deps)
+  for (const folderId of folderIds) {
+    try {
+      await access.assertFolderOperation(user, folderId, "searchUse", [
+        "currentEligibilityConfirmed",
+        "documentPermissionsReevaluated"
+      ])
+      return true
+    } catch (error) {
+      if (error instanceof ResourceOperationAuthorizationError) continue
+      throw error
+    }
   }
+  return false
 }
 
-function canAccessManifest(manifest: DocumentManifest, user: AppUser, groups: DocumentGroup[] = []): boolean {
-  if (user.cognitoGroups.includes("SYSTEM_ADMIN")) return true
-  const metadata = manifest.metadata ?? {}
-  const groupIds = stringValues(metadata.groupIds ?? metadata.groupId)
-  const scopeType = stringValue(metadata.scopeType)
-  if (groupIds.length > 0 || scopeType === "group") {
-    return groupIds.some((groupId) => canAccessDocumentGroup(groups.find((group) => group.groupId === groupId), user, groups))
-  }
-  if (stringValue(metadata.ownerUserId) === user.userId) return true
-  if (!hasExplicitMetadataAcl(metadata)) return false
-  return canAccessMetadata(metadata, user)
-}
-
-function hasExplicitMetadataAcl(metadata: Record<string, JsonValue>): boolean {
-  return stringValues(metadata.aclGroups ?? metadata.allowedGroups ?? metadata.aclGroup ?? metadata.group).length > 0
-    || stringValues(metadata.allowedUsers ?? metadata.userIds ?? metadata.privateToUserId).length > 0
-}
-
-function canAccessMetadata(metadata: Record<string, JsonValue>, user: AppUser): boolean {
-  const groups = new Set(user.cognitoGroups)
-  const aclGroups = stringValues(metadata.aclGroups ?? metadata.allowedGroups ?? metadata.aclGroup ?? metadata.group)
-  const allowedUsers = stringValues(metadata.allowedUsers ?? metadata.userIds ?? metadata.privateToUserId)
-  if (aclGroups.length === 0 && allowedUsers.length === 0) return false
-  if (aclGroups.length > 0 && !aclGroups.some((group) => groups.has(group))) return false
-  if (allowedUsers.length > 0 && !allowedUsers.includes(user.userId) && (!user.email || !allowedUsers.includes(user.email))) return false
-  return true
-}
-
-function stringValues(value: JsonValue | undefined): string[] {
-  if (typeof value === "string") return [value]
-  if (Array.isArray(value)) return value.filter((item): item is string => typeof item === "string")
-  return []
-}
-
-function stringValue(value: JsonValue | undefined): string | undefined {
-  return typeof value === "string" ? value : undefined
+function isExplicitLocalEligibilityFixture(
+  allowLocalFixture: boolean,
+  currentEligible: boolean,
+  manifest: DocumentManifest,
+  record: Pick<VectorMetadata, "securityEnvelope">
+): boolean {
+  return allowLocalFixture && currentEligible && !manifest.securityEnvelope && !record.securityEnvelope
 }
 
 async function loadManifest(
-  deps: Pick<Dependencies, "objectStore">,
+  deps: Pick<Dependencies, "objectStore" | "localTestIngestAdmissionContext" | "legacyGlobalDocumentArtifacts">,
   cache: Map<string, DocumentManifest | undefined>,
+  user: AppUser,
   documentId: string
 ): Promise<DocumentManifest | undefined> {
   if (cache.has(documentId)) return cache.get(documentId)
   try {
-    const manifest = JSON.parse(await deps.objectStore.getText(`manifests/${documentId}.json`)) as DocumentManifest
+    const tenantId = user.tenantId?.trim()
+    if (!tenantId) return undefined
+    const manifest = await readTenantManifest(deps, tenantId, documentId)
     cache.set(documentId, manifest)
     return manifest
   } catch {

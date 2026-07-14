@@ -39,6 +39,11 @@ const historyMock = vi.hoisted(() => ({
   updateHistoryQuestionTickets: vi.fn(),
   createConversationId: vi.fn(() => "conv-2")
 }))
+const favoritesMock = vi.hoisted(() => ({
+  refreshFavorites: vi.fn(),
+  addFavorite: vi.fn(),
+  removeFavorite: vi.fn()
+}))
 const debugMock = vi.hoisted(() => ({
   setDebugRuns: vi.fn(),
   setSelectedRunId: vi.fn(),
@@ -78,6 +83,7 @@ const adminMock = vi.hoisted(() => ({
   refreshAdminData: vi.fn(),
   onAssignUserRoles: vi.fn(),
   onCreateManagedUser: vi.fn(),
+  onPrepareManagedUserDelete: vi.fn(),
   onSetManagedUserStatus: vi.fn(),
   onCreateAlias: vi.fn(),
   onUpdateAlias: vi.fn(),
@@ -120,6 +126,12 @@ vi.mock("../../features/history/hooks/useConversationHistory.js", () => ({
     }],
     currentConversationId: "conv-1",
     ...historyMock
+  }))
+}))
+vi.mock("../../features/favorites/hooks/useFavorites.js", () => ({
+  useFavorites: vi.fn(() => ({
+    favorites: [],
+    ...favoritesMock
   }))
 }))
 vi.mock("../../features/debug/hooks/useDebugRuns.js", () => ({
@@ -171,6 +183,7 @@ const allPermissions: Permission[] = [
   "rag:index:rebuild:group",
   "rag:group:create",
   "rag:group:assign_manager",
+  "folder.move",
   "rag:alias:read",
   "rag:alias:write:group",
   "rag:alias:review:group",
@@ -213,6 +226,7 @@ describe("useAppShellState", () => {
       benchmarkMock.refreshBenchmarkRuns,
       benchmarkMock.refreshBenchmarkSuites,
       historyMock.refreshHistory,
+      favoritesMock.refreshFavorites,
       debugMock.refreshDebugRuns,
       questionsMock.refreshQuestions,
       adminMock.refreshManagedUsers,

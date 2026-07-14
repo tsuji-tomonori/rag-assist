@@ -4,6 +4,7 @@ import path from "node:path"
 import { fileURLToPath } from "node:url"
 import { extractDrawingRegionArtifact, type DrawingExtractionArtifact } from "./drawing-local-extraction.js"
 import { normalizeExpectedDrawingValue, type DrawingValueKind } from "./metrics/drawing-normalization.js"
+import { createCurrentAuthorizedFetch } from "./run-authorization.js"
 
 export const architectureDrawingQaragSuiteId = "architecture-drawing-qarag-v0.1"
 
@@ -220,6 +221,7 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), ".."
 const defaultConfigPath = path.join(repoRoot, "benchmark", "architecture-drawing-qarag-v0.1.json")
 const defaultDatasetOutput = ".local-data/architecture-drawing-qarag-v0.1/dataset.jsonl"
 const defaultCorpusDir = ".local-data/architecture-drawing-qarag-v0.1/corpus"
+const currentAuthorizedFetch = createCurrentAuthorizedFetch()
 
 export async function prepareArchitectureDrawingQaragBenchmark(options: PrepareOptions): Promise<{ datasetRows: number; corpusFiles: string[] }> {
   const definition = parseArchitectureDrawingQaragDefinition(await readFile(options.configPath, "utf-8"))
@@ -246,7 +248,7 @@ export async function prepareArchitectureDrawingQaragBenchmark(options: PrepareO
   for (const source of definition.sources.filter((candidate) => usedSourceIds.has(candidate.sourceId))) {
     const fileName = sourceFileNames.get(source.sourceId)
     if (!fileName) continue
-    const content = await downloadSource(source, options.fetchImpl ?? fetch)
+    const content = await downloadSource(source, options.fetchImpl ?? currentAuthorizedFetch)
     const outputPath = path.join(options.corpusDir, fileName)
     await writeFile(outputPath, content)
     const corpusMetadata = corpusMetadataBySource.get(source.sourceId)

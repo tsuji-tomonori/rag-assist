@@ -19,7 +19,7 @@ describe("RailNav", () => {
         authSession={authSession}
         canAnswerQuestions={true}
         canReadBenchmarkRuns={true}
-        canManageDocuments={true}
+        canReadDocuments={true}
         canSeeAdminSettings={true}
         onChangeView={onChangeView}
       />
@@ -43,7 +43,7 @@ describe("RailNav", () => {
         authSession={authSession}
         canAnswerQuestions={false}
         canReadBenchmarkRuns={false}
-        canManageDocuments={false}
+        canReadDocuments={false}
         canSeeAdminSettings={false}
         onChangeView={vi.fn()}
       />
@@ -65,7 +65,7 @@ describe("RailNav", () => {
         authSession={{ ...authSession, email: "very-long-account-name-for-layout-check@example.internal" }}
         canAnswerQuestions={false}
         canReadBenchmarkRuns={false}
-        canManageDocuments={false}
+        canReadDocuments={false}
         canSeeAdminSettings={false}
         onChangeView={onChangeView}
       />

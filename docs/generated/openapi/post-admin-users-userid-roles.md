@@ -31,6 +31,7 @@ Media type: `application/json`
 | 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
 | `groups` | `array<string>` | yes | ユーザーが所属する Cognito group または検証用 group。 | minItems=1<br>maxItems=12 |
+| `reason` | `string` | yes | 判断や失敗の理由。 | minLength=1<br>maxLength=1000 |
 
 ## Authorization
 
@@ -66,6 +67,7 @@ _なし_
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 | `404` | 指定したリソースが見つかりません。 | `application/json` | 2 field(s) |
+| `503` | 正本 role の更新または session 失効に失敗しました | `application/json` | 2 field(s) |
 
 ##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
@@ -101,6 +103,15 @@ Media type: `application/json`
 | `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ##### `404` 指定したリソースが見つかりません。
+
+Media type: `application/json`
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
+
+##### `503` 正本 role の更新または session 失効に失敗しました
 
 Media type: `application/json`
 

@@ -1,7 +1,7 @@
 import { act, renderHook } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { listAccessRoles } from "../api/accessRolesApi.js"
-import { assignUserRoles, createManagedUser, deleteManagedUser, listManagedUsers, suspendManagedUser, unsuspendManagedUser } from "../api/adminUsersApi.js"
+import { assignUserRoles, createManagedUser, deleteManagedUser, getManagedUserDeletionPreflight, listManagedUsers, suspendManagedUser, unsuspendManagedUser } from "../api/adminUsersApi.js"
 import { createAlias, disableAlias, listAliasAuditLog, listAliases, publishAliases, reviewAlias, updateAlias } from "../api/aliasesApi.js"
 import { listAdminAuditLog } from "../api/auditLogApi.js"
 import { getCostAuditSummary } from "../api/costApi.js"
@@ -13,6 +13,7 @@ vi.mock("../api/adminUsersApi.js", () => ({
   assignUserRoles: vi.fn(),
   createManagedUser: vi.fn(),
   deleteManagedUser: vi.fn(),
+  getManagedUserDeletionPreflight: vi.fn(),
   listManagedUsers: vi.fn().mockResolvedValue([]),
   suspendManagedUser: vi.fn(),
   unsuspendManagedUser: vi.fn()
@@ -56,13 +57,19 @@ describe("useAdminData", () => {
     vi.mocked(listManagedUsers).mockResolvedValue([{ userId: "user-1", email: "b@example.com", status: "active", groups: ["CHAT_USER"], createdAt: "now", updatedAt: "now" }])
     vi.mocked(listAccessRoles).mockResolvedValue([{ role: "CHAT_USER", permissions: ["chat:create"] }])
     vi.mocked(listAdminAuditLog).mockResolvedValue([{ auditId: "audit-1", action: "user:create", actorUserId: "admin", targetUserId: "user-1", targetEmail: "b@example.com", beforeGroups: [], afterGroups: [], createdAt: "now" }])
-    vi.mocked(listUsageSummaries).mockResolvedValue([{ userId: "user-1", email: "b@example.com", chatMessages: 1, conversationCount: 1, questionCount: 0, documentCount: 0, benchmarkRunCount: 0, debugRunCount: 0 }])
-    vi.mocked(getCostAuditSummary).mockResolvedValue({ periodStart: "2026-05-01", periodEnd: "2026-05-31", currency: "USD", totalEstimatedUsd: 1, items: [], users: [], pricingCatalogUpdatedAt: "now" })
+    vi.mocked(listUsageSummaries).mockResolvedValue([{ userId: "user-1", email: "b@example.com", chatMessages: 1, conversationCount: 1, questionCount: 0, documentCount: 0, benchmarkRunCount: 0, debugRunCount: 0, availableMetrics: ["chatMessages", "conversationCount", "questionCount", "documentCount", "benchmarkRunCount", "debugRunCount"], unavailableMetrics: [] }])
+    vi.mocked(getCostAuditSummary).mockResolvedValue({ available: true, periodStart: "2026-05-01", periodEnd: "2026-05-31", currency: "USD", totalEstimatedUsd: 1, items: [], users: [], pricingCatalogUpdatedAt: "now" })
     vi.mocked(assignUserRoles).mockResolvedValue({ userId: "user-1", email: "a@example.com", status: "active", groups: ["SYSTEM_ADMIN"], createdAt: "now", updatedAt: "now" })
     vi.mocked(createManagedUser).mockResolvedValue({ userId: "user-2", email: "c@example.com", status: "active", groups: ["CHAT_USER"], createdAt: "now", updatedAt: "now" })
     vi.mocked(suspendManagedUser).mockResolvedValue({ userId: "user-1", email: "a@example.com", status: "suspended", groups: ["CHAT_USER"], createdAt: "now", updatedAt: "now" })
     vi.mocked(unsuspendManagedUser).mockResolvedValue({ userId: "user-1", email: "a@example.com", status: "active", groups: ["CHAT_USER"], createdAt: "now", updatedAt: "now" })
     vi.mocked(deleteManagedUser).mockResolvedValue({ userId: "user-1", email: "a@example.com", status: "deleted", groups: ["CHAT_USER"], createdAt: "now", updatedAt: "now" })
+    vi.mocked(getManagedUserDeletionPreflight).mockResolvedValue({
+      targetUserId: "user-1",
+      requiresSuccessor: false,
+      ownedResources: { folders: 0, resourceGroups: 0, documents: 0, total: 0 },
+      eligibleSuccessors: []
+    })
     vi.mocked(createAlias).mockResolvedValue({ aliasId: "alias-2", term: "rto", expansions: ["復旧時間目標"], status: "draft", createdBy: "user-1", createdAt: "now", updatedAt: "now" })
     vi.mocked(updateAlias).mockResolvedValue({ aliasId: "alias-1", term: "pto", expansions: ["有給休暇"], status: "draft", createdBy: "user-1", createdAt: "now", updatedAt: "now" })
     vi.mocked(reviewAlias).mockResolvedValue({ aliasId: "alias-1", term: "pto", expansions: ["有給休暇"], status: "approved", createdBy: "user-1", createdAt: "now", updatedAt: "now" })
@@ -171,13 +178,13 @@ describe("useAdminData", () => {
     const props = createProps({ canReadAdminAuditLog: true, canReadUsage: true, canReadCosts: true, canReadAliases: true })
     const { result } = renderHook(() => useAdminData(props))
 
-    await act(() => result.current.onAssignUserRoles("user-1", ["SYSTEM_ADMIN"]))
+    await act(() => result.current.onAssignUserRoles("user-1", ["SYSTEM_ADMIN"], "管理担当へ変更"))
     await act(() => result.current.onCreateManagedUser({ email: "c@example.com", groups: ["CHAT_USER"] }))
     await act(() => result.current.onSetManagedUserStatus("user-1", "suspend"))
     await act(() => result.current.onSetManagedUserStatus("user-1", "unsuspend"))
     await act(() => result.current.onSetManagedUserStatus("user-1", "delete"))
 
-    expect(assignUserRoles).toHaveBeenCalledWith("user-1", ["SYSTEM_ADMIN"])
+    expect(assignUserRoles).toHaveBeenCalledWith("user-1", ["SYSTEM_ADMIN"], "管理担当へ変更")
     expect(createManagedUser).toHaveBeenCalledWith({ email: "c@example.com", groups: ["CHAT_USER"] })
     expect(suspendManagedUser).toHaveBeenCalledWith("user-1")
     expect(unsuspendManagedUser).toHaveBeenCalledWith("user-1")
@@ -186,12 +193,30 @@ describe("useAdminData", () => {
     expect(props.setLoading).toHaveBeenLastCalledWith(false)
   })
 
+  it("削除 preflight を取得し選択した後継 userId を削除 API へ渡す", async () => {
+    const props = createProps()
+    vi.mocked(getManagedUserDeletionPreflight).mockResolvedValueOnce({
+      targetUserId: "user-1",
+      requiresSuccessor: true,
+      ownedResources: { folders: 1, resourceGroups: 1, documents: 1, total: 3 },
+      eligibleSuccessors: [{ userId: "successor-1", email: "successor@example.com", status: "active" }]
+    })
+    const { result } = renderHook(() => useAdminData(props))
+
+    const preflight = await act(() => result.current.onPrepareManagedUserDelete("user-1"))
+    await act(() => result.current.onSetManagedUserStatus("user-1", "delete", "successor-1"))
+
+    expect(preflight?.eligibleSuccessors).toHaveLength(1)
+    expect(getManagedUserDeletionPreflight).toHaveBeenCalledWith("user-1")
+    expect(deleteManagedUser).toHaveBeenCalledWith("user-1", "successor-1")
+  })
+
   it("管理操作失敗時はエラーを設定する", async () => {
     const props = createProps()
     vi.mocked(assignUserRoles).mockRejectedValueOnce(new Error("assign failed"))
     const { result } = renderHook(() => useAdminData(props))
 
-    await act(() => result.current.onAssignUserRoles("user-1", ["SYSTEM_ADMIN"]))
+    await act(() => result.current.onAssignUserRoles("user-1", ["SYSTEM_ADMIN"], "管理担当へ変更"))
 
     expect(props.setError).toHaveBeenCalledWith("assign failed")
     expect(props.setLoading).toHaveBeenLastCalledWith(false)
@@ -204,7 +229,7 @@ describe("useAdminData", () => {
     vi.mocked(suspendManagedUser).mockRejectedValueOnce("suspend failed")
     const { result } = renderHook(() => useAdminData(props))
 
-    await act(() => result.current.onAssignUserRoles("user-1", ["SYSTEM_ADMIN"]))
+    await act(() => result.current.onAssignUserRoles("user-1", ["SYSTEM_ADMIN"], "管理担当へ変更"))
     await act(() => result.current.onCreateManagedUser({ email: "c@example.com" }))
     await act(() => result.current.onSetManagedUserStatus("user-1", "suspend"))
 

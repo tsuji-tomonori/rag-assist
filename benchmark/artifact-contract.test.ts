@@ -1,6 +1,12 @@
 import assert from "node:assert/strict"
 import test from "node:test"
-import { BenchmarkCaseSchema, BenchmarkRunSchema, BenchmarkSuiteSchema } from "@memorag-mvp/contract"
+import {
+  BenchmarkCaseSchema,
+  BenchmarkPriceCatalogSchema,
+  BenchmarkRunSchema,
+  BenchmarkSuiteSchema,
+  BenchmarkWorkloadEvidenceSchema
+} from "@memorag-mvp/contract"
 import {
   benchmarkCompactMetadataBudgetBytes,
   benchmarkLambdaMemoryMb,
@@ -69,6 +75,8 @@ test("benchmark run artifact records target config, case result, seed manifest, 
     failureReasons: ["recall_at_10_miss"],
     retrieval: { retrievedCount: 3, recallAtK: 0, mrrAtK: 0 },
     citation: { citationCount: 0, citationHit: null },
+    answerability: { expectedAnswerable: true, actualAnswerable: false, expectedResponseType: "answer", actualResponseType: "refusal" },
+    task: { expectedOutcome: "complete", actualOutcome: "failed" },
     latency: { latencyMs: 123 }
   })
   const seedManifest = [{ fileName: "handbook.md", status: "seeded", chunkCount: 2, sourceHash: "abc", ingestSignature: "def" }]
@@ -95,8 +103,52 @@ test("benchmark run artifact records target config, case result, seed manifest, 
   assert.equal(parsed.candidateConfig.runner, "search")
   assert.equal(parsed.caseResults[0]?.passed, false)
   assert.equal(parsed.caseResults[0]?.failureReasons[0], "recall_at_10_miss")
+  assert.equal(parsed.caseResults[0]?.answerability.actualResponseType, "refusal")
+  assert.equal(parsed.caseResults[0]?.task.actualOutcome, "failed")
   assert.equal(parsed.datasetPrepareRuns[0]?.seedManifest[0]?.fileName, "handbook.md")
   assert.equal(parsed.skipManifest[0]?.reason, "required_corpus_skipped")
+})
+
+test("SQ-006/SQ-015 workload evidence and price inputs require explicit version and approval metadata", () => {
+  assert.equal(BenchmarkWorkloadEvidenceSchema.safeParse({ schemaVersion: 1, profileId: "load", version: "v1" }).success, false)
+  assert.equal(BenchmarkPriceCatalogSchema.safeParse({ schemaVersion: 1, catalogId: "aws", version: "v1" }).success, false)
+
+  const workload = BenchmarkWorkloadEvidenceSchema.parse({
+    schemaVersion: 1,
+    profileId: "representative-load",
+    version: "workload-v3",
+    approvedBy: "sre-owner",
+    approvedAt: "2026-07-11T00:00:00.000Z",
+    datasetVersion: "dataset-v7",
+    runtimeProfileVersion: "runtime-v9",
+    dimensions: {
+      corpusProfileVersion: "corpus-v2",
+      aclDistributionVersion: "acl-v3",
+      concurrency: 8,
+      documentSizeProfileVersion: "size-v2",
+      dependencyLatencyProfileVersion: "dependency-v4"
+    },
+    eligibilityProbes: [],
+    recoveryScenarios: [],
+    endpointStageSamples: []
+  })
+  const catalog = BenchmarkPriceCatalogSchema.parse({
+    schemaVersion: 1,
+    catalogId: "aws-us-east-1",
+    version: "price-v6",
+    approvedBy: "finops-owner",
+    approvedAt: "2026-07-11T00:00:00.000Z",
+    region: "us-east-1",
+    currency: "USD",
+    modelRates: {},
+    embeddingRates: {},
+    storageUsdPerGbHour: 0,
+    workerUsdPerSecond: 0,
+    egressUsdPerGb: 0
+  })
+
+  assert.equal(workload.version, "workload-v3")
+  assert.equal(catalog.version, "price-v6")
 })
 
 test("benchmark case mapping keeps current JSONL expectations compatible", () => {

@@ -62,7 +62,14 @@ test("document quality profile ignores invalid metadata and absent profiles", ()
 })
 
 test("normal RAG quality gate blocks every explicit disqualifier", () => {
-  assert.equal(isQualityApprovedForNormalRag({ metadata: undefined, qualityProfile: undefined }), true)
+  const missing = qualityGateForNormalRag({ metadata: undefined, qualityProfile: undefined })
+  assert.equal(isQualityApprovedForNormalRag({ metadata: undefined, qualityProfile: undefined }), false)
+  assert.ok(missing.reasons.includes("source_admission_not_approved"))
+  assert.ok(missing.reasons.includes("quality_ref_missing"))
+  assert.equal(isQualityApprovedForNormalRag(
+    { metadata: undefined, qualityProfile: undefined },
+    { allowLegacyLocalTestFixture: true }
+  ), true)
 
   const blockedProfiles = [
     { knowledgeQualityStatus: "blocked" },
@@ -83,7 +90,7 @@ test("normal RAG quality gate blocks low confidence extraction evidence", () => 
     metadata: undefined,
     qualityProfile: undefined,
     extractionWarnings: [{ code: "low_ocr_confidence", message: "OCR confidence is low", severity: "warning", confidence: 62 }]
-  })
+  }, { allowLegacyLocalTestFixture: true })
 
   assert.equal(decision.approved, false)
   assert.deepEqual(decision.reasons, ["low_confidence_extraction_warning"])
@@ -112,6 +119,12 @@ test("quality profile cache key is stable for gate-relevant fields", () => {
       ragEligibility: "eligible",
       confidence: undefined,
       flags: ["verification_required"],
+      admissionStatus: undefined,
+      qualityReferenceHash: undefined,
+      derivedIntegrityVerified: undefined,
+      documentSecurityEnvelopeHash: undefined,
+      publicationEligible: undefined,
+      processingStatus: undefined,
       extractionRestrictions: []
     })
   )

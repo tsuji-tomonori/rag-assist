@@ -67,7 +67,7 @@
 | 検証可能性 | OK | missing/self-asserted metadata、malware、unsupported format、review transition test で確認できる |
 | ニーズ適合 | OK | 利用者が信頼・利用条件を確認された文書だけから回答を得られる |
 | 原子性 | OK | normal RAG への admission decision を規定する |
-| 実装適合 | NG/conflict | `quality-policy.ts:53-65` は missing を良好値へ補完する |
+| 実装適合 | OK（confirmed） | source admission/governance approval が protected metadata、versioned reference、inspection/quality、current reviewer、staged publication を fail closed に強制し、admission lifecycle tests を持つ |
 | 合意 | pending | 対応 MIME、reviewer、data classification、公開状態遷移が未確定 |
 
 ## トレース

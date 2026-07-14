@@ -57,10 +57,10 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 34 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 53 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
-| `404` | 指定したリソースが見つかりません。 | `application/json` | 2 field(s) |
+| `404` | 指定したリソースが見つかりません。 | `application/json` | 3 field(s) |
 
 ##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
@@ -82,8 +82,27 @@ Media type: `application/json`
 | `warnings[].message` | `string` | yes | ユーザーまたは API 向けのメッセージ。 | - |
 | `warnings[].severity` | `enum(info \| warning \| error)` | yes | `response.warnings[].severity` の値。項目名は severity を表します。 | enum=info, warning, error |
 | `warnings[].page` | `integer` | no | `response.warnings[].page` の値。項目名は page を表します。 | minimum=0 |
+| `warnings[].pageStart` | `integer` | no | `response.warnings[].pageStart` の値。項目名は page start を表します。 | minimum=0 |
+| `warnings[].pageEnd` | `integer` | no | `response.warnings[].pageEnd` の値。項目名は page end を表します。 | minimum=0 |
+| `warnings[].sectionPath` | `array<string>` | no | `response.warnings[].sectionPath` の値。項目名は section path を表します。 | - |
+| `warnings[].startChar` | `integer` | no | `response.warnings[].startChar` の値。項目名は start char を表します。 | minimum=0 |
+| `warnings[].endChar` | `integer` | no | `response.warnings[].endChar` の値。項目名は end char を表します。 | minimum=0 |
 | `warnings[].sourceBlockId` | `string` | no | `response.warnings[].sourceBlockId` の値。項目名は source block id を表します。 | - |
 | `warnings[].confidence` | `number` | no | `response.warnings[].confidence` の値。項目名は confidence を表します。 | - |
+| `warnings[].degradationDecision` | `object` | no | `response.warnings[].degradationDecision` の値。項目名は degradation decision を表します。 | - |
+| `warnings[].degradationDecision.policyVersion` | `enum(rag-safe-degradation-v1)` | yes | `response.warnings[].degradationDecision.policyVersion` の値。項目名は policy version を表します。 | enum=rag-safe-degradation-v1 |
+| `warnings[].degradationDecision.trigger` | `enum(dependency_error \| timeout \| overload \| cost_limit \| circuit_open \| unsafe_profile)` | yes | `response.warnings[].degradationDecision.trigger` の値。項目名は trigger を表します。 | enum=dependency_error, timeout, overload, cost_limit, circuit_open, unsafe_profile |
+| `warnings[].degradationDecision.stage` | `string` | yes | `response.warnings[].degradationDecision.stage` の値。項目名は stage を表します。 | - |
+| `warnings[].degradationDecision.action` | `enum(limited_answer \| refuse \| fail)` | yes | `response.warnings[].degradationDecision.action` の値。項目名は action を表します。 | enum=limited_answer, refuse, fail |
+| `warnings[].degradationDecision.enforcedGuards` | `array<enum(authentication \| authorization \| classification_usage \| prompt_injection \| tool_policy \| grounding \| citation \| output_secret \| trace_redaction)>` | yes | `response.warnings[].degradationDecision.enforcedGuards` の値。項目名は enforced guards を表します。 | - |
+| `warnings[].degradationDecision.missingGuards` | `array<enum(authentication \| authorization \| classification_usage \| prompt_injection \| tool_policy \| grounding \| citation \| output_secret \| trace_redaction)>` | yes | `response.warnings[].degradationDecision.missingGuards` の値。項目名は missing guards を表します。 | - |
+| `warnings[].degradationDecision.safeToReturnContent` | `boolean` | yes | `response.warnings[].degradationDecision.safeToReturnContent` の値。項目名は safe to return content を表します。 | - |
+| `warnings[].degradationDecision.guardOutcomes` | `array<object>` | yes | `response.warnings[].degradationDecision.guardOutcomes` の値。項目名は guard outcomes を表します。 | - |
+| `warnings[].degradationDecision.guardOutcomes[].guard` | `enum(authentication \| authorization \| classification_usage \| prompt_injection \| tool_policy \| grounding \| citation \| output_secret \| trace_redaction)` | yes | `response.warnings[].degradationDecision.guardOutcomes[].guard` の値。項目名は guard を表します。 | enum=authentication, authorization, classification_usage, prompt_injection, tool_policy, grounding, citation, output_secret, trace_redaction |
+| `warnings[].degradationDecision.guardOutcomes[].observed` | `boolean` | yes | `response.warnings[].degradationDecision.guardOutcomes[].observed` の値。項目名は observed を表します。 | - |
+| `warnings[].degradationDecision.guardOutcomes[].passed` | `boolean` | yes | `response.warnings[].degradationDecision.guardOutcomes[].passed` の値。項目名は passed を表します。 | - |
+| `warnings[].degradationDecision.guardOutcomes[].evidence` | `string` | yes | `response.warnings[].degradationDecision.guardOutcomes[].evidence` の値。項目名は evidence を表します。 | - |
+| `warnings[].degradationDecision.guardOutcomes[].observedAt` | `string:date-time` | yes | `response.warnings[].degradationDecision.guardOutcomes[].observedAt` の値。項目名は observed at を表します。 | - |
 | `counters` | `object` | no | `response.counters` の値。項目名は counters を表します。 | - |
 | `pages` | `array<object>` | no | `response.pages` の値。項目名は pages を表します。 | - |
 | `blocks` | `array<object>` | no | `response.blocks` の値。項目名は blocks を表します。 | - |
@@ -127,5 +146,6 @@ Media type: `application/json`
 
 | 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
-| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
-| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
+| `error` | `enum(Resource unavailable)` | yes | エラー内容を表すメッセージ。 | enum=Resource unavailable |
+| `code` | `enum(RESOURCE_UNAVAILABLE)` | yes | `response.code` の値。項目名は code を表します。 | enum=RESOURCE_UNAVAILABLE |
+| `responseProfileVersion` | `enum(resource-non-enumeration-v1)` | yes | `response.responseProfileVersion` の値。項目名は response profile version を表します。 | enum=resource-non-enumeration-v1 |

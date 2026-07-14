@@ -8,6 +8,8 @@ export function DocumentConfirmDialog({
   documentGroups,
   loading = false,
   errorMessage,
+  deleteReason = "",
+  onDeleteReasonChange,
   onCancel,
   onConfirm
 }: {
@@ -16,6 +18,8 @@ export function DocumentConfirmDialog({
   documentGroups: DocumentGroup[]
   loading?: boolean
   errorMessage?: string | null
+  deleteReason?: string
+  onDeleteReasonChange?: (value: string) => void
   onCancel: () => void
   onConfirm: () => Promise<void> | void
 }) {
@@ -27,11 +31,25 @@ export function DocumentConfirmDialog({
       rows={details.rows}
       confirmLabel={details.confirmLabel}
       loading={loading}
+      confirmDisabled={action.kind === "delete" && !deleteReason.trim()}
       errorMessage={errorMessage}
       danger={details.danger}
       onCancel={onCancel}
       onConfirm={onConfirm}
-    />
+    >
+      {action.kind === "delete" && (
+        <label className="confirm-dialog-field">
+          <span>削除理由</span>
+          <textarea
+            value={deleteReason}
+            onChange={(event) => onDeleteReasonChange?.(event.target.value)}
+            required
+            maxLength={500}
+            disabled={loading}
+          />
+        </label>
+      )}
+    </ConfirmDialog>
   )
 }
 
@@ -82,6 +100,6 @@ function documentRows(document: DocumentManifest, documentGroups: DocumentGroup[
     { label: "documentId", value: document.documentId },
     { label: "チャンク数", value: String(document.chunkCount) },
     { label: "所属フォルダ", value: groupNames || "未設定" },
-    { label: "lifecycle", value: document.lifecycleStatus ?? "active" }
+    { label: "lifecycle", value: document.lifecycleStatus ?? "利用不可" }
   ]
 }

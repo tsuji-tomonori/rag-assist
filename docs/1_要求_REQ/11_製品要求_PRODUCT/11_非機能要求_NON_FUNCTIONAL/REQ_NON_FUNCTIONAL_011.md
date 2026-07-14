@@ -43,7 +43,7 @@
 - AC-NFR011-028: `GET /me` は静的 policy test で認証必須かつ追加 role permission なしの route として検証されること。
 - AC-NFR011-029: `POST /benchmark/query` は `benchmark:query` を要求し、`BENCHMARK_OPERATOR` / `RAG_GROUP_MANAGER` による管理画面の benchmark run 起動権限 `benchmark:run` と分離されること。
 - AC-NFR011-030: `POST /benchmark/search` は `benchmark:query` を要求し、`BENCHMARK_RUNNER` が通常利用者向け `POST /search` を直接実行できないことを contract test で検証すること。
-- AC-NFR011-031: `POST /benchmark/search` は `BENCHMARK_RUNNER` service user からの呼び出しに限り search benchmark dataset の `user.groups` を ACL 評価用の利用者文脈として扱い、dataset payload から `SYSTEM_ADMIN` などの特権 group を指定できないこと。
+- AC-NFR011-031: `POST /benchmark/query` と `POST /benchmark/search` は `BENCHMARK_RUNNER` service user からの呼び出しに限り、必須 `suiteId` に対応する server-side allowlist の nonprivileged simulated subject と isolated tenant/corpus scope を使い、dataset/request の user、group、tenant、filter、scope override を拒否すること。
 
 ## 受け入れ条件 disposition
 

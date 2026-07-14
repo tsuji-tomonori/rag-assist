@@ -43,6 +43,19 @@ export type ArtifactTargetInput = {
   memoryTopK?: number
   minScore?: number
   evaluatorProfile: string
+  runtimeProfileVersion?: string
+  workloadProfileVersion?: string
+  corpusProfileVersion?: string
+  aclDistributionVersion?: string
+  workloadConcurrency?: number
+  documentSizeProfileVersion?: string
+  dependencyLatencyProfileVersion?: string
+  priceCatalogVersion?: string
+  indexVersion?: string
+  promptVersion?: string
+  pipelineVersion?: string
+  parserVersion?: string
+  chunkerVersion?: string
 }
 
 export function createBenchmarkSuiteMetadata(input: SuiteMetadataInput): BenchmarkSuite {
@@ -82,7 +95,20 @@ export function createBenchmarkTargetConfig(input: ArtifactTargetInput): Benchma
     minScore: input.minScore,
     evaluatorProfile: input.evaluatorProfile,
     benchmarkSuiteId: input.suite.suiteId,
-    runner: input.suite.runner
+    runner: input.suite.runner,
+    runtimeProfileVersion: input.runtimeProfileVersion,
+    workloadProfileVersion: input.workloadProfileVersion,
+    corpusProfileVersion: input.corpusProfileVersion,
+    aclDistributionVersion: input.aclDistributionVersion,
+    workloadConcurrency: input.workloadConcurrency,
+    documentSizeProfileVersion: input.documentSizeProfileVersion,
+    dependencyLatencyProfileVersion: input.dependencyLatencyProfileVersion,
+    priceCatalogVersion: input.priceCatalogVersion,
+    indexVersion: input.indexVersion,
+    promptVersion: input.promptVersion,
+    pipelineVersion: input.pipelineVersion,
+    parserVersion: input.parserVersion,
+    chunkerVersion: input.chunkerVersion
   }
 }
 
@@ -115,8 +141,14 @@ export function createBenchmarkCaseResult(input: {
   caseId?: string
   status: number
   failureReasons: string[]
+  slice?: BenchmarkCaseResult["slice"]
   retrieval?: BenchmarkCaseResult["retrieval"]
   citation?: BenchmarkCaseResult["citation"]
+  claims?: BenchmarkCaseResult["claims"]
+  citations?: BenchmarkCaseResult["citations"]
+  answerability?: BenchmarkCaseResult["answerability"]
+  task?: BenchmarkCaseResult["task"]
+  generation?: BenchmarkCaseResult["generation"]
   latency?: BenchmarkCaseResult["latency"]
   cost?: BenchmarkCaseResult["cost"]
 }): BenchmarkCaseResult {
@@ -125,8 +157,14 @@ export function createBenchmarkCaseResult(input: {
     status: input.status,
     passed: input.failureReasons.length === 0 && input.status >= 200 && input.status < 300,
     failureReasons: input.failureReasons,
+    slice: input.slice,
     retrieval: input.retrieval,
     citation: input.citation,
+    claims: input.claims,
+    citations: input.citations,
+    answerability: input.answerability,
+    task: input.task,
+    generation: input.generation,
     latency: input.latency,
     cost: input.cost
   })
@@ -193,7 +231,15 @@ export function targetConfigFromEnv(input: {
     topK: envInt(input.env, "TOP_K"),
     memoryTopK: envInt(input.env, "MEMORY_TOP_K"),
     minScore: envNumber(input.env, "MIN_SCORE"),
-    evaluatorProfile: input.evaluatorProfile
+    evaluatorProfile: input.evaluatorProfile,
+    runtimeProfileVersion: normalizedEnv(input.env, "RAG_RUNTIME_PROFILE_VERSION"),
+    workloadProfileVersion: normalizedEnv(input.env, "RAG_WORKLOAD_PROFILE_VERSION"),
+    priceCatalogVersion: normalizedEnv(input.env, "RAG_PRICE_CATALOG_VERSION"),
+    indexVersion: normalizedEnv(input.env, "RAG_INDEX_VERSION"),
+    promptVersion: normalizedEnv(input.env, "RAG_PROMPT_VERSION"),
+    pipelineVersion: normalizedEnv(input.env, "RAG_PIPELINE_VERSION"),
+    parserVersion: normalizedEnv(input.env, "RAG_PARSER_VERSION"),
+    chunkerVersion: normalizedEnv(input.env, "RAG_CHUNKER_VERSION")
   })
 }
 
@@ -224,4 +270,9 @@ function envNumber(env: NodeJS.ProcessEnv, name: string): number | undefined {
   if (!raw) return undefined
   const value = Number(raw)
   return Number.isFinite(value) ? value : undefined
+}
+
+function normalizedEnv(env: NodeJS.ProcessEnv, name: string): string | undefined {
+  const value = env[name]?.trim()
+  return value || undefined
 }

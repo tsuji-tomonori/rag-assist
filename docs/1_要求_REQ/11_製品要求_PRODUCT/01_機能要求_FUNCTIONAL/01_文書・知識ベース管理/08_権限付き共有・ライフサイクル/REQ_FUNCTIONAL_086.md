@@ -94,6 +94,7 @@
 | 実現可能性 | OK | transaction、durable publication intent、または mutation result と相関可能な event store で実現可能 |
 | 検証可能性 | OK | 操作×結果の matrix、必須 field schema、audit-write failure injection、state/event correlation で検証できる |
 | ニーズ適合 | OK | 管理者・監査担当が権限変更の主体、対象、理由、結果を横断調査できる |
+| 実装適合 | OK（confirmed） | `security-mutation-audit-outbox.ts` と各 mutation service/coordinator が state/audit intent を相関可能に確定し、success/reject/write-failure/reconciliation tests を持つ |
 
 ## トレース
 

@@ -12,10 +12,11 @@ type CachedEmbedding = {
 
 export async function embedWithCache(
   deps: Pick<Dependencies, "objectStore" | "textModel">,
-  input: { text: string; modelId: string; dimensions: number }
+  input: { text: string; modelId: string; dimensions: number; partitionKey: string }
 ): Promise<number[]> {
+  if (!input.partitionKey.trim()) throw new Error("Embedding cache partition is required")
   const textHash = hashText(input.text)
-  const key = embeddingCacheKey(input.modelId, input.dimensions, textHash)
+  const key = embeddingCacheKey(input.partitionKey, input.modelId, input.dimensions, textHash)
   try {
     const cached = JSON.parse(await deps.objectStore.getText(key)) as CachedEmbedding
     if (cached.modelId === input.modelId && cached.dimensions === input.dimensions && cached.textHash === textHash && Array.isArray(cached.vector)) {
@@ -57,7 +58,8 @@ export function hashText(text: string): string {
   return createHash("sha256").update(text.normalize("NFKC")).digest("hex")
 }
 
-function embeddingCacheKey(modelId: string, dimensions: number, textHash: string): string {
+function embeddingCacheKey(partitionKey: string, modelId: string, dimensions: number, textHash: string): string {
+  const partitionHash = hashText(partitionKey).slice(0, 24)
   const modelHash = hashText(`${modelId}:${dimensions}`).slice(0, 16)
-  return `embedding-cache/${modelHash}/${textHash}.json`
+  return `embedding-cache/${partitionHash}/${modelHash}/${textHash}.json`
 }

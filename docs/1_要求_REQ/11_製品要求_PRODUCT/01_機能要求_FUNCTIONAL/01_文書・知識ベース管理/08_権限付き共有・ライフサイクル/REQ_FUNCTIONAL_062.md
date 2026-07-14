@@ -66,7 +66,7 @@ free-text principal や別 tenant principal を受理すると誤共有を招く
 | 実現可能性 | OK | directory lookup と既存 permission service で実現可能 |
 | 検証可能性 | OK | permission×principal state×tenant の否定 matrix |
 | ニーズ適合 | OK | owner が意図した範囲だけへ安全に共有できる |
-| 実装適合 | partial | direct grant は一部検証するが folder principal 検証は不足 |
+| 実装適合 | OK（confirmed） | folder/document versioned replace が actor feature+full と active same-tenant canonical principal を検証し、service/route tests が inactive/cross-tenant/role principal を拒否する |
 
 ## トレース
 

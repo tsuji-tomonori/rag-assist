@@ -67,7 +67,7 @@
 | 検証可能性 | OK | manifest-record completeness と mandatory field missing/mismatch test で確認できる |
 | ニーズ適合 | OK | 派生データを利用しても元文書の共有範囲と引用位置を維持できる |
 | 原子性 | OK | 派生 record の属性継承を規定する |
-| 実装適合 | partial | metadata コピーはあるが mandatory contract と publication gate が不足 |
+| 実装適合 | OK（confirmed） | `derived-record-security.ts` が document→chunk/memory/vector の tenant/reference/hash/count/locator envelope を生成・検証し、tamper/missing metadata を eligibility tests で除外する |
 | 合意 | pending | 添付・コメント等の例外資源モデルは未確定 |
 
 ## トレース

@@ -67,7 +67,7 @@
 | 検証可能性 | OK | multi-resource transfer と stage failure injection test へ変換できる |
 | ニーズ適合 | OK | 退職・group 廃止後も正当な管理者が共有資源を管理できる |
 | 原子性 | OK | 管理主体を失う変更の確定前に後継移管を完了するという一つの invariant を規定する |
-| 実装適合 | NG | account/group delete と所有資源 inventory/transfer が接続されていない |
+| 実装適合 | OK（confirmed） | `administrative-principal-transfer-service.ts` が successor/inventory/preflight/version/fault reconciliation を実装し、transfer/account lifecycle tests が partial failure を拒否する |
 | 合意 | pending | successor の選任責任者と大量移管時の運用手順を承認する必要がある |
 
 ## トレース

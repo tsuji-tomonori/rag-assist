@@ -5,6 +5,7 @@ import readline from "node:readline"
 import { fileURLToPath } from "node:url"
 import { benchmarkCorpusDirFromEnv, benchmarkCorpusSkipMemoryFromEnv, benchmarkIngestRunPollIntervalMsFromEnv, benchmarkIngestRunTimeoutMsFromEnv, seedBenchmarkCorpus, type SeededDocument } from "./corpus.js"
 import { createBenchmarkApiClient } from "./api-client.js"
+import { createCurrentAuthorizedFetch } from "./run-authorization.js"
 import { createSkippedDatasetRow, skippedCorpusFileNameSet, skippedExpectedFileNames, type SkippedDatasetRow } from "./skipped-corpus.js"
 import { createQualityReview, type QualityReview } from "./metrics/quality.js"
 import { normalizeExpectedDrawingValue, normalizedDrawingValuesMatch, type DrawingValueKind } from "./metrics/drawing-normalization.js"
@@ -24,7 +25,7 @@ import {
   datasetSourceFromEnv,
   targetConfigFromEnv
 } from "./artifact-contract.js"
-import type { BenchmarkQueryResponse } from "@memorag-mvp/contract"
+import type { BenchmarkQueryResponse, JsonValue } from "@memorag-mvp/contract"
 import type { BenchmarkRun, BenchmarkSuite, BenchmarkTargetConfig, BenchmarkUseCase } from "@memorag-mvp/contract"
 
 type DatasetRow = {
@@ -135,7 +136,7 @@ type Citation = {
   regionId?: string
   regionType?: string
   sourceType?: string
-  bbox?: unknown
+  bbox?: JsonValue
   pageStart?: number
   pageEnd?: number
   pageOrSheet?: string
@@ -484,7 +485,8 @@ type DiagnosticFailureCategory = "retrieval" | "ocr" | "grounding" | "reasoning"
 
 const apiBaseUrl = process.env.API_BASE_URL ?? "http://localhost:8787"
 const apiAuthToken = process.env.API_AUTH_TOKEN
-const api = createBenchmarkApiClient({ apiBaseUrl, authToken: apiAuthToken })
+const authorizedFetch = createCurrentAuthorizedFetch()
+const api = createBenchmarkApiClient({ apiBaseUrl, authToken: apiAuthToken, fetchImpl: authorizedFetch })
 const defaultModelId = process.env.MODEL_ID ?? "amazon.nova-lite-v1:0"
 const defaultEmbeddingModelId = process.env.EMBEDDING_MODEL_ID?.trim() || undefined
 const benchmarkSuiteId = process.env.BENCHMARK_SUITE_ID ?? "standard-agent-v1"
@@ -541,6 +543,7 @@ const corpusSeed = await seedBenchmarkCorpus({
   embeddingModelId: defaultEmbeddingModelId,
   ingestRunPollIntervalMs: benchmarkIngestRunPollIntervalMsFromEnv(process.env),
   ingestRunTimeoutMs: benchmarkIngestRunTimeoutMsFromEnv(process.env),
+  fetchImpl: authorizedFetch,
   log: (message) => console.log(message)
 })
 
@@ -711,7 +714,7 @@ async function runAsyncAgentBenchmarkRow(row: DatasetRow): Promise<{
   }
 
   try {
-    const response = await fetch(`${apiBaseUrl.replace(/\/$/, "")}/agents/runs/${encodeURIComponent(row.agentRunId)}`, {
+    const response = await authorizedFetch(`${apiBaseUrl.replace(/\/$/, "")}/agents/runs/${encodeURIComponent(row.agentRunId)}`, {
       headers: {
         ...(apiAuthToken ? { Authorization: `Bearer ${apiAuthToken}` } : {})
       }
@@ -810,7 +813,7 @@ async function runQueryRequest(input: {
       minScore: input.minScore,
       strictGrounded: input.strictGrounded,
       useMemory: input.useMemory,
-      benchmarkSuiteId: benchmarkCorpusSuiteId,
+      suiteId: benchmarkSuiteId,
       includeDebug: true
     })
     return { status: 200, body }
@@ -1410,6 +1413,23 @@ function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[], 
       citationSupportPass: row.evaluation.citationSupportPass,
       expectedFileHit: row.evaluation.expectedFileHit,
       expectedPageHit: row.evaluation.expectedPageHit
+    },
+    answerability: {
+      expectedAnswerable: row.evaluation.expectedAnswerable,
+      actualAnswerable: row.evaluation.actualAnswerable,
+      expectedResponseType: row.evaluation.expectedResponseType,
+      actualResponseType: row.evaluation.actualResponseType
+    },
+    task: {
+      expectedOutcome: "complete",
+      actualOutcome: row.evaluation.answerCorrect ? "complete" : "failed"
+    },
+    generation: {
+      supportedClaimCount: row.evaluation.totalSentenceCount === null || row.evaluation.unsupportedSentenceCount === null
+        ? undefined
+        : Math.max(0, row.evaluation.totalSentenceCount - row.evaluation.unsupportedSentenceCount),
+      unsupportedClaimCount: row.evaluation.unsupportedSentenceCount ?? undefined,
+      evaluatedClaimCount: row.evaluation.totalSentenceCount ?? undefined
     },
     latency: {
       latencyMs: row.latencyMs,

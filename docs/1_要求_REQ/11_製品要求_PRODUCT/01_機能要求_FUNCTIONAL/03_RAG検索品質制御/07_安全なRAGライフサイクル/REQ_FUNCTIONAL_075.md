@@ -67,7 +67,7 @@
 | 検証可能性 | OK | executable suite summary、critical slice result、gate decision、production-equivalence check で確認できる |
 | ニーズ適合 | OK | 利用者・業務責任者が品質と安全性を満たす RAG 版だけを利用できる |
 | 原子性 | OK | RAG change の promotion decision を規定する |
-| 実装適合 | partial/NG | benchmark 指標はあるが runner/gate と production equivalence が不足 |
+| 実装適合 | OK（confirmed、閾値入力は未承認） | versioned case/slice/workload/price/provenance、claim/citation/task/recovery metrics、release audit、promotion/deploy fail-closed gate を実装し、contract/benchmark/infra/producer focused tests が pass |
 | 合意 | pending | slice、閾値、モデル judge、費用上限が未確定 |
 
 ## トレース

@@ -67,7 +67,7 @@
 | 検証可能性 | OK | must-not-access、unauthorized top hit、underfill、revoke race、cache/citation test で確認できる |
 | ニーズ適合 | OK | 利用者が権限外情報を漏らさず、許可された根拠を十分に検索できる |
 | 原子性 | OK | retrieval の authorization placement を規定する |
-| 実装適合 | partial/NG | lexical は prefilter、semantic/memory/context expansion は未達 |
+| 実装適合 | OK（confirmed） | vector/lexical/memory の tenant/ACL/eligibility prefilter と `current-evidence-reauthorizer.ts` の context/prompt/citation/cache 前再認可を接続し、unauthorized top-hit/revoke tests を持つ |
 | 合意 | pending | vector backend の partition/filter 実装方式は設計判断 |
 
 ## トレース

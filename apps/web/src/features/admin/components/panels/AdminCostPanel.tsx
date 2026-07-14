@@ -7,22 +7,24 @@ export function AdminCostPanel({ costAudit }: { costAudit: CostAuditSummary | nu
     <section className="admin-section-panel" aria-label="コスト監査一覧">
       <div className="document-list-head">
         <h3>コスト監査</h3>
-        <span>{costAudit ? formatCurrency(costAudit.totalEstimatedUsd) : "未提供"}</span>
+        <span>{costAudit?.available && costAudit.totalEstimatedUsd !== undefined ? formatCurrency(costAudit.totalEstimatedUsd) : "利用不可"}</span>
       </div>
-      <p className="admin-panel-note">金額は現行 API の confidence を持つ推定 summary です。実請求、export、異常検知は未提供です。</p>
+      <p className="admin-panel-note">承認済み price catalog と完全な usage evidence がある場合だけ金額を表示します。実請求、export、異常検知は未提供です。</p>
       {!costAudit ? (
         <EmptyState title="コスト summary は未提供です。" description="権限内の API から cost audit summary が返されていません。" />
+      ) : !costAudit.available ? (
+        <EmptyState title="コスト summary は利用できません。" description="承認済み price catalog または完全な usage evidence がないため、推定金額を表示していません。" />
       ) : (
         <>
           <div className="cost-summary-line">
             <span>{formatDate(costAudit.periodStart)} - {formatDate(costAudit.periodEnd)}</span>
-            <span>pricing: {formatDate(costAudit.pricingCatalogUpdatedAt)}</span>
+            <span>pricing: {costAudit.pricingCatalogUpdatedAt ? formatDate(costAudit.pricingCatalogUpdatedAt) : "未設定"}</span>
           </div>
           <div className="cost-item-list">
-            {costAudit.items.length === 0 ? (
+            {(costAudit.items ?? []).length === 0 ? (
               <EmptyState title="コスト明細はありません。" description="推定 summary はありますが、service/category 別 item は空です。" />
             ) : (
-              costAudit.items.map((item) => (
+              (costAudit.items ?? []).map((item) => (
                 <article className="cost-item" key={`${item.service}-${item.category}`}>
                   <div>
                     <strong>{item.service}</strong>

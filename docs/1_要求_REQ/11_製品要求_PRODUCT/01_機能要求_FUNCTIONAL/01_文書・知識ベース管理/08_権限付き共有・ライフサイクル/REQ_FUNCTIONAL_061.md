@@ -66,7 +66,7 @@
 | 実現可能性 | OK | 既存 service を単一化して実現可能 |
 | 検証可能性 | OK | parent/child、explicit/inherited、nested membership matrix |
 | ニーズ適合 | OK | 権限外 folder の利用と経路差を防ぐ |
-| 実装適合 | partial/conflict | ADR と service はあるが legacy 経路が残る |
+| 実装適合 | OK（confirmed） | `folder-permission-service.ts` が nearest explicit/child override/cycle/mandatory deny/admin invariant を単一 decision で評価し、folder permission tests が legacy boundary も含め検証する |
 
 ## トレース
 

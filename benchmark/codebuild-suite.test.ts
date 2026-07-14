@@ -1,4 +1,5 @@
 import assert from "node:assert/strict"
+import { readFile } from "node:fs/promises"
 import test from "node:test"
 import { createRunnerEnv, loadCodeBuildSuiteManifest, resolveCodeBuildSuite } from "./codebuild-suite.js"
 
@@ -103,4 +104,12 @@ test("fails unknown CodeBuild benchmark suites before running shell commands", a
     () => resolveCodeBuildSuite(manifest, "new-suite-not-in-manifest"),
     /Unknown benchmark suite/
   )
+})
+
+test("FR-090 every CodeBuild S3 protected read has an immediate current-authorization guard", async () => {
+  const source = await readFile(new URL("codebuild-suite.ts", import.meta.url), "utf-8")
+  const awsCopyCount = source.match(/runCommand\("aws", \["s3", "cp"/g)?.length ?? 0
+  const readAuthorizationCount = source.match(/await authorize\("protected_read"\)/g)?.length ?? 0
+  assert.equal(awsCopyCount, 2)
+  assert.equal(readAuthorizationCount, awsCopyCount)
 })

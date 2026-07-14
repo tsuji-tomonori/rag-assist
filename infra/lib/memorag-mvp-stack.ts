@@ -5,8 +5,12 @@ import { Duration, RemovalPolicy, Size, Stack, type StackProps } from "aws-cdk-l
 import * as apigw from "aws-cdk-lib/aws-apigateway"
 import * as cloudfront from "aws-cdk-lib/aws-cloudfront"
 import * as codebuild from "aws-cdk-lib/aws-codebuild"
+import * as cloudwatch from "aws-cdk-lib/aws-cloudwatch"
+import * as cloudwatchActions from "aws-cdk-lib/aws-cloudwatch-actions"
 import * as origins from "aws-cdk-lib/aws-cloudfront-origins"
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb"
+import * as events from "aws-cdk-lib/aws-events"
+import * as eventTargets from "aws-cdk-lib/aws-events-targets"
 import * as iam from "aws-cdk-lib/aws-iam"
 import * as kms from "aws-cdk-lib/aws-kms"
 import * as lambda from "aws-cdk-lib/aws-lambda"
@@ -14,29 +18,20 @@ import * as logs from "aws-cdk-lib/aws-logs"
 import * as cognito from "aws-cdk-lib/aws-cognito"
 import * as s3 from "aws-cdk-lib/aws-s3"
 import * as s3deploy from "aws-cdk-lib/aws-s3-deployment"
+import * as sns from "aws-cdk-lib/aws-sns"
+import * as subscriptions from "aws-cdk-lib/aws-sns-subscriptions"
 import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager"
 import * as sfn from "aws-cdk-lib/aws-stepfunctions"
 import * as tasks from "aws-cdk-lib/aws-stepfunctions-tasks"
 import * as cr from "aws-cdk-lib/custom-resources"
 import { NagSuppressions } from "cdk-nag"
 import type { Construct } from "constructs"
+import { APPLICATION_ROLES } from "@memorag-mvp/contract/access-control"
 import type { ApiFunctionRuntimeEnv, ApiRuntimeEnv } from "@memorag-mvp/contract/infra"
 
 export interface MemoRagMvpStackProps extends StackProps {
   readonly includeFrontendDeployment?: boolean
 }
-
-const appRoles = [
-  "CHAT_USER",
-  "ANSWER_EDITOR",
-  "RAG_GROUP_MANAGER",
-  "BENCHMARK_OPERATOR",
-  "BENCHMARK_RUNNER",
-  "USER_ADMIN",
-  "ACCESS_ADMIN",
-  "COST_AUDITOR",
-  "SYSTEM_ADMIN"
-] as const
 
 const defaultResourceTags = {
   Project: "memorag-bedrock-mvp",
@@ -79,6 +74,21 @@ export class MemoRagMvpStack extends Stack {
     const benchmarkRunnerAuthSecretIdOverride = String(this.node.tryGetContext("benchmarkRunnerAuthSecretId") ?? "")
     const benchmarkRunnerUsername = String(this.node.tryGetContext("benchmarkRunnerUsername") ?? "benchmark-runner@memorag.local")
     const defaultSupportAssigneeGroupId = String(this.node.tryGetContext("defaultSupportAssigneeGroupId") ?? "ANSWER_EDITOR")
+    const ragAlertTopicArn = String(this.node.tryGetContext("ragAlertTopicArn") ?? "")
+    const ragAlertEmail = String(this.node.tryGetContext("ragAlertEmail") ?? "")
+    const ragWorkloadEvidenceS3Key = String(this.node.tryGetContext("ragWorkloadEvidenceS3Key") ?? "").trim()
+    const ragPriceCatalogS3Key = String(this.node.tryGetContext("ragPriceCatalogS3Key") ?? "").trim()
+    const ragRuntimeProfileVersion = String(this.node.tryGetContext("ragRuntimeProfileVersion") ?? "").trim()
+    const ragWorkloadProfileVersion = String(this.node.tryGetContext("ragWorkloadProfileVersion") ?? "").trim()
+    const ragPriceCatalogVersion = String(this.node.tryGetContext("ragPriceCatalogVersion") ?? "").trim()
+    const ragIndexVersion = String(this.node.tryGetContext("ragIndexVersion") ?? "").trim()
+    const ragPromptVersion = String(this.node.tryGetContext("ragPromptVersion") ?? "").trim()
+    const ragPipelineVersion = String(this.node.tryGetContext("ragPipelineVersion") ?? "").trim()
+    const ragParserVersion = String(this.node.tryGetContext("ragParserVersion") ?? "").trim()
+    const ragChunkerVersion = String(this.node.tryGetContext("ragChunkerVersion") ?? "").trim()
+    if (deploymentEnvironment === "prod" && !ragAlertTopicArn && !ragAlertEmail) {
+      throw new Error("Production deployment requires ragAlertTopicArn or ragAlertEmail for the RAG quality/safety owner")
+    }
 
     const accessLogsBucket = new s3.Bucket(this, "AccessLogsBucket", {
       encryption: s3.BucketEncryption.S3_MANAGED,
@@ -185,6 +195,7 @@ export class MemoRagMvpStack extends Stack {
       pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: true },
       removalPolicy: RemovalPolicy.DESTROY
     })
+    addTenantItemIndex(benchmarkRunsTable)
 
     const chatRunsTable = new dynamodb.Table(this, "ChatRunsTable", {
       partitionKey: { name: "runId", type: dynamodb.AttributeType.STRING },
@@ -193,6 +204,7 @@ export class MemoRagMvpStack extends Stack {
       pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: true },
       removalPolicy: RemovalPolicy.DESTROY
     })
+    addTenantItemIndex(chatRunsTable)
 
     const chatRunEventsTable = new dynamodb.Table(this, "ChatRunEventsTable", {
       partitionKey: { name: "runId", type: dynamodb.AttributeType.STRING },
@@ -207,6 +219,15 @@ export class MemoRagMvpStack extends Stack {
       partitionKey: { name: "runId", type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       timeToLiveAttribute: "ttl",
+      pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: true },
+      removalPolicy: RemovalPolicy.DESTROY
+    })
+    addTenantItemIndex(documentIngestRunsTable)
+
+    const activeRunAuthorizationIndexTable = new dynamodb.Table(this, "ActiveRunAuthorizationIndexTable", {
+      partitionKey: { name: "tenantPartitionId", type: dynamodb.AttributeType.STRING },
+      sortKey: { name: "runKey", type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: true },
       removalPolicy: RemovalPolicy.DESTROY
     })
@@ -232,6 +253,7 @@ export class MemoRagMvpStack extends Stack {
       sortKey: { name: "normalizedCanonicalPath", type: dynamodb.AttributeType.STRING },
       projectionType: dynamodb.ProjectionType.ALL
     })
+    addTenantItemIndex(documentGroupsTable)
 
     new s3deploy.BucketDeployment(this, "DeployBenchmarkDatasets", {
       sources: [
@@ -313,6 +335,9 @@ export class MemoRagMvpStack extends Stack {
       mfa: cognito.Mfa.OPTIONAL,
       mfaSecondFactor: { sms: false, otp: true },
       passwordPolicy: { minLength: 12, requireLowercase: true, requireUppercase: true, requireDigits: true, requireSymbols: true },
+      customAttributes: {
+        session_invalid_after: new cognito.NumberAttribute({ mutable: true, min: 0 })
+      },
       accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
       removalPolicy: RemovalPolicy.DESTROY
     })
@@ -332,7 +357,7 @@ export class MemoRagMvpStack extends Stack {
       cognitoDomain: { domainPrefix: `memorag-${suffix}` }
     })
 
-    for (const role of appRoles) {
+    for (const role of APPLICATION_ROLES) {
       new cognito.CfnUserPoolGroup(this, `${role.replaceAll("_", "")}Group`, {
         userPoolId: userPool.userPoolId,
         groupName: role,
@@ -381,6 +406,7 @@ export class MemoRagMvpStack extends Stack {
       CONVERSATION_HISTORY_TABLE_NAME: conversationHistoryTable.tableName,
       FAVORITES_TABLE_NAME: favoritesTable.tableName,
       BENCHMARK_RUNS_TABLE_NAME: benchmarkRunsTable.tableName,
+      ACTIVE_RUN_AUTHORIZATION_INDEX_TABLE_NAME: activeRunAuthorizationIndexTable.tableName,
       CHAT_RUNS_TABLE_NAME: chatRunsTable.tableName,
       CHAT_RUN_EVENTS_TABLE_NAME: chatRunEventsTable.tableName,
       DOCUMENT_INGEST_RUNS_TABLE_NAME: documentIngestRunsTable.tableName,
@@ -400,12 +426,17 @@ export class MemoRagMvpStack extends Stack {
       EMBEDDING_DIMENSIONS: String(embeddingDimensions),
       MIN_RETRIEVAL_SCORE: "0.20",
       AUTH_ENABLED: "true",
+      AUTH_TENANT_ID: cdk.Aws.ACCOUNT_ID,
+      BENCHMARK_EVALUATION_ENABLED: "true",
+      BENCHMARK_EVALUATION_TENANT_ID: `benchmark-${cdk.Aws.ACCOUNT_ID}`,
       CORS_ALLOWED_ORIGINS: "*",
       COGNITO_REGION: cdk.Aws.REGION,
       COGNITO_USER_POOL_ID: userPool.userPoolId,
       COGNITO_APP_CLIENT_ID: userPoolClient.userPoolClientId,
       DEBUG_DOWNLOAD_BUCKET_NAME: debugDownloadBucket.bucketName,
-      DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS: "900"
+      DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS: "900",
+      RAG_MONITORING_REQUIRED: "1",
+      RAG_SAFETY_STATE_TTL_SECONDS: "600"
     } satisfies ApiRuntimeEnv
     const apiFunctionEnvironment = {
       ...apiEnvironment,
@@ -515,6 +546,148 @@ export class MemoRagMvpStack extends Stack {
       environment: apiEnvironment
     })
 
+    const benchmarkRunAuthorizationLogGroup = new logs.LogGroup(this, "BenchmarkRunAuthorizationLogGroup", {
+      retention: logs.RetentionDays.ONE_MONTH,
+      removalPolicy: RemovalPolicy.RETAIN
+    })
+    const benchmarkRunAuthorizationFn = new lambda.Function(this, "BenchmarkRunAuthorizationFunction", {
+      code: lambda.Code.fromAsset(path.join(__dirname, "../lambda-dist/benchmark-run-authorization-worker")),
+      handler: "index.handler",
+      runtime: lambda.Runtime.NODEJS_22_X,
+      architecture: lambda.Architecture.ARM_64,
+      memorySize: 512,
+      timeout: Duration.seconds(29),
+      logGroup: benchmarkRunAuthorizationLogGroup,
+      environment: apiEnvironment
+    })
+
+    const revocationCleanupLogGroup = new logs.LogGroup(this, "RevocationCleanupLogGroup", {
+      retention: logs.RetentionDays.ONE_MONTH,
+      removalPolicy: RemovalPolicy.RETAIN
+    })
+    const revocationCleanupFn = new lambda.Function(this, "RevocationCleanupFunction", {
+      code: lambda.Code.fromAsset(path.join(__dirname, "../lambda-dist/revocation-cleanup-worker")),
+      handler: "index.handler",
+      runtime: lambda.Runtime.NODEJS_22_X,
+      architecture: lambda.Architecture.ARM_64,
+      memorySize: 1024,
+      timeout: Duration.minutes(5),
+      logGroup: revocationCleanupLogGroup,
+      environment: apiEnvironment
+    })
+    const revocationCleanupSchedule = new events.Rule(this, "RevocationCleanupSchedule", {
+      description: "Reconcile tenant-scoped deny-first revocation cleanup manifests.",
+      schedule: events.Schedule.rate(Duration.minutes(1))
+    })
+    revocationCleanupSchedule.addTarget(new eventTargets.LambdaFunction(revocationCleanupFn, {
+      event: events.RuleTargetInput.fromObject({ limitPerTenant: 100 })
+    }))
+
+    const securityAuditReconciliationLogGroup = new logs.LogGroup(this, "SecurityAuditReconciliationLogGroup", {
+      retention: logs.RetentionDays.ONE_MONTH,
+      removalPolicy: RemovalPolicy.RETAIN
+    })
+    const securityAuditReconciliationFn = new lambda.Function(this, "SecurityAuditReconciliationFunction", {
+      code: lambda.Code.fromAsset(path.join(__dirname, "../lambda-dist/security-mutation-audit-reconciliation-worker")),
+      handler: "index.handler",
+      runtime: lambda.Runtime.NODEJS_22_X,
+      architecture: lambda.Architecture.ARM_64,
+      memorySize: 512,
+      timeout: Duration.minutes(1),
+      logGroup: securityAuditReconciliationLogGroup,
+      environment: apiEnvironment
+    })
+    const securityAuditReconciliationSchedule = new events.Rule(this, "SecurityAuditReconciliationSchedule", {
+      description: "Finalize tenant-scoped security mutation audits after authoritative state reconciliation.",
+      schedule: events.Schedule.rate(Duration.minutes(1))
+    })
+    securityAuditReconciliationSchedule.addTarget(new eventTargets.LambdaFunction(securityAuditReconciliationFn, {
+      event: events.RuleTargetInput.fromObject({ tenantId: cdk.Aws.ACCOUNT_ID, limit: 100 })
+    }))
+
+    const ragQualityMonitorLogGroup = new logs.LogGroup(this, "RagQualityMonitorLogGroup", {
+      retention: logs.RetentionDays.ONE_MONTH,
+      removalPolicy: RemovalPolicy.RETAIN
+    })
+    const ragQualityMonitorFn = new lambda.Function(this, "RagQualityMonitorFunction", {
+      code: lambda.Code.fromAsset(path.join(__dirname, "../lambda-dist/rag-quality-monitor-worker")),
+      handler: "index.handler",
+      runtime: lambda.Runtime.NODEJS_22_X,
+      architecture: lambda.Architecture.ARM_64,
+      memorySize: 512,
+      timeout: Duration.minutes(5),
+      logGroup: ragQualityMonitorLogGroup,
+      environment: apiEnvironment
+    })
+    const ragQualityMonitorSchedule = new events.Rule(this, "RagQualityMonitorSchedule", {
+      description: "Evaluate production RAG quality/security signals and apply the approved safety runbook.",
+      schedule: events.Schedule.rate(Duration.minutes(5))
+    })
+    ragQualityMonitorSchedule.addTarget(new eventTargets.LambdaFunction(ragQualityMonitorFn, {
+      event: events.RuleTargetInput.fromObject({ windowMinutes: 5 })
+    }))
+
+    const createdRagAlertTopic = ragAlertTopicArn
+      ? undefined
+      : new sns.Topic(this, "RagQualityAlertTopic", {
+          displayName: "MemoRAG production quality and safety alerts"
+        })
+    const ragAlertTopic = ragAlertTopicArn
+      ? sns.Topic.fromTopicArn(this, "RagQualityAlertTopic", ragAlertTopicArn)
+      : createdRagAlertTopic as sns.Topic
+    createdRagAlertTopic?.addToResourcePolicy(new iam.PolicyStatement({
+      effect: iam.Effect.DENY,
+      principals: [new iam.AnyPrincipal()],
+      actions: ["sns:Publish"],
+      resources: [createdRagAlertTopic.topicArn],
+      conditions: { Bool: { "aws:SecureTransport": "false" } }
+    }))
+    if (!ragAlertTopicArn && ragAlertEmail) ragAlertTopic.addSubscription(new subscriptions.EmailSubscription(ragAlertEmail))
+    ragQualityMonitorFn.addEnvironment("RAG_ALERT_TOPIC_ARN", ragAlertTopic.topicArn)
+    ragAlertTopic.grantPublish(ragQualityMonitorFn)
+
+    const ragControlLoopFailureAlarm = new cloudwatch.Alarm(this, "RagQualityControlLoopFailureAlarm", {
+      metric: new cloudwatch.Metric({
+        namespace: "MemoRAG/QualityControl",
+        metricName: "ControlLoopFailure",
+        statistic: "Sum",
+        period: Duration.minutes(5)
+      }),
+      threshold: 1,
+      evaluationPeriods: 1,
+      comparisonOperator: cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+      treatMissingData: cloudwatch.TreatMissingData.BREACHING
+    })
+    const ragCriticalAlertAlarm = new cloudwatch.Alarm(this, "RagQualityCriticalAlertAlarm", {
+      metric: new cloudwatch.Metric({
+        namespace: "MemoRAG/QualityControl",
+        metricName: "CriticalAlertCount",
+        statistic: "Sum",
+        period: Duration.minutes(5)
+      }),
+      threshold: 1,
+      evaluationPeriods: 1,
+      comparisonOperator: cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+      treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING
+    })
+    const ragMonitorLambdaErrorAlarm = new cloudwatch.Alarm(this, "RagQualityMonitorLambdaErrorAlarm", {
+      metric: ragQualityMonitorFn.metricErrors({ period: Duration.minutes(5), statistic: "Sum" }),
+      threshold: 1,
+      evaluationPeriods: 1,
+      comparisonOperator: cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+      treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING
+    })
+    const revocationCleanupLambdaErrorAlarm = new cloudwatch.Alarm(this, "RevocationCleanupLambdaErrorAlarm", {
+      metric: revocationCleanupFn.metricErrors({ period: Duration.minutes(5), statistic: "Sum" }),
+      threshold: 1,
+      evaluationPeriods: 1,
+      comparisonOperator: cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+      treatMissingData: cloudwatch.TreatMissingData.BREACHING
+    })
+    for (const alarm of [ragControlLoopFailureAlarm, ragCriticalAlertAlarm, ragMonitorLambdaErrorAlarm, revocationCleanupLambdaErrorAlarm]) {
+      alarm.addAlarmAction(new cloudwatchActions.SnsAction(ragAlertTopic))
+    }
+
     for (const fn of apiFns) {
       docsBucket.grantReadWrite(fn)
       debugDownloadBucket.grantReadWrite(fn)
@@ -528,20 +701,109 @@ export class MemoRagMvpStack extends Stack {
       documentIngestRunsTable.grantReadWriteData(fn)
       documentIngestRunEventsTable.grantReadWriteData(fn)
       documentGroupsTable.grantReadWriteData(fn)
+      activeRunAuthorizationIndexTable.grantReadWriteData(fn)
     }
     docsBucket.grantReadWrite(chatRunWorkerFn)
     docsBucket.grantReadWrite(documentIngestRunWorkerFn)
+    docsBucket.grantReadWrite(ragQualityMonitorFn)
+    const revocationCleanupLedgerPatterns = [
+      "security/revocation-cleanup/*",
+      "security/revocation-cleanup-repairs/*",
+      "security/revocation-cleanup-tenants/*",
+      "security/revocation-cleanup-tenant-registry-state/*"
+    ]
+    const revocationCleanupTargetPatterns = [
+      "security/account-revocations/*",
+      "tenant-artifacts/*",
+      "embedding-cache/*",
+      "debug-runs/*",
+      "quality-control/source-samples/*",
+      "source-governance/*",
+      "documents/share-grants/*",
+      "publication/active/*"
+    ]
+    const revocationCleanupDocumentPatterns = [
+      ...revocationCleanupLedgerPatterns,
+      ...revocationCleanupTargetPatterns
+    ]
+    revocationCleanupFn.addToRolePolicy(new iam.PolicyStatement({
+      actions: ["s3:ListBucket"],
+      resources: [docsBucket.bucketArn],
+      conditions: { StringLike: { "s3:prefix": revocationCleanupDocumentPatterns } }
+    }))
+    revocationCleanupFn.addToRolePolicy(new iam.PolicyStatement({
+      actions: ["s3:GetObject"],
+      resources: revocationCleanupDocumentPatterns.map((pattern) => docsBucket.arnForObjects(pattern))
+    }))
+    revocationCleanupFn.addToRolePolicy(new iam.PolicyStatement({
+      actions: ["s3:DeleteObject"],
+      resources: revocationCleanupTargetPatterns.map((pattern) => docsBucket.arnForObjects(pattern))
+    }))
+    docsBucket.grantPut(revocationCleanupFn, "security/revocation-cleanup/*")
+    docsBucket.grantPut(revocationCleanupFn, "security/revocation-cleanup-repairs/*")
+    docsBucket.grantPut(revocationCleanupFn, "security/revocation-cleanup-tenants/*")
+    docsBucket.grantPut(revocationCleanupFn, "security/revocation-cleanup-tenant-registry-state/*")
+    const securityAuditObjectPatterns = [
+      `security-audit/intents/${cdk.Aws.ACCOUNT_ID}/*`,
+      `source-governance/${cdk.Aws.ACCOUNT_ID}/*`
+    ]
+    securityAuditReconciliationFn.addToRolePolicy(new iam.PolicyStatement({
+      actions: ["s3:ListBucket"],
+      resources: [docsBucket.bucketArn],
+      conditions: {
+        StringLike: {
+          "s3:prefix": securityAuditObjectPatterns
+        }
+      }
+    }))
+    securityAuditReconciliationFn.addToRolePolicy(new iam.PolicyStatement({
+      actions: ["s3:GetObject", "s3:PutObject"],
+      resources: securityAuditObjectPatterns.map((pattern) => docsBucket.arnForObjects(pattern))
+    }))
+    revocationCleanupFn.addToRolePolicy(new iam.PolicyStatement({
+      actions: ["s3:ListBucket"],
+      resources: [benchmarkBucket.bucketArn],
+      conditions: { StringLike: { "s3:prefix": ["runs/*"] } }
+    }))
+    revocationCleanupFn.addToRolePolicy(new iam.PolicyStatement({
+      actions: ["s3:GetObject", "s3:DeleteObject"],
+      resources: [benchmarkBucket.arnForObjects("runs/*")]
+    }))
     debugDownloadBucket.grantReadWrite(chatRunWorkerFn)
     chatRunsTable.grantReadWriteData(chatRunWorkerFn)
+    activeRunAuthorizationIndexTable.grantReadWriteData(chatRunWorkerFn)
     chatRunsTable.grantReadWriteData(chatRunMarkFailedFn)
+    activeRunAuthorizationIndexTable.grantReadWriteData(chatRunMarkFailedFn)
     chatRunsTable.grantReadData(chatRunEventsFn)
     chatRunEventsTable.grantReadWriteData(chatRunWorkerFn)
     chatRunEventsTable.grantReadWriteData(chatRunMarkFailedFn)
     chatRunEventsTable.grantReadData(chatRunEventsFn)
     documentIngestRunsTable.grantReadWriteData(documentIngestRunWorkerFn)
+    activeRunAuthorizationIndexTable.grantReadWriteData(documentIngestRunWorkerFn)
     documentIngestRunsTable.grantReadWriteData(documentIngestRunMarkFailedFn)
+    activeRunAuthorizationIndexTable.grantReadWriteData(documentIngestRunMarkFailedFn)
     documentIngestRunEventsTable.grantReadWriteData(documentIngestRunWorkerFn)
     documentIngestRunEventsTable.grantReadWriteData(documentIngestRunMarkFailedFn)
+    benchmarkRunsTable.grantReadWriteData(benchmarkRunAuthorizationFn)
+    activeRunAuthorizationIndexTable.grantReadWriteData(benchmarkRunAuthorizationFn)
+    revocationCleanupFn.addToRolePolicy(new iam.PolicyStatement({
+      actions: ["dynamodb:Query", "dynamodb:PutItem", "dynamodb:DeleteItem"],
+      resources: [activeRunAuthorizationIndexTable.tableArn]
+    }))
+    for (const table of [benchmarkRunsTable, chatRunsTable, documentIngestRunsTable]) {
+      revocationCleanupFn.addToRolePolicy(new iam.PolicyStatement({
+        actions: ["dynamodb:GetItem", "dynamodb:Query", "dynamodb:UpdateItem", "dynamodb:DescribeTable"],
+        resources: [table.tableArn, `${table.tableArn}/index/*`]
+      }))
+    }
+    revocationCleanupFn.addToRolePolicy(new iam.PolicyStatement({
+      actions: ["dynamodb:GetItem", "dynamodb:Query", "dynamodb:DescribeTable"],
+      resources: [documentGroupsTable.tableArn, `${documentGroupsTable.tableArn}/index/*`]
+    }))
+    docsBucket.grantRead(benchmarkRunAuthorizationFn, "security/revocation-cleanup/*")
+    docsBucket.grantPut(benchmarkRunAuthorizationFn, "security/revocation-cleanup/*")
+    benchmarkBucket.grantRead(benchmarkRunAuthorizationFn, "runs/*")
+    benchmarkBucket.grantDelete(benchmarkRunAuthorizationFn, "runs/*")
     documentGroupsTable.grantReadData(chatRunWorkerFn)
     documentGroupsTable.grantReadData(documentIngestRunWorkerFn)
     for (const fn of [...apiFns, chatRunWorkerFn, documentIngestRunWorkerFn]) {
@@ -558,10 +820,27 @@ export class MemoRagMvpStack extends Stack {
         })
       )
     }
+    revocationCleanupFn.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ["s3vectors:GetVectors", "s3vectors:DeleteVectors"],
+        resources: ["*"]
+      })
+    )
     for (const fn of apiFns) {
       fn.addToRolePolicy(
         new iam.PolicyStatement({
-          actions: ["cognito-idp:ListUsers", "cognito-idp:AdminListGroupsForUser", "cognito-idp:AdminAddUserToGroup", "cognito-idp:AdminRemoveUserFromGroup"],
+          actions: [
+            "cognito-idp:ListUsers",
+            "cognito-idp:AdminGetUser",
+            "cognito-idp:AdminListGroupsForUser",
+            "cognito-idp:AdminAddUserToGroup",
+            "cognito-idp:AdminRemoveUserFromGroup",
+            "cognito-idp:AdminDisableUser",
+            "cognito-idp:AdminEnableUser",
+            "cognito-idp:AdminUpdateUserAttributes",
+            "cognito-idp:AdminUserGlobalSignOut",
+            "cognito-idp:AdminDeleteUser"
+          ],
           resources: [userPool.userPoolArn]
         })
       )
@@ -572,6 +851,20 @@ export class MemoRagMvpStack extends Stack {
         })
       )
     }
+    for (const fn of [chatRunWorkerFn, documentIngestRunWorkerFn, benchmarkRunAuthorizationFn, revocationCleanupFn]) {
+      fn.addToRolePolicy(
+        new iam.PolicyStatement({
+          actions: ["cognito-idp:ListUsers", "cognito-idp:AdminGetUser", "cognito-idp:AdminListGroupsForUser"],
+          resources: [userPool.userPoolArn]
+        })
+      )
+    }
+    revocationCleanupFn.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ["cognito-idp:AdminUpdateUserAttributes", "cognito-idp:AdminUserGlobalSignOut"],
+        resources: [userPool.userPoolArn]
+      })
+    )
     documentIngestRunWorkerFn.addToRolePolicy(
       new iam.PolicyStatement({
         actions: ["textract:DetectDocumentText", "textract:StartDocumentTextDetection", "textract:GetDocumentTextDetection"],
@@ -682,7 +975,8 @@ export class MemoRagMvpStack extends Stack {
     const chatRunWorkerTask = new tasks.LambdaInvoke(this, "ChatRunWorkerTask", {
       lambdaFunction: chatRunWorkerFn,
       payload: sfn.TaskInput.fromObject({
-        runId: sfn.JsonPath.stringAt("$.runId")
+        runId: sfn.JsonPath.stringAt("$.runId"),
+        tenantId: sfn.JsonPath.stringAt("$.tenantId")
       }),
       resultPath: "$.worker"
     })
@@ -690,6 +984,7 @@ export class MemoRagMvpStack extends Stack {
       lambdaFunction: chatRunMarkFailedFn,
       payload: sfn.TaskInput.fromObject({
         runId: sfn.JsonPath.stringAt("$.runId"),
+        tenantId: sfn.JsonPath.stringAt("$.tenantId"),
         errorInfo: sfn.JsonPath.objectAt("$.errorInfo")
       }),
       resultPath: "$.markFailed"
@@ -730,7 +1025,8 @@ export class MemoRagMvpStack extends Stack {
     const documentIngestRunWorkerTask = new tasks.LambdaInvoke(this, "DocumentIngestRunWorkerTask", {
       lambdaFunction: documentIngestRunWorkerFn,
       payload: sfn.TaskInput.fromObject({
-        runId: sfn.JsonPath.stringAt("$.runId")
+        runId: sfn.JsonPath.stringAt("$.runId"),
+        tenantId: sfn.JsonPath.stringAt("$.tenantId")
       }),
       resultPath: "$.worker"
     })
@@ -738,6 +1034,7 @@ export class MemoRagMvpStack extends Stack {
       lambdaFunction: documentIngestRunMarkFailedFn,
       payload: sfn.TaskInput.fromObject({
         runId: sfn.JsonPath.stringAt("$.runId"),
+        tenantId: sfn.JsonPath.stringAt("$.tenantId"),
         errorInfo: sfn.JsonPath.objectAt("$.errorInfo")
       }),
       resultPath: "$.markFailed"
@@ -800,7 +1097,19 @@ export class MemoRagMvpStack extends Stack {
           BENCHMARK_AUTH_SECRET_ID: { value: benchmarkRunnerAuthSecretId },
           BENCHMARK_RUNNER_GROUP: { value: "BENCHMARK_RUNNER" },
           BENCHMARK_RUNS_TABLE_NAME: { value: benchmarkRunsTable.tableName },
-          BENCHMARK_CODEBUILD_LOG_GROUP_NAME: { value: benchmarkProjectLogGroup.logGroupName }
+          BENCHMARK_CODEBUILD_LOG_GROUP_NAME: { value: benchmarkProjectLogGroup.logGroupName },
+          BENCHMARK_BUCKET_NAME: { value: benchmarkBucket.bucketName },
+          BENCHMARK_AUTHORIZATION_FUNCTION_NAME: { value: benchmarkRunAuthorizationFn.functionName },
+          ...(ragWorkloadEvidenceS3Key ? { RAG_WORKLOAD_EVIDENCE_S3_KEY: { value: ragWorkloadEvidenceS3Key } } : {}),
+          ...(ragPriceCatalogS3Key ? { RAG_PRICE_CATALOG_S3_KEY: { value: ragPriceCatalogS3Key } } : {}),
+          ...(ragRuntimeProfileVersion ? { RAG_RUNTIME_PROFILE_VERSION: { value: ragRuntimeProfileVersion } } : {}),
+          ...(ragWorkloadProfileVersion ? { RAG_WORKLOAD_PROFILE_VERSION: { value: ragWorkloadProfileVersion } } : {}),
+          ...(ragPriceCatalogVersion ? { RAG_PRICE_CATALOG_VERSION: { value: ragPriceCatalogVersion } } : {}),
+          ...(ragIndexVersion ? { RAG_INDEX_VERSION: { value: ragIndexVersion } } : {}),
+          ...(ragPromptVersion ? { RAG_PROMPT_VERSION: { value: ragPromptVersion } } : {}),
+          ...(ragPipelineVersion ? { RAG_PIPELINE_VERSION: { value: ragPipelineVersion } } : {}),
+          ...(ragParserVersion ? { RAG_PARSER_VERSION: { value: ragParserVersion } } : {}),
+          ...(ragChunkerVersion ? { RAG_CHUNKER_VERSION: { value: ragChunkerVersion } } : {})
         }
       },
       timeout: benchmarkCodeBuildTimeout,
@@ -819,7 +1128,8 @@ export class MemoRagMvpStack extends Stack {
               "set -euo pipefail",
               "LOG_URL=\"${CODEBUILD_BUILD_URL:-https://${AWS_DEFAULT_REGION}.console.aws.amazon.com/codesuite/codebuild/projects/${CODEBUILD_PROJECT_NAME}/build/${CODEBUILD_BUILD_ID}/log?region=${AWS_DEFAULT_REGION}}\"",
               "if [[ \"$CODEBUILD_LOG_PATH\" == *:* ]]; then LOG_GROUP_NAME=\"${CODEBUILD_LOG_PATH%%:*}\"; LOG_STREAM_NAME=\"${CODEBUILD_LOG_PATH#*:}\"; else LOG_GROUP_NAME=\"$BENCHMARK_CODEBUILD_LOG_GROUP_NAME\"; LOG_STREAM_NAME=\"$CODEBUILD_LOG_PATH\"; fi",
-              "aws dynamodb update-item --table-name \"$BENCHMARK_RUNS_TABLE_NAME\" --key \"{\\\"runId\\\":{\\\"S\\\":\\\"$RUN_ID\\\"}}\" --update-expression \"SET codeBuildBuildId = :buildId, codeBuildLogUrl = :logUrl, codeBuildLogGroupName = :logGroupName, codeBuildLogStreamName = :logStreamName\" --expression-attribute-values \"{\\\":buildId\\\":{\\\"S\\\":\\\"$CODEBUILD_BUILD_ID\\\"},\\\":logUrl\\\":{\\\"S\\\":\\\"$LOG_URL\\\"},\\\":logGroupName\\\":{\\\"S\\\":\\\"$LOG_GROUP_NAME\\\"},\\\":logStreamName\\\":{\\\"S\\\":\\\"$LOG_STREAM_NAME\\\"}}\" >/dev/null",
+              "node infra/scripts/authorize-benchmark-boundary.mjs durable_commit build-metadata",
+              "aws dynamodb update-item --table-name \"$BENCHMARK_RUNS_TABLE_NAME\" --key \"{\\\"runId\\\":{\\\"S\\\":\\\"$STORAGE_RUN_ID\\\"}}\" --condition-expression \"#status = :running\" --expression-attribute-names \"{\\\"#status\\\":\\\"status\\\"}\" --update-expression \"SET codeBuildBuildId = :buildId, codeBuildLogUrl = :logUrl, codeBuildLogGroupName = :logGroupName, codeBuildLogStreamName = :logStreamName\" --expression-attribute-values \"{\\\":running\\\":{\\\"S\\\":\\\"running\\\"},\\\":buildId\\\":{\\\"S\\\":\\\"$CODEBUILD_BUILD_ID\\\"},\\\":logUrl\\\":{\\\"S\\\":\\\"$LOG_URL\\\"},\\\":logGroupName\\\":{\\\"S\\\":\\\"$LOG_GROUP_NAME\\\"},\\\":logStreamName\\\":{\\\"S\\\":\\\"$LOG_STREAM_NAME\\\"}}\" >/dev/null",
               "cd \"$CODEBUILD_SRC_DIR\"",
               "npm ci"
             ]
@@ -832,8 +1142,21 @@ export class MemoRagMvpStack extends Stack {
               "export SUMMARY=./benchmark/.runner-summary.json",
               "export REPORT=./benchmark/.runner-report.md",
               "export DATASET=./benchmark/.runner-dataset.jsonl",
+              "export RAG_WORKLOAD_EVIDENCE_PATH=./benchmark/.workload-evidence.json",
+              "export RAG_PRICE_CATALOG_PATH=./benchmark/.price-catalog.json",
+              "node -e 'process.stdout.write(JSON.stringify({ tenantId: process.env.TENANT_ID, runId: process.env.RUN_ID, boundary: \"protected_read\" }))' > /tmp/benchmark-authorize-protected-read.json",
+              "AUTHORIZATION_FUNCTION_ERROR=\"$(aws lambda invoke --function-name \"$BENCHMARK_AUTHORIZATION_FUNCTION_NAME\" --cli-binary-format raw-in-base64-out --payload fileb:///tmp/benchmark-authorize-protected-read.json --query FunctionError --output text /tmp/benchmark-authorize-protected-read-response.json)\"",
+              "if [ \"$AUTHORIZATION_FUNCTION_ERROR\" != \"None\" ]; then exit 1; fi",
+              "node -e 'const value = JSON.parse(require(\"node:fs\").readFileSync(\"/tmp/benchmark-authorize-protected-read-response.json\", \"utf-8\")); if (value.authorized !== true || value.boundary !== \"protected_read\" || value.runId !== process.env.RUN_ID || value.tenantId !== process.env.TENANT_ID) process.exit(1)'",
+              "if [ -n \"${RAG_WORKLOAD_EVIDENCE_S3_KEY:-}\" ]; then node infra/scripts/authorize-benchmark-boundary.mjs protected_read workload-evidence; aws s3 cp \"s3://$BENCHMARK_BUCKET_NAME/$RAG_WORKLOAD_EVIDENCE_S3_KEY\" \"$RAG_WORKLOAD_EVIDENCE_PATH\"; fi",
+              "if [ -n \"${RAG_PRICE_CATALOG_S3_KEY:-}\" ]; then node infra/scripts/authorize-benchmark-boundary.mjs protected_read price-catalog; aws s3 cp \"s3://$BENCHMARK_BUCKET_NAME/$RAG_PRICE_CATALOG_S3_KEY\" \"$RAG_PRICE_CATALOG_PATH\"; fi",
               "export BENCHMARK_SUITE_ID=\"$SUITE_ID\"",
+              "node -e 'process.stdout.write(JSON.stringify({ tenantId: process.env.TENANT_ID, runId: process.env.RUN_ID, boundary: \"external_side_effect\" }))' > /tmp/benchmark-authorize-prepare-external-side-effect.json",
+              "AUTHORIZATION_FUNCTION_ERROR=\"$(aws lambda invoke --function-name \"$BENCHMARK_AUTHORIZATION_FUNCTION_NAME\" --cli-binary-format raw-in-base64-out --payload fileb:///tmp/benchmark-authorize-prepare-external-side-effect.json --query FunctionError --output text /tmp/benchmark-authorize-prepare-external-side-effect-response.json)\"",
+              "if [ \"$AUTHORIZATION_FUNCTION_ERROR\" != \"None\" ]; then exit 1; fi",
+              "node -e 'const value = JSON.parse(require(\"node:fs\").readFileSync(\"/tmp/benchmark-authorize-prepare-external-side-effect-response.json\", \"utf-8\")); if (value.authorized !== true || value.boundary !== \"external_side_effect\" || value.runId !== process.env.RUN_ID || value.tenantId !== process.env.TENANT_ID) process.exit(1)'",
               "npm run codebuild:prepare -w @memorag-mvp/benchmark",
+              "node infra/scripts/authorize-benchmark-boundary.mjs protected_read runner-token",
               "API_AUTH_TOKEN=\"$(node infra/scripts/resolve-benchmark-auth-token.mjs)\"",
               "export API_AUTH_TOKEN"
             ]
@@ -842,6 +1165,10 @@ export class MemoRagMvpStack extends Stack {
             commands: [
               "set -euo pipefail",
               "cd \"$CODEBUILD_SRC_DIR\"",
+              "node -e 'process.stdout.write(JSON.stringify({ tenantId: process.env.TENANT_ID, runId: process.env.RUN_ID, boundary: \"external_side_effect\" }))' > /tmp/benchmark-authorize-run-external-side-effect.json",
+              "AUTHORIZATION_FUNCTION_ERROR=\"$(aws lambda invoke --function-name \"$BENCHMARK_AUTHORIZATION_FUNCTION_NAME\" --cli-binary-format raw-in-base64-out --payload fileb:///tmp/benchmark-authorize-run-external-side-effect.json --query FunctionError --output text /tmp/benchmark-authorize-run-external-side-effect-response.json)\"",
+              "if [ \"$AUTHORIZATION_FUNCTION_ERROR\" != \"None\" ]; then exit 1; fi",
+              "node -e 'const value = JSON.parse(require(\"node:fs\").readFileSync(\"/tmp/benchmark-authorize-run-external-side-effect-response.json\", \"utf-8\")); if (value.authorized !== true || value.boundary !== \"external_side_effect\" || value.runId !== process.env.RUN_ID || value.tenantId !== process.env.TENANT_ID) process.exit(1)'",
               "npm run codebuild:run -w @memorag-mvp/benchmark"
             ]
           },
@@ -852,17 +1179,30 @@ export class MemoRagMvpStack extends Stack {
               "if [ ! -f \"$OUTPUT\" ]; then printf '' > \"$OUTPUT\"; fi",
               "if [ ! -f \"$SUMMARY\" ]; then printf '{\"total\":0,\"succeeded\":0,\"failedHttp\":0,\"metrics\":{\"errorRate\":1}}\\n' > \"$SUMMARY\"; fi",
               "if [ ! -f \"$REPORT\" ]; then printf '# Benchmark runner failed\\n\\nCodeBuild failed before benchmark artifacts were produced. See the CodeBuild log URL recorded on the benchmark run.\\n' > \"$REPORT\"; fi",
+              "export RELEASE_AUDIT=./benchmark/.release-audit.json",
+              "npm run release:audit -w @memorag-mvp/benchmark -- --summary \"$SUMMARY\" --source-root apps/api/src --source-root apps/web/src --output \"$RELEASE_AUDIT\" --report-only",
+              "node -e 'process.stdout.write(JSON.stringify({ tenantId: process.env.TENANT_ID, runId: process.env.RUN_ID, boundary: \"durable_commit\" }))' > /tmp/benchmark-authorize-artifact-durable-commit.json",
+              "AUTHORIZATION_FUNCTION_ERROR=\"$(aws lambda invoke --function-name \"$BENCHMARK_AUTHORIZATION_FUNCTION_NAME\" --cli-binary-format raw-in-base64-out --payload fileb:///tmp/benchmark-authorize-artifact-durable-commit.json --query FunctionError --output text /tmp/benchmark-authorize-artifact-durable-commit-response.json)\"",
+              "if [ \"$AUTHORIZATION_FUNCTION_ERROR\" != \"None\" ]; then exit 1; fi",
+              "node -e 'const value = JSON.parse(require(\"node:fs\").readFileSync(\"/tmp/benchmark-authorize-artifact-durable-commit-response.json\", \"utf-8\")); if (value.authorized !== true || value.boundary !== \"durable_commit\" || value.runId !== process.env.RUN_ID || value.tenantId !== process.env.TENANT_ID) process.exit(1)'",
+              "node infra/scripts/authorize-benchmark-boundary.mjs durable_commit results-artifact",
               "aws s3 cp \"$OUTPUT\" \"$OUTPUT_S3_PREFIX/results.jsonl\"",
+              "node infra/scripts/authorize-benchmark-boundary.mjs durable_commit summary-artifact",
               "aws s3 cp \"$SUMMARY\" \"$OUTPUT_S3_PREFIX/summary.json\"",
+              "node infra/scripts/authorize-benchmark-boundary.mjs durable_commit report-artifact",
               "aws s3 cp \"$REPORT\" \"$OUTPUT_S3_PREFIX/report.md\"",
+              "node infra/scripts/authorize-benchmark-boundary.mjs durable_commit release-audit-artifact",
+              "aws s3 cp \"$RELEASE_AUDIT\" \"$OUTPUT_S3_PREFIX/release-audit.json\"",
+              "node infra/scripts/authorize-benchmark-boundary.mjs durable_commit metrics-update",
               "node infra/scripts/update-benchmark-run-metrics.mjs"
             ]
           }
         },
-        artifacts: { files: ["benchmark/.runner-results.jsonl", "benchmark/.runner-summary.json", "benchmark/.runner-report.md"] }
+        artifacts: { files: ["benchmark/.runner-results.jsonl", "benchmark/.runner-summary.json", "benchmark/.runner-report.md", "benchmark/.release-audit.json"] }
       })
     })
     benchmarkBucket.grantReadWrite(benchmarkProject)
+    benchmarkRunAuthorizationFn.grantInvoke(benchmarkProject)
     benchmarkProject.addToRolePolicy(new iam.PolicyStatement({
       actions: ["dynamodb:UpdateItem"],
       resources: [benchmarkRunsTable.tableArn]
@@ -883,11 +1223,13 @@ export class MemoRagMvpStack extends Stack {
         Resource: "arn:aws:states:::dynamodb:updateItem",
         Parameters: {
           TableName: benchmarkRunsTable.tableName,
-          Key: { runId: { "S.$": "$.runId" } },
+          Key: { runId: { "S.$": "$.storageRunId" } },
+          ConditionExpression: "#status = :queued",
           UpdateExpression: "SET #status = :status, startedAt = :startedAt, updatedAt = :startedAt",
           ExpressionAttributeNames: { "#status": "status" },
           ExpressionAttributeValues: {
             ":status": { S: "running" },
+            ":queued": { S: "queued" },
             ":startedAt": { "S.$": "$$.State.EnteredTime" }
           }
         },
@@ -902,6 +1244,8 @@ export class MemoRagMvpStack extends Stack {
           ProjectName: benchmarkProject.projectName,
           EnvironmentVariablesOverride: [
             { Name: "RUN_ID", "Value.$": "$.runId", Type: "PLAINTEXT" },
+            { Name: "STORAGE_RUN_ID", "Value.$": "$.storageRunId", Type: "PLAINTEXT" },
+            { Name: "TENANT_ID", "Value.$": "$.tenantId", Type: "PLAINTEXT" },
             { Name: "MODE", "Value.$": "$.mode", Type: "PLAINTEXT" },
             { Name: "SUITE_ID", "Value.$": "$.suiteId", Type: "PLAINTEXT" },
             { Name: "DATASET_S3_URI", "Value.$": "$.datasetS3Uri", Type: "PLAINTEXT" },
@@ -923,11 +1267,13 @@ export class MemoRagMvpStack extends Stack {
         Resource: "arn:aws:states:::dynamodb:updateItem",
         Parameters: {
           TableName: benchmarkRunsTable.tableName,
-          Key: { runId: { "S.$": "$.runId" } },
+          Key: { runId: { "S.$": "$.storageRunId" } },
+          ConditionExpression: "#status = :running",
           UpdateExpression: "SET #status = :status, completedAt = :completedAt, updatedAt = :completedAt, codeBuildBuildId = :codeBuildBuildId, summaryS3Key = :summaryS3Key, reportS3Key = :reportS3Key, resultsS3Key = :resultsS3Key",
           ExpressionAttributeNames: { "#status": "status" },
           ExpressionAttributeValues: {
             ":status": { S: "succeeded" },
+            ":running": { S: "running" },
             ":completedAt": { "S.$": "$$.State.EnteredTime" },
             ":codeBuildBuildId": { "S.$": "$.build.Build.Id" },
             ":summaryS3Key": { "S.$": "$.summaryS3Key" },
@@ -944,8 +1290,8 @@ export class MemoRagMvpStack extends Stack {
         Resource: "arn:aws:states:::dynamodb:updateItem",
         Parameters: {
           TableName: benchmarkRunsTable.tableName,
-          Key: { runId: { "S.$": "$.runId" } },
-          UpdateExpression: "SET #status = :status, completedAt = :completedAt, updatedAt = :completedAt, #error = :error",
+          Key: { runId: { "S.$": "$.storageRunId" } },
+          UpdateExpression: "SET #status = :status, completedAt = if_not_exists(completedAt, :completedAt), updatedAt = if_not_exists(completedAt, :completedAt), #error = if_not_exists(#error, :error)",
           ExpressionAttributeNames: { "#status": "status", "#error": "error" },
           ExpressionAttributeValues: {
             ":status": { S: "failed" },
@@ -956,14 +1302,42 @@ export class MemoRagMvpStack extends Stack {
         End: true
       }
     })
+    const authorizeBenchmarkStart = new tasks.LambdaInvoke(this, "BenchmarkAuthorizeStart", {
+      lambdaFunction: benchmarkRunAuthorizationFn,
+      payload: sfn.TaskInput.fromObject({
+        runId: sfn.JsonPath.stringAt("$.runId"),
+        tenantId: sfn.JsonPath.stringAt("$.tenantId"),
+        boundary: "start"
+      }),
+      payloadResponseOnly: true,
+      resultPath: sfn.JsonPath.DISCARD
+    })
+    const authorizeBenchmarkCommit = new tasks.LambdaInvoke(this, "BenchmarkAuthorizeCommit", {
+      lambdaFunction: benchmarkRunAuthorizationFn,
+      payload: sfn.TaskInput.fromObject({
+        runId: sfn.JsonPath.stringAt("$.runId"),
+        tenantId: sfn.JsonPath.stringAt("$.tenantId"),
+        boundary: "durable_commit"
+      }),
+      payloadResponseOnly: true,
+      resultPath: sfn.JsonPath.DISCARD
+    })
+    authorizeBenchmarkStart.addCatch(markFailed, { resultPath: "$.errorInfo" })
     startBenchmarkBuild.addCatch(markFailed, { resultPath: "$.errorInfo" })
+    authorizeBenchmarkCommit.addCatch(markFailed, { resultPath: "$.errorInfo" })
 
     const benchmarkStateMachineLogGroup = new logs.LogGroup(this, "BenchmarkStateMachineLogGroup", {
       retention: logs.RetentionDays.ONE_WEEK,
       removalPolicy: RemovalPolicy.DESTROY
     })
     const benchmarkStateMachine = new sfn.StateMachine(this, "BenchmarkStateMachine", {
-      definitionBody: sfn.DefinitionBody.fromChainable(markRunning.next(startBenchmarkBuild).next(markSucceeded)),
+      definitionBody: sfn.DefinitionBody.fromChainable(
+        authorizeBenchmarkStart
+          .next(markRunning)
+          .next(startBenchmarkBuild)
+          .next(authorizeBenchmarkCommit)
+          .next(markSucceeded)
+      ),
       logs: {
         destination: benchmarkStateMachineLogGroup,
         level: sfn.LogLevel.ALL
@@ -1098,6 +1472,15 @@ export class MemoRagMvpStack extends Stack {
     new cdk.CfnOutput(this, "EvidenceVectorIndexName", { value: evidenceVectorIndexName })
     new cdk.CfnOutput(this, "DocumentsBucketName", { value: docsBucket.bucketName })
   }
+}
+
+function addTenantItemIndex(table: dynamodb.Table): void {
+  table.addGlobalSecondaryIndex({
+    indexName: "TenantItemIndex",
+    partitionKey: { name: "tenantPartitionId", type: dynamodb.AttributeType.STRING },
+    sortKey: { name: "tenantItemId", type: dynamodb.AttributeType.STRING },
+    projectionType: dynamodb.ProjectionType.ALL
+  })
 }
 
 function addApiMethod(

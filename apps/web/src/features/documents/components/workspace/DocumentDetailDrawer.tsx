@@ -19,8 +19,11 @@ export function DocumentDetailDrawer({
   onCopyDocumentId,
   onClose,
   onAskDocument,
+  onDownload,
+  isDownloading,
   onDelete,
   onStageReindex,
+  canManage,
   canDelete,
   canReindex
 }: {
@@ -30,8 +33,11 @@ export function DocumentDetailDrawer({
   onCopyDocumentId: () => void
   onClose: () => void
   onAskDocument?: () => void
+  onDownload?: () => Promise<unknown> | void
+  isDownloading: boolean
   onDelete: () => void
   onStageReindex: () => void
+  canManage: boolean
   canDelete: boolean
   canReindex: boolean
 }) {
@@ -63,44 +69,50 @@ export function DocumentDetailDrawer({
           </button>
         </header>
         <dl className="document-detail-list">
-          <DetailRow label="documentId" value={document.documentId} />
           <DetailRow label="所属フォルダ" value={groupNames.join(", ") || "未設定"} />
-          <DetailRow label="visibility" value={owningGroups.map(visibilityLabel).join(", ") || "利用不可"} />
-          <DetailRow label="shared groups" value={owningGroups.flatMap((group) => group.sharedGroups).join(", ") || "未設定"} />
           <DetailRow label="mime type" value={document.mimeType ?? "利用不可"} />
-          <DetailRow label="ファイルサイズ" value={fileSize === undefined ? "利用不可" : formatFileSize(fileSize)} />
-          <DetailRow label="作成日時" value={formatDateTime(document.createdAt)} />
-          <DetailRow label="更新日時" value={updatedAt ? formatDateTime(updatedAt) : "利用不可"} />
-          <DetailRow label="chunk count" value={String(document.chunkCount)} />
-          <DetailRow label="memory card count" value={String(document.memoryCardCount)} />
-          <DetailRow label="lifecycle status" value={documentStatusLabel(document)} />
-          <DetailRow label="ingest run ID" value={ingestRunId ?? "利用不可"} />
-          <DetailRow label="embedding model" value={embeddingModel ?? "利用不可"} />
-          <DetailRow label="memory model" value={memoryModel ?? "利用不可"} />
-          <DetailRow label="最新 reindex 状態" value={latestMigrationStatus} />
-          <DetailRow label="抽出品質" value={qualityItems.length > 0 ? <InlineList items={qualityItems} /> : "利用不可"} />
-          <DetailRow label="抽出警告" value={extractionWarnings && extractionWarnings.length > 0 ? <WarningList warnings={extractionWarnings} /> : extractionWarnings ? "警告はありません。" : "利用不可"} />
-          <DetailRow label="抽出カウンター" value={extractionCounters && Object.keys(extractionCounters).length > 0 ? <CounterList counters={extractionCounters} /> : extractionCounters ? "カウンターはありません。" : "利用不可"} />
-          <DetailRow label="ParsedDocument summary" value={document.parsedDocument ? <ParsedDocumentSummary document={document} countItems={parsedCountItems} /> : "利用不可"} />
-          <DetailRow label="抽出テキスト preview" value={parsedPreview ? truncateText(parsedPreview, 360) : document.parsedDocument ? "抽出テキストは空です。" : "利用不可"} />
+          <DetailRow label="登録日時" value={formatDateTime(document.createdAt)} />
+          {canManage && <>
+            <DetailRow label="更新日時" value={updatedAt ? formatDateTime(updatedAt) : "利用不可"} />
+            <DetailRow label="lifecycle status" value={documentStatusLabel(document)} />
+            <DetailRow label="documentId" value={document.documentId} />
+            <DetailRow label="visibility" value={owningGroups.map(visibilityLabel).join(", ") || "利用不可"} />
+            <DetailRow label="shared groups" value={owningGroups.flatMap((group) => group.sharedGroups ?? []).join(", ") || "未設定"} />
+            <DetailRow label="ファイルサイズ" value={fileSize === undefined ? "利用不可" : formatFileSize(fileSize)} />
+            <DetailRow label="chunk count" value={document.chunkCount === undefined ? "利用不可" : String(document.chunkCount)} />
+            <DetailRow label="memory card count" value={document.memoryCardCount === undefined ? "利用不可" : String(document.memoryCardCount)} />
+            <DetailRow label="ingest run ID" value={ingestRunId ?? "利用不可"} />
+            <DetailRow label="embedding model" value={embeddingModel ?? "利用不可"} />
+            <DetailRow label="memory model" value={memoryModel ?? "利用不可"} />
+            <DetailRow label="最新 reindex 状態" value={latestMigrationStatus} />
+            <DetailRow label="抽出品質" value={qualityItems.length > 0 ? <InlineList items={qualityItems} /> : "利用不可"} />
+            <DetailRow label="抽出警告" value={extractionWarnings && extractionWarnings.length > 0 ? <WarningList warnings={extractionWarnings} /> : extractionWarnings ? "警告はありません。" : "利用不可"} />
+            <DetailRow label="抽出カウンター" value={extractionCounters && Object.keys(extractionCounters).length > 0 ? <CounterList counters={extractionCounters} /> : extractionCounters ? "カウンターはありません。" : "利用不可"} />
+            <DetailRow label="ParsedDocument summary" value={document.parsedDocument ? <ParsedDocumentSummary document={document} countItems={parsedCountItems} /> : "利用不可"} />
+            <DetailRow label="抽出テキスト preview" value={parsedPreview ? truncateText(parsedPreview, 360) : document.parsedDocument ? "抽出テキストは空です。" : "利用不可"} />
+          </>}
         </dl>
         <div className="document-drawer-actions">
           <button type="button" disabled={!onAskDocument} onClick={() => onAskDocument?.()}>
             <Icon name="chat" />
             <span>この資料に質問する</span>
           </button>
-          <button type="button" onClick={onCopyDocumentId}>
+          {onDownload && <button type="button" disabled={isDownloading} onClick={() => void onDownload()}>
+            <Icon name="download" />
+            <span>{isDownloading ? "ダウンロード中" : "抽出テキストをダウンロード"}</span>
+          </button>}
+          {canManage && <button type="button" onClick={onCopyDocumentId}>
             <Icon name={copied ? "check" : "copy"} />
             <span>{copied ? "コピー済み" : "documentId コピー"}</span>
-          </button>
-          <button type="button" disabled={!canReindex} onClick={onStageReindex}>
+          </button>}
+          {canReindex && <button type="button" onClick={onStageReindex}>
             <Icon name="gauge" />
             <span>再インデックス</span>
-          </button>
-          <button type="button" className="danger" disabled={!canDelete} onClick={onDelete}>
+          </button>}
+          {canDelete && <button type="button" className="danger" onClick={onDelete}>
             <Icon name="trash" />
             <span>削除</span>
-          </button>
+          </button>}
         </div>
       </aside>
     </div>

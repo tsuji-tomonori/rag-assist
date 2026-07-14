@@ -4,6 +4,7 @@ import { ragRuntimePolicy } from "../../../../chat-orchestration/runtime-policy.
 import { formatQuestionRequirementsForPrompt } from "../../../../chat-orchestration/question-requirements.js"
 import { assembleContext, formatContextXml, textAnswerRelevanceScore } from "../../post-retrieval/context-packing/context-packer.js"
 import { selectAnswerPolicyForMetadata, type AnswerPolicy } from "../../../_shared/policies/answer-policy.js"
+import { guardUntrustedPromptText, type UntrustedContentSource } from "../../../_shared/security/untrusted-content-policy.js"
 export { buildMemoryCardPrompt } from "../../../offline/generation/prompt-assets/memory-card-prompt.js"
 
 type FinalAnswerPromptOptions = {
@@ -30,13 +31,13 @@ JSON schema:
 {"clues": ["短い検索クエリまたは手がかり"]}
 
 <conversationHistory>
-${escapeXml(conversationHistory || "なし")}
+${escapeUntrustedXml(conversationHistory || "なし", "conversation_history")}
 </conversationHistory>
 <question>
-${escapeXml(question)}
+${escapeUntrustedXml(question, "user_input")}
 </question>
 <memory>
-${escapeXml(memoryContext || "メモリは見つかりませんでした。")}
+${escapeUntrustedXml(memoryContext || "メモリは見つかりませんでした。", "document_body")}
 </memory>`
 }
 
@@ -92,16 +93,16 @@ JSON schema:
 }
 
 <question>
-${escapeXml(question)}
+${escapeUntrustedXml(question, "user_input")}
 </question>
 <conversationHistory>
-${escapeXml(conversationHistory || "なし")}
+${escapeUntrustedXml(conversationHistory || "なし", "conversation_history")}
 </conversationHistory>
 <temporalContext>
-${escapeXml(temporalContextJson)}
+${escapeUntrustedXml(temporalContextJson, "tool_output")}
 </temporalContext>
 <computedFacts>
-${escapeXml(computedFactsJson)}
+${escapeUntrustedXml(computedFactsJson, "tool_output")}
 </computedFacts>
 <context>
 ${context}
@@ -154,13 +155,13 @@ JSON schema:
 }
 
 <question>
-${question}
+${escapeUntrustedXml(question, "user_input")}
 </question>
 <requiredFacts>
-${escapeXml(facts)}
+${escapeUntrustedXml(facts, "tool_output")}
 </requiredFacts>
 <computedFacts>
-${escapeXml(computedFactsJson)}
+${escapeUntrustedXml(computedFactsJson, "tool_output")}
 </computedFacts>
 <context>
 ${context || "根拠チャンクはありません。"}
@@ -202,13 +203,13 @@ JSON schema:
 }
 
 <question>
-${question}
+${escapeUntrustedXml(question, "user_input")}
 </question>
 <answer>
-${escapeXml(answer)}
+${escapeUntrustedXml(answer, "tool_output")}
 </answer>
 <computedFacts>
-${escapeXml(computedFactsJson)}
+${escapeUntrustedXml(computedFactsJson, "tool_output")}
 </computedFacts>
 <context>
 ${context || "根拠チャンクはありません。"}
@@ -304,7 +305,7 @@ ${textMap}
 </policyComputationTextMap>
 
 <question>
-${question}
+${escapeUntrustedXml(question, "user_input")}
 </question>
 <context>
 ${context || "根拠チャンクはありません。"}
@@ -339,13 +340,13 @@ JSON schema:
 }
 
 <question>
-${question}
+${escapeUntrustedXml(question, "user_input")}
 </question>
 <answer>
-${escapeXml(answer)}
+${escapeUntrustedXml(answer, "tool_output")}
 </answer>
 <unsupportedSentences>
-${escapeXml(unsupported || "なし")}
+${escapeUntrustedXml(unsupported || "なし", "tool_output")}
 </unsupportedSentences>
 <context>
 ${context || "根拠チャンクはありません。"}
@@ -392,13 +393,13 @@ JSON schema:
 }
 
 <question>
-${question}
+${escapeUntrustedXml(question, "user_input")}
 </question>
 <requiredFacts>
-${escapeXml(facts)}
+${escapeUntrustedXml(facts, "tool_output")}
 </requiredFacts>
 <riskSignals>
-${escapeXml(risks || "risk signal はありません。")}
+${escapeUntrustedXml(risks || "risk signal はありません。", "tool_output")}
 </riskSignals>
 <context>
 ${context || "根拠チャンクはありません。"}
@@ -465,6 +466,10 @@ function formatPolicyComputationTextMap(policy: AnswerPolicy): string {
 
 function escapeXml(input: string): string {
   return input.replace(/[<>&"']/g, (char) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;", "'": "&apos;" }[char] ?? char))
+}
+
+function escapeUntrustedXml(input: string, source: UntrustedContentSource): string {
+  return escapeXml(guardUntrustedPromptText(input, source).text)
 }
 
 function intentAnchors(question: string): string[] {

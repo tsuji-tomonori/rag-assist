@@ -32,6 +32,11 @@ export type QualityGateDecision = {
   reasons: string[]
 }
 
+export type QualityGateOptions = {
+  /** Explicitly permits pre-admission manifests in local/test fixtures only. */
+  allowLegacyLocalTestFixture?: boolean
+}
+
 export function documentQualityProfileFromMetadata(metadata: Record<string, JsonValue> | undefined): DocumentQualityProfile | undefined {
   if (!metadata) return undefined
   const nested = objectValue(metadata.qualityProfile)
@@ -72,29 +77,75 @@ export function resolveDocumentQualityProfile(manifest: Pick<DocumentManifest, "
   })
 }
 
-export function isQualityApprovedForNormalRag(manifest: Pick<DocumentManifest, "metadata" | "qualityProfile" | "extractionWarnings" | "chunks" | "parsedDocument">): boolean {
-  return qualityGateForNormalRag(manifest).approved
+type QualityGateManifest = Pick<
+  DocumentManifest,
+  "metadata" | "qualityProfile" | "extractionWarnings" | "chunks" | "parsedDocument" | "admission" | "derivedIntegrity" | "securityEnvelope" | "publicationEligible" | "processingStatus"
+>
+
+export function isQualityApprovedForNormalRag(manifest: QualityGateManifest, options: QualityGateOptions = {}): boolean {
+  return qualityGateForNormalRag(manifest, options).approved
 }
 
-export function qualityGateForNormalRag(manifest: Pick<DocumentManifest, "metadata" | "qualityProfile" | "extractionWarnings" | "chunks" | "parsedDocument">): QualityGateDecision {
+export function qualityGateForNormalRag(manifest: QualityGateManifest, options: QualityGateOptions = {}): QualityGateDecision {
   const profile = resolveDocumentQualityProfile(manifest)
+  const temporaryAttachment = isScopedTemporaryAttachment(manifest)
+  const suppliedProfile = {
+    ...documentQualityProfileFromMetadata(manifest.metadata),
+    ...manifest.qualityProfile
+  }
+  const strictReasons = options.allowLegacyLocalTestFixture ? [] : [
+    ...requiredQualityFieldReasons(suppliedProfile),
+    ...(manifest.admission?.status === "approved" ? [] : ["source_admission_not_approved"]),
+    ...requiredAdmissionReferenceReasons(manifest),
+    ...(manifest.derivedIntegrity?.verified === true ? [] : ["derived_integrity_not_verified"]),
+    ...(manifest.securityEnvelope ? [] : ["document_security_envelope_missing"]),
+    ...(manifest.publicationEligible === true ? [] : ["publication_not_eligible"]),
+    ...(manifest.processingStatus === undefined || manifest.processingStatus === "complete" ? [] : ["ingest_processing_incomplete"])
+  ]
   const reasons = [
-    ...(profile.knowledgeQualityStatus === "blocked" ? ["knowledge_quality_blocked"] : []),
-    ...(profile.ragEligibility !== "eligible" ? ["rag_not_eligible"] : []),
-    ...(profile.verificationStatus === "rejected" ? ["verification_rejected"] : []),
-    ...(profile.freshnessStatus === "expired" ? ["freshness_expired"] : []),
-    ...(profile.supersessionStatus === "superseded" ? ["superseded_by_newer_document"] : []),
-    ...(profile.extractionQualityStatus === "unusable" ? ["unusable_extraction"] : []),
+    ...strictReasons,
+    ...(!temporaryAttachment && profile.knowledgeQualityStatus !== "approved" ? ["knowledge_quality_not_approved"] : []),
+    ...((temporaryAttachment
+      ? profile.ragEligibility !== "eligible" && profile.ragEligibility !== "eligible_with_warning"
+      : profile.ragEligibility !== "eligible") ? ["rag_not_eligible"] : []),
+    ...(!temporaryAttachment && profile.verificationStatus !== "verified" ? ["verification_not_verified"] : []),
+    ...(profile.freshnessStatus !== "current" ? ["freshness_not_current"] : []),
+    ...(profile.supersessionStatus !== "current" ? ["superseded_by_newer_document"] : []),
+    ...(profile.extractionQualityStatus !== "high" ? ["extraction_quality_not_high"] : []),
+    ...((profile.flags ?? []).some((flag) => flag === "manual_rag_exclusion" || (!temporaryAttachment && flag === "verification_required")) ? ["quality_flag_blocks_publication"] : []),
     ...extractionConfidenceRestrictionReasons(manifest)
   ]
   return {
     profile,
-    reasons,
+    reasons: [...new Set(reasons)].sort(),
     approved: reasons.length === 0
   }
 }
 
-export function qualityProfileCacheKey(manifest: Pick<DocumentManifest, "metadata" | "qualityProfile" | "extractionWarnings" | "chunks" | "parsedDocument">): string {
+function isScopedTemporaryAttachment(manifest: QualityGateManifest): boolean {
+  const metadata = manifest.metadata
+  const expiresAt = typeof metadata?.expiresAt === "string" ? Date.parse(metadata.expiresAt) : Number.NaN
+  return metadata?.scopeType === "chat"
+    && typeof metadata.ownerUserId === "string"
+    && metadata.ownerUserId.length > 0
+    && typeof metadata.tenantId === "string"
+    && metadata.tenantId.length > 0
+    && typeof metadata.temporaryScopeId === "string"
+    && metadata.temporaryScopeId.length > 0
+    && Number.isFinite(expiresAt)
+    && expiresAt > Date.now()
+    && profileAllowsTemporaryAttachment(manifest)
+}
+
+function profileAllowsTemporaryAttachment(manifest: QualityGateManifest): boolean {
+  const profile = resolveDocumentQualityProfile(manifest)
+  return profile.knowledgeQualityStatus === "warning"
+    && profile.verificationStatus === "unverified"
+    && profile.ragEligibility === "eligible_with_warning"
+    && profile.extractionQualityStatus === "high"
+}
+
+export function qualityProfileCacheKey(manifest: QualityGateManifest): string {
   const profile = resolveDocumentQualityProfile(manifest)
   return JSON.stringify({
     knowledgeQualityStatus: profile.knowledgeQualityStatus,
@@ -105,8 +156,40 @@ export function qualityProfileCacheKey(manifest: Pick<DocumentManifest, "metadat
     ragEligibility: profile.ragEligibility,
     confidence: profile.confidence,
     flags: profile.flags,
+    admissionStatus: manifest.admission?.status,
+    qualityReferenceHash: manifest.admission?.qualityRef?.hash,
+    derivedIntegrityVerified: manifest.derivedIntegrity?.verified,
+    documentSecurityEnvelopeHash: manifest.securityEnvelope?.envelopeHash,
+    publicationEligible: manifest.publicationEligible,
+    processingStatus: manifest.processingStatus,
     extractionRestrictions: extractionConfidenceRestrictionReasons(manifest)
   })
+}
+
+function requiredQualityFieldReasons(profile: DocumentQualityProfile): string[] {
+  const reasons: string[] = []
+  if (!profile.knowledgeQualityStatus) reasons.push("knowledge_quality_status_missing")
+  if (!profile.verificationStatus) reasons.push("verification_status_missing")
+  if (!profile.freshnessStatus) reasons.push("freshness_status_missing")
+  if (!profile.supersessionStatus) reasons.push("supersession_status_missing")
+  if (!profile.extractionQualityStatus) reasons.push("extraction_quality_status_missing")
+  if (!profile.ragEligibility) reasons.push("rag_eligibility_missing")
+  return reasons
+}
+
+function requiredAdmissionReferenceReasons(manifest: QualityGateManifest): string[] {
+  const admission = manifest.admission
+  const references = [
+    ["authorization_ref_missing", admission?.authorizationRef],
+    ["classification_ref_missing", admission?.classificationRef],
+    ["usage_policy_ref_missing", admission?.usagePolicyRef],
+    ["quality_ref_missing", admission?.qualityRef],
+    ["lifecycle_ref_missing", admission?.lifecycleRef],
+    ["provenance_ref_missing", admission?.provenanceRef]
+  ] as const
+  return references
+    .filter(([, reference]) => !reference?.id || !reference.version || !/^[a-f0-9]{64}$/i.test(reference.hash))
+    .map(([reason]) => reason)
 }
 
 function extractionConfidenceRestrictionReasons(

@@ -1,7 +1,11 @@
 import { z } from "@hono/zod-openapi"
 import { HTTPException } from "hono/http-exception"
-import type { AppUser } from "../auth.js"
 import { requirePermission } from "../authorization.js"
+import {
+  BenchmarkEvaluationContextError,
+  prepareBenchmarkQueryInvocation,
+  prepareBenchmarkSearchInvocation
+} from "../benchmark/evaluation-context.js"
 import {
   BenchmarkQueryRequestSchema,
   BenchmarkQueryResponseSchema,
@@ -16,18 +20,21 @@ import {
 } from "../schemas.js"
 import type { ApiRouteContext } from "./route-context.js"
 import { looseRoute, routeAuthorization, validJson, validParam } from "./route-utils.js"
-
-function benchmarkSearchUser(runnerUser: AppUser, requestUser: z.infer<typeof BenchmarkSearchRequestSchema>["user"]): AppUser {
-  if (!requestUser) return runnerUser
-  throw new HTTPException(400, { message: "Benchmark search user override is not supported" })
-}
+import { ResourceUnavailableError, settleNonEnumerationTiming } from "../security/public-resource-response.js"
 
 export function registerBenchmarkRoutes({ app, service }: ApiRouteContext) {
   app.openapi(
     looseRoute({
       method: "post",
       path: "/benchmark/query",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "benchmark:query" }),
+      "x-memorag-authorization": routeAuthorization({
+        mode: "required",
+        permission: "benchmark:query",
+        allowedRoles: ["BENCHMARK_RUNNER"],
+        operationKey: "benchmark.query",
+        resourceCondition: "benchmarkEvaluationScope",
+        notes: ["suiteId は server-side allowlist で simulated subject と isolated tenant/corpus scope に解決する。"]
+      }),
       request: {
         body: {
           required: true,
@@ -35,22 +42,18 @@ export function registerBenchmarkRoutes({ app, service }: ApiRouteContext) {
         }
       },
       responses: {
-        200: { description: "Benchmark query result", content: { "application/json": { schema: BenchmarkQueryResponseSchema } } }
+        200: { description: "Benchmark query result", content: { "application/json": { schema: BenchmarkQueryResponseSchema } } },
+        400: { description: "Validation error or unknown suite", content: { "application/json": { schema: ErrorResponseSchema } } },
+        503: { description: "benchmark 評価が無効または設定不備のため利用できません", content: { "application/json": { schema: ErrorResponseSchema } } }
       }
     }),
     async (c) => {
-      requirePermission(c.get("user"), "benchmark:query")
+      const runner = c.get("user")
+      requirePermission(runner, "benchmark:query")
       const body = validJson<z.infer<typeof BenchmarkQueryRequestSchema>>(c)
-      const result = await service.chat({
-        ...body,
-        includeDebug: body.includeDebug ?? true,
-        searchFilters: {
-          source: "benchmark-runner",
-          docType: "benchmark-corpus",
-          benchmarkSuiteId: body.benchmarkSuiteId
-        }
-      }, c.get("user"))
-      return c.json({ id: body.id, ...result }, 200)
+      const invocation = benchmarkHttp(() => prepareBenchmarkQueryInvocation(body, runner))
+      const result = await service.chat(invocation.serviceInput, invocation.subject)
+      return c.json({ id: invocation.id, ...result }, 200)
     }
   )
 
@@ -58,7 +61,14 @@ export function registerBenchmarkRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "post",
       path: "/benchmark/search",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "benchmark:query" }),
+      "x-memorag-authorization": routeAuthorization({
+        mode: "required",
+        permission: "benchmark:query",
+        allowedRoles: ["BENCHMARK_RUNNER"],
+        operationKey: "benchmark.search",
+        resourceCondition: "benchmarkEvaluationScope",
+        notes: ["request の user/group/tenant/filter override は拒否し、suite registry の scope だけを使う。"]
+      }),
       request: {
         body: {
           required: true,
@@ -68,6 +78,7 @@ export function registerBenchmarkRoutes({ app, service }: ApiRouteContext) {
       responses: {
         200: { description: "Benchmark search result", content: { "application/json": { schema: SearchResponseSchema } } },
         400: { description: "Validation error", content: { "application/json": { schema: ErrorResponseSchema } } },
+        503: { description: "benchmark 評価が無効または設定不備のため利用できません", content: { "application/json": { schema: ErrorResponseSchema } } },
         500: { description: "Server error", content: { "application/json": { schema: ErrorResponseSchema } } }
       }
     }),
@@ -75,17 +86,8 @@ export function registerBenchmarkRoutes({ app, service }: ApiRouteContext) {
       const user = c.get("user")
       requirePermission(user, "benchmark:query")
       const body = validJson<z.infer<typeof BenchmarkSearchRequestSchema>>(c)
-      const { user: requestUser, benchmarkSuiteId, ...searchInput } = body
-      const benchmarkFilterSuiteId = benchmarkSuiteId ?? searchInput.filters?.benchmarkSuiteId
-      if (benchmarkFilterSuiteId) {
-        searchInput.filters = {
-          ...(searchInput.filters ?? {}),
-          source: "benchmark-runner",
-          docType: "benchmark-corpus",
-          benchmarkSuiteId: benchmarkFilterSuiteId
-        }
-      }
-      return c.json(await service.search(searchInput, benchmarkSearchUser(user, requestUser)), 200)
+      const invocation = benchmarkHttp(() => prepareBenchmarkSearchInvocation(body, user))
+      return c.json(await service.search(invocation.serviceInput, invocation.subject), 200)
     }
   )
 
@@ -132,14 +134,15 @@ export function registerBenchmarkRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "get",
       path: "/benchmark-runs",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "benchmark:read", operationKey: "benchmark.run.read", resourceCondition: "none" }),
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "benchmark:read", operationKey: "benchmark.run.read", resourceCondition: "tenantCollection" }),
       responses: {
         200: { description: "List benchmark runs", content: { "application/json": { schema: BenchmarkRunListResponseSchema } } }
       }
     }),
     async (c) => {
-      requirePermission(c.get("user"), "benchmark:read")
-      return c.json({ benchmarkRuns: await service.listBenchmarkRuns() }, 200)
+      const actor = c.get("user")
+      requirePermission(actor, "benchmark:read")
+      return c.json({ benchmarkRuns: await service.listBenchmarkRuns(actor) }, 200)
     }
   )
 
@@ -147,7 +150,7 @@ export function registerBenchmarkRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "get",
       path: "/benchmark-runs/{runId}",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "benchmark:read", operationKey: "benchmark.run.read", resourceCondition: "none" }),
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "benchmark:read", operationKey: "benchmark.run.read", resourceCondition: "tenantRun", errorDisclosure: "resource-hidden" }),
       request: {
         params: z.object({ runId: z.string().min(1) })
       },
@@ -157,10 +160,12 @@ export function registerBenchmarkRoutes({ app, service }: ApiRouteContext) {
       }
     }),
     async (c) => {
-      requirePermission(c.get("user"), "benchmark:read")
+      const lookupStartedAt = Date.now()
+      const actor = c.get("user")
+      requirePermission(actor, "benchmark:read")
       const { runId } = validParam<{ runId: string }>(c)
-      const run = await service.getBenchmarkRun(runId)
-      if (!run) return c.json({ error: "Benchmark run not found" }, 404)
+      const run = await service.getBenchmarkRun(actor, runId)
+      if (!run) return resourceUnavailable(lookupStartedAt)
       return c.json(run, 200)
     }
   )
@@ -169,7 +174,7 @@ export function registerBenchmarkRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "post",
       path: "/benchmark-runs/{runId}/cancel",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "benchmark:cancel", operationKey: "benchmark.run.cancel", resourceCondition: "none" }),
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "benchmark:cancel", operationKey: "benchmark.run.cancel", resourceCondition: "tenantRun", errorDisclosure: "resource-hidden" }),
       request: {
         params: z.object({ runId: z.string().min(1) })
       },
@@ -179,10 +184,12 @@ export function registerBenchmarkRoutes({ app, service }: ApiRouteContext) {
       }
     }),
     async (c) => {
-      requirePermission(c.get("user"), "benchmark:cancel")
+      const lookupStartedAt = Date.now()
+      const actor = c.get("user")
+      requirePermission(actor, "benchmark:cancel")
       const { runId } = validParam<{ runId: string }>(c)
-      const run = await service.cancelBenchmarkRun(runId)
-      if (!run) return c.json({ error: "Benchmark run not found" }, 404)
+      const run = await service.cancelBenchmarkRun(actor, runId)
+      if (!run) return resourceUnavailable(lookupStartedAt)
       return c.json(run, 200)
     }
   )
@@ -191,7 +198,7 @@ export function registerBenchmarkRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "post",
       path: "/benchmark-runs/{runId}/download",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "benchmark:download", operationKey: "benchmark.artifact.download", resourceCondition: "none" }),
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "benchmark:download", operationKey: "benchmark.artifact.download", resourceCondition: "tenantRun", errorDisclosure: "resource-hidden" }),
       request: {
         params: z.object({ runId: z.string().min(1) }),
         body: {
@@ -205,11 +212,13 @@ export function registerBenchmarkRoutes({ app, service }: ApiRouteContext) {
       }
     }),
     async (c) => {
-      requirePermission(c.get("user"), "benchmark:download")
+      const lookupStartedAt = Date.now()
+      const actor = c.get("user")
+      requirePermission(actor, "benchmark:download")
       const { runId } = validParam<{ runId: string }>(c)
       const body = (validJson<{ artifact?: "report" | "summary" | "results" | "logs" } | undefined>(c) ?? {})
-      const download = await service.createBenchmarkArtifactDownloadUrl(runId, body.artifact ?? "report")
-      if (!download) return c.json({ error: "Benchmark run not found" }, 404)
+      const download = await service.createBenchmarkArtifactDownloadUrl(actor, runId, body.artifact ?? "report")
+      if (!download) return resourceUnavailable(lookupStartedAt)
       return c.json(download, 200)
     }
   )
@@ -218,7 +227,7 @@ export function registerBenchmarkRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "get",
       path: "/benchmark-runs/{runId}/logs",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "benchmark:download", operationKey: "benchmark.artifact.download", resourceCondition: "none" }),
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "benchmark:download", operationKey: "benchmark.artifact.download", resourceCondition: "tenantRun", errorDisclosure: "resource-hidden" }),
       request: {
         params: z.object({ runId: z.string().min(1) })
       },
@@ -228,14 +237,32 @@ export function registerBenchmarkRoutes({ app, service }: ApiRouteContext) {
       }
     }),
     async (c) => {
-      requirePermission(c.get("user"), "benchmark:download")
+      const lookupStartedAt = Date.now()
+      const actor = c.get("user")
+      requirePermission(actor, "benchmark:download")
       const { runId } = validParam<{ runId: string }>(c)
-      const download = await service.getBenchmarkCodeBuildLogText(runId)
-      if (!download) return c.json({ error: "Benchmark CodeBuild logs not found" }, 404)
+      const download = await service.getBenchmarkCodeBuildLogText(actor, runId)
+      if (!download) return resourceUnavailable(lookupStartedAt)
       return c.text(download.text, 200, {
         "Content-Type": "text/plain; charset=utf-8",
         "Content-Disposition": download.contentDisposition
       })
     }
   )
+}
+
+async function resourceUnavailable(startedAtMs: number): Promise<never> {
+  await settleNonEnumerationTiming(startedAtMs)
+  throw new ResourceUnavailableError()
+}
+
+function benchmarkHttp<T>(resolve: () => T): T {
+  try {
+    return resolve()
+  } catch (error) {
+    if (error instanceof BenchmarkEvaluationContextError) {
+      throw new HTTPException(error.status, { message: error.message })
+    }
+    throw error
+  }
 }

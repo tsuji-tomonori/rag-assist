@@ -67,7 +67,7 @@
 | 検証可能性 | OK | structured corpus、repeat-run equality、boundary/oversize fixtures、manifest assertion で確認できる |
 | ニーズ適合 | OK | 表・例外・手順の文脈を保った検索と引用を可能にする |
 | 原子性 | OK | normalized block から publishable chunk への derivation contract だけを規定する |
-| 実装適合 | missing/partial | chunk は生成するが versioned structure/budget/overlap/quality contract が不足する |
+| 実装適合 | OK（confirmed） | structure-aware chunker が versioned policy、table/list/code/page/span boundary、stable ID、overlap/token budget、security envelope を強制し、determinism/quarantine tests を持つ |
 | 合意 | pending | corpus/profile ごとの token budget、overlap、構造保持優先順位を承認する必要がある |
 
 ## トレース

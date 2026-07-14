@@ -160,8 +160,8 @@ export function AdminOverviewGrid({
             kind: "kpi" as const,
             id: "cost",
             label: "コスト監査",
-            value: costAudit ? formatCurrency(costAudit.totalEstimatedUsd) : "未提供",
-            note: costAudit ? "推定値を含む" : "コスト summary は未提供",
+            value: costAudit?.available && costAudit.totalEstimatedUsd !== undefined ? formatCurrency(costAudit.totalEstimatedUsd) : "利用不可",
+            note: costAudit?.available ? "承認済み catalog に基づく summary" : "price catalog または usage evidence は未提供",
             icon: "warning" as const
           }
         ]

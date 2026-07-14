@@ -35,7 +35,7 @@ export const plainResponseHeaders = {
   "Cache-Control": "no-cache"
 }
 
-type ChatRunEventsStreamDependencies = Pick<typeof deps, "chatRunStore" | "chatRunEventStore">
+type ChatRunEventsStreamDependencies = Pick<typeof deps, "chatRunStore" | "chatRunEventStore" | "verifiedIdentityProvider">
 type LambdaStreamingRuntime = typeof awslambda
 
 export function createChatRunEventsStreamHandler(runtime: LambdaStreamingRuntime, streamDeps: ChatRunEventsStreamDependencies) {
@@ -48,20 +48,28 @@ export function createChatRunEventsStreamHandler(runtime: LambdaStreamingRuntime
         return
       }
 
-      const run = await streamDeps.chatRunStore.get(runId)
+      const claims = (event.requestContext.authorizer as { claims?: Record<string, unknown> } | undefined)?.claims ?? {}
+      const userId = claims.sub ? String(claims.sub) : ""
+      const currentIdentity = userId && streamDeps.verifiedIdentityProvider
+        ? await streamDeps.verifiedIdentityProvider.getCurrentIdentityBySubject(userId)
+        : undefined
+      const tenantId = currentIdentity?.tenantId ?? (config.nodeEnv !== "production" ? config.authTenantId : "")
+      if (!tenantId || currentIdentity?.accountStatus === "suspended") {
+        writePlainResponse(runtime, responseStream, 404, "Resource unavailable")
+        return
+      }
+      const run = await streamDeps.chatRunStore.get(tenantId, runId)
       if (!run) {
-        writePlainResponse(runtime, responseStream, 404, "Chat run not found")
+        writePlainResponse(runtime, responseStream, 404, "Resource unavailable")
         return
       }
 
-      const claims = (event.requestContext.authorizer as { claims?: Record<string, unknown> } | undefined)?.claims ?? {}
-      const userId = claims.sub ? String(claims.sub) : ""
-      const groups = parseGroups(claims["cognito:groups"])
+      const groups = currentIdentity?.cognitoGroups ?? parseGroups(claims["cognito:groups"])
       const permissions = getPermissionsForGroups(groups)
       const canReadOwn = permissions.includes("chat:read:own")
       const canReadAll = permissions.includes("chat:admin:read_all")
       if ((!canReadOwn && !canReadAll) || (run.createdBy !== userId && !canReadAll)) {
-        writePlainResponse(runtime, responseStream, 403, "Forbidden")
+        writePlainResponse(runtime, responseStream, 404, "Resource unavailable")
         return
       }
 
@@ -76,8 +84,15 @@ export function createChatRunEventsStreamHandler(runtime: LambdaStreamingRuntime
       let lastHeartbeat = 0
 
       while (Date.now() < deadline) {
-        const events = await streamDeps.chatRunEventStore.listAfter(runId, afterSeq)
+        const events = await streamDeps.chatRunEventStore.listAfter(tenantId, runId, afterSeq)
         for (const item of events) {
+          if (item.type === "final") {
+            const terminalRun = await streamDeps.chatRunStore.get(tenantId, runId)
+            if (terminalRun?.status !== "succeeded") {
+              afterSeq = item.seq
+              continue
+            }
+          }
           send(stream, item.type, item.seq, eventPayload(item))
           afterSeq = item.seq
           if (item.type === "final" || item.type === "error") return

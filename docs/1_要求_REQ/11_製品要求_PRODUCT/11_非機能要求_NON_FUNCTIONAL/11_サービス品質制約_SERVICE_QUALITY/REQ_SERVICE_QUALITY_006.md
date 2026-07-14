@@ -62,7 +62,7 @@
 | 検証可能性 | OK | active session/cache/old index/queued run fixture の max・p95・p99 report で確認できる |
 | ニーズ適合 | OK | 文書所有者・管理者が剥奪した権限の残存時間を把握し、承認水準内へ抑えられる |
 | 定量性 | pending | 尺度は定義、閾値は open question |
-| 実装適合 | NG | 全派生経路の propagation contract がない |
+| 実装適合 | OK（measurement contract、目標値未承認） | 10 trigger×7 path の70 probe completeness、p50/p95/p99/max、unreflected resource report を schema/metrics/gate で強制し、部分 matrix を unavailable にする focused test が pass |
 | 合意 | pending | Security/SRE/PO が値を決定する |
 
 ## トレース

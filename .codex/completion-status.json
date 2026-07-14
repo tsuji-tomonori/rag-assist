@@ -1,105 +1,40 @@
 {
-  "complete": true,
-  "status": "complete",
+  "complete": false,
+  "status": "partially_complete",
   "requested_items": [
-    "Improve the benchmark result at .workspace/bench_20260506T113300Z_e19441d7",
-    "Follow repository worktree task PR flow"
+    "Create an executable plan for fully implementing FR-056 through FR-093 and SQ-005 through SQ-015",
+    "Implement every newly defined requirement in production paths",
+    "Run requirement-appropriate tests and repair failures",
+    "Perform requirement-by-requirement acceptance assessment",
+    "Complete the repository worktree, report, commit, PR, and review-comment flow"
   ],
   "completed_items": [
-    "Created dedicated worktree and task file",
-    "Implemented search benchmark corpus seed support",
-    "Aligned search sample dataset with benchmark seed corpus",
-    "Added benchmark search alias metadata support",
-    "Updated CodeBuild corpus seed condition for search-standard-v1",
-    "Fixed duplicate relevance nDCG overcounting",
-    "Updated docs and tests",
-    "Ran targeted typecheck, tests, infra snapshot test, and local benchmarks",
-    "Created post-task work report",
-    "Committed and pushed implementation changes",
-    "Created PR #138",
-    "Posted acceptance criteria confirmation comment",
-    "Posted PR self-review comment",
-    "Moved task file to tasks/done",
-    "Rebased PR branch onto origin/main and resolved conflicts"
+    "Created the dedicated implementation worktree, task, execution plan, and requirement evidence matrix",
+    "Implemented and verified repository production paths for FR-056 through FR-093 and control paths for SQ-005 through SQ-015",
+    "Passed contract 1/1, API 658/658, Web 307/307, infra 38/38, benchmark 102/102, and browser E2E smoke 4/4",
+    "Passed lint, all workspace typechecks/builds, OpenAPI and inventory freshness, spec validation, hidden Unicode, source audit, and diff checks",
+    "Completed an independent final production-path review with blocker count zero",
+    "Created the required post-task working report"
   ],
-  "remaining_items": [],
-  "blocked_items": [],
+  "remaining_items": [
+    "Create and monitor the main-targeted draft PR, add the semver label, and post Japanese acceptance and self-review comments",
+    "Obtain live AWS registry backfill/convergence and cleanup-duration evidence for FR-066",
+    "Run live notification, drift, and rollback drills for FR-093",
+    "Obtain approved datasets, thresholds, owners, workloads, price catalog, load/chaos/cost/billing evidence for SQ-005 through SQ-015"
+  ],
+  "blocked_items": [
+    "Operational acceptance needs an authorized non-production AWS environment and stakeholder-approved quality/SLO/cost profiles"
+  ],
   "validation": [
-    {
-      "command": "npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/benchmark",
-      "result": "pass"
-    },
-    {
-      "command": "npm --prefix memorag-bedrock-mvp test -w @memorag-mvp/benchmark",
-      "result": "pass"
-    },
-    {
-      "command": "npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/api",
-      "result": "pass"
-    },
-    {
-      "command": "npm --prefix memorag-bedrock-mvp test -w @memorag-mvp/api -- src/contract/api-contract.test.ts src/search/hybrid-search.test.ts",
-      "result": "pass"
-    },
-    {
-      "command": "UPDATE_SNAPSHOTS=1 npm --prefix memorag-bedrock-mvp test -w @memorag-mvp/infra",
-      "result": "pass"
-    },
-    {
-      "command": "npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/infra",
-      "result": "pass"
-    },
-    {
-      "command": "API_BASE_URL=http://localhost:18791 task benchmark:search:sample",
-      "result": "pass"
-    },
-    {
-      "command": "API_BASE_URL=http://localhost:18791 task benchmark:sample",
-      "result": "pass"
-    },
-    {
-      "command": "git diff --check",
-      "result": "pass"
-    },
-    {
-      "command": "task docs:check",
-      "result": "not_run",
-      "reason": "Taskfile has no docs:check task"
-    },
-    {
-      "command": "rg -n \"<<<<<<<|=======|>>>>>>>\" memorag-bedrock-mvp .codex tasks --glob '!reports/**'",
-      "result": "pass"
-    },
-    {
-      "command": "npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/benchmark",
-      "result": "pass_after_rebase"
-    },
-    {
-      "command": "npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/api",
-      "result": "pass_after_rebase"
-    },
-    {
-      "command": "npm --prefix memorag-bedrock-mvp test -w @memorag-mvp/benchmark",
-      "result": "pass_after_rebase"
-    },
-    {
-      "command": "npm --prefix memorag-bedrock-mvp test -w @memorag-mvp/api -- src/contract/api-contract.test.ts src/search/hybrid-search.test.ts",
-      "result": "pass_after_rebase"
-    },
-    {
-      "command": "npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/infra",
-      "result": "pass_after_rebase"
-    },
-    {
-      "command": "npm --prefix memorag-bedrock-mvp test -w @memorag-mvp/infra",
-      "result": "pass_after_rebase"
-    },
-    {
-      "command": "API_BASE_URL=http://localhost:18792 task benchmark:search:sample",
-      "result": "pass_after_rebase",
-      "note": "Local API used MOCK_BEDROCK=1 and LOCAL_AUTH_GROUPS=BENCHMARK_RUNNER"
-    }
+    "contract tests: 1/1 pass",
+    "API tests: 658/658 pass",
+    "Web tests: 307/307 pass",
+    "infra tests: 38/38 pass",
+    "benchmark tests: 102/102 pass",
+    "browser E2E smoke: 4/4 pass",
+    "lint, typecheck, build, docs checks, spec validator, source audit, and git diff check: pass",
+    "independent production-path review: blocker 0"
   ],
-  "next_action": "none",
+  "next_action": "Commit and push the repository-verified implementation, create the draft PR and comments, then await live operational evidence",
   "safe_to_continue_without_user": true
 }

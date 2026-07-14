@@ -110,7 +110,10 @@ describe("API client", () => {
 
     await expect(listDocuments()).resolves.toEqual([{ documentId: "doc-1", fileName: "a.txt" }])
     await expect(uploadDocument({ fileName: "b.txt", text: "body" })).resolves.toMatchObject({ documentId: "doc-2" })
-    await expect(deleteDocument("doc-2")).resolves.toBeUndefined()
+    await expect(deleteDocument("doc-2", {
+      expectedUpdatedAt: "now",
+      reason: "test cleanup"
+    })).resolves.toBeUndefined()
 
     expect(fetchMock).toHaveBeenNthCalledWith(2, "http://api.example.test/documents", { headers: {} })
     expect(fetchMock).toHaveBeenNthCalledWith(
@@ -122,7 +125,11 @@ describe("API client", () => {
         body: JSON.stringify({ fileName: "b.txt", text: "body" })
       })
     )
-    expect(fetchMock).toHaveBeenNthCalledWith(4, "http://api.example.test/documents/doc-2", { method: "DELETE", headers: {} })
+    expect(fetchMock).toHaveBeenNthCalledWith(4, "http://api.example.test/documents/doc-2", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ expectedUpdatedAt: "now", reason: "test cleanup" })
+    })
   })
 
   it("uploads browser files through an upload session before ingest", async () => {
@@ -251,6 +258,34 @@ describe("API client", () => {
     vi.stubGlobal("fetch", fetchMock)
 
     await expect(uploadDocumentFile({ file })).rejects.toThrow("ingest denied")
+  })
+
+  it("surfaces rejected document ingest runs immediately instead of polling until the 15 minute timeout", async () => {
+    const file = new File(["body"], "rejected.txt", { type: "text/plain" })
+    resetRuntimeConfigForTests()
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: vi.fn().mockResolvedValue({ apiBaseUrl: "http://api.example.test" }) })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          uploadId: "upload-rejected",
+          objectKey: "uploads/documents/user/upload-rejected-rejected.txt",
+          uploadUrl: "http://s3.example.test/upload-rejected",
+          method: "PUT",
+          headers: { "Content-Type": "text/plain" },
+          expiresInSeconds: 900,
+          requiresAuth: false
+        })
+      })
+      .mockResolvedValueOnce({ ok: true, text: vi.fn().mockResolvedValue("") })
+      .mockResolvedValueOnce({ ok: true, json: vi.fn().mockResolvedValue({ runId: "ingest-rejected", status: "rejected" }) })
+
+    vi.stubGlobal("fetch", fetchMock)
+
+    await expect(uploadDocumentFile({ file })).rejects.toThrow("文書取り込みは受け入れポリシーにより拒否されました")
+    expect(fetchMock).toHaveBeenCalledTimes(4)
+    expect(fetchMock.mock.calls.some(([url]) => String(url).endsWith("/document-ingest-runs/ingest-rejected"))).toBe(false)
   })
 
   it("uses a default message for cancelled document ingest runs", async () => {
@@ -482,7 +517,10 @@ describe("API client", () => {
 
   it("raises response text on failed requests", async () => {
     mockFetch("boom", false)
-    await expect(deleteDocument("missing")).rejects.toThrow("boom")
+    await expect(deleteDocument("missing", {
+      expectedUpdatedAt: "now",
+      reason: "missing cleanup"
+    })).rejects.toThrow("boom")
   })
 
   it("falls back to localhost when runtime config cannot be loaded", async () => {

@@ -13,7 +13,7 @@ export type AppRoutesProps = {
   activeView: AppView
   canAnswerQuestions: boolean
   canReadBenchmarkRuns: boolean
-  canManageDocuments: boolean
+  canReadDocuments: boolean
   canSeeAdminSettings: boolean
   chatProps: ComponentProps<typeof ChatView>
   assigneeProps: ComponentProps<typeof AssigneeWorkspace>
@@ -29,7 +29,7 @@ export function AppRoutes({
   activeView,
   canAnswerQuestions,
   canReadBenchmarkRuns,
-  canManageDocuments,
+  canReadDocuments,
   canSeeAdminSettings,
   chatProps,
   assigneeProps,
@@ -43,7 +43,7 @@ export function AppRoutes({
   if (activeView === "chat") return <ChatView {...chatProps} />
   if (activeView === "assignee" && canAnswerQuestions) return <AssigneeWorkspace {...assigneeProps} />
   if (activeView === "benchmark" && canReadBenchmarkRuns) return <BenchmarkWorkspace {...benchmarkProps} />
-  if (activeView === "documents" && canManageDocuments) return <DocumentWorkspace {...documentProps} />
+  if (activeView === "documents" && canReadDocuments) return <DocumentWorkspace {...documentProps} />
   if (activeView === "admin" && canSeeAdminSettings) return <AdminWorkspace {...adminProps} />
   if (activeView === "profile") return <PersonalSettingsView {...profileProps} />
   if (activeView === "favorites") return <FavoritesWorkspace {...favoritesProps} />

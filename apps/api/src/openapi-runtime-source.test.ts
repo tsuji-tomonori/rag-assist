@@ -24,6 +24,17 @@ test("GET /openapi.json is the runtime OpenAPI source of truth", async () => {
   assert.equal(runtimeDocument.info?.title, "MemoRAG Bedrock QA MVP API")
   assert.ok(runtimeDocument.paths?.["/chat"]?.post)
   assert.ok(runtimeDocument.paths?.["/chat-runs"]?.post)
+
+  const searchDecisionSchema = findSchemaWithProperty(runtimeDocument.paths?.["/search"]?.post, "guardOutcomes")
+  assert.ok(searchDecisionSchema, "search OpenAPI must expose structured degradation guard outcomes")
+  assert.ok(requiredFields(searchDecisionSchema).includes("guardOutcomes"))
+  const guardOutcomes = schemaProperties(searchDecisionSchema).guardOutcomes
+  const guardOutcomeSchema = isRecord(guardOutcomes) && isRecord(guardOutcomes.items) ? guardOutcomes.items : undefined
+  assert.ok(guardOutcomeSchema)
+  assert.deepEqual(
+    [...requiredFields(guardOutcomeSchema)].sort(),
+    ["evidence", "guard", "observed", "observedAt", "passed"]
+  )
 })
 
 test("OpenAPI quality gate validates lifecycle metadata and generated Markdown freshness", async () => {
@@ -60,3 +71,35 @@ test("representative oRPC contract routes stay mapped to runtime OpenAPI operati
   )
   assert.deepEqual(validateRestOrpcContractDrift(runtimeDocument), [])
 })
+
+function findSchemaWithProperty(value: unknown, property: string): Record<string, unknown> | undefined {
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const found = findSchemaWithProperty(item, property)
+      if (found) return found
+    }
+    return undefined
+  }
+  if (!isRecord(value)) return undefined
+  const properties = schemaProperties(value)
+  if (Object.hasOwn(properties, property)) return value
+  for (const item of Object.values(value)) {
+    const found = findSchemaWithProperty(item, property)
+    if (found) return found
+  }
+  return undefined
+}
+
+function schemaProperties(schema: Record<string, unknown>): Record<string, unknown> {
+  return isRecord(schema.properties) ? schema.properties : {}
+}
+
+function requiredFields(schema: Record<string, unknown>): string[] {
+  return Array.isArray(schema.required)
+    ? schema.required.filter((field): field is string => typeof field === "string")
+    : []
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+}
