@@ -2,7 +2,7 @@
 
 # GET /admin/usage IF仕様
 
-- 実装 route: `apps/api/src/routes/admin-routes.ts:617 (GET /admin/usage)`
+- 実装 route: `apps/api/src/routes/admin-routes.ts:619 (GET /admin/usage)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 利用状況を取得する
@@ -21,7 +21,17 @@ _なし_
 
 ## Query Parameters
 
-_なし_
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `periodStart` | `string:date-time` | no | `periodStart` の値。項目名は period start を表します。 クエリ文字列で検索または一覧条件を指定します。 | - |
+| `periodEnd` | `string:date-time` | no | `periodEnd` の値。項目名は period end を表します。 クエリ文字列で検索または一覧条件を指定します。 | - |
+| `subjectId` | `string` | no | `subjectId` の値。項目名は subject id を表します。 クエリ文字列で検索または一覧条件を指定します。 | minLength=1<br>maxLength=200 |
+| `runId` | `string` | no | 非同期 run または debug trace を識別する ID。 クエリ文字列で検索または一覧条件を指定します。 | minLength=1<br>maxLength=200 |
+| `modelId` | `string` | no | 回答生成に利用する Bedrock model ID。 クエリ文字列で検索または一覧条件を指定します。 | minLength=1<br>maxLength=300 |
+| `feature` | `string` | no | `feature` の値。項目名は feature を表します。 クエリ文字列で検索または一覧条件を指定します。 | minLength=1<br>maxLength=120 |
+| `provider` | `string` | no | `provider` の値。項目名は provider を表します。 クエリ文字列で検索または一覧条件を指定します。 | minLength=1<br>maxLength=120 |
+| `limit` | `integer` | no | `limit` の値。項目名は limit を表します。 クエリ文字列で検索または一覧条件を指定します。 | minimum=1<br>maximum=200 |
+| `cursor` | `string` | no | `cursor` の値。項目名は cursor を表します。 クエリ文字列で検索または一覧条件を指定します。 | minLength=1<br>maxLength=4096 |
 
 ## Data
 
@@ -53,7 +63,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 13 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 73 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 
@@ -63,19 +73,79 @@ Media type: `application/json`
 
 | 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
-| `users` | `array<object>` | yes | `response.users` の値。項目名は users を表します。 | - |
-| `users[].userId` | `string` | yes | 対象ユーザーを一意に識別する ID。 | - |
-| `users[].email` | `string` | yes | ユーザーのメールアドレス。 | - |
-| `users[].displayName` | `string` | no | 画面に表示するユーザー名。 | - |
-| `users[].chatMessages` | `integer` | no | `response.users[].chatMessages` の値。項目名は chat messages を表します。 | minimum=0 |
-| `users[].conversationCount` | `integer` | no | `response.users[].conversationCount` の値。項目名は conversation count を表します。 | minimum=0 |
-| `users[].questionCount` | `integer` | no | `response.users[].questionCount` の値。項目名は question count を表します。 | minimum=0 |
-| `users[].documentCount` | `integer` | no | `response.users[].documentCount` の値。項目名は document count を表します。 | minimum=0 |
-| `users[].benchmarkRunCount` | `integer` | no | `response.users[].benchmarkRunCount` の値。項目名は benchmark run count を表します。 | minimum=0 |
-| `users[].debugRunCount` | `integer` | no | `response.users[].debugRunCount` の値。項目名は debug run count を表します。 | minimum=0 |
-| `users[].availableMetrics` | `array<enum(chatMessages \| conversationCount \| questionCount \| documentCount \| benchmarkRunCount \| debugRunCount)>` | yes | `response.users[].availableMetrics` の値。項目名は available metrics を表します。 | - |
-| `users[].unavailableMetrics` | `array<enum(chatMessages \| conversationCount \| questionCount \| documentCount \| benchmarkRunCount \| debugRunCount)>` | yes | `response.users[].unavailableMetrics` の値。項目名は unavailable metrics を表します。 | - |
-| `users[].lastActivityAt` | `string` | no | `response.users[].lastActivityAt` の値。項目名は last activity at を表します。 | - |
+| `query` | `object` | yes | 検索や benchmark に利用する query。 | - |
+| `query.periodStart` | `string:date-time` | yes | `response.query.periodStart` の値。項目名は period start を表します。 | - |
+| `query.periodEnd` | `string:date-time` | yes | `response.query.periodEnd` の値。項目名は period end を表します。 | - |
+| `query.subjectId` | `string` | no | `response.query.subjectId` の値。項目名は subject id を表します。 | minLength=1<br>maxLength=200 |
+| `query.runId` | `string` | no | 非同期 run または debug trace を識別する ID。 | minLength=1<br>maxLength=200 |
+| `query.modelId` | `string` | no | 回答生成に利用する Bedrock model ID。 | minLength=1<br>maxLength=300 |
+| `query.feature` | `string` | no | `response.query.feature` の値。項目名は feature を表します。 | minLength=1<br>maxLength=120 |
+| `query.provider` | `string` | no | `response.query.provider` の値。項目名は provider を表します。 | minLength=1<br>maxLength=120 |
+| `query.limit` | `integer` | yes | `response.query.limit` の値。項目名は limit を表します。 | minimum=1<br>maximum=200 |
+| `events` | `array<object>` | yes | `response.events` の値。項目名は events を表します。 | - |
+| `events[].schemaVersion` | `enum(1)` | yes | `response.events[].schemaVersion` の値。項目名は schema version を表します。 | enum=1 |
+| `events[].eventId` | `string` | yes | `response.events[].eventId` の値。項目名は event id を表します。 | - |
+| `events[].tenantId` | `string` | yes | `response.events[].tenantId` の値。項目名は tenant id を表します。 | - |
+| `events[].subjectId` | `string` | no | `response.events[].subjectId` の値。項目名は subject id を表します。 | - |
+| `events[].runId` | `string` | no | 非同期 run または debug trace を識別する ID。 | - |
+| `events[].feature` | `string` | no | `response.events[].feature` の値。項目名は feature を表します。 | - |
+| `events[].provider` | `string` | no | `response.events[].provider` の値。項目名は provider を表します。 | - |
+| `events[].region` | `string` | no | `response.events[].region` の値。項目名は region を表します。 | - |
+| `events[].modelId` | `string` | no | 回答生成に利用する Bedrock model ID。 | - |
+| `events[].quantities` | `array<object>` | yes | `response.events[].quantities` の値。項目名は quantities を表します。 | - |
+| `events[].quantities[].unit` | `enum(input_token \| output_token \| cache_read_token \| cache_write_token \| request)` | yes | `response.events[].quantities[].unit` の値。項目名は unit を表します。 | enum=input_token, output_token, cache_read_token, cache_write_token, request |
+| `events[].quantities[].value` | `integer` | no | `response.events[].quantities[].value` の値。項目名は value を表します。 | minimum=0 |
+| `events[].quantities[].source` | `enum(provider \| tokenizer_estimate \| missing)` | yes | `response.events[].quantities[].source` の値。項目名は source を表します。 | enum=provider, tokenizer_estimate, missing |
+| `events[].status` | `enum(succeeded \| failed)` | yes | 現在の処理状態または管理状態。 | enum=succeeded, failed |
+| `events[].errorCode` | `string` | no | `response.events[].errorCode` の値。項目名は error code を表します。 | - |
+| `events[].idempotencyKey` | `string` | yes | `response.events[].idempotencyKey` の値。項目名は idempotency key を表します。 | - |
+| `events[].occurredAt` | `string:date-time` | yes | `response.events[].occurredAt` の値。項目名は occurred at を表します。 | - |
+| `events[].recordedAt` | `string:date-time` | yes | `response.events[].recordedAt` の値。項目名は recorded at を表します。 | - |
+| `nextCursor` | `string` | no | `response.nextCursor` の値。項目名は next cursor を表します。 | - |
+| `truncated` | `boolean` | yes | `response.truncated` の値。項目名は truncated を表します。 | - |
+| `asOf` | `string:date-time` | yes | `response.asOf` の値。項目名は as of を表します。 | - |
+| `source` | `enum(usage_event_store)` | yes | `response.source` の値。項目名は source を表します。 | enum=usage_event_store |
+| `rolloutMode` | `enum(disabled \| shadow \| active)` | yes | `response.rolloutMode` の値。項目名は rollout mode を表します。 | enum=disabled, shadow, active |
+| `completeness` | `object` | yes | `response.completeness` の値。項目名は completeness を表します。 | - |
+| `completeness.eventCount` | `integer` | yes | `response.completeness.eventCount` の値。項目名は event count を表します。 | minimum=0 |
+| `completeness.actualQuantityCount` | `integer` | yes | `response.completeness.actualQuantityCount` の値。項目名は actual quantity count を表します。 | minimum=0 |
+| `completeness.estimatedQuantityCount` | `integer` | yes | `response.completeness.estimatedQuantityCount` の値。項目名は estimated quantity count を表します。 | minimum=0 |
+| `completeness.missingQuantityCount` | `integer` | yes | `response.completeness.missingQuantityCount` の値。項目名は missing quantity count を表します。 | minimum=0 |
+| `completeness.unknownSubjectCount` | `integer` | yes | `response.completeness.unknownSubjectCount` の値。項目名は unknown subject count を表します。 | minimum=0 |
+| `completeness.unknownRunCount` | `integer` | yes | `response.completeness.unknownRunCount` の値。項目名は unknown run count を表します。 | minimum=0 |
+| `completeness.unknownModelCount` | `integer` | yes | `response.completeness.unknownModelCount` の値。項目名は unknown model count を表します。 | minimum=0 |
+| `completeness.unknownFeatureCount` | `integer` | yes | `response.completeness.unknownFeatureCount` の値。項目名は unknown feature count を表します。 | minimum=0 |
+| `completeness.unpricedQuantityCount` | `integer` | yes | `response.completeness.unpricedQuantityCount` の値。項目名は unpriced quantity count を表します。 | minimum=0 |
+| `completeness.state` | `enum(complete \| partial \| missing)` | yes | `response.completeness.state` の値。項目名は state を表します。 | enum=complete, partial, missing |
+| `breakdowns` | `object` | yes | `response.breakdowns` の値。項目名は breakdowns を表します。 | - |
+| `breakdowns.bySubject` | `array<object>` | yes | `response.breakdowns.bySubject` の値。項目名は by subject を表します。 | - |
+| `breakdowns.bySubject[].key` | `string` | yes | object store または artifact の key。 | - |
+| `breakdowns.bySubject[].label` | `string` | yes | `response.breakdowns.bySubject[].label` の値。項目名は label を表します。 | - |
+| `breakdowns.bySubject[].actualQuantity` | `number` | yes | `response.breakdowns.bySubject[].actualQuantity` の値。項目名は actual quantity を表します。 | minimum=0 |
+| `breakdowns.bySubject[].estimatedQuantity` | `number` | yes | `response.breakdowns.bySubject[].estimatedQuantity` の値。項目名は estimated quantity を表します。 | minimum=0 |
+| `breakdowns.bySubject[].missingQuantityCount` | `integer` | yes | `response.breakdowns.bySubject[].missingQuantityCount` の値。項目名は missing quantity count を表します。 | minimum=0 |
+| `breakdowns.bySubject[].eventCount` | `integer` | yes | `response.breakdowns.bySubject[].eventCount` の値。項目名は event count を表します。 | minimum=0 |
+| `breakdowns.byFeature` | `array<object>` | yes | `response.breakdowns.byFeature` の値。項目名は by feature を表します。 | - |
+| `breakdowns.byFeature[].key` | `string` | yes | object store または artifact の key。 | - |
+| `breakdowns.byFeature[].label` | `string` | yes | `response.breakdowns.byFeature[].label` の値。項目名は label を表します。 | - |
+| `breakdowns.byFeature[].actualQuantity` | `number` | yes | `response.breakdowns.byFeature[].actualQuantity` の値。項目名は actual quantity を表します。 | minimum=0 |
+| `breakdowns.byFeature[].estimatedQuantity` | `number` | yes | `response.breakdowns.byFeature[].estimatedQuantity` の値。項目名は estimated quantity を表します。 | minimum=0 |
+| `breakdowns.byFeature[].missingQuantityCount` | `integer` | yes | `response.breakdowns.byFeature[].missingQuantityCount` の値。項目名は missing quantity count を表します。 | minimum=0 |
+| `breakdowns.byFeature[].eventCount` | `integer` | yes | `response.breakdowns.byFeature[].eventCount` の値。項目名は event count を表します。 | minimum=0 |
+| `breakdowns.byProvider` | `array<object>` | yes | `response.breakdowns.byProvider` の値。項目名は by provider を表します。 | - |
+| `breakdowns.byProvider[].key` | `string` | yes | object store または artifact の key。 | - |
+| `breakdowns.byProvider[].label` | `string` | yes | `response.breakdowns.byProvider[].label` の値。項目名は label を表します。 | - |
+| `breakdowns.byProvider[].actualQuantity` | `number` | yes | `response.breakdowns.byProvider[].actualQuantity` の値。項目名は actual quantity を表します。 | minimum=0 |
+| `breakdowns.byProvider[].estimatedQuantity` | `number` | yes | `response.breakdowns.byProvider[].estimatedQuantity` の値。項目名は estimated quantity を表します。 | minimum=0 |
+| `breakdowns.byProvider[].missingQuantityCount` | `integer` | yes | `response.breakdowns.byProvider[].missingQuantityCount` の値。項目名は missing quantity count を表します。 | minimum=0 |
+| `breakdowns.byProvider[].eventCount` | `integer` | yes | `response.breakdowns.byProvider[].eventCount` の値。項目名は event count を表します。 | minimum=0 |
+| `breakdowns.byModel` | `array<object>` | yes | `response.breakdowns.byModel` の値。項目名は by model を表します。 | - |
+| `breakdowns.byModel[].key` | `string` | yes | object store または artifact の key。 | - |
+| `breakdowns.byModel[].label` | `string` | yes | `response.breakdowns.byModel[].label` の値。項目名は label を表します。 | - |
+| `breakdowns.byModel[].actualQuantity` | `number` | yes | `response.breakdowns.byModel[].actualQuantity` の値。項目名は actual quantity を表します。 | minimum=0 |
+| `breakdowns.byModel[].estimatedQuantity` | `number` | yes | `response.breakdowns.byModel[].estimatedQuantity` の値。項目名は estimated quantity を表します。 | minimum=0 |
+| `breakdowns.byModel[].missingQuantityCount` | `integer` | yes | `response.breakdowns.byModel[].missingQuantityCount` の値。項目名は missing quantity count を表します。 | minimum=0 |
+| `breakdowns.byModel[].eventCount` | `integer` | yes | `response.breakdowns.byModel[].eventCount` の値。項目名は event count を表します。 | minimum=0 |
 
 ##### `401` 認証が必要です。
 

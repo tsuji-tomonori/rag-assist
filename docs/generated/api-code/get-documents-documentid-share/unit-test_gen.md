@@ -8,7 +8,7 @@
 
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
-| 到達 symbol | document share API uses the loaded policy version and common security audit path | `apps/api/src/rag/memorag-service.test.ts:165 (document share API uses the loaded policy version and common security audit path)` |
+| 到達 symbol | document share API uses the loaded policy version and common security audit path | `apps/api/src/rag/memorag-service.test.ts:196 (document share API uses the loaded policy version and common security audit path)` |
 | route request | document share routes expose and forward the caller-loaded policy version | `apps/api/src/routes/document-share-versioned-routes.test.ts:17 (document share routes expose and forward the caller-loaded policy version)` |
 | route request | document share PUT requires expectedVersion and maps a stale policy to 409 | `apps/api/src/routes/document-share-versioned-routes.test.ts:48 (document share PUT requires expectedVersion and maps a stale policy to 409)` |
 
@@ -20,7 +20,7 @@
 | F002 | `GET /documents/{documentId}/share handler` | if | is forbidden error の判定結果が真である | `apps/api/src/routes/document-routes.ts:888 (GET /documents/{documentId}/share handler)` |
 | F003 | `GET /documents/{documentId}/share handler` | if | `err` が `Error` の instance である、かつ `err.message` が "ENOENT" を含む、または `err.message` が "NoSuchKey" を含む | `apps/api/src/routes/document-routes.ts:889 (GET /documents/{documentId}/share handler)` |
 | F004 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| F005 | `MemoRagService.getDocumentShareInfo` | if | can share document の判定結果が真ではない | `apps/api/src/rag/memorag-service.ts:1095 (MemoRagService.getDocumentShareInfo)` |
+| F005 | `MemoRagService.getDocumentShareInfo` | if | can share document の判定結果が真ではない | `apps/api/src/rag/memorag-service.ts:1180 (MemoRagService.getDocumentShareInfo)` |
 
 ## 3. コード由来テストケース
 
@@ -34,8 +34,8 @@
 | TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:889 (GET /documents/{documentId}/share handler)` |
 | TC007 | F004: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
 | TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC009 | F005: 条件成立 | can share document の判定結果が真ではない 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1095 (MemoRagService.getDocumentShareInfo)` |
-| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1095 (MemoRagService.getDocumentShareInfo)` |
+| TC009 | F005: 条件成立 | can share document の判定結果が真ではない 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1180 (MemoRagService.getDocumentShareInfo)` |
+| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1180 (MemoRagService.getDocumentShareInfo)` |
 | TC011 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC012 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC013 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

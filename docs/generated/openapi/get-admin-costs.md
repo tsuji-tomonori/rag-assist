@@ -20,7 +20,17 @@ _なし_
 
 ## Query Parameters
 
-_なし_
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `periodStart` | `string:date-time` | no | `periodStart` の値。項目名は period start を表します。 クエリ文字列で検索または一覧条件を指定します。 | - |
+| `periodEnd` | `string:date-time` | no | `periodEnd` の値。項目名は period end を表します。 クエリ文字列で検索または一覧条件を指定します。 | - |
+| `subjectId` | `string` | no | `subjectId` の値。項目名は subject id を表します。 クエリ文字列で検索または一覧条件を指定します。 | minLength=1<br>maxLength=200 |
+| `runId` | `string` | no | 非同期 run または debug trace を識別する ID。 クエリ文字列で検索または一覧条件を指定します。 | minLength=1<br>maxLength=200 |
+| `modelId` | `string` | no | 回答生成に利用する Bedrock model ID。 クエリ文字列で検索または一覧条件を指定します。 | minLength=1<br>maxLength=300 |
+| `feature` | `string` | no | `feature` の値。項目名は feature を表します。 クエリ文字列で検索または一覧条件を指定します。 | minLength=1<br>maxLength=120 |
+| `provider` | `string` | no | `provider` の値。項目名は provider を表します。 クエリ文字列で検索または一覧条件を指定します。 | minLength=1<br>maxLength=120 |
+| `limit` | `integer` | no | `limit` の値。項目名は limit を表します。 クエリ文字列で検索または一覧条件を指定します。 | minimum=1<br>maximum=200 |
+| `cursor` | `string` | no | `cursor` の値。項目名は cursor を表します。 クエリ文字列で検索または一覧条件を指定します。 | minLength=1<br>maxLength=4096 |
 
 ## Data
 
@@ -52,7 +62,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 19 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 45 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 
@@ -62,25 +72,51 @@ Media type: `application/json`
 
 | 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
-| `available` | `boolean` | yes | `response.available` の値。項目名は available を表します。 | - |
-| `unavailableReason` | `string` | no | `response.unavailableReason` の値。項目名は unavailable reason を表します。 | - |
-| `periodStart` | `string` | yes | `response.periodStart` の値。項目名は period start を表します。 | - |
-| `periodEnd` | `string` | yes | `response.periodEnd` の値。項目名は period end を表します。 | - |
-| `currency` | `enum(USD)` | no | `response.currency` の値。項目名は currency を表します。 | enum=USD |
-| `totalEstimatedUsd` | `number` | no | `response.totalEstimatedUsd` の値。項目名は total estimated usd を表します。 | minimum=0 |
-| `items` | `array<object>` | no | 一覧レスポンスに含まれる item 配列。 | - |
-| `items[].service` | `string` | yes | `response.items[].service` の値。項目名は service を表します。 | - |
-| `items[].category` | `string` | yes | 問い合わせや文書の分類。 | - |
-| `items[].usage` | `number` | yes | 利用状況の集計。 | minimum=0 |
-| `items[].unit` | `string` | yes | `response.items[].unit` の値。項目名は unit を表します。 | - |
-| `items[].unitCostUsd` | `number` | yes | `response.items[].unitCostUsd` の値。項目名は unit cost usd を表します。 | minimum=0 |
-| `items[].estimatedCostUsd` | `number` | yes | `response.items[].estimatedCostUsd` の値。項目名は estimated cost usd を表します。 | minimum=0 |
-| `items[].confidence` | `enum(actual_usage \| estimated_usage \| manual_estimate)` | yes | `response.items[].confidence` の値。項目名は confidence を表します。 | enum=actual_usage, estimated_usage, manual_estimate |
-| `users` | `array<object>` | no | `response.users` の値。項目名は users を表します。 | - |
-| `users[].userId` | `string` | yes | 対象ユーザーを一意に識別する ID。 | - |
-| `users[].email` | `string` | yes | ユーザーのメールアドレス。 | - |
-| `users[].estimatedCostUsd` | `number` | yes | `response.users[].estimatedCostUsd` の値。項目名は estimated cost usd を表します。 | minimum=0 |
-| `pricingCatalogUpdatedAt` | `string` | no | `response.pricingCatalogUpdatedAt` の値。項目名は pricing catalog updated at を表します。 | - |
+| `query` | `object` | yes | 検索や benchmark に利用する query。 | - |
+| `query.periodStart` | `string:date-time` | yes | `response.query.periodStart` の値。項目名は period start を表します。 | - |
+| `query.periodEnd` | `string:date-time` | yes | `response.query.periodEnd` の値。項目名は period end を表します。 | - |
+| `query.subjectId` | `string` | no | `response.query.subjectId` の値。項目名は subject id を表します。 | minLength=1<br>maxLength=200 |
+| `query.runId` | `string` | no | 非同期 run または debug trace を識別する ID。 | minLength=1<br>maxLength=200 |
+| `query.modelId` | `string` | no | 回答生成に利用する Bedrock model ID。 | minLength=1<br>maxLength=300 |
+| `query.feature` | `string` | no | `response.query.feature` の値。項目名は feature を表します。 | minLength=1<br>maxLength=120 |
+| `query.provider` | `string` | no | `response.query.provider` の値。項目名は provider を表します。 | minLength=1<br>maxLength=120 |
+| `query.limit` | `integer` | yes | `response.query.limit` の値。項目名は limit を表します。 | minimum=1<br>maximum=200 |
+| `currency` | `enum(USD)` | yes | `response.currency` の値。項目名は currency を表します。 | enum=USD |
+| `pricedCostUsd` | `number` | yes | `response.pricedCostUsd` の値。項目名は priced cost usd を表します。 | minimum=0 |
+| `items` | `array<object>` | yes | 一覧レスポンスに含まれる item 配列。 | - |
+| `items[].eventId` | `string` | yes | `response.items[].eventId` の値。項目名は event id を表します。 | - |
+| `items[].subjectId` | `string` | yes | `response.items[].subjectId` の値。項目名は subject id を表します。 | - |
+| `items[].runId` | `string` | yes | 非同期 run または debug trace を識別する ID。 | - |
+| `items[].feature` | `string` | yes | `response.items[].feature` の値。項目名は feature を表します。 | - |
+| `items[].provider` | `string` | yes | `response.items[].provider` の値。項目名は provider を表します。 | - |
+| `items[].region` | `string` | yes | `response.items[].region` の値。項目名は region を表します。 | - |
+| `items[].modelId` | `string` | yes | 回答生成に利用する Bedrock model ID。 | - |
+| `items[].unit` | `enum(input_token \| output_token \| cache_read_token \| cache_write_token \| request)` | yes | `response.items[].unit` の値。項目名は unit を表します。 | enum=input_token, output_token, cache_read_token, cache_write_token, request |
+| `items[].quantity` | `number` | no | `response.items[].quantity` の値。項目名は quantity を表します。 | minimum=0 |
+| `items[].measurementSource` | `enum(provider \| tokenizer_estimate \| missing)` | yes | `response.items[].measurementSource` の値。項目名は measurement source を表します。 | enum=provider, tokenizer_estimate, missing |
+| `items[].pricingState` | `enum(actual \| estimate \| unpriced)` | yes | `response.items[].pricingState` の値。項目名は pricing state を表します。 | enum=actual, estimate, unpriced |
+| `items[].catalogVersion` | `string` | no | `response.items[].catalogVersion` の値。項目名は catalog version を表します。 | - |
+| `items[].priceSource` | `string` | no | `response.items[].priceSource` の値。項目名は price source を表します。 | - |
+| `items[].unitCostUsd` | `number` | no | `response.items[].unitCostUsd` の値。項目名は unit cost usd を表します。 | minimum=0 |
+| `items[].costUsd` | `number` | no | `response.items[].costUsd` の値。項目名は cost usd を表します。 | minimum=0 |
+| `items[].occurredAt` | `string:date-time` | yes | `response.items[].occurredAt` の値。項目名は occurred at を表します。 | - |
+| `nextCursor` | `string` | no | `response.nextCursor` の値。項目名は next cursor を表します。 | - |
+| `truncated` | `boolean` | yes | `response.truncated` の値。項目名は truncated を表します。 | - |
+| `asOf` | `string:date-time` | yes | `response.asOf` の値。項目名は as of を表します。 | - |
+| `source` | `enum(usage_event_store+versioned_price_catalog)` | yes | `response.source` の値。項目名は source を表します。 | enum=usage_event_store+versioned_price_catalog |
+| `rolloutMode` | `enum(disabled \| shadow \| active)` | yes | `response.rolloutMode` の値。項目名は rollout mode を表します。 | enum=disabled, shadow, active |
+| `catalogVersions` | `array<string>` | yes | `response.catalogVersions` の値。項目名は catalog versions を表します。 | - |
+| `completeness` | `object` | yes | `response.completeness` の値。項目名は completeness を表します。 | - |
+| `completeness.eventCount` | `integer` | yes | `response.completeness.eventCount` の値。項目名は event count を表します。 | minimum=0 |
+| `completeness.actualQuantityCount` | `integer` | yes | `response.completeness.actualQuantityCount` の値。項目名は actual quantity count を表します。 | minimum=0 |
+| `completeness.estimatedQuantityCount` | `integer` | yes | `response.completeness.estimatedQuantityCount` の値。項目名は estimated quantity count を表します。 | minimum=0 |
+| `completeness.missingQuantityCount` | `integer` | yes | `response.completeness.missingQuantityCount` の値。項目名は missing quantity count を表します。 | minimum=0 |
+| `completeness.unknownSubjectCount` | `integer` | yes | `response.completeness.unknownSubjectCount` の値。項目名は unknown subject count を表します。 | minimum=0 |
+| `completeness.unknownRunCount` | `integer` | yes | `response.completeness.unknownRunCount` の値。項目名は unknown run count を表します。 | minimum=0 |
+| `completeness.unknownModelCount` | `integer` | yes | `response.completeness.unknownModelCount` の値。項目名は unknown model count を表します。 | minimum=0 |
+| `completeness.unknownFeatureCount` | `integer` | yes | `response.completeness.unknownFeatureCount` の値。項目名は unknown feature count を表します。 | minimum=0 |
+| `completeness.unpricedQuantityCount` | `integer` | yes | `response.completeness.unpricedQuantityCount` の値。項目名は unpriced quantity count を表します。 | minimum=0 |
+| `completeness.state` | `enum(complete \| partial \| missing)` | yes | `response.completeness.state` の値。項目名は state を表します。 | enum=complete, partial, missing |
 
 ##### `401` 認証が必要です。
 

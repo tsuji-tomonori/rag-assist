@@ -18,7 +18,7 @@ _静的に直接対応を確認できた test case はありません。`unit-te
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | 利用可能なロール一覧を取得する が成功 response を返す。 | `apps/api/src/routes/admin-routes.ts:348 (GET /admin/roles handler)` |
+| TC001 | 正常系 | 利用可能なロール一覧を取得する が成功 response を返す。 | `apps/api/src/routes/admin-routes.ts:350 (GET /admin/roles handler)` |
 | TC002 | F001: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
 | TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
 | TC004 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

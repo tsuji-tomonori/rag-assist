@@ -10,7 +10,7 @@
 
 用途概要: DynamoDB table
 
-リソース数: 10
+リソース数: 11
 
 ## Logical ID 一覧
 
@@ -26,6 +26,7 @@
 | [Document Ingest Runs Table](#document-ingest-runs-table) | `DocumentIngestRunsTableEA8F8CCA` | Document Ingest Runs Table (DynamoDB table) |
 | [Favorites Table](#favorites-table) | `FavoritesTable4DA8A306` | Favorites Table (DynamoDB table) |
 | [Human Questions Table](#human-questions-table) | `HumanQuestionsTable5DA9688B` | Human Questions Table (DynamoDB table) |
+| [Usage Events Table](#usage-events-table) | `UsageEventsTable215FE3DD` | Usage Events Table (DynamoDB table) |
 
 ## Logical ID 別設定
 
@@ -160,5 +161,18 @@ Logical ID: `HumanQuestionsTable5DA9688B`
 | --- | --- |
 | `keySchema` | [{"AttributeName":"questionId","KeyType":"HASH"}] |
 | `attributeDefinitions` | [{"AttributeName":"questionId","AttributeType":"S"},{"AttributeName":"requesterUserId","AttributeType":"S"},{"AttributeName":"updatedAt","AttributeType":"S"},{"AttributeName":"assigneeUserId","AttributeType":"S"},{"AttributeName":"assigneeGroupId","AttributeType":"S"},{"AttributeName":"status","AttributeType":"S"}] |
+| `billingMode` | PAY_PER_REQUEST |
+| `pointInTimeRecoveryEnabled` | true |
+
+### Usage Events Table
+
+Logical ID: `UsageEventsTable215FE3DD`
+
+用途推定: Usage Events Table (DynamoDB table)
+
+| 設定項目 | 値 |
+| --- | --- |
+| `keySchema` | [{"AttributeName":"tenantId","KeyType":"HASH"},{"AttributeName":"idempotencyKey","KeyType":"RANGE"}] |
+| `attributeDefinitions` | [{"AttributeName":"tenantId","AttributeType":"S"},{"AttributeName":"idempotencyKey","AttributeType":"S"},{"AttributeName":"periodKey","AttributeType":"S"}] |
 | `billingMode` | PAY_PER_REQUEST |
 | `pointInTimeRecoveryEnabled` | true |

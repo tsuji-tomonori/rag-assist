@@ -8,10 +8,10 @@
 
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
-| 到達 symbol | service manages reviewed alias artifacts and audit log | `apps/api/src/rag/memorag-service.test.ts:1380 (service manages reviewed alias artifacts and audit log)` |
-| 到達 symbol | alias governance enforces tenant, version, state transition, and stable cursor boundaries | `apps/api/src/rag/memorag-service.test.ts:1423 (alias governance enforces tenant, version, state transition, and stable cursor boundaries)` |
-| 到達 symbol | concurrent alias updates accept one current version and audit the stale command | `apps/api/src/rag/memorag-service.test.ts:1501 (concurrent alias updates accept one current version and audit the stale command)` |
-| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:3375 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
+| 到達 symbol | service manages reviewed alias artifacts and audit log | `apps/api/src/rag/memorag-service.test.ts:1411 (service manages reviewed alias artifacts and audit log)` |
+| 到達 symbol | alias governance enforces tenant, version, state transition, and stable cursor boundaries | `apps/api/src/rag/memorag-service.test.ts:1454 (alias governance enforces tenant, version, state transition, and stable cursor boundaries)` |
+| 到達 symbol | concurrent alias updates accept one current version and audit the stale command | `apps/api/src/rag/memorag-service.test.ts:1532 (concurrent alias updates accept one current version and audit the stale command)` |
+| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:3469 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
 | 到達 symbol | service search expands published reviewed aliases without returning alias details | `apps/api/src/search/hybrid-search.test.ts:1030 (service search expands published reviewed aliases without returning alias details)` |
 
 ## 2. 実装分岐から導くテスト要因
@@ -19,17 +19,17 @@
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
 | F001 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| F002 | `MemoRagService.createAlias` | if | `result` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1321 (MemoRagService.createAlias)` |
+| F002 | `MemoRagService.createAlias` | if | `result` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1406 (MemoRagService.createAlias)` |
 
 ## 3. コード由来テストケース
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | 検索 alias draft を作成する が成功 response を返す。 | `apps/api/src/routes/admin-routes.ts:398 (POST /admin/aliases handler)` |
+| TC001 | 正常系 | 検索 alias draft を作成する が成功 response を返す。 | `apps/api/src/routes/admin-routes.ts:400 (POST /admin/aliases handler)` |
 | TC002 | F001: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
 | TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC004 | F002: 条件成立 | `result` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1321 (MemoRagService.createAlias)` |
-| TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1321 (MemoRagService.createAlias)` |
+| TC004 | F002: 条件成立 | `result` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1406 (MemoRagService.createAlias)` |
+| TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1406 (MemoRagService.createAlias)` |
 | TC006 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC007 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC008 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

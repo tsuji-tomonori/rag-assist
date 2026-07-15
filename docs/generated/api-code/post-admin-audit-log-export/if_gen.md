@@ -2,7 +2,7 @@
 
 # POST /admin/audit-log/export IF仕様
 
-- 実装 route: `apps/api/src/routes/admin-routes.ts:201 (POST /admin/audit-log/export)`
+- 実装 route: `apps/api/src/routes/admin-routes.ts:203 (POST /admin/audit-log/export)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 管理操作履歴 export URL を作成する
@@ -74,7 +74,7 @@ Media type: `application/json`
 
 | 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
-| `exportType` | `enum(audit_log \| cost_summary)` | yes | `response.exportType` の値。項目名は export type を表します。 | enum=audit_log, cost_summary |
+| `exportType` | `enum(audit_log \| usage_summary \| cost_summary)` | yes | `response.exportType` の値。項目名は export type を表します。 | enum=audit_log, usage_summary, cost_summary |
 | `url` | `string:uri` | yes | アクセス先または署名付き URL。 | - |
 | `expiresInSeconds` | `integer` | yes | `response.expiresInSeconds` の値。項目名は expires in seconds を表します。 | minimum=0 |
 | `objectKey` | `string` | yes | `response.objectKey` の値。項目名は object key を表します。 | - |

@@ -33,7 +33,9 @@
 | `POST /admin/aliases/publish` | alias publish | `FR-023`, `NFR-012` |
 | `GET /admin/aliases/audit-log` | alias 操作履歴 | `FR-023`, `NFR-012` |
 | `GET /admin/usage` | 全ユーザー利用状況 | `FR-027`, `NFR-011` |
+| `POST /admin/usage/export` | 同一条件の全 usage event export | `FR-027`, `NFR-011` |
 | `GET /admin/costs` | コスト監査 | `FR-027`, `NFR-011` |
+| `POST /admin/costs/export` | 同一条件の全 cost audit export | `FR-027`, `NFR-011` |
 | `GET /documents` | 登録文書 summary 一覧 | `FR-001`, `FR-007` |
 | `POST /documents` | 小さなテキスト互換用の同期文書登録（ファイル用途は非推奨） | `FR-001`, `FR-002` |
 | `GET /document-groups` | 参照可能な資料グループ一覧 | `FR-041`, `NFR-011` |
@@ -73,7 +75,7 @@
 | `POST /benchmark-runs/{runId}/cancel` | benchmark run cancel | `FR-019`, `NFR-010` |
 | `POST /benchmark-runs/{runId}/download` | benchmark report / summary / results / CodeBuild logs download URL 生成 | `FR-011`, `FR-019`, `NFR-010` |
 
-注: `GET /admin/costs` は運用者向けの概算コスト監査 summary を返す。請求確定用の料金算出 API は現行 MVP では未提供であり、`DES_DATA_001` の `UsageMeter`、`PricingCatalogEntry`、`CostEstimate` を使う将来拡張として扱う。
+注: `GET /admin/usage` と `GET /admin/costs` は tenant-scoped usage event store を source of truth とし、half-open period、subject/run/model/feature/provider filter、stable cursor、source、as-of、completeness、`rolloutMode` を返す。`GET /admin/costs` の合計は承認済み versioned price catalog で価格付けできた項目だけであり、AWS 請求確定額ではない。`disabled` / `shadow` では event を既定 read path へ公開せず、usage/cost export を `503` で拒否する。
 
 ## OpenAPI 生成ドキュメント
 
@@ -625,13 +627,17 @@ Phase 1 では通常利用者の Cognito self sign-up UI を提供する。
 | alias publish | `POST /admin/aliases/publish` | `rag:alias:publish:group` | `RAG_GROUP_MANAGER`, `SYSTEM_ADMIN` |
 | alias audit log | `GET /admin/aliases/audit-log` | `rag:alias:read` | `RAG_GROUP_MANAGER`, `SYSTEM_ADMIN` |
 | 全ユーザー利用状況 | `GET /admin/usage` | `usage:read:all_users` | `USER_ADMIN`, `SYSTEM_ADMIN` |
+| 全ユーザー利用状況 export | `POST /admin/usage/export` | `usage:export` | `USER_ADMIN`, `SYSTEM_ADMIN` |
 | コスト監査 | `GET /admin/costs` | `cost:read:all` | `COST_AUDITOR`, `SYSTEM_ADMIN` |
+| コスト監査 export | `POST /admin/costs/export` | `cost:export` | `COST_AUDITOR`, `SYSTEM_ADMIN` |
 
 Phase 2 のユーザー管理は、verified identity/directory adapter が設定される場合はそれを authoritative source とし、tenant 分割された管理台帳を projection/read model とする。未設定の非 production local 環境では tenant 分割管理台帳を正とする。role/account mutation は共通 security audit outbox と相関する operation evidence を返し、session revoke、effective permission、propagation/reconciliation を成功と推測せず表示できるようにする。
 
 `GET /admin/users` は `query`、`status`、`sort`、`cursor`、`limit` を受け、`total`、`nextCursor`、`truncated`、`source`、`asOf`、ledger `version` と各 user の server capability、effective permissions、projection source/as-of/reconciliation state を返す。不正 cursor は `400` とし、self、inactive target、最後の recovery principal などの blocker を server が最終判定する。
 
 `GET /admin/audit-log` は legacy 管理台帳の成功 event と tenant-scoped common security audit outbox を一つの read model に正規化し、`pending`、`success`、`denied`、`conflict`、`failed`、reason、target、policy version、source を返す。`POST /admin/audit-log/export` は read と分離した `access:audit:export`、同じ query と必須 reason を要求し、tenant 内の全 page を取得して redaction metadata を付け、export の成功/失敗自体も共通監査へ記録する。
+
+`POST /admin/usage/export` と `POST /admin/costs/export` は cursor/limit を除く現在の normalized query と必須 reason を受け、tenant 内の全 cursor page を取得する。read permission から export permission を推論せず、sanitize 済み JSON、redaction policy、署名 URL の有効期限を server が決定し、成功/失敗を共通 security audit outbox へ記録する。
 
 alias list/audit と管理操作履歴は `cursor`、`limit`、`query` および resource 固有 filter を受け、`total`、`nextCursor`、`truncated`、`source`、`asOf` を返す。cursor は sort と最後の複合 key を含む opaque token で、sort 不一致・不正 token は `400` とする。alias response は record `version`、list response は ledger `version` を返す。
 

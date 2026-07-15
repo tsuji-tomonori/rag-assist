@@ -585,8 +585,7 @@
           "apps/web/src/shared/ui/OperationFeedback.tsx"
         ],
         "gapTasks": [
-          "tasks/do/20260714-1011-admin-access-audit-state.md",
-          "tasks/todo/20260714-1011-admin-usage-cost-integrity.md",
+          "tasks/do/20260714-1011-admin-usage-cost-integrity.md",
           "tasks/todo/20260714-issue-345-manual-a11y-evidence.md"
         ]
       }
@@ -767,7 +766,7 @@
         "admin"
       ],
       "componentCount": 9,
-      "interactionCount": 104
+      "interactionCount": 134
     },
     {
       "feature": "agents",
@@ -1049,12 +1048,22 @@
       "jsxUsages": [
         "AdminPanelDataStatus",
         "EmptyState",
+        "UsageQueryForm",
+        "a",
         "article",
+        "button",
+        "dd",
         "div",
+        "dl",
+        "dt",
+        "form",
         "h3",
         "i",
+        "input",
+        "label",
         "p",
         "section",
+        "small",
         "span",
         "strong"
       ],
@@ -1105,13 +1114,24 @@
       "file": "apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx",
       "feature": "admin",
       "exports": [
-        "AdminUsagePanel"
+        "AdminUsagePanel",
+        "UsageQueryForm"
       ],
       "jsxUsages": [
         "AdminPanelDataStatus",
+        "CompletenessSummary",
         "EmptyState",
+        "UsageQueryForm",
+        "a",
+        "button",
+        "dd",
         "div",
+        "dl",
+        "dt",
+        "form",
         "h3",
+        "input",
+        "label",
         "p",
         "section",
         "span",
@@ -1120,6 +1140,7 @@
         "td",
         "th",
         "thead",
+        "time",
         "tr"
       ],
       "certainty": "confirmed"
@@ -2756,9 +2777,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:201:button",
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:216:button",
       "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 201,
+      "line": 216,
       "feature": "admin",
       "component": "AdminWorkspace",
       "element": "button",
@@ -2800,9 +2821,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:214:button",
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:229:button",
       "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 214,
+      "line": 229,
       "feature": "admin",
       "component": "AdminWorkspace",
       "element": "button",
@@ -3318,6 +3339,237 @@
       "certainty": "confirmed"
     },
     {
+      "id": "apps/web/src/features/admin/components/panels/AdminCostPanel.tsx:30:UsageQueryForm",
+      "file": "apps/web/src/features/admin/components/panels/AdminCostPanel.tsx",
+      "line": 30,
+      "feature": "admin",
+      "component": "AdminCostPanel",
+      "element": "UsageQueryForm",
+      "isIntrinsic": false,
+      "label": "未推定",
+      "a11y": {
+        "accessibleName": "未推定",
+        "accessibleNameSource": "missing",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "setQuery"
+        },
+        {
+          "name": "onSubmit",
+          "value": "(event) => { event.preventDefault(); void onApplyQuery(query) }"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "onChange",
+          "value": "setQuery"
+        },
+        {
+          "name": "onSubmit",
+          "value": "(event) => { event.preventDefault(); void onApplyQuery(query) }"
+        }
+      ],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AdminCostPanel.tsx:38:form",
+      "file": "apps/web/src/features/admin/components/panels/AdminCostPanel.tsx",
+      "line": 38,
+      "feature": "admin",
+      "component": "AdminCostPanel",
+      "element": "form",
+      "isIntrinsic": true,
+      "label": "現在のコスト条件を export",
+      "a11y": {
+        "accessibleName": "現在のコスト条件を export",
+        "accessibleNameSource": "aria-label",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onSubmit",
+          "value": "async (event: FormEvent) => { event.preventDefault(); if (!exportReason.trim()) return; s…"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "aria-label",
+          "value": "現在のコスト条件を export"
+        },
+        {
+          "name": "onSubmit",
+          "value": "async (event: FormEvent) => { event.preventDefault(); if (!exportReason.trim()) return; s…"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AdminCostPanel.tsx:43:label",
+      "file": "apps/web/src/features/admin/components/panels/AdminCostPanel.tsx",
+      "line": 43,
+      "feature": "admin",
+      "component": "AdminCostPanel",
+      "element": "label",
+      "isIntrinsic": true,
+      "label": "export 理由（必須）",
+      "a11y": {
+        "accessibleName": "export 理由（必須）",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AdminCostPanel.tsx:43:input",
+      "file": "apps/web/src/features/admin/components/panels/AdminCostPanel.tsx",
+      "line": 43,
+      "feature": "admin",
+      "component": "AdminCostPanel",
+      "element": "input",
+      "isIntrinsic": true,
+      "label": "exportReason",
+      "a11y": {
+        "accessibleName": "export 理由（必須）",
+        "accessibleNameSource": "label",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => setExportReason(event.target.value)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "value",
+          "value": "exportReason"
+        },
+        {
+          "name": "onChange",
+          "value": "(event) => setExportReason(event.target.value)"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AdminCostPanel.tsx:44:button",
+      "file": "apps/web/src/features/admin/components/panels/AdminCostPanel.tsx",
+      "line": 44,
+      "feature": "admin",
+      "component": "AdminCostPanel",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "同じ条件の全ページを export",
+      "a11y": {
+        "accessibleName": "同じ条件の全ページを export",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=loading || !exportReason.trim()"
+        ],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "submit"
+        },
+        {
+          "name": "disabled",
+          "value": "loading || !exportReason.trim()"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AdminCostPanel.tsx:47:a",
+      "file": "apps/web/src/features/admin/components/panels/AdminCostPanel.tsx",
+      "line": 47,
+      "feature": "admin",
+      "component": "AdminCostPanel",
+      "element": "a",
+      "isIntrinsic": true,
+      "label": "有効期限内に取得",
+      "a11y": {
+        "accessibleName": "有効期限内に取得",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AdminCostPanel.tsx:56:button",
+      "file": "apps/web/src/features/admin/components/panels/AdminCostPanel.tsx",
+      "line": 56,
+      "feature": "admin",
+      "component": "AdminCostPanel",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "次の cost item を読み込む",
+      "a11y": {
+        "accessibleName": "次の cost item を読み込む",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=loading"
+        ],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => void onLoadMore()"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "loading"
+        },
+        {
+          "name": "onClick",
+          "value": "() => void onLoadMore()"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
       "id": "apps/web/src/features/admin/components/panels/AdminOverviewGrid.tsx:205:button",
       "file": "apps/web/src/features/admin/components/panels/AdminOverviewGrid.tsx",
       "line": 205,
@@ -3417,6 +3669,716 @@
       },
       "handlers": [],
       "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:53:UsageQueryForm",
+      "file": "apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx",
+      "line": 53,
+      "feature": "admin",
+      "component": "AdminUsagePanel",
+      "element": "UsageQueryForm",
+      "isIntrinsic": false,
+      "label": "未推定",
+      "a11y": {
+        "accessibleName": "未推定",
+        "accessibleNameSource": "missing",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "setQuery"
+        },
+        {
+          "name": "onSubmit",
+          "value": "applyFilters"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "onChange",
+          "value": "setQuery"
+        },
+        {
+          "name": "onSubmit",
+          "value": "applyFilters"
+        }
+      ],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:56:form",
+      "file": "apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx",
+      "line": 56,
+      "feature": "admin",
+      "component": "AdminUsagePanel",
+      "element": "form",
+      "isIntrinsic": true,
+      "label": "現在の利用状況条件を export",
+      "a11y": {
+        "accessibleName": "現在の利用状況条件を export",
+        "accessibleNameSource": "aria-label",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onSubmit",
+          "value": "exportCurrent"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "aria-label",
+          "value": "現在の利用状況条件を export"
+        },
+        {
+          "name": "onSubmit",
+          "value": "exportCurrent"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:57:label",
+      "file": "apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx",
+      "line": 57,
+      "feature": "admin",
+      "component": "AdminUsagePanel",
+      "element": "label",
+      "isIntrinsic": true,
+      "label": "export 理由（必須）",
+      "a11y": {
+        "accessibleName": "export 理由（必須）",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:57:input",
+      "file": "apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx",
+      "line": 57,
+      "feature": "admin",
+      "component": "AdminUsagePanel",
+      "element": "input",
+      "isIntrinsic": true,
+      "label": "exportReason",
+      "a11y": {
+        "accessibleName": "export 理由（必須）",
+        "accessibleNameSource": "label",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => setExportReason(event.target.value)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "value",
+          "value": "exportReason"
+        },
+        {
+          "name": "onChange",
+          "value": "(event) => setExportReason(event.target.value)"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:58:button",
+      "file": "apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx",
+      "line": 58,
+      "feature": "admin",
+      "component": "AdminUsagePanel",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "同じ条件の全ページを export",
+      "a11y": {
+        "accessibleName": "同じ条件の全ページを export",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=loading || !exportReason.trim()"
+        ],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "submit"
+        },
+        {
+          "name": "disabled",
+          "value": "loading || !exportReason.trim()"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:61:a",
+      "file": "apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx",
+      "line": 61,
+      "feature": "admin",
+      "component": "AdminUsagePanel",
+      "element": "a",
+      "isIntrinsic": true,
+      "label": "有効期限内に取得",
+      "a11y": {
+        "accessibleName": "有効期限内に取得",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:78:button",
+      "file": "apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx",
+      "line": 78,
+      "feature": "admin",
+      "component": "AdminUsagePanel",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "次の usage event を読み込む",
+      "a11y": {
+        "accessibleName": "次の usage event を読み込む",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=loading"
+        ],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => void onLoadMore()"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "loading"
+        },
+        {
+          "name": "onClick",
+          "value": "() => void onLoadMore()"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:84:form",
+      "file": "apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx",
+      "line": 84,
+      "feature": "admin",
+      "component": "UsageQueryForm",
+      "element": "form",
+      "isIntrinsic": true,
+      "label": "利用量とコストを絞り込む",
+      "a11y": {
+        "accessibleName": "利用量とコストを絞り込む",
+        "accessibleNameSource": "aria-label",
+        "descriptionRefs": "-",
+        "role": "search",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onSubmit",
+          "value": "onSubmit"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "role",
+          "value": "search"
+        },
+        {
+          "name": "aria-label",
+          "value": "利用量とコストを絞り込む"
+        },
+        {
+          "name": "onSubmit",
+          "value": "onSubmit"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:85:label",
+      "file": "apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx",
+      "line": 85,
+      "feature": "admin",
+      "component": "UsageQueryForm",
+      "element": "label",
+      "isIntrinsic": true,
+      "label": "期間開始（ISO 8601）",
+      "a11y": {
+        "accessibleName": "期間開始（ISO 8601）",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:85:input",
+      "file": "apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx",
+      "line": 85,
+      "feature": "admin",
+      "component": "UsageQueryForm",
+      "element": "input",
+      "isIntrinsic": true,
+      "label": "query.periodStart ?? \"\"",
+      "a11y": {
+        "accessibleName": "期間開始（ISO 8601）",
+        "accessibleNameSource": "label",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => onChange({ ...query, periodStart: event.target.value })"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "value",
+          "value": "query.periodStart ?? \"\""
+        },
+        {
+          "name": "onChange",
+          "value": "(event) => onChange({ ...query, periodStart: event.target.value })"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:86:label",
+      "file": "apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx",
+      "line": 86,
+      "feature": "admin",
+      "component": "UsageQueryForm",
+      "element": "label",
+      "isIntrinsic": true,
+      "label": "期間終了（ISO 8601・含まない）",
+      "a11y": {
+        "accessibleName": "期間終了（ISO 8601・含まない）",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:86:input",
+      "file": "apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx",
+      "line": 86,
+      "feature": "admin",
+      "component": "UsageQueryForm",
+      "element": "input",
+      "isIntrinsic": true,
+      "label": "query.periodEnd ?? \"\"",
+      "a11y": {
+        "accessibleName": "期間終了（ISO 8601・含まない）",
+        "accessibleNameSource": "label",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => onChange({ ...query, periodEnd: event.target.value })"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "value",
+          "value": "query.periodEnd ?? \"\""
+        },
+        {
+          "name": "onChange",
+          "value": "(event) => onChange({ ...query, periodEnd: event.target.value })"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:87:label",
+      "file": "apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx",
+      "line": 87,
+      "feature": "admin",
+      "component": "UsageQueryForm",
+      "element": "label",
+      "isIntrinsic": true,
+      "label": "subject",
+      "a11y": {
+        "accessibleName": "subject",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:87:input",
+      "file": "apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx",
+      "line": 87,
+      "feature": "admin",
+      "component": "UsageQueryForm",
+      "element": "input",
+      "isIntrinsic": true,
+      "label": "query.subjectId ?? \"\"",
+      "a11y": {
+        "accessibleName": "subject",
+        "accessibleNameSource": "label",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => onChange({ ...query, subjectId: event.target.value })"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "value",
+          "value": "query.subjectId ?? \"\""
+        },
+        {
+          "name": "onChange",
+          "value": "(event) => onChange({ ...query, subjectId: event.target.value })"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:88:label",
+      "file": "apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx",
+      "line": 88,
+      "feature": "admin",
+      "component": "UsageQueryForm",
+      "element": "label",
+      "isIntrinsic": true,
+      "label": "run",
+      "a11y": {
+        "accessibleName": "run",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:88:input",
+      "file": "apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx",
+      "line": 88,
+      "feature": "admin",
+      "component": "UsageQueryForm",
+      "element": "input",
+      "isIntrinsic": true,
+      "label": "query.runId ?? \"\"",
+      "a11y": {
+        "accessibleName": "run",
+        "accessibleNameSource": "label",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => onChange({ ...query, runId: event.target.value })"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "value",
+          "value": "query.runId ?? \"\""
+        },
+        {
+          "name": "onChange",
+          "value": "(event) => onChange({ ...query, runId: event.target.value })"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:89:label",
+      "file": "apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx",
+      "line": 89,
+      "feature": "admin",
+      "component": "UsageQueryForm",
+      "element": "label",
+      "isIntrinsic": true,
+      "label": "model",
+      "a11y": {
+        "accessibleName": "model",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:89:input",
+      "file": "apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx",
+      "line": 89,
+      "feature": "admin",
+      "component": "UsageQueryForm",
+      "element": "input",
+      "isIntrinsic": true,
+      "label": "query.modelId ?? \"\"",
+      "a11y": {
+        "accessibleName": "model",
+        "accessibleNameSource": "label",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => onChange({ ...query, modelId: event.target.value })"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "value",
+          "value": "query.modelId ?? \"\""
+        },
+        {
+          "name": "onChange",
+          "value": "(event) => onChange({ ...query, modelId: event.target.value })"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:90:label",
+      "file": "apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx",
+      "line": 90,
+      "feature": "admin",
+      "component": "UsageQueryForm",
+      "element": "label",
+      "isIntrinsic": true,
+      "label": "feature",
+      "a11y": {
+        "accessibleName": "feature",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:90:input",
+      "file": "apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx",
+      "line": 90,
+      "feature": "admin",
+      "component": "UsageQueryForm",
+      "element": "input",
+      "isIntrinsic": true,
+      "label": "query.feature ?? \"\"",
+      "a11y": {
+        "accessibleName": "feature",
+        "accessibleNameSource": "label",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => onChange({ ...query, feature: event.target.value })"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "value",
+          "value": "query.feature ?? \"\""
+        },
+        {
+          "name": "onChange",
+          "value": "(event) => onChange({ ...query, feature: event.target.value })"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:91:label",
+      "file": "apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx",
+      "line": 91,
+      "feature": "admin",
+      "component": "UsageQueryForm",
+      "element": "label",
+      "isIntrinsic": true,
+      "label": "provider",
+      "a11y": {
+        "accessibleName": "provider",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:91:input",
+      "file": "apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx",
+      "line": 91,
+      "feature": "admin",
+      "component": "UsageQueryForm",
+      "element": "input",
+      "isIntrinsic": true,
+      "label": "query.provider ?? \"\"",
+      "a11y": {
+        "accessibleName": "provider",
+        "accessibleNameSource": "label",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => onChange({ ...query, provider: event.target.value })"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "value",
+          "value": "query.provider ?? \"\""
+        },
+        {
+          "name": "onChange",
+          "value": "(event) => onChange({ ...query, provider: event.target.value })"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:92:button",
+      "file": "apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx",
+      "line": 92,
+      "feature": "admin",
+      "component": "UsageQueryForm",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "条件を適用",
+      "a11y": {
+        "accessibleName": "条件を適用",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=loading"
+        ],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "submit"
+        },
+        {
+          "name": "disabled",
+          "value": "loading"
+        }
+      ],
       "certainty": "confirmed"
     },
     {

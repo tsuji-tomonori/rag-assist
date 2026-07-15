@@ -8,24 +8,34 @@
 
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
-| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:3375 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
+| 到達 symbol | shadow usage rollout records events without exposing read or export as the active path | `apps/api/src/rag/memorag-service.test.ts:3101 (shadow usage rollout records events without exposing read or export as the active path)` |
+| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:3469 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
 
 ## 2. 実装分岐から導くテスト要因
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| F001 | `GET /admin/usage handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/admin-routes.ts:634 (GET /admin/usage handler)` |
+| F002 | `GET /admin/usage handler` | if | is invalid usage query の判定結果が真である | `apps/api/src/routes/admin-routes.ts:635 (GET /admin/usage handler)` |
+| F003 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| F004 | `MemoRagService.listUsageSummaries` | 三項条件 | `rolloutMode` が `"active"` と等しい、かつ `this.deps.usageEventStore` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2169 (MemoRagService.listUsageSummaries)` |
 
 ## 3. コード由来テストケース
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | 利用状況を取得する が成功 response を返す。 | `apps/api/src/routes/admin-routes.ts:626 (GET /admin/usage handler)` |
-| TC002 | F001: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC004 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
-| TC005 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
-| TC006 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC001 | 正常系 | 利用状況を取得する が成功 response を返す。 | `apps/api/src/routes/admin-routes.ts:629 (GET /admin/usage handler)` |
+| TC002 | F001: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/admin-routes.ts:634 (GET /admin/usage handler)` |
+| TC003 | F002: 条件成立 | is invalid usage query の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:635 (GET /admin/usage handler)` |
+| TC004 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:635 (GET /admin/usage handler)` |
+| TC005 | F003: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| TC007 | F004: 条件成立 | `rolloutMode` が `"active"` と等しい、かつ `this.deps.usageEventStore` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2169 (MemoRagService.listUsageSummaries)` |
+| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2169 (MemoRagService.listUsageSummaries)` |
+| TC009 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC010 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC011 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC012 | HTTP 400 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 
 ## 4. 検証方針
 

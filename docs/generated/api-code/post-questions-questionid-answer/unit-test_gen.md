@@ -8,7 +8,7 @@
 
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
-| 到達 symbol | service delegates human question lifecycle to the question store | `apps/api/src/rag/memorag-service.test.ts:1572 (service delegates human question lifecycle to the question store)` |
+| 到達 symbol | service delegates human question lifecycle to the question store | `apps/api/src/rag/memorag-service.test.ts:1603 (service delegates human question lifecycle to the question store)` |
 | route request | questionRoute_answerRejectsUnassignedAnswerEditor | `apps/api/src/routes/question-routes.test.ts:80 (questionRoute_answerRejectsUnassignedAnswerEditor)` |
 | route request | questionRoute_answerAllowsAssignedUser | `apps/api/src/routes/question-routes.test.ts:105 (questionRoute_answerAllowsAssignedUser)` |
 | route request | questionRoute_answerAllowsAssignedGroupMember | `apps/api/src/routes/question-routes.test.ts:119 (questionRoute_answerAllowsAssignedGroupMember)` |

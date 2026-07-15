@@ -8,9 +8,9 @@
 
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
-| 到達 symbol | service persists document quality profile and excludes ineligible documents from normal RAG search | `apps/api/src/rag/memorag-service.test.ts:414 (service persists document quality profile and excludes ineligible documents from normal RAG search)` |
-| 到達 symbol | service inherits parent document group sharing unless child has explicit policy | `apps/api/src/rag/memorag-service.test.ts:827 (service inherits parent document group sharing unless child has explicit policy)` |
-| 到達 symbol | search includes owner-owned group scoped documents despite ordinary folder denial | `apps/api/src/rag/memorag-service.test.ts:1074 (search includes owner-owned group scoped documents despite ordinary folder denial)` |
+| 到達 symbol | service persists document quality profile and excludes ineligible documents from normal RAG search | `apps/api/src/rag/memorag-service.test.ts:445 (service persists document quality profile and excludes ineligible documents from normal RAG search)` |
+| 到達 symbol | service inherits parent document group sharing unless child has explicit policy | `apps/api/src/rag/memorag-service.test.ts:858 (service inherits parent document group sharing unless child has explicit policy)` |
+| 到達 symbol | search includes owner-owned group scoped documents despite ordinary folder denial | `apps/api/src/rag/memorag-service.test.ts:1105 (search includes owner-owned group scoped documents despite ordinary folder denial)` |
 | 到達 symbol | FR-068 production path re-ingests quarantine into a fenced candidate and publishes only the approved artifact | `apps/api/src/rag/offline/pre-retrieval/admission/source-governance-approval-service.test.ts:374 (FR-068 production path re-ingests quarantine into a fenced candidate and publishes only the approved artifact)` |
 | 到達 symbol | service search applies ACL and metadata filters across lexical and vector results | `apps/api/src/search/hybrid-search.test.ts:408 (service search applies ACL and metadata filters across lexical and vector results)` |
 | 到達 symbol | service search denies group-scoped manifests to non-members without legacy ACLs | `apps/api/src/search/hybrid-search.test.ts:486 (service search denies group-scoped manifests to non-members without legacy ACLs)` |

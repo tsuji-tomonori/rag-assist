@@ -17,7 +17,10 @@
 | M002 | OpenAPI contract | `401` | 認証が必要です。 | OpenAPI で宣言された HTTP 401 response | runtime OpenAPI |
 | M003 | OpenAPI contract | `403` | 対象操作を実行する権限がありません。 | OpenAPI で宣言された HTTP 403 response | runtime OpenAPI |
 | M004 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| M005 | 例外 | `-` | Authoritative directory identity is unavailable during reconciliation | `this.deps.verifiedIdentityProvider` が存在し、真である、かつ `currentIdentity` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:3417 (MemoRagService.syncUserDirectory)` |
+| M005 | 例外 | `-` | Invalid half-open usage period | is finite の判定結果が真ではない、または is finite の判定結果が真ではない、または `periodStart` が `periodEnd` 以上である | `apps/api/src/adapters/usage-event-store.ts:81 (normalizeUsageQuery)` |
+| M006 | 例外 | `-` | Invalid non-negative decimal price | test の判定結果が真ではない | `apps/api/src/rag/_shared/usage/usage-pricing-catalog.ts:96 (parsePrice)` |
+| M007 | 例外 | `-` | Invalid price | is finite の判定結果が真ではない | `apps/api/src/rag/_shared/usage/usage-pricing-catalog.ts:98 (parsePrice)` |
+| M008 | HTTP 実装応答 | `400` | Invalid cost query or cursor | is invalid usage query の判定結果が真である | `apps/api/src/routes/admin-routes.ts:689 (GET /admin/costs handler)` |
 
 ## 読み方
 
