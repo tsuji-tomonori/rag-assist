@@ -312,7 +312,6 @@
         "apps/web/src/shared/ui/OperationFeedback.tsx"
       ],
       "gapTasks": [
-        "tasks/do/20260714-1011-admin-usage-cost-integrity.md",
         "tasks/todo/20260714-issue-345-manual-a11y-evidence.md"
       ]
     },

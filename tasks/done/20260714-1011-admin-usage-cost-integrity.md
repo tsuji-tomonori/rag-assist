@@ -1,6 +1,6 @@
 # 管理 Usage / Cost の真正性と export 境界を実装する
 
-- 状態: in_progress
+- 状態: done
 - 優先度: P0
 - 種別: 実装 / data integrity / security / operations
 - 起票日: 2026-07-14
@@ -25,7 +25,7 @@
 - [x] 1,000 件超・複数 tenant・複数 price version と migration/backfill/reconciliation の適用要否を検証・記録する。
 - [x] lint、typecheck、関連/full test、build、docs/generated freshness、security policy test が成功する。
 - [x] live AWS/provider/billing acceptance の未実施項目を達成扱いにせず、release blocker/残余リスクを report/PR に記録する。
-- [ ] 日本語 commit、stacked draft PR、受け入れ条件コメント、セルフレビュー、作業レポート、task の `done` 移動と lifecycle push が完了する。
+- [x] 日本語 commit、stacked draft PR、受け入れ条件コメント、セルフレビュー、作業レポート、task の `done` 移動と lifecycle push が完了する。
 
 ## 実行計画
 
