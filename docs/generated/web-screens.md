@@ -120,7 +120,7 @@
 - 要件・AC: `FR-094` (`AC-FR094-003`) / `FR-095` (`AC-FR095-004`, `AC-FR095-005`) / `FR-096` (`AC-FR096-005`) / `FR-097` (`AC-FR097-001`, `AC-FR097-002`) / `FR-098` (`AC-FR098-003`)
 - verification: `E2E-VIEW-ADMIN-001` (implemented), `E2E-UI-ADMIN-001` (implemented)
 - 実装状態: `partial`
-- 未完了 task: `tasks/do/20260714-1011-admin-access-audit-state.md`, `tasks/todo/20260714-1011-admin-usage-cost-integrity.md`, `tasks/todo/20260714-issue-345-manual-a11y-evidence.md`
+- 未完了 task: `tasks/todo/20260714-1011-admin-usage-cost-integrity.md`, `tasks/todo/20260714-issue-345-manual-a11y-evidence.md`
 - 画面の意味: 管理者設定。文書管理、担当者対応、debug / benchmark、ユーザー管理、alias 管理などの入口になります。
 - 主要操作: チャットへ戻る、管理操作履歴を絞り込む、対象・実行者を検索、query、操作 / すべて、action、すべて、検索、条件を解除、現在の監査条件を export ほか 57 件
 
