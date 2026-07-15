@@ -22,6 +22,7 @@ AWS では API Gateway、Lambda、Amazon Bedrock、Amazon S3、Amazon S3 Vectors
 - [OpenAPI Docs](docs/generated/openapi.md): 生成済み OpenAPI Markdown
 - [API Code Docs](docs/generated/api-code/index.md): API ごとの詳細設計、IF、メッセージ、query、sequence、unit test 自動生成文書
 - [Web UI Inventory](docs/generated/web-overview.md): Web UI 自動生成インベントリ
+- [Web UI Traceability](docs/generated/web-traceability.md): `AppView`、persona/job、URL/permission、要件/AC、検証、未完了 task の自動生成対応表
 - [AWS Resource Inventory](docs/generated/infra-inventory.md): CDK snapshot 由来の AWS リソースインベントリ
 
 ## ローカル起動
@@ -50,6 +51,8 @@ npm test --workspaces --if-present
 npm run typecheck --workspaces --if-present
 npm run docs:openapi:check
 npm run docs:api-code:check
+npm run docs:web-trace:test
+npm run docs:web-inventory:check
 ```
 
 Taskfile を使う場合:

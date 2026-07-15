@@ -14,8 +14,9 @@ def _valid_repository(repo: Path) -> Path:
     product = docs / "1_要求_REQ" / "11_製品要求_PRODUCT"
     product.mkdir()
     ids = [
-        *(f"FR-{number:03d}" for number in range(56, 94)),
-        *(f"SQ-{number:03d}" for number in range(5, 16)),
+        *(f"FR-{number:03d}" for number in range(56, 99)),
+        *(f"NFR-{number:03d}" for number in range(16, 19)),
+        *(f"SQ-{number:03d}" for number in range(5, 17)),
     ]
     task_name = "20260713-0000-example.md"
     (product / "REQUIREMENTS_BASELINE_202607.md").write_text(

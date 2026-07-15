@@ -3,13 +3,13 @@
 - ファイル: `docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md`
 - 種別: `REQ_PRODUCT_BASELINE`
 - 作成日: 2026-07-11
-- 最終更新: 2026-07-13
+- 最終更新: 2026-07-14
 - 状態: Draft（ステークホルダー承認前）
 - 変更要求: `CHG-003`
 
 ## 目的
 
-現行コードを正解そのものとはみなさず、利用者ニーズ、既存要件、実装・テスト、作業・障害レポート、『RAGエンジニアリングガイド』、SWEBOK v4.0a を相互照合し、権限、文書共有、RAG ライフサイクルの要求を再定義する。
+現行コードを正解そのものとはみなさず、利用者ニーズ、既存要件、実装・テスト、作業・障害レポート、『RAGエンジニアリングガイド』、SWEBOK v4.0a を相互照合し、権限、文書共有、RAG ライフサイクル、UI/UX 品質基盤の要求を再定義する。
 
 この文書は要求集合の境界と読み方を定める索引である。規範的な要求文と受け入れ条件は、リンク先の 1 要件 1 ファイルを正とする。
 
@@ -45,6 +45,7 @@ SWEBOK v4.0a Chapter 1 に従い、要求は次を満たす粒度にする。
 | SRC-036 | `apps/api/src`, `apps/web/src`, `infra` | `origin/main` commit `9cd904d3c5203caf2400eb2ff654096d63f9d8fb` と本 task の read-only audit | 現行実装とテストの事実 | confirmed |
 | SRC-037 | `docs/1_要求_REQ`, `docs/2_アーキテクチャ_ARC`, `docs/3_設計_DES` | 既存要求・ADR・設計 | 既存合意と矛盾の検出 | confirmed |
 | SRC-038 | `reports/working`, `reports/bugs` の権限・共有・RAG 関連レポート | 2026-05-12–2026-05-22 を中心に本文確認 | 実装意図、既知制約、未検証事項 | confirmed |
+| SRC-039 | GitHub Issue #345、PR #341〜#344、現行 Web source/test/inventory | 2026-07-14、`origin/main` `b9fb39b` | UI/UX、a11y、responsive、状態、文書・実装同期 | confirmed |
 
 主な PDF 根拠は、RAG ガイド §3.1–3.8（PDF pp.59–97）、§4–6（PDF pp.99–154）、§7（PDF pp.156–185）、§8.1–8.8（PDF pp.186–208）である。ページ対応は本文の印刷ページに 6 を加えた PDF ページを併記する。
 
@@ -60,6 +61,8 @@ SWEBOK v4.0a Chapter 1 に従い、要求は次を満たす粒度にする。
 | QA・評価担当 | 工程別指標、否定試験、回帰、公開ゲートを検証する。 |
 | 監査担当 | 認可・共有・削除・公開判断を、本文を過剰保存せず追跡する。 |
 | 文書管理責任者・業務責任者 | 正本性、施行期間、優先情報源、矛盾処理、品質閾値を決定する。 |
+| Web 利用者・回答担当者・管理 UI 利用者 | 権限、viewport、zoom、入力手段にかかわらず許可済み主要 job を予測可能に完了する。 |
+| UI 実装者・reviewer | production view、正規要件、AC、検証、生成 inventory の不整合を merge 前に検出する。 |
 
 ## 保護対象と信頼境界
 
@@ -156,6 +159,20 @@ SWEBOK v4.0a Chapter 1 に従い、要求は次を満たす粒度にする。
 - `SQ-014`: 可用性・復旧 SLO
 - `SQ-015`: 単位処理コスト上限
 
+### UI/UX 品質基盤
+
+- `FR-094`: 権限対応の addressable navigation と安全な復帰
+- `FR-095`: loading/empty/error/permission/partial/stale/retry の共通状態契約
+- `FR-096`: 高影響操作の対象・影響・回復可否・結果フィードバック
+- `FR-097`: high-density workspace の query/selection context 保持
+- `FR-098`: 主要 job・詳細・高影響操作の段階的情報設計
+- `NFR-016`: production view から要件・AC・検証までの意味トレーサビリティと freshness gate
+- `NFR-017`: 利用者語彙、design token、共通 primitive、honest UI の一貫性
+- `NFR-018`: 自動・手動 UI 品質 evidence を release 判定へ残すこと
+- `SQ-016`: WCAG 2.2 AA と viewport/zoom/input/content-state matrix での主要 journey 完遂
+
+これらは GitHub Issue #345 の継続改善基盤を原子的な要求へ分けた Draft である。正規 UI 設計は `docs/3_設計_DES/21_UI_UX/DES_UI_UX_001.md`、事実・推定・矛盾・未確定点は同 issue の dated analysis report under `reports/working/` を参照する。PR #341〜#344 は 2026-07-14 時点ですべて `main` に統合済みであり、削除済みの旧 `spec` / `spec-recovery` docs root は正規要求として復活させない。
+
 既存の `FR-004`, `FR-005`, `FR-014`–`FR-018`, `FR-026`, `FR-038`, `FR-045`, `FR-046` は、引用、回答保留、検索・回答検証、非同期取り込み、trace の既存要求として維持し、新要求を追加制約として適用する。
 
 ## 置換・互換方針
@@ -218,6 +235,24 @@ SWEBOK v4.0a Chapter 1 に従い、要求は次を満たす粒度にする。
 
 表の todo はすべて `tasks/todo/` 配下である。planning 要求の `FR-049`–`FR-051`, `FR-053`–`FR-055` は、それぞれ `20260713-2259-chat-orchestration-completion.md`、`20260713-2300-async-agent-execution.md`、`20260713-2301-user-preferences.md`、`20260713-2302-api-lifecycle-common-middleware.md`、`20260522-2120-cloudfront-single-entry-implementation.md` で追跡する。`SQ-004` の未検証 responsive 条件は `20260713-2304-responsive-chat-ui-verification.md` で追跡する。
 
+### UI/UX 品質基盤の不一致
+
+2026-07-14 の Issue #345 audit では、静的 inventory の freshness は存在するが、production `AppView` と persona/job、URL/permission、正規要件、AC、実行可能検証を結ぶ意味的 gate はない。次の gap は未実装または未検証であり、対応 task の完了前に要件適合とみなさない。
+
+| ID | 現状と要求上の扱い | Confidence | 実装 todo |
+| --- | --- | --- | --- |
+| GAP-UI-001 | 720px 以下で account/profile 導線が消え、権限別 navigation overflow 代替もなく、`FR-094`, `SQ-016` に未達。 | confirmed | `20260714-issue-345-mobile-navigation.md` |
+| GAP-UI-002 | view/document state の URL 読み取りはあるが、利用者遷移が `replaceState` 中心で denied/invalid recovery と browser history 契約が不完全。 | confirmed | `20260714-issue-345-url-history-routing.md` |
+| GAP-UI-003 | global error は plain banner で、permission/partial/stale/target/retry を区別する共通状態契約がない。 | confirmed | `20260714-issue-345-shared-ui-state-contract.md` |
+| GAP-UI-004 | 高影響操作の target/effect/recoverability/result を横断保証する primitive と検証がない。 | inferred | `20260714-issue-345-risky-operation-feedback.md` |
+| GAP-UI-005 | documents は 143 interaction の高密度 UI で、操作 hierarchy と state restoration の横断検証がない。 | confirmed | `20260714-issue-345-document-workspace-context.md` |
+| GAP-UI-006 | chat/history/assignee の question-to-human-response journey を state transition として検証する E2E が不足する。 | confirmed | `20260714-issue-345-chat-assignee-journey.md` |
+| GAP-UI-007 | 8 AppViews 横断の a11y/responsive 修正、利用者語彙・token・primitive 統一が完了していない。 | confirmed | `20260714-issue-345-cross-screen-a11y-responsive.md`, `20260714-issue-345-ui-language-primitives.md` |
+| GAP-UI-008 | Playwright は desktop Chromium 中心で E2E は手動 dispatch、axe/mobile/browser/visual の required PR gate がない。 | confirmed | `20260714-issue-345-ui-automated-quality-gates.md` |
+| GAP-UI-009 | keyboard、screen reader、320px/400% zoom、実機の release evidence がない。 | confirmed | `20260714-issue-345-manual-a11y-evidence.md` |
+
+admin 固有の source/as-of、選択 context、responsive、server-authoritative data は既存 `20260714-1011-admin-ui-governance-quality.md` を再利用する。個人設定の永続化は既存 `20260713-2301-user-preferences.md`、chat responsive の狭い `SQ-004` 条件は既存 `20260713-2304-responsive-chat-ui-verification.md` を維持し、Issue #345 task との重複範囲を相互参照する。
+
 ## 未確定判断
 
 次は要求の欠落ではなく、責任者が値または方針を承認するまで `open_question` として管理する。
@@ -236,6 +271,9 @@ SWEBOK v4.0a Chapter 1 に従い、要求は次を満たす粒度にする。
 | `OQ-RD-010` | 情報源 authority、施行期間、矛盾 escalation の責任者と規則。 |
 | `OQ-RD-011` | 共有 audience として許可する principal 種別。 |
 | `OQ-RD-012` | move に source container `full` を必須とするか。 |
+| `OQ-UI-001` | PR 必須とする browser matrix を Chromium mobile までにするか、Firefox/WebKit も required にするか。 |
+| `OQ-UI-002` | 代表 screen reader / OS / browser と実機端末の release matrix、実施頻度、evidence owner。 |
+| `OQ-UI-003` | UI semantic trace の planned verification を implemented に昇格させる review owner と期限 SLA。 |
 
 未確定値を仮の合格値として扱わず、対応する要求は Draft のままにする。decision owner、選択肢、承認、要求/ADR 反映は `tasks/todo/20260713-2303-requirement-open-decisions.md` で追跡する。
 

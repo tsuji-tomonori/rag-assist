@@ -97,6 +97,11 @@ const traceByRequirement: Record<string, string[]> = {
   "FR-091": ["apps/api/src/security/public-resource-response.ts", "apps/api/src/security/public-resource-response.test.ts", "apps/api/src/contract/api-contract.test.ts", "apps/api/src/routes/benchmark-tenant-boundary.test.ts", "apps/web/src/features/documents/components/DocumentWorkspace.test.tsx"],
   "FR-092": ["apps/api/src/rag/offline/pre-retrieval/chunking/chunker.service.ts", "apps/api/src/rag/admission-lifecycle.test.ts", "apps/api/src/rag/text-processing.test.ts"],
   "FR-093": ["packages/contract/src/rag-quality-control.ts", "apps/api/src/rag/quality-control/production-rag-monitor.ts", "apps/api/src/rag/quality-control/production-rag-observation-producer.ts", "packages/contract/src/rag-quality-control.test.ts", "apps/api/src/rag/production-rag-monitor.test.ts", "apps/api/src/rag/production-rag-observation-producer.test.ts", "apps/api/src/rag-quality-monitor-worker.test.ts"],
+  "FR-094": ["apps/web/src/app/AppRoutes.tsx", "apps/web/e2e/visual-regression.spec.ts", "tools/web-inventory/ui-traceability.json", "tasks/todo/20260714-issue-345-mobile-navigation.md", "tasks/todo/20260714-issue-345-url-history-routing.md"],
+  "FR-095": ["tools/web-inventory/ui-traceability.json", "tools/web-inventory/ui-traceability.test.mjs", "tasks/todo/20260714-issue-345-shared-ui-state-contract.md"],
+  "FR-096": ["tools/web-inventory/ui-traceability.json", "tasks/todo/20260714-issue-345-risky-operation-feedback.md"],
+  "FR-097": ["apps/web/src/features/documents/components/DocumentWorkspace.tsx", "apps/web/src/features/documents/components/DocumentWorkspace.test.tsx", "tools/web-inventory/ui-traceability.json", "tasks/todo/20260714-issue-345-document-workspace-context.md"],
+  "FR-098": ["apps/web/src/features/admin/components/AdminWorkspace.tsx", "apps/web/src/features/admin/components/AdminWorkspace.test.tsx", "tools/web-inventory/ui-traceability.json", "tasks/todo/20260714-1011-admin-ui-governance-quality.md"],
   "NFR-001": ["graph.test.ts", "local-stores.test.ts", "text-processing.test.ts"],
   "NFR-002": ["infra/test/memorag-mvp-stack.test.ts", "docs/4_運用_OPS/21_監視_MONITORING/OPS_MONITORING_001.md"],
   "NFR-003": ["infra/test/memorag-mvp-stack.test.ts"],
@@ -112,6 +117,9 @@ const traceByRequirement: Record<string, string[]> = {
   "NFR-013": ["chat-run-events-stream.test.ts", "access-control-policy.test.ts"],
   "NFR-014": ["document-ingest-runs tests", "benchmark/corpus.test.ts", "docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md"],
   "NFR-015": ["debugApi.test.ts", "access-control-policy.test.ts", "docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md"],
+  "NFR-016": ["tools/web-inventory/ui-traceability.mjs", "tools/web-inventory/ui-traceability.test.mjs", "tools/web-inventory/ui-traceability.json"],
+  "NFR-017": ["tools/web-inventory/ui-traceability.json", "tasks/todo/20260714-issue-345-ui-language-primitives.md"],
+  "NFR-018": [".github/workflows/memorag-ci.yml", "apps/web/e2e/visual-regression.spec.ts", "tasks/todo/20260714-issue-345-ui-automated-quality-gates.md", "tasks/todo/20260714-issue-345-manual-a11y-evidence.md"],
   "SQ-001": ["benchmark/run.test.ts", "apps/api/src/search/hybrid-search.test.ts"],
   "SQ-002": ["benchmark/run.test.ts", "benchmark/corpus.test.ts"],
   "SQ-003": ["docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md"],
@@ -126,7 +134,8 @@ const traceByRequirement: Record<string, string[]> = {
   "SQ-012": ["packages/contract/src/rag-quality-control.ts", "apps/api/src/chat-orchestration/nodes/node-units.test.ts", "packages/contract/src/rag-quality-control.test.ts", "apps/api/src/rag/production-rag-observation-producer.test.ts"],
   "SQ-013": ["packages/contract/src/rag-quality-control.ts", "packages/contract/src/schemas/benchmark.ts", "infra/scripts/update-benchmark-run-metrics.mjs", "apps/api/src/rag/quality-control/production-rag-observation-producer.ts", "packages/contract/src/rag-quality-control.test.ts", "infra/test/update-benchmark-run-metrics.test.ts", "apps/api/src/rag/production-rag-observation-producer.test.ts"],
   "SQ-014": ["packages/contract/src/rag-quality-control.ts", "packages/contract/src/schemas/benchmark.ts", "infra/scripts/update-benchmark-run-metrics.mjs", "apps/api/src/rag/quality-control/production-rag-monitor.ts", "packages/contract/src/rag-quality-control.test.ts", "infra/test/update-benchmark-run-metrics.test.ts", "apps/api/src/rag/production-rag-monitor.test.ts"],
-  "SQ-015": ["packages/contract/src/rag-quality-control.ts", "apps/api/src/rag/quality-control/production-rag-observation-producer.ts", "packages/contract/src/rag-quality-control.test.ts", "apps/api/src/rag/production-rag-observation-producer.test.ts"]
+  "SQ-015": ["packages/contract/src/rag-quality-control.ts", "apps/api/src/rag/quality-control/production-rag-observation-producer.ts", "packages/contract/src/rag-quality-control.test.ts", "apps/api/src/rag/production-rag-observation-producer.test.ts"],
+  "SQ-016": ["apps/web/e2e/visual-regression.spec.ts", "tools/web-inventory/ui-traceability.json", "tasks/todo/20260714-issue-345-cross-screen-a11y-responsive.md", "tasks/todo/20260714-issue-345-manual-a11y-evidence.md"]
 }
 
 const redefinedRequirementIds = new Set([
@@ -152,7 +161,7 @@ test("product requirement documents have non-empty trace references", async () =
   assert.ok(requirements.every((requirement) => requirement.text.length > 0))
 
   const repoRoot = path.resolve(process.cwd(), "../..")
-  const repoPathPattern = /^(?:apps|benchmark|docs|infra|reports|scripts|tasks)\//
+  const repoPathPattern = /^(?:\.github|apps|benchmark|docs|infra|reports|scripts|tasks|tools)\//
   for (const [requirementId, references] of Object.entries(traceByRequirement)) {
     for (const reference of references.filter((item) => repoPathPattern.test(item))) {
       const content = await readFile(path.resolve(repoRoot, reference))

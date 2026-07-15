@@ -3,6 +3,13 @@ import fs from "node:fs"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
 import * as ts from "typescript"
+import {
+  enrichInventoryWithUiTrace,
+  findStaleGeneratedFiles,
+  formatUiTraceIssues,
+  readUiTraceManifest,
+  validateUiTraceability
+} from "./ui-traceability.mjs"
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..")
 const webSrcDir = path.join(repoRoot, "apps/web/src")
@@ -14,6 +21,7 @@ const outputFiles = {
   features: path.join(outputDir, "web-features.md"),
   components: path.join(outputDir, "web-components.md"),
   accessibility: path.join(outputDir, "web-accessibility.md"),
+  traceability: path.join(outputDir, "web-traceability.md"),
   json: path.join(outputDir, "web-ui-inventory.json")
 }
 const args = new Set(process.argv.slice(2))
@@ -694,7 +702,8 @@ ${markdownTable(
     ["機能領域", inventory.features.length, "[web-features.md](web-features.md)"],
     ["コンポーネント", inventory.components.length, "[web-components.md](web-components.md)"],
     ["UI 操作要素", inventory.interactions.length, "[web-features.md](web-features.md)"],
-    ["操作説明", inventory.interactions.length, "[web-accessibility.md](web-accessibility.md)"]
+    ["操作説明", inventory.interactions.length, "[web-accessibility.md](web-accessibility.md)"],
+    ["意味トレース対象画面", inventory.screens.length, "[web-traceability.md](web-traceability.md)"]
   ]
 )}
 
@@ -705,6 +714,7 @@ ${markdownTable(
 3. 気になる機能の詳細ファイルを開き、ボタン、フォーム、handler、実装ファイルを確認する。
 4. [操作説明一覧](web-accessibility.md) で、ボタンや入力項目が支援技術にどう説明されるかを確認する。
 5. [コンポーネント一覧](web-components.md) で、画面を構成する部品と JSX 使用要素を確認する。
+6. [UI 意味トレーサビリティ](web-traceability.md) で、画面、persona/job、URL/permission、要件、AC、検証、未完了 task を確認する。
 
 ## 生成されるファイル
 
@@ -717,6 +727,7 @@ ${markdownTable(
     ["[web-features/*.md](web-features/)", "機能ごとの画面、コンポーネント、UI 操作要素"],
     ["[web-components.md](web-components.md)", "コンポーネント、export、役割、関連画面"],
     ["[web-accessibility.md](web-accessibility.md)", "アクセシブル名、説明参照、状態属性に基づく UI 操作説明"],
+    ["[web-traceability.md](web-traceability.md)", "production AppView と persona/job、URL/permission、REQ/AC、verification、gap task の対応"],
     ["web-ui-inventory.json", "CI や将来の可視化に使える機械可読データ"]
   ]
 )}
@@ -729,7 +740,7 @@ function renderScreens(inventory) {
 ## 画面サマリ
 
 ${markdownTable(
-  ["表示名", "view", "route", "機能", "画面コンポーネント", "権限条件", "主要操作", "確度"],
+  ["表示名", "view", "route", "機能", "画面コンポーネント", "権限条件", "persona / job", "REQ / AC", "verification", "実装状態", "主要操作", "確度"],
   inventory.screens.map((screen) => [
     screen.label,
     screen.view,
@@ -737,6 +748,10 @@ ${markdownTable(
     `[${featureLabels[viewFeatures[screen.view]] ?? viewFeatures[screen.view]}](${featureLink(viewFeatures[screen.view])})`,
     screen.screenComponent,
     screen.permissions.length > 0 ? screen.permissions.join(", ") : "-",
+    `${screen.trace.personas.join(", ")}<br>${screen.trace.jobs.map((job) => `${job.id}: ${job.summary}`).join("<br>")}`,
+    screen.trace.requirements.map((reference) => `${reference.id}: ${reference.acceptanceCriteria.join(", ")}`).join("<br>"),
+    screen.trace.verifications.map((verification) => `${verification.id} (${verification.status})`).join("<br>"),
+    screen.trace.implementationStatus,
     summarizeLabels(inventory.interactions.filter((item) => item.feature === viewFeatures[screen.view]), 6),
     screen.certainty
   ])
@@ -752,7 +767,14 @@ ${inventory.screens.map((screen) => {
 - 機能領域: [${featureLabels[viewFeatures[screen.view]] ?? viewFeatures[screen.view]}](${featureLink(viewFeatures[screen.view])})
 - 画面コンポーネント: \`${screen.screenComponent}\`
 - route: \`${screen.routePath}\` (${screen.routeKind})
+- URL pattern: ${screen.trace.urlPatterns.map((urlPattern) => `\`${urlPattern}\``).join(", ")}
 - 権限条件: ${screen.permissions.length > 0 ? screen.permissions.map((permission) => `\`${permission}\``).join(", ") : "なし"}
+- persona: ${screen.trace.personas.map((persona) => `\`${persona}\``).join(", ")}
+- job: ${screen.trace.jobs.map((job) => `\`${job.id}\` ${job.summary}`).join(" / ")}
+- 要件・AC: ${screen.trace.requirements.map((reference) => `\`${reference.id}\` (${reference.acceptanceCriteria.map((acceptanceId) => `\`${acceptanceId}\``).join(", ")})`).join(" / ")}
+- verification: ${screen.trace.verifications.map((verification) => `\`${verification.id}\` (${verification.status})`).join(", ")}
+- 実装状態: \`${screen.trace.implementationStatus}\`
+- 未完了 task: ${screen.trace.gapTasks.map((taskPath) => `\`${taskPath}\``).join(", ") || "なし"}
 - 画面の意味: ${viewDescriptions[screen.view] ?? "静的解析では説明未定義。"}
 - 主要操作: ${summarizeLabels(interactions, 10)}
 `
@@ -967,6 +989,72 @@ ${markdownTable(
 `
 }
 
+function renderTraceability(inventory) {
+  const traceability = inventory.traceability
+  const crossViewVerifications = traceability.crossViewVerifications ?? []
+  return `${renderHeader("Web UI 意味トレーサビリティ", inventory)}
+
+> authored metadata: \`${traceability.generatedFrom}\`
+>
+> production \`AppView\` / route guard と canonical requirement / AC / test evidence は generator が検証します。\`partial\` / \`planned\` は実装済みを意味せず、対応 task の完了が必要です。
+
+## Persona
+
+${markdownTable(
+  ["ID", "表示名", "主要 job context"],
+  traceability.personas.map((persona) => [persona.id, persona.label, persona.jobContext])
+)}
+
+## AppView trace
+
+${markdownTable(
+  ["view", "canonical URL", "route guard", "persona", "job", "REQ / AC", "verification", "evidence", "状態", "gap task"],
+  inventory.screens.map((screen) => [
+    screen.view,
+    screen.trace.urlPatterns.join("<br>"),
+    screen.permissions.join(", ") || "authenticated session",
+    screen.trace.personas.join("<br>"),
+    screen.trace.jobs.map((job) => `${job.id}: ${job.summary}`).join("<br>"),
+    screen.trace.requirements.map((reference) => `${reference.id}: ${reference.acceptanceCriteria.join(", ")}`).join("<br>"),
+    screen.trace.verifications.map((verification) => `${verification.id} (${verification.status})`).join("<br>"),
+    screen.trace.implementationEvidence.join("<br>"),
+    screen.trace.implementationStatus,
+    screen.trace.gapTasks.join("<br>") || "-"
+  ])
+)}
+
+## 横断品質要件
+
+${markdownTable(
+  ["要件", "AC", "適用 view"],
+  traceability.qualityRequirements.map((reference) => [
+    reference.id,
+    reference.acceptanceCriteria.join("<br>"),
+    reference.appliesTo.join(", ")
+  ])
+)}
+
+## 横断検証
+
+${markdownTable(
+  ["verification", "状態", "evidence", "未完了 task"],
+  crossViewVerifications.map((verification) => [
+    verification.id,
+    verification.status,
+    verification.evidence?.join("<br>") ?? "-",
+    verification.task ?? "-"
+  ])
+)}
+
+## 判定上の注意
+
+- \`implemented\` は記載された executable evidence 内に verification ID が存在することを表す。
+- \`partial\`、\`planned\`、\`manual\` は未達または追加 evidence が必要であり、Issue #345 全体の完了を表さない。
+- UI permission/guard は API authorization の代替ではなく、権限外 data を取得・表示しない server-side boundary を維持する。
+- 自動 inventory/axe/visual result は keyboard、screen reader、400% zoom、real-device の手動 evidence を代替しない。
+`
+}
+
 function renderOutputs(inventory) {
   const outputs = {
     [outputFiles.overview]: renderOverview(inventory),
@@ -974,6 +1062,7 @@ function renderOutputs(inventory) {
     [outputFiles.features]: renderFeatures(inventory),
     [outputFiles.components]: renderComponents(inventory),
     [outputFiles.accessibility]: renderAccessibility(inventory),
+    [outputFiles.traceability]: renderTraceability(inventory),
     [outputFiles.json]: `${JSON.stringify(inventory, null, 2)}\n`
   }
   for (const feature of inventory.features) {
@@ -1001,13 +1090,19 @@ function findOrphanFeatureDetailFiles(outputs) {
 }
 
 function main() {
-  const outputs = renderOutputs(buildInventory())
+  const sourceInventory = buildInventory()
+  const manifest = readUiTraceManifest(repoRoot)
+  const traceIssues = validateUiTraceability({ repoRoot, manifest, screens: sourceInventory.screens })
+  if (traceIssues.length > 0) {
+    console.error(`Web UI 意味トレーサビリティに ${traceIssues.length} 件の不整合があります。`)
+    console.error(formatUiTraceIssues(traceIssues))
+    process.exitCode = 1
+    return
+  }
+  const outputs = renderOutputs(enrichInventoryWithUiTrace(sourceInventory, manifest))
   const orphanFeatureDetailFiles = findOrphanFeatureDetailFiles(outputs)
   if (checkOnly) {
-    const staleFiles = []
-    for (const [filePath, content] of Object.entries(outputs)) {
-      if (!fs.existsSync(filePath) || fs.readFileSync(filePath, "utf8") !== content) staleFiles.push(path.relative(repoRoot, filePath))
-    }
+    const staleFiles = findStaleGeneratedFiles(outputs).map((filePath) => path.relative(repoRoot, filePath))
     staleFiles.push(...orphanFeatureDetailFiles.map((filePath) => path.relative(repoRoot, filePath)))
     if (staleFiles.length > 0) {
       console.error(`Web UI インベントリが最新ではありません: ${staleFiles.join(", ")}`)
