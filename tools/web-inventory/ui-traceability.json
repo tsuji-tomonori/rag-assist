@@ -63,23 +63,23 @@
     },
     {
       "id": "E2E-UI-NAV-001",
-      "status": "planned",
-      "task": "tasks/todo/20260714-issue-345-mobile-navigation.md"
+      "status": "implemented",
+      "evidence": ["apps/web/e2e/visual-regression.spec.ts"]
     },
     {
       "id": "E2E-UI-NAV-002",
-      "status": "planned",
-      "task": "tasks/todo/20260714-issue-345-mobile-navigation.md"
+      "status": "implemented",
+      "evidence": ["apps/web/e2e/visual-regression.spec.ts"]
     },
     {
       "id": "E2E-UI-ROUTE-001",
-      "status": "planned",
-      "task": "tasks/todo/20260714-issue-345-url-history-routing.md"
+      "status": "implemented",
+      "evidence": ["apps/web/e2e/visual-regression.spec.ts"]
     },
     {
       "id": "E2E-UI-ROUTE-002",
-      "status": "planned",
-      "task": "tasks/todo/20260714-issue-345-url-history-routing.md"
+      "status": "implemented",
+      "evidence": ["apps/web/e2e/visual-regression.spec.ts"]
     },
     {
       "id": "E2E-UI-STATE-001",
@@ -292,7 +292,6 @@
       "implementationStatus": "partial",
       "implementationEvidence": ["apps/web/src/app/components/PersonalSettingsView.tsx"],
       "gapTasks": [
-        "tasks/todo/20260714-issue-345-mobile-navigation.md",
         "tasks/todo/20260713-2301-user-preferences.md"
       ]
     }

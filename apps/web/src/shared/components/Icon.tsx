@@ -22,6 +22,7 @@ export type IconName =
   | "gauge"
   | "stop"
   | "close"
+  | "menu"
 
 export function Icon({ name }: { name: IconName }) {
   return (
@@ -79,5 +80,7 @@ function getIconPath(name: IconName) {
       return <path d="M7 7h10v10H7V7Z" />
     case "close":
       return <path d="m6.4 5 5.6 5.6L17.6 5 19 6.4 13.4 12l5.6 5.6-1.4 1.4-5.6-5.6L6.4 19 5 17.6l5.6-5.6L5 6.4 6.4 5Z" />
+    case "menu":
+      return <path d="M4 6h16v2H4V6Zm0 5h16v2H4v-2Zm0 5h16v2H4v-2Z" />
   }
 }

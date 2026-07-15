@@ -233,7 +233,7 @@ SWEBOK v4.0a Chapter 1 に従い、要求は次を満たす粒度にする。
 | GAP-RD-023 | move が manifest、vector metadata、subtree/index/policy を一公開単位で更新せず、`FR-061`, `FR-065`, `FR-087`, `SQ-009` に未達。 | confirmed | `20260517-1241-document-move-between-folders.md` |
 | GAP-RD-024 | 本番 stage/slice 別 drift、alert、safe action の control loop がなく、`FR-089`, `FR-093`, `SQ-008`, `SQ-012`–`SQ-015` に未達。 | confirmed | `20260713-2257-production-rag-monitoring.md` |
 
-表の todo はすべて `tasks/todo/` 配下である。planning 要求の `FR-049`–`FR-051`, `FR-053`–`FR-055` は、それぞれ `20260713-2259-chat-orchestration-completion.md`、`20260713-2300-async-agent-execution.md`、`20260713-2301-user-preferences.md`、`20260713-2302-api-lifecycle-common-middleware.md`、`20260522-2120-cloudfront-single-entry-implementation.md` で追跡する。`SQ-004` の未検証 responsive 条件は `20260713-2304-responsive-chat-ui-verification.md` で追跡する。
+表の task は lifecycle に応じて `tasks/todo/`、`tasks/do/`、`tasks/done/` のいずれか一つに置く。planning 要求の `FR-049`–`FR-051`, `FR-053`–`FR-055` は、それぞれ `20260713-2259-chat-orchestration-completion.md`、`20260713-2300-async-agent-execution.md`、`20260713-2301-user-preferences.md`、`20260713-2302-api-lifecycle-common-middleware.md`、`20260522-2120-cloudfront-single-entry-implementation.md` で追跡する。`SQ-004` の未検証 responsive 条件は `20260713-2304-responsive-chat-ui-verification.md` で追跡する。
 
 ### UI/UX 品質基盤の不一致
 

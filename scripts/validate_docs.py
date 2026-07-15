@@ -39,7 +39,8 @@ REQUIREMENT_FILE = re.compile(
     r"^REQ_(FUNCTIONAL|NON_FUNCTIONAL|SERVICE_QUALITY|TECHNICAL_CONSTRAINT)_\d+\.md$"
 )
 REQUIREMENT_BULLET = re.compile(r"^- (FR|NFR|SQ|TC)-\d+: \S", re.MULTILINE)
-TODO_FILE = re.compile(r"`?(20\d{6}-[a-z0-9-]+\.md)`?")
+TASK_FILE = re.compile(r"`?(20\d{6}-[a-z0-9-]+\.md)`?")
+TASK_STATES = ("todo", "do", "done")
 MARKDOWN_LINK = re.compile(r"\[[^\]]+\]\((?P<target><[^>]+>|[^)\s]+)")
 
 
@@ -53,7 +54,7 @@ def validate_repository(repo_root: Path) -> list[str]:
     _validate_ops(docs_root, errors)
     _validate_generated(docs_root, errors)
     _validate_requirements(docs_root, errors)
-    _validate_baseline_todos(repo_root, docs_root, errors)
+    _validate_baseline_tasks(repo_root, docs_root, errors)
     _validate_live_references(repo_root, docs_root, errors)
     return errors
 
@@ -166,7 +167,7 @@ def _validate_requirements(docs_root: Path, errors: list[str]) -> None:
             errors.append(f"受け入れ条件がありません: {relative}")
 
 
-def _validate_baseline_todos(repo_root: Path, docs_root: Path, errors: list[str]) -> None:
+def _validate_baseline_tasks(repo_root: Path, docs_root: Path, errors: list[str]) -> None:
     baseline = (
         docs_root
         / "1_要求_REQ"
@@ -177,9 +178,19 @@ def _validate_baseline_todos(repo_root: Path, docs_root: Path, errors: list[str]
         errors.append("REQUIREMENTS_BASELINE_202607.md が存在しません")
         return
     text = baseline.read_text(encoding="utf-8")
-    for name in sorted(set(TODO_FILE.findall(text))):
-        if not (repo_root / "tasks" / "todo" / name).is_file():
-            errors.append(f"baseline が参照する todo が存在しません: tasks/todo/{name}")
+    for name in sorted(set(TASK_FILE.findall(text))):
+        locations = [
+            repo_root / "tasks" / state / name
+            for state in TASK_STATES
+            if (repo_root / "tasks" / state / name).is_file()
+        ]
+        if not locations:
+            errors.append(f"baseline が参照する task が存在しません: {name}")
+        elif len(locations) > 1:
+            rendered = ", ".join(
+                str(location.relative_to(repo_root)) for location in locations
+            )
+            errors.append(f"baseline が参照する task が複数状態に存在します: {rendered}")
     for number in range(56, 99):
         requirement_id = f"FR-{number:03d}"
         if requirement_id not in text:
@@ -211,6 +222,8 @@ def _validate_live_references(repo_root: Path, docs_root: Path, errors: list[str
     skills_root = repo_root / "skills"
     if skills_root.is_dir():
         candidates.extend(skills_root.rglob("*.md"))
+    # Completed task reports are historical records and may intentionally retain
+    # the canonical paths that were current when the work was performed.
     for task_state in ("do", "todo"):
         task_root = repo_root / "tasks" / task_state
         if task_root.is_dir():

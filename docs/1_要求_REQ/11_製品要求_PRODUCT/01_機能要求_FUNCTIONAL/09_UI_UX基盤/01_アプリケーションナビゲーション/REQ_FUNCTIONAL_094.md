@@ -37,7 +37,7 @@
 ## 要件の源泉・背景
 
 - 源泉: GitHub Issue #345 の「利用不能・誤操作リスク」。
-- confirmed evidence: `apps/web/src/app/types.ts` の 8 AppViews、`apps/web/src/app/hooks/useAppShellState.ts` の query/path hydration と `replaceState`、`apps/web/src/styles/responsive.css` の 720px 以下における `.account-button` 非表示。
+- confirmed evidence: `apps/web/src/app/types.ts` の 8 AppViews、`apps/web/src/app/routing/appRoute.ts` の canonical route parser/serializer、`useAppShellState.ts` の push/replace/popstate と denied recovery、`RailNav.tsx` と responsive CSS の permission-aware mobile menu。
 - 分析: `reports/working/20260714-1317-issue-345-uiux-spec-analysis.md`。
 
 ## 要件の目的・意図
@@ -56,7 +56,7 @@
 | 源泉 | GitHub Issue #345、current Web source/test |
 | 種類 | 機能要求 |
 | 依存関係 | `FR-024`, `FR-051`, `FR-057`, `FR-091`, `SQ-016` |
-| 衝突 | 現行 `replaceState` と利用者操作ごとの back/forward 期待、720px CSS の account 非表示 |
+| 衝突 | 解消済み: 利用者 navigation は `pushState`、正規化・権限復帰・transient state は `replaceState` とし、720px 以下は個人設定を含む mobile menu を使用する |
 | 受け入れ基準 | `AC-FR094-001`〜`AC-FR094-005` |
 | 優先度 | S |
 | 安定性 | High |
@@ -67,7 +67,7 @@
 | 観点 | 結果 | 根拠 |
 | --- | --- | --- |
 | 必要性・ニーズ適合 | pass | permitted destination の実到達不能を解消する。 |
-| 一貫性 | pass with gap | API authorization を正とし、UI は非開示と recovery を追加する。 |
+| 一貫性 | pass with manual gap | API authorization を正とし、UI は非開示と recovery を追加した。代表 screen reader、400% browser zoom、real-device は未検証。 |
 | 実現可能性 | pass | 既存 AppView/query/popstate を段階的に拡張できる。 |
 | 検証可能性 | pass | mobile/zoom/history/permission の独立 scenario がある。 |
 
@@ -75,5 +75,5 @@
 
 - `docs/1_要求_REQ/31_変更管理_CHANGE/REQ_CHANGE_001.md`
 - `docs/3_設計_DES/21_UI_UX/DES_UI_UX_001.md`
-- `tasks/todo/20260714-issue-345-mobile-navigation.md`
-- `tasks/todo/20260714-issue-345-url-history-routing.md`
+- `tasks/do/20260714-issue-345-mobile-navigation.md`
+- `tasks/done/20260714-issue-345-url-history-routing.md`

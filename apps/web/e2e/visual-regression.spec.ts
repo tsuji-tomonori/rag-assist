@@ -213,6 +213,21 @@ async function installMockApi(page: Page) {
   await page.route('http://127.0.0.1:8787/**', handleApiRoute)
 }
 
+async function installCurrentUserPermissions(page: Page, grantedPermissions: string[]) {
+  await page.route(/http:\/\/(api\.visual\.test|127\.0\.0\.1:8787)\/me$/, async (route) => {
+    await route.fulfill({
+      json: {
+        user: {
+          userId: 'visual-user',
+          email: 'visual@example.com',
+          groups: [],
+          permissions: grantedPermissions
+        }
+      }
+    })
+  })
+}
+
 async function installBenchmarkRuns(page: Page, count: number) {
   const benchmarkRuns = Array.from({ length: count }, (_, index) => benchmarkRun(index + 1))
 
@@ -332,6 +347,138 @@ test('全 AppView の permission-aware 到達性 @smoke', async ({ page }) => {
       await expect(page.getByRole('region', { name: viewStep.region, exact: true })).toBeVisible()
     })
   }
+})
+
+test('E2E-UI-NAV-002: 最大権限 persona は 320px mobile menu から全許可 view と個人設定へ到達する @smoke', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 720 })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await signIn(page)
+
+  const openMenu = () => page.getByRole('button', { name: 'メニューを開く' })
+  await openMenu().focus()
+  await page.keyboard.press('Enter')
+  const mobileNavigation = page.getByRole('navigation', { name: 'モバイル画面' })
+  await expect(mobileNavigation.getByRole('button', { name: 'チャット' })).toHaveAttribute('aria-current', 'page')
+  await expect(mobileNavigation.getByRole('button', { name: 'チャット' })).toBeFocused()
+  await expect(page).toHaveScreenshot('mobile-navigation-320.png', {
+    fullPage: true,
+    animations: 'disabled'
+  })
+
+  await page.keyboard.press('Escape')
+  await expect(openMenu()).toBeFocused()
+
+  const destinations = [
+    { label: '担当者対応', region: '担当者対応' },
+    { label: '履歴', region: '履歴' },
+    { label: '性能テスト', region: '性能テスト' },
+    { label: 'お気に入り', region: 'お気に入り' },
+    { label: 'ドキュメント', region: 'ドキュメント管理' },
+    { label: '管理者設定', region: '管理者設定' },
+    { label: '個人設定', region: '個人設定' }
+  ] as const
+
+  for (const destination of destinations) {
+    await openMenu().click()
+    const panel = page.getByRole('navigation', { name: 'モバイル画面' })
+    const destinationButton = destination.label === '個人設定'
+      ? page.locator('.mobile-navigation-panel').getByRole('button', { name: destination.label })
+      : panel.getByRole('button', { name: destination.label })
+    await destinationButton.click()
+    await expect(page.getByRole('region', { name: destination.region, exact: true })).toBeVisible()
+    await expect(openMenu()).toBeFocused()
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true)
+  }
+
+  await page.setViewportSize({ width: 375, height: 720 })
+  await openMenu().click()
+  await expect(page.getByRole('navigation', { name: 'モバイル画面' })).toBeVisible()
+  await expect(page.locator('.mobile-navigation-panel').getByRole('button', { name: '個人設定' })).toBeVisible()
+})
+
+test('E2E-UI-NAV-001: standard user は権限外 destination を表示せず許可済み view へ到達する @smoke', async ({ page }) => {
+  await installCurrentUserPermissions(page, ['chat:create', 'chat:read:own'])
+  await page.setViewportSize({ width: 320, height: 720 })
+  await signIn(page)
+
+  await page.getByRole('button', { name: 'メニューを開く' }).click()
+  const panel = page.getByRole('navigation', { name: 'モバイル画面' })
+  await expect(panel.getByRole('button', { name: 'チャット' })).toBeVisible()
+  await expect(panel.getByRole('button', { name: '履歴' })).toBeVisible()
+  await expect(panel.getByRole('button', { name: 'お気に入り' })).toBeVisible()
+  await expect(page.locator('.mobile-navigation-panel').getByRole('button', { name: '個人設定' })).toBeVisible()
+  await expect(panel.getByRole('button', { name: '担当者対応' })).toHaveCount(0)
+  await expect(panel.getByRole('button', { name: '性能テスト' })).toHaveCount(0)
+  await expect(panel.getByRole('button', { name: 'ドキュメント' })).toHaveCount(0)
+  await expect(panel.getByRole('button', { name: '管理者設定' })).toHaveCount(0)
+
+  await page.keyboard.press('Escape')
+  const destinations = [
+    { label: '履歴', region: '履歴' },
+    { label: 'お気に入り', region: 'お気に入り' },
+    { label: '個人設定', region: '個人設定' }
+  ] as const
+
+  for (const destination of destinations) {
+    await page.getByRole('button', { name: 'メニューを開く' }).click()
+    const menuPanel = page.locator('.mobile-navigation-panel')
+    await menuPanel.getByRole('button', { name: destination.label }).click()
+    await expect(page.getByRole('region', { name: destination.region, exact: true })).toBeVisible()
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true)
+  }
+})
+
+test('E2E-UI-ROUTE-001: view navigation は back・forward・reload で復元する @smoke', async ({ page }) => {
+  await signIn(page)
+
+  await page.getByTitle('履歴').click()
+  await expect(page).toHaveURL(/\?view=history$/)
+  await expect(page.getByRole('region', { name: '履歴', exact: true })).toBeVisible()
+
+  await page.getByTitle('お気に入り').click()
+  await expect(page).toHaveURL(/\?view=favorites$/)
+  await expect(page.getByRole('region', { name: 'お気に入り', exact: true })).toBeVisible()
+
+  await page.goBack()
+  await expect(page).toHaveURL(/\?view=history$/)
+  await expect(page.getByRole('region', { name: '履歴', exact: true })).toBeVisible()
+
+  await page.goForward()
+  await expect(page).toHaveURL(/\?view=favorites$/)
+  await page.reload()
+  await expect(page.getByRole('region', { name: 'お気に入り', exact: true })).toBeVisible()
+
+  await page.goto('/documents?query=policy&sort=fileNameAsc')
+  await expect(page.getByRole('region', { name: 'ドキュメント管理', exact: true })).toBeVisible()
+  await page.reload()
+  await expect(page).toHaveURL(/\/documents\?query=policy&sort=fileNameAsc$/)
+  await expect(page.getByRole('region', { name: 'ドキュメント管理', exact: true })).toBeVisible()
+})
+
+test('E2E-UI-ROUTE-002: denied・invalid deep link は protected fetch なしで正規化する @smoke', async ({ page }) => {
+  await installCurrentUserPermissions(page, ['chat:create', 'chat:read:own'])
+  const protectedRequests: string[] = []
+  page.on('request', (request) => {
+    const pathname = new URL(request.url()).pathname
+    if (pathname.startsWith('/admin/')) protectedRequests.push(pathname)
+  })
+  await signIn(page)
+
+  await page.goto('/?view=admin')
+  await expect(page.getByRole('alert')).toContainText('表示する権限を確認できなかった')
+  await expect(page.getByRole('region', { name: 'チャット', exact: true })).toBeVisible()
+  await expect(page).toHaveURL(/\/$/)
+  expect(protectedRequests).toEqual([])
+
+  await page.goto('/?view=obsolete')
+  await expect(page.getByRole('status')).toContainText('URLの画面指定を確認できなかった')
+  await expect(page.getByRole('region', { name: 'チャット', exact: true })).toBeVisible()
+  await expect(page).toHaveURL(/\/$/)
+
+  await page.goto('/?view=history&unknown=value')
+  await expect(page.getByRole('status')).toContainText('URLの画面指定を確認できなかった')
+  await expect(page.getByRole('region', { name: '履歴', exact: true })).toBeVisible()
+  await expect(page).toHaveURL(/\?view=history$/)
 })
 
 test('性能テストの実行ボタンがサマリーに重ならずクリックできる @smoke', async ({ page }) => {

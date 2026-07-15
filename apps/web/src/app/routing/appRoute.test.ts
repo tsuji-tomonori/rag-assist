@@ -1,0 +1,108 @@
+import { describe, expect, it } from "vitest"
+import {
+  buildAppViewUrl,
+  canAccessAppView,
+  decodeRouteSegment,
+  isSupportedDocumentPath,
+  normalizeAppRouteUrl,
+  parseAppRoute
+} from "./appRoute.js"
+
+describe("appRoute", () => {
+  it("parses canonical view routes and supported document deep links", () => {
+    expect(parseAppRoute({ pathname: "/", search: "" })).toEqual({
+      view: "chat",
+      needsNormalization: false
+    })
+    expect(parseAppRoute({ pathname: "/", search: "?view=history" })).toEqual({
+      view: "history",
+      needsNormalization: false
+    })
+    expect(parseAppRoute({ pathname: "/documents/groups/group-1", search: "?query=policy" })).toEqual({
+      view: "documents",
+      needsNormalization: false
+    })
+  })
+
+  it("classifies invalid, obsolete, conflicting, and legacy routes for safe normalization", () => {
+    expect(parseAppRoute({ pathname: "/", search: "?view=obsolete" })).toEqual({
+      view: "chat",
+      issue: "invalid-view",
+      needsNormalization: true
+    })
+    expect(parseAppRoute({ pathname: "/obsolete", search: "" })).toEqual({
+      view: "chat",
+      issue: "invalid-path",
+      needsNormalization: true
+    })
+    expect(parseAppRoute({ pathname: "/documents/doc-1", search: "?view=admin" })).toEqual({
+      view: "documents",
+      issue: "conflicting-view",
+      needsNormalization: true
+    })
+    expect(parseAppRoute({ pathname: "/", search: "?view=documents&query=policy" })).toEqual({
+      view: "documents",
+      needsNormalization: true
+    })
+    expect(parseAppRoute({ pathname: "/", search: "?view=history&unknown=value" })).toEqual({
+      view: "history",
+      issue: "invalid-query",
+      needsNormalization: true
+    })
+    expect(parseAppRoute({ pathname: "/", search: "?view=history&view=admin" })).toEqual({
+      view: "history",
+      issue: "invalid-query",
+      needsNormalization: true
+    })
+  })
+
+  it("builds canonical URLs without retaining document workspace state across views", () => {
+    expect(buildAppViewUrl("https://app.example/documents/doc-1?query=policy&view=documents", "history"))
+      .toBe("/?view=history")
+    expect(buildAppViewUrl("https://app.example/?view=history", "documents"))
+      .toBe("/documents")
+    expect(buildAppViewUrl("https://app.example/?view=profile", "chat"))
+      .toBe("/")
+    expect(buildAppViewUrl("https://app.example/?view=history&unknown=value#stale", "favorites"))
+      .toBe("/?view=favorites")
+  })
+
+  it("normalizes legacy document routes while preserving approved restorable state", () => {
+    const parsed = parseAppRoute({ pathname: "/", search: "?view=documents&query=policy&sort=updatedDesc" })
+    expect(normalizeAppRouteUrl("https://app.example/?view=documents&query=policy&sort=updatedDesc", parsed))
+      .toBe("/documents?query=policy&sort=updatedDesc")
+
+    const invalidQuery = parseAppRoute({
+      pathname: "/documents/doc-1",
+      search: "?query=policy&sort=unknown&extra=value"
+    })
+    expect(invalidQuery.issue).toBe("invalid-query")
+    expect(normalizeAppRouteUrl(
+      "https://app.example/documents/doc-1?query=policy&sort=unknown&extra=value#stale",
+      invalidQuery
+    )).toBe("/documents/doc-1?query=policy")
+  })
+
+  it("rejects malformed or path-escaping document identifiers", () => {
+    expect(isSupportedDocumentPath("/documents/groups/group-1")).toBe(true)
+    expect(isSupportedDocumentPath("/documents/groups")).toBe(false)
+    expect(isSupportedDocumentPath("/documents/groups/group-1/child")).toBe(false)
+    expect(isSupportedDocumentPath("/documents/%2Fadmin")).toBe(false)
+    expect(decodeRouteSegment("%E0%A4%A")).toBeUndefined()
+  })
+
+  it("resolves protected views from exact UI guards without broadening authorization", () => {
+    const noPrivilegedAccess = {
+      canAnswerQuestions: false,
+      canReadBenchmarkRuns: false,
+      canReadDocuments: false,
+      canSeeAdminSettings: false
+    }
+    expect(canAccessAppView("chat", noPrivilegedAccess)).toBe(true)
+    expect(canAccessAppView("profile", noPrivilegedAccess)).toBe(true)
+    expect(canAccessAppView("assignee", noPrivilegedAccess)).toBe(false)
+    expect(canAccessAppView("benchmark", noPrivilegedAccess)).toBe(false)
+    expect(canAccessAppView("documents", noPrivilegedAccess)).toBe(false)
+    expect(canAccessAppView("admin", noPrivilegedAccess)).toBe(false)
+  })
+})

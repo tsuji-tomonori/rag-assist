@@ -11,6 +11,7 @@ import type { AppView } from "./types.js"
 
 export type AppRoutesProps = {
   activeView: AppView
+  permissionsResolved: boolean
   canAnswerQuestions: boolean
   canReadBenchmarkRuns: boolean
   canReadDocuments: boolean
@@ -27,6 +28,7 @@ export type AppRoutesProps = {
 
 export function AppRoutes({
   activeView,
+  permissionsResolved,
   canAnswerQuestions,
   canReadBenchmarkRuns,
   canReadDocuments,
@@ -40,6 +42,7 @@ export function AppRoutes({
   favoritesProps,
   profileProps
 }: AppRoutesProps) {
+  if (!permissionsResolved) return null
   if (activeView === "chat") return <ChatView {...chatProps} />
   if (activeView === "assignee" && canAnswerQuestions) return <AssigneeWorkspace {...assigneeProps} />
   if (activeView === "benchmark" && canReadBenchmarkRuns) return <BenchmarkWorkspace {...benchmarkProps} />
@@ -47,5 +50,6 @@ export function AppRoutes({
   if (activeView === "admin" && canSeeAdminSettings) return <AdminWorkspace {...adminProps} />
   if (activeView === "profile") return <PersonalSettingsView {...profileProps} />
   if (activeView === "favorites") return <FavoritesWorkspace {...favoritesProps} />
-  return <HistoryWorkspace {...historyProps} />
+  if (activeView === "history") return <HistoryWorkspace {...historyProps} />
+  return null
 }

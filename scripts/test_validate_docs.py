@@ -117,11 +117,30 @@ class ValidateDocsTest(unittest.TestCase):
             )
         )
 
-    def test_rejects_missing_baseline_todo(self) -> None:
+    def test_accepts_baseline_task_in_progress(self) -> None:
+        task = self.repo / "tasks" / "todo" / "20260713-0000-example.md"
+        (self.repo / "tasks" / "do").mkdir()
+        task.rename(self.repo / "tasks" / "do" / task.name)
+
+        self.assertEqual(validate_docs.validate_repository(self.repo), [])
+
+    def test_rejects_missing_baseline_task(self) -> None:
         (self.repo / "tasks" / "todo" / "20260713-0000-example.md").unlink()
         self.assertTrue(
             any(
-                "todo が存在しません" in error
+                "task が存在しません" in error
+                for error in validate_docs.validate_repository(self.repo)
+            )
+        )
+
+    def test_rejects_baseline_task_in_multiple_states(self) -> None:
+        duplicate = self.repo / "tasks" / "do" / "20260713-0000-example.md"
+        duplicate.parent.mkdir()
+        duplicate.write_text("# duplicate\n", encoding="utf-8")
+
+        self.assertTrue(
+            any(
+                "task が複数状態に存在します" in error
                 for error in validate_docs.validate_repository(self.repo)
             )
         )

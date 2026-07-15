@@ -498,6 +498,7 @@ async function renderAuthenticatedApp() {
   await userEvent.type(screen.getByPlaceholderText("メールアドレスを入力"), "tester@example.com")
   await userEvent.type(screen.getByPlaceholderText("パスワードを入力"), "Password123!")
   await userEvent.click(screen.getByRole("button", { name: "サインイン" }))
+  await screen.findByRole("region", { name: "チャット" })
 }
 
 function findRequest(fetchMock: ReturnType<typeof vi.fn>, suffix: string, method = "GET") {
