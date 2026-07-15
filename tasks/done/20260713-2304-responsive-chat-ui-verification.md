@@ -1,6 +1,6 @@
 # チャット UI responsive・状態表示の完成
 
-- 状態: do
+- 状態: done
 - タスク種別: Web 品質実装
 - 作成日: 2026-07-13
 - 関連要件: `FR-042`, `FR-043`, `SQ-004`
@@ -34,7 +34,7 @@
 - [x] full Chromium E2E の chat / mobile / axe / visual / risky-operation を修復する。
 - [x] Web lint / typecheck、full E2E、docs freshness を検証する。
 - [x] 未実施の manual evidence を別 task の blocker として維持する。
-- [ ] 日本語 commit、既存 stacked draft PR 更新、受け入れ条件コメント、セルフレビュー、作業レポート、task lifecycle push を完了する。
+- [x] 日本語 commit、既存 stacked draft PR 更新、受け入れ条件コメント、セルフレビュー、作業レポート、task lifecycle push を完了する。
 
 ## ドキュメントメンテナンス計画
 

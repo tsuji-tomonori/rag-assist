@@ -31,7 +31,7 @@ Issue #345 の全体完了へ向け、最新 stacked head で automated UI / a11
 - `apps/web/e2e/chat-document-flow.spec.ts`
 - `apps/web/e2e/visual-regression.spec.ts`
 - debug / admin Chromium snapshot 2枚
-- task: `tasks/do/20260713-2304-responsive-chat-ui-verification.md`
+- task: `tasks/done/20260713-2304-responsive-chat-ui-verification.md`
 
 ## 検証結果
 
