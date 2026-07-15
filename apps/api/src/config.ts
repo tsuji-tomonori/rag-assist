@@ -37,6 +37,14 @@ function csvEnv(name: string, defaultValue: readonly string[] = []): readonly st
   return raw.split(",").map((value) => value.trim()).filter(Boolean)
 }
 
+function enumEnv<const T extends string>(name: string, values: readonly T[], defaultValue: T): T {
+  const raw = process.env[name]
+  if (raw === undefined) return defaultValue
+  if ((values as readonly string[]).includes(raw)) return raw as T
+  if (isProduction) throw new Error(`${name} must be one of: ${values.join(", ")}`)
+  return defaultValue
+}
+
 function requireProductionValue(name: string, value: string): void {
   if (isProduction && value.trim().length === 0) throw new Error(`${name} is required in production`)
 }
@@ -92,6 +100,7 @@ export const config = {
   useLocalChatRunStore: boolEnv("USE_LOCAL_CHAT_RUN_STORE", process.env.NODE_ENV !== "production"),
   useLocalDocumentIngestRunStore: boolEnv("USE_LOCAL_DOCUMENT_INGEST_RUN_STORE", process.env.NODE_ENV !== "production"),
   useLocalDocumentGroupStore: boolEnv("USE_LOCAL_DOCUMENT_GROUP_STORE", process.env.NODE_ENV !== "production"),
+  useLocalUsageEventStore: boolEnv("USE_LOCAL_USAGE_EVENT_STORE", process.env.NODE_ENV !== "production"),
   localDataDir: process.env.LOCAL_DATA_DIR ?? ".local-data",
   docsBucketName,
   questionTableName: process.env.QUESTION_TABLE_NAME ?? "memorag-human-questions",
@@ -103,6 +112,9 @@ export const config = {
   activeRunAuthorizationIndexTableName: process.env.ACTIVE_RUN_AUTHORIZATION_INDEX_TABLE_NAME ?? "memorag-active-run-authorization-index",
   chatRunsTableName: process.env.CHAT_RUNS_TABLE_NAME ?? "memorag-chat-runs",
   chatRunEventsTableName: process.env.CHAT_RUN_EVENTS_TABLE_NAME ?? "memorag-chat-run-events",
+  usageEventsTableName: process.env.USAGE_EVENTS_TABLE_NAME ?? "memorag-usage-events",
+  usageAccountingMode: enumEnv("USAGE_ACCOUNTING_MODE", ["disabled", "shadow", "active"] as const, isProduction ? "shadow" : "active"),
+  usagePricingCatalogJson: process.env.USAGE_PRICING_CATALOG_JSON,
   chatRunStateMachineArn: process.env.CHAT_RUN_STATE_MACHINE_ARN ?? "",
   documentIngestRunsTableName: process.env.DOCUMENT_INGEST_RUNS_TABLE_NAME ?? "memorag-document-ingest-runs",
   documentIngestRunEventsTableName: process.env.DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME ?? "memorag-document-ingest-run-events",

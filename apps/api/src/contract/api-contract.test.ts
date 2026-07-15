@@ -439,13 +439,15 @@ test("HTTP contract validates major endpoint responses against /openapi.json", a
     validateSchema(adminAuditLog.body, responseSchema(openapi, "/admin/audit-log", "get", 200), openapi)
 
     const usage = await getJson(`http://127.0.0.1:${port}/admin/usage`)
-    assert.equal(Array.isArray(usage.body.users), true)
+    assert.equal(Array.isArray(usage.body.events), true)
+    assert.equal(usage.body.source, "usage_event_store")
     validateSchema(usage.body, responseSchema(openapi, "/admin/usage", "get", 200), openapi)
 
     const costs = await getJson(`http://127.0.0.1:${port}/admin/costs`)
-    assert.equal(costs.body.available, false)
-    assert.equal(costs.body.currency, undefined)
-    assert.equal(costs.body.unavailableReason, "versioned_price_catalog_and_complete_usage_evidence_unavailable")
+    assert.equal(costs.body.currency, "USD")
+    assert.equal(costs.body.pricedCostUsd, 0)
+    assert.equal(costs.body.completeness.state, "partial")
+    assert.ok(costs.body.completeness.unpricedQuantityCount > 0)
     validateSchema(costs.body, responseSchema(openapi, "/admin/costs", "get", 200), openapi)
   } finally {
     server.kill("SIGTERM")
@@ -1832,7 +1834,17 @@ test("Phase 2 admin endpoints enforce user, access, usage, and cost permissions"
       body: JSON.stringify({ expectedVersion: "permission-probe-version", reason: "permission boundary probe" })
     })).status, 403)
     assert.equal((await fetch(`http://127.0.0.1:${port}/admin/usage`)).status, 403)
+    assert.equal((await fetch(`http://127.0.0.1:${port}/admin/usage/export`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ query: {}, reason: "Permission boundary probe" })
+    })).status, 403)
     assert.equal((await fetch(`http://127.0.0.1:${port}/admin/costs`)).status, 403)
+    assert.equal((await fetch(`http://127.0.0.1:${port}/admin/costs/export`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ query: {}, reason: "Permission boundary probe" })
+    })).status, 403)
     assert.equal((await fetch(`http://127.0.0.1:${port}/admin/users/local-dev/suspend`, { method: "POST" })).status, 403)
     assert.equal(
       (await fetch(`http://127.0.0.1:${port}/admin/users/local-dev/roles`, {

@@ -189,10 +189,11 @@ export const ROLE_PERMISSION_CATALOG = {
     "user:suspend",
     "user:unsuspend",
     "user:delete",
-    "usage:read:all_users"
+    "usage:read:all_users",
+    "usage:export"
   ],
   ACCESS_ADMIN: ["access:role:create", "access:role:update", "access:role:assign", "access:policy:read", "access:audit:export"],
-  COST_AUDITOR: ["cost:read:all"],
+  COST_AUDITOR: ["cost:read:all", "cost:export"],
   SYSTEM_ADMIN: [
     "chat:create",
     "chat:read:own",
@@ -259,8 +260,10 @@ export const ROLE_PERMISSION_CATALOG = {
     "agent_preset:delete:self",
     "usage:read:own",
     "usage:read:all_users",
+    "usage:export",
     "cost:read:own",
     "cost:read:all",
+    "cost:export",
     "user:create",
     "user:read",
     "user:suspend",

@@ -99,6 +99,10 @@ import {
 import { ObjectStoreResourceGroupMembershipCleanupRepairStore } from "../security/resource-group-membership-cleanup-repair-store.js"
 import { tenantPartitionId, tenantStorageKey } from "../security/tenant-partition.js"
 import { securityResourceReference } from "../security/security-resource-reference.js"
+import type { UsageBreakdown, UsageEvent, UsageListQuery, UsageSummaryPage } from "../types.js"
+import { normalizeUsageQuery, type UsageEventPage } from "../adapters/usage-event-store.js"
+import { priceUsageEvents, usageCompleteness } from "./_shared/usage/usage-pricing-catalog.js"
+import { UsageTrackingTextModel } from "./_shared/usage/usage-tracking-text-model.js"
 import {
   enforceResolvedResourceOperation,
   resolvedResourceScope,
@@ -254,6 +258,70 @@ type AdminAuditExportInput = {
   reason: string
 }
 
+type AdminUsageExportInput = {
+  query: Omit<Partial<UsageListQuery>, "cursor" | "limit">
+  reason: string
+}
+
+function defaultedUsageQuery(query: Partial<UsageListQuery>): UsageListQuery {
+  const periodEnd = query.periodEnd ? new Date(query.periodEnd) : new Date()
+  const periodStart = query.periodStart
+    ? new Date(query.periodStart)
+    : new Date(Date.UTC(periodEnd.getUTCFullYear(), periodEnd.getUTCMonth(), 1))
+  return normalizeUsageQuery({ ...query, periodStart: periodStart.toISOString(), periodEnd: periodEnd.toISOString() })
+}
+
+function withoutCursor(query: UsageListQuery): Omit<UsageListQuery, "cursor"> {
+  const { cursor: _cursor, ...normalized } = query
+  return normalized
+}
+
+function usageSummaryFromPage(query: UsageListQuery, page: UsageEventPage, rolloutMode: UsageSummaryPage["rolloutMode"]): UsageSummaryPage {
+  return {
+    query: withoutCursor(query),
+    events: page.events,
+    nextCursor: page.nextCursor,
+    truncated: page.truncated,
+    asOf: page.asOf,
+    source: "usage_event_store",
+    rolloutMode,
+    completeness: usageCompleteness(page.events),
+    breakdowns: {
+      bySubject: usageBreakdown(page.events, (event) => event.subjectId),
+      byFeature: usageBreakdown(page.events, (event) => event.feature),
+      byProvider: usageBreakdown(page.events, (event) => event.provider),
+      byModel: usageBreakdown(page.events, (event) => event.modelId)
+    }
+  }
+}
+
+function usageBreakdown(events: UsageEvent[], keyFor: (event: UsageEvent) => string | undefined): UsageBreakdown[] {
+  const groups = new Map<string, { events: Set<string>; actual: number; estimated: number; missing: number }>()
+  for (const event of events) {
+    const key = keyFor(event) ?? "unknown"
+    const group = groups.get(key) ?? { events: new Set<string>(), actual: 0, estimated: 0, missing: 0 }
+    group.events.add(event.eventId)
+    for (const quantity of event.quantities) {
+      if (quantity.source === "provider") group.actual += quantity.value ?? 0
+      else if (quantity.source === "tokenizer_estimate") group.estimated += quantity.value ?? 0
+      else group.missing += 1
+    }
+    groups.set(key, group)
+  }
+  return [...groups.entries()].map(([key, group]) => ({
+    key,
+    label: key === "unknown" ? "unknown" : key,
+    actualQuantity: group.actual,
+    estimatedQuantity: group.estimated,
+    missingQuantityCount: group.missing,
+    eventCount: group.events.size
+  })).sort((a, b) => b.eventCount - a.eventCount || a.key.localeCompare(b.key))
+}
+
+function roundUsageCost(value: number): number {
+  return Number(value.toFixed(12))
+}
+
 type AliasMutationEvidence = {
   expectedVersion: string
   reason: string
@@ -391,7 +459,24 @@ export class MemoRagService {
   }
 
   async ingest(input: IngestInput): Promise<DocumentManifest> {
-    return runIngestPipeline(this.deps, input, (memoryInput) => this.createMemoryCards(memoryInput))
+    const admissionContext = input.admissionContext ?? this.deps.localTestIngestAdmissionContext
+    const tenantId = admissionContext?.tenantId?.trim()
+    const subjectId = admissionContext?.ownerUserId?.trim()
+    const runId = input.publicationFence?.artifactId
+      ?? input.artifactIdOverride
+      ?? `ingest:${randomUUID()}`
+    const deps = tenantId && this.deps.usageEventStore && this.usageRolloutMode() !== "disabled"
+      ? {
+          ...this.deps,
+          textModel: new UsageTrackingTextModel(this.deps.textModel, this.deps.usageEventStore, {
+            tenantId,
+            subjectId: subjectId || undefined,
+            runId,
+            feature: "ingest"
+          })
+        }
+      : this.deps
+    return runIngestPipeline(deps, input, (memoryInput) => this.createMemoryCards(memoryInput, deps.textModel))
   }
 
   createCurrentDocumentIngestAuthorization(input: {
@@ -2077,51 +2162,32 @@ export class MemoRagService {
     return this.updateManagedUserStatus(actor, userId, "deleted", input)
   }
 
-  async listUsageSummaries(actor: AppUser): Promise<UserUsageSummary[]> {
-    const db = await this.loadAdminLedger(actor, { syncUserDirectory: true })
+  async listUsageSummaries(actor: AppUser, query: Partial<UsageListQuery> = {}): Promise<UsageSummaryPage> {
     const tenantId = authoritativeActorTenantId(actor)
-    const manifestKeys = await this.deps.objectStore.listKeys(tenantManifestPrefix(this.deps, tenantId))
-    const manifests = (await Promise.all(manifestKeys
-      .filter((key) => key.endsWith(".json"))
-      .map((key) => readTenantManifestByKey(this.deps, tenantId, key).catch(() => undefined))))
-      .filter((manifest): manifest is DocumentManifest => Boolean(manifest))
-    const benchmarkRuns = await this.deps.benchmarkRunStore.list(tenantId)
-
-    return db.users
-      .filter((user) => user.status !== "deleted")
-      .map((user) => {
-        const userDocuments = manifests.filter((manifest) => (
-          manifest.admission?.ownerUserId === user.userId
-          || stringValue(manifest.metadata?.ownerUserId) === user.userId
-        ))
-        const userBenchmarkRuns = benchmarkRuns.filter((run) => run.createdBy === user.userId)
-        const lastActivityAt = [
-          ...userDocuments.map((manifest) => manifest.updatedAt ?? manifest.createdAt),
-          ...userBenchmarkRuns.map((run) => run.updatedAt)
-        ].filter(Boolean).sort().at(-1)
-        return {
-          userId: user.userId,
-          email: user.email,
-          displayName: user.displayName,
-          documentCount: userDocuments.length,
-          benchmarkRunCount: userBenchmarkRuns.length,
-          availableMetrics: ["documentCount", "benchmarkRunCount"] as UserUsageSummary["availableMetrics"],
-          unavailableMetrics: ["chatMessages", "conversationCount", "questionCount", "debugRunCount"] as UserUsageSummary["unavailableMetrics"],
-          lastActivityAt
-        }
-      })
-      .sort((a, b) => (b.lastActivityAt ?? "").localeCompare(a.lastActivityAt ?? ""))
+    const normalized = defaultedUsageQuery(query)
+    const rolloutMode = this.usageRolloutMode()
+    const page = rolloutMode === "active" && this.deps.usageEventStore
+      ? await this.deps.usageEventStore.query(tenantId, normalized)
+      : { events: [], truncated: false, asOf: new Date().toISOString() }
+    return usageSummaryFromPage(normalized, page, rolloutMode)
   }
 
-  async getCostAuditSummary(actor: AppUser): Promise<CostAuditSummary> {
-    await this.loadAdminLedger(actor, { syncUserDirectory: false })
-    const now = new Date()
-    const periodStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString()
+  async getCostAuditSummary(actor: AppUser, query: Partial<UsageListQuery> = {}): Promise<CostAuditSummary> {
+    const normalized = defaultedUsageQuery(query)
+    const page = await this.listUsageSummaries(actor, normalized)
+    const priced = priceUsageEvents(page.events, this.deps.usagePricingCatalog ?? [])
     return {
-      available: false,
-      unavailableReason: "versioned_price_catalog_and_complete_usage_evidence_unavailable",
-      periodStart,
-      periodEnd: now.toISOString()
+      query: page.query,
+      currency: "USD",
+      pricedCostUsd: roundUsageCost(priced.items.reduce((total, item) => total + (item.costUsd ?? 0), 0)),
+      items: priced.items,
+      nextCursor: page.nextCursor,
+      truncated: page.truncated,
+      asOf: page.asOf,
+      source: "usage_event_store+versioned_price_catalog",
+      rolloutMode: page.rolloutMode,
+      catalogVersions: priced.catalogVersions,
+      completeness: usageCompleteness(page.events, priced.unpricedQuantityCount)
     }
   }
 
@@ -2139,12 +2205,14 @@ export class MemoRagService {
   async createAdminExportDownloadUrl(
     actor: AppUser,
     exportType: AdminExportArtifact["exportType"],
-    auditInput?: AdminAuditExportInput
+    exportInput?: AdminAuditExportInput | AdminUsageExportInput
   ): Promise<AdminExportArtifact> {
-    if (!config.debugDownloadBucketName && exportType !== "audit_log") throw new Error("DEBUG_DOWNLOAD_BUCKET_NAME is not configured")
     const tenantId = authoritativeActorTenantId(actor)
-    if (exportType === "audit_log" && (!auditInput || !auditInput.reason || auditInput.reason.trim() !== auditInput.reason)) {
-      throw new Error("Audit export reason is required and must be canonical")
+    if (!exportInput || !exportInput.reason || exportInput.reason.trim() !== exportInput.reason) {
+      throw new Error("Admin export reason is required and must be canonical")
+    }
+    if (exportType !== "audit_log" && this.usageRolloutMode() !== "active") {
+      throw new Error("Usage accounting read path is not active")
     }
     const generatedAt = new Date().toISOString()
     const redaction = {
@@ -2153,36 +2221,49 @@ export class MemoRagService {
       notes: ["管理 export は署名付き URL と sanitize 済み集計・監査メタデータだけを返します。"]
     }
     const outbox = this.deps.securityAuditOutbox ?? new ObjectStoreSecurityMutationAuditOutbox(this.deps.objectStore)
-    const exportIntent = exportType === "audit_log"
-      ? await outbox.prepare({
-          actorId: actor.userId,
-          tenantId,
-          targetType: "adminAuditExport",
-          targetId: stableHash(JSON.stringify(auditInput!.query)),
-          operation: "audit.export",
-          before: null,
-          proposedAfter: { query: auditInput!.query, redactionPolicyVersion: redaction.policyVersion },
-          reason: auditInput!.reason,
-          policyVersion: "admin-audit-export-v1"
-        })
-      : undefined
+    const operation = exportType === "audit_log" ? "audit.export" : exportType === "usage_summary" ? "usage.export" : "cost.export"
+    const exportIntent = await outbox.prepare({
+      actorId: actor.userId,
+      tenantId,
+      targetType: exportType,
+      targetId: stableHash(JSON.stringify(exportInput.query)),
+      operation,
+      before: null,
+      proposedAfter: { query: exportInput.query, redactionPolicyVersion: redaction.policyVersion },
+      reason: exportInput.reason,
+      policyVersion: exportType === "audit_log"
+        ? "admin-audit-export-v1"
+        : exportType === "usage_summary"
+          ? "admin-usage-export-v1"
+          : "admin-cost-export-v1"
+    })
     let body: JsonValue
     try {
       if (!config.debugDownloadBucketName) throw new Error("DEBUG_DOWNLOAD_BUCKET_NAME is not configured")
-      body = exportType === "audit_log"
-        ? {
+      if (exportType === "audit_log") {
+        const input = exportInput as AdminAuditExportInput
+        body = { exportType, generatedAt, redaction, query: input.query, auditLog: await this.listAllAdminAuditEntries(actor, input.query) }
+      } else {
+        const input = exportInput as AdminUsageExportInput
+        const events = await this.listAllUsageEvents(actor, input.query)
+        const normalized = defaultedUsageQuery({ ...input.query, limit: 200 })
+        if (exportType === "usage_summary") {
+          body = { exportType, generatedAt, redaction, usageSummary: usageSummaryFromPage(normalized, { events, truncated: false, asOf: generatedAt }, "active") }
+        } else {
+          const priced = priceUsageEvents(events, this.deps.usagePricingCatalog ?? [])
+          body = {
             exportType,
             generatedAt,
             redaction,
-            query: auditInput!.query,
-            auditLog: await this.listAllAdminAuditEntries(actor, auditInput!.query)
+            costSummary: {
+              query: withoutCursor(normalized), currency: "USD", pricedCostUsd: roundUsageCost(priced.items.reduce((total, item) => total + (item.costUsd ?? 0), 0)),
+              items: priced.items, truncated: false, asOf: generatedAt, source: "usage_event_store+versioned_price_catalog",
+              rolloutMode: "active",
+              catalogVersions: priced.catalogVersions, completeness: usageCompleteness(events, priced.unpricedQuantityCount)
+            }
           }
-        : {
-            exportType,
-            generatedAt,
-            redaction,
-            costSummary: await this.getCostAuditSummary(actor)
-          }
+        }
+      }
     } catch (error) {
       if (exportIntent) await outbox.complete(exportIntent.intentId, tenantId, "failed", { generated: false })
       throw error
@@ -2233,6 +2314,20 @@ export class MemoRagService {
       cursor = page.nextCursor
     } while (cursor)
     return entries
+  }
+
+  private async listAllUsageEvents(actor: AppUser, query: Omit<Partial<UsageListQuery>, "cursor" | "limit">): Promise<UsageEvent[]> {
+    const events: UsageEvent[] = []
+    let cursor: string | undefined
+    const seen = new Set<string>()
+    do {
+      if (cursor && seen.has(cursor)) throw new Error("Usage cursor did not advance")
+      if (cursor) seen.add(cursor)
+      const page = await this.listUsageSummaries(actor, { ...query, cursor, limit: 200 })
+      events.push(...page.events)
+      cursor = page.nextCursor
+    } while (cursor)
+    return events
   }
 
   async listDebugRuns(actor?: AppUser): Promise<DebugTrace[]> {
@@ -2320,7 +2415,7 @@ export class MemoRagService {
     let persistedTrace: DebugTrace | undefined
     try {
       const result = await runChatOrchestration(
-        this.deps,
+        this.usageTrackedDependencies(currentActor, operationId, "chat"),
         input,
         currentActor,
         authorize ? {
@@ -2434,7 +2529,7 @@ export class MemoRagService {
       })
       const currentUser = await this.authorizeChatRunBoundary(run, "protected_read")
       const result = await runChatOrchestration(
-        this.deps,
+        this.usageTrackedDependencies(currentUser, runId, "chat"),
         {
           question: run.question,
           conversationHistory: run.conversationHistory,
@@ -5036,8 +5131,8 @@ export class MemoRagService {
     return { url, expiresInSeconds, objectKey: downloadMetadata.objectKey }
   }
 
-  private async createMemoryCards(input: { fileName: string; text: string; chunks: Chunk[]; documentStatistics?: DocumentManifest["documentStatistics"]; modelId?: string }): Promise<MemoryCard[]> {
-    const raw = await this.deps.textModel.generate(
+  private async createMemoryCards(input: { fileName: string; text: string; chunks: Chunk[]; documentStatistics?: DocumentManifest["documentStatistics"]; modelId?: string }, textModel = this.deps.textModel): Promise<MemoryCard[]> {
+    const raw = await textModel.generate(
       buildMemoryCardPrompt(input.fileName, input.text),
       llmOptions("memoryCard", input.modelId ?? config.defaultMemoryModelId)
     )
@@ -5063,6 +5158,23 @@ export class MemoRagService {
     const sectionCards = createSectionMemoryCards(input.chunks, input.documentStatistics)
     const conceptCards = createConceptMemoryCards(input.chunks, card.keywords, input.documentStatistics)
     return [{ ...card, text }, ...sectionCards, ...conceptCards]
+  }
+
+  private usageTrackedDependencies(actor: AppUser | undefined, runId: string, feature: string): Dependencies {
+    if (!actor?.tenantId || !this.deps.usageEventStore || this.usageRolloutMode() === "disabled") return this.deps
+    return {
+      ...this.deps,
+      textModel: new UsageTrackingTextModel(this.deps.textModel, this.deps.usageEventStore, {
+        tenantId: authoritativeActorTenantId(actor),
+        subjectId: actor.userId,
+        runId,
+        feature
+      })
+    }
+  }
+
+  private usageRolloutMode(): "disabled" | "shadow" | "active" {
+    return this.deps.usageAccountingMode ?? "active"
   }
 }
 

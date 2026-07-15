@@ -65,6 +65,7 @@ const operationMatrixSubset = new Map<string, { operationKey: string; resourceCo
   ["POST /documents/reindex-migrations/{migrationId}/cutover", { operationKey: "document.reindex.cutover", resourceCondition: "documentGroupFull" }],
   ["POST /documents/reindex-migrations/{migrationId}/rollback", { operationKey: "document.reindex.rollback", resourceCondition: "documentGroupFull" }],
   ["POST /admin/audit-log/export", { operationKey: "audit.export", resourceCondition: "none" }],
+  ["POST /admin/usage/export", { operationKey: "usage.export", resourceCondition: "none" }],
   ["GET /admin/aliases", { operationKey: "alias.read", resourceCondition: "tenantCollection" }],
   ["POST /admin/aliases", { operationKey: "alias.create", resourceCondition: "tenantCollection" }],
   ["POST /admin/aliases/{aliasId}/update", { operationKey: "alias.update", resourceCondition: "tenantCollection" }],

@@ -6,8 +6,10 @@ import {
 import { config } from "../config.js"
 import type { EmbedOptions, GenerateOptions, TextModel } from "./text-model.js"
 
+type BedrockRuntimeClientLike = Pick<BedrockRuntimeClient, "send">
+
 export class BedrockTextModel implements TextModel {
-  private readonly client = new BedrockRuntimeClient({ region: config.region })
+  constructor(private readonly client: BedrockRuntimeClientLike = new BedrockRuntimeClient({ region: config.region })) {}
 
   async embed(text: string, options: EmbedOptions = {}): Promise<number[]> {
     const modelId = options.modelId ?? config.embeddingModelId
@@ -32,7 +34,9 @@ export class BedrockTextModel implements TextModel {
     const payload = JSON.parse(Buffer.from(response.body ?? new Uint8Array()).toString("utf-8")) as {
       embedding?: number[]
       embeddingsByType?: { float?: number[] }
+      inputTextTokenCount?: number
     }
+    options.onUsage?.({ inputTokens: payload.inputTextTokenCount, outputTokens: 0 })
 
     const vector = payload.embedding ?? payload.embeddingsByType?.float
     if (!vector?.length) {
@@ -59,6 +63,12 @@ export class BedrockTextModel implements TextModel {
         }
       })
     )
+    options.onUsage?.({
+      inputTokens: response.usage?.inputTokens,
+      outputTokens: response.usage?.outputTokens,
+      cacheReadTokens: response.usage?.cacheReadInputTokens,
+      cacheWriteTokens: response.usage?.cacheWriteInputTokens
+    })
 
     return (
       response.output?.message?.content

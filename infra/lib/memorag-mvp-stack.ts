@@ -215,6 +215,20 @@ export class MemoRagMvpStack extends Stack {
       removalPolicy: RemovalPolicy.DESTROY
     })
 
+    const usageEventsTable = new dynamodb.Table(this, "UsageEventsTable", {
+      partitionKey: { name: "tenantId", type: dynamodb.AttributeType.STRING },
+      sortKey: { name: "idempotencyKey", type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: true },
+      removalPolicy: RemovalPolicy.DESTROY
+    })
+    usageEventsTable.addGlobalSecondaryIndex({
+      indexName: "tenantId-periodKey-index",
+      partitionKey: { name: "tenantId", type: dynamodb.AttributeType.STRING },
+      sortKey: { name: "periodKey", type: dynamodb.AttributeType.STRING },
+      projectionType: dynamodb.ProjectionType.ALL
+    })
+
     const documentIngestRunsTable = new dynamodb.Table(this, "DocumentIngestRunsTable", {
       partitionKey: { name: "runId", type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
@@ -409,6 +423,8 @@ export class MemoRagMvpStack extends Stack {
       ACTIVE_RUN_AUTHORIZATION_INDEX_TABLE_NAME: activeRunAuthorizationIndexTable.tableName,
       CHAT_RUNS_TABLE_NAME: chatRunsTable.tableName,
       CHAT_RUN_EVENTS_TABLE_NAME: chatRunEventsTable.tableName,
+      USAGE_EVENTS_TABLE_NAME: usageEventsTable.tableName,
+      USAGE_ACCOUNTING_MODE: "shadow",
       DOCUMENT_INGEST_RUNS_TABLE_NAME: documentIngestRunsTable.tableName,
       DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME: documentIngestRunEventsTable.tableName,
       DOCUMENT_GROUPS_TABLE_NAME: documentGroupsTable.tableName,
@@ -417,6 +433,8 @@ export class MemoRagMvpStack extends Stack {
       BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS: "900",
       USE_LOCAL_BENCHMARK_RUN_STORE: "false",
       USE_LOCAL_CHAT_RUN_STORE: "false",
+      USE_LOCAL_USAGE_EVENT_STORE: "false",
+      USAGE_PRICING_CATALOG_JSON: "[]",
       VECTOR_BUCKET_NAME: vectorBucketName,
       MEMORY_VECTOR_INDEX_NAME: memoryVectorIndexName,
       EVIDENCE_VECTOR_INDEX_NAME: evidenceVectorIndexName,
@@ -698,6 +716,7 @@ export class MemoRagMvpStack extends Stack {
       benchmarkRunsTable.grantReadWriteData(fn)
       chatRunsTable.grantReadWriteData(fn)
       chatRunEventsTable.grantReadWriteData(fn)
+      usageEventsTable.grantReadWriteData(fn)
       documentIngestRunsTable.grantReadWriteData(fn)
       documentIngestRunEventsTable.grantReadWriteData(fn)
       documentGroupsTable.grantReadWriteData(fn)
@@ -776,6 +795,7 @@ export class MemoRagMvpStack extends Stack {
     activeRunAuthorizationIndexTable.grantReadWriteData(chatRunMarkFailedFn)
     chatRunsTable.grantReadData(chatRunEventsFn)
     chatRunEventsTable.grantReadWriteData(chatRunWorkerFn)
+    usageEventsTable.grantReadWriteData(chatRunWorkerFn)
     chatRunEventsTable.grantReadWriteData(chatRunMarkFailedFn)
     chatRunEventsTable.grantReadData(chatRunEventsFn)
     documentIngestRunsTable.grantReadWriteData(documentIngestRunWorkerFn)

@@ -1455,6 +1455,85 @@
       "UpdateReplacePolicy": "Delete",
       "DeletionPolicy": "Delete"
     },
+    "UsageEventsTable215FE3DD": {
+      "Type": "AWS::DynamoDB::Table",
+      "Properties": {
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "tenantId",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "idempotencyKey",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "periodKey",
+            "AttributeType": "S"
+          }
+        ],
+        "BillingMode": "PAY_PER_REQUEST",
+        "GlobalSecondaryIndexes": [
+          {
+            "IndexName": "tenantId-periodKey-index",
+            "KeySchema": [
+              {
+                "AttributeName": "tenantId",
+                "KeyType": "HASH"
+              },
+              {
+                "AttributeName": "periodKey",
+                "KeyType": "RANGE"
+              }
+            ],
+            "Projection": {
+              "ProjectionType": "ALL"
+            }
+          }
+        ],
+        "KeySchema": [
+          {
+            "AttributeName": "tenantId",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "idempotencyKey",
+            "KeyType": "RANGE"
+          }
+        ],
+        "PointInTimeRecoverySpecification": {
+          "PointInTimeRecoveryEnabled": true
+        },
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ]
+      },
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete"
+    },
     "DocumentIngestRunsTableEA8F8CCA": {
       "Type": "AWS::DynamoDB::Table",
       "Properties": {
@@ -3353,6 +3432,72 @@
               "Resource": [
                 {
                   "Fn::GetAtt": [
+                    "UsageEventsTable215FE3DD",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "UsageEventsTable215FE3DD",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "UsageEventsTable215FE3DD",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "UsageEventsTable215FE3DD",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
                     "DocumentIngestRunsTableEA8F8CCA",
                     "Arn"
                   ]
@@ -3425,6 +3570,32 @@
                 }
               ]
             },
+            {
+              "Action": [
+                "bedrock:InvokeModel",
+                "bedrock:InvokeModelWithResponseStream"
+              ],
+              "Effect": "Allow",
+              "Resource": "*"
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "ApiFunctionServiceRoleDefaultPolicy20A32B8D",
+        "Roles": [
+          {
+            "Ref": "ApiFunctionServiceRole52B9747B"
+          }
+        ]
+      }
+    },
+    "ApiFunctionServiceRoleOverflowPolicy15B8AE146": {
+      "Type": "AWS::IAM::ManagedPolicy",
+      "Properties": {
+        "Description": "Part of the policies for MemoRagMvpStackTest/ApiFunction/ServiceRole",
+        "Path": "/",
+        "PolicyDocument": {
+          "Statement": [
             {
               "Action": [
                 "dynamodb:GetRecords",
@@ -3477,32 +3648,6 @@
                 }
               ]
             },
-            {
-              "Action": [
-                "bedrock:InvokeModel",
-                "bedrock:InvokeModelWithResponseStream"
-              ],
-              "Effect": "Allow",
-              "Resource": "*"
-            }
-          ],
-          "Version": "2012-10-17"
-        },
-        "PolicyName": "ApiFunctionServiceRoleDefaultPolicy20A32B8D",
-        "Roles": [
-          {
-            "Ref": "ApiFunctionServiceRole52B9747B"
-          }
-        ]
-      }
-    },
-    "ApiFunctionServiceRoleOverflowPolicy15B8AE146": {
-      "Type": "AWS::IAM::ManagedPolicy",
-      "Properties": {
-        "Description": "Part of the policies for MemoRagMvpStackTest/ApiFunction/ServiceRole",
-        "Path": "/",
-        "PolicyDocument": {
-          "Statement": [
             {
               "Action": [
                 "dynamodb:GetRecords",
@@ -3722,6 +3867,10 @@
             "CHAT_RUN_EVENTS_TABLE_NAME": {
               "Ref": "ChatRunEventsTable7455A50E"
             },
+            "USAGE_EVENTS_TABLE_NAME": {
+              "Ref": "UsageEventsTable215FE3DD"
+            },
+            "USAGE_ACCOUNTING_MODE": "shadow",
             "DOCUMENT_INGEST_RUNS_TABLE_NAME": {
               "Ref": "DocumentIngestRunsTableEA8F8CCA"
             },
@@ -3738,6 +3887,8 @@
             "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
             "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
             "USE_LOCAL_CHAT_RUN_STORE": "false",
+            "USE_LOCAL_USAGE_EVENT_STORE": "false",
+            "USAGE_PRICING_CATALOG_JSON": "[]",
             "VECTOR_BUCKET_NAME": {
               "Fn::Join": [
                 "",
@@ -4403,6 +4554,72 @@
               "Resource": [
                 {
                   "Fn::GetAtt": [
+                    "UsageEventsTable215FE3DD",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "UsageEventsTable215FE3DD",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "UsageEventsTable215FE3DD",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "UsageEventsTable215FE3DD",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
                     "DocumentIngestRunsTableEA8F8CCA",
                     "Arn"
                   ]
@@ -4475,6 +4692,32 @@
                 }
               ]
             },
+            {
+              "Action": [
+                "bedrock:InvokeModel",
+                "bedrock:InvokeModelWithResponseStream"
+              ],
+              "Effect": "Allow",
+              "Resource": "*"
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "HeavyApiFunctionServiceRoleDefaultPolicyC207D4DE",
+        "Roles": [
+          {
+            "Ref": "HeavyApiFunctionServiceRole25A7AE5E"
+          }
+        ]
+      }
+    },
+    "HeavyApiFunctionServiceRoleOverflowPolicy13079BA64": {
+      "Type": "AWS::IAM::ManagedPolicy",
+      "Properties": {
+        "Description": "Part of the policies for MemoRagMvpStackTest/HeavyApiFunction/ServiceRole",
+        "Path": "/",
+        "PolicyDocument": {
+          "Statement": [
             {
               "Action": [
                 "dynamodb:GetRecords",
@@ -4527,32 +4770,6 @@
                 }
               ]
             },
-            {
-              "Action": [
-                "bedrock:InvokeModel",
-                "bedrock:InvokeModelWithResponseStream"
-              ],
-              "Effect": "Allow",
-              "Resource": "*"
-            }
-          ],
-          "Version": "2012-10-17"
-        },
-        "PolicyName": "HeavyApiFunctionServiceRoleDefaultPolicyC207D4DE",
-        "Roles": [
-          {
-            "Ref": "HeavyApiFunctionServiceRole25A7AE5E"
-          }
-        ]
-      }
-    },
-    "HeavyApiFunctionServiceRoleOverflowPolicy13079BA64": {
-      "Type": "AWS::IAM::ManagedPolicy",
-      "Properties": {
-        "Description": "Part of the policies for MemoRagMvpStackTest/HeavyApiFunction/ServiceRole",
-        "Path": "/",
-        "PolicyDocument": {
-          "Statement": [
             {
               "Action": [
                 "dynamodb:GetRecords",
@@ -4772,6 +4989,10 @@
             "CHAT_RUN_EVENTS_TABLE_NAME": {
               "Ref": "ChatRunEventsTable7455A50E"
             },
+            "USAGE_EVENTS_TABLE_NAME": {
+              "Ref": "UsageEventsTable215FE3DD"
+            },
+            "USAGE_ACCOUNTING_MODE": "shadow",
             "DOCUMENT_INGEST_RUNS_TABLE_NAME": {
               "Ref": "DocumentIngestRunsTableEA8F8CCA"
             },
@@ -4788,6 +5009,8 @@
             "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
             "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
             "USE_LOCAL_CHAT_RUN_STORE": "false",
+            "USE_LOCAL_USAGE_EVENT_STORE": "false",
+            "USAGE_PRICING_CATALOG_JSON": "[]",
             "VECTOR_BUCKET_NAME": {
               "Fn::Join": [
                 "",
@@ -5243,6 +5466,72 @@
                 "dynamodb:GetItem",
                 "dynamodb:Scan",
                 "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "UsageEventsTable215FE3DD",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "UsageEventsTable215FE3DD",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "UsageEventsTable215FE3DD",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "UsageEventsTable215FE3DD",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
                 "dynamodb:DescribeTable"
               ],
               "Effect": "Allow",
@@ -5382,6 +5671,10 @@
             "CHAT_RUN_EVENTS_TABLE_NAME": {
               "Ref": "ChatRunEventsTable7455A50E"
             },
+            "USAGE_EVENTS_TABLE_NAME": {
+              "Ref": "UsageEventsTable215FE3DD"
+            },
+            "USAGE_ACCOUNTING_MODE": "shadow",
             "DOCUMENT_INGEST_RUNS_TABLE_NAME": {
               "Ref": "DocumentIngestRunsTableEA8F8CCA"
             },
@@ -5398,6 +5691,8 @@
             "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
             "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
             "USE_LOCAL_CHAT_RUN_STORE": "false",
+            "USE_LOCAL_USAGE_EVENT_STORE": "false",
+            "USAGE_PRICING_CATALOG_JSON": "[]",
             "VECTOR_BUCKET_NAME": {
               "Fn::Join": [
                 "",
@@ -5791,6 +6086,10 @@
             "CHAT_RUN_EVENTS_TABLE_NAME": {
               "Ref": "ChatRunEventsTable7455A50E"
             },
+            "USAGE_EVENTS_TABLE_NAME": {
+              "Ref": "UsageEventsTable215FE3DD"
+            },
+            "USAGE_ACCOUNTING_MODE": "shadow",
             "DOCUMENT_INGEST_RUNS_TABLE_NAME": {
               "Ref": "DocumentIngestRunsTableEA8F8CCA"
             },
@@ -5807,6 +6106,8 @@
             "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
             "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
             "USE_LOCAL_CHAT_RUN_STORE": "false",
+            "USE_LOCAL_USAGE_EVENT_STORE": "false",
+            "USAGE_PRICING_CATALOG_JSON": "[]",
             "VECTOR_BUCKET_NAME": {
               "Fn::Join": [
                 "",
@@ -6154,6 +6455,10 @@
             "CHAT_RUN_EVENTS_TABLE_NAME": {
               "Ref": "ChatRunEventsTable7455A50E"
             },
+            "USAGE_EVENTS_TABLE_NAME": {
+              "Ref": "UsageEventsTable215FE3DD"
+            },
+            "USAGE_ACCOUNTING_MODE": "shadow",
             "DOCUMENT_INGEST_RUNS_TABLE_NAME": {
               "Ref": "DocumentIngestRunsTableEA8F8CCA"
             },
@@ -6170,6 +6475,8 @@
             "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
             "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
             "USE_LOCAL_CHAT_RUN_STORE": "false",
+            "USE_LOCAL_USAGE_EVENT_STORE": "false",
+            "USAGE_PRICING_CATALOG_JSON": "[]",
             "VECTOR_BUCKET_NAME": {
               "Fn::Join": [
                 "",
@@ -6704,6 +7011,10 @@
             "CHAT_RUN_EVENTS_TABLE_NAME": {
               "Ref": "ChatRunEventsTable7455A50E"
             },
+            "USAGE_EVENTS_TABLE_NAME": {
+              "Ref": "UsageEventsTable215FE3DD"
+            },
+            "USAGE_ACCOUNTING_MODE": "shadow",
             "DOCUMENT_INGEST_RUNS_TABLE_NAME": {
               "Ref": "DocumentIngestRunsTableEA8F8CCA"
             },
@@ -6720,6 +7031,8 @@
             "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
             "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
             "USE_LOCAL_CHAT_RUN_STORE": "false",
+            "USE_LOCAL_USAGE_EVENT_STORE": "false",
+            "USAGE_PRICING_CATALOG_JSON": "[]",
             "VECTOR_BUCKET_NAME": {
               "Fn::Join": [
                 "",
@@ -7118,6 +7431,10 @@
             "CHAT_RUN_EVENTS_TABLE_NAME": {
               "Ref": "ChatRunEventsTable7455A50E"
             },
+            "USAGE_EVENTS_TABLE_NAME": {
+              "Ref": "UsageEventsTable215FE3DD"
+            },
+            "USAGE_ACCOUNTING_MODE": "shadow",
             "DOCUMENT_INGEST_RUNS_TABLE_NAME": {
               "Ref": "DocumentIngestRunsTableEA8F8CCA"
             },
@@ -7134,6 +7451,8 @@
             "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
             "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
             "USE_LOCAL_CHAT_RUN_STORE": "false",
+            "USE_LOCAL_USAGE_EVENT_STORE": "false",
+            "USAGE_PRICING_CATALOG_JSON": "[]",
             "VECTOR_BUCKET_NAME": {
               "Fn::Join": [
                 "",
@@ -7606,6 +7925,10 @@
             "CHAT_RUN_EVENTS_TABLE_NAME": {
               "Ref": "ChatRunEventsTable7455A50E"
             },
+            "USAGE_EVENTS_TABLE_NAME": {
+              "Ref": "UsageEventsTable215FE3DD"
+            },
+            "USAGE_ACCOUNTING_MODE": "shadow",
             "DOCUMENT_INGEST_RUNS_TABLE_NAME": {
               "Ref": "DocumentIngestRunsTableEA8F8CCA"
             },
@@ -7622,6 +7945,8 @@
             "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
             "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
             "USE_LOCAL_CHAT_RUN_STORE": "false",
+            "USE_LOCAL_USAGE_EVENT_STORE": "false",
+            "USAGE_PRICING_CATALOG_JSON": "[]",
             "VECTOR_BUCKET_NAME": {
               "Fn::Join": [
                 "",
@@ -8503,6 +8828,10 @@
             "CHAT_RUN_EVENTS_TABLE_NAME": {
               "Ref": "ChatRunEventsTable7455A50E"
             },
+            "USAGE_EVENTS_TABLE_NAME": {
+              "Ref": "UsageEventsTable215FE3DD"
+            },
+            "USAGE_ACCOUNTING_MODE": "shadow",
             "DOCUMENT_INGEST_RUNS_TABLE_NAME": {
               "Ref": "DocumentIngestRunsTableEA8F8CCA"
             },
@@ -8519,6 +8848,8 @@
             "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
             "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
             "USE_LOCAL_CHAT_RUN_STORE": "false",
+            "USE_LOCAL_USAGE_EVENT_STORE": "false",
+            "USAGE_PRICING_CATALOG_JSON": "[]",
             "VECTOR_BUCKET_NAME": {
               "Fn::Join": [
                 "",
@@ -8920,6 +9251,10 @@
             "CHAT_RUN_EVENTS_TABLE_NAME": {
               "Ref": "ChatRunEventsTable7455A50E"
             },
+            "USAGE_EVENTS_TABLE_NAME": {
+              "Ref": "UsageEventsTable215FE3DD"
+            },
+            "USAGE_ACCOUNTING_MODE": "shadow",
             "DOCUMENT_INGEST_RUNS_TABLE_NAME": {
               "Ref": "DocumentIngestRunsTableEA8F8CCA"
             },
@@ -8936,6 +9271,8 @@
             "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
             "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
             "USE_LOCAL_CHAT_RUN_STORE": "false",
+            "USE_LOCAL_USAGE_EVENT_STORE": "false",
+            "USAGE_PRICING_CATALOG_JSON": "[]",
             "VECTOR_BUCKET_NAME": {
               "Fn::Join": [
                 "",
@@ -9307,6 +9644,10 @@
             "CHAT_RUN_EVENTS_TABLE_NAME": {
               "Ref": "ChatRunEventsTable7455A50E"
             },
+            "USAGE_EVENTS_TABLE_NAME": {
+              "Ref": "UsageEventsTable215FE3DD"
+            },
+            "USAGE_ACCOUNTING_MODE": "shadow",
             "DOCUMENT_INGEST_RUNS_TABLE_NAME": {
               "Ref": "DocumentIngestRunsTableEA8F8CCA"
             },
@@ -9323,6 +9664,8 @@
             "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
             "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
             "USE_LOCAL_CHAT_RUN_STORE": "false",
+            "USE_LOCAL_USAGE_EVENT_STORE": "false",
+            "USAGE_PRICING_CATALOG_JSON": "[]",
             "VECTOR_BUCKET_NAME": {
               "Fn::Join": [
                 "",

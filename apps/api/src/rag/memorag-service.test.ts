@@ -21,9 +21,10 @@ import { LocalGroupMembershipStore } from "../adapters/local-group-membership-st
 import { LocalBenchmarkRunStore } from "../adapters/local-benchmark-run-store.js"
 import { LocalQuestionStore } from "../adapters/local-question-store.js"
 import { LocalVectorStore } from "../adapters/local-vector-store.js"
+import { InMemoryUsageEventStore, type UsageEventStore } from "../adapters/usage-event-store.js"
 import { MockBedrockTextModel } from "../adapters/mock-bedrock.js"
 import type { Dependencies } from "../dependencies.js"
-import type { AgentRuntimeProvider, AliasDefinition, AsyncAgentRun, AuthoritativeAdmissionContext, BenchmarkRunner, DebugTrace, FolderPolicyEntry, ManagedUser } from "../types.js"
+import type { AgentRuntimeProvider, AliasDefinition, AsyncAgentRun, AuthoritativeAdmissionContext, BenchmarkRunner, DebugTrace, FolderPolicyEntry, ManagedUser, UsageEvent } from "../types.js"
 import type { UserDirectory } from "../adapters/user-directory.js"
 import type { VerifiedIdentityProvider } from "../adapters/verified-identity-provider.js"
 import type { CodeBuildLogReader } from "../adapters/codebuild-log-reader.js"
@@ -133,6 +134,36 @@ test("service rejects empty uploads and missing documents", async () => {
     expectedUpdatedAt: "2026-07-11T00:00:00.000Z"
   }))
   assert.equal(await service.getDebugRun("missing-run"), undefined)
+})
+
+test("service records tenant-scoped ingest usage once for a replayed stable run", async () => {
+  const usageEventStore = new InMemoryUsageEventStore()
+  const { service } = await createService({ usageEventStore })
+  const input = {
+    fileName: "usage-source.txt",
+    text: "Usage event integrity source text.",
+    artifactIdOverride: "stable-ingest-run"
+  }
+
+  await service.ingest(input)
+  const query = {
+    periodStart: "2000-01-01T00:00:00.000Z",
+    periodEnd: "2100-01-01T00:00:00.000Z",
+    limit: 100
+  }
+  const firstPage = await usageEventStore.query("default", query)
+  assert.ok(firstPage.events.length >= 2, "ingest must record memory generation and every embedding invocation")
+
+  await service.ingest(input)
+  const page = await usageEventStore.query("default", query)
+  assert.equal(page.events.length, firstPage.events.length, "ingest invocation usage must be idempotent across replay")
+  assert.deepEqual(page.events.map((event) => event.idempotencyKey), firstPage.events.map((event) => event.idempotencyKey))
+  assert.deepEqual(new Set(page.events.map((event) => event.runId)), new Set(["stable-ingest-run"]))
+  assert.deepEqual(new Set(page.events.map((event) => event.tenantId)), new Set(["default"]))
+  assert.deepEqual(new Set(page.events.map((event) => event.subjectId)), new Set(["local-dev"]))
+  assert.ok(page.events.some((event) => event.feature === "embedding"))
+  assert.ok(page.events.some((event) => event.feature === "rag.memoryCard"))
+  assert.equal((await usageEventStore.query("other-tenant", query)).events.length, 0)
 })
 
 test("FR-066 failed ingest compensation persists a tenant-scoped cleanup reconciliation manifest", async () => {
@@ -3024,6 +3055,69 @@ test("admin audit export traversal follows every stable cursor page without sile
   assert.equal(new Set(all.map((entry) => entry.auditId)).size, 205)
 })
 
+test("usage and cost export failures are tenant-scoped and audited through separate operations", async () => {
+  const usageEventStore = new InMemoryUsageEventStore()
+  await usageEventStore.putOnce(usageEvent(0, "tenant-export"))
+  const { service } = await createService({ usageEventStore })
+  const actor = { userId: "admin-sub", email: "admin@example.com", cognitoGroups: ["SYSTEM_ADMIN"], accountStatus: "active" as const, tenantId: "tenant-export" }
+  const query = { periodStart: "2026-07-01T00:00:00.000Z", periodEnd: "2026-08-01T00:00:00.000Z" }
+
+  await assert.rejects(
+    () => service.createAdminExportDownloadUrl(actor, "usage_summary", { query, reason: "Usage reconciliation" }),
+    /DEBUG_DOWNLOAD_BUCKET_NAME/
+  )
+  await assert.rejects(
+    () => service.createAdminExportDownloadUrl(actor, "cost_summary", { query, reason: "Cost reconciliation" }),
+    /DEBUG_DOWNLOAD_BUCKET_NAME/
+  )
+
+  const usageAudit = await service.listAdminAuditLog(actor, { action: "usage.export" })
+  const costAudit = await service.listAdminAuditLog(actor, { action: "cost.export" })
+  assert.equal(usageAudit.auditLog.length, 1)
+  assert.equal(usageAudit.auditLog[0]?.result, "failed")
+  assert.equal(usageAudit.auditLog[0]?.tenantId, "tenant-export")
+  assert.equal(usageAudit.auditLog[0]?.policyVersion, "admin-usage-export-v1")
+  assert.equal(costAudit.auditLog.length, 1)
+  assert.equal(costAudit.auditLog[0]?.result, "failed")
+  assert.equal(costAudit.auditLog[0]?.tenantId, "tenant-export")
+  assert.equal(costAudit.auditLog[0]?.policyVersion, "admin-cost-export-v1")
+})
+
+test("usage export traversal follows every stable tenant cursor page without truncation", async () => {
+  const usageEventStore = new InMemoryUsageEventStore()
+  for (let index = 0; index < 405; index += 1) await usageEventStore.putOnce(usageEvent(index, "tenant-pages"))
+  for (let index = 0; index < 25; index += 1) await usageEventStore.putOnce(usageEvent(index, "tenant-other"))
+  const { service } = await createService({ usageEventStore })
+  const actor = { userId: "admin-pages", email: "admin@example.com", cognitoGroups: ["SYSTEM_ADMIN"], accountStatus: "active" as const, tenantId: "tenant-pages" }
+  const all = await (service as unknown as {
+    listAllUsageEvents(user: AppUser, query: { periodStart: string; periodEnd: string }): Promise<UsageEvent[]>
+  }).listAllUsageEvents(actor, { periodStart: "2026-07-01T00:00:00.000Z", periodEnd: "2026-08-01T00:00:00.000Z" })
+
+  assert.equal(all.length, 405)
+  assert.equal(new Set(all.map((event) => event.eventId)).size, 405)
+  assert.ok(all.every((event) => event.tenantId === "tenant-pages"))
+})
+
+test("shadow usage rollout records events without exposing read or export as the active path", async () => {
+  const usageEventStore = new InMemoryUsageEventStore()
+  await usageEventStore.putOnce(usageEvent(0, "tenant-shadow"))
+  const { service } = await createService({ usageEventStore, usageAccountingMode: "shadow" })
+  const actor = { userId: "shadow-admin", email: "admin@example.com", cognitoGroups: ["SYSTEM_ADMIN"], accountStatus: "active" as const, tenantId: "tenant-shadow" }
+  const query = { periodStart: "2026-07-01T00:00:00.000Z", periodEnd: "2026-08-01T00:00:00.000Z" }
+
+  const usage = await service.listUsageSummaries(actor, query)
+  const cost = await service.getCostAuditSummary(actor, query)
+  assert.equal(usage.rolloutMode, "shadow")
+  assert.equal(usage.events.length, 0)
+  assert.equal(usage.completeness.state, "missing")
+  assert.equal(cost.rolloutMode, "shadow")
+  assert.equal(cost.items.length, 0)
+  await assert.rejects(
+    () => service.createAdminExportDownloadUrl(actor, "usage_summary", { query, reason: "Premature export" }),
+    /read path is not active/
+  )
+})
+
 test("concurrent managed-user projection writes fail closed instead of overwriting a sibling mutation", async () => {
   let arrivals = 0
   let release!: () => void
@@ -3396,12 +3490,13 @@ test("service covers admin defaults, alias misses, terminal async runs, and benc
   assert.ok((await service.listAdminAuditLog(admin)).auditLog.some((entry) => entry.action === "role:assign"))
 
   const usage = await service.listUsageSummaries(admin)
-  assert.equal(usage.find((item) => item.userId === managed.userId)?.chatMessages, undefined)
-  assert.ok(usage.find((item) => item.userId === managed.userId)?.unavailableMetrics.includes("chatMessages"))
+  assert.deepEqual(usage.events, [])
+  assert.equal(usage.completeness.state, "missing")
   const cost = await service.getCostAuditSummary(admin)
-  assert.equal(cost.available, false)
-  assert.equal(cost.currency, undefined)
-  assert.equal(cost.items, undefined)
+  assert.equal(cost.currency, "USD")
+  assert.equal(cost.pricedCostUsd, 0)
+  assert.deepEqual(cost.items, [])
+  assert.equal(cost.completeness.state, "missing")
 
   const alias = await service.createAlias(admin, {
     term: "  PTO  ",
@@ -3515,6 +3610,8 @@ async function createService(options: {
   onObjectPutText?: (key: string) => void | Promise<void>
   onObjectPutTextIfVersion?: (key: string) => void | Promise<void>
   onDocumentIngestRunEventAppend?: (input: Parameters<LocalDocumentIngestRunEventStore["append"]>[1]) => void | Promise<void>
+  usageEventStore?: UsageEventStore
+  usageAccountingMode?: "disabled" | "shadow" | "active"
 } = {}): Promise<{ service: MemoRagService; dataDir: string; deps: Dependencies }> {
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-service-test-"))
   const baseObjectStore = new LocalObjectStore(dataDir)
@@ -3570,6 +3667,8 @@ async function createService(options: {
       }
     },
     textModel: options.textModel ?? new MockBedrockTextModel(),
+    usageEventStore: options.usageEventStore,
+    usageAccountingMode: options.usageAccountingMode,
     questionStore: new LocalQuestionStore(dataDir),
     conversationHistoryStore: new LocalConversationHistoryStore(dataDir),
     favoriteStore: new LocalFavoriteStore(dataDir),
@@ -3636,6 +3735,26 @@ function workerAdmissionContext(): AuthoritativeAdmissionContext {
     },
     lifecycleStatus: "active",
     scope: { scopeType: "personal", allowedUsers: ["worker-user"] }
+  }
+}
+
+function usageEvent(index: number, tenantId: string): UsageEvent {
+  const occurredAt = new Date(Date.UTC(2026, 6, 1, 0, 0, index)).toISOString()
+  return {
+    schemaVersion: 1,
+    eventId: `${tenantId}-event-${index}`,
+    tenantId,
+    subjectId: `subject-${index % 3}`,
+    runId: `run-${index}`,
+    feature: "chat",
+    provider: "bedrock",
+    region: "ap-northeast-1",
+    modelId: "model-a",
+    quantities: [{ unit: "input_token", value: index + 1, source: "provider" }],
+    status: "succeeded",
+    idempotencyKey: `operation-${index}`,
+    occurredAt,
+    recordedAt: occurredAt
   }
 }
 

@@ -31,6 +31,8 @@ import {
   ReviewAliasRequestSchema,
   TransitionAliasRequestSchema,
   UpdateAliasCommandSchema,
+  UsageExportRequestSchema,
+  UsageQuerySchema,
   UsageSummaryListResponseSchema
 } from "../schemas.js"
 import type { ApiRouteContext } from "./route-context.js"
@@ -619,6 +621,7 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
       method: "get",
       path: "/admin/usage",
       "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "usage:read:all_users", operationKey: "usage.read.aggregate", resourceCondition: "none" }),
+      request: { query: UsageQuerySchema },
       responses: {
         200: { description: "List all-user usage summaries", content: { "application/json": { schema: UsageSummaryListResponseSchema } } }
       }
@@ -626,7 +629,44 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
     async (c) => {
       const user = c.get("user")
       requirePermission(user, "usage:read:all_users")
-      return c.json({ users: await service.listUsageSummaries(user) }, 200)
+      try {
+        return c.json(await service.listUsageSummaries(user, validQuery<z.infer<typeof UsageQuerySchema>>(c)), 200)
+      } catch (error) {
+        if (isInvalidUsageQuery(error)) return c.json({ error: "Invalid usage query or cursor" }, 400)
+        throw error
+      }
+    }
+  )
+
+  app.openapi(
+    looseRoute({
+      method: "post",
+      path: "/admin/usage/export",
+      "x-memorag-authorization": routeAuthorization({
+        mode: "required",
+        permission: "usage:export",
+        operationKey: "usage.export",
+        resourceCondition: "none",
+        notes: ["usage export は同じ normalized query の全ページと completeness metadata を tenant scope 内で出力します。"]
+      }),
+      request: { body: { required: true, content: { "application/json": { schema: UsageExportRequestSchema } } } },
+      responses: {
+        200: { description: "Create signed admin usage export URL", content: { "application/json": { schema: AdminExportResponseSchema } } },
+        403: { description: "Forbidden", content: { "application/json": { schema: ErrorResponseSchema } } },
+        503: { description: "export 保存先が設定されていません", content: { "application/json": { schema: ErrorResponseSchema } } }
+      }
+    }),
+    async (c) => {
+      const user = c.get("user")
+      requirePermission(user, "usage:export")
+      const body = validJson<z.infer<typeof UsageExportRequestSchema>>(c)
+      try {
+        return c.json(await service.createAdminExportDownloadUrl(user, "usage_summary", body), 200)
+      } catch (error) {
+        if (error instanceof Error && error.message.includes("DEBUG_DOWNLOAD_BUCKET_NAME")) return c.json({ error: "Export storage is not configured" }, 503)
+        if (error instanceof Error && error.message.includes("Usage accounting read path is not active")) return c.json({ error: "Usage accounting rollout is not active" }, 503)
+        throw error
+      }
     }
   )
 
@@ -635,6 +675,7 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
       method: "get",
       path: "/admin/costs",
       "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "cost:read:all", operationKey: "cost.read.aggregate", resourceCondition: "none" }),
+      request: { query: UsageQuerySchema },
       responses: {
         200: { description: "Get estimated cost audit summary", content: { "application/json": { schema: CostAuditSummarySchema } } }
       }
@@ -642,7 +683,12 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
     async (c) => {
       const user = c.get("user")
       requirePermission(user, "cost:read:all")
-      return c.json(await service.getCostAuditSummary(user), 200)
+      try {
+        return c.json(await service.getCostAuditSummary(user, validQuery<z.infer<typeof UsageQuerySchema>>(c)), 200)
+      } catch (error) {
+        if (isInvalidUsageQuery(error)) return c.json({ error: "Invalid cost query or cursor" }, 400)
+        throw error
+      }
     }
   )
 
@@ -652,11 +698,12 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
       path: "/admin/costs/export",
       "x-memorag-authorization": routeAuthorization({
         mode: "required",
-        permission: "cost:read:all",
+        permission: "cost:export",
         operationKey: "cost.export",
         resourceCondition: "none",
         notes: ["cost export は集計値と redaction metadata のみを含む sanitize 済み JSON として返します。"]
       }),
+      request: { body: { required: true, content: { "application/json": { schema: UsageExportRequestSchema } } } },
       responses: {
         200: { description: "Create signed admin cost export URL", content: { "application/json": { schema: AdminExportResponseSchema } } },
         403: { description: "Forbidden", content: { "application/json": { schema: ErrorResponseSchema } } },
@@ -665,15 +712,21 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
     }),
     async (c) => {
       const user = c.get("user")
-      requirePermission(user, "cost:read:all")
+      requirePermission(user, "cost:export")
+      const body = validJson<z.infer<typeof UsageExportRequestSchema>>(c)
       try {
-        return c.json(await service.createAdminExportDownloadUrl(user, "cost_summary"), 200)
+        return c.json(await service.createAdminExportDownloadUrl(user, "cost_summary", body), 200)
       } catch (err) {
         if (err instanceof Error && err.message.includes("DEBUG_DOWNLOAD_BUCKET_NAME")) return c.json({ error: "Export storage is not configured" }, 503)
+        if (err instanceof Error && err.message.includes("Usage accounting read path is not active")) return c.json({ error: "Usage accounting rollout is not active" }, 503)
         throw err
       }
     }
   )
+}
+
+function isInvalidUsageQuery(error: unknown): boolean {
+  return error instanceof Error && (/Invalid (?:half-open usage period|usage cursor)/.test(error.message))
 }
 
 function aliasGovernanceStatus(error: AliasGovernanceError): 400 | 409 | 503 {
