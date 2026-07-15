@@ -1502,9 +1502,32 @@ export type ManagedUserAuditLogEntry = {
   createdAt: string
 }
 
+export type AdminListPageMetadata = {
+  total: number
+  nextCursor?: string
+  truncated: boolean
+  source: string
+  asOf: string
+  version?: string
+}
+
+export type ManagedUserAuditLogPage = AdminListPageMetadata & {
+  auditLog: ManagedUserAuditLogEntry[]
+}
+
 export type AccessRoleDefinition = {
   role: string
+  displayName: string
+  description: string
+  kind: "systemPreset"
   permissions: string[]
+}
+
+export type AccessRoleList = {
+  roles: AccessRoleDefinition[]
+  catalogVersion: string
+  source: string
+  asOf: string
 }
 
 export type AliasStatus = "draft" | "approved" | "disabled"
@@ -1519,6 +1542,7 @@ export type AliasScope = {
 
 export type AliasDefinition = {
   aliasId: string
+  version: string
   term: string
   expansions: string[]
   scope?: AliasScope
@@ -1550,10 +1574,24 @@ export type SearchImprovementMetadata = {
 export type AliasAuditLogItem = {
   auditId: string
   aliasId?: string
-  action: "create" | "update" | "review" | "disable" | "publish"
+  tenantId: string
+  action: "create" | "update" | "review" | "transition" | "disable" | "publish"
   actorUserId: string
+  result: "success" | "denied" | "conflict" | "failed"
+  reason: string
+  beforeStatus?: AliasStatus
+  afterStatus?: AliasStatus
+  aliasVersion?: string
   createdAt: string
   detail: string
+}
+
+export type AliasListPage = AdminListPageMetadata & {
+  aliases: AliasDefinition[]
+}
+
+export type AliasAuditLogPage = AdminListPageMetadata & {
+  auditLog: AliasAuditLogItem[]
 }
 
 export type PublishedAliasArtifact = {

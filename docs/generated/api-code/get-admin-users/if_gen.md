@@ -2,7 +2,7 @@
 
 # GET /admin/users IF仕様
 
-- 実装 route: `apps/api/src/routes/admin-routes.ts:114 (GET /admin/users)`
+- 実装 route: `apps/api/src/routes/admin-routes.ts:123 (GET /admin/users)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 管理対象ユーザー一覧を取得する

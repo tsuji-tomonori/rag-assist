@@ -1,7 +1,7 @@
 import { get } from "../../../shared/api/http.js"
-import type { ManagedUserAuditLogEntry } from "../types.js"
+import type { AdminAuditLogQuery, ManagedUserAuditLogPage } from "../types.js"
+import { buildAdminQuery, decodeManagedUserAuditLogPage } from "./adminContract.js"
 
-export async function listAdminAuditLog(): Promise<ManagedUserAuditLogEntry[] | null> {
-  const result = await get<{ auditLog?: ManagedUserAuditLogEntry[] }>("/admin/audit-log")
-  return Array.isArray(result.auditLog) ? result.auditLog : null
+export async function listAdminAuditLog(query: AdminAuditLogQuery = {}): Promise<ManagedUserAuditLogPage> {
+  return decodeManagedUserAuditLogPage(await get<unknown>(`/admin/audit-log${buildAdminQuery(query)}`))
 }

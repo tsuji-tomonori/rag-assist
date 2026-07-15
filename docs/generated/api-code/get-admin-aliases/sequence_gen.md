@@ -14,29 +14,44 @@ sequenceDiagram
   participant Store as Store
   participant External as External
   Client->>API: GET /admin/aliases
+  Note over API: 分岐 例外が発生した場合に catch 処理へ移る
+  Note over API: 分岐 error が InvalidPageCursorError の instance である
   API->>Auth: 認証済み利用者を request context から取得する。
   API->>Auth: "rag：alias：read" permission を必須条件として確認する。
   API->>Service: service の list aliases 処理を呼び出す。
   Service->>Store: this に対して load alias ledger を実行する。
-  Service->>Store: this.deps.objectStore に対して get text を実行する。
-  Service->>Store: ledger.aliases に対して sort を実行する。
+  Service->>Store: this.deps.objectStore に対して get text with version を実行する。
+  Service->>Store: normalizeAliasLedger に対して normalize alias ledger を実行する。
+  Service->>Store: ledger.aliases        に対して filter を実行する。
+  Service->>Store: ledger.aliases       .filter((alias) =＞ aliasTenantId(alias) === tenantId)        に対して filter を実行する。
+  Service->>Store: ledger.aliases       .filter((alias) =＞ aliasTenantId(alias) === tenantId)       .filter((alias) =＞ !query.status || alias.status === query.status)        に対して filter を実行する。
   API-->>Client: HTTP 200 で JSON response を返す。
+  API-->>Client: HTTP 400 で JSON response を返す。
 ```
 
 ## 処理順とコード対応
 
 | # | Caller | 境界 | 処理 | コード | 実装位置 |
 | ---: | --- | --- | --- | --- | --- |
-| 1 | `GET /admin/aliases handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/admin-routes.ts:333 (GET /admin/aliases handler)` |
-| 2 | `GET /admin/aliases handler` | Auth | "rag:alias:read" permission を必須条件として確認する。 | `requirePermission(c.get("user"), "rag:alias:read")` | `apps/api/src/routes/admin-routes.ts:333 (GET /admin/aliases handler)` |
-| 3 | `GET /admin/aliases handler` | Service | service の list aliases 処理を呼び出す。 | `service.listAliases()` | `apps/api/src/routes/admin-routes.ts:334 (GET /admin/aliases handler)` |
-| 4 | `MemoRagService.listAliases` | Store | `this` に対して load alias ledger を実行する。 | `this.loadAliasLedger()` | `apps/api/src/rag/memorag-service.ts:1188 (MemoRagService.listAliases)` |
-| 5 | `MemoRagService.loadAliasLedger` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(aliasLedgerKey)` | `apps/api/src/rag/memorag-service.ts:2979 (MemoRagService.loadAliasLedger)` |
-| 6 | `MemoRagService.listAliases` | Store | `ledger.aliases` に対して sort を実行する。 | `ledger.aliases.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))` | `apps/api/src/rag/memorag-service.ts:1189 (MemoRagService.listAliases)` |
-| 7 | `GET /admin/aliases handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json({ aliases: await service.listAliases() }, 200)` | `apps/api/src/routes/admin-routes.ts:334 (GET /admin/aliases handler)` |
+| 1 | `GET /admin/aliases handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/admin-routes.ts:357 (GET /admin/aliases handler)` |
+| 2 | `GET /admin/aliases handler` | Auth | "rag:alias:read" permission を必須条件として確認する。 | `requirePermission(actor, "rag:alias:read")` | `apps/api/src/routes/admin-routes.ts:358 (GET /admin/aliases handler)` |
+| 3 | `GET /admin/aliases handler` | Service | service の list aliases 処理を呼び出す。 | `service.listAliases(actor, query)` | `apps/api/src/routes/admin-routes.ts:361 (GET /admin/aliases handler)` |
+| 4 | `MemoRagService.listAliases` | Store | `this` に対して load alias ledger を実行する。 | `this.loadAliasLedger()` | `apps/api/src/rag/memorag-service.ts:1242 (MemoRagService.listAliases)` |
+| 5 | `MemoRagService.loadAliasLedger` | Store | `this.deps.objectStore` に対して get text with version を実行する。 | `this.deps.objectStore.getTextWithVersion(aliasLedgerKey)` | `apps/api/src/rag/memorag-service.ts:3259 (MemoRagService.loadAliasLedger)` |
+| 6 | `MemoRagService.loadAliasLedger` | Store | `normalizeAliasLedger` に対して normalize alias ledger を実行する。 | `normalizeAliasLedger(raw)` | `apps/api/src/rag/memorag-service.ts:3263 (MemoRagService.loadAliasLedger)` |
+| 7 | `MemoRagService.listAliases` | Store | `ledger.aliases<br>      ` に対して filter を実行する。 | `ledger.aliases .filter((alias) => aliasTenantId(alias) === tenantId)` | `apps/api/src/rag/memorag-service.ts:1246 (MemoRagService.listAliases)` |
+| 8 | `MemoRagService.listAliases` | Store | `ledger.aliases<br>      .filter((alias) => aliasTenantId(alias) === tenantId)<br>      ` に対して filter を実行する。 | `ledger.aliases .filter((alias) => aliasTenantId(alias) === tenantId) .filter((alias) => !query.status \|\| alias.status === query.status)` | `apps/api/src/rag/memorag-service.ts:1246 (MemoRagService.listAliases)` |
+| 9 | `MemoRagService.listAliases` | Store | `ledger.aliases<br>      .filter((alias) => aliasTenantId(alias) === tenantId)<br>      .filter((alias) => !query.status \|\| alias.status === query.status)<br>      ` に対して filter を実行する。 | `ledger.aliases .filter((alias) => aliasTenantId(alias) === tenantId) .filter((alias) => !query.status \|\| alias.status === query.status) .filter((alias) => !normalizedQuery \|\| [alias.term, ...alias.expansions] .some((val…` | `apps/api/src/rag/memorag-service.ts:1246 (MemoRagService.listAliases)` |
+| 10 | `GET /admin/aliases handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json(await service.listAliases(actor, query), 200)` | `apps/api/src/routes/admin-routes.ts:361 (GET /admin/aliases handler)` |
+| 11 | `GET /admin/aliases handler` | HTTP/SSE | HTTP 400 で JSON response を返す。 | `c.json({ error: error.message }, 400)` | `apps/api/src/routes/admin-routes.ts:363 (GET /admin/aliases handler)` |
 
 ## 分岐
 
 | ID | Function | 条件 | 実装位置 |
 | --- | --- | --- | --- |
-| B001 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| B001 | `GET /admin/aliases handler` | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/admin-routes.ts:362 (GET /admin/aliases handler)` |
+| B002 | `GET /admin/aliases handler` | `error` が `InvalidPageCursorError` の instance である | `apps/api/src/routes/admin-routes.ts:363 (GET /admin/aliases handler)` |
+| B003 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| B004 | `MemoRagService.listAliases` | `sort` が `"termAsc"` と等しい | `apps/api/src/rag/memorag-service.ts:1251 (MemoRagService.listAliases)` |
+| B005 | `MemoRagService.listAliases` | `sort` が `"termAsc"` と等しい | `apps/api/src/rag/memorag-service.ts:1259 (MemoRagService.listAliases)` |
+| B006 | `MemoRagService.listAliases` | `sort` が `"termAsc"` と等しい | `apps/api/src/rag/memorag-service.ts:1262 (MemoRagService.listAliases)` |

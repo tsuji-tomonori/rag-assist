@@ -395,18 +395,23 @@ test("HTTP contract validates major endpoint responses against /openapi.json", a
       body: JSON.stringify({ term: "pto", expansions: ["年次有給休暇"], scope: { tenantId: "tenant-a" } })
     })
     assert.equal(createAlias.status, 200)
-    const alias = (await createAlias.json()) as { aliasId: string }
+    const alias = (await createAlias.json()) as { aliasId: string; version: string }
     validateSchema(alias, responseSchema(openapi, "/admin/aliases", "post", 200), openapi)
 
     const reviewAlias = await fetch(`http://127.0.0.1:${port}/admin/aliases/${alias.aliasId}/review`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ decision: "approve", comment: "contract" })
+      body: JSON.stringify({ decision: "approve", expectedVersion: alias.version, reason: "contract review" })
     })
     assert.equal(reviewAlias.status, 200)
     validateSchema(await reviewAlias.json(), responseSchema(openapi, "/admin/aliases/{aliasId}/review", "post", 200), openapi)
 
-    const publishAliases = await fetch(`http://127.0.0.1:${port}/admin/aliases/publish`, { method: "POST" })
+    const aliasesBeforePublish = await getJson(`http://127.0.0.1:${port}/admin/aliases`)
+    const publishAliases = await fetch(`http://127.0.0.1:${port}/admin/aliases/publish`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ expectedVersion: aliasesBeforePublish.body.version, reason: "contract publish" })
+    })
     assert.equal(publishAliases.status, 200)
     validateSchema(await publishAliases.json(), responseSchema(openapi, "/admin/aliases/publish", "post", 200), openapi)
 
@@ -1821,7 +1826,11 @@ test("Phase 2 admin endpoints enforce user, access, usage, and cost permissions"
     assert.equal((await fetch(`http://127.0.0.1:${port}/admin/audit-log`)).status, 403)
     assert.equal((await fetch(`http://127.0.0.1:${port}/admin/roles`)).status, 403)
     assert.equal((await fetch(`http://127.0.0.1:${port}/admin/aliases`)).status, 403)
-    assert.equal((await fetch(`http://127.0.0.1:${port}/admin/aliases/publish`, { method: "POST" })).status, 403)
+    assert.equal((await fetch(`http://127.0.0.1:${port}/admin/aliases/publish`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ expectedVersion: "permission-probe-version", reason: "permission boundary probe" })
+    })).status, 403)
     assert.equal((await fetch(`http://127.0.0.1:${port}/admin/usage`)).status, 403)
     assert.equal((await fetch(`http://127.0.0.1:${port}/admin/costs`)).status, 403)
     assert.equal((await fetch(`http://127.0.0.1:${port}/admin/users/local-dev/suspend`, { method: "POST" })).status, 403)

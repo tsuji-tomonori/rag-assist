@@ -1035,17 +1035,43 @@ export const ManagedUserAuditLogEntrySchema = z.object({
   createdAt: z.string()
 })
 
-export const AdminAuditLogResponseSchema = z.object({
+export const AdminListPageMetadataSchema = z.object({
+  total: z.number().int().nonnegative(),
+  nextCursor: z.string().optional(),
+  truncated: z.boolean(),
+  source: z.string(),
+  asOf: z.string(),
+  version: z.string().optional()
+})
+
+export const AdminAuditLogResponseSchema = AdminListPageMetadataSchema.extend({
   auditLog: z.array(ManagedUserAuditLogEntrySchema)
+})
+
+const AdminPageCursorSchema = z.string().min(1).max(2048).optional()
+const AdminPageLimitSchema = z.coerce.number().int().min(1).max(100).optional()
+const AdminListSearchSchema = z.string().trim().min(1).max(120).optional()
+
+export const AdminAuditLogQuerySchema = z.object({
+  cursor: AdminPageCursorSchema,
+  limit: AdminPageLimitSchema,
+  query: AdminListSearchSchema,
+  action: ManagedUserAuditActionSchema.optional()
 })
 
 export const AccessRoleDefinitionSchema = z.object({
   role: z.string(),
+  displayName: z.string(),
+  description: z.string(),
+  kind: z.literal("systemPreset"),
   permissions: z.array(z.string())
 })
 
 export const AccessRoleListResponseSchema = z.object({
-  roles: z.array(AccessRoleDefinitionSchema)
+  roles: z.array(AccessRoleDefinitionSchema),
+  catalogVersion: z.string(),
+  source: z.string(),
+  asOf: z.string()
 })
 
 export const AssignUserRolesRequestSchema = z.object({
@@ -1065,6 +1091,7 @@ export const AliasScopeSchema = z.object({
 
 export const AliasDefinitionSchema = z.object({
   aliasId: z.string(),
+  version: z.string(),
   term: z.string(),
   expansions: z.array(z.string()),
   scope: AliasScopeSchema.optional(),
@@ -1102,26 +1129,69 @@ export const UpdateAliasRequestSchema = CreateAliasRequestSchema.partial().refin
   "At least one alias field must be provided"
 )
 
-export const ReviewAliasRequestSchema = z.object({
-  decision: z.enum(["approve", "reject"]),
-  comment: z.string().max(1000).optional()
+export const AliasMutationEvidenceSchema = z.object({
+  expectedVersion: z.string().min(1),
+  reason: z.string().trim().min(1).max(1000)
 })
 
-export const AliasListResponseSchema = z.object({
+export const UpdateAliasCommandSchema = UpdateAliasRequestSchema.and(AliasMutationEvidenceSchema)
+
+export const ReviewAliasRequestSchema = z.object({
+  decision: z.enum(["approve", "reject"]),
+  expectedVersion: z.string().min(1),
+  reason: z.string().trim().min(1).max(1000)
+})
+
+export const TransitionAliasRequestSchema = z.object({
+  targetStatus: z.literal("draft"),
+  expectedVersion: z.string().min(1),
+  reason: z.string().trim().min(1).max(1000)
+})
+
+export const DisableAliasRequestSchema = AliasMutationEvidenceSchema
+
+export const PublishAliasesRequestSchema = z.object({
+  expectedVersion: z.string().min(1),
+  reason: z.string().trim().min(1).max(1000)
+})
+
+export const AliasListResponseSchema = AdminListPageMetadataSchema.extend({
   aliases: z.array(AliasDefinitionSchema)
+})
+
+export const AliasListQuerySchema = z.object({
+  cursor: AdminPageCursorSchema,
+  limit: AdminPageLimitSchema,
+  query: AdminListSearchSchema,
+  status: AliasStatusSchema.optional(),
+  sort: z.enum(["updatedDesc", "termAsc"]).optional()
 })
 
 export const AliasAuditLogItemSchema = z.object({
   auditId: z.string(),
   aliasId: z.string().optional(),
-  action: z.enum(["create", "update", "review", "disable", "publish"]),
+  tenantId: z.string(),
+  action: z.enum(["create", "update", "review", "transition", "disable", "publish"]),
   actorUserId: z.string(),
+  result: z.enum(["success", "denied", "conflict", "failed"]),
+  reason: z.string(),
+  beforeStatus: AliasStatusSchema.optional(),
+  afterStatus: AliasStatusSchema.optional(),
+  aliasVersion: z.string().optional(),
   createdAt: z.string(),
   detail: z.string()
 })
 
-export const AliasAuditLogResponseSchema = z.object({
+export const AliasAuditLogResponseSchema = AdminListPageMetadataSchema.extend({
   auditLog: z.array(AliasAuditLogItemSchema)
+})
+
+export const AliasAuditLogQuerySchema = z.object({
+  cursor: AdminPageCursorSchema,
+  limit: AdminPageLimitSchema,
+  query: AdminListSearchSchema,
+  action: AliasAuditLogItemSchema.shape.action.optional(),
+  aliasId: z.string().min(1).max(200).optional()
 })
 
 export const PublishAliasesResponseSchema = z.object({

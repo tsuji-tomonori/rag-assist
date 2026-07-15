@@ -2,7 +2,7 @@
 
 # GET /admin/roles IF仕様
 
-- 実装 route: `apps/api/src/routes/admin-routes.ts:308 (GET /admin/roles)`
+- 実装 route: `apps/api/src/routes/admin-routes.ts:325 (GET /admin/roles)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 利用可能なロール一覧を取得する
@@ -53,7 +53,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 3 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 9 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 
@@ -65,7 +65,13 @@ Media type: `application/json`
 | --- | --- | --- | --- | --- |
 | `roles` | `array<object>` | yes | ユーザーに付与するアプリケーションロール。 | - |
 | `roles[].role` | `string` | yes | `response.roles[].role` の値。項目名は role を表します。 | - |
+| `roles[].displayName` | `string` | yes | 画面に表示するユーザー名。 | - |
+| `roles[].description` | `string` | yes | `response.roles[].description` の値。項目名は description を表します。 | - |
+| `roles[].kind` | `enum(systemPreset)` | yes | `response.roles[].kind` の値。項目名は kind を表します。 | enum=systemPreset |
 | `roles[].permissions` | `array<string>` | yes | ログインユーザーに有効な permission 一覧。 | - |
+| `catalogVersion` | `string` | yes | `response.catalogVersion` の値。項目名は catalog version を表します。 | - |
+| `source` | `string` | yes | `response.source` の値。項目名は source を表します。 | - |
+| `asOf` | `string` | yes | `response.asOf` の値。項目名は as of を表します。 | - |
 
 ##### `401` 認証が必要です。
 

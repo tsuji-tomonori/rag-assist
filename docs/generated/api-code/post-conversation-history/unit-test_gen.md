@@ -8,8 +8,8 @@
 
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
-| 到達 symbol | conversationHistoryList_includesOldFavoriteBeforeRecentNonFavorites | `apps/api/src/rag/memorag-service.test.ts:1540 (conversationHistoryList_includesOldFavoriteBeforeRecentNonFavorites)` |
-| 到達 symbol | favoriteCreateRechecksChatSessionOwner | `apps/api/src/rag/memorag-service.test.ts:1580 (favoriteCreateRechecksChatSessionOwner)` |
+| 到達 symbol | conversationHistoryList_includesOldFavoriteBeforeRecentNonFavorites | `apps/api/src/rag/memorag-service.test.ts:1655 (conversationHistoryList_includesOldFavoriteBeforeRecentNonFavorites)` |
+| 到達 symbol | favoriteCreateRechecksChatSessionOwner | `apps/api/src/rag/memorag-service.test.ts:1695 (favoriteCreateRechecksChatSessionOwner)` |
 
 ## 2. 実装分岐から導くテスト要因
 

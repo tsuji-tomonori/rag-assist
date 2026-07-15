@@ -46,9 +46,32 @@ export type ManagedUserAuditLogEntry = {
   createdAt: string
 }
 
+export type AdminListPageMetadata = {
+  total: number
+  nextCursor?: string
+  truncated: boolean
+  source: string
+  asOf: string
+  version?: string
+}
+
+export type ManagedUserAuditLogPage = AdminListPageMetadata & {
+  auditLog: ManagedUserAuditLogEntry[]
+}
+
 export type AccessRoleDefinition = {
   role: string
+  displayName: string
+  description: string
+  kind: "systemPreset"
   permissions: Permission[]
+}
+
+export type AccessRoleList = {
+  roles: AccessRoleDefinition[]
+  catalogVersion: string
+  source: string
+  asOf: string
 }
 
 export type UserUsageSummary = {
@@ -96,6 +119,7 @@ export type CostAuditSummary = {
 
 export type AliasDefinition = {
   aliasId: string
+  version: string
   term: string
   expansions: string[]
   scope?: {
@@ -117,8 +141,45 @@ export type AliasDefinition = {
 export type AliasAuditLogItem = {
   auditId: string
   aliasId?: string
-  action: "create" | "update" | "review" | "disable" | "publish"
+  tenantId: string
+  action: "create" | "update" | "review" | "transition" | "disable" | "publish"
   actorUserId: string
+  result: "success" | "denied" | "conflict" | "failed"
+  reason: string
+  beforeStatus?: AliasDefinition["status"]
+  afterStatus?: AliasDefinition["status"]
+  aliasVersion?: string
   createdAt: string
   detail: string
+}
+
+export type AliasListPage = AdminListPageMetadata & {
+  aliases: AliasDefinition[]
+}
+
+export type AliasAuditLogPage = AdminListPageMetadata & {
+  auditLog: AliasAuditLogItem[]
+}
+
+export type AliasListQuery = {
+  cursor?: string
+  limit?: number
+  query?: string
+  status?: AliasDefinition["status"]
+  sort?: "updatedDesc" | "termAsc"
+}
+
+export type AliasAuditLogQuery = {
+  cursor?: string
+  limit?: number
+  query?: string
+  action?: AliasAuditLogItem["action"]
+  aliasId?: string
+}
+
+export type AdminAuditLogQuery = {
+  cursor?: string
+  limit?: number
+  query?: string
+  action?: ManagedUserAuditAction
 }

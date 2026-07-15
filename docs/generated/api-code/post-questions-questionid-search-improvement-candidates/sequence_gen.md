@@ -22,12 +22,15 @@ sequenceDiagram
   API->>Service: service の create search improvement candidate 処理を呼び出す。
   API->>Service: service の get question 処理を呼び出す。
   Service->>Store: this.deps.questionStore に対して get を実行する。
-  Service->>Store: this に対して load alias ledger を実行する。
-  Service->>Store: this.deps.objectStore に対して get text を実行する。
   Service->>Store: ledger.aliases に対して push を実行する。
   Service->>Store: ledger.auditLog に対して push を実行する。
+  Service->>Store: this に対して mutate alias ledger を実行する。
+  Service->>Store: this に対して load alias ledger を実行する。
+  Service->>Store: this.deps.objectStore に対して get text with version を実行する。
+  Service->>Store: normalizeAliasLedger に対して normalize alias ledger を実行する。
   Service->>Store: this に対して save alias ledger を実行する。
-  Service->>Store: this.deps.objectStore に対して put text を実行する。
+  Service->>Store: this.deps.objectStore に対して put text if version を実行する。
+  Service->>Store: this.deps.objectStore に対して get text with version を実行する。
   API-->>Client: HTTP 404 で JSON response を返す。
   API-->>Client: HTTP 200 で JSON response を返す。
 ```
@@ -41,16 +44,19 @@ sequenceDiagram
 | 3 | `POST /questions/{questionId}/search-improvement-candidates handler` | Validation | schema 検証済みの path parameter を取得する。 | `validParam<{ questionId: string }>(c)` | `apps/api/src/routes/question-routes.ts:151 (POST /questions/{questionId}/search-improvement-candidates handler)` |
 | 4 | `POST /questions/{questionId}/search-improvement-candidates handler` | Validation | schema 検証済みの JSON request body を取得する。 | `validJson<z.infer<typeof CreateSearchImprovementCandidateRequestSchema>>(c)` | `apps/api/src/routes/question-routes.ts:152 (POST /questions/{questionId}/search-improvement-candidates handler)` |
 | 5 | `POST /questions/{questionId}/search-improvement-candidates handler` | Service | service の create search improvement candidate 処理を呼び出す。 | `service.createSearchImprovementCandidate(user, questionId, body)` | `apps/api/src/routes/question-routes.ts:153 (POST /questions/{questionId}/search-improvement-candidates handler)` |
-| 6 | `MemoRagService.createSearchImprovementCandidate` | Service | service の get question 処理を呼び出す。 | `this.getQuestion(questionId)` | `apps/api/src/rag/memorag-service.ts:1212 (MemoRagService.createSearchImprovementCandidate)` |
-| 7 | `MemoRagService.getQuestion` | Store | `this.deps.questionStore` に対して get を実行する。 | `this.deps.questionStore.get(questionId)` | `apps/api/src/rag/memorag-service.ts:2602 (MemoRagService.getQuestion)` |
-| 8 | `MemoRagService.createSearchImprovementCandidate` | Store | `this` に対して load alias ledger を実行する。 | `this.loadAliasLedger()` | `apps/api/src/rag/memorag-service.ts:1214 (MemoRagService.createSearchImprovementCandidate)` |
-| 9 | `MemoRagService.loadAliasLedger` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(aliasLedgerKey)` | `apps/api/src/rag/memorag-service.ts:2979 (MemoRagService.loadAliasLedger)` |
-| 10 | `MemoRagService.createSearchImprovementCandidate` | Store | `ledger.aliases` に対して push を実行する。 | `ledger.aliases.push(alias)` | `apps/api/src/rag/memorag-service.ts:1239 (MemoRagService.createSearchImprovementCandidate)` |
-| 11 | `appendAliasAudit` | Store | `ledger.auditLog` に対して push を実行する。 | `ledger.auditLog.push({ auditId: \`audit_${randomUUID().slice(0, 12)}\`, aliasId, action, actorUserId: actor.userId, createdAt: new Date().toISOString(), detail })` | `apps/api/src/rag/memorag-service.ts:5060 (appendAliasAudit)` |
-| 12 | `MemoRagService.createSearchImprovementCandidate` | Store | `this` に対して save alias ledger を実行する。 | `this.saveAliasLedger(ledger)` | `apps/api/src/rag/memorag-service.ts:1241 (MemoRagService.createSearchImprovementCandidate)` |
-| 13 | `MemoRagService.saveAliasLedger` | Store | `this.deps.objectStore` に対して put text を実行する。 | `this.deps.objectStore.putText(aliasLedgerKey, JSON.stringify(ledger, null, 2), "application/json")` | `apps/api/src/rag/memorag-service.ts:2992 (MemoRagService.saveAliasLedger)` |
-| 14 | `POST /questions/{questionId}/search-improvement-candidates handler` | HTTP/SSE | HTTP 404 で JSON response を返す。 | `c.json({ error: "Question not found" }, 404)` | `apps/api/src/routes/question-routes.ts:154 (POST /questions/{questionId}/search-improvement-candidates handler)` |
-| 15 | `POST /questions/{questionId}/search-improvement-candidates handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json({ candidate }, 200)` | `apps/api/src/routes/question-routes.ts:155 (POST /questions/{questionId}/search-improvement-candidates handler)` |
+| 6 | `MemoRagService.createSearchImprovementCandidate` | Service | service の get question 処理を呼び出す。 | `this.getQuestion(questionId)` | `apps/api/src/rag/memorag-service.ts:1310 (MemoRagService.createSearchImprovementCandidate)` |
+| 7 | `MemoRagService.getQuestion` | Store | `this.deps.questionStore` に対して get を実行する。 | `this.deps.questionStore.get(questionId)` | `apps/api/src/rag/memorag-service.ts:2882 (MemoRagService.getQuestion)` |
+| 8 | `MemoRagService.createSearchImprovementCandidate` | Store | `ledger.aliases` に対して push を実行する。 | `ledger.aliases.push(alias)` | `apps/api/src/rag/memorag-service.ts:1339 (MemoRagService.createSearchImprovementCandidate)` |
+| 9 | `appendAliasAudit` | Store | `ledger.auditLog` に対して push を実行する。 | `ledger.auditLog.push({ auditId: \`audit_${randomUUID().slice(0, 12)}\`, aliasId: input.alias?.aliasId, tenantId: input.tenantId, action: input.action, actorUserId: input.actor.userId, result: input.result, reason: input.r…` | `apps/api/src/rag/memorag-service.ts:5477 (appendAliasAudit)` |
+| 10 | `MemoRagService.createSearchImprovementCandidate` | Store | `this` に対して mutate alias ledger を実行する。 | `this.mutateAliasLedger((ledger) => { const now = new Date().toISOString() const alias: AliasDefinition = { aliasId: \`alias_${randomUUID().slice(0, 12)}\`, version: createAliasRecordVersion(now), term: normalizeAliasTerm(…` | `apps/api/src/rag/memorag-service.ts:1313 (MemoRagService.createSearchImprovementCandidate)` |
+| 11 | `MemoRagService.mutateAliasLedger` | Store | `this` に対して load alias ledger を実行する。 | `this.loadAliasLedger()` | `apps/api/src/rag/memorag-service.ts:3289 (MemoRagService.mutateAliasLedger)` |
+| 12 | `MemoRagService.loadAliasLedger` | Store | `this.deps.objectStore` に対して get text with version を実行する。 | `this.deps.objectStore.getTextWithVersion(aliasLedgerKey)` | `apps/api/src/rag/memorag-service.ts:3259 (MemoRagService.loadAliasLedger)` |
+| 13 | `MemoRagService.loadAliasLedger` | Store | `normalizeAliasLedger` に対して normalize alias ledger を実行する。 | `normalizeAliasLedger(raw)` | `apps/api/src/rag/memorag-service.ts:3263 (MemoRagService.loadAliasLedger)` |
+| 14 | `MemoRagService.mutateAliasLedger` | Store | `this` に対して save alias ledger を実行する。 | `this.saveAliasLedger(state.ledger, state.storeVersion)` | `apps/api/src/rag/memorag-service.ts:3293 (MemoRagService.mutateAliasLedger)` |
+| 15 | `MemoRagService.saveAliasLedger` | Store | `this.deps.objectStore` に対して put text if version を実行する。 | `this.deps.objectStore.putTextIfVersion( aliasLedgerKey, JSON.stringify(ledger, null, 2), expectedVersion, "application/json" )` | `apps/api/src/rag/memorag-service.ts:3272 (MemoRagService.saveAliasLedger)` |
+| 16 | `MemoRagService.saveAliasLedger` | Store | `this.deps.objectStore` に対して get text with version を実行する。 | `this.deps.objectStore.getTextWithVersion(aliasLedgerKey)` | `apps/api/src/rag/memorag-service.ts:3278 (MemoRagService.saveAliasLedger)` |
+| 17 | `POST /questions/{questionId}/search-improvement-candidates handler` | HTTP/SSE | HTTP 404 で JSON response を返す。 | `c.json({ error: "Question not found" }, 404)` | `apps/api/src/routes/question-routes.ts:154 (POST /questions/{questionId}/search-improvement-candidates handler)` |
+| 18 | `POST /questions/{questionId}/search-improvement-candidates handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json({ candidate }, 200)` | `apps/api/src/routes/question-routes.ts:155 (POST /questions/{questionId}/search-improvement-candidates handler)` |
 
 ## 分岐
 
@@ -58,4 +64,4 @@ sequenceDiagram
 | --- | --- | --- | --- |
 | B001 | `POST /questions/{questionId}/search-improvement-candidates handler` | `candidate` が存在しない、または偽である | `apps/api/src/routes/question-routes.ts:154 (POST /questions/{questionId}/search-improvement-candidates handler)` |
 | B002 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| B003 | `MemoRagService.createSearchImprovementCandidate` | `question` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1213 (MemoRagService.createSearchImprovementCandidate)` |
+| B003 | `MemoRagService.createSearchImprovementCandidate` | `question` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1311 (MemoRagService.createSearchImprovementCandidate)` |

@@ -1,11 +1,24 @@
 import { useRef, useState } from "react"
 import { listAccessRoles } from "../api/accessRolesApi.js"
 import { assignUserRoles, createManagedUser, deleteManagedUser, getManagedUserDeletionPreflight, listManagedUsers, suspendManagedUser, unsuspendManagedUser } from "../api/adminUsersApi.js"
-import { createAlias, disableAlias, listAliasAuditLog, listAliases, publishAliases, reviewAlias, updateAlias } from "../api/aliasesApi.js"
+import { createAlias, disableAlias, listAliasAuditLog, listAliases, publishAliases, reviewAlias, transitionAliasToDraft, updateAlias } from "../api/aliasesApi.js"
 import { listAdminAuditLog } from "../api/auditLogApi.js"
 import { getCostAuditSummary } from "../api/costApi.js"
 import { listUsageSummaries } from "../api/usageApi.js"
-import type { AccessRoleDefinition, AliasAuditLogItem, AliasDefinition, CostAuditSummary, ManagedUser, ManagedUserAuditLogEntry, ManagedUserDeletionPreflight, UserUsageSummary } from "../types.js"
+import type {
+  AccessRoleList,
+  AdminAuditLogQuery,
+  AliasAuditLogPage,
+  AliasAuditLogQuery,
+  AliasDefinition,
+  AliasListPage,
+  AliasListQuery,
+  CostAuditSummary,
+  ManagedUser,
+  ManagedUserAuditLogPage,
+  ManagedUserDeletionPreflight,
+  UserUsageSummary
+} from "../types.js"
 import {
   confirmedOperation,
   failedOperation,
@@ -13,6 +26,8 @@ import {
   type OperationEvidence,
   type OperationOutcome
 } from "../../../shared/ui/operationOutcome.js"
+
+const defaultPageLimit = 50
 
 export function useAdminData({
   canReadAdminAuditLog,
@@ -42,24 +57,32 @@ export function useAdminData({
   setError: (error: string | null) => void
 }) {
   const [managedUsers, setManagedUsers] = useState<ManagedUser[] | null>(null)
-  const [adminAuditLog, setAdminAuditLog] = useState<ManagedUserAuditLogEntry[] | null>(null)
-  const [accessRoles, setAccessRoles] = useState<AccessRoleDefinition[] | null>(null)
+  const [adminAuditPage, setAdminAuditPage] = useState<ManagedUserAuditLogPage | null>(null)
+  const [accessRoleList, setAccessRoleList] = useState<AccessRoleList | null>(null)
   const [usageSummaries, setUsageSummaries] = useState<UserUsageSummary[] | null>(null)
   const [costAudit, setCostAudit] = useState<CostAuditSummary | null>(null)
-  const [aliases, setAliases] = useState<AliasDefinition[] | null>(null)
-  const [aliasAuditLog, setAliasAuditLog] = useState<AliasAuditLogItem[] | null>(null)
+  const [aliasPage, setAliasPage] = useState<AliasListPage | null>(null)
+  const [aliasAuditPage, setAliasAuditPage] = useState<AliasAuditLogPage | null>(null)
   const pendingMutationKeysRef = useRef(new Set<string>())
+  const adminAuditQueryRef = useRef<AdminAuditLogQuery>({ limit: defaultPageLimit })
+  const aliasQueryRef = useRef<AliasListQuery>({ limit: defaultPageLimit, sort: "updatedDesc" })
+  const aliasAuditQueryRef = useRef<AliasAuditLogQuery>({ limit: defaultPageLimit })
 
   async function refreshManagedUsers() {
     setManagedUsers(await listManagedUsers())
   }
 
-  async function refreshAdminAuditLog() {
-    setAdminAuditLog(await listAdminAuditLog())
+  async function refreshAdminAuditLog(query: AdminAuditLogQuery = adminAuditQueryRef.current, append = false) {
+    const normalized = { limit: defaultPageLimit, ...query }
+    adminAuditQueryRef.current = normalized
+    const nextPage = await listAdminAuditLog(normalized)
+    setAdminAuditPage((current) => append && current
+      ? { ...nextPage, auditLog: mergeByKey(current.auditLog, nextPage.auditLog, (entry) => entry.auditId) }
+      : nextPage)
   }
 
   async function refreshAccessRoles() {
-    setAccessRoles(await listAccessRoles())
+    setAccessRoleList(await listAccessRoles())
   }
 
   async function refreshUsageSummaries() {
@@ -70,10 +93,22 @@ export function useAdminData({
     setCostAudit(await getCostAuditSummary())
   }
 
-  async function refreshAliases() {
-    const [nextAliases, nextAuditLog] = await Promise.all([listAliases(), listAliasAuditLog()])
-    setAliases(nextAliases)
-    setAliasAuditLog(nextAuditLog)
+  async function refreshAliases(query: AliasListQuery = aliasQueryRef.current, append = false) {
+    const normalized = { limit: defaultPageLimit, sort: "updatedDesc" as const, ...query }
+    aliasQueryRef.current = normalized
+    const nextPage = await listAliases(normalized)
+    setAliasPage((current) => append && current
+      ? { ...nextPage, aliases: mergeByKey(current.aliases, nextPage.aliases, (alias) => alias.aliasId) }
+      : nextPage)
+  }
+
+  async function refreshAliasAuditLog(query: AliasAuditLogQuery = aliasAuditQueryRef.current, append = false) {
+    const normalized = { limit: defaultPageLimit, ...query }
+    aliasAuditQueryRef.current = normalized
+    const nextPage = await listAliasAuditLog(normalized)
+    setAliasAuditPage((current) => append && current
+      ? { ...nextPage, auditLog: mergeByKey(current.auditLog, nextPage.auditLog, (entry) => entry.auditId) }
+      : nextPage)
   }
 
   async function refreshAdminData() {
@@ -83,7 +118,8 @@ export function useAdminData({
       canOpenAdminSettings ? refreshAccessRoles() : Promise.resolve(),
       canReadUsage ? refreshUsageSummaries() : Promise.resolve(),
       canReadCosts ? refreshCostAudit() : Promise.resolve(),
-      canReadAliases ? refreshAliases() : Promise.resolve()
+      canReadAliases ? refreshAliases() : Promise.resolve(),
+      canReadAliases ? refreshAliasAuditLog() : Promise.resolve()
     ])
   }
 
@@ -92,7 +128,8 @@ export function useAdminData({
       canReadAdminAuditLog ? refreshAdminAuditLog() : Promise.resolve(),
       canReadUsage ? refreshUsageSummaries() : Promise.resolve(),
       canReadCosts ? refreshCostAudit() : Promise.resolve(),
-      canReadAliases ? refreshAliases() : Promise.resolve()
+      canReadAliases ? refreshAliases() : Promise.resolve(),
+      canReadAliases ? refreshAliasAuditLog() : Promise.resolve()
     ])
   }
 
@@ -100,15 +137,17 @@ export function useAdminData({
     value,
     successMessage,
     partialMessage,
-    evidence
+    evidence,
+    refresh = refreshAdminSideEffects
   }: {
     value: T
     successMessage: string
     partialMessage: string
     evidence?: OperationEvidence
+    refresh?: () => Promise<void>
   }): Promise<OperationOutcome<T>> {
     try {
-      await refreshAdminSideEffects()
+      await refresh()
       return confirmedOperation(value, { message: successMessage, evidence })
     } catch (err) {
       console.warn("Failed to refresh admin state after confirmed mutation", err)
@@ -118,28 +157,16 @@ export function useAdminData({
   }
 
   async function onAssignUserRoles(userId: string, groups: string[], reason: string): Promise<OperationOutcome<ManagedUser>> {
-    const mutationKey = `role:${userId}`
-    if (pendingMutationKeysRef.current.has(mutationKey)) return failedOperation(new Error("このユーザーのロールは変更処理中です"))
-    pendingMutationKeysRef.current.add(mutationKey)
-    setLoading(true)
-    setError(null)
-    try {
+    return runMutation(`role:${userId}`, "このユーザーのロールは変更処理中です", async () => {
       const updated = await assignUserRoles(userId, groups, reason)
-      setManagedUsers((prev) => [updated, ...(prev ?? []).filter((user) => user.userId !== userId)].sort((a, b) => a.email.localeCompare(b.email)))
-      return await confirmAdminMutation({
+      setManagedUsers((current) => upsertManagedUser(current, updated))
+      return confirmAdminMutation({
         value: updated,
         successMessage: "API がロール変更を確定し、許可された管理データを更新しました。",
         partialMessage: "ロール変更は確定しましたが、関連する管理データを更新できませんでした。再実行せず更新してください。",
         evidence: { resultReference: updated.userId, version: updated.updatedAt }
       })
-    } catch (err) {
-      const outcome = failedOperation(err)
-      setError(outcome.message)
-      return outcome
-    } finally {
-      pendingMutationKeysRef.current.delete(mutationKey)
-      setLoading(false)
-    }
+    })
   }
 
   async function onCreateManagedUser(input: { email: string; displayName?: string; groups?: string[] }) {
@@ -147,10 +174,10 @@ export function useAdminData({
     setError(null)
     try {
       const created = await createManagedUser(input)
-      setManagedUsers((prev) => [created, ...(prev ?? []).filter((user) => user.userId !== created.userId)].sort((a, b) => a.email.localeCompare(b.email)))
+      setManagedUsers((current) => upsertManagedUser(current, created))
       await refreshAdminSideEffects()
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(errorMessage(err))
     } finally {
       setLoading(false)
     }
@@ -162,7 +189,7 @@ export function useAdminData({
     try {
       return await getManagedUserDeletionPreflight(userId)
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(errorMessage(err))
       return null
     } finally {
       setLoading(false)
@@ -170,131 +197,124 @@ export function useAdminData({
   }
 
   async function onSetManagedUserStatus(userId: string, action: "suspend" | "unsuspend" | "delete", successorUserId?: string): Promise<OperationOutcome<ManagedUser>> {
-    const mutationKey = `status:${userId}`
-    if (pendingMutationKeysRef.current.has(mutationKey)) return failedOperation(new Error("このユーザーの状態は変更処理中です"))
-    pendingMutationKeysRef.current.add(mutationKey)
-    setLoading(true)
-    setError(null)
-    try {
-      const updated =
-        action === "suspend" ? await suspendManagedUser(userId) : action === "unsuspend" ? await unsuspendManagedUser(userId) : await deleteManagedUser(userId, successorUserId)
-      setManagedUsers((prev) => {
-        const current = prev ?? []
-        if (updated.status === "deleted") return current.filter((user) => user.userId !== userId)
-        return [updated, ...current.filter((user) => user.userId !== userId)].sort((a, b) => a.email.localeCompare(b.email))
-      })
-      return await confirmAdminMutation({
+    return runMutation(`status:${userId}`, "このユーザーの状態は変更処理中です", async () => {
+      const updated = action === "suspend"
+        ? await suspendManagedUser(userId)
+        : action === "unsuspend"
+          ? await unsuspendManagedUser(userId)
+          : await deleteManagedUser(userId, successorUserId)
+      setManagedUsers((current) => updated.status === "deleted"
+        ? current?.filter((user) => user.userId !== userId) ?? current
+        : upsertManagedUser(current, updated))
+      return confirmAdminMutation({
         value: updated,
         successMessage: "API がユーザー状態の変更を確定しました。",
         partialMessage: "ユーザー状態の変更は確定しましたが、関連する管理データを更新できませんでした。再実行せず更新してください。",
         evidence: { resultReference: updated.userId, version: updated.updatedAt }
       })
-    } catch (err) {
-      const outcome = failedOperation(err)
-      setError(outcome.message)
-      return outcome
-    } finally {
-      pendingMutationKeysRef.current.delete(mutationKey)
-      setLoading(false)
-    }
+    })
   }
 
-  async function onCreateAlias(input: { term: string; expansions: string[]; scope?: AliasDefinition["scope"] }) {
-    if (!canWriteAliases) return
-    setLoading(true)
-    setError(null)
-    try {
-      await createAlias(input)
-      await refreshAliases()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
-    } finally {
-      setLoading(false)
-    }
+  async function onCreateAlias(input: { term: string; expansions: string[]; scope?: AliasDefinition["scope"] }): Promise<OperationOutcome<AliasDefinition>> {
+    if (!canWriteAliases) return failedOperation(new Error("用語展開を作成する権限がありません"))
+    return runMutation("alias-create", "用語展開は作成処理中です", async () => {
+      const created = await createAlias(input)
+      updateAliasPage(created)
+      return confirmAliasMutation(created, "API が用語展開の下書きを作成しました。", "作成は確定しましたが、一覧または監査ログを更新できませんでした。再実行せず更新してください。")
+    })
   }
 
-  async function onUpdateAlias(aliasId: string, input: { term?: string; expansions?: string[]; scope?: AliasDefinition["scope"] }) {
-    if (!canWriteAliases) return
-    setLoading(true)
-    setError(null)
-    try {
-      await updateAlias(aliasId, input)
-      await refreshAliases()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
-    } finally {
-      setLoading(false)
-    }
+  async function onUpdateAlias(aliasId: string, input: {
+    term?: string
+    expansions?: string[]
+    scope?: AliasDefinition["scope"]
+    expectedVersion: string
+    reason: string
+  }): Promise<OperationOutcome<AliasDefinition>> {
+    if (!canWriteAliases) return failedOperation(new Error("用語展開を更新する権限がありません"))
+    return runAliasMutation(`alias-update:${aliasId}`, aliasId, () => updateAlias(aliasId, input), "API が用語展開を更新しました。")
   }
 
-  async function onReviewAlias(aliasId: string, decision: "approve" | "reject", comment?: string) {
-    if (!canReviewAliases) return
-    setLoading(true)
-    setError(null)
-    try {
-      const reviewed = await reviewAlias(aliasId, decision, comment)
-      const [nextAliases, nextAuditLog] = await Promise.all([listAliases(), listAliasAuditLog()])
-      setAliases(nextAliases === null ? null : nextAliases.map((alias) => {
-        if (alias.aliasId !== aliasId) return alias
-        return reviewed.aliasId === aliasId
-          ? reviewed
-          : {
-              ...alias,
-              status: decision === "approve" ? "approved" : "draft",
-              updatedAt: new Date().toISOString()
-            }
-      }))
-      setAliasAuditLog(nextAuditLog)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
-    } finally {
-      setLoading(false)
-    }
+  async function onReviewAlias(aliasId: string, decision: "approve" | "reject", expectedVersion: string, reason: string): Promise<OperationOutcome<AliasDefinition>> {
+    if (!canReviewAliases) return failedOperation(new Error("用語展開をレビューする権限がありません"))
+    return runAliasMutation(`alias-review:${aliasId}`, aliasId, () => reviewAlias(aliasId, decision, expectedVersion, reason), "API がレビュー結果を確定しました。")
   }
 
-  async function onDisableAlias(aliasId: string): Promise<OperationOutcome<AliasDefinition>> {
+  async function onTransitionAlias(aliasId: string, expectedVersion: string, reason: string): Promise<OperationOutcome<AliasDefinition>> {
+    if (!canWriteAliases) return failedOperation(new Error("用語展開を下書きへ戻す権限がありません"))
+    return runAliasMutation(`alias-transition:${aliasId}`, aliasId, () => transitionAliasToDraft(aliasId, expectedVersion, reason), "API が下書きへの遷移を確定しました。")
+  }
+
+  async function onDisableAlias(aliasId: string, expectedVersion: string, reason: string): Promise<OperationOutcome<AliasDefinition>> {
     if (!canDisableAliases) return failedOperation(new Error("用語展開を無効化する権限がありません"))
-    const mutationKey = `alias-disable:${aliasId}`
-    if (pendingMutationKeysRef.current.has(mutationKey)) return failedOperation(new Error("この用語展開は無効化処理中です"))
-    pendingMutationKeysRef.current.add(mutationKey)
-    setLoading(true)
-    setError(null)
-    try {
-      const disabled = await disableAlias(aliasId)
-      setAliases((current) => current?.map((alias) => alias.aliasId === disabled.aliasId ? disabled : alias) ?? current)
-      return await confirmAdminMutation({
-        value: disabled,
-        successMessage: "API が用語展開の無効化を確定しました。",
-        partialMessage: "無効化は確定しましたが、管理データを更新できませんでした。再実行せず更新してください。",
-        evidence: { resultReference: disabled.aliasId, version: disabled.updatedAt }
-      })
-    } catch (err) {
-      const outcome = failedOperation(err)
-      setError(outcome.message)
-      return outcome
-    } finally {
-      pendingMutationKeysRef.current.delete(mutationKey)
-      setLoading(false)
-    }
+    return runAliasMutation(`alias-disable:${aliasId}`, aliasId, () => disableAlias(aliasId, expectedVersion, reason), "API が用語展開の無効化を確定しました。")
   }
 
-  async function onPublishAliases(): Promise<OperationOutcome<{ version: string; publishedAt: string; aliasCount: number }>> {
-    const mutationKey = "alias-publish"
+  async function onPublishAliases(expectedVersion: string, reason: string): Promise<OperationOutcome<{ version: string; publishedAt: string; aliasCount: number }>> {
     if (!canPublishAliases) return failedOperation(new Error("用語展開を公開する権限がありません"))
-    if (pendingMutationKeysRef.current.has(mutationKey)) return failedOperation(new Error("用語展開は公開処理中です"))
-    pendingMutationKeysRef.current.add(mutationKey)
-    setLoading(true)
-    setError(null)
-    try {
-      const published = await publishAliases()
-      return await confirmAdminMutation({
+    return runMutation("alias-publish", "用語展開は公開処理中です", async () => {
+      const published = await publishAliases(expectedVersion, reason)
+      return confirmAdminMutation({
         value: published,
         successMessage: "API が用語展開の公開 version を確定しました。",
-        partialMessage: "公開 version は確定しましたが、管理データを更新できませんでした。再実行せず更新してください。",
-        evidence: { resultReference: published.version, version: published.version }
+        partialMessage: "公開 version は確定しましたが、一覧または監査ログを更新できませんでした。再実行せず更新してください。",
+        evidence: { resultReference: published.version, version: published.version },
+        refresh: refreshAliasData
       })
+    })
+  }
+
+  async function runAliasMutation(
+    mutationKey: string,
+    aliasId: string,
+    mutation: () => Promise<AliasDefinition>,
+    successMessage: string
+  ): Promise<OperationOutcome<AliasDefinition>> {
+    return runMutation(mutationKey, "この用語展開は変更処理中です", async () => {
+      const updated = await mutation()
+      updateAliasPage(updated)
+      return confirmAliasMutation(updated, successMessage, "変更は確定しましたが、一覧または監査ログを更新できませんでした。再実行せず更新してください。", aliasId)
+    })
+  }
+
+  async function confirmAliasMutation(
+    alias: AliasDefinition,
+    successMessage: string,
+    partialMessage: string,
+    resultReference = alias.aliasId
+  ): Promise<OperationOutcome<AliasDefinition>> {
+    return confirmAdminMutation({
+      value: alias,
+      successMessage,
+      partialMessage,
+      evidence: { resultReference, version: alias.version },
+      refresh: refreshAliasData
+    })
+  }
+
+  async function refreshAliasData() {
+    await Promise.all([refreshAliases(), refreshAliasAuditLog()])
+  }
+
+  function updateAliasPage(alias: AliasDefinition) {
+    setAliasPage((current) => current
+      ? { ...current, aliases: mergeByKey([alias], current.aliases, (item) => item.aliasId) }
+      : current)
+  }
+
+  async function runMutation<T>(
+    mutationKey: string,
+    duplicateMessage: string,
+    mutation: () => Promise<OperationOutcome<T>>
+  ): Promise<OperationOutcome<T>> {
+    if (pendingMutationKeysRef.current.has(mutationKey)) return failedOperation(new Error(duplicateMessage))
+    pendingMutationKeysRef.current.add(mutationKey)
+    setLoading(true)
+    setError(null)
+    try {
+      return await mutation()
     } catch (err) {
-      const outcome = failedOperation(err)
+      const outcome: OperationOutcome<T> = failedOperation(err)
       setError(outcome.message)
       return outcome
     } finally {
@@ -305,18 +325,23 @@ export function useAdminData({
 
   return {
     managedUsers,
-    adminAuditLog,
-    accessRoles,
+    adminAuditLog: adminAuditPage?.auditLog ?? null,
+    adminAuditPage,
+    accessRoles: accessRoleList?.roles ?? null,
+    accessRoleList,
     usageSummaries,
     costAudit,
-    aliases,
-    aliasAuditLog,
+    aliases: aliasPage?.aliases ?? null,
+    aliasPage,
+    aliasAuditLog: aliasAuditPage?.auditLog ?? null,
+    aliasAuditPage,
     refreshManagedUsers,
     refreshAdminAuditLog,
     refreshAccessRoles,
     refreshUsageSummaries,
     refreshCostAudit,
     refreshAliases,
+    refreshAliasAuditLog,
     refreshAdminData,
     onAssignUserRoles,
     onCreateManagedUser,
@@ -325,7 +350,27 @@ export function useAdminData({
     onCreateAlias,
     onUpdateAlias,
     onReviewAlias,
+    onTransitionAlias,
     onDisableAlias,
     onPublishAliases
   }
+}
+
+function upsertManagedUser(current: ManagedUser[] | null, updated: ManagedUser): ManagedUser[] {
+  return [updated, ...(current ?? []).filter((user) => user.userId !== updated.userId)]
+    .sort((left, right) => left.email.localeCompare(right.email))
+}
+
+function mergeByKey<T>(first: readonly T[], second: readonly T[], key: (value: T) => string): T[] {
+  const seen = new Set<string>()
+  return [...first, ...second].filter((item) => {
+    const itemKey = key(item)
+    if (seen.has(itemKey)) return false
+    seen.add(itemKey)
+    return true
+  })
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error)
 }

@@ -1,7 +1,7 @@
 import { get } from "../../../shared/api/http.js"
-import type { AccessRoleDefinition } from "../types.js"
+import type { AccessRoleList } from "../types.js"
+import { decodeAccessRoleList } from "./adminContract.js"
 
-export async function listAccessRoles(): Promise<AccessRoleDefinition[] | null> {
-  const result = await get<{ roles?: AccessRoleDefinition[] }>("/admin/roles")
-  return Array.isArray(result.roles) ? result.roles : null
+export async function listAccessRoles(): Promise<AccessRoleList> {
+  return decodeAccessRoleList(await get<unknown>("/admin/roles"))
 }

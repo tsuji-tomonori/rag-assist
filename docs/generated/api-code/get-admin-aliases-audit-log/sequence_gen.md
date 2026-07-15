@@ -14,31 +14,43 @@ sequenceDiagram
   participant Store as Store
   participant External as External
   Client->>API: GET /admin/aliases/audit-log
+  Note over API: 分岐 例外が発生した場合に catch 処理へ移る
+  Note over API: 分岐 error が InvalidPageCursorError の instance である
   API->>Auth: 認証済み利用者を request context から取得する。
   API->>Auth: "rag：alias：read" permission を必須条件として確認する。
   API->>Service: service の list alias audit log 処理を呼び出す。
   Service->>Store: this に対して load alias ledger を実行する。
-  Service->>Store: this.deps.objectStore に対して get text を実行する。
-  Service->>Store: ledger.auditLog に対して sort を実行する。
-  Service->>Store: ledger.auditLog.sort((a, b) =＞ b.createdAt.localeCompare(a.createdAt)) に対して slice を実行する。
+  Service->>Store: this.deps.objectStore に対して get text with version を実行する。
+  Service->>Store: normalizeAliasLedger に対して normalize alias ledger を実行する。
+  Service->>Store: ledger.auditLog        に対して filter を実行する。
+  Service->>Store: ledger.auditLog       .filter((entry) =＞ entry.tenantId === tenantId)        に対して filter を実行する。
+  Service->>Store: ledger.auditLog       .filter((entry) =＞ entry.tenantId === tenantId)       .filter((entry) =＞ !query.action || entry.action === query.action)        に対して filter を実行する。
+  Service->>Store: ledger.auditLog       .filter((entry) =＞ entry.tenantId === tenantId)       .filter((entry) =＞ !query.action || entry.action === query.action)       .filter((entry) =＞ !query.alia…
   API-->>Client: HTTP 200 で JSON response を返す。
+  API-->>Client: HTTP 400 で JSON response を返す。
 ```
 
 ## 処理順とコード対応
 
 | # | Caller | 境界 | 処理 | コード | 実装位置 |
 | ---: | --- | --- | --- | --- | --- |
-| 1 | `GET /admin/aliases/audit-log handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/admin-routes.ts:464 (GET /admin/aliases/audit-log handler)` |
-| 2 | `GET /admin/aliases/audit-log handler` | Auth | "rag:alias:read" permission を必須条件として確認する。 | `requirePermission(c.get("user"), "rag:alias:read")` | `apps/api/src/routes/admin-routes.ts:464 (GET /admin/aliases/audit-log handler)` |
-| 3 | `GET /admin/aliases/audit-log handler` | Service | service の list alias audit log 処理を呼び出す。 | `service.listAliasAuditLog()` | `apps/api/src/routes/admin-routes.ts:465 (GET /admin/aliases/audit-log handler)` |
-| 4 | `MemoRagService.listAliasAuditLog` | Store | `this` に対して load alias ledger を実行する。 | `this.loadAliasLedger()` | `apps/api/src/rag/memorag-service.ts:1316 (MemoRagService.listAliasAuditLog)` |
-| 5 | `MemoRagService.loadAliasLedger` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(aliasLedgerKey)` | `apps/api/src/rag/memorag-service.ts:2979 (MemoRagService.loadAliasLedger)` |
-| 6 | `MemoRagService.listAliasAuditLog` | Store | `ledger.auditLog` に対して sort を実行する。 | `ledger.auditLog.sort((a, b) => b.createdAt.localeCompare(a.createdAt))` | `apps/api/src/rag/memorag-service.ts:1317 (MemoRagService.listAliasAuditLog)` |
-| 7 | `MemoRagService.listAliasAuditLog` | Store | `ledger.auditLog.sort((a, b) => b.createdAt.localeCompare(a.createdAt))` に対して slice を実行する。 | `ledger.auditLog.sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 200)` | `apps/api/src/rag/memorag-service.ts:1317 (MemoRagService.listAliasAuditLog)` |
-| 8 | `GET /admin/aliases/audit-log handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json({ auditLog: await service.listAliasAuditLog() }, 200)` | `apps/api/src/routes/admin-routes.ts:465 (GET /admin/aliases/audit-log handler)` |
+| 1 | `GET /admin/aliases/audit-log handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/admin-routes.ts:568 (GET /admin/aliases/audit-log handler)` |
+| 2 | `GET /admin/aliases/audit-log handler` | Auth | "rag:alias:read" permission を必須条件として確認する。 | `requirePermission(actor, "rag:alias:read")` | `apps/api/src/routes/admin-routes.ts:569 (GET /admin/aliases/audit-log handler)` |
+| 3 | `GET /admin/aliases/audit-log handler` | Service | service の list alias audit log 処理を呼び出す。 | `service.listAliasAuditLog(actor, query)` | `apps/api/src/routes/admin-routes.ts:572 (GET /admin/aliases/audit-log handler)` |
+| 4 | `MemoRagService.listAliasAuditLog` | Store | `this` に対して load alias ledger を実行する。 | `this.loadAliasLedger()` | `apps/api/src/rag/memorag-service.ts:1548 (MemoRagService.listAliasAuditLog)` |
+| 5 | `MemoRagService.loadAliasLedger` | Store | `this.deps.objectStore` に対して get text with version を実行する。 | `this.deps.objectStore.getTextWithVersion(aliasLedgerKey)` | `apps/api/src/rag/memorag-service.ts:3259 (MemoRagService.loadAliasLedger)` |
+| 6 | `MemoRagService.loadAliasLedger` | Store | `normalizeAliasLedger` に対して normalize alias ledger を実行する。 | `normalizeAliasLedger(raw)` | `apps/api/src/rag/memorag-service.ts:3263 (MemoRagService.loadAliasLedger)` |
+| 7 | `MemoRagService.listAliasAuditLog` | Store | `ledger.auditLog<br>      ` に対して filter を実行する。 | `ledger.auditLog .filter((entry) => entry.tenantId === tenantId)` | `apps/api/src/rag/memorag-service.ts:1551 (MemoRagService.listAliasAuditLog)` |
+| 8 | `MemoRagService.listAliasAuditLog` | Store | `ledger.auditLog<br>      .filter((entry) => entry.tenantId === tenantId)<br>      ` に対して filter を実行する。 | `ledger.auditLog .filter((entry) => entry.tenantId === tenantId) .filter((entry) => !query.action \|\| entry.action === query.action)` | `apps/api/src/rag/memorag-service.ts:1551 (MemoRagService.listAliasAuditLog)` |
+| 9 | `MemoRagService.listAliasAuditLog` | Store | `ledger.auditLog<br>      .filter((entry) => entry.tenantId === tenantId)<br>      .filter((entry) => !query.action \|\| entry.action === query.action)<br>      ` に対して filter を実行する。 | `ledger.auditLog .filter((entry) => entry.tenantId === tenantId) .filter((entry) => !query.action \|\| entry.action === query.action) .filter((entry) => !query.aliasId \|\| entry.aliasId === query.aliasId)` | `apps/api/src/rag/memorag-service.ts:1551 (MemoRagService.listAliasAuditLog)` |
+| 10 | `MemoRagService.listAliasAuditLog` | Store | `ledger.auditLog<br>      .filter((entry) => entry.tenantId === tenantId)<br>      .filter((entry) => !query.action \|\| entry.action === query.action)<br>      .filter((entry) => !query.aliasId \|\| entry.aliasId === query.aliasId)<br>      ` に対して filter を実行する。 | `ledger.auditLog .filter((entry) => entry.tenantId === tenantId) .filter((entry) => !query.action \|\| entry.action === query.action) .filter((entry) => !query.aliasId \|\| entry.aliasId === query.aliasId) .filter((entry) =>…` | `apps/api/src/rag/memorag-service.ts:1551 (MemoRagService.listAliasAuditLog)` |
+| 11 | `GET /admin/aliases/audit-log handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json(await service.listAliasAuditLog(actor, query), 200)` | `apps/api/src/routes/admin-routes.ts:572 (GET /admin/aliases/audit-log handler)` |
+| 12 | `GET /admin/aliases/audit-log handler` | HTTP/SSE | HTTP 400 で JSON response を返す。 | `c.json({ error: error.message }, 400)` | `apps/api/src/routes/admin-routes.ts:574 (GET /admin/aliases/audit-log handler)` |
 
 ## 分岐
 
 | ID | Function | 条件 | 実装位置 |
 | --- | --- | --- | --- |
-| B001 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| B001 | `GET /admin/aliases/audit-log handler` | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/admin-routes.ts:573 (GET /admin/aliases/audit-log handler)` |
+| B002 | `GET /admin/aliases/audit-log handler` | `error` が `InvalidPageCursorError` の instance である | `apps/api/src/routes/admin-routes.ts:574 (GET /admin/aliases/audit-log handler)` |
+| B003 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |

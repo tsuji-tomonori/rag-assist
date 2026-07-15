@@ -263,6 +263,7 @@ function mockAppFetch(groups = ["SYSTEM_ADMIN"], initialHistory: ConversationHis
   let aliases: AliasDefinition[] = [
     {
       aliasId: "alias-1",
+      version: "alias-version-1",
       term: "pto",
       expansions: ["有給休暇"],
       status: "draft" as const,
@@ -275,8 +276,13 @@ function mockAppFetch(groups = ["SYSTEM_ADMIN"], initialHistory: ConversationHis
     {
       auditId: "audit-1",
       aliasId: "alias-1",
+      tenantId: "local-test",
       action: "create" as const,
       actorUserId: "local-dev",
+      result: "success" as const,
+      reason: "用語登録",
+      afterStatus: "draft" as const,
+      aliasVersion: "alias-version-1",
       createdAt: "2026-05-02T00:00:00.000Z",
       detail: "created pto"
     }
@@ -284,35 +290,42 @@ function mockAppFetch(groups = ["SYSTEM_ADMIN"], initialHistory: ConversationHis
   let reindexMigrations: unknown[] = []
   let adminAuditLog: unknown[] = []
   let lastChatResponse: unknown = undefined
-  const roles = Object.entries(rolePermissions).map(([role, permissions]) => ({ role, permissions }))
+  const roles = Object.entries(rolePermissions).map(([role, permissions]) => ({
+    role,
+    displayName: role,
+    description: `${role} application role`,
+    kind: "systemPreset" as const,
+    permissions
+  }))
   const fetchMock = vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
     const requestUrl = String(url)
+    const requestPath = requestUrl.startsWith("http") ? new URL(requestUrl).pathname : requestUrl
     if (requestUrl === "/config.json") return Promise.resolve(response({ apiBaseUrl: "http://api.test" }))
     if (requestUrl.endsWith("/me") && isGet(init)) return Promise.resolve(response(currentUserResponse(groups)))
     if (requestUrl.endsWith("/admin/users") && isGet(init)) return Promise.resolve(response({ users: managedUsers }))
-    if (requestUrl.endsWith("/admin/audit-log") && isGet(init)) return Promise.resolve(response({ auditLog: adminAuditLog }))
-    if (requestUrl.endsWith("/admin/roles") && isGet(init)) return Promise.resolve(response({ roles }))
+    if (requestPath.endsWith("/admin/audit-log") && isGet(init)) return Promise.resolve(response({ auditLog: adminAuditLog, total: adminAuditLog.length, truncated: false, source: "admin-audit-ledger", asOf: "2026-05-02T00:00:00.000Z" }))
+    if (requestPath.endsWith("/admin/roles") && isGet(init)) return Promise.resolve(response({ roles, catalogVersion: "role-catalog-v2", source: "canonical-application-role-catalog", asOf: "2026-05-02T00:00:00.000Z" }))
     if (requestUrl.endsWith("/admin/usage") && isGet(init)) {
       return Promise.resolve(response({ users: [{ userId: "local-dev", email: "tester@example.com", chatMessages: 12, conversationCount: 3, questionCount: 1, documentCount: 2, benchmarkRunCount: 0, debugRunCount: 0, availableMetrics: ["chatMessages", "conversationCount", "questionCount", "documentCount", "benchmarkRunCount", "debugRunCount"], unavailableMetrics: [], lastActivityAt: "2026-05-02T00:00:00.000Z" }] }))
     }
     if (requestUrl.endsWith("/admin/costs") && isGet(init)) {
       return Promise.resolve(response({ available: true, periodStart: "2026-05-01T00:00:00.000Z", periodEnd: "2026-05-02T00:00:00.000Z", currency: "USD", totalEstimatedUsd: 0.0123, pricingCatalogUpdatedAt: "2026-05-02T00:00:00.000Z", users: [{ userId: "local-dev", email: "tester@example.com", estimatedCostUsd: 0.0123 }], items: [{ service: "Bedrock", category: "chat completion", usage: 12, unit: "message", unitCostUsd: 0.0008, estimatedCostUsd: 0.0096, confidence: "estimated_usage" }] }))
     }
-    if (requestUrl.endsWith("/admin/aliases") && isGet(init)) return Promise.resolve(response({ aliases }))
-    if (requestUrl.endsWith("/admin/aliases/audit-log") && isGet(init)) return Promise.resolve(response({ auditLog: aliasAuditLog }))
+    if (requestPath.endsWith("/admin/aliases") && isGet(init)) return Promise.resolve(response({ aliases, total: aliases.length, truncated: false, source: "alias-governance-ledger", asOf: "2026-05-02T00:00:00.000Z", version: "alias-ledger-version-1" }))
+    if (requestPath.endsWith("/admin/aliases/audit-log") && isGet(init)) return Promise.resolve(response({ auditLog: aliasAuditLog, total: aliasAuditLog.length, truncated: false, source: "alias-governance-audit-ledger", asOf: "2026-05-02T00:00:00.000Z" }))
     if (requestUrl.endsWith("/admin/aliases") && init?.method === "POST") {
       const body = parseRequestJson(init)
-      const alias: AliasDefinition = { aliasId: "alias-2", ...body, status: "draft", createdBy: "local-dev", createdAt: "2026-05-02T00:01:00.000Z", updatedAt: "2026-05-02T00:01:00.000Z" }
+      const alias: AliasDefinition = { aliasId: "alias-2", version: "alias-version-2", ...body, status: "draft", createdBy: "local-dev", createdAt: "2026-05-02T00:01:00.000Z", updatedAt: "2026-05-02T00:01:00.000Z" }
       aliases = [alias, ...aliases]
       return Promise.resolve(response(alias))
     }
     if (requestUrl.endsWith("/admin/aliases/alias-1/review") && init?.method === "POST") {
-      aliases = aliases.map((alias) => (alias.aliasId === "alias-1" ? { ...alias, status: "approved", reviewedBy: "local-dev", reviewedAt: "2026-05-02T00:02:00.000Z", updatedAt: "2026-05-02T00:02:00.000Z" } : alias))
+      aliases = aliases.map((alias) => (alias.aliasId === "alias-1" ? { ...alias, version: "alias-version-2", status: "approved", reviewedBy: "local-dev", reviewedAt: "2026-05-02T00:02:00.000Z", updatedAt: "2026-05-02T00:02:00.000Z" } : alias))
       return Promise.resolve(response(aliases[0]))
     }
     if (requestUrl.endsWith("/admin/aliases/publish") && init?.method === "POST") {
       aliases = aliases.map((alias) => (alias.status === "approved" ? { ...alias, publishedVersion: "aliases-20260502T000300Z" } : alias))
-      aliasAuditLog = [{ auditId: "audit-2", action: "publish", actorUserId: "local-dev", createdAt: "2026-05-02T00:03:00.000Z", detail: "published 1 aliases" }, ...aliasAuditLog]
+      aliasAuditLog = [{ auditId: "audit-2", tenantId: "local-test", action: "publish", actorUserId: "local-dev", result: "success", reason: "検索へ反映", createdAt: "2026-05-02T00:03:00.000Z", detail: "published 1 aliases" }, ...aliasAuditLog]
       return Promise.resolve(response({ version: "aliases-20260502T000300Z", publishedAt: "2026-05-02T00:03:00.000Z", aliasCount: 1 }))
     }
     if (requestUrl.endsWith("/admin/users") && init?.method === "POST") {
@@ -515,7 +528,8 @@ async function renderAuthenticatedApp() {
 function findRequest(fetchMock: ReturnType<typeof vi.fn>, suffix: string, method = "GET") {
   return fetchMock.mock.calls.find(([url, init]) => {
     const requestMethod = (init as RequestInit | undefined)?.method ?? "GET"
-    return String(url).endsWith(suffix) && requestMethod === method
+    const pathname = new URL(String(url), "http://app.test").pathname
+    return pathname.endsWith(suffix) && requestMethod === method
   })
 }
 
@@ -1526,6 +1540,15 @@ describe("App chat and upload flow", () => {
       if (requestUrl.endsWith("/me") && isGet(init)) return Promise.resolve(response(currentUserResponse(["ACCESS_ADMIN"])))
       if (requestUrl.endsWith("/documents") && isGet(init)) return Promise.resolve(response({ documents }))
       if (requestUrl.endsWith("/conversation-history") && isGet(init)) return Promise.resolve(response({ history: [] }))
+      if (requestUrl.endsWith("/admin/roles") && isGet(init)) return Promise.resolve(response({
+        roles: [{ role: "ACCESS_ADMIN", displayName: "アクセス管理者", description: "アクセスを管理", kind: "systemPreset", permissions: ["access:policy:read"] }],
+        catalogVersion: "role-catalog-v2",
+        source: "canonical-application-role-catalog",
+        asOf: "2026-05-02T00:00:00.000Z"
+      }))
+      if (new URL(requestUrl).pathname.endsWith("/admin/audit-log") && isGet(init)) return Promise.resolve(response({
+        auditLog: [], total: 0, truncated: false, source: "admin-audit-ledger", asOf: "2026-05-02T00:00:00.000Z"
+      }))
       return Promise.resolve(response({}))
     })
     vi.stubGlobal("fetch", fetchMock)
@@ -1533,8 +1556,9 @@ describe("App chat and upload flow", () => {
 
     await userEvent.click(await screen.findByTitle("管理者設定"))
     expect(await screen.findByLabelText("管理者設定")).toBeInTheDocument()
-    expect(screen.getByText("アクセス管理")).toBeInTheDocument()
-    expect(screen.getByText("ロール定義")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "アクセス管理を開く" })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole("button", { name: "ロール" }))
+    expect(screen.getByLabelText("アプリケーションロール定義")).toBeInTheDocument()
     expect(screen.queryByTitle("担当者対応")).not.toBeInTheDocument()
     expect(fetchMock.mock.calls.some(([url, init]) => String(url).endsWith("/questions") && isGet(init as RequestInit | undefined))).toBe(false)
     expect(fetchMock.mock.calls.some(([url, init]) => String(url).endsWith("/debug-runs") && isGet(init as RequestInit | undefined))).toBe(false)
@@ -1546,12 +1570,12 @@ describe("App chat and upload flow", () => {
 
     await userEvent.click(await screen.findByTitle("管理者設定"))
     const adminWorkspace = await screen.findByLabelText("管理者設定")
-    expect(within(adminWorkspace).getByLabelText("ユーザー管理")).toBeInTheDocument()
+    expect(within(adminWorkspace).getByRole("button", { name: "ユーザー管理を開く" })).toBeInTheDocument()
     await userEvent.click(within(adminWorkspace).getByRole("button", { name: "ユーザー" }))
     expect(await screen.findByLabelText("ユーザー管理一覧")).toBeInTheDocument()
     expect(screen.getByLabelText("管理対象ユーザー作成")).toBeInTheDocument()
     await userEvent.click(within(adminWorkspace).getByRole("button", { name: "ロール" }))
-    expect(screen.getByLabelText("ロール定義")).toBeInTheDocument()
+    expect(screen.getByLabelText("アプリケーションロール定義")).toBeInTheDocument()
     await userEvent.click(within(adminWorkspace).getByRole("button", { name: "利用状況・コスト" }))
     expect(screen.getByLabelText("利用状況一覧")).toBeInTheDocument()
     expect(screen.getByLabelText("コスト監査一覧")).toBeInTheDocument()
@@ -1561,43 +1585,45 @@ describe("App chat and upload flow", () => {
     expect(screen.getByLabelText("用語展開管理一覧")).toBeInTheDocument()
 
     await userEvent.click(within(adminWorkspace).getByRole("button", { name: "ユーザー" }))
-    await userEvent.selectOptions(screen.getByDisplayValue("SYSTEM_ADMIN"), "COST_AUDITOR")
+    await userEvent.click(screen.getByRole("checkbox", { name: /COST_AUDITOR/ }))
     await userEvent.type(screen.getByLabelText("tester@example.comのロール変更理由"), "コスト監査担当へ変更")
-    const assignButton = screen.getAllByRole("button", { name: "付与" }).find((button) => !button.hasAttribute("disabled"))
-    expect(assignButton).toBeDefined()
-    await userEvent.click(assignButton!)
-    const roleAssignDialog = await screen.findByRole("dialog", { name: "ロールを付与しますか？" })
-    await userEvent.click(within(roleAssignDialog).getByRole("button", { name: "付与" }))
+    await userEvent.click(screen.getByRole("button", { name: "tester@example.comのロール変更を確認" }))
+    const roleAssignDialog = await screen.findByRole("dialog", { name: "ロール割り当てを変更しますか？" })
+    await userEvent.click(within(roleAssignDialog).getByRole("button", { name: "変更" }))
     await waitFor(() =>
       expect(
         fetchMock.mock.calls.some(([url, init]) => String(url).endsWith("/admin/users/local-dev/roles") && (init as RequestInit | undefined)?.method === "POST")
       ).toBe(true)
     )
 
-    await userEvent.click(screen.getByRole("button", { name: "停止" }))
+    await userEvent.click(screen.getByRole("button", { name: "tester@example.comの利用を停止" }))
     const suspendDialog = await screen.findByRole("dialog", { name: "このユーザーを停止しますか？" })
     await userEvent.click(within(suspendDialog).getByRole("button", { name: "停止" }))
     expect(await screen.findByText("停止中")).toBeInTheDocument()
-    await userEvent.click(screen.getByRole("button", { name: "再開" }))
+    await userEvent.click(screen.getByRole("button", { name: "tester@example.comの利用を再開" }))
     expect(await screen.findByText("有効")).toBeInTheDocument()
 
     await userEvent.click(within(adminWorkspace).getByRole("button", { name: "用語展開" }))
-    await userEvent.type(within(screen.getByLabelText("用語展開管理一覧")).getByPlaceholderText("pto"), "sl")
-    await userEvent.type(screen.getByPlaceholderText("有給休暇, 休暇申請"), "病気休暇, sick leave")
-    await userEvent.click(screen.getByRole("button", { name: "追加" }))
-    expect(await screen.findByText("sl")).toBeInTheDocument()
-    const approveButton = within(screen.getByLabelText("用語展開管理一覧")).getAllByRole("button", { name: "承認" }).at(0)
+    await userEvent.type(within(screen.getByLabelText("用語展開管理一覧")).getByLabelText("用語"), "sl")
+    await userEvent.type(screen.getByLabelText("展開語（カンマまたは改行区切り）"), "病気休暇, sick leave")
+    await userEvent.click(screen.getByRole("button", { name: "下書きを追加" }))
+    expect((await screen.findAllByText("sl")).length).toBeGreaterThan(0)
+    const approveButton = within(screen.getByLabelText("用語展開管理一覧")).getByRole("button", { name: "ptoを承認" })
     assertElement(approveButton)
     await userEvent.click(approveButton)
-    await userEvent.click(screen.getByRole("button", { name: "公開" }))
-    const publishDialog = await screen.findByRole("dialog", { name: "用語展開を公開しますか？" })
+    const reviewDialog = await screen.findByRole("dialog", { name: "承認しますか？" })
+    await userEvent.type(within(reviewDialog).getByLabelText("実行理由（必須）"), "運用確認済み")
+    await userEvent.click(within(reviewDialog).getByRole("button", { name: "承認" }))
+    await userEvent.click(screen.getByRole("button", { name: "承認済み用語展開を公開" }))
+    const publishDialog = await screen.findByRole("dialog", { name: "承認済みの用語展開を公開しますか？" })
+    await userEvent.type(within(publishDialog).getByLabelText("実行理由（必須）"), "検索へ反映")
     await userEvent.click(within(publishDialog).getByRole("button", { name: "公開" }))
     await waitFor(() =>
       expect(fetchMock.mock.calls.some(([url, init]) => String(url).endsWith("/admin/aliases/publish") && (init as RequestInit | undefined)?.method === "POST")).toBe(true)
     )
 
     await userEvent.click(within(adminWorkspace).getByRole("button", { name: "ユーザー" }))
-    await userEvent.click(screen.getByRole("button", { name: "削除" }))
+    await userEvent.click(screen.getByRole("button", { name: "tester@example.comを削除" }))
     const userDeleteDialog = await screen.findByRole("dialog", { name: "このユーザーを削除状態にしますか？" })
     await userEvent.click(within(userDeleteDialog).getByRole("button", { name: "削除" }))
     await waitFor(() =>
@@ -1611,7 +1637,7 @@ describe("App chat and upload flow", () => {
     await userEvent.selectOptions(within(adminWorkspace).getByLabelText("初期ロール"), "CHAT_USER")
     await userEvent.click(within(adminWorkspace).getByRole("button", { name: "作成" }))
     expect((await screen.findAllByText("new-user@example.com")).length).toBeGreaterThan(0)
-    expect(await screen.findByText("ユーザー作成")).toBeInTheDocument()
+    expect((await screen.findAllByText("ユーザー作成")).length).toBeGreaterThan(0)
   })
 
   it("connects the admin overview to Phase 1 workspaces", async () => {

@@ -507,7 +507,8 @@
         "view": "admin",
         "canonicalUrl": "/?view=admin",
         "urlPatterns": [
-          "/?view=admin"
+          "/?view=admin",
+          "/?view=admin&section=:section&adminQuery=:query&aliasStatus=:status&auditAction=:action&sort=:sort&selected=:id"
         ],
         "routeKind": "query-state",
         "access": {
@@ -566,16 +567,28 @@
             "evidence": [
               "apps/web/e2e/visual-regression.spec.ts"
             ]
+          },
+          {
+            "id": "E2E-UI-ADMIN-001",
+            "status": "implemented",
+            "evidence": [
+              "apps/web/e2e/visual-regression.spec.ts"
+            ]
           }
         ],
         "implementationStatus": "partial",
         "implementationEvidence": [
           "apps/web/src/features/admin/components/AdminWorkspace.tsx",
+          "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
           "apps/web/src/features/admin/hooks/useAdminData.ts",
+          "apps/web/src/features/admin/api/adminContract.ts",
           "apps/web/src/shared/ui/OperationFeedback.tsx"
         ],
         "gapTasks": [
-          "tasks/todo/20260714-1011-admin-ui-governance-quality.md"
+          "tasks/do/20260714-1011-admin-ui-governance-quality.md",
+          "tasks/todo/20260714-1011-admin-access-audit-state.md",
+          "tasks/todo/20260714-1011-admin-usage-cost-integrity.md",
+          "tasks/todo/20260714-issue-345-manual-a11y-evidence.md"
         ]
       }
     },
@@ -754,8 +767,8 @@
       "screens": [
         "admin"
       ],
-      "componentCount": 8,
-      "interactionCount": 38
+      "componentCount": 9,
+      "interactionCount": 85
     },
     {
       "feature": "agents",
@@ -957,6 +970,21 @@
       "certainty": "confirmed"
     },
     {
+      "file": "apps/web/src/features/admin/components/AdminPanelDataStatus.tsx",
+      "feature": "admin",
+      "exports": [
+        "AdminPanelDataStatus"
+      ],
+      "jsxUsages": [
+        "button",
+        "div",
+        "span",
+        "strong",
+        "time"
+      ],
+      "certainty": "confirmed"
+    },
+    {
       "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
       "feature": "admin",
       "exports": [
@@ -990,12 +1018,20 @@
         "AdminAuditPanel"
       ],
       "jsxUsages": [
+        "AdminPanelDataStatus",
         "EmptyState",
         "article",
+        "button",
+        "code",
         "div",
+        "form",
         "h3",
+        "input",
+        "label",
+        "option",
         "p",
         "section",
+        "select",
         "small",
         "span",
         "strong",
@@ -1010,6 +1046,7 @@
         "AdminCostPanel"
       ],
       "jsxUsages": [
+        "AdminPanelDataStatus",
         "EmptyState",
         "article",
         "div",
@@ -1031,7 +1068,6 @@
       "jsxUsages": [
         "EmptyState",
         "Icon",
-        "article",
         "button",
         "div",
         "small",
@@ -1047,14 +1083,20 @@
         "AdminRolePanel"
       ],
       "jsxUsages": [
+        "AdminPanelDataStatus",
         "EmptyState",
-        "article",
+        "code",
+        "details",
         "div",
         "h3",
+        "li",
         "p",
         "section",
+        "small",
         "span",
-        "strong"
+        "strong",
+        "summary",
+        "ul"
       ],
       "certainty": "confirmed"
     },
@@ -1065,12 +1107,19 @@
         "AdminUsagePanel"
       ],
       "jsxUsages": [
+        "AdminPanelDataStatus",
         "EmptyState",
         "div",
         "h3",
         "p",
         "section",
-        "span"
+        "span",
+        "table",
+        "tbody",
+        "td",
+        "th",
+        "thead",
+        "tr"
       ],
       "certainty": "confirmed"
     },
@@ -1082,6 +1131,7 @@
       ],
       "jsxUsages": [
         "AdminCreateUserForm",
+        "AdminPanelDataStatus",
         "ConfirmDialog",
         "EmptyState",
         "LoadingSpinner",
@@ -1089,17 +1139,27 @@
         "OperationFeedback",
         "StatusBadge",
         "button",
+        "code",
         "div",
+        "fieldset",
         "form",
         "h3",
         "input",
         "label",
+        "legend",
         "option",
         "section",
         "select",
         "small",
         "span",
-        "strong"
+        "strong",
+        "table",
+        "tbody",
+        "td",
+        "textarea",
+        "th",
+        "thead",
+        "tr"
       ],
       "certainty": "confirmed"
     },
@@ -1110,22 +1170,32 @@
         "AliasAdminPanel"
       ],
       "jsxUsages": [
+        "AdminPanelDataStatus",
         "ConfirmDialog",
         "EmptyState",
-        "LoadingSpinner",
         "OperationFeedback",
+        "ReasonField",
         "StatusBadge",
         "article",
         "button",
+        "code",
+        "dd",
         "div",
+        "dl",
+        "dt",
         "form",
         "h3",
+        "h4",
         "input",
         "label",
+        "option",
         "section",
+        "select",
         "small",
         "span",
-        "strong"
+        "strong",
+        "textarea",
+        "time"
       ],
       "certainty": "confirmed"
     },
@@ -2639,9 +2709,55 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:143:button",
+      "id": "apps/web/src/features/admin/components/AdminPanelDataStatus.tsx:38:button",
+      "file": "apps/web/src/features/admin/components/AdminPanelDataStatus.tsx",
+      "line": 38,
+      "feature": "admin",
+      "component": "AdminPanelDataStatus",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "`${label}を更新`",
+      "a11y": {
+        "accessibleName": "`${label}を更新`",
+        "accessibleNameSource": "aria-label",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=loading || isBusy"
+        ],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => void onRefresh()"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "loading || isBusy"
+        },
+        {
+          "name": "onClick",
+          "value": "() => void onRefresh()"
+        },
+        {
+          "name": "aria-label",
+          "value": "`${label}を更新`"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:189:button",
       "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 143,
+      "line": 189,
       "feature": "admin",
       "component": "AdminWorkspace",
       "element": "button",
@@ -2683,9 +2799,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:156:button",
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:202:button",
       "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 156,
+      "line": 202,
       "feature": "admin",
       "component": "AdminWorkspace",
       "element": "button",
@@ -2705,7 +2821,7 @@
       "handlers": [
         {
           "name": "onClick",
-          "value": "() => setActiveSection(section.id)"
+          "value": "() => openSection(section.id)"
         }
       ],
       "attributes": [
@@ -2719,15 +2835,342 @@
         },
         {
           "name": "onClick",
-          "value": "() => setActiveSection(section.id)"
+          "value": "() => openSection(section.id)"
         }
       ],
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AdminOverviewGrid.tsx:191:button",
+      "id": "apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:54:form",
+      "file": "apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx",
+      "line": 54,
+      "feature": "admin",
+      "component": "AdminAuditPanel",
+      "element": "form",
+      "isIntrinsic": true,
+      "label": "管理操作履歴を絞り込む",
+      "a11y": {
+        "accessibleName": "管理操作履歴を絞り込む",
+        "accessibleNameSource": "aria-label",
+        "descriptionRefs": "-",
+        "role": "search",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onSubmit",
+          "value": "applyFilters"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "onSubmit",
+          "value": "applyFilters"
+        },
+        {
+          "name": "role",
+          "value": "search"
+        },
+        {
+          "name": "aria-label",
+          "value": "管理操作履歴を絞り込む"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:55:label",
+      "file": "apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx",
+      "line": 55,
+      "feature": "admin",
+      "component": "AdminAuditPanel",
+      "element": "label",
+      "isIntrinsic": true,
+      "label": "対象・実行者を検索",
+      "a11y": {
+        "accessibleName": "対象・実行者を検索",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:57:input",
+      "file": "apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx",
+      "line": 57,
+      "feature": "admin",
+      "component": "AdminAuditPanel",
+      "element": "input",
+      "isIntrinsic": true,
+      "label": "query",
+      "a11y": {
+        "accessibleName": "対象・実行者を検索",
+        "accessibleNameSource": "label",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => setQuery(event.target.value)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "value",
+          "value": "query"
+        },
+        {
+          "name": "onChange",
+          "value": "(event) => setQuery(event.target.value)"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:59:label",
+      "file": "apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx",
+      "line": 59,
+      "feature": "admin",
+      "component": "AdminAuditPanel",
+      "element": "label",
+      "isIntrinsic": true,
+      "label": "操作 / すべて",
+      "a11y": {
+        "accessibleName": "操作 / すべて",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:61:select",
+      "file": "apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx",
+      "line": 61,
+      "feature": "admin",
+      "component": "AdminAuditPanel",
+      "element": "select",
+      "isIntrinsic": true,
+      "label": "action",
+      "a11y": {
+        "accessibleName": "すべて",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => onUrlStateChange({ ...urlState, section: \"audit\", auditAction: event.target.va…"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "value",
+          "value": "action"
+        },
+        {
+          "name": "onChange",
+          "value": "(event) => onUrlStateChange({ ...urlState, section: \"audit\", auditAction: event.target.va…"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:69:option",
+      "file": "apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx",
+      "line": 69,
+      "feature": "admin",
+      "component": "AdminAuditPanel",
+      "element": "option",
+      "isIntrinsic": true,
+      "label": "すべて",
+      "a11y": {
+        "accessibleName": "すべて",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "value",
+          "value": ""
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:70:option",
+      "file": "apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx",
+      "line": 70,
+      "feature": "admin",
+      "component": "AdminAuditPanel",
+      "element": "option",
+      "isIntrinsic": true,
+      "label": "option.value",
+      "a11y": {
+        "accessibleName": "操作 / すべて",
+        "accessibleNameSource": "label",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "value",
+          "value": "option.value"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:73:button",
+      "file": "apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx",
+      "line": 73,
+      "feature": "admin",
+      "component": "AdminAuditPanel",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "検索",
+      "a11y": {
+        "accessibleName": "検索",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=loading"
+        ],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "submit"
+        },
+        {
+          "name": "disabled",
+          "value": "loading"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:75:button",
+      "file": "apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx",
+      "line": 75,
+      "feature": "admin",
+      "component": "AdminAuditPanel",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "条件を解除",
+      "a11y": {
+        "accessibleName": "条件を解除",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=loading"
+        ],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => { setQuery(\"\") onUrlStateChange({ ...urlState, section: \"audit\", query: undefined, …"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "loading"
+        },
+        {
+          "name": "onClick",
+          "value": "() => { setQuery(\"\") onUrlStateChange({ ...urlState, section: \"audit\", query: undefined, …"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:108:button",
+      "file": "apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx",
+      "line": 108,
+      "feature": "admin",
+      "component": "AdminAuditPanel",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "次の履歴を読み込む（残り / 件）",
+      "a11y": {
+        "accessibleName": "次の履歴を読み込む（残り / 件）",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=loading"
+        ],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => void onLoadMore()"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "loading"
+        },
+        {
+          "name": "onClick",
+          "value": "() => void onLoadMore()"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AdminOverviewGrid.tsx:205:button",
       "file": "apps/web/src/features/admin/components/panels/AdminOverviewGrid.tsx",
-      "line": 191,
+      "line": 205,
       "feature": "admin",
       "component": "AdminOverviewGrid",
       "element": "button",
@@ -2765,29 +3208,27 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:63:button",
-      "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
-      "line": 63,
+      "id": "apps/web/src/features/admin/components/panels/AdminOverviewGrid.tsx:212:button",
+      "file": "apps/web/src/features/admin/components/panels/AdminOverviewGrid.tsx",
+      "line": 212,
       "feature": "admin",
-      "component": "AdminUserPanel",
+      "component": "AdminOverviewGrid",
       "element": "button",
       "isIntrinsic": true,
-      "label": "更新",
+      "label": "`${card.label}を開く`",
       "a11y": {
-        "accessibleName": "更新",
-        "accessibleNameSource": "visible-text",
+        "accessibleName": "`${card.label}を開く`",
+        "accessibleNameSource": "aria-label",
         "descriptionRefs": "-",
         "role": "-",
-        "state": [
-          "disabled=loading"
-        ],
+        "state": [],
         "status": "ok",
         "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
       },
       "handlers": [
         {
           "name": "onClick",
-          "value": "() => void onRefreshAdminData()"
+          "value": "card.onSelect"
         }
       ],
       "attributes": [
@@ -2796,20 +3237,42 @@
           "value": "button"
         },
         {
-          "name": "onClick",
-          "value": "() => void onRefreshAdminData()"
+          "name": "aria-label",
+          "value": "`${card.label}を開く`"
         },
         {
-          "name": "disabled",
-          "value": "loading"
+          "name": "onClick",
+          "value": "card.onSelect"
         }
       ],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:69:AdminCreateUserForm",
+      "id": "apps/web/src/features/admin/components/panels/AdminRolePanel.tsx:55:summary",
+      "file": "apps/web/src/features/admin/components/panels/AdminRolePanel.tsx",
+      "line": 55,
+      "feature": "admin",
+      "component": "AdminRolePanel",
+      "element": "summary",
+      "isIntrinsic": true,
+      "label": "権限 ID / 件を表示",
+      "a11y": {
+        "accessibleName": "権限 ID / 件を表示",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:71:AdminCreateUserForm",
       "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
-      "line": 69,
+      "line": 71,
       "feature": "admin",
       "component": "AdminUserPanel",
       "element": "AdminCreateUserForm",
@@ -2839,9 +3302,9 @@
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:153:form",
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:159:form",
       "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
-      "line": 153,
+      "line": 159,
       "feature": "admin",
       "component": "AdminCreateUserForm",
       "element": "form",
@@ -2875,9 +3338,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:154:label",
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:160:label",
       "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
-      "line": 154,
+      "line": 160,
       "feature": "admin",
       "component": "AdminCreateUserForm",
       "element": "label",
@@ -2897,9 +3360,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:156:input",
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:162:input",
       "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
-      "line": 156,
+      "line": 162,
       "feature": "admin",
       "component": "AdminCreateUserForm",
       "element": "input",
@@ -2941,9 +3404,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:158:label",
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:164:label",
       "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
-      "line": 158,
+      "line": 164,
       "feature": "admin",
       "component": "AdminCreateUserForm",
       "element": "label",
@@ -2963,9 +3426,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:160:input",
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:166:input",
       "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
-      "line": 160,
+      "line": 166,
       "feature": "admin",
       "component": "AdminCreateUserForm",
       "element": "input",
@@ -3003,9 +3466,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:162:label",
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:168:label",
       "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
-      "line": 162,
+      "line": 168,
       "feature": "admin",
       "component": "AdminCreateUserForm",
       "element": "label",
@@ -3025,9 +3488,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:169:select",
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:175:select",
       "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
-      "line": 169,
+      "line": 175,
       "feature": "admin",
       "component": "AdminCreateUserForm",
       "element": "select",
@@ -3061,17 +3524,17 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:171:option",
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:177:option",
       "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
-      "line": 171,
+      "line": 177,
       "feature": "admin",
       "component": "AdminCreateUserForm",
       "element": "option",
       "isIntrinsic": true,
       "label": "roleDefinition.role",
       "a11y": {
-        "accessibleName": "初期ロール",
-        "accessibleNameSource": "label",
+        "accessibleName": "( / )",
+        "accessibleNameSource": "visible-text",
         "descriptionRefs": "-",
         "role": "-",
         "state": [],
@@ -3088,9 +3551,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:176:button",
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:182:button",
       "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
-      "line": 176,
+      "line": 182,
       "feature": "admin",
       "component": "AdminCreateUserForm",
       "element": "button",
@@ -3121,63 +3584,17 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:290:select",
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:297:label",
       "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
-      "line": 290,
+      "line": 297,
       "feature": "admin",
       "component": "ManagedUserRow",
-      "element": "select",
+      "element": "label",
       "isIntrinsic": true,
-      "label": "`${user.email}に付与するロール`",
+      "label": "未推定",
       "a11y": {
-        "accessibleName": "`${user.email}に付与するロール`",
-        "accessibleNameSource": "aria-label",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [
-          "disabled=loading"
-        ],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [
-        {
-          "name": "onChange",
-          "value": "(event) => setSelectedRole(event.target.value)"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "value",
-          "value": "selectedRole"
-        },
-        {
-          "name": "disabled",
-          "value": "loading"
-        },
-        {
-          "name": "aria-label",
-          "value": "`${user.email}に付与するロール`"
-        },
-        {
-          "name": "onChange",
-          "value": "(event) => setSelectedRole(event.target.value)"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:292:option",
-      "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
-      "line": 292,
-      "feature": "admin",
-      "component": "ManagedUserRow",
-      "element": "option",
-      "isIntrinsic": true,
-      "label": "role.role",
-      "a11y": {
-        "accessibleName": "role.role",
-        "accessibleNameSource": "value",
+        "accessibleName": "未推定",
+        "accessibleNameSource": "missing",
         "descriptionRefs": "-",
         "role": "-",
         "state": [],
@@ -3185,63 +3602,80 @@
         "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
       },
       "handlers": [],
-      "attributes": [
-        {
-          "name": "value",
-          "value": "role.role"
-        }
-      ],
-      "certainty": "confirmed"
+      "attributes": [],
+      "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:295:button",
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:298:input",
       "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
-      "line": 295,
+      "line": 298,
       "feature": "admin",
       "component": "ManagedUserRow",
-      "element": "button",
+      "element": "input",
       "isIntrinsic": true,
-      "label": "付与",
+      "label": "未推定",
       "a11y": {
-        "accessibleName": "付与",
-        "accessibleNameSource": "visible-text",
+        "accessibleName": "未推定",
+        "accessibleNameSource": "missing",
         "descriptionRefs": "-",
         "role": "-",
         "state": [
-          "disabled=loading || !roleChanged || roleReason.trim().length === 0"
+          "disabled=loading"
         ],
-        "status": "warning",
-        "reason": "削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。"
+        "status": "missing",
+        "reason": "アクセシブル名が静的解析で確認できません。"
       },
       "handlers": [
         {
-          "name": "onClick",
-          "value": "() => setRoleAssignOpen(true)"
+          "name": "onChange",
+          "value": "(event) => setSelectedRoles((current) => event.target.checked ? [...current, role.role] :…"
         }
       ],
       "attributes": [
         {
           "name": "type",
-          "value": "button"
+          "value": "checkbox"
         },
         {
           "name": "disabled",
-          "value": "loading || !roleChanged || roleReason.trim().length === 0"
+          "value": "loading"
         },
         {
-          "name": "onClick",
-          "value": "() => setRoleAssignOpen(true)"
+          "name": "onChange",
+          "value": "(event) => setSelectedRoles((current) => event.target.checked ? [...current, role.role] :…"
         }
       ],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:311:label",
+      "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
+      "line": 311,
+      "feature": "admin",
+      "component": "ManagedUserRow",
+      "element": "label",
+      "isIntrinsic": true,
+      "label": "変更理由（必須）",
+      "a11y": {
+        "accessibleName": "変更理由（必須）",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:299:input",
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:313:textarea",
       "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
-      "line": 299,
+      "line": 313,
       "feature": "admin",
       "component": "ManagedUserRow",
-      "element": "input",
+      "element": "textarea",
       "isIntrinsic": true,
       "label": "`${user.email}のロール変更理由`",
       "a11y": {
@@ -3275,10 +3709,6 @@
           "value": "`${user.email}のロール変更理由`"
         },
         {
-          "name": "placeholder",
-          "value": "変更理由（必須）"
-        },
-        {
           "name": "onChange",
           "value": "(event) => setRoleReason(event.target.value)"
         }
@@ -3286,24 +3716,70 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:318:button",
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:322:button",
       "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
-      "line": 318,
+      "line": 322,
       "feature": "admin",
       "component": "ManagedUserRow",
       "element": "button",
       "isIntrinsic": true,
-      "label": "再開",
+      "label": "`${user.email}のロール変更を確認`",
       "a11y": {
-        "accessibleName": "再開",
-        "accessibleNameSource": "visible-text",
+        "accessibleName": "`${user.email}のロール変更を確認`",
+        "accessibleNameSource": "aria-label",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=loading || !roleChanged || nextGroups.length === 0 || roleReason.trim().length === 0"
+        ],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => setRoleAssignOpen(true)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "loading || !roleChanged || nextGroups.length === 0 || roleReason.trim().length === 0"
+        },
+        {
+          "name": "onClick",
+          "value": "() => setRoleAssignOpen(true)"
+        },
+        {
+          "name": "aria-label",
+          "value": "`${user.email}のロール変更を確認`"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:342:button",
+      "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
+      "line": 342,
+      "feature": "admin",
+      "component": "ManagedUserRow",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "`${user.email}の利用を再開`",
+      "a11y": {
+        "accessibleName": "`${user.email}の利用を再開`",
+        "accessibleNameSource": "aria-label",
         "descriptionRefs": "-",
         "role": "-",
         "state": [
           "disabled=loading"
         ],
-        "status": "warning",
-        "reason": "削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。"
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
       },
       "handlers": [
         {
@@ -3323,29 +3799,33 @@
         {
           "name": "onClick",
           "value": "() => void applyStatus(\"unsuspend\")"
+        },
+        {
+          "name": "aria-label",
+          "value": "`${user.email}の利用を再開`"
         }
       ],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:323:button",
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:347:button",
       "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
-      "line": 323,
+      "line": 347,
       "feature": "admin",
       "component": "ManagedUserRow",
       "element": "button",
       "isIntrinsic": true,
-      "label": "停止",
+      "label": "`${user.email}の利用を停止`",
       "a11y": {
-        "accessibleName": "停止",
-        "accessibleNameSource": "visible-text",
+        "accessibleName": "`${user.email}の利用を停止`",
+        "accessibleNameSource": "aria-label",
         "descriptionRefs": "-",
         "role": "-",
         "state": [
           "disabled=loading"
         ],
-        "status": "warning",
-        "reason": "削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。"
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
       },
       "handlers": [
         {
@@ -3365,29 +3845,33 @@
         {
           "name": "onClick",
           "value": "() => setStatusCandidate(\"suspend\")"
+        },
+        {
+          "name": "aria-label",
+          "value": "`${user.email}の利用を停止`"
         }
       ],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:328:button",
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:352:button",
       "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
-      "line": 328,
+      "line": 352,
       "feature": "admin",
       "component": "ManagedUserRow",
       "element": "button",
       "isIntrinsic": true,
-      "label": "削除",
+      "label": "`${user.email}を削除`",
       "a11y": {
-        "accessibleName": "削除",
-        "accessibleNameSource": "visible-text",
+        "accessibleName": "`${user.email}を削除`",
+        "accessibleNameSource": "aria-label",
         "descriptionRefs": "-",
         "role": "-",
         "state": [
           "disabled=loading"
         ],
-        "status": "warning",
-        "reason": "削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。"
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
       },
       "handlers": [
         {
@@ -3407,14 +3891,18 @@
         {
           "name": "onClick",
           "value": "() => void prepareDelete()"
+        },
+        {
+          "name": "aria-label",
+          "value": "`${user.email}を削除`"
         }
       ],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:376:label",
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:399:label",
       "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
-      "line": 376,
+      "line": 399,
       "feature": "admin",
       "component": "ManagedUserRow",
       "element": "label",
@@ -3439,9 +3927,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:378:select",
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:401:select",
       "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
-      "line": 378,
+      "line": 401,
       "feature": "admin",
       "component": "ManagedUserRow",
       "element": "select",
@@ -3489,9 +3977,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:386:option",
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:409:option",
       "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
-      "line": 386,
+      "line": 409,
       "feature": "admin",
       "component": "ManagedUserRow",
       "element": "option",
@@ -3516,9 +4004,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:388:option",
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:411:option",
       "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
-      "line": 388,
+      "line": 411,
       "feature": "admin",
       "component": "ManagedUserRow",
       "element": "option",
@@ -3543,29 +4031,29 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:81:button",
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:129:button",
       "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
-      "line": 81,
+      "line": 129,
       "feature": "admin",
       "component": "AliasAdminPanel",
       "element": "button",
       "isIntrinsic": true,
-      "label": "公開",
+      "label": "承認済み用語展開を公開",
       "a11y": {
-        "accessibleName": "公開",
-        "accessibleNameSource": "visible-text",
+        "accessibleName": "承認済み用語展開を公開",
+        "accessibleNameSource": "aria-label",
         "descriptionRefs": "-",
         "role": "-",
         "state": [
           "disabled=loading"
         ],
-        "status": "warning",
-        "reason": "削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。"
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
       },
       "handlers": [
         {
           "name": "onClick",
-          "value": "() => setPublishConfirmOpen(true)"
+          "value": "() => { setReason(\"\"); setPublishConfirmOpen(true) }"
         }
       ],
       "attributes": [
@@ -3579,22 +4067,477 @@
         },
         {
           "name": "onClick",
-          "value": "() => setPublishConfirmOpen(true)"
+          "value": "() => { setReason(\"\"); setPublishConfirmOpen(true) }"
+        },
+        {
+          "name": "aria-label",
+          "value": "承認済み用語展開を公開"
         }
       ],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:96:form",
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:138:form",
       "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
-      "line": 96,
+      "line": 138,
       "feature": "admin",
       "component": "AliasAdminPanel",
       "element": "form",
       "isIntrinsic": true,
-      "label": "用語 / 展開語 / 適用部署 / 追加",
+      "label": "用語展開を絞り込む",
       "a11y": {
-        "accessibleName": "用語 / 展開語 / 適用部署 / 追加",
+        "accessibleName": "用語展開を絞り込む",
+        "accessibleNameSource": "aria-label",
+        "descriptionRefs": "-",
+        "role": "search",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onSubmit",
+          "value": "applyFilters"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "onSubmit",
+          "value": "applyFilters"
+        },
+        {
+          "name": "role",
+          "value": "search"
+        },
+        {
+          "name": "aria-label",
+          "value": "用語展開を絞り込む"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:139:label",
+      "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
+      "line": 139,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "label",
+      "isIntrinsic": true,
+      "label": "用語・展開語を検索",
+      "a11y": {
+        "accessibleName": "用語・展開語を検索",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:141:input",
+      "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
+      "line": 141,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "input",
+      "isIntrinsic": true,
+      "label": "query",
+      "a11y": {
+        "accessibleName": "用語・展開語を検索",
+        "accessibleNameSource": "label",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => setQuery(event.target.value)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "value",
+          "value": "query"
+        },
+        {
+          "name": "onChange",
+          "value": "(event) => setQuery(event.target.value)"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:143:label",
+      "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
+      "line": 143,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "label",
+      "isIntrinsic": true,
+      "label": "状態 / すべて / 下書き / 承認済み / 無効",
+      "a11y": {
+        "accessibleName": "状態 / すべて / 下書き / 承認済み / 無効",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "warning",
+        "reason": "削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。"
+      },
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:145:select",
+      "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
+      "line": 145,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "select",
+      "isIntrinsic": true,
+      "label": "urlState.aliasStatus ?? \"\"",
+      "a11y": {
+        "accessibleName": "すべて / 下書き / 承認済み / 無効",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "warning",
+        "reason": "削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。"
+      },
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => onUrlStateChange({ ...urlState, section: \"alias\", aliasStatus: event.target.va…"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "value",
+          "value": "urlState.aliasStatus ?? \"\""
+        },
+        {
+          "name": "onChange",
+          "value": "(event) => onUrlStateChange({ ...urlState, section: \"alias\", aliasStatus: event.target.va…"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:151:option",
+      "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
+      "line": 151,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "option",
+      "isIntrinsic": true,
+      "label": "すべて",
+      "a11y": {
+        "accessibleName": "すべて",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "value",
+          "value": ""
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:152:option",
+      "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
+      "line": 152,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "option",
+      "isIntrinsic": true,
+      "label": "draft",
+      "a11y": {
+        "accessibleName": "下書き",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "value",
+          "value": "draft"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:153:option",
+      "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
+      "line": 153,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "option",
+      "isIntrinsic": true,
+      "label": "approved",
+      "a11y": {
+        "accessibleName": "承認済み",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "warning",
+        "reason": "削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。"
+      },
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "value",
+          "value": "approved"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:154:option",
+      "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
+      "line": 154,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "option",
+      "isIntrinsic": true,
+      "label": "disabled",
+      "a11y": {
+        "accessibleName": "無効",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "warning",
+        "reason": "削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。"
+      },
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "value",
+          "value": "disabled"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:157:label",
+      "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
+      "line": 157,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "label",
+      "isIntrinsic": true,
+      "label": "並び順 / 更新が新しい順 / 用語順",
+      "a11y": {
+        "accessibleName": "並び順 / 更新が新しい順 / 用語順",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:159:select",
+      "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
+      "line": 159,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "select",
+      "isIntrinsic": true,
+      "label": "urlState.sort ?? \"updatedDesc\"",
+      "a11y": {
+        "accessibleName": "更新が新しい順 / 用語順",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => onUrlStateChange({ ...urlState, section: \"alias\", sort: event.target.value as …"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "value",
+          "value": "urlState.sort ?? \"updatedDesc\""
+        },
+        {
+          "name": "onChange",
+          "value": "(event) => onUrlStateChange({ ...urlState, section: \"alias\", sort: event.target.value as …"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:165:option",
+      "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
+      "line": 165,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "option",
+      "isIntrinsic": true,
+      "label": "updatedDesc",
+      "a11y": {
+        "accessibleName": "更新が新しい順",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "value",
+          "value": "updatedDesc"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:166:option",
+      "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
+      "line": 166,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "option",
+      "isIntrinsic": true,
+      "label": "termAsc",
+      "a11y": {
+        "accessibleName": "用語順",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "value",
+          "value": "termAsc"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:169:button",
+      "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
+      "line": 169,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "検索",
+      "a11y": {
+        "accessibleName": "検索",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=loading"
+        ],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "submit"
+        },
+        {
+          "name": "disabled",
+          "value": "loading"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:171:button",
+      "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
+      "line": 171,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "条件を解除",
+      "a11y": {
+        "accessibleName": "条件を解除",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=loading"
+        ],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => { setQuery(\"\") onUrlStateChange({ ...urlState, section: \"alias\", query: undefined, …"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "loading"
+        },
+        {
+          "name": "onClick",
+          "value": "() => { setQuery(\"\") onUrlStateChange({ ...urlState, section: \"alias\", query: undefined, …"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:185:form",
+      "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
+      "line": 185,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "form",
+      "isIntrinsic": true,
+      "label": "用語 / 展開語（カンマまたは改行区切り） / 適用部署（任意） / 下書きを追加",
+      "a11y": {
+        "accessibleName": "用語 / 展開語（カンマまたは改行区切り） / 適用部署（任意） / 下書きを追加",
         "accessibleNameSource": "visible-text",
         "descriptionRefs": "-",
         "role": "-",
@@ -3605,21 +4548,21 @@
       "handlers": [
         {
           "name": "onSubmit",
-          "value": "(event) => void onSubmit(event)"
+          "value": "(event) => void submitCreate(event)"
         }
       ],
       "attributes": [
         {
           "name": "onSubmit",
-          "value": "(event) => void onSubmit(event)"
+          "value": "(event) => void submitCreate(event)"
         }
       ],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:97:label",
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:186:label",
       "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
-      "line": 97,
+      "line": 186,
       "feature": "admin",
       "component": "AliasAdminPanel",
       "element": "label",
@@ -3639,17 +4582,17 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:99:input",
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:188:input",
       "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
-      "line": 99,
+      "line": 188,
       "feature": "admin",
       "component": "AliasAdminPanel",
       "element": "input",
       "isIntrinsic": true,
-      "label": "pto",
+      "label": "term",
       "a11y": {
-        "accessibleName": "pto",
-        "accessibleNameSource": "placeholder",
+        "accessibleName": "用語",
+        "accessibleNameSource": "label",
         "descriptionRefs": "-",
         "role": "-",
         "state": [
@@ -3674,10 +4617,6 @@
           "value": "(event) => setTerm(event.target.value)"
         },
         {
-          "name": "placeholder",
-          "value": "pto"
-        },
-        {
           "name": "disabled",
           "value": "loading"
         }
@@ -3685,16 +4624,16 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:101:label",
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:190:label",
       "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
-      "line": 101,
+      "line": 190,
       "feature": "admin",
       "component": "AliasAdminPanel",
       "element": "label",
       "isIntrinsic": true,
-      "label": "展開語",
+      "label": "展開語（カンマまたは改行区切り）",
       "a11y": {
-        "accessibleName": "展開語",
+        "accessibleName": "展開語（カンマまたは改行区切り）",
         "accessibleNameSource": "visible-text",
         "descriptionRefs": "-",
         "role": "-",
@@ -3707,17 +4646,17 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:103:input",
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:192:textarea",
       "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
-      "line": 103,
+      "line": 192,
       "feature": "admin",
       "component": "AliasAdminPanel",
-      "element": "input",
+      "element": "textarea",
       "isIntrinsic": true,
-      "label": "有給休暇, 休暇申請",
+      "label": "expansions",
       "a11y": {
-        "accessibleName": "有給休暇, 休暇申請",
-        "accessibleNameSource": "placeholder",
+        "accessibleName": "展開語（カンマまたは改行区切り）",
+        "accessibleNameSource": "label",
         "descriptionRefs": "-",
         "role": "-",
         "state": [
@@ -3742,10 +4681,6 @@
           "value": "(event) => setExpansions(event.target.value)"
         },
         {
-          "name": "placeholder",
-          "value": "有給休暇, 休暇申請"
-        },
-        {
           "name": "disabled",
           "value": "loading"
         }
@@ -3753,16 +4688,16 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:105:label",
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:194:label",
       "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
-      "line": 105,
+      "line": 194,
       "feature": "admin",
       "component": "AliasAdminPanel",
       "element": "label",
       "isIntrinsic": true,
-      "label": "適用部署",
+      "label": "適用部署（任意）",
       "a11y": {
-        "accessibleName": "適用部署",
+        "accessibleName": "適用部署（任意）",
         "accessibleNameSource": "visible-text",
         "descriptionRefs": "-",
         "role": "-",
@@ -3775,17 +4710,17 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:107:input",
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:196:input",
       "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
-      "line": 107,
+      "line": 196,
       "feature": "admin",
       "component": "AliasAdminPanel",
       "element": "input",
       "isIntrinsic": true,
-      "label": "任意",
+      "label": "department",
       "a11y": {
-        "accessibleName": "任意",
-        "accessibleNameSource": "placeholder",
+        "accessibleName": "適用部署（任意）",
+        "accessibleNameSource": "label",
         "descriptionRefs": "-",
         "role": "-",
         "state": [
@@ -3810,10 +4745,6 @@
           "value": "(event) => setDepartment(event.target.value)"
         },
         {
-          "name": "placeholder",
-          "value": "任意"
-        },
-        {
           "name": "disabled",
           "value": "loading"
         }
@@ -3821,16 +4752,16 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:109:button",
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:198:button",
       "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
-      "line": 109,
+      "line": 198,
       "feature": "admin",
       "component": "AliasAdminPanel",
       "element": "button",
       "isIntrinsic": true,
-      "label": "追加",
+      "label": "下書きを追加",
       "a11y": {
-        "accessibleName": "追加",
+        "accessibleName": "下書きを追加",
         "accessibleNameSource": "visible-text",
         "descriptionRefs": "-",
         "role": "-",
@@ -3854,21 +4785,61 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:134:button",
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:225:button",
       "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
-      "line": 134,
+      "line": 225,
       "feature": "admin",
       "component": "AliasAdminPanel",
       "element": "button",
       "isIntrinsic": true,
-      "label": "下書き化",
+      "label": "`${alias.term}の監査ログを${urlState.selected === alias.aliasId ? \"全件表示へ戻す\" : \"絞り込む\"}`",
       "a11y": {
-        "accessibleName": "下書き化",
-        "accessibleNameSource": "visible-text",
+        "accessibleName": "`${alias.term}の監査ログを${urlState.selected === alias.aliasId ? \"全件表示へ戻す\" : \"絞り込む\"}`",
+        "accessibleNameSource": "aria-label",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => onUrlStateChange({ ...urlState, section: \"alias\", selected: urlState.selected === a…"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "onClick",
+          "value": "() => onUrlStateChange({ ...urlState, section: \"alias\", selected: urlState.selected === a…"
+        },
+        {
+          "name": "aria-label",
+          "value": "`${alias.term}の監査ログを${urlState.selected === alias.aliasId ? \"全件表示へ戻す\" : \"絞り込む\"}`"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:233:button",
+      "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
+      "line": 233,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "`${alias.term}を編集`",
+      "a11y": {
+        "accessibleName": "`${alias.term}を編集`",
+        "accessibleNameSource": "aria-label",
         "descriptionRefs": "-",
         "role": "-",
         "state": [
-          "disabled=!canWrite || loading || alias.status === \"disabled\""
+          "disabled=loading"
         ],
         "status": "ok",
         "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
@@ -3876,7 +4847,7 @@
       "handlers": [
         {
           "name": "onClick",
-          "value": "() => void onUpdate(alias.aliasId, { expansions: alias.expansions })"
+          "value": "() => openEdit(alias)"
         }
       ],
       "attributes": [
@@ -3886,39 +4857,43 @@
         },
         {
           "name": "disabled",
-          "value": "!canWrite || loading || alias.status === \"disabled\""
+          "value": "loading"
         },
         {
           "name": "onClick",
-          "value": "() => void onUpdate(alias.aliasId, { expansions: alias.expansions })"
+          "value": "() => openEdit(alias)"
+        },
+        {
+          "name": "aria-label",
+          "value": "`${alias.term}を編集`"
         }
       ],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:138:button",
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:237:button",
       "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
-      "line": 138,
+      "line": 237,
       "feature": "admin",
       "component": "AliasAdminPanel",
       "element": "button",
       "isIntrinsic": true,
-      "label": "承認",
+      "label": "`${alias.term}を承認`",
       "a11y": {
-        "accessibleName": "承認",
-        "accessibleNameSource": "visible-text",
+        "accessibleName": "`${alias.term}を承認`",
+        "accessibleNameSource": "aria-label",
         "descriptionRefs": "-",
         "role": "-",
         "state": [
-          "disabled=!canReview || loading || alias.status === \"disabled\""
+          "disabled=loading"
         ],
-        "status": "warning",
-        "reason": "削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。"
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
       },
       "handlers": [
         {
           "name": "onClick",
-          "value": "() => void onReview(alias.aliasId, \"approve\")"
+          "value": "() => { setReason(\"\"); setCommandCandidate({ alias, command: \"approve\" }) }"
         }
       ],
       "attributes": [
@@ -3928,39 +4903,43 @@
         },
         {
           "name": "disabled",
-          "value": "!canReview || loading || alias.status === \"disabled\""
+          "value": "loading"
         },
         {
           "name": "onClick",
-          "value": "() => void onReview(alias.aliasId, \"approve\")"
+          "value": "() => { setReason(\"\"); setCommandCandidate({ alias, command: \"approve\" }) }"
+        },
+        {
+          "name": "aria-label",
+          "value": "`${alias.term}を承認`"
         }
       ],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:142:button",
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:238:button",
       "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
-      "line": 142,
+      "line": 238,
       "feature": "admin",
       "component": "AliasAdminPanel",
       "element": "button",
       "isIntrinsic": true,
-      "label": "差戻",
+      "label": "`${alias.term}を差し戻し`",
       "a11y": {
-        "accessibleName": "差戻",
-        "accessibleNameSource": "visible-text",
+        "accessibleName": "`${alias.term}を差し戻し`",
+        "accessibleNameSource": "aria-label",
         "descriptionRefs": "-",
         "role": "-",
         "state": [
-          "disabled=!canReview || loading || alias.status === \"disabled\""
+          "disabled=loading"
         ],
-        "status": "warning",
-        "reason": "削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。"
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
       },
       "handlers": [
         {
           "name": "onClick",
-          "value": "() => void onReview(alias.aliasId, \"reject\", \"画面から差し戻し\")"
+          "value": "() => { setReason(\"\"); setCommandCandidate({ alias, command: \"reject\" }) }"
         }
       ],
       "attributes": [
@@ -3970,39 +4949,43 @@
         },
         {
           "name": "disabled",
-          "value": "!canReview || loading || alias.status === \"disabled\""
+          "value": "loading"
         },
         {
           "name": "onClick",
-          "value": "() => void onReview(alias.aliasId, \"reject\", \"画面から差し戻し\")"
+          "value": "() => { setReason(\"\"); setCommandCandidate({ alias, command: \"reject\" }) }"
+        },
+        {
+          "name": "aria-label",
+          "value": "`${alias.term}を差し戻し`"
         }
       ],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:146:button",
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:242:button",
       "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
-      "line": 146,
+      "line": 242,
       "feature": "admin",
       "component": "AliasAdminPanel",
       "element": "button",
       "isIntrinsic": true,
-      "label": "無効",
+      "label": "`${alias.term}を下書きへ戻す`",
       "a11y": {
-        "accessibleName": "無効",
-        "accessibleNameSource": "visible-text",
+        "accessibleName": "`${alias.term}を下書きへ戻す`",
+        "accessibleNameSource": "aria-label",
         "descriptionRefs": "-",
         "role": "-",
         "state": [
-          "disabled=!canDisable || loading || alias.status === \"disabled\""
+          "disabled=loading"
         ],
-        "status": "warning",
-        "reason": "削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。"
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
       },
       "handlers": [
         {
           "name": "onClick",
-          "value": "() => setDisableCandidate(alias)"
+          "value": "() => { setReason(\"\"); setCommandCandidate({ alias, command: \"transition\" }) }"
         }
       ],
       "attributes": [
@@ -4012,11 +4995,566 @@
         },
         {
           "name": "disabled",
-          "value": "!canDisable || loading || alias.status === \"disabled\""
+          "value": "loading"
         },
         {
           "name": "onClick",
-          "value": "() => setDisableCandidate(alias)"
+          "value": "() => { setReason(\"\"); setCommandCandidate({ alias, command: \"transition\" }) }"
+        },
+        {
+          "name": "aria-label",
+          "value": "`${alias.term}を下書きへ戻す`"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:245:button",
+      "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
+      "line": 245,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "`${alias.term}を無効化`",
+      "a11y": {
+        "accessibleName": "`${alias.term}を無効化`",
+        "accessibleNameSource": "aria-label",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=loading"
+        ],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => { setReason(\"\"); setCommandCandidate({ alias, command: \"disable\" }) }"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "loading"
+        },
+        {
+          "name": "onClick",
+          "value": "() => { setReason(\"\"); setCommandCandidate({ alias, command: \"disable\" }) }"
+        },
+        {
+          "name": "aria-label",
+          "value": "`${alias.term}を無効化`"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:253:button",
+      "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
+      "line": 253,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "次の用語展開を読み込む（残り / 件）",
+      "a11y": {
+        "accessibleName": "次の用語展開を読み込む（残り / 件）",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=loading"
+        ],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => void onLoadMore()"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "loading"
+        },
+        {
+          "name": "onClick",
+          "value": "() => void onLoadMore()"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:263:label",
+      "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
+      "line": 263,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "label",
+      "isIntrinsic": true,
+      "label": "監査操作 / すべて / 作成 / 更新 / レビュー / 状態遷移 / 無効化 / 公開",
+      "a11y": {
+        "accessibleName": "監査操作 / すべて / 作成 / 更新 / レビュー / 状態遷移 / 無効化 / 公開",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "warning",
+        "reason": "削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。"
+      },
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:265:select",
+      "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
+      "line": 265,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "select",
+      "isIntrinsic": true,
+      "label": "auditAction",
+      "a11y": {
+        "accessibleName": "すべて / 作成 / 更新 / レビュー / 状態遷移 / 無効化 / 公開",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "warning",
+        "reason": "削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。"
+      },
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => onUrlStateChange({ ...urlState, section: \"alias\", auditAction: event.target.va…"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "value",
+          "value": "auditAction"
+        },
+        {
+          "name": "onChange",
+          "value": "(event) => onUrlStateChange({ ...urlState, section: \"alias\", auditAction: event.target.va…"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:270:option",
+      "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
+      "line": 270,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "option",
+      "isIntrinsic": true,
+      "label": "すべて",
+      "a11y": {
+        "accessibleName": "すべて",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "value",
+          "value": ""
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:271:option",
+      "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
+      "line": 271,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "option",
+      "isIntrinsic": true,
+      "label": "create",
+      "a11y": {
+        "accessibleName": "作成",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "value",
+          "value": "create"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:272:option",
+      "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
+      "line": 272,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "option",
+      "isIntrinsic": true,
+      "label": "update",
+      "a11y": {
+        "accessibleName": "更新",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "value",
+          "value": "update"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:273:option",
+      "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
+      "line": 273,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "option",
+      "isIntrinsic": true,
+      "label": "review",
+      "a11y": {
+        "accessibleName": "レビュー",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "value",
+          "value": "review"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:274:option",
+      "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
+      "line": 274,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "option",
+      "isIntrinsic": true,
+      "label": "transition",
+      "a11y": {
+        "accessibleName": "状態遷移",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "value",
+          "value": "transition"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:275:option",
+      "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
+      "line": 275,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "option",
+      "isIntrinsic": true,
+      "label": "disable",
+      "a11y": {
+        "accessibleName": "無効化",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "warning",
+        "reason": "削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。"
+      },
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "value",
+          "value": "disable"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:276:option",
+      "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
+      "line": 276,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "option",
+      "isIntrinsic": true,
+      "label": "publish",
+      "a11y": {
+        "accessibleName": "公開",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "warning",
+        "reason": "削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。"
+      },
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "value",
+          "value": "publish"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:306:button",
+      "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
+      "line": 306,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "次の監査ログを読み込む（残り / 件）",
+      "a11y": {
+        "accessibleName": "次の監査ログを読み込む（残り / 件）",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=loading"
+        ],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => void onLoadMoreAudit()"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "loading"
+        },
+        {
+          "name": "onClick",
+          "value": "() => void onLoadMoreAudit()"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:381:label",
+      "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
+      "line": 381,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "label",
+      "isIntrinsic": true,
+      "label": "用語",
+      "a11y": {
+        "accessibleName": "用語",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:381:input",
+      "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
+      "line": 381,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "input",
+      "isIntrinsic": true,
+      "label": "editTerm",
+      "a11y": {
+        "accessibleName": "用語",
+        "accessibleNameSource": "label",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => setEditTerm(event.target.value)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "value",
+          "value": "editTerm"
+        },
+        {
+          "name": "onChange",
+          "value": "(event) => setEditTerm(event.target.value)"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:382:label",
+      "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
+      "line": 382,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "label",
+      "isIntrinsic": true,
+      "label": "展開語",
+      "a11y": {
+        "accessibleName": "展開語",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:382:textarea",
+      "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
+      "line": 382,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "textarea",
+      "isIntrinsic": true,
+      "label": "editExpansions",
+      "a11y": {
+        "accessibleName": "展開語",
+        "accessibleNameSource": "label",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => setEditExpansions(event.target.value)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "value",
+          "value": "editExpansions"
+        },
+        {
+          "name": "onChange",
+          "value": "(event) => setEditExpansions(event.target.value)"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:425:label",
+      "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
+      "line": 425,
+      "feature": "admin",
+      "component": "ReasonField",
+      "element": "label",
+      "isIntrinsic": true,
+      "label": "実行理由（必須）",
+      "a11y": {
+        "accessibleName": "実行理由（必須）",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:427:textarea",
+      "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
+      "line": 427,
+      "feature": "admin",
+      "component": "ReasonField",
+      "element": "textarea",
+      "isIntrinsic": true,
+      "label": "value",
+      "a11y": {
+        "accessibleName": "実行理由（必須）",
+        "accessibleNameSource": "label",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => onChange(event.target.value)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "value",
+          "value": "value"
+        },
+        {
+          "name": "onChange",
+          "value": "(event) => onChange(event.target.value)"
         }
       ],
       "certainty": "confirmed"

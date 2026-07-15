@@ -4,12 +4,15 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 import { SFNClient, StartExecutionCommand, StopExecutionCommand } from "@aws-sdk/client-sfn"
 import { config } from "../config.js"
 import { hasPermission, rolePermissions, type Role } from "../authorization.js"
+import {
+  APPLICATION_ROLE_DISPLAY_CATALOG
+} from "@memorag-mvp/contract/access-control"
 import type { Dependencies } from "../dependencies.js"
 import { sanitizeProviderText, type AsyncAgentProviderArtifact, type AsyncAgentProviderInput, type AsyncAgentProviderResult } from "../async-agent/provider.js"
 import { debugTraceObjectKey, runChatOrchestration } from "./orchestration/chat-rag-orchestrator.js"
 import { llmOptions, normalizeMaxIterations, normalizeMemoryTopK, normalizeMinScore, normalizeSearchTopK, normalizeTopK, ragRuntimePolicy } from "../chat-orchestration/runtime-policy.js"
 import type { ChatInput, ChatOrchestrationResult } from "../chat-orchestration/types.js"
-import { DEBUG_TRACE_SANITIZE_POLICY_VERSION, DEBUG_TRACE_SCHEMA_VERSION, type AdminExportArtifact, type AgentProviderAvailability, type AgentProviderSetting, type AgentRuntimeProvider, type AsyncAgentRun, type AccessRoleDefinition, type AliasAuditLogItem, type AliasDefinition, type AuthoritativeAdmissionContext, type BenchmarkMode, type BenchmarkRun, type BenchmarkRunner, type BenchmarkRunThresholds, type BenchmarkSuite, type ChatRun, type ChatToolInvocation, type Chunk, type ConversationHistoryItem, type CostAuditSummary, type DebugReplayPlan, type DebugTrace, type DocumentGroup, type DocumentIngestRun, type DocumentManifest, type DocumentManifestSummary, type ExtractionWarning, type FavoriteItem, type FavoriteListItem, type FavoriteTargetType, type HumanQuestion, type IngestAdmissionContext, type JsonValue, type ManagedUser, type ManagedUserAuditAction, type ManagedUserAuditLogEntry, type ManagedUserDeletionPreflight, type MemoryCard, type ParsedDocumentPreview, type PublishedAliasArtifact, type QualityActionCard, type ReindexMigration, type StagedPublicationFence, type StructuredBlock, type UserUsageSummary, type VectorRecord } from "../types.js"
+import { DEBUG_TRACE_SANITIZE_POLICY_VERSION, DEBUG_TRACE_SCHEMA_VERSION, type AdminExportArtifact, type AgentProviderAvailability, type AgentProviderSetting, type AgentRuntimeProvider, type AsyncAgentRun, type AccessRoleDefinition, type AliasAuditLogItem, type AliasAuditLogPage, type AliasDefinition, type AliasListPage, type AuthoritativeAdmissionContext, type BenchmarkMode, type BenchmarkRun, type BenchmarkRunner, type BenchmarkRunThresholds, type BenchmarkSuite, type ChatRun, type ChatToolInvocation, type Chunk, type ConversationHistoryItem, type CostAuditSummary, type DebugReplayPlan, type DebugTrace, type DocumentGroup, type DocumentIngestRun, type DocumentManifest, type DocumentManifestSummary, type ExtractionWarning, type FavoriteItem, type FavoriteListItem, type FavoriteTargetType, type HumanQuestion, type IngestAdmissionContext, type JsonValue, type ManagedUser, type ManagedUserAuditAction, type ManagedUserAuditLogEntry, type ManagedUserAuditLogPage, type ManagedUserDeletionPreflight, type MemoryCard, type ParsedDocumentPreview, type PublishedAliasArtifact, type QualityActionCard, type ReindexMigration, type StagedPublicationFence, type StructuredBlock, type UserUsageSummary, type VectorRecord } from "../types.js"
 import type { ReplayDecisionReasonCode } from "../types.js"
 import type { AppUser } from "../auth.js"
 import type { CreatedDirectoryUser } from "../adapters/user-directory.js"
@@ -45,7 +48,8 @@ import {
 import { buildMemoryCardPrompt } from "./offline/generation/prompt-assets/memory-card-prompt.js"
 import { deleteUncommittedIngestArtifacts, putDocumentVectorRecords, registerUncommittedIngestCleanupReconciliation, runIngestPipeline, type IngestInput } from "./offline/pre-retrieval/ingestion/ingest-run.service.js"
 import { embedWithCache, mapWithConcurrency } from "./offline/pre-retrieval/embedding/embedding-cache.js"
-import { aliasArtifactLatestKey } from "../search/alias-artifacts.js"
+import { aliasArtifactLatestKeyForTenant } from "../search/alias-artifacts.js"
+import { pageByStableCursor } from "../admin/keyset-pagination.js"
 import { FolderPermissionService } from "../folders/folder-permission-service.js"
 import {
   FolderLifecycleMutationCoordinator,
@@ -195,13 +199,57 @@ type SearchImprovementCandidateInput = Pick<AliasInput, "scope"> & {
 
 type AliasReviewInput = {
   decision: "approve" | "reject"
-  comment?: string
+  expectedVersion: string
+  reason: string
 }
 
 type AliasLedger = {
-  schemaVersion: 1
+  schemaVersion: 2
   aliases: AliasDefinition[]
   auditLog: AliasAuditLogItem[]
+}
+
+type VersionedAliasLedger = {
+  ledger: AliasLedger
+  storeVersion?: string
+}
+
+type AliasListQuery = {
+  cursor?: string
+  limit?: number
+  query?: string
+  status?: AliasDefinition["status"]
+  sort?: "updatedDesc" | "termAsc"
+}
+
+type AliasAuditListQuery = {
+  cursor?: string
+  limit?: number
+  query?: string
+  action?: AliasAuditLogItem["action"]
+  aliasId?: string
+}
+
+type AdminAuditListQuery = {
+  cursor?: string
+  limit?: number
+  query?: string
+  action?: ManagedUserAuditAction
+}
+
+type AliasMutationEvidence = {
+  expectedVersion: string
+  reason: string
+}
+
+export class AliasGovernanceError extends Error {
+  constructor(
+    message: string,
+    readonly result: "denied" | "conflict" | "failed"
+  ) {
+    super(message)
+    this.name = "AliasGovernanceError"
+  }
 }
 
 const adminLedgerKey = "admin/admin-ledger.json"
@@ -1180,124 +1228,289 @@ export class MemoRagService {
 
   listAccessRoles(): AccessRoleDefinition[] {
     return Object.entries(rolePermissions)
-      .map(([role, permissions]) => ({ role, permissions: [...permissions] }))
+      .map(([role, permissions]) => ({
+        role,
+        displayName: APPLICATION_ROLE_DISPLAY_CATALOG[role as Role].displayName,
+        description: APPLICATION_ROLE_DISPLAY_CATALOG[role as Role].description,
+        kind: "systemPreset" as const,
+        permissions: [...permissions]
+      }))
       .sort((a, b) => a.role.localeCompare(b.role))
   }
 
-  async listAliases(): Promise<AliasDefinition[]> {
-    const ledger = await this.loadAliasLedger()
-    return ledger.aliases.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+  async listAliases(actor: AppUser, query: AliasListQuery = {}): Promise<AliasListPage> {
+    const { ledger, storeVersion } = await this.loadAliasLedger()
+    const tenantId = authoritativeActorTenantId(actor)
+    const sort = query.sort ?? "updatedDesc"
+    const normalizedQuery = query.query?.trim().toLowerCase()
+    const aliases = ledger.aliases
+      .filter((alias) => aliasTenantId(alias) === tenantId)
+      .filter((alias) => !query.status || alias.status === query.status)
+      .filter((alias) => !normalizedQuery || [alias.term, ...alias.expansions]
+        .some((value) => value.toLowerCase().includes(normalizedQuery)))
+      .sort(sort === "termAsc"
+        ? (left, right) => left.term.localeCompare(right.term) || left.aliasId.localeCompare(right.aliasId)
+        : (left, right) => right.updatedAt.localeCompare(left.updatedAt) || left.aliasId.localeCompare(right.aliasId))
+    const page = pageByStableCursor({
+      items: aliases,
+      limit: query.limit ?? 25,
+      cursor: query.cursor,
+      sort,
+      cursorValues: (alias) => sort === "termAsc"
+        ? [alias.term, alias.aliasId]
+        : [alias.updatedAt, alias.aliasId],
+      isAfter: (alias, values) => sort === "termAsc"
+        ? alias.term.localeCompare(values[0] ?? "") > 0 || alias.term === values[0] && alias.aliasId.localeCompare(values[1] ?? "") > 0
+        : alias.updatedAt.localeCompare(values[0] ?? "") < 0 || alias.updatedAt === values[0] && alias.aliasId.localeCompare(values[1] ?? "") > 0
+    })
+    return {
+      aliases: page.items,
+      total: page.total,
+      nextCursor: page.nextCursor,
+      truncated: page.truncated,
+      source: "tenant-alias-ledger",
+      asOf: new Date().toISOString(),
+      version: storeVersion ?? "absent"
+    }
   }
 
   async createAlias(actor: AppUser, input: Required<Pick<AliasInput, "term" | "expansions">> & Pick<AliasInput, "scope">): Promise<AliasDefinition> {
-    const ledger = await this.loadAliasLedger()
-    const now = new Date().toISOString()
-    const alias: AliasDefinition = {
-      aliasId: `alias_${randomUUID().slice(0, 12)}`,
-      term: normalizeAliasTerm(input.term),
-      expansions: normalizeAliasExpansions(input.expansions),
-      scope: normalizeAliasScope(input.scope),
-      status: "draft",
-      createdBy: actor.userId,
-      createdAt: now,
-      updatedAt: now
-    }
-    ledger.aliases.push(alias)
-    appendAliasAudit(ledger, actor, "create", alias.aliasId, `created ${alias.term}`)
-    await this.saveAliasLedger(ledger)
-    return alias
+    const tenantId = authoritativeActorTenantId(actor)
+    const result = await this.mutateAliasLedger((ledger) => {
+      const now = new Date().toISOString()
+      const alias: AliasDefinition = {
+        aliasId: `alias_${randomUUID().slice(0, 12)}`,
+        version: createAliasRecordVersion(now),
+        term: normalizeAliasTerm(input.term),
+        expansions: normalizeAliasExpansions(input.expansions),
+        scope: aliasScopeForTenant(input.scope, tenantId),
+        status: "draft",
+        createdBy: actor.userId,
+        createdAt: now,
+        updatedAt: now
+      }
+      ledger.aliases.push(alias)
+      appendAliasAudit(ledger, {
+        actor,
+        tenantId,
+        action: "create",
+        alias,
+        result: "success",
+        reason: "operator_created_alias",
+        afterStatus: alias.status,
+        detail: `created ${alias.term}`
+      })
+      return { commit: true, value: alias }
+    })
+    if (!result) throw new AliasGovernanceError("Alias creation failed", "failed")
+    return result
   }
 
   async createSearchImprovementCandidate(actor: AppUser, questionId: string, input: SearchImprovementCandidateInput): Promise<AliasDefinition | undefined> {
     const question = await this.getQuestion(questionId)
     if (!question) return undefined
-    const ledger = await this.loadAliasLedger()
-    const now = new Date().toISOString()
-    const alias: AliasDefinition = {
-      aliasId: `alias_${randomUUID().slice(0, 12)}`,
-      term: normalizeAliasTerm(input.term),
-      expansions: normalizeAliasExpansions(input.expansions),
-      scope: normalizeAliasScope(input.scope),
-      status: "draft",
-      searchImprovement: {
-        candidateSource: input.candidateSource ?? "support_ticket",
-        sourceQuestionId: question.questionId,
-        sourceMessageId: question.messageId,
-        sourceRagRunId: question.ragRunId ?? question.chatRunId,
-        suggestionReason: trimOptional(input.suggestionReason),
-        reviewState: "pending_review",
-        reviewReason: trimOptional(input.reviewReason),
-        impactSummary: trimOptional(input.impactSummary),
-        searchResultDiffSummary: trimOptional(input.searchResultDiffSummary),
-        beforeResultIds: normalizeStringList(input.beforeResultIds, 50),
-        afterResultIds: normalizeStringList(input.afterResultIds, 50)
-      },
-      createdBy: actor.userId,
-      createdAt: now,
-      updatedAt: now
-    }
-    ledger.aliases.push(alias)
-    appendAliasAudit(ledger, actor, "create", alias.aliasId, `created search improvement candidate ${alias.term} from ${question.questionId}`)
-    await this.saveAliasLedger(ledger)
-    return alias
+    const tenantId = authoritativeActorTenantId(actor)
+    return this.mutateAliasLedger((ledger) => {
+      const now = new Date().toISOString()
+      const alias: AliasDefinition = {
+        aliasId: `alias_${randomUUID().slice(0, 12)}`,
+        version: createAliasRecordVersion(now),
+        term: normalizeAliasTerm(input.term),
+        expansions: normalizeAliasExpansions(input.expansions),
+        scope: aliasScopeForTenant(input.scope, tenantId),
+        status: "draft",
+        searchImprovement: {
+          candidateSource: input.candidateSource ?? "support_ticket",
+          sourceQuestionId: question.questionId,
+          sourceMessageId: question.messageId,
+          sourceRagRunId: question.ragRunId ?? question.chatRunId,
+          suggestionReason: trimOptional(input.suggestionReason),
+          reviewState: "pending_review",
+          reviewReason: trimOptional(input.reviewReason),
+          impactSummary: trimOptional(input.impactSummary),
+          searchResultDiffSummary: trimOptional(input.searchResultDiffSummary),
+          beforeResultIds: normalizeStringList(input.beforeResultIds, 50),
+          afterResultIds: normalizeStringList(input.afterResultIds, 50)
+        },
+        createdBy: actor.userId,
+        createdAt: now,
+        updatedAt: now
+      }
+      ledger.aliases.push(alias)
+      appendAliasAudit(ledger, {
+        actor,
+        tenantId,
+        action: "create",
+        alias,
+        result: "success",
+        reason: input.reviewReason?.trim() || "support_ticket_search_improvement",
+        afterStatus: alias.status,
+        detail: `created search improvement candidate ${alias.term} from ${question.questionId}`
+      })
+      return { commit: true, value: alias }
+    })
   }
 
-  async updateAlias(actor: AppUser, aliasId: string, input: AliasInput): Promise<AliasDefinition | undefined> {
-    const ledger = await this.loadAliasLedger()
-    const alias = ledger.aliases.find((candidate) => candidate.aliasId === aliasId)
-    if (!alias) return undefined
-    if (input.term !== undefined) alias.term = normalizeAliasTerm(input.term)
-    if (input.expansions !== undefined) alias.expansions = normalizeAliasExpansions(input.expansions)
-    if (input.scope !== undefined) alias.scope = normalizeAliasScope(input.scope)
-    alias.status = alias.status === "disabled" ? "disabled" : "draft"
-    alias.updatedAt = new Date().toISOString()
-    delete alias.reviewedBy
-    delete alias.reviewedAt
-    delete alias.reviewComment
-    delete alias.publishedVersion
-    appendAliasAudit(ledger, actor, "update", alias.aliasId, `updated ${alias.term}`)
-    await this.saveAliasLedger(ledger)
-    return alias
+  async updateAlias(actor: AppUser, aliasId: string, input: AliasInput & AliasMutationEvidence): Promise<AliasDefinition | undefined> {
+    const tenantId = authoritativeActorTenantId(actor)
+    const reason = canonicalAliasReason(input.reason)
+    return this.mutateAliasLedger((ledger) => {
+      const alias = findTenantAlias(ledger, aliasId, tenantId)
+      if (!alias) return { commit: false }
+      const invalid = validateAliasMutationVersion(alias, input.expectedVersion)
+        ?? (alias.status === "disabled" ? new AliasGovernanceError("Disabled aliases cannot be updated", "denied") : undefined)
+      if (invalid) return rejectedAliasMutation(ledger, actor, tenantId, "update", alias, reason, invalid)
+      const beforeStatus = alias.status
+      if (input.term !== undefined) alias.term = normalizeAliasTerm(input.term)
+      if (input.expansions !== undefined) alias.expansions = normalizeAliasExpansions(input.expansions)
+      if (input.scope !== undefined) alias.scope = aliasScopeForTenant(input.scope, tenantId)
+      alias.status = "draft"
+      alias.updatedAt = new Date().toISOString()
+      alias.version = createAliasRecordVersion(alias.updatedAt)
+      delete alias.reviewedBy
+      delete alias.reviewedAt
+      delete alias.reviewComment
+      delete alias.publishedVersion
+      appendAliasAudit(ledger, {
+        actor,
+        tenantId,
+        action: "update",
+        alias,
+        result: "success",
+        reason,
+        beforeStatus,
+        afterStatus: alias.status,
+        detail: `updated ${alias.term}`
+      })
+      return { commit: true, value: alias }
+    })
   }
 
   async reviewAlias(actor: AppUser, aliasId: string, input: AliasReviewInput): Promise<AliasDefinition | undefined> {
-    const ledger = await this.loadAliasLedger()
-    const alias = ledger.aliases.find((candidate) => candidate.aliasId === aliasId)
-    if (!alias) return undefined
-    alias.status = input.decision === "approve" ? "approved" : "draft"
-    alias.reviewedBy = actor.userId
-    alias.reviewedAt = new Date().toISOString()
-    alias.reviewComment = input.comment
-    if (alias.searchImprovement) alias.searchImprovement.reviewState = "reviewed"
-    alias.updatedAt = alias.reviewedAt
-    appendAliasAudit(ledger, actor, "review", alias.aliasId, `${input.decision} ${alias.term}`)
-    await this.saveAliasLedger(ledger)
-    return alias
+    const tenantId = authoritativeActorTenantId(actor)
+    const reason = canonicalAliasReason(input.reason)
+    return this.mutateAliasLedger((ledger) => {
+      const alias = findTenantAlias(ledger, aliasId, tenantId)
+      if (!alias) return { commit: false }
+      const invalid = validateAliasMutationVersion(alias, input.expectedVersion)
+        ?? (alias.status !== "draft" ? new AliasGovernanceError("Only draft aliases can be reviewed", "denied") : undefined)
+      if (invalid) return rejectedAliasMutation(ledger, actor, tenantId, "review", alias, reason, invalid)
+      const beforeStatus = alias.status
+      alias.status = input.decision === "approve" ? "approved" : "draft"
+      alias.reviewedBy = actor.userId
+      alias.reviewedAt = new Date().toISOString()
+      alias.reviewComment = reason
+      if (alias.searchImprovement) alias.searchImprovement.reviewState = "reviewed"
+      alias.updatedAt = alias.reviewedAt
+      alias.version = createAliasRecordVersion(alias.updatedAt)
+      appendAliasAudit(ledger, {
+        actor,
+        tenantId,
+        action: "review",
+        alias,
+        result: "success",
+        reason,
+        beforeStatus,
+        afterStatus: alias.status,
+        detail: `${input.decision} ${alias.term}`
+      })
+      return { commit: true, value: alias }
+    })
   }
 
-  async disableAlias(actor: AppUser, aliasId: string): Promise<AliasDefinition | undefined> {
-    const ledger = await this.loadAliasLedger()
-    const alias = ledger.aliases.find((candidate) => candidate.aliasId === aliasId)
-    if (!alias) return undefined
-    alias.status = "disabled"
-    alias.updatedAt = new Date().toISOString()
-    appendAliasAudit(ledger, actor, "disable", alias.aliasId, `disabled ${alias.term}`)
-    await this.saveAliasLedger(ledger)
-    return alias
+  async transitionAliasToDraft(actor: AppUser, aliasId: string, input: AliasMutationEvidence): Promise<AliasDefinition | undefined> {
+    const tenantId = authoritativeActorTenantId(actor)
+    const reason = canonicalAliasReason(input.reason)
+    return this.mutateAliasLedger((ledger) => {
+      const alias = findTenantAlias(ledger, aliasId, tenantId)
+      if (!alias) return { commit: false }
+      const invalid = validateAliasMutationVersion(alias, input.expectedVersion)
+        ?? (alias.status !== "approved" ? new AliasGovernanceError("Only approved aliases can return to draft", "denied") : undefined)
+      if (invalid) return rejectedAliasMutation(ledger, actor, tenantId, "transition", alias, reason, invalid)
+      const beforeStatus = alias.status
+      alias.status = "draft"
+      alias.updatedAt = new Date().toISOString()
+      alias.version = createAliasRecordVersion(alias.updatedAt)
+      delete alias.reviewedBy
+      delete alias.reviewedAt
+      delete alias.reviewComment
+      delete alias.publishedVersion
+      appendAliasAudit(ledger, {
+        actor,
+        tenantId,
+        action: "transition",
+        alias,
+        result: "success",
+        reason,
+        beforeStatus,
+        afterStatus: alias.status,
+        detail: `returned ${alias.term} to draft`
+      })
+      return { commit: true, value: alias }
+    })
   }
 
-  async publishAliases(actor: AppUser): Promise<{ version: string; publishedAt: string; aliasCount: number }> {
-    const ledger = await this.loadAliasLedger()
+  async disableAlias(actor: AppUser, aliasId: string, input: AliasMutationEvidence): Promise<AliasDefinition | undefined> {
+    const tenantId = authoritativeActorTenantId(actor)
+    const reason = canonicalAliasReason(input.reason)
+    return this.mutateAliasLedger((ledger) => {
+      const alias = findTenantAlias(ledger, aliasId, tenantId)
+      if (!alias) return { commit: false }
+      const invalid = validateAliasMutationVersion(alias, input.expectedVersion)
+        ?? (alias.status === "disabled" ? new AliasGovernanceError("Alias is already disabled", "denied") : undefined)
+      if (invalid) return rejectedAliasMutation(ledger, actor, tenantId, "disable", alias, reason, invalid)
+      const beforeStatus = alias.status
+      alias.status = "disabled"
+      alias.updatedAt = new Date().toISOString()
+      alias.version = createAliasRecordVersion(alias.updatedAt)
+      appendAliasAudit(ledger, {
+        actor,
+        tenantId,
+        action: "disable",
+        alias,
+        result: "success",
+        reason,
+        beforeStatus,
+        afterStatus: alias.status,
+        detail: `disabled ${alias.term}`
+      })
+      return { commit: true, value: alias }
+    })
+  }
+
+  async publishAliases(actor: AppUser, input: AliasMutationEvidence): Promise<{ version: string; publishedAt: string; aliasCount: number }> {
+    const tenantId = authoritativeActorTenantId(actor)
+    const reason = canonicalAliasReason(input.reason)
+    const state = await this.loadAliasLedger()
+    if ((state.storeVersion ?? "absent") !== input.expectedVersion) {
+      await this.recordAliasMutationResult(actor, tenantId, "publish", reason, new AliasGovernanceError("Alias ledger version conflict", "conflict"))
+      throw new AliasGovernanceError("Alias ledger version conflict", "conflict")
+    }
+    const ledger = state.ledger
     const publishedAt = new Date().toISOString()
     const version = createAliasVersion(publishedAt)
-    const aliases = ledger.aliases.filter((alias) => alias.status === "approved").map((alias) => ({ ...alias, publishedVersion: version }))
+    const aliases = ledger.aliases
+      .filter((alias) => aliasTenantId(alias) === tenantId && alias.status === "approved")
+      .map((alias) => ({
+        ...alias,
+        publishedVersion: version,
+        updatedAt: publishedAt,
+        version: createAliasRecordVersion(publishedAt)
+      }))
+    if (aliases.length === 0) {
+      const error = new AliasGovernanceError("No approved aliases are available to publish", "denied")
+      await this.recordAliasMutationResult(actor, tenantId, "publish", reason, error)
+      throw error
+    }
+    const byId = new Map(aliases.map((alias) => [alias.aliasId, alias]))
     for (const alias of ledger.aliases) {
-      if (alias.status === "approved") {
-        alias.publishedVersion = version
+      const published = byId.get(alias.aliasId)
+      if (published) {
+        Object.assign(alias, published)
         if (alias.searchImprovement) alias.searchImprovement.reviewState = "published"
       }
     }
-    const objectKey = `aliases/${version}/aliases.json`
+    const objectKey = `aliases/${tenantPartitionId(tenantId)}/${version}/aliases.json`
     const artifact: PublishedAliasArtifact = {
       schemaVersion: 1,
       version,
@@ -1306,15 +1519,60 @@ export class MemoRagService {
       aliases
     }
     await this.deps.objectStore.putText(objectKey, JSON.stringify(artifact, null, 2), "application/json")
-    await this.deps.objectStore.putText(aliasArtifactLatestKey, JSON.stringify({ version, objectKey, publishedAt, aliasCount: aliases.length }, null, 2), "application/json")
-    appendAliasAudit(ledger, actor, "publish", undefined, `published ${aliases.length} aliases as ${version}`)
-    await this.saveAliasLedger(ledger)
+    appendAliasAudit(ledger, {
+      actor,
+      tenantId,
+      action: "publish",
+      result: "success",
+      reason,
+      detail: `published ${aliases.length} aliases as ${version}`
+    })
+    try {
+      await this.saveAliasLedger(ledger, state.storeVersion)
+    } catch (error) {
+      if (isConditionalObjectWriteError(error)) {
+        await this.recordAliasMutationResult(actor, tenantId, "publish", reason, new AliasGovernanceError("Alias ledger version conflict", "conflict"))
+        throw new AliasGovernanceError("Alias ledger version conflict", "conflict")
+      }
+      throw error
+    }
+    await this.deps.objectStore.putText(
+      aliasArtifactLatestKeyForTenant(tenantId),
+      JSON.stringify({ version, objectKey, publishedAt, aliasCount: aliases.length }, null, 2),
+      "application/json"
+    )
     return { version, publishedAt, aliasCount: aliases.length }
   }
 
-  async listAliasAuditLog(): Promise<AliasAuditLogItem[]> {
-    const ledger = await this.loadAliasLedger()
-    return ledger.auditLog.sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 200)
+  async listAliasAuditLog(actor: AppUser, query: AliasAuditListQuery = {}): Promise<AliasAuditLogPage> {
+    const { ledger, storeVersion } = await this.loadAliasLedger()
+    const tenantId = authoritativeActorTenantId(actor)
+    const normalizedQuery = query.query?.trim().toLowerCase()
+    const auditLog = ledger.auditLog
+      .filter((entry) => entry.tenantId === tenantId)
+      .filter((entry) => !query.action || entry.action === query.action)
+      .filter((entry) => !query.aliasId || entry.aliasId === query.aliasId)
+      .filter((entry) => !normalizedQuery || [entry.aliasId, entry.actorUserId, entry.reason, entry.detail]
+        .some((value) => value?.toLowerCase().includes(normalizedQuery)))
+      .sort((left, right) => right.createdAt.localeCompare(left.createdAt) || left.auditId.localeCompare(right.auditId))
+    const page = pageByStableCursor({
+      items: auditLog,
+      limit: query.limit ?? 25,
+      cursor: query.cursor,
+      sort: "createdDesc",
+      cursorValues: (entry) => [entry.createdAt, entry.auditId],
+      isAfter: (entry, values) => entry.createdAt.localeCompare(values[0] ?? "") < 0
+        || entry.createdAt === values[0] && entry.auditId.localeCompare(values[1] ?? "") > 0
+    })
+    return {
+      auditLog: page.items,
+      total: page.total,
+      nextCursor: page.nextCursor,
+      truncated: page.truncated,
+      source: "tenant-alias-ledger",
+      asOf: new Date().toISOString(),
+      version: storeVersion ?? "absent"
+    }
   }
 
   async listManagedUsers(actor: AppUser): Promise<ManagedUser[]> {
@@ -1622,9 +1880,31 @@ export class MemoRagService {
     return user
   }
 
-  async listAdminAuditLog(actor: AppUser): Promise<ManagedUserAuditLogEntry[]> {
+  async listAdminAuditLog(actor: AppUser, query: AdminAuditListQuery = {}): Promise<ManagedUserAuditLogPage> {
     const db = await this.loadAdminLedger(actor)
-    return [...(db.auditLog ?? [])].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 100)
+    const normalizedQuery = query.query?.trim().toLowerCase()
+    const auditLog = [...(db.auditLog ?? [])]
+      .filter((entry) => !query.action || entry.action === query.action)
+      .filter((entry) => !normalizedQuery || [entry.actorEmail, entry.actorUserId, entry.targetEmail, entry.targetUserId]
+        .some((value) => value?.toLowerCase().includes(normalizedQuery)))
+      .sort((left, right) => right.createdAt.localeCompare(left.createdAt) || left.auditId.localeCompare(right.auditId))
+    const page = pageByStableCursor({
+      items: auditLog,
+      limit: query.limit ?? 25,
+      cursor: query.cursor,
+      sort: "createdDesc",
+      cursorValues: (entry) => [entry.createdAt, entry.auditId],
+      isAfter: (entry, values) => entry.createdAt.localeCompare(values[0] ?? "") < 0
+        || entry.createdAt === values[0] && entry.auditId.localeCompare(values[1] ?? "") > 0
+    })
+    return {
+      auditLog: page.items,
+      total: page.total,
+      nextCursor: page.nextCursor,
+      truncated: page.truncated,
+      source: "managed-user-audit-ledger",
+      asOf: new Date().toISOString()
+    }
   }
 
   async assignUserRoles(actor: AppUser, userId: string, groups: string[], reason?: string): Promise<ManagedUser | undefined> {
@@ -1761,7 +2041,7 @@ export class MemoRagService {
           exportType,
           generatedAt,
           redaction,
-          auditLog: await this.listAdminAuditLog(actor)
+          auditLog: (await this.listAdminAuditLog(actor, { limit: Number.MAX_SAFE_INTEGER })).auditLog
         }
       : {
           exportType,
@@ -2974,22 +3254,71 @@ export class MemoRagService {
     ].filter((operation): operation is Promise<void> => operation !== undefined))
   }
 
-  private async loadAliasLedger(): Promise<AliasLedger> {
+  private async loadAliasLedger(): Promise<VersionedAliasLedger> {
     try {
-      const raw = JSON.parse(await this.deps.objectStore.getText(aliasLedgerKey)) as AliasLedger
+      const stored = await this.deps.objectStore.getTextWithVersion(aliasLedgerKey)
+      const raw = JSON.parse(stored.text) as Partial<AliasLedger>
       return {
-        schemaVersion: 1,
-        aliases: Array.isArray(raw.aliases) ? raw.aliases : [],
-        auditLog: Array.isArray(raw.auditLog) ? raw.auditLog : []
+        storeVersion: stored.version,
+        ledger: normalizeAliasLedger(raw)
       }
     } catch (err) {
       if (!isMissingObjectError(err)) throw err
-      return { schemaVersion: 1, aliases: [], auditLog: [] }
+      return { ledger: { schemaVersion: 2, aliases: [], auditLog: [] } }
     }
   }
 
-  private async saveAliasLedger(ledger: AliasLedger): Promise<void> {
-    await this.deps.objectStore.putText(aliasLedgerKey, JSON.stringify(ledger, null, 2), "application/json")
+  private async saveAliasLedger(ledger: AliasLedger, expectedVersion: string | undefined): Promise<string> {
+    await this.deps.objectStore.putTextIfVersion(
+      aliasLedgerKey,
+      JSON.stringify(ledger, null, 2),
+      expectedVersion,
+      "application/json"
+    )
+    return (await this.deps.objectStore.getTextWithVersion(aliasLedgerKey)).version
+  }
+
+  private async mutateAliasLedger<T>(
+    mutation: (ledger: AliasLedger, storeVersion: string | undefined) => {
+      commit: boolean
+      value?: T
+      error?: AliasGovernanceError
+    }
+  ): Promise<T | undefined> {
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      const state = await this.loadAliasLedger()
+      const outcome = mutation(state.ledger, state.storeVersion)
+      if (!outcome.commit) return undefined
+      try {
+        await this.saveAliasLedger(state.ledger, state.storeVersion)
+        if (outcome.error) throw outcome.error
+        return outcome.value
+      } catch (error) {
+        if (error instanceof AliasGovernanceError) throw error
+        if (!isConditionalObjectWriteError(error)) throw error
+      }
+    }
+    throw new AliasGovernanceError("Alias ledger version conflict", "conflict")
+  }
+
+  private async recordAliasMutationResult(
+    actor: AppUser,
+    tenantId: string,
+    action: AliasAuditLogItem["action"],
+    reason: string,
+    error: AliasGovernanceError
+  ): Promise<void> {
+    await this.mutateAliasLedger((ledger) => {
+      appendAliasAudit(ledger, {
+        actor,
+        tenantId,
+        action,
+        result: error.result,
+        reason,
+        detail: error.message
+      })
+      return { commit: true, value: undefined }
+    })
   }
 
   private async currentReindexAuthorizationManifest(
@@ -3456,7 +3785,6 @@ export class MemoRagService {
       afterGroups,
       createdAt
     })
-    db.auditLog = db.auditLog.slice(0, 200)
   }
 
   async saveConversationHistory(subject: AppUser | string, input: SaveConversationHistoryInput, tenantId?: string): Promise<ConversationHistoryItem> {
@@ -5023,6 +5351,88 @@ function normalizeAliasScope(scope: AliasInput["scope"]): AliasDefinition["scope
   return normalized && Object.keys(normalized).length > 0 ? normalized : undefined
 }
 
+function aliasScopeForTenant(scope: AliasInput["scope"], tenantId: string): AliasDefinition["scope"] {
+  const normalized = normalizeAliasScope(scope)
+  return { ...normalized, tenantId }
+}
+
+function aliasTenantId(alias: AliasDefinition): string {
+  return alias.scope?.tenantId?.trim() || defaultTenantId
+}
+
+function findTenantAlias(ledger: AliasLedger, aliasId: string, tenantId: string): AliasDefinition | undefined {
+  return ledger.aliases.find((alias) => alias.aliasId === aliasId && aliasTenantId(alias) === tenantId)
+}
+
+function canonicalAliasReason(value: string): string {
+  if (!value || value.trim() !== value) {
+    throw new AliasGovernanceError("Alias mutation reason is required and must be canonical", "denied")
+  }
+  return value
+}
+
+function validateAliasMutationVersion(alias: AliasDefinition, expectedVersion: string): AliasGovernanceError | undefined {
+  return expectedVersion === alias.version
+    ? undefined
+    : new AliasGovernanceError("Alias version conflict", "conflict")
+}
+
+function rejectedAliasMutation(
+  ledger: AliasLedger,
+  actor: AppUser,
+  tenantId: string,
+  action: AliasAuditLogItem["action"],
+  alias: AliasDefinition,
+  reason: string,
+  error: AliasGovernanceError
+): { commit: true; error: AliasGovernanceError } {
+  appendAliasAudit(ledger, {
+    actor,
+    tenantId,
+    action,
+    alias,
+    result: error.result,
+    reason,
+    beforeStatus: alias.status,
+    afterStatus: alias.status,
+    detail: error.message
+  })
+  return { commit: true, error }
+}
+
+function normalizeAliasLedger(raw: Partial<AliasLedger>): AliasLedger {
+  const aliases = (Array.isArray(raw.aliases) ? raw.aliases : []).map((candidate) => {
+    const alias = candidate as AliasDefinition & { version?: string }
+    const scope = aliasScopeForTenant(alias.scope, alias.scope?.tenantId?.trim() || defaultTenantId)
+    return {
+      ...alias,
+      scope,
+      version: alias.version || `legacy_${stableHash({
+        aliasId: alias.aliasId,
+        term: alias.term,
+        status: alias.status,
+        updatedAt: alias.updatedAt
+      }).slice(0, 24)}`
+    }
+  })
+  const byId = new Map(aliases.map((alias) => [alias.aliasId, alias]))
+  const auditLog = (Array.isArray(raw.auditLog) ? raw.auditLog : []).map((candidate) => {
+    const entry = candidate as AliasAuditLogItem & Partial<Pick<
+      AliasAuditLogItem,
+      "tenantId" | "result" | "reason" | "beforeStatus" | "afterStatus" | "aliasVersion"
+    >>
+    const alias = entry.aliasId ? byId.get(entry.aliasId) : undefined
+    return {
+      ...entry,
+      tenantId: entry.tenantId?.trim() || (alias ? aliasTenantId(alias) : defaultTenantId),
+      result: entry.result ?? "success",
+      reason: entry.reason?.trim() || "legacy_event_reason_unavailable",
+      aliasVersion: entry.aliasVersion ?? alias?.version
+    }
+  })
+  return { schemaVersion: 2, aliases, auditLog }
+}
+
 function sanitizeSupportDiagnostics(
   diagnostics: HumanQuestion["sanitizedDiagnostics"] | undefined,
   fallbackAnswerUnavailableReason?: string
@@ -5052,19 +5462,36 @@ function isSupportNextAction(value: unknown): value is NonNullable<NonNullable<H
 
 function appendAliasAudit(
   ledger: AliasLedger,
-  actor: AppUser,
-  action: AliasAuditLogItem["action"],
-  aliasId: string | undefined,
-  detail: string
+  input: {
+    actor: AppUser
+    tenantId: string
+    action: AliasAuditLogItem["action"]
+    alias?: AliasDefinition
+    result: AliasAuditLogItem["result"]
+    reason: string
+    beforeStatus?: AliasDefinition["status"]
+    afterStatus?: AliasDefinition["status"]
+    detail: string
+  }
 ): void {
   ledger.auditLog.push({
     auditId: `audit_${randomUUID().slice(0, 12)}`,
-    aliasId,
-    action,
-    actorUserId: actor.userId,
+    aliasId: input.alias?.aliasId,
+    tenantId: input.tenantId,
+    action: input.action,
+    actorUserId: input.actor.userId,
+    result: input.result,
+    reason: input.reason,
+    beforeStatus: input.beforeStatus,
+    afterStatus: input.afterStatus,
+    aliasVersion: input.alias?.version,
     createdAt: new Date().toISOString(),
-    detail
+    detail: input.detail
   })
+}
+
+function createAliasRecordVersion(now: string): string {
+  return `alias_state_${now.replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z")}_${randomUUID().slice(0, 12)}`
 }
 
 function createAliasVersion(now: string): string {

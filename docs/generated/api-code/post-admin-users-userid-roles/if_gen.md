@@ -2,7 +2,7 @@
 
 # POST /admin/users/{userId}/roles IF仕様
 
-- 実装 route: `apps/api/src/routes/admin-routes.ts:203 (POST /admin/users/{userId}/roles)`
+- 実装 route: `apps/api/src/routes/admin-routes.ts:220 (POST /admin/users/{userId}/roles)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: ユーザーのロールを更新する

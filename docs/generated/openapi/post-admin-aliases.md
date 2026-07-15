@@ -63,7 +63,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 29 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 30 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 
@@ -74,6 +74,7 @@ Media type: `application/json`
 | 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
 | `aliasId` | `string` | yes | 検索 alias を識別する ID。 | - |
+| `version` | `string` | yes | `response.version` の値。項目名は version を表します。 | - |
 | `term` | `string` | yes | `response.term` の値。項目名は term を表します。 | - |
 | `expansions` | `array<string>` | yes | `response.expansions` の値。項目名は expansions を表します。 | - |
 | `scope` | `object` | no | `response.scope` の値。項目名は scope を表します。 | - |

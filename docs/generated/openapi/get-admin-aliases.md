@@ -20,7 +20,13 @@ _なし_
 
 ## Query Parameters
 
-_なし_
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `cursor` | `string` | no | `cursor` の値。項目名は cursor を表します。 クエリ文字列で検索または一覧条件を指定します。 | minLength=1<br>maxLength=2048 |
+| `limit` | `integer` | no | `limit` の値。項目名は limit を表します。 クエリ文字列で検索または一覧条件を指定します。 | minimum=1<br>maximum=100 |
+| `query` | `string` | no | 検索や benchmark に利用する query。 クエリ文字列で検索または一覧条件を指定します。 | minLength=1<br>maxLength=120 |
+| `status` | `enum(draft \| approved \| disabled)` | no | 現在の処理状態または管理状態。 クエリ文字列で検索または一覧条件を指定します。 | enum=draft, approved, disabled |
+| `sort` | `enum(updatedDesc \| termAsc)` | no | `sort` の値。項目名は sort を表します。 クエリ文字列で検索または一覧条件を指定します。 | enum=updatedDesc, termAsc |
 
 ## Data
 
@@ -52,7 +58,8 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 30 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 37 field(s) |
+| `400` | リクエスト形式または入力値が不正です。 | `application/json` | 2 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 
@@ -62,8 +69,15 @@ Media type: `application/json`
 
 | 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
+| `total` | `integer` | yes | `response.total` の値。項目名は total を表します。 | minimum=0 |
+| `nextCursor` | `string` | no | `response.nextCursor` の値。項目名は next cursor を表します。 | - |
+| `truncated` | `boolean` | yes | `response.truncated` の値。項目名は truncated を表します。 | - |
+| `source` | `string` | yes | `response.source` の値。項目名は source を表します。 | - |
+| `asOf` | `string` | yes | `response.asOf` の値。項目名は as of を表します。 | - |
+| `version` | `string` | no | `response.version` の値。項目名は version を表します。 | - |
 | `aliases` | `array<object>` | yes | 検索 alias 一覧。 | - |
 | `aliases[].aliasId` | `string` | yes | 検索 alias を識別する ID。 | - |
+| `aliases[].version` | `string` | yes | `response.aliases[].version` の値。項目名は version を表します。 | - |
 | `aliases[].term` | `string` | yes | `response.aliases[].term` の値。項目名は term を表します。 | - |
 | `aliases[].expansions` | `array<string>` | yes | `response.aliases[].expansions` の値。項目名は expansions を表します。 | - |
 | `aliases[].scope` | `object` | no | `response.aliases[].scope` の値。項目名は scope を表します。 | - |
@@ -92,6 +106,15 @@ Media type: `application/json`
 | `aliases[].reviewedAt` | `string` | no | `response.aliases[].reviewedAt` の値。項目名は reviewed at を表します。 | - |
 | `aliases[].reviewComment` | `string` | no | `response.aliases[].reviewComment` の値。項目名は review comment を表します。 | - |
 | `aliases[].publishedVersion` | `string` | no | `response.aliases[].publishedVersion` の値。項目名は published version を表します。 | - |
+
+##### `400` リクエスト形式または入力値が不正です。
+
+Media type: `application/json`
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ##### `401` 認証が必要です。
 

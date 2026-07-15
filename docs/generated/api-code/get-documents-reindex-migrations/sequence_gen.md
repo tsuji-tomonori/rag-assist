@@ -30,9 +30,9 @@ sequenceDiagram
 | 1 | `GET /documents/reindex-migrations handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/document-routes.ts:1405 (GET /documents/reindex-migrations handler)` |
 | 2 | `GET /documents/reindex-migrations handler` | Auth | "rag:index:rebuild:group" permission を必須条件として確認する。 | `requirePermission(c.get("user"), "rag:index:rebuild:group")` | `apps/api/src/routes/document-routes.ts:1405 (GET /documents/reindex-migrations handler)` |
 | 3 | `GET /documents/reindex-migrations handler` | Service | service の list reindex migrations 処理を呼び出す。 | `service.listReindexMigrations()` | `apps/api/src/routes/document-routes.ts:1406 (GET /documents/reindex-migrations handler)` |
-| 4 | `MemoRagService.listReindexMigrations` | Store | `this` に対して load reindex migration ledger を実行する。 | `this.loadReindexMigrationLedger()` | `apps/api/src/rag/memorag-service.ts:749 (MemoRagService.listReindexMigrations)` |
-| 5 | `MemoRagService.loadReindexMigrationLedger` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(reindexMigrationLedgerKey)` | `apps/api/src/rag/memorag-service.ts:3083 (MemoRagService.loadReindexMigrationLedger)` |
-| 6 | `MemoRagService.listReindexMigrations` | Store | `(await this.loadReindexMigrationLedger())` に対して sort を実行する。 | `(await this.loadReindexMigrationLedger()).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))` | `apps/api/src/rag/memorag-service.ts:749 (MemoRagService.listReindexMigrations)` |
+| 4 | `MemoRagService.listReindexMigrations` | Store | `this` に対して load reindex migration ledger を実行する。 | `this.loadReindexMigrationLedger()` | `apps/api/src/rag/memorag-service.ts:797 (MemoRagService.listReindexMigrations)` |
+| 5 | `MemoRagService.loadReindexMigrationLedger` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(reindexMigrationLedgerKey)` | `apps/api/src/rag/memorag-service.ts:3412 (MemoRagService.loadReindexMigrationLedger)` |
+| 6 | `MemoRagService.listReindexMigrations` | Store | `(await this.loadReindexMigrationLedger())` に対して sort を実行する。 | `(await this.loadReindexMigrationLedger()).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))` | `apps/api/src/rag/memorag-service.ts:797 (MemoRagService.listReindexMigrations)` |
 | 7 | `GET /documents/reindex-migrations handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json({ migrations: await service.listReindexMigrations() }, 200)` | `apps/api/src/routes/document-routes.ts:1406 (GET /documents/reindex-migrations handler)` |
 
 ## 分岐

@@ -1043,8 +1043,13 @@ test("service search expands published reviewed aliases without returning alias 
     expansions: ["年次有給休暇"],
     scope: { tenantId: "tenant-a" }
   })
-  await service.reviewAlias(manager, alias.aliasId, { decision: "approve" })
-  await service.publishAliases(manager)
+  await service.reviewAlias(manager, alias.aliasId, {
+    decision: "approve",
+    expectedVersion: alias.version,
+    reason: "検索展開を確認"
+  })
+  const aliasPage = await service.listAliases(manager)
+  await service.publishAliases(manager, { expectedVersion: aliasPage.version!, reason: "検索へ公開" })
 
   const result = await service.search({ query: "pto", topK: 10, filters: { tenantId: "tenant-a" } }, user(["GROUP_A"]))
   assert.equal(result.results[0]?.fileName, "vacation.md")

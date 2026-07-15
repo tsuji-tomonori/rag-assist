@@ -19,6 +19,57 @@ export type ApplicationRole = (typeof APPLICATION_ROLES)[number]
 
 export const DEFAULT_APPLICATION_ROLE: ApplicationRole = "CHAT_USER"
 
+export const APPLICATION_ROLE_DISPLAY_CATALOG = {
+  CHAT_USER: {
+    displayName: "チャット利用者",
+    description: "チャット、本人の履歴・利用状況、許可された文書検索を利用します。"
+  },
+  ANSWER_EDITOR: {
+    displayName: "問い合わせ回答担当",
+    description: "割り当てられた問い合わせの回答を編集・公開します。"
+  },
+  RAG_GROUP_MANAGER: {
+    displayName: "RAG グループ管理者",
+    description: "許可された文書・フォルダ・リソースグループと用語展開を管理します。"
+  },
+  BENCHMARK_OPERATOR: {
+    displayName: "性能評価オペレーター",
+    description: "性能評価の定義を参照し、許可された評価を実行します。"
+  },
+  BENCHMARK_RUNNER: {
+    displayName: "性能評価実行者",
+    description: "評価専用 corpus と query を使って性能評価を実行します。"
+  },
+  ASYNC_AGENT_USER: {
+    displayName: "非同期エージェント利用者",
+    description: "本人の非同期エージェント実行、成果物、preset を管理します。"
+  },
+  SKILL_PROFILE_ADMIN: {
+    displayName: "スキル・プロファイル管理者",
+    description: "共有スキルとエージェントプロファイルを管理します。"
+  },
+  ASYNC_AGENT_ADMIN: {
+    displayName: "非同期エージェント管理者",
+    description: "管理対象の非同期エージェント実行と実行設定を管理します。"
+  },
+  USER_ADMIN: {
+    displayName: "ユーザー管理者",
+    description: "管理対象ユーザーの作成、状態変更、利用状況確認を行います。"
+  },
+  ACCESS_ADMIN: {
+    displayName: "アクセス管理者",
+    description: "アプリケーションロールの割り当てと認可ポリシーの確認を行います。"
+  },
+  COST_AUDITOR: {
+    displayName: "コスト監査担当",
+    description: "提供可能な全体コスト情報を監査します。"
+  },
+  SYSTEM_ADMIN: {
+    displayName: "システム管理者",
+    description: "システム全体の管理と復旧に必要な権限を持つ system preset です。"
+  }
+} as const satisfies Record<ApplicationRole, { displayName: string; description: string }>
+
 /** FR-076 enabled cells. resourceGroup.move/share are intentionally absent. */
 export const RESOURCE_OPERATION_FEATURE_PERMISSIONS = [
   "document.create",

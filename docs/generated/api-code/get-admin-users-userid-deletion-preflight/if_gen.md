@@ -2,7 +2,7 @@
 
 # GET /admin/users/{userId}/deletion-preflight IF仕様
 
-- 実装 route: `apps/api/src/routes/admin-routes.ts:131 (GET /admin/users/{userId}/deletion-preflight)`
+- 実装 route: `apps/api/src/routes/admin-routes.ts:140 (GET /admin/users/{userId}/deletion-preflight)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: ユーザー削除前の移管条件を取得する

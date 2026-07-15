@@ -15,6 +15,7 @@ Grounded internal-document QA API. Answers only from uploaded documents; otherwi
 | `POST` | `/admin/aliases` | 検索 alias draft を作成する | [詳細](openapi/post-admin-aliases.md) |
 | `POST` | `/admin/aliases/{aliasId}/disable` | 検索 alias を無効化する | [詳細](openapi/post-admin-aliases-aliasid-disable.md) |
 | `POST` | `/admin/aliases/{aliasId}/review` | 検索 alias をレビューする | [詳細](openapi/post-admin-aliases-aliasid-review.md) |
+| `POST` | `/admin/aliases/{aliasId}/transition` | 検索 alias を下書きへ戻す | [詳細](openapi/post-admin-aliases-aliasid-transition.md) |
 | `POST` | `/admin/aliases/{aliasId}/update` | 検索 alias draft を更新する | [詳細](openapi/post-admin-aliases-aliasid-update.md) |
 | `GET` | `/admin/aliases/audit-log` | 検索 alias 監査ログを取得する | [詳細](openapi/get-admin-aliases-audit-log.md) |
 | `POST` | `/admin/aliases/publish` | 検索 alias を公開する | [詳細](openapi/post-admin-aliases-publish.md) |

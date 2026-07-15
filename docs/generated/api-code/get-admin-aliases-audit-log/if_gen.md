@@ -2,7 +2,7 @@
 
 # GET /admin/aliases/audit-log IF仕様
 
-- 実装 route: `apps/api/src/routes/admin-routes.ts:454 (GET /admin/aliases/audit-log)`
+- 実装 route: `apps/api/src/routes/admin-routes.ts:556 (GET /admin/aliases/audit-log)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 検索 alias 監査ログを取得する
@@ -21,7 +21,13 @@ _なし_
 
 ## Query Parameters
 
-_なし_
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `cursor` | `string` | no | `cursor` の値。項目名は cursor を表します。 クエリ文字列で検索または一覧条件を指定します。 | minLength=1<br>maxLength=2048 |
+| `limit` | `integer` | no | `limit` の値。項目名は limit を表します。 クエリ文字列で検索または一覧条件を指定します。 | minimum=1<br>maximum=100 |
+| `query` | `string` | no | 検索や benchmark に利用する query。 クエリ文字列で検索または一覧条件を指定します。 | minLength=1<br>maxLength=120 |
+| `action` | `enum(create \| update \| review \| transition \| disable \| publish)` | no | `action` の値。項目名は action を表します。 クエリ文字列で検索または一覧条件を指定します。 | enum=create, update, review, transition, disable, publish |
+| `aliasId` | `string` | no | 検索 alias を識別する ID。 クエリ文字列で検索または一覧条件を指定します。 | minLength=1<br>maxLength=200 |
 
 ## Data
 
@@ -53,7 +59,8 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 7 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 19 field(s) |
+| `400` | リクエスト形式または入力値が不正です。 | `application/json` | 2 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 
@@ -63,13 +70,34 @@ Media type: `application/json`
 
 | 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
+| `total` | `integer` | yes | `response.total` の値。項目名は total を表します。 | minimum=0 |
+| `nextCursor` | `string` | no | `response.nextCursor` の値。項目名は next cursor を表します。 | - |
+| `truncated` | `boolean` | yes | `response.truncated` の値。項目名は truncated を表します。 | - |
+| `source` | `string` | yes | `response.source` の値。項目名は source を表します。 | - |
+| `asOf` | `string` | yes | `response.asOf` の値。項目名は as of を表します。 | - |
+| `version` | `string` | no | `response.version` の値。項目名は version を表します。 | - |
 | `auditLog` | `array<object>` | yes | 監査ログ一覧。 | - |
 | `auditLog[].auditId` | `string` | yes | `response.auditLog[].auditId` の値。項目名は audit id を表します。 | - |
 | `auditLog[].aliasId` | `string` | no | 検索 alias を識別する ID。 | - |
-| `auditLog[].action` | `enum(create \| update \| review \| disable \| publish)` | yes | `response.auditLog[].action` の値。項目名は action を表します。 | enum=create, update, review, disable, publish |
+| `auditLog[].tenantId` | `string` | yes | `response.auditLog[].tenantId` の値。項目名は tenant id を表します。 | - |
+| `auditLog[].action` | `enum(create \| update \| review \| transition \| disable \| publish)` | yes | `response.auditLog[].action` の値。項目名は action を表します。 | enum=create, update, review, transition, disable, publish |
 | `auditLog[].actorUserId` | `string` | yes | `response.auditLog[].actorUserId` の値。項目名は actor user id を表します。 | - |
+| `auditLog[].result` | `enum(success \| denied \| conflict \| failed)` | yes | `response.auditLog[].result` の値。項目名は result を表します。 | enum=success, denied, conflict, failed |
+| `auditLog[].reason` | `string` | yes | 判断や失敗の理由。 | - |
+| `auditLog[].beforeStatus` | `enum(draft \| approved \| disabled)` | no | `response.auditLog[].beforeStatus` の値。項目名は before status を表します。 | enum=draft, approved, disabled |
+| `auditLog[].afterStatus` | `enum(draft \| approved \| disabled)` | no | `response.auditLog[].afterStatus` の値。項目名は after status を表します。 | enum=draft, approved, disabled |
+| `auditLog[].aliasVersion` | `string` | no | `response.auditLog[].aliasVersion` の値。項目名は alias version を表します。 | - |
 | `auditLog[].createdAt` | `string` | yes | レコードを作成した日時。 | - |
 | `auditLog[].detail` | `string` | yes | `response.auditLog[].detail` の値。項目名は detail を表します。 | - |
+
+##### `400` リクエスト形式または入力値が不正です。
+
+Media type: `application/json`
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ##### `401` 認証が必要です。
 

@@ -80,6 +80,7 @@ const adminMock = vi.hoisted(() => ({
   refreshUsageSummaries: vi.fn(),
   refreshCostAudit: vi.fn(),
   refreshAliases: vi.fn(),
+  refreshAliasAuditLog: vi.fn(),
   refreshAdminData: vi.fn(),
   onAssignUserRoles: vi.fn(),
   onCreateManagedUser: vi.fn(),
@@ -88,6 +89,7 @@ const adminMock = vi.hoisted(() => ({
   onCreateAlias: vi.fn(),
   onUpdateAlias: vi.fn(),
   onReviewAlias: vi.fn(),
+  onTransitionAlias: vi.fn(),
   onDisableAlias: vi.fn(),
   onPublishAliases: vi.fn()
 }))
@@ -162,7 +164,11 @@ vi.mock("../../features/admin/hooks/useAdminData.js", () => ({
     usageSummaries: [],
     costAudit: null,
     aliases: [],
+    aliasPage: null,
     aliasAuditLog: [],
+    aliasAuditPage: null,
+    adminAuditPage: null,
+    accessRoleList: null,
     ...adminMock
   }))
 }))
@@ -235,6 +241,7 @@ describe("useAppShellState", () => {
       adminMock.refreshUsageSummaries,
       adminMock.refreshCostAudit,
       adminMock.refreshAliases,
+      adminMock.refreshAliasAuditLog,
       adminMock.refreshAdminData,
       questionsMock.refreshLinkedQuestions,
       questionsMock.refreshQuestionTickets
@@ -286,6 +293,7 @@ describe("useAppShellState", () => {
     expect(adminMock.refreshUsageSummaries).toHaveBeenCalled()
     expect(adminMock.refreshCostAudit).toHaveBeenCalled()
     expect(adminMock.refreshAliases).toHaveBeenCalled()
+    expect(adminMock.refreshAliasAuditLog).toHaveBeenCalled()
 
     act(() => result.current.routeProps.adminProps.onOpenDebug())
     expect(result.current.railProps.activeView).toBe("chat")

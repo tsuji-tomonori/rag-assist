@@ -2,6 +2,7 @@ import assert from "node:assert/strict"
 import test from "node:test"
 import {
   APPLICATION_ROLES,
+  APPLICATION_ROLE_DISPLAY_CATALOG,
   DEFAULT_APPLICATION_ROLE,
   RESOURCE_OPERATION_FEATURE_PERMISSIONS,
   ROLE_CATALOG_VERSION,
@@ -14,10 +15,13 @@ test("canonical role catalog has a version and exactly one definition for every 
   assert.match(ROLE_CATALOG_VERSION, /^memorag-access-role-catalog-v\d+$/)
   assert.equal(new Set(APPLICATION_ROLES).size, APPLICATION_ROLES.length)
   assert.deepEqual(Object.keys(ROLE_PERMISSION_CATALOG), [...APPLICATION_ROLES])
+  assert.deepEqual(Object.keys(APPLICATION_ROLE_DISPLAY_CATALOG), [...APPLICATION_ROLES])
 
   for (const role of APPLICATION_ROLES) {
     const permissions = ROLE_PERMISSION_CATALOG[role]
     assert.equal(new Set(permissions).size, permissions.length, `${role} permissions must be unique`)
+    assert.notEqual(APPLICATION_ROLE_DISPLAY_CATALOG[role].displayName.trim(), "")
+    assert.notEqual(APPLICATION_ROLE_DISPLAY_CATALOG[role].description.trim(), "")
   }
 })
 

@@ -8,7 +8,7 @@
 
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
-| 到達 symbol | service delegates human question lifecycle to the question store | `apps/api/src/rag/memorag-service.test.ts:1457 (service delegates human question lifecycle to the question store)` |
+| 到達 symbol | service delegates human question lifecycle to the question store | `apps/api/src/rag/memorag-service.test.ts:1572 (service delegates human question lifecycle to the question store)` |
 | route request | questionRoute_listAllRejectsSuspendedSystemAdmin | `apps/api/src/routes/question-routes.test.ts:16 (questionRoute_listAllRejectsSuspendedSystemAdmin)` |
 | route request | questionRoute_listAnswerEditorSeesDefaultSupportQueue | `apps/api/src/routes/question-routes.test.ts:59 (questionRoute_listAnswerEditorSeesDefaultSupportQueue)` |
 

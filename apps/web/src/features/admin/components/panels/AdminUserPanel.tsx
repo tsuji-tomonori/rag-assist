@@ -15,11 +15,14 @@ import {
 import { LoadingSpinner } from "../../../../shared/components/LoadingSpinner.js"
 import { managedUserStatusLabel } from "../../../../shared/utils/format.js"
 import { managedUserStatusPresentation } from "../../../../shared/ui/displayMetadata.js"
+import type { UiResourcePartState } from "../../../../shared/ui/ResourceState.js"
 import type { AccessRoleDefinition, ManagedUser, ManagedUserDeletionPreflight } from "../../types.js"
+import { AdminPanelDataStatus } from "../AdminPanelDataStatus.js"
 
 export function AdminUserPanel({
   managedUsers,
   accessRoles,
+  part,
   usersLoadFailed = false,
   rolesLoadFailed = false,
   loading,
@@ -32,10 +35,11 @@ export function AdminUserPanel({
   onAssignRoles,
   onPrepareUserDelete,
   onSetUserStatus,
-  onRefreshAdminData
+  onRefresh
 }: {
   managedUsers: ManagedUser[] | null
   accessRoles: AccessRoleDefinition[] | null
+  part?: UiResourcePartState
   usersLoadFailed?: boolean
   rolesLoadFailed?: boolean
   loading: boolean
@@ -48,7 +52,7 @@ export function AdminUserPanel({
   onAssignRoles: (userId: string, groups: string[], reason: string) => Promise<OperationOutcome<ManagedUser> | void>
   onPrepareUserDelete: (userId: string) => Promise<ManagedUserDeletionPreflight | null>
   onSetUserStatus: (userId: string, action: "suspend" | "unsuspend" | "delete", successorUserId?: string) => Promise<OperationOutcome<ManagedUser> | void>
-  onRefreshAdminData: () => Promise<void>
+  onRefresh: () => Promise<void>
 }) {
   const [operationFeedback, setOperationFeedback] = useState<OperationFeedbackEntry[]>([])
 
@@ -60,11 +64,9 @@ export function AdminUserPanel({
     <section className="admin-section-panel user-admin-panel" aria-label="ユーザー管理一覧">
       <div className="document-list-head">
         <h3>ユーザー管理</h3>
-        <button type="button" onClick={() => void onRefreshAdminData()} disabled={loading}>
-          {loading && <LoadingSpinner className="button-spinner" />}
-          <span>更新</span>
-        </button>
+        <span>{managedUsers ? `${managedUsers.length} 人` : usersLoadFailed ? "取得失敗" : "未確認"}</span>
       </div>
+      <AdminPanelDataStatus label="管理対象ユーザー" part={part} source="管理ユーザー API" asOf={part?.asOf} loading={loading} onRefresh={onRefresh} />
       {canCreateUsers && (
         <AdminCreateUserForm roles={accessRoles} rolesLoadFailed={rolesLoadFailed} loading={loading} onCreateUser={onCreateUser} />
       )}
@@ -73,20 +75,23 @@ export function AdminUserPanel({
           {operationFeedback.slice(0, 3).map((entry) => <OperationFeedback key={entry.id} entry={entry} />)}
         </div>
       )}
-      <div className="admin-data-table" role="table" aria-label="ユーザー一覧">
-        <div className="admin-user-row admin-user-head" role="row">
-          <span role="columnheader">ユーザー</span>
-          <span role="columnheader">状態</span>
-          <span role="columnheader">ロール</span>
-          <span role="columnheader">操作</span>
-        </div>
+      <table className="admin-data-table" aria-label="ユーザー一覧">
+        <thead>
+          <tr className="admin-user-row admin-user-head">
+            <th scope="col">ユーザー</th>
+            <th scope="col">状態</th>
+            <th scope="col">ロール</th>
+            <th scope="col">操作</th>
+          </tr>
+        </thead>
+        <tbody>
         {managedUsers === null ? (
-          <EmptyState
-            title={usersLoadFailed ? "管理対象ユーザーを取得できませんでした。" : "管理対象ユーザー API field は未提供です。"}
-            description={usersLoadFailed ? "画面上部の状態メッセージから再試行してください。" : "権限内の API response に users field がありません。"}
-          />
+          <tr><td colSpan={4}><EmptyState
+            title={usersLoadFailed ? "管理対象ユーザーを取得できませんでした。" : "管理対象ユーザーをまだ確認できません。"}
+            description={usersLoadFailed ? "このパネルの更新を試してください。" : "管理 API の取得完了後に表示します。"}
+          /></td></tr>
         ) : managedUsers.length === 0 ? (
-          <EmptyState title="管理対象ユーザーはありません。" />
+          <tr><td colSpan={4}><EmptyState title="管理対象ユーザーはありません。" /></td></tr>
         ) : (
           managedUsers.map((managedUser) => (
             <ManagedUserRow
@@ -106,7 +111,8 @@ export function AdminUserPanel({
             />
           ))
         )}
-      </div>
+        </tbody>
+      </table>
     </section>
   )
 }
@@ -168,7 +174,7 @@ function AdminCreateUserForm({
         ) : (
           <select value={role} onChange={(event) => setRole(event.target.value)}>
             {roles.map((roleDefinition) => (
-              <option value={roleDefinition.role} key={roleDefinition.role}>{roleDefinition.role}</option>
+              <option value={roleDefinition.role} key={roleDefinition.role}>{roleDefinition.displayName} ({roleDefinition.role})</option>
             ))}
           </select>
         )}
@@ -209,15 +215,18 @@ function ManagedUserRow({
   onOperationFeedback: (entry: OperationFeedbackEntry) => void
 }) {
   const availableRoles = useMemo(() => roles ?? [], [roles])
-  const [selectedRole, setSelectedRole] = useState(user.groups[0] ?? availableRoles[0]?.role ?? "")
+  const [selectedRoles, setSelectedRoles] = useState<string[]>(user.groups)
   const [statusCandidate, setStatusCandidate] = useState<"suspend" | "delete" | null>(null)
   const [deletionPreflight, setDeletionPreflight] = useState<ManagedUserDeletionPreflight | null>(null)
   const [successorUserId, setSuccessorUserId] = useState("")
   const [roleAssignOpen, setRoleAssignOpen] = useState(false)
   const [roleReason, setRoleReason] = useState("")
   const canShowRoleAssignment = canAssignRoles && availableRoles.length > 0
-  const nextGroups = selectedRole ? [selectedRole] : []
-  const roleChanged = canShowRoleAssignment && selectedRole !== "" && (!user.groups.includes(selectedRole) || user.groups.length !== nextGroups.length)
+  const nextGroups = useMemo(() => [
+    ...availableRoles.map((role) => role.role).filter((role) => selectedRoles.includes(role)),
+    ...selectedRoles.filter((role) => !availableRoles.some((definition) => definition.role === role))
+  ], [availableRoles, selectedRoles])
+  const roleChanged = canShowRoleAssignment && !sameStringSet(user.groups, nextGroups)
   const canShowSuspendAction = user.status === "suspended" ? canUnsuspend : canSuspend
   const canShowDeleteAction = canDelete
   const eligibleSuccessors = useMemo(
@@ -267,72 +276,86 @@ function ManagedUserRow({
   }
 
   useEffect(() => {
-    const currentRole = user.groups[0]
-    if (currentRole && availableRoles.some((role) => role.role === currentRole)) {
-      setSelectedRole(currentRole)
-      return
-    }
-    setSelectedRole(availableRoles[0]?.role ?? "")
-  }, [availableRoles, user.groups])
+    setSelectedRoles(user.groups)
+  }, [user.groups])
 
   return (
-    <div className="admin-user-row" role="row">
-      <span role="cell">
+    <tr className="admin-user-row">
+      <td data-label="ユーザー">
         <strong>{user.displayName || user.email}</strong>
         <small>{user.email}</small>
-      </span>
-      <span role="cell">
+      </td>
+      <td data-label="状態">
         <StatusBadge presentation={managedUserStatusPresentation(user.status)} />
-      </span>
-      <span role="cell">
+      </td>
+      <td data-label="ロール">
         {canShowRoleAssignment && (
-          <div className="role-assignment">
-            <select value={selectedRole} disabled={loading} aria-label={`${user.email}に付与するロール`} onChange={(event) => setSelectedRole(event.target.value)}>
+          <fieldset className="role-assignment">
+            <legend>{user.displayName || user.email} のアプリケーションロール</legend>
+            <div className="role-checkbox-list">
               {availableRoles.map((role) => (
-                <option value={role.role} key={role.role}>{role.role}</option>
+                <label key={role.role}>
+                  <input
+                    type="checkbox"
+                    checked={selectedRoles.includes(role.role)}
+                    disabled={loading}
+                    onChange={(event) => setSelectedRoles((current) => event.target.checked
+                      ? [...current, role.role]
+                      : current.filter((currentRole) => currentRole !== role.role))}
+                  />
+                  <span>{role.displayName}</span>
+                  <code>{role.role}</code>
+                </label>
               ))}
-            </select>
-            <button type="button" disabled={loading || !roleChanged || roleReason.trim().length === 0} onClick={() => setRoleAssignOpen(true)}>
+            </div>
+            <label>
+              <span>変更理由（必須）</span>
+              <textarea
+                value={roleReason}
+                maxLength={1000}
+                disabled={loading}
+                aria-label={`${user.email}のロール変更理由`}
+                onChange={(event) => setRoleReason(event.target.value)}
+              />
+            </label>
+            {nextGroups.length === 0 && <small role="alert">アプリケーションロールを 1 件以上選択してください。</small>}
+            <button
+              type="button"
+              disabled={loading || !roleChanged || nextGroups.length === 0 || roleReason.trim().length === 0}
+              onClick={() => setRoleAssignOpen(true)}
+              aria-label={`${user.email}のロール変更を確認`}
+            >
               {loading && <LoadingSpinner className="button-spinner" />}
-              <span>付与</span>
+              <span>変更を確認</span>
             </button>
-            <input
-              value={roleReason}
-              maxLength={1000}
-              disabled={loading}
-              aria-label={`${user.email}のロール変更理由`}
-              placeholder="変更理由（必須）"
-              onChange={(event) => setRoleReason(event.target.value)}
-            />
-          </div>
+          </fieldset>
         )}
-        {roles === null && <small>{rolesLoadFailed ? "ロール定義を取得できませんでした" : "ロール定義は未提供"}</small>}
+        {roles === null && <small>{rolesLoadFailed ? "ロール定義を取得できませんでした" : "ロール定義をまだ確認できません"}</small>}
         {roleChanged && (
           <small className="role-diff-preview">変更前: {formatGroupList(user.groups)} / 変更後: {formatGroupList(nextGroups)}</small>
         )}
-        <small>{formatGroupList(user.groups)}</small>
-      </span>
-      <span role="cell">
+        <small>現在: {formatGroupList(user.groups)}</small>
+      </td>
+      <td data-label="操作">
         <div className="user-row-actions">
           {canShowSuspendAction && (user.status === "suspended" ? (
-            <button type="button" disabled={loading} onClick={() => void applyStatus("unsuspend")}>
+            <button type="button" disabled={loading} onClick={() => void applyStatus("unsuspend")} aria-label={`${user.email}の利用を再開`}>
               {loading && <LoadingSpinner className="button-spinner" />}
               <span>再開</span>
             </button>
           ) : (
-            <button type="button" disabled={loading} onClick={() => setStatusCandidate("suspend")}>
+            <button type="button" disabled={loading} onClick={() => setStatusCandidate("suspend")} aria-label={`${user.email}の利用を停止`}>
               {loading && <LoadingSpinner className="button-spinner" />}
               <span>停止</span>
             </button>
           ))}
-          {canShowDeleteAction && <button type="button" disabled={loading} onClick={() => void prepareDelete()}>
+          {canShowDeleteAction && <button type="button" disabled={loading} onClick={() => void prepareDelete()} aria-label={`${user.email}を削除`}>
             {loading && <LoadingSpinner className="button-spinner" />}
             <span>削除</span>
           </button>}
           {!canShowSuspendAction && !canShowDeleteAction && <span className="admin-field-unavailable">利用可能な操作はありません</span>}
         </div>
-      </span>
-      {statusCandidate && (
+        {statusCandidate && (
         <ConfirmDialog
           title={statusCandidate === "suspend" ? "このユーザーを停止しますか？" : "このユーザーを削除状態にしますか？"}
           description={statusCandidate === "suspend"
@@ -396,10 +419,10 @@ function ManagedUserRow({
             </div>
           )}
         </ConfirmDialog>
-      )}
-      {roleAssignOpen && (
+        )}
+        {roleAssignOpen && (
         <ConfirmDialog
-          title="ロールを付与しますか？"
+          title="ロール割り当てを変更しますか？"
           description="変更前後の差分と監査に記録する理由を確認してから確定します。"
           details={[
             `ユーザー: ${user.displayName || user.email}`,
@@ -411,9 +434,10 @@ function ManagedUserRow({
             "回復条件: 最新 role set を確認し、理由付きで再変更できます",
             "確認が必要な理由: 自己昇格や管理者不在を server guard で拒否する高権限操作のため"
           ]}
-          confirmLabel="付与"
+          confirmLabel="変更"
           tone="warning"
           loading={loading}
+          confirmDisabled={!roleReason.trim() || !roleChanged || nextGroups.length === 0}
           onCancel={() => setRoleAssignOpen(false)}
           onConfirm={async () => {
             const reason = roleReason.trim()
@@ -439,13 +463,18 @@ function ManagedUserRow({
             }
           }}
         />
-      )}
-    </div>
+        )}
+      </td>
+    </tr>
   )
 }
 
 function formatGroupList(groups: string[]) {
   return groups.length > 0 ? groups.join(" / ") : "未設定"
+}
+
+function sameStringSet(left: string[], right: string[]): boolean {
+  return left.length === right.length && left.every((value) => right.includes(value))
 }
 
 async function resolveOperation<T>(operation: () => Promise<OperationOutcome<T> | void>): Promise<OperationOutcome<T>> {

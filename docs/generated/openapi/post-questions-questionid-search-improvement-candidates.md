@@ -75,7 +75,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 30 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 31 field(s) |
 | `400` | リクエスト形式または入力値が不正です。 | `application/json` | 2 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
@@ -89,6 +89,7 @@ Media type: `application/json`
 | --- | --- | --- | --- | --- |
 | `candidate` | `object` | yes | 検索改善の候補。 | - |
 | `candidate.aliasId` | `string` | yes | 検索 alias を識別する ID。 | - |
+| `candidate.version` | `string` | yes | `response.candidate.version` の値。項目名は version を表します。 | - |
 | `candidate.term` | `string` | yes | `response.candidate.term` の値。項目名は term を表します。 | - |
 | `candidate.expansions` | `array<string>` | yes | `response.candidate.expansions` の値。項目名は expansions を表します。 | - |
 | `candidate.scope` | `object` | no | `response.candidate.scope` の値。項目名は scope を表します。 | - |

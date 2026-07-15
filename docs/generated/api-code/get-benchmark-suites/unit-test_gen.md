@@ -8,7 +8,7 @@
 
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
-| 到達 symbol | service preserves asynchronous chat run options and can mark worker failures | `apps/api/src/rag/memorag-service.test.ts:1598 (service preserves asynchronous chat run options and can mark worker failures)` |
+| 到達 symbol | service preserves asynchronous chat run options and can mark worker failures | `apps/api/src/rag/memorag-service.test.ts:1713 (service preserves asynchronous chat run options and can mark worker failures)` |
 
 ## 2. 実装分岐から導くテスト要因
 

@@ -32,18 +32,18 @@ sequenceDiagram
 
 | # | Caller | 境界 | 処理 | コード | 実装位置 |
 | ---: | --- | --- | --- | --- | --- |
-| 1 | `GET /admin/usage handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/admin-routes.ts:502 (GET /admin/usage handler)` |
-| 2 | `GET /admin/usage handler` | Auth | "usage:read:all_users" permission を必須条件として確認する。 | `requirePermission(user, "usage:read:all_users")` | `apps/api/src/routes/admin-routes.ts:503 (GET /admin/usage handler)` |
-| 3 | `GET /admin/usage handler` | Service | service の list usage summaries 処理を呼び出す。 | `service.listUsageSummaries(user)` | `apps/api/src/routes/admin-routes.ts:504 (GET /admin/usage handler)` |
-| 4 | `MemoRagService.listUsageSummaries` | Store | `this` に対して load admin ledger を実行する。 | `this.loadAdminLedger(actor, { syncUserDirectory: true })` | `apps/api/src/rag/memorag-service.ts:1693 (MemoRagService.listUsageSummaries)` |
-| 5 | `MemoRagService.loadAdminLedger` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(adminLedgerKey)` | `apps/api/src/rag/memorag-service.ts:2864 (MemoRagService.loadAdminLedger)` |
-| 6 | `MemoRagService.loadAdminLedger` | External | `this` へ sync user directory を実行する。 | `this.syncUserDirectory(db)` | `apps/api/src/rag/memorag-service.ts:2905 (MemoRagService.loadAdminLedger)` |
-| 7 | `MemoRagService.syncUserDirectory` | External | `this.deps.userDirectory` へ list users を実行する。 | `this.deps.userDirectory.listUsers()` | `apps/api/src/rag/memorag-service.ts:2912 (MemoRagService.syncUserDirectory)` |
-| 8 | `MemoRagService.syncUserDirectory` | External | `this.deps.verifiedIdentityProvider` へ get current identity by subject を実行する。 | `this.deps.verifiedIdentityProvider.getCurrentIdentityBySubject(directoryUser.userId)` | `apps/api/src/rag/memorag-service.ts:2917 (MemoRagService.syncUserDirectory)` |
-| 9 | `MemoRagService.listUsageSummaries` | Store | `this.deps.objectStore` に対して list keys を実行する。 | `this.deps.objectStore.listKeys(tenantManifestPrefix(this.deps, tenantId))` | `apps/api/src/rag/memorag-service.ts:1695 (MemoRagService.listUsageSummaries)` |
+| 1 | `GET /admin/usage handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/admin-routes.ts:613 (GET /admin/usage handler)` |
+| 2 | `GET /admin/usage handler` | Auth | "usage:read:all_users" permission を必須条件として確認する。 | `requirePermission(user, "usage:read:all_users")` | `apps/api/src/routes/admin-routes.ts:614 (GET /admin/usage handler)` |
+| 3 | `GET /admin/usage handler` | Service | service の list usage summaries 処理を呼び出す。 | `service.listUsageSummaries(user)` | `apps/api/src/routes/admin-routes.ts:615 (GET /admin/usage handler)` |
+| 4 | `MemoRagService.listUsageSummaries` | Store | `this` に対して load admin ledger を実行する。 | `this.loadAdminLedger(actor, { syncUserDirectory: true })` | `apps/api/src/rag/memorag-service.ts:1973 (MemoRagService.listUsageSummaries)` |
+| 5 | `MemoRagService.loadAdminLedger` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(adminLedgerKey)` | `apps/api/src/rag/memorag-service.ts:3144 (MemoRagService.loadAdminLedger)` |
+| 6 | `MemoRagService.loadAdminLedger` | External | `this` へ sync user directory を実行する。 | `this.syncUserDirectory(db)` | `apps/api/src/rag/memorag-service.ts:3185 (MemoRagService.loadAdminLedger)` |
+| 7 | `MemoRagService.syncUserDirectory` | External | `this.deps.userDirectory` へ list users を実行する。 | `this.deps.userDirectory.listUsers()` | `apps/api/src/rag/memorag-service.ts:3192 (MemoRagService.syncUserDirectory)` |
+| 8 | `MemoRagService.syncUserDirectory` | External | `this.deps.verifiedIdentityProvider` へ get current identity by subject を実行する。 | `this.deps.verifiedIdentityProvider.getCurrentIdentityBySubject(directoryUser.userId)` | `apps/api/src/rag/memorag-service.ts:3197 (MemoRagService.syncUserDirectory)` |
+| 9 | `MemoRagService.listUsageSummaries` | Store | `this.deps.objectStore` に対して list keys を実行する。 | `this.deps.objectStore.listKeys(tenantManifestPrefix(this.deps, tenantId))` | `apps/api/src/rag/memorag-service.ts:1975 (MemoRagService.listUsageSummaries)` |
 | 10 | `readTenantManifestByKey` | Store | `deps.objectStore` に対して get text を実行する。 | `deps.objectStore.getText(key)` | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:93 (readTenantManifestByKey)` |
-| 11 | `MemoRagService.listUsageSummaries` | Store | `this.deps.benchmarkRunStore` に対して list を実行する。 | `this.deps.benchmarkRunStore.list(tenantId)` | `apps/api/src/rag/memorag-service.ts:1700 (MemoRagService.listUsageSummaries)` |
-| 12 | `GET /admin/usage handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json({ users: await service.listUsageSummaries(user) }, 200)` | `apps/api/src/routes/admin-routes.ts:504 (GET /admin/usage handler)` |
+| 11 | `MemoRagService.listUsageSummaries` | Store | `this.deps.benchmarkRunStore` に対して list を実行する。 | `this.deps.benchmarkRunStore.list(tenantId)` | `apps/api/src/rag/memorag-service.ts:1980 (MemoRagService.listUsageSummaries)` |
+| 12 | `GET /admin/usage handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json({ users: await service.listUsageSummaries(user) }, 200)` | `apps/api/src/routes/admin-routes.ts:615 (GET /admin/usage handler)` |
 
 ## 分岐
 

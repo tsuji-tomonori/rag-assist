@@ -2,7 +2,7 @@
 
 # DELETE /admin/users/{userId} IF仕様
 
-- 実装 route: `apps/api/src/routes/admin-routes.ts:283 (DELETE /admin/users/{userId})`
+- 実装 route: `apps/api/src/routes/admin-routes.ts:300 (DELETE /admin/users/{userId})`
 - contract source: runtime `GET /openapi.json`
 
 Summary: ユーザーを削除する

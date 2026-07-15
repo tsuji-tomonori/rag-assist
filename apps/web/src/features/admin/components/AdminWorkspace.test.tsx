@@ -1,37 +1,35 @@
-import { cleanup, render, screen, within } from "@testing-library/react"
+import { render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
+import { useState } from "react"
 import { describe, expect, it, vi } from "vitest"
 import type { CurrentUser } from "../../../shared/types/common.js"
-import type { AccessRoleDefinition, AliasAuditLogItem, AliasDefinition, CostAuditSummary, ManagedUser, UserUsageSummary } from "../types.js"
+import type { AccessRoleList, AliasAuditLogItem, AliasAuditLogPage, AliasDefinition, AliasListPage, CostAuditSummary, ManagedUser, ManagedUserAuditLogPage, UserUsageSummary } from "../types.js"
+import type { AdminWorkspaceUrlState } from "../urlState.js"
 import { AdminWorkspace } from "./AdminWorkspace.js"
-import { createContentResourceState } from "../../../shared/ui/resourceStateModel.js"
 import { appUiStateTargets } from "../../../app/uiStateTargets.js"
-import { confirmedOperation, failedOperation } from "../../../shared/ui/operationOutcome.js"
+import { confirmedOperation } from "../../../shared/ui/operationOutcome.js"
 
-const user: CurrentUser = {
-  userId: "user-1",
-  email: "admin@example.com",
-  groups: ["SYSTEM_ADMIN"],
-  permissions: []
+const asOf = "2026-05-10T00:00:00.000Z"
+const user: CurrentUser = { userId: "user-1", email: "admin@example.com", groups: ["SYSTEM_ADMIN"], permissions: [] }
+
+const accessRoleList: AccessRoleList = {
+  catalogVersion: "role-catalog-v2",
+  source: "canonical-application-role-catalog",
+  asOf,
+  roles: [
+    { role: "CHAT_USER", displayName: "チャット利用者", description: "チャットを利用します。", kind: "systemPreset", permissions: ["chat:create"] },
+    { role: "COST_AUDITOR", displayName: "コスト監査担当", description: "コストを監査します。", kind: "systemPreset", permissions: ["cost:read:all"] },
+    { role: "SYSTEM_ADMIN", displayName: "システム管理者", description: "システムを管理します。", kind: "systemPreset", permissions: ["user:read", "access:role:assign"] }
+  ]
 }
-
-const roles: AccessRoleDefinition[] = [
-  {
-    role: "CHAT_USER",
-    permissions: ["chat:create"]
-  },
-  {
-    role: "SYSTEM_ADMIN",
-    permissions: ["user:read", "access:role:assign"]
-  }
-]
 
 const aliases: AliasDefinition[] = [
   {
     aliasId: "alias-1",
+    version: "alias-version-1",
     term: "pto",
     expansions: ["有給休暇", "休暇申請"],
-    scope: { department: "総務部" },
+    scope: { tenantId: "tenant-1", department: "総務部" },
     status: "draft",
     createdBy: "user-1",
     createdAt: "2026-05-01T00:00:00.000Z",
@@ -39,41 +37,83 @@ const aliases: AliasDefinition[] = [
   },
   {
     aliasId: "alias-2",
+    version: "alias-version-2",
     term: "slo",
     expansions: ["サービスレベル目標"],
+    scope: { tenantId: "tenant-1" },
     status: "approved",
     createdBy: "user-1",
     createdAt: "2026-05-01T00:00:00.000Z",
-    updatedAt: "2026-05-03T00:00:00.000Z",
-    publishedVersion: "alias-v1"
+    updatedAt: "2026-05-03T00:00:00.000Z"
   }
 ]
 
-const aliasAuditLog: AliasAuditLogItem[] = [
-  {
-    auditId: "audit-1",
-    aliasId: "alias-1",
-    action: "create",
-    actorUserId: "user-1",
-    createdAt: "2026-05-02T00:00:00.000Z",
-    detail: "created alias"
-  }
-]
+const aliasPage: AliasListPage = {
+  aliases,
+  total: 52,
+  nextCursor: "alias-cursor-2",
+  truncated: true,
+  source: "alias-governance-ledger",
+  asOf,
+  version: "ledger-version-4"
+}
+
+const aliasAuditLog: AliasAuditLogItem[] = Array.from({ length: 10 }, (_, index) => ({
+  auditId: `alias-audit-${index}`,
+  aliasId: "alias-1",
+  tenantId: "tenant-1",
+  action: index === 0 ? "create" : "review",
+  actorUserId: "user-1",
+  result: "success",
+  reason: index === 0 ? "用語登録" : `レビュー ${index}`,
+  beforeStatus: index === 0 ? undefined : "draft",
+  afterStatus: index === 0 ? "draft" : "approved",
+  aliasVersion: `alias-version-${index + 1}`,
+  createdAt: `2026-05-${String(index + 1).padStart(2, "0")}T00:00:00.000Z`,
+  detail: `audit detail ${index}`
+}))
+
+const aliasAuditPage: AliasAuditLogPage = {
+  auditLog: aliasAuditLog,
+  total: 75,
+  nextCursor: "audit-cursor-2",
+  truncated: true,
+  source: "alias-governance-audit-ledger",
+  asOf
+}
 
 const managedUser: ManagedUser = {
   userId: "managed-1",
   email: "managed@example.com",
   displayName: "管理対象ユーザー",
   status: "active",
-  groups: ["CHAT_USER"],
+  groups: ["CHAT_USER", "COST_AUDITOR"],
   createdAt: "2026-05-01T00:00:00.000Z",
   updatedAt: "2026-05-02T00:00:00.000Z"
+}
+
+const adminAuditPage: ManagedUserAuditLogPage = {
+  auditLog: [{
+    auditId: "admin-audit-1",
+    action: "role:assign",
+    actorUserId: "user-1",
+    actorEmail: "admin@example.com",
+    targetUserId: "managed-1",
+    targetEmail: "managed@example.com",
+    beforeGroups: ["CHAT_USER"],
+    afterGroups: ["CHAT_USER", "COST_AUDITOR"],
+    createdAt: asOf
+  }],
+  total: 61,
+  nextCursor: "admin-audit-cursor-2",
+  truncated: true,
+  source: "admin-audit-ledger",
+  asOf
 }
 
 const usageSummary: UserUsageSummary = {
   userId: "managed-1",
   email: "managed@example.com",
-  displayName: "管理対象ユーザー",
   chatMessages: 3,
   conversationCount: 2,
   questionCount: 1,
@@ -90,387 +130,215 @@ const costAudit: CostAuditSummary = {
   periodEnd: "2026-05-31T00:00:00.000Z",
   currency: "USD",
   totalEstimatedUsd: 12.34,
-  items: [
-    {
-      service: "bedrock",
-      category: "chat",
-      usage: 1200,
-      unit: "tokens",
-      unitCostUsd: 0.001,
-      estimatedCostUsd: 1.2,
-      confidence: "estimated_usage"
-    }
-  ],
+  items: [{ service: "bedrock", category: "chat", usage: 1200, unit: "tokens", unitCostUsd: 0.001, estimatedCostUsd: 1.2, confidence: "estimated_usage" }],
   users: [{ userId: "managed-1", email: "managed@example.com", estimatedCostUsd: 1.2 }],
   pricingCatalogUpdatedAt: "2026-05-01T00:00:00.000Z"
 }
 
+function readyDataState() {
+  return {
+    kind: "content" as const,
+    target: appUiStateTargets.admin,
+    asOf,
+    parts: ["users", "roles", "audit", "usage", "cost", "aliases", "aliasAudit"].map((id) => ({
+      id,
+      label: id,
+      status: "ready" as const,
+      asOf
+    }))
+  }
+}
+
 function renderAdminWorkspace(overrides: Partial<Parameters<typeof AdminWorkspace>[0]> = {}) {
-  const props: Parameters<typeof AdminWorkspace>[0] = {
-    dataState: createContentResourceState(appUiStateTargets.admin, "2026-05-10T00:00:00.000Z"),
-    user,
-    documentsCount: 2,
-    openQuestionsCount: 1,
-    debugRunsCount: 3,
-    benchmarkRunsCount: 4,
-    managedUsers: [],
-    adminAuditLog: [],
-    accessRoles: roles,
-    usageSummaries: [],
-    costAudit: null,
-    aliases,
-    aliasAuditLog,
-    loading: false,
-    canManageDocuments: true,
-    canAnswerQuestions: true,
-    canReadDebugRuns: true,
-    canReadBenchmarkRuns: true,
-    canOpenAdminSettings: true,
-    canReadUsers: false,
-    canCreateUsers: false,
-    canSuspendUsers: false,
-    canUnsuspendUsers: false,
-    canDeleteUsers: false,
-    canAssignRoles: false,
-    canReadUsage: false,
-    canReadCosts: false,
-    canReadAdminAuditLog: false,
-    canManageAliases: true,
-    canReadAliases: true,
-    canWriteAliases: true,
-    canReviewAliases: true,
-    canDisableAliases: true,
-    canPublishAliases: true,
-    onOpenDocuments: vi.fn(),
-    onOpenAssignee: vi.fn(),
-    onOpenDebug: vi.fn(),
-    onOpenBenchmark: vi.fn(),
-    onCreateUser: vi.fn().mockResolvedValue(undefined),
-    onAssignRoles: vi.fn().mockResolvedValue(undefined),
-    onPrepareUserDelete: vi.fn().mockResolvedValue({
-      targetUserId: "managed-1",
-      requiresSuccessor: false,
-      ownedResources: { folders: 0, resourceGroups: 0, documents: 0, total: 0 },
-      eligibleSuccessors: []
-    }),
-    onSetUserStatus: vi.fn().mockResolvedValue(undefined),
-    onRefreshAdminData: vi.fn().mockResolvedValue(undefined),
-    onCreateAlias: vi.fn().mockResolvedValue(undefined),
-    onUpdateAlias: vi.fn().mockResolvedValue(undefined),
-    onReviewAlias: vi.fn().mockResolvedValue(undefined),
-    onDisableAlias: vi.fn().mockResolvedValue(undefined),
-    onPublishAliases: vi.fn().mockResolvedValue(undefined),
-    onBack: vi.fn(),
-    ...overrides
+  const spies = {
+    onUrlStateChange: vi.fn(),
+    onAssignRoles: vi.fn().mockResolvedValue(confirmedOperation(managedUser)),
+    onReviewAlias: vi.fn().mockResolvedValue(confirmedOperation({ ...aliases[0]!, status: "approved" as const, version: "alias-version-3" })),
+    onTransitionAlias: vi.fn().mockResolvedValue(confirmedOperation({ ...aliases[1]!, status: "draft" as const, version: "alias-version-3" })),
+    onDisableAlias: vi.fn().mockResolvedValue(confirmedOperation({ ...aliases[0]!, status: "disabled" as const, version: "alias-version-3" })),
+    onPublishAliases: vi.fn().mockResolvedValue(confirmedOperation({ version: "published-1", publishedAt: asOf, aliasCount: 1 })),
+    onCreateAlias: vi.fn().mockResolvedValue(confirmedOperation(aliases[0]!)),
+    onUpdateAlias: vi.fn().mockResolvedValue(confirmedOperation(aliases[0]!)),
+    onLoadMoreAliases: vi.fn().mockResolvedValue(undefined),
+    onLoadMoreAliasAudit: vi.fn().mockResolvedValue(undefined),
+    onLoadMoreAdminAudit: vi.fn().mockResolvedValue(undefined),
+    onRefreshAdminPart: vi.fn().mockResolvedValue(undefined)
+  }
+  const initialUrlState = overrides.urlState ?? {}
+
+  function Harness() {
+    const [urlState, setUrlState] = useState<AdminWorkspaceUrlState>(initialUrlState)
+    const props: Parameters<typeof AdminWorkspace>[0] = {
+      dataState: readyDataState(),
+      user,
+      documentsCount: 2,
+      openQuestionsCount: 1,
+      debugRunsCount: 3,
+      benchmarkRunsCount: 4,
+      managedUsers: [managedUser],
+      adminAuditPage,
+      accessRoleList,
+      usageSummaries: [usageSummary],
+      costAudit,
+      aliasPage,
+      aliasAuditPage,
+      loading: false,
+      canManageDocuments: true,
+      canAnswerQuestions: true,
+      canReadDebugRuns: true,
+      canReadBenchmarkRuns: true,
+      canOpenAdminSettings: true,
+      canReadUsers: true,
+      canCreateUsers: true,
+      canSuspendUsers: true,
+      canUnsuspendUsers: true,
+      canDeleteUsers: true,
+      canAssignRoles: true,
+      canReadUsage: true,
+      canReadCosts: true,
+      canReadAdminAuditLog: true,
+      canManageAliases: true,
+      canReadAliases: true,
+      canWriteAliases: true,
+      canReviewAliases: true,
+      canDisableAliases: true,
+      canPublishAliases: true,
+      onOpenDocuments: vi.fn(),
+      onOpenAssignee: vi.fn(),
+      onOpenDebug: vi.fn(),
+      onOpenBenchmark: vi.fn(),
+      onCreateUser: vi.fn().mockResolvedValue(undefined),
+      onAssignRoles: spies.onAssignRoles,
+      onPrepareUserDelete: vi.fn().mockResolvedValue({ targetUserId: "managed-1", requiresSuccessor: false, ownedResources: { folders: 0, resourceGroups: 0, documents: 0, total: 0 }, eligibleSuccessors: [] }),
+      onSetUserStatus: vi.fn().mockResolvedValue(confirmedOperation(managedUser)),
+      onRefreshAdminData: vi.fn().mockResolvedValue(undefined),
+      onRefreshAdminPart: spies.onRefreshAdminPart,
+      onLoadMoreAdminAudit: spies.onLoadMoreAdminAudit,
+      onLoadMoreAliases: spies.onLoadMoreAliases,
+      onLoadMoreAliasAudit: spies.onLoadMoreAliasAudit,
+      onUrlStateChange: (nextState, mode) => {
+        spies.onUrlStateChange(nextState, mode)
+        setUrlState(nextState)
+      },
+      onCreateAlias: spies.onCreateAlias,
+      onUpdateAlias: spies.onUpdateAlias,
+      onReviewAlias: spies.onReviewAlias,
+      onTransitionAlias: spies.onTransitionAlias,
+      onDisableAlias: spies.onDisableAlias,
+      onPublishAliases: spies.onPublishAliases,
+      onBack: vi.fn(),
+      ...overrides,
+      urlState
+    }
+    return <AdminWorkspace {...props} />
   }
 
-  render(<AdminWorkspace {...props} />)
-  return props
+  render(<Harness />)
+  return spies
 }
 
 describe("AdminWorkspace", () => {
-  it("overview で action card と read-only KPI を分けて表示する", () => {
-    renderAdminWorkspace({
-      managedUsers: [managedUser],
-      canReadUsers: true,
-      canReadUsage: true,
-      canReadCosts: true,
-      usageSummaries: [usageSummary],
-      costAudit
-    })
+  it("overview の permission-aware KPI から対応 section へ遷移する", async () => {
+    const spies = renderAdminWorkspace()
+    expect(screen.getByRole("button", { name: "ユーザー管理を開く" })).toHaveTextContent("1 人")
+    expect(screen.getByRole("button", { name: "アクセス管理を開く" })).toHaveTextContent("3 件")
+    expect(screen.getByRole("button", { name: "用語展開管理を開く" })).toHaveTextContent("2 件")
 
-    expect(screen.getByRole("button", { name: /ドキュメント管理/ })).toBeInTheDocument()
-    expect(screen.getByLabelText("ユーザー管理")).toHaveTextContent("1 人")
-    expect(screen.getByRole("article", { name: "利用状況" })).toHaveTextContent("1 人")
-    expect(screen.getByLabelText("コスト監査")).toHaveTextContent("$12.3400")
-    expect(screen.getByLabelText("用語展開管理")).toHaveTextContent("2 件")
-    expect(screen.queryByRole("button", { name: /ユーザー管理/ })).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole("button", { name: "ユーザー管理を開く" }))
+    expect(screen.getByLabelText("ユーザー管理一覧")).toBeVisible()
+    expect(spies.onUrlStateChange).toHaveBeenCalledWith(expect.objectContaining({ section: "users" }), "push")
   })
 
-  it("overview は API field が未提供の action card と count を表示しない", () => {
-    renderAdminWorkspace({
-      documentsCount: null,
-      openQuestionsCount: null,
-      debugRunsCount: null,
-      benchmarkRunsCount: null,
-      managedUsers: null,
-      accessRoles: null,
-      usageSummaries: null,
-      aliases: null,
-      canReadUsers: true,
-      canReadUsage: true
-    })
-
-    expect(screen.queryByRole("button", { name: /ドキュメント管理/ })).not.toBeInTheDocument()
-    expect(screen.queryByRole("button", { name: /担当者対応/ })).not.toBeInTheDocument()
-    expect(screen.queryByRole("button", { name: /デバッグ/ })).not.toBeInTheDocument()
-    expect(screen.queryByRole("button", { name: /性能テスト/ })).not.toBeInTheDocument()
-    expect(screen.getByLabelText("ユーザー管理")).toHaveTextContent("未提供")
-    expect(screen.getByLabelText("アクセス管理")).toHaveTextContent("ロール定義データは未提供")
-    expect(screen.getByLabelText("用語展開管理")).toHaveTextContent("用語展開データは未提供")
-    expect(screen.queryByText("0 users")).not.toBeInTheDocument()
-    expect(screen.queryByText("0 aliases")).not.toBeInTheDocument()
-  })
-
-  it("Alias 管理を表示し、作成と公開操作を通知する", async () => {
-    const onCreateAlias = vi.fn().mockResolvedValue(undefined)
-    const onPublishAliases = vi.fn().mockResolvedValue(undefined)
-
-    renderAdminWorkspace({ onCreateAlias, onPublishAliases })
-    await userEvent.click(screen.getByRole("button", { name: "用語展開" }))
-
-    const panel = screen.getByLabelText("用語展開管理一覧")
-    expect(panel).toHaveTextContent("2 件")
-    expect(within(panel).getByText("pto")).toBeInTheDocument()
-    expect(within(panel).getByText("作成")).toBeInTheDocument()
-
-    await userEvent.type(within(panel).getByLabelText("用語"), "rto")
-    await userEvent.type(within(panel).getByLabelText("展開語"), "復旧時間目標, 障害復旧")
-    await userEvent.type(within(panel).getByLabelText("適用部署"), "SRE")
-    await userEvent.click(within(panel).getByRole("button", { name: "追加" }))
-    await userEvent.click(within(panel).getByRole("button", { name: "公開" }))
-    const dialog = screen.getByRole("dialog", { name: "用語展開を公開しますか？" })
-    expect(dialog).toHaveTextContent("承認済み")
-    expect(onPublishAliases).not.toHaveBeenCalled()
-    await userEvent.click(within(dialog).getByRole("button", { name: "公開" }))
-
-    expect(onCreateAlias).toHaveBeenCalledWith({
-      term: "rto",
-      expansions: ["復旧時間目標", "障害復旧"],
-      scope: { department: "SRE" }
-    })
-    expect(onPublishAliases).toHaveBeenCalledTimes(1)
-    expect(screen.getByRole("status", { name: "用語展開公開: 承認済み 1 件" })).toHaveTextContent("完了")
-  })
-
-  it("Alias API field 未提供または公開対象なしでは公開 control を表示しない", async () => {
-    renderAdminWorkspace({ aliases: null, aliasAuditLog: null })
-    await userEvent.click(screen.getByRole("button", { name: "用語展開" }))
-
-    expect(screen.getByText("用語展開データは未提供です。")).toBeInTheDocument()
-    expect(screen.getByText("用語展開の監査ログは未提供です。")).toBeInTheDocument()
-    expect(screen.queryByRole("button", { name: "公開" })).not.toBeInTheDocument()
-
-    cleanup()
-    renderAdminWorkspace({ aliases: aliases.filter((alias) => alias.status !== "approved"), aliasAuditLog: [] })
-    await userEvent.click(screen.getByRole("button", { name: "用語展開" }))
-    expect(screen.queryByRole("button", { name: "公開" })).not.toBeInTheDocument()
-  })
-
-  it("Alias の下書き化、承認、差戻、無効化操作を通知する", async () => {
-    const onUpdateAlias = vi.fn().mockResolvedValue(undefined)
-    const onReviewAlias = vi.fn().mockResolvedValue(undefined)
-    const onDisableAlias = vi.fn().mockResolvedValue(undefined)
-
-    renderAdminWorkspace({ onUpdateAlias, onReviewAlias, onDisableAlias })
-    await userEvent.click(screen.getByRole("button", { name: "用語展開" }))
-
+  it("Alias mutation は expected version と必須 reason を送り、client で状態を捏造しない", async () => {
+    const spies = renderAdminWorkspace({ urlState: { section: "alias" } })
     const panel = screen.getByLabelText("用語展開管理一覧")
 
-    await userEvent.click(within(panel).getAllByRole("button", { name: "下書き化" })[0]!)
-    await userEvent.click(within(panel).getAllByRole("button", { name: "承認" })[0]!)
-    await userEvent.click(within(panel).getAllByRole("button", { name: "差戻" })[0]!)
-    await userEvent.click(within(panel).getAllByRole("button", { name: "無効" })[0]!)
-    const dialog = screen.getByRole("dialog", { name: "この用語展開を無効化しますか？" })
-    expect(dialog).toHaveTextContent("pto")
-    expect(onDisableAlias).not.toHaveBeenCalled()
-    await userEvent.click(within(dialog).getByRole("button", { name: "無効化" }))
+    await userEvent.click(within(panel).getByRole("button", { name: "ptoを承認" }))
+    const reviewDialog = screen.getByRole("dialog", { name: "承認しますか？" })
+    expect(within(reviewDialog).getByRole("button", { name: "承認" })).toBeDisabled()
+    await userEvent.type(within(reviewDialog).getByLabelText("実行理由（必須）"), "運用用語として確認済み")
+    await userEvent.click(within(reviewDialog).getByRole("button", { name: "承認" }))
+    expect(spies.onReviewAlias).toHaveBeenCalledWith("alias-1", "approve", "alias-version-1", "運用用語として確認済み")
 
-    expect(onUpdateAlias).toHaveBeenCalledWith("alias-1", { expansions: ["有給休暇", "休暇申請"] })
-    expect(onReviewAlias).toHaveBeenCalledWith("alias-1", "approve")
-    expect(onReviewAlias).toHaveBeenCalledWith("alias-1", "reject", "画面から差し戻し")
-    expect(onDisableAlias).toHaveBeenCalledWith("alias-1")
-    expect(screen.getByRole("status", { name: "用語展開無効化: pto" })).toHaveTextContent("完了")
+    await userEvent.click(within(panel).getByRole("button", { name: "sloを下書きへ戻す" }))
+    const transitionDialog = screen.getByRole("dialog", { name: "下書きへ戻しますか？" })
+    await userEvent.type(within(transitionDialog).getByLabelText("実行理由（必須）"), "内容更新が必要")
+    await userEvent.click(within(transitionDialog).getByRole("button", { name: "下書きへ戻す" }))
+    expect(spies.onTransitionAlias).toHaveBeenCalledWith("alias-2", "alias-version-2", "内容更新が必要")
   })
 
-  it("Alias 公開の timeout は結果不明として確認 dialog を閉じない", async () => {
-    const onPublishAliases = vi.fn().mockResolvedValue(failedOperation(new Error("publish timed out")))
-    renderAdminWorkspace({ onPublishAliases })
-    await userEvent.click(screen.getByRole("button", { name: "用語展開" }))
-    await userEvent.click(screen.getByRole("button", { name: "公開" }))
-    const dialog = screen.getByRole("dialog", { name: "用語展開を公開しますか？" })
+  it("Alias 公開は ledger version と理由を確認し、監査ログを固定件数で切らない", async () => {
+    const spies = renderAdminWorkspace({ urlState: { section: "alias" } })
+    expect(screen.getAllByText(/audit detail/)).toHaveLength(10)
+    expect(screen.getByText("10 / 75 件")).toBeInTheDocument()
+    await userEvent.click(screen.getByRole("button", { name: /次の監査ログを読み込む/ }))
+    expect(spies.onLoadMoreAliasAudit).toHaveBeenCalledTimes(1)
 
+    await userEvent.click(screen.getByRole("button", { name: "承認済み用語展開を公開" }))
+    const dialog = screen.getByRole("dialog", { name: "承認済みの用語展開を公開しますか？" })
+    await userEvent.type(within(dialog).getByLabelText("実行理由（必須）"), "検索辞書へ反映")
     await userEvent.click(within(dialog).getByRole("button", { name: "公開" }))
-
-    expect(dialog).toBeVisible()
-    expect(screen.getByRole("alert", { name: "用語展開公開: 承認済み 1 件" })).toHaveTextContent("結果未確認")
+    expect(spies.onPublishAliases).toHaveBeenCalledWith("ledger-version-4", "検索辞書へ反映")
   })
 
-  it("ユーザー停止と削除は確認後に実行する", async () => {
-    const onSetUserStatus = vi.fn().mockResolvedValue(undefined)
+  it("filter・sort・selection を URL state に反映する", async () => {
+    const spies = renderAdminWorkspace({ urlState: { section: "alias", sort: "updatedDesc" } })
+    const panel = screen.getByLabelText("用語展開管理一覧")
+    await userEvent.type(within(panel).getByLabelText("用語・展開語を検索"), "休暇")
+    await userEvent.selectOptions(within(panel).getByLabelText("状態"), "draft")
+    await userEvent.selectOptions(within(panel).getByLabelText("並び順"), "termAsc")
+    await userEvent.click(within(panel).getByRole("button", { name: "検索" }))
+    await userEvent.click(within(panel).getByRole("button", { name: "ptoの監査ログを絞り込む" }))
 
-    renderAdminWorkspace({
-      managedUsers: [managedUser],
-      canReadUsers: true,
-      canSuspendUsers: true,
-      canDeleteUsers: true,
-      onSetUserStatus
-    })
-    await userEvent.click(screen.getByRole("button", { name: "ユーザー" }))
-
-    await userEvent.click(screen.getByRole("button", { name: "停止" }))
-    const suspendDialog = screen.getByRole("dialog", { name: "このユーザーを停止しますか？" })
-    expect(suspendDialog).toHaveTextContent("managed@example.com")
-    expect(onSetUserStatus).not.toHaveBeenCalled()
-    await userEvent.click(within(suspendDialog).getByRole("button", { name: "停止" }))
-    expect(onSetUserStatus).toHaveBeenCalledWith("managed-1", "suspend")
-    expect(screen.getByRole("status", { name: "ユーザー停止: 管理対象ユーザー" })).toHaveTextContent("完了")
-
-    await userEvent.click(screen.getByRole("button", { name: "削除" }))
-    const deleteDialog = await screen.findByRole("dialog", { name: "このユーザーを削除状態にしますか？" })
-    expect(deleteDialog).toHaveTextContent("管理対象ユーザー")
-    await userEvent.click(within(deleteDialog).getByRole("button", { name: "削除" }))
-    expect(onSetUserStatus).toHaveBeenCalledWith("managed-1", "delete")
+    expect(spies.onUrlStateChange).toHaveBeenCalledWith(expect.objectContaining({ section: "alias", query: "休暇" }), "push")
+    expect(spies.onUrlStateChange).toHaveBeenCalledWith(expect.objectContaining({ section: "alias", selected: "alias-1" }), undefined)
   })
 
-  it("所有資源があるユーザーは検証済みの後継管理者を明示選択してから削除する", async () => {
-    const onPrepareUserDelete = vi.fn().mockResolvedValue({
-      targetUserId: "managed-1",
-      requiresSuccessor: true,
-      ownedResources: { folders: 2, resourceGroups: 1, documents: 3, total: 6 },
-      eligibleSuccessors: [{
-        userId: "successor-1",
-        email: "successor@example.com",
-        displayName: "後継 管理者",
-        status: "active"
-      }]
-    })
-    const onSetUserStatus = vi.fn().mockResolvedValue(undefined)
-
-    renderAdminWorkspace({
-      managedUsers: [managedUser],
-      canReadUsers: true,
-      canDeleteUsers: true,
-      onPrepareUserDelete,
-      onSetUserStatus
-    })
-    await userEvent.click(screen.getByRole("button", { name: "ユーザー" }))
-    await userEvent.click(screen.getByRole("button", { name: "削除" }))
-
-    const dialog = await screen.findByRole("dialog", { name: "このユーザーを削除状態にしますか？" })
-    expect(onPrepareUserDelete).toHaveBeenCalledWith("managed-1")
-    expect(dialog).toHaveTextContent("所有フォルダ2")
-    expect(dialog).toHaveTextContent("所有リソースグループ1")
-    expect(dialog).toHaveTextContent("所有文書3")
-    expect(within(dialog).getByRole("button", { name: "削除" })).toBeDisabled()
-
-    await userEvent.selectOptions(screen.getByLabelText("managed@example.comの後継管理者"), "successor-1")
-    await userEvent.click(within(dialog).getByRole("button", { name: "削除" }))
-
-    expect(onSetUserStatus).toHaveBeenCalledWith("managed-1", "delete", "successor-1")
+  it("複数ロールの変更で既存ロールを落とさず before/after を確認する", async () => {
+    const spies = renderAdminWorkspace({ urlState: { section: "users" } })
+    const row = screen.getByRole("row", { name: /managed@example.com/ })
+    const systemAdmin = within(row).getByRole("checkbox", { name: /システム管理者/ })
+    expect(within(row).getByRole("checkbox", { name: /チャット利用者/ })).toBeChecked()
+    expect(within(row).getByRole("checkbox", { name: /コスト監査担当/ })).toBeChecked()
+    await userEvent.click(systemAdmin)
+    await userEvent.type(within(row).getByLabelText("managed@example.comのロール変更理由"), "緊急対応のため追加")
+    await userEvent.click(within(row).getByRole("button", { name: "managed@example.comのロール変更を確認" }))
+    const dialog = screen.getByRole("dialog", { name: "ロール割り当てを変更しますか？" })
+    expect(dialog).toHaveTextContent("CHAT_USER / COST_AUDITOR / SYSTEM_ADMIN")
+    await userEvent.click(within(dialog).getByRole("button", { name: "変更" }))
+    expect(spies.onAssignRoles).toHaveBeenCalledWith(
+      "managed-1",
+      ["CHAT_USER", "COST_AUDITOR", "SYSTEM_ADMIN"],
+      "緊急対応のため追加"
+    )
   })
 
-  it("所有資源があるのに検証済み後継候補がない場合は架空候補を補わず削除を無効化する", async () => {
-    renderAdminWorkspace({
-      managedUsers: [managedUser, { ...managedUser, userId: "unverified-1", email: "unverified@example.com" }],
-      canReadUsers: true,
-      canDeleteUsers: true,
-      onPrepareUserDelete: vi.fn().mockResolvedValue({
-        targetUserId: "managed-1",
-        requiresSuccessor: true,
-        ownedResources: { folders: 1, resourceGroups: 0, documents: 0, total: 1 },
-        eligibleSuccessors: []
-      })
-    })
-    await userEvent.click(screen.getByRole("button", { name: "ユーザー" }))
-    await userEvent.click(screen.getAllByRole("button", { name: "削除" })[0]!)
-
-    const dialog = await screen.findByRole("dialog", { name: "このユーザーを削除状態にしますか？" })
-    expect(dialog).toHaveTextContent("有効かつ同一テナントの後継候補がありません")
-    expect(dialog).not.toHaveTextContent("unverified@example.com")
-    expect(within(dialog).getByRole("button", { name: "削除" })).toBeDisabled()
-  })
-
-  it("ロール付与前に変更前後の差分を表示する", async () => {
-    const onAssignRoles = vi.fn().mockResolvedValue(confirmedOperation(managedUser, {
-      evidence: { resultReference: "managed-1", version: "2026-05-10T00:00:00.000Z" }
-    }))
-
-    renderAdminWorkspace({
-      managedUsers: [managedUser],
-      canReadUsers: true,
-      canAssignRoles: true,
-      onAssignRoles
-    })
-    await userEvent.click(screen.getByRole("button", { name: "ユーザー" }))
-
-    await userEvent.selectOptions(screen.getByLabelText("managed@example.comに付与するロール"), "SYSTEM_ADMIN")
-    await userEvent.type(screen.getByLabelText("managed@example.comのロール変更理由"), "緊急対応担当へ変更")
-    expect(screen.getByText("変更前: CHAT_USER / 変更後: SYSTEM_ADMIN")).toBeInTheDocument()
-    await userEvent.click(screen.getByRole("button", { name: "付与" }))
-    const dialog = screen.getByRole("dialog", { name: "ロールを付与しますか？" })
-    expect(dialog).toHaveTextContent("変更前")
-    expect(dialog).toHaveTextContent("SYSTEM_ADMIN")
-    expect(dialog).toHaveTextContent("緊急対応担当へ変更")
-    expect(onAssignRoles).not.toHaveBeenCalled()
-    await userEvent.click(within(dialog).getByRole("button", { name: "付与" }))
-
-    expect(onAssignRoles).toHaveBeenCalledWith("managed-1", ["SYSTEM_ADMIN"], "緊急対応担当へ変更")
-    expect(screen.getByRole("status", { name: "ロール変更: 管理対象ユーザー" })).toHaveTextContent("managed-1")
-  })
-
-  it("ロール API field が未提供のとき fake group を作成・付与しない", async () => {
-    const onCreateUser = vi.fn().mockResolvedValue(undefined)
-    const onAssignRoles = vi.fn().mockResolvedValue(undefined)
-
-    renderAdminWorkspace({
-      managedUsers: [{ ...managedUser, groups: [] }],
-      accessRoles: null,
-      canReadUsers: true,
-      canCreateUsers: true,
-      canAssignRoles: true,
-      onCreateUser,
-      onAssignRoles
-    })
-    await userEvent.click(screen.getByRole("button", { name: "ユーザー" }))
-
-    expect(screen.getAllByText("未提供").length).toBeGreaterThan(0)
-    expect(screen.getByText("ロール定義は未提供")).toBeInTheDocument()
-    expect(screen.queryByLabelText("managed@example.comに付与するロール")).not.toBeInTheDocument()
-    expect(screen.queryByRole("button", { name: "付与" })).not.toBeInTheDocument()
-
-    await userEvent.type(screen.getByLabelText("メール"), "new@example.com")
-    await userEvent.click(screen.getByRole("button", { name: "作成" }))
-
-    expect(onCreateUser).toHaveBeenCalledWith({
-      email: "new@example.com",
-      displayName: undefined,
-      groups: undefined
-    })
-    expect(onAssignRoles).not.toHaveBeenCalled()
-  })
-
-  it("usage/cost/audit の未提供と空状態を正直に表示する", async () => {
-    renderAdminWorkspace({
-      canReadUsage: true,
-      canReadCosts: true,
-      canReadAdminAuditLog: true,
-      usageSummaries: [],
-      costAudit: null,
-      adminAuditLog: []
-    })
+  it("native table、対象付き操作名、panel ごとの source/as-of/refresh を提供する", async () => {
+    const spies = renderAdminWorkspace({ urlState: { section: "users" } })
+    expect(screen.getByRole("table", { name: "ユーザー一覧" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "managed@example.comの利用を停止" })).toBeInTheDocument()
+    expect(screen.getByText("取得元: 管理ユーザー API")).toBeInTheDocument()
+    await userEvent.click(screen.getByRole("button", { name: "管理対象ユーザーを更新" }))
+    expect(spies.onRefreshAdminPart).toHaveBeenCalledWith("users")
 
     await userEvent.click(screen.getByRole("button", { name: "利用状況・コスト" }))
-    expect(screen.getByText("利用状況はありません。")).toBeInTheDocument()
-    expect(screen.getByText("コスト summary は未提供です。")).toBeInTheDocument()
-    await userEvent.click(screen.getByRole("button", { name: "監査" }))
-    expect(screen.getByText(/横断 audit、reason、export は未提供です。/)).toBeInTheDocument()
-    expect(screen.getByText("管理操作履歴はありません。")).toBeInTheDocument()
+    expect(screen.getByRole("table", { name: "利用状況" })).toBeInTheDocument()
   })
 
-  it("usage/audit API field 未提供を空件数に変換しない", async () => {
-    renderAdminWorkspace({
-      canReadUsage: true,
-      canReadAdminAuditLog: true,
-      usageSummaries: null,
-      adminAuditLog: null
-    })
+  it("ロールの日本語 metadata と raw ID、resource group との概念差を表示する", () => {
+    renderAdminWorkspace({ urlState: { section: "roles" } })
+    const panel = screen.getByLabelText("アプリケーションロール定義")
+    expect(within(panel).getByText("チャット利用者")).toBeInTheDocument()
+    expect(within(panel).getByText("CHAT_USER")).toBeInTheDocument()
+    expect(within(panel).getByText(/リソースグループは文書へのアクセス範囲を表す別の概念/)).toBeInTheDocument()
+    expect(within(panel).getByText(/権限カテゴリ: chat/)).toBeInTheDocument()
+  })
 
-    await userEvent.click(screen.getByRole("button", { name: "利用状況・コスト" }))
-    expect(screen.getByText("利用状況 API field は未提供です。")).toBeInTheDocument()
-    expect(screen.queryByText("0 users")).not.toBeInTheDocument()
-    await userEvent.click(screen.getByRole("button", { name: "監査" }))
-    expect(screen.getByText("管理操作履歴 API field は未提供です。")).toBeInTheDocument()
-    expect(screen.queryByText("0 件")).not.toBeInTheDocument()
+  it("管理監査を page metadata 付きで表示し load more を行う", async () => {
+    const spies = renderAdminWorkspace({ urlState: { section: "audit" } })
+    expect(screen.getByText("1 / 61 件")).toBeInTheDocument()
+    expect(screen.getByText("取得元: admin-audit-ledger")).toBeInTheDocument()
+    await userEvent.click(screen.getByRole("button", { name: /次の履歴を読み込む/ }))
+    expect(spies.onLoadMoreAdminAudit).toHaveBeenCalledTimes(1)
   })
 })
