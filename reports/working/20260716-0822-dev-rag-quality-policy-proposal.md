@@ -1,9 +1,13 @@
 # dev RAG 品質 policy 承認案
 
-- 対象 artifact: `config/rag-quality/dev-policy.draft.json`
+- 承認済み artifact: `config/rag-quality/dev-policy.json`
 - profile: `memorag-dev-rag-quality`
-- draft version: `2026-07-16.draft-1`
-- 状態: **未承認・deploy 使用禁止**
+- version: `2026-07-16.draft-1`
+- 状態: **2026-07-16 承認済み**
+- 承認者: `tsuji-tomonori`
+- 承認記録時刻: `2026-07-15T23:43:48.000Z`
+
+> 本文は承認判断時に提示した案を保存している。ユーザーは `memorag-dev-rag-quality` の `2026-07-16.draft-1` を dev 初期 policy として承認した。後続の CD 自動化では、未取得の observation を合格値として生成せず、必須 evidence が揃うまで deploy を保留する。
 
 ## 1. 承認案の目的
 

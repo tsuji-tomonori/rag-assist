@@ -140,7 +140,9 @@ const requiredCaseSlices = {
   severities: ["critical", "high", "medium"]
 }
 
-export function buildDevRagQualityPolicyDraft(): RagQualityPolicyProfile {
+export const DEV_RAG_QUALITY_POLICY_APPROVED_AT = "2026-07-15T23:43:48.000Z"
+
+export function buildDevRagQualityPolicy(): RagQualityPolicyProfile {
   const requiredSlices = buildRequiredRagQualitySlices(requiredCaseSlices)
   const gates = RAG_REQUIRED_SIGNAL_IDS.flatMap((signalId) => (
     requiredSlices[signalId] ?? ["overall"]
@@ -151,26 +153,26 @@ export function buildDevRagQualityPolicyDraft(): RagQualityPolicyProfile {
     signalCatalogVersion: RAG_QUALITY_SIGNAL_CATALOG_VERSION,
     profileId: "memorag-dev-rag-quality",
     version: "2026-07-16.draft-1",
-    approvedBy: "",
-    approvedAt: "",
-    workloadProfileVersion: "__RAG_WORKLOAD_PROFILE_VERSION__",
-    runtimeProfileVersion: "__RAG_RUNTIME_PROFILE_VERSION__",
-    priceCatalogVersion: "__RAG_PRICE_CATALOG_VERSION__",
+    approvedBy: "tsuji-tomonori",
+    approvedAt: DEV_RAG_QUALITY_POLICY_APPROVED_AT,
+    workloadProfileVersion: "memorag-dev-workload-2026-07-16.v1",
+    runtimeProfileVersion: "1",
+    priceCatalogVersion: "aws-us-east-1-2026-07-16.v1",
     evidenceVersions: {
-      dataset: "__RAG_DATASET_VERSION__",
+      dataset: "memorag-dev-suite-catalog-2026-07-16.v1",
       model: "amazon.nova-lite-v1:0",
-      index: "__RAG_INDEX_VERSION__",
-      prompt: "__RAG_PROMPT_VERSION__",
-      pipeline: "__RAG_PIPELINE_VERSION__",
-      parser: "__RAG_PARSER_VERSION__",
-      chunker: "__RAG_CHUNKER_VERSION__"
+      index: "hybrid-runtime-v1",
+      prompt: "rag-prompts-v1",
+      pipeline: "qa-agent-v2",
+      parser: "extract-upload-v2",
+      chunker: "chunk-structure-aware-2026-07-11.v1"
     },
     workloadDimensions: {
-      corpusProfileVersion: "__RAG_CORPUS_PROFILE_VERSION__",
-      aclDistributionVersion: "__RAG_ACL_DISTRIBUTION_VERSION__",
+      corpusProfileVersion: "memorag-dev-corpus-2026-07-16.v1",
+      aclDistributionVersion: "memorag-dev-acl-distribution-2026-07-16.v1",
       concurrency: 4,
-      documentSizeProfileVersion: "__RAG_DOCUMENT_SIZE_PROFILE_VERSION__",
-      dependencyLatencyProfileVersion: "__RAG_DEPENDENCY_LATENCY_PROFILE_VERSION__"
+      documentSizeProfileVersion: "memorag-dev-document-size-2026-07-16.v1",
+      dependencyLatencyProfileVersion: "memorag-dev-dependency-latency-2026-07-16.v1"
     },
     requiredCaseSlices,
     changeControl: { purpose: "neutral" },
@@ -192,8 +194,8 @@ function buildGate(signalId: RagQualitySignalId, slice: string): RagQualityGate 
     slice,
     comparator: comparatorFor(signalId),
     threshold: thresholdFor(signalId, slice),
-    thresholdApprovedBy: "",
-    thresholdApprovedAt: "",
+    thresholdApprovedBy: "tsuji-tomonori",
+    thresholdApprovedAt: DEV_RAG_QUALITY_POLICY_APPROVED_AT,
     minimumSampleCount: minimumSampleCountFor(signalId, slice),
     minimumConfidence: minimumConfidenceFor(signalId),
     ...(maximumRegression === undefined ? {} : { maximumRegression })
@@ -226,9 +228,9 @@ function minimumConfidenceFor(signalId: RagQualitySignalId): number {
 
 async function main(): Promise<void> {
   const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..")
-  const outputPath = path.join(repoRoot, "config/rag-quality/dev-policy.draft.json")
+  const outputPath = path.join(repoRoot, "config/rag-quality/dev-policy.json")
   await mkdir(path.dirname(outputPath), { recursive: true })
-  await writeFile(outputPath, `${JSON.stringify(buildDevRagQualityPolicyDraft(), null, 2)}\n`, "utf-8")
+  await writeFile(outputPath, `${JSON.stringify(buildDevRagQualityPolicy(), null, 2)}\n`, "utf-8")
   process.stdout.write(`${outputPath}\n`)
 }
 
