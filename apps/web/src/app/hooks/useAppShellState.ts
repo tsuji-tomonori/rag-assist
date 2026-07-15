@@ -25,6 +25,11 @@ import { useDocuments } from "../../features/documents/hooks/useDocuments.js"
 import { useFavorites } from "../../features/favorites/hooks/useFavorites.js"
 import { useConversationHistory } from "../../features/history/hooks/useConversationHistory.js"
 import { useQuestions } from "../../features/questions/hooks/useQuestions.js"
+import { isResourcePartAvailable, isResourceStateBusy } from "../../shared/ui/resourceStateModel.js"
+import { useResourceStateController, type ResourceLoadIntent } from "../../shared/ui/useResourceStateController.js"
+import { accountUiStateTarget, appResourceStateTargets, appUiStateTargets } from "../uiStateTargets.js"
+import type { UiStateTarget } from "../../shared/ui/ResourceState.js"
+import { createContentResourceState } from "../../shared/ui/resourceStateModel.js"
 import {
   buildAppViewUrl,
   canAccessAppView,
@@ -40,6 +45,11 @@ const defaultEmbeddingModelId = "amazon.titan-embed-text-v2:0"
 
 export type AppRouteNotice = {
   kind: "permission" | "invalid"
+  message: string
+}
+
+export type AppErrorNotice = {
+  target: UiStateTarget
   message: string
 }
 
@@ -64,8 +74,23 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
   const [embeddingModelId] = useState(defaultEmbeddingModelId)
   const [minScore] = useState(0.2)
   const [pendingApiCalls, setPendingApiCalls] = useState(0)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setErrorNotice] = useState<AppErrorNotice | null>(null)
+  const setTargetError = useCallback((target: UiStateTarget, nextError: string | null) => {
+    setErrorNotice(nextError ? { target, message: publicSafeUiError(nextError) } : null)
+  }, [])
+  const setChatError = useCallback((nextError: string | null) => setTargetError(appUiStateTargets.chat, nextError), [setTargetError])
+  const setDocumentError = useCallback((nextError: string | null) => setTargetError(appUiStateTargets.documents, nextError), [setTargetError])
+  const setBenchmarkError = useCallback((nextError: string | null) => setTargetError(appUiStateTargets.benchmark, nextError), [setTargetError])
+  const setHistoryError = useCallback((nextError: string | null) => setTargetError(appUiStateTargets.history, nextError), [setTargetError])
+  const setFavoritesError = useCallback((nextError: string | null) => setTargetError(appUiStateTargets.favorites, nextError), [setTargetError])
+  const setAssigneeError = useCallback((nextError: string | null) => setTargetError(appUiStateTargets.assignee, nextError), [setTargetError])
+  const setAdminError = useCallback((nextError: string | null) => setTargetError(appUiStateTargets.admin, nextError), [setTargetError])
   const [debugMode, setDebugMode] = useState(false)
+  const {
+    states: resourceStates,
+    run: runResourceLoad,
+    setPermission: setResourcePermission
+  } = useResourceStateController(appResourceStateTargets)
   const latestMessageRef = useRef<HTMLElement | null>(null)
   const setLoading = useCallback((nextLoading: boolean) => {
     setPendingApiCalls((current) => nextLoading ? current + 1 : Math.max(0, current - 1))
@@ -167,7 +192,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     canDeleteDocuments,
     canReindexDocuments,
     setLoading,
-    setError
+    setError: setDocumentError
   })
 
   const {
@@ -187,7 +212,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     embeddingModelId,
     minScore,
     setLoading,
-    setError
+    setError: setBenchmarkError
   })
 
   const {
@@ -200,14 +225,14 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     deleteHistoryItem,
     updateHistoryQuestionTickets,
     createConversationId
-  } = useConversationHistory({ setError })
+  } = useConversationHistory({ setError: setHistoryError })
 
   const {
     favorites,
     refreshFavorites,
     addFavorite,
     removeFavorite
-  } = useFavorites({ setError })
+  } = useFavorites({ setError: setFavoritesError })
 
   const {
     debugRuns,
@@ -261,7 +286,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     setExpandedStepId,
     setAllExpanded,
     setLoading,
-    setError
+    setError: setChatError
   })
 
   const {
@@ -278,7 +303,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     canAnswerQuestions,
     setMessages,
     setLoading,
-    setError
+    setError: setAssigneeError
   })
 
   const {
@@ -295,7 +320,6 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     refreshUsageSummaries,
     refreshCostAudit,
     refreshAliases,
-    refreshAdminData,
     onAssignUserRoles,
     onCreateManagedUser,
     onPrepareManagedUserDelete,
@@ -317,7 +341,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     canDisableAliases,
     canPublishAliases,
     setLoading,
-    setError
+    setError: setAdminError
   })
 
   const latestAssistant = [...messages].reverse().find((message) => message.role === "assistant")
@@ -343,37 +367,62 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     .filter(Boolean))], [history])
   const historyQuestionRefreshKey = historyQuestionIds.join("|")
 
+  function loadDocumentResources(intent: ResourceLoadIntent) {
+    return runResourceLoad("documents", [
+      {
+        id: "catalog",
+        label: "文書とフォルダ",
+        load: () => Promise.all([refreshDocuments(), refreshDocumentGroups()])
+      },
+      ...(canReindexDocuments
+        ? [{ id: "reindex", label: "再インデックス履歴", load: refreshReindexMigrations }]
+        : [])
+    ], intent)
+  }
+
+  function loadBenchmarkResources(intent: ResourceLoadIntent) {
+    return runResourceLoad("benchmark", [
+      { id: "runs", label: "実行履歴", load: refreshBenchmarkRuns },
+      { id: "suites", label: "テスト定義", load: refreshBenchmarkSuites }
+    ], intent)
+  }
+
+  function loadAdminResources(intent: ResourceLoadIntent) {
+    return runResourceLoad("admin", [
+      ...(canReadUsers ? [{ id: "users", label: "管理対象ユーザー", load: refreshManagedUsers }] : []),
+      ...(canOpenAdminSettings ? [{ id: "roles", label: "ロール定義", load: refreshAccessRoles }] : []),
+      ...(canReadAdminAuditLog ? [{ id: "audit", label: "管理操作履歴", load: refreshAdminAuditLog }] : []),
+      ...(canReadUsage ? [{ id: "usage", label: "利用状況", load: refreshUsageSummaries }] : []),
+      ...(canReadCosts ? [{ id: "cost", label: "コスト監査", load: refreshCostAudit }] : []),
+      ...(canReadAliases ? [{ id: "aliases", label: "Alias", load: refreshAliases }] : [])
+    ], intent)
+  }
+
   useEffect(() => {
-    if (currentUserError) setError(currentUserError)
-  }, [currentUserError])
+    if (currentUserError) setTargetError(accountUiStateTarget, currentUserError)
+  }, [currentUserError, setTargetError])
 
   useEffect(() => {
     if (!authSession || !currentUser) return
-    const loaders: Promise<unknown>[] = []
     if (canReadDocuments) {
-      loaders.push(refreshDocuments().catch((err) => console.warn("Failed to load documents", err)))
-      loaders.push(refreshDocumentGroups().catch((err) => console.warn("Failed to load document groups", err)))
-    }
-    if (canReindexDocuments) loaders.push(refreshReindexMigrations().catch((err) => console.warn("Failed to load reindex migrations", err)))
-    if (canReadDebugRuns) loaders.push(refreshDebugRuns().catch((err) => console.warn("Failed to load debug runs", err)))
+      void loadDocumentResources("initial")
+    } else setResourcePermission("documents", "文書を参照する権限がありません。利用可能な画面へ戻ってください。")
+    if (canReadDebugRuns) void runResourceLoad("debug", [{ id: "runs", label: "デバッグ実行履歴", load: refreshDebugRuns }], "initial")
+    else setResourcePermission("debug", "デバッグ実行履歴を参照する権限がありません。")
     if (canReadBenchmarkRuns) {
-      loaders.push(refreshBenchmarkRuns().catch((err) => console.warn("Failed to load benchmark runs", err)))
-      loaders.push(refreshBenchmarkSuites().catch((err) => console.warn("Failed to load benchmark suites", err)))
-    }
-    if (canReadUsers) loaders.push(refreshManagedUsers().catch((err) => console.warn("Failed to load managed users", err)))
-    if (canOpenAdminSettings) loaders.push(refreshAccessRoles().catch((err) => console.warn("Failed to load access roles", err)))
-    if (canReadAdminAuditLog) loaders.push(refreshAdminAuditLog().catch((err) => console.warn("Failed to load admin audit log", err)))
-    if (canReadUsage) loaders.push(refreshUsageSummaries().catch((err) => console.warn("Failed to load usage summaries", err)))
-    if (canReadCosts) loaders.push(refreshCostAudit().catch((err) => console.warn("Failed to load cost audit", err)))
-    if (canReadAliases) loaders.push(refreshAliases().catch((err) => console.warn("Failed to load aliases", err)))
-    if (canAnswerQuestions) loaders.push(refreshQuestions().catch((err) => console.warn("Failed to load questions", err)))
+      void loadBenchmarkResources("initial")
+    } else setResourcePermission("benchmark", "性能テストの実行履歴を参照する権限がありません。利用可能な画面へ戻ってください。")
+    if (canSeeAdminSettings) void loadAdminResources("initial")
+    else setResourcePermission("admin", "管理者設定を参照する権限がありません。利用可能な画面へ戻ってください。")
+    if (canAnswerQuestions) void runResourceLoad("assignee", [{ id: "questions", label: "問い合わせ一覧", load: refreshQuestions }], "initial")
+    else setResourcePermission("assignee", "担当者向け問い合わせを参照する権限がありません。利用可能な画面へ戻ってください。")
     if (canReadHistory) {
-      loaders.push(refreshHistory().catch((err) => console.warn("Failed to load conversation history", err)))
-      loaders.push(refreshFavorites().catch((err) => console.warn("Failed to load favorites", err)))
+      void runResourceLoad("history", [{ id: "conversations", label: "会話履歴", load: refreshHistory }], "initial")
+      void runResourceLoad("favorites", [{ id: "favorites", label: "お気に入り", load: refreshFavorites }], "initial")
+    } else {
+      setResourcePermission("history", "会話履歴を参照する権限がありません。チャットへ戻ってください。")
+      setResourcePermission("favorites", "お気に入りを参照する権限がありません。チャットへ戻ってください。")
     }
-    if (loaders.length === 0) return
-    setLoading(true)
-    void Promise.all(loaders).finally(() => setLoading(false))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authSession, currentUser])
 
@@ -402,10 +451,10 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
   useEffect(() => {
     if (activeView !== "benchmark" || !canReadBenchmarkRuns) return
     const timer = window.setInterval(() => {
-      refreshBenchmarkRuns().catch((err) => console.warn("Failed to poll benchmark runs", err))
+      void runResourceLoad("benchmark", [{ id: "runs", label: "実行履歴", load: refreshBenchmarkRuns }], "background")
     }, 15000)
     return () => window.clearInterval(timer)
-  }, [activeView, canReadBenchmarkRuns, refreshBenchmarkRuns])
+  }, [activeView, canReadBenchmarkRuns, refreshBenchmarkRuns, runResourceLoad])
 
   useEffect(() => {
     if (messages.length === 0) return
@@ -478,6 +527,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     canReadDocuments,
     canSeeAdminSettings,
     chatProps: {
+      dataState: createContentResourceState(appUiStateTargets.chat),
       messages: visibleMessages,
       questions,
       documentsCount: documents.length,
@@ -516,21 +566,26 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       onToggleDebugStep: (stepId) => setExpandedStepId((current) => (current === stepId ? null : stepId))
     },
     assigneeProps: buildAssigneeRouteProps({
+      dataState: resourceStates.assignee,
       questions,
       selectedQuestionId,
       user: currentUser,
-      loading,
+      loading: loading || isResourceStateBusy(resourceStates.assignee),
+      onRetry: () => {
+        void runResourceLoad("assignee", [{ id: "questions", label: "問い合わせ一覧", load: refreshQuestions }], "retry")
+      },
       onSelect: setSelectedQuestionId,
       onAnswer: onAnswerQuestion,
       onBack: () => setActiveView("chat")
     }),
     benchmarkProps: buildBenchmarkRouteProps({
+      dataState: resourceStates.benchmark,
       runs: benchmarkRuns,
       suites: benchmarkSuites,
       suiteId: benchmarkSuiteId,
       modelId: benchmarkModelId,
       concurrency: benchmarkConcurrency,
-      loading,
+      loading: loading || isResourceStateBusy(resourceStates.benchmark),
       canRun: canRunBenchmark,
       canCancel: canCancelBenchmark,
       canDownload: canDownloadBenchmark,
@@ -538,20 +593,16 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       onModelChange: setBenchmarkModelId,
       onConcurrencyChange: setBenchmarkConcurrency,
       onStart: onStartBenchmark,
-      onRefresh: () => {
-        setLoading(true)
-        setError(null)
-        void refreshBenchmarkRuns()
-          .catch((err) => setError(err instanceof Error ? err.message : String(err)))
-          .finally(() => setLoading(false))
-      },
+      onRefresh: () => { void loadBenchmarkResources("refresh") },
       onCancel: onCancelBenchmark,
       onBack: () => setActiveView("chat")
     }),
     documentProps: buildDocumentRouteProps({
+      dataState: resourceStates.documents,
       documents,
       documentGroups,
-      loading,
+      loading: loading || isResourceStateBusy(resourceStates.documents),
+      onRetryLoad: () => { void loadDocumentResources("retry") },
       canCreateGroup: canCreateDocumentGroups,
       canShareGroup: canShareDocumentGroups,
       canMoveGroup: canMoveDocumentGroups,
@@ -587,11 +638,14 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       onUrlStateChange: onDocumentUrlStateChange
     }),
     adminProps: buildAdminRouteProps({
+      dataState: resourceStates.admin,
       user: currentUser,
-      documentsCount: documents.length,
-      openQuestionsCount: questions.filter((questionItem) => questionItem.status === "open").length,
-      debugRunsCount: debugRuns.length,
-      benchmarkRunsCount: benchmarkRuns.length,
+      documentsCount: isResourcePartAvailable(resourceStates.documents, "catalog") ? documents.length : null,
+      openQuestionsCount: isResourcePartAvailable(resourceStates.assignee, "questions")
+        ? questions.filter((questionItem) => questionItem.status === "open").length
+        : null,
+      debugRunsCount: isResourcePartAvailable(resourceStates.debug, "runs") ? debugRuns.length : null,
+      benchmarkRunsCount: isResourcePartAvailable(resourceStates.benchmark, "runs") ? benchmarkRuns.length : null,
       managedUsers,
       adminAuditLog,
       accessRoles,
@@ -599,7 +653,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       costAudit,
       aliases,
       aliasAuditLog,
-      loading,
+      loading: loading || isResourceStateBusy(resourceStates.admin),
       canManageDocuments,
       canAnswerQuestions,
       canReadDebugRuns,
@@ -631,21 +685,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       onAssignRoles: onAssignUserRoles,
       onPrepareUserDelete: onPrepareManagedUserDelete,
       onSetUserStatus: onSetManagedUserStatus,
-      onRefreshAdminData: async () => {
-        setLoading(true)
-        setError(null)
-        try {
-          await Promise.all([
-            refreshAdminData(),
-            canReindexDocuments ? refreshReindexMigrations() : Promise.resolve(),
-            canReadAliases ? refreshAliases() : Promise.resolve()
-          ])
-        } catch (err) {
-          setError(err instanceof Error ? err.message : String(err))
-        } finally {
-          setLoading(false)
-        }
-      },
+      onRefreshAdminData: async () => { await loadAdminResources("refresh") },
       onCreateAlias,
       onUpdateAlias,
       onReviewAlias,
@@ -654,12 +694,16 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       onBack: () => setActiveView("chat")
     }),
     historyProps: buildHistoryRouteProps({
+      dataState: resourceStates.history,
       history,
+      onRetry: () => {
+        void runResourceLoad("history", [{ id: "conversations", label: "会話履歴", load: refreshHistory }], "retry")
+      },
       onSelect: (item) => {
         setCurrentConversationId(item.id)
         setMessages(item.messages)
         setActiveView("chat")
-        setError(null)
+        setErrorNotice(null)
         setSelectedRunId("")
         setPendingActivity(null)
         setPendingDebugQuestion(null)
@@ -671,7 +715,11 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       onBack: () => setActiveView("chat")
     }),
     favoritesProps: buildFavoritesRouteProps({
+      dataState: resourceStates.favorites,
       favorites,
+      onRetry: () => {
+        void runResourceLoad("favorites", [{ id: "favorites", label: "お気に入り", load: refreshFavorites }], "retry")
+      },
       onBack: () => setActiveView("chat")
     }),
     profileProps: buildProfileRouteProps({
@@ -694,6 +742,15 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
 }
 
 const documentSortKeys = new Set(["updatedDesc", "updatedAsc", "fileNameAsc", "chunkDesc", "typeAsc"])
+
+export function publicSafeUiError(value: string): string {
+  const compact = value.replace(/\s+/g, " ").trim()
+  const generic = "処理を完了できませんでした。入力内容と権限を確認して、もう一度お試しください。"
+  if (!compact || compact.length > 240) return generic
+  if (/[{}<>]|(?:arn:|s3:\/\/|request.?id|stack|exception|traceback|select\s+.+\s+from|\bat\s+\S+\s*\()/i.test(compact)) return generic
+  return compact
+}
+
 function readAppRouteFromLocation(): ParsedAppRoute {
   if (typeof window === "undefined") return { view: "chat", needsNormalization: false }
   return parseAppRoute(window.location)

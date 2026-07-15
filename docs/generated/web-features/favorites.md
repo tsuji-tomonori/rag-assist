@@ -19,13 +19,13 @@
 
 | コンポーネント | 説明 | 役割 | ファイル | export | 使用 JSX 要素 |
 | --- | --- | --- | --- | --- | --- |
-| FavoritesWorkspace | FavoritesWorkspace は favorites 領域の 画面または画面内 UI コンポーネント です。単独画面ではなく、他の UI から利用されます。 | 画面または画面内 UI コンポーネント | apps/web/src/features/favorites/components/FavoritesWorkspace.tsx | FavoritesWorkspace | Icon, button, div, h2, h3, header, section, small, span, strong |
+| FavoritesWorkspace | FavoritesWorkspace は favorites 領域の 画面または画面内 UI コンポーネント です。単独画面ではなく、他の UI から利用されます。 | 画面または画面内 UI コンポーネント | apps/web/src/features/favorites/components/FavoritesWorkspace.tsx | FavoritesWorkspace | Icon, ResourceStateBoundary, button, div, h2, h3, header, section, small, span, strong |
 
 ## 主なボタン・リンク
 
 | コンポーネント | 要素 | ラベル | 操作説明 | 状態・補足 | ハンドラ | 場所 | 確度 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| FavoritesWorkspace | button | チャットへ戻る | 「チャットへ戻る」を実行するボタン。 | - | onClick=onBack | apps/web/src/features/favorites/components/FavoritesWorkspace.tsx:34 | confirmed |
+| FavoritesWorkspace | button | チャットへ戻る | 「チャットへ戻る」を実行するボタン。 | - | onClick=onBack | apps/web/src/features/favorites/components/FavoritesWorkspace.tsx:49 | confirmed |
 
 ## フォーム
 
@@ -39,4 +39,4 @@
 
 | コンポーネント | 要素 | ラベル | UI 説明 | 状態・補足 | ハンドラ | 場所 | 確度 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| FavoritesWorkspace | button | チャットへ戻る | 「チャットへ戻る」を実行するボタン。 | - | onClick=onBack | apps/web/src/features/favorites/components/FavoritesWorkspace.tsx:34 | confirmed |
+| FavoritesWorkspace | button | チャットへ戻る | 「チャットへ戻る」を実行するボタン。 | - | onClick=onBack | apps/web/src/features/favorites/components/FavoritesWorkspace.tsx:49 | confirmed |

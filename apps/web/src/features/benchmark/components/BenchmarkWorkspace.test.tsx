@@ -3,6 +3,8 @@ import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 import type { BenchmarkRun, BenchmarkSuite } from "../types.js"
 import { BenchmarkWorkspace } from "./BenchmarkWorkspace.js"
+import { createContentResourceState } from "../../../shared/ui/resourceStateModel.js"
+import { appUiStateTargets } from "../../../app/uiStateTargets.js"
 
 const suite: BenchmarkSuite = {
   suiteId: "standard-agent-v1",
@@ -27,6 +29,7 @@ const run: BenchmarkRun = {
 
 function renderBenchmarkWorkspace(overrides: Partial<Parameters<typeof BenchmarkWorkspace>[0]> = {}) {
   const props: Parameters<typeof BenchmarkWorkspace>[0] = {
+    dataState: createContentResourceState(appUiStateTargets.benchmark, "2026-05-10T00:00:00.000Z"),
     runs: [run],
     suites: [suite],
     suiteId: suite.suiteId,

@@ -83,8 +83,8 @@
     },
     {
       "id": "E2E-UI-STATE-001",
-      "status": "planned",
-      "task": "tasks/todo/20260714-issue-345-shared-ui-state-contract.md"
+      "status": "implemented",
+      "evidence": ["apps/web/e2e/visual-regression.spec.ts"]
     },
     {
       "id": "E2E-UI-RISK-001",

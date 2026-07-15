@@ -25,6 +25,13 @@
 - production source No Mock Product UI scan/review。
 - token contrast review for text/UI/focus/state combinations。
 
+## 実装状況（2026-07-14）
+
+- 共通 `ResourceStateBoundary` / `ResourceStatePanel` と semantic state token は、同じ状態を feature 固有色だけに依存せず marker、見出し、説明、native semantics、action で表す。
+- production の count/empty 表示は取得確認済み part に限定し、documents、questions、debug、benchmark、admin の未取得値を `null` または明示的 state として扱う。
+- representative component/controller tests、Web full test、`E2E-UI-STATE-001`、generated Web inventory で primitive と feature integration を検証する。
+- approved vocabulary、全 token/contrast、全 feature primitive の横断監査は `tasks/todo/20260714-issue-345-ui-language-primitives.md` に残り、本要件全体を実装完了とは扱わない。
+
 ## 要件の源泉・背景
 
 - 源泉: GitHub Issue #345 の token/common primitive、user vocabulary、state expression TODO。

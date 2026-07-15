@@ -4,20 +4,32 @@ import { ConfirmDialog } from "../../../shared/components/ConfirmDialog.js"
 import { Icon } from "../../../shared/components/Icon.js"
 import { formatDateTime } from "../../../shared/utils/format.js"
 import { searchConversationHistory, type ConversationHistorySearchResult } from "../utils/conversationHistorySearch.js"
+import {
+  ResourceStateBoundary,
+  type UiResourceState
+} from "../../../shared/ui/ResourceState.js"
+import {
+  hasConfirmedResourceResult,
+  isResourcePartAvailable
+} from "../../../shared/ui/resourceStateModel.js"
 
 export function HistoryWorkspace({
+  dataState,
   history,
   favoriteOnly = false,
   onSelect,
   onDelete,
   onToggleFavorite,
+  onRetry,
   onBack
 }: {
+  dataState: UiResourceState
   history: ConversationHistoryItem[]
   favoriteOnly?: boolean
   onSelect: (item: ConversationHistoryItem) => void
   onDelete: (id: string) => void
   onToggleFavorite: (item: ConversationHistoryItem) => void
+  onRetry: () => void
   onBack: () => void
 }) {
   const [query, setQuery] = useState("")
@@ -25,6 +37,9 @@ export function HistoryWorkspace({
   const [favoritesOnly, setFavoritesOnly] = useState(favoriteOnly)
   const [deleteCandidate, setDeleteCandidate] = useState<ConversationHistoryItem | null>(null)
   const favoriteCount = history.filter((item) => item.isFavorite).length
+  const hasHistoryResult = dataState.parts.length === 0
+    ? hasConfirmedResourceResult(dataState)
+    : isResourcePartAvailable(dataState, "conversations")
 
   useEffect(() => {
     setFavoritesOnly(favoriteOnly)
@@ -55,9 +70,18 @@ export function HistoryWorkspace({
         </button>
         <div>
           <h2>{favoriteOnly ? "お気に入り" : "履歴"}</h2>
-          <span>{history.length} 件の会話 / {favoriteCount} 件のお気に入り</span>
+          <span>{hasHistoryResult ? `${history.length} 件の会話 / ${favoriteCount} 件のお気に入り` : "会話履歴を確認中"}</span>
         </div>
       </header>
+      <ResourceStateBoundary
+        state={dataState}
+        isEmpty={history.length === 0}
+        emptyScope="保存済みの会話履歴"
+        emptyTitle="保存済みの会話履歴はありません。"
+        emptyDescription="会話を始めると、取得が確認できた履歴がここに表示されます。"
+        onRetry={onRetry}
+        onBack={onBack}
+      >
       <div className="question-list-panel history-panel">
         <div className="history-list-head">
           <h3>会話一覧</h3>
@@ -116,6 +140,7 @@ export function HistoryWorkspace({
           )}
         </div>
       </div>
+      </ResourceStateBoundary>
       {deleteCandidate && (
         <ConfirmDialog
           title="この会話履歴を削除しますか？"

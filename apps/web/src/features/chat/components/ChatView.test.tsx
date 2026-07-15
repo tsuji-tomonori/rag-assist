@@ -2,8 +2,11 @@ import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 import { ChatView } from "./ChatView.js"
+import { createContentResourceState } from "../../../shared/ui/resourceStateModel.js"
+import { appUiStateTargets } from "../../../app/uiStateTargets.js"
 
 const defaultProps: Parameters<typeof ChatView>[0] = {
+  dataState: createContentResourceState(appUiStateTargets.chat, "2026-05-10T00:00:00.000Z"),
   messages: [],
   questions: [],
   documentsCount: 0,

@@ -859,6 +859,8 @@ describe("App chat and upload flow", () => {
       if (requestUrl === "/config.json") return Promise.resolve(response({ apiBaseUrl: "http://api.test" }))
       if (requestUrl.endsWith("/me") && isGet(init)) return Promise.resolve(response(currentUserResponse()))
       if (requestUrl.endsWith("/documents") && isGet(init)) return Promise.resolve(response({ documents }))
+      if (requestUrl.endsWith("/document-groups") && isGet(init)) return Promise.resolve(response({ groups: documentGroups }))
+      if (requestUrl.endsWith("/documents/reindex-migrations") && isGet(init)) return Promise.resolve(response({ migrations: [] }))
       if (requestUrl.endsWith("/debug-runs") && isGet(init)) return Promise.resolve(response({ debugRuns: [debugTrace] }))
       if (requestUrl.endsWith("/debug-runs/run-1/download") && init?.method === "POST") return Promise.resolve(response({ url: "https://signed.example/debug.json", expiresInSeconds: 900, objectKey: "downloads/debug.json" }))
       if (requestUrl.endsWith("/rpc/chat/startRun") && init?.method === "POST") {
@@ -880,7 +882,7 @@ describe("App chat and upload flow", () => {
     await userEvent.click(screen.getByTitle("送信"))
 
     expect(await screen.findByText("処理中の表示を確認したい")).toBeInTheDocument()
-    expect(screen.getByText("API処理中")).toBeInTheDocument()
+    expect(screen.getAllByText("回答を生成中").length).toBeGreaterThanOrEqual(1)
     expect(screen.getByTitle("送信")).toBeDisabled()
     await userEvent.click(screen.getByTitle("送信"))
     expect(requestBodies(fetchMock, "/rpc/chat/startRun")).toHaveLength(1)
@@ -897,7 +899,7 @@ describe("App chat and upload flow", () => {
       }))
     )
     expect(await screen.findByText("処理中表示を確認しました。")).toBeInTheDocument()
-    await waitFor(() => expect(screen.queryByText("API処理中")).not.toBeInTheDocument())
+    await waitFor(() => expect(screen.queryAllByText("回答を生成中")).toHaveLength(0))
     expect(screen.getAllByText("run-processing").length).toBeGreaterThanOrEqual(1)
     expect(screen.getByRole("button", { name: "実行IDをコピー" })).toBeEnabled()
     expect(screen.getAllByText("1.25 秒").length).toBeGreaterThanOrEqual(1)

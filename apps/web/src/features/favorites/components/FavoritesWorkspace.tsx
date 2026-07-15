@@ -1,6 +1,14 @@
 import { useMemo } from "react"
 import { Icon } from "../../../shared/components/Icon.js"
 import type { FavoriteItem } from "../types.js"
+import {
+  ResourceStateBoundary,
+  type UiResourceState
+} from "../../../shared/ui/ResourceState.js"
+import {
+  hasConfirmedResourceResult,
+  isResourcePartAvailable
+} from "../../../shared/ui/resourceStateModel.js"
 
 const targetTypeLabels: Record<FavoriteItem["targetType"], string> = {
   chatSession: "会話",
@@ -14,10 +22,14 @@ const targetTypeLabels: Record<FavoriteItem["targetType"], string> = {
 }
 
 export function FavoritesWorkspace({
+  dataState,
   favorites,
+  onRetry,
   onBack
 }: {
+  dataState: UiResourceState
   favorites: FavoriteItem[]
+  onRetry: () => void
   onBack: () => void
 }) {
   const grouped = useMemo(() => {
@@ -27,6 +39,9 @@ export function FavoritesWorkspace({
     }
     return [...groups.entries()]
   }, [favorites])
+  const hasFavoritesResult = dataState.parts.length === 0
+    ? hasConfirmedResourceResult(dataState)
+    : isResourcePartAvailable(dataState, "favorites")
 
   return (
     <section className="assignee-workspace" aria-label="お気に入り">
@@ -36,9 +51,18 @@ export function FavoritesWorkspace({
         </button>
         <div>
           <h2>お気に入り</h2>
-          <span>{favorites.length} 件のショートカット</span>
+          <span>{hasFavoritesResult ? `${favorites.length} 件のショートカット` : "お気に入りを確認中"}</span>
         </div>
       </header>
+      <ResourceStateBoundary
+        state={dataState}
+        isEmpty={favorites.length === 0}
+        emptyScope="お気に入り"
+        emptyTitle="お気に入りはありません。"
+        emptyDescription="取得は完了しており、保存済みのお気に入りは 0 件です。"
+        onRetry={onRetry}
+        onBack={onBack}
+      >
       <div className="question-list-panel history-panel">
         <div className="history-list-head">
           <h3>項目一覧</h3>
@@ -62,6 +86,7 @@ export function FavoritesWorkspace({
           ))
         )}
       </div>
+      </ResourceStateBoundary>
     </section>
   )
 }

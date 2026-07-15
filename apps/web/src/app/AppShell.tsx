@@ -3,10 +3,10 @@ import { AppRoutes } from "./AppRoutes.js"
 import { RailNav } from "./components/RailNav.js"
 import { TopBar } from "./components/TopBar.js"
 import { useAppShellState } from "./hooks/useAppShellState.js"
-import { LoadingStatus } from "../shared/components/LoadingSpinner.js"
+import { ResourceStatePanel } from "../shared/ui/ResourceState.js"
 
 export function AppShell({ authSession, onSignOut }: { authSession: AuthSession; onSignOut: () => void }) {
-  const { error, loading, routeNotice, railProps, topBarProps, routeProps } = useAppShellState({ authSession, onSignOut })
+  const { error, routeNotice, railProps, topBarProps, routeProps } = useAppShellState({ authSession, onSignOut })
 
   return (
     <main className="app-frame">
@@ -15,10 +15,16 @@ export function AppShell({ authSession, onSignOut }: { authSession: AuthSession;
       <section className="main-area">
         <TopBar {...topBarProps} />
 
-        {(loading || error || routeNotice) && (
+        {(error || routeNotice) && (
           <div className="app-status-stack">
-            {loading && <LoadingStatus label="API処理中" />}
-            {error && <div className="error-banner">{error}</div>}
+            {error && (
+              <ResourceStatePanel state={{
+                kind: "error",
+                target: error.target,
+                parts: [],
+                message: error.message
+              }} />
+            )}
             {routeNotice && (
               <div
                 className={`route-notice route-notice-${routeNotice.kind}`}

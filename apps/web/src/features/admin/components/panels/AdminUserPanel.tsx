@@ -8,6 +8,8 @@ import type { AccessRoleDefinition, ManagedUser, ManagedUserDeletionPreflight } 
 export function AdminUserPanel({
   managedUsers,
   accessRoles,
+  usersLoadFailed = false,
+  rolesLoadFailed = false,
   loading,
   canCreateUsers,
   canAssignRoles,
@@ -22,6 +24,8 @@ export function AdminUserPanel({
 }: {
   managedUsers: ManagedUser[] | null
   accessRoles: AccessRoleDefinition[] | null
+  usersLoadFailed?: boolean
+  rolesLoadFailed?: boolean
   loading: boolean
   canCreateUsers: boolean
   canAssignRoles: boolean
@@ -44,7 +48,7 @@ export function AdminUserPanel({
         </button>
       </div>
       {canCreateUsers && (
-        <AdminCreateUserForm roles={accessRoles} loading={loading} onCreateUser={onCreateUser} />
+        <AdminCreateUserForm roles={accessRoles} rolesLoadFailed={rolesLoadFailed} loading={loading} onCreateUser={onCreateUser} />
       )}
       <div className="admin-data-table" role="table" aria-label="ユーザー一覧">
         <div className="admin-user-row admin-user-head" role="row">
@@ -54,7 +58,10 @@ export function AdminUserPanel({
           <span role="columnheader">操作</span>
         </div>
         {managedUsers === null ? (
-          <EmptyState title="管理対象ユーザー API field は未提供です。" description="権限内の API response に users field がありません。" />
+          <EmptyState
+            title={usersLoadFailed ? "管理対象ユーザーを取得できませんでした。" : "管理対象ユーザー API field は未提供です。"}
+            description={usersLoadFailed ? "画面上部の状態メッセージから再試行してください。" : "権限内の API response に users field がありません。"}
+          />
         ) : managedUsers.length === 0 ? (
           <EmptyState title="管理対象ユーザーはありません。" />
         ) : (
@@ -63,6 +70,7 @@ export function AdminUserPanel({
               key={managedUser.userId}
               user={managedUser}
               roles={accessRoles}
+              rolesLoadFailed={rolesLoadFailed}
               loading={loading}
               canAssignRoles={canAssignRoles}
               canSuspend={canSuspendUsers}
@@ -81,10 +89,12 @@ export function AdminUserPanel({
 
 function AdminCreateUserForm({
   roles,
+  rolesLoadFailed,
   loading,
   onCreateUser
 }: {
   roles: AccessRoleDefinition[] | null
+  rolesLoadFailed: boolean
   loading: boolean
   onCreateUser: (input: { email: string; displayName?: string; groups?: string[] }) => Promise<void>
 }) {
@@ -128,7 +138,7 @@ function AdminCreateUserForm({
       <label>
         <span>初期ロール</span>
         {roles === null ? (
-          <span className="admin-field-unavailable">未提供</span>
+          <span className="admin-field-unavailable">{rolesLoadFailed ? "取得失敗" : "未提供"}</span>
         ) : roles.length === 0 ? (
           <span className="admin-field-unavailable">選択可能なロールはありません</span>
         ) : (
@@ -150,6 +160,7 @@ function AdminCreateUserForm({
 function ManagedUserRow({
   user,
   roles,
+  rolesLoadFailed,
   loading,
   canAssignRoles,
   canSuspend,
@@ -161,6 +172,7 @@ function ManagedUserRow({
 }: {
   user: ManagedUser
   roles: AccessRoleDefinition[] | null
+  rolesLoadFailed: boolean
   loading: boolean
   canAssignRoles: boolean
   canSuspend: boolean
@@ -241,7 +253,7 @@ function ManagedUserRow({
             />
           </div>
         )}
-        {roles === null && <small>ロール定義は未提供</small>}
+        {roles === null && <small>{rolesLoadFailed ? "ロール定義を取得できませんでした" : "ロール定義は未提供"}</small>}
         {roleChanged && (
           <small className="role-diff-preview">変更前: {formatGroupList(user.groups)} / 変更後: {formatGroupList(nextGroups)}</small>
         )}

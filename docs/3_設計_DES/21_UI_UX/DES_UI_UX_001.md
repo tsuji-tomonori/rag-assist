@@ -53,13 +53,13 @@
 
 | View | Canonical URL / accepted pattern | Current route guard | Personas | Primary job | Requirement / AC | Executable evidence | Current |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `chat` | `/`; `/?view=chat` is normalized to `/` | authenticated shell; submit uses `canCreateChat` | `standard-user`, `answer-editor`, `operator`, `system-admin` | `JOB-UI-CHAT`: ask → processing → answer/refusal → citation/follow-up/escalation | `FR-003`〜`FR-005`, `FR-009`, `FR-042`, `FR-043`, `FR-094`, `FR-095`, `SQ-016`; `AC-FR042-001`, `AC-FR043-003`, `AC-FR094-001`, `AC-FR095-001` | `E2E-VIEW-CHAT-001`, `E2E-UI-NAV-001`, `E2E-UI-ROUTE-001`, planned `E2E-UI-STATE-001` | partial: mobile route/navigation automation exists; full state and manual a11y journey missing |
-| `assignee` | `/?view=assignee` | `canAnswerQuestions` | `answer-editor`, `system-admin` | `JOB-UI-ASSIGNEE`: filter/select/answer/resolve | `FR-031`〜`FR-033`, `FR-094`〜`FR-098`, `SQ-016`; `AC-FR031-001`, `AC-FR032-004`, `AC-FR094-003` | `E2E-VIEW-ASSIGNEE-001`, `E2E-UI-NAV-002`, `E2E-UI-ROUTE-002`, planned `E2E-UI-STATE-001` | partial: mobile reachability/denied route automation exists; full handoff/state/manual evidence missing |
-| `history` | `/?view=history` | no `AppRoutes` guard; data uses own-history boundary | all signed-in personas | `JOB-UI-HISTORY`: search/select/resume/delete own conversation | `FR-022`, `FR-030`, `FR-044`, `FR-094`, `FR-095`, `FR-097`, `SQ-016`; `AC-FR022-002`, `AC-FR030-001`, `AC-FR094-002` | `E2E-VIEW-HISTORY-001`, `E2E-UI-NAV-001`, `E2E-UI-ROUTE-001` | partial: mobile reachability and browser-history restoration exist; full state journey missing |
+| `chat` | `/`; `/?view=chat` is normalized to `/` | authenticated shell; submit uses `canCreateChat` | `standard-user`, `answer-editor`, `operator`, `system-admin` | `JOB-UI-CHAT`: ask → processing → answer/refusal → citation/follow-up/escalation | `FR-003`〜`FR-005`, `FR-009`, `FR-042`, `FR-043`, `FR-094`, `FR-095`, `SQ-016`; `AC-FR042-001`, `AC-FR043-003`, `AC-FR094-001`, `AC-FR095-001` | `E2E-VIEW-CHAT-001`, `E2E-UI-NAV-001`, `E2E-UI-ROUTE-001` | partial: target-specific processing/error and shared boundary exist; full journey/manual a11y evidence missing |
+| `assignee` | `/?view=assignee` | `canAnswerQuestions` | `answer-editor`, `system-admin` | `JOB-UI-ASSIGNEE`: filter/select/answer/resolve | `FR-031`〜`FR-033`, `FR-094`〜`FR-098`, `SQ-016`; `AC-FR031-001`, `AC-FR032-004`, `AC-FR094-003` | `E2E-VIEW-ASSIGNEE-001`, `E2E-UI-NAV-002`, `E2E-UI-ROUTE-002` | partial: permission/loading/error/empty adapter exists; full handoff/manual evidence missing |
+| `history` | `/?view=history` | no `AppRoutes` guard; data uses own-history boundary | all signed-in personas | `JOB-UI-HISTORY`: search/select/resume/delete own conversation | `FR-022`, `FR-030`, `FR-044`, `FR-094`, `FR-095`, `FR-097`, `SQ-016`; `AC-FR022-002`, `AC-FR030-001`, `AC-FR094-002` | `E2E-VIEW-HISTORY-001`, `E2E-UI-NAV-001`, `E2E-UI-ROUTE-001`, `E2E-UI-STATE-001` | partial: state recovery, mobile reachability, browser-history restoration exist; full conversation journey missing |
 | `favorites` | `/?view=favorites` | no `AppRoutes` guard; data uses own-history boundary | all signed-in personas | `JOB-UI-FAVORITES`: inspect and resume favorited own conversation | `FR-028`, `FR-094`, `FR-095`, `FR-097`, `SQ-016`; `AC-FR028-004`, `AC-FR094-002` | `E2E-VIEW-FAVORITES-001`, `E2E-UI-NAV-001`, `E2E-UI-ROUTE-001` | partial: mobile reachability and browser-history restoration exist; favorite resume journey missing |
-| `benchmark` | `/?view=benchmark` | `canReadBenchmarkRuns` | `operator`, `system-admin` | `JOB-UI-BENCHMARK`: start/observe/cancel/download authorized run | `FR-010`, `FR-011`, `FR-048`, `FR-094`〜`FR-098`, `SQ-016`; `AC-FR048-001`, `AC-FR096-001` | `E2E-VIEW-BENCHMARK-001`, `E2E-UI-NAV-002`, `E2E-UI-ROUTE-002` | partial: mobile reachability/denied route automation exists; state/manual a11y evidence missing |
-| `admin` | `/?view=admin`; section/filter state target TBD by task | `canSeeAdminSettings` composite | `system-admin` | `JOB-UI-ADMIN`: navigate authorized governance/observation section | `FR-024`, `FR-027`, `FR-094`〜`FR-098`, `SQ-016`; `AC-FR024-001`, `AC-FR027-011`, `AC-FR096-001`, `AC-FR097-001` | `E2E-VIEW-ADMIN-001`, `E2E-UI-NAV-002`, `E2E-UI-ROUTE-002` | partial: mobile reachability/non-disclosing denied route exist; #344 remaining task open |
-| `documents` | `/documents`; `/documents/groups/:id`; `/documents/:id`; `/documents/reindex-migrations/:id`; `?view=documents&...` accepted and normalized | `canReadDocuments` | `operator`, `system-admin` | `JOB-UI-DOCUMENTS`: find/select/upload/share/manage/ask within effective permission | `FR-001`, `FR-002`, `FR-038`, `FR-064`, `FR-094`〜`FR-098`, `SQ-016`; `AC-FR001-001`, `AC-FR001-008`, `AC-FR094-002`, `AC-FR097-001` | `E2E-VIEW-DOCUMENTS-001`, `E2E-UI-NAV-002`, `E2E-UI-ROUTE-001`, `E2E-UI-ROUTE-002`, planned `E2E-UI-DOCUMENTS-001` | partial: canonical path/query reload and denied route exist; 143-operation IA/full restoration missing |
+| `benchmark` | `/?view=benchmark` | `canReadBenchmarkRuns` | `operator`, `system-admin` | `JOB-UI-BENCHMARK`: start/observe/cancel/download authorized run | `FR-010`, `FR-011`, `FR-048`, `FR-094`〜`FR-098`, `SQ-016`; `AC-FR048-001`, `AC-FR096-001` | `E2E-VIEW-BENCHMARK-001`, `E2E-UI-NAV-002`, `E2E-UI-ROUTE-002` | partial: run/suite part state and false-zero prevention exist; risky-operation/manual evidence missing |
+| `admin` | `/?view=admin`; section/filter state target TBD by task | `canSeeAdminSettings` composite | `system-admin` | `JOB-UI-ADMIN`: navigate authorized governance/observation section | `FR-024`, `FR-027`, `FR-094`〜`FR-098`, `SQ-016`; `AC-FR024-001`, `AC-FR027-011`, `AC-FR096-001`, `AC-FR097-001` | `E2E-VIEW-ADMIN-001`, `E2E-UI-NAV-002`, `E2E-UI-ROUTE-002`, `E2E-UI-STATE-001` | partial: part-level partial/stale/retry and non-disclosing denied route exist; #344 remaining task open |
+| `documents` | `/documents`; `/documents/groups/:id`; `/documents/:id`; `/documents/reindex-migrations/:id`; `?view=documents&...` accepted and normalized | `canReadDocuments` | `operator`, `system-admin` | `JOB-UI-DOCUMENTS`: find/select/upload/share/manage/ask within effective permission | `FR-001`, `FR-002`, `FR-038`, `FR-064`, `FR-094`〜`FR-098`, `SQ-016`; `AC-FR001-001`, `AC-FR001-008`, `AC-FR094-002`, `AC-FR097-001` | `E2E-VIEW-DOCUMENTS-001`, `E2E-UI-NAV-002`, `E2E-UI-ROUTE-001`, `E2E-UI-ROUTE-002`, planned `E2E-UI-DOCUMENTS-001` | partial: catalog/reindex part state, canonical route, denied recovery exist; 143-operation IA/full restoration missing |
 | `profile` | `/?view=profile` | authenticated shell | all | `JOB-UI-PROFILE`: inspect/update own settings and sign out | `FR-051`, `FR-094`, `FR-095`, `SQ-016`; `AC-FR094-001`, `AC-FR094-002` | `E2E-VIEW-PROFILE-001`, `E2E-UI-NAV-001`, `E2E-UI-NAV-002`, `E2E-UI-ROUTE-001` | partial: <=720px menu reachability is automated; settings persistence and manual a11y remain |
 
 ## URL と browser history policy
@@ -76,6 +76,13 @@
 
 ## Common state contract
 
+### Confirmed production implementation（2026-07-14）
+
+- `ResourceState.tsx` owns the discriminated state model, target/source metadata, alert/status/live/busy semantics, focus option, retry/back/support actions, partial summaries, and stale source/as-of disclosure.
+- `useResourceStateController.ts` settles endpoint parts independently, maps HTTP 401/403 to permission, retains last confirmed content as stale after refresh failure, ignores superseded requests, and publishes only public-safe failure text while raw detail remains in developer logging.
+- `useAppShellState.ts` applies the controller to history、favorites、questions、documents catalog/reindex、benchmark runs/suites、admin endpoint parts、debug runs. Feature adapters hide unconfirmed counts/content and keep successful parts available.
+- `E2E-UI-STATE-001` exercises initial loading/500/confirmed-empty recovery、actual HTTP 403、admin partial recovery、source/as-of stale recovery. Primitive/controller/component tests cover all state variants and false-zero rules.
+
 ```mermaid
 stateDiagram-v2
   [*] --> loading
@@ -89,9 +96,9 @@ stateDiagram-v2
   permissionDenied --> recovery: permitted destination
   partialSuccess --> retrying: retry failed subset
   stale --> retrying: refresh
-  retrying --> content: recovered with data
-  retrying --> empty: recovered with confirmed zero
+  retrying --> recovered: recovered with data or confirmed zero
   retrying --> error: failed again
+  retrying --> stale: refresh failed; keep prior content
 ```
 
 | State | Must expose | Must not do | AT metadata |
@@ -227,7 +234,6 @@ Checkboxes are checked only for evidence actually obtained.
 | Gap | Requirement | Task |
 | --- | --- | --- |
 | mobile navigation automation completed; representative screen reader、400% browser zoom、safe-area/virtual-keyboard real-device evidence remains | `FR-094`, `SQ-016` | `tasks/do/20260714-issue-345-mobile-navigation.md`, `tasks/todo/20260714-issue-345-manual-a11y-evidence.md` |
-| unstructured global error/common states | `FR-095` | `tasks/todo/20260714-issue-345-shared-ui-state-contract.md` |
 | target/risk/result feedback inconsistent | `FR-096` | `tasks/todo/20260714-issue-345-risky-operation-feedback.md` |
 | documents 143-interaction density and state restoration | `FR-097`, `FR-098` | `tasks/todo/20260714-issue-345-document-workspace-context.md` |
 | chat/assignee full journey | existing chat/question requirements, `FR-095` | `tasks/todo/20260714-issue-345-chat-assignee-journey.md` |
@@ -238,6 +244,8 @@ Checkboxes are checked only for evidence actually obtained.
 | manual screen-reader/zoom/real-device evidence missing | `SQ-016`, `NFR-018` | `tasks/todo/20260714-issue-345-manual-a11y-evidence.md` |
 
 URL/history/denied-route gap は draft PR #349 と `tasks/done/20260714-issue-345-url-history-routing.md` で自動検証まで解消した。PR #348 依存は production behavior の gap ではなく、default branch merge 前に解消する PR lifecycle blocker として扱う。
+
+共通 UI state gap は shared primitive/controller、feature adapter、`E2E-UI-STATE-001` により自動検証範囲を解消した。代表 screen reader、実 browser zoom、real-device は common state 固有の成功として主張せず、manual evidence task と cross-screen task に残す。
 
 ## Open decisions
 

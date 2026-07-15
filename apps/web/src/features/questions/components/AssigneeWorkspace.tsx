@@ -6,6 +6,15 @@ import { LoadingSpinner, LoadingStatus } from "../../../shared/components/Loadin
 import type { CurrentUser } from "../../../shared/types/common.js"
 import { currentUserLabel } from "../../../shared/utils/currentUserLabel.js"
 import { formatDateTime, priorityLabel, statusLabel } from "../../../shared/utils/format.js"
+import {
+  ResourceStateBoundary,
+  type UiResourceState
+} from "../../../shared/ui/ResourceState.js"
+import {
+  hasConfirmedResourceResult,
+  isResourcePartAvailable,
+  isResourceStateBusy
+} from "../../../shared/ui/resourceStateModel.js"
 
 type AssigneeLaneId = "unassigned" | "inProgress" | "waitingReview" | "resolved"
 
@@ -17,18 +26,22 @@ const ASSIGNEE_LANES: { id: AssigneeLaneId; label: string; description: string }
 ]
 
 export function AssigneeWorkspace({
+  dataState,
   questions,
   selectedQuestionId,
   user,
   loading,
+  onRetry,
   onSelect,
   onAnswer,
   onBack
 }: {
+  dataState: UiResourceState
   questions: HumanQuestion[]
   selectedQuestionId: string
   user: CurrentUser | null
   loading: boolean
+  onRetry: () => void
   onSelect: (questionId: string) => void
   onAnswer: (questionId: string, input: Parameters<typeof answerQuestion>[1]) => Promise<void>
   onBack: () => void
@@ -59,6 +72,9 @@ export function AssigneeWorkspace({
   })
   const selected = visibleQuestions.find((question) => question.questionId === selectedQuestionId) ?? visibleQuestions[0]
   const openCount = questions.filter((question) => question.status === "open").length
+  const hasQuestionResult = dataState.parts.length === 0
+    ? hasConfirmedResourceResult(dataState)
+    : isResourcePartAvailable(dataState, "questions")
 
   useEffect(() => {
     setAnswerTitle(selected ? `${selected.title}への回答` : "")
@@ -119,10 +135,19 @@ export function AssigneeWorkspace({
         </button>
         <div>
           <h2>担当者対応</h2>
-          <span>{openCount} 件が対応待ち</span>
+          <span>{hasQuestionResult ? `${openCount} 件が対応待ち` : "問い合わせを確認中"}</span>
         </div>
       </header>
-      {loading && <LoadingStatus label="問い合わせAPIを処理中" />}
+      {loading && !isResourceStateBusy(dataState) && <LoadingStatus label="問い合わせAPIを処理中" />}
+      <ResourceStateBoundary
+        state={dataState}
+        isEmpty={questions.length === 0}
+        emptyScope="担当者向け問い合わせ"
+        emptyTitle="担当者へ送信された質問はまだありません。"
+        emptyDescription="取得は完了しており、現在対応できる問い合わせは 0 件です。"
+        onRetry={onRetry}
+        onBack={onBack}
+      >
       {questions.length > 0 ? (
         <>
           <div className="assignee-toolbar" aria-label="問い合わせ一覧">
@@ -250,6 +275,7 @@ export function AssigneeWorkspace({
       ) : (
         <div className="empty-question-panel">担当者へ送信された質問はまだありません。</div>
       )}
+      </ResourceStateBoundary>
     </section>
   )
 }

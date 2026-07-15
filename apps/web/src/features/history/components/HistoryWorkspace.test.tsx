@@ -3,6 +3,8 @@ import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 import type { ConversationHistoryItem } from "../types.js"
 import { HistoryWorkspace } from "./HistoryWorkspace.js"
+import { createContentResourceState } from "../../../shared/ui/resourceStateModel.js"
+import { appUiStateTargets } from "../../../app/uiStateTargets.js"
 
 const historyItem: ConversationHistoryItem = {
   schemaVersion: 1,
@@ -16,10 +18,12 @@ const historyItem: ConversationHistoryItem = {
 
 function renderHistoryWorkspace(overrides: Partial<Parameters<typeof HistoryWorkspace>[0]> = {}) {
   const props: Parameters<typeof HistoryWorkspace>[0] = {
+    dataState: createContentResourceState(appUiStateTargets.history, "2026-05-10T00:00:00.000Z"),
     history: [historyItem],
     onSelect: vi.fn(),
     onDelete: vi.fn(),
     onToggleFavorite: vi.fn(),
+    onRetry: vi.fn(),
     onBack: vi.fn(),
     ...overrides
   }
