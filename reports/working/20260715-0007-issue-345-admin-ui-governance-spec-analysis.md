@@ -146,3 +146,10 @@ API route permission と static access-control policy は維持し、alias tenan
 - alias publish は record/ledger CAS と tenant artifact 分離を持つが、複数 object の完全な atomic commit は未解決。`tasks/todo/20260714-1011-admin-access-audit-state.md` と同じ P0 governance follow-up で扱う。
 - managed-user audit の共通 immutable audit/outbox、retention/export privacy は `tasks/todo/20260714-1011-admin-access-audit-state.md`、usage/cost evidence integrity は `tasks/todo/20260714-1011-admin-usage-cost-integrity.md` を閉じていない。
 - pricing、budget/anomaly threshold、正式な全 role 日本語用語、browser/AT matrix は owner 未決のため固定値を導入していない。
+
+### PR lifecycle
+
+- 実装 commit: `fd2e67d5`（`✨ feat(admin): 管理 UI の governance と状態復元を確立する`）。
+- stacked draft PR: `#355`（base: `codex/issue-345-chat-assignee-journey` / PR `#354`）。
+- GitHub Apps で `semver:minor` を付与し、日本語の受け入れ条件確認コメントとセルフレビューコメントを記録した。
+- task を `tasks/done/20260714-1011-admin-ui-governance-quality.md` へ移動し、lifecycle commit/push 後に PR 更新差分を再レビューする。
