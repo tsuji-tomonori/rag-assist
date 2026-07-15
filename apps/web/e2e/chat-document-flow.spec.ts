@@ -11,7 +11,7 @@ test.beforeEach(async ({ page }) => {
 
 test('根拠不足質問で no-answer メッセージになる', async ({ page }) => {
   await page.getByRole('textbox', { name: '質問', exact: true }).fill('この会社の創業者の誕生日は？')
-  await page.getByRole('button', { name: '送信' }).click()
+  await page.getByRole('button', { name: '質問を送信', exact: true }).click()
   await expect(page.getByText('資料からは回答できません。')).toBeVisible()
 })
 
@@ -61,8 +61,9 @@ test('質問送信で回答と citations が表示される @smoke', async ({ pa
   await expect(page.getByText('参照元', { exact: true })).toBeVisible()
 })
 
-test('新しい会話では以前の一時添付を検索対象にしない', async ({ page }) => {
-  const filename = `e2e-temporary-${Date.now()}.txt`
+test('新しい会話では旧会話の一時資料 scope を検索へ含めない', async ({ page }) => {
+  const filename = `e2e-delete-${Date.now()}.txt`
+
   await page.locator('input[type="file"]').setInputFiles({
     name: filename,
     mimeType: 'text/plain',
@@ -72,13 +73,13 @@ test('新しい会話では以前の一時添付を検索対象にしない', as
   await expect(page.getByText('資料を取り込みました。知りたいことを入力してください。')).toBeVisible()
 
   await page.getByRole('textbox', { name: '質問', exact: true }).fill('秘密の語句は何ですか？')
-  await page.getByRole('button', { name: '送信' }).click()
+  await page.getByRole('button', { name: '質問を送信', exact: true }).click()
   await expect(page.getByText(/ALPHA-DELTA|資料では次のように記載されています。/)).toBeVisible()
 
-  await page.getByRole('button', { name: '新しい会話' }).click()
-  await expect(page.getByText(`一時添付: ${filename}`)).toHaveCount(0)
+  await page.getByRole('button', { name: '新しい会話', exact: true }).click()
+  await expect(page.locator('section[aria-label="チャット"]')).toBeVisible()
 
   await page.getByRole('textbox', { name: '質問', exact: true }).fill('秘密の語句は何ですか？')
-  await page.getByRole('button', { name: '送信' }).click()
+  await page.getByRole('button', { name: '質問を送信', exact: true }).click()
   await expect(page.getByText('資料からは回答できません。')).toBeVisible()
 })
