@@ -162,6 +162,7 @@ function renderAdminWorkspace(overrides: Partial<Parameters<typeof AdminWorkspac
     onLoadMoreAliases: vi.fn().mockResolvedValue(undefined),
     onLoadMoreAliasAudit: vi.fn().mockResolvedValue(undefined),
     onLoadMoreAdminAudit: vi.fn().mockResolvedValue(undefined),
+    onLoadMoreManagedUsers: vi.fn().mockResolvedValue(undefined),
     onRefreshAdminPart: vi.fn().mockResolvedValue(undefined)
   }
   const initialUrlState = overrides.urlState ?? {}
@@ -215,6 +216,7 @@ function renderAdminWorkspace(overrides: Partial<Parameters<typeof AdminWorkspac
       onRefreshAdminData: vi.fn().mockResolvedValue(undefined),
       onRefreshAdminPart: spies.onRefreshAdminPart,
       onLoadMoreAdminAudit: spies.onLoadMoreAdminAudit,
+      onLoadMoreManagedUsers: spies.onLoadMoreManagedUsers,
       onLoadMoreAliases: spies.onLoadMoreAliases,
       onLoadMoreAliasAudit: spies.onLoadMoreAliasAudit,
       onUrlStateChange: (nextState, mode) => {
@@ -339,6 +341,50 @@ describe("AdminWorkspace", () => {
     expect(screen.getByRole("button", { name: "second@example.comの利用を停止" })).toBeEnabled()
   })
 
+  it("server capability blocker と projection 再調整状態を操作可否へ反映する", () => {
+    const blockedUser: ManagedUser = {
+      ...managedUser,
+      status: "suspended",
+      effectivePermissions: [],
+      capability: {
+        canAssignRoles: false,
+        canSuspend: false,
+        canUnsuspend: false,
+        canDelete: false,
+        blockers: ["self_mutation", "target_inactive", "last_recovery_principal", "policy_denied"]
+      },
+      projection: { source: "local_ledger", asOf, reconciliationState: "pending" }
+    }
+    renderAdminWorkspace({
+      urlState: { section: "users" },
+      managedUsers: [blockedUser],
+      managedUserPage: { users: [blockedUser], total: 1, truncated: false, source: "local_ledger", asOf, version: "ledger-version-2" }
+    })
+    const row = screen.getByRole("row", { name: /managed@example.com/ })
+    expect(within(row).getByText(/正本: ローカル台帳 \/ 同期: 要再調整/)).toBeInTheDocument()
+    expect(within(row).getByText(/自分自身は変更不可 \/ 停止中の対象 \/ 最後の復旧管理者 \/ policy_denied/)).toBeInTheDocument()
+    expect(within(row).getByText("有効 permission: 0 件")).toBeInTheDocument()
+    expect(within(row).getByText("利用可能な操作はありません")).toBeInTheDocument()
+  })
+
+  it("ユーザー query・状態・sort と cursor pagination を URL/API 境界へ渡す", async () => {
+    const spies = renderAdminWorkspace({
+      urlState: { section: "users", userSort: "emailAsc" },
+      managedUserPage: { users: [managedUser], total: 3, nextCursor: "user-cursor-2", truncated: true, source: "authoritative_identity", asOf, version: "ledger-version-1" }
+    })
+    const panel = screen.getByLabelText("ユーザー管理一覧")
+    await userEvent.type(within(panel).getByLabelText("ユーザー・ロールを検索"), "  finance  ")
+    await userEvent.selectOptions(within(panel).getByLabelText("状態"), "suspended")
+    await userEvent.selectOptions(within(panel).getByLabelText("並び順"), "updatedDesc")
+    await userEvent.click(within(panel).getByRole("button", { name: "検索" }))
+    await userEvent.click(within(panel).getByRole("button", { name: /次のユーザーを読み込む/ }))
+
+    expect(spies.onUrlStateChange).toHaveBeenCalledWith(expect.objectContaining({ section: "users", userStatus: "suspended" }), "push")
+    expect(spies.onUrlStateChange).toHaveBeenCalledWith(expect.objectContaining({ section: "users", userSort: "updatedDesc" }), "push")
+    expect(spies.onUrlStateChange).toHaveBeenCalledWith(expect.objectContaining({ section: "users", query: "finance" }), "push")
+    expect(spies.onLoadMoreManagedUsers).toHaveBeenCalledTimes(1)
+  })
+
   it("ロールの日本語 metadata と raw ID、resource group との概念差を表示する", () => {
     renderAdminWorkspace({ urlState: { section: "roles" } })
     const panel = screen.getByLabelText("アプリケーションロール定義")
@@ -376,6 +422,29 @@ describe("AdminWorkspace", () => {
     await userEvent.click(button)
     expect(onCreateAdminAuditExport).toHaveBeenCalledWith("四半期 access review")
     expect(await screen.findByRole("link", { name: "有効期限内に取得" })).toHaveAttribute("href", "https://example.com/export")
+  })
+
+  it("監査 export 失敗を監査一覧と混同せず表示する", async () => {
+    renderAdminWorkspace({
+      urlState: { section: "audit" },
+      canExportAdminAuditLog: true,
+      onCreateAdminAuditExport: vi.fn().mockRejectedValue(new Error("export service unavailable"))
+    })
+    await userEvent.type(screen.getByLabelText("export 理由（必須）"), "障害調査")
+    await userEvent.click(screen.getByRole("button", { name: "現在の条件を export" }))
+    expect(await screen.findByRole("alert")).toHaveTextContent("export service unavailable")
+    expect(screen.getByText("1 / 61 件")).toBeInTheDocument()
+  })
+
+  it("監査 export の非 Error rejection を安全な文言へ変換する", async () => {
+    renderAdminWorkspace({
+      urlState: { section: "audit" },
+      canExportAdminAuditLog: true,
+      onCreateAdminAuditExport: vi.fn().mockRejectedValue("network-down")
+    })
+    await userEvent.type(screen.getByLabelText("export 理由（必須）"), "定例監査")
+    await userEvent.click(screen.getByRole("button", { name: "現在の条件を export" }))
+    expect(await screen.findByRole("alert")).toHaveTextContent("監査 export を作成できませんでした。")
   })
 
   it("権限外 section を overview へ正規化し、取得前の actor と summary を捏造しない", () => {

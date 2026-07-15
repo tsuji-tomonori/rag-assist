@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import { listAccessRoles } from "../api/accessRolesApi.js"
 import { assignUserRoles, createManagedUser, deleteManagedUser, getManagedUserDeletionPreflight, listManagedUsers, suspendManagedUser, unsuspendManagedUser } from "../api/adminUsersApi.js"
 import { createAlias, disableAlias, listAliasAuditLog, listAliases, publishAliases, reviewAlias, transitionAliasToDraft, updateAlias } from "../api/aliasesApi.js"
-import { listAdminAuditLog } from "../api/auditLogApi.js"
+import { createAdminAuditExport, listAdminAuditLog } from "../api/auditLogApi.js"
 import { getCostAuditSummary } from "../api/costApi.js"
 import { listUsageSummaries } from "../api/usageApi.js"
 import type { AliasAuditLogPage, AliasDefinition, AliasListPage } from "../types.js"
@@ -29,7 +29,7 @@ vi.mock("../api/aliasesApi.js", () => ({
   transitionAliasToDraft: vi.fn(),
   updateAlias: vi.fn()
 }))
-vi.mock("../api/auditLogApi.js", () => ({ listAdminAuditLog: vi.fn() }))
+vi.mock("../api/auditLogApi.js", () => ({ createAdminAuditExport: vi.fn(), listAdminAuditLog: vi.fn() }))
 vi.mock("../api/costApi.js", () => ({ getCostAuditSummary: vi.fn() }))
 vi.mock("../api/usageApi.js", () => ({ listUsageSummaries: vi.fn() }))
 
@@ -124,6 +124,14 @@ describe("useAdminData", () => {
       source: "admin-audit-ledger",
       asOf: "now"
     })
+    vi.mocked(createAdminAuditExport).mockResolvedValue({
+      exportType: "audit_log",
+      url: "https://example.com/audit.json",
+      expiresInSeconds: 300,
+      objectKey: "downloads/tenant-1/audit.json",
+      generatedAt: "now",
+      redaction: { policyVersion: "redaction-v1", redactedFields: [], notes: [] }
+    })
     vi.mocked(listUsageSummaries).mockResolvedValue([])
     vi.mocked(getCostAuditSummary).mockResolvedValue(null)
     vi.mocked(assignUserRoles).mockResolvedValue({ userId: "user-1", email: "a@example.com", status: "active", groups: ["CHAT_USER", "SYSTEM_ADMIN"], createdAt: "now", updatedAt: "now" })
@@ -213,6 +221,52 @@ describe("useAdminData", () => {
     expect(listAliasAuditLog).toHaveBeenCalledWith({ limit: 50 })
     expect(result.current.accessRoleList).toMatchObject({ catalogVersion: "role-v1" })
     expect(result.current.adminAuditPage).toMatchObject({ total: 1 })
+  })
+
+  it("管理ユーザー query を正規化し stable cursor を重複なく追記する", async () => {
+    const secondUser = { userId: "user-2", email: "c@example.com", status: "suspended" as const, groups: [], createdAt: "now", updatedAt: "later" }
+    vi.mocked(listManagedUsers)
+      .mockResolvedValueOnce({ users: [{ userId: "user-1", email: "b@example.com", status: "active", groups: [], createdAt: "now", updatedAt: "now" }], total: 2, nextCursor: "cursor-2", truncated: true, source: "authoritative_identity", asOf: "now", version: "v1" })
+      .mockResolvedValueOnce({ users: [secondUser], total: 2, truncated: false, source: "authoritative_identity", asOf: "later", version: "v2" })
+    const { result } = renderHook(() => useAdminData(createProps({ canReadUsers: true })))
+
+    await act(() => result.current.refreshManagedUsers({ query: "ops", status: "active", sort: "updatedDesc" }))
+    await act(() => result.current.loadMoreManagedUsers())
+    await act(() => result.current.loadMoreManagedUsers())
+
+    expect(listManagedUsers).toHaveBeenNthCalledWith(1, { limit: 50, query: "ops", status: "active", sort: "updatedDesc" })
+    expect(listManagedUsers).toHaveBeenNthCalledWith(2, { limit: 50, query: "ops", status: "active", sort: "updatedDesc", cursor: "cursor-2" })
+    expect(listManagedUsers).toHaveBeenCalledTimes(2)
+    expect(result.current.managedUsers?.map((item) => item.userId)).toEqual(["user-1", "user-2"])
+    expect(result.current.managedUserPage).toMatchObject({ version: "v2", total: 2 })
+  })
+
+  it("監査 export は capability を必須とし cursor を request へ含めない", async () => {
+    const denied = renderHook(() => useAdminData(createProps({ canExportAdminAuditLog: false })))
+    await expect(act(() => denied.result.current.onCreateAdminAuditExport("監査"))).rejects.toThrow("権限がありません")
+    expect(createAdminAuditExport).not.toHaveBeenCalled()
+
+    const allowed = renderHook(() => useAdminData(createProps({ canReadAdminAuditLog: true, canExportAdminAuditLog: true })))
+    await act(() => allowed.result.current.refreshAdminAuditLog({ limit: 1, query: "denied", cursor: "cursor-2" }))
+    const artifact = await act(() => allowed.result.current.onCreateAdminAuditExport("四半期確認"))
+    expect(createAdminAuditExport).toHaveBeenCalledWith({ query: "denied" }, "四半期確認")
+    expect(artifact.objectKey).toContain("tenant-1")
+  })
+
+  it("session 失効と audit intent を mutation evidence として返す", async () => {
+    vi.mocked(assignUserRoles).mockResolvedValueOnce({
+      userId: "user-1", email: "a@example.com", status: "active", groups: ["SYSTEM_ADMIN"], createdAt: "now", updatedAt: "later",
+      operationEvidence: { sessionRevocation: "confirmed", propagationState: "current", effectivePermissions: ["access:role:assign"], auditIntentId: "audit-intent-1" }
+    })
+    const { result } = renderHook(() => useAdminData(createProps({ canReadUsers: true })))
+    await act(() => result.current.refreshManagedUsers())
+    const outcome = await act(() => result.current.onAssignUserRoles("user-1", ["SYSTEM_ADMIN"], "担当変更"))
+    expect(outcome).toMatchObject({
+      ok: true,
+      message: expect.stringContaining("session 失効"),
+      evidence: { auditReference: "audit-intent-1", version: "later" }
+    })
+    expect(result.current.pendingAdminMutationKeys).toEqual([])
   })
 
   it("確定後の監査再取得失敗は再実行を促さない partial として返す", async () => {
