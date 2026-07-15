@@ -48,4 +48,4 @@ CI 成功後の PR #353 以降を順次確認し、条件を満たした PR を 
 
 - 実 AWS provider usage、実 DynamoDB query、署名付き export storage、approved billing source との live reconciliation は未実施。owner / FinOps の許容差承認と照合成功まで production `active` 化を禁止する。
 - representative screen reader、実ブラウザ 200% / 400% zoom、real-device touch / virtual keyboard、Firefox / WebKit は未実施で、manual evidence task の blocker を維持する。
-- GitHub Actions MemoRAG CI run `29426634270` と semver 検証は成功した。task lifecycle push 後の run `29427316713` は 801 API tests 中1件が同時刻 event の UUID order を固定視して失敗したため、task を `do` に戻して `feature` 識別の決定的 assertion へ修正した。再検証完了までは blocking として扱う。
+- GitHub Actions MemoRAG CI run `29426634270` と semver 検証は成功した。task lifecycle push 後の run `29427316713` は 801 API tests 中1件が同時刻 event の UUID order を固定視して失敗したため、task を `do` に戻して `feature` 識別の決定的 assertion へ修正した。修正 head の run `29456068666` は API coverage を含む全必須 step が成功し、条件付き RAG promotion gate は設計どおり skip した。
