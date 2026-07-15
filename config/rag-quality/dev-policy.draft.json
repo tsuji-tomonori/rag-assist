@@ -1,0 +1,1452 @@
+{
+  "schemaVersion": 2,
+  "signalCatalogVersion": "rag-quality-signals-v2",
+  "profileId": "memorag-dev-rag-quality",
+  "version": "2026-07-16.draft-1",
+  "approvedBy": "",
+  "approvedAt": "",
+  "workloadProfileVersion": "__RAG_WORKLOAD_PROFILE_VERSION__",
+  "runtimeProfileVersion": "__RAG_RUNTIME_PROFILE_VERSION__",
+  "priceCatalogVersion": "__RAG_PRICE_CATALOG_VERSION__",
+  "evidenceVersions": {
+    "dataset": "__RAG_DATASET_VERSION__",
+    "model": "amazon.nova-lite-v1:0",
+    "index": "__RAG_INDEX_VERSION__",
+    "prompt": "__RAG_PROMPT_VERSION__",
+    "pipeline": "__RAG_PIPELINE_VERSION__",
+    "parser": "__RAG_PARSER_VERSION__",
+    "chunker": "__RAG_CHUNKER_VERSION__"
+  },
+  "workloadDimensions": {
+    "corpusProfileVersion": "__RAG_CORPUS_PROFILE_VERSION__",
+    "aclDistributionVersion": "__RAG_ACL_DISTRIBUTION_VERSION__",
+    "concurrency": 4,
+    "documentSizeProfileVersion": "__RAG_DOCUMENT_SIZE_PROFILE_VERSION__",
+    "dependencyLatencyProfileVersion": "__RAG_DEPENDENCY_LATENCY_PROFILE_VERSION__"
+  },
+  "requiredCaseSlices": {
+    "questionTypes": [
+      "direct_fact",
+      "multi_statement_synthesis",
+      "comparison"
+    ],
+    "tenantRoles": [
+      "chat_user",
+      "answer_editor",
+      "system_admin"
+    ],
+    "ocrModes": [
+      "native",
+      "ocr"
+    ],
+    "languages": [
+      "ja",
+      "en"
+    ],
+    "multiEvidence": [
+      "true",
+      "false"
+    ],
+    "answerability": [
+      "answerable",
+      "unanswerable"
+    ],
+    "severities": [
+      "critical",
+      "high",
+      "medium"
+    ]
+  },
+  "changeControl": {
+    "purpose": "neutral"
+  },
+  "requiredSlices": {
+    "ingest.extraction_coverage": [
+      "overall"
+    ],
+    "ingest.parser_ocr_accuracy": [
+      "overall"
+    ],
+    "ingest.silent_truncation_count": [
+      "overall"
+    ],
+    "ingest.locator_validity": [
+      "overall"
+    ],
+    "ingest.chunk_structure_quality": [
+      "overall"
+    ],
+    "ingest.manifest_integrity": [
+      "overall"
+    ],
+    "ingest.admission_correctness": [
+      "overall"
+    ],
+    "retrieval.authorized_recall_at_k": [
+      "overall"
+    ],
+    "retrieval.false_denial_rate": [
+      "overall"
+    ],
+    "evidence.retention_rate": [
+      "overall"
+    ],
+    "generation.faithfulness": [
+      "overall"
+    ],
+    "generation.unsupported_claim_rate": [
+      "overall"
+    ],
+    "generation.critical_unsupported_claim_count": [
+      "overall"
+    ],
+    "citation.precision": [
+      "overall"
+    ],
+    "citation.completeness": [
+      "overall"
+    ],
+    "citation.locator_validity": [
+      "overall"
+    ],
+    "citation.required_claim_miss_count": [
+      "overall"
+    ],
+    "answerability.false_answer_rate": [
+      "overall"
+    ],
+    "answerability.false_refusal_rate": [
+      "overall"
+    ],
+    "task.completion_rate": [
+      "overall"
+    ],
+    "task.outcome_accuracy": [
+      "overall"
+    ],
+    "task.critical_failure_count": [
+      "overall"
+    ],
+    "evaluation.slice_case_count": [
+      "overall",
+      "question_type=direct_fact",
+      "question_type=multi_statement_synthesis",
+      "question_type=comparison",
+      "tenant_role=chat_user",
+      "tenant_role=answer_editor",
+      "tenant_role=system_admin",
+      "ocr_mode=native",
+      "ocr_mode=ocr",
+      "language=ja",
+      "language=en",
+      "multi_evidence=true",
+      "multi_evidence=false",
+      "answerability=answerable",
+      "answerability=unanswerable",
+      "severity=critical",
+      "severity=high",
+      "severity=medium"
+    ],
+    "security.unauthorized_exposure_count": [
+      "overall"
+    ],
+    "security.injection_success_count": [
+      "overall"
+    ],
+    "security.secret_exposure_count": [
+      "overall"
+    ],
+    "security.eligibility_matrix_coverage": [
+      "overall"
+    ],
+    "security.eligibility_unreconciled_resource_count": [
+      "overall"
+    ],
+    "security.eligibility_propagation_p50_ms": [
+      "overall"
+    ],
+    "security.eligibility_propagation_p95_ms": [
+      "overall"
+    ],
+    "security.eligibility_propagation_p99_ms": [
+      "overall"
+    ],
+    "security.eligibility_propagation_max_ms": [
+      "overall"
+    ],
+    "performance.chat_p50_ms": [
+      "overall",
+      "stage=chat"
+    ],
+    "performance.chat_p95_ms": [
+      "overall",
+      "stage=chat"
+    ],
+    "performance.chat_p99_ms": [
+      "overall",
+      "stage=chat"
+    ],
+    "performance.search_p50_ms": [
+      "overall",
+      "stage=search"
+    ],
+    "performance.search_p95_ms": [
+      "overall",
+      "stage=search"
+    ],
+    "performance.search_p99_ms": [
+      "overall",
+      "stage=search"
+    ],
+    "performance.ingest_p50_ms": [
+      "overall",
+      "stage=ingest"
+    ],
+    "performance.ingest_p95_ms": [
+      "overall",
+      "stage=ingest"
+    ],
+    "performance.ingest_p99_ms": [
+      "overall",
+      "stage=ingest"
+    ],
+    "reliability.success_rate": [
+      "overall",
+      "endpoint=chat|stage=chat",
+      "endpoint=search|stage=search",
+      "endpoint=ingest|stage=ingest"
+    ],
+    "reliability.timeout_rate": [
+      "overall",
+      "endpoint=chat|stage=chat",
+      "endpoint=search|stage=search",
+      "endpoint=ingest|stage=ingest"
+    ],
+    "reliability.error_rate": [
+      "overall",
+      "endpoint=chat|stage=chat",
+      "endpoint=search|stage=search",
+      "endpoint=ingest|stage=ingest"
+    ],
+    "reliability.backlog_age_p99_ms": [
+      "overall",
+      "endpoint=chat|stage=chat",
+      "endpoint=search|stage=search",
+      "endpoint=ingest|stage=ingest"
+    ],
+    "reliability.retry_exhaustion_count": [
+      "overall",
+      "endpoint=chat|stage=chat",
+      "endpoint=search|stage=search",
+      "endpoint=ingest|stage=ingest"
+    ],
+    "reliability.mttr_ms": [
+      "overall",
+      "dependency=vector",
+      "dependency=llm",
+      "dependency=ocr",
+      "dependency=queue"
+    ],
+    "reliability.recovery_without_loss_rate": [
+      "overall",
+      "dependency=vector",
+      "dependency=llm",
+      "dependency=ocr",
+      "dependency=queue"
+    ],
+    "reliability.recovery_loss_count": [
+      "overall",
+      "dependency=vector",
+      "dependency=llm",
+      "dependency=ocr",
+      "dependency=queue"
+    ],
+    "reliability.recovery_scenario_coverage": [
+      "overall",
+      "dependency=vector",
+      "dependency=llm",
+      "dependency=ocr",
+      "dependency=queue"
+    ],
+    "cost.chat_per_request": [
+      "overall"
+    ],
+    "cost.search_per_request": [
+      "overall"
+    ],
+    "cost.ingest_per_document": [
+      "overall"
+    ],
+    "release.dataset_specific_branch_count": [
+      "overall"
+    ],
+    "release.artifact_manifest_mismatch_count": [
+      "overall"
+    ]
+  },
+  "gates": [
+    {
+      "signalId": "ingest.extraction_coverage",
+      "slice": "overall",
+      "comparator": "gte",
+      "threshold": 0.98,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95
+    },
+    {
+      "signalId": "ingest.parser_ocr_accuracy",
+      "slice": "overall",
+      "comparator": "gte",
+      "threshold": 0.9,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95
+    },
+    {
+      "signalId": "ingest.silent_truncation_count",
+      "slice": "overall",
+      "comparator": "eq",
+      "threshold": 0,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 1
+    },
+    {
+      "signalId": "ingest.locator_validity",
+      "slice": "overall",
+      "comparator": "gte",
+      "threshold": 0.99,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95
+    },
+    {
+      "signalId": "ingest.chunk_structure_quality",
+      "slice": "overall",
+      "comparator": "gte",
+      "threshold": 0.95,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95
+    },
+    {
+      "signalId": "ingest.manifest_integrity",
+      "slice": "overall",
+      "comparator": "gte",
+      "threshold": 1,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95
+    },
+    {
+      "signalId": "ingest.admission_correctness",
+      "slice": "overall",
+      "comparator": "gte",
+      "threshold": 1,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95
+    },
+    {
+      "signalId": "retrieval.authorized_recall_at_k",
+      "slice": "overall",
+      "comparator": "gte",
+      "threshold": 0.7,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95,
+      "maximumRegression": 0.05
+    },
+    {
+      "signalId": "retrieval.false_denial_rate",
+      "slice": "overall",
+      "comparator": "lte",
+      "threshold": 0.05,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95,
+      "maximumRegression": 0.01
+    },
+    {
+      "signalId": "evidence.retention_rate",
+      "slice": "overall",
+      "comparator": "gte",
+      "threshold": 0.95,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95,
+      "maximumRegression": 0.03
+    },
+    {
+      "signalId": "generation.faithfulness",
+      "slice": "overall",
+      "comparator": "gte",
+      "threshold": 0.9,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95,
+      "maximumRegression": 0.03
+    },
+    {
+      "signalId": "generation.unsupported_claim_rate",
+      "slice": "overall",
+      "comparator": "lte",
+      "threshold": 0.05,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95,
+      "maximumRegression": 0.01
+    },
+    {
+      "signalId": "generation.critical_unsupported_claim_count",
+      "slice": "overall",
+      "comparator": "eq",
+      "threshold": 0,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 1
+    },
+    {
+      "signalId": "citation.precision",
+      "slice": "overall",
+      "comparator": "gte",
+      "threshold": 0.95,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95,
+      "maximumRegression": 0.03
+    },
+    {
+      "signalId": "citation.completeness",
+      "slice": "overall",
+      "comparator": "gte",
+      "threshold": 0.95,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95,
+      "maximumRegression": 0.03
+    },
+    {
+      "signalId": "citation.locator_validity",
+      "slice": "overall",
+      "comparator": "gte",
+      "threshold": 0.99,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95,
+      "maximumRegression": 0.01
+    },
+    {
+      "signalId": "citation.required_claim_miss_count",
+      "slice": "overall",
+      "comparator": "eq",
+      "threshold": 0,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 1
+    },
+    {
+      "signalId": "answerability.false_answer_rate",
+      "slice": "overall",
+      "comparator": "lte",
+      "threshold": 0.05,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95,
+      "maximumRegression": 0.01
+    },
+    {
+      "signalId": "answerability.false_refusal_rate",
+      "slice": "overall",
+      "comparator": "lte",
+      "threshold": 0.1,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95,
+      "maximumRegression": 0.03
+    },
+    {
+      "signalId": "task.completion_rate",
+      "slice": "overall",
+      "comparator": "gte",
+      "threshold": 0.85,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95,
+      "maximumRegression": 0.05
+    },
+    {
+      "signalId": "task.outcome_accuracy",
+      "slice": "overall",
+      "comparator": "gte",
+      "threshold": 0.9,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95,
+      "maximumRegression": 0.05
+    },
+    {
+      "signalId": "task.critical_failure_count",
+      "slice": "overall",
+      "comparator": "eq",
+      "threshold": 0,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 1
+    },
+    {
+      "signalId": "evaluation.slice_case_count",
+      "slice": "overall",
+      "comparator": "gte",
+      "threshold": 100,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 1,
+      "minimumConfidence": 1
+    },
+    {
+      "signalId": "evaluation.slice_case_count",
+      "slice": "question_type=direct_fact",
+      "comparator": "gte",
+      "threshold": 20,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 1,
+      "minimumConfidence": 1
+    },
+    {
+      "signalId": "evaluation.slice_case_count",
+      "slice": "question_type=multi_statement_synthesis",
+      "comparator": "gte",
+      "threshold": 20,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 1,
+      "minimumConfidence": 1
+    },
+    {
+      "signalId": "evaluation.slice_case_count",
+      "slice": "question_type=comparison",
+      "comparator": "gte",
+      "threshold": 20,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 1,
+      "minimumConfidence": 1
+    },
+    {
+      "signalId": "evaluation.slice_case_count",
+      "slice": "tenant_role=chat_user",
+      "comparator": "gte",
+      "threshold": 20,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 1,
+      "minimumConfidence": 1
+    },
+    {
+      "signalId": "evaluation.slice_case_count",
+      "slice": "tenant_role=answer_editor",
+      "comparator": "gte",
+      "threshold": 20,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 1,
+      "minimumConfidence": 1
+    },
+    {
+      "signalId": "evaluation.slice_case_count",
+      "slice": "tenant_role=system_admin",
+      "comparator": "gte",
+      "threshold": 20,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 1,
+      "minimumConfidence": 1
+    },
+    {
+      "signalId": "evaluation.slice_case_count",
+      "slice": "ocr_mode=native",
+      "comparator": "gte",
+      "threshold": 20,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 1,
+      "minimumConfidence": 1
+    },
+    {
+      "signalId": "evaluation.slice_case_count",
+      "slice": "ocr_mode=ocr",
+      "comparator": "gte",
+      "threshold": 20,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 1,
+      "minimumConfidence": 1
+    },
+    {
+      "signalId": "evaluation.slice_case_count",
+      "slice": "language=ja",
+      "comparator": "gte",
+      "threshold": 20,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 1,
+      "minimumConfidence": 1
+    },
+    {
+      "signalId": "evaluation.slice_case_count",
+      "slice": "language=en",
+      "comparator": "gte",
+      "threshold": 20,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 1,
+      "minimumConfidence": 1
+    },
+    {
+      "signalId": "evaluation.slice_case_count",
+      "slice": "multi_evidence=true",
+      "comparator": "gte",
+      "threshold": 20,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 1,
+      "minimumConfidence": 1
+    },
+    {
+      "signalId": "evaluation.slice_case_count",
+      "slice": "multi_evidence=false",
+      "comparator": "gte",
+      "threshold": 20,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 1,
+      "minimumConfidence": 1
+    },
+    {
+      "signalId": "evaluation.slice_case_count",
+      "slice": "answerability=answerable",
+      "comparator": "gte",
+      "threshold": 20,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 1,
+      "minimumConfidence": 1
+    },
+    {
+      "signalId": "evaluation.slice_case_count",
+      "slice": "answerability=unanswerable",
+      "comparator": "gte",
+      "threshold": 20,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 1,
+      "minimumConfidence": 1
+    },
+    {
+      "signalId": "evaluation.slice_case_count",
+      "slice": "severity=critical",
+      "comparator": "gte",
+      "threshold": 20,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 1,
+      "minimumConfidence": 1
+    },
+    {
+      "signalId": "evaluation.slice_case_count",
+      "slice": "severity=high",
+      "comparator": "gte",
+      "threshold": 20,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 1,
+      "minimumConfidence": 1
+    },
+    {
+      "signalId": "evaluation.slice_case_count",
+      "slice": "severity=medium",
+      "comparator": "gte",
+      "threshold": 20,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 1,
+      "minimumConfidence": 1
+    },
+    {
+      "signalId": "security.unauthorized_exposure_count",
+      "slice": "overall",
+      "comparator": "eq",
+      "threshold": 0,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 1
+    },
+    {
+      "signalId": "security.injection_success_count",
+      "slice": "overall",
+      "comparator": "eq",
+      "threshold": 0,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 1
+    },
+    {
+      "signalId": "security.secret_exposure_count",
+      "slice": "overall",
+      "comparator": "eq",
+      "threshold": 0,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 1
+    },
+    {
+      "signalId": "security.eligibility_matrix_coverage",
+      "slice": "overall",
+      "comparator": "gte",
+      "threshold": 1,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95
+    },
+    {
+      "signalId": "security.eligibility_unreconciled_resource_count",
+      "slice": "overall",
+      "comparator": "eq",
+      "threshold": 0,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 1
+    },
+    {
+      "signalId": "security.eligibility_propagation_p50_ms",
+      "slice": "overall",
+      "comparator": "lte",
+      "threshold": 5000,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95
+    },
+    {
+      "signalId": "security.eligibility_propagation_p95_ms",
+      "slice": "overall",
+      "comparator": "lte",
+      "threshold": 30000,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95
+    },
+    {
+      "signalId": "security.eligibility_propagation_p99_ms",
+      "slice": "overall",
+      "comparator": "lte",
+      "threshold": 60000,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95
+    },
+    {
+      "signalId": "security.eligibility_propagation_max_ms",
+      "slice": "overall",
+      "comparator": "lte",
+      "threshold": 120000,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95
+    },
+    {
+      "signalId": "performance.chat_p50_ms",
+      "slice": "overall",
+      "comparator": "lte",
+      "threshold": 10000,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95
+    },
+    {
+      "signalId": "performance.chat_p50_ms",
+      "slice": "stage=chat",
+      "comparator": "lte",
+      "threshold": 10000,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95
+    },
+    {
+      "signalId": "performance.chat_p95_ms",
+      "slice": "overall",
+      "comparator": "lte",
+      "threshold": 30000,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95,
+      "maximumRegression": 5000
+    },
+    {
+      "signalId": "performance.chat_p95_ms",
+      "slice": "stage=chat",
+      "comparator": "lte",
+      "threshold": 30000,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95,
+      "maximumRegression": 5000
+    },
+    {
+      "signalId": "performance.chat_p99_ms",
+      "slice": "overall",
+      "comparator": "lte",
+      "threshold": 60000,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95
+    },
+    {
+      "signalId": "performance.chat_p99_ms",
+      "slice": "stage=chat",
+      "comparator": "lte",
+      "threshold": 60000,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95
+    },
+    {
+      "signalId": "performance.search_p50_ms",
+      "slice": "overall",
+      "comparator": "lte",
+      "threshold": 2000,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95
+    },
+    {
+      "signalId": "performance.search_p50_ms",
+      "slice": "stage=search",
+      "comparator": "lte",
+      "threshold": 2000,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95
+    },
+    {
+      "signalId": "performance.search_p95_ms",
+      "slice": "overall",
+      "comparator": "lte",
+      "threshold": 5000,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95,
+      "maximumRegression": 1000
+    },
+    {
+      "signalId": "performance.search_p95_ms",
+      "slice": "stage=search",
+      "comparator": "lte",
+      "threshold": 5000,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95,
+      "maximumRegression": 1000
+    },
+    {
+      "signalId": "performance.search_p99_ms",
+      "slice": "overall",
+      "comparator": "lte",
+      "threshold": 10000,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95
+    },
+    {
+      "signalId": "performance.search_p99_ms",
+      "slice": "stage=search",
+      "comparator": "lte",
+      "threshold": 10000,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95
+    },
+    {
+      "signalId": "performance.ingest_p50_ms",
+      "slice": "overall",
+      "comparator": "lte",
+      "threshold": 60000,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95
+    },
+    {
+      "signalId": "performance.ingest_p50_ms",
+      "slice": "stage=ingest",
+      "comparator": "lte",
+      "threshold": 60000,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95
+    },
+    {
+      "signalId": "performance.ingest_p95_ms",
+      "slice": "overall",
+      "comparator": "lte",
+      "threshold": 300000,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95,
+      "maximumRegression": 60000
+    },
+    {
+      "signalId": "performance.ingest_p95_ms",
+      "slice": "stage=ingest",
+      "comparator": "lte",
+      "threshold": 300000,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95,
+      "maximumRegression": 60000
+    },
+    {
+      "signalId": "performance.ingest_p99_ms",
+      "slice": "overall",
+      "comparator": "lte",
+      "threshold": 600000,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95
+    },
+    {
+      "signalId": "performance.ingest_p99_ms",
+      "slice": "stage=ingest",
+      "comparator": "lte",
+      "threshold": 600000,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95
+    },
+    {
+      "signalId": "reliability.success_rate",
+      "slice": "overall",
+      "comparator": "gte",
+      "threshold": 0.95,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95,
+      "maximumRegression": 0.01
+    },
+    {
+      "signalId": "reliability.success_rate",
+      "slice": "endpoint=chat|stage=chat",
+      "comparator": "gte",
+      "threshold": 0.95,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95,
+      "maximumRegression": 0.01
+    },
+    {
+      "signalId": "reliability.success_rate",
+      "slice": "endpoint=search|stage=search",
+      "comparator": "gte",
+      "threshold": 0.95,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95,
+      "maximumRegression": 0.01
+    },
+    {
+      "signalId": "reliability.success_rate",
+      "slice": "endpoint=ingest|stage=ingest",
+      "comparator": "gte",
+      "threshold": 0.95,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95,
+      "maximumRegression": 0.01
+    },
+    {
+      "signalId": "reliability.timeout_rate",
+      "slice": "overall",
+      "comparator": "lte",
+      "threshold": 0.02,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95,
+      "maximumRegression": 0.01
+    },
+    {
+      "signalId": "reliability.timeout_rate",
+      "slice": "endpoint=chat|stage=chat",
+      "comparator": "lte",
+      "threshold": 0.02,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95,
+      "maximumRegression": 0.01
+    },
+    {
+      "signalId": "reliability.timeout_rate",
+      "slice": "endpoint=search|stage=search",
+      "comparator": "lte",
+      "threshold": 0.02,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95,
+      "maximumRegression": 0.01
+    },
+    {
+      "signalId": "reliability.timeout_rate",
+      "slice": "endpoint=ingest|stage=ingest",
+      "comparator": "lte",
+      "threshold": 0.02,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95,
+      "maximumRegression": 0.01
+    },
+    {
+      "signalId": "reliability.error_rate",
+      "slice": "overall",
+      "comparator": "lte",
+      "threshold": 0.05,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95,
+      "maximumRegression": 0.01
+    },
+    {
+      "signalId": "reliability.error_rate",
+      "slice": "endpoint=chat|stage=chat",
+      "comparator": "lte",
+      "threshold": 0.05,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95,
+      "maximumRegression": 0.01
+    },
+    {
+      "signalId": "reliability.error_rate",
+      "slice": "endpoint=search|stage=search",
+      "comparator": "lte",
+      "threshold": 0.05,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95,
+      "maximumRegression": 0.01
+    },
+    {
+      "signalId": "reliability.error_rate",
+      "slice": "endpoint=ingest|stage=ingest",
+      "comparator": "lte",
+      "threshold": 0.05,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95,
+      "maximumRegression": 0.01
+    },
+    {
+      "signalId": "reliability.backlog_age_p99_ms",
+      "slice": "overall",
+      "comparator": "lte",
+      "threshold": 300000,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95
+    },
+    {
+      "signalId": "reliability.backlog_age_p99_ms",
+      "slice": "endpoint=chat|stage=chat",
+      "comparator": "lte",
+      "threshold": 300000,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95
+    },
+    {
+      "signalId": "reliability.backlog_age_p99_ms",
+      "slice": "endpoint=search|stage=search",
+      "comparator": "lte",
+      "threshold": 300000,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95
+    },
+    {
+      "signalId": "reliability.backlog_age_p99_ms",
+      "slice": "endpoint=ingest|stage=ingest",
+      "comparator": "lte",
+      "threshold": 300000,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95
+    },
+    {
+      "signalId": "reliability.retry_exhaustion_count",
+      "slice": "overall",
+      "comparator": "lte",
+      "threshold": 0,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95
+    },
+    {
+      "signalId": "reliability.retry_exhaustion_count",
+      "slice": "endpoint=chat|stage=chat",
+      "comparator": "lte",
+      "threshold": 0,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95
+    },
+    {
+      "signalId": "reliability.retry_exhaustion_count",
+      "slice": "endpoint=search|stage=search",
+      "comparator": "lte",
+      "threshold": 0,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95
+    },
+    {
+      "signalId": "reliability.retry_exhaustion_count",
+      "slice": "endpoint=ingest|stage=ingest",
+      "comparator": "lte",
+      "threshold": 0,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95
+    },
+    {
+      "signalId": "reliability.mttr_ms",
+      "slice": "overall",
+      "comparator": "lte",
+      "threshold": 1800000,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 4,
+      "minimumConfidence": 0.95
+    },
+    {
+      "signalId": "reliability.mttr_ms",
+      "slice": "dependency=vector",
+      "comparator": "lte",
+      "threshold": 1800000,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 4,
+      "minimumConfidence": 0.95
+    },
+    {
+      "signalId": "reliability.mttr_ms",
+      "slice": "dependency=llm",
+      "comparator": "lte",
+      "threshold": 1800000,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 4,
+      "minimumConfidence": 0.95
+    },
+    {
+      "signalId": "reliability.mttr_ms",
+      "slice": "dependency=ocr",
+      "comparator": "lte",
+      "threshold": 1800000,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 4,
+      "minimumConfidence": 0.95
+    },
+    {
+      "signalId": "reliability.mttr_ms",
+      "slice": "dependency=queue",
+      "comparator": "lte",
+      "threshold": 1800000,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 4,
+      "minimumConfidence": 0.95
+    },
+    {
+      "signalId": "reliability.recovery_without_loss_rate",
+      "slice": "overall",
+      "comparator": "gte",
+      "threshold": 1,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 4,
+      "minimumConfidence": 0.95
+    },
+    {
+      "signalId": "reliability.recovery_without_loss_rate",
+      "slice": "dependency=vector",
+      "comparator": "gte",
+      "threshold": 1,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 4,
+      "minimumConfidence": 0.95
+    },
+    {
+      "signalId": "reliability.recovery_without_loss_rate",
+      "slice": "dependency=llm",
+      "comparator": "gte",
+      "threshold": 1,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 4,
+      "minimumConfidence": 0.95
+    },
+    {
+      "signalId": "reliability.recovery_without_loss_rate",
+      "slice": "dependency=ocr",
+      "comparator": "gte",
+      "threshold": 1,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 4,
+      "minimumConfidence": 0.95
+    },
+    {
+      "signalId": "reliability.recovery_without_loss_rate",
+      "slice": "dependency=queue",
+      "comparator": "gte",
+      "threshold": 1,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 4,
+      "minimumConfidence": 0.95
+    },
+    {
+      "signalId": "reliability.recovery_loss_count",
+      "slice": "overall",
+      "comparator": "eq",
+      "threshold": 0,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 4,
+      "minimumConfidence": 1
+    },
+    {
+      "signalId": "reliability.recovery_loss_count",
+      "slice": "dependency=vector",
+      "comparator": "eq",
+      "threshold": 0,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 4,
+      "minimumConfidence": 1
+    },
+    {
+      "signalId": "reliability.recovery_loss_count",
+      "slice": "dependency=llm",
+      "comparator": "eq",
+      "threshold": 0,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 4,
+      "minimumConfidence": 1
+    },
+    {
+      "signalId": "reliability.recovery_loss_count",
+      "slice": "dependency=ocr",
+      "comparator": "eq",
+      "threshold": 0,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 4,
+      "minimumConfidence": 1
+    },
+    {
+      "signalId": "reliability.recovery_loss_count",
+      "slice": "dependency=queue",
+      "comparator": "eq",
+      "threshold": 0,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 4,
+      "minimumConfidence": 1
+    },
+    {
+      "signalId": "reliability.recovery_scenario_coverage",
+      "slice": "overall",
+      "comparator": "gte",
+      "threshold": 1,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 4,
+      "minimumConfidence": 0.95
+    },
+    {
+      "signalId": "reliability.recovery_scenario_coverage",
+      "slice": "dependency=vector",
+      "comparator": "gte",
+      "threshold": 1,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 4,
+      "minimumConfidence": 0.95
+    },
+    {
+      "signalId": "reliability.recovery_scenario_coverage",
+      "slice": "dependency=llm",
+      "comparator": "gte",
+      "threshold": 1,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 4,
+      "minimumConfidence": 0.95
+    },
+    {
+      "signalId": "reliability.recovery_scenario_coverage",
+      "slice": "dependency=ocr",
+      "comparator": "gte",
+      "threshold": 1,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 4,
+      "minimumConfidence": 0.95
+    },
+    {
+      "signalId": "reliability.recovery_scenario_coverage",
+      "slice": "dependency=queue",
+      "comparator": "gte",
+      "threshold": 1,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 4,
+      "minimumConfidence": 0.95
+    },
+    {
+      "signalId": "cost.chat_per_request",
+      "slice": "overall",
+      "comparator": "lte",
+      "threshold": 0.02,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95,
+      "maximumRegression": 0.002
+    },
+    {
+      "signalId": "cost.search_per_request",
+      "slice": "overall",
+      "comparator": "lte",
+      "threshold": 0.005,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95,
+      "maximumRegression": 0.001
+    },
+    {
+      "signalId": "cost.ingest_per_document",
+      "slice": "overall",
+      "comparator": "lte",
+      "threshold": 0.1,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 100,
+      "minimumConfidence": 0.95,
+      "maximumRegression": 0.02
+    },
+    {
+      "signalId": "release.dataset_specific_branch_count",
+      "slice": "overall",
+      "comparator": "eq",
+      "threshold": 0,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 1,
+      "minimumConfidence": 1
+    },
+    {
+      "signalId": "release.artifact_manifest_mismatch_count",
+      "slice": "overall",
+      "comparator": "eq",
+      "threshold": 0,
+      "thresholdApprovedBy": "",
+      "thresholdApprovedAt": "",
+      "minimumSampleCount": 1,
+      "minimumConfidence": 1
+    }
+  ],
+  "responsePolicy": {
+    "owner": "memorag-dev-on-call",
+    "runbookVersion": "OPS_MONITORING_001@2026-07-14",
+    "allowedActions": [
+      "promotion_freeze",
+      "candidate_quarantine",
+      "limited_answer",
+      "refuse_answer"
+    ]
+  }
+}
