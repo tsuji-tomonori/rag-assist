@@ -1,6 +1,6 @@
 # 管理 UI governance を latest main の CI gate へ収束する
 
-状態: do
+状態: done
 
 タスク種別: CI 修復 / stacked PR 収束
 
@@ -17,12 +17,12 @@ PR #355 の旧 CI run `29378658521` は Web trace/inventory の task path 不整
 
 ## 受け入れ条件
 
-- [x] latest `origin/main` を競合解消して統合する。PR base の `main` 変更は push 後に実施する。
+- [x] latest `origin/main` を競合解消して統合し、PR base を `main` に変更する。
 - [x] traceability source から lifecycle 完了 task を除外し、generated Web inventory と check が同期する。
 - [x] Web full coverage が全 test 成功かつ branch 85%以上になる。
 - [x] API full coverage、lint、typecheck、build、docs check、変更範囲の Chromium E2E/visual が成功する。
 - [x] admin route permission、tenant/actor/CAS/audit、RAG 根拠性、no-mock、benchmark/dataset 固有分岐なしを再確認する。
-- [ ] PR 本文・受け入れコメント・セルフレビュー・CI 証跡を更新し、task を done 化する。
+- [x] PR 本文・受け入れコメント・セルフレビュー・CI 証跡を更新し、task を done 化する。
 
 ## ドキュメントメンテナンス計画
 
@@ -39,3 +39,10 @@ PR #355 の旧 CI run `29378658521` は Web trace/inventory の task path 不整
 - admin の未提供・permission/failed・zero・空・実データ・filter/pagination と section 正規化を追加 test で網羅し、Web branch coverage を 82.84% から 85.15% へ回復した。
 - 管理 visual の初回差分は、権限付き「用語展開」タブを旧 baseline が欠いていたことを目視確認した。baseline 1枚を更新し、更新なし再実行で Chromium 16/16 が成功した。
 - 検証詳細は `reports/working/20260715-2108-admin-governance-ci-convergence.md` に記録した。
+
+## PR・CI 証跡
+
+- latest main 後セルフレビュー: https://github.com/tsuji-tomonori/rag-assist/pull/355#issuecomment-4980402919
+- 受け入れ条件コメント: https://github.com/tsuji-tomonori/rag-assist/pull/355#issuecomment-4980480791
+- MemoRAG CI: run `29414214896` success（7分42秒）
+- Explicit RAG candidate promotion gate: 条件非該当のため skipped
