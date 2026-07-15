@@ -158,7 +158,7 @@
         "apps/web/src/features/questions/hooks/useQuestions.ts"
       ],
       "gapTasks": [
-        "tasks/todo/20260713-2304-responsive-chat-ui-verification.md",
+        "tasks/do/20260713-2304-responsive-chat-ui-verification.md",
         "tasks/todo/20260714-issue-345-cross-screen-a11y-responsive.md",
         "tasks/todo/20260714-issue-345-manual-a11y-evidence.md"
       ]

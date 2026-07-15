@@ -35,7 +35,7 @@
 - 要件・AC: `FR-003` (`AC-FR003-002`, `AC-FR003-003`, `AC-FR003-004`) / `FR-004` (`AC-FR004-002`, `AC-FR004-003`) / `FR-005` (`AC-FR005-002`, `AC-FR005-003`) / `FR-021` (`AC-FR021-006`, `AC-FR021-007`) / `FR-029` (`AC-FR029-001`) / `FR-042` (`AC-FR042-001`, `AC-FR042-004`) / `FR-043` (`AC-FR043-001`, `AC-FR043-003`, `AC-FR043-004`) / `FR-094` (`AC-FR094-002`, `AC-FR094-004`) / `FR-095` (`AC-FR095-001`, `AC-FR095-003`, `AC-FR095-004`) / `FR-096` (`AC-FR096-003`, `AC-FR096-004`)
 - verification: `E2E-VIEW-CHAT-001` (implemented)
 - 実装状態: `implemented`
-- 未完了 task: `tasks/todo/20260713-2304-responsive-chat-ui-verification.md`, `tasks/todo/20260714-issue-345-cross-screen-a11y-responsive.md`, `tasks/todo/20260714-issue-345-manual-a11y-evidence.md`
+- 未完了 task: `tasks/do/20260713-2304-responsive-chat-ui-verification.md`, `tasks/todo/20260714-issue-345-cross-screen-a11y-responsive.md`, `tasks/todo/20260714-issue-345-manual-a11y-evidence.md`
 - 画面の意味: チャット。利用者が質問し、RAG 回答、引用、確認質問、担当者への問い合わせ導線を確認します。
 - 主要操作: 自分で入力、質問入力、質問、ファイルをアップロード、資料を添付、モデル / Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku、モデルを選択、対象文書を解除、質問を送信、解決した ほか 20 件
 

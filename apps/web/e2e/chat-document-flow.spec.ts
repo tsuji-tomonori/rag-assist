@@ -1,4 +1,4 @@
-import { expect, type Page, test } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
 test.beforeEach(async ({ page }) => {
   page.on('dialog', async (dialog) => dialog.accept())
@@ -9,20 +9,8 @@ test.beforeEach(async ({ page }) => {
   await expect(page.locator('section[aria-label="チャット"]')).toBeVisible()
 })
 
-async function deleteDocumentByName(page: Page, filename: string) {
-  await page.getByTitle('ドキュメント').click()
-  await expect(page.getByLabel('ドキュメント管理')).toBeVisible()
-  await page.getByTitle(`${filename}を削除`).click()
-  const dialog = page.getByRole('dialog', { name: '文書を削除しますか' })
-  await dialog.getByRole('textbox', { name: '削除理由' }).fill('E2E cleanup')
-  await dialog.getByRole('button', { name: '削除', exact: true }).click()
-  await expect(page.getByTitle(`${filename}を削除`)).toHaveCount(0)
-  await page.getByTitle('チャット').click()
-  await expect(page.locator('section[aria-label="チャット"]')).toBeVisible()
-}
-
 test('根拠不足質問で no-answer メッセージになる', async ({ page }) => {
-  await page.getByLabel('質問').fill('この会社の創業者の誕生日は？')
+  await page.getByRole('textbox', { name: '質問', exact: true }).fill('この会社の創業者の誕生日は？')
   await page.getByRole('button', { name: '送信' }).click()
   await expect(page.getByText('資料からは回答できません。')).toBeVisible()
 })
@@ -73,24 +61,24 @@ test('質問送信で回答と citations が表示される @smoke', async ({ pa
   await expect(page.getByText('参照元', { exact: true })).toBeVisible()
 })
 
-test('資料削除で再質問時の挙動が変わる', async ({ page }) => {
-  const filename = `e2e-delete-${Date.now()}.txt`
-
+test('新しい会話では以前の一時添付を検索対象にしない', async ({ page }) => {
+  const filename = `e2e-temporary-${Date.now()}.txt`
   await page.locator('input[type="file"]').setInputFiles({
     name: filename,
     mimeType: 'text/plain',
-    buffer: Buffer.from('削除検証用。秘密の語句はALPHA-DELTAです。', 'utf-8')
+    buffer: Buffer.from('一時添付の検証用。秘密の語句はALPHA-DELTAです。', 'utf-8')
   })
   await page.getByRole('button', { name: '送信' }).click()
   await expect(page.getByText('資料を取り込みました。知りたいことを入力してください。')).toBeVisible()
 
-  await page.getByLabel('質問').fill('秘密の語句は何ですか？')
+  await page.getByRole('textbox', { name: '質問', exact: true }).fill('秘密の語句は何ですか？')
   await page.getByRole('button', { name: '送信' }).click()
   await expect(page.getByText(/ALPHA-DELTA|資料では次のように記載されています。/)).toBeVisible()
 
-  await deleteDocumentByName(page, filename)
+  await page.getByRole('button', { name: '新しい会話' }).click()
+  await expect(page.getByText(`一時添付: ${filename}`)).toHaveCount(0)
 
-  await page.getByLabel('質問').fill('秘密の語句は何ですか？')
+  await page.getByRole('textbox', { name: '質問', exact: true }).fill('秘密の語句は何ですか？')
   await page.getByRole('button', { name: '送信' }).click()
   await expect(page.getByText('資料からは回答できません。')).toBeVisible()
 })
