@@ -48,4 +48,4 @@ CI 成功後の PR #353 以降を順次確認し、条件を満たした PR を 
 
 - 実 AWS provider usage、実 DynamoDB query、署名付き export storage、approved billing source との live reconciliation は未実施。owner / FinOps の許容差承認と照合成功まで production `active` 化を禁止する。
 - representative screen reader、実ブラウザ 200% / 400% zoom、real-device touch / virtual keyboard、Firefox / WebKit は未実施で、manual evidence task の blocker を維持する。
-- GitHub Actions の最新 head は commit / push 後に確認する。未確認の段階では成功済みと扱わない。
+- GitHub Actions MemoRAG CI run `29426634270` と semver 検証は成功した。明示的 RAG candidate promotion gate は条件非該当で skip。draft 解除後も `CLEAN / MERGEABLE` を確認した。
