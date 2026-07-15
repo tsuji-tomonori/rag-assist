@@ -113,47 +113,33 @@ export type AccessRoleList = {
   asOf: string
 }
 
-export type UserUsageSummary = {
-  userId: string
-  email: string
-  displayName?: string
-  chatMessages?: number
-  conversationCount?: number
-  questionCount?: number
-  documentCount?: number
-  benchmarkRunCount?: number
-  debugRunCount?: number
-  availableMetrics: Array<"chatMessages" | "conversationCount" | "questionCount" | "documentCount" | "benchmarkRunCount" | "debugRunCount">
-  unavailableMetrics: Array<"chatMessages" | "conversationCount" | "questionCount" | "documentCount" | "benchmarkRunCount" | "debugRunCount">
-  lastActivityAt?: string
+export type UsageMeasurementSource = "provider" | "tokenizer_estimate" | "missing"
+export type UsageQuantityUnit = "input_token" | "output_token" | "cache_read_token" | "cache_write_token" | "request"
+export type UsageQuery = { periodStart?: string; periodEnd?: string; subjectId?: string; runId?: string; modelId?: string; feature?: string; provider?: string; limit?: number; cursor?: string }
+export type UsageQuantity = { unit: UsageQuantityUnit; value?: number; source: UsageMeasurementSource }
+export type UsageEvent = {
+  schemaVersion: 1; eventId: string; tenantId: string; subjectId?: string; runId?: string; feature?: string; provider?: string; region?: string; modelId?: string
+  quantities: UsageQuantity[]; status: "succeeded" | "failed"; errorCode?: string; idempotencyKey: string; occurredAt: string; recordedAt: string
 }
-
+export type UsageCompleteness = {
+  eventCount: number; actualQuantityCount: number; estimatedQuantityCount: number; missingQuantityCount: number
+  unknownSubjectCount: number; unknownRunCount: number; unknownModelCount: number; unknownFeatureCount: number; unpricedQuantityCount: number
+  state: "complete" | "partial" | "missing"
+}
+export type UsageBreakdown = { key: string; label: string; actualQuantity: number; estimatedQuantity: number; missingQuantityCount: number; eventCount: number }
+export type UsageSummaryPage = {
+  query: Omit<UsageQuery, "cursor">; events: UsageEvent[]; nextCursor?: string; truncated: boolean; asOf: string; source: "usage_event_store"; rolloutMode: "disabled" | "shadow" | "active"
+  completeness: UsageCompleteness
+  breakdowns: { bySubject: UsageBreakdown[]; byFeature: UsageBreakdown[]; byProvider: UsageBreakdown[]; byModel: UsageBreakdown[] }
+}
 export type CostAuditItem = {
-  service: string
-  category: string
-  usage: number
-  unit: string
-  unitCostUsd: number
-  estimatedCostUsd: number
-  confidence: "actual_usage" | "estimated_usage" | "manual_estimate"
+  eventId: string; subjectId: string; runId: string; feature: string; provider: string; region: string; modelId: string; unit: UsageQuantityUnit
+  quantity?: number; measurementSource: UsageMeasurementSource; pricingState: "actual" | "estimate" | "unpriced"; catalogVersion?: string; priceSource?: string
+  unitCostUsd?: number; costUsd?: number; occurredAt: string
 }
-
-export type UserCostSummary = {
-  userId: string
-  email: string
-  estimatedCostUsd: number
-}
-
 export type CostAuditSummary = {
-  available: boolean
-  unavailableReason?: string
-  periodStart: string
-  periodEnd: string
-  currency?: "USD"
-  totalEstimatedUsd?: number
-  items?: CostAuditItem[]
-  users?: UserCostSummary[]
-  pricingCatalogUpdatedAt?: string
+  query: Omit<UsageQuery, "cursor">; currency: "USD"; pricedCostUsd: number; items: CostAuditItem[]; nextCursor?: string; truncated: boolean
+  asOf: string; source: "usage_event_store+versioned_price_catalog"; rolloutMode: "disabled" | "shadow" | "active"; catalogVersions: string[]; completeness: UsageCompleteness
 }
 
 export type AliasDefinition = {
@@ -224,7 +210,7 @@ export type AdminAuditLogQuery = {
 }
 
 export type AdminExportArtifact = {
-  exportType: "audit_log" | "cost_summary"
+  exportType: "audit_log" | "usage_summary" | "cost_summary"
   url: string
   expiresInSeconds: number
   objectKey: string

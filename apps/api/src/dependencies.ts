@@ -4,6 +4,8 @@ import { LocalObjectStore } from "./adapters/local-object-store.js"
 import type { ObjectStore } from "./adapters/object-store.js"
 import { S3ObjectStore } from "./adapters/s3-object-store.js"
 import type { TextModel } from "./adapters/text-model.js"
+import { DynamoDbUsageEventStore } from "./adapters/dynamodb-usage-event-store.js"
+import { ObjectStoreUsageEventStore, type UsageEventStore } from "./adapters/usage-event-store.js"
 import { LocalVectorStore } from "./adapters/local-vector-store.js"
 import { MockBedrockTextModel } from "./adapters/mock-bedrock.js"
 import { S3VectorsStore } from "./adapters/s3-vectors-store.js"
@@ -69,6 +71,7 @@ import {
   ObjectStoreAdministrativePrincipalTransferFence,
   type AdministrativePrincipalTransferFencePort
 } from "./security/administrative-principal-transfer-fence.js"
+import { parseUsagePricingCatalog, type UsagePricingCatalog } from "./rag/_shared/usage/usage-pricing-catalog.js"
 
 export type Dependencies = {
   objectStore: ObjectStore
@@ -77,6 +80,9 @@ export type Dependencies = {
   memoryVectorStore: VectorStore
   evidenceVectorStore: VectorStore
   textModel: TextModel
+  usageEventStore?: UsageEventStore
+  usageAccountingMode?: "disabled" | "shadow" | "active"
+  usagePricingCatalog?: UsagePricingCatalog
   questionStore: QuestionStore
   conversationHistoryStore: ConversationHistoryStore
   favoriteStore: FavoriteStore
@@ -131,6 +137,10 @@ export function createDependencies(): Dependencies {
     : new S3VectorsStore(config.vectorBucketName, config.evidenceVectorIndexName)
 
   const textModel = config.mockBedrock ? new MockBedrockTextModel() : new BedrockTextModel()
+  const usageEventStore = config.useLocalUsageEventStore
+    ? new ObjectStoreUsageEventStore(objectStore)
+    : new DynamoDbUsageEventStore(config.usageEventsTableName)
+  const usagePricingCatalog = parseUsagePricingCatalog(config.usagePricingCatalogJson)
   const useLegacyLocalStoresForTests = config.nodeEnv === "test" && process.env.MEMORAG_ALLOW_LEGACY_LOCAL_STORE_FOR_TESTS === "true"
   const questionStore = useLegacyLocalStoresForTests ? new LocalQuestionStore(config.localDataDir) : new DynamoDbQuestionStore(config.questionTableName)
   const conversationHistoryStore = useLegacyLocalStoresForTests ? new LocalConversationHistoryStore(config.localDataDir) : new DynamoDbConversationHistoryStore(config.conversationHistoryTableName)
@@ -180,7 +190,7 @@ export function createDependencies(): Dependencies {
     : undefined
   const securityAuditOutbox = new ObjectStoreSecurityMutationAuditOutbox(objectStore)
 
-  cached = { objectStore, benchmarkArtifactStore, memoryVectorStore, evidenceVectorStore, textModel, questionStore, conversationHistoryStore, favoriteStore, benchmarkRunStore, chatRunStore, chatRunEventStore, documentIngestRunStore, documentIngestRunEventStore, documentGroupStore, folderPolicyStore, userGroupStore, groupMembershipStore, codeBuildLogReader, asyncAgentProviders, userDirectory, verifiedIdentityProvider, accountRevocationRegistry, administrativePrincipalTransferFence, resourceUserPrincipalDirectory, securityAuditOutbox, securityAuditReconciliationOutbox: securityAuditOutbox }
+  cached = { objectStore, benchmarkArtifactStore, memoryVectorStore, evidenceVectorStore, textModel, usageEventStore, usageAccountingMode: config.usageAccountingMode, usagePricingCatalog, questionStore, conversationHistoryStore, favoriteStore, benchmarkRunStore, chatRunStore, chatRunEventStore, documentIngestRunStore, documentIngestRunEventStore, documentGroupStore, folderPolicyStore, userGroupStore, groupMembershipStore, codeBuildLogReader, asyncAgentProviders, userDirectory, verifiedIdentityProvider, accountRevocationRegistry, administrativePrincipalTransferFence, resourceUserPrincipalDirectory, securityAuditOutbox, securityAuditReconciliationOutbox: securityAuditOutbox }
   return cached
 }
 

@@ -1243,51 +1243,123 @@ export const PublishAliasesResponseSchema = z.object({
   aliasCount: z.number().int().nonnegative()
 })
 
-export const UserUsageSummarySchema = z.object({
-  userId: z.string(),
-  email: z.string(),
-  displayName: z.string().optional(),
-  chatMessages: z.number().int().nonnegative().optional(),
-  conversationCount: z.number().int().nonnegative().optional(),
-  questionCount: z.number().int().nonnegative().optional(),
-  documentCount: z.number().int().nonnegative().optional(),
-  benchmarkRunCount: z.number().int().nonnegative().optional(),
-  debugRunCount: z.number().int().nonnegative().optional(),
-  availableMetrics: z.array(z.enum(["chatMessages", "conversationCount", "questionCount", "documentCount", "benchmarkRunCount", "debugRunCount"])),
-  unavailableMetrics: z.array(z.enum(["chatMessages", "conversationCount", "questionCount", "documentCount", "benchmarkRunCount", "debugRunCount"])),
-  lastActivityAt: z.string().optional()
+export const UsageQuerySchema = z.object({
+  periodStart: z.string().datetime().optional(),
+  periodEnd: z.string().datetime().optional(),
+  subjectId: z.string().min(1).max(200).optional(),
+  runId: z.string().min(1).max(200).optional(),
+  modelId: z.string().min(1).max(300).optional(),
+  feature: z.string().min(1).max(120).optional(),
+  provider: z.string().min(1).max(120).optional(),
+  limit: z.coerce.number().int().min(1).max(200).optional(),
+  cursor: z.string().min(1).max(4096).optional()
 })
 
+export const UsageQuantitySchema = z.object({
+  unit: z.enum(["input_token", "output_token", "cache_read_token", "cache_write_token", "request"]),
+  value: z.number().int().nonnegative().optional(),
+  source: z.enum(["provider", "tokenizer_estimate", "missing"])
+})
+
+export const UsageEventSchema = z.object({
+  schemaVersion: z.literal(1),
+  eventId: z.string(),
+  tenantId: z.string(),
+  subjectId: z.string().optional(),
+  runId: z.string().optional(),
+  feature: z.string().optional(),
+  provider: z.string().optional(),
+  region: z.string().optional(),
+  modelId: z.string().optional(),
+  quantities: z.array(UsageQuantitySchema),
+  status: z.enum(["succeeded", "failed"]),
+  errorCode: z.string().optional(),
+  idempotencyKey: z.string(),
+  occurredAt: z.string().datetime(),
+  recordedAt: z.string().datetime()
+})
+
+export const UsageCompletenessSchema = z.object({
+  eventCount: z.number().int().nonnegative(),
+  actualQuantityCount: z.number().int().nonnegative(),
+  estimatedQuantityCount: z.number().int().nonnegative(),
+  missingQuantityCount: z.number().int().nonnegative(),
+  unknownSubjectCount: z.number().int().nonnegative(),
+  unknownRunCount: z.number().int().nonnegative(),
+  unknownModelCount: z.number().int().nonnegative(),
+  unknownFeatureCount: z.number().int().nonnegative(),
+  unpricedQuantityCount: z.number().int().nonnegative(),
+  state: z.enum(["complete", "partial", "missing"])
+})
+
+const UsageBreakdownSchema = z.object({
+  key: z.string(),
+  label: z.string(),
+  actualQuantity: z.number().nonnegative(),
+  estimatedQuantity: z.number().nonnegative(),
+  missingQuantityCount: z.number().int().nonnegative(),
+  eventCount: z.number().int().nonnegative()
+})
+
+const NormalizedUsageQuerySchema = UsageQuerySchema.extend({
+  periodStart: z.string().datetime(),
+  periodEnd: z.string().datetime(),
+  limit: z.number().int().min(1).max(200)
+}).omit({ cursor: true })
+
 export const UsageSummaryListResponseSchema = z.object({
-  users: z.array(UserUsageSummarySchema)
+  query: NormalizedUsageQuerySchema,
+  events: z.array(UsageEventSchema),
+  nextCursor: z.string().optional(),
+  truncated: z.boolean(),
+  asOf: z.string().datetime(),
+  source: z.literal("usage_event_store"),
+  rolloutMode: z.enum(["disabled", "shadow", "active"]),
+  completeness: UsageCompletenessSchema,
+  breakdowns: z.object({
+    bySubject: z.array(UsageBreakdownSchema),
+    byFeature: z.array(UsageBreakdownSchema),
+    byProvider: z.array(UsageBreakdownSchema),
+    byModel: z.array(UsageBreakdownSchema)
+  })
 })
 
 export const CostAuditItemSchema = z.object({
-  service: z.string(),
-  category: z.string(),
-  usage: z.number().nonnegative(),
-  unit: z.string(),
-  unitCostUsd: z.number().nonnegative(),
-  estimatedCostUsd: z.number().nonnegative(),
-  confidence: z.enum(["actual_usage", "estimated_usage", "manual_estimate"])
-})
-
-export const UserCostSummarySchema = z.object({
-  userId: z.string(),
-  email: z.string(),
-  estimatedCostUsd: z.number().nonnegative()
+  eventId: z.string(),
+  subjectId: z.string(),
+  runId: z.string(),
+  feature: z.string(),
+  provider: z.string(),
+  region: z.string(),
+  modelId: z.string(),
+  unit: UsageQuantitySchema.shape.unit,
+  quantity: z.number().nonnegative().optional(),
+  measurementSource: UsageQuantitySchema.shape.source,
+  pricingState: z.enum(["actual", "estimate", "unpriced"]),
+  catalogVersion: z.string().optional(),
+  priceSource: z.string().optional(),
+  unitCostUsd: z.number().nonnegative().optional(),
+  costUsd: z.number().nonnegative().optional(),
+  occurredAt: z.string().datetime()
 })
 
 export const CostAuditSummarySchema = z.object({
-  available: z.boolean(),
-  unavailableReason: z.string().optional(),
-  periodStart: z.string(),
-  periodEnd: z.string(),
-  currency: z.literal("USD").optional(),
-  totalEstimatedUsd: z.number().nonnegative().optional(),
-  items: z.array(CostAuditItemSchema).optional(),
-  users: z.array(UserCostSummarySchema).optional(),
-  pricingCatalogUpdatedAt: z.string().optional()
+  query: NormalizedUsageQuerySchema,
+  currency: z.literal("USD"),
+  pricedCostUsd: z.number().nonnegative(),
+  items: z.array(CostAuditItemSchema),
+  nextCursor: z.string().optional(),
+  truncated: z.boolean(),
+  asOf: z.string().datetime(),
+  source: z.literal("usage_event_store+versioned_price_catalog"),
+  rolloutMode: z.enum(["disabled", "shadow", "active"]),
+  catalogVersions: z.array(z.string()),
+  completeness: UsageCompletenessSchema
+})
+
+export const UsageExportRequestSchema = z.object({
+  query: UsageQuerySchema.omit({ cursor: true, limit: true }),
+  reason: z.string().trim().min(1).max(500)
 })
 
 const ClarificationContextSchema = z.object({
@@ -2313,7 +2385,7 @@ export const QualityActionCardListResponseSchema = z.object({
 })
 
 export const AdminExportResponseSchema = z.object({
-  exportType: z.enum(["audit_log", "cost_summary"]),
+  exportType: z.enum(["audit_log", "usage_summary", "cost_summary"]),
   url: z.string().url(),
   expiresInSeconds: z.number().int().positive(),
   objectKey: z.string(),

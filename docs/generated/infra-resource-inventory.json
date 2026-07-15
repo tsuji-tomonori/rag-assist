@@ -2,7 +2,7 @@
   "generatedBy": "tools/infra-inventory/generate-infra-inventory.mjs",
   "source": "infra/test/__snapshots__/memorag-mvp-stack.snapshot.json",
   "stackName": "MemoRagMvpStack",
-  "totalResources": 250,
+  "totalResources": 251,
   "totalsByDomain": [
     {
       "domain": "Storage",
@@ -10,7 +10,7 @@
     },
     {
       "domain": "Data",
-      "count": 10
+      "count": 11
     },
     {
       "domain": "Compute",
@@ -53,7 +53,7 @@
     },
     {
       "type": "AWS::DynamoDB::Table",
-      "count": 10,
+      "count": 11,
       "purpose": "DynamoDB table"
     },
     {
@@ -725,6 +725,41 @@
       "detailFilePath": "infra-inventory/aws-dynamodb-table.md"
     },
     {
+      "logicalId": "UsageEventsTable215FE3DD",
+      "logicalName": "Usage Events Table",
+      "type": "AWS::DynamoDB::Table",
+      "purpose": "Usage Events Table (DynamoDB table)",
+      "settings": {
+        "keySchema": [
+          {
+            "AttributeName": "tenantId",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "idempotencyKey",
+            "KeyType": "RANGE"
+          }
+        ],
+        "attributeDefinitions": [
+          {
+            "AttributeName": "tenantId",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "idempotencyKey",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "periodKey",
+            "AttributeType": "S"
+          }
+        ],
+        "billingMode": "PAY_PER_REQUEST",
+        "pointInTimeRecoveryEnabled": true
+      },
+      "detailFilePath": "infra-inventory/aws-dynamodb-table.md"
+    },
+    {
       "logicalId": "ApiFunctionCE271BD4",
       "logicalName": "Api Function",
       "type": "AWS::Lambda::Function",
@@ -780,8 +815,12 @@
           "QUESTION_TABLE_NAME": "Ref:HumanQuestionsTable5DA9688B",
           "RAG_MONITORING_REQUIRED": "1",
           "RAG_SAFETY_STATE_TTL_SECONDS": "600",
+          "USAGE_ACCOUNTING_MODE": "shadow",
+          "USAGE_EVENTS_TABLE_NAME": "Ref:UsageEventsTable215FE3DD",
+          "USAGE_PRICING_CATALOG_JSON": "[]",
           "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
           "USE_LOCAL_CHAT_RUN_STORE": "false",
+          "USE_LOCAL_USAGE_EVENT_STORE": "false",
           "USE_LOCAL_VECTOR_STORE": "false",
           "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"
         },
@@ -839,8 +878,12 @@
           "QUESTION_TABLE_NAME": "Ref:HumanQuestionsTable5DA9688B",
           "RAG_MONITORING_REQUIRED": "1",
           "RAG_SAFETY_STATE_TTL_SECONDS": "600",
+          "USAGE_ACCOUNTING_MODE": "shadow",
+          "USAGE_EVENTS_TABLE_NAME": "Ref:UsageEventsTable215FE3DD",
+          "USAGE_PRICING_CATALOG_JSON": "[]",
           "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
           "USE_LOCAL_CHAT_RUN_STORE": "false",
+          "USE_LOCAL_USAGE_EVENT_STORE": "false",
           "USE_LOCAL_VECTOR_STORE": "false",
           "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"
         },
@@ -898,8 +941,12 @@
           "QUESTION_TABLE_NAME": "Ref:HumanQuestionsTable5DA9688B",
           "RAG_MONITORING_REQUIRED": "1",
           "RAG_SAFETY_STATE_TTL_SECONDS": "600",
+          "USAGE_ACCOUNTING_MODE": "shadow",
+          "USAGE_EVENTS_TABLE_NAME": "Ref:UsageEventsTable215FE3DD",
+          "USAGE_PRICING_CATALOG_JSON": "[]",
           "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
           "USE_LOCAL_CHAT_RUN_STORE": "false",
+          "USE_LOCAL_USAGE_EVENT_STORE": "false",
           "USE_LOCAL_VECTOR_STORE": "false",
           "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"
         },
@@ -957,8 +1004,12 @@
           "QUESTION_TABLE_NAME": "Ref:HumanQuestionsTable5DA9688B",
           "RAG_MONITORING_REQUIRED": "1",
           "RAG_SAFETY_STATE_TTL_SECONDS": "600",
+          "USAGE_ACCOUNTING_MODE": "shadow",
+          "USAGE_EVENTS_TABLE_NAME": "Ref:UsageEventsTable215FE3DD",
+          "USAGE_PRICING_CATALOG_JSON": "[]",
           "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
           "USE_LOCAL_CHAT_RUN_STORE": "false",
+          "USE_LOCAL_USAGE_EVENT_STORE": "false",
           "USE_LOCAL_VECTOR_STORE": "false",
           "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"
         },
@@ -1016,8 +1067,12 @@
           "QUESTION_TABLE_NAME": "Ref:HumanQuestionsTable5DA9688B",
           "RAG_MONITORING_REQUIRED": "1",
           "RAG_SAFETY_STATE_TTL_SECONDS": "600",
+          "USAGE_ACCOUNTING_MODE": "shadow",
+          "USAGE_EVENTS_TABLE_NAME": "Ref:UsageEventsTable215FE3DD",
+          "USAGE_PRICING_CATALOG_JSON": "[]",
           "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
           "USE_LOCAL_CHAT_RUN_STORE": "false",
+          "USE_LOCAL_USAGE_EVENT_STORE": "false",
           "USE_LOCAL_VECTOR_STORE": "false",
           "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"
         },
@@ -1108,8 +1163,12 @@
           "QUESTION_TABLE_NAME": "Ref:HumanQuestionsTable5DA9688B",
           "RAG_MONITORING_REQUIRED": "1",
           "RAG_SAFETY_STATE_TTL_SECONDS": "600",
+          "USAGE_ACCOUNTING_MODE": "shadow",
+          "USAGE_EVENTS_TABLE_NAME": "Ref:UsageEventsTable215FE3DD",
+          "USAGE_PRICING_CATALOG_JSON": "[]",
           "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
           "USE_LOCAL_CHAT_RUN_STORE": "false",
+          "USE_LOCAL_USAGE_EVENT_STORE": "false",
           "USE_LOCAL_VECTOR_STORE": "false",
           "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"
         },
@@ -1170,8 +1229,12 @@
           "QUESTION_TABLE_NAME": "Ref:HumanQuestionsTable5DA9688B",
           "RAG_MONITORING_REQUIRED": "1",
           "RAG_SAFETY_STATE_TTL_SECONDS": "600",
+          "USAGE_ACCOUNTING_MODE": "shadow",
+          "USAGE_EVENTS_TABLE_NAME": "Ref:UsageEventsTable215FE3DD",
+          "USAGE_PRICING_CATALOG_JSON": "[]",
           "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
           "USE_LOCAL_CHAT_RUN_STORE": "false",
+          "USE_LOCAL_USAGE_EVENT_STORE": "false",
           "USE_LOCAL_VECTOR_STORE": "false",
           "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"
         },
@@ -1235,8 +1298,12 @@
           "QUESTION_TABLE_NAME": "Ref:HumanQuestionsTable5DA9688B",
           "RAG_MONITORING_REQUIRED": "1",
           "RAG_SAFETY_STATE_TTL_SECONDS": "600",
+          "USAGE_ACCOUNTING_MODE": "shadow",
+          "USAGE_EVENTS_TABLE_NAME": "Ref:UsageEventsTable215FE3DD",
+          "USAGE_PRICING_CATALOG_JSON": "[]",
           "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
           "USE_LOCAL_CHAT_RUN_STORE": "false",
+          "USE_LOCAL_USAGE_EVENT_STORE": "false",
           "USE_LOCAL_VECTOR_STORE": "false",
           "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"
         },
@@ -1295,8 +1362,12 @@
           "RAG_ALERT_TOPIC_ARN": "Ref:RagQualityAlertTopic3AFB5A32",
           "RAG_MONITORING_REQUIRED": "1",
           "RAG_SAFETY_STATE_TTL_SECONDS": "600",
+          "USAGE_ACCOUNTING_MODE": "shadow",
+          "USAGE_EVENTS_TABLE_NAME": "Ref:UsageEventsTable215FE3DD",
+          "USAGE_PRICING_CATALOG_JSON": "[]",
           "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
           "USE_LOCAL_CHAT_RUN_STORE": "false",
+          "USE_LOCAL_USAGE_EVENT_STORE": "false",
           "USE_LOCAL_VECTOR_STORE": "false",
           "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"
         },
@@ -1354,8 +1425,12 @@
           "QUESTION_TABLE_NAME": "Ref:HumanQuestionsTable5DA9688B",
           "RAG_MONITORING_REQUIRED": "1",
           "RAG_SAFETY_STATE_TTL_SECONDS": "600",
+          "USAGE_ACCOUNTING_MODE": "shadow",
+          "USAGE_EVENTS_TABLE_NAME": "Ref:UsageEventsTable215FE3DD",
+          "USAGE_PRICING_CATALOG_JSON": "[]",
           "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
           "USE_LOCAL_CHAT_RUN_STORE": "false",
+          "USE_LOCAL_USAGE_EVENT_STORE": "false",
           "USE_LOCAL_VECTOR_STORE": "false",
           "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"
         },
@@ -1445,8 +1520,12 @@
           "QUESTION_TABLE_NAME": "Ref:HumanQuestionsTable5DA9688B",
           "RAG_MONITORING_REQUIRED": "1",
           "RAG_SAFETY_STATE_TTL_SECONDS": "600",
+          "USAGE_ACCOUNTING_MODE": "shadow",
+          "USAGE_EVENTS_TABLE_NAME": "Ref:UsageEventsTable215FE3DD",
+          "USAGE_PRICING_CATALOG_JSON": "[]",
           "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
           "USE_LOCAL_CHAT_RUN_STORE": "false",
+          "USE_LOCAL_USAGE_EVENT_STORE": "false",
           "USE_LOCAL_VECTOR_STORE": "false",
           "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"
         },
@@ -3240,20 +3319,20 @@
           "GetAtt:ChatRunsTable8446CD95.Arn",
           "GetAtt:ConversationHistoryTable59A3534C.Arn",
           "GetAtt:DebugDownloadBucketAB6A16BE.Arn",
-          "GetAtt:DocumentGroupsTableA5108040.Arn",
           "GetAtt:DocumentIngestRunEventsTableF4692EBE.Arn",
           "GetAtt:DocumentIngestRunsTableEA8F8CCA.Arn",
           "GetAtt:DocumentsBucket9EC9DEB9.Arn",
           "GetAtt:FavoritesTable4DA8A306.Arn",
           "GetAtt:HumanQuestionsTable5DA9688B.Arn",
+          "GetAtt:UsageEventsTable215FE3DD.Arn",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"BenchmarkBucketDD7D1D2F\",\"Arn\"]},\"/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"BenchmarkRunsTableD0841636\",\"Arn\"]},\"/index/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"ChatRunsTable8446CD95\",\"Arn\"]},\"/index/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DebugDownloadBucketAB6A16BE\",\"Arn\"]},\"/*\"]]",
-          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentGroupsTableA5108040\",\"Arn\"]},\"/index/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentIngestRunsTableEA8F8CCA\",\"Arn\"]},\"/index/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/*\"]]",
-          "Join:[\"\",[{\"Fn::GetAtt\":[\"HumanQuestionsTable5DA9688B\",\"Arn\"]},\"/index/*\"]]"
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"HumanQuestionsTable5DA9688B\",\"Arn\"]},\"/index/*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"UsageEventsTable215FE3DD\",\"Arn\"]},\"/index/*\"]]"
         ]
       },
       "detailFilePath": "infra-inventory/aws-iam-policy.md"
@@ -3520,7 +3599,7 @@
         "roles": [
           "Ref:ChatRunWorkerFunctionServiceRoleBED42CDB"
         ],
-        "statementCount": 13,
+        "statementCount": 15,
         "actions": [
           "bedrock:InvokeModel",
           "bedrock:InvokeModelWithResponseStream",
@@ -3563,11 +3642,13 @@
           "GetAtt:DebugDownloadBucketAB6A16BE.Arn",
           "GetAtt:DocumentGroupsTableA5108040.Arn",
           "GetAtt:DocumentsBucket9EC9DEB9.Arn",
+          "GetAtt:UsageEventsTable215FE3DD.Arn",
           "GetAtt:UserPool6BA7E5F2.Arn",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"ChatRunsTable8446CD95\",\"Arn\"]},\"/index/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DebugDownloadBucketAB6A16BE\",\"Arn\"]},\"/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentGroupsTableA5108040\",\"Arn\"]},\"/index/*\"]]",
-          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/*\"]]"
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"UsageEventsTable215FE3DD\",\"Arn\"]},\"/index/*\"]]"
         ]
       },
       "detailFilePath": "infra-inventory/aws-iam-policy.md"
@@ -3778,20 +3859,20 @@
           "GetAtt:ChatRunsTable8446CD95.Arn",
           "GetAtt:ConversationHistoryTable59A3534C.Arn",
           "GetAtt:DebugDownloadBucketAB6A16BE.Arn",
-          "GetAtt:DocumentGroupsTableA5108040.Arn",
           "GetAtt:DocumentIngestRunEventsTableF4692EBE.Arn",
           "GetAtt:DocumentIngestRunsTableEA8F8CCA.Arn",
           "GetAtt:DocumentsBucket9EC9DEB9.Arn",
           "GetAtt:FavoritesTable4DA8A306.Arn",
           "GetAtt:HumanQuestionsTable5DA9688B.Arn",
+          "GetAtt:UsageEventsTable215FE3DD.Arn",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"BenchmarkBucketDD7D1D2F\",\"Arn\"]},\"/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"BenchmarkRunsTableD0841636\",\"Arn\"]},\"/index/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"ChatRunsTable8446CD95\",\"Arn\"]},\"/index/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DebugDownloadBucketAB6A16BE\",\"Arn\"]},\"/*\"]]",
-          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentGroupsTableA5108040\",\"Arn\"]},\"/index/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentIngestRunsTableEA8F8CCA\",\"Arn\"]},\"/index/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/*\"]]",
-          "Join:[\"\",[{\"Fn::GetAtt\":[\"HumanQuestionsTable5DA9688B\",\"Arn\"]},\"/index/*\"]]"
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"HumanQuestionsTable5DA9688B\",\"Arn\"]},\"/index/*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"UsageEventsTable215FE3DD\",\"Arn\"]},\"/index/*\"]]"
         ]
       },
       "detailFilePath": "infra-inventory/aws-iam-policy.md"
@@ -3969,7 +4050,7 @@
         "roles": [
           "Ref:ApiFunctionServiceRole52B9747B"
         ],
-        "statementCount": 12,
+        "statementCount": 14,
         "actions": [
           "codebuild:BatchGetBuilds",
           "cognito-idp:AdminAddUserToGroup",
@@ -4012,6 +4093,7 @@
           "GetAtt:ActiveRunAuthorizationIndexTable2D018C99.Arn",
           "GetAtt:BenchmarkProject1593465D.Arn",
           "GetAtt:DocumentGroupsTableA5108040.Arn",
+          "GetAtt:DocumentIngestRunEventsTableF4692EBE.Arn",
           "GetAtt:UserPool6BA7E5F2.Arn",
           "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":logs:ap-northeast-1:111111111111:log-group:\",{\"Ref\":\"BenchmarkProjectLogGroup395F719E\"},\":log-stream…",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentGroupsTableA5108040\",\"Arn\"]},\"/index/*\"]]",
@@ -4031,7 +4113,7 @@
         "roles": [
           "Ref:HeavyApiFunctionServiceRole25A7AE5E"
         ],
-        "statementCount": 12,
+        "statementCount": 14,
         "actions": [
           "codebuild:BatchGetBuilds",
           "cognito-idp:AdminAddUserToGroup",
@@ -4074,6 +4156,7 @@
           "GetAtt:ActiveRunAuthorizationIndexTable2D018C99.Arn",
           "GetAtt:BenchmarkProject1593465D.Arn",
           "GetAtt:DocumentGroupsTableA5108040.Arn",
+          "GetAtt:DocumentIngestRunEventsTableF4692EBE.Arn",
           "GetAtt:UserPool6BA7E5F2.Arn",
           "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":logs:ap-northeast-1:111111111111:log-group:\",{\"Ref\":\"BenchmarkProjectLogGroup395F719E\"},\":log-stream…",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentGroupsTableA5108040\",\"Arn\"]},\"/index/*\"]]",

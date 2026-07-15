@@ -158,7 +158,6 @@
         "apps/web/src/features/questions/hooks/useQuestions.ts"
       ],
       "gapTasks": [
-        "tasks/todo/20260713-2304-responsive-chat-ui-verification.md",
         "tasks/todo/20260714-issue-345-cross-screen-a11y-responsive.md",
         "tasks/todo/20260714-issue-345-manual-a11y-evidence.md"
       ]
@@ -312,7 +311,6 @@
         "apps/web/src/shared/ui/OperationFeedback.tsx"
       ],
       "gapTasks": [
-        "tasks/todo/20260714-1011-admin-usage-cost-integrity.md",
         "tasks/todo/20260714-issue-345-manual-a11y-evidence.md"
       ]
     },

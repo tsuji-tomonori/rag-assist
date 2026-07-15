@@ -24,14 +24,26 @@ _なし_
 
 ## Data
 
-_なし_
+Media type: `application/json`
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `query` | `object` | yes | 検索や benchmark に利用する query。 | - |
+| `query.periodStart` | `string:date-time` | no | `data.query.periodStart` の値。項目名は period start を表します。 | - |
+| `query.periodEnd` | `string:date-time` | no | `data.query.periodEnd` の値。項目名は period end を表します。 | - |
+| `query.subjectId` | `string` | no | `data.query.subjectId` の値。項目名は subject id を表します。 | minLength=1<br>maxLength=200 |
+| `query.runId` | `string` | no | 非同期 run または debug trace を識別する ID。 | minLength=1<br>maxLength=200 |
+| `query.modelId` | `string` | no | 回答生成に利用する Bedrock model ID。 | minLength=1<br>maxLength=300 |
+| `query.feature` | `string` | no | `data.query.feature` の値。項目名は feature を表します。 | minLength=1<br>maxLength=120 |
+| `query.provider` | `string` | no | `data.query.provider` の値。項目名は provider を表します。 | minLength=1<br>maxLength=120 |
+| `reason` | `string` | yes | 判断や失敗の理由。 | minLength=1<br>maxLength=500 |
 
 ## Authorization
 
 | 項目 | 内容 |
 | --- | --- |
 | 認可モード | `required` |
-| 必須 permission | `cost:read:all` |
+| 必須 permission | `cost:export` |
 | 条件付き permission | - |
 | 実行可能 role | `COST_AUDITOR`, `SYSTEM_ADMIN` |
 | エラーになる role | `CHAT_USER`, `ANSWER_EDITOR`, `RAG_GROUP_MANAGER`, `BENCHMARK_OPERATOR`, `BENCHMARK_RUNNER`, `ASYNC_AGENT_USER`, `SKILL_PROFILE_ADMIN`, `ASYNC_AGENT_ADMIN`, `USER_ADMIN`, `ACCESS_ADMIN` |
@@ -45,7 +57,7 @@ _なし_
 | Status | 発生条件 | Body |
 | --- | --- | --- |
 | `401` | Authorization header がない、または Bearer token を検証できない場合。 | `{"error":"Unauthorized"}` |
-| `403` | 必要 permission (cost:read:all) または条件付き permission を満たさない場合。 | `{"error":"Forbidden"}` |
+| `403` | 必要 permission (cost:export) または条件付き permission を満たさない場合。 | `{"error":"Forbidden"}` |
 
 ## Lifecycle
 
@@ -66,7 +78,7 @@ Media type: `application/json`
 
 | 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
-| `exportType` | `enum(audit_log \| cost_summary)` | yes | `response.exportType` の値。項目名は export type を表します。 | enum=audit_log, cost_summary |
+| `exportType` | `enum(audit_log \| usage_summary \| cost_summary)` | yes | `response.exportType` の値。項目名は export type を表します。 | enum=audit_log, usage_summary, cost_summary |
 | `url` | `string:uri` | yes | アクセス先または署名付き URL。 | - |
 | `expiresInSeconds` | `integer` | yes | `response.expiresInSeconds` の値。項目名は expires in seconds を表します。 | minimum=0 |
 | `objectKey` | `string` | yes | `response.objectKey` の値。項目名は object key を表します。 | - |

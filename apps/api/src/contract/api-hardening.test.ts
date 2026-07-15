@@ -102,6 +102,7 @@ test("production config parses explicit runtime environment values", () => {
     USE_LOCAL_CHAT_RUN_STORE: "true",
     USE_LOCAL_DOCUMENT_INGEST_RUN_STORE: "1",
     USE_LOCAL_DOCUMENT_GROUP_STORE: "on",
+    USAGE_ACCOUNTING_MODE: "active",
     DOCUMENT_UPLOAD_MAX_BYTES: "1234.9",
     EMBEDDING_DIMENSIONS: "256",
     RAG_ADAPTIVE_RETRIEVAL: "true",
@@ -126,6 +127,7 @@ test("production config parses explicit runtime environment values", () => {
   assert.equal(config.useLocalChatRunStore, true)
   assert.equal(config.useLocalDocumentIngestRunStore, true)
   assert.equal(config.useLocalDocumentGroupStore, true)
+  assert.equal(config.usageAccountingMode, "active")
   assert.equal(config.documentUploadMaxBytes, 1234)
   assert.equal(config.embeddingDimensions, 256)
   assert.equal(config.ragAdaptiveRetrieval, true)
@@ -159,6 +161,10 @@ test("production config rejects missing docs bucket and invalid scalar values", 
   const invalidNumber = importConfigInSubprocess({
     ...requiredProductionEnv,
     PORT: "not-a-number"
+  })
+  const invalidUsageAccountingMode = importConfigInSubprocess({
+    ...requiredProductionEnv,
+    USAGE_ACCOUNTING_MODE: "cutover-now"
   })
   const missingAppClient = importConfigInSubprocess({
     ...requiredProductionEnv,
@@ -196,6 +202,8 @@ test("production config rejects missing docs bucket and invalid scalar values", 
   assert.match(invalidBoolean.stderr, /MOCK_BEDROCK must be a boolean value in production/)
   assert.notEqual(invalidNumber.status, 0)
   assert.match(invalidNumber.stderr, /PORT must be a finite number in production/)
+  assert.notEqual(invalidUsageAccountingMode.status, 0)
+  assert.match(invalidUsageAccountingMode.stderr, /USAGE_ACCOUNTING_MODE must be one of/)
   assert.notEqual(missingAppClient.status, 0)
   assert.match(missingAppClient.stderr, /COGNITO_APP_CLIENT_ID is required in production/)
   assert.notEqual(missingFavoritesTable.status, 0)

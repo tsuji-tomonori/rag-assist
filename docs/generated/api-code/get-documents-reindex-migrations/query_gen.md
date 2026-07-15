@@ -8,9 +8,9 @@
 
 | # | CRUD/実行 | Target | Method | 自然言語での目的 | Caller | コード根拠 |
 | ---: | --- | --- | --- | --- | --- | --- |
-| 1 | 参照 | `this` | `loadReindexMigrationLedger` | `this` に対して load reindex migration ledger を実行する。 | `MemoRagService.listReindexMigrations` | `apps/api/src/rag/memorag-service.ts:813 (MemoRagService.listReindexMigrations)` |
-| 2 | 参照 | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `MemoRagService.loadReindexMigrationLedger` | `apps/api/src/rag/memorag-service.ts:3648 (MemoRagService.loadReindexMigrationLedger)` |
-| 3 | 実行 | `(await this.loadReindexMigrationLedger())` | `sort` | `(await this.loadReindexMigrationLedger())` に対して sort を実行する。 | `MemoRagService.listReindexMigrations` | `apps/api/src/rag/memorag-service.ts:813 (MemoRagService.listReindexMigrations)` |
+| 1 | 参照 | `this` | `loadReindexMigrationLedger` | `this` に対して load reindex migration ledger を実行する。 | `MemoRagService.listReindexMigrations` | `apps/api/src/rag/memorag-service.ts:898 (MemoRagService.listReindexMigrations)` |
+| 2 | 参照 | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `MemoRagService.loadReindexMigrationLedger` | `apps/api/src/rag/memorag-service.ts:3743 (MemoRagService.loadReindexMigrationLedger)` |
+| 3 | 実行 | `(await this.loadReindexMigrationLedger())` | `sort` | `(await this.loadReindexMigrationLedger())` に対して sort を実行する。 | `MemoRagService.listReindexMigrations` | `apps/api/src/rag/memorag-service.ts:898 (MemoRagService.listReindexMigrations)` |
 
 ## 外部サービス操作
 

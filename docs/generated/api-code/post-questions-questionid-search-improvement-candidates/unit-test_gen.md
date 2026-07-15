@@ -8,7 +8,7 @@
 
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
-| 到達 symbol | service creates search improvement candidates as draft review items | `apps/api/src/rag/memorag-service.test.ts:1519 (service creates search improvement candidates as draft review items)` |
+| 到達 symbol | service creates search improvement candidates as draft review items | `apps/api/src/rag/memorag-service.test.ts:1550 (service creates search improvement candidates as draft review items)` |
 
 ## 2. 実装分岐から導くテスト要因
 
@@ -16,7 +16,7 @@
 | --- | --- | --- | --- | --- |
 | F001 | `POST /questions/{questionId}/search-improvement-candidates handler` | if | `candidate` が存在しない、または偽である | `apps/api/src/routes/question-routes.ts:154 (POST /questions/{questionId}/search-improvement-candidates handler)` |
 | F002 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| F003 | `MemoRagService.createSearchImprovementCandidate` | if | `question` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1327 (MemoRagService.createSearchImprovementCandidate)` |
+| F003 | `MemoRagService.createSearchImprovementCandidate` | if | `question` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1412 (MemoRagService.createSearchImprovementCandidate)` |
 
 ## 3. コード由来テストケース
 
@@ -27,8 +27,8 @@
 | TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/question-routes.ts:154 (POST /questions/{questionId}/search-improvement-candidates handler)` |
 | TC004 | F002: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
 | TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC006 | F003: 条件成立 | `question` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1327 (MemoRagService.createSearchImprovementCandidate)` |
-| TC007 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1327 (MemoRagService.createSearchImprovementCandidate)` |
+| TC006 | F003: 条件成立 | `question` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1412 (MemoRagService.createSearchImprovementCandidate)` |
+| TC007 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1412 (MemoRagService.createSearchImprovementCandidate)` |
 | TC008 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC009 | HTTP 400 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC010 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

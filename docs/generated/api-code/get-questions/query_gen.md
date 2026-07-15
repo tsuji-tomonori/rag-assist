@@ -8,8 +8,8 @@
 
 | # | CRUD/実行 | Target | Method | 自然言語での目的 | Caller | コード根拠 |
 | ---: | --- | --- | --- | --- | --- | --- |
-| 1 | 参照 | `this.deps.questionStore` | `listAllForAdmin` | `this.deps.questionStore` に対して list all for admin を実行する。 | `MemoRagService.listAllQuestionsForAdmin` | `apps/api/src/rag/memorag-service.ts:3041 (MemoRagService.listAllQuestionsForAdmin)` |
-| 2 | 参照 | `this.deps.questionStore` | `listAssignedToUser` | `this.deps.questionStore` に対して list assigned to user を実行する。 | `MemoRagService.listAssignedQuestions` | `apps/api/src/rag/memorag-service.ts:3033 (MemoRagService.listAssignedQuestions)` |
+| 1 | 参照 | `this.deps.questionStore` | `listAllForAdmin` | `this.deps.questionStore` に対して list all for admin を実行する。 | `MemoRagService.listAllQuestionsForAdmin` | `apps/api/src/rag/memorag-service.ts:3136 (MemoRagService.listAllQuestionsForAdmin)` |
+| 2 | 参照 | `this.deps.questionStore` | `listAssignedToUser` | `this.deps.questionStore` に対して list assigned to user を実行する。 | `MemoRagService.listAssignedQuestions` | `apps/api/src/rag/memorag-service.ts:3128 (MemoRagService.listAssignedQuestions)` |
 
 ## 外部サービス操作
 

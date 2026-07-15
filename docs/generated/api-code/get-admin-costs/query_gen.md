@@ -8,22 +8,15 @@
 
 | # | CRUD/実行 | Target | Method | 自然言語での目的 | Caller | コード根拠 |
 | ---: | --- | --- | --- | --- | --- | --- |
-| 1 | 参照 | `this` | `loadAdminLedger` | `this` に対して load admin ledger を実行する。 | `MemoRagService.getCostAuditSummary` | `apps/api/src/rag/memorag-service.ts:2117 (MemoRagService.getCostAuditSummary)` |
-| 2 | 実行 | `adminLedgerKeyForTenant` | `adminLedgerKeyForTenant` | `adminLedgerKeyForTenant` に対して admin ledger key for tenant を実行する。 | `MemoRagService.loadAdminLedger` | `apps/api/src/rag/memorag-service.ts:3315 (MemoRagService.loadAdminLedger)` |
-| 3 | 参照 | `this.deps.objectStore` | `getTextWithVersion` | `this.deps.objectStore` に対して get text with version を実行する。 | `MemoRagService.loadAdminLedger` | `apps/api/src/rag/memorag-service.ts:3317 (MemoRagService.loadAdminLedger)` |
-| 4 | 参照 | `this` | `loadOrMigrateLegacyAdminLedger` | `this` に対して load or migrate legacy admin ledger を実行する。 | `MemoRagService.loadAdminLedger` | `apps/api/src/rag/memorag-service.ts:3322 (MemoRagService.loadAdminLedger)` |
-| 5 | 参照 | `this.deps.objectStore` | `getTextWithVersion` | `this.deps.objectStore` に対して get text with version を実行する。 | `MemoRagService.loadOrMigrateLegacyAdminLedger` | `apps/api/src/rag/memorag-service.ts:3384 (MemoRagService.loadOrMigrateLegacyAdminLedger)` |
-| 6 | 作成・追記 | `this.deps.objectStore` | `putTextIfVersion` | `this.deps.objectStore` に対して put text if version を実行する。 | `MemoRagService.loadOrMigrateLegacyAdminLedger` | `apps/api/src/rag/memorag-service.ts:3398 (MemoRagService.loadOrMigrateLegacyAdminLedger)` |
-| 7 | 参照 | `this.deps.objectStore` | `getTextWithVersion` | `this.deps.objectStore` に対して get text with version を実行する。 | `MemoRagService.loadOrMigrateLegacyAdminLedger` | `apps/api/src/rag/memorag-service.ts:3402 (MemoRagService.loadOrMigrateLegacyAdminLedger)` |
+| 1 | 参照 | `this.deps.usageEventStore` | `query` | `this.deps.usageEventStore` に対して query を実行する。 | `MemoRagService.listUsageSummaries` | `apps/api/src/rag/memorag-service.ts:2170 (MemoRagService.listUsageSummaries)` |
 
 ## 外部サービス操作
 
 | # | CRUD/実行 | Target | Method | 自然言語での目的 | Caller | コード根拠 |
 | ---: | --- | --- | --- | --- | --- | --- |
-| 1 | 参照 | `this.deps.verifiedIdentityProvider` | `getCurrentIdentityBySubject` | `this.deps.verifiedIdentityProvider` へ get current identity by subject を実行する。 | `MemoRagService.loadAdminLedger` | `apps/api/src/rag/memorag-service.ts:3329 (MemoRagService.loadAdminLedger)` |
-| 2 | 実行 | `this` | `syncUserDirectory` | `this` へ sync user directory を実行する。 | `MemoRagService.loadAdminLedger` | `apps/api/src/rag/memorag-service.ts:3371 (MemoRagService.loadAdminLedger)` |
-| 3 | 参照 | `this.deps.userDirectory` | `listUsers` | `this.deps.userDirectory` へ list users を実行する。 | `MemoRagService.syncUserDirectory` | `apps/api/src/rag/memorag-service.ts:3409 (MemoRagService.syncUserDirectory)` |
-| 4 | 参照 | `this.deps.verifiedIdentityProvider` | `getCurrentIdentityBySubject` | `this.deps.verifiedIdentityProvider` へ get current identity by subject を実行する。 | `MemoRagService.syncUserDirectory` | `apps/api/src/rag/memorag-service.ts:3414 (MemoRagService.syncUserDirectory)` |
+| 1 | 実行 | `catalog<br>    .filter((entry) => entry.provider === event.provider)<br>    ` | `filter` | `catalog<br>    .filter((entry) => entry.provider === event.provider)<br>    ` へ filter を実行する。 | `findPrice` | `apps/api/src/rag/_shared/usage/usage-pricing-catalog.ts:69 (findPrice)` |
+| 2 | 実行 | `catalog<br>    .filter((entry) => entry.provider === event.provider)<br>    .filter((entry) => entry.region === event.region \|\| entry.region === "*")<br>    ` | `filter` | `catalog<br>    .filter((entry) => entry.provider === event.provider)<br>    .filter((entry) => entry.region === event.region \|\| entry.region === "*")<br>    ` へ filter を実行する。 | `findPrice` | `apps/api/src/rag/_shared/usage/usage-pricing-catalog.ts:69 (findPrice)` |
+| 3 | 実行 | `catalog<br>    .filter((entry) => entry.provider === event.provider)<br>    .filter((entry) => entry.region === event.region \|\| entry.region === "*")<br>    .filter((entry) => entry.modelId === event.modelId \|\| entry.modelId === "*")<br>    ` | `filter` | `catalog<br>    .filter((entry) => entry.provider === event.provider)<br>    .filter((entry) => entry.region === event.region \|\| entry.region === "*")<br>    .filter((entry) => entry.modelId === event.modelId \|\| entry.modelId === "*")<br>    ` へ filter を実行する。 | `findPrice` | `apps/api/src/rag/_shared/usage/usage-pricing-catalog.ts:69 (findPrice)` |
 
 ## 解析境界
 

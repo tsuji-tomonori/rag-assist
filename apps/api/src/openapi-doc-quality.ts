@@ -245,6 +245,10 @@ const operationDocs: Record<string, { summary: string; description: string }> = 
     summary: "利用状況を取得する",
     description: "全ユーザーまたは指定条件に一致する利用状況の集計を返します。"
   },
+  "POST /admin/usage/export": {
+    summary: "利用状況 export URL を作成する",
+    description: "利用状況 event を sanitize 済み JSON として保存し、短期限の署名付き URL を返します。"
+  },
   "GET /admin/quality-actions": {
     summary: "文書品質 action card 一覧を取得する",
     description: "参照可能な文書の品質 profile と抽出警告から、管理者が対応すべき action card を返します。"

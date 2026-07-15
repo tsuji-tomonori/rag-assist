@@ -36,6 +36,12 @@
 - AC-FR027-013: 管理操作履歴は actor の authoritative tenant 内に限定し、共通 security audit の `pending`、`success`、`denied`、`conflict`、`failed` と reason、target、policy version、source を検索・ページング可能な形で返すこと。
 - AC-FR027-014: 管理操作履歴 export は閲覧とは別の `access:audit:export` permission、非空 reason、同一 query、tenant scope、全ページ取得、機微情報 redaction、export 自体の監査を強制すること。
 - AC-FR027-015: 管理台帳は authoritative tenant ごとに保存し、同時更新を条件付き write で fail closed にし、旧単一 tenant 台帳を設定済み tenant へ非破壊で一度だけ移行できること。
+- AC-FR027-016: chat と document ingest の各 model 呼び出しは authoritative tenant、subject、run、feature、provider、region、model、quantity source を持つ immutable usage event を条件付き write し、同じ tenant-scoped idempotency key の replay を二重計上しないこと。
+- AC-FR027-017: usage query は tenant と half-open period の index を `Query` し、filter と結び付いた opaque cursor で 1,000 件を超える全 page を欠落なく辿れること。
+- AC-FR027-018: provider quantity、tokenizer estimate、missing と unknown attribution を分離し、missing を計測済み zero または完全な集計として返さないこと。
+- AC-FR027-019: cost audit は version、provider、region、model、unit、effective period、source、承認者を持つ price catalog だけを適用し、`actual`、`estimate`、`unpriced` と微小正値を保持すること。
+- AC-FR027-020: usage/cost export は read と別の `usage:export` / `cost:export`、非空 reason、同じ normalized query、tenant scope、全 page、redaction、期限、export 自体の監査を server で強制すること。
+- AC-FR027-021: production の usage/cost 新経路は `disabled` / `shadow` / `active` rollout mode を持ち、live canary、tenant/quantity/price 照合、承認済み price source、rollback 条件を満たすまで read/export の既定経路を `active` にしないこと。
 
 ## 要件の源泉・背景
 
@@ -49,6 +55,7 @@
 - 目的: 管理者が権限に応じてユーザー、ロール、管理操作履歴、利用状況、コストを同一管理画面で確認できるようにする。
 - 意図: 実際の Cognito 管理連携や監査ログの強化を後続 adapter に分離し、UI/API contract を先に安定させる。
 - 意図: コスト監査は AWS 請求の正本ではなく、運用判断のための概算として明示する。
+- 意図: 未計測、未価格、shadow rollout を zero cost と表示せず、production cutover の未達条件を release blocker として残す。
 - 区分: 機能要求。
 
 ## 関連文書
@@ -56,3 +63,4 @@
 - `1_要求_REQ/11_製品要求_PRODUCT/11_非機能要求_NON_FUNCTIONAL/REQ_NON_FUNCTIONAL_011.md`
 - `3_設計_DES/01_高レベル設計_HLD/DES_HLD_001.md`
 - `3_設計_DES/41_API_API/DES_API_001.md`
+- `4_運用_OPS/31_利用量_USAGE/OPS_USAGE_001.md`

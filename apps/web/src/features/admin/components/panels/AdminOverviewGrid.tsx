@@ -2,7 +2,7 @@ import { Icon } from "../../../../shared/components/Icon.js"
 import type { IconName } from "../../../../shared/components/Icon.js"
 import { EmptyState } from "../../../../shared/ui/index.js"
 import { formatCurrency } from "../../../../shared/utils/format.js"
-import type { AccessRoleDefinition, AliasDefinition, CostAuditSummary, ManagedUser, UserUsageSummary } from "../../types.js"
+import type { AccessRoleDefinition, AliasDefinition, CostAuditSummary, ManagedUser, UsageSummaryPage } from "../../types.js"
 
 type DashboardCard =
   | {
@@ -58,7 +58,7 @@ export function AdminOverviewGrid({
   benchmarkRunsCount: number | null
   managedUsers: ManagedUser[] | null
   accessRoles: AccessRoleDefinition[] | null
-  usageSummaries: UserUsageSummary[] | null
+  usageSummaries: UsageSummaryPage | null
   costAudit: CostAuditSummary | null
   aliases: AliasDefinition[] | null
   failedParts?: ReadonlySet<string>
@@ -161,8 +161,8 @@ export function AdminOverviewGrid({
             kind: "kpi" as const,
             id: "usage",
             label: "利用状況",
-            value: usageSummaries ? `${usageSummaries.length} 人` : failedParts.has("usage") ? "取得失敗" : "未提供",
-            note: usageSummaries ? "ユーザー別の集計" : failedParts.has("usage") ? "状態メッセージから再試行できます" : "利用状況データは未提供",
+            value: usageSummaries ? `${usageSummaries.completeness.eventCount} event` : failedParts.has("usage") ? "取得失敗" : "未提供",
+            note: usageSummaries ? `完全性: ${usageSummaries.completeness.state}` : failedParts.has("usage") ? "状態メッセージから再試行できます" : "利用状況データは未提供",
             icon: "gauge" as const,
             onSelect: onOpenUsageCost
           }
@@ -174,8 +174,8 @@ export function AdminOverviewGrid({
             kind: "kpi" as const,
             id: "cost",
             label: "コスト監査",
-            value: costAudit?.available && costAudit.totalEstimatedUsd !== undefined ? formatCurrency(costAudit.totalEstimatedUsd) : failedParts.has("cost") ? "取得失敗" : "利用不可",
-            note: costAudit?.available ? "承認済み料金表に基づく集計" : failedParts.has("cost") ? "状態メッセージから再試行できます" : "料金表または利用実績は未提供",
+            value: costAudit ? formatCurrency(costAudit.pricedCostUsd) : failedParts.has("cost") ? "取得失敗" : "利用不可",
+            note: costAudit ? `priced 部分 / 完全性: ${costAudit.completeness.state}` : failedParts.has("cost") ? "状態メッセージから再試行できます" : "料金表または利用実績は未提供",
             icon: "warning" as const,
             onSelect: onOpenUsageCost
           }

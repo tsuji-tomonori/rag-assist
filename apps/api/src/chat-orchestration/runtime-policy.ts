@@ -221,6 +221,7 @@ export function expandedSearchTopK(topK: number): number {
 export function llmOptions(task: LlmTask, modelId: string): GenerateOptions {
   return {
     modelId,
+    usageTask: task,
     temperature: ragRuntimePolicy.llm.temperature,
     maxTokens: ragRuntimePolicy.llm.maxTokens[task]
   }

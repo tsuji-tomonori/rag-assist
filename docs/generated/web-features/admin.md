@@ -24,10 +24,10 @@
 | AdminPanelDataStatus | AdminPanelDataStatus は 管理 領域の 画面または画面内 UI コンポーネント です。関連画面: 管理者設定。 | 画面または画面内 UI コンポーネント | apps/web/src/features/admin/components/AdminPanelDataStatus.tsx | AdminPanelDataStatus | button, code, div, span, strong, time |
 | AdminWorkspace | AdminWorkspace は 管理 領域の 画面または画面内 UI コンポーネント です。関連画面: 管理者設定。 | 画面または画面内 UI コンポーネント | apps/web/src/features/admin/components/AdminWorkspace.tsx | AdminWorkspace | AdminAuditPanel, AdminCostPanel, AdminOverviewGrid, AdminRolePanel, AdminUsagePanel, AdminUserPanel, AliasAdminPanel, Icon, LoadingStatus, ResourceStateBoundary, button, div, h2, header, nav, section, span |
 | AdminAuditPanel | AdminAuditPanel は 管理 領域の 画面または画面内 UI コンポーネント です。関連画面: 管理者設定。 | 画面または画面内 UI コンポーネント | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx | AdminAuditPanel | AdminPanelDataStatus, EmptyState, a, article, button, code, div, form, h3, input, label, option, p, section, select, small, span, strong, time |
-| AdminCostPanel | AdminCostPanel は 管理 領域の 画面または画面内 UI コンポーネント です。関連画面: 管理者設定。 | 画面または画面内 UI コンポーネント | apps/web/src/features/admin/components/panels/AdminCostPanel.tsx | AdminCostPanel | AdminPanelDataStatus, EmptyState, article, div, h3, i, p, section, span, strong |
+| AdminCostPanel | AdminCostPanel は 管理 領域の 画面または画面内 UI コンポーネント です。関連画面: 管理者設定。 | 画面または画面内 UI コンポーネント | apps/web/src/features/admin/components/panels/AdminCostPanel.tsx | AdminCostPanel | AdminPanelDataStatus, EmptyState, UsageQueryForm, a, article, button, dd, div, dl, dt, form, h3, i, input, label, p, section, small, span, strong |
 | AdminOverviewGrid | AdminOverviewGrid は 管理 領域の 画面または画面内 UI コンポーネント です。関連画面: 管理者設定。 | 画面または画面内 UI コンポーネント | apps/web/src/features/admin/components/panels/AdminOverviewGrid.tsx | AdminOverviewGrid | EmptyState, Icon, button, div, small, span, strong |
 | AdminRolePanel | AdminRolePanel は 管理 領域の 画面または画面内 UI コンポーネント です。関連画面: 管理者設定。 | 画面または画面内 UI コンポーネント | apps/web/src/features/admin/components/panels/AdminRolePanel.tsx | AdminRolePanel | AdminPanelDataStatus, EmptyState, code, details, div, h3, li, p, section, small, span, strong, summary, ul |
-| AdminUsagePanel | AdminUsagePanel は 管理 領域の 画面または画面内 UI コンポーネント です。関連画面: 管理者設定。 | 画面または画面内 UI コンポーネント | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx | AdminUsagePanel | AdminPanelDataStatus, EmptyState, div, h3, p, section, span, table, tbody, td, th, thead, tr |
+| AdminUsagePanel | AdminUsagePanel は 管理 領域の 画面または画面内 UI コンポーネント です。関連画面: 管理者設定。 | 画面または画面内 UI コンポーネント | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx | AdminUsagePanel, UsageQueryForm | AdminPanelDataStatus, CompletenessSummary, EmptyState, UsageQueryForm, a, button, dd, div, dl, dt, form, h3, input, label, p, section, span, table, tbody, td, th, thead, time, tr |
 | AdminUserPanel | AdminUserPanel は 管理 領域の 画面または画面内 UI コンポーネント です。関連画面: 管理者設定。 | 画面または画面内 UI コンポーネント | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx | AdminUserPanel | AdminCreateUserForm, AdminPanelDataStatus, ConfirmDialog, EmptyState, LoadingSpinner, ManagedUserRow, OperationFeedback, StatusBadge, button, code, div, fieldset, form, h3, input, label, legend, option, section, select, small, span, strong, table, tbody, td, textarea, th, thead, tr |
 | AliasAdminPanel | AliasAdminPanel は 管理 領域の 画面または画面内 UI コンポーネント です。関連画面: 管理者設定。 | 画面または画面内 UI コンポーネント | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx | AliasAdminPanel | AdminPanelDataStatus, ConfirmDialog, EmptyState, OperationFeedback, ReasonField, StatusBadge, article, button, code, dd, div, dl, dt, form, h3, h4, input, label, option, section, select, small, span, strong, textarea, time |
 
@@ -36,15 +36,22 @@
 | コンポーネント | 要素 | ラベル | 操作説明 | 状態・補足 | ハンドラ | 場所 | 確度 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | AdminPanelDataStatus | button | `${label}を更新` | 「`${label}を更新`」を実行するボタン。 | 状態: disabled=loading \|\| isBusy | onClick=() => void onRefresh() | apps/web/src/features/admin/components/AdminPanelDataStatus.tsx:39 | confirmed |
-| AdminWorkspace | button | チャットへ戻る | 「チャットへ戻る」を実行するボタン。 | - | onClick=onBack | apps/web/src/features/admin/components/AdminWorkspace.tsx:201 | confirmed |
-| AdminWorkspace | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: aria-current=resolvedActiveSection === section.id ? "page" : undefined | onClick=() => openSection(section.id) | apps/web/src/features/admin/components/AdminWorkspace.tsx:214 | unknown |
+| AdminWorkspace | button | チャットへ戻る | 「チャットへ戻る」を実行するボタン。 | - | onClick=onBack | apps/web/src/features/admin/components/AdminWorkspace.tsx:216 | confirmed |
+| AdminWorkspace | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: aria-current=resolvedActiveSection === section.id ? "page" : undefined | onClick=() => openSection(section.id) | apps/web/src/features/admin/components/AdminWorkspace.tsx:229 | unknown |
 | AdminAuditPanel | button | 検索 | 「検索」を実行するボタン。 | 状態: disabled=loading | - | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:81 | confirmed |
 | AdminAuditPanel | button | 条件を解除 | 「条件を解除」を実行するボタン。 | 状態: disabled=loading | onClick=() => { setQuery("") onUrlStateChange({ ...urlState, section: "audit", query: undefined, … | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:83 | confirmed |
 | AdminAuditPanel | button | 現在の条件を export | 「現在の条件を export」を実行するボタン。 | 状態: disabled=loading \|\| exportReason.trim().length === 0 | - | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:105 | confirmed |
 | AdminAuditPanel | a | 有効期限内に取得 | 「有効期限内に取得」へ移動するリンク。 | - | - | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:110 | confirmed |
 | AdminAuditPanel | button | 次の履歴を読み込む（残り / 件） | 「次の履歴を読み込む（残り / 件）」を実行するボタン。 | 状態: disabled=loading | onClick=() => void onLoadMore() | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:140 | confirmed |
+| AdminCostPanel | button | 同じ条件の全ページを export | 「同じ条件の全ページを export」を実行するボタン。 | 状態: disabled=loading \|\| !exportReason.trim() | - | apps/web/src/features/admin/components/panels/AdminCostPanel.tsx:44 | confirmed |
+| AdminCostPanel | a | 有効期限内に取得 | 「有効期限内に取得」へ移動するリンク。 | - | - | apps/web/src/features/admin/components/panels/AdminCostPanel.tsx:47 | confirmed |
+| AdminCostPanel | button | 次の cost item を読み込む | 「次の cost item を読み込む」を実行するボタン。 | 状態: disabled=loading | onClick=() => void onLoadMore() | apps/web/src/features/admin/components/panels/AdminCostPanel.tsx:56 | confirmed |
 | AdminOverviewGrid | button | `${card.label}を開く` | 「`${card.label}を開く`」を実行するボタン。 | - | onClick=card.onSelect | apps/web/src/features/admin/components/panels/AdminOverviewGrid.tsx:205 | confirmed |
 | AdminOverviewGrid | button | `${card.label}を開く` | 「`${card.label}を開く`」を実行するボタン。 | - | onClick=card.onSelect | apps/web/src/features/admin/components/panels/AdminOverviewGrid.tsx:212 | confirmed |
+| AdminUsagePanel | button | 同じ条件の全ページを export | 「同じ条件の全ページを export」を実行するボタン。 | 状態: disabled=loading \|\| !exportReason.trim() | - | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:58 | confirmed |
+| AdminUsagePanel | a | 有効期限内に取得 | 「有効期限内に取得」へ移動するリンク。 | - | - | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:61 | confirmed |
+| AdminUsagePanel | button | 次の usage event を読み込む | 「次の usage event を読み込む」を実行するボタン。 | 状態: disabled=loading | onClick=() => void onLoadMore() | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:78 | confirmed |
+| UsageQueryForm | button | 条件を適用 | 「条件を適用」を実行するボタン。 | 状態: disabled=loading | - | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:92 | confirmed |
 | AdminUserPanel | button | 検索 | 「検索」を実行するボタン。 | 状態: disabled=loading | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:95 | confirmed |
 | AdminUserPanel | button | 次のユーザーを読み込む（残り / 人） | 「次のユーザーを読み込む（残り / 人）」を実行するボタン。 | 状態: disabled=loading | onClick=() => void onLoadMore() | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:143 | confirmed |
 | AdminCreateUserForm | button | 作成 | 「作成」を実行するボタン。 | 状態: disabled=loading \|\| email.trim().length === 0 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:212 | confirmed |
@@ -71,6 +78,9 @@
 | --- | --- | --- | --- | --- | --- | --- |
 | AdminAuditPanel | 管理操作履歴を絞り込む | 「管理操作履歴を絞り込む」を入力・送信するフォーム。 | role: search | onSubmit=applyFilters | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:62 | confirmed |
 | AdminAuditPanel | 現在の監査条件を export | 「現在の監査条件を export」を入力・送信するフォーム。 | - | onSubmit=async (event) => { event.preventDefault() const reason = exportReason.trim() if (!reason)… | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:90 | confirmed |
+| AdminCostPanel | 現在のコスト条件を export | 「現在のコスト条件を export」を入力・送信するフォーム。 | - | onSubmit=async (event: FormEvent) => { event.preventDefault(); if (!exportReason.trim()) return; s… | apps/web/src/features/admin/components/panels/AdminCostPanel.tsx:38 | confirmed |
+| AdminUsagePanel | 現在の利用状況条件を export | 「現在の利用状況条件を export」を入力・送信するフォーム。 | - | onSubmit=exportCurrent | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:56 | confirmed |
+| UsageQueryForm | 利用量とコストを絞り込む | 「利用量とコストを絞り込む」を入力・送信するフォーム。 | role: search | onSubmit=onSubmit | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:84 | confirmed |
 | AdminUserPanel | 管理対象ユーザーを絞り込む | 「管理対象ユーザーを絞り込む」を入力・送信するフォーム。 | role: search | onSubmit=(event) => { event.preventDefault() onUrlStateChange({ ...urlState, section: "users", que… | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:84 | confirmed |
 | AdminCreateUserForm | 管理対象ユーザー作成 | 「管理対象ユーザー作成」を入力・送信するフォーム。 | - | onSubmit=(event) => void submit(event) | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:189 | confirmed |
 | AliasAdminPanel | 用語展開を絞り込む | 「用語展開を絞り込む」を入力・送信するフォーム。 | role: search | onSubmit=applyFilters | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:138 | confirmed |
@@ -83,6 +93,15 @@
 | AdminAuditPanel | input | 対象・実行者を検索 | 「対象・実行者を検索」を入力または選択する項目。 | - | onChange=(event) => setQuery(event.target.value) | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:65 | confirmed |
 | AdminAuditPanel | select | すべて | 「すべて」を選ぶ選択項目。 | - | onChange=(event) => onUrlStateChange({ ...urlState, section: "audit", auditAction: event.target.va… | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:69 | confirmed |
 | AdminAuditPanel | input | export 理由（必須） | 「export 理由（必須）」を入力または選択する項目。 | - | onChange=(event) => setExportReason(event.target.value) | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:104 | confirmed |
+| AdminCostPanel | input | export 理由（必須） | 「export 理由（必須）」を入力または選択する項目。 | - | onChange=(event) => setExportReason(event.target.value) | apps/web/src/features/admin/components/panels/AdminCostPanel.tsx:43 | confirmed |
+| AdminUsagePanel | input | export 理由（必須） | 「export 理由（必須）」を入力または選択する項目。 | - | onChange=(event) => setExportReason(event.target.value) | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:57 | confirmed |
+| UsageQueryForm | input | 期間開始（ISO 8601） | 「期間開始（ISO 8601）」を入力または選択する項目。 | - | onChange=(event) => onChange({ ...query, periodStart: event.target.value }) | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:85 | confirmed |
+| UsageQueryForm | input | 期間終了（ISO 8601・含まない） | 「期間終了（ISO 8601・含まない）」を入力または選択する項目。 | - | onChange=(event) => onChange({ ...query, periodEnd: event.target.value }) | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:86 | confirmed |
+| UsageQueryForm | input | subject | 「subject」を入力または選択する項目。 | - | onChange=(event) => onChange({ ...query, subjectId: event.target.value }) | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:87 | confirmed |
+| UsageQueryForm | input | run | 「run」を入力または選択する項目。 | - | onChange=(event) => onChange({ ...query, runId: event.target.value }) | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:88 | confirmed |
+| UsageQueryForm | input | model | 「model」を入力または選択する項目。 | - | onChange=(event) => onChange({ ...query, modelId: event.target.value }) | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:89 | confirmed |
+| UsageQueryForm | input | feature | 「feature」を入力または選択する項目。 | - | onChange=(event) => onChange({ ...query, feature: event.target.value }) | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:90 | confirmed |
+| UsageQueryForm | input | provider | 「provider」を入力または選択する項目。 | - | onChange=(event) => onChange({ ...query, provider: event.target.value }) | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:91 | confirmed |
 | AdminUserPanel | input | ユーザー・ロールを検索 | 「ユーザー・ロールを検索」を入力または選択する項目。 | - | onChange=(event) => setQuery(event.target.value) | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:88 | confirmed |
 | AdminUserPanel | select | すべて / 有効 / 停止中 | 「すべて / 有効 / 停止中」を選ぶ選択項目。 | - | onChange=(event) => onUrlStateChange({ ...urlState, section: "users", userStatus: event.target.val… | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:89 | confirmed |
 | AdminUserPanel | select | メール昇順 / 更新日時の新しい順 | 「メール昇順 / 更新日時の新しい順」を選ぶ選択項目。 | - | onChange=(event) => onUrlStateChange({ ...urlState, section: "users", userSort: event.target.value… | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:92 | confirmed |
@@ -108,8 +127,8 @@
 | コンポーネント | 要素 | ラベル | UI 説明 | 状態・補足 | ハンドラ | 場所 | 確度 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | AdminPanelDataStatus | button | `${label}を更新` | 「`${label}を更新`」を実行するボタン。 | 状態: disabled=loading \|\| isBusy | onClick=() => void onRefresh() | apps/web/src/features/admin/components/AdminPanelDataStatus.tsx:39 | confirmed |
-| AdminWorkspace | button | チャットへ戻る | 「チャットへ戻る」を実行するボタン。 | - | onClick=onBack | apps/web/src/features/admin/components/AdminWorkspace.tsx:201 | confirmed |
-| AdminWorkspace | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: aria-current=resolvedActiveSection === section.id ? "page" : undefined | onClick=() => openSection(section.id) | apps/web/src/features/admin/components/AdminWorkspace.tsx:214 | unknown |
+| AdminWorkspace | button | チャットへ戻る | 「チャットへ戻る」を実行するボタン。 | - | onClick=onBack | apps/web/src/features/admin/components/AdminWorkspace.tsx:216 | confirmed |
+| AdminWorkspace | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: aria-current=resolvedActiveSection === section.id ? "page" : undefined | onClick=() => openSection(section.id) | apps/web/src/features/admin/components/AdminWorkspace.tsx:229 | unknown |
 | AdminAuditPanel | form | 管理操作履歴を絞り込む | 「管理操作履歴を絞り込む」を入力・送信するフォーム。 | role: search | onSubmit=applyFilters | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:62 | confirmed |
 | AdminAuditPanel | label | 対象・実行者を検索 | 「対象・実行者を検索」に紐づく入力ラベル。 | - | - | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:63 | confirmed |
 | AdminAuditPanel | input | 対象・実行者を検索 | 「対象・実行者を検索」を入力または選択する項目。 | - | onChange=(event) => setQuery(event.target.value) | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:65 | confirmed |
@@ -125,9 +144,39 @@
 | AdminAuditPanel | button | 現在の条件を export | 「現在の条件を export」を実行するボタン。 | 状態: disabled=loading \|\| exportReason.trim().length === 0 | - | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:105 | confirmed |
 | AdminAuditPanel | a | 有効期限内に取得 | 「有効期限内に取得」へ移動するリンク。 | - | - | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:110 | confirmed |
 | AdminAuditPanel | button | 次の履歴を読み込む（残り / 件） | 「次の履歴を読み込む（残り / 件）」を実行するボタン。 | 状態: disabled=loading | onClick=() => void onLoadMore() | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:140 | confirmed |
+| AdminCostPanel | UsageQueryForm | 未推定 | UsageQueryForm 要素。静的解析では具体的な操作名を推定できません。 | - | onChange=setQuery<br>onSubmit=(event) => { event.preventDefault(); void onApplyQuery(query) } | apps/web/src/features/admin/components/panels/AdminCostPanel.tsx:30 | unknown |
+| AdminCostPanel | form | 現在のコスト条件を export | 「現在のコスト条件を export」を入力・送信するフォーム。 | - | onSubmit=async (event: FormEvent) => { event.preventDefault(); if (!exportReason.trim()) return; s… | apps/web/src/features/admin/components/panels/AdminCostPanel.tsx:38 | confirmed |
+| AdminCostPanel | label | export 理由（必須） | 「export 理由（必須）」に紐づく入力ラベル。 | - | - | apps/web/src/features/admin/components/panels/AdminCostPanel.tsx:43 | confirmed |
+| AdminCostPanel | input | export 理由（必須） | 「export 理由（必須）」を入力または選択する項目。 | - | onChange=(event) => setExportReason(event.target.value) | apps/web/src/features/admin/components/panels/AdminCostPanel.tsx:43 | confirmed |
+| AdminCostPanel | button | 同じ条件の全ページを export | 「同じ条件の全ページを export」を実行するボタン。 | 状態: disabled=loading \|\| !exportReason.trim() | - | apps/web/src/features/admin/components/panels/AdminCostPanel.tsx:44 | confirmed |
+| AdminCostPanel | a | 有効期限内に取得 | 「有効期限内に取得」へ移動するリンク。 | - | - | apps/web/src/features/admin/components/panels/AdminCostPanel.tsx:47 | confirmed |
+| AdminCostPanel | button | 次の cost item を読み込む | 「次の cost item を読み込む」を実行するボタン。 | 状態: disabled=loading | onClick=() => void onLoadMore() | apps/web/src/features/admin/components/panels/AdminCostPanel.tsx:56 | confirmed |
 | AdminOverviewGrid | button | `${card.label}を開く` | 「`${card.label}を開く`」を実行するボタン。 | - | onClick=card.onSelect | apps/web/src/features/admin/components/panels/AdminOverviewGrid.tsx:205 | confirmed |
 | AdminOverviewGrid | button | `${card.label}を開く` | 「`${card.label}を開く`」を実行するボタン。 | - | onClick=card.onSelect | apps/web/src/features/admin/components/panels/AdminOverviewGrid.tsx:212 | confirmed |
 | AdminRolePanel | summary | 権限 ID / 件を表示 | 「権限 ID / 件を表示」の詳細を開閉する要素。 | - | - | apps/web/src/features/admin/components/panels/AdminRolePanel.tsx:55 | confirmed |
+| AdminUsagePanel | UsageQueryForm | 未推定 | UsageQueryForm 要素。静的解析では具体的な操作名を推定できません。 | - | onChange=setQuery<br>onSubmit=applyFilters | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:53 | unknown |
+| AdminUsagePanel | form | 現在の利用状況条件を export | 「現在の利用状況条件を export」を入力・送信するフォーム。 | - | onSubmit=exportCurrent | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:56 | confirmed |
+| AdminUsagePanel | label | export 理由（必須） | 「export 理由（必須）」に紐づく入力ラベル。 | - | - | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:57 | confirmed |
+| AdminUsagePanel | input | export 理由（必須） | 「export 理由（必須）」を入力または選択する項目。 | - | onChange=(event) => setExportReason(event.target.value) | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:57 | confirmed |
+| AdminUsagePanel | button | 同じ条件の全ページを export | 「同じ条件の全ページを export」を実行するボタン。 | 状態: disabled=loading \|\| !exportReason.trim() | - | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:58 | confirmed |
+| AdminUsagePanel | a | 有効期限内に取得 | 「有効期限内に取得」へ移動するリンク。 | - | - | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:61 | confirmed |
+| AdminUsagePanel | button | 次の usage event を読み込む | 「次の usage event を読み込む」を実行するボタン。 | 状態: disabled=loading | onClick=() => void onLoadMore() | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:78 | confirmed |
+| UsageQueryForm | form | 利用量とコストを絞り込む | 「利用量とコストを絞り込む」を入力・送信するフォーム。 | role: search | onSubmit=onSubmit | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:84 | confirmed |
+| UsageQueryForm | label | 期間開始（ISO 8601） | 「期間開始（ISO 8601）」に紐づく入力ラベル。 | - | - | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:85 | confirmed |
+| UsageQueryForm | input | 期間開始（ISO 8601） | 「期間開始（ISO 8601）」を入力または選択する項目。 | - | onChange=(event) => onChange({ ...query, periodStart: event.target.value }) | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:85 | confirmed |
+| UsageQueryForm | label | 期間終了（ISO 8601・含まない） | 「期間終了（ISO 8601・含まない）」に紐づく入力ラベル。 | - | - | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:86 | confirmed |
+| UsageQueryForm | input | 期間終了（ISO 8601・含まない） | 「期間終了（ISO 8601・含まない）」を入力または選択する項目。 | - | onChange=(event) => onChange({ ...query, periodEnd: event.target.value }) | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:86 | confirmed |
+| UsageQueryForm | label | subject | 「subject」に紐づく入力ラベル。 | - | - | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:87 | confirmed |
+| UsageQueryForm | input | subject | 「subject」を入力または選択する項目。 | - | onChange=(event) => onChange({ ...query, subjectId: event.target.value }) | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:87 | confirmed |
+| UsageQueryForm | label | run | 「run」に紐づく入力ラベル。 | - | - | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:88 | confirmed |
+| UsageQueryForm | input | run | 「run」を入力または選択する項目。 | - | onChange=(event) => onChange({ ...query, runId: event.target.value }) | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:88 | confirmed |
+| UsageQueryForm | label | model | 「model」に紐づく入力ラベル。 | - | - | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:89 | confirmed |
+| UsageQueryForm | input | model | 「model」を入力または選択する項目。 | - | onChange=(event) => onChange({ ...query, modelId: event.target.value }) | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:89 | confirmed |
+| UsageQueryForm | label | feature | 「feature」に紐づく入力ラベル。 | - | - | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:90 | confirmed |
+| UsageQueryForm | input | feature | 「feature」を入力または選択する項目。 | - | onChange=(event) => onChange({ ...query, feature: event.target.value }) | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:90 | confirmed |
+| UsageQueryForm | label | provider | 「provider」に紐づく入力ラベル。 | - | - | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:91 | confirmed |
+| UsageQueryForm | input | provider | 「provider」を入力または選択する項目。 | - | onChange=(event) => onChange({ ...query, provider: event.target.value }) | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:91 | confirmed |
+| UsageQueryForm | button | 条件を適用 | 「条件を適用」を実行するボタン。 | 状態: disabled=loading | - | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:92 | confirmed |
 | AdminUserPanel | form | 管理対象ユーザーを絞り込む | 「管理対象ユーザーを絞り込む」を入力・送信するフォーム。 | role: search | onSubmit=(event) => { event.preventDefault() onUrlStateChange({ ...urlState, section: "users", que… | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:84 | confirmed |
 | AdminUserPanel | label | ユーザー・ロールを検索 | 「ユーザー・ロールを検索」に紐づく入力ラベル。 | - | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:88 | confirmed |
 | AdminUserPanel | input | ユーザー・ロールを検索 | 「ユーザー・ロールを検索」を入力または選択する項目。 | - | onChange=(event) => setQuery(event.target.value) | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:88 | confirmed |

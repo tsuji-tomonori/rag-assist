@@ -28,7 +28,7 @@ Bedrock、S3 Vectors、DynamoDB、Lambda などの利用量を集計し、servic
 
 | 処理 | 入力 | 出力 |
 |---|---|---|
-| `collect_usage` | trace、document/vector manifest、DynamoDB item stats、Lambda metrics | usage summary |
+| `collect_usage` | Bedrock response usage、tokenizer estimate、authoritative actor/run context | immutable usage event |
 | `load_pricing_catalog` | service、region、catalog version | pricing catalog entries |
 | `estimate_cost` | usage summary、pricing catalog、period、component map | cost estimate |
 | `get_cost_summary` | authorized user、period、filters | service/component 別 cost summary |
@@ -37,8 +37,8 @@ Bedrock、S3 Vectors、DynamoDB、Lambda などの利用量を集計し、servic
 
 | service | usage source | 主な単位 |
 |---|---|---|
-| Bedrock chat model | Debug Trace Store | input tokens、output tokens、model id、region |
-| Bedrock embedding model | ingestion/search trace | embedding tokens、model id、region |
+| Bedrock chat model | provider response usage / tokenizer estimate | input/output/cache tokens、model id、region |
+| Bedrock embedding model | provider response usage / tokenizer estimate | input tokens、model id、region |
 | S3 Vectors | vector manifest、query diagnostics | vector count、logical storage、query API、query data processed |
 | DynamoDB | item size estimate、CloudWatch metrics | read request unit、write request unit、storage、PITR |
 | Lambda | CloudWatch metrics | request count、duration、memory GB-second |
@@ -48,12 +48,12 @@ Bedrock、S3 Vectors、DynamoDB、Lambda などの利用量を集計し、servic
 
 ### 利用量集計
 
-1. Usage Meter は対象期間と component map を受け取る。
-2. Debug Trace Store から model id、token usage、RAG step、component を集計する。
+1. chat/ingest の model wrapper は authoritative tenant、subject、run、feature と呼び出し ordinal から idempotency key を作る。
+2. provider response usage を優先し、得られない quantity は tokenizer estimate または `missing` として保存する。
 3. document/vector manifest から vector count、storage bytes、indexVersion を集計する。
 4. DynamoDB item stats または CloudWatch metrics から read/write/storage の概算値を集計する。
 5. Lambda metrics から request count と `memoryGb * durationSeconds` を集計する。
-6. usage source が実測か概算かを `confidence` に記録する。
+6. tenant + half-open period GSI を `Query` し、filter fingerprint と LastEvaluatedKey を結び付けた cursor で全 page を辿る。
 
 ### 料金カタログ
 
@@ -61,6 +61,7 @@ Bedrock、S3 Vectors、DynamoDB、Lambda などの利用量を集計し、servic
 2. 単価が未登録の service/component は 0 円扱いにしない。
 3. pricing catalog の更新は audit 可能な version として扱う。
 4. 公式料金とずれる可能性があるため、表示上は請求額ではなく概算と明記する。
+5. catalog は canonical timestamp、承認者、source、重複しない version/provider/region/model/unit/effectiveFrom identity を必須にする。
 
 ### コスト見積もり
 
@@ -98,3 +99,6 @@ Bedrock、S3 Vectors、DynamoDB、Lambda などの利用量を集計し、servic
 | 未登録単価 | 0 円ではなく `unpriced` と warning を出す。 |
 | 概算 confidence | estimated usage と measured usage を区別する。 |
 | 権限 | cost auditor または管理者 permission なしで summary を取得できない。 |
+| replay | 同じ tenant/run/invocation の再実行で quantity が増えない。 |
+| scale | 1,000 件超、複数 tenant、複数 price version を全 cursor page で欠落なく処理する。 |
+| rollout | shadow では write を許可しても read/export を active と表示せず、active だけが export できる。 |

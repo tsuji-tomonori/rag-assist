@@ -8,16 +8,16 @@
 
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
-| 到達 symbol | service creates search improvement candidates as draft review items | `apps/api/src/rag/memorag-service.test.ts:1519 (service creates search improvement candidates as draft review items)` |
-| 到達 symbol | service delegates human question lifecycle to the question store | `apps/api/src/rag/memorag-service.test.ts:1572 (service delegates human question lifecycle to the question store)` |
-| 到達 symbol | questionCreate_setsDefaultAssigneeGroupWhenMissing | `apps/api/src/rag/memorag-service.test.ts:1638 (questionCreate_setsDefaultAssigneeGroupWhenMissing)` |
+| 到達 symbol | service creates search improvement candidates as draft review items | `apps/api/src/rag/memorag-service.test.ts:1550 (service creates search improvement candidates as draft review items)` |
+| 到達 symbol | service delegates human question lifecycle to the question store | `apps/api/src/rag/memorag-service.test.ts:1603 (service delegates human question lifecycle to the question store)` |
+| 到達 symbol | questionCreate_setsDefaultAssigneeGroupWhenMissing | `apps/api/src/rag/memorag-service.test.ts:1669 (questionCreate_setsDefaultAssigneeGroupWhenMissing)` |
 
 ## 2. 実装分岐から導くテスト要因
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
 | F001 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| F002 | `MemoRagService.createQuestion` | 三項条件 | `input.assigneeUserId` が存在し、真である、または `input.assigneeGroupId` が存在し、真である | `apps/api/src/rag/memorag-service.ts:3019 (MemoRagService.createQuestion)` |
+| F002 | `MemoRagService.createQuestion` | 三項条件 | `input.assigneeUserId` が存在し、真である、または `input.assigneeGroupId` が存在し、真である | `apps/api/src/rag/memorag-service.ts:3114 (MemoRagService.createQuestion)` |
 
 ## 3. コード由来テストケース
 
@@ -26,8 +26,8 @@
 | TC001 | 正常系 | 担当者問い合わせを作成する が成功 response を返す。 | `apps/api/src/routes/question-routes.ts:43 (POST /questions handler)` |
 | TC002 | F001: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
 | TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC004 | F002: 条件成立 | `input.assigneeUserId` が存在し、真である、または `input.assigneeGroupId` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:3019 (MemoRagService.createQuestion)` |
-| TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:3019 (MemoRagService.createQuestion)` |
+| TC004 | F002: 条件成立 | `input.assigneeUserId` が存在し、真である、または `input.assigneeGroupId` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:3114 (MemoRagService.createQuestion)` |
+| TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:3114 (MemoRagService.createQuestion)` |
 | TC006 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC007 | HTTP 400 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC008 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

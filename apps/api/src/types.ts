@@ -1058,7 +1058,7 @@ export type QualityActionCard = {
 }
 
 export type AdminExportArtifact = {
-  exportType: "audit_log" | "cost_summary"
+  exportType: "audit_log" | "usage_summary" | "cost_summary"
   url: string
   expiresInSeconds: number
   objectKey: string
@@ -1662,6 +1662,10 @@ export type ReindexMigration = {
   checkpoint?: string
 }
 
+export type UsageMeasurementSource = "provider" | "tokenizer_estimate" | "missing"
+export type UsageQuantityUnit = "input_token" | "output_token" | "cache_read_token" | "cache_write_token" | "request"
+
+/** Legacy admin-ledger counters retained only for non-destructive migration reads. */
 export type UserUsageSummary = {
   userId: string
   email: string
@@ -1672,37 +1676,131 @@ export type UserUsageSummary = {
   documentCount?: number
   benchmarkRunCount?: number
   debugRunCount?: number
-  availableMetrics: Array<"chatMessages" | "conversationCount" | "questionCount" | "documentCount" | "benchmarkRunCount" | "debugRunCount">
-  unavailableMetrics: Array<"chatMessages" | "conversationCount" | "questionCount" | "documentCount" | "benchmarkRunCount" | "debugRunCount">
+  availableMetrics: string[]
+  unavailableMetrics: string[]
   lastActivityAt?: string
 }
 
-export type CostAuditItem = {
-  service: string
-  category: string
-  usage: number
-  unit: string
-  unitCostUsd: number
-  estimatedCostUsd: number
-  confidence: "actual_usage" | "estimated_usage" | "manual_estimate"
+export type UsageQuantity = {
+  unit: UsageQuantityUnit
+  value?: number
+  source: UsageMeasurementSource
 }
 
-export type UserCostSummary = {
-  userId: string
-  email: string
-  estimatedCostUsd: number
+export type UsageEvent = {
+  schemaVersion: 1
+  eventId: string
+  tenantId: string
+  subjectId?: string
+  runId?: string
+  feature?: string
+  provider?: string
+  region?: string
+  modelId?: string
+  quantities: UsageQuantity[]
+  status: "succeeded" | "failed"
+  errorCode?: string
+  idempotencyKey: string
+  occurredAt: string
+  recordedAt: string
+}
+
+export type UsageListQuery = {
+  periodStart: string
+  periodEnd: string
+  subjectId?: string
+  runId?: string
+  modelId?: string
+  feature?: string
+  provider?: string
+  limit?: number
+  cursor?: string
+}
+
+export type UsageDataCompleteness = {
+  eventCount: number
+  actualQuantityCount: number
+  estimatedQuantityCount: number
+  missingQuantityCount: number
+  unknownSubjectCount: number
+  unknownRunCount: number
+  unknownModelCount: number
+  unknownFeatureCount: number
+  unpricedQuantityCount: number
+  state: "complete" | "partial" | "missing"
+}
+
+export type UsageBreakdown = {
+  key: string
+  label: string
+  actualQuantity: number
+  estimatedQuantity: number
+  missingQuantityCount: number
+  eventCount: number
+}
+
+export type UsageSummaryPage = {
+  query: Omit<UsageListQuery, "cursor">
+  events: UsageEvent[]
+  nextCursor?: string
+  truncated: boolean
+  asOf: string
+  source: "usage_event_store"
+  rolloutMode: "disabled" | "shadow" | "active"
+  completeness: UsageDataCompleteness
+  breakdowns: {
+    bySubject: UsageBreakdown[]
+    byFeature: UsageBreakdown[]
+    byProvider: UsageBreakdown[]
+    byModel: UsageBreakdown[]
+  }
+}
+
+export type PriceCatalogEntry = {
+  catalogVersion: string
+  provider: string
+  region: string
+  modelId: string
+  unit: UsageQuantityUnit
+  priceUsdPerUnit: string
+  effectiveFrom: string
+  effectiveTo?: string
+  source: string
+  approvedBy: string
+  publishedAt: string
+}
+
+export type CostAuditItem = {
+  eventId: string
+  subjectId: string
+  runId: string
+  feature: string
+  provider: string
+  region: string
+  modelId: string
+  unit: UsageQuantityUnit
+  quantity?: number
+  measurementSource: UsageMeasurementSource
+  pricingState: "actual" | "estimate" | "unpriced"
+  catalogVersion?: string
+  priceSource?: string
+  unitCostUsd?: number
+  costUsd?: number
+  occurredAt: string
 }
 
 export type CostAuditSummary = {
-  available: boolean
-  unavailableReason?: string
-  periodStart: string
-  periodEnd: string
-  currency?: "USD"
-  totalEstimatedUsd?: number
-  items?: CostAuditItem[]
-  users?: UserCostSummary[]
-  pricingCatalogUpdatedAt?: string
+  query: Omit<UsageListQuery, "cursor">
+  currency: "USD"
+  pricedCostUsd: number
+  items: CostAuditItem[]
+  nextCursor?: string
+  truncated: boolean
+  asOf: string
+  source: "usage_event_store+versioned_price_catalog"
+  rolloutMode: "disabled" | "shadow" | "active"
+  catalogVersions: string[]
+  completeness: UsageDataCompleteness
 }
 
 export type QuestionStatus = "open" | "in_progress" | "waiting_requester" | "answered" | "resolved"

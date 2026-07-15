@@ -19,7 +19,7 @@
 
 | 機能 | feature | 操作要素 | 主な UI 説明 | 詳細 |
 | --- | --- | --- | --- | --- |
-| 管理 | admin | 104 | 「チャットへ戻る」を実行するボタン。<br>「管理操作履歴を絞り込む」を入力・送信するフォーム。<br>「対象・実行者を検索」に紐づく入力ラベル。<br>「対象・実行者を検索」を入力または選択する項目。 ほか 72 件 | [admin.md](web-features/admin.md) |
+| 管理 | admin | 134 | 「チャットへ戻る」を実行するボタン。<br>「管理操作履歴を絞り込む」を入力・送信するフォーム。<br>「対象・実行者を検索」に紐づく入力ラベル。<br>「対象・実行者を検索」を入力または選択する項目。 ほか 93 件 | [admin.md](web-features/admin.md) |
 | agents | agents | 4 | 「チャットへ戻る」を実行するボタン。<br>「非同期エージェント情報を更新」を実行するボタン。<br>「キャンセル」を実行するボタン。 | [agents.md](web-features/agents.md) |
 | アプリケーション枠 | app | 15 | 「チャットへ戻る」を実行するボタン。<br>「送信キー / Enterで送信 / Ctrl+Enterで送信」に紐づく入力ラベル。<br>「Enterで送信 / Ctrl+Enterで送信」を選ぶ選択項目。<br>「Enterで送信」を表す option 要素。 ほか 8 件 | [app.md](web-features/app.md) |
 | 認証 | auth | 26 | 「title」を入力・送信するフォーム。<br>「新しいパスワード」に紐づく入力ラベル。<br>「新しいパスワード」を入力または選択する項目。<br>「新しいパスワード（確認）」に紐づく入力ラベル。 ほか 14 件 | [auth.md](web-features/auth.md) |
@@ -52,8 +52,8 @@
 | アプリケーション枠 | TopBar | input | デバッグモード | 「デバッグモード」を入力または選択する項目。 | - | apps/web/src/app/components/TopBar.tsx:20 |
 | アプリケーション枠 | TopBar | button | 新しい会話 | 「新しい会話」を実行するボタン。 | - | apps/web/src/app/components/TopBar.tsx:24 |
 | 管理 | AdminPanelDataStatus | button | `${label}を更新` | 「`${label}を更新`」を実行するボタン。 | 状態: disabled=loading \|\| isBusy | apps/web/src/features/admin/components/AdminPanelDataStatus.tsx:39 |
-| 管理 | AdminWorkspace | button | チャットへ戻る | 「チャットへ戻る」を実行するボタン。 | - | apps/web/src/features/admin/components/AdminWorkspace.tsx:201 |
-| 管理 | AdminWorkspace | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: aria-current=resolvedActiveSection === section.id ? "page" : undefined | apps/web/src/features/admin/components/AdminWorkspace.tsx:214 |
+| 管理 | AdminWorkspace | button | チャットへ戻る | 「チャットへ戻る」を実行するボタン。 | - | apps/web/src/features/admin/components/AdminWorkspace.tsx:216 |
+| 管理 | AdminWorkspace | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: aria-current=resolvedActiveSection === section.id ? "page" : undefined | apps/web/src/features/admin/components/AdminWorkspace.tsx:229 |
 | 管理 | AdminAuditPanel | form | 管理操作履歴を絞り込む | 「管理操作履歴を絞り込む」を入力・送信するフォーム。 | role: search | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:62 |
 | 管理 | AdminAuditPanel | label | 対象・実行者を検索 | 「対象・実行者を検索」に紐づく入力ラベル。 | - | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:63 |
 | 管理 | AdminAuditPanel | input | 対象・実行者を検索 | 「対象・実行者を検索」を入力または選択する項目。 | - | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:65 |
@@ -69,9 +69,39 @@
 | 管理 | AdminAuditPanel | button | 現在の条件を export | 「現在の条件を export」を実行するボタン。 | 状態: disabled=loading \|\| exportReason.trim().length === 0 | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:105 |
 | 管理 | AdminAuditPanel | a | 有効期限内に取得 | 「有効期限内に取得」へ移動するリンク。 | - | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:110 |
 | 管理 | AdminAuditPanel | button | 次の履歴を読み込む（残り / 件） | 「次の履歴を読み込む（残り / 件）」を実行するボタン。 | 状態: disabled=loading | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:140 |
+| 管理 | AdminCostPanel | UsageQueryForm | 未推定 | UsageQueryForm 要素。静的解析では具体的な操作名を推定できません。 | - | apps/web/src/features/admin/components/panels/AdminCostPanel.tsx:30 |
+| 管理 | AdminCostPanel | form | 現在のコスト条件を export | 「現在のコスト条件を export」を入力・送信するフォーム。 | - | apps/web/src/features/admin/components/panels/AdminCostPanel.tsx:38 |
+| 管理 | AdminCostPanel | label | export 理由（必須） | 「export 理由（必須）」に紐づく入力ラベル。 | - | apps/web/src/features/admin/components/panels/AdminCostPanel.tsx:43 |
+| 管理 | AdminCostPanel | input | export 理由（必須） | 「export 理由（必須）」を入力または選択する項目。 | - | apps/web/src/features/admin/components/panels/AdminCostPanel.tsx:43 |
+| 管理 | AdminCostPanel | button | 同じ条件の全ページを export | 「同じ条件の全ページを export」を実行するボタン。 | 状態: disabled=loading \|\| !exportReason.trim() | apps/web/src/features/admin/components/panels/AdminCostPanel.tsx:44 |
+| 管理 | AdminCostPanel | a | 有効期限内に取得 | 「有効期限内に取得」へ移動するリンク。 | - | apps/web/src/features/admin/components/panels/AdminCostPanel.tsx:47 |
+| 管理 | AdminCostPanel | button | 次の cost item を読み込む | 「次の cost item を読み込む」を実行するボタン。 | 状態: disabled=loading | apps/web/src/features/admin/components/panels/AdminCostPanel.tsx:56 |
 | 管理 | AdminOverviewGrid | button | `${card.label}を開く` | 「`${card.label}を開く`」を実行するボタン。 | - | apps/web/src/features/admin/components/panels/AdminOverviewGrid.tsx:205 |
 | 管理 | AdminOverviewGrid | button | `${card.label}を開く` | 「`${card.label}を開く`」を実行するボタン。 | - | apps/web/src/features/admin/components/panels/AdminOverviewGrid.tsx:212 |
 | 管理 | AdminRolePanel | summary | 権限 ID / 件を表示 | 「権限 ID / 件を表示」の詳細を開閉する要素。 | - | apps/web/src/features/admin/components/panels/AdminRolePanel.tsx:55 |
+| 管理 | AdminUsagePanel | UsageQueryForm | 未推定 | UsageQueryForm 要素。静的解析では具体的な操作名を推定できません。 | - | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:53 |
+| 管理 | AdminUsagePanel | form | 現在の利用状況条件を export | 「現在の利用状況条件を export」を入力・送信するフォーム。 | - | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:56 |
+| 管理 | AdminUsagePanel | label | export 理由（必須） | 「export 理由（必須）」に紐づく入力ラベル。 | - | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:57 |
+| 管理 | AdminUsagePanel | input | export 理由（必須） | 「export 理由（必須）」を入力または選択する項目。 | - | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:57 |
+| 管理 | AdminUsagePanel | button | 同じ条件の全ページを export | 「同じ条件の全ページを export」を実行するボタン。 | 状態: disabled=loading \|\| !exportReason.trim() | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:58 |
+| 管理 | AdminUsagePanel | a | 有効期限内に取得 | 「有効期限内に取得」へ移動するリンク。 | - | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:61 |
+| 管理 | AdminUsagePanel | button | 次の usage event を読み込む | 「次の usage event を読み込む」を実行するボタン。 | 状態: disabled=loading | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:78 |
+| 管理 | UsageQueryForm | form | 利用量とコストを絞り込む | 「利用量とコストを絞り込む」を入力・送信するフォーム。 | role: search | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:84 |
+| 管理 | UsageQueryForm | label | 期間開始（ISO 8601） | 「期間開始（ISO 8601）」に紐づく入力ラベル。 | - | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:85 |
+| 管理 | UsageQueryForm | input | 期間開始（ISO 8601） | 「期間開始（ISO 8601）」を入力または選択する項目。 | - | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:85 |
+| 管理 | UsageQueryForm | label | 期間終了（ISO 8601・含まない） | 「期間終了（ISO 8601・含まない）」に紐づく入力ラベル。 | - | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:86 |
+| 管理 | UsageQueryForm | input | 期間終了（ISO 8601・含まない） | 「期間終了（ISO 8601・含まない）」を入力または選択する項目。 | - | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:86 |
+| 管理 | UsageQueryForm | label | subject | 「subject」に紐づく入力ラベル。 | - | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:87 |
+| 管理 | UsageQueryForm | input | subject | 「subject」を入力または選択する項目。 | - | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:87 |
+| 管理 | UsageQueryForm | label | run | 「run」に紐づく入力ラベル。 | - | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:88 |
+| 管理 | UsageQueryForm | input | run | 「run」を入力または選択する項目。 | - | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:88 |
+| 管理 | UsageQueryForm | label | model | 「model」に紐づく入力ラベル。 | - | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:89 |
+| 管理 | UsageQueryForm | input | model | 「model」を入力または選択する項目。 | - | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:89 |
+| 管理 | UsageQueryForm | label | feature | 「feature」に紐づく入力ラベル。 | - | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:90 |
+| 管理 | UsageQueryForm | input | feature | 「feature」を入力または選択する項目。 | - | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:90 |
+| 管理 | UsageQueryForm | label | provider | 「provider」に紐づく入力ラベル。 | - | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:91 |
+| 管理 | UsageQueryForm | input | provider | 「provider」を入力または選択する項目。 | - | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:91 |
+| 管理 | UsageQueryForm | button | 条件を適用 | 「条件を適用」を実行するボタン。 | 状態: disabled=loading | apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx:92 |
 | 管理 | AdminUserPanel | form | 管理対象ユーザーを絞り込む | 「管理対象ユーザーを絞り込む」を入力・送信するフォーム。 | role: search | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:84 |
 | 管理 | AdminUserPanel | label | ユーザー・ロールを検索 | 「ユーザー・ロールを検索」に紐づく入力ラベル。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:88 |
 | 管理 | AdminUserPanel | input | ユーザー・ロールを検索 | 「ユーザー・ロールを検索」を入力または選択する項目。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:88 |

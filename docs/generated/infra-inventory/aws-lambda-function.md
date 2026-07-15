@@ -95,8 +95,12 @@ Logical ID: `ApiFunctionCE271BD4`
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
 | `RAG_MONITORING_REQUIRED` | 1 |
 | `RAG_SAFETY_STATE_TTL_SECONDS` | 600 |
+| `USAGE_ACCOUNTING_MODE` | shadow |
+| `USAGE_EVENTS_TABLE_NAME` | Ref:UsageEventsTable215FE3DD |
+| `USAGE_PRICING_CATALOG_JSON` | [] |
 | `USE_LOCAL_BENCHMARK_RUN_STORE` | false |
 | `USE_LOCAL_CHAT_RUN_STORE` | false |
+| `USE_LOCAL_USAGE_EVENT_STORE` | false |
 | `USE_LOCAL_VECTOR_STORE` | false |
 | `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |
 
@@ -155,8 +159,12 @@ Logical ID: `BenchmarkRunAuthorizationFunction16D4CD86`
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
 | `RAG_MONITORING_REQUIRED` | 1 |
 | `RAG_SAFETY_STATE_TTL_SECONDS` | 600 |
+| `USAGE_ACCOUNTING_MODE` | shadow |
+| `USAGE_EVENTS_TABLE_NAME` | Ref:UsageEventsTable215FE3DD |
+| `USAGE_PRICING_CATALOG_JSON` | [] |
 | `USE_LOCAL_BENCHMARK_RUN_STORE` | false |
 | `USE_LOCAL_CHAT_RUN_STORE` | false |
+| `USE_LOCAL_USAGE_EVENT_STORE` | false |
 | `USE_LOCAL_VECTOR_STORE` | false |
 | `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |
 
@@ -215,8 +223,12 @@ Logical ID: `ChatRunEventsStreamFunctionA12E11AC`
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
 | `RAG_MONITORING_REQUIRED` | 1 |
 | `RAG_SAFETY_STATE_TTL_SECONDS` | 600 |
+| `USAGE_ACCOUNTING_MODE` | shadow |
+| `USAGE_EVENTS_TABLE_NAME` | Ref:UsageEventsTable215FE3DD |
+| `USAGE_PRICING_CATALOG_JSON` | [] |
 | `USE_LOCAL_BENCHMARK_RUN_STORE` | false |
 | `USE_LOCAL_CHAT_RUN_STORE` | false |
+| `USE_LOCAL_USAGE_EVENT_STORE` | false |
 | `USE_LOCAL_VECTOR_STORE` | false |
 | `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |
 
@@ -275,8 +287,12 @@ Logical ID: `ChatRunMarkFailedFunction23223E28`
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
 | `RAG_MONITORING_REQUIRED` | 1 |
 | `RAG_SAFETY_STATE_TTL_SECONDS` | 600 |
+| `USAGE_ACCOUNTING_MODE` | shadow |
+| `USAGE_EVENTS_TABLE_NAME` | Ref:UsageEventsTable215FE3DD |
+| `USAGE_PRICING_CATALOG_JSON` | [] |
 | `USE_LOCAL_BENCHMARK_RUN_STORE` | false |
 | `USE_LOCAL_CHAT_RUN_STORE` | false |
+| `USE_LOCAL_USAGE_EVENT_STORE` | false |
 | `USE_LOCAL_VECTOR_STORE` | false |
 | `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |
 
@@ -335,8 +351,12 @@ Logical ID: `ChatRunWorkerFunction3C85A553`
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
 | `RAG_MONITORING_REQUIRED` | 1 |
 | `RAG_SAFETY_STATE_TTL_SECONDS` | 600 |
+| `USAGE_ACCOUNTING_MODE` | shadow |
+| `USAGE_EVENTS_TABLE_NAME` | Ref:UsageEventsTable215FE3DD |
+| `USAGE_PRICING_CATALOG_JSON` | [] |
 | `USE_LOCAL_BENCHMARK_RUN_STORE` | false |
 | `USE_LOCAL_CHAT_RUN_STORE` | false |
+| `USE_LOCAL_USAGE_EVENT_STORE` | false |
 | `USE_LOCAL_VECTOR_STORE` | false |
 | `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |
 
@@ -429,8 +449,12 @@ Logical ID: `DocumentIngestRunMarkFailedFunction41F16DD3`
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
 | `RAG_MONITORING_REQUIRED` | 1 |
 | `RAG_SAFETY_STATE_TTL_SECONDS` | 600 |
+| `USAGE_ACCOUNTING_MODE` | shadow |
+| `USAGE_EVENTS_TABLE_NAME` | Ref:UsageEventsTable215FE3DD |
+| `USAGE_PRICING_CATALOG_JSON` | [] |
 | `USE_LOCAL_BENCHMARK_RUN_STORE` | false |
 | `USE_LOCAL_CHAT_RUN_STORE` | false |
+| `USE_LOCAL_USAGE_EVENT_STORE` | false |
 | `USE_LOCAL_VECTOR_STORE` | false |
 | `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |
 
@@ -492,8 +516,12 @@ Logical ID: `DocumentIngestRunWorkerFunctionBBDBF694`
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
 | `RAG_MONITORING_REQUIRED` | 1 |
 | `RAG_SAFETY_STATE_TTL_SECONDS` | 600 |
+| `USAGE_ACCOUNTING_MODE` | shadow |
+| `USAGE_EVENTS_TABLE_NAME` | Ref:UsageEventsTable215FE3DD |
+| `USAGE_PRICING_CATALOG_JSON` | [] |
 | `USE_LOCAL_BENCHMARK_RUN_STORE` | false |
 | `USE_LOCAL_CHAT_RUN_STORE` | false |
+| `USE_LOCAL_USAGE_EVENT_STORE` | false |
 | `USE_LOCAL_VECTOR_STORE` | false |
 | `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |
 
@@ -558,8 +586,12 @@ Logical ID: `HeavyApiFunction4BC152A5`
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
 | `RAG_MONITORING_REQUIRED` | 1 |
 | `RAG_SAFETY_STATE_TTL_SECONDS` | 600 |
+| `USAGE_ACCOUNTING_MODE` | shadow |
+| `USAGE_EVENTS_TABLE_NAME` | Ref:UsageEventsTable215FE3DD |
+| `USAGE_PRICING_CATALOG_JSON` | [] |
 | `USE_LOCAL_BENCHMARK_RUN_STORE` | false |
 | `USE_LOCAL_CHAT_RUN_STORE` | false |
+| `USE_LOCAL_USAGE_EVENT_STORE` | false |
 | `USE_LOCAL_VECTOR_STORE` | false |
 | `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |
 
@@ -619,8 +651,12 @@ Logical ID: `RagQualityMonitorFunction9BE8E903`
 | `RAG_ALERT_TOPIC_ARN` | Ref:RagQualityAlertTopic3AFB5A32 |
 | `RAG_MONITORING_REQUIRED` | 1 |
 | `RAG_SAFETY_STATE_TTL_SECONDS` | 600 |
+| `USAGE_ACCOUNTING_MODE` | shadow |
+| `USAGE_EVENTS_TABLE_NAME` | Ref:UsageEventsTable215FE3DD |
+| `USAGE_PRICING_CATALOG_JSON` | [] |
 | `USE_LOCAL_BENCHMARK_RUN_STORE` | false |
 | `USE_LOCAL_CHAT_RUN_STORE` | false |
+| `USE_LOCAL_USAGE_EVENT_STORE` | false |
 | `USE_LOCAL_VECTOR_STORE` | false |
 | `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |
 
@@ -679,8 +715,12 @@ Logical ID: `RevocationCleanupFunctionE7C00D6D`
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
 | `RAG_MONITORING_REQUIRED` | 1 |
 | `RAG_SAFETY_STATE_TTL_SECONDS` | 600 |
+| `USAGE_ACCOUNTING_MODE` | shadow |
+| `USAGE_EVENTS_TABLE_NAME` | Ref:UsageEventsTable215FE3DD |
+| `USAGE_PRICING_CATALOG_JSON` | [] |
 | `USE_LOCAL_BENCHMARK_RUN_STORE` | false |
 | `USE_LOCAL_CHAT_RUN_STORE` | false |
+| `USE_LOCAL_USAGE_EVENT_STORE` | false |
 | `USE_LOCAL_VECTOR_STORE` | false |
 | `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |
 
@@ -772,7 +812,11 @@ Logical ID: `SecurityAuditReconciliationFunction9A53A79D`
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
 | `RAG_MONITORING_REQUIRED` | 1 |
 | `RAG_SAFETY_STATE_TTL_SECONDS` | 600 |
+| `USAGE_ACCOUNTING_MODE` | shadow |
+| `USAGE_EVENTS_TABLE_NAME` | Ref:UsageEventsTable215FE3DD |
+| `USAGE_PRICING_CATALOG_JSON` | [] |
 | `USE_LOCAL_BENCHMARK_RUN_STORE` | false |
 | `USE_LOCAL_CHAT_RUN_STORE` | false |
+| `USE_LOCAL_USAGE_EVENT_STORE` | false |
 | `USE_LOCAL_VECTOR_STORE` | false |
 | `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |

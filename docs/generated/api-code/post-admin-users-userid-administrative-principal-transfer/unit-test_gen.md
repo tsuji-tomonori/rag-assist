@@ -15,61 +15,61 @@
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `POST /admin/users/{userId}/administrative-principal-transfer handler` | if | `result` が存在しない、または偽である | `apps/api/src/routes/admin-routes.ts:106 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
-| F002 | `POST /admin/users/{userId}/administrative-principal-transfer handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/admin-routes.ts:108 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
-| F003 | `POST /admin/users/{userId}/administrative-principal-transfer handler` | if | `error` が `Error` の instance である、かつ starts with の判定結果が真である | `apps/api/src/routes/admin-routes.ts:109 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
-| F004 | `POST /admin/users/{userId}/administrative-principal-transfer handler` | if | `error` が `AdministrativePrincipalTransferError` の instance である | `apps/api/src/routes/admin-routes.ts:112 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
-| F005 | `POST /admin/users/{userId}/administrative-principal-transfer handler` | if | `error.reconciliationRequired` が存在し、真である | `apps/api/src/routes/admin-routes.ts:113 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
-| F006 | `POST /admin/users/{userId}/administrative-principal-transfer handler` | if | test の判定結果が真である | `apps/api/src/routes/admin-routes.ts:114 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
-| F007 | `POST /admin/users/{userId}/administrative-principal-transfer handler` | if | `error` が `Error` の instance である、かつ `error.message` が "Transfer reason" を含む | `apps/api/src/routes/admin-routes.ts:119 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
+| F001 | `POST /admin/users/{userId}/administrative-principal-transfer handler` | if | `result` が存在しない、または偽である | `apps/api/src/routes/admin-routes.ts:108 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
+| F002 | `POST /admin/users/{userId}/administrative-principal-transfer handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/admin-routes.ts:110 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
+| F003 | `POST /admin/users/{userId}/administrative-principal-transfer handler` | if | `error` が `Error` の instance である、かつ starts with の判定結果が真である | `apps/api/src/routes/admin-routes.ts:111 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
+| F004 | `POST /admin/users/{userId}/administrative-principal-transfer handler` | if | `error` が `AdministrativePrincipalTransferError` の instance である | `apps/api/src/routes/admin-routes.ts:114 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
+| F005 | `POST /admin/users/{userId}/administrative-principal-transfer handler` | if | `error.reconciliationRequired` が存在し、真である | `apps/api/src/routes/admin-routes.ts:115 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
+| F006 | `POST /admin/users/{userId}/administrative-principal-transfer handler` | if | test の判定結果が真である | `apps/api/src/routes/admin-routes.ts:116 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
+| F007 | `POST /admin/users/{userId}/administrative-principal-transfer handler` | if | `error` が `Error` の instance である、かつ `error.message` が "Transfer reason" を含む | `apps/api/src/routes/admin-routes.ts:121 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
 | F008 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| F009 | `MemoRagService.transferManagedUserAdministrativePrincipal` | if | trim の判定結果が真ではない、または `input.reason.trim()` が `input.reason` と異なる | `apps/api/src/rag/memorag-service.ts:1751 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
-| F010 | `MemoRagService.transferManagedUserAdministrativePrincipal` | if | `preflight` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1755 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
-| F011 | `MemoRagService.transferManagedUserAdministrativePrincipal` | 三項条件 | `candidate` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1762 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
-| F012 | `MemoRagService.transferManagedUserAdministrativePrincipal` | if | `this.deps.verifiedIdentityProvider` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1765 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
-| F013 | `MemoRagService.transferManagedUserAdministrativePrincipal` | if | `actorIdentity` が存在しない、または偽である、または `sourceIdentity` が存在しない、または偽である、または `actorIdentity.accountStatus` が `"active"` と異なる、または `actorIdentity.tenantId` が `sourceIdentity.tenantId` と異なる、または `actor.tenantId` が `actorIdentity.tenantId` と異なる | `apps/api/src/rag/memorag-service.ts:1772 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
-| F014 | `MemoRagService.transferManagedUserAdministrativePrincipal` | 三項条件 | `candidate` が存在し、真である、かつ `successorIdentity?.userId` が `input.successorUserId` と等しい、かつ `successorIdentity.accountStatus` が `"active"` と等しい、かつ `successorIdentity.tenantId` が `tenantId` と等しい | `apps/api/src/rag/memorag-service.ts:1789 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
-| F015 | `MemoRagService.transferManagedUserAdministrativePrincipal` | if | `successor.status` が `"active"` と異なる | `apps/api/src/rag/memorag-service.ts:1806 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
-| F016 | `MemoRagService.transferManagedUserAdministrativePrincipal` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/rag/memorag-service.ts:1809 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
-| F017 | `MemoRagService.transferManagedUserAdministrativePrincipal` | if | `error` が `AdministrativePrincipalTransferError` の instance であるではない | `apps/api/src/rag/memorag-service.ts:1810 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
+| F009 | `MemoRagService.transferManagedUserAdministrativePrincipal` | if | trim の判定結果が真ではない、または `input.reason.trim()` が `input.reason` と異なる | `apps/api/src/rag/memorag-service.ts:1836 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
+| F010 | `MemoRagService.transferManagedUserAdministrativePrincipal` | if | `preflight` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1840 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
+| F011 | `MemoRagService.transferManagedUserAdministrativePrincipal` | 三項条件 | `candidate` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1847 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
+| F012 | `MemoRagService.transferManagedUserAdministrativePrincipal` | if | `this.deps.verifiedIdentityProvider` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1850 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
+| F013 | `MemoRagService.transferManagedUserAdministrativePrincipal` | if | `actorIdentity` が存在しない、または偽である、または `sourceIdentity` が存在しない、または偽である、または `actorIdentity.accountStatus` が `"active"` と異なる、または `actorIdentity.tenantId` が `sourceIdentity.tenantId` と異なる、または `actor.tenantId` が `actorIdentity.tenantId` と異なる | `apps/api/src/rag/memorag-service.ts:1857 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
+| F014 | `MemoRagService.transferManagedUserAdministrativePrincipal` | 三項条件 | `candidate` が存在し、真である、かつ `successorIdentity?.userId` が `input.successorUserId` と等しい、かつ `successorIdentity.accountStatus` が `"active"` と等しい、かつ `successorIdentity.tenantId` が `tenantId` と等しい | `apps/api/src/rag/memorag-service.ts:1874 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
+| F015 | `MemoRagService.transferManagedUserAdministrativePrincipal` | if | `successor.status` が `"active"` と異なる | `apps/api/src/rag/memorag-service.ts:1891 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
+| F016 | `MemoRagService.transferManagedUserAdministrativePrincipal` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/rag/memorag-service.ts:1894 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
+| F017 | `MemoRagService.transferManagedUserAdministrativePrincipal` | if | `error` が `AdministrativePrincipalTransferError` の instance であるではない | `apps/api/src/rag/memorag-service.ts:1895 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
 
 ## 3. コード由来テストケース
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | 管理主体の所有資源を後継へ移管する が成功 response を返す。 | `apps/api/src/routes/admin-routes.ts:99 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
-| TC002 | F001: 条件成立 | `result` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:106 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
-| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:106 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
-| TC004 | F002: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/admin-routes.ts:108 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
-| TC005 | F003: 条件成立 | `error` が `Error` の instance である、かつ starts with の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:109 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
-| TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:109 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
-| TC007 | F004: 条件成立 | `error` が `AdministrativePrincipalTransferError` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:112 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
-| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:112 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
-| TC009 | F005: 条件成立 | `error.reconciliationRequired` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:113 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
-| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:113 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
-| TC011 | F006: 条件成立 | test の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:114 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
-| TC012 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:114 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
-| TC013 | F007: 条件成立 | `error` が `Error` の instance である、かつ `error.message` が "Transfer reason" を含む 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:119 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
-| TC014 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:119 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
+| TC001 | 正常系 | 管理主体の所有資源を後継へ移管する が成功 response を返す。 | `apps/api/src/routes/admin-routes.ts:101 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
+| TC002 | F001: 条件成立 | `result` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:108 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
+| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:108 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
+| TC004 | F002: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/admin-routes.ts:110 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
+| TC005 | F003: 条件成立 | `error` が `Error` の instance である、かつ starts with の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:111 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
+| TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:111 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
+| TC007 | F004: 条件成立 | `error` が `AdministrativePrincipalTransferError` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:114 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
+| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:114 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
+| TC009 | F005: 条件成立 | `error.reconciliationRequired` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:115 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
+| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:115 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
+| TC011 | F006: 条件成立 | test の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:116 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
+| TC012 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:116 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
+| TC013 | F007: 条件成立 | `error` が `Error` の instance である、かつ `error.message` が "Transfer reason" を含む 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:121 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
+| TC014 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:121 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
 | TC015 | F008: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
 | TC016 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC017 | F009: 条件成立 | trim の判定結果が真ではない、または `input.reason.trim()` が `input.reason` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1751 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
-| TC018 | F009: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1751 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
-| TC019 | F010: 条件成立 | `preflight` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1755 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
-| TC020 | F010: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1755 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
-| TC021 | F011: 条件成立 | `candidate` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1762 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
-| TC022 | F011: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1762 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
-| TC023 | F012: 条件成立 | `this.deps.verifiedIdentityProvider` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1765 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
-| TC024 | F012: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1765 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
-| TC025 | F013: 条件成立 | `actorIdentity` が存在しない、または偽である、または `sourceIdentity` が存在しない、または偽である、または `actorIdentity.accountStatus` が `"active"` と異なる、または `actorIdentity.tenantId` が `sourceIdentity.tenantId` と異なる、または `actor.tenantId` が `actorIdentity.tenantId` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1772 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
-| TC026 | F013: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1772 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
-| TC027 | F014: 条件成立 | `candidate` が存在し、真である、かつ `successorIdentity?.userId` が `input.successorUserId` と等しい、かつ `successorIdentity.accountStatus` が `"active"` と等しい、かつ `successorIdentity.tenantId` が `tenantId` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1789 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
-| TC028 | F014: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1789 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
-| TC029 | F015: 条件成立 | `successor.status` が `"active"` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1806 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
-| TC030 | F015: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1806 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
-| TC031 | F016: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/rag/memorag-service.ts:1809 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
-| TC032 | F017: 条件成立 | `error` が `AdministrativePrincipalTransferError` の instance であるではない 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1810 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
-| TC033 | F017: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1810 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
+| TC017 | F009: 条件成立 | trim の判定結果が真ではない、または `input.reason.trim()` が `input.reason` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1836 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
+| TC018 | F009: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1836 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
+| TC019 | F010: 条件成立 | `preflight` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1840 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
+| TC020 | F010: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1840 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
+| TC021 | F011: 条件成立 | `candidate` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1847 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
+| TC022 | F011: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1847 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
+| TC023 | F012: 条件成立 | `this.deps.verifiedIdentityProvider` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1850 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
+| TC024 | F012: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1850 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
+| TC025 | F013: 条件成立 | `actorIdentity` が存在しない、または偽である、または `sourceIdentity` が存在しない、または偽である、または `actorIdentity.accountStatus` が `"active"` と異なる、または `actorIdentity.tenantId` が `sourceIdentity.tenantId` と異なる、または `actor.tenantId` が `actorIdentity.tenantId` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1857 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
+| TC026 | F013: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1857 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
+| TC027 | F014: 条件成立 | `candidate` が存在し、真である、かつ `successorIdentity?.userId` が `input.successorUserId` と等しい、かつ `successorIdentity.accountStatus` が `"active"` と等しい、かつ `successorIdentity.tenantId` が `tenantId` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1874 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
+| TC028 | F014: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1874 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
+| TC029 | F015: 条件成立 | `successor.status` が `"active"` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1891 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
+| TC030 | F015: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1891 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
+| TC031 | F016: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/rag/memorag-service.ts:1894 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
+| TC032 | F017: 条件成立 | `error` が `AdministrativePrincipalTransferError` の instance であるではない 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1895 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
+| TC033 | F017: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1895 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
 | TC034 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC035 | HTTP 400 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC036 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

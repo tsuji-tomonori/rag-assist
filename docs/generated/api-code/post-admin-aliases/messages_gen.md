@@ -17,8 +17,8 @@
 | M002 | OpenAPI contract | `401` | 認証が必要です。 | OpenAPI で宣言された HTTP 401 response | runtime OpenAPI |
 | M003 | OpenAPI contract | `403` | 対象操作を実行する権限がありません。 | OpenAPI で宣言された HTTP 403 response | runtime OpenAPI |
 | M004 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| M005 | 例外 | `-` | Alias ledger version conflict | 当該処理へ到達した場合 | `apps/api/src/rag/memorag-service.ts:3537 (MemoRagService.mutateAliasLedger)` |
-| M006 | 例外 | `-` | Alias creation failed | `result` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1321 (MemoRagService.createAlias)` |
+| M005 | 例外 | `-` | Alias ledger version conflict | 当該処理へ到達した場合 | `apps/api/src/rag/memorag-service.ts:3632 (MemoRagService.mutateAliasLedger)` |
+| M006 | 例外 | `-` | Alias creation failed | `result` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1406 (MemoRagService.createAlias)` |
 
 ## 読み方
 

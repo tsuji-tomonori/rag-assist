@@ -215,3 +215,17 @@ test("role 群から重複なしの有効 permission を返す", () => {
   assert.ok(permissions.includes("rag:doc:write:group"))
   assert.equal(permissions.includes("chat:admin:read_all"), false)
 })
+
+test("usage と cost の export permission は対応する read permission と独立して付与される", () => {
+  const userAdmin = { userId: "usage-admin", cognitoGroups: ["USER_ADMIN"] }
+  assert.doesNotThrow(() => requirePermission(userAdmin, "usage:read:all_users"))
+  assert.doesNotThrow(() => requirePermission(userAdmin, "usage:export"))
+  assert.throws(() => requirePermission(userAdmin, "cost:read:all"))
+  assert.throws(() => requirePermission(userAdmin, "cost:export"))
+
+  const costAuditor = { userId: "cost-auditor", cognitoGroups: ["COST_AUDITOR"] }
+  assert.doesNotThrow(() => requirePermission(costAuditor, "cost:read:all"))
+  assert.doesNotThrow(() => requirePermission(costAuditor, "cost:export"))
+  assert.throws(() => requirePermission(costAuditor, "usage:read:all_users"))
+  assert.throws(() => requirePermission(costAuditor, "usage:export"))
+})

@@ -1,6 +1,6 @@
 # チャット UI responsive・状態表示の完成
 
-- 状態: todo
+- 状態: done
 - タスク種別: Web 品質実装
 - 作成日: 2026-07-13
 - 関連要件: `FR-042`, `FR-043`, `SQ-004`
@@ -22,16 +22,30 @@
 2. composer、answer、citation、history action の overlap/focus/state を修復する。
 3. component/E2E/visual/manual verification を実行して再修復する。
 
+## 作業前チェックリスト
+
+- [x] chat attachment、回答、citation、new conversation の現行 state contract を確認する。
+- [x] 既存 full E2E を実行し、stale locator、visual snapshot、実装 defect を分離する。
+- [x] 一時添付を永続文書と誤認しない fixture 境界を確認する。
+- [x] Issue #345 の manual screen reader / real-device evidence を自動検証と分離する。
+
+## Done 条件
+
+- [x] full Chromium E2E の chat / mobile / axe / visual / risky-operation を修復する。
+- [x] Web lint / typecheck、full E2E、docs freshness を検証する。
+- [x] 未実施の manual evidence を別 task の blocker として維持する。
+- [x] 日本語 commit、既存 stacked draft PR 更新、受け入れ条件コメント、セルフレビュー、作業レポート、task lifecycle push を完了する。
+
 ## ドキュメントメンテナンス計画
 
 `FR-042`, `FR-043`, `SQ-004`, `SQ-016` と chat/UI design、generated inventory を同期する。
 
 ## 受け入れ条件
 
-- [ ] 承認 viewport で入力、回答、引用、履歴操作が重ならず利用できる。
-- [ ] keyboard/focus、loading、empty、error、permission state が識別可能である。
-- [ ] API にない件数・容量・user/group を架空表示しない。
-- [ ] component test と responsive E2E/visual check を追加する。
+- [x] 承認済み自動化 viewport で入力、回答、引用、履歴操作が重ならず利用できる。
+- [x] keyboard/focus、loading、empty、error、permission state が識別可能である。
+- [x] API にない件数・容量・user/group を架空表示しない。
+- [x] component test と responsive E2E/visual check を追加する。
 
 ## 検証・文書
 
@@ -41,6 +55,8 @@
 ## リスク
 
 承認 viewport と browser matrix は requirement owner の決定が必要である。
+
+代表 screen reader、実 browser 200% / 400% zoom、real-device touch / virtual keyboard は `tasks/todo/20260714-issue-345-manual-a11y-evidence.md` の owner であり、本 task の自動検証成功へ読み替えない。
 
 ## PR レビュー観点
 

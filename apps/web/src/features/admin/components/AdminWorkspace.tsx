@@ -12,7 +12,8 @@ import type {
   ManagedUserAuditLogPage,
   ManagedUserDeletionPreflight,
   ManagedUserListPage,
-  UserUsageSummary
+  UsageQuery,
+  UsageSummaryPage
 } from "../types.js"
 import { AdminAuditPanel } from "./panels/AdminAuditPanel.js"
 import { AdminCostPanel } from "./panels/AdminCostPanel.js"
@@ -64,6 +65,8 @@ export function AdminWorkspace({
   canAssignRoles,
   canReadUsage,
   canReadCosts,
+  canExportUsage,
+  canExportCosts,
   canReadAdminAuditLog,
   canExportAdminAuditLog,
   canManageAliases,
@@ -84,6 +87,11 @@ export function AdminWorkspace({
   onRefreshAdminPart,
   onLoadMoreAdminAudit,
   onCreateAdminAuditExport,
+  onApplyUsageCostQuery,
+  onLoadMoreUsage,
+  onLoadMoreCosts,
+  onCreateUsageExport,
+  onCreateCostExport,
   onLoadMoreManagedUsers,
   onLoadMoreAliases,
   onLoadMoreAliasAudit,
@@ -108,7 +116,7 @@ export function AdminWorkspace({
   adminAuditPage: ManagedUserAuditLogPage | null
   accessRoles?: never
   accessRoleList: AccessRoleList | null
-  usageSummaries: UserUsageSummary[] | null
+  usageSummaries: UsageSummaryPage | null
   costAudit: CostAuditSummary | null
   aliases?: never
   aliasPage: AliasListPage | null
@@ -130,6 +138,8 @@ export function AdminWorkspace({
   canAssignRoles: boolean
   canReadUsage: boolean
   canReadCosts: boolean
+  canExportUsage?: boolean
+  canExportCosts?: boolean
   canReadAdminAuditLog: boolean
   canExportAdminAuditLog?: boolean
   canManageAliases: boolean
@@ -150,6 +160,11 @@ export function AdminWorkspace({
   onRefreshAdminPart: (partId: AdminResourcePartId) => Promise<void>
   onLoadMoreAdminAudit: () => Promise<void>
   onCreateAdminAuditExport?: (reason: string) => Promise<AdminExportArtifact>
+  onApplyUsageCostQuery?: (query: UsageQuery) => Promise<void>
+  onLoadMoreUsage?: () => Promise<void>
+  onLoadMoreCosts?: () => Promise<void>
+  onCreateUsageExport?: (reason: string) => Promise<AdminExportArtifact>
+  onCreateCostExport?: (reason: string) => Promise<AdminExportArtifact>
   onLoadMoreManagedUsers?: () => Promise<void>
   onLoadMoreAliases: () => Promise<void>
   onLoadMoreAliasAudit: () => Promise<void>
@@ -291,8 +306,26 @@ export function AdminWorkspace({
 
           {(canReadUsage || canReadCosts) && (
             <div className="admin-combined-section" hidden={resolvedActiveSection !== "usage-cost"}>
-              {canReadUsage && <AdminUsagePanel usageSummaries={visibleUsageSummaries} part={part("usage")} loading={loading} onRefresh={() => onRefreshAdminPart("usage")} />}
-              {canReadCosts && <AdminCostPanel costAudit={visibleCostAudit} part={part("cost")} loading={loading} onRefresh={() => onRefreshAdminPart("cost")} />}
+              {canReadUsage && <AdminUsagePanel
+                usageSummary={visibleUsageSummaries}
+                part={part("usage")}
+                loading={loading}
+                canExport={canExportUsage ?? false}
+                onApplyQuery={onApplyUsageCostQuery ?? (async () => undefined)}
+                onRefresh={() => onRefreshAdminPart("usage")}
+                onLoadMore={onLoadMoreUsage ?? (async () => undefined)}
+                onCreateExport={onCreateUsageExport ?? (async () => { throw new Error("利用状況 export は利用できません") })}
+              />}
+              {canReadCosts && <AdminCostPanel
+                costAudit={visibleCostAudit}
+                part={part("cost")}
+                loading={loading}
+                canExport={canExportCosts ?? false}
+                onApplyQuery={onApplyUsageCostQuery ?? (async () => undefined)}
+                onRefresh={() => onRefreshAdminPart("cost")}
+                onLoadMore={onLoadMoreCosts ?? (async () => undefined)}
+                onCreateExport={onCreateCostExport ?? (async () => { throw new Error("コスト export は利用できません") })}
+              />}
             </div>
           )}
 

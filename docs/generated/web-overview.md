@@ -22,8 +22,8 @@
 | 画面 | 8 | [web-screens.md](web-screens.md) |
 | 機能領域 | 12 | [web-features.md](web-features.md) |
 | コンポーネント | 64 | [web-components.md](web-components.md) |
-| UI 操作要素 | 408 | [web-features.md](web-features.md) |
-| 操作説明 | 408 | [web-accessibility.md](web-accessibility.md) |
+| UI 操作要素 | 438 | [web-features.md](web-features.md) |
+| 操作説明 | 438 | [web-accessibility.md](web-accessibility.md) |
 | 意味トレース対象画面 | 8 | [web-traceability.md](web-traceability.md) |
 
 ## 初めて見る人向けの導線

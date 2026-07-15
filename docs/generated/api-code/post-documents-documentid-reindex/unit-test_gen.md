@@ -8,7 +8,7 @@
 
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
-| 到達 symbol | service reindexes documents through embedding cache compatible pipeline versions | `apps/api/src/rag/memorag-service.test.ts:1136 (service reindexes documents through embedding cache compatible pipeline versions)` |
+| 到達 symbol | service reindexes documents through embedding cache compatible pipeline versions | `apps/api/src/rag/memorag-service.test.ts:1167 (service reindexes documents through embedding cache compatible pipeline versions)` |
 
 ## 2. 実装分岐から導くテスト要因
 

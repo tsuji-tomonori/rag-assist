@@ -11,12 +11,12 @@
 ## 全体サマリ
 
 - 対象スタック: `MemoRagMvpStack`
-- CloudFormation resources: 250
+- CloudFormation resources: 251
 
 | 領域 | 件数 |
 | --- | ---: |
 | Storage | 15 |
-| Data | 10 |
+| Data | 11 |
 | Compute | 19 |
 | API | 70 |
 | Identity | 15 |
@@ -31,7 +31,7 @@
 | Resource type | 個数 | 用途概要 | 詳細 |
 | --- | ---: | --- | --- |
 | `AWS::S3::Bucket` | 5 | S3 bucket | [詳細](infra-inventory/aws-s3-bucket.md) |
-| `AWS::DynamoDB::Table` | 10 | DynamoDB table | [詳細](infra-inventory/aws-dynamodb-table.md) |
+| `AWS::DynamoDB::Table` | 11 | DynamoDB table | [詳細](infra-inventory/aws-dynamodb-table.md) |
 | `AWS::Lambda::Function` | 15 | Lambda function | [詳細](infra-inventory/aws-lambda-function.md) |
 | `AWS::ApiGateway::RestApi` | 1 | API Gateway REST API | [詳細](infra-inventory/aws-apigateway-restapi.md) |
 | `AWS::ApiGateway::Stage` | 1 | API Gateway stage | [詳細](infra-inventory/aws-apigateway-stage.md) |
