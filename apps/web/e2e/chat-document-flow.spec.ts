@@ -70,7 +70,7 @@ test('質問送信で回答と citations が表示される @smoke', async ({ pa
   })
 
   await expect(page.getByText(/MVP-2026|資料では次のように記載されています。/)).toBeVisible()
-  await expect(page.getByText('参照元')).toBeVisible()
+  await expect(page.getByText('参照元', { exact: true })).toBeVisible()
 })
 
 test('資料削除で再質問時の挙動が変わる', async ({ page }) => {
