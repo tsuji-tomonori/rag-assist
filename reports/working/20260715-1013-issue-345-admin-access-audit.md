@@ -29,7 +29,8 @@ Issue #345 の全体完了へ向け、管理 UI 再検証で残った P0 の Acc
 - 管理ユーザー・監査画面の server-driven query/state 実装
 - API/Web/E2E regression test
 - 正規設計文書と generated documentation
-- `tasks/do/20260714-1011-admin-access-audit-state.md`
+- stacked draft PR #356
+- `tasks/done/20260714-1011-admin-access-audit-state.md`
 
 ## 指示への fit 評価
 

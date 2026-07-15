@@ -1,6 +1,6 @@
 # 管理 Access / Audit / Query state の残余 gap を修復する
 
-- 状態: in_progress
+- 状態: done
 - 優先度: P0
 - 種別: 実装 / security / integrity / UI state
 - 起票日: 2026-07-14
@@ -25,7 +25,7 @@
 - [x] concurrent write、partial failure、retry/reconciliation、deleted/suspended invariant を fault-injection で検証する。
 - [x] lint、typecheck、関連/full test、build、docs/generated freshness、security policy test が成功する。
 - [x] 未実施の live/manual 検証は達成扱いにせず report/PR に理由とリスクを記録する。
-- [ ] 日本語 commit、stacked draft PR、受け入れ条件コメント、セルフレビュー、作業レポート、task の `done` 移動と lifecycle push が完了する。
+- [x] 日本語 commit、stacked draft PR、受け入れ条件コメント、セルフレビュー、作業レポート、task の `done` 移動と lifecycle push が完了する。
 
 ## 実行計画
 
