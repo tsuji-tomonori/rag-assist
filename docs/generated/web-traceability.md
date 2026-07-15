@@ -18,7 +18,7 @@
 | standard-user | 一般利用者 | 自分に許可された情報で質問し、回答・根拠・履歴・個人設定を扱う |
 | answer-editor | 回答担当者 | 許可された問い合わせを検索し、回答・下書き・状態を更新する |
 | operator | 運用担当者 | 許可された文書運用、benchmark、debug、利用状況・監査の操作と観測を行う |
-| system-admin | システム管理者 | 許可された管理、監査、利用状況、alias governance を扱う |
+| system-admin | システム管理者 | 許可された管理、監査、利用状況、用語展開 governance を扱う |
 
 ## AppView trace
 
@@ -38,7 +38,7 @@
 | 要件 | AC | 適用 view |
 | --- | --- | --- |
 | NFR-016 | AC-NFR016-001<br>AC-NFR016-002<br>AC-NFR016-003<br>AC-NFR016-004<br>AC-NFR016-005 | * |
-| NFR-017 | AC-NFR017-002<br>AC-NFR017-003<br>AC-NFR017-004 | * |
+| NFR-017 | AC-NFR017-001<br>AC-NFR017-002<br>AC-NFR017-003<br>AC-NFR017-004<br>AC-NFR017-005 | * |
 | NFR-018 | AC-NFR018-001<br>AC-NFR018-002<br>AC-NFR018-005<br>AC-NFR018-007 | * |
 | SQ-016 | AC-SQ016-001<br>AC-SQ016-002<br>AC-SQ016-003<br>AC-SQ016-007<br>AC-SQ016-008 | * |
 
@@ -48,11 +48,13 @@
 | --- | --- | --- | --- |
 | NONUI-UI-TRACE-001 | implemented | tools/web-inventory/ui-traceability.test.mjs | - |
 | NONUI-UI-TRACE-002 | implemented | tools/web-inventory/ui-traceability.test.mjs | - |
+| NONUI-UI-SEMANTIC-001 | implemented | tools/web-inventory/semantic-ui-contract.test.mjs | - |
 | E2E-UI-NAV-001 | implemented | apps/web/e2e/visual-regression.spec.ts | - |
 | E2E-UI-NAV-002 | implemented | apps/web/e2e/visual-regression.spec.ts | - |
 | E2E-UI-ROUTE-001 | implemented | apps/web/e2e/visual-regression.spec.ts | - |
 | E2E-UI-ROUTE-002 | implemented | apps/web/e2e/visual-regression.spec.ts | - |
 | E2E-UI-STATE-001 | implemented | apps/web/e2e/visual-regression.spec.ts | - |
+| E2E-UI-SEMANTIC-001 | implemented | apps/web/e2e/visual-regression.spec.ts | - |
 | E2E-UI-RISK-001 | planned | - | tasks/todo/20260714-issue-345-risky-operation-feedback.md |
 | E2E-UI-DOCUMENTS-001 | planned | - | tasks/todo/20260714-issue-345-document-workspace-context.md |
 | E2E-UI-MANUAL-001 | manual | - | tasks/todo/20260714-issue-345-manual-a11y-evidence.md |

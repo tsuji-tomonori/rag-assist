@@ -1,4 +1,5 @@
 import { ConfirmDialog } from "../../../../shared/ui/index.js"
+import { documentLifecycleStatusPresentation, reindexMigrationStatusPresentation } from "../../../../shared/ui/displayMetadata.js"
 import type { DocumentGroup, DocumentManifest } from "../../types.js"
 import { documentGroupIds, type ConfirmAction } from "./documentWorkspaceUtils.js"
 
@@ -81,12 +82,12 @@ function confirmDetails(action: ConfirmAction, documents: DocumentManifest[], do
     confirmLabel: action.kind === "cutover" ? "切替" : "戻す",
     danger: false,
     rows: [
-      { label: "migrationId", value: action.migration.migrationId },
-      { label: "現行 documentId", value: action.migration.sourceDocumentId },
-      { label: "staged documentId", value: action.migration.stagedDocumentId },
+      { label: "移行識別子", value: action.migration.migrationId },
+      { label: "現在の文書識別子", value: action.migration.sourceDocumentId },
+      { label: "切替先の文書識別子", value: action.migration.stagedDocumentId },
       { label: "対象ファイル", value: sourceDocument?.fileName ?? "未取得" },
-      { label: "現在の状態", value: action.migration.status },
-      { label: "rollback 可否", value: action.kind === "cutover" ? "切替後に migration が cutover 状態なら可能" : "戻し後は rolled_back 状態" }
+      { label: "現在の状態", value: reindexMigrationStatusPresentation(action.migration.status).label },
+      { label: "切戻し可否", value: action.kind === "cutover" ? "切替後に切替済み状態なら可能" : "切戻し後は切戻し済み状態" }
     ]
   }
 }
@@ -97,9 +98,9 @@ function documentRows(document: DocumentManifest, documentGroups: DocumentGroup[
     .join(", ")
   return [
     { label: "ファイル名", value: document.fileName },
-    { label: "documentId", value: document.documentId },
+    { label: "文書識別子", value: document.documentId },
     { label: "チャンク数", value: String(document.chunkCount) },
     { label: "所属フォルダ", value: groupNames || "未設定" },
-    { label: "lifecycle", value: document.lifecycleStatus ?? "利用不可" }
+    { label: "利用状態", value: document.lifecycleStatus ? documentLifecycleStatusPresentation(document.lifecycleStatus).label : "利用不可" }
   ]
 }

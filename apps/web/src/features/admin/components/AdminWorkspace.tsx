@@ -118,12 +118,12 @@ export function AdminWorkspace({
 }) {
   const [activeSection, setActiveSection] = useState<AdminSectionId>("overview")
   const sections: Array<{ id: AdminSectionId; label: string; available: boolean }> = [
-    { id: "overview", label: "Overview", available: true },
-    { id: "users", label: "Users", available: canReadUsers },
-    { id: "roles", label: "Roles", available: canOpenAdminSettings },
-    { id: "usage-cost", label: "Usage / Cost", available: canReadUsage || canReadCosts },
-    { id: "audit", label: "Audit", available: canReadAdminAuditLog },
-    { id: "alias", label: "Alias", available: canReadAliases }
+    { id: "overview", label: "概要", available: true },
+    { id: "users", label: "ユーザー", available: canReadUsers },
+    { id: "roles", label: "ロール", available: canOpenAdminSettings },
+    { id: "usage-cost", label: "利用状況・コスト", available: canReadUsage || canReadCosts },
+    { id: "audit", label: "監査", available: canReadAdminAuditLog },
+    { id: "alias", label: "用語展開", available: canReadAliases }
   ]
   const availableSections = sections.filter((section) => section.available)
   const resolvedActiveSection = availableSections.some((section) => section.id === activeSection) ? activeSection : "overview"

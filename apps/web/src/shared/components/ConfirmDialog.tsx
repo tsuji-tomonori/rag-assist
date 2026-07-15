@@ -1,4 +1,5 @@
-import { useEffect, useState, type ReactNode } from "react"
+import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react"
+import { Button } from "../ui/Button.js"
 
 export function ConfirmDialog({
   title,
@@ -25,11 +26,22 @@ export function ConfirmDialog({
   onCancel: () => void
   onConfirm: () => Promise<void> | void
 }) {
+  const dialogRef = useRef<HTMLElement | null>(null)
+  const cancelButtonRef = useRef<HTMLButtonElement | null>(null)
+  const returnFocusRef = useRef<HTMLElement | null>(null)
   const [confirming, setConfirming] = useState(false)
   const busy = loading || confirming
 
   useEffect(() => {
-    function onKeyDown(event: KeyboardEvent) {
+    returnFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    cancelButtonRef.current?.focus()
+    return () => {
+      returnFocusRef.current?.focus()
+    }
+  }, [])
+
+  useEffect(() => {
+    function onKeyDown(event: globalThis.KeyboardEvent) {
       if (event.key === "Escape" && !busy) onCancel()
     }
     window.addEventListener("keydown", onKeyDown)
@@ -46,9 +58,36 @@ export function ConfirmDialog({
     }
   }
 
+  function trapFocus(event: KeyboardEvent<HTMLElement>) {
+    if (event.key !== "Tab") return
+    const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    )
+    if (!focusable || focusable.length === 0) return
+    const first = focusable[0]
+    const last = focusable[focusable.length - 1]
+    if (!first || !last) return
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault()
+      last.focus()
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault()
+      first.focus()
+    }
+  }
+
   return (
     <div className="confirm-dialog-backdrop" role="presentation">
-      <section className={`confirm-dialog ${tone}`} role="dialog" aria-modal="true" aria-labelledby="confirm-dialog-title" aria-describedby="confirm-dialog-description">
+      <section
+        ref={dialogRef}
+        className={`confirm-dialog ${tone}`}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="confirm-dialog-title"
+        aria-describedby="confirm-dialog-description"
+        aria-busy={busy}
+        onKeyDown={trapFocus}
+      >
         <div className="confirm-dialog-body">
           <h2 id="confirm-dialog-title">{title}</h2>
           <p id="confirm-dialog-description">{description}</p>
@@ -69,10 +108,10 @@ export function ConfirmDialog({
           {children}
         </div>
         <div className="confirm-dialog-actions">
-          <button type="button" onClick={onCancel} disabled={busy}>{cancelLabel}</button>
-          <button type="button" className="confirm-dialog-primary" onClick={() => void confirm()} disabled={busy || confirmDisabled}>
+          <Button ref={cancelButtonRef} type="button" onClick={onCancel} disabled={busy}>{cancelLabel}</Button>
+          <Button type="button" variant={tone} onClick={() => void confirm()} disabled={busy || confirmDisabled}>
             {busy ? "処理中" : confirmLabel}
-          </button>
+          </Button>
         </div>
       </section>
     </div>

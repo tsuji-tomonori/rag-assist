@@ -1519,20 +1519,10 @@
   gap: 8px;
 }
 
-.confirm-dialog-actions button {
+.confirm-dialog-actions .ui-button {
   min-height: 36px;
-  border: 1px solid #cbd8e7;
-  border-radius: var(--radius-xs);
   padding: 0 13px;
-  color: #2d415f;
-  background: var(--color-surface);
   font-weight: 900;
-}
-
-.confirm-dialog-actions button.danger {
-  border-color: #e0aaaa;
-  color: #b12222;
-  background: #fff6f6;
 }
 
 .share-validation {

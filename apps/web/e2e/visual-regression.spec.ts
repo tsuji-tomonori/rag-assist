@@ -1,4 +1,5 @@
 import { expect, type Page, type Route, test } from '@playwright/test'
+import AxeBuilder from '@axe-core/playwright'
 
 const permissions = [
   'chat:create',
@@ -67,6 +68,12 @@ function benchmarkRun(index: number) {
     runId: `bench-visual-${String(index).padStart(2, '0')}`,
     suiteId: 'standard-agent-v1',
     status: index % 5 === 0 ? 'failed' : 'succeeded',
+    mode: 'agent',
+    runner: 'codebuild',
+    datasetS3Key: 'datasets/agent/standard-v1.jsonl',
+    createdBy: 'visual-admin',
+    createdAt: `2026-05-02T00:${String(index).padStart(2, '0')}:00.000Z`,
+    updatedAt: `2026-05-02T00:${String(index).padStart(2, '0')}:30.000Z`,
     modelId: 'amazon.nova-lite-v1:0',
     startedAt: `2026-05-02T00:${String(index).padStart(2, '0')}:00.000Z`,
     completedAt: `2026-05-02T00:${String(index).padStart(2, '0')}:30.000Z`,
@@ -80,6 +87,8 @@ function benchmarkRun(index: number) {
 }
 
 async function installMockApi(page: Page) {
+  let includeDebugForChatRun = false
+
   await page.route('**/config.json', async (route) => {
     await route.fulfill({ json: { apiBaseUrl: 'http://api.visual.test' } })
   })
@@ -99,16 +108,40 @@ async function installMockApi(page: Page) {
       else await route.fulfill({ json: documents[0] })
       return
     }
-    if (path === '/chat' && method === 'POST') {
-      const body = JSON.parse(request.postData() ?? '{}')
+    if (path === '/document-groups') {
+      await route.fulfill({ json: { groups: [] } })
+      return
+    }
+    if (path === '/documents/reindex-migrations') {
+      await route.fulfill({ json: { migrations: [] } })
+      return
+    }
+    if (path === '/rpc/chat/startRun' && method === 'POST') {
+      const rpcBody = JSON.parse(request.postData() ?? '{}')
+      const body = rpcBody.json ?? rpcBody
+      includeDebugForChatRun = body.includeDebug === true
       await route.fulfill({
         json: {
-          answer: '製品コードは MVP-2026 です。',
-          isAnswerable: true,
-          citations: debugTrace.citations,
-          retrieved: debugTrace.retrieved,
-          debug: body.includeDebug ? debugTrace : undefined
+          json: {
+            runId: 'visual-chat-run',
+            status: 'queued',
+            eventsPath: '/chat-runs/visual-chat-run/events'
+          }
         }
+      })
+      return
+    }
+    if (path === '/chat-runs/visual-chat-run/events' && method === 'GET') {
+      const finalResult = {
+        answer: '製品コードは MVP-2026 です。',
+        isAnswerable: true,
+        citations: debugTrace.citations,
+        retrieved: debugTrace.retrieved,
+        debug: includeDebugForChatRun ? debugTrace : undefined
+      }
+      await route.fulfill({
+        contentType: 'text/event-stream',
+        body: `id: 1\nevent: final\ndata: ${JSON.stringify(finalResult)}\n\n`
       })
       return
     }
@@ -160,6 +193,10 @@ async function installMockApi(page: Page) {
             runId: 'bench-visual-created',
             suiteId: 'standard-agent-v1',
             status: 'queued',
+            mode: 'agent',
+            runner: 'codebuild',
+            datasetS3Key: 'datasets/agent/standard-v1.jsonl',
+            createdBy: 'visual-admin',
             modelId: 'amazon.nova-lite-v1:0',
             createdAt: '2026-05-02T00:00:00.000Z',
             updatedAt: '2026-05-02T00:00:00.000Z'
@@ -175,7 +212,13 @@ async function installMockApi(page: Page) {
               runId: 'bench-visual-1',
               suiteId: 'standard-agent-v1',
               status: 'succeeded',
+              mode: 'agent',
+              runner: 'codebuild',
+              datasetS3Key: 'datasets/agent/standard-v1.jsonl',
+              createdBy: 'visual-admin',
               modelId: 'amazon.nova-lite-v1:0',
+              createdAt: '2026-05-02T00:00:00.000Z',
+              updatedAt: '2026-05-02T00:01:00.000Z',
               startedAt: '2026-05-02T00:00:00.000Z',
               completedAt: '2026-05-02T00:01:00.000Z',
               metrics: { p50LatencyMs: 850, p95LatencyMs: 1400, answerableAccuracy: 0.92, retrievalRecallAt20: 0.88 }
@@ -238,6 +281,10 @@ async function installBenchmarkRuns(page: Page, count: number) {
           runId: 'bench-visual-created',
           suiteId: 'standard-agent-v1',
           status: 'queued',
+          mode: 'agent',
+          runner: 'codebuild',
+          datasetS3Key: 'datasets/agent/standard-v1.jsonl',
+          createdBy: 'visual-admin',
           modelId: 'amazon.nova-lite-v1:0',
           createdAt: '2026-05-02T00:00:00.000Z',
           updatedAt: '2026-05-02T00:00:00.000Z'
@@ -289,7 +336,7 @@ test('チャット空状態の visual regression @visual', async ({ page }) => {
 
 test('回答と引用表示の visual regression @visual', async ({ page }) => {
   await signIn(page)
-  await page.getByLabel('質問').fill('製品コードは何ですか？')
+  await page.getByRole('textbox', { name: '質問', exact: true }).fill('製品コードは何ですか？')
   await page.getByRole('button', { name: '送信' }).click()
   await expect(page.getByText('製品コードは MVP-2026 です。')).toBeVisible()
   await expect(page.getByText('参照元')).toBeVisible()
@@ -299,10 +346,10 @@ test('回答と引用表示の visual regression @visual', async ({ page }) => {
 test('デバッグパネルの visual regression @visual', async ({ page }) => {
   await signIn(page)
   await page.getByRole('checkbox').check({ force: true })
-  await page.getByLabel('質問').fill('製品コードは何ですか？')
+  await page.getByRole('textbox', { name: '質問', exact: true }).fill('製品コードは何ですか？')
   await page.getByTitle('送信').click()
-  await expect(page.getByLabel('デバッグパネル')).toBeVisible()
-  await expect(page.getByText('answerability_gate')).toBeVisible()
+  await expect(page.getByRole('complementary', { name: 'デバッグパネル', exact: true })).toBeVisible()
+  await expect(page.getByText('回答可否判定')).toBeVisible()
   await expect(page).toHaveScreenshot('debug-panel.png', { fullPage: true, animations: 'disabled' })
 })
 
@@ -310,20 +357,34 @@ test('管理系画面の visual regression @visual', async ({ page }) => {
   await signIn(page)
 
   await page.getByTitle('ドキュメント').click()
-  await expect(page.getByLabel('ドキュメント管理')).toBeVisible()
+  await expect(page.getByRole('region', { name: 'ドキュメント管理', exact: true })).toBeVisible()
   await expect(page).toHaveScreenshot('documents-workspace.png', { fullPage: true, animations: 'disabled' })
 
   await page.getByTitle('担当者対応').click()
-  await expect(page.getByLabel('担当者対応')).toBeVisible()
+  await expect(page.getByRole('region', { name: '担当者対応', exact: true })).toBeVisible()
   await expect(page).toHaveScreenshot('assignee-workspace.png', { fullPage: true, animations: 'disabled' })
 
   await page.getByTitle('性能テスト').click()
-  await expect(page.getByLabel('性能テスト')).toBeVisible()
+  await expect(page.getByRole('region', { name: '性能テスト', exact: true })).toBeVisible()
   await expect(page).toHaveScreenshot('benchmark-workspace.png', { fullPage: true, animations: 'disabled' })
 
   await page.getByTitle('管理者設定').click()
-  await expect(page.getByLabel('管理者設定')).toBeVisible()
+  await expect(page.getByRole('region', { name: '管理者設定', exact: true })).toBeVisible()
   await expect(page).toHaveScreenshot('admin-workspace.png', { fullPage: true, animations: 'disabled' })
+})
+
+test('E2E-UI-SEMANTIC-001: 状態表示と確認ダイアログは axe 違反を生じない @semantic-ui', async ({ page }) => {
+  await signIn(page)
+  await page.getByTitle('性能テスト').click()
+  await expect(page.locator('.benchmark-workspace .ui-status-badge')).toBeVisible()
+
+  const statusScan = await new AxeBuilder({ page }).include('.benchmark-workspace .ui-status-badge').analyze()
+  expect(statusScan.violations, JSON.stringify(statusScan.violations, null, 2)).toEqual([])
+
+  await page.getByRole('button', { name: '性能テストを実行' }).click()
+  await expect(page.getByRole('dialog', { name: '性能テストを実行しますか？' })).toBeVisible()
+  const dialogScan = await new AxeBuilder({ page }).include('.confirm-dialog').analyze()
+  expect(dialogScan.violations, JSON.stringify(dialogScan.violations, null, 2)).toEqual([])
 })
 
 test('全 AppView の permission-aware 到達性 @smoke', async ({ page }) => {
@@ -562,7 +623,7 @@ test('E2E-UI-STATE-001: admin partial success は成功・失敗 part を分け�
   await expect(partialState).toContainText('未更新')
   await expect(partialState).toContainText('管理操作履歴')
 
-  await adminRegion.getByRole('button', { name: 'Audit' }).click()
+  await adminRegion.getByRole('button', { name: '監査' }).click()
   await expect(adminRegion).toContainText('管理操作履歴を取得できませんでした')
   await expect(adminRegion).not.toContainText('0 件')
 
@@ -588,7 +649,7 @@ test('E2E-UI-STATE-001: refresh failure は as-of/source 付き stale data を�
   await signIn(page)
   await page.getByTitle('管理者設定').click()
   const adminRegion = page.getByRole('region', { name: '管理者設定', exact: true })
-  await adminRegion.getByRole('button', { name: 'Users' }).click()
+  await adminRegion.getByRole('button', { name: 'ユーザー' }).click()
   await expect(adminRegion).toContainText('Visual Admin')
   await adminRegion.getByRole('button', { name: '更新', exact: true }).click()
 

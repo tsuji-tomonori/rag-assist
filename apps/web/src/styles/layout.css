@@ -146,20 +146,10 @@ button:has(.button-spinner) {
   background: #f8fafc;
 }
 
-.confirm-dialog-actions button {
+.confirm-dialog-actions .ui-button {
   min-height: 38px;
-  border: 1px solid #c9d4e3;
-  border-radius: 6px;
   padding: 0 14px;
-  color: #24344f;
-  background: #fff;
   font-weight: 900;
-}
-
-.confirm-dialog-actions .confirm-dialog-primary {
-  border-color: #b32626;
-  color: #fff;
-  background: #b32626;
 }
 
 @media (prefers-reduced-motion: reduce) {

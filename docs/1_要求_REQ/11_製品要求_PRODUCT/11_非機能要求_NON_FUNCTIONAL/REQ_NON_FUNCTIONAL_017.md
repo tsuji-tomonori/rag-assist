@@ -28,9 +28,12 @@
 ## 実装状況（2026-07-14）
 
 - 共通 `ResourceStateBoundary` / `ResourceStatePanel` と semantic state token は、同じ状態を feature 固有色だけに依存せず marker、見出し、説明、native semantics、action で表す。
+- `displayMetadata.ts` は domain union を source of truth とした exhaustive な approved display metadata を所有し、`StatusBadge` は semantic tone、可視日本語 label、色に依存しない marker を同時に表示する。
+- `--status-{neutral,info,success,warning,danger}-{foreground,background,border}` と共通 `Button` の warning/danger variant を定義し、2 種類の確認 dialog は同じ button intent contract を使う。
+- benchmark、非同期エージェント、documents/share/reindex、admin user/用語展開、debug の主要 status/permission/mode/runner/action を approved metadata へ移行し、opaque ID は必要な管理・技術詳細へ限定した。API に名称解決機能がない共有先は「管理者向け識別子」と明示し、架空名称へ置換しない。
 - production の count/empty 表示は取得確認済み part に限定し、documents、questions、debug、benchmark、admin の未取得値を `null` または明示的 state として扱う。
-- representative component/controller tests、Web full test、`E2E-UI-STATE-001`、generated Web inventory で primitive と feature integration を検証する。
-- approved vocabulary、全 token/contrast、全 feature primitive の横断監査は `tasks/todo/20260714-issue-345-ui-language-primitives.md` に残り、本要件全体を実装完了とは扱わない。
+- metadata/primitive/representative feature tests、semantic token contrast test、`E2E-UI-SEMANTIC-001` axe、`E2E-UI-STATE-001`、generated Web inventory で primitive と feature integration を検証する。
+- 今回の対象外である全 feature の brand/layout arbitrary color、全ブラウザ、screen reader、実 browser zoom、real device の横断確認は cross-screen/manual/quality-gate task に残り、本要件全体の release 適合を自動検証だけから宣言しない。
 
 ## 要件の源泉・背景
 
@@ -71,4 +74,4 @@
 ## 関連文書・task
 
 - `docs/3_設計_DES/21_UI_UX/DES_UI_UX_001.md`
-- `tasks/todo/20260714-issue-345-ui-language-primitives.md`
+- `tasks/done/20260714-issue-345-ui-language-primitives.md`

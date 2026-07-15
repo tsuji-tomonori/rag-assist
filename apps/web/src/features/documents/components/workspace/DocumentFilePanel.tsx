@@ -1,7 +1,8 @@
-import { EmptyState } from "../../../../shared/ui/index.js"
+import { EmptyState, StatusBadge } from "../../../../shared/ui/index.js"
 import { Icon } from "../../../../shared/components/Icon.js"
 import { LoadingSpinner } from "../../../../shared/components/LoadingSpinner.js"
 import { formatDateTime } from "../../../../shared/utils/format.js"
+import { reindexMigrationStatusPresentation } from "../../../../shared/ui/displayMetadata.js"
 import type { DocumentGroup, DocumentManifest, ReindexMigration } from "../../types.js"
 import type { DocumentOperationState } from "../../hooks/useDocuments.js"
 import {
@@ -405,7 +406,7 @@ function ReindexMigrationStrip({
     <div className="migration-strip" aria-label="再インデックス移行一覧">
       {migrations.map((migration) => (
         <article className={`migration-chip ${selectedMigrationId === migration.migrationId ? "selected" : ""}`} key={migration.migrationId} aria-current={selectedMigrationId === migration.migrationId ? "true" : undefined}>
-          <strong>{migration.status}</strong>
+          <StatusBadge presentation={reindexMigrationStatusPresentation(migration.status)} />
           <span>{migration.sourceDocumentId} → {migration.stagedDocumentId}</span>
           <button type="button" disabled={operationState.cutoverMigrationId === migration.migrationId || migration.status !== "staged"} onClick={() => onConfirmAction({ kind: "cutover", migration })}>
             {operationState.cutoverMigrationId === migration.migrationId ? <LoadingSpinner className="button-spinner" /> : "切替"}

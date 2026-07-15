@@ -45,6 +45,7 @@
 }
 
 .agent-provider-row strong,
+.agent-run-row strong,
 .agent-run-row code {
   overflow-wrap: anywhere;
 }

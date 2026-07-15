@@ -19,16 +19,16 @@
 
 | コンポーネント | 説明 | 役割 | ファイル | export | 使用 JSX 要素 |
 | --- | --- | --- | --- | --- | --- |
-| AsyncAgentWorkspace | AsyncAgentWorkspace は agents 領域の 画面または画面内 UI コンポーネント です。単独画面ではなく、他の UI から利用されます。 | 画面または画面内 UI コンポーネント | apps/web/src/features/agents/components/AsyncAgentWorkspace.tsx | AsyncAgentWorkspace | Icon, LoadingStatus, article, button, code, div, h2, h3, header, p, section, small, span, strong |
+| AsyncAgentWorkspace | AsyncAgentWorkspace は agents 領域の 画面または画面内 UI コンポーネント です。単独画面ではなく、他の UI から利用されます。 | 画面または画面内 UI コンポーネント | apps/web/src/features/agents/components/AsyncAgentWorkspace.tsx | AsyncAgentWorkspace | Icon, LoadingStatus, StatusBadge, article, button, code, div, h2, h3, header, p, section, small, span, strong |
 
 ## 主なボタン・リンク
 
 | コンポーネント | 要素 | ラベル | 操作説明 | 状態・補足 | ハンドラ | 場所 | 確度 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| AsyncAgentWorkspace | button | チャットへ戻る | 「チャットへ戻る」を実行するボタン。 | - | onClick=onBack | apps/web/src/features/agents/components/AsyncAgentWorkspace.tsx:33 | confirmed |
-| AsyncAgentWorkspace | button | 非同期エージェント情報を更新 | 「非同期エージェント情報を更新」を実行するボタン。 | 状態: disabled=loading | onClick=onRefresh | apps/web/src/features/agents/components/AsyncAgentWorkspace.tsx:47 | confirmed |
-| AsyncAgentWorkspace | button | `${run.agentRunId}の詳細` | 「`${run.agentRunId}の詳細`」を実行するボタン。 | 状態: aria-current=selectedRun?.agentRunId === run.agentRunId ? "true" : undefined | onClick=() => setSelectedRunId(run.agentRunId) | apps/web/src/features/agents/components/AsyncAgentWorkspace.tsx:84 | confirmed |
-| AsyncAgentWorkspace | button | キャンセル | 「キャンセル」を実行するボタン。 | 状態: disabled=!canCancel \|\| !["queued", "preparing_workspace", "running", "waiting_for_approval"].inclu… | onClick=() => void onCancel(selectedRun.agentRunId) | apps/web/src/features/agents/components/AsyncAgentWorkspace.tsx:116 | confirmed |
+| AsyncAgentWorkspace | button | チャットへ戻る | 「チャットへ戻る」を実行するボタン。 | - | onClick=onBack | apps/web/src/features/agents/components/AsyncAgentWorkspace.tsx:40 | confirmed |
+| AsyncAgentWorkspace | button | 非同期エージェント情報を更新 | 「非同期エージェント情報を更新」を実行するボタン。 | 状態: disabled=loading | onClick=onRefresh | apps/web/src/features/agents/components/AsyncAgentWorkspace.tsx:54 | confirmed |
+| AsyncAgentWorkspace | button | `${providerDisplayName(run)}の非同期実行（${formatDateTime(run.updatedAt)}、識別子: ${run.agentRunId… | 「`${providerDisplayName(run)}の非同期実行（${formatDateTime(run.updatedAt)}、識別子: ${run.agentRunId…」を実行するボタン。 | 状態: aria-current=selectedRun?.agentRunId === run.agentRunId ? "true" : undefined | onClick=() => setSelectedRunId(run.agentRunId) | apps/web/src/features/agents/components/AsyncAgentWorkspace.tsx:91 | confirmed |
+| AsyncAgentWorkspace | button | キャンセル | 「キャンセル」を実行するボタン。 | 状態: disabled=!canCancel \|\| !["queued", "preparing_workspace", "running", "waiting_for_approval"].inclu… | onClick=() => void onCancel(selectedRun.agentRunId) | apps/web/src/features/agents/components/AsyncAgentWorkspace.tsx:124 | confirmed |
 
 ## フォーム
 
@@ -42,7 +42,7 @@
 
 | コンポーネント | 要素 | ラベル | UI 説明 | 状態・補足 | ハンドラ | 場所 | 確度 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| AsyncAgentWorkspace | button | チャットへ戻る | 「チャットへ戻る」を実行するボタン。 | - | onClick=onBack | apps/web/src/features/agents/components/AsyncAgentWorkspace.tsx:33 | confirmed |
-| AsyncAgentWorkspace | button | 非同期エージェント情報を更新 | 「非同期エージェント情報を更新」を実行するボタン。 | 状態: disabled=loading | onClick=onRefresh | apps/web/src/features/agents/components/AsyncAgentWorkspace.tsx:47 | confirmed |
-| AsyncAgentWorkspace | button | `${run.agentRunId}の詳細` | 「`${run.agentRunId}の詳細`」を実行するボタン。 | 状態: aria-current=selectedRun?.agentRunId === run.agentRunId ? "true" : undefined | onClick=() => setSelectedRunId(run.agentRunId) | apps/web/src/features/agents/components/AsyncAgentWorkspace.tsx:84 | confirmed |
-| AsyncAgentWorkspace | button | キャンセル | 「キャンセル」を実行するボタン。 | 状態: disabled=!canCancel \|\| !["queued", "preparing_workspace", "running", "waiting_for_approval"].inclu… | onClick=() => void onCancel(selectedRun.agentRunId) | apps/web/src/features/agents/components/AsyncAgentWorkspace.tsx:116 | confirmed |
+| AsyncAgentWorkspace | button | チャットへ戻る | 「チャットへ戻る」を実行するボタン。 | - | onClick=onBack | apps/web/src/features/agents/components/AsyncAgentWorkspace.tsx:40 | confirmed |
+| AsyncAgentWorkspace | button | 非同期エージェント情報を更新 | 「非同期エージェント情報を更新」を実行するボタン。 | 状態: disabled=loading | onClick=onRefresh | apps/web/src/features/agents/components/AsyncAgentWorkspace.tsx:54 | confirmed |
+| AsyncAgentWorkspace | button | `${providerDisplayName(run)}の非同期実行（${formatDateTime(run.updatedAt)}、識別子: ${run.agentRunId… | 「`${providerDisplayName(run)}の非同期実行（${formatDateTime(run.updatedAt)}、識別子: ${run.agentRunId…」を実行するボタン。 | 状態: aria-current=selectedRun?.agentRunId === run.agentRunId ? "true" : undefined | onClick=() => setSelectedRunId(run.agentRunId) | apps/web/src/features/agents/components/AsyncAgentWorkspace.tsx:91 | confirmed |
+| AsyncAgentWorkspace | button | キャンセル | 「キャンセル」を実行するボタン。 | 状態: disabled=!canCancel \|\| !["queued", "preparing_workspace", "running", "waiting_for_approval"].inclu… | onClick=() => void onCancel(selectedRun.agentRunId) | apps/web/src/features/agents/components/AsyncAgentWorkspace.tsx:124 | confirmed |

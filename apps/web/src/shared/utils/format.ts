@@ -1,5 +1,11 @@
 import type { CostAuditSummary, ManagedUser, ManagedUserAuditLogEntry } from "../../features/admin/types.js"
 import type { HumanQuestion } from "../../features/questions/types.js"
+import {
+  benchmarkRunStatusPresentation,
+  managedUserStatusPresentation,
+  questionPriorityPresentation,
+  questionStatusPresentation
+} from "../ui/displayMetadata.js"
 
 export function formatLatency(value: number): string {
   if (value >= 1000) return `${(value / 1000).toFixed(2)} 秒`
@@ -50,9 +56,7 @@ export function formatDateTime(input: string): string {
 }
 
 export function managedUserStatusLabel(status: ManagedUser["status"]): string {
-  if (status === "active") return "有効"
-  if (status === "suspended") return "停止中"
-  return "削除済み"
+  return managedUserStatusPresentation(status).label
 }
 
 export function costConfidenceLabel(confidence: NonNullable<CostAuditSummary["items"]>[number]["confidence"]): string {
@@ -81,23 +85,15 @@ export function adminAuditSummary(entry: ManagedUserAuditLogEntry): string {
 }
 
 export function statusLabel(status: HumanQuestion["status"]): string {
-  if (status === "open") return "対応中"
-  if (status === "answered") return "回答済み"
-  return "解決済み"
+  return questionStatusPresentation(status).label
 }
 
 export function runStatusLabel(status: "queued" | "running" | "succeeded" | "failed" | "cancelled"): string {
-  if (status === "queued") return "待機中"
-  if (status === "running") return "実行中"
-  if (status === "succeeded") return "成功"
-  if (status === "failed") return "失敗"
-  return "取消済み"
+  return benchmarkRunStatusPresentation(status).label
 }
 
 export function priorityLabel(priority: HumanQuestion["priority"]): string {
-  if (priority === "urgent") return "緊急"
-  if (priority === "high") return "高"
-  return "通常"
+  return questionPriorityPresentation(priority).label
 }
 
 export function sanitizeFileName(input: string): string {

@@ -113,6 +113,24 @@ stateDiagram-v2
 
 Displayed values derive from API/props/persisted state/config or an honest explicit state. The contract prohibits demo/fake fallback values in production paths.
 
+## Vocabulary、semantic token、primitive contract
+
+### Confirmed production implementation（2026-07-14）
+
+| Layer | Responsibility | Contract |
+| --- | --- | --- |
+| domain type | status/mode/permission/action の許可値 | union を source of truth とし、表示層が未知値を推測しない |
+| `displayMetadata.ts` | approved 日本語 label、semantic tone、技術値の honest unavailable 表示 | `satisfies Record<DomainUnion, ...>` で値追加時の mapping 漏れを typecheck failure にする |
+| `StatusBadge` | status の共通表示 | foreground/background/border token、可視 label、`aria-hidden` marker を同時に使い、色だけに依存しない |
+| `Button` / confirmation dialog | primary/secondary/warning/danger intent | native `button`、disabled/busy、focus/Escape/restore contract を維持し、feature 固有の危険色を再定義しない |
+| feature adapter | domain value から presentation を選ぶ | raw enum/internal service/error detail を ordinary task の主要語彙へ出さず、ID が操作上必要なら管理・技術詳細と明示する |
+
+Semantic status token は `neutral`、`info`、`success`、`warning`、`danger` の 5 intent とし、各 foreground/background の text contrast を `tools/web-inventory/semantic-ui-contract.test.mjs` で WCAG AA 4.5:1 以上に固定する。marker の形と日本語 label が第二・第三 cue になるため、色の違いだけで意味を伝えない。
+
+Representative migration は benchmark、非同期エージェント、documents/share/reindex、admin user/用語展開、debug を含む。domain 固有の model ID、dataset key、document/user/group ID は値自体を偽の表示名へ変換せず、ordinary label ではなく選択内容または管理・技術詳細として表示する。API が display name を提供しない共有先識別子は制約を明記し、後続の directory/IA 改善範囲とする。
+
+検証は metadata/primitive/feature unit test、semantic source/contrast contract、generated inventory、`E2E-UI-SEMANTIC-001` の representative status/dialog axe を組み合わせる。これは screen reader、400% zoom、real device、Firefox/WebKit、全画面の arbitrary layout/brand color 監査を代替しない。
+
 ## High-impact operation contract
 
 Every delete/share/permission/suspend/disable/publish/cancel/cutover/rollback interaction carries:
@@ -239,13 +257,15 @@ Checkboxes are checked only for evidence actually obtained.
 | chat/assignee full journey | existing chat/question requirements, `FR-095` | `tasks/todo/20260714-issue-345-chat-assignee-journey.md` |
 | admin remaining governance/a11y/scale | `FR-096`〜`FR-098`, `SQ-016` | `tasks/todo/20260714-1011-admin-ui-governance-quality.md` |
 | cross-screen a11y/responsive violations | `SQ-016` | `tasks/todo/20260714-issue-345-cross-screen-a11y-responsive.md` |
-| wording/token/primitive drift | `NFR-017` | `tasks/todo/20260714-issue-345-ui-language-primitives.md` |
+| representative wording/token/primitive migration implemented; remaining cross-screen brand/layout color and manual/browser evidence | `NFR-017`, `SQ-016`, `NFR-018` | `tasks/done/20260714-issue-345-ui-language-primitives.md`, `tasks/todo/20260714-issue-345-cross-screen-a11y-responsive.md`, `tasks/todo/20260714-issue-345-ui-automated-quality-gates.md`, `tasks/todo/20260714-issue-345-manual-a11y-evidence.md` |
 | required axe/mobile/visual/browser gate missing | `NFR-018` | `tasks/todo/20260714-issue-345-ui-automated-quality-gates.md` |
 | manual screen-reader/zoom/real-device evidence missing | `SQ-016`, `NFR-018` | `tasks/todo/20260714-issue-345-manual-a11y-evidence.md` |
 
 URL/history/denied-route gap は draft PR #349 と `tasks/done/20260714-issue-345-url-history-routing.md` で自動検証まで解消した。PR #348 依存は production behavior の gap ではなく、default branch merge 前に解消する PR lifecycle blocker として扱う。
 
 共通 UI state gap は shared primitive/controller、feature adapter、`E2E-UI-STATE-001` により自動検証範囲を解消した。代表 screen reader、実 browser zoom、real-device は common state 固有の成功として主張せず、manual evidence task と cross-screen task に残す。
+
+利用者語彙・semantic status token・status/dialog primitive の代表 gap は `displayMetadata.ts`、`StatusBadge`、共通 `Button` intent、`NONUI-UI-SEMANTIC-001`、`E2E-UI-SEMANTIC-001` により自動検証範囲を解消した。全画面の layout/brand color、ブラウザ横断、manual evidence は上記の後続 task に残す。
 
 ## Open decisions
 

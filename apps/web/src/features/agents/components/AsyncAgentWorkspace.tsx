@@ -2,6 +2,12 @@ import { useMemo, useState } from "react"
 import { Icon } from "../../../shared/components/Icon.js"
 import { LoadingStatus } from "../../../shared/components/LoadingSpinner.js"
 import { formatDateTime } from "../../../shared/utils/format.js"
+import { StatusBadge } from "../../../shared/ui/StatusBadge.js"
+import {
+  agentAvailabilityPresentation,
+  agentFailureReasonLabel,
+  agentRunStatusPresentation
+} from "../../../shared/ui/displayMetadata.js"
 import type { AgentRuntimeProviderDefinition, AsyncAgentRun } from "../types.js"
 
 export function AsyncAgentWorkspace({
@@ -26,6 +32,7 @@ export function AsyncAgentWorkspace({
   const allUnavailable = providers.length > 0 && providers.every((provider) => provider.availability !== "available")
   const [selectedRunId, setSelectedRunId] = useState("")
   const selectedRun = useMemo(() => runs.find((run) => run.agentRunId === selectedRunId) ?? runs[0], [runs, selectedRunId])
+  const providerDisplayName = (run: AsyncAgentRun) => providers.find((provider) => provider.provider === run.provider)?.displayName ?? "名称未提供"
 
   return (
     <section className="agent-workspace" aria-label="非同期エージェント">
@@ -35,83 +42,84 @@ export function AsyncAgentWorkspace({
         </button>
         <div>
           <h2>非同期エージェント</h2>
-          <span>{runs.length} 件の run metadata</span>
+          <span>{runs.length} 件の実行履歴</span>
         </div>
       </header>
       {loading && <LoadingStatus label="非同期エージェントAPIを処理中" />}
 
       <div className="agent-layout">
-        <section className="agent-panel" aria-label="Provider設定状態">
+        <section className="agent-panel" aria-label="実行環境の設定状態">
           <div className="history-list-head">
-            <h3>Provider</h3>
+            <h3>実行環境</h3>
             <button type="button" onClick={onRefresh} disabled={loading} title="更新" aria-label="非同期エージェント情報を更新">
               <Icon name="clock" />
               <span>更新</span>
             </button>
           </div>
           {providers.length === 0 ? (
-            <p className="agent-empty">provider 設定状態を取得できません。</p>
+            <p className="agent-empty">実行環境の設定状態を取得できません。</p>
           ) : (
             <div className="agent-provider-list">
               {providers.map((provider) => (
                 <article className="agent-provider-row" key={provider.provider}>
                   <div>
                     <strong>{provider.displayName}</strong>
-                    <span>{provider.provider}</span>
+                    <span>非同期処理の実行環境</span>
                   </div>
-                  <span className={`run-status ${provider.availability === "available" ? "succeeded" : "failed"}`}>{providerAvailabilityLabel(provider.availability)}</span>
-                  {provider.reason ? <p>{provider.reason}</p> : null}
+                  <StatusBadge presentation={agentAvailabilityPresentation(provider.availability)} />
+                  {provider.reason ? <p>設定の詳細は管理者に確認してください。</p> : null}
                 </article>
               ))}
             </div>
           )}
           {allUnavailable && (
-            <p className="agent-empty">provider は未設定です。G1 では本実行、workspace execution、writeback は利用できません。</p>
+            <p className="agent-empty">実行環境は未設定です。非同期実行、作業領域での処理、結果の書き戻しは利用できません。</p>
           )}
           {!canRun && <p className="agent-empty">非同期エージェント実行権限がありません。</p>}
         </section>
 
-        <section className="agent-panel" aria-label="Run一覧">
+        <section className="agent-panel" aria-label="実行一覧">
           <div className="history-list-head">
-            <h3>Run</h3>
+            <h3>実行履歴</h3>
             <span>{runs.length} 件</span>
           </div>
           {runs.length === 0 ? (
-            <p className="agent-empty">run はまだありません。</p>
+            <p className="agent-empty">実行履歴はまだありません。</p>
           ) : (
             <div className="agent-run-list">
               {runs.map((run) => (
-                <button className="agent-run-row" type="button" key={run.agentRunId} aria-label={`${run.agentRunId}の詳細`} aria-current={selectedRun?.agentRunId === run.agentRunId ? "true" : undefined} onClick={() => setSelectedRunId(run.agentRunId)}>
-                  <code>{run.agentRunId}</code>
-                  <span className={`run-status ${run.status === "completed" ? "succeeded" : run.status === "running" || run.status === "queued" ? "running" : "failed"}`}>{runStatusLabel(run.status)}</span>
-                  <span>{run.provider} / {run.modelId}</span>
+                <button className="agent-run-row" type="button" key={run.agentRunId} aria-label={`${providerDisplayName(run)}の非同期実行（${formatDateTime(run.updatedAt)}、識別子: ${run.agentRunId}）を表示`} aria-current={selectedRun?.agentRunId === run.agentRunId ? "true" : undefined} onClick={() => setSelectedRunId(run.agentRunId)}>
+                  <strong>{providerDisplayName(run)} の実行</strong>
+                  <StatusBadge presentation={agentRunStatusPresentation(run.status)} />
+                  <span>{run.modelId}</span>
                   <small>{formatDateTime(run.updatedAt)}</small>
+                  <small>実行識別子: <code>{run.agentRunId}</code></small>
                 </button>
               ))}
             </div>
           )}
         </section>
 
-        <section className="agent-panel agent-detail-panel" aria-label="Run詳細">
+        <section className="agent-panel agent-detail-panel" aria-label="実行詳細">
           <div className="history-list-head">
             <h3>詳細</h3>
             {selectedRun ? <code>{selectedRun.runId}</code> : <span>未選択</span>}
           </div>
           {!selectedRun ? (
-            <p className="agent-empty">run を選択すると read-only metadata を表示します。</p>
+            <p className="agent-empty">実行を選択すると読み取り専用の詳細を表示します。</p>
           ) : (
             <div className="agent-detail-grid">
-              <span>status</span>
-              <strong>{runStatusLabel(selectedRun.status)}</strong>
-              <span>provider</span>
-              <strong>{selectedRun.providerAvailability === "available" ? selectedRun.provider : providerAvailabilityLabel(selectedRun.providerAvailability)}</strong>
-              <span>mount</span>
+              <span>状態</span>
+              <strong><StatusBadge presentation={agentRunStatusPresentation(selectedRun.status)} /></strong>
+              <span>実行環境</span>
+              <strong>{selectedRun.providerAvailability === "available" ? providerDisplayName(selectedRun) : agentAvailabilityPresentation(selectedRun.providerAvailability).label}</strong>
+              <span>作業領域</span>
               <strong>{selectedRun.workspaceMounts.length === 0 ? "未設定" : `${selectedRun.workspaceMounts.length} 件`}</strong>
-              <span>artifact</span>
+              <span>成果物</span>
               <strong>{selectedRun.artifacts.length === 0 ? "なし" : `${selectedRun.artifacts.length} 件`}</strong>
               <span>失敗理由</span>
-              <strong>{selectedRun.failureReasonCode ? failureReasonLabel(selectedRun.failureReasonCode) : "なし"}</strong>
-              {selectedRun.failureReason ? <p className="agent-detail-note">{selectedRun.failureReason}</p> : null}
+              <strong>{selectedRun.failureReasonCode ? agentFailureReasonLabel(selectedRun.failureReasonCode) : "なし"}</strong>
+              {selectedRun.failureReason ? <p className="agent-detail-note">詳細は実行ログを確認してください。</p> : null}
               <div className="agent-detail-actions">
                 <button type="button" disabled={!canCancel || !["queued", "preparing_workspace", "running", "waiting_for_approval"].includes(selectedRun.status)} onClick={() => void onCancel(selectedRun.agentRunId)}>
                   <Icon name="stop" />
@@ -124,30 +132,4 @@ export function AsyncAgentWorkspace({
       </div>
     </section>
   )
-}
-
-function providerAvailabilityLabel(availability: AgentRuntimeProviderDefinition["availability"]): string {
-  if (availability === "available") return "利用可能"
-  if (availability === "not_configured") return "未設定"
-  if (availability === "provider_unavailable") return "利用不可"
-  return "無効"
-}
-
-function runStatusLabel(status: AsyncAgentRun["status"]): string {
-  if (status === "completed") return "完了"
-  if (status === "blocked") return "ブロック"
-  if (status === "cancelled") return "キャンセル"
-  if (status === "failed") return "失敗"
-  if (status === "running") return "実行中"
-  if (status === "preparing_workspace") return "準備中"
-  if (status === "waiting_for_approval") return "承認待ち"
-  if (status === "expired") return "期限切れ"
-  return "待機中"
-}
-
-function failureReasonLabel(reason: NonNullable<AsyncAgentRun["failureReasonCode"]>): string {
-  if (reason === "not_configured") return "provider 未設定"
-  if (reason === "provider_unavailable") return "provider 利用不可"
-  if (reason === "cancelled") return "キャンセル"
-  return "実行エラー"
 }

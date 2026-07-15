@@ -286,7 +286,7 @@ export function DocumentDetailPanel({
               value={folderShareReason}
               disabled={!canShareGroups || folderShareLoading || !folderSharePolicyVersion || operationState.sharingGroupId !== null}
               onChange={(event) => onFolderShareReasonChange(event.target.value)}
-              placeholder="共有 policy を変更する理由"
+              placeholder="共有設定を変更する理由"
               required
             />
           </label>

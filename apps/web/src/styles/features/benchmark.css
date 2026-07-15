@@ -48,18 +48,20 @@
   overflow-wrap: anywhere;
 }
 
-.benchmark-kpi-card.succeeded strong {
-  color: #137333;
+.benchmark-kpi-card.tone-success strong {
+  color: var(--status-success-foreground);
 }
 
-.benchmark-kpi-card.failed strong,
-.benchmark-kpi-card.cancelled strong {
-  color: #b32626;
+.benchmark-kpi-card.tone-danger strong {
+  color: var(--status-danger-foreground);
 }
 
-.benchmark-kpi-card.running strong,
-.benchmark-kpi-card.queued strong {
-  color: #1f62dc;
+.benchmark-kpi-card.tone-info strong {
+  color: var(--status-info-foreground);
+}
+
+.benchmark-kpi-card.tone-warning strong {
+  color: var(--status-warning-foreground);
 }
 
 .benchmark-layout {

@@ -1,8 +1,9 @@
 import { type FormEvent, useState } from "react"
 import { ConfirmDialog } from "../../../../shared/components/ConfirmDialog.js"
-import { EmptyState } from "../../../../shared/ui/index.js"
+import { EmptyState, StatusBadge } from "../../../../shared/ui/index.js"
 import { LoadingSpinner } from "../../../../shared/components/LoadingSpinner.js"
 import { formatDateTime } from "../../../../shared/utils/format.js"
+import { aliasAuditActionLabel, aliasStatusPresentation } from "../../../../shared/ui/displayMetadata.js"
 import type { AliasAuditLogItem, AliasDefinition } from "../../types.js"
 
 export function AliasAdminPanel({
@@ -59,9 +60,9 @@ export function AliasAdminPanel({
   }
 
   return (
-    <section className="admin-section-panel alias-admin-panel" aria-label="Alias管理一覧">
+    <section className="admin-section-panel alias-admin-panel" aria-label="用語展開管理一覧">
       <div className="document-list-head">
-        <h3>Alias管理</h3>
+        <h3>用語展開管理</h3>
         <div className="inline-action-group">
           <span>{aliases ? `${aliases.length} 件` : loadFailed ? "取得失敗" : "未提供"}</span>
           {canShowPublish && (
@@ -84,7 +85,7 @@ export function AliasAdminPanel({
             <input value={expansions} onChange={(event) => setExpansions(event.target.value)} placeholder="有給休暇, 休暇申請" disabled={loading} />
           </label>
           <label>
-            <span>部署 scope</span>
+            <span>適用部署</span>
             <input value={department} onChange={(event) => setDepartment(event.target.value)} placeholder="任意" disabled={loading} />
           </label>
           <button type="submit" disabled={loading || !term.trim() || parseExpansionList(expansions).length === 0}>
@@ -97,18 +98,19 @@ export function AliasAdminPanel({
       <div className="alias-list">
         {aliases === null ? (
           <EmptyState
-            title={loadFailed ? "Alias を取得できませんでした。" : "Alias API field は未提供です。"}
-            description={loadFailed ? "画面上部の状態メッセージから再試行してください。" : "権限内の API response に aliases field がありません。"}
+            title={loadFailed ? "用語展開を取得できませんでした。" : "用語展開データは未提供です。"}
+            description={loadFailed ? "画面上部の状態メッセージから再試行してください。" : "権限内の応答に用語展開データがありません。"}
           />
         ) : aliases.length === 0 ? (
-          <EmptyState title="登録済み alias はありません。" />
+          <EmptyState title="登録済みの用語展開はありません。" />
         ) : (
           aliases.map((alias) => (
             <article className={`alias-card ${alias.status}`} key={alias.aliasId}>
               <div>
                 <strong>{alias.term}</strong>
                 <span>{alias.expansions.join(", ")}</span>
-                <small>{alias.scope?.department ? `department: ${alias.scope.department}` : "global"} / {alias.publishedVersion ?? alias.status}</small>
+                <small>適用範囲: {alias.scope?.department ? `部署 ${alias.scope.department}` : "全体"}{alias.publishedVersion ? ` / 公開版 ${alias.publishedVersion}` : ""}</small>
+                <StatusBadge presentation={aliasStatusPresentation(alias.status)} />
               </div>
               <div className="inline-action-group">
                 <button type="button" disabled={!canWrite || loading || alias.status === "disabled"} onClick={() => void onUpdate(alias.aliasId, { expansions: alias.expansions })}>
@@ -119,7 +121,7 @@ export function AliasAdminPanel({
                   {loading && <LoadingSpinner className="button-spinner" />}
                   <span>承認</span>
                 </button>
-                <button type="button" disabled={!canReview || loading || alias.status === "disabled"} onClick={() => void onReview(alias.aliasId, "reject", "Rejected from UI")}>
+                <button type="button" disabled={!canReview || loading || alias.status === "disabled"} onClick={() => void onReview(alias.aliasId, "reject", "画面から差し戻し")}>
                   {loading && <LoadingSpinner className="button-spinner" />}
                   <span>差戻</span>
                 </button>
@@ -135,8 +137,8 @@ export function AliasAdminPanel({
 
       {publishConfirmOpen && (
         <ConfirmDialog
-          title="Alias を公開しますか？"
-          description="承認済み alias を公開バージョンへ反映します。検索時の用語展開に影響します。"
+          title="用語展開を公開しますか？"
+          description="承認済みの用語展開を公開バージョンへ反映します。検索時の用語展開に影響します。"
           details={[`対象件数: ${approvedAliases.length} 件`, "影響: 公開後の検索結果が変わる可能性があります。"]}
           confirmLabel="公開"
           tone="warning"
@@ -151,9 +153,9 @@ export function AliasAdminPanel({
 
       {disableCandidate && (
         <ConfirmDialog
-          title="この alias を無効化しますか？"
-          description="無効化した alias は検索時の用語展開に使われなくなります。"
-          details={[`用語: ${disableCandidate.term}`, `展開語: ${disableCandidate.expansions.join(", ")}`, `状態: ${disableCandidate.status}`]}
+          title="この用語展開を無効化しますか？"
+          description="無効化した用語展開は検索時に使われなくなります。"
+          details={[`用語: ${disableCandidate.term}`, `展開語: ${disableCandidate.expansions.join(", ")}`, `状態: ${aliasStatusPresentation(disableCandidate.status).label}`]}
           confirmLabel="無効化"
           tone="danger"
           loading={loading}
@@ -165,18 +167,18 @@ export function AliasAdminPanel({
         />
       )}
 
-      <div className="alias-audit-list" aria-label="Alias監査ログ">
+      <div className="alias-audit-list" aria-label="用語展開監査ログ">
         {auditLog === null ? (
           <EmptyState
-            title={loadFailed ? "Alias監査ログを取得できませんでした。" : "Alias監査ログ API field は未提供です。"}
-            description={loadFailed ? "画面上部の状態メッセージから再試行してください。" : "権限内の API response に auditLog field がありません。"}
+            title={loadFailed ? "用語展開の監査ログを取得できませんでした。" : "用語展開の監査ログは未提供です。"}
+            description={loadFailed ? "画面上部の状態メッセージから再試行してください。" : "権限内の応答に監査ログがありません。"}
           />
         ) : auditLog.length === 0 ? (
-          <EmptyState title="Alias監査ログはありません。" />
+          <EmptyState title="用語展開の監査ログはありません。" />
         ) : auditLog.slice(0, 8).map((item) => (
           <div key={item.auditId}>
             <span>{formatDateTime(item.createdAt)}</span>
-            <strong>{item.action}</strong>
+            <strong>{aliasAuditActionLabel(item.action)}</strong>
             <small>{item.detail}</small>
           </div>
         ))}
