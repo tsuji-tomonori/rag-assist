@@ -28,6 +28,7 @@
 | `POST /admin/aliases` | alias draft 作成 | `FR-023`, `NFR-012` |
 | `POST /admin/aliases/{aliasId}/update` | alias draft 更新 | `FR-023`, `NFR-012` |
 | `POST /admin/aliases/{aliasId}/review` | alias review | `FR-023`, `NFR-012` |
+| `POST /admin/aliases/{aliasId}/transition` | alias を明示的に draft へ戻す | `FR-023`, `NFR-012` |
 | `POST /admin/aliases/{aliasId}/disable` | alias disable | `FR-023`, `NFR-012` |
 | `POST /admin/aliases/publish` | alias publish | `FR-023`, `NFR-012` |
 | `GET /admin/aliases/audit-log` | alias 操作履歴 | `FR-023`, `NFR-012` |
@@ -618,6 +619,7 @@ Phase 1 では通常利用者の Cognito self sign-up UI を提供する。
 | alias draft 作成 | `POST /admin/aliases` | `rag:alias:write:group` | `RAG_GROUP_MANAGER`, `SYSTEM_ADMIN` |
 | alias draft 更新 | `POST /admin/aliases/{aliasId}/update` | `rag:alias:write:group` | `RAG_GROUP_MANAGER`, `SYSTEM_ADMIN` |
 | alias review | `POST /admin/aliases/{aliasId}/review` | `rag:alias:review:group` | `RAG_GROUP_MANAGER`, `SYSTEM_ADMIN` |
+| alias draft 遷移 | `POST /admin/aliases/{aliasId}/transition` | `rag:alias:write:group` | `RAG_GROUP_MANAGER`, `SYSTEM_ADMIN` |
 | alias disable | `POST /admin/aliases/{aliasId}/disable` | `rag:alias:disable:group` | `RAG_GROUP_MANAGER`, `SYSTEM_ADMIN` |
 | alias publish | `POST /admin/aliases/publish` | `rag:alias:publish:group` | `RAG_GROUP_MANAGER`, `SYSTEM_ADMIN` |
 | alias audit log | `GET /admin/aliases/audit-log` | `rag:alias:read` | `RAG_GROUP_MANAGER`, `SYSTEM_ADMIN` |
@@ -625,6 +627,10 @@ Phase 1 では通常利用者の Cognito self sign-up UI を提供する。
 | コスト監査 | `GET /admin/costs` | `cost:read:all` | `COST_AUDITOR`, `SYSTEM_ADMIN` |
 
 Phase 2 初期実装のユーザー管理は管理台帳 API を正とする。管理台帳 API はユーザー作成、role group 付与、停止、再開、削除を管理操作履歴へ記録する。Cognito Admin API への実変更、承認 workflow、監査ログの保全設計は後続 adapter/運用設計で扱う。
+
+alias list/audit と管理操作履歴は `cursor`、`limit`、`query` および resource 固有 filter を受け、`total`、`nextCursor`、`truncated`、`source`、`asOf` を返す。cursor は sort と最後の複合 key を含む opaque token で、sort 不一致・不正 token は `400` とする。alias response は record `version`、list response は ledger `version` を返す。
+
+alias update/review/transition/disable は record の `expectedVersion` と非空 `reason`、publish は list で確認した ledger `expectedVersion` と非空 `reason` を必須にする。古い version は `409`、許可されない state transition は `400`、永続化不能は `503` とし、該当 tenant の監査 event に結果を記録する。aliasId が同一でも actor tenant と一致しなければ存在を開示せず `404` とする。
 
 ## エラー方針
 

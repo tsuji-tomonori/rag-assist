@@ -4,9 +4,9 @@
 
 runtime OpenAPI と TypeScript 実装を対応付け、各 API の詳細設計、IF、メッセージ、query、sequence、unit test 仕様を生成しています。
 
-- API 数: 95
+- API 数: 96
 - API 別文書数: 6
-- 文書総数: 570
+- 文書総数: 576
 
 | Method | Path | Summary | OpenAPI | 6文書 |
 | --- | --- | --- | --- | --- |
@@ -14,6 +14,7 @@ runtime OpenAPI と TypeScript 実装を対応付け、各 API の詳細設計�
 | `POST` | `/admin/aliases` | 検索 alias draft を作成する | yes | [detail-design](post-admin-aliases/detail-design_gen.md) / [if](post-admin-aliases/if_gen.md) / [messages](post-admin-aliases/messages_gen.md) / [query](post-admin-aliases/query_gen.md) / [sequence](post-admin-aliases/sequence_gen.md) / [unit-test](post-admin-aliases/unit-test_gen.md) |
 | `POST` | `/admin/aliases/{aliasId}/disable` | 検索 alias を無効化する | yes | [detail-design](post-admin-aliases-aliasid-disable/detail-design_gen.md) / [if](post-admin-aliases-aliasid-disable/if_gen.md) / [messages](post-admin-aliases-aliasid-disable/messages_gen.md) / [query](post-admin-aliases-aliasid-disable/query_gen.md) / [sequence](post-admin-aliases-aliasid-disable/sequence_gen.md) / [unit-test](post-admin-aliases-aliasid-disable/unit-test_gen.md) |
 | `POST` | `/admin/aliases/{aliasId}/review` | 検索 alias をレビューする | yes | [detail-design](post-admin-aliases-aliasid-review/detail-design_gen.md) / [if](post-admin-aliases-aliasid-review/if_gen.md) / [messages](post-admin-aliases-aliasid-review/messages_gen.md) / [query](post-admin-aliases-aliasid-review/query_gen.md) / [sequence](post-admin-aliases-aliasid-review/sequence_gen.md) / [unit-test](post-admin-aliases-aliasid-review/unit-test_gen.md) |
+| `POST` | `/admin/aliases/{aliasId}/transition` | 検索 alias を下書きへ戻す | yes | [detail-design](post-admin-aliases-aliasid-transition/detail-design_gen.md) / [if](post-admin-aliases-aliasid-transition/if_gen.md) / [messages](post-admin-aliases-aliasid-transition/messages_gen.md) / [query](post-admin-aliases-aliasid-transition/query_gen.md) / [sequence](post-admin-aliases-aliasid-transition/sequence_gen.md) / [unit-test](post-admin-aliases-aliasid-transition/unit-test_gen.md) |
 | `POST` | `/admin/aliases/{aliasId}/update` | 検索 alias draft を更新する | yes | [detail-design](post-admin-aliases-aliasid-update/detail-design_gen.md) / [if](post-admin-aliases-aliasid-update/if_gen.md) / [messages](post-admin-aliases-aliasid-update/messages_gen.md) / [query](post-admin-aliases-aliasid-update/query_gen.md) / [sequence](post-admin-aliases-aliasid-update/sequence_gen.md) / [unit-test](post-admin-aliases-aliasid-update/unit-test_gen.md) |
 | `GET` | `/admin/aliases/audit-log` | 検索 alias 監査ログを取得する | yes | [detail-design](get-admin-aliases-audit-log/detail-design_gen.md) / [if](get-admin-aliases-audit-log/if_gen.md) / [messages](get-admin-aliases-audit-log/messages_gen.md) / [query](get-admin-aliases-audit-log/query_gen.md) / [sequence](get-admin-aliases-audit-log/sequence_gen.md) / [unit-test](get-admin-aliases-audit-log/unit-test_gen.md) |
 | `POST` | `/admin/aliases/publish` | 検索 alias を公開する | yes | [detail-design](post-admin-aliases-publish/detail-design_gen.md) / [if](post-admin-aliases-publish/if_gen.md) / [messages](post-admin-aliases-publish/messages_gen.md) / [query](post-admin-aliases-publish/query_gen.md) / [sequence](post-admin-aliases-publish/sequence_gen.md) / [unit-test](post-admin-aliases-publish/unit-test_gen.md) |

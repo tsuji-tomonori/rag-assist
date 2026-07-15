@@ -1,30 +1,71 @@
 import { EmptyState } from "../../../../shared/ui/index.js"
-import type { AccessRoleDefinition } from "../../types.js"
+import type { UiResourcePartState } from "../../../../shared/ui/ResourceState.js"
+import type { AccessRoleList } from "../../types.js"
+import { AdminPanelDataStatus } from "../AdminPanelDataStatus.js"
 
-export function AdminRolePanel({ accessRoles, loadFailed = false }: { accessRoles: AccessRoleDefinition[] | null; loadFailed?: boolean }) {
+export function AdminRolePanel({
+  accessRoleList,
+  part,
+  loading,
+  onRefresh
+}: {
+  accessRoleList: AccessRoleList | null
+  part?: UiResourcePartState
+  loading: boolean
+  onRefresh: () => Promise<void>
+}) {
+  const roles = accessRoleList?.roles ?? null
+  const loadFailed = part?.status === "failed" || part?.status === "permission"
   return (
-    <section className="admin-section-panel" aria-label="ロール定義">
+    <section className="admin-section-panel" aria-label="アプリケーションロール定義">
       <div className="document-list-head">
-        <h3>ロール定義</h3>
-        <span>{accessRoles ? `${accessRoles.length} 件` : loadFailed ? "取得失敗" : "未提供"}</span>
+        <h3>アプリケーションロール</h3>
+        <span>{roles ? `${roles.length} 件` : loadFailed ? "取得失敗" : "未確認"}</span>
       </div>
-      <p className="admin-panel-note">ロール定義は現行 API の read-only preset です。custom role editor と resource-level folder permission は未提供です。</p>
-      <div className="role-definition-list">
-        {accessRoles === null ? (
-          <EmptyState
-            title={loadFailed ? "ロール定義を取得できませんでした。" : "ロール定義 API field は未提供です。"}
-            description={loadFailed ? "画面上部の状態メッセージから再試行してください。" : "権限内の API response に roles field がありません。"}
-          />
-        ) : accessRoles.length === 0 ? (
-          <EmptyState title="ロール定義はありません。" />
-        ) : accessRoles.map((role) => (
-          <article className="role-definition-card" key={role.role}>
-            <strong>{role.role}</strong>
-            <span>{role.permissions.length} permissions</span>
-            <p>{role.permissions.join(", ")}</p>
-          </article>
-        ))}
-      </div>
+      <AdminPanelDataStatus
+        label="ロール定義"
+        part={part}
+        source={accessRoleList?.source}
+        asOf={accessRoleList?.asOf}
+        loading={loading}
+        onRefresh={onRefresh}
+      />
+      <p className="admin-panel-note">
+        ここではアプリケーションロールの system preset を読み取り専用で表示します。リソースグループは文書へのアクセス範囲を表す別の概念で、この一覧の編集対象ではありません。
+      </p>
+      <ul className="role-definition-list">
+        {roles === null ? (
+          <li>
+            <EmptyState
+              title={loadFailed ? "ロール定義を取得できませんでした。" : "ロール定義をまだ確認できません。"}
+              description={loadFailed ? "ロール定義の更新を試してください。" : "管理 API の取得完了後に表示します。"}
+            />
+          </li>
+        ) : roles.length === 0 ? (
+          <li><EmptyState title="ロール定義はありません。" /></li>
+        ) : roles.map((role) => {
+          const categories = [...new Set(role.permissions.map(permissionCategory))]
+          return (
+            <li className="role-definition-card" key={role.role}>
+              <strong>{role.displayName}</strong>
+              <span>{role.description}</span>
+              <small>種別: system preset / 識別子: <code>{role.role}</code></small>
+              <small>権限カテゴリ: {categories.length > 0 ? categories.join("、") : "なし"}</small>
+              <details>
+                <summary>権限 ID {role.permissions.length} 件を表示</summary>
+                <ul>
+                  {role.permissions.map((permission) => <li key={permission}><code>{permission}</code></li>)}
+                </ul>
+              </details>
+            </li>
+          )
+        })}
+      </ul>
+      {accessRoleList && <small>カタログ version: <code>{accessRoleList.catalogVersion}</code></small>}
     </section>
   )
+}
+
+function permissionCategory(permission: string): string {
+  return permission.split(/[:.]/, 1)[0] || "その他"
 }

@@ -26,7 +26,12 @@ _なし_
 
 ## Data
 
-_なし_
+Media type: `application/json`
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `expectedVersion` | `string` | yes | `data.expectedVersion` の値。項目名は expected version を表します。 | minLength=1 |
+| `reason` | `string` | yes | 判断や失敗の理由。 | minLength=1<br>maxLength=1000 |
 
 ## Authorization
 
@@ -54,10 +59,13 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 29 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 30 field(s) |
+| `400` | リクエスト形式または入力値が不正です。 | `application/json` | 2 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 | `404` | 指定したリソースが見つかりません。 | `application/json` | 2 field(s) |
+| `409` | 現在のリソース状態と要求された操作が競合しています。 | `application/json` | 2 field(s) |
+| `503` | alias 無効化の永続化を完了できません | `application/json` | 2 field(s) |
 
 ##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
@@ -66,6 +74,7 @@ Media type: `application/json`
 | 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
 | `aliasId` | `string` | yes | 検索 alias を識別する ID。 | - |
+| `version` | `string` | yes | `response.version` の値。項目名は version を表します。 | - |
 | `term` | `string` | yes | `response.term` の値。項目名は term を表します。 | - |
 | `expansions` | `array<string>` | yes | `response.expansions` の値。項目名は expansions を表します。 | - |
 | `scope` | `object` | no | `response.scope` の値。項目名は scope を表します。 | - |
@@ -95,6 +104,15 @@ Media type: `application/json`
 | `reviewComment` | `string` | no | `response.reviewComment` の値。項目名は review comment を表します。 | - |
 | `publishedVersion` | `string` | no | `response.publishedVersion` の値。項目名は published version を表します。 | - |
 
+##### `400` リクエスト形式または入力値が不正です。
+
+Media type: `application/json`
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
+
 ##### `401` 認証が必要です。
 
 Media type: `application/json`
@@ -114,6 +132,24 @@ Media type: `application/json`
 | `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ##### `404` 指定したリソースが見つかりません。
+
+Media type: `application/json`
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
+
+##### `409` 現在のリソース状態と要求された操作が競合しています。
+
+Media type: `application/json`
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
+
+##### `503` alias 無効化の永続化を完了できません
 
 Media type: `application/json`
 

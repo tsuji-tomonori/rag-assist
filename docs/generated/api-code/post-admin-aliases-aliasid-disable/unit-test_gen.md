@@ -8,31 +8,52 @@
 
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
-| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:3125 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
+| 到達 symbol | alias governance enforces tenant, version, state transition, and stable cursor boundaries | `apps/api/src/rag/memorag-service.test.ts:1423 (alias governance enforces tenant, version, state transition, and stable cursor boundaries)` |
+| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:3240 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
 
 ## 2. 実装分岐から導くテスト要因
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `POST /admin/aliases/{aliasId}/disable handler` | if | `alias` が存在しない、または偽である | `apps/api/src/routes/admin-routes.ts:433 (POST /admin/aliases/{aliasId}/disable handler)` |
-| F002 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| F003 | `MemoRagService.disableAlias` | if | `alias` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1281 (MemoRagService.disableAlias)` |
+| F001 | `POST /admin/aliases/{aliasId}/disable handler` | if | `alias` が存在しない、または偽である | `apps/api/src/routes/admin-routes.ts:521 (POST /admin/aliases/{aliasId}/disable handler)` |
+| F002 | `POST /admin/aliases/{aliasId}/disable handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/admin-routes.ts:523 (POST /admin/aliases/{aliasId}/disable handler)` |
+| F003 | `POST /admin/aliases/{aliasId}/disable handler` | if | `error` が `AliasGovernanceError` の instance である | `apps/api/src/routes/admin-routes.ts:524 (POST /admin/aliases/{aliasId}/disable handler)` |
+| F004 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| F005 | `MemoRagService.disableAlias` | if | `alias` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1458 (MemoRagService.disableAlias)` |
+| F006 | `MemoRagService.disableAlias` | 三項条件 | `alias.status` が `"disabled"` と等しい | `apps/api/src/rag/memorag-service.ts:1460 (MemoRagService.disableAlias)` |
+| F007 | `MemoRagService.disableAlias` | if | `invalid` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1461 (MemoRagService.disableAlias)` |
+| F008 | `aliasGovernanceStatus` | if | `error.result` が `"conflict"` と等しい | `apps/api/src/routes/admin-routes.ts:666 (aliasGovernanceStatus)` |
+| F009 | `aliasGovernanceStatus` | if | `error.result` が `"denied"` と等しい | `apps/api/src/routes/admin-routes.ts:667 (aliasGovernanceStatus)` |
 
 ## 3. コード由来テストケース
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | 検索 alias を無効化する が成功 response を返す。 | `apps/api/src/routes/admin-routes.ts:428 (POST /admin/aliases/{aliasId}/disable handler)` |
-| TC002 | F001: 条件成立 | `alias` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:433 (POST /admin/aliases/{aliasId}/disable handler)` |
-| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:433 (POST /admin/aliases/{aliasId}/disable handler)` |
-| TC004 | F002: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC006 | F003: 条件成立 | `alias` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1281 (MemoRagService.disableAlias)` |
-| TC007 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1281 (MemoRagService.disableAlias)` |
-| TC008 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
-| TC009 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
-| TC010 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
-| TC011 | HTTP 404 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC001 | 正常系 | 検索 alias を無効化する が成功 response を返す。 | `apps/api/src/routes/admin-routes.ts:514 (POST /admin/aliases/{aliasId}/disable handler)` |
+| TC002 | F001: 条件成立 | `alias` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:521 (POST /admin/aliases/{aliasId}/disable handler)` |
+| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:521 (POST /admin/aliases/{aliasId}/disable handler)` |
+| TC004 | F002: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/admin-routes.ts:523 (POST /admin/aliases/{aliasId}/disable handler)` |
+| TC005 | F003: 条件成立 | `error` が `AliasGovernanceError` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:524 (POST /admin/aliases/{aliasId}/disable handler)` |
+| TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:524 (POST /admin/aliases/{aliasId}/disable handler)` |
+| TC007 | F004: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| TC009 | F005: 条件成立 | `alias` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1458 (MemoRagService.disableAlias)` |
+| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1458 (MemoRagService.disableAlias)` |
+| TC011 | F006: 条件成立 | `alias.status` が `"disabled"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1460 (MemoRagService.disableAlias)` |
+| TC012 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1460 (MemoRagService.disableAlias)` |
+| TC013 | F007: 条件成立 | `invalid` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1461 (MemoRagService.disableAlias)` |
+| TC014 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1461 (MemoRagService.disableAlias)` |
+| TC015 | F008: 条件成立 | `error.result` が `"conflict"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:666 (aliasGovernanceStatus)` |
+| TC016 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:666 (aliasGovernanceStatus)` |
+| TC017 | F009: 条件成立 | `error.result` が `"denied"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:667 (aliasGovernanceStatus)` |
+| TC018 | F009: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:667 (aliasGovernanceStatus)` |
+| TC019 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC020 | HTTP 400 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC021 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC022 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC023 | HTTP 404 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC024 | HTTP 409 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC025 | HTTP 503 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 
 ## 4. 検証方針
 

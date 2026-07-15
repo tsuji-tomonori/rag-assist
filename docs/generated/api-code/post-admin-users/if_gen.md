@@ -2,7 +2,7 @@
 
 # POST /admin/users IF仕様
 
-- 実装 route: `apps/api/src/routes/admin-routes.ts:33 (POST /admin/users)`
+- 実装 route: `apps/api/src/routes/admin-routes.ts:42 (POST /admin/users)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 管理対象ユーザーを作成する

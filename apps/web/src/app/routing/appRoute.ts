@@ -40,8 +40,34 @@ export const documentStateSearchParams = [
   "pageSize"
 ] as const
 
+export const adminStateSearchParams = [
+  "section",
+  "adminQuery",
+  "aliasStatus",
+  "auditAction",
+  "sort",
+  "selected"
+] as const
+
 const documentSortKeys = new Set(["updatedDesc", "updatedAsc", "fileNameAsc", "chunkDesc", "typeAsc"])
 const documentSearchParamSet = new Set<string>(documentStateSearchParams)
+const adminSearchParamSet = new Set<string>(adminStateSearchParams)
+const adminSections = new Set(["overview", "users", "roles", "usage-cost", "audit", "alias"])
+const aliasStatuses = new Set(["draft", "approved", "disabled"])
+const aliasSortKeys = new Set(["updatedDesc", "termAsc"])
+const adminAuditActions = new Set([
+  "user:create",
+  "role:assign",
+  "user:suspend",
+  "user:unsuspend",
+  "user:delete",
+  "create",
+  "update",
+  "review",
+  "transition",
+  "disable",
+  "publish"
+])
 
 export function parseAppRoute(location: Pick<Location, "pathname" | "search"> & { hash?: string }): ParsedAppRoute {
   const params = new URLSearchParams(location.search)
@@ -65,7 +91,7 @@ export function parseAppRoute(location: Pick<Location, "pathname" | "search"> & 
     return { view: "chat", issue: "invalid-path", needsNormalization: true }
   }
 
-  const invalidQuery = hasInvalidViewQuery(params) || hasHash
+  const invalidQuery = hasInvalidViewQuery(params, viewParam) || hasHash
   if (viewParam === null) {
     return invalidQuery
       ? { view: "chat", issue: "invalid-query", needsNormalization: true }
@@ -103,6 +129,15 @@ export function buildAppViewUrl(currentHref: string, view: AppView): string {
     return relativeUrl(url)
   }
 
+  if (view === "admin") {
+    url.pathname = "/"
+    if (currentRoute.view !== "admin") url.search = ""
+    sanitizeAdminSearchParams(url.searchParams)
+    url.searchParams.set("view", "admin")
+    url.hash = ""
+    return relativeUrl(url)
+  }
+
   url.pathname = "/"
   url.search = ""
   if (view !== "chat") url.searchParams.set("view", view)
@@ -112,6 +147,13 @@ export function buildAppViewUrl(currentHref: string, view: AppView): string {
 
 export function normalizeAppRouteUrl(currentHref: string, route: ParsedAppRoute): string {
   const url = new URL(currentHref)
+  if (route.view === "admin") {
+    url.pathname = "/"
+    sanitizeAdminSearchParams(url.searchParams)
+    url.searchParams.set("view", "admin")
+    url.hash = ""
+    return relativeUrl(url)
+  }
   if (route.view !== "documents") return buildAppViewUrl(currentHref, route.view)
 
   if (!isSupportedDocumentPath(url.pathname)) url.pathname = "/documents"
@@ -157,9 +199,21 @@ function isSafeRouteSegment(value: string): boolean {
   return decodeRouteSegment(value) !== undefined
 }
 
-function hasInvalidViewQuery(params: URLSearchParams): boolean {
+function hasInvalidViewQuery(params: URLSearchParams, view: string | null): boolean {
+  if (view === "admin") return hasInvalidAdminQuery(params)
   const keys = [...params.keys()]
   return keys.some((key) => key !== "view") || params.getAll("view").length > 1
+}
+
+function hasInvalidAdminQuery(params: URLSearchParams): boolean {
+  const keys = [...new Set(params.keys())]
+  return keys.some((key) => {
+    if (key === "view") return params.getAll(key).length !== 1
+    if (!adminSearchParamSet.has(key)) return true
+    const values = params.getAll(key)
+    if (values.length !== 1 || values[0] === "") return true
+    return !isValidAdminStateParam(key, values[0]!)
+  })
 }
 
 function hasInvalidDocumentQuery(params: URLSearchParams): boolean {
@@ -186,6 +240,27 @@ function sanitizeDocumentSearchParams(params: URLSearchParams): void {
       params.delete(key)
     }
   }
+}
+
+function sanitizeAdminSearchParams(params: URLSearchParams): void {
+  for (const key of [...new Set(params.keys())]) {
+    if (key === "view") continue
+    const values = params.getAll(key)
+    if (
+      !adminSearchParamSet.has(key)
+      || values.length !== 1
+      || values[0] === ""
+      || !isValidAdminStateParam(key, values[0]!)
+    ) params.delete(key)
+  }
+}
+
+function isValidAdminStateParam(key: string, value: string): boolean {
+  if (key === "section") return adminSections.has(value)
+  if (key === "aliasStatus") return aliasStatuses.has(value)
+  if (key === "sort") return aliasSortKeys.has(value)
+  if (key === "auditAction") return adminAuditActions.has(value)
+  return value.length <= 200
 }
 
 function isValidDocumentStateParam(key: string, value: string): boolean {

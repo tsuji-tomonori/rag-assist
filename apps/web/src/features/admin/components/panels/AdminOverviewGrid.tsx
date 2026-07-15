@@ -20,6 +20,7 @@ type DashboardCard =
       value: string
       note: string
       icon: IconName
+      onSelect: () => void
     }
 
 export function AdminOverviewGrid({
@@ -45,7 +46,11 @@ export function AdminOverviewGrid({
   onOpenDocuments,
   onOpenAssignee,
   onOpenDebug,
-  onOpenBenchmark
+  onOpenBenchmark,
+  onOpenUsers,
+  onOpenRoles,
+  onOpenUsageCost,
+  onOpenAliases
 }: {
   documentsCount: number | null
   openQuestionsCount: number | null
@@ -70,6 +75,10 @@ export function AdminOverviewGrid({
   onOpenAssignee: () => void
   onOpenDebug: () => void
   onOpenBenchmark: () => void
+  onOpenUsers: () => void
+  onOpenRoles: () => void
+  onOpenUsageCost: () => void
+  onOpenAliases: () => void
 }) {
   const cards: DashboardCard[] = [
     ...(canManageDocuments && documentsCount !== null
@@ -128,7 +137,8 @@ export function AdminOverviewGrid({
             label: "アクセス管理",
             value: accessRoles ? `${accessRoles.length} 件` : failedParts.has("roles") ? "取得失敗" : "未提供",
             note: accessRoles ? "ロール定義は読み取り専用" : failedParts.has("roles") ? "状態メッセージから再試行できます" : "ロール定義データは未提供",
-            icon: "settings" as const
+            icon: "settings" as const,
+            onSelect: onOpenRoles
           }
         ]
       : []),
@@ -140,7 +150,8 @@ export function AdminOverviewGrid({
             label: "ユーザー管理",
             value: managedUsers ? `${managedUsers.length} 人` : failedParts.has("users") ? "取得失敗" : "未提供",
             note: managedUsers ? "管理対象ユーザー" : failedParts.has("users") ? "状態メッセージから再試行できます" : "管理対象ユーザーデータは未提供",
-            icon: "settings" as const
+            icon: "settings" as const,
+            onSelect: onOpenUsers
           }
         ]
       : []),
@@ -152,7 +163,8 @@ export function AdminOverviewGrid({
             label: "利用状況",
             value: usageSummaries ? `${usageSummaries.length} 人` : failedParts.has("usage") ? "取得失敗" : "未提供",
             note: usageSummaries ? "ユーザー別の集計" : failedParts.has("usage") ? "状態メッセージから再試行できます" : "利用状況データは未提供",
-            icon: "gauge" as const
+            icon: "gauge" as const,
+            onSelect: onOpenUsageCost
           }
         ]
       : []),
@@ -164,7 +176,8 @@ export function AdminOverviewGrid({
             label: "コスト監査",
             value: costAudit?.available && costAudit.totalEstimatedUsd !== undefined ? formatCurrency(costAudit.totalEstimatedUsd) : failedParts.has("cost") ? "取得失敗" : "利用不可",
             note: costAudit?.available ? "承認済み料金表に基づく集計" : failedParts.has("cost") ? "状態メッセージから再試行できます" : "料金表または利用実績は未提供",
-            icon: "warning" as const
+            icon: "warning" as const,
+            onSelect: onOpenUsageCost
           }
         ]
       : []),
@@ -176,7 +189,8 @@ export function AdminOverviewGrid({
             label: "用語展開管理",
             value: aliases ? `${aliases.length} 件` : failedParts.has("aliases") ? "取得失敗" : "未提供",
             note: aliases ? "レビューと公開は用語展開セクションで操作" : failedParts.has("aliases") ? "状態メッセージから再試行できます" : "用語展開データは未提供",
-            icon: "settings" as const
+            icon: "settings" as const,
+            onSelect: onOpenAliases
           }
         ]
       : [])
@@ -195,12 +209,12 @@ export function AdminOverviewGrid({
             <small>開く</small>
           </button>
         ) : (
-          <article className="admin-overview-tile kpi-card" aria-label={card.label} key={card.id}>
+          <button type="button" className="admin-overview-tile kpi-card" aria-label={`${card.label}を開く`} onClick={card.onSelect} key={card.id}>
             <Icon name={card.icon} />
             <strong>{card.label}</strong>
             <span>{card.value}</span>
             <small>{card.note}</small>
-          </article>
+          </button>
         )
       )}
     </div>

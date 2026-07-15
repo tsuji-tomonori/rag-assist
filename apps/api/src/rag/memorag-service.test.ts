@@ -23,7 +23,7 @@ import { LocalQuestionStore } from "../adapters/local-question-store.js"
 import { LocalVectorStore } from "../adapters/local-vector-store.js"
 import { MockBedrockTextModel } from "../adapters/mock-bedrock.js"
 import type { Dependencies } from "../dependencies.js"
-import type { AgentRuntimeProvider, AsyncAgentRun, AuthoritativeAdmissionContext, BenchmarkRunner, DebugTrace, FolderPolicyEntry, ManagedUser } from "../types.js"
+import type { AgentRuntimeProvider, AliasDefinition, AsyncAgentRun, AuthoritativeAdmissionContext, BenchmarkRunner, DebugTrace, FolderPolicyEntry, ManagedUser } from "../types.js"
 import type { UserDirectory } from "../adapters/user-directory.js"
 import type { VerifiedIdentityProvider } from "../adapters/verified-identity-provider.js"
 import type { CodeBuildLogReader } from "../adapters/codebuild-log-reader.js"
@@ -1388,22 +1388,132 @@ test("service manages reviewed alias artifacts and audit log", async () => {
   })
   assert.equal(alias.status, "draft")
   assert.equal(alias.term, "pto")
+  assert.equal(alias.scope?.tenantId, "default")
 
-  const updated = await service.updateAlias(actor, alias.aliasId, { expansions: ["年次有給休暇"] })
+  const updated = await service.updateAlias(actor, alias.aliasId, {
+    expansions: ["年次有給休暇"],
+    expectedVersion: alias.version,
+    reason: "展開語を正規化"
+  })
   assert.deepEqual(updated?.expansions, ["年次有給休暇"])
 
-  const reviewed = await service.reviewAlias(actor, alias.aliasId, { decision: "approve", comment: "社内用語として確認済み" })
+  const reviewed = await service.reviewAlias(actor, alias.aliasId, {
+    decision: "approve",
+    expectedVersion: updated!.version,
+    reason: "社内用語として確認済み"
+  })
   assert.equal(reviewed?.status, "approved")
 
-  const published = await service.publishAliases(actor)
+  const reviewedPage = await service.listAliases(actor)
+  const published = await service.publishAliases(actor, {
+    expectedVersion: reviewedPage.version!,
+    reason: "承認済み用語を検索へ反映"
+  })
   assert.equal(published.aliasCount, 1)
   assert.match(published.version, /^alias_/)
 
-  const audit = await service.listAliasAuditLog()
-  assert.deepEqual(audit.map((item) => item.action).sort(), ["create", "publish", "review", "update"])
+  const audit = await service.listAliasAuditLog(actor)
+  assert.deepEqual(audit.auditLog.map((item) => item.action).sort(), ["create", "publish", "review", "update"])
+  assert.ok(audit.auditLog.every((item) => item.result === "success" && item.tenantId === "default"))
 
-  const latest = JSON.parse(await readFile(path.join(dataDir, "objects", "aliases", "latest.json"), "utf-8")) as { objectKey: string }
-  assert.match(latest.objectKey, /^aliases\/alias_/)
+  const latest = JSON.parse(await readFile(path.join(dataDir, "objects", "aliases", tenantPartitionId("default"), "latest.json"), "utf-8")) as { objectKey: string }
+  assert.match(latest.objectKey, new RegExp(`^aliases/${tenantPartitionId("default")}/alias_`))
+})
+
+test("alias governance enforces tenant, version, state transition, and stable cursor boundaries", async () => {
+  const { service } = await createService()
+  const tenantA = { userId: "manager-a", cognitoGroups: ["RAG_GROUP_MANAGER"], accountStatus: "active" as const, tenantId: "tenant-a" }
+  const tenantB = { userId: "manager-b", cognitoGroups: ["RAG_GROUP_MANAGER"], accountStatus: "active" as const, tenantId: "tenant-b" }
+
+  const aliases: AliasDefinition[] = []
+  for (const term of ["alpha", "bravo", "charlie", "delta", "echo"]) {
+    aliases.push(await service.createAlias(tenantA, { term, expansions: [`${term}-expansion`] }))
+  }
+  const hidden = await service.createAlias(tenantB, { term: "tenant-b-only", expansions: ["hidden"] })
+
+  const first = await service.listAliases(tenantA, { limit: 2, sort: "termAsc" })
+  assert.deepEqual(first.aliases.map((alias) => alias.term), ["alpha", "bravo"])
+  assert.equal(first.total, 5)
+  assert.equal(first.truncated, true)
+  assert.ok(first.nextCursor)
+  assert.equal(first.aliases.some((alias) => alias.aliasId === hidden.aliasId), false)
+
+  const second = await service.listAliases(tenantA, { limit: 2, sort: "termAsc", cursor: first.nextCursor })
+  assert.deepEqual(second.aliases.map((alias) => alias.term), ["charlie", "delta"])
+  const third = await service.listAliases(tenantA, { limit: 2, sort: "termAsc", cursor: second.nextCursor })
+  assert.deepEqual(third.aliases.map((alias) => alias.term), ["echo"])
+  assert.equal(third.truncated, false)
+  assert.equal((await service.listAliases(tenantA, { query: "CHARLIE" })).total, 1)
+  assert.equal(await service.updateAlias(tenantB, aliases[0]!.aliasId, {
+    term: "cross-tenant",
+    expectedVersion: aliases[0]!.version,
+    reason: "cross tenant probe"
+  }), undefined)
+
+  const updated = await service.updateAlias(tenantA, aliases[0]!.aliasId, {
+    expansions: ["alpha-updated"],
+    expectedVersion: aliases[0]!.version,
+    reason: "展開語を更新"
+  })
+  await assert.rejects(
+    () => service.disableAlias(tenantA, aliases[0]!.aliasId, {
+      expectedVersion: aliases[0]!.version,
+      reason: "古い画面から無効化"
+    }),
+    /version conflict/
+  )
+  assert.equal((await service.listAliases(tenantA, { query: "alpha" })).aliases[0]?.version, updated?.version)
+
+  const approved = await service.reviewAlias(tenantA, updated!.aliasId, {
+    decision: "approve",
+    expectedVersion: updated!.version,
+    reason: "検索差分を確認"
+  })
+  const draft = await service.transitionAliasToDraft(tenantA, approved!.aliasId, {
+    expectedVersion: approved!.version,
+    reason: "追加レビューのため下書きへ戻す"
+  })
+  assert.equal(draft?.status, "draft")
+  const disabled = await service.disableAlias(tenantA, draft!.aliasId, {
+    expectedVersion: draft!.version,
+    reason: "用語を廃止"
+  })
+  await assert.rejects(
+    () => service.reviewAlias(tenantA, disabled!.aliasId, {
+      decision: "approve",
+      expectedVersion: disabled!.version,
+      reason: "無効状態からの不正レビュー"
+    }),
+    /Only draft aliases/
+  )
+
+  const auditFirst = await service.listAliasAuditLog(tenantA, { limit: 3, aliasId: aliases[0]!.aliasId })
+  assert.equal(auditFirst.total, 7)
+  assert.equal(auditFirst.auditLog.length, 3)
+  assert.equal(auditFirst.truncated, true)
+  const auditSecond = await service.listAliasAuditLog(tenantA, { limit: 10, aliasId: aliases[0]!.aliasId, cursor: auditFirst.nextCursor })
+  assert.equal(auditSecond.auditLog.length, 4)
+  assert.ok([...auditFirst.auditLog, ...auditSecond.auditLog].some((entry) => entry.result === "conflict" && entry.reason === "古い画面から無効化"))
+  assert.ok([...auditFirst.auditLog, ...auditSecond.auditLog].some((entry) => entry.result === "denied" && entry.reason === "無効状態からの不正レビュー"))
+  assert.equal((await service.listAliasAuditLog(tenantB)).auditLog.some((entry) => entry.aliasId === aliases[0]!.aliasId), false)
+})
+
+test("concurrent alias updates accept one current version and audit the stale command", async () => {
+  const { service } = await createService()
+  const actor = { userId: "manager-1", cognitoGroups: ["RAG_GROUP_MANAGER"], accountStatus: "active" as const, tenantId: "default" }
+  const alias = await service.createAlias(actor, { term: "pto", expansions: ["有給休暇"] })
+
+  const settled = await Promise.allSettled([
+    service.updateAlias(actor, alias.aliasId, { expansions: ["有給休暇A"], expectedVersion: alias.version, reason: "更新A" }),
+    service.updateAlias(actor, alias.aliasId, { expansions: ["有給休暇B"], expectedVersion: alias.version, reason: "更新B" })
+  ])
+  assert.equal(settled.filter((result) => result.status === "fulfilled").length, 1)
+  assert.equal(settled.filter((result) => result.status === "rejected").length, 1)
+  const current = (await service.listAliases(actor)).aliases[0]
+  assert.ok(current?.expansions[0] === "有給休暇A" || current?.expansions[0] === "有給休暇B")
+  const audit = await service.listAliasAuditLog(actor, { aliasId: alias.aliasId, limit: 20 })
+  assert.equal(audit.auditLog.filter((entry) => entry.action === "update" && entry.result === "success").length, 1)
+  assert.equal(audit.auditLog.filter((entry) => entry.action === "update" && entry.result === "conflict").length, 1)
 })
 
 test("service creates search improvement candidates as draft review items", async () => {
@@ -1448,10 +1558,15 @@ test("service creates search improvement candidates as draft review items", asyn
     afterResultIds: ["after-1"]
   })
 
-  const reviewed = await service.reviewAlias(manager, candidate?.aliasId ?? "", { decision: "approve", comment: "レビュー済み" })
+  const reviewed = await service.reviewAlias(manager, candidate?.aliasId ?? "", {
+    decision: "approve",
+    expectedVersion: candidate!.version,
+    reason: "レビュー済み"
+  })
   assert.equal(reviewed?.searchImprovement?.reviewState, "reviewed")
-  await service.publishAliases(manager)
-  assert.equal((await service.listAliases()).find((item) => item.aliasId === candidate?.aliasId)?.searchImprovement?.reviewState, "published")
+  const reviewedPage = await service.listAliases(manager)
+  await service.publishAliases(manager, { expectedVersion: reviewedPage.version!, reason: "検索改善候補を公開" })
+  assert.equal((await service.listAliases(manager)).aliases.find((item) => item.aliasId === candidate?.aliasId)?.searchImprovement?.reviewState, "published")
 })
 
 test("service delegates human question lifecycle to the question store", async () => {
@@ -3143,7 +3258,7 @@ test("service covers admin defaults, alias misses, terminal async runs, and benc
   assert.deepEqual((await service.assignUserRoles(admin, managed.userId, []))?.groups, ["CHAT_USER"])
   assert.equal(await service.suspendManagedUser(admin, "missing-user"), undefined)
   assert.equal(await service.deleteManagedUser(admin, "missing-user"), undefined)
-  assert.ok((await service.listAdminAuditLog(admin)).some((entry) => entry.action === "role:assign"))
+  assert.ok((await service.listAdminAuditLog(admin)).auditLog.some((entry) => entry.action === "role:assign"))
 
   const usage = await service.listUsageSummaries(admin)
   assert.equal(usage.find((item) => item.userId === managed.userId)?.chatMessages, undefined)
@@ -3159,15 +3274,24 @@ test("service covers admin defaults, alias misses, terminal async runs, and benc
     scope: { tenantId: " tenant-a ", department: "" }
   })
   assert.deepEqual(alias.expansions, ["有給休暇"])
-  assert.deepEqual(alias.scope, { tenantId: "tenant-a" })
-  assert.equal(await service.updateAlias(admin, "missing-alias", { term: "x" }), undefined)
-  assert.equal(await service.reviewAlias(admin, "missing-alias", { decision: "approve" }), undefined)
-  assert.equal(await service.disableAlias(admin, "missing-alias"), undefined)
-  assert.equal((await service.reviewAlias(admin, alias.aliasId, { decision: "reject", comment: "未承認" }))?.status, "draft")
-  assert.equal((await service.disableAlias(admin, alias.aliasId))?.status, "disabled")
-  assert.equal((await service.updateAlias(admin, alias.aliasId, { term: "paid-time-off" }))?.status, "disabled")
-  assert.equal((await service.publishAliases(admin)).aliasCount, 0)
-  assert.equal((await service.listAliases())[0]?.status, "disabled")
+  assert.deepEqual(alias.scope, { tenantId: "default" })
+  assert.equal(await service.updateAlias(admin, "missing-alias", { term: "x", expectedVersion: "missing", reason: "missing" }), undefined)
+  assert.equal(await service.reviewAlias(admin, "missing-alias", { decision: "approve", expectedVersion: "missing", reason: "missing" }), undefined)
+  assert.equal(await service.disableAlias(admin, "missing-alias", { expectedVersion: "missing", reason: "missing" }), undefined)
+  const rejected = await service.reviewAlias(admin, alias.aliasId, { decision: "reject", expectedVersion: alias.version, reason: "未承認" })
+  assert.equal(rejected?.status, "draft")
+  const disabled = await service.disableAlias(admin, alias.aliasId, { expectedVersion: rejected!.version, reason: "利用停止" })
+  assert.equal(disabled?.status, "disabled")
+  await assert.rejects(
+    () => service.updateAlias(admin, alias.aliasId, { term: "paid-time-off", expectedVersion: disabled!.version, reason: "無効後更新" }),
+    /Disabled aliases cannot be updated/
+  )
+  const aliasPage = await service.listAliases(admin)
+  await assert.rejects(
+    () => service.publishAliases(admin, { expectedVersion: aliasPage.version!, reason: "公開対象確認" }),
+    /No approved aliases/
+  )
+  assert.equal((await service.listAliases(admin)).aliases[0]?.status, "disabled")
 
   await assert.rejects(() => service.cutoverReindexMigration(admin, "missing-migration"), /not found/)
   await assert.rejects(() => service.rollbackReindexMigration(admin, "missing-migration"), /not found/)

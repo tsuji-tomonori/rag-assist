@@ -24,8 +24,8 @@
 | 到達 symbol | service restores staging state when cutover vector activation fails after partial write | `apps/api/src/rag/memorag-service.test.ts:1214 (service restores staging state when cutover vector activation fails after partial write)` |
 | 到達 symbol | FR-090 reindex cutover compensates publication when current authorization is revoked before ledger commit | `apps/api/src/rag/memorag-service.test.ts:1246 (FR-090 reindex cutover compensates publication when current authorization is revoked before ledger commit)` |
 | 到達 symbol | FR-090 failed cutover compensation persists a durable intent and an authorized retry converges it | `apps/api/src/rag/memorag-service.test.ts:1280 (FR-090 failed cutover compensation persists a durable intent and an authorized retry converges it)` |
-| 到達 symbol | FR-090 ingest reauthorizes after the final event and compensates before persisting success | `apps/api/src/rag/memorag-service.test.ts:2638 (FR-090 ingest reauthorizes after the final event and compensates before persisting success)` |
-| 到達 symbol | FR-090 revoke after governance creation compensates all ingest artifacts and never publishes success | `apps/api/src/rag/memorag-service.test.ts:2698 (FR-090 revoke after governance creation compensates all ingest artifacts and never publishes success)` |
+| 到達 symbol | FR-090 ingest reauthorizes after the final event and compensates before persisting success | `apps/api/src/rag/memorag-service.test.ts:2753 (FR-090 ingest reauthorizes after the final event and compensates before persisting success)` |
+| 到達 symbol | FR-090 revoke after governance creation compensates all ingest artifacts and never publishes success | `apps/api/src/rag/memorag-service.test.ts:2813 (FR-090 revoke after governance creation compensates all ingest artifacts and never publishes success)` |
 | 到達 symbol | FR-060 same documentId is physically partitioned and never reveals the other tenant body or candidates | `apps/api/src/rag/tenant-artifact-partition.test.ts:27 (FR-060 same documentId is physically partitioned and never reveals the other tenant body or candidates)` |
 
 ## 2. 実装分岐から導くテスト要因
@@ -34,12 +34,12 @@
 | --- | --- | --- | --- | --- |
 | F001 | `GET /documents handler` | if | 利用者が "rag:doc:read" permission を持たない、かつ 利用者が "benchmark:seed_corpus" permission を持たない | `apps/api/src/routes/document-routes.ts:837 (GET /documents handler)` |
 | F002 | `GET /documents handler` | 三項条件 | 利用者が "rag:doc:read" permission を持つ | `apps/api/src/routes/document-routes.ts:841 (GET /documents handler)` |
-| F003 | `MemoRagService.listDocuments` | if | is missing object error の判定結果が真である | `apps/api/src/rag/memorag-service.ts:759 (MemoRagService.listDocuments)` |
-| F004 | `MemoRagService.listDocuments` | 三項条件 | `user` が存在し、真である | `apps/api/src/rag/memorag-service.ts:773 (MemoRagService.listDocuments)` |
-| F005 | `MemoRagService.listDocuments` | 三項条件 | `user` が存在し、真である | `apps/api/src/rag/memorag-service.ts:776 (MemoRagService.listDocuments)` |
-| F006 | `MemoRagService.listDocuments` | if | `user` が存在しない、または偽である、または `permissionService` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:781 (MemoRagService.listDocuments)` |
-| F007 | `MemoRagService.listBenchmarkDocumentManifests` | if | `config.benchmarkEvaluationEnabled` が存在しない、または偽である、または `tenantId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:806 (MemoRagService.listBenchmarkDocumentManifests)` |
-| F008 | `MemoRagService.listBenchmarkDocumentManifests` | if | is missing object error の判定結果が真である | `apps/api/src/rag/memorag-service.ts:813 (MemoRagService.listBenchmarkDocumentManifests)` |
+| F003 | `MemoRagService.listDocuments` | if | is missing object error の判定結果が真である | `apps/api/src/rag/memorag-service.ts:807 (MemoRagService.listDocuments)` |
+| F004 | `MemoRagService.listDocuments` | 三項条件 | `user` が存在し、真である | `apps/api/src/rag/memorag-service.ts:821 (MemoRagService.listDocuments)` |
+| F005 | `MemoRagService.listDocuments` | 三項条件 | `user` が存在し、真である | `apps/api/src/rag/memorag-service.ts:824 (MemoRagService.listDocuments)` |
+| F006 | `MemoRagService.listDocuments` | if | `user` が存在しない、または偽である、または `permissionService` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:829 (MemoRagService.listDocuments)` |
+| F007 | `MemoRagService.listBenchmarkDocumentManifests` | if | `config.benchmarkEvaluationEnabled` が存在しない、または偽である、または `tenantId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:854 (MemoRagService.listBenchmarkDocumentManifests)` |
+| F008 | `MemoRagService.listBenchmarkDocumentManifests` | if | is missing object error の判定結果が真である | `apps/api/src/rag/memorag-service.ts:861 (MemoRagService.listBenchmarkDocumentManifests)` |
 | F009 | `decodeCollectionCursor` | if | `cursor` が存在しない、または偽である | `apps/api/src/routes/document-routes.ts:279 (decodeCollectionCursor)` |
 | F010 | `decodeCollectionCursor` | if | test の判定結果が真ではない | `apps/api/src/routes/document-routes.ts:283 (decodeCollectionCursor)` |
 | F011 | `decodeCollectionCursor` | if | `Buffer.from(decoded, "utf-8").toString("base64url")` が `normalized` と異なる | `apps/api/src/routes/document-routes.ts:284 (decodeCollectionCursor)` |
@@ -56,18 +56,18 @@
 | TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:837 (GET /documents handler)` |
 | TC004 | F002: 条件成立 | 利用者が "rag:doc:read" permission を持つ 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:841 (GET /documents handler)` |
 | TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:841 (GET /documents handler)` |
-| TC006 | F003: 条件成立 | is missing object error の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:759 (MemoRagService.listDocuments)` |
-| TC007 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:759 (MemoRagService.listDocuments)` |
-| TC008 | F004: 条件成立 | `user` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:773 (MemoRagService.listDocuments)` |
-| TC009 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:773 (MemoRagService.listDocuments)` |
-| TC010 | F005: 条件成立 | `user` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:776 (MemoRagService.listDocuments)` |
-| TC011 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:776 (MemoRagService.listDocuments)` |
-| TC012 | F006: 条件成立 | `user` が存在しない、または偽である、または `permissionService` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:781 (MemoRagService.listDocuments)` |
-| TC013 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:781 (MemoRagService.listDocuments)` |
-| TC014 | F007: 条件成立 | `config.benchmarkEvaluationEnabled` が存在しない、または偽である、または `tenantId` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:806 (MemoRagService.listBenchmarkDocumentManifests)` |
-| TC015 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:806 (MemoRagService.listBenchmarkDocumentManifests)` |
-| TC016 | F008: 条件成立 | is missing object error の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:813 (MemoRagService.listBenchmarkDocumentManifests)` |
-| TC017 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:813 (MemoRagService.listBenchmarkDocumentManifests)` |
+| TC006 | F003: 条件成立 | is missing object error の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:807 (MemoRagService.listDocuments)` |
+| TC007 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:807 (MemoRagService.listDocuments)` |
+| TC008 | F004: 条件成立 | `user` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:821 (MemoRagService.listDocuments)` |
+| TC009 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:821 (MemoRagService.listDocuments)` |
+| TC010 | F005: 条件成立 | `user` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:824 (MemoRagService.listDocuments)` |
+| TC011 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:824 (MemoRagService.listDocuments)` |
+| TC012 | F006: 条件成立 | `user` が存在しない、または偽である、または `permissionService` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:829 (MemoRagService.listDocuments)` |
+| TC013 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:829 (MemoRagService.listDocuments)` |
+| TC014 | F007: 条件成立 | `config.benchmarkEvaluationEnabled` が存在しない、または偽である、または `tenantId` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:854 (MemoRagService.listBenchmarkDocumentManifests)` |
+| TC015 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:854 (MemoRagService.listBenchmarkDocumentManifests)` |
+| TC016 | F008: 条件成立 | is missing object error の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:861 (MemoRagService.listBenchmarkDocumentManifests)` |
+| TC017 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:861 (MemoRagService.listBenchmarkDocumentManifests)` |
 | TC018 | F009: 条件成立 | `cursor` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:279 (decodeCollectionCursor)` |
 | TC019 | F009: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:279 (decodeCollectionCursor)` |
 | TC020 | F010: 条件成立 | test の判定結果が真ではない 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:283 (decodeCollectionCursor)` |

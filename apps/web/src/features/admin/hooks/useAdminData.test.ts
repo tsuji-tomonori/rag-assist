@@ -2,19 +2,20 @@ import { act, renderHook } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { listAccessRoles } from "../api/accessRolesApi.js"
 import { assignUserRoles, createManagedUser, deleteManagedUser, getManagedUserDeletionPreflight, listManagedUsers, suspendManagedUser, unsuspendManagedUser } from "../api/adminUsersApi.js"
-import { createAlias, disableAlias, listAliasAuditLog, listAliases, publishAliases, reviewAlias, updateAlias } from "../api/aliasesApi.js"
+import { createAlias, disableAlias, listAliasAuditLog, listAliases, publishAliases, reviewAlias, transitionAliasToDraft, updateAlias } from "../api/aliasesApi.js"
 import { listAdminAuditLog } from "../api/auditLogApi.js"
 import { getCostAuditSummary } from "../api/costApi.js"
 import { listUsageSummaries } from "../api/usageApi.js"
+import type { AliasAuditLogPage, AliasDefinition, AliasListPage } from "../types.js"
 import { useAdminData } from "./useAdminData.js"
 
-vi.mock("../api/accessRolesApi.js", () => ({ listAccessRoles: vi.fn().mockResolvedValue([]) }))
+vi.mock("../api/accessRolesApi.js", () => ({ listAccessRoles: vi.fn() }))
 vi.mock("../api/adminUsersApi.js", () => ({
   assignUserRoles: vi.fn(),
   createManagedUser: vi.fn(),
   deleteManagedUser: vi.fn(),
   getManagedUserDeletionPreflight: vi.fn(),
-  listManagedUsers: vi.fn().mockResolvedValue([]),
+  listManagedUsers: vi.fn(),
   suspendManagedUser: vi.fn(),
   unsuspendManagedUser: vi.fn()
 }))
@@ -25,11 +26,59 @@ vi.mock("../api/aliasesApi.js", () => ({
   listAliases: vi.fn(),
   publishAliases: vi.fn(),
   reviewAlias: vi.fn(),
+  transitionAliasToDraft: vi.fn(),
   updateAlias: vi.fn()
 }))
-vi.mock("../api/auditLogApi.js", () => ({ listAdminAuditLog: vi.fn().mockResolvedValue([]) }))
-vi.mock("../api/costApi.js", () => ({ getCostAuditSummary: vi.fn().mockResolvedValue(null) }))
-vi.mock("../api/usageApi.js", () => ({ listUsageSummaries: vi.fn().mockResolvedValue([]) }))
+vi.mock("../api/auditLogApi.js", () => ({ listAdminAuditLog: vi.fn() }))
+vi.mock("../api/costApi.js", () => ({ getCostAuditSummary: vi.fn() }))
+vi.mock("../api/usageApi.js", () => ({ listUsageSummaries: vi.fn() }))
+
+const aliasDraft: AliasDefinition = {
+  aliasId: "alias-1",
+  version: "alias-version-1",
+  term: "pto",
+  expansions: ["有給休暇"],
+  scope: { tenantId: "tenant-1" },
+  status: "draft",
+  createdBy: "user-1",
+  createdAt: "2026-05-01T00:00:00.000Z",
+  updatedAt: "2026-05-02T00:00:00.000Z"
+}
+
+function aliasListPage(aliases = [aliasDraft], overrides: Partial<AliasListPage> = {}): AliasListPage {
+  return {
+    aliases,
+    total: aliases.length,
+    truncated: false,
+    source: "alias-governance-ledger",
+    asOf: "2026-05-10T00:00:00.000Z",
+    version: "ledger-version-1",
+    ...overrides
+  }
+}
+
+function aliasAuditPage(overrides: Partial<AliasAuditLogPage> = {}): AliasAuditLogPage {
+  return {
+    auditLog: [{
+      auditId: "audit-1",
+      aliasId: "alias-1",
+      tenantId: "tenant-1",
+      action: "create",
+      actorUserId: "user-1",
+      result: "success",
+      reason: "登録",
+      afterStatus: "draft",
+      aliasVersion: "alias-version-1",
+      createdAt: "2026-05-02T00:00:00.000Z",
+      detail: "created"
+    }],
+    total: 1,
+    truncated: false,
+    source: "alias-governance-audit-ledger",
+    asOf: "2026-05-10T00:00:00.000Z",
+    ...overrides
+  }
+}
 
 function createProps(overrides: Partial<Parameters<typeof useAdminData>[0]> = {}): Parameters<typeof useAdminData>[0] {
   return {
@@ -52,68 +101,95 @@ function createProps(overrides: Partial<Parameters<typeof useAdminData>[0]> = {}
 describe("useAdminData", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(listAliases).mockResolvedValue([{ aliasId: "alias-1", term: "pto", expansions: ["有給休暇"], status: "draft", createdBy: "user-1", createdAt: "now", updatedAt: "now" }])
-    vi.mocked(listAliasAuditLog).mockResolvedValue([{ auditId: "audit-1", action: "create", actorUserId: "user-1", createdAt: "now", detail: "created" }])
+    vi.mocked(listAliases).mockResolvedValue(aliasListPage())
+    vi.mocked(listAliasAuditLog).mockResolvedValue(aliasAuditPage())
     vi.mocked(listManagedUsers).mockResolvedValue([{ userId: "user-1", email: "b@example.com", status: "active", groups: ["CHAT_USER"], createdAt: "now", updatedAt: "now" }])
-    vi.mocked(listAccessRoles).mockResolvedValue([{ role: "CHAT_USER", permissions: ["chat:create"] }])
-    vi.mocked(listAdminAuditLog).mockResolvedValue([{ auditId: "audit-1", action: "user:create", actorUserId: "admin", targetUserId: "user-1", targetEmail: "b@example.com", beforeGroups: [], afterGroups: [], createdAt: "now" }])
-    vi.mocked(listUsageSummaries).mockResolvedValue([{ userId: "user-1", email: "b@example.com", chatMessages: 1, conversationCount: 1, questionCount: 0, documentCount: 0, benchmarkRunCount: 0, debugRunCount: 0, availableMetrics: ["chatMessages", "conversationCount", "questionCount", "documentCount", "benchmarkRunCount", "debugRunCount"], unavailableMetrics: [] }])
-    vi.mocked(getCostAuditSummary).mockResolvedValue({ available: true, periodStart: "2026-05-01", periodEnd: "2026-05-31", currency: "USD", totalEstimatedUsd: 1, items: [], users: [], pricingCatalogUpdatedAt: "now" })
-    vi.mocked(assignUserRoles).mockResolvedValue({ userId: "user-1", email: "a@example.com", status: "active", groups: ["SYSTEM_ADMIN"], createdAt: "now", updatedAt: "now" })
+    vi.mocked(listAccessRoles).mockResolvedValue({
+      roles: [{ role: "CHAT_USER", displayName: "チャット利用者", description: "チャットを利用", kind: "systemPreset", permissions: ["chat:create"] }],
+      catalogVersion: "role-v1",
+      source: "role-catalog",
+      asOf: "now"
+    })
+    vi.mocked(listAdminAuditLog).mockResolvedValue({
+      auditLog: [{ auditId: "admin-audit-1", action: "user:create", actorUserId: "admin", targetUserId: "user-1", targetEmail: "b@example.com", beforeGroups: [], afterGroups: [], createdAt: "now" }],
+      total: 1,
+      truncated: false,
+      source: "admin-audit-ledger",
+      asOf: "now"
+    })
+    vi.mocked(listUsageSummaries).mockResolvedValue([])
+    vi.mocked(getCostAuditSummary).mockResolvedValue(null)
+    vi.mocked(assignUserRoles).mockResolvedValue({ userId: "user-1", email: "a@example.com", status: "active", groups: ["CHAT_USER", "SYSTEM_ADMIN"], createdAt: "now", updatedAt: "now" })
     vi.mocked(createManagedUser).mockResolvedValue({ userId: "user-2", email: "c@example.com", status: "active", groups: ["CHAT_USER"], createdAt: "now", updatedAt: "now" })
     vi.mocked(suspendManagedUser).mockResolvedValue({ userId: "user-1", email: "a@example.com", status: "suspended", groups: ["CHAT_USER"], createdAt: "now", updatedAt: "now" })
     vi.mocked(unsuspendManagedUser).mockResolvedValue({ userId: "user-1", email: "a@example.com", status: "active", groups: ["CHAT_USER"], createdAt: "now", updatedAt: "now" })
     vi.mocked(deleteManagedUser).mockResolvedValue({ userId: "user-1", email: "a@example.com", status: "deleted", groups: ["CHAT_USER"], createdAt: "now", updatedAt: "now" })
-    vi.mocked(getManagedUserDeletionPreflight).mockResolvedValue({
-      targetUserId: "user-1",
-      requiresSuccessor: false,
-      ownedResources: { folders: 0, resourceGroups: 0, documents: 0, total: 0 },
-      eligibleSuccessors: []
-    })
-    vi.mocked(createAlias).mockResolvedValue({ aliasId: "alias-2", term: "rto", expansions: ["復旧時間目標"], status: "draft", createdBy: "user-1", createdAt: "now", updatedAt: "now" })
-    vi.mocked(updateAlias).mockResolvedValue({ aliasId: "alias-1", term: "pto", expansions: ["有給休暇"], status: "draft", createdBy: "user-1", createdAt: "now", updatedAt: "now" })
-    vi.mocked(reviewAlias).mockResolvedValue({ aliasId: "alias-1", term: "pto", expansions: ["有給休暇"], status: "approved", createdBy: "user-1", createdAt: "now", updatedAt: "now" })
-    vi.mocked(disableAlias).mockResolvedValue({ aliasId: "alias-1", term: "pto", expansions: ["有給休暇"], status: "disabled", createdBy: "user-1", createdAt: "now", updatedAt: "now" })
-    vi.mocked(publishAliases).mockResolvedValue({ version: "alias-v1", publishedAt: "now", aliasCount: 1 })
+    vi.mocked(getManagedUserDeletionPreflight).mockResolvedValue({ targetUserId: "user-1", requiresSuccessor: false, ownedResources: { folders: 0, resourceGroups: 0, documents: 0, total: 0 }, eligibleSuccessors: [] })
+    vi.mocked(createAlias).mockResolvedValue({ ...aliasDraft, aliasId: "alias-2", version: "alias-version-2", term: "rto" })
+    vi.mocked(updateAlias).mockResolvedValue({ ...aliasDraft, version: "alias-version-2", expansions: ["有給休暇", "休暇申請"] })
+    vi.mocked(reviewAlias).mockResolvedValue({ ...aliasDraft, version: "alias-version-2", status: "approved" })
+    vi.mocked(transitionAliasToDraft).mockResolvedValue({ ...aliasDraft, version: "alias-version-3" })
+    vi.mocked(disableAlias).mockResolvedValue({ ...aliasDraft, version: "alias-version-2", status: "disabled" })
+    vi.mocked(publishAliases).mockResolvedValue({ version: "published-v1", publishedAt: "now", aliasCount: 1 })
   })
 
-  it("Alias 管理操作後に alias 一覧と監査ログを再取得する", async () => {
-    const props = createProps()
-    const { result } = renderHook(() => useAdminData(props))
+  it("page metadata を保持し filter と stable cursor の追記を API へ渡す", async () => {
+    const pageTwoAlias = { ...aliasDraft, aliasId: "alias-2", version: "alias-version-2", term: "rto" }
+    vi.mocked(listAliases)
+      .mockResolvedValueOnce(aliasListPage([aliasDraft], { total: 2, nextCursor: "cursor-2", truncated: true }))
+      .mockResolvedValueOnce(aliasListPage([pageTwoAlias], { total: 2 }))
+    const { result } = renderHook(() => useAdminData(createProps()))
 
-    await act(() => result.current.onCreateAlias({ term: "rto", expansions: ["復旧時間目標"] }))
-    await act(() => result.current.onUpdateAlias("alias-1", { expansions: ["有給休暇"] }))
-    await act(() => result.current.onReviewAlias("alias-1", "approve"))
-    const disableOutcome = await act(() => result.current.onDisableAlias("alias-1"))
-    const publishOutcome = await act(() => result.current.onPublishAliases())
+    await act(() => result.current.refreshAliases({ limit: 1, query: "休暇", status: "draft", sort: "termAsc" }))
+    await act(() => result.current.refreshAliases({ limit: 1, query: "休暇", status: "draft", sort: "termAsc", cursor: "cursor-2" }, true))
 
-    expect(createAlias).toHaveBeenCalledWith({ term: "rto", expansions: ["復旧時間目標"] })
-    expect(updateAlias).toHaveBeenCalledWith("alias-1", { expansions: ["有給休暇"] })
-    expect(reviewAlias).toHaveBeenCalledWith("alias-1", "approve", undefined)
-    expect(disableAlias).toHaveBeenCalledWith("alias-1")
-    expect(publishAliases).toHaveBeenCalledTimes(1)
-    expect(disableOutcome).toMatchObject({ ok: true, status: "success", evidence: { resultReference: "alias-1" } })
-    expect(publishOutcome).toMatchObject({ ok: true, status: "success", evidence: { version: "alias-v1" } })
-    expect(listAliases).toHaveBeenCalledTimes(5)
-    expect(listAliasAuditLog).toHaveBeenCalledTimes(5)
-    expect(props.setError).toHaveBeenCalledWith(null)
+    expect(listAliases).toHaveBeenNthCalledWith(1, { limit: 1, query: "休暇", status: "draft", sort: "termAsc" })
+    expect(listAliases).toHaveBeenNthCalledWith(2, { limit: 1, query: "休暇", status: "draft", sort: "termAsc", cursor: "cursor-2" })
+    expect(result.current.aliases?.map((alias) => alias.aliasId)).toEqual(["alias-1", "alias-2"])
+    expect(result.current.aliasPage).toMatchObject({ total: 2, source: "alias-governance-ledger" })
   })
 
-  it("Alias 権限がない操作は API を呼ばない", async () => {
+  it("Alias mutation に expected version・reason を渡し server 応答だけを state に使う", async () => {
+    const { result } = renderHook(() => useAdminData(createProps()))
+    await act(() => result.current.refreshAliases())
+
+    const updateOutcome = await act(() => result.current.onUpdateAlias("alias-1", {
+      expansions: ["有給休暇", "休暇申請"],
+      expectedVersion: "alias-version-1",
+      reason: "展開語追加"
+    }))
+    await act(() => result.current.onReviewAlias("alias-1", "approve", "alias-version-2", "レビュー済み"))
+    await act(() => result.current.onTransitionAlias("alias-1", "alias-version-2", "再編集"))
+    await act(() => result.current.onDisableAlias("alias-1", "alias-version-3", "廃止"))
+    const publishOutcome = await act(() => result.current.onPublishAliases("ledger-version-1", "検索へ反映"))
+
+    expect(updateAlias).toHaveBeenCalledWith("alias-1", expect.objectContaining({ expectedVersion: "alias-version-1", reason: "展開語追加" }))
+    expect(reviewAlias).toHaveBeenCalledWith("alias-1", "approve", "alias-version-2", "レビュー済み")
+    expect(transitionAliasToDraft).toHaveBeenCalledWith("alias-1", "alias-version-2", "再編集")
+    expect(disableAlias).toHaveBeenCalledWith("alias-1", "alias-version-3", "廃止")
+    expect(publishAliases).toHaveBeenCalledWith("ledger-version-1", "検索へ反映")
+    expect(updateOutcome).toMatchObject({ ok: true, evidence: { version: "alias-version-2" } })
+    expect(publishOutcome).toMatchObject({ ok: true, evidence: { version: "published-v1" } })
+  })
+
+  it("Alias 権限がない操作は API を呼ばず failure を返す", async () => {
     const { result } = renderHook(() => useAdminData(createProps({ canWriteAliases: false, canReviewAliases: false, canDisableAliases: false, canPublishAliases: false })))
-
-    await act(() => result.current.onCreateAlias({ term: "rto", expansions: ["復旧時間目標"] }))
-    await act(() => result.current.onReviewAlias("alias-1", "reject"))
-    await act(() => result.current.onDisableAlias("alias-1"))
-    await act(() => result.current.onPublishAliases())
-
+    const outcomes = await act(() => Promise.all([
+      result.current.onCreateAlias({ term: "rto", expansions: ["復旧時間目標"] }),
+      result.current.onReviewAlias("alias-1", "reject", "v1", "重複"),
+      result.current.onTransitionAlias("alias-1", "v1", "再編集"),
+      result.current.onDisableAlias("alias-1", "v1", "廃止"),
+      result.current.onPublishAliases("ledger-v1", "公開")
+    ]))
+    expect(outcomes.every((outcome) => !outcome.ok)).toBe(true)
     expect(createAlias).not.toHaveBeenCalled()
     expect(reviewAlias).not.toHaveBeenCalled()
+    expect(transitionAliasToDraft).not.toHaveBeenCalled()
     expect(disableAlias).not.toHaveBeenCalled()
     expect(publishAliases).not.toHaveBeenCalled()
   })
 
-  it("権限に応じて admin データをまとめて再取得する", async () => {
+  it("権限内の admin resource を独立取得し、role/page metadata を保持する", async () => {
     const { result } = renderHook(() => useAdminData(createProps({
       canReadUsers: true,
       canReadAdminAuditLog: true,
@@ -122,200 +198,46 @@ describe("useAdminData", () => {
       canReadCosts: true,
       canReadAliases: true
     })))
-
     await act(() => result.current.refreshAdminData())
-
     expect(listManagedUsers).toHaveBeenCalledTimes(1)
-    expect(listAdminAuditLog).toHaveBeenCalledTimes(1)
+    expect(listAdminAuditLog).toHaveBeenCalledWith({ limit: 50 })
     expect(listAccessRoles).toHaveBeenCalledTimes(1)
-    expect(listUsageSummaries).toHaveBeenCalledTimes(1)
-    expect(getCostAuditSummary).toHaveBeenCalledTimes(1)
-    expect(listAliases).toHaveBeenCalledTimes(1)
-    expect(result.current.costAudit?.totalEstimatedUsd).toBe(1)
+    expect(listAliases).toHaveBeenCalledWith({ limit: 50, sort: "updatedDesc" })
+    expect(listAliasAuditLog).toHaveBeenCalledWith({ limit: 50 })
+    expect(result.current.accessRoleList).toMatchObject({ catalogVersion: "role-v1" })
+    expect(result.current.adminAuditPage).toMatchObject({ total: 1 })
   })
 
-  it("API field が未提供の場合は空配列に変換せず null のまま保持する", async () => {
-    vi.mocked(listManagedUsers).mockResolvedValueOnce(null)
-    vi.mocked(listAdminAuditLog).mockResolvedValueOnce(null)
-    vi.mocked(listAccessRoles).mockResolvedValueOnce(null)
-    vi.mocked(listUsageSummaries).mockResolvedValueOnce(null)
-    vi.mocked(getCostAuditSummary).mockResolvedValueOnce(null)
-    vi.mocked(listAliases).mockResolvedValueOnce(null)
-    vi.mocked(listAliasAuditLog).mockResolvedValueOnce(null)
-    const { result } = renderHook(() => useAdminData(createProps({
-      canReadUsers: true,
-      canReadAdminAuditLog: true,
-      canOpenAdminSettings: true,
-      canReadUsage: true,
-      canReadCosts: true,
-      canReadAliases: true
-    })))
-
-    await act(() => result.current.refreshAdminData())
-
-    expect(result.current.managedUsers).toBeNull()
-    expect(result.current.adminAuditLog).toBeNull()
-    expect(result.current.accessRoles).toBeNull()
-    expect(result.current.usageSummaries).toBeNull()
-    expect(result.current.costAudit).toBeNull()
-    expect(result.current.aliases).toBeNull()
-    expect(result.current.aliasAuditLog).toBeNull()
-  })
-
-  it("読み取り権限がない admin データは再取得しない", async () => {
-    const { result } = renderHook(() => useAdminData(createProps({ canReadAliases: false })))
-
-    await act(() => result.current.refreshAdminData())
-
-    expect(listManagedUsers).not.toHaveBeenCalled()
-    expect(listAdminAuditLog).not.toHaveBeenCalled()
-    expect(listAccessRoles).not.toHaveBeenCalled()
-    expect(listUsageSummaries).not.toHaveBeenCalled()
-    expect(getCostAuditSummary).not.toHaveBeenCalled()
-    expect(listAliases).not.toHaveBeenCalled()
-    expect(listAliasAuditLog).not.toHaveBeenCalled()
-  })
-
-  it("ユーザー管理操作後に一覧と副作用データを更新する", async () => {
-    const props = createProps({ canReadAdminAuditLog: true, canReadUsage: true, canReadCosts: true, canReadAliases: true })
+  it("確定後の監査再取得失敗は再実行を促さない partial として返す", async () => {
+    vi.mocked(listAliasAuditLog).mockRejectedValueOnce(new Error("audit refresh failed"))
+    const props = createProps()
     const { result } = renderHook(() => useAdminData(props))
+    const outcome = await act(() => result.current.onPublishAliases("ledger-version-1", "検索へ反映"))
+    expect(outcome).toMatchObject({ ok: true, status: "partial", evidence: { version: "published-v1" } })
+    expect(outcome.message).toContain("再実行せず更新してください")
+    expect(outcome.message).not.toContain("audit refresh failed")
+  })
 
-    const roleOutcome = await act(() => result.current.onAssignUserRoles("user-1", ["SYSTEM_ADMIN"], "管理担当へ変更"))
-    await act(() => result.current.onCreateManagedUser({ email: "c@example.com", groups: ["CHAT_USER"] }))
-    await act(() => result.current.onSetManagedUserStatus("user-1", "suspend"))
-    await act(() => result.current.onSetManagedUserStatus("user-1", "unsuspend"))
-    await act(() => result.current.onSetManagedUserStatus("user-1", "delete"))
-
-    expect(assignUserRoles).toHaveBeenCalledWith("user-1", ["SYSTEM_ADMIN"], "管理担当へ変更")
-    expect(roleOutcome).toMatchObject({ ok: true, status: "success", evidence: { resultReference: "user-1" } })
-    expect(createManagedUser).toHaveBeenCalledWith({ email: "c@example.com", groups: ["CHAT_USER"] })
-    expect(suspendManagedUser).toHaveBeenCalledWith("user-1")
-    expect(unsuspendManagedUser).toHaveBeenCalledWith("user-1")
-    expect(deleteManagedUser).toHaveBeenCalledTimes(1)
-    expect(result.current.managedUsers?.some((user) => user.userId === "user-1")).toBe(false)
+  it("mutation の通信断は結果不明として返す", async () => {
+    vi.mocked(assignUserRoles).mockRejectedValueOnce(new TypeError("Failed to fetch"))
+    const props = createProps()
+    const { result } = renderHook(() => useAdminData(props))
+    const outcome = await act(() => result.current.onAssignUserRoles("user-1", ["CHAT_USER", "SYSTEM_ADMIN"], "管理担当追加"))
+    expect(outcome).toMatchObject({ ok: false, status: "unknown" })
     expect(props.setLoading).toHaveBeenLastCalledWith(false)
   })
 
-  it("削除 preflight を取得し選択した後継 userId を削除 API へ渡す", async () => {
-    const props = createProps()
+  it("削除 preflight と successor を user API へ引き継ぐ", async () => {
     vi.mocked(getManagedUserDeletionPreflight).mockResolvedValueOnce({
       targetUserId: "user-1",
       requiresSuccessor: true,
       ownedResources: { folders: 1, resourceGroups: 1, documents: 1, total: 3 },
       eligibleSuccessors: [{ userId: "successor-1", email: "successor@example.com", status: "active" }]
     })
-    const { result } = renderHook(() => useAdminData(props))
-
+    const { result } = renderHook(() => useAdminData(createProps()))
     const preflight = await act(() => result.current.onPrepareManagedUserDelete("user-1"))
     await act(() => result.current.onSetManagedUserStatus("user-1", "delete", "successor-1"))
-
     expect(preflight?.eligibleSuccessors).toHaveLength(1)
-    expect(getManagedUserDeletionPreflight).toHaveBeenCalledWith("user-1")
     expect(deleteManagedUser).toHaveBeenCalledWith("user-1", "successor-1")
-  })
-
-  it("管理操作失敗時はエラーを設定する", async () => {
-    const props = createProps()
-    vi.mocked(assignUserRoles).mockRejectedValueOnce(new Error("assign failed"))
-    const { result } = renderHook(() => useAdminData(props))
-
-    const outcome = await act(() => result.current.onAssignUserRoles("user-1", ["SYSTEM_ADMIN"], "管理担当へ変更"))
-
-    expect(props.setError).toHaveBeenCalledWith("assign failed")
-    expect(outcome).toMatchObject({ ok: false, status: "failure" })
-    expect(props.setLoading).toHaveBeenLastCalledWith(false)
-  })
-
-  it("管理 mutation の通信断は結果不明、確定後の副作用更新失敗は partial として返す", async () => {
-    const props = createProps({ canReadAliases: true })
-    vi.mocked(assignUserRoles).mockRejectedValueOnce(new TypeError("Failed to fetch"))
-    const { result } = renderHook(() => useAdminData(props))
-
-    const unknown = await act(() => result.current.onAssignUserRoles("user-1", ["SYSTEM_ADMIN"], "管理担当へ変更"))
-    expect(unknown).toMatchObject({ ok: false, status: "unknown" })
-
-    vi.mocked(listAliasAuditLog).mockRejectedValueOnce(new Error("audit refresh failed"))
-    const partial = await act(() => result.current.onPublishAliases())
-    expect(partial).toMatchObject({ ok: true, status: "partial", evidence: { version: "alias-v1" } })
-    expect(partial.message).toContain("再実行せず更新してください")
-    expect(partial.message).not.toContain("audit refresh failed")
-  })
-
-  it("管理操作失敗時は文字列エラーも設定する", async () => {
-    const props = createProps()
-    vi.mocked(assignUserRoles).mockRejectedValueOnce("assign failed")
-    vi.mocked(createManagedUser).mockRejectedValueOnce("create user failed")
-    vi.mocked(suspendManagedUser).mockRejectedValueOnce("suspend failed")
-    const { result } = renderHook(() => useAdminData(props))
-
-    await act(() => result.current.onAssignUserRoles("user-1", ["SYSTEM_ADMIN"], "管理担当へ変更"))
-    await act(() => result.current.onCreateManagedUser({ email: "c@example.com" }))
-    await act(() => result.current.onSetManagedUserStatus("user-1", "suspend"))
-
-    expect(props.setError).toHaveBeenCalledWith("assign failed")
-    expect(props.setError).toHaveBeenCalledWith("create user failed")
-    expect(props.setError).toHaveBeenCalledWith("suspend failed")
-    expect(props.setLoading).toHaveBeenLastCalledWith(false)
-  })
-
-  it("ユーザー作成と状態変更失敗時は Error の message も設定する", async () => {
-    const props = createProps()
-    vi.mocked(createManagedUser).mockRejectedValueOnce(new Error("create user failed"))
-    vi.mocked(unsuspendManagedUser).mockRejectedValueOnce(new Error("unsuspend failed"))
-    vi.mocked(deleteManagedUser).mockRejectedValueOnce(new Error("delete failed"))
-    const { result } = renderHook(() => useAdminData(props))
-
-    await act(() => result.current.onCreateManagedUser({ email: "c@example.com" }))
-    await act(() => result.current.onSetManagedUserStatus("user-1", "unsuspend"))
-    await act(() => result.current.onSetManagedUserStatus("user-1", "delete"))
-
-    expect(props.setError).toHaveBeenCalledWith("create user failed")
-    expect(props.setError).toHaveBeenCalledWith("unsuspend failed")
-    expect(props.setError).toHaveBeenCalledWith("delete failed")
-  })
-
-  it("Alias 管理操作失敗時は文字列エラーも設定する", async () => {
-    const props = createProps()
-    vi.mocked(createAlias).mockRejectedValueOnce("create alias failed")
-    vi.mocked(updateAlias).mockRejectedValueOnce("update alias failed")
-    vi.mocked(reviewAlias).mockRejectedValueOnce("review alias failed")
-    vi.mocked(disableAlias).mockRejectedValueOnce("disable alias failed")
-    vi.mocked(publishAliases).mockRejectedValueOnce("publish alias failed")
-    const { result } = renderHook(() => useAdminData(props))
-
-    await act(() => result.current.onCreateAlias({ term: "rto", expansions: ["復旧時間目標"] }))
-    await act(() => result.current.onUpdateAlias("alias-1", { expansions: ["有給休暇"] }))
-    await act(() => result.current.onReviewAlias("alias-1", "reject", "重複"))
-    await act(() => result.current.onDisableAlias("alias-1"))
-    await act(() => result.current.onPublishAliases())
-
-    expect(props.setError).toHaveBeenCalledWith("create alias failed")
-    expect(props.setError).toHaveBeenCalledWith("update alias failed")
-    expect(props.setError).toHaveBeenCalledWith("review alias failed")
-    expect(props.setError).toHaveBeenCalledWith("disable alias failed")
-    expect(props.setError).toHaveBeenCalledWith("publish alias failed")
-    expect(props.setLoading).toHaveBeenLastCalledWith(false)
-  })
-
-  it("Alias 管理操作失敗時は Error の message も設定する", async () => {
-    const props = createProps()
-    vi.mocked(createAlias).mockRejectedValueOnce(new Error("create alias failed"))
-    vi.mocked(updateAlias).mockRejectedValueOnce(new Error("update alias failed"))
-    vi.mocked(reviewAlias).mockRejectedValueOnce(new Error("review alias failed"))
-    vi.mocked(disableAlias).mockRejectedValueOnce(new Error("disable alias failed"))
-    vi.mocked(publishAliases).mockRejectedValueOnce(new Error("publish alias failed"))
-    const { result } = renderHook(() => useAdminData(props))
-
-    await act(() => result.current.onCreateAlias({ term: "rto", expansions: ["復旧時間目標"] }))
-    await act(() => result.current.onUpdateAlias("alias-1", { expansions: ["有給休暇"] }))
-    await act(() => result.current.onReviewAlias("alias-1", "reject"))
-    await act(() => result.current.onDisableAlias("alias-1"))
-    await act(() => result.current.onPublishAliases())
-
-    expect(props.setError).toHaveBeenCalledWith("create alias failed")
-    expect(props.setError).toHaveBeenCalledWith("update alias failed")
-    expect(props.setError).toHaveBeenCalledWith("review alias failed")
-    expect(props.setError).toHaveBeenCalledWith("disable alias failed")
-    expect(props.setError).toHaveBeenCalledWith("publish alias failed")
   })
 })

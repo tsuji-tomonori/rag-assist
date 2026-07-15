@@ -2,7 +2,7 @@
 
 # POST /admin/users/{userId}/unsuspend IF仕様
 
-- 実装 route: `apps/api/src/routes/admin-routes.ts:262 (POST /admin/users/{userId}/unsuspend)`
+- 実装 route: `apps/api/src/routes/admin-routes.ts:279 (POST /admin/users/{userId}/unsuspend)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: ユーザー停止を解除する

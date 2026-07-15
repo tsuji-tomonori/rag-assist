@@ -15,45 +15,61 @@ sequenceDiagram
   participant External as External
   Client->>API: POST /admin/aliases/{aliasId}/review
   Note over API: 分岐 alias が存在しない、または偽である
+  Note over API: 分岐 例外が発生した場合に catch 処理へ移る
+  Note over API: 分岐 error が AliasGovernanceError の instance である
   API->>Auth: 認証済み利用者を request context から取得する。
   API->>Auth: "rag：alias：review：group" permission を必須条件として確認する。
   API->>Auth: schema 検証済みの path parameter を取得する。
   API->>Auth: schema 検証済みの JSON request body を取得する。
   API->>Service: service の review alias 処理を呼び出す。
-  Service->>Store: this に対して load alias ledger を実行する。
-  Service->>Store: this.deps.objectStore に対して get text を実行する。
   Service->>Store: ledger.aliases に対して find を実行する。
   Service->>Store: ledger.auditLog に対して push を実行する。
+  Service->>Store: this に対して mutate alias ledger を実行する。
+  Service->>Store: this に対して load alias ledger を実行する。
+  Service->>Store: this.deps.objectStore に対して get text with version を実行する。
+  Service->>Store: normalizeAliasLedger に対して normalize alias ledger を実行する。
   Service->>Store: this に対して save alias ledger を実行する。
-  Service->>Store: this.deps.objectStore に対して put text を実行する。
+  Service->>Store: this.deps.objectStore に対して put text if version を実行する。
+  Service->>Store: this.deps.objectStore に対して get text with version を実行する。
   API-->>Client: HTTP 404 で JSON response を返す。
   API-->>Client: HTTP 200 で JSON response を返す。
+  API-->>Client: HTTP aliasGovernanceStatus(error) で JSON response を返す。
 ```
 
 ## 処理順とコード対応
 
 | # | Caller | 境界 | 処理 | コード | 実装位置 |
 | ---: | --- | --- | --- | --- | --- |
-| 1 | `POST /admin/aliases/{aliasId}/review handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/admin-routes.ts:407 (POST /admin/aliases/{aliasId}/review handler)` |
-| 2 | `POST /admin/aliases/{aliasId}/review handler` | Auth | "rag:alias:review:group" permission を必須条件として確認する。 | `requirePermission(user, "rag:alias:review:group")` | `apps/api/src/routes/admin-routes.ts:408 (POST /admin/aliases/{aliasId}/review handler)` |
-| 3 | `POST /admin/aliases/{aliasId}/review handler` | Validation | schema 検証済みの path parameter を取得する。 | `validParam<{ aliasId: string }>(c)` | `apps/api/src/routes/admin-routes.ts:409 (POST /admin/aliases/{aliasId}/review handler)` |
-| 4 | `POST /admin/aliases/{aliasId}/review handler` | Validation | schema 検証済みの JSON request body を取得する。 | `validJson<z.infer<typeof ReviewAliasRequestSchema>>(c)` | `apps/api/src/routes/admin-routes.ts:410 (POST /admin/aliases/{aliasId}/review handler)` |
-| 5 | `POST /admin/aliases/{aliasId}/review handler` | Service | service の review alias 処理を呼び出す。 | `service.reviewAlias(user, aliasId, body)` | `apps/api/src/routes/admin-routes.ts:411 (POST /admin/aliases/{aliasId}/review handler)` |
-| 6 | `MemoRagService.reviewAlias` | Store | `this` に対して load alias ledger を実行する。 | `this.loadAliasLedger()` | `apps/api/src/rag/memorag-service.ts:1264 (MemoRagService.reviewAlias)` |
-| 7 | `MemoRagService.loadAliasLedger` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(aliasLedgerKey)` | `apps/api/src/rag/memorag-service.ts:2979 (MemoRagService.loadAliasLedger)` |
-| 8 | `MemoRagService.reviewAlias` | Store | `ledger.aliases` に対して find を実行する。 | `ledger.aliases.find((candidate) => candidate.aliasId === aliasId)` | `apps/api/src/rag/memorag-service.ts:1265 (MemoRagService.reviewAlias)` |
-| 9 | `appendAliasAudit` | Store | `ledger.auditLog` に対して push を実行する。 | `ledger.auditLog.push({ auditId: \`audit_${randomUUID().slice(0, 12)}\`, aliasId, action, actorUserId: actor.userId, createdAt: new Date().toISOString(), detail })` | `apps/api/src/rag/memorag-service.ts:5060 (appendAliasAudit)` |
-| 10 | `MemoRagService.reviewAlias` | Store | `this` に対して save alias ledger を実行する。 | `this.saveAliasLedger(ledger)` | `apps/api/src/rag/memorag-service.ts:1274 (MemoRagService.reviewAlias)` |
-| 11 | `MemoRagService.saveAliasLedger` | Store | `this.deps.objectStore` に対して put text を実行する。 | `this.deps.objectStore.putText(aliasLedgerKey, JSON.stringify(ledger, null, 2), "application/json")` | `apps/api/src/rag/memorag-service.ts:2992 (MemoRagService.saveAliasLedger)` |
-| 12 | `POST /admin/aliases/{aliasId}/review handler` | HTTP/SSE | HTTP 404 で JSON response を返す。 | `c.json({ error: "Alias not found" }, 404)` | `apps/api/src/routes/admin-routes.ts:412 (POST /admin/aliases/{aliasId}/review handler)` |
-| 13 | `POST /admin/aliases/{aliasId}/review handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json(alias, 200)` | `apps/api/src/routes/admin-routes.ts:413 (POST /admin/aliases/{aliasId}/review handler)` |
+| 1 | `POST /admin/aliases/{aliasId}/review handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/admin-routes.ts:449 (POST /admin/aliases/{aliasId}/review handler)` |
+| 2 | `POST /admin/aliases/{aliasId}/review handler` | Auth | "rag:alias:review:group" permission を必須条件として確認する。 | `requirePermission(user, "rag:alias:review:group")` | `apps/api/src/routes/admin-routes.ts:450 (POST /admin/aliases/{aliasId}/review handler)` |
+| 3 | `POST /admin/aliases/{aliasId}/review handler` | Validation | schema 検証済みの path parameter を取得する。 | `validParam<{ aliasId: string }>(c)` | `apps/api/src/routes/admin-routes.ts:451 (POST /admin/aliases/{aliasId}/review handler)` |
+| 4 | `POST /admin/aliases/{aliasId}/review handler` | Validation | schema 検証済みの JSON request body を取得する。 | `validJson<z.infer<typeof ReviewAliasRequestSchema>>(c)` | `apps/api/src/routes/admin-routes.ts:452 (POST /admin/aliases/{aliasId}/review handler)` |
+| 5 | `POST /admin/aliases/{aliasId}/review handler` | Service | service の review alias 処理を呼び出す。 | `service.reviewAlias(user, aliasId, body)` | `apps/api/src/routes/admin-routes.ts:454 (POST /admin/aliases/{aliasId}/review handler)` |
+| 6 | `findTenantAlias` | Store | `ledger.aliases` に対して find を実行する。 | `ledger.aliases.find((alias) => alias.aliasId === aliasId && aliasTenantId(alias) === tenantId)` | `apps/api/src/rag/memorag-service.ts:5364 (findTenantAlias)` |
+| 7 | `appendAliasAudit` | Store | `ledger.auditLog` に対して push を実行する。 | `ledger.auditLog.push({ auditId: \`audit_${randomUUID().slice(0, 12)}\`, aliasId: input.alias?.aliasId, tenantId: input.tenantId, action: input.action, actorUserId: input.actor.userId, result: input.result, reason: input.r…` | `apps/api/src/rag/memorag-service.ts:5477 (appendAliasAudit)` |
+| 8 | `MemoRagService.reviewAlias` | Store | `this` に対して mutate alias ledger を実行する。 | `this.mutateAliasLedger((ledger) => { const alias = findTenantAlias(ledger, aliasId, tenantId) if (!alias) return { commit: false } const invalid = validateAliasMutationVersion(alias, input.expectedVersion) ?? (alias.sta…` | `apps/api/src/rag/memorag-service.ts:1392 (MemoRagService.reviewAlias)` |
+| 9 | `MemoRagService.mutateAliasLedger` | Store | `this` に対して load alias ledger を実行する。 | `this.loadAliasLedger()` | `apps/api/src/rag/memorag-service.ts:3289 (MemoRagService.mutateAliasLedger)` |
+| 10 | `MemoRagService.loadAliasLedger` | Store | `this.deps.objectStore` に対して get text with version を実行する。 | `this.deps.objectStore.getTextWithVersion(aliasLedgerKey)` | `apps/api/src/rag/memorag-service.ts:3259 (MemoRagService.loadAliasLedger)` |
+| 11 | `MemoRagService.loadAliasLedger` | Store | `normalizeAliasLedger` に対して normalize alias ledger を実行する。 | `normalizeAliasLedger(raw)` | `apps/api/src/rag/memorag-service.ts:3263 (MemoRagService.loadAliasLedger)` |
+| 12 | `MemoRagService.mutateAliasLedger` | Store | `this` に対して save alias ledger を実行する。 | `this.saveAliasLedger(state.ledger, state.storeVersion)` | `apps/api/src/rag/memorag-service.ts:3293 (MemoRagService.mutateAliasLedger)` |
+| 13 | `MemoRagService.saveAliasLedger` | Store | `this.deps.objectStore` に対して put text if version を実行する。 | `this.deps.objectStore.putTextIfVersion( aliasLedgerKey, JSON.stringify(ledger, null, 2), expectedVersion, "application/json" )` | `apps/api/src/rag/memorag-service.ts:3272 (MemoRagService.saveAliasLedger)` |
+| 14 | `MemoRagService.saveAliasLedger` | Store | `this.deps.objectStore` に対して get text with version を実行する。 | `this.deps.objectStore.getTextWithVersion(aliasLedgerKey)` | `apps/api/src/rag/memorag-service.ts:3278 (MemoRagService.saveAliasLedger)` |
+| 15 | `POST /admin/aliases/{aliasId}/review handler` | HTTP/SSE | HTTP 404 で JSON response を返す。 | `c.json({ error: "Alias not found" }, 404)` | `apps/api/src/routes/admin-routes.ts:455 (POST /admin/aliases/{aliasId}/review handler)` |
+| 16 | `POST /admin/aliases/{aliasId}/review handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json(alias, 200)` | `apps/api/src/routes/admin-routes.ts:456 (POST /admin/aliases/{aliasId}/review handler)` |
+| 17 | `POST /admin/aliases/{aliasId}/review handler` | HTTP/SSE | HTTP aliasGovernanceStatus(error) で JSON response を返す。 | `c.json({ error: error.message }, aliasGovernanceStatus(error))` | `apps/api/src/routes/admin-routes.ts:458 (POST /admin/aliases/{aliasId}/review handler)` |
 
 ## 分岐
 
 | ID | Function | 条件 | 実装位置 |
 | --- | --- | --- | --- |
-| B001 | `POST /admin/aliases/{aliasId}/review handler` | `alias` が存在しない、または偽である | `apps/api/src/routes/admin-routes.ts:412 (POST /admin/aliases/{aliasId}/review handler)` |
-| B002 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| B003 | `MemoRagService.reviewAlias` | `alias` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1266 (MemoRagService.reviewAlias)` |
-| B004 | `MemoRagService.reviewAlias` | `input.decision` が `"approve"` と等しい | `apps/api/src/rag/memorag-service.ts:1267 (MemoRagService.reviewAlias)` |
-| B005 | `MemoRagService.reviewAlias` | `alias.searchImprovement` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1271 (MemoRagService.reviewAlias)` |
+| B001 | `POST /admin/aliases/{aliasId}/review handler` | `alias` が存在しない、または偽である | `apps/api/src/routes/admin-routes.ts:455 (POST /admin/aliases/{aliasId}/review handler)` |
+| B002 | `POST /admin/aliases/{aliasId}/review handler` | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/admin-routes.ts:457 (POST /admin/aliases/{aliasId}/review handler)` |
+| B003 | `POST /admin/aliases/{aliasId}/review handler` | `error` が `AliasGovernanceError` の instance である | `apps/api/src/routes/admin-routes.ts:458 (POST /admin/aliases/{aliasId}/review handler)` |
+| B004 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| B005 | `MemoRagService.reviewAlias` | `alias` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1394 (MemoRagService.reviewAlias)` |
+| B006 | `MemoRagService.reviewAlias` | `alias.status` が `"draft"` と異なる | `apps/api/src/rag/memorag-service.ts:1396 (MemoRagService.reviewAlias)` |
+| B007 | `MemoRagService.reviewAlias` | `invalid` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1397 (MemoRagService.reviewAlias)` |
+| B008 | `MemoRagService.reviewAlias` | `input.decision` が `"approve"` と等しい | `apps/api/src/rag/memorag-service.ts:1399 (MemoRagService.reviewAlias)` |
+| B009 | `MemoRagService.reviewAlias` | `alias.searchImprovement` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1403 (MemoRagService.reviewAlias)` |
+| B010 | `aliasGovernanceStatus` | `error.result` が `"conflict"` と等しい | `apps/api/src/routes/admin-routes.ts:666 (aliasGovernanceStatus)` |
+| B011 | `aliasGovernanceStatus` | `error.result` が `"denied"` と等しい | `apps/api/src/routes/admin-routes.ts:667 (aliasGovernanceStatus)` |

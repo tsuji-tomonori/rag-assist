@@ -225,6 +225,10 @@ const operationDocs: Record<string, { summary: string; description: string }> = 
     summary: "検索 alias をレビューする",
     description: "指定した alias draft をレビュー済み状態へ進めます。"
   },
+  "POST /admin/aliases/{aliasId}/transition": {
+    summary: "検索 alias を下書きへ戻す",
+    description: "指定した承認済み alias を、version と理由を検証して編集可能な下書きへ戻します。"
+  },
   "POST /admin/aliases/{aliasId}/disable": {
     summary: "検索 alias を無効化する",
     description: "指定した alias を検索展開から外すため無効化します。"

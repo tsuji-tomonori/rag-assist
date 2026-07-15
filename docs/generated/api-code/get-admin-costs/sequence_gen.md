@@ -29,15 +29,15 @@ sequenceDiagram
 
 | # | Caller | 境界 | 処理 | コード | 実装位置 |
 | ---: | --- | --- | --- | --- | --- |
-| 1 | `GET /admin/costs handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/admin-routes.ts:518 (GET /admin/costs handler)` |
-| 2 | `GET /admin/costs handler` | Auth | "cost:read:all" permission を必須条件として確認する。 | `requirePermission(user, "cost:read:all")` | `apps/api/src/routes/admin-routes.ts:519 (GET /admin/costs handler)` |
-| 3 | `GET /admin/costs handler` | Service | service の get cost audit summary 処理を呼び出す。 | `service.getCostAuditSummary(user)` | `apps/api/src/routes/admin-routes.ts:520 (GET /admin/costs handler)` |
-| 4 | `MemoRagService.getCostAuditSummary` | Store | `this` に対して load admin ledger を実行する。 | `this.loadAdminLedger(actor, { syncUserDirectory: false })` | `apps/api/src/rag/memorag-service.ts:1729 (MemoRagService.getCostAuditSummary)` |
-| 5 | `MemoRagService.loadAdminLedger` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(adminLedgerKey)` | `apps/api/src/rag/memorag-service.ts:2864 (MemoRagService.loadAdminLedger)` |
-| 6 | `MemoRagService.loadAdminLedger` | External | `this` へ sync user directory を実行する。 | `this.syncUserDirectory(db)` | `apps/api/src/rag/memorag-service.ts:2905 (MemoRagService.loadAdminLedger)` |
-| 7 | `MemoRagService.syncUserDirectory` | External | `this.deps.userDirectory` へ list users を実行する。 | `this.deps.userDirectory.listUsers()` | `apps/api/src/rag/memorag-service.ts:2912 (MemoRagService.syncUserDirectory)` |
-| 8 | `MemoRagService.syncUserDirectory` | External | `this.deps.verifiedIdentityProvider` へ get current identity by subject を実行する。 | `this.deps.verifiedIdentityProvider.getCurrentIdentityBySubject(directoryUser.userId)` | `apps/api/src/rag/memorag-service.ts:2917 (MemoRagService.syncUserDirectory)` |
-| 9 | `GET /admin/costs handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json(await service.getCostAuditSummary(user), 200)` | `apps/api/src/routes/admin-routes.ts:520 (GET /admin/costs handler)` |
+| 1 | `GET /admin/costs handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/admin-routes.ts:629 (GET /admin/costs handler)` |
+| 2 | `GET /admin/costs handler` | Auth | "cost:read:all" permission を必須条件として確認する。 | `requirePermission(user, "cost:read:all")` | `apps/api/src/routes/admin-routes.ts:630 (GET /admin/costs handler)` |
+| 3 | `GET /admin/costs handler` | Service | service の get cost audit summary 処理を呼び出す。 | `service.getCostAuditSummary(user)` | `apps/api/src/routes/admin-routes.ts:631 (GET /admin/costs handler)` |
+| 4 | `MemoRagService.getCostAuditSummary` | Store | `this` に対して load admin ledger を実行する。 | `this.loadAdminLedger(actor, { syncUserDirectory: false })` | `apps/api/src/rag/memorag-service.ts:2009 (MemoRagService.getCostAuditSummary)` |
+| 5 | `MemoRagService.loadAdminLedger` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(adminLedgerKey)` | `apps/api/src/rag/memorag-service.ts:3144 (MemoRagService.loadAdminLedger)` |
+| 6 | `MemoRagService.loadAdminLedger` | External | `this` へ sync user directory を実行する。 | `this.syncUserDirectory(db)` | `apps/api/src/rag/memorag-service.ts:3185 (MemoRagService.loadAdminLedger)` |
+| 7 | `MemoRagService.syncUserDirectory` | External | `this.deps.userDirectory` へ list users を実行する。 | `this.deps.userDirectory.listUsers()` | `apps/api/src/rag/memorag-service.ts:3192 (MemoRagService.syncUserDirectory)` |
+| 8 | `MemoRagService.syncUserDirectory` | External | `this.deps.verifiedIdentityProvider` へ get current identity by subject を実行する。 | `this.deps.verifiedIdentityProvider.getCurrentIdentityBySubject(directoryUser.userId)` | `apps/api/src/rag/memorag-service.ts:3197 (MemoRagService.syncUserDirectory)` |
+| 9 | `GET /admin/costs handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json(await service.getCostAuditSummary(user), 200)` | `apps/api/src/routes/admin-routes.ts:631 (GET /admin/costs handler)` |
 
 ## 分岐
 

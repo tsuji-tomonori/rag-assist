@@ -1,33 +1,42 @@
 import { z } from "@hono/zod-openapi"
 import { HTTPException } from "hono/http-exception"
+import { ROLE_CATALOG_VERSION } from "@memorag-mvp/contract/access-control"
 import { requirePermission } from "../authorization.js"
 import {
   AccessRoleListResponseSchema,
   AdministrativePrincipalTransferRequestSchema,
   AdministrativePrincipalTransferResponseSchema,
   AdminExportResponseSchema,
+  AdminAuditLogQuerySchema,
   AdminAuditLogResponseSchema,
+  AliasAuditLogQuerySchema,
   AliasAuditLogResponseSchema,
   AliasDefinitionSchema,
+  AliasListQuerySchema,
   AliasListResponseSchema,
   AssignUserRolesRequestSchema,
   CostAuditSummarySchema,
   CreateAliasRequestSchema,
   CreateManagedUserRequestSchema,
+  DisableAliasRequestSchema,
   ErrorResponseSchema,
   ManagedUserDeletionPreflightSchema,
   ManagedUserListResponseSchema,
   ManagedUserSchema,
+  PublishAliasesRequestSchema,
   PublishAliasesResponseSchema,
   QualityActionCardListResponseSchema,
   ReviewAliasRequestSchema,
-  UpdateAliasRequestSchema,
+  TransitionAliasRequestSchema,
+  UpdateAliasCommandSchema,
   UsageSummaryListResponseSchema
 } from "../schemas.js"
 import type { ApiRouteContext } from "./route-context.js"
 import { looseRoute, routeAuthorization, validJson, validParam, validQuery } from "./route-utils.js"
 import { ApplicationRoleMutationError } from "../security/application-role-mutation-service.js"
 import { AdministrativePrincipalTransferError } from "../security/administrative-principal-transfer-service.js"
+import { AliasGovernanceError } from "../rag/memorag-service.js"
+import { InvalidPageCursorError } from "../admin/keyset-pagination.js"
 
 export function registerAdminRoutes({ app, service }: ApiRouteContext) {
   app.openapi(
@@ -160,14 +169,22 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
       method: "get",
       path: "/admin/audit-log",
       "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "access:policy:read", operationKey: "audit.read", resourceCondition: "none" }),
+      request: { query: AdminAuditLogQuerySchema },
       responses: {
-        200: { description: "List recent admin audit log entries", content: { "application/json": { schema: AdminAuditLogResponseSchema } } }
+        200: { description: "List admin audit log entries with stable cursor metadata", content: { "application/json": { schema: AdminAuditLogResponseSchema } } },
+        400: { description: "Invalid cursor or filter", content: { "application/json": { schema: ErrorResponseSchema } } }
       }
     }),
     async (c) => {
       const user = c.get("user")
       requirePermission(user, "access:policy:read")
-      return c.json({ auditLog: await service.listAdminAuditLog(user) }, 200)
+      const query = validQuery<z.infer<typeof AdminAuditLogQuerySchema>>(c)
+      try {
+        return c.json(await service.listAdminAuditLog(user, query), 200)
+      } catch (error) {
+        if (error instanceof InvalidPageCursorError) return c.json({ error: error.message }, 400)
+        throw error
+      }
     }
   )
 
@@ -316,7 +333,12 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
     }),
     (c) => {
       requirePermission(c.get("user"), "access:policy:read")
-      return c.json({ roles: service.listAccessRoles() }, 200)
+      return c.json({
+        roles: service.listAccessRoles(),
+        catalogVersion: ROLE_CATALOG_VERSION,
+        source: "canonical-application-role-catalog",
+        asOf: new Date().toISOString()
+      }, 200)
     }
   )
 
@@ -324,14 +346,23 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "get",
       path: "/admin/aliases",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:alias:read" }),
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:alias:read", operationKey: "alias.read", resourceCondition: "tenantCollection" }),
+      request: { query: AliasListQuerySchema },
       responses: {
-        200: { description: "List alias definitions", content: { "application/json": { schema: AliasListResponseSchema } } }
+        200: { description: "List tenant alias definitions with stable cursor metadata", content: { "application/json": { schema: AliasListResponseSchema } } },
+        400: { description: "Invalid cursor or filter", content: { "application/json": { schema: ErrorResponseSchema } } }
       }
     }),
     async (c) => {
-      requirePermission(c.get("user"), "rag:alias:read")
-      return c.json({ aliases: await service.listAliases() }, 200)
+      const actor = c.get("user")
+      requirePermission(actor, "rag:alias:read")
+      const query = validQuery<z.infer<typeof AliasListQuerySchema>>(c)
+      try {
+        return c.json(await service.listAliases(actor, query), 200)
+      } catch (error) {
+        if (error instanceof InvalidPageCursorError) return c.json({ error: error.message }, 400)
+        throw error
+      }
     }
   )
 
@@ -339,7 +370,7 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "post",
       path: "/admin/aliases",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:alias:write:group" }),
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:alias:write:group", operationKey: "alias.create", resourceCondition: "tenantCollection" }),
       request: {
         body: {
           required: true,
@@ -362,27 +393,35 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "post",
       path: "/admin/aliases/{aliasId}/update",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:alias:write:group" }),
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:alias:write:group", operationKey: "alias.update", resourceCondition: "tenantCollection" }),
       request: {
         params: z.object({ aliasId: z.string().min(1) }),
         body: {
           required: true,
-          content: { "application/json": { schema: UpdateAliasRequestSchema } }
+          content: { "application/json": { schema: UpdateAliasCommandSchema } }
         }
       },
       responses: {
         200: { description: "Updated alias draft", content: { "application/json": { schema: AliasDefinitionSchema } } },
-        404: { description: "Alias not found", content: { "application/json": { schema: ErrorResponseSchema } } }
+        400: { description: "Invalid alias transition", content: { "application/json": { schema: ErrorResponseSchema } } },
+        404: { description: "Alias not found", content: { "application/json": { schema: ErrorResponseSchema } } },
+        409: { description: "Alias version conflict", content: { "application/json": { schema: ErrorResponseSchema } } },
+        503: { description: "alias 更新の永続化を完了できません", content: { "application/json": { schema: ErrorResponseSchema } } }
       }
     }),
     async (c) => {
       const user = c.get("user")
       requirePermission(user, "rag:alias:write:group")
       const { aliasId } = validParam<{ aliasId: string }>(c)
-      const body = validJson<z.infer<typeof UpdateAliasRequestSchema>>(c)
-      const alias = await service.updateAlias(user, aliasId, body)
-      if (!alias) return c.json({ error: "Alias not found" }, 404)
-      return c.json(alias, 200)
+      const body = validJson<z.infer<typeof UpdateAliasCommandSchema>>(c)
+      try {
+        const alias = await service.updateAlias(user, aliasId, body)
+        if (!alias) return c.json({ error: "Alias not found" }, 404)
+        return c.json(alias, 200)
+      } catch (error) {
+        if (error instanceof AliasGovernanceError) return c.json({ error: error.message }, aliasGovernanceStatus(error))
+        throw error
+      }
     }
   )
 
@@ -390,7 +429,7 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "post",
       path: "/admin/aliases/{aliasId}/review",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:alias:review:group" }),
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:alias:review:group", operationKey: "alias.review", resourceCondition: "tenantCollection" }),
       request: {
         params: z.object({ aliasId: z.string().min(1) }),
         body: {
@@ -400,7 +439,10 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
       },
       responses: {
         200: { description: "Reviewed alias", content: { "application/json": { schema: AliasDefinitionSchema } } },
-        404: { description: "Alias not found", content: { "application/json": { schema: ErrorResponseSchema } } }
+        400: { description: "Invalid alias transition", content: { "application/json": { schema: ErrorResponseSchema } } },
+        404: { description: "Alias not found", content: { "application/json": { schema: ErrorResponseSchema } } },
+        409: { description: "Alias version conflict", content: { "application/json": { schema: ErrorResponseSchema } } },
+        503: { description: "alias レビューの永続化を完了できません", content: { "application/json": { schema: ErrorResponseSchema } } }
       }
     }),
     async (c) => {
@@ -408,9 +450,47 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
       requirePermission(user, "rag:alias:review:group")
       const { aliasId } = validParam<{ aliasId: string }>(c)
       const body = validJson<z.infer<typeof ReviewAliasRequestSchema>>(c)
-      const alias = await service.reviewAlias(user, aliasId, body)
-      if (!alias) return c.json({ error: "Alias not found" }, 404)
-      return c.json(alias, 200)
+      try {
+        const alias = await service.reviewAlias(user, aliasId, body)
+        if (!alias) return c.json({ error: "Alias not found" }, 404)
+        return c.json(alias, 200)
+      } catch (error) {
+        if (error instanceof AliasGovernanceError) return c.json({ error: error.message }, aliasGovernanceStatus(error))
+        throw error
+      }
+    }
+  )
+
+  app.openapi(
+    looseRoute({
+      method: "post",
+      path: "/admin/aliases/{aliasId}/transition",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:alias:write:group", operationKey: "alias.transition", resourceCondition: "tenantCollection" }),
+      request: {
+        params: z.object({ aliasId: z.string().min(1) }),
+        body: { required: true, content: { "application/json": { schema: TransitionAliasRequestSchema } } }
+      },
+      responses: {
+        200: { description: "Transitioned alias to draft", content: { "application/json": { schema: AliasDefinitionSchema } } },
+        400: { description: "Invalid alias transition", content: { "application/json": { schema: ErrorResponseSchema } } },
+        404: { description: "Alias not found", content: { "application/json": { schema: ErrorResponseSchema } } },
+        409: { description: "Alias version conflict", content: { "application/json": { schema: ErrorResponseSchema } } },
+        503: { description: "alias 状態遷移の永続化を完了できません", content: { "application/json": { schema: ErrorResponseSchema } } }
+      }
+    }),
+    async (c) => {
+      const actor = c.get("user")
+      requirePermission(actor, "rag:alias:write:group")
+      const { aliasId } = validParam<{ aliasId: string }>(c)
+      const body = validJson<z.infer<typeof TransitionAliasRequestSchema>>(c)
+      try {
+        const alias = await service.transitionAliasToDraft(actor, aliasId, body)
+        if (!alias) return c.json({ error: "Alias not found" }, 404)
+        return c.json(alias, 200)
+      } catch (error) {
+        if (error instanceof AliasGovernanceError) return c.json({ error: error.message }, aliasGovernanceStatus(error))
+        throw error
+      }
     }
   )
 
@@ -418,20 +498,32 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "post",
       path: "/admin/aliases/{aliasId}/disable",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:alias:disable:group" }),
-      request: { params: z.object({ aliasId: z.string().min(1) }) },
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:alias:disable:group", operationKey: "alias.disable", resourceCondition: "tenantCollection" }),
+      request: {
+        params: z.object({ aliasId: z.string().min(1) }),
+        body: { required: true, content: { "application/json": { schema: DisableAliasRequestSchema } } }
+      },
       responses: {
         200: { description: "Disabled alias", content: { "application/json": { schema: AliasDefinitionSchema } } },
-        404: { description: "Alias not found", content: { "application/json": { schema: ErrorResponseSchema } } }
+        400: { description: "Invalid alias transition", content: { "application/json": { schema: ErrorResponseSchema } } },
+        404: { description: "Alias not found", content: { "application/json": { schema: ErrorResponseSchema } } },
+        409: { description: "Alias version conflict", content: { "application/json": { schema: ErrorResponseSchema } } },
+        503: { description: "alias 無効化の永続化を完了できません", content: { "application/json": { schema: ErrorResponseSchema } } }
       }
     }),
     async (c) => {
       const user = c.get("user")
       requirePermission(user, "rag:alias:disable:group")
       const { aliasId } = validParam<{ aliasId: string }>(c)
-      const alias = await service.disableAlias(user, aliasId)
-      if (!alias) return c.json({ error: "Alias not found" }, 404)
-      return c.json(alias, 200)
+      const body = validJson<z.infer<typeof DisableAliasRequestSchema>>(c)
+      try {
+        const alias = await service.disableAlias(user, aliasId, body)
+        if (!alias) return c.json({ error: "Alias not found" }, 404)
+        return c.json(alias, 200)
+      } catch (error) {
+        if (error instanceof AliasGovernanceError) return c.json({ error: error.message }, aliasGovernanceStatus(error))
+        throw error
+      }
     }
   )
 
@@ -439,15 +531,25 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "post",
       path: "/admin/aliases/publish",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:alias:publish:group" }),
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:alias:publish:group", operationKey: "alias.publish", resourceCondition: "tenantCollection" }),
+      request: { body: { required: true, content: { "application/json": { schema: PublishAliasesRequestSchema } } } },
       responses: {
-        200: { description: "Published approved aliases", content: { "application/json": { schema: PublishAliasesResponseSchema } } }
+        200: { description: "Published approved aliases", content: { "application/json": { schema: PublishAliasesResponseSchema } } },
+        400: { description: "No publishable aliases or invalid command", content: { "application/json": { schema: ErrorResponseSchema } } },
+        409: { description: "Alias ledger version conflict", content: { "application/json": { schema: ErrorResponseSchema } } },
+        503: { description: "alias 公開の永続化を完了できません", content: { "application/json": { schema: ErrorResponseSchema } } }
       }
     }),
     async (c) => {
       const user = c.get("user")
       requirePermission(user, "rag:alias:publish:group")
-      return c.json(await service.publishAliases(user), 200)
+      const body = validJson<z.infer<typeof PublishAliasesRequestSchema>>(c)
+      try {
+        return c.json(await service.publishAliases(user, body), 200)
+      } catch (error) {
+        if (error instanceof AliasGovernanceError) return c.json({ error: error.message }, aliasGovernanceStatus(error))
+        throw error
+      }
     }
   )
 
@@ -455,14 +557,23 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "get",
       path: "/admin/aliases/audit-log",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:alias:read" }),
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:alias:read", operationKey: "alias.audit.read", resourceCondition: "tenantCollection" }),
+      request: { query: AliasAuditLogQuerySchema },
       responses: {
-        200: { description: "List alias audit events", content: { "application/json": { schema: AliasAuditLogResponseSchema } } }
+        200: { description: "List tenant alias audit events with stable cursor metadata", content: { "application/json": { schema: AliasAuditLogResponseSchema } } },
+        400: { description: "Invalid cursor or filter", content: { "application/json": { schema: ErrorResponseSchema } } }
       }
     }),
     async (c) => {
-      requirePermission(c.get("user"), "rag:alias:read")
-      return c.json({ auditLog: await service.listAliasAuditLog() }, 200)
+      const actor = c.get("user")
+      requirePermission(actor, "rag:alias:read")
+      const query = validQuery<z.infer<typeof AliasAuditLogQuerySchema>>(c)
+      try {
+        return c.json(await service.listAliasAuditLog(actor, query), 200)
+      } catch (error) {
+        if (error instanceof InvalidPageCursorError) return c.json({ error: error.message }, 400)
+        throw error
+      }
     }
   )
 
@@ -549,4 +660,10 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
       }
     }
   )
+}
+
+function aliasGovernanceStatus(error: AliasGovernanceError): 400 | 409 | 503 {
+  if (error.result === "conflict") return 409
+  if (error.result === "denied") return 400
+  return 503
 }

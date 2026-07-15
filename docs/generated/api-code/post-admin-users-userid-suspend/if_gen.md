@@ -2,7 +2,7 @@
 
 # POST /admin/users/{userId}/suspend IF仕様
 
-- 実装 route: `apps/api/src/routes/admin-routes.ts:241 (POST /admin/users/{userId}/suspend)`
+- 実装 route: `apps/api/src/routes/admin-routes.ts:258 (POST /admin/users/{userId}/suspend)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: ユーザーを停止する

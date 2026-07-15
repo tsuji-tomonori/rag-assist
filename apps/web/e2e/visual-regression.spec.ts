@@ -31,7 +31,12 @@ const permissions = [
   'access:role:create',
   'access:role:update',
   'access:role:assign',
-  'access:policy:read'
+  'access:policy:read',
+  'rag:alias:read',
+  'rag:alias:write:group',
+  'rag:alias:review:group',
+  'rag:alias:disable:group',
+  'rag:alias:publish:group'
 ]
 
 const documents = [
@@ -88,6 +93,30 @@ function benchmarkRun(index: number) {
 
 async function installMockApi(page: Page) {
   let includeDebugForChatRun = false
+  const adminAliases = Array.from({ length: 55 }, (_, index) => ({
+    aliasId: `alias-visual-${String(index + 1).padStart(2, '0')}`,
+    version: `alias-state-${String(index + 1).padStart(2, '0')}`,
+    term: `visual-${String(index + 1).padStart(2, '0')}`,
+    expansions: [`管理用語 ${index + 1}`],
+    scope: { tenantId: 'local-e2e' },
+    status: index === 0 ? 'approved' : 'draft',
+    createdBy: 'visual-admin',
+    createdAt: '2026-05-01T00:00:00.000Z',
+    updatedAt: `2026-05-02T00:${String(index % 60).padStart(2, '0')}:00.000Z`
+  }))
+  const aliasAuditLog = Array.from({ length: 55 }, (_, index) => ({
+    auditId: `alias-audit-visual-${String(index + 1).padStart(2, '0')}`,
+    aliasId: adminAliases[index]?.aliasId,
+    tenantId: 'local-e2e',
+    action: index === 0 ? 'publish' : 'create',
+    actorUserId: 'visual-admin',
+    result: 'success',
+    reason: index === 0 ? '公開前の確認済み理由' : '管理用語を登録',
+    afterStatus: adminAliases[index]?.status,
+    aliasVersion: adminAliases[index]?.version,
+    createdAt: `2026-05-02T00:${String(index % 60).padStart(2, '0')}:30.000Z`,
+    detail: index === 0 ? 'published tenant aliases' : 'created tenant alias'
+  }))
 
   await page.route('**/config.json', async (route) => {
     await route.fulfill({ json: { apiBaseUrl: 'http://api.visual.test' } })
@@ -233,19 +262,64 @@ async function installMockApi(page: Page) {
       return
     }
     if (path === '/admin/roles') {
-      await route.fulfill({ json: { roles: [{ role: 'SYSTEM_ADMIN', permissions }] } })
+      await route.fulfill({ json: {
+        roles: [{ role: 'SYSTEM_ADMIN', displayName: 'システム管理者', description: 'システム全体の管理と復旧を行います。', kind: 'systemPreset', permissions }],
+        catalogVersion: 'role-catalog-v2',
+        source: 'canonical-application-role-catalog',
+        asOf: '2026-05-02T00:00:00.000Z'
+      } })
       return
     }
     if (path === '/admin/audit-log') {
-      await route.fulfill({ json: { auditLog: [{ auditId: 'audit-1', action: 'role:assign', actorUserId: 'visual-admin', actorEmail: 'visual@example.com', targetUserId: 'visual-admin', targetEmail: 'visual@example.com', beforeGroups: ['CHAT_USER'], afterGroups: ['SYSTEM_ADMIN'], createdAt: '2026-05-02T00:00:00.000Z' }] } })
+      await route.fulfill({ json: {
+        auditLog: [{ auditId: 'audit-1', action: 'role:assign', actorUserId: 'visual-admin', actorEmail: 'visual@example.com', targetUserId: 'visual-admin', targetEmail: 'visual@example.com', beforeGroups: ['CHAT_USER'], afterGroups: ['SYSTEM_ADMIN'], createdAt: '2026-05-02T00:00:00.000Z' }],
+        total: 1,
+        truncated: false,
+        source: 'managed-user-audit-ledger',
+        asOf: '2026-05-02T00:00:00.000Z'
+      } })
       return
     }
     if (path === '/admin/usage') {
-      await route.fulfill({ json: { users: [{ userId: 'visual-admin', email: 'visual@example.com', chatMessages: 12, conversationCount: 3, questionCount: 1, documentCount: 2, benchmarkRunCount: 1, debugRunCount: 1, lastActivityAt: '2026-05-02T00:00:00.000Z' }] } })
+      await route.fulfill({ json: { users: [{ userId: 'visual-admin', email: 'visual@example.com', chatMessages: 12, conversationCount: 3, questionCount: 1, documentCount: 2, benchmarkRunCount: 1, debugRunCount: 1, availableMetrics: ['chatMessages', 'conversationCount', 'questionCount', 'documentCount', 'benchmarkRunCount', 'debugRunCount'], unavailableMetrics: [], lastActivityAt: '2026-05-02T00:00:00.000Z' }] } })
       return
     }
     if (path === '/admin/costs') {
-      await route.fulfill({ json: { periodStart: '2026-05-01T00:00:00.000Z', periodEnd: '2026-05-02T00:00:00.000Z', currency: 'USD', totalEstimatedUsd: 0.0123, pricingCatalogUpdatedAt: '2026-05-02T00:00:00.000Z', users: [{ userId: 'visual-admin', email: 'visual@example.com', estimatedCostUsd: 0.0123 }], items: [{ service: 'Bedrock', category: 'chat completion', usage: 12, unit: 'message', unitCostUsd: 0.0008, estimatedCostUsd: 0.0096, confidence: 'estimated_usage' }] } })
+      await route.fulfill({ json: { available: true, periodStart: '2026-05-01T00:00:00.000Z', periodEnd: '2026-05-02T00:00:00.000Z', currency: 'USD', totalEstimatedUsd: 0.0123, pricingCatalogUpdatedAt: '2026-05-02T00:00:00.000Z', users: [{ userId: 'visual-admin', email: 'visual@example.com', estimatedCostUsd: 0.0123 }], items: [{ service: 'Bedrock', category: 'chat completion', usage: 12, unit: 'message', unitCostUsd: 0.0008, estimatedCostUsd: 0.0096, confidence: 'estimated_usage' }] } })
+      return
+    }
+    if (path === '/admin/aliases' && method === 'GET') {
+      const cursor = url.searchParams.get('cursor')
+      const query = url.searchParams.get('query')?.toLowerCase()
+      const status = url.searchParams.get('status')
+      const filtered = adminAliases.filter((alias) => (!query || [alias.term, ...alias.expansions].some((value) => value.toLowerCase().includes(query))) && (!status || alias.status === status))
+      const offset = cursor === 'alias-cursor-2' ? 50 : 0
+      const aliases = filtered.slice(offset, offset + 50)
+      await route.fulfill({ json: {
+        aliases,
+        total: filtered.length,
+        nextCursor: offset + aliases.length < filtered.length ? 'alias-cursor-2' : undefined,
+        truncated: offset + aliases.length < filtered.length,
+        source: 'tenant-alias-ledger',
+        asOf: '2026-05-02T00:00:00.000Z',
+        version: 'alias-ledger-v1'
+      } })
+      return
+    }
+    if (path === '/admin/aliases/audit-log' && method === 'GET') {
+      const cursor = url.searchParams.get('cursor')
+      const aliasId = url.searchParams.get('aliasId')
+      const filtered = aliasAuditLog.filter((entry) => !aliasId || entry.aliasId === aliasId)
+      const offset = cursor === 'alias-audit-cursor-2' ? 50 : 0
+      const auditLog = filtered.slice(offset, offset + 50)
+      await route.fulfill({ json: {
+        auditLog,
+        total: filtered.length,
+        nextCursor: offset + auditLog.length < filtered.length ? 'alias-audit-cursor-2' : undefined,
+        truncated: offset + auditLog.length < filtered.length,
+        source: 'tenant-alias-ledger',
+        asOf: '2026-05-02T00:00:00.000Z'
+      } })
       return
     }
 
@@ -367,7 +441,7 @@ async function installRiskyOperationApi(page: Page) {
     historyDelete: false,
     documentShare: null as unknown,
     benchmarkCancel: false,
-    aliasPublish: false
+    aliasPublish: null as unknown
   }
   const riskDocument = {
     detailLevel: 'manager',
@@ -401,8 +475,10 @@ async function installRiskyOperationApi(page: Page) {
   }
   const approvedAlias = {
     aliasId: 'alias-risk-1',
+    version: 'alias-risk-state-v1',
     term: 'pto',
     expansions: ['有給休暇'],
+    scope: { tenantId: 'local-e2e' },
     status: 'approved',
     createdBy: 'risk-admin',
     createdAt: '2026-05-01T00:00:00.000Z',
@@ -491,15 +567,15 @@ async function installRiskyOperationApi(page: Page) {
       return
     }
     if (path === '/admin/aliases' && method === 'GET') {
-      await route.fulfill({ json: { aliases: [approvedAlias] } })
+      await route.fulfill({ json: { aliases: [approvedAlias], total: 1, truncated: false, source: 'tenant-alias-ledger', asOf: '2026-05-02T00:00:00.000Z', version: 'alias-risk-ledger-v1' } })
       return
     }
     if (path === '/admin/aliases/audit-log' && method === 'GET') {
-      await route.fulfill({ json: { auditLog: [] } })
+      await route.fulfill({ json: { auditLog: [], total: 0, truncated: false, source: 'tenant-alias-ledger', asOf: '2026-05-02T00:00:00.000Z' } })
       return
     }
     if (path === '/admin/aliases/publish' && method === 'POST') {
-      requests.aliasPublish = true
+      requests.aliasPublish = request.postDataJSON()
       await route.fulfill({ json: { version: 'alias-risk-v2', publishedAt: '2026-05-02T00:02:00.000Z', aliasCount: 1 } })
       return
     }
@@ -742,26 +818,65 @@ test('E2E-UI-RISK-001: 高影響操作は対象・影響・回復条件と API �
     expect(requestedOperations.benchmarkCancel).toBe(true)
   })
 
-  await test.step('用語展開公開は不可逆性を示し、API version を結果根拠として表示する', async () => {
+  await test.step('用語展開公開は ledger version・理由・回復条件を示し、API version を結果根拠として表示する', async () => {
     await page.getByTitle('管理者設定').click()
     await expect(page.getByRole('region', { name: '管理者設定', exact: true })).toBeVisible()
     await page.getByRole('button', { name: '用語展開', exact: true }).click()
     await page.getByRole('button', { name: '公開', exact: true }).click()
-    const dialog = page.getByRole('dialog', { name: '用語展開を公開しますか？' })
+    const dialog = page.getByRole('dialog', { name: '承認済みの用語展開を公開しますか？' })
     await expect(dialog.getByText('影響', { exact: true })).toBeVisible()
-    await expect(dialog.getByText('公開後の検索結果が変わる可能性があります', { exact: true })).toBeVisible()
+    await expect(dialog.getByText('公開後の検索時用語展開が変わります', { exact: true })).toBeVisible()
     await expect(dialog.getByText('回復条件', { exact: true })).toBeVisible()
-    await expect(dialog.getByText('以前の公開版へ戻す操作は現行 API で未提供です', { exact: true })).toBeVisible()
+    await expect(dialog.getByText('以前の公開版へ戻す UI/API は現時点で未提供です', { exact: true })).toBeVisible()
+    await dialog.getByLabel('実行理由（必須）').fill('公開前の差分確認が完了したため')
     await dialog.getByRole('button', { name: '公開', exact: true }).click()
 
-    const feedback = page.getByRole('status', { name: '用語展開公開: 承認済み 1 件' })
+    const feedback = page.getByRole('status', { name: '用語展開公開: 同一テナントの承認済み定義' })
     await expect(feedback).toContainText('完了')
     await expect(feedback).toContainText('alias-risk-v2')
-    expect(requestedOperations.aliasPublish).toBe(true)
+    expect(requestedOperations.aliasPublish).toEqual({
+      expectedVersion: 'alias-risk-ledger-v1',
+      reason: '公開前の差分確認が完了したため'
+    })
 
     const feedbackScan = await new AxeBuilder({ page }).include('.operation-feedback').analyze()
     expect(feedbackScan.violations, JSON.stringify(feedbackScan.violations, null, 2)).toEqual([])
   })
+})
+
+test('E2E-UI-ADMIN-001: 管理用語の URL 状態・cursor・狭幅・axe を server-authoritative に扱う @smoke @admin-workspace', async ({ page }) => {
+  await signIn(page)
+  await page.goto('/?view=admin&section=alias&adminQuery=visual&aliasStatus=draft&sort=termAsc')
+
+  const workspace = page.getByRole('region', { name: '管理者設定', exact: true })
+  const panel = page.getByRole('region', { name: '用語展開管理一覧', exact: true })
+  await expect(workspace).toBeVisible()
+  await expect(panel.getByLabel('用語・展開語を検索')).toHaveValue('visual')
+  await expect(panel.getByRole('combobox', { name: '状態', exact: true })).toHaveValue('draft')
+  await expect(panel.getByRole('combobox', { name: '並び順', exact: true })).toHaveValue('termAsc')
+  await expect(panel.getByText('50 / 54 件', { exact: true })).toBeVisible()
+  await expect(panel.getByText('取得元: tenant-alias-ledger', { exact: true }).first()).toBeVisible()
+  await expect(panel.locator('time').first()).toHaveAttribute('dateTime', '2026-05-02T00:00:00.000Z')
+
+  await panel.getByRole('button', { name: '次の用語展開を読み込む（残り 4 件）' }).click()
+  await expect(panel.getByText('54 / 54 件', { exact: true })).toBeVisible()
+
+  const selectedAlias = 'visual-02'
+  await panel.getByRole('button', { name: `${selectedAlias}の監査ログを絞り込む` }).click()
+  await expect(page).toHaveURL(/selected=alias-visual-02/)
+  await page.reload()
+  await expect(panel.getByRole('button', { name: `${selectedAlias}の監査ログを全件表示へ戻す` })).toBeVisible()
+  await expect(panel.getByText('1 / 1 件', { exact: true })).toBeVisible()
+
+  for (const width of [320, 375, 768, 1280]) {
+    await page.setViewportSize({ width, height: 1000 })
+    await expect(workspace).toBeVisible()
+    const hasViewportOverflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)
+    expect(hasViewportOverflow, `${width}px で管理画面全体の横スクロールが発生しています`).toBe(false)
+  }
+
+  const axe = await new AxeBuilder({ page }).include('.admin-workspace').analyze()
+  expect(axe.violations, JSON.stringify(axe.violations, null, 2)).toEqual([])
 })
 
 test('全 AppView の permission-aware 到達性 @smoke', async ({ page }) => {
@@ -981,7 +1096,7 @@ test('E2E-UI-STATE-001: HTTP 403 は empty/zero ではなく permission denied �
 
 test('E2E-UI-STATE-001: admin partial success は成功・失敗 part を分けて retry recovery する @smoke', async ({ page }) => {
   let auditReads = 0
-  await page.route(/http:\/\/(api\.visual\.test|127\.0\.0\.1:8787)\/admin\/audit-log$/, async (route) => {
+  await page.route(/http:\/\/(api\.visual\.test|127\.0\.0\.1:8787)\/admin\/audit-log(?:\?.*)?$/, async (route) => {
     auditReads += 1
     if (auditReads === 1) {
       await route.fulfill({ status: 500, contentType: 'text/plain', body: 'audit unavailable' })
@@ -1000,10 +1115,6 @@ test('E2E-UI-STATE-001: admin partial success は成功・失敗 part を分け�
   await expect(partialState).toContainText('未更新')
   await expect(partialState).toContainText('管理操作履歴')
 
-  await adminRegion.getByRole('button', { name: '監査' }).click()
-  await expect(adminRegion).toContainText('管理操作履歴を取得できませんでした')
-  await expect(adminRegion).not.toContainText('0 件')
-
   await partialState.getByRole('button', { name: '失敗した項目を再試行' }).click()
   await expect(adminRegion.locator('[data-state-kind="recovered"]')).toContainText('管理者設定を更新しました')
   await expect(adminRegion).toContainText('role:assign')
@@ -1012,7 +1123,7 @@ test('E2E-UI-STATE-001: admin partial success は成功・失敗 part を分け�
 
 test('E2E-UI-STATE-001: refresh failure は as-of/source 付き stale data を保持して回復する @smoke', async ({ page }) => {
   const refreshCounts = new Map<string, number>()
-  await page.route(/http:\/\/(api\.visual\.test|127\.0\.0\.1:8787)\/admin\/(users|roles|audit-log|usage|costs)$/, async (route) => {
+  await page.route(/http:\/\/(api\.visual\.test|127\.0\.0\.1:8787)\/admin\/(users|roles|audit-log|usage|costs)(?:\?.*)?$/, async (route) => {
     const path = new URL(route.request().url()).pathname
     const count = (refreshCounts.get(path) ?? 0) + 1
     refreshCounts.set(path, count)
@@ -1026,17 +1137,21 @@ test('E2E-UI-STATE-001: refresh failure は as-of/source 付き stale data を�
   await signIn(page)
   await page.getByTitle('管理者設定').click()
   const adminRegion = page.getByRole('region', { name: '管理者設定', exact: true })
-  await adminRegion.getByRole('button', { name: 'ユーザー' }).click()
+  await adminRegion.getByRole('button', { name: 'ユーザー', exact: true }).click()
   await expect(adminRegion).toContainText('Visual Admin')
-  await adminRegion.getByRole('button', { name: '更新', exact: true }).click()
+  await adminRegion.getByRole('button', { name: '管理対象ユーザーを更新', exact: true }).click()
 
-  const staleState = adminRegion.locator('[data-state-kind="stale"]')
-  await expect(staleState).toContainText('管理者設定は最新ではありません')
-  await expect(staleState).toContainText('source: 管理 API')
-  await expect(staleState.locator('time')).toHaveAttribute('dateTime', '2026-05-02T00:00:00.000Z')
+  const partialState = adminRegion.locator('[data-state-kind="partial"]')
+  await expect(partialState).toContainText('管理者設定の一部を取得できませんでした')
+  await expect(partialState).toContainText('管理対象ユーザー')
+  const userPanel = adminRegion.getByRole('region', { name: 'ユーザー管理一覧', exact: true })
+  const userDataStatus = userPanel.getByRole('status')
+  await expect(userDataStatus).toContainText('取得元: 管理ユーザー API')
+  await expect(userDataStatus).toContainText('最新情報の取得に失敗したため、最後に確認できた内容です。')
+  await expect(userDataStatus.locator('time')).toHaveAttribute('dateTime', '2026-05-02T00:00:00.000Z')
   await expect(adminRegion).toContainText('Visual Admin')
 
-  await staleState.getByRole('button', { name: '最新情報を取得' }).click()
+  await userPanel.getByRole('button', { name: '管理対象ユーザーを更新', exact: true }).click()
   await expect(adminRegion.locator('[data-state-kind="recovered"]')).toContainText('管理者設定を更新しました')
   await expect(adminRegion).toContainText('Visual Admin')
 })

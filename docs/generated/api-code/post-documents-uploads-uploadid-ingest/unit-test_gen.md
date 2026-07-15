@@ -66,13 +66,13 @@
 | 到達 symbol | FR-090 reindex cutover compensates publication when current authorization is revoked before ledger commit | `apps/api/src/rag/memorag-service.test.ts:1246 (FR-090 reindex cutover compensates publication when current authorization is revoked before ledger commit)` |
 | 到達 symbol | FR-090 failed cutover compensation persists a durable intent and an authorized retry converges it | `apps/api/src/rag/memorag-service.test.ts:1280 (FR-090 failed cutover compensation persists a durable intent and an authorized retry converges it)` |
 | 到達 symbol | FR-090 revoked rollback persists ledger reconciliation and retries only after current authorization | `apps/api/src/rag/memorag-service.test.ts:1335 (FR-090 revoked rollback persists ledger reconciliation and retries only after current authorization)` |
-| 到達 symbol | service records async agent readable selections without expanding duplicates | `apps/api/src/rag/memorag-service.test.ts:1760 (service records async agent readable selections without expanding duplicates)` |
-| 到達 symbol | service executes configured Claude Code provider with sanitized artifacts | `apps/api/src/rag/memorag-service.test.ts:1796 (service executes configured Claude Code provider with sanitized artifacts)` |
-| 到達 symbol | service executes configured Codex command provider with sanitized artifacts | `apps/api/src/rag/memorag-service.test.ts:1974 (service executes configured Codex command provider with sanitized artifacts)` |
-| 到達 symbol | service executes configured OpenCode command provider with sanitized artifacts | `apps/api/src/rag/memorag-service.test.ts:2094 (service executes configured OpenCode command provider with sanitized artifacts)` |
-| 到達 symbol | asynchronous chat run stores debug trace by reference | `apps/api/src/rag/memorag-service.test.ts:2453 (asynchronous chat run stores debug trace by reference)` |
-| 到達 symbol | FR-090 revoke after governance creation compensates all ingest artifacts and never publishes success | `apps/api/src/rag/memorag-service.test.ts:2698 (FR-090 revoke after governance creation compensates all ingest artifacts and never publishes success)` |
-| 到達 symbol | service ingest falls back when memory JSON parse fails and surfaces generate timeout | `apps/api/src/rag/memorag-service.test.ts:3106 (service ingest falls back when memory JSON parse fails and surfaces generate timeout)` |
+| 到達 symbol | service records async agent readable selections without expanding duplicates | `apps/api/src/rag/memorag-service.test.ts:1875 (service records async agent readable selections without expanding duplicates)` |
+| 到達 symbol | service executes configured Claude Code provider with sanitized artifacts | `apps/api/src/rag/memorag-service.test.ts:1911 (service executes configured Claude Code provider with sanitized artifacts)` |
+| 到達 symbol | service executes configured Codex command provider with sanitized artifacts | `apps/api/src/rag/memorag-service.test.ts:2089 (service executes configured Codex command provider with sanitized artifacts)` |
+| 到達 symbol | service executes configured OpenCode command provider with sanitized artifacts | `apps/api/src/rag/memorag-service.test.ts:2209 (service executes configured OpenCode command provider with sanitized artifacts)` |
+| 到達 symbol | asynchronous chat run stores debug trace by reference | `apps/api/src/rag/memorag-service.test.ts:2568 (asynchronous chat run stores debug trace by reference)` |
+| 到達 symbol | FR-090 revoke after governance creation compensates all ingest artifacts and never publishes success | `apps/api/src/rag/memorag-service.test.ts:2813 (FR-090 revoke after governance creation compensates all ingest artifacts and never publishes success)` |
+| 到達 symbol | service ingest falls back when memory JSON parse fails and surfaces generate timeout | `apps/api/src/rag/memorag-service.test.ts:3221 (service ingest falls back when memory JSON parse fails and surfaces generate timeout)` |
 | 到達 symbol | FR-068 production path re-ingests quarantine into a fenced candidate and publishes only the approved artifact | `apps/api/src/rag/offline/pre-retrieval/admission/source-governance-approval-service.test.ts:374 (FR-068 production path re-ingests quarantine into a fenced candidate and publishes only the approved artifact)` |
 | 到達 symbol | service search applies ACL and metadata filters across lexical and vector results | `apps/api/src/search/hybrid-search.test.ts:408 (service search applies ACL and metadata filters across lexical and vector results)` |
 | 到達 symbol | service search denies group-scoped manifests to non-members without legacy ACLs | `apps/api/src/search/hybrid-search.test.ts:486 (service search denies group-scoped manifests to non-members without legacy ACLs)` |
@@ -134,9 +134,9 @@
 | F047 | `enforceDocumentCreateOperation` | 三項条件 | `scope?.scopeType` が `"group"` と等しい | `apps/api/src/routes/document-routes.ts:480 (enforceDocumentCreateOperation)` |
 | F048 | `enforceDocumentCreateOperation` | if | `groupIds.length` が `0` より大きい | `apps/api/src/routes/document-routes.ts:481 (enforceDocumentCreateOperation)` |
 | F049 | `enforceDocumentCreateOperation` | loop | `groupIds` が存在し、真である | `apps/api/src/routes/document-routes.ts:483 (enforceDocumentCreateOperation)` |
-| F050 | `MemoRagService.createCurrentDocumentIngestAuthorization` | 三項条件 | `input.purpose` が `"benchmarkSeed"` と等しい | `apps/api/src/rag/memorag-service.ts:339 (MemoRagService.createCurrentDocumentIngestAuthorization)` |
-| F051 | `MemoRagService.createCurrentDocumentIngestAuthorization` | 三項条件 | `input.purpose` が `"chatAttachment"` と等しい | `apps/api/src/rag/memorag-service.ts:341 (MemoRagService.createCurrentDocumentIngestAuthorization)` |
-| F052 | `MemoRagService.discardUncommittedIngest` | if | some の判定結果が真である | `apps/api/src/rag/memorag-service.ts:373 (MemoRagService.discardUncommittedIngest)` |
+| F050 | `MemoRagService.createCurrentDocumentIngestAuthorization` | 三項条件 | `input.purpose` が `"benchmarkSeed"` と等しい | `apps/api/src/rag/memorag-service.ts:387 (MemoRagService.createCurrentDocumentIngestAuthorization)` |
+| F051 | `MemoRagService.createCurrentDocumentIngestAuthorization` | 三項条件 | `input.purpose` が `"chatAttachment"` と等しい | `apps/api/src/rag/memorag-service.ts:389 (MemoRagService.createCurrentDocumentIngestAuthorization)` |
+| F052 | `MemoRagService.discardUncommittedIngest` | if | some の判定結果が真である | `apps/api/src/rag/memorag-service.ts:421 (MemoRagService.discardUncommittedIngest)` |
 
 ## 3. コード由来テストケース
 
@@ -238,12 +238,12 @@
 | TC094 | F048: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:481 (enforceDocumentCreateOperation)` |
 | TC095 | F049: 0件 | 反復対象が空でも不正な副作用や例外を生じない。 | `apps/api/src/routes/document-routes.ts:483 (enforceDocumentCreateOperation)` |
 | TC096 | F049: 複数件 | 各要素を順に処理し、順序・終了条件を守る。 | `apps/api/src/routes/document-routes.ts:483 (enforceDocumentCreateOperation)` |
-| TC097 | F050: 条件成立 | `input.purpose` が `"benchmarkSeed"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:339 (MemoRagService.createCurrentDocumentIngestAuthorization)` |
-| TC098 | F050: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:339 (MemoRagService.createCurrentDocumentIngestAuthorization)` |
-| TC099 | F051: 条件成立 | `input.purpose` が `"chatAttachment"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:341 (MemoRagService.createCurrentDocumentIngestAuthorization)` |
-| TC100 | F051: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:341 (MemoRagService.createCurrentDocumentIngestAuthorization)` |
-| TC101 | F052: 条件成立 | some の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:373 (MemoRagService.discardUncommittedIngest)` |
-| TC102 | F052: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:373 (MemoRagService.discardUncommittedIngest)` |
+| TC097 | F050: 条件成立 | `input.purpose` が `"benchmarkSeed"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:387 (MemoRagService.createCurrentDocumentIngestAuthorization)` |
+| TC098 | F050: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:387 (MemoRagService.createCurrentDocumentIngestAuthorization)` |
+| TC099 | F051: 条件成立 | `input.purpose` が `"chatAttachment"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:389 (MemoRagService.createCurrentDocumentIngestAuthorization)` |
+| TC100 | F051: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:389 (MemoRagService.createCurrentDocumentIngestAuthorization)` |
+| TC101 | F052: 条件成立 | some の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:421 (MemoRagService.discardUncommittedIngest)` |
+| TC102 | F052: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:421 (MemoRagService.discardUncommittedIngest)` |
 | TC103 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC104 | HTTP 400 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC105 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

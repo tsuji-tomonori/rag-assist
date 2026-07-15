@@ -285,7 +285,7 @@
     {
       "view": "admin",
       "canonicalUrl": "/?view=admin",
-      "urlPatterns": ["/?view=admin"],
+      "urlPatterns": ["/?view=admin", "/?view=admin&section=:section&adminQuery=:query&aliasStatus=:status&auditAction=:action&sort=:sort&selected=:id"],
       "routeKind": "query-state",
       "access": { "session": "authenticated", "guards": ["canSeeAdminSettings"] },
       "personas": ["system-admin"],
@@ -300,15 +300,22 @@
         { "id": "FR-098", "acceptanceCriteria": ["AC-FR098-003"] }
       ],
       "verifications": [
-        { "id": "E2E-VIEW-ADMIN-001", "status": "implemented", "evidence": ["apps/web/e2e/visual-regression.spec.ts"] }
+        { "id": "E2E-VIEW-ADMIN-001", "status": "implemented", "evidence": ["apps/web/e2e/visual-regression.spec.ts"] },
+        { "id": "E2E-UI-ADMIN-001", "status": "implemented", "evidence": ["apps/web/e2e/visual-regression.spec.ts"] }
       ],
       "implementationStatus": "partial",
       "implementationEvidence": [
         "apps/web/src/features/admin/components/AdminWorkspace.tsx",
+        "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
         "apps/web/src/features/admin/hooks/useAdminData.ts",
+        "apps/web/src/features/admin/api/adminContract.ts",
         "apps/web/src/shared/ui/OperationFeedback.tsx"
       ],
-      "gapTasks": ["tasks/todo/20260714-1011-admin-ui-governance-quality.md"]
+      "gapTasks": [
+        "tasks/todo/20260714-1011-admin-access-audit-state.md",
+        "tasks/todo/20260714-1011-admin-usage-cost-integrity.md",
+        "tasks/todo/20260714-issue-345-manual-a11y-evidence.md"
+      ]
     },
     {
       "view": "documents",

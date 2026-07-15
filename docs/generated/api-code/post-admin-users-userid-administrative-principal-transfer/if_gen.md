@@ -2,7 +2,7 @@
 
 # POST /admin/users/{userId}/administrative-principal-transfer IF仕様
 
-- 実装 route: `apps/api/src/routes/admin-routes.ts:64 (POST /admin/users/{userId}/administrative-principal-transfer)`
+- 実装 route: `apps/api/src/routes/admin-routes.ts:73 (POST /admin/users/{userId}/administrative-principal-transfer)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 管理主体の所有資源を後継へ移管する

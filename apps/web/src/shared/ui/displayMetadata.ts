@@ -115,6 +115,7 @@ const aliasAuditActions = {
   create: "作成",
   update: "更新",
   review: "レビュー",
+  transition: "状態遷移",
   disable: "無効化",
   publish: "公開"
 } satisfies Record<AliasAuditLogItem["action"], string>

@@ -2,7 +2,7 @@
 
 # POST /admin/aliases/publish IF仕様
 
-- 実装 route: `apps/api/src/routes/admin-routes.ts:438 (POST /admin/aliases/publish)`
+- 実装 route: `apps/api/src/routes/admin-routes.ts:530 (POST /admin/aliases/publish)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 検索 alias を公開する
@@ -25,7 +25,12 @@ _なし_
 
 ## Data
 
-_なし_
+Media type: `application/json`
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `expectedVersion` | `string` | yes | `data.expectedVersion` の値。項目名は expected version を表します。 | minLength=1 |
+| `reason` | `string` | yes | 判断や失敗の理由。 | minLength=1<br>maxLength=1000 |
 
 ## Authorization
 
@@ -54,8 +59,11 @@ _なし_
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
 | `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 3 field(s) |
+| `400` | リクエスト形式または入力値が不正です。 | `application/json` | 2 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
+| `409` | 現在のリソース状態と要求された操作が競合しています。 | `application/json` | 2 field(s) |
+| `503` | alias 公開の永続化を完了できません | `application/json` | 2 field(s) |
 
 ##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
@@ -67,6 +75,15 @@ Media type: `application/json`
 | `publishedAt` | `string` | yes | `response.publishedAt` の値。項目名は published at を表します。 | - |
 | `aliasCount` | `integer` | yes | `response.aliasCount` の値。項目名は alias count を表します。 | minimum=0 |
 
+##### `400` リクエスト形式または入力値が不正です。
+
+Media type: `application/json`
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
+
 ##### `401` 認証が必要です。
 
 Media type: `application/json`
@@ -77,6 +94,24 @@ Media type: `application/json`
 | `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ##### `403` 対象操作を実行する権限がありません。
+
+Media type: `application/json`
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
+
+##### `409` 現在のリソース状態と要求された操作が競合しています。
+
+Media type: `application/json`
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
+
+##### `503` alias 公開の永続化を完了できません
 
 Media type: `application/json`
 

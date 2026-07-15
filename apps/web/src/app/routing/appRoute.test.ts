@@ -67,6 +67,22 @@ describe("appRoute", () => {
       .toBe("/?view=favorites")
   })
 
+  it("accepts and preserves validated admin section/filter/sort/selection state", () => {
+    const search = "?view=admin&section=alias&adminQuery=休暇&aliasStatus=draft&auditAction=review&sort=termAsc&selected=alias-1"
+    expect(parseAppRoute({ pathname: "/", search })).toEqual({ view: "admin", needsNormalization: false })
+    expect(buildAppViewUrl(`https://app.example/${search}`, "admin"))
+      .toBe(`/${search.replace("休暇", "%E4%BC%91%E6%9A%87")}`)
+  })
+
+  it("removes unknown or malformed admin state without carrying it to another view", () => {
+    const parsed = parseAppRoute({ pathname: "/", search: "?view=admin&section=unknown&sort=unsafe&extra=value" })
+    expect(parsed).toEqual({ view: "admin", issue: "invalid-query", needsNormalization: true })
+    expect(normalizeAppRouteUrl("https://app.example/?view=admin&section=unknown&sort=unsafe&extra=value", parsed))
+      .toBe("/?view=admin")
+    expect(buildAppViewUrl("https://app.example/?view=admin&section=alias&selected=alias-1", "history"))
+      .toBe("/?view=history")
+  })
+
   it("normalizes legacy document routes while preserving approved restorable state", () => {
     const parsed = parseAppRoute({ pathname: "/", search: "?view=documents&folderQuery=rules&query=policy&sort=updatedDesc&page=2&pageSize=50" })
     expect(normalizeAppRouteUrl("https://app.example/?view=documents&folderQuery=rules&query=policy&sort=updatedDesc&page=2&pageSize=50", parsed))

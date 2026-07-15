@@ -1,8 +1,17 @@
-import { useState } from "react"
 import type { CurrentUser } from "../../../shared/types/common.js"
 import { Icon } from "../../../shared/components/Icon.js"
 import { LoadingStatus } from "../../../shared/components/LoadingSpinner.js"
-import type { AccessRoleDefinition, AliasAuditLogItem, AliasDefinition, CostAuditSummary, ManagedUser, ManagedUserAuditLogEntry, ManagedUserDeletionPreflight, UserUsageSummary } from "../types.js"
+import type {
+  AccessRoleList,
+  AliasAuditLogPage,
+  AliasDefinition,
+  AliasListPage,
+  CostAuditSummary,
+  ManagedUser,
+  ManagedUserAuditLogPage,
+  ManagedUserDeletionPreflight,
+  UserUsageSummary
+} from "../types.js"
 import { AdminAuditPanel } from "./panels/AdminAuditPanel.js"
 import { AdminCostPanel } from "./panels/AdminCostPanel.js"
 import { AdminOverviewGrid } from "./panels/AdminOverviewGrid.js"
@@ -13,8 +22,14 @@ import { AliasAdminPanel } from "./panels/AliasAdminPanel.js"
 import { ResourceStateBoundary, type UiResourceState } from "../../../shared/ui/ResourceState.js"
 import { isResourceStateBusy } from "../../../shared/ui/resourceStateModel.js"
 import type { OperationOutcome } from "../../../shared/ui/operationOutcome.js"
+import {
+  adminAuditActions,
+  aliasAuditActions,
+  type AdminSectionId,
+  type AdminWorkspaceUrlState
+} from "../urlState.js"
 
-type AdminSectionId = "overview" | "users" | "roles" | "usage-cost" | "audit" | "alias"
+export type AdminResourcePartId = "users" | "roles" | "audit" | "usage" | "cost" | "aliases" | "aliasAudit"
 
 export function AdminWorkspace({
   dataState,
@@ -24,12 +39,13 @@ export function AdminWorkspace({
   debugRunsCount,
   benchmarkRunsCount,
   managedUsers,
-  adminAuditLog,
-  accessRoles,
+  adminAuditPage,
+  accessRoleList,
   usageSummaries,
   costAudit,
-  aliases,
-  aliasAuditLog,
+  aliasPage,
+  aliasAuditPage,
+  urlState,
   loading,
   canManageDocuments,
   canAnswerQuestions,
@@ -60,9 +76,15 @@ export function AdminWorkspace({
   onPrepareUserDelete,
   onSetUserStatus,
   onRefreshAdminData,
+  onRefreshAdminPart,
+  onLoadMoreAdminAudit,
+  onLoadMoreAliases,
+  onLoadMoreAliasAudit,
+  onUrlStateChange,
   onCreateAlias,
   onUpdateAlias,
   onReviewAlias,
+  onTransitionAlias,
   onDisableAlias,
   onPublishAliases,
   onBack
@@ -74,12 +96,17 @@ export function AdminWorkspace({
   debugRunsCount: number | null
   benchmarkRunsCount: number | null
   managedUsers: ManagedUser[] | null
-  adminAuditLog: ManagedUserAuditLogEntry[] | null
-  accessRoles: AccessRoleDefinition[] | null
+  adminAuditLog?: never
+  adminAuditPage: ManagedUserAuditLogPage | null
+  accessRoles?: never
+  accessRoleList: AccessRoleList | null
   usageSummaries: UserUsageSummary[] | null
   costAudit: CostAuditSummary | null
-  aliases: AliasDefinition[] | null
-  aliasAuditLog: AliasAuditLogItem[] | null
+  aliases?: never
+  aliasPage: AliasListPage | null
+  aliasAuditLog?: never
+  aliasAuditPage: AliasAuditLogPage | null
+  urlState: AdminWorkspaceUrlState
   loading: boolean
   canManageDocuments: boolean
   canAnswerQuestions: boolean
@@ -110,14 +137,19 @@ export function AdminWorkspace({
   onPrepareUserDelete: (userId: string) => Promise<ManagedUserDeletionPreflight | null>
   onSetUserStatus: (userId: string, action: "suspend" | "unsuspend" | "delete", successorUserId?: string) => Promise<OperationOutcome<ManagedUser> | void>
   onRefreshAdminData: () => Promise<void>
-  onCreateAlias: (input: { term: string; expansions: string[]; scope?: AliasDefinition["scope"] }) => Promise<void>
-  onUpdateAlias: (aliasId: string, input: { term?: string; expansions?: string[]; scope?: AliasDefinition["scope"] }) => Promise<void>
-  onReviewAlias: (aliasId: string, decision: "approve" | "reject", comment?: string) => Promise<void>
-  onDisableAlias: (aliasId: string) => Promise<OperationOutcome<AliasDefinition> | void>
-  onPublishAliases: () => Promise<OperationOutcome<{ version: string; publishedAt: string; aliasCount: number }> | void>
+  onRefreshAdminPart: (partId: AdminResourcePartId) => Promise<void>
+  onLoadMoreAdminAudit: () => Promise<void>
+  onLoadMoreAliases: () => Promise<void>
+  onLoadMoreAliasAudit: () => Promise<void>
+  onUrlStateChange: (state: AdminWorkspaceUrlState, mode?: "push" | "replace") => void
+  onCreateAlias: (input: { term: string; expansions: string[]; scope?: AliasDefinition["scope"] }) => Promise<OperationOutcome<AliasDefinition> | void>
+  onUpdateAlias: (aliasId: string, input: { term?: string; expansions?: string[]; scope?: AliasDefinition["scope"]; expectedVersion: string; reason: string }) => Promise<OperationOutcome<AliasDefinition> | void>
+  onReviewAlias: (aliasId: string, decision: "approve" | "reject", expectedVersion: string, reason: string) => Promise<OperationOutcome<AliasDefinition> | void>
+  onTransitionAlias: (aliasId: string, expectedVersion: string, reason: string) => Promise<OperationOutcome<AliasDefinition> | void>
+  onDisableAlias: (aliasId: string, expectedVersion: string, reason: string) => Promise<OperationOutcome<AliasDefinition> | void>
+  onPublishAliases: (expectedVersion: string, reason: string) => Promise<OperationOutcome<{ version: string; publishedAt: string; aliasCount: number }> | void>
   onBack: () => void
 }) {
-  const [activeSection, setActiveSection] = useState<AdminSectionId>("overview")
   const sections: Array<{ id: AdminSectionId; label: string; available: boolean }> = [
     { id: "overview", label: "概要", available: true },
     { id: "users", label: "ユーザー", available: canReadUsers },
@@ -127,15 +159,29 @@ export function AdminWorkspace({
     { id: "alias", label: "用語展開", available: canReadAliases }
   ]
   const availableSections = sections.filter((section) => section.available)
-  const resolvedActiveSection = availableSections.some((section) => section.id === activeSection) ? activeSection : "overview"
+  const requestedSection = urlState.section ?? "overview"
+  const resolvedActiveSection = availableSections.some((section) => section.id === requestedSection) ? requestedSection : "overview"
   const failedParts = new Set(dataState.parts.filter((part) => part.status === "failed" || part.status === "permission").map((part) => part.id))
+  const part = (id: AdminResourcePartId) => dataState.parts.find((candidate) => candidate.id === id)
   const visibleManagedUsers = failedParts.has("users") ? null : managedUsers
-  const visibleAccessRoles = failedParts.has("roles") ? null : accessRoles
+  const visibleAccessRoleList = failedParts.has("roles") ? null : accessRoleList
   const visibleUsageSummaries = failedParts.has("usage") ? null : usageSummaries
   const visibleCostAudit = failedParts.has("cost") ? null : costAudit
-  const visibleAdminAuditLog = failedParts.has("audit") ? null : adminAuditLog
-  const visibleAliases = failedParts.has("aliases") ? null : aliases
-  const visibleAliasAuditLog = failedParts.has("aliases") ? null : aliasAuditLog
+  const visibleAdminAuditPage = failedParts.has("audit") ? null : adminAuditPage
+  const visibleAliasPage = failedParts.has("aliases") ? null : aliasPage
+  const visibleAliasAuditPage = failedParts.has("aliasAudit") ? null : aliasAuditPage
+
+  function openSection(section: AdminSectionId) {
+    let nextState: AdminWorkspaceUrlState = { ...urlState, section }
+    if (section !== "alias") nextState = { ...nextState, aliasStatus: undefined, sort: undefined, selected: undefined }
+    if (section === "audit" && nextState.auditAction && aliasAuditActions.has(nextState.auditAction as never)) {
+      nextState.auditAction = undefined
+    }
+    if (section === "alias" && nextState.auditAction && adminAuditActions.has(nextState.auditAction as never)) {
+      nextState.auditAction = undefined
+    }
+    onUrlStateChange(nextState, "push")
+  }
 
   return (
     <section className="admin-workspace" aria-label="管理者設定">
@@ -148,112 +194,133 @@ export function AdminWorkspace({
           <span>{user?.groups.join(" / ") || "権限未取得"}</span>
         </div>
       </header>
-      {loading && !isResourceStateBusy(dataState) && <LoadingStatus label="管理APIを処理中" />}
+      {loading && !isResourceStateBusy(dataState) && <LoadingStatus label="管理 API を処理中" />}
 
       <ResourceStateBoundary state={dataState} onRetry={() => { void onRefreshAdminData() }} onBack={onBack}>
-      <nav className="admin-section-tabs" aria-label="管理セクション">
-        {availableSections.map((section) => (
-          <button
-            type="button"
-            aria-current={resolvedActiveSection === section.id ? "page" : undefined}
-            onClick={() => setActiveSection(section.id)}
-            key={section.id}
-          >
-            {section.label}
-          </button>
-        ))}
-      </nav>
+        <nav className="admin-section-tabs" aria-label="管理セクション">
+          {availableSections.map((section) => (
+            <button
+              type="button"
+              aria-current={resolvedActiveSection === section.id ? "page" : undefined}
+              onClick={() => openSection(section.id)}
+              key={section.id}
+            >
+              {section.label}
+            </button>
+          ))}
+        </nav>
 
-      {resolvedActiveSection === "overview" && (
-        <AdminOverviewGrid
-          documentsCount={documentsCount}
-          openQuestionsCount={openQuestionsCount}
-          debugRunsCount={debugRunsCount}
-          benchmarkRunsCount={benchmarkRunsCount}
-          managedUsers={visibleManagedUsers}
-          accessRoles={visibleAccessRoles}
-          usageSummaries={visibleUsageSummaries}
-          costAudit={visibleCostAudit}
-          aliases={visibleAliases}
-          failedParts={failedParts}
-          canManageDocuments={canManageDocuments}
-          canAnswerQuestions={canAnswerQuestions}
-          canReadDebugRuns={canReadDebugRuns}
-          canReadBenchmarkRuns={canReadBenchmarkRuns}
-          canOpenAdminSettings={canOpenAdminSettings}
-          canReadUsers={canReadUsers}
-          canReadUsage={canReadUsage}
-          canReadCosts={canReadCosts}
-          canManageAliases={canManageAliases}
-          onOpenDocuments={onOpenDocuments}
-          onOpenAssignee={onOpenAssignee}
-          onOpenDebug={onOpenDebug}
-          onOpenBenchmark={onOpenBenchmark}
-        />
-      )}
-
-      <div className="phase2-admin-grid" hidden={resolvedActiveSection === "overview"}>
-        {canReadUsers && (
-          <div hidden={resolvedActiveSection !== "users"}>
-            <AdminUserPanel
-              managedUsers={visibleManagedUsers}
-              accessRoles={visibleAccessRoles}
-              usersLoadFailed={failedParts.has("users")}
-              rolesLoadFailed={failedParts.has("roles")}
-              loading={loading}
-              canCreateUsers={canCreateUsers}
-              canAssignRoles={canAssignRoles}
-              canSuspendUsers={canSuspendUsers}
-              canUnsuspendUsers={canUnsuspendUsers}
-              canDeleteUsers={canDeleteUsers}
-              onCreateUser={onCreateUser}
-              onAssignRoles={onAssignRoles}
-              onPrepareUserDelete={onPrepareUserDelete}
-              onSetUserStatus={onSetUserStatus}
-              onRefreshAdminData={onRefreshAdminData}
-            />
-          </div>
+        {resolvedActiveSection === "overview" && (
+          <AdminOverviewGrid
+            documentsCount={documentsCount}
+            openQuestionsCount={openQuestionsCount}
+            debugRunsCount={debugRunsCount}
+            benchmarkRunsCount={benchmarkRunsCount}
+            managedUsers={visibleManagedUsers}
+            accessRoles={visibleAccessRoleList?.roles ?? null}
+            usageSummaries={visibleUsageSummaries}
+            costAudit={visibleCostAudit}
+            aliases={visibleAliasPage?.aliases ?? null}
+            failedParts={failedParts}
+            canManageDocuments={canManageDocuments}
+            canAnswerQuestions={canAnswerQuestions}
+            canReadDebugRuns={canReadDebugRuns}
+            canReadBenchmarkRuns={canReadBenchmarkRuns}
+            canOpenAdminSettings={canOpenAdminSettings}
+            canReadUsers={canReadUsers}
+            canReadUsage={canReadUsage}
+            canReadCosts={canReadCosts}
+            canManageAliases={canManageAliases}
+            onOpenDocuments={onOpenDocuments}
+            onOpenAssignee={onOpenAssignee}
+            onOpenDebug={onOpenDebug}
+            onOpenBenchmark={onOpenBenchmark}
+            onOpenUsers={() => openSection("users")}
+            onOpenRoles={() => openSection("roles")}
+            onOpenUsageCost={() => openSection("usage-cost")}
+            onOpenAliases={() => openSection("alias")}
+          />
         )}
 
-        {canOpenAdminSettings && (
-          <div hidden={resolvedActiveSection !== "roles"}>
-            <AdminRolePanel accessRoles={visibleAccessRoles} loadFailed={failedParts.has("roles")} />
-          </div>
-        )}
+        <div className="phase2-admin-grid" hidden={resolvedActiveSection === "overview"}>
+          {canReadUsers && (
+            <div hidden={resolvedActiveSection !== "users"}>
+              <AdminUserPanel
+                managedUsers={visibleManagedUsers}
+                accessRoles={visibleAccessRoleList?.roles ?? null}
+                part={part("users")}
+                usersLoadFailed={failedParts.has("users")}
+                rolesLoadFailed={failedParts.has("roles")}
+                loading={loading}
+                canCreateUsers={canCreateUsers}
+                canAssignRoles={canAssignRoles}
+                canSuspendUsers={canSuspendUsers}
+                canUnsuspendUsers={canUnsuspendUsers}
+                canDeleteUsers={canDeleteUsers}
+                onCreateUser={onCreateUser}
+                onAssignRoles={onAssignRoles}
+                onPrepareUserDelete={onPrepareUserDelete}
+                onSetUserStatus={onSetUserStatus}
+                onRefresh={() => onRefreshAdminPart("users")}
+              />
+            </div>
+          )}
 
-        {(canReadUsage || canReadCosts) && (
-          <div className="admin-combined-section" hidden={resolvedActiveSection !== "usage-cost"}>
-            {canReadUsage && <AdminUsagePanel usageSummaries={visibleUsageSummaries} loadFailed={failedParts.has("usage")} />}
-            {canReadCosts && <AdminCostPanel costAudit={visibleCostAudit} loadFailed={failedParts.has("cost")} />}
-          </div>
-        )}
+          {canOpenAdminSettings && (
+            <div hidden={resolvedActiveSection !== "roles"}>
+              <AdminRolePanel accessRoleList={visibleAccessRoleList} part={part("roles")} loading={loading} onRefresh={() => onRefreshAdminPart("roles")} />
+            </div>
+          )}
 
-        {canReadAdminAuditLog && (
-          <div hidden={resolvedActiveSection !== "audit"}>
-            <AdminAuditPanel adminAuditLog={visibleAdminAuditLog} loadFailed={failedParts.has("audit")} />
-          </div>
-        )}
+          {(canReadUsage || canReadCosts) && (
+            <div className="admin-combined-section" hidden={resolvedActiveSection !== "usage-cost"}>
+              {canReadUsage && <AdminUsagePanel usageSummaries={visibleUsageSummaries} part={part("usage")} loading={loading} onRefresh={() => onRefreshAdminPart("usage")} />}
+              {canReadCosts && <AdminCostPanel costAudit={visibleCostAudit} part={part("cost")} loading={loading} onRefresh={() => onRefreshAdminPart("cost")} />}
+            </div>
+          )}
 
-        {canReadAliases && (
-          <div hidden={resolvedActiveSection !== "alias"}>
-            <AliasAdminPanel
-              aliases={visibleAliases}
-              auditLog={visibleAliasAuditLog}
-              loadFailed={failedParts.has("aliases")}
-              loading={loading}
-              canWrite={canWriteAliases}
-              canReview={canReviewAliases}
-              canDisable={canDisableAliases}
-              canPublish={canPublishAliases}
-              onCreate={onCreateAlias}
-              onUpdate={onUpdateAlias}
-              onReview={onReviewAlias}
-              onDisable={onDisableAlias}
-              onPublish={onPublishAliases}
-            />
-          </div>
-        )}
-      </div>
+          {canReadAdminAuditLog && (
+            <div hidden={resolvedActiveSection !== "audit"}>
+              <AdminAuditPanel
+                page={visibleAdminAuditPage}
+                part={part("audit")}
+                loading={loading}
+                urlState={urlState}
+                onUrlStateChange={onUrlStateChange}
+                onRefresh={() => onRefreshAdminPart("audit")}
+                onLoadMore={onLoadMoreAdminAudit}
+              />
+            </div>
+          )}
+
+          {canReadAliases && (
+            <div hidden={resolvedActiveSection !== "alias"}>
+              <AliasAdminPanel
+                page={visibleAliasPage}
+                auditPage={visibleAliasAuditPage}
+                listPart={part("aliases")}
+                auditPart={part("aliasAudit")}
+                loading={loading}
+                canWrite={canWriteAliases}
+                canReview={canReviewAliases}
+                canDisable={canDisableAliases}
+                canPublish={canPublishAliases}
+                urlState={urlState}
+                onUrlStateChange={onUrlStateChange}
+                onRefreshList={() => onRefreshAdminPart("aliases")}
+                onRefreshAudit={() => onRefreshAdminPart("aliasAudit")}
+                onLoadMore={onLoadMoreAliases}
+                onLoadMoreAudit={onLoadMoreAliasAudit}
+                onCreate={onCreateAlias}
+                onUpdate={onUpdateAlias}
+                onReview={onReviewAlias}
+                onTransition={onTransitionAlias}
+                onDisable={onDisableAlias}
+                onPublish={onPublishAliases}
+              />
+            </div>
+          )}
+        </div>
       </ResourceStateBoundary>
     </section>
   )

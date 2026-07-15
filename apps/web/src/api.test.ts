@@ -36,6 +36,7 @@ import {
   startBenchmarkRun,
   startChatRun,
   streamChatRunEvents,
+  transitionAliasToDraft,
   updateAlias,
   uploadDocument,
   uploadDocumentFile
@@ -479,26 +480,53 @@ describe("API client", () => {
   })
 
   it("calls alias management APIs", async () => {
-    mockFetch({ aliases: [{ aliasId: "alias-1", term: "pto" }] })
-    await expect(listAliases()).resolves.toEqual([{ aliasId: "alias-1", term: "pto" }])
+    const alias = {
+      aliasId: "alias-1",
+      version: "alias-version-1",
+      term: "pto",
+      expansions: ["有給休暇"],
+      scope: { tenantId: "tenant-1" },
+      status: "draft",
+      createdBy: "user-1",
+      createdAt: "2026-05-01T00:00:00.000Z",
+      updatedAt: "2026-05-02T00:00:00.000Z"
+    }
+    const listFetch = mockFetch({ aliases: [alias], total: 1, truncated: false, source: "alias-ledger", asOf: "2026-05-02T00:00:00.000Z", version: "ledger-version-1" })
+    await expect(listAliases({ status: "draft", limit: 25 })).resolves.toMatchObject({ aliases: [alias], total: 1 })
+    expect(listFetch).toHaveBeenCalledWith(expect.stringMatching(/\/admin\/aliases\?status=draft&limit=25|\/admin\/aliases\?limit=25&status=draft/), expect.anything())
 
-    mockFetch({ aliasId: "alias-2", term: "sl" })
+    mockFetch({ ...alias, aliasId: "alias-2", version: "alias-version-2", term: "sl" })
     await expect(createAlias({ term: "sl", expansions: ["病気休暇"] })).resolves.toMatchObject({ aliasId: "alias-2" })
 
-    mockFetch({ aliasId: "alias-2", term: "sick leave" })
-    await expect(updateAlias("alias-2", { term: "sick leave" })).resolves.toMatchObject({ term: "sick leave" })
+    mockFetch({ ...alias, aliasId: "alias-2", version: "alias-version-3", term: "sick leave" })
+    await expect(updateAlias("alias-2", { term: "sick leave", expectedVersion: "alias-version-2", reason: "表記修正" })).resolves.toMatchObject({ term: "sick leave" })
 
-    mockFetch({ aliasId: "alias-2", status: "approved" })
-    await expect(reviewAlias("alias-2", "approve")).resolves.toMatchObject({ status: "approved" })
+    mockFetch({ ...alias, aliasId: "alias-2", version: "alias-version-4", status: "approved" })
+    await expect(reviewAlias("alias-2", "approve", "alias-version-3", "レビュー済み")).resolves.toMatchObject({ status: "approved" })
 
-    mockFetch({ aliasId: "alias-2", status: "disabled" })
-    await expect(disableAlias("alias-2")).resolves.toMatchObject({ status: "disabled" })
+    mockFetch({ ...alias, aliasId: "alias-2", version: "alias-version-5" })
+    await expect(transitionAliasToDraft("alias-2", "alias-version-4", "再編集")).resolves.toMatchObject({ status: "draft" })
 
-    mockFetch({ version: "aliases-20260502T000000Z", aliasCount: 1 })
-    await expect(publishAliases()).resolves.toMatchObject({ aliasCount: 1 })
+    mockFetch({ ...alias, aliasId: "alias-2", version: "alias-version-6", status: "disabled" })
+    await expect(disableAlias("alias-2", "alias-version-5", "廃止")).resolves.toMatchObject({ status: "disabled" })
 
-    mockFetch({ auditLog: [{ auditId: "audit-1", action: "publish" }] })
-    await expect(listAliasAuditLog()).resolves.toEqual([{ auditId: "audit-1", action: "publish" }])
+    mockFetch({ version: "aliases-20260502T000000Z", publishedAt: "2026-05-02T00:00:00.000Z", aliasCount: 1 })
+    await expect(publishAliases("ledger-version-1", "検索へ反映")).resolves.toMatchObject({ aliasCount: 1 })
+
+    const auditItem = {
+      auditId: "audit-1",
+      aliasId: "alias-2",
+      tenantId: "tenant-1",
+      action: "publish",
+      actorUserId: "user-1",
+      result: "success",
+      reason: "検索へ反映",
+      aliasVersion: "alias-version-6",
+      createdAt: "2026-05-02T00:00:00.000Z",
+      detail: "published"
+    }
+    mockFetch({ auditLog: [auditItem], total: 1, truncated: false, source: "alias-audit-ledger", asOf: "2026-05-02T00:00:00.000Z" })
+    await expect(listAliasAuditLog()).resolves.toMatchObject({ auditLog: [auditItem], total: 1 })
   })
 
   it("calls reindex migration APIs", async () => {

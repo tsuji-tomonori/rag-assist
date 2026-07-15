@@ -148,5 +148,5 @@ sequenceDiagram
 | B013 | `authorizeDocumentDelete` | 利用者が "benchmark:seed_corpus" permission を持たない | `apps/api/src/routes/benchmark-seed.ts:410 (authorizeDocumentDelete)` |
 | B014 | `authorizeDocumentDelete` | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/benchmark-seed.ts:416 (authorizeDocumentDelete)` |
 | B015 | `authorizeDocumentDelete` | is benchmark seed document manifest の判定結果が真ではない、かつ 「`deletionRetry` が存在し、真である、かつ is benchmark seed document identity の判定結果が真である」ではない | `apps/api/src/routes/benchmark-seed.ts:420 (authorizeDocumentDelete)` |
-| B016 | `MemoRagService.getBenchmarkDocumentManifest` | `tenantId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:800 (MemoRagService.getBenchmarkDocumentManifest)` |
+| B016 | `MemoRagService.getBenchmarkDocumentManifest` | `tenantId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:848 (MemoRagService.getBenchmarkDocumentManifest)` |
 | B017 | `stringValue` | `typeof value` が `"string"` と等しい | `apps/api/src/routes/document-routes.ts:450 (stringValue)` |

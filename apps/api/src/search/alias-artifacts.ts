@@ -1,15 +1,22 @@
 import type { Dependencies } from "../dependencies.js"
+import { tenantPartitionId } from "../security/tenant-partition.js"
 import type { AliasDefinition, AliasScope, JsonValue, PublishedAliasArtifact } from "../types.js"
 
 export type AliasMap = Record<string, string[]>
 
 export const aliasArtifactLatestKey = "aliases/latest.json"
 
+export function aliasArtifactLatestKeyForTenant(tenantId: string): string {
+  return `aliases/${tenantPartitionId(tenantId)}/latest.json`
+}
+
 export async function loadPublishedAliasArtifact(
-  deps: Pick<Dependencies, "objectStore">
+  deps: Pick<Dependencies, "objectStore">,
+  tenantId?: string
 ): Promise<PublishedAliasArtifact | undefined> {
   try {
-    const latest = JSON.parse(await deps.objectStore.getText(aliasArtifactLatestKey)) as { objectKey?: string }
+    const latestKey = tenantId ? aliasArtifactLatestKeyForTenant(tenantId) : aliasArtifactLatestKey
+    const latest = JSON.parse(await deps.objectStore.getText(latestKey)) as { objectKey?: string }
     if (!latest.objectKey) return undefined
     const artifact = JSON.parse(await deps.objectStore.getText(latest.objectKey)) as PublishedAliasArtifact
     if (artifact.schemaVersion !== 1 || !artifact.version) return undefined
@@ -24,7 +31,7 @@ export async function loadPublishedAliasMap(
   filters?: AliasScope,
   visibleMetadata: Array<Record<string, JsonValue> | undefined> = []
 ): Promise<{ aliases: AliasMap; version: string }> {
-  const artifact = await loadPublishedAliasArtifact(deps)
+  const artifact = await loadTenantArtifactWithDefaultCompatibility(deps, filters?.tenantId)
   if (!artifact) return { aliases: {}, version: "none" }
   return {
     aliases: aliasMapFromDefinitions(
@@ -32,6 +39,15 @@ export async function loadPublishedAliasMap(
     ),
     version: artifact.version
   }
+}
+
+async function loadTenantArtifactWithDefaultCompatibility(
+  deps: Pick<Dependencies, "objectStore">,
+  tenantId?: string
+): Promise<PublishedAliasArtifact | undefined> {
+  const artifact = await loadPublishedAliasArtifact(deps, tenantId)
+  if (artifact || tenantId !== "default") return artifact
+  return loadPublishedAliasArtifact(deps)
 }
 
 export function aliasMapFromDefinitions(definitions: AliasDefinition[]): AliasMap {

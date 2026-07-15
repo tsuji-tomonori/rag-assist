@@ -8,8 +8,8 @@
 
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
-| 到達 symbol | service lists all Cognito directory users in the managed user ledger | `apps/api/src/rag/memorag-service.test.ts:2764 (service lists all Cognito directory users in the managed user ledger)` |
-| 到達 symbol | service merges Cognito directory users with existing ledger users by email | `apps/api/src/rag/memorag-service.test.ts:2814 (service merges Cognito directory users with existing ledger users by email)` |
+| 到達 symbol | service lists all Cognito directory users in the managed user ledger | `apps/api/src/rag/memorag-service.test.ts:2879 (service lists all Cognito directory users in the managed user ledger)` |
+| 到達 symbol | service merges Cognito directory users with existing ledger users by email | `apps/api/src/rag/memorag-service.test.ts:2929 (service merges Cognito directory users with existing ledger users by email)` |
 | 到達 symbol | account create role failure removes the authoritative identity and records failed without a ledger success | `apps/api/src/security/account-lifecycle-current-identity.test.ts:70 (account create role failure removes the authoritative identity and records failed without a ledger success)` |
 | 到達 symbol | session revoke failure keeps a deny-first suspended ledger and records reconciliation | `apps/api/src/security/account-lifecycle-current-identity.test.ts:102 (session revoke failure keeps a deny-first suspended ledger and records reconciliation)` |
 | 到達 symbol | identity disable failure still leaves a durable application deny and suspended reconciliation ledger | `apps/api/src/security/account-lifecycle-current-identity.test.ts:112 (identity disable failure still leaves a durable application deny and suspended reconciliation ledger)` |
@@ -25,7 +25,7 @@
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | 管理対象ユーザー一覧を取得する が成功 response を返す。 | `apps/api/src/routes/admin-routes.ts:124 (GET /admin/users handler)` |
+| TC001 | 正常系 | 管理対象ユーザー一覧を取得する が成功 response を返す。 | `apps/api/src/routes/admin-routes.ts:133 (GET /admin/users handler)` |
 | TC002 | F001: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
 | TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
 | TC004 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

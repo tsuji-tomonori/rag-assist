@@ -2,7 +2,7 @@
 
 # GET /admin/usage IF仕様
 
-- 実装 route: `apps/api/src/routes/admin-routes.ts:492 (GET /admin/usage)`
+- 実装 route: `apps/api/src/routes/admin-routes.ts:603 (GET /admin/usage)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 利用状況を取得する

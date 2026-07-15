@@ -138,6 +138,7 @@ search runtime は alias artifact を request 中に更新しない。通常 res
 | `GET` | `/admin/aliases` | `rag:alias:read` | scope 内 alias を一覧する |
 | `POST` | `/admin/aliases/{aliasId}/update` | `rag:alias:write:group` | draft alias を修正する |
 | `POST` | `/admin/aliases/{aliasId}/review` | `rag:alias:review:group` | draft を approve/reject する |
+| `POST` | `/admin/aliases/{aliasId}/transition` | `rag:alias:write:group` | approved alias を明示的に draft へ戻す |
 | `POST` | `/admin/aliases/{aliasId}/disable` | `rag:alias:disable:group` | active alias を無効化する |
 | `POST` | `/admin/aliases/publish` | `rag:alias:publish:group` | batch publish を要求する |
 | `GET` | `/admin/aliases/audit-log` | `rag:alias:read` | audit log を参照する |
@@ -154,10 +155,14 @@ search runtime は alias artifact を request 中に更新しない。通常 res
 - `diagnostics.indexVersion` は opaque hash にし、document ID と alias 本文を含めない。
 - `diagnostics.aliasVersion` は opaque hash または `none` にし、alias 本文を含めない。
 - alias expansion は visible manifest 由来 alias と publish 済み alias artifact を merge し、scope/filter 外 alias を使わない。
-- alias ledger は `admin/alias-ledger.json` に draft / approved / disabled と audit log を保持する。
+- alias ledger は `admin/alias-ledger.json` に tenant-scoped draft / approved / disabled、record version、監査 event を保持し、conditional write で後着上書きを防ぐ。
+- alias list と audit list は query/filter、安定 sort、opaque cursor、total/truncation/source/as-of を返し、tenant 外 record を返さない。
+- update/review/draft transition/disable は record の `expectedVersion` と非空 `reason`、publish は ledger の `expectedVersion` と非空 `reason` を必須にする。
+- alias audit は success/denied/conflict/failed、actor、reason、before/after status、record version を保存する。旧 schema の reason/version 不在 event は legacy 不明値として明示的に正規化する。
 - 問い合わせ由来の検索改善候補は alias ledger の draft として保存し、`searchImprovement.reviewState=pending_review` を持つ。AI suggest であってもこの状態では publish 済み artifact に入らない。
 - 検索改善候補は review reason、impact summary、search result diff summary を保存できる。UI 文言では「検索改善」「検索語対応づけ」を使い、通常利用者向け画面に alias 語や alias 本文を露出しない。
-- publish は `aliases/<version>/aliases.json` と `aliases/latest.json` を保存し、search runtime は request 中に alias を変更しない。
+- publish は `aliases/<tenant-partition>/<version>/aliases.json` と tenant partitioned `latest.json` を保存し、search runtime は request 中に alias を変更しない。default tenant の旧 pointer は read compatibility のみに使う。
+- artifact、ledger、latest pointer は現時点で単一 transaction ではなく、途中失敗の補償・reconciliation は後続 P0 で扱う。
 
 ## 評価指標
 

@@ -2,7 +2,7 @@
 
 # GET /admin/audit-log IF仕様
 
-- 実装 route: `apps/api/src/routes/admin-routes.ts:158 (GET /admin/audit-log)`
+- 実装 route: `apps/api/src/routes/admin-routes.ts:167 (GET /admin/audit-log)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 管理操作履歴を取得する
@@ -21,7 +21,12 @@ _なし_
 
 ## Query Parameters
 
-_なし_
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `cursor` | `string` | no | `cursor` の値。項目名は cursor を表します。 クエリ文字列で検索または一覧条件を指定します。 | minLength=1<br>maxLength=2048 |
+| `limit` | `integer` | no | `limit` の値。項目名は limit を表します。 クエリ文字列で検索または一覧条件を指定します。 | minimum=1<br>maximum=100 |
+| `query` | `string` | no | 検索や benchmark に利用する query。 クエリ文字列で検索または一覧条件を指定します。 | minLength=1<br>maxLength=120 |
+| `action` | `enum(user:create \| role:assign \| user:suspend \| user:unsuspend \| user:delete)` | no | `action` の値。項目名は action を表します。 クエリ文字列で検索または一覧条件を指定します。 | enum=user:create, role:assign, user:suspend, user:unsuspend, user:delete |
 
 ## Data
 
@@ -53,7 +58,8 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 12 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 18 field(s) |
+| `400` | リクエスト形式または入力値が不正です。 | `application/json` | 2 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 
@@ -63,6 +69,12 @@ Media type: `application/json`
 
 | 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
+| `total` | `integer` | yes | `response.total` の値。項目名は total を表します。 | minimum=0 |
+| `nextCursor` | `string` | no | `response.nextCursor` の値。項目名は next cursor を表します。 | - |
+| `truncated` | `boolean` | yes | `response.truncated` の値。項目名は truncated を表します。 | - |
+| `source` | `string` | yes | `response.source` の値。項目名は source を表します。 | - |
+| `asOf` | `string` | yes | `response.asOf` の値。項目名は as of を表します。 | - |
+| `version` | `string` | no | `response.version` の値。項目名は version を表します。 | - |
 | `auditLog` | `array<object>` | yes | 監査ログ一覧。 | - |
 | `auditLog[].auditId` | `string` | yes | `response.auditLog[].auditId` の値。項目名は audit id を表します。 | - |
 | `auditLog[].action` | `enum(user:create \| role:assign \| user:suspend \| user:unsuspend \| user:delete)` | yes | `response.auditLog[].action` の値。項目名は action を表します。 | enum=user:create, role:assign, user:suspend, user:unsuspend, user:delete |
@@ -75,6 +87,15 @@ Media type: `application/json`
 | `auditLog[].beforeGroups` | `array<string>` | yes | `response.auditLog[].beforeGroups` の値。項目名は before groups を表します。 | - |
 | `auditLog[].afterGroups` | `array<string>` | yes | `response.auditLog[].afterGroups` の値。項目名は after groups を表します。 | - |
 | `auditLog[].createdAt` | `string` | yes | レコードを作成した日時。 | - |
+
+##### `400` リクエスト形式または入力値が不正です。
+
+Media type: `application/json`
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ##### `401` 認証が必要です。
 

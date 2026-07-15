@@ -11,68 +11,68 @@
 | route request | GET /openapi.json is the runtime OpenAPI source of truth | `apps/api/src/openapi-runtime-source.test.ts:16 (GET /openapi.json is the runtime OpenAPI source of truth)` |
 | route request | OpenAPI quality gate validates lifecycle metadata and generated Markdown freshness | `apps/api/src/openapi-runtime-source.test.ts:40 (OpenAPI quality gate validates lifecycle metadata and generated Markdown freshness)` |
 | route request | representative oRPC contract routes stay mapped to runtime OpenAPI operations | `apps/api/src/openapi-runtime-source.test.ts:57 (representative oRPC contract routes stay mapped to runtime OpenAPI operations)` |
-| route request | document share update documents conflict response in OpenAPI | `apps/api/src/security/access-control-policy.test.ts:405 (document share update documents conflict response in OpenAPI)` |
-| route request | document deletion owns the required reason/version request body and read routes do not | `apps/api/src/security/access-control-policy.test.ts:414 (document deletion owns the required reason/version request body and read routes do not)` |
-| route request | resource-group membership routes require the mutate feature, target full authority, CAS, and minimal errors | `apps/api/src/security/access-control-policy.test.ts:426 (resource-group membership routes require the mutate feature, target full authority, CAS, and minimal errors)` |
+| route request | document share update documents conflict response in OpenAPI | `apps/api/src/security/access-control-policy.test.ts:413 (document share update documents conflict response in OpenAPI)` |
+| route request | document deletion owns the required reason/version request body and read routes do not | `apps/api/src/security/access-control-policy.test.ts:422 (document deletion owns the required reason/version request body and read routes do not)` |
+| route request | resource-group membership routes require the mutate feature, target full authority, CAS, and minimal errors | `apps/api/src/security/access-control-policy.test.ts:434 (resource-group membership routes require the mutate feature, target full authority, CAS, and minimal errors)` |
 
 ## 2. 実装分岐から導くテスト要因
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `enrichOpenApiDocument` | loop | entries の判定結果が真である | `apps/api/src/openapi-doc-quality.ts:669 (enrichOpenApiDocument)` |
-| F002 | `enrichOpenApiDocument` | loop | entries の判定結果が真である | `apps/api/src/openapi-doc-quality.ts:673 (enrichOpenApiDocument)` |
-| F003 | `enrichOpenApiDocument` | loop | entries の判定結果が真である | `apps/api/src/openapi-doc-quality.ts:674 (enrichOpenApiDocument)` |
-| F004 | `enrichOpenApiDocument` | if | is http method の判定結果が真ではない | `apps/api/src/openapi-doc-quality.ts:675 (enrichOpenApiDocument)` |
-| F005 | `enrichOpenApiDocument` | if | `docs` が存在し、真である | `apps/api/src/openapi-doc-quality.ts:677 (enrichOpenApiDocument)` |
-| F006 | `enrichOpenApiDocument` | if | `lifecycle` が存在し、真である | `apps/api/src/openapi-doc-quality.ts:682 (enrichOpenApiDocument)` |
-| F007 | `enrichOpenApiDocument` | if | requires authorization の判定結果が真である | `apps/api/src/openapi-doc-quality.ts:683 (enrichOpenApiDocument)` |
-| F008 | `enrichOpenApiDocument` | loop | `operation.parameters` が `[]` の条件を満たす | `apps/api/src/openapi-doc-quality.ts:689 (enrichOpenApiDocument)` |
-| F009 | `enrichOpenApiDocument` | 三項条件 | `parameter.description` が存在し、真である、かつ has japanese の判定結果が真である | `apps/api/src/openapi-doc-quality.ts:690 (enrichOpenApiDocument)` |
-| F010 | `enrichOpenApiDocument` | if | `parameter.schema` が存在し、真である | `apps/api/src/openapi-doc-quality.ts:693 (enrichOpenApiDocument)` |
-| F011 | `enrichOpenApiDocument` | if | `operation.requestBody` が存在し、真である | `apps/api/src/openapi-doc-quality.ts:695 (enrichOpenApiDocument)` |
-| F012 | `enrichOpenApiDocument` | loop | values の判定結果が真である | `apps/api/src/openapi-doc-quality.ts:697 (enrichOpenApiDocument)` |
-| F013 | `enrichOpenApiDocument` | if | `media.schema` が存在し、真である | `apps/api/src/openapi-doc-quality.ts:698 (enrichOpenApiDocument)` |
-| F014 | `enrichOpenApiDocument` | loop | entries の判定結果が真である | `apps/api/src/openapi-doc-quality.ts:701 (enrichOpenApiDocument)` |
-| F015 | `enrichOpenApiDocument` | loop | values の判定結果が真である | `apps/api/src/openapi-doc-quality.ts:703 (enrichOpenApiDocument)` |
-| F016 | `enrichOpenApiDocument` | if | `media.schema` が存在し、真である | `apps/api/src/openapi-doc-quality.ts:704 (enrichOpenApiDocument)` |
+| F001 | `enrichOpenApiDocument` | loop | entries の判定結果が真である | `apps/api/src/openapi-doc-quality.ts:673 (enrichOpenApiDocument)` |
+| F002 | `enrichOpenApiDocument` | loop | entries の判定結果が真である | `apps/api/src/openapi-doc-quality.ts:677 (enrichOpenApiDocument)` |
+| F003 | `enrichOpenApiDocument` | loop | entries の判定結果が真である | `apps/api/src/openapi-doc-quality.ts:678 (enrichOpenApiDocument)` |
+| F004 | `enrichOpenApiDocument` | if | is http method の判定結果が真ではない | `apps/api/src/openapi-doc-quality.ts:679 (enrichOpenApiDocument)` |
+| F005 | `enrichOpenApiDocument` | if | `docs` が存在し、真である | `apps/api/src/openapi-doc-quality.ts:681 (enrichOpenApiDocument)` |
+| F006 | `enrichOpenApiDocument` | if | `lifecycle` が存在し、真である | `apps/api/src/openapi-doc-quality.ts:686 (enrichOpenApiDocument)` |
+| F007 | `enrichOpenApiDocument` | if | requires authorization の判定結果が真である | `apps/api/src/openapi-doc-quality.ts:687 (enrichOpenApiDocument)` |
+| F008 | `enrichOpenApiDocument` | loop | `operation.parameters` が `[]` の条件を満たす | `apps/api/src/openapi-doc-quality.ts:693 (enrichOpenApiDocument)` |
+| F009 | `enrichOpenApiDocument` | 三項条件 | `parameter.description` が存在し、真である、かつ has japanese の判定結果が真である | `apps/api/src/openapi-doc-quality.ts:694 (enrichOpenApiDocument)` |
+| F010 | `enrichOpenApiDocument` | if | `parameter.schema` が存在し、真である | `apps/api/src/openapi-doc-quality.ts:697 (enrichOpenApiDocument)` |
+| F011 | `enrichOpenApiDocument` | if | `operation.requestBody` が存在し、真である | `apps/api/src/openapi-doc-quality.ts:699 (enrichOpenApiDocument)` |
+| F012 | `enrichOpenApiDocument` | loop | values の判定結果が真である | `apps/api/src/openapi-doc-quality.ts:701 (enrichOpenApiDocument)` |
+| F013 | `enrichOpenApiDocument` | if | `media.schema` が存在し、真である | `apps/api/src/openapi-doc-quality.ts:702 (enrichOpenApiDocument)` |
+| F014 | `enrichOpenApiDocument` | loop | entries の判定結果が真である | `apps/api/src/openapi-doc-quality.ts:705 (enrichOpenApiDocument)` |
+| F015 | `enrichOpenApiDocument` | loop | values の判定結果が真である | `apps/api/src/openapi-doc-quality.ts:707 (enrichOpenApiDocument)` |
+| F016 | `enrichOpenApiDocument` | if | `media.schema` が存在し、真である | `apps/api/src/openapi-doc-quality.ts:708 (enrichOpenApiDocument)` |
 
 ## 3. コード由来テストケース
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
 | TC001 | 正常系 | GET /openapi.json を処理する が成功 response を返す。 | `apps/api/src/app.ts:75 (GET /openapi.json handler)` |
-| TC002 | F001: 0件 | 反復対象が空でも不正な副作用や例外を生じない。 | `apps/api/src/openapi-doc-quality.ts:669 (enrichOpenApiDocument)` |
-| TC003 | F001: 複数件 | 各要素を順に処理し、順序・終了条件を守る。 | `apps/api/src/openapi-doc-quality.ts:669 (enrichOpenApiDocument)` |
-| TC004 | F002: 0件 | 反復対象が空でも不正な副作用や例外を生じない。 | `apps/api/src/openapi-doc-quality.ts:673 (enrichOpenApiDocument)` |
-| TC005 | F002: 複数件 | 各要素を順に処理し、順序・終了条件を守る。 | `apps/api/src/openapi-doc-quality.ts:673 (enrichOpenApiDocument)` |
-| TC006 | F003: 0件 | 反復対象が空でも不正な副作用や例外を生じない。 | `apps/api/src/openapi-doc-quality.ts:674 (enrichOpenApiDocument)` |
-| TC007 | F003: 複数件 | 各要素を順に処理し、順序・終了条件を守る。 | `apps/api/src/openapi-doc-quality.ts:674 (enrichOpenApiDocument)` |
-| TC008 | F004: 条件成立 | is http method の判定結果が真ではない 場合の response / side effect が実装どおりである。 | `apps/api/src/openapi-doc-quality.ts:675 (enrichOpenApiDocument)` |
-| TC009 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/openapi-doc-quality.ts:675 (enrichOpenApiDocument)` |
-| TC010 | F005: 条件成立 | `docs` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/openapi-doc-quality.ts:677 (enrichOpenApiDocument)` |
-| TC011 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/openapi-doc-quality.ts:677 (enrichOpenApiDocument)` |
-| TC012 | F006: 条件成立 | `lifecycle` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/openapi-doc-quality.ts:682 (enrichOpenApiDocument)` |
-| TC013 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/openapi-doc-quality.ts:682 (enrichOpenApiDocument)` |
-| TC014 | F007: 条件成立 | requires authorization の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/openapi-doc-quality.ts:683 (enrichOpenApiDocument)` |
-| TC015 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/openapi-doc-quality.ts:683 (enrichOpenApiDocument)` |
-| TC016 | F008: 0件 | 反復対象が空でも不正な副作用や例外を生じない。 | `apps/api/src/openapi-doc-quality.ts:689 (enrichOpenApiDocument)` |
-| TC017 | F008: 複数件 | 各要素を順に処理し、順序・終了条件を守る。 | `apps/api/src/openapi-doc-quality.ts:689 (enrichOpenApiDocument)` |
-| TC018 | F009: 条件成立 | `parameter.description` が存在し、真である、かつ has japanese の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/openapi-doc-quality.ts:690 (enrichOpenApiDocument)` |
-| TC019 | F009: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/openapi-doc-quality.ts:690 (enrichOpenApiDocument)` |
-| TC020 | F010: 条件成立 | `parameter.schema` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/openapi-doc-quality.ts:693 (enrichOpenApiDocument)` |
-| TC021 | F010: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/openapi-doc-quality.ts:693 (enrichOpenApiDocument)` |
-| TC022 | F011: 条件成立 | `operation.requestBody` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/openapi-doc-quality.ts:695 (enrichOpenApiDocument)` |
-| TC023 | F011: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/openapi-doc-quality.ts:695 (enrichOpenApiDocument)` |
-| TC024 | F012: 0件 | 反復対象が空でも不正な副作用や例外を生じない。 | `apps/api/src/openapi-doc-quality.ts:697 (enrichOpenApiDocument)` |
-| TC025 | F012: 複数件 | 各要素を順に処理し、順序・終了条件を守る。 | `apps/api/src/openapi-doc-quality.ts:697 (enrichOpenApiDocument)` |
-| TC026 | F013: 条件成立 | `media.schema` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/openapi-doc-quality.ts:698 (enrichOpenApiDocument)` |
-| TC027 | F013: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/openapi-doc-quality.ts:698 (enrichOpenApiDocument)` |
-| TC028 | F014: 0件 | 反復対象が空でも不正な副作用や例外を生じない。 | `apps/api/src/openapi-doc-quality.ts:701 (enrichOpenApiDocument)` |
-| TC029 | F014: 複数件 | 各要素を順に処理し、順序・終了条件を守る。 | `apps/api/src/openapi-doc-quality.ts:701 (enrichOpenApiDocument)` |
-| TC030 | F015: 0件 | 反復対象が空でも不正な副作用や例外を生じない。 | `apps/api/src/openapi-doc-quality.ts:703 (enrichOpenApiDocument)` |
-| TC031 | F015: 複数件 | 各要素を順に処理し、順序・終了条件を守る。 | `apps/api/src/openapi-doc-quality.ts:703 (enrichOpenApiDocument)` |
-| TC032 | F016: 条件成立 | `media.schema` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/openapi-doc-quality.ts:704 (enrichOpenApiDocument)` |
-| TC033 | F016: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/openapi-doc-quality.ts:704 (enrichOpenApiDocument)` |
+| TC002 | F001: 0件 | 反復対象が空でも不正な副作用や例外を生じない。 | `apps/api/src/openapi-doc-quality.ts:673 (enrichOpenApiDocument)` |
+| TC003 | F001: 複数件 | 各要素を順に処理し、順序・終了条件を守る。 | `apps/api/src/openapi-doc-quality.ts:673 (enrichOpenApiDocument)` |
+| TC004 | F002: 0件 | 反復対象が空でも不正な副作用や例外を生じない。 | `apps/api/src/openapi-doc-quality.ts:677 (enrichOpenApiDocument)` |
+| TC005 | F002: 複数件 | 各要素を順に処理し、順序・終了条件を守る。 | `apps/api/src/openapi-doc-quality.ts:677 (enrichOpenApiDocument)` |
+| TC006 | F003: 0件 | 反復対象が空でも不正な副作用や例外を生じない。 | `apps/api/src/openapi-doc-quality.ts:678 (enrichOpenApiDocument)` |
+| TC007 | F003: 複数件 | 各要素を順に処理し、順序・終了条件を守る。 | `apps/api/src/openapi-doc-quality.ts:678 (enrichOpenApiDocument)` |
+| TC008 | F004: 条件成立 | is http method の判定結果が真ではない 場合の response / side effect が実装どおりである。 | `apps/api/src/openapi-doc-quality.ts:679 (enrichOpenApiDocument)` |
+| TC009 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/openapi-doc-quality.ts:679 (enrichOpenApiDocument)` |
+| TC010 | F005: 条件成立 | `docs` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/openapi-doc-quality.ts:681 (enrichOpenApiDocument)` |
+| TC011 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/openapi-doc-quality.ts:681 (enrichOpenApiDocument)` |
+| TC012 | F006: 条件成立 | `lifecycle` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/openapi-doc-quality.ts:686 (enrichOpenApiDocument)` |
+| TC013 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/openapi-doc-quality.ts:686 (enrichOpenApiDocument)` |
+| TC014 | F007: 条件成立 | requires authorization の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/openapi-doc-quality.ts:687 (enrichOpenApiDocument)` |
+| TC015 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/openapi-doc-quality.ts:687 (enrichOpenApiDocument)` |
+| TC016 | F008: 0件 | 反復対象が空でも不正な副作用や例外を生じない。 | `apps/api/src/openapi-doc-quality.ts:693 (enrichOpenApiDocument)` |
+| TC017 | F008: 複数件 | 各要素を順に処理し、順序・終了条件を守る。 | `apps/api/src/openapi-doc-quality.ts:693 (enrichOpenApiDocument)` |
+| TC018 | F009: 条件成立 | `parameter.description` が存在し、真である、かつ has japanese の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/openapi-doc-quality.ts:694 (enrichOpenApiDocument)` |
+| TC019 | F009: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/openapi-doc-quality.ts:694 (enrichOpenApiDocument)` |
+| TC020 | F010: 条件成立 | `parameter.schema` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/openapi-doc-quality.ts:697 (enrichOpenApiDocument)` |
+| TC021 | F010: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/openapi-doc-quality.ts:697 (enrichOpenApiDocument)` |
+| TC022 | F011: 条件成立 | `operation.requestBody` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/openapi-doc-quality.ts:699 (enrichOpenApiDocument)` |
+| TC023 | F011: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/openapi-doc-quality.ts:699 (enrichOpenApiDocument)` |
+| TC024 | F012: 0件 | 反復対象が空でも不正な副作用や例外を生じない。 | `apps/api/src/openapi-doc-quality.ts:701 (enrichOpenApiDocument)` |
+| TC025 | F012: 複数件 | 各要素を順に処理し、順序・終了条件を守る。 | `apps/api/src/openapi-doc-quality.ts:701 (enrichOpenApiDocument)` |
+| TC026 | F013: 条件成立 | `media.schema` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/openapi-doc-quality.ts:702 (enrichOpenApiDocument)` |
+| TC027 | F013: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/openapi-doc-quality.ts:702 (enrichOpenApiDocument)` |
+| TC028 | F014: 0件 | 反復対象が空でも不正な副作用や例外を生じない。 | `apps/api/src/openapi-doc-quality.ts:705 (enrichOpenApiDocument)` |
+| TC029 | F014: 複数件 | 各要素を順に処理し、順序・終了条件を守る。 | `apps/api/src/openapi-doc-quality.ts:705 (enrichOpenApiDocument)` |
+| TC030 | F015: 0件 | 反復対象が空でも不正な副作用や例外を生じない。 | `apps/api/src/openapi-doc-quality.ts:707 (enrichOpenApiDocument)` |
+| TC031 | F015: 複数件 | 各要素を順に処理し、順序・終了条件を守る。 | `apps/api/src/openapi-doc-quality.ts:707 (enrichOpenApiDocument)` |
+| TC032 | F016: 条件成立 | `media.schema` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/openapi-doc-quality.ts:708 (enrichOpenApiDocument)` |
+| TC033 | F016: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/openapi-doc-quality.ts:708 (enrichOpenApiDocument)` |
 
 ## 4. 検証方針
 

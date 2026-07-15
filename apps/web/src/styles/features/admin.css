@@ -536,3 +536,434 @@
   font-weight: 850;
   overflow-wrap: anywhere;
 }
+
+/* Admin governance layout: keep every task operable at a 320 CSS-pixel viewport. */
+.admin-workspace {
+  overflow-x: hidden;
+}
+
+.admin-workspace *,
+.admin-section-panel,
+.phase2-admin-grid > div {
+  min-width: 0;
+}
+
+.phase2-admin-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.admin-section-tabs button,
+.document-list-head button,
+.inline-action-group button,
+.alias-card-actions button,
+.admin-load-more,
+.admin-filter-form button,
+.admin-panel-data-status button,
+.admin-audit-action-filter select,
+.admin-create-user-form input,
+.admin-create-user-form select,
+.admin-create-user-form button,
+.alias-editor-form input,
+.alias-editor-form textarea,
+.alias-editor-form button,
+.role-assignment button,
+.user-row-actions button {
+  min-height: 44px;
+}
+
+.admin-panel-data-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 10px 0 14px;
+  border: 1px solid #c9d7ea;
+  border-radius: var(--radius-xs);
+  padding: 10px 12px;
+  color: #304563;
+  background: #f7faff;
+}
+
+.admin-panel-data-status.stale {
+  border-color: #d9ad5d;
+  background: #fff9ed;
+}
+
+.admin-panel-data-status.unavailable {
+  border-color: #d88b8b;
+  background: #fff5f5;
+}
+
+.admin-panel-data-status > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+
+.admin-panel-data-status strong {
+  flex-basis: 100%;
+}
+
+.admin-panel-data-status span {
+  color: #52627c;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.admin-panel-data-status button,
+.admin-filter-form button,
+.admin-load-more {
+  border: 1px solid #afc4e7;
+  border-radius: var(--radius-xs);
+  padding: 0 12px;
+  color: #244d86;
+  background: #fff;
+  font-weight: 900;
+}
+
+.admin-filter-form {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.5fr) repeat(2, minmax(150px, 0.7fr)) auto auto;
+  align-items: end;
+  gap: 10px;
+  margin: 0 0 14px;
+}
+
+.admin-filter-form label,
+.admin-audit-action-filter,
+.admin-reason-field,
+.alias-edit-fields label {
+  display: grid;
+  gap: 5px;
+  color: #3f536f;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.admin-filter-form input,
+.admin-filter-form select,
+.admin-audit-action-filter select,
+.admin-reason-field textarea,
+.alias-edit-fields input,
+.alias-edit-fields textarea,
+.role-assignment textarea {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid #bac8dc;
+  border-radius: var(--radius-xs);
+  padding: 8px 10px;
+  color: #182842;
+  background: #fff;
+  font: inherit;
+}
+
+.admin-reason-field textarea,
+.alias-edit-fields textarea,
+.role-assignment textarea,
+.alias-editor-form textarea {
+  min-height: 84px;
+  resize: vertical;
+}
+
+.admin-create-user-form,
+.alias-editor-form {
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+}
+
+.alias-editor-form textarea {
+  width: 100%;
+  border: 1px solid #cfd8e6;
+  border-radius: var(--radius-xs);
+  padding: 8px 10px;
+  color: #182842;
+  background: #fff;
+  font: inherit;
+}
+
+.alias-card {
+  grid-template-columns: minmax(0, 1fr) minmax(210px, auto);
+}
+
+.alias-card.selected {
+  border-color: #2f6fed;
+  box-shadow: 0 0 0 2px rgba(47, 111, 237, 0.18);
+}
+
+.alias-card-actions {
+  display: flex !important;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.alias-card-actions button {
+  border: 1px solid #b8c9e4;
+  border-radius: var(--radius-xs);
+  padding: 0 10px;
+  color: #244d86;
+  background: #fff;
+  font-weight: 900;
+}
+
+.alias-audit-heading {
+  margin-top: 24px;
+}
+
+.alias-audit-list article {
+  border: 1px solid #dce4ee;
+  border-radius: var(--radius-sm);
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  color: #273750;
+  background: #fbfdff;
+}
+
+.alias-audit-list article > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  align-items: baseline;
+}
+
+.alias-audit-list dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.alias-audit-list dl div {
+  display: grid;
+  gap: 2px;
+}
+
+.alias-audit-list dt,
+.alias-audit-list dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+}
+
+.alias-audit-list dt {
+  color: #52627c;
+  font-weight: 900;
+}
+
+.admin-audit-action-filter {
+  max-width: 260px;
+  margin: 0 0 12px;
+}
+
+.admin-load-more {
+  width: 100%;
+  margin-top: 12px;
+}
+
+.alias-edit-fields {
+  display: grid;
+  gap: 12px;
+}
+
+.role-definition-list {
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.role-definition-card {
+  display: grid;
+  gap: 6px;
+}
+
+.role-definition-card details ul {
+  margin: 8px 0 0;
+  padding-left: 22px;
+}
+
+.admin-data-table,
+.usage-table {
+  width: 100%;
+  min-width: 0;
+  overflow: visible;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+}
+
+.admin-user-row,
+.usage-row {
+  min-width: 0;
+  display: table-row;
+  padding: 0;
+}
+
+.admin-user-row th,
+.admin-user-row td,
+.usage-row th,
+.usage-row td {
+  border-bottom: 1px solid #e5ebf3;
+  padding: 12px 10px;
+  overflow-wrap: anywhere;
+  text-align: left;
+  vertical-align: top;
+}
+
+.admin-user-row th:nth-child(1) { width: 20%; }
+.admin-user-row th:nth-child(2) { width: 11%; }
+.admin-user-row th:nth-child(3) { width: 49%; }
+.admin-user-row th:nth-child(4) { width: 20%; }
+
+.role-assignment {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin: 0;
+  border: 0;
+  padding: 0;
+}
+
+.role-assignment legend {
+  margin-bottom: 6px;
+  color: #314662;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.role-checkbox-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 6px;
+}
+
+.role-checkbox-list label {
+  min-height: 44px;
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 2px 8px;
+  align-items: center;
+  border: 1px solid #d5dfed;
+  border-radius: var(--radius-xs);
+  padding: 6px 8px;
+  background: #fff;
+}
+
+.role-checkbox-list input {
+  width: 20px;
+  height: 20px;
+  grid-row: 1 / 3;
+}
+
+.role-checkbox-list code {
+  color: #61708a;
+  font-size: 10px;
+  overflow-wrap: anywhere;
+}
+
+.user-row-actions {
+  flex-wrap: wrap;
+}
+
+@media (max-width: 720px) {
+  .admin-workspace {
+    padding: 14px 10px;
+  }
+
+  .admin-section-panel {
+    padding: 12px;
+  }
+
+  .admin-filter-form,
+  .admin-create-user-form,
+  .alias-editor-form,
+  .admin-combined-section {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .admin-panel-data-status,
+  .document-list-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-panel-data-status button,
+  .inline-action-group,
+  .inline-action-group button,
+  .alias-card-actions,
+  .alias-card-actions button,
+  .user-row-actions,
+  .user-row-actions button {
+    width: 100%;
+  }
+
+  .alias-card,
+  .cost-item,
+  .admin-audit-entry {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .alias-card-actions {
+    justify-content: stretch;
+  }
+
+  .admin-data-table,
+  .usage-table,
+  .admin-data-table tbody,
+  .usage-table tbody,
+  .admin-data-table tr,
+  .usage-table tr,
+  .admin-data-table td,
+  .usage-table td,
+  .usage-table th[scope="row"] {
+    display: block;
+    width: 100%;
+  }
+
+  .admin-data-table thead,
+  .usage-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .admin-data-table tbody,
+  .usage-table tbody {
+    border: 0;
+  }
+
+  .admin-data-table tr,
+  .usage-table tr {
+    margin-bottom: 12px;
+    border: 1px solid #dce4ee;
+    border-radius: var(--radius-sm);
+    background: #fff;
+  }
+
+  .admin-data-table td,
+  .usage-table td,
+  .usage-table th[scope="row"] {
+    border-bottom: 1px solid #e5ebf3;
+    padding: 10px;
+  }
+
+  .admin-data-table td::before,
+  .usage-table td::before,
+  .usage-table th[scope="row"]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 5px;
+    color: #52627c;
+    font-size: 11px;
+    font-weight: 900;
+  }
+
+  .role-checkbox-list,
+  .alias-audit-list dl {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
