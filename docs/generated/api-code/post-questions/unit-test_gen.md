@@ -10,7 +10,7 @@
 | --- | --- | --- |
 | 到達 symbol | service creates search improvement candidates as draft review items | `apps/api/src/rag/memorag-service.test.ts:1409 (service creates search improvement candidates as draft review items)` |
 | 到達 symbol | service delegates human question lifecycle to the question store | `apps/api/src/rag/memorag-service.test.ts:1457 (service delegates human question lifecycle to the question store)` |
-| 到達 symbol | questionCreate_setsDefaultAssigneeGroupWhenMissing | `apps/api/src/rag/memorag-service.test.ts:1515 (questionCreate_setsDefaultAssigneeGroupWhenMissing)` |
+| 到達 symbol | questionCreate_setsDefaultAssigneeGroupWhenMissing | `apps/api/src/rag/memorag-service.test.ts:1523 (questionCreate_setsDefaultAssigneeGroupWhenMissing)` |
 
 ## 2. 実装分岐から導くテスト要因
 

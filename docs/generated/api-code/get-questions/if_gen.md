@@ -76,7 +76,7 @@ Media type: `application/json`
 | `questions[].priority` | `enum(normal \| high \| urgent)` | yes | `response.questions[].priority` の値。項目名は priority を表します。 | enum=normal, high, urgent |
 | `questions[].status` | `enum(open \| in_progress \| waiting_requester \| answered \| resolved)` | yes | 現在の処理状態または管理状態。 | enum=open, in_progress, waiting_requester, answered, resolved |
 | `questions[].source` | `enum(manual_escalation \| answer_unavailable \| negative_feedback \| quality_issue)` | no | `response.questions[].source` の値。項目名は source を表します。 | enum=manual_escalation, answer_unavailable, negative_feedback, quality_issue |
-| `questions[].messageId` | `string` | no | `response.questions[].messageId` の値。項目名は message id を表します。 | - |
+| `questions[].messageId` | `string` | no | チャット発話の安定識別子。同じ認証済み requester と同じ値の再送は同一問い合わせを返します。 | - |
 | `questions[].ragRunId` | `string` | no | `response.questions[].ragRunId` の値。項目名は rag run id を表します。 | - |
 | `questions[].answerUnavailableEventId` | `string` | no | `response.questions[].answerUnavailableEventId` の値。項目名は answer unavailable event id を表します。 | - |
 | `questions[].answerUnavailableReason` | `string` | no | `response.questions[].answerUnavailableReason` の値。項目名は answer unavailable reason を表します。 | - |

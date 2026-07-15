@@ -9,7 +9,7 @@
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
 | 到達 symbol | service manages reviewed alias artifacts and audit log | `apps/api/src/rag/memorag-service.test.ts:1380 (service manages reviewed alias artifacts and audit log)` |
-| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:3117 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
+| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:3125 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
 
 ## 2. 実装分岐から導くテスト要因
 

@@ -2,6 +2,7 @@ import type { ChatResponse } from "./types-api.js"
 import type { HumanQuestion } from "../questions/types.js"
 
 export type Message = {
+  messageId?: string
   role: "user" | "assistant"
   text: string
   createdAt: string

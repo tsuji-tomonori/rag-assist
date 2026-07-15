@@ -4,7 +4,7 @@
 - タスク種別: Web 品質実装
 - 作成日: 2026-07-13
 - 関連要件: `FR-042`, `FR-043`, `SQ-004`
-- 関連 issue/task: `#345`, `tasks/todo/20260714-issue-345-chat-assignee-journey.md`, `tasks/todo/20260714-issue-345-cross-screen-a11y-responsive.md`
+- 関連 issue/task: `#345`, `tasks/done/20260714-issue-345-chat-assignee-journey.md`, `tasks/todo/20260714-issue-345-cross-screen-a11y-responsive.md`
 
 ## 背景
 

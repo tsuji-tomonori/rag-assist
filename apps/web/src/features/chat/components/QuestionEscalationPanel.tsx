@@ -1,12 +1,20 @@
 import { type FormEvent, useState } from "react"
 import type { createQuestion } from "../../questions/api/questionsApi.js"
-import type { HumanQuestion } from "../../questions/types.js"
+import type { HumanQuestion, QuestionOperationOutcome } from "../../questions/types.js"
 import { LoadingSpinner } from "../../../shared/components/LoadingSpinner.js"
 import type { CurrentUser } from "../../../shared/types/common.js"
 import { currentUserDepartmentLabel, currentUserLabel } from "../../../shared/utils/currentUserLabel.js"
 import { formatDateTime } from "../../../shared/utils/format.js"
 import type { Message } from "../types.js"
 import { defaultQuestionBody, defaultQuestionTitle } from "../utils/questionDefaults.js"
+import { questionJourneyPresentation } from "../../questions/utils/questionJourney.js"
+import { StatusBadge } from "../../../shared/ui/StatusBadge.js"
+import {
+  OperationFeedback,
+  feedbackFromOutcome,
+  processingOperationFeedback,
+  type OperationFeedbackEntry
+} from "../../../shared/ui/index.js"
 
 export function QuestionEscalationPanel({
   message,
@@ -19,7 +27,7 @@ export function QuestionEscalationPanel({
   questionTicket?: HumanQuestion
   currentUser: CurrentUser | null
   loading: boolean
-  onCreateQuestion: (input: Parameters<typeof createQuestion>[0]) => Promise<void>
+  onCreateQuestion: (input: Parameters<typeof createQuestion>[0]) => Promise<QuestionOperationOutcome>
 }) {
   const sourceQuestion = message.sourceQuestion ?? ""
   const [title, setTitle] = useState(defaultQuestionTitle(sourceQuestion))
@@ -27,22 +35,38 @@ export function QuestionEscalationPanel({
   const [category, setCategory] = useState("その他の質問")
   const [priority, setPriority] = useState<HumanQuestion["priority"]>("normal")
   const [assigneeDepartment, setAssigneeDepartment] = useState("")
+  const [operationFeedback, setOperationFeedback] = useState<OperationFeedbackEntry | null>(null)
 
   if (questionTicket) {
+    const journey = questionJourneyPresentation(questionTicket, "requester")
     return (
-      <section className="question-status-panel">
-        <div>
-          <strong>{questionTicket.status === "open" ? "担当者へ送信済み" : questionTicket.status === "answered" ? "担当者が回答済み" : "解決済み"}</strong>
+      <section className="question-status-panel" aria-label={`問い合わせ状態: ${questionTicket.title}`}>
+        <header>
+          <StatusBadge presentation={journey.presentation} />
           <span>{questionTicket.assigneeDepartment} / {formatDateTime(questionTicket.updatedAt)}</span>
-        </div>
+        </header>
         <p>{questionTicket.title}</p>
+        <dl>
+          <div><dt>対象識別子</dt><dd>{questionTicket.questionId}</dd></div>
+          <div><dt>割当</dt><dd>{journey.assignmentLabel}</dd></div>
+          <div><dt>次の操作</dt><dd>{journey.nextAction}</dd></div>
+        </dl>
+        {operationFeedback && <OperationFeedback entry={operationFeedback} className="question-operation-feedback" />}
       </section>
     )
   }
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
-    await onCreateQuestion({
+    const feedbackBase = {
+      id: `question-create-${message.messageId ?? message.createdAt}`,
+      actionLabel: "担当者への問い合わせ送信",
+      targetLabel: title,
+      targetId: message.messageId,
+      details: [{ label: "元の質問", value: sourceQuestion || "API 応答で未提供" }]
+    }
+    setOperationFeedback(processingOperationFeedback(feedbackBase))
+    const outcome = await onCreateQuestion({
       title,
       question: body,
       requesterName: currentUserLabel(currentUser),
@@ -50,20 +74,23 @@ export function QuestionEscalationPanel({
       assigneeDepartment: assigneeDepartment.trim() || undefined,
       category,
       priority,
+      messageId: message.messageId,
       sourceQuestion,
       chatAnswer: message.text,
       chatRunId: message.result?.debug?.runId
     })
+    setOperationFeedback(feedbackFromOutcome(feedbackBase, outcome))
   }
 
   return (
     <form className="question-escalation-panel" onSubmit={onSubmit} aria-label="担当者へ質問">
       <div className="question-panel-head">
         <div>
-          <h3>担当者へ質問</h3>
+          <h2>担当者へ質問</h2>
           <span>自動表示</span>
         </div>
       </div>
+      {operationFeedback && <OperationFeedback entry={operationFeedback} className="question-operation-feedback" />}
       <label>
         <span>件名</span>
         <input value={title} onChange={(event) => setTitle(event.target.value)} maxLength={120} required />

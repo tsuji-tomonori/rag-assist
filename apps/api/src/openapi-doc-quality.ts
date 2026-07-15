@@ -434,7 +434,7 @@ const operationDocs: Record<string, { summary: string; description: string }> = 
   },
   "POST /questions": {
     summary: "担当者問い合わせを作成する",
-    description: "回答不能または確認が必要な内容を担当者へ引き継ぐ問い合わせとして登録します。"
+    description: "回答不能または確認が必要な内容を担当者へ引き継ぐ問い合わせとして登録します。同じ認証済み依頼者と messageId の再送は同一問い合わせを返します。"
   },
   "GET /questions": {
     summary: "担当者問い合わせ一覧を取得する",

@@ -6,6 +6,7 @@ import { HistoryWorkspace } from "./HistoryWorkspace.js"
 import { createContentResourceState } from "../../../shared/ui/resourceStateModel.js"
 import { appUiStateTargets } from "../../../app/uiStateTargets.js"
 import { confirmedOperation, failedOperation } from "../../../shared/ui/operationOutcome.js"
+import type { HumanQuestion } from "../../questions/types.js"
 
 const historyItem: ConversationHistoryItem = {
   schemaVersion: 1,
@@ -93,5 +94,36 @@ describe("HistoryWorkspace risky actions", () => {
 
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
     expect(onDelete).not.toHaveBeenCalled()
+  })
+})
+
+describe("HistoryWorkspace question journey", () => {
+  it("shows an intermediate ticket state and next action on its conversation target", () => {
+    const ticket: HumanQuestion = {
+      questionId: "q-1",
+      title: "追加確認",
+      question: "確認してください",
+      requesterName: "依頼者",
+      requesterDepartment: "人事",
+      assigneeDepartment: "総務",
+      assigneeGroupId: "support",
+      category: "general",
+      priority: "normal",
+      status: "waiting_requester",
+      createdAt: "2026-05-10T00:00:00.000Z",
+      updatedAt: "2026-05-10T01:00:00.000Z"
+    }
+    renderHistoryWorkspace({
+      history: [{
+        ...historyItem,
+        messages: [...historyItem.messages, { role: "assistant", text: "確認待ち", createdAt: ticket.updatedAt, questionTicket: ticket }]
+      }]
+    })
+
+    const conversation = screen.getByText("追加確認待ち").closest("button")
+    expect(conversation).not.toBeNull()
+    expect(conversation).toHaveTextContent("追加確認待ち")
+    expect(conversation).toHaveTextContent("次の操作")
+    expect(conversation).toHaveTextContent("担当者からの確認内容")
   })
 })

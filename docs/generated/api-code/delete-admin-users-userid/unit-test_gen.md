@@ -8,8 +8,8 @@
 
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
-| 到達 symbol | service lists all Cognito directory users in the managed user ledger | `apps/api/src/rag/memorag-service.test.ts:2756 (service lists all Cognito directory users in the managed user ledger)` |
-| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:3117 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
+| 到達 symbol | service lists all Cognito directory users in the managed user ledger | `apps/api/src/rag/memorag-service.test.ts:2764 (service lists all Cognito directory users in the managed user ledger)` |
+| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:3125 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
 | 到達 symbol | delete is deny-first and signs out before authoritative deletion | `apps/api/src/security/account-lifecycle-current-identity.test.ts:151 (delete is deny-first and signs out before authoritative deletion)` |
 | 到達 symbol | delete blocks orphan creation and transfers owned folders before authoritative account deletion | `apps/api/src/security/account-lifecycle-current-identity.test.ts:161 (delete blocks orphan creation and transfers owned folders before authoritative account deletion)` |
 

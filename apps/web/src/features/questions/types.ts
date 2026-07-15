@@ -1,3 +1,5 @@
+import type { OperationOutcome } from "../../shared/ui/operationOutcome.js"
+
 export type HumanQuestion = {
   questionId: string
   title: string
@@ -44,3 +46,5 @@ export type HumanQuestion = {
   answeredAt?: string
   resolvedAt?: string
 }
+
+export type QuestionOperationOutcome = OperationOutcome<HumanQuestion>

@@ -1,8 +1,8 @@
-import { randomUUID } from "node:crypto"
 import { mkdir, readFile, writeFile } from "node:fs/promises"
 import path from "node:path"
 import type { HumanQuestion } from "../types.js"
 import type { AnswerQuestionInput, CreateQuestionInput, QuestionStore } from "./question-store.js"
+import { isSameQuestionCreateIdentity, questionIdForCreate } from "./question-identity.js"
 
 type DbFile = {
   questions: HumanQuestion[]
@@ -16,9 +16,14 @@ export class LocalQuestionStore implements QuestionStore {
   }
 
   async create(input: CreateQuestionInput): Promise<HumanQuestion> {
+    const db = await this.load()
+    const questionId = questionIdForCreate(input)
+    const existing = db.questions.find((candidate) => candidate.questionId === questionId)
+    if (existing && isSameQuestionCreateIdentity(existing, input)) return existing
+    if (existing) throw new Error("Question identity collision")
     const now = new Date().toISOString()
     const question: HumanQuestion = {
-      questionId: randomUUID(),
+      questionId,
       title: input.title,
       question: input.question,
       requesterName: input.requesterName?.trim() || "未設定",
@@ -44,7 +49,6 @@ export class LocalQuestionStore implements QuestionStore {
       createdAt: now,
       updatedAt: now
     }
-    const db = await this.load()
     db.questions = [question, ...db.questions]
     await this.save(db)
     return question

@@ -3,6 +3,7 @@
   --color-text: #17233f;
   --color-text-strong: #111a2e;
   --color-text-muted: #68758f;
+  --color-text-muted-strong: #5f6c84;
   --color-surface: #ffffff;
   --color-surface-muted: #f5f7fb;
   --color-surface-subtle: #f8fbff;
@@ -139,31 +140,35 @@ button:disabled {
   font-weight: 700;
 }
 
-.ui-badge-neutral {
+.ui-badge > span {
+  color: inherit !important;
+}
+
+.ui-badge.ui-badge-neutral {
   border-color: var(--status-neutral-border);
   color: var(--status-neutral-foreground);
   background: var(--status-neutral-background);
 }
 
-.ui-badge-success {
+.ui-badge.ui-badge-success {
   border-color: var(--status-success-border);
   color: var(--status-success-foreground);
   background: var(--status-success-background);
 }
 
-.ui-badge-warning {
+.ui-badge.ui-badge-warning {
   border-color: var(--status-warning-border);
   color: var(--status-warning-foreground);
   background: var(--status-warning-background);
 }
 
-.ui-badge-danger {
+.ui-badge.ui-badge-danger {
   border-color: var(--status-danger-border);
   color: var(--status-danger-foreground);
   background: var(--status-danger-background);
 }
 
-.ui-badge-info {
+.ui-badge.ui-badge-info {
   border-color: var(--status-info-border);
   color: var(--status-info-foreground);
   background: var(--status-info-background);

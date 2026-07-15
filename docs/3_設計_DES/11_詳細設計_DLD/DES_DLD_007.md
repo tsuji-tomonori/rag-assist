@@ -75,13 +75,15 @@
 ### 人手問い合わせ
 
 1. 回答不能または利用者が追加確認を求める場面で、Web UI は問い合わせ作成 API を呼ぶ。
-2. Human Question Store は original question、conversation reference、refusal reason、status に加え、SupportTicket 互換の `source`、`messageId`、`ragRunId`、`answerUnavailableEventId`、担当者割当、SLA、品質起因分類を optional field として保存する。
-3. 担当者または管理者は permission に応じて ticket list を取得する。
-4. Answer Draft Manager は draft answer、internal note、公開状態、解決状態を更新する。
-5. 公開済み回答は対象利用者の conversation に紐づけて表示できる。
-6. 担当者向け診断情報は `support_sanitized` allowlist に限定し、権限外文書名、権限外件数、ACL group、内部 policy、raw prompt、LLM 内部推論を ticket response に含めない。
-7. 低評価または回答不能由来の検索改善候補は review 待ちの検索語対応づけ候補として作成し、human review / publish なしに runtime 検索挙動へ反映しない。
-8. 状態変更は audit event として保存する。
+2. Web UI は発話ごとに安定した `messageId` を保持し、問い合わせ作成 request に渡す。同じ認証済み userId / `messageId` の再送は同一操作として扱う。
+3. Human Question Store は `requesterUserId` / `messageId` から安定 ID を導出し、条件付き作成が競合した場合も同じ identity の既存 ticket を返す。`messageId` がない legacy request は従来どおり一意な ID を採番する。
+4. Human Question Store は original question、conversation reference、refusal reason、status に加え、SupportTicket 互換の `source`、`messageId`、`ragRunId`、`answerUnavailableEventId`、担当者割当、SLA、品質起因分類を optional field として保存する。
+5. 担当者または管理者は permission に応じて ticket list を取得する。
+6. Answer Draft Manager は draft answer、internal note、公開状態、解決状態を更新する。
+7. 公開済み回答は `messageId` を第一キーとして対象利用者の conversation message に紐づけて表示する。legacy 履歴の `sourceQuestion` fallback は一意に一致する場合だけ使う。
+8. 担当者向け診断情報は `support_sanitized` allowlist に限定し、権限外文書名、権限外件数、ACL group、内部 policy、raw prompt、LLM 内部推論を ticket response に含めない。
+9. 低評価または回答不能由来の検索改善候補は review 待ちの検索語対応づけ候補として作成し、human review / publish なしに runtime 検索挙動へ反映しない。
+10. 状態変更は audit event として保存する。
 
 ## 権限境界
 
@@ -110,6 +112,7 @@
 | お気に入り | favorite state の追加、解除、一覧が userId で分離される。 |
 | 履歴検索 | userId 外の conversation が検索結果に出ない。 |
 | 問い合わせ作成 | refusal metadata と conversation reference が ticket に紐づく。 |
+| 問い合わせ作成再送 | 同じ認証済み userId / `messageId` では同じ ticket を返し、保存件数を増やさない。別利用者または別 `messageId` は別 ticket になる。 |
 | 担当者更新 | permission なしで draft answer を更新できない。 |
 | debug 非漏えい | 履歴や問い合わせ通常 response に raw prompt や内部 ACL metadata が出ない。 |
 | support_sanitized | 担当者向け ticket に allowlist 外の文書名、ACL group、内部 policy が含まれない。 |

@@ -408,6 +408,7 @@ local 開発では Hono の `GET /chat-runs/{runId}/events` が同じ `ChatRunEv
   "assigneeDepartment": "総務部",
   "category": "その他の質問",
   "priority": "normal",
+  "messageId": "msg_20260714_001",
   "sourceQuestion": "今日山田さんは何を食べましたか?",
   "chatAnswer": "資料からは回答できません。",
   "chatRunId": "run_20260502_010203Z_abc123"
@@ -436,7 +437,9 @@ local 開発では Hono の `GET /chat-runs/{runId}/events` が同じ `ChatRunEv
 | `POST /questions/{questionId}/answer` | `answered` |
 | `POST /questions/{questionId}/resolve` | `resolved` |
 
-`POST /questions` は通常利用者のエスカレーション導線で使い、認証済み userId を `requesterUserId` として ticket に保持する。`GET /questions` は `answer:edit` を要求する。`GET /questions/{questionId}` は `answer:edit` を持つ担当者に全項目を返し、作成者本人には `internalMemo` を除いた詳細を返す。非担当者・非作成者には既存 ticket でも `404` を返し、存在有無を識別させない。回答登録は `answer:publish` を要求する。解決済み化は `answer:publish` を持つ担当者、または作成者本人の回答済み ticket に限り許可する。
+`POST /questions` は通常利用者のエスカレーション導線で使い、認証済み userId を `requesterUserId` として ticket に保持する。`messageId` を指定した場合、同じ `requesterUserId` と trim 後に同じ `messageId` の再送は同一 `questionId` / ticket を返す冪等操作とし、別利用者または別 message の ticket とは共有しない。`messageId` がない legacy client は一意な ticket を作成する。
+
+`GET /questions` は `answer:edit` を要求する。`GET /questions/{questionId}` は `answer:edit` を持つ担当者に全項目を返し、作成者本人には `internalMemo` を除いた詳細を返す。非担当者・非作成者には既存 ticket でも `404` を返し、存在有無を識別させない。回答登録は `answer:publish` を要求する。解決済み化は `answer:publish` を持つ担当者、または作成者本人の回答済み ticket に限り許可する。
 
 ## `POST /benchmark/query`
 

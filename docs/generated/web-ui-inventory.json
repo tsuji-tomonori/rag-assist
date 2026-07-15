@@ -37,6 +37,56 @@
         ],
         "requirements": [
           {
+            "id": "FR-003",
+            "acceptanceCriteria": [
+              "AC-FR003-002",
+              "AC-FR003-003",
+              "AC-FR003-004"
+            ]
+          },
+          {
+            "id": "FR-004",
+            "acceptanceCriteria": [
+              "AC-FR004-002",
+              "AC-FR004-003"
+            ]
+          },
+          {
+            "id": "FR-005",
+            "acceptanceCriteria": [
+              "AC-FR005-002",
+              "AC-FR005-003"
+            ]
+          },
+          {
+            "id": "FR-021",
+            "acceptanceCriteria": [
+              "AC-FR021-006",
+              "AC-FR021-007"
+            ]
+          },
+          {
+            "id": "FR-029",
+            "acceptanceCriteria": [
+              "AC-FR029-001"
+            ]
+          },
+          {
+            "id": "FR-042",
+            "acceptanceCriteria": [
+              "AC-FR042-001",
+              "AC-FR042-004"
+            ]
+          },
+          {
+            "id": "FR-043",
+            "acceptanceCriteria": [
+              "AC-FR043-001",
+              "AC-FR043-003",
+              "AC-FR043-004"
+            ]
+          },
+          {
             "id": "FR-094",
             "acceptanceCriteria": [
               "AC-FR094-002",
@@ -47,7 +97,15 @@
             "id": "FR-095",
             "acceptanceCriteria": [
               "AC-FR095-001",
-              "AC-FR095-003"
+              "AC-FR095-003",
+              "AC-FR095-004"
+            ]
+          },
+          {
+            "id": "FR-096",
+            "acceptanceCriteria": [
+              "AC-FR096-003",
+              "AC-FR096-004"
             ]
           }
         ],
@@ -60,13 +118,19 @@
             ]
           }
         ],
-        "implementationStatus": "partial",
+        "implementationStatus": "implemented",
         "implementationEvidence": [
-          "apps/web/src/features/chat/components/ChatView.tsx"
+          "apps/web/src/features/chat/components/ChatView.tsx",
+          "apps/web/src/features/chat/components/ChatJourneyStatus.tsx",
+          "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
+          "apps/web/src/features/chat/hooks/useChatSession.ts",
+          "apps/web/src/features/chat/utils/chatJourney.ts",
+          "apps/web/src/features/questions/hooks/useQuestions.ts"
         ],
         "gapTasks": [
-          "tasks/todo/20260714-issue-345-chat-assignee-journey.md",
-          "tasks/todo/20260713-2304-responsive-chat-ui-verification.md"
+          "tasks/todo/20260713-2304-responsive-chat-ui-verification.md",
+          "tasks/todo/20260714-issue-345-cross-screen-a11y-responsive.md",
+          "tasks/todo/20260714-issue-345-manual-a11y-evidence.md"
         ]
       }
     },
@@ -105,6 +169,30 @@
         ],
         "requirements": [
           {
+            "id": "FR-031",
+            "acceptanceCriteria": [
+              "AC-FR031-001",
+              "AC-FR031-002",
+              "AC-FR031-005",
+              "AC-FR031-006"
+            ]
+          },
+          {
+            "id": "FR-032",
+            "acceptanceCriteria": [
+              "AC-FR032-004"
+            ]
+          },
+          {
+            "id": "FR-033",
+            "acceptanceCriteria": [
+              "AC-FR033-003",
+              "AC-FR033-005",
+              "AC-FR033-007",
+              "AC-FR033-008"
+            ]
+          },
+          {
             "id": "FR-094",
             "acceptanceCriteria": [
               "AC-FR094-003"
@@ -114,6 +202,13 @@
             "id": "FR-095",
             "acceptanceCriteria": [
               "AC-FR095-004"
+            ]
+          },
+          {
+            "id": "FR-096",
+            "acceptanceCriteria": [
+              "AC-FR096-003",
+              "AC-FR096-004"
             ]
           },
           {
@@ -138,12 +233,16 @@
             ]
           }
         ],
-        "implementationStatus": "partial",
+        "implementationStatus": "implemented",
         "implementationEvidence": [
-          "apps/web/src/features/questions/components/AssigneeWorkspace.tsx"
+          "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
+          "apps/web/src/features/questions/hooks/useQuestions.ts",
+          "apps/web/src/features/questions/utils/questionJourney.ts",
+          "apps/web/src/shared/ui/OperationFeedback.tsx"
         ],
         "gapTasks": [
-          "tasks/todo/20260714-issue-345-chat-assignee-journey.md"
+          "tasks/todo/20260714-issue-345-cross-screen-a11y-responsive.md",
+          "tasks/todo/20260714-issue-345-manual-a11y-evidence.md"
         ]
       }
     },
@@ -180,6 +279,39 @@
         ],
         "requirements": [
           {
+            "id": "FR-034",
+            "acceptanceCriteria": [
+              "AC-FR034-002",
+              "AC-FR034-003",
+              "AC-FR034-006"
+            ]
+          },
+          {
+            "id": "FR-035",
+            "acceptanceCriteria": [
+              "AC-FR035-001",
+              "AC-FR035-002",
+              "AC-FR035-003",
+              "AC-FR035-006",
+              "AC-FR035-007"
+            ]
+          },
+          {
+            "id": "FR-036",
+            "acceptanceCriteria": [
+              "AC-FR036-001",
+              "AC-FR036-002",
+              "AC-FR036-004"
+            ]
+          },
+          {
+            "id": "FR-044",
+            "acceptanceCriteria": [
+              "AC-FR044-001",
+              "AC-FR044-004"
+            ]
+          },
+          {
             "id": "FR-094",
             "acceptanceCriteria": [
               "AC-FR094-002"
@@ -209,14 +341,16 @@
             ]
           }
         ],
-        "implementationStatus": "partial",
+        "implementationStatus": "implemented",
         "implementationEvidence": [
           "apps/web/src/features/history/components/HistoryWorkspace.tsx",
           "apps/web/src/features/history/hooks/useConversationHistory.ts",
+          "apps/web/src/features/questions/utils/questionJourney.ts",
           "apps/web/src/shared/ui/OperationFeedback.tsx"
         ],
         "gapTasks": [
-          "tasks/todo/20260714-issue-345-chat-assignee-journey.md"
+          "tasks/todo/20260714-issue-345-cross-screen-a11y-responsive.md",
+          "tasks/todo/20260714-issue-345-manual-a11y-evidence.md"
         ]
       }
     },
@@ -279,7 +413,8 @@
           "apps/web/src/features/favorites/components/FavoritesWorkspace.tsx"
         ],
         "gapTasks": [
-          "tasks/todo/20260714-issue-345-chat-assignee-journey.md"
+          "tasks/todo/20260714-issue-345-cross-screen-a11y-responsive.md",
+          "tasks/todo/20260714-issue-345-manual-a11y-evidence.md"
         ]
       }
     },
@@ -660,7 +795,7 @@
       "screens": [
         "chat"
       ],
-      "componentCount": 16,
+      "componentCount": 17,
       "interactionCount": 41
     },
     {
@@ -1181,6 +1316,7 @@
       "jsxUsages": [
         "AnswerCopyAction",
         "AnswerText",
+        "ChatJourneyStatus",
         "CitationList",
         "ClarificationOptions",
         "FollowupSuggestions",
@@ -1224,6 +1360,22 @@
         "h2",
         "section",
         "span"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/features/chat/components/ChatJourneyStatus.tsx",
+      "feature": "chat",
+      "exports": [
+        "ChatJourneyStatus"
+      ],
+      "jsxUsages": [
+        "StatusBadge",
+        "div",
+        "header",
+        "p",
+        "span",
+        "strong"
       ],
       "certainty": "confirmed"
     },
@@ -1302,6 +1454,7 @@
       ],
       "jsxUsages": [
         "LoadingSpinner",
+        "StatusBadge",
         "div",
         "p",
         "span"
@@ -1317,6 +1470,8 @@
       "jsxUsages": [
         "Icon",
         "LoadingSpinner",
+        "OperationFeedback",
+        "StatusBadge",
         "button",
         "dd",
         "div",
@@ -1339,10 +1494,16 @@
       ],
       "jsxUsages": [
         "LoadingSpinner",
+        "OperationFeedback",
+        "StatusBadge",
         "button",
+        "dd",
         "div",
+        "dl",
+        "dt",
         "form",
-        "h3",
+        "h2",
+        "header",
         "input",
         "label",
         "option",
@@ -1350,7 +1511,6 @@
         "section",
         "select",
         "span",
-        "strong",
         "textarea"
       ],
       "certainty": "confirmed"
@@ -1714,6 +1874,7 @@
         "Icon",
         "OperationFeedback",
         "ResourceStateBoundary",
+        "StatusBadge",
         "button",
         "div",
         "h2",
@@ -1740,7 +1901,9 @@
         "Icon",
         "LoadingSpinner",
         "LoadingStatus",
+        "OperationFeedback",
         "ResourceStateBoundary",
+        "StatusBadge",
         "aside",
         "button",
         "dd",
@@ -6366,9 +6529,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/QuestionAnswerPanel.tsx:40:button",
+      "id": "apps/web/src/features/chat/components/QuestionAnswerPanel.tsx:67:button",
       "file": "apps/web/src/features/chat/components/QuestionAnswerPanel.tsx",
-      "line": 40,
+      "line": 67,
       "feature": "chat",
       "component": "QuestionAnswerPanel",
       "element": "button",
@@ -6388,7 +6551,7 @@
       "handlers": [
         {
           "name": "onClick",
-          "value": "() => onResolveQuestion(question.questionId)"
+          "value": "() => void resolveQuestion()"
         }
       ],
       "attributes": [
@@ -6402,15 +6565,15 @@
         },
         {
           "name": "onClick",
-          "value": "() => onResolveQuestion(question.questionId)"
+          "value": "() => void resolveQuestion()"
         }
       ],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/QuestionAnswerPanel.tsx:44:button",
+      "id": "apps/web/src/features/chat/components/QuestionAnswerPanel.tsx:71:button",
       "file": "apps/web/src/features/chat/components/QuestionAnswerPanel.tsx",
-      "line": 44,
+      "line": 71,
       "feature": "chat",
       "component": "QuestionAnswerPanel",
       "element": "button",
@@ -6444,9 +6607,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:60:form",
+      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:86:form",
       "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
-      "line": 60,
+      "line": 86,
       "feature": "chat",
       "component": "QuestionEscalationPanel",
       "element": "form",
@@ -6480,9 +6643,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:67:label",
+      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:94:label",
       "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
-      "line": 67,
+      "line": 94,
       "feature": "chat",
       "component": "QuestionEscalationPanel",
       "element": "label",
@@ -6502,9 +6665,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:69:input",
+      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:96:input",
       "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
-      "line": 69,
+      "line": 96,
       "feature": "chat",
       "component": "QuestionEscalationPanel",
       "element": "input",
@@ -6538,9 +6701,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:71:label",
+      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:98:label",
       "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
-      "line": 71,
+      "line": 98,
       "feature": "chat",
       "component": "QuestionEscalationPanel",
       "element": "label",
@@ -6560,9 +6723,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:73:textarea",
+      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:100:textarea",
       "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
-      "line": 73,
+      "line": 100,
       "feature": "chat",
       "component": "QuestionEscalationPanel",
       "element": "textarea",
@@ -6596,9 +6759,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:76:label",
+      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:103:label",
       "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
-      "line": 76,
+      "line": 103,
       "feature": "chat",
       "component": "QuestionEscalationPanel",
       "element": "label",
@@ -6618,9 +6781,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:78:select",
+      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:105:select",
       "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
-      "line": 78,
+      "line": 105,
       "feature": "chat",
       "component": "QuestionEscalationPanel",
       "element": "select",
@@ -6654,9 +6817,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:79:option",
+      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:106:option",
       "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
-      "line": 79,
+      "line": 106,
       "feature": "chat",
       "component": "QuestionEscalationPanel",
       "element": "option",
@@ -6681,9 +6844,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:80:option",
+      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:107:option",
       "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
-      "line": 80,
+      "line": 107,
       "feature": "chat",
       "component": "QuestionEscalationPanel",
       "element": "option",
@@ -6708,9 +6871,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:81:option",
+      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:108:option",
       "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
-      "line": 81,
+      "line": 108,
       "feature": "chat",
       "component": "QuestionEscalationPanel",
       "element": "option",
@@ -6735,9 +6898,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:82:option",
+      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:109:option",
       "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
-      "line": 82,
+      "line": 109,
       "feature": "chat",
       "component": "QuestionEscalationPanel",
       "element": "option",
@@ -6762,9 +6925,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:85:label",
+      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:112:label",
       "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
-      "line": 85,
+      "line": 112,
       "feature": "chat",
       "component": "QuestionEscalationPanel",
       "element": "label",
@@ -6784,9 +6947,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:87:select",
+      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:114:select",
       "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
-      "line": 87,
+      "line": 114,
       "feature": "chat",
       "component": "QuestionEscalationPanel",
       "element": "select",
@@ -6820,9 +6983,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:88:option",
+      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:115:option",
       "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
-      "line": 88,
+      "line": 115,
       "feature": "chat",
       "component": "QuestionEscalationPanel",
       "element": "option",
@@ -6847,9 +7010,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:89:option",
+      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:116:option",
       "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
-      "line": 89,
+      "line": 116,
       "feature": "chat",
       "component": "QuestionEscalationPanel",
       "element": "option",
@@ -6874,9 +7037,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:90:option",
+      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:117:option",
       "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
-      "line": 90,
+      "line": 117,
       "feature": "chat",
       "component": "QuestionEscalationPanel",
       "element": "option",
@@ -6901,9 +7064,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:94:label",
+      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:121:label",
       "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
-      "line": 94,
+      "line": 121,
       "feature": "chat",
       "component": "QuestionEscalationPanel",
       "element": "label",
@@ -6923,9 +7086,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:96:input",
+      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:123:input",
       "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
-      "line": 96,
+      "line": 123,
       "feature": "chat",
       "component": "QuestionEscalationPanel",
       "element": "input",
@@ -6963,9 +7126,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:100:button",
+      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:127:button",
       "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
-      "line": 100,
+      "line": 127,
       "feature": "chat",
       "component": "QuestionEscalationPanel",
       "element": "button",
@@ -12382,9 +12545,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:76:button",
+      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:79:button",
       "file": "apps/web/src/features/history/components/HistoryWorkspace.tsx",
-      "line": 76,
+      "line": 79,
       "feature": "history",
       "component": "HistoryWorkspace",
       "element": "button",
@@ -12426,9 +12589,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:100:input",
+      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:103:input",
       "file": "apps/web/src/features/history/components/HistoryWorkspace.tsx",
-      "line": 100,
+      "line": 103,
       "feature": "history",
       "component": "HistoryWorkspace",
       "element": "input",
@@ -12474,9 +12637,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:107:select",
+      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:110:select",
       "file": "apps/web/src/features/history/components/HistoryWorkspace.tsx",
-      "line": 107,
+      "line": 110,
       "feature": "history",
       "component": "HistoryWorkspace",
       "element": "select",
@@ -12514,9 +12677,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:108:option",
+      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:111:option",
       "file": "apps/web/src/features/history/components/HistoryWorkspace.tsx",
-      "line": 108,
+      "line": 111,
       "feature": "history",
       "component": "HistoryWorkspace",
       "element": "option",
@@ -12541,9 +12704,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:109:option",
+      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:112:option",
       "file": "apps/web/src/features/history/components/HistoryWorkspace.tsx",
-      "line": 109,
+      "line": 112,
       "feature": "history",
       "component": "HistoryWorkspace",
       "element": "option",
@@ -12568,9 +12731,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:110:option",
+      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:113:option",
       "file": "apps/web/src/features/history/components/HistoryWorkspace.tsx",
-      "line": 110,
+      "line": 113,
       "feature": "history",
       "component": "HistoryWorkspace",
       "element": "option",
@@ -12595,9 +12758,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:112:label",
+      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:115:label",
       "file": "apps/web/src/features/history/components/HistoryWorkspace.tsx",
-      "line": 112,
+      "line": 115,
       "feature": "history",
       "component": "HistoryWorkspace",
       "element": "label",
@@ -12617,9 +12780,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:113:input",
+      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:116:input",
       "file": "apps/web/src/features/history/components/HistoryWorkspace.tsx",
-      "line": 113,
+      "line": 116,
       "feature": "history",
       "component": "HistoryWorkspace",
       "element": "input",
@@ -12653,9 +12816,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:126:button",
+      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:134:button",
       "file": "apps/web/src/features/history/components/HistoryWorkspace.tsx",
-      "line": 126,
+      "line": 134,
       "feature": "history",
       "component": "HistoryWorkspace",
       "element": "button",
@@ -12697,9 +12860,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:135:button",
+      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:143:button",
       "file": "apps/web/src/features/history/components/HistoryWorkspace.tsx",
-      "line": 135,
+      "line": 143,
       "feature": "history",
       "component": "HistoryWorkspace",
       "element": "button",
@@ -12733,9 +12896,9 @@
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:143:button",
+      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:162:button",
       "file": "apps/web/src/features/history/components/HistoryWorkspace.tsx",
-      "line": 143,
+      "line": 162,
       "feature": "history",
       "component": "HistoryWorkspace",
       "element": "button",
@@ -12775,9 +12938,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:133:button",
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:168:button",
       "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
-      "line": 133,
+      "line": 168,
       "feature": "questions",
       "component": "AssigneeWorkspace",
       "element": "button",
@@ -12819,9 +12982,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:155:label",
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:191:label",
       "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
-      "line": 155,
+      "line": 191,
       "feature": "questions",
       "component": "AssigneeWorkspace",
       "element": "label",
@@ -12841,9 +13004,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:157:select",
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:193:select",
       "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
-      "line": 157,
+      "line": 193,
       "feature": "questions",
       "component": "AssigneeWorkspace",
       "element": "select",
@@ -12877,9 +13040,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:158:option",
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:194:option",
       "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
-      "line": 158,
+      "line": 194,
       "feature": "questions",
       "component": "AssigneeWorkspace",
       "element": "option",
@@ -12904,9 +13067,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:160:option",
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:196:option",
       "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
-      "line": 160,
+      "line": 196,
       "feature": "questions",
       "component": "AssigneeWorkspace",
       "element": "option",
@@ -12931,9 +13094,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:164:label",
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:200:label",
       "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
-      "line": 164,
+      "line": 200,
       "feature": "questions",
       "component": "AssigneeWorkspace",
       "element": "label",
@@ -12953,9 +13116,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:166:input",
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:202:input",
       "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
-      "line": 166,
+      "line": 202,
       "feature": "questions",
       "component": "AssigneeWorkspace",
       "element": "input",
@@ -12997,9 +13160,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:190:button",
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:228:button",
       "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
-      "line": 190,
+      "line": 228,
       "feature": "questions",
       "component": "AssigneeWorkspace",
       "element": "button",
@@ -13043,16 +13206,16 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:236:form",
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:278:form",
       "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
-      "line": 236,
+      "line": 278,
       "feature": "questions",
       "component": "AssigneeWorkspace",
       "element": "form",
       "isIntrinsic": true,
-      "label": "回答作成 / 回答タイトル / 回答内容 / 参照資料 / 関連リンク / 内部メモ / 質問者へ通知する / 下書き保存 / 回答を送信",
+      "label": "回答作成 / 回答タイトル / 回答内容 / 参照資料 / 関連リンク / 内部メモ / 質問者へ通知する / 入力を一時保持 / 回答を送信",
       "a11y": {
-        "accessibleName": "回答作成 / 回答タイトル / 回答内容 / 参照資料 / 関連リンク / 内部メモ / 質問者へ通知する / 下書き保存 / 回答を送信",
+        "accessibleName": "回答作成 / 回答タイトル / 回答内容 / 参照資料 / 関連リンク / 内部メモ / 質問者へ通知する / 入力を一時保持 / 回答を送信",
         "accessibleNameSource": "visible-text",
         "descriptionRefs": "-",
         "role": "-",
@@ -13075,9 +13238,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:238:label",
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:280:label",
       "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
-      "line": 238,
+      "line": 280,
       "feature": "questions",
       "component": "AssigneeWorkspace",
       "element": "label",
@@ -13097,9 +13260,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:240:input",
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:282:input",
       "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
-      "line": 240,
+      "line": 282,
       "feature": "questions",
       "component": "AssigneeWorkspace",
       "element": "input",
@@ -13110,7 +13273,9 @@
         "accessibleNameSource": "label",
         "descriptionRefs": "-",
         "role": "-",
-        "state": [],
+        "state": [
+          "disabled=!answerWritable || loading"
+        ],
         "status": "ok",
         "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
       },
@@ -13128,14 +13293,18 @@
         {
           "name": "onChange",
           "value": "(event) => { setAnswerTitle(event.target.value); markDirty() }"
+        },
+        {
+          "name": "disabled",
+          "value": "!answerWritable || loading"
         }
       ],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:242:label",
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:284:label",
       "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
-      "line": 242,
+      "line": 284,
       "feature": "questions",
       "component": "AssigneeWorkspace",
       "element": "label",
@@ -13155,9 +13324,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:244:textarea",
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:286:textarea",
       "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
-      "line": 244,
+      "line": 286,
       "feature": "questions",
       "component": "AssigneeWorkspace",
       "element": "textarea",
@@ -13168,7 +13337,9 @@
         "accessibleNameSource": "label",
         "descriptionRefs": "-",
         "role": "-",
-        "state": [],
+        "state": [
+          "disabled=!answerWritable || loading"
+        ],
         "status": "ok",
         "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
       },
@@ -13186,14 +13357,18 @@
         {
           "name": "onChange",
           "value": "(event) => { setAnswerBody(event.target.value); markDirty() }"
+        },
+        {
+          "name": "disabled",
+          "value": "!answerWritable || loading"
         }
       ],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:246:label",
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:288:label",
       "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
-      "line": 246,
+      "line": 288,
       "feature": "questions",
       "component": "AssigneeWorkspace",
       "element": "label",
@@ -13213,9 +13388,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:248:input",
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:290:input",
       "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
-      "line": 248,
+      "line": 290,
       "feature": "questions",
       "component": "AssigneeWorkspace",
       "element": "input",
@@ -13226,7 +13401,9 @@
         "accessibleNameSource": "placeholder",
         "descriptionRefs": "-",
         "role": "-",
-        "state": [],
+        "state": [
+          "disabled=!answerWritable || loading"
+        ],
         "status": "ok",
         "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
       },
@@ -13248,14 +13425,18 @@
         {
           "name": "placeholder",
           "value": "資料名、URL、またはナレッジリンク"
+        },
+        {
+          "name": "disabled",
+          "value": "!answerWritable || loading"
         }
       ],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:250:label",
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:292:label",
       "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
-      "line": 250,
+      "line": 292,
       "feature": "questions",
       "component": "AssigneeWorkspace",
       "element": "label",
@@ -13275,9 +13456,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:252:textarea",
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:294:textarea",
       "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
-      "line": 252,
+      "line": 294,
       "feature": "questions",
       "component": "AssigneeWorkspace",
       "element": "textarea",
@@ -13288,7 +13469,9 @@
         "accessibleNameSource": "label",
         "descriptionRefs": "-",
         "role": "-",
-        "state": [],
+        "state": [
+          "disabled=!answerWritable || loading"
+        ],
         "status": "ok",
         "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
       },
@@ -13306,14 +13489,18 @@
         {
           "name": "onChange",
           "value": "(event) => { setInternalMemo(event.target.value); markDirty() }"
+        },
+        {
+          "name": "disabled",
+          "value": "!answerWritable || loading"
         }
       ],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:254:label",
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:296:label",
       "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
-      "line": 254,
+      "line": 296,
       "feature": "questions",
       "component": "AssigneeWorkspace",
       "element": "label",
@@ -13333,9 +13520,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:255:input",
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:297:input",
       "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
-      "line": 255,
+      "line": 297,
       "feature": "questions",
       "component": "AssigneeWorkspace",
       "element": "input",
@@ -13346,7 +13533,9 @@
         "accessibleNameSource": "label",
         "descriptionRefs": "-",
         "role": "-",
-        "state": [],
+        "state": [
+          "disabled=!answerWritable || loading"
+        ],
         "status": "ok",
         "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
       },
@@ -13364,26 +13553,30 @@
         {
           "name": "onChange",
           "value": "(event) => { setNotifyRequester(event.target.checked); markDirty() }"
+        },
+        {
+          "name": "disabled",
+          "value": "!answerWritable || loading"
         }
       ],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:262:button",
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:310:button",
       "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
-      "line": 262,
+      "line": 310,
       "feature": "questions",
       "component": "AssigneeWorkspace",
       "element": "button",
       "isIntrinsic": true,
-      "label": "下書き保存",
+      "label": "入力を一時保持",
       "a11y": {
-        "accessibleName": "下書き保存",
+        "accessibleName": "入力を一時保持",
         "accessibleNameSource": "visible-text",
         "descriptionRefs": "-",
         "role": "-",
         "state": [
-          "disabled=loading || !isDirty"
+          "disabled=loading || !answerWritable || !isDirty"
         ],
         "status": "ok",
         "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
@@ -13391,7 +13584,7 @@
       "handlers": [
         {
           "name": "onClick",
-          "value": "onSaveDraft"
+          "value": "onHoldDraft"
         }
       ],
       "attributes": [
@@ -13401,19 +13594,19 @@
         },
         {
           "name": "disabled",
-          "value": "loading || !isDirty"
+          "value": "loading || !answerWritable || !isDirty"
         },
         {
           "name": "onClick",
-          "value": "onSaveDraft"
+          "value": "onHoldDraft"
         }
       ],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:263:button",
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:311:button",
       "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
-      "line": 263,
+      "line": 311,
       "feature": "questions",
       "component": "AssigneeWorkspace",
       "element": "button",
@@ -13425,7 +13618,7 @@
         "descriptionRefs": "-",
         "role": "-",
         "state": [
-          "disabled=loading || !answerTitle.trim() || !answerBody.trim()"
+          "disabled=loading || !answerWritable || !answerTitle.trim() || !answerBody.trim()"
         ],
         "status": "ok",
         "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
@@ -13438,7 +13631,7 @@
         },
         {
           "name": "disabled",
-          "value": "loading || !answerTitle.trim() || !answerBody.trim()"
+          "value": "loading || !answerWritable || !answerTitle.trim() || !answerBody.trim()"
         }
       ],
       "certainty": "confirmed"
@@ -13998,6 +14191,20 @@
         "status": "implemented",
         "evidence": [
           "apps/web/e2e/visual-regression.spec.ts"
+        ]
+      },
+      {
+        "id": "E2E-UI-QUESTION-001",
+        "status": "implemented",
+        "evidence": [
+          "apps/web/e2e/question-journey.spec.ts"
+        ]
+      },
+      {
+        "id": "E2E-UI-QUESTION-002",
+        "status": "implemented",
+        "evidence": [
+          "apps/web/e2e/question-journey.spec.ts"
         ]
       },
       {

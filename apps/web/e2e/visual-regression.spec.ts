@@ -552,7 +552,7 @@ test('回答と引用表示の visual regression @visual', async ({ page }) => {
   await page.getByRole('textbox', { name: '質問', exact: true }).fill('製品コードは何ですか？')
   await page.getByRole('button', { name: '送信' }).click()
   await expect(page.getByText('製品コードは MVP-2026 です。')).toBeVisible()
-  await expect(page.getByText('参照元')).toBeVisible()
+  await expect(page.getByText('参照元', { exact: true })).toBeVisible()
   await expect(page).toHaveScreenshot('chat-answer-citations.png', { fullPage: true, animations: 'disabled' })
 })
 

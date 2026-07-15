@@ -19,7 +19,7 @@
 
 ## 受け入れ条件（この要件専用）
 
-- AC-FR029-001: `POST /chat` は通常回答、回答不能、確認質問を `responseType` の `answer`、`refusal`、`clarification` で区別できること。
+- `AC-FR029-001`: `POST /chat` は通常回答、回答不能、確認質問を `responseType` の `answer`、`refusal`、`clarification` で区別できること。
 - AC-FR029-002: 「申請期限は？」のように対象が未指定で、corpus 上に複数の申請種別候補がある場合、`responseType=clarification` を返すこと。
 - AC-FR029-003: 「経費精算の申請期限は？」のように対象が明示され、根拠が十分な場合、確認質問を出さず `responseType=answer` を返すこと。
 - AC-FR029-004: corpus に候補を作れる根拠がない質問では、確認質問ではなく `responseType=refusal` を返すこと。

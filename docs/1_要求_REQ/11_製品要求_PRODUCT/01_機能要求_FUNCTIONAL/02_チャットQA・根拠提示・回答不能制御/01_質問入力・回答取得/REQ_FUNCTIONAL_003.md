@@ -19,6 +19,9 @@
 ## 受け入れ条件（この要件専用）
 
 - AC-005: 質問入力から回答表示まで成功すること。
+- `AC-FR003-002`: 回答生成中は未完了の processing state と現在の処理内容を対象会話内に表示し、final response と区別できること。
+- `AC-FR003-003`: final response は API の `answer`、`refusal`、`clarification` を異なる状態として対象回答内に表示し、利用可能な次操作を関連付けること。
+- `AC-FR003-004`: 長い回答でも本文、状態、次操作が同じ回答 context に保たれ、横方向の画面 overflow を発生させないこと。
 
 ## 要件の源泉・背景
 

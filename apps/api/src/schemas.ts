@@ -1622,7 +1622,10 @@ export const QuestionSchema = z.object({
   priority: QuestionPrioritySchema,
   status: QuestionStatusSchema,
   source: SupportTicketSourceSchema.optional(),
-  messageId: z.string().optional(),
+  messageId: z.string().optional().openapi({
+    description: "チャット発話の安定識別子。同じ認証済み requester と同じ値の再送は同一問い合わせを返します。",
+    example: "msg_20260714_001"
+  }),
   ragRunId: z.string().optional(),
   answerUnavailableEventId: z.string().optional(),
   answerUnavailableReason: z.string().optional(),
@@ -1652,6 +1655,7 @@ export const QuestionListResponseSchema = z.object({
 })
 
 export const ConversationMessageSchema = z.object({
+  messageId: z.string().optional(),
   role: z.enum(["user", "assistant"]),
   text: z.string(),
   createdAt: z.string(),
@@ -1727,7 +1731,10 @@ export const CreateQuestionRequestSchema = z.object({
   category: z.string().optional().openapi({ example: "その他の質問" }),
   priority: QuestionPrioritySchema.optional(),
   source: SupportTicketSourceSchema.optional().default("manual_escalation"),
-  messageId: z.string().optional(),
+  messageId: z.string().trim().min(1).max(200).optional().openapi({
+    description: "チャット発話の安定識別子。同じ認証済み requester と同じ値の再送は同一問い合わせを返します。",
+    example: "msg_20260714_001"
+  }),
   ragRunId: z.string().optional(),
   answerUnavailableEventId: z.string().optional(),
   answerUnavailableReason: z.string().optional(),

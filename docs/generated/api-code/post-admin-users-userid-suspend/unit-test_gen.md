@@ -8,8 +8,8 @@
 
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
-| 到達 symbol | service lists all Cognito directory users in the managed user ledger | `apps/api/src/rag/memorag-service.test.ts:2756 (service lists all Cognito directory users in the managed user ledger)` |
-| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:3117 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
+| 到達 symbol | service lists all Cognito directory users in the managed user ledger | `apps/api/src/rag/memorag-service.test.ts:2764 (service lists all Cognito directory users in the managed user ledger)` |
+| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:3125 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
 | 到達 symbol | suspend disables Cognito, globally revokes sessions, and only then reports the ledger transition | `apps/api/src/security/account-lifecycle-current-identity.test.ts:19 (suspend disables Cognito, globally revokes sessions, and only then reports the ledger transition)` |
 | 到達 symbol | denied account lifecycle mutation is audited before returning without changing account state | `apps/api/src/security/account-lifecycle-current-identity.test.ts:32 (denied account lifecycle mutation is audited before returning without changing account state)` |
 | 到達 symbol | account lifecycle mutation does not touch authoritative state when the common audit intent cannot be persisted | `apps/api/src/security/account-lifecycle-current-identity.test.ts:43 (account lifecycle mutation does not touch authoritative state when the common audit intent cannot be persisted)` |

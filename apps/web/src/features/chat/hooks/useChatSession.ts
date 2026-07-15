@@ -201,7 +201,7 @@ export function useChatSession({
   ) {
     const includeTemporary = hasAttachment || temporaryAttachmentScopeIds.has(currentConversationId)
     setQuestion("")
-    setMessages((prev) => [...prev, { role: "user", text: userQuestion, createdAt: new Date().toISOString() }])
+    setMessages((prev) => [...prev, { messageId: createMessageId(), role: "user", text: userQuestion, createdAt: new Date().toISOString() }])
     setLoading(true)
     setPendingActivity(hasAttachment && typedQuestion ? "資料を取り込み、回答を生成中" : typedQuestion ? "回答を生成中" : "資料を取り込み中")
     setPendingDebugQuestion(debugMode && canReadDebugRuns ? userQuestion : null)
@@ -302,7 +302,7 @@ export function useChatSession({
         if (terminalError) throw terminalError
         if (!result) throw new Error("chat run completed without final event")
         const finalResult = result
-        setMessages((prev) => [...prev, { role: "assistant", text: finalResult.answer, sourceQuestion: userQuestion, result: finalResult, createdAt: new Date().toISOString() }])
+        setMessages((prev) => [...prev, { messageId: createMessageId(), role: "assistant", text: finalResult.answer, sourceQuestion: userQuestion, result: finalResult, createdAt: new Date().toISOString() }])
         if (finalResult.debug) {
           setSelectedRunId(finalResult.debug.runId)
           setDebugRuns((prev) => [finalResult.debug as DebugTrace, ...prev.filter((run) => run.runId !== finalResult.debug?.runId)])
@@ -310,7 +310,7 @@ export function useChatSession({
       } else {
         setMessages((prev) => [
           ...prev,
-          { role: "assistant", text: "資料を取り込みました。知りたいことを入力してください。", createdAt: new Date().toISOString() }
+          { messageId: createMessageId(), role: "assistant", text: "資料を取り込みました。知りたいことを入力してください。", createdAt: new Date().toISOString() }
         ])
       }
     } catch (err) {
@@ -360,4 +360,9 @@ export function useChatSession({
     startClarificationFreeform,
     newConversation
   }
+}
+
+function createMessageId(): string {
+  if (typeof globalThis.crypto?.randomUUID === "function") return globalThis.crypto.randomUUID()
+  return `message-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
 }

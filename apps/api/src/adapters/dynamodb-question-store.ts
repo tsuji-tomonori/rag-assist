@@ -1,9 +1,9 @@
-import { randomUUID } from "node:crypto"
 import { GetItemCommand, PutItemCommand, QueryCommand, UpdateItemCommand, type DynamoDBClient } from "@aws-sdk/client-dynamodb"
 import { marshall, unmarshall } from "@aws-sdk/util-dynamodb"
 import type { HumanQuestion } from "../types.js"
 import type { AnswerQuestionInput, CreateQuestionInput, QuestionStore } from "./question-store.js"
 import { createDynamoDbClient } from "./dynamodb-client.js"
+import { isSameQuestionCreateIdentity, questionIdForCreate } from "./question-identity.js"
 
 export class DynamoDbQuestionStore implements QuestionStore {
   private readonly client: DynamoDBClient
@@ -15,7 +15,7 @@ export class DynamoDbQuestionStore implements QuestionStore {
   async create(input: CreateQuestionInput): Promise<HumanQuestion> {
     const now = new Date().toISOString()
     const question: HumanQuestion = {
-      questionId: randomUUID(),
+      questionId: questionIdForCreate(input),
       title: input.title,
       question: input.question,
       requesterName: input.requesterName?.trim() || "未設定",
@@ -41,13 +41,20 @@ export class DynamoDbQuestionStore implements QuestionStore {
       createdAt: now,
       updatedAt: now
     }
-    await this.client.send(
-      new PutItemCommand({
-        TableName: this.tableName,
-        Item: marshall(question, { removeUndefinedValues: true }),
-        ConditionExpression: "attribute_not_exists(questionId)"
-      })
-    )
+    try {
+      await this.client.send(
+        new PutItemCommand({
+          TableName: this.tableName,
+          Item: marshall(question, { removeUndefinedValues: true }),
+          ConditionExpression: "attribute_not_exists(questionId)"
+        })
+      )
+    } catch (error) {
+      if (!isConditionalCheckFailure(error) || !input.requesterUserId || !input.messageId) throw error
+      const existing = await this.get(question.questionId)
+      if (!existing || !isSameQuestionCreateIdentity(existing, input)) throw error
+      return existing
+    }
     return question
   }
 
@@ -153,6 +160,10 @@ export class DynamoDbQuestionStore implements QuestionStore {
     } while (ExclusiveStartKey)
     return items
   }
+}
+
+function isConditionalCheckFailure(error: unknown): boolean {
+  return error instanceof Error && error.name === "ConditionalCheckFailedException"
 }
 
 function sortAndDedupeQuestions(questions: HumanQuestion[]): HumanQuestion[] {

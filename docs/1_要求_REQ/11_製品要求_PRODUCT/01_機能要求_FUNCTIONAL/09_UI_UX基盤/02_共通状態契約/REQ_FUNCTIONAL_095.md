@@ -40,6 +40,7 @@
 - chat、history/favorites、questions、documents、benchmark、admin の adapter は未取得・失敗・permission の値を 0 件/blank/未提供へ変換せず、利用可能 part だけを表示する。
 - `E2E-UI-STATE-001` は Chromium で loading→500→retry→confirmed empty、HTTP 403、admin partial→recovered、refresh failure→source/as-of 付き stale→recovered を検証する。
 - component/controller test は全 variant、focus、target/action、false-zero、partial、permission、stale、retry race を検証する。代表 screen reader と real-device の手動証跡は `tasks/todo/20260714-issue-345-manual-a11y-evidence.md` の未完了範囲である。
+- chat/question journey は assistant message、question ticket、history item ごとに processing/final、5 ticket states、次操作を関連付け、mutation failure/unknown を対象付き feedback として保持する。
 
 ## 要件の源泉・背景
 

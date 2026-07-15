@@ -56,7 +56,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 452 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 453 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 | `500` | サーバー内部で処理エラーが発生しました。 | `application/json` | 2 field(s) |
@@ -74,6 +74,7 @@ Media type: `application/json`
 | `history[].updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
 | `history[].isFavorite` | `boolean` | no | `response.history[].isFavorite` の値。項目名は is favorite を表します。 | - |
 | `history[].messages` | `array<object>` | yes | `response.history[].messages` の値。項目名は messages を表します。 | maxItems=100 |
+| `history[].messages[].messageId` | `string` | no | `response.history[].messages[].messageId` の値。項目名は message id を表します。 | - |
 | `history[].messages[].role` | `enum(user \| assistant)` | yes | `response.history[].messages[].role` の値。項目名は role を表します。 | enum=user, assistant |
 | `history[].messages[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
 | `history[].messages[].createdAt` | `string` | yes | レコードを作成した日時。 | - |
@@ -438,7 +439,7 @@ Media type: `application/json`
 | `history[].messages[].questionTicket.priority` | `enum(normal \| high \| urgent)` | yes | `response.history[].messages[].questionTicket.priority` の値。項目名は priority を表します。 | enum=normal, high, urgent |
 | `history[].messages[].questionTicket.status` | `enum(open \| in_progress \| waiting_requester \| answered \| resolved)` | yes | 現在の処理状態または管理状態。 | enum=open, in_progress, waiting_requester, answered, resolved |
 | `history[].messages[].questionTicket.source` | `enum(manual_escalation \| answer_unavailable \| negative_feedback \| quality_issue)` | no | `response.history[].messages[].questionTicket.source` の値。項目名は source を表します。 | enum=manual_escalation, answer_unavailable, negative_feedback, quality_issue |
-| `history[].messages[].questionTicket.messageId` | `string` | no | `response.history[].messages[].questionTicket.messageId` の値。項目名は message id を表します。 | - |
+| `history[].messages[].questionTicket.messageId` | `string` | no | チャット発話の安定識別子。同じ認証済み requester と同じ値の再送は同一問い合わせを返します。 | - |
 | `history[].messages[].questionTicket.ragRunId` | `string` | no | `response.history[].messages[].questionTicket.ragRunId` の値。項目名は rag run id を表します。 | - |
 | `history[].messages[].questionTicket.answerUnavailableEventId` | `string` | no | `response.history[].messages[].questionTicket.answerUnavailableEventId` の値。項目名は answer unavailable event id を表します。 | - |
 | `history[].messages[].questionTicket.answerUnavailableReason` | `string` | no | `response.history[].messages[].questionTicket.answerUnavailableReason` の値。項目名は answer unavailable reason を表します。 | - |

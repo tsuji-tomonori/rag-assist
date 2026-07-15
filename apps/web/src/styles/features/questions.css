@@ -31,7 +31,7 @@
 }
 
 .assignee-header span {
-  color: var(--color-text-muted);
+  color: var(--color-text-muted-strong);
   font-size: 13px;
   font-weight: 800;
 }
@@ -367,4 +367,17 @@
 .answer-form-actions button:disabled {
   cursor: not-allowed;
   opacity: 0.5;
+}
+
+.assignee-operation-feedback {
+  margin: 0 0 14px;
+}
+
+.question-detail-panel .ui-status-badge {
+  width: fit-content;
+}
+
+.answer-form-panel :is(input, textarea):disabled {
+  color: var(--color-text-muted);
+  background: #f4f6f9;
 }

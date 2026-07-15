@@ -11,7 +11,7 @@
 | 到達 symbol | service enforces full document group permission for delete and reindex operations | `apps/api/src/rag/memorag-service.test.ts:1101 (service enforces full document group permission for delete and reindex operations)` |
 | 到達 symbol | service stages and rolls back structured blue-green reindex migrations | `apps/api/src/rag/memorag-service.test.ts:1164 (service stages and rolls back structured blue-green reindex migrations)` |
 | 到達 symbol | FR-090 revoked rollback persists ledger reconciliation and retries only after current authorization | `apps/api/src/rag/memorag-service.test.ts:1335 (FR-090 revoked rollback persists ledger reconciliation and retries only after current authorization)` |
-| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:3117 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
+| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:3125 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
 
 ## 2. 実装分岐から導くテスト要因
 

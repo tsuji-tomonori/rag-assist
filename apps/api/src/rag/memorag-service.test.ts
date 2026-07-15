@@ -1499,6 +1499,14 @@ test("service delegates human question lifecycle to the question store", async (
   assert.equal((await service.listAllQuestionsForAdmin())[0]?.questionId, question.questionId)
   assert.equal((await service.getQuestion(question.questionId))?.questionId, question.questionId)
 
+  const repeated = await service.createQuestion({
+    title: "再送時に変更された件名",
+    question: "再送された本文",
+    messageId: "msg-1"
+  }, user)
+  assert.equal(repeated.questionId, question.questionId)
+  assert.equal((await service.listAllQuestionsForAdmin()).filter((item) => item.questionId === question.questionId).length, 1)
+
   const answered = await service.answerQuestion(question.questionId, {
     answerTitle: "回答",
     answerBody: "担当者の確認結果です。",
