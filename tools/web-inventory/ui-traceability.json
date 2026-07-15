@@ -103,8 +103,8 @@
     },
     {
       "id": "E2E-UI-DOCUMENTS-001",
-      "status": "planned",
-      "task": "tasks/todo/20260714-issue-345-document-workspace-context.md"
+      "status": "implemented",
+      "evidence": ["apps/web/e2e/visual-regression.spec.ts"]
     },
     {
       "id": "E2E-UI-MANUAL-001",
@@ -281,19 +281,24 @@
         { "id": "FR-094", "acceptanceCriteria": ["AC-FR094-002", "AC-FR094-003"] },
         { "id": "FR-095", "acceptanceCriteria": ["AC-FR095-004", "AC-FR095-005"] },
         { "id": "FR-096", "acceptanceCriteria": ["AC-FR096-001", "AC-FR096-002"] },
-        { "id": "FR-097", "acceptanceCriteria": ["AC-FR097-001", "AC-FR097-003"] },
-        { "id": "FR-098", "acceptanceCriteria": ["AC-FR098-001", "AC-FR098-005"] }
+        { "id": "FR-097", "acceptanceCriteria": ["AC-FR097-001", "AC-FR097-002", "AC-FR097-003", "AC-FR097-004", "AC-FR097-005"] },
+        { "id": "FR-098", "acceptanceCriteria": ["AC-FR098-001", "AC-FR098-002", "AC-FR098-003", "AC-FR098-004", "AC-FR098-005"] }
       ],
       "verifications": [
         { "id": "E2E-VIEW-DOCUMENTS-001", "status": "implemented", "evidence": ["apps/web/e2e/visual-regression.spec.ts"] }
       ],
-      "implementationStatus": "partial",
+      "implementationStatus": "implemented",
       "implementationEvidence": [
+        "apps/web/src/app/hooks/useAppShellState.ts",
+        "apps/web/src/app/routing/appRoute.ts",
         "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+        "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx",
+        "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
+        "apps/web/src/features/documents/components/workspace/documentWorkspaceState.ts",
         "apps/web/src/features/documents/hooks/useDocuments.ts",
         "apps/web/src/shared/ui/OperationFeedback.tsx"
       ],
-      "gapTasks": ["tasks/todo/20260714-issue-345-document-workspace-context.md"]
+      "gapTasks": []
     },
     {
       "view": "profile",

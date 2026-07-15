@@ -208,6 +208,27 @@ async function openCreateFolderSettings() {
   await userEvent.click(screen.getByRole("button", { name: "フォルダ設定を開く" }))
 }
 
+function getDocumentDetailButton(fileName: string, index = 0) {
+  return screen.getAllByRole("button", { name: `${fileName}の詳細を表示` })[index]!
+}
+
+async function openDocumentDetail(fileName: string, index = 0) {
+  await userEvent.click(getDocumentDetailButton(fileName, index))
+  return screen.getByRole("dialog", { name: fileName })
+}
+
+async function getDocumentManagementAction(fileName: string, actionName: string, index = 0) {
+  const drawer = await openDocumentDetail(fileName, index)
+  await userEvent.click(within(drawer).getByRole("button", { name: "管理操作を表示" }))
+  return within(drawer).getByRole("button", { name: actionName })
+}
+
+async function launchDocumentManagementAction(fileName: string, actionName: string, index = 0) {
+  const action = await getDocumentManagementAction(fileName, actionName, index)
+  await userEvent.click(action)
+  return action
+}
+
 describe("DocumentWorkspace", () => {
   it("初期状態から名称だけで保存先を作成し、単一ファイルをアップロードする", async () => {
     const onUploadGroupChange = vi.fn()
@@ -376,7 +397,7 @@ describe("DocumentWorkspace", () => {
 
     expect(screen.getAllByText("requirements.md").length).toBeGreaterThanOrEqual(1)
 
-    await userEvent.click(screen.getByTitle("requirements.mdを削除"))
+    await launchDocumentManagementAction("requirements.md", "削除")
     expect(screen.getByRole("dialog", { name: "文書を削除しますか" })).toBeInTheDocument()
     expect(screen.getByText("文書識別子")).toBeInTheDocument()
     await userEvent.type(screen.getByRole("textbox", { name: "削除理由" }), "obsolete document")
@@ -413,13 +434,13 @@ describe("DocumentWorkspace", () => {
       />
     )
 
-    const row = screen.getByRole("row", { name: "requirements.mdの詳細を表示" })
+    const row = getDocumentDetailButton("requirements.md").closest<HTMLElement>('[role="row"]')!
     expect(screen.getByRole("columnheader", { name: "所属フォルダ" })).toBeInTheDocument()
     expect(within(row).getByText("社内規定")).toBeInTheDocument()
     expect(screen.getByTitle("requirements.md")).toBeInTheDocument()
     expect(container.querySelector('[data-label="ファイル名"]')).not.toBeNull()
     expect(container.querySelector('[data-label="所属フォルダ"]')).not.toBeNull()
-    expect(container.querySelector('[data-label="操作"] .document-action-buttons')).not.toBeNull()
+    expect(container.querySelector('[data-label="詳細"] .document-row-primary-action')).not.toBeNull()
   })
 
   it("ファイル共有モーダルで直接共有を更新できる", async () => {
@@ -462,7 +483,7 @@ describe("DocumentWorkspace", () => {
       />
     )
 
-    await userEvent.click(screen.getByRole("button", { name: "requirements.mdを共有" }))
+    await launchDocumentManagementAction("requirements.md", "共有")
     const dialog = await screen.findByRole("dialog", { name: "ファイル共有" })
     expect(onLoadDocumentShare).toHaveBeenCalledWith("doc-1")
     expect(await within(dialog).findByText("現在の権限: 管理可能")).toBeInTheDocument()
@@ -488,7 +509,7 @@ describe("DocumentWorkspace", () => {
     const onShareDocument = vi.fn().mockResolvedValue({ ok: false, error: "document share policy version conflict" })
     renderShareWorkspace({ onLoadDocumentShare, onShareDocument })
 
-    await userEvent.click(screen.getByRole("button", { name: "doc-a.mdを共有" }))
+    await launchDocumentManagementAction("doc-a.md", "共有")
     const dialog = await screen.findByRole("dialog", { name: "ファイル共有" })
     await userEvent.type(within(dialog).getByLabelText("理由"), "stale 更新")
     await userEvent.click(within(dialog).getByRole("button", { name: "保存" }))
@@ -525,12 +546,12 @@ describe("DocumentWorkspace", () => {
     const onShareDocument = vi.fn().mockResolvedValue({ ok: true })
     renderShareWorkspace({ onLoadDocumentShare, onShareDocument })
 
-    await userEvent.click(screen.getByRole("button", { name: "doc-a.mdを共有" }))
+    await launchDocumentManagementAction("doc-a.md", "共有")
     let dialog = await screen.findByRole("dialog", { name: "ファイル共有" })
     expect(await within(dialog).findByText("直接: ユーザー user-old / 閲覧のみ")).toBeInTheDocument()
 
     await userEvent.click(within(dialog).getByRole("button", { name: "ファイル共有を閉じる" }))
-    await userEvent.click(screen.getByRole("button", { name: "doc-b.mdを共有" }))
+    await launchDocumentManagementAction("doc-b.md", "共有")
     dialog = screen.getByRole("dialog", { name: "ファイル共有" })
 
     expect(within(dialog).queryByText("直接: ユーザー user-old / 閲覧のみ")).not.toBeInTheDocument()
@@ -544,7 +565,7 @@ describe("DocumentWorkspace", () => {
     const onShareDocument = vi.fn().mockResolvedValue({ ok: true })
     renderShareWorkspace({ onLoadDocumentShare, onShareDocument })
 
-    await userEvent.click(screen.getByRole("button", { name: "doc-b.mdを共有" }))
+    await launchDocumentManagementAction("doc-b.md", "共有")
     const dialog = await screen.findByRole("dialog", { name: "ファイル共有" })
 
     await userEvent.type(within(dialog).getByLabelText("理由"), "急ぎの共有")
@@ -560,7 +581,7 @@ describe("DocumentWorkspace", () => {
     const onShareDocument = vi.fn().mockResolvedValue({ ok: true })
     renderShareWorkspace({ onLoadDocumentShare, onShareDocument })
 
-    await userEvent.click(screen.getByRole("button", { name: "doc-b.mdを共有" }))
+    await launchDocumentManagementAction("doc-b.md", "共有")
     const dialog = await screen.findByRole("dialog", { name: "ファイル共有" })
     docBLoad.resolve(shareInfo("doc-b", []))
     expect(await within(dialog).findByText("現在の権限: 管理可能")).toBeInTheDocument()
@@ -584,10 +605,10 @@ describe("DocumentWorkspace", () => {
     const onShareDocument = vi.fn().mockResolvedValue({ ok: true })
     renderShareWorkspace({ onLoadDocumentShare, onShareDocument })
 
-    await userEvent.click(screen.getByRole("button", { name: "doc-a.mdを共有" }))
+    await launchDocumentManagementAction("doc-a.md", "共有")
     let dialog = await screen.findByRole("dialog", { name: "ファイル共有" })
     await userEvent.click(within(dialog).getByRole("button", { name: "ファイル共有を閉じる" }))
-    await userEvent.click(screen.getByRole("button", { name: "doc-b.mdを共有" }))
+    await launchDocumentManagementAction("doc-b.md", "共有")
     dialog = screen.getByRole("dialog", { name: "ファイル共有" })
 
     docBLoad.resolve(shareInfo("doc-b", []))
@@ -617,7 +638,7 @@ describe("DocumentWorkspace", () => {
     const onShareDocument = vi.fn().mockResolvedValue({ ok: true })
     renderShareWorkspace({ onLoadDocumentShare, onShareDocument })
 
-    await userEvent.click(screen.getByRole("button", { name: "doc-a.mdを共有" }))
+    await launchDocumentManagementAction("doc-a.md", "共有")
     const dialog = await screen.findByRole("dialog", { name: "ファイル共有" })
 
     expect(await within(dialog).findByRole("alert")).toHaveTextContent("共有設定を取得できませんでした。")
@@ -629,7 +650,7 @@ describe("DocumentWorkspace", () => {
     const onShareDocument = vi.fn().mockResolvedValue({ ok: true })
     renderShareWorkspace({ onLoadDocumentShare, onShareDocument })
 
-    await userEvent.click(screen.getByRole("button", { name: "doc-a.mdを共有" }))
+    await launchDocumentManagementAction("doc-a.md", "共有")
     const dialog = await screen.findByRole("dialog", { name: "ファイル共有" })
     expect(await within(dialog).findByRole("alert")).toBeInTheDocument()
 
@@ -660,12 +681,12 @@ describe("DocumentWorkspace", () => {
     const onShareDocument = vi.fn().mockResolvedValue({ ok: true })
     renderShareWorkspace({ onLoadDocumentShare, onShareDocument })
 
-    await userEvent.click(screen.getByRole("button", { name: "doc-a.mdを共有" }))
+    await launchDocumentManagementAction("doc-a.md", "共有")
     let dialog = await screen.findByRole("dialog", { name: "ファイル共有" })
     expect(await within(dialog).findByRole("alert")).toBeInTheDocument()
     await userEvent.click(within(dialog).getByRole("button", { name: "ファイル共有を閉じる" }))
 
-    await userEvent.click(screen.getByRole("button", { name: "doc-a.mdを共有" }))
+    await launchDocumentManagementAction("doc-a.md", "共有")
     dialog = await screen.findByRole("dialog", { name: "ファイル共有" })
     expect(await within(dialog).findByText("直接: ユーザー user-restored / 閲覧のみ")).toBeInTheDocument()
 
@@ -684,7 +705,7 @@ describe("DocumentWorkspace", () => {
     const onShareDocument = vi.fn().mockResolvedValue({ ok: true })
     renderShareWorkspace({ onLoadDocumentShare, onShareDocument })
 
-    await userEvent.click(screen.getByRole("button", { name: "doc-a.mdを共有" }))
+    await launchDocumentManagementAction("doc-a.md", "共有")
     const dialog = await screen.findByRole("dialog", { name: "ファイル共有" })
     expect(await within(dialog).findByRole("alert")).toBeInTheDocument()
 
@@ -730,7 +751,7 @@ describe("DocumentWorkspace", () => {
       />
     )
 
-    await userEvent.click(screen.getAllByRole("button", { name: "requirements.mdを移動" })[0]!)
+    await launchDocumentManagementAction("requirements.md", "移動", 0)
     const dialog = screen.getByRole("dialog", { name: "ファイル移動" })
     await userEvent.selectOptions(within(dialog).getByLabelText("移動先フォルダ"), "group-1")
     await userEvent.type(within(dialog).getByLabelText("理由"), "整理")
@@ -802,9 +823,9 @@ describe("DocumentWorkspace", () => {
       />
     )
 
-    await userEvent.click(screen.getByRole("row", { name: "preview.pdfの詳細を表示" }))
+    const drawer = await openDocumentDetail("preview.pdf")
+    await userEvent.click(within(drawer).getByRole("button", { name: "技術・品質詳細を表示" }))
 
-    const drawer = screen.getByRole("dialog", { name: "preview.pdf" })
     expect(within(drawer).getByText("抽出品質")).toBeInTheDocument()
     expect(within(drawer).getByText(/extraction: low/)).toBeInTheDocument()
     expect(within(drawer).getByText(/RAG: eligible_with_warning/)).toBeInTheDocument()
@@ -838,9 +859,9 @@ describe("DocumentWorkspace", () => {
       />
     )
 
-    await userEvent.click(screen.getByRole("row", { name: "requirements.mdの詳細を表示" }))
+    const drawer = await openDocumentDetail("requirements.md")
+    await userEvent.click(within(drawer).getByRole("button", { name: "技術・品質詳細を表示" }))
 
-    const drawer = screen.getByRole("dialog", { name: "requirements.md" })
     expect(within(drawer).getByText("ParsedDocument summary")).toBeInTheDocument()
     expect(within(drawer).getAllByText("利用不可").length).toBeGreaterThanOrEqual(4)
     expect(within(drawer).queryByText(/pageCount:/)).not.toBeInTheDocument()
@@ -1019,7 +1040,7 @@ describe("DocumentWorkspace", () => {
       />
     )
 
-    await userEvent.click(screen.getByTitle("requirements.mdの再インデックスをステージング"))
+    await launchDocumentManagementAction("requirements.md", "再インデックス")
     expect(screen.getByRole("dialog", { name: "再インデックスをステージングしますか" })).toBeInTheDocument()
     await userEvent.click(screen.getByRole("button", { name: "ステージング" }))
     await userEvent.click(screen.getAllByRole("button", { name: "切替" })[0]!)
@@ -1071,7 +1092,7 @@ describe("DocumentWorkspace", () => {
     expect(within(recentOperations).getAllByText("user-1").length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText(/監査ログ API は未接続です/)).toBeInTheDocument()
 
-    await userEvent.click(screen.getByTitle("requirements.mdを削除"))
+    await launchDocumentManagementAction("requirements.md", "削除")
     await userEvent.type(screen.getByRole("textbox", { name: "削除理由" }), "obsolete document")
     await userEvent.click(screen.getByRole("button", { name: "削除" }))
 
@@ -1111,7 +1132,7 @@ describe("DocumentWorkspace", () => {
       />
     )
 
-    await userEvent.click(screen.getByTitle("requirements.mdを削除"))
+    await launchDocumentManagementAction("requirements.md", "削除")
     const dialog = screen.getByRole("dialog", { name: "文書を削除しますか" })
     await userEvent.type(within(dialog).getByRole("textbox", { name: "削除理由" }), "obsolete document")
     await userEvent.click(within(dialog).getByRole("button", { name: "削除" }))
@@ -1153,7 +1174,7 @@ describe("DocumentWorkspace", () => {
       />
     )
 
-    await userEvent.click(screen.getByTitle("requirements.mdを削除"))
+    await launchDocumentManagementAction("requirements.md", "削除")
     await userEvent.type(screen.getByRole("textbox", { name: "削除理由" }), "obsolete document")
     await userEvent.click(screen.getByRole("button", { name: "削除" }))
 
@@ -1196,7 +1217,8 @@ describe("DocumentWorkspace", () => {
       />
     )
 
-    const deleteButton = screen.getByTitle("requirements.mdを削除")
+    const detailButton = getDocumentDetailButton("requirements.md")
+    const deleteButton = await getDocumentManagementAction("requirements.md", "削除")
     await user.click(deleteButton)
     const dialog = screen.getByRole("dialog", { name: "文書を削除しますか" })
     const cancelButton = within(dialog).getByRole("button", { name: "キャンセル" })
@@ -1213,7 +1235,7 @@ describe("DocumentWorkspace", () => {
 
     await user.keyboard("{Escape}")
     expect(screen.queryByRole("dialog", { name: "文書を削除しますか" })).not.toBeInTheDocument()
-    expect(deleteButton).toHaveFocus()
+    expect(detailButton).toHaveFocus()
   })
 
   it("操作データがない場合は最近の操作の空状態を表示する", async () => {
@@ -2012,7 +2034,7 @@ describe("DocumentWorkspace", () => {
     expect(screen.getAllByText("CSV").length).toBeGreaterThanOrEqual(1)
     expect(screen.queryByText("メモリカード")).not.toBeInTheDocument()
 
-    await userEvent.click(screen.getByTitle("inventory.csvの再インデックスをステージング"))
+    await launchDocumentManagementAction("inventory.csv", "再インデックス")
     await userEvent.click(screen.getByRole("button", { name: "ステージング" }))
 
     expect(onStageReindex).toHaveBeenCalledWith("doc-csv")
@@ -2161,6 +2183,233 @@ describe("DocumentWorkspace", () => {
     expect(within(migrationStrip).getByText("doc-1 → doc-1-staged").closest("article")).toHaveAttribute("aria-current", "true")
   })
 
+  it("URL由来のページと表示件数を復元し、絞り込み変更時は先頭ページへ戻す", async () => {
+    const onUrlStateChange = vi.fn()
+    render(
+      <DocumentWorkspace
+        documents={paginatedDocuments}
+        {...documentGroupProps}
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
+        canReindex={true}
+        migrations={[]}
+        urlState={{ page: 2, pageSize: 25 }}
+        onUrlStateChange={onUrlStateChange}
+        onUpload={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    expect(screen.getByText("26-30 / 30 件を表示（フォルダ内 30 件 / 全体 30 件）")).toBeInTheDocument()
+    expect(screen.getByText("ページ 2 / 2")).toBeInTheDocument()
+    expect(screen.getByLabelText("表示件数")).toHaveValue("25")
+
+    await userEvent.type(screen.getByLabelText("ファイル名検索"), "policy-30")
+
+    expect(screen.getByText("1-1 / 1 件を表示（フォルダ内 30 件 / 全体 30 件）")).toBeInTheDocument()
+    await waitFor(() => expect(onUrlStateChange).toHaveBeenLastCalledWith(
+      expect.not.objectContaining({ page: 2 }),
+      "replace"
+    ))
+  })
+
+  it("catalog未確定中はURLの有効なページを早期補正せず、取得後に復元する", () => {
+    const target = { id: "documents", label: "文書", regionId: "documents-resource-region", source: "文書 API" }
+    const sharedProps = {
+      ...documentGroupProps,
+      loading: false,
+      canWrite: true,
+      canDelete: true,
+      canCreateGroups: true,
+      canShareGroups: true,
+      canReindex: true,
+      migrations: [],
+      urlState: { page: 2, pageSize: 25 },
+      onUpload: vi.fn(),
+      onDelete: vi.fn(),
+      onStageReindex: vi.fn(),
+      onCutoverReindex: vi.fn(),
+      onRollbackReindex: vi.fn(),
+      onBack: vi.fn()
+    }
+    const { rerender } = render(
+      <DocumentWorkspace
+        {...sharedProps}
+        documents={[]}
+        dataState={{
+          kind: "loading",
+          target,
+          parts: [{ id: "catalog", label: "文書一覧", status: "loading" }],
+          operation: "文書一覧を取得",
+          retainContent: false
+        }}
+      />
+    )
+
+    expect(screen.queryByText("対象件数が変わったため、利用できる最後のページへ移動しました。")).not.toBeInTheDocument()
+
+    rerender(
+      <DocumentWorkspace
+        {...sharedProps}
+        documents={paginatedDocuments}
+        dataState={{
+          kind: "content",
+          target,
+          parts: [{ id: "catalog", label: "文書一覧", status: "ready", asOf: "2026-07-14T08:30:00.000Z" }],
+          asOf: "2026-07-14T08:30:00.000Z"
+        }}
+      />
+    )
+
+    expect(screen.getByText("ページ 2 / 2")).toBeInTheDocument()
+    expect(screen.queryByText("対象件数が変わったため、利用できる最後のページへ移動しました。")).not.toBeInTheDocument()
+  })
+
+  it("存在しない・権限外のURL状態を識別子の再掲なしで正規化する", async () => {
+    const onUrlStateChange = vi.fn()
+    render(
+      <DocumentWorkspace
+        documents={[{ ...documents[0]!, capabilities: { canRead: true, canShare: false, canMove: false, canDelete: false, canReindex: false } }]}
+        documentGroups={documentGroups}
+        uploadGroupId=""
+        loading={false}
+        canWrite={false}
+        canDelete={false}
+        canCreateGroups={false}
+        canShareGroups={false}
+        canReindex={false}
+        migrations={[]}
+        urlState={{
+          folderId: "secret-folder",
+          documentId: "secret-document",
+          migrationId: "secret-migration",
+          query: "policy",
+          type: "内部形式",
+          status: "active",
+          groupFilter: "secret-group",
+          sort: "chunkDesc",
+          page: 9999999,
+          pageSize: 1000
+        }}
+        onUrlStateChange={onUrlStateChange}
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={vi.fn()}
+        onShareGroup={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    const notice = await screen.findByRole("status")
+    expect(notice).toHaveTextContent("許可された既定値へ戻しました")
+    expect(notice).not.toHaveTextContent("secret")
+    expect(document.body).not.toHaveTextContent("secret-folder")
+    expect(document.body).not.toHaveTextContent("secret-document")
+    await waitFor(() => expect(onUrlStateChange).toHaveBeenCalledWith({ query: "policy" }, "replace"))
+  })
+
+  it("現在の表示条件に取得元と最終確認時刻を表示する", () => {
+    const asOf = "2026-07-14T08:30:00.000Z"
+    render(
+      <DocumentWorkspace
+        documents={documents}
+        {...documentGroupProps}
+        dataState={{
+          kind: "content",
+          target: { id: "documents", label: "文書", regionId: "documents-resource-region", source: "Document Catalog API" },
+          parts: [{ id: "catalog", label: "文書一覧", status: "ready", asOf }],
+          asOf
+        }}
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
+        canReindex={true}
+        migrations={[]}
+        onUpload={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    const context = screen.getByRole("region", { name: "現在の文書表示条件" })
+    expect(within(context).getByText("Document Catalog API")).toBeInTheDocument()
+    expect(within(context).getByText("取得済み")).toBeInTheDocument()
+    expect(within(context).getByRole("time")).toHaveAttribute("datetime", asOf)
+  })
+
+  it("staleでは現在contextを保持し、errorでは対象付き再試行を表示する", async () => {
+    const onRetryLoad = vi.fn()
+    const asOf = "2026-07-14T08:30:00.000Z"
+    const target = { id: "documents", label: "文書ワークスペース", regionId: "documents-resource-region", source: "文書 API" }
+    const sharedProps = {
+      documents,
+      ...documentGroupProps,
+      loading: false,
+      canWrite: true,
+      canDelete: true,
+      canCreateGroups: true,
+      canShareGroups: true,
+      canReindex: true,
+      migrations: [],
+      onRetryLoad,
+      onUpload: vi.fn(),
+      onDelete: vi.fn(),
+      onStageReindex: vi.fn(),
+      onCutoverReindex: vi.fn(),
+      onRollbackReindex: vi.fn(),
+      onBack: vi.fn()
+    }
+    const { rerender } = render(
+      <DocumentWorkspace
+        {...sharedProps}
+        dataState={{
+          kind: "stale",
+          target,
+          parts: [{ id: "catalog", label: "文書一覧", status: "stale", asOf }],
+          message: "取得済み一覧を表示しています。",
+          asOf
+        }}
+      />
+    )
+
+    expect(screen.getByRole("status", { name: "文書ワークスペースは最新ではありません" })).toBeInTheDocument()
+    expect(screen.getByRole("region", { name: "現在の文書表示条件" })).toHaveTextContent("更新が必要")
+    await userEvent.click(screen.getByRole("button", { name: "最新情報を取得" }))
+    expect(onRetryLoad).toHaveBeenCalledTimes(1)
+
+    rerender(
+      <DocumentWorkspace
+        {...sharedProps}
+        dataState={{
+          kind: "error",
+          target,
+          parts: [{ id: "catalog", label: "文書一覧", status: "failed" }],
+          message: "文書一覧を取得できませんでした。"
+        }}
+      />
+    )
+
+    expect(screen.getByRole("alert", { name: "文書ワークスペースを取得できませんでした" })).toHaveTextContent("文書一覧を取得できませんでした。")
+    expect(screen.getByRole("button", { name: "再試行" })).toHaveAttribute("aria-controls", "documents-resource-region")
+    expect(screen.queryByRole("region", { name: "現在の文書表示条件" })).not.toBeInTheDocument()
+  })
+
   it("文書管理状態の変更をURL同期コールバックへ通知する", async () => {
     const onUrlStateChange = vi.fn()
 
@@ -2194,21 +2443,21 @@ describe("DocumentWorkspace", () => {
     await userEvent.click(screen.getByLabelText("requirements.mdの詳細を表示"))
 
     await waitFor(() => {
-      expect(onUrlStateChange).toHaveBeenLastCalledWith(expect.objectContaining({
+      expect(onUrlStateChange).toHaveBeenCalledWith(expect.objectContaining({
         folderId: "group-1",
         documentId: "doc-1",
         query: "requirements"
-      }))
+      }), "push")
     })
 
     await userEvent.click(screen.getByRole("button", { name: "文書詳細を閉じる" }))
     await waitFor(() => {
-      expect(onUrlStateChange).toHaveBeenLastCalledWith(expect.not.objectContaining({ documentId: "doc-1" }))
+      expect(onUrlStateChange).toHaveBeenCalledWith(expect.not.objectContaining({ documentId: "doc-1" }), "push")
     })
 
     await userEvent.click(screen.getAllByRole("button", { name: "切替" })[0]!)
     await waitFor(() => {
-      expect(onUrlStateChange).toHaveBeenLastCalledWith(expect.objectContaining({ migrationId: "migration-1" }))
+      expect(onUrlStateChange).toHaveBeenCalledWith(expect.objectContaining({ migrationId: "migration-1" }), "push")
     })
   })
 
@@ -2254,16 +2503,16 @@ describe("DocumentWorkspace", () => {
       />
     )
 
-    await userEvent.click(screen.getByLabelText("requirements.mdの詳細を表示"))
+    const drawer = await openDocumentDetail("requirements.md")
+    await userEvent.click(within(drawer).getByRole("button", { name: "技術・品質詳細を表示" }))
 
-    expect(screen.getByRole("dialog", { name: "requirements.md" })).toBeInTheDocument()
-    expect(screen.getByText("run-doc-1")).toBeInTheDocument()
-    expect(screen.getByText("embed-model")).toBeInTheDocument()
-    expect(screen.getByText("memory-model")).toBeInTheDocument()
-    expect(screen.getByText("2.0 KB")).toBeInTheDocument()
-    expect(screen.getAllByText("利用不可").length).toBeGreaterThanOrEqual(1)
+    expect(within(drawer).getByText("run-doc-1")).toBeInTheDocument()
+    expect(within(drawer).getByText("embed-model")).toBeInTheDocument()
+    expect(within(drawer).getByText("memory-model")).toBeInTheDocument()
+    expect(within(drawer).getByText("2.0 KB")).toBeInTheDocument()
+    expect(within(drawer).getAllByText("利用不可").length).toBeGreaterThanOrEqual(1)
 
-    await userEvent.click(screen.getByRole("button", { name: "documentId コピー" }))
+    await userEvent.click(within(drawer).getByRole("button", { name: "文書識別子をコピー" }))
     expect(writeText).toHaveBeenCalledWith("doc-1")
     expect(screen.getByRole("button", { name: "コピー済み" })).toBeInTheDocument()
 
@@ -2271,6 +2520,50 @@ describe("DocumentWorkspace", () => {
     expect(onAskDocument).toHaveBeenCalledWith(expect.objectContaining({ documentId: "doc-1", fileName: "requirements.md" }))
 
     vi.unstubAllGlobals()
+  })
+
+  it("文書詳細drawerは初期focus、focus trap、Escape、focus復帰を扱う", async () => {
+    const user = userEvent.setup()
+    render(
+      <DocumentWorkspace
+        documents={documents}
+        {...documentGroupProps}
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
+        canReindex={true}
+        migrations={[]}
+        onUpload={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    const detailButton = getDocumentDetailButton("requirements.md")
+    await user.click(detailButton)
+    const drawer = screen.getByRole("dialog", { name: "requirements.md" })
+    const closeButton = within(drawer).getByRole("button", { name: "文書詳細を閉じる" })
+    expect(closeButton).toHaveFocus()
+
+    const managementToggle = within(drawer).getByRole("button", { name: "管理操作を表示" })
+    expect(managementToggle).toHaveAttribute("aria-expanded", "false")
+    await user.click(managementToggle)
+    expect(managementToggle).toHaveAttribute("aria-expanded", "true")
+    expect(within(drawer).getByRole("group", { name: "高影響操作" })).toBeInTheDocument()
+
+    const focusableButtons = within(drawer).getAllByRole("button").filter((button) => !button.hasAttribute("disabled"))
+    focusableButtons.at(-1)!.focus()
+    await user.tab()
+    expect(closeButton).toHaveFocus()
+
+    await user.keyboard("{Escape}")
+    expect(screen.queryByRole("dialog", { name: "requirements.md" })).not.toBeInTheDocument()
+    expect(detailButton).toHaveFocus()
   })
 
   it("詳細drawerから既存の確認ダイアログへ接続する", async () => {
@@ -2294,8 +2587,7 @@ describe("DocumentWorkspace", () => {
       />
     )
 
-    await userEvent.click(screen.getByLabelText("requirements.mdの詳細を表示"))
-    await userEvent.click(screen.getByRole("button", { name: "再インデックス" }))
+    await launchDocumentManagementAction("requirements.md", "再インデックス")
     expect(screen.getByRole("dialog", { name: "再インデックスをステージングしますか" })).toBeInTheDocument()
   })
 
@@ -2633,8 +2925,9 @@ describe("DocumentWorkspace", () => {
     expect(screen.getByLabelText("新しいフォルダ名（必須）")).toBeInTheDocument()
     await userEvent.click(screen.getByRole("button", { name: "ドキュメント追加を閉じる" }))
     expect(screen.getByTitle("フォルダ設定を開く")).toBeEnabled()
-    expect(screen.queryByTitle("requirements.mdを削除")).not.toBeInTheDocument()
-    expect(screen.queryByTitle("requirements.mdの再インデックスをステージング")).not.toBeInTheDocument()
+    const readOnlyDrawer = await openDocumentDetail("requirements.md")
+    expect(within(readOnlyDrawer).queryByRole("button", { name: "管理操作を表示" })).not.toBeInTheDocument()
+    await userEvent.click(within(readOnlyDrawer).getByRole("button", { name: "文書詳細を閉じる" }))
     expect(onDelete).not.toHaveBeenCalled()
     expect(onStageReindex).not.toHaveBeenCalled()
   })
@@ -2693,8 +2986,9 @@ describe("DocumentWorkspace", () => {
     await userEvent.click(screen.getByRole("button", { name: "フォルダ設定を閉じる" }))
 
     await userEvent.click(screen.getByRole("button", { name: /権限未設定フォルダ/ }))
-    expect(screen.queryByTitle("requirements.mdを削除")).not.toBeInTheDocument()
-    expect(screen.queryByTitle("requirements.mdの再インデックスをステージング")).not.toBeInTheDocument()
+    const missingPermissionDrawer = await openDocumentDetail("requirements.md")
+    expect(within(missingPermissionDrawer).queryByRole("button", { name: "管理操作を表示" })).not.toBeInTheDocument()
+    await userEvent.click(within(missingPermissionDrawer).getByRole("button", { name: "文書詳細を閉じる" }))
     expect(onDelete).not.toHaveBeenCalled()
     expect(onStageReindex).not.toHaveBeenCalled()
 
@@ -2751,10 +3045,14 @@ describe("DocumentWorkspace", () => {
       />
     )
 
-    expect(screen.getByTitle("full.mdを削除")).toBeEnabled()
-    expect(screen.getByTitle("full.mdの再インデックスをステージング")).toBeEnabled()
-    expect(screen.queryByTitle("readonly.mdを削除")).not.toBeInTheDocument()
-    expect(screen.queryByTitle("readonly.mdの再インデックスをステージング")).not.toBeInTheDocument()
+    const fullDrawer = await openDocumentDetail("full.md")
+    await userEvent.click(within(fullDrawer).getByRole("button", { name: "管理操作を表示" }))
+    expect(within(fullDrawer).getByRole("button", { name: "削除" })).toBeEnabled()
+    expect(within(fullDrawer).getByRole("button", { name: "再インデックス" })).toBeEnabled()
+    await userEvent.click(within(fullDrawer).getByRole("button", { name: "文書詳細を閉じる" }))
+
+    const readOnlyDrawer = await openDocumentDetail("readonly.md")
+    expect(within(readOnlyDrawer).queryByRole("button", { name: "管理操作を表示" })).not.toBeInTheDocument()
     expect(onDelete).not.toHaveBeenCalled()
     expect(onStageReindex).not.toHaveBeenCalled()
   })
@@ -3284,8 +3582,12 @@ describe("DocumentWorkspace", () => {
     await openFolderSettings()
     expect(screen.getByText("ベクトル化中")).toBeInTheDocument()
     expect(screen.getAllByText("run ID: run-123").length).toBeGreaterThanOrEqual(1)
-    expect(screen.getByTitle("policy.pdfを削除")).toBeDisabled()
-    expect(screen.getByTitle("requirements.mdを削除")).not.toBeDisabled()
+    await userEvent.click(screen.getByRole("button", { name: "フォルダ設定を閉じる" }))
+    const policyDelete = await getDocumentManagementAction("policy.pdf", "削除")
+    expect(policyDelete).toBeDisabled()
+    await userEvent.click(screen.getByRole("button", { name: "文書詳細を閉じる" }))
+    const requirementsDelete = await getDocumentManagementAction("requirements.md", "削除")
+    expect(requirementsDelete).toBeEnabled()
   })
 
   it("read-only共有文書を発見・閲覧・chat選択でき、管理操作と内部情報を表示しない", async () => {
@@ -3352,9 +3654,9 @@ describe("DocumentWorkspace", () => {
     expect(screen.queryByRole("columnheader", { name: "操作" })).not.toBeInTheDocument()
     expect(screen.queryByRole("columnheader", { name: "チャンク数" })).not.toBeInTheDocument()
     expect(screen.queryByRole("columnheader", { name: "状態" })).not.toBeInTheDocument()
+    expect(screen.getByRole("columnheader", { name: "詳細" })).toBeInTheDocument()
 
-    await userEvent.click(screen.getByRole("row", { name: "shared-policy.pdfの詳細を表示" }))
-    const drawer = screen.getByRole("dialog", { name: "shared-policy.pdf" })
+    const drawer = await openDocumentDetail("shared-policy.pdf")
     expect(within(drawer).getByText("application/pdf")).toBeInTheDocument()
     expect(within(drawer).queryByText("secret-document-id")).not.toBeInTheDocument()
     expect(within(drawer).queryByText("confidential-principal")).not.toBeInTheDocument()
@@ -3362,6 +3664,7 @@ describe("DocumentWorkspace", () => {
     expect(within(drawer).queryByText("管理者だけが確認できる抽出テキスト")).not.toBeInTheDocument()
     expect(within(drawer).queryByRole("button", { name: "削除" })).not.toBeInTheDocument()
     expect(within(drawer).queryByRole("button", { name: "再インデックス" })).not.toBeInTheDocument()
+    expect(within(drawer).queryByRole("button", { name: "管理操作を表示" })).not.toBeInTheDocument()
 
     await userEvent.click(within(drawer).getByRole("button", { name: "抽出テキストをダウンロード" }))
     expect(onDownloadExtractedText).toHaveBeenCalledWith(readOnlyDocument.documentId)

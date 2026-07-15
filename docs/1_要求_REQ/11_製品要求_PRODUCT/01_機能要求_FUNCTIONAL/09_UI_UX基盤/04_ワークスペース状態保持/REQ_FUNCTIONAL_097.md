@@ -35,7 +35,7 @@
 ## 要件の源泉・背景
 
 - 源泉: GitHub Issue #345 の search/filter/sort/selection predictability TODO。
-- current evidence: document workspace の folder/document/migration/query/type/status/group/sort は canonical path/query へ serialize され、route normalization と reload evidence がある。admin/questions の detail/filter/selection と scroll context は引き続き未完了。
+- current evidence: document workspace の folder/document/migration/folderQuery/query/type/status/group/sort/page/pageSize は canonical path/query へ serialize される。active value、result/source/as-of、selection を表示し、reload/detail return/back/forward、catalog 確定前、invalid/obsolete/unauthorized、zero/many/long-label を component/Chromium E2E で検証済み。admin/questions の detail/filter/selection と scroll context は引き続き未完了。
 - existing admin task: `tasks/todo/20260714-1011-admin-ui-governance-quality.md`。
 
 ## 要件の目的・意図
@@ -72,5 +72,5 @@
 
 - `docs/3_設計_DES/21_UI_UX/DES_UI_UX_001.md`
 - `tasks/done/20260714-issue-345-url-history-routing.md`
-- `tasks/todo/20260714-issue-345-document-workspace-context.md`
+- `tasks/done/20260714-issue-345-document-workspace-context.md`
 - `tasks/todo/20260714-1011-admin-ui-governance-quality.md`

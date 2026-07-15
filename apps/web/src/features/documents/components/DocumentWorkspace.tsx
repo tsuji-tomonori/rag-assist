@@ -51,16 +51,23 @@ import {
   type DocumentSortKey,
   type WorkspaceFolder
 } from "./workspace/documentWorkspaceUtils.js"
+import {
+  documentWorkspaceNormalizationMessage,
+  normalizeDocumentWorkspaceUrlState
+} from "./workspace/documentWorkspaceState.js"
 
 export type DocumentWorkspaceUrlState = {
   folderId?: string | undefined
   documentId?: string | undefined
   migrationId?: string | undefined
+  folderQuery?: string | undefined
   query?: string | undefined
   type?: string | undefined
   status?: string | undefined
   groupFilter?: string | undefined
   sort?: DocumentSortKey | undefined
+  page?: number | undefined
+  pageSize?: number | undefined
 }
 
 export function DocumentWorkspace({
@@ -138,7 +145,7 @@ export function DocumentWorkspace({
   onAskDocument?: (document: DocumentManifest) => void
   onBack: () => void
   urlState?: DocumentWorkspaceUrlState
-  onUrlStateChange?: (state: DocumentWorkspaceUrlState) => void
+  onUrlStateChange?: (state: DocumentWorkspaceUrlState, historyMode?: "push" | "replace") => void
 }) {
   const resolvedDataState = dataState ?? createContentResourceState({
     id: "documents",
@@ -174,7 +181,7 @@ export function DocumentWorkspace({
   const [editGroupMoveReason, setEditGroupMoveReason] = useState("")
   const [folderSettingsOpen, setFolderSettingsOpen] = useState(false)
   const [selectedFolderId, setSelectedFolderId] = useState(urlState?.folderId ?? "all")
-  const [folderSearch, setFolderSearch] = useState("")
+  const [folderSearch, setFolderSearch] = useState(urlState?.folderQuery ?? "")
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null)
   const [confirmError, setConfirmError] = useState<string | null>(null)
   const [deleteReason, setDeleteReason] = useState("")
@@ -183,8 +190,8 @@ export function DocumentWorkspace({
   const [documentStatusFilter, setDocumentStatusFilter] = useState(urlState?.status ?? "all")
   const [documentGroupFilter, setDocumentGroupFilter] = useState(urlState?.groupFilter ?? "all")
   const [documentSort, setDocumentSort] = useState<DocumentSortKey>(urlState?.sort ?? "updatedDesc")
-  const [documentPageSize, setDocumentPageSize] = useState(25)
-  const [documentPage, setDocumentPage] = useState(1)
+  const [documentPageSize, setDocumentPageSize] = useState(urlState?.pageSize ?? 25)
+  const [documentPage, setDocumentPage] = useState(urlState?.page ?? 1)
   const [selectedDocumentId, setSelectedDocumentId] = useState(urlState?.documentId ?? "")
   const [selectedMigrationId, setSelectedMigrationId] = useState(urlState?.migrationId ?? "")
   const [copiedDocumentId, setCopiedDocumentId] = useState<string | null>(null)
@@ -203,6 +210,7 @@ export function DocumentWorkspace({
   const [documentMoveDestinationId, setDocumentMoveDestinationId] = useState("")
   const [documentMoveNewTitle, setDocumentMoveNewTitle] = useState("")
   const [documentMoveReason, setDocumentMoveReason] = useState("")
+  const [urlNormalizationMessage, setUrlNormalizationMessage] = useState<string | null>(null)
   const uploadInputRef = useRef<HTMLInputElement | null>(null)
   const createGroupNameRef = useRef<HTMLInputElement | null>(null)
   const shareSelectRef = useRef<HTMLSelectElement | null>(null)
@@ -246,7 +254,6 @@ export function DocumentWorkspace({
   const uploadDestinationLabel = uploadDestination?.name ?? (isQuickCreatedUploadDestination ? quickCreatedDestination?.name : undefined) ?? "未選択"
   const selectedFolderCanManage = !selectedFolder.group || canManageDocumentGroup(selectedFolder.group)
   const canWriteSelectedFolder = canWrite && selectedFolderCanManage
-  const canDeleteSelectedFolder = canDelete && selectedFolderCanManage
   const canReindexSelectedFolder = canReindex && selectedFolderCanManage
   const canUploadToDestination = canWrite && Boolean(uploadGroupId) && Boolean(
     (uploadDestination && canManageDocumentGroup(uploadDestination)) || isQuickCreatedUploadDestination
@@ -411,33 +418,67 @@ export function DocumentWorkspace({
 
   useEffect(() => {
     if (!urlState) return
-    setSelectedFolderId(urlState.folderId ?? "all")
-    setDocumentQuery(urlState.query ?? "")
-    setDocumentTypeFilter(urlState.type ?? "all")
-    setDocumentStatusFilter(urlState.status ?? "all")
-    setDocumentGroupFilter(urlState.groupFilter ?? "all")
-    setDocumentSort(urlState.sort ?? "updatedDesc")
-    setSelectedDocumentId(urlState.documentId ?? "")
-    setSelectedMigrationId(urlState.migrationId ?? "")
-  }, [urlState, urlState?.documentId, urlState?.folderId, urlState?.groupFilter, urlState?.migrationId, urlState?.query, urlState?.sort, urlState?.status, urlState?.type])
+    const normalized = hasCatalogResult
+      ? normalizeDocumentWorkspaceUrlState({
+          state: urlState,
+          documents,
+          documentGroups,
+          migrations,
+          lastUploadedDocument,
+          showManagementControls: hasWorkspaceManagement
+        })
+      : { state: urlState, reasons: [] as const }
+    const next = normalized.state
+    setSelectedFolderId(next.folderId ?? "all")
+    setFolderSearch(next.folderQuery ?? "")
+    setDocumentQuery(next.query ?? "")
+    setDocumentTypeFilter(next.type ?? "all")
+    setDocumentStatusFilter(next.status ?? "all")
+    setDocumentGroupFilter(next.groupFilter ?? "all")
+    setDocumentSort(next.sort ?? "updatedDesc")
+    setDocumentPageSize(next.pageSize ?? 25)
+    setDocumentPage(next.page ?? 1)
+    setSelectedDocumentId(next.documentId ?? "")
+    setSelectedMigrationId(next.migrationId ?? "")
+    const message = documentWorkspaceNormalizationMessage(normalized.reasons)
+    if (message) {
+      setUrlNormalizationMessage(message)
+      onUrlStateChange?.(next, "replace")
+    }
+  }, [
+    documentGroups,
+    documents,
+    hasCatalogResult,
+    hasWorkspaceManagement,
+    lastUploadedDocument,
+    migrations,
+    onUrlStateChange,
+    urlState
+  ])
 
   useEffect(() => {
     onUrlStateChange?.({
       folderId: selectedFolderId === "all" ? undefined : selectedFolderId,
       documentId: selectedDocumentId || undefined,
       migrationId: selectedMigrationId || undefined,
+      folderQuery: folderSearch.trim() || undefined,
       query: documentQuery.trim() || undefined,
       type: documentTypeFilter === "all" ? undefined : documentTypeFilter,
       status: documentStatusFilter === "all" ? undefined : documentStatusFilter,
       groupFilter: documentGroupFilter === "all" ? undefined : documentGroupFilter,
-      sort: documentSort === "updatedDesc" ? undefined : documentSort
-    })
+      sort: documentSort === "updatedDesc" ? undefined : documentSort,
+      page: documentPage > 1 ? documentPage : undefined,
+      pageSize: documentPageSize === 25 ? undefined : documentPageSize
+    }, "replace")
   }, [
     documentGroupFilter,
     documentQuery,
     documentSort,
     documentStatusFilter,
     documentTypeFilter,
+    documentPage,
+    documentPageSize,
+    folderSearch,
     onUrlStateChange,
     selectedDocumentId,
     selectedMigrationId,
@@ -445,12 +486,10 @@ export function DocumentWorkspace({
   ])
 
   useEffect(() => {
-    setDocumentPage(1)
-  }, [documentGroupFilter, documentQuery, documentSort, documentStatusFilter, documentTypeFilter, selectedFolderId])
-
-  useEffect(() => {
-    if (documentPage > documentPageCount) setDocumentPage(documentPageCount)
-  }, [documentPage, documentPageCount])
+    if (!hasCatalogResult || documentPage <= documentPageCount) return
+    setDocumentPage(documentPageCount)
+    setUrlNormalizationMessage((current) => current ?? "対象件数が変わったため、利用できる最後のページへ移動しました。")
+  }, [documentPage, documentPageCount, hasCatalogResult])
 
   useEffect(() => {
     setShareGroups(currentShareGroupsValue)
@@ -484,6 +523,24 @@ export function DocumentWorkspace({
     setSessionOperationEvents((current) => [event, ...current].slice(0, 8))
   }
 
+  function pushWorkspaceState(overrides: Partial<DocumentWorkspaceUrlState>) {
+    setUrlNormalizationMessage(null)
+    onUrlStateChange?.({
+      folderId: selectedFolderId === "all" ? undefined : selectedFolderId,
+      documentId: selectedDocumentId || undefined,
+      migrationId: selectedMigrationId || undefined,
+      folderQuery: folderSearch.trim() || undefined,
+      query: documentQuery.trim() || undefined,
+      type: documentTypeFilter === "all" ? undefined : documentTypeFilter,
+      status: documentStatusFilter === "all" ? undefined : documentStatusFilter,
+      groupFilter: documentGroupFilter === "all" ? undefined : documentGroupFilter,
+      sort: documentSort === "updatedDesc" ? undefined : documentSort,
+      page: documentPage > 1 ? documentPage : undefined,
+      pageSize: documentPageSize === 25 ? undefined : documentPageSize,
+      ...overrides
+    }, "push")
+  }
+
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
     if (!uploadFile || !canUploadToDestination) return
@@ -513,14 +570,18 @@ export function DocumentWorkspace({
     setDocumentAddOpen(false)
     setSelectedDocumentId(document.documentId)
     setSelectedMigrationId("")
+    pushWorkspaceState({ documentId: document.documentId, migrationId: undefined })
   }
 
   function showUploadedFolder(groupId: string) {
     setDocumentAddOpen(false)
     setSelectedFolderId(groupId)
+    setSelectedDocumentId("")
+    setSelectedMigrationId("")
     setDocumentGroupFilter("all")
     setDocumentPage(1)
     onUploadGroupChange(groupId)
+    pushWorkspaceState({ folderId: groupId, documentId: undefined, migrationId: undefined, groupFilter: undefined, page: undefined })
   }
 
   async function onCreateGroupSubmit(event: FormEvent) {
@@ -536,7 +597,12 @@ export function DocumentWorkspace({
     recordSessionOperation("フォルダ作成", name, "非公開 / 共有は作成後に設定", createdGroup?.groupId ? "反映済み" : "失敗")
     if (createdGroup?.groupId && moveToCreatedGroup) {
       setSelectedFolderId(createdGroup.groupId)
+      setSelectedDocumentId("")
+      setSelectedMigrationId("")
+      setDocumentGroupFilter("all")
+      setDocumentPage(1)
       onUploadGroupChange(createdGroup.groupId)
+      pushWorkspaceState({ folderId: createdGroup.groupId, documentId: undefined, migrationId: undefined, groupFilter: undefined, page: undefined })
     }
     if (createdGroup?.groupId) setFolderSettingsOpen(false)
     setGroupName("")
@@ -636,7 +702,11 @@ export function DocumentWorkspace({
   function onDocumentConfirmAction(action: ConfirmAction) {
     if (action.kind === "delete" && !canDeleteDocument(action.document)) return
     if (action.kind === "stage" && !canReindexDocument(action.document)) return
-    if (action.kind === "cutover" || action.kind === "rollback") setSelectedMigrationId(action.migration.migrationId)
+    if (action.kind === "cutover" || action.kind === "rollback") {
+      setSelectedDocumentId("")
+      setSelectedMigrationId(action.migration.migrationId)
+      pushWorkspaceState({ documentId: undefined, migrationId: action.migration.migrationId })
+    }
     setConfirmError(null)
     if (action.kind === "delete") setDeleteReason("")
     setConfirmAction(action)
@@ -774,7 +844,45 @@ export function DocumentWorkspace({
 
   function selectFolder(folderId: string, groupId: string) {
     setSelectedFolderId(folderId)
+    setSelectedDocumentId("")
+    setSelectedMigrationId("")
+    setDocumentPage(1)
     onUploadGroupChange(groupId)
+    pushWorkspaceState({
+      folderId: folderId === "all" ? undefined : folderId,
+      documentId: undefined,
+      migrationId: undefined,
+      page: undefined
+    })
+  }
+
+  function selectDocument(document: DocumentManifest) {
+    setSelectedDocumentId(document.documentId)
+    setSelectedMigrationId("")
+    pushWorkspaceState({ documentId: document.documentId, migrationId: undefined })
+  }
+
+  function closeDocumentDetail(historyMode: "push" | "replace" = "push") {
+    setSelectedDocumentId("")
+    const next = {
+      folderId: selectedFolderId === "all" ? undefined : selectedFolderId,
+      documentId: undefined,
+      migrationId: selectedMigrationId || undefined,
+      folderQuery: folderSearch.trim() || undefined,
+      query: documentQuery.trim() || undefined,
+      type: documentTypeFilter === "all" ? undefined : documentTypeFilter,
+      status: documentStatusFilter === "all" ? undefined : documentStatusFilter,
+      groupFilter: documentGroupFilter === "all" ? undefined : documentGroupFilter,
+      sort: documentSort === "updatedDesc" ? undefined : documentSort,
+      page: documentPage > 1 ? documentPage : undefined,
+      pageSize: documentPageSize === 25 ? undefined : documentPageSize
+    }
+    onUrlStateChange?.(next, historyMode)
+  }
+
+  function changeDocumentPage(page: number) {
+    setDocumentPage(page)
+    pushWorkspaceState({ page: page > 1 ? page : undefined })
   }
 
   function openFolderSettingsModal() {
@@ -892,6 +1000,7 @@ export function DocumentWorkspace({
 
   return (
     <section className="document-workspace" aria-label={hasWorkspaceManagement ? "ドキュメント管理" : "ドキュメント閲覧"}>
+      <div className="document-workspace-chrome">
       <header className="document-page-header">
         <div>
           <button className="document-back-button" type="button" onClick={onBack} title="前の画面へ戻る" aria-label="前の画面へ戻る">
@@ -917,6 +1026,11 @@ export function DocumentWorkspace({
         </div>
       )}
 
+      {urlNormalizationMessage && (
+        <p className="document-url-normalization" role="status">{urlNormalizationMessage}</p>
+      )}
+      </div>
+
       <ResourceStateBoundary state={resolvedDataState} onRetry={onRetryLoad} onBack={onBack}>
       {hasCatalogResult ? (
       <div className="document-management-layout">
@@ -927,7 +1041,10 @@ export function DocumentWorkspace({
           selectedFolder={selectedFolder}
           selectedFolderId={selectedFolderId}
           folderSearch={folderSearch}
-          onFolderSearchChange={setFolderSearch}
+          onFolderSearchChange={(value) => {
+            setUrlNormalizationMessage(null)
+            setFolderSearch(value)
+          }}
           onSelectFolder={selectFolder}
         />
         <DocumentFilePanel
@@ -955,7 +1072,6 @@ export function DocumentWorkspace({
           selectedDocument={selectedDocument}
           operationState={operationState}
           canWrite={canWriteSelectedFolder}
-          canDelete={canDeleteSelectedFolder}
           canCreateGroups={canCreateGroups}
           canShareGroups={canShareGroups}
           canMoveGroups={canMoveGroups}
@@ -963,32 +1079,48 @@ export function DocumentWorkspace({
           canOpenDocumentAdd={canOpenDocumentAdd}
           addDocumentDisabledReason={addDocumentDisabledReason}
           showManagementControls={hasWorkspaceManagement}
-          canDeleteDocument={(document) => canDelete && canDeleteDocument(document)}
-          canReindexDocument={(document) => canReindex && canReindexDocument(document)}
-          canShareDocument={(document) => Boolean(onShareDocument) && canShareDocument(document)}
-          canMoveDocument={(document) => Boolean(onMoveDocument) && canMoveDocument(document)}
           migrations={migrations}
           selectedMigrationId={selectedMigrationId}
-          onDocumentQueryChange={setDocumentQuery}
-          onDocumentTypeFilterChange={setDocumentTypeFilter}
-          onDocumentStatusFilterChange={setDocumentStatusFilter}
-          onDocumentGroupFilterChange={setDocumentGroupFilter}
-          onDocumentSortChange={setDocumentSort}
-          onDocumentPageChange={setDocumentPage}
+          dataSource={resolvedDataState.target.source}
+          dataAsOf={resourceStateAsOf(resolvedDataState)}
+          dataStateLabel={resourceStateLabel(resolvedDataState)}
+          onDocumentQueryChange={(value) => {
+            setUrlNormalizationMessage(null)
+            setDocumentQuery(value)
+            setDocumentPage(1)
+          }}
+          onDocumentTypeFilterChange={(value) => {
+            setUrlNormalizationMessage(null)
+            setDocumentTypeFilter(value)
+            setDocumentPage(1)
+          }}
+          onDocumentStatusFilterChange={(value) => {
+            setUrlNormalizationMessage(null)
+            setDocumentStatusFilter(value)
+            setDocumentPage(1)
+          }}
+          onDocumentGroupFilterChange={(value) => {
+            setUrlNormalizationMessage(null)
+            setDocumentGroupFilter(value)
+            setDocumentPage(1)
+          }}
+          onDocumentSortChange={(value) => {
+            setUrlNormalizationMessage(null)
+            setDocumentSort(value)
+            setDocumentPage(1)
+          }}
+          onDocumentPageChange={changeDocumentPage}
           onDocumentPageSizeChange={(pageSize) => {
+            setUrlNormalizationMessage(null)
             setDocumentPageSize(pageSize)
             setDocumentPage(1)
           }}
-          onSelectDocument={(document) => {
-            setSelectedDocumentId(document.documentId)
-            setSelectedMigrationId("")
-          }}
+          onSelectDocument={selectDocument}
           onConfirmAction={onDocumentConfirmAction}
-          onShareDocument={(document) => void openDocumentShare(document)}
-          onMoveDocument={openDocumentMove}
           onOpenFolderSettings={openFolderSettingsModal}
           onOpenDocumentAdd={openDocumentAddDialog}
           onClearFilters={() => {
+            setUrlNormalizationMessage(null)
             setDocumentQuery("")
             setDocumentTypeFilter("all")
             setDocumentStatusFilter("all")
@@ -1254,25 +1386,62 @@ export function DocumentWorkspace({
           onAskDocument={selectedDocumentCanRead && onAskDocument ? () => onAskDocument(selectedDocument) : undefined}
           onDownload={selectedDocumentCanRead && onDownloadExtractedText ? () => onDownloadExtractedText(selectedDocument.documentId) : undefined}
           isDownloading={operationState.downloadingDocumentId === selectedDocument.documentId}
-          onClose={() => setSelectedDocumentId("")}
+          onShare={selectedDocument.capabilities?.canShare === true && onShareDocument
+            ? () => {
+                closeDocumentDetail("replace")
+                void openDocumentShare(selectedDocument)
+              }
+            : undefined}
+          onMove={selectedDocument.capabilities?.canMove === true && onMoveDocument
+            ? () => {
+                closeDocumentDetail("replace")
+                openDocumentMove(selectedDocument)
+              }
+            : undefined}
+          onClose={() => closeDocumentDetail()}
           onDelete={() => {
             setConfirmError(null)
             setDeleteReason("")
             if (selectedDocumentCanDelete) setConfirmAction({ kind: "delete", document: selectedDocument })
-            setSelectedDocumentId("")
+            closeDocumentDetail("replace")
           }}
           onStageReindex={() => {
             setConfirmError(null)
             if (selectedDocumentCanReindex) setConfirmAction({ kind: "stage", document: selectedDocument })
-            setSelectedDocumentId("")
+            closeDocumentDetail("replace")
           }}
           canManage={selectedDocumentCanManage}
+          canShare={selectedDocument.capabilities?.canShare === true && Boolean(onShareDocument)}
+          canMove={selectedDocument.capabilities?.canMove === true && Boolean(onMoveDocument)}
           canDelete={canDelete && selectedDocumentCanDelete}
           canReindex={canReindex && selectedDocumentCanReindex}
+          shareBusy={operationState.sharingDocumentId === selectedDocument.documentId}
+          moveBusy={operationState.movingDocumentId === selectedDocument.documentId}
+          deleteBusy={operationState.deletingDocumentId === selectedDocument.documentId}
+          reindexBusy={operationState.stagingReindexDocumentId === selectedDocument.documentId}
         />
       )}
     </section>
   )
+}
+
+function resourceStateAsOf(state: UiResourceState): string | undefined {
+  if ("asOf" in state && state.asOf) return state.asOf
+  return state.parts
+    .map((part) => part.asOf)
+    .filter((value): value is string => Boolean(value))
+    .sort((left, right) => right.localeCompare(left))[0]
+}
+
+function resourceStateLabel(state: UiResourceState): string {
+  if (state.kind === "content") return "取得済み"
+  if (state.kind === "empty") return "0 件を確認済み"
+  if (state.kind === "partial") return "一部未取得"
+  if (state.kind === "stale") return "更新が必要"
+  if (state.kind === "recovered") return "再取得済み"
+  if (state.kind === "loading" || state.kind === "retrying") return "更新中"
+  if (state.kind === "permission") return "権限を確認できません"
+  return "取得失敗"
 }
 
 function normalizeOperationResult(result: DocumentOperationResult | void) {
@@ -1342,14 +1511,6 @@ function documentOperationResultLabel(status: Exclude<OperationStatus, "processi
 
 function canManageDocumentGroup(group: DocumentGroup): boolean {
   return group.effectivePermission === "full"
-}
-
-function canShareDocument(document: DocumentManifest): boolean {
-  return document.capabilities?.canShare === true
-}
-
-function canMoveDocument(document: DocumentManifest): boolean {
-  return document.capabilities?.canMove === true
 }
 
 function canDeleteDocument(document: DocumentManifest): boolean {

@@ -41,7 +41,6 @@ export function DocumentFilePanel({
   selectedDocument,
   operationState,
   canWrite,
-  canDelete,
   canCreateGroups,
   canShareGroups,
   canMoveGroups,
@@ -49,12 +48,11 @@ export function DocumentFilePanel({
   canOpenDocumentAdd,
   addDocumentDisabledReason,
   showManagementControls,
-  canDeleteDocument,
-  canReindexDocument,
-  canShareDocument,
-  canMoveDocument,
   migrations,
   selectedMigrationId,
+  dataSource,
+  dataAsOf,
+  dataStateLabel,
   onDocumentQueryChange,
   onDocumentTypeFilterChange,
   onDocumentStatusFilterChange,
@@ -64,8 +62,6 @@ export function DocumentFilePanel({
   onDocumentPageSizeChange,
   onSelectDocument,
   onConfirmAction,
-  onShareDocument,
-  onMoveDocument,
   onOpenFolderSettings,
   onOpenDocumentAdd,
   onClearFilters
@@ -94,7 +90,6 @@ export function DocumentFilePanel({
   selectedDocument: DocumentManifest | null
   operationState: DocumentOperationState
   canWrite: boolean
-  canDelete: boolean
   canCreateGroups: boolean
   canShareGroups: boolean
   canMoveGroups: boolean
@@ -102,12 +97,11 @@ export function DocumentFilePanel({
   canOpenDocumentAdd: boolean
   addDocumentDisabledReason: string | null
   showManagementControls: boolean
-  canDeleteDocument: (document: DocumentManifest) => boolean
-  canReindexDocument: (document: DocumentManifest) => boolean
-  canShareDocument: (document: DocumentManifest) => boolean
-  canMoveDocument: (document: DocumentManifest) => boolean
   migrations: ReindexMigration[]
   selectedMigrationId?: string
+  dataSource: string
+  dataAsOf?: string
+  dataStateLabel: string
   onDocumentQueryChange: (value: string) => void
   onDocumentTypeFilterChange: (value: string) => void
   onDocumentStatusFilterChange: (value: string) => void
@@ -117,12 +111,22 @@ export function DocumentFilePanel({
   onDocumentPageSizeChange: (pageSize: number) => void
   onSelectDocument: (document: DocumentManifest) => void
   onConfirmAction: (action: ConfirmAction) => void
-  onShareDocument: (document: DocumentManifest) => void
-  onMoveDocument: (document: DocumentManifest) => void
   onOpenFolderSettings: () => void
   onOpenDocumentAdd: () => void
   onClearFilters: () => void
 }) {
+  const activeFilters = [
+    documentQuery.trim() ? `検索: ${documentQuery.trim()}` : undefined,
+    documentTypeFilter !== "all" ? `種別: ${documentTypeFilter}` : undefined,
+    documentStatusFilter !== "all" ? `状態: ${documentStatusFilter}` : undefined,
+    documentGroupFilter !== "all"
+      ? `所属フォルダ: ${documentGroupFilter === "unassigned"
+        ? "未設定"
+        : documentGroups.find((group) => group.groupId === documentGroupFilter)?.name ?? "利用不可"}`
+      : undefined,
+    documentSort !== "updatedDesc" ? `並び替え: ${documentSortLabel(documentSort)}` : undefined
+  ].filter((value): value is string => Boolean(value))
+
   return (
     <section className="document-file-panel" aria-label="登録文書一覧">
       <div className="document-file-panel-head">
@@ -159,6 +163,26 @@ export function DocumentFilePanel({
           </button>
         </div>}
       </div>
+      <section className="document-context-summary" aria-label="現在の文書表示条件">
+        <header>
+          <h4>現在の表示</h4>
+          <span>{dataStateLabel}</span>
+        </header>
+        <dl>
+          <div><dt>対象</dt><dd>{selectedFolder.name}</dd></div>
+          <div><dt>選択中</dt><dd>{selectedDocument?.fileName ?? (selectedMigrationId ? "再インデックス移行" : "なし")}</dd></div>
+          <div><dt>結果</dt><dd>{filteredDocumentsCount} 件（対象内 {folderDocumentsCount} 件）</dd></div>
+          <div><dt>source</dt><dd>{dataSource}</dd></div>
+          <div><dt>最終確認</dt><dd>{dataAsOf ? <time dateTime={dataAsOf}>{formatDateTime(dataAsOf)}</time> : "未確認"}</dd></div>
+        </dl>
+        {activeFilters.length > 0 ? (
+          <div className="document-active-filters">
+            <span>適用中</span>
+            <ul>{activeFilters.map((filter) => <li key={filter}>{filter}</li>)}</ul>
+            <button type="button" onClick={onClearFilters}>絞り込みをリセット</button>
+          </div>
+        ) : <p>追加の絞り込みはありません。</p>}
+      </section>
       {documents.length > 0 && <div className="document-filter-bar" aria-label="文書検索と絞り込み">
         <label>
           <span>ファイル名検索</span>
@@ -204,7 +228,7 @@ export function DocumentFilePanel({
         </label>
       </div>}
 
-      <div className="document-file-table" role={folderDocumentsCount > 0 ? "table" : undefined} aria-label={folderDocumentsCount > 0 ? "登録文書" : undefined}>
+      <div className={`document-file-table ${showManagementControls ? "is-manager" : "is-reader"}`} role={folderDocumentsCount > 0 ? "table" : undefined} aria-label={folderDocumentsCount > 0 ? "登録文書" : undefined}>
         {folderDocumentsCount > 0 && <div className="document-file-row document-file-head" role="row">
           <span role="columnheader">ファイル名</span>
           <span role="columnheader">種別</span>
@@ -212,7 +236,7 @@ export function DocumentFilePanel({
           {showManagementControls && <span role="columnheader">チャンク数</span>}
           {showManagementControls && <span role="columnheader">状態</span>}
           <span role="columnheader">所属フォルダ</span>
-          {showManagementControls && <span role="columnheader">操作</span>}
+          <span role="columnheader">詳細</span>
         </div>}
         {folderDocumentsCount === 0 ? (
           <EmptyState
@@ -239,24 +263,12 @@ export function DocumentFilePanel({
         ) : (
           pagedDocuments.map((document) => {
             const groupLabel = documentGroupNames(document, documentGroups).join(", ") || "未設定"
-            const canDeleteRow = canDelete && canDeleteDocument(document)
-            const canReindexRow = canReindex && canReindexDocument(document)
-            const canShareRow = canShareDocument(document)
-            const canMoveRow = canMoveDocument(document)
             return (
               <div
                 className={`document-file-row ${selectedDocument?.documentId === document.documentId ? "selected" : ""}`}
                 role="row"
                 key={document.documentId}
-                tabIndex={0}
-                aria-label={`${document.fileName}の詳細を表示`}
-                onClick={() => onSelectDocument(document)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault()
-                    onSelectDocument(document)
-                  }
-                }}
+                aria-selected={selectedDocument?.documentId === document.documentId}
               >
                 <span role="cell" className="document-name-cell" data-label="ファイル名">
                   <FileIcon document={document} />
@@ -267,65 +279,16 @@ export function DocumentFilePanel({
                 {showManagementControls && <span role="cell" data-label="チャンク数">{document.chunkCount ?? "利用不可"}</span>}
                 {showManagementControls && <span role="cell" data-label="状態">{documentStatusLabel(document)}</span>}
                 <span role="cell" data-label="所属フォルダ">{groupLabel}</span>
-                {showManagementControls && <span role="cell" className="document-actions-cell" data-label="操作">
-                  <span className="document-action-buttons">
-                    {canShareRow && (
-                      <button
-                        type="button"
-                        title={`${document.fileName}を共有`}
-                        aria-label={`${document.fileName}を共有`}
-                        disabled={operationState.sharingDocumentId === document.documentId}
-                        onClick={(event) => {
-                          event.stopPropagation()
-                          onShareDocument(document)
-                        }}
-                      >
-                        共有
-                      </button>
-                    )}
-                    {canMoveRow && (
-                      <button
-                        type="button"
-                        title={`${document.fileName}を移動`}
-                        aria-label={`${document.fileName}を移動`}
-                        disabled={operationState.movingDocumentId === document.documentId}
-                        onClick={(event) => {
-                          event.stopPropagation()
-                          onMoveDocument(document)
-                        }}
-                      >
-                        移動
-                      </button>
-                    )}
-                    {canReindexRow && <button
-                      type="button"
-                      title={`${document.fileName}の再インデックスをステージング`}
-                      aria-label={`${document.fileName}の再インデックスをステージング`}
-                      disabled={!canReindexRow || operationState.stagingReindexDocumentId === document.documentId}
-                      onClick={(event) => {
-                        event.stopPropagation()
-                        if (!canReindexRow) return
-                        onConfirmAction({ kind: "stage", document })
-                      }}
-                    >
-                      {operationState.stagingReindexDocumentId === document.documentId ? <LoadingSpinner className="button-spinner" /> : <Icon name="gauge" />}
-                    </button>}
-                    {canDeleteRow && <button
-                      type="button"
-                      className="delete-document-button"
-                      title={`${document.fileName}を削除`}
-                      aria-label={`${document.fileName}を削除`}
-                      disabled={!canDeleteRow || operationState.deletingDocumentId === document.documentId}
-                      onClick={(event) => {
-                        event.stopPropagation()
-                        if (!canDeleteRow) return
-                        onConfirmAction({ kind: "delete", document })
-                      }}
-                    >
-                      {operationState.deletingDocumentId === document.documentId ? <LoadingSpinner className="button-spinner" /> : <Icon name="trash" />}
-                    </button>}
-                  </span>
-                </span>}
+                <span role="cell" className="document-actions-cell" data-label="詳細">
+                  <button
+                    className="document-row-primary-action"
+                    type="button"
+                    aria-label={`${document.fileName}の詳細を表示`}
+                    onClick={() => onSelectDocument(document)}
+                  >
+                    詳細
+                  </button>
+                </span>
               </div>
             )
           })
@@ -380,6 +343,14 @@ export function DocumentFilePanel({
       />
     </section>
   )
+}
+
+function documentSortLabel(sort: DocumentSortKey): string {
+  if (sort === "updatedAsc") return "更新日 古い順"
+  if (sort === "fileNameAsc") return "ファイル名順"
+  if (sort === "chunkDesc") return "チャンク数順"
+  if (sort === "typeAsc") return "種別順"
+  return "更新日 新しい順"
 }
 
 function FileIcon({ document }: { document: DocumentManifest }) {

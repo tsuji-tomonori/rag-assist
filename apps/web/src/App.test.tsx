@@ -162,6 +162,17 @@ function assertElement(value: Element | undefined): asserts value is Element {
   if (!value) throw new Error("Expected element")
 }
 
+async function getDocumentManagementAction(fileName: string, actionName: string) {
+  await userEvent.click(await screen.findByRole("button", { name: `${fileName}の詳細を表示` }))
+  const drawer = await screen.findByRole("dialog", { name: fileName })
+  await userEvent.click(within(drawer).getByRole("button", { name: "管理操作を表示" }))
+  return within(drawer).getByRole("button", { name: actionName })
+}
+
+async function launchDocumentManagementAction(fileName: string, actionName: string) {
+  await userEvent.click(await getDocumentManagementAction(fileName, actionName))
+}
+
 function jwtWithGroups(groups: string[]) {
   const encode = (value: unknown) => Buffer.from(JSON.stringify(value)).toString("base64url")
   return `${encode({ alg: "none", typ: "JWT" })}.${encode({ sub: "user-1", email: "tester@example.com", "cognito:groups": groups })}.signature`
@@ -561,12 +572,12 @@ describe("App document management", () => {
     await renderAuthenticatedApp()
 
     await screen.findByTitle("送信")
-    expect(screen.queryByTitle("requirements.mdを削除")).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "requirements.mdの詳細を表示" })).not.toBeInTheDocument()
 
     await userEvent.click(screen.getByTitle("ドキュメント"))
     expect(await screen.findByLabelText("ドキュメント管理")).toBeInTheDocument()
     expect(screen.getByText("登録文書")).toBeInTheDocument()
-    expect(screen.getByTitle("requirements.mdを削除")).toBeEnabled()
+    expect(await getDocumentManagementAction("requirements.md", "削除")).toBeEnabled()
   })
 
   it("deletes selected document only after confirmation and refreshes the list", async () => {
@@ -574,7 +585,7 @@ describe("App document management", () => {
     await renderAuthenticatedApp()
 
     await userEvent.click(await screen.findByTitle("ドキュメント"))
-    await userEvent.click(screen.getByTitle("requirements.mdを削除"))
+    await launchDocumentManagementAction("requirements.md", "削除")
     expect(screen.getByRole("dialog", { name: "文書を削除しますか" })).toHaveTextContent("元資料、manifest、検索ベクトル")
     await userEvent.type(screen.getByRole("textbox", { name: "削除理由" }), "obsolete document")
     await userEvent.click(screen.getByRole("button", { name: "削除" }))
@@ -599,7 +610,7 @@ describe("App document management", () => {
     await renderAuthenticatedApp()
 
     await userEvent.click(await screen.findByTitle("ドキュメント"))
-    await userEvent.click(screen.getByTitle("requirements.mdを削除"))
+    await launchDocumentManagementAction("requirements.md", "削除")
     await userEvent.click(screen.getByRole("button", { name: "キャンセル" }))
 
     expect(
@@ -622,7 +633,7 @@ describe("App document management", () => {
     await renderAuthenticatedApp()
 
     await userEvent.click(await screen.findByTitle("ドキュメント"))
-    await userEvent.click(screen.getByTitle("requirements.mdを削除"))
+    await launchDocumentManagementAction("requirements.md", "削除")
     await userEvent.type(screen.getByRole("textbox", { name: "削除理由" }), "obsolete document")
     await userEvent.click(screen.getByRole("button", { name: "削除" }))
 
@@ -1615,7 +1626,7 @@ describe("App chat and upload flow", () => {
 
     await userEvent.click(within(adminWorkspace).getByRole("button", { name: /ドキュメント管理/ }))
     expect(await screen.findByLabelText("ドキュメント管理")).toBeInTheDocument()
-    await userEvent.click(screen.getByTitle("requirements.mdの再インデックスをステージング"))
+    await launchDocumentManagementAction("requirements.md", "再インデックス")
     await userEvent.click(screen.getByRole("button", { name: "ステージング" }))
     expect(await screen.findByLabelText("再インデックス移行一覧")).toHaveTextContent("切替待ち")
     await userEvent.click(screen.getByRole("button", { name: "切替" }))
