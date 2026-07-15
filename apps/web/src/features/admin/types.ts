@@ -11,6 +11,25 @@ export type ManagedUser = {
   createdAt: string
   updatedAt: string
   lastLoginAt?: string
+  operationEvidence?: {
+    auditIntentId: string
+    sessionRevocation: "confirmed" | "not_required"
+    propagationState: "current" | "reconciliation_required"
+    effectivePermissions: string[]
+  }
+  capability?: {
+    canAssignRoles: boolean
+    canSuspend: boolean
+    canUnsuspend: boolean
+    canDelete: boolean
+    blockers: string[]
+  }
+  effectivePermissions?: string[]
+  projection?: {
+    source: "authoritative_identity" | "local_ledger"
+    asOf: string
+    reconciliationState: "current" | "pending"
+  }
 }
 
 export type ManagedUserDeletionPreflight = {
@@ -30,20 +49,27 @@ export type ManagedUserDeletionPreflight = {
   }>
 }
 
-export type ManagedUserAuditAction = "user:create" | "role:assign" | "user:suspend" | "user:unsuspend" | "user:delete"
+export type ManagedUserAuditAction = string
 
 export type ManagedUserAuditLogEntry = {
   auditId: string
   action: ManagedUserAuditAction
+  result?: "pending" | "success" | "denied" | "conflict" | "failed"
+  reason?: string
+  tenantId?: string
+  targetType?: string
   actorUserId: string
   actorEmail?: string
   targetUserId: string
-  targetEmail: string
+  targetEmail?: string
+  policyVersion?: string
+  source?: "security_audit_outbox" | "legacy_admin_ledger"
   beforeStatus?: ManagedUserStatus
   afterStatus?: ManagedUserStatus
   beforeGroups: string[]
   afterGroups: string[]
   createdAt: string
+  completedAt?: string
 }
 
 export type AdminListPageMetadata = {
@@ -57,6 +83,19 @@ export type AdminListPageMetadata = {
 
 export type ManagedUserAuditLogPage = AdminListPageMetadata & {
   auditLog: ManagedUserAuditLogEntry[]
+}
+
+export type ManagedUserListPage = AdminListPageMetadata & {
+  version: string
+  users: ManagedUser[]
+}
+
+export type ManagedUserListQuery = {
+  cursor?: string
+  limit?: number
+  query?: string
+  status?: "active" | "suspended"
+  sort?: "emailAsc" | "updatedDesc"
 }
 
 export type AccessRoleDefinition = {
@@ -182,4 +221,17 @@ export type AdminAuditLogQuery = {
   limit?: number
   query?: string
   action?: ManagedUserAuditAction
+}
+
+export type AdminExportArtifact = {
+  exportType: "audit_log" | "cost_summary"
+  url: string
+  expiresInSeconds: number
+  objectKey: string
+  generatedAt: string
+  redaction: {
+    policyVersion: string
+    redactedFields: string[]
+    notes: string[]
+  }
 }

@@ -2,7 +2,7 @@
 
 # POST /admin/aliases/{aliasId}/transition IF仕様
 
-- 実装 route: `apps/api/src/routes/admin-routes.ts:464 (POST /admin/aliases/{aliasId}/transition)`
+- 実装 route: `apps/api/src/routes/admin-routes.ts:478 (POST /admin/aliases/{aliasId}/transition)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 検索 alias を下書きへ戻す

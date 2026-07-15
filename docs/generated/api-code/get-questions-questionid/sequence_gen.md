@@ -35,7 +35,7 @@ sequenceDiagram
 | 1 | `GET /questions/{questionId} handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/question-routes.ts:83 (GET /questions/{questionId} handler)` |
 | 2 | `GET /questions/{questionId} handler` | Validation | schema 検証済みの path parameter を取得する。 | `validParam<{ questionId: string }>(c)` | `apps/api/src/routes/question-routes.ts:84 (GET /questions/{questionId} handler)` |
 | 3 | `GET /questions/{questionId} handler` | Service | service の get question 処理を呼び出す。 | `service.getQuestion(questionId)` | `apps/api/src/routes/question-routes.ts:85 (GET /questions/{questionId} handler)` |
-| 4 | `MemoRagService.getQuestion` | Store | `this.deps.questionStore` に対して get を実行する。 | `this.deps.questionStore.get(questionId)` | `apps/api/src/rag/memorag-service.ts:2882 (MemoRagService.getQuestion)` |
+| 4 | `MemoRagService.getQuestion` | Store | `this.deps.questionStore` に対して get を実行する。 | `this.deps.questionStore.get(questionId)` | `apps/api/src/rag/memorag-service.ts:3045 (MemoRagService.getQuestion)` |
 | 5 | `GET /questions/{questionId} handler` | HTTP/SSE | HTTP 404 で JSON response を返す。 | `c.json({ error: "Question not found" }, 404)` | `apps/api/src/routes/question-routes.ts:86 (GET /questions/{questionId} handler)` |
 | 6 | `GET /questions/{questionId} handler` | Auth | "answer:edit" permission の保有有無を判定する。 | `hasPermission(user, "answer:edit")` | `apps/api/src/routes/question-routes.ts:87 (GET /questions/{questionId} handler)` |
 | 7 | `GET /questions/{questionId} handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json(question, 200)` | `apps/api/src/routes/question-routes.ts:87 (GET /questions/{questionId} handler)` |

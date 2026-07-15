@@ -44,6 +44,7 @@ export interface SecurityMutationAuditOutboxPort {
 export interface SecurityMutationAuditReconciliationOutboxPort extends SecurityMutationAuditOutboxPort {
   get(tenantId: string, intentId: string): Promise<SecurityMutationAuditIntent>
   listPending(tenantId: string, limit?: number): Promise<SecurityMutationAuditIntent[]>
+  listAll(tenantId: string): Promise<SecurityMutationAuditIntent[]>
 }
 
 export class SecurityMutationAuditCompletionPendingError extends Error {
@@ -177,11 +178,17 @@ export class ObjectStoreSecurityMutationAuditOutbox implements SecurityMutationA
     if (!Number.isInteger(limit) || limit < 1 || limit > 1_000) {
       throw new Error("Security mutation audit pending-list limit is invalid")
     }
+    const intents = await this.listAll(tenantId)
+    return intents.filter((intent) => intent.status !== "completed").slice(0, limit)
+  }
+
+  async listAll(tenantId: string): Promise<SecurityMutationAuditIntent[]> {
+    assertIdentifier(tenantId, "tenantId")
     const prefix = intentPrefix(tenantId)
     const keys = (await this.objectStore.listKeys(prefix))
       .filter((key) => key.endsWith(".json"))
       .sort()
-    const intents = await Promise.all(keys.map(async (key) => {
+    return Promise.all(keys.map(async (key) => {
       const stored = await this.objectStore.getTextWithVersion(key)
       const intent = parseAndValidateIntent(stored.text, tenantId)
       if (key !== intentKey(tenantId, intent.intentId)) {
@@ -189,7 +196,6 @@ export class ObjectStoreSecurityMutationAuditOutbox implements SecurityMutationA
       }
       return intent
     }))
-    return intents.filter((intent) => intent.status !== "completed").slice(0, limit)
   }
 
   private async readVersioned(

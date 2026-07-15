@@ -23,6 +23,7 @@ describe("useResourceStateController", () => {
     expect(result.current.states.admin).toMatchObject({
       message: "通信またはサービスの状態を確認して、もう一度お試しください。"
     })
+    expect(result.current.states.admin.parts[0]?.requestReference).toBe("ui-admin-users-1")
     expect(JSON.stringify(result.current.states.admin)).not.toContain("private stack")
   })
 

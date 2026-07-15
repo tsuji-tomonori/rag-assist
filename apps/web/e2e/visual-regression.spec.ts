@@ -258,7 +258,14 @@ async function installMockApi(page: Page) {
       return
     }
     if (path === '/admin/users') {
-      await route.fulfill({ json: { users: [{ userId: 'visual-admin', email: 'visual@example.com', displayName: 'Visual Admin', status: 'active', groups: ['SYSTEM_ADMIN'], createdAt: '2026-05-02T00:00:00.000Z', updatedAt: '2026-05-02T00:00:00.000Z', lastLoginAt: '2026-05-02T00:00:00.000Z' }] } })
+      await route.fulfill({ json: {
+        users: [{ userId: 'visual-admin', email: 'visual@example.com', displayName: 'Visual Admin', status: 'active', groups: ['SYSTEM_ADMIN'], createdAt: '2026-05-02T00:00:00.000Z', updatedAt: '2026-05-02T00:00:00.000Z', lastLoginAt: '2026-05-02T00:00:00.000Z', capability: { canAssignRoles: false, canSuspend: false, canUnsuspend: false, canDelete: false, blockers: ['self_mutation', 'last_recovery_principal'] }, effectivePermissions: permissions, projection: { source: 'authoritative_identity', asOf: '2026-05-02T00:00:00.000Z', reconciliationState: 'current' } }],
+        total: 1,
+        truncated: false,
+        source: 'authoritative_identity',
+        asOf: '2026-05-02T00:00:00.000Z',
+        version: 'ledger-version-1'
+      } })
       return
     }
     if (path === '/admin/roles') {
@@ -272,7 +279,7 @@ async function installMockApi(page: Page) {
     }
     if (path === '/admin/audit-log') {
       await route.fulfill({ json: {
-        auditLog: [{ auditId: 'audit-1', action: 'role:assign', actorUserId: 'visual-admin', actorEmail: 'visual@example.com', targetUserId: 'visual-admin', targetEmail: 'visual@example.com', beforeGroups: ['CHAT_USER'], afterGroups: ['SYSTEM_ADMIN'], createdAt: '2026-05-02T00:00:00.000Z' }],
+        auditLog: [{ auditId: 'audit-1', action: 'role:assign', result: 'success', reason: '定期権限レビュー', tenantId: 'local-test', targetType: 'applicationRolePrincipal', actorUserId: 'visual-admin', actorEmail: 'visual@example.com', targetUserId: 'visual-admin', targetEmail: 'visual@example.com', policyVersion: 'role-catalog-v2', source: 'security_audit_outbox', beforeGroups: ['CHAT_USER'], afterGroups: ['SYSTEM_ADMIN'], createdAt: '2026-05-02T00:00:00.000Z' }],
         total: 1,
         truncated: false,
         source: 'managed-user-audit-ledger',
@@ -1121,12 +1128,11 @@ test('E2E-UI-STATE-001: admin partial success は成功・失敗 part を分け�
 })
 
 test('E2E-UI-STATE-001: refresh failure は as-of/source 付き stale data を保持して回復する @smoke', async ({ page }) => {
-  const refreshCounts = new Map<string, number>()
+  let failNextUserRefresh = false
   await page.route(/http:\/\/(api\.visual\.test|127\.0\.0\.1:8787)\/admin\/(users|roles|audit-log|usage|costs)(?:\?.*)?$/, async (route) => {
     const path = new URL(route.request().url()).pathname
-    const count = (refreshCounts.get(path) ?? 0) + 1
-    refreshCounts.set(path, count)
-    if (count === 2) {
+    if (path === '/admin/users' && failNextUserRefresh) {
+      failNextUserRefresh = false
       await route.fulfill({ status: 500, contentType: 'text/plain', body: 'temporary refresh failure' })
       return
     }
@@ -1138,6 +1144,7 @@ test('E2E-UI-STATE-001: refresh failure は as-of/source 付き stale data を�
   const adminRegion = page.getByRole('region', { name: '管理者設定', exact: true })
   await adminRegion.getByRole('button', { name: 'ユーザー', exact: true }).click()
   await expect(adminRegion).toContainText('Visual Admin')
+  failNextUserRefresh = true
   await adminRegion.getByRole('button', { name: '管理対象ユーザーを更新', exact: true }).click()
 
   const partialState = adminRegion.locator('[data-state-kind="partial"]')
@@ -1145,7 +1152,7 @@ test('E2E-UI-STATE-001: refresh failure は as-of/source 付き stale data を�
   await expect(partialState).toContainText('管理対象ユーザー')
   const userPanel = adminRegion.getByRole('region', { name: 'ユーザー管理一覧', exact: true })
   const userDataStatus = userPanel.getByRole('status')
-  await expect(userDataStatus).toContainText('取得元: 管理ユーザー API')
+  await expect(userDataStatus).toContainText('取得元: authoritative_identity')
   await expect(userDataStatus).toContainText('最新情報の取得に失敗したため、最後に確認できた内容です。')
   await expect(userDataStatus.locator('time')).toHaveAttribute('dateTime', '2026-05-02T00:00:00.000Z')
   await expect(adminRegion).toContainText('Visual Admin')

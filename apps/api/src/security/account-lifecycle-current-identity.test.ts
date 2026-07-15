@@ -38,6 +38,11 @@ test("denied account lifecycle mutation is audited before returning without chan
   assert.deepEqual(fixture.calls, [])
   assert.equal(fixture.identities.target?.accountStatus, "active")
   assert.equal(fixture.completedAuditResults().at(-1), "denied")
+  const page = await fixture.service.listAdminAuditLog(fixture.actor, { action: "user:suspend" })
+  assert.equal(page.auditLog[0]?.result, "denied")
+  assert.equal(page.auditLog[0]?.source, "security_audit_outbox")
+  assert.equal(page.auditLog[0]?.tenantId, "tenant-1")
+  assert.match(page.auditLog[0]?.reason ?? "", /Administrative account lifecycle/)
 })
 
 test("account lifecycle mutation does not touch authoritative state when the common audit intent cannot be persisted", async () => {

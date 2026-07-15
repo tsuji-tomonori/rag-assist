@@ -8,30 +8,37 @@
 
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
-| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:3240 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
+| 到達 symbol | audit export failure is tenant-scoped and recorded in the common audit read model | `apps/api/src/rag/memorag-service.test.ts:2975 (audit export failure is tenant-scoped and recorded in the common audit read model)` |
+| 到達 symbol | admin audit export traversal follows every stable cursor page without silent truncation | `apps/api/src/rag/memorag-service.test.ts:2995 (admin audit export traversal follows every stable cursor page without silent truncation)` |
+| 到達 symbol | managed-user ledgers and audit queries are tenant partitioned | `apps/api/src/rag/memorag-service.test.ts:3085 (managed-user ledgers and audit queries are tenant partitioned)` |
+| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:3375 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
+| 到達 symbol | denied account lifecycle mutation is audited before returning without changing account state | `apps/api/src/security/account-lifecycle-current-identity.test.ts:32 (denied account lifecycle mutation is audited before returning without changing account state)` |
 
 ## 2. 実装分岐から導くテスト要因
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `GET /admin/audit-log handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/admin-routes.ts:184 (GET /admin/audit-log handler)` |
-| F002 | `GET /admin/audit-log handler` | if | `error` が `InvalidPageCursorError` の instance である | `apps/api/src/routes/admin-routes.ts:185 (GET /admin/audit-log handler)` |
+| F001 | `GET /admin/audit-log handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/admin-routes.ts:194 (GET /admin/audit-log handler)` |
+| F002 | `GET /admin/audit-log handler` | if | `error` が `InvalidPageCursorError` の instance である | `apps/api/src/routes/admin-routes.ts:195 (GET /admin/audit-log handler)` |
 | F003 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| F004 | `MemoRagService.listAdminAuditLog` | 三項条件 | `intent.status` が `"completed"` と等しい | `apps/api/src/rag/memorag-service.ts:1967 (MemoRagService.listAdminAuditLog)` |
 
 ## 3. コード由来テストケース
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | 管理操作履歴を取得する が成功 response を返す。 | `apps/api/src/routes/admin-routes.ts:178 (GET /admin/audit-log handler)` |
-| TC002 | F001: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/admin-routes.ts:184 (GET /admin/audit-log handler)` |
-| TC003 | F002: 条件成立 | `error` が `InvalidPageCursorError` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:185 (GET /admin/audit-log handler)` |
-| TC004 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:185 (GET /admin/audit-log handler)` |
+| TC001 | 正常系 | 管理操作履歴を取得する が成功 response を返す。 | `apps/api/src/routes/admin-routes.ts:188 (GET /admin/audit-log handler)` |
+| TC002 | F001: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/admin-routes.ts:194 (GET /admin/audit-log handler)` |
+| TC003 | F002: 条件成立 | `error` が `InvalidPageCursorError` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:195 (GET /admin/audit-log handler)` |
+| TC004 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:195 (GET /admin/audit-log handler)` |
 | TC005 | F003: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
 | TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC007 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
-| TC008 | HTTP 400 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
-| TC009 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
-| TC010 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC007 | F004: 条件成立 | `intent.status` が `"completed"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1967 (MemoRagService.listAdminAuditLog)` |
+| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1967 (MemoRagService.listAdminAuditLog)` |
+| TC009 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC010 | HTTP 400 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC011 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC012 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 
 ## 4. 検証方針
 

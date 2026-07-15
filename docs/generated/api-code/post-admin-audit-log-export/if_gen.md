@@ -2,7 +2,7 @@
 
 # POST /admin/audit-log/export IF仕様
 
-- 実装 route: `apps/api/src/routes/admin-routes.ts:191 (POST /admin/audit-log/export)`
+- 実装 route: `apps/api/src/routes/admin-routes.ts:201 (POST /admin/audit-log/export)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 管理操作履歴 export URL を作成する
@@ -25,14 +25,21 @@ _なし_
 
 ## Data
 
-_なし_
+Media type: `application/json`
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `query` | `object` | no | 検索や benchmark に利用する query。 | - |
+| `query.query` | `string` | no | 検索や benchmark に利用する query。 | minLength=1<br>maxLength=120 |
+| `query.action` | `string` | no | `data.query.action` の値。項目名は action を表します。 | minLength=1<br>maxLength=160 |
+| `reason` | `string` | yes | 判断や失敗の理由。 | minLength=1<br>maxLength=1000 |
 
 ## Authorization
 
 | 項目 | 内容 |
 | --- | --- |
 | 認可モード | `required` |
-| 必須 permission | `access:policy:read` |
+| 必須 permission | `access:audit:export` |
 | 条件付き permission | - |
 | 実行可能 role | `ACCESS_ADMIN`, `SYSTEM_ADMIN` |
 | エラーになる role | `CHAT_USER`, `ANSWER_EDITOR`, `RAG_GROUP_MANAGER`, `BENCHMARK_OPERATOR`, `BENCHMARK_RUNNER`, `ASYNC_AGENT_USER`, `SKILL_PROFILE_ADMIN`, `ASYNC_AGENT_ADMIN`, `USER_ADMIN`, `COST_AUDITOR` |
@@ -46,7 +53,7 @@ _なし_
 | Status | 発生条件 | Body |
 | --- | --- | --- |
 | `401` | Authorization header がない、または Bearer token を検証できない場合。 | `{"error":"Unauthorized"}` |
-| `403` | 必要 permission (access:policy:read) または条件付き permission を満たさない場合。 | `{"error":"Forbidden"}` |
+| `403` | 必要 permission (access:audit:export) または条件付き permission を満たさない場合。 | `{"error":"Forbidden"}` |
 
 ## Lifecycle
 

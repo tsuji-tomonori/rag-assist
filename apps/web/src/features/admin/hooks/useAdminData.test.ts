@@ -103,7 +103,14 @@ describe("useAdminData", () => {
     vi.clearAllMocks()
     vi.mocked(listAliases).mockResolvedValue(aliasListPage())
     vi.mocked(listAliasAuditLog).mockResolvedValue(aliasAuditPage())
-    vi.mocked(listManagedUsers).mockResolvedValue([{ userId: "user-1", email: "b@example.com", status: "active", groups: ["CHAT_USER"], createdAt: "now", updatedAt: "now" }])
+    vi.mocked(listManagedUsers).mockResolvedValue({
+      users: [{ userId: "user-1", email: "b@example.com", status: "active", groups: ["CHAT_USER"], createdAt: "now", updatedAt: "now" }],
+      total: 1,
+      truncated: false,
+      source: "authoritative_identity",
+      asOf: "now",
+      version: "ledger-version-1"
+    })
     vi.mocked(listAccessRoles).mockResolvedValue({
       roles: [{ role: "CHAT_USER", displayName: "チャット利用者", description: "チャットを利用", kind: "systemPreset", permissions: ["chat:create"] }],
       catalogVersion: "role-v1",

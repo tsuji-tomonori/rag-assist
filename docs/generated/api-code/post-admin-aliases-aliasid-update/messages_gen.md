@@ -21,9 +21,9 @@
 | M006 | OpenAPI contract | `409` | 現在のリソース状態と要求された操作が競合しています。 | OpenAPI で宣言された HTTP 409 response | runtime OpenAPI |
 | M007 | OpenAPI contract | `503` | alias 更新の永続化を完了できません | OpenAPI で宣言された HTTP 503 response | runtime OpenAPI |
 | M008 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| M009 | 例外 | `-` | Alias mutation reason is required and must be canonical | `value` が存在しない、または偽である、または `value.trim()` が `value` と異なる | `apps/api/src/rag/memorag-service.ts:5369 (canonicalAliasReason)` |
-| M010 | 例外 | `-` | Alias ledger version conflict | 当該処理へ到達した場合 | `apps/api/src/rag/memorag-service.ts:3301 (MemoRagService.mutateAliasLedger)` |
-| M011 | HTTP 実装応答 | `404` | Alias not found | `alias` が存在しない、または偽である | `apps/api/src/routes/admin-routes.ts:419 (POST /admin/aliases/{aliasId}/update handler)` |
+| M009 | 例外 | `-` | Alias mutation reason is required and must be canonical | `value` が存在しない、または偽である、または `value.trim()` が `value` と異なる | `apps/api/src/rag/memorag-service.ts:5611 (canonicalAliasReason)` |
+| M010 | 例外 | `-` | Alias ledger version conflict | 当該処理へ到達した場合 | `apps/api/src/rag/memorag-service.ts:3537 (MemoRagService.mutateAliasLedger)` |
+| M011 | HTTP 実装応答 | `404` | Alias not found | `alias` が存在しない、または偽である | `apps/api/src/routes/admin-routes.ts:433 (POST /admin/aliases/{aliasId}/update handler)` |
 
 ## 読み方
 

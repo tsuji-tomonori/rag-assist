@@ -24,6 +24,8 @@ import type { DocumentWorkspaceUrlState } from "../../features/documents/compone
 import {
   adminAuditActions,
   adminSections,
+  adminUserSortKeys,
+  adminUserStatuses,
   aliasAuditActions,
   aliasSortKeys,
   aliasStatuses,
@@ -163,6 +165,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     canReadUsage,
     canReadCosts,
     canReadAdminAuditLog,
+    canExportAdminAuditLog,
     canManageAliases,
     canManageDocuments,
     canSeeAdminSettings
@@ -323,13 +326,16 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
 
   const {
     managedUsers,
+    managedUserPage,
     adminAuditPage,
     accessRoleList,
     usageSummaries,
     costAudit,
     aliasPage,
     aliasAuditPage,
+    pendingAdminMutationKeys,
     refreshManagedUsers,
+    loadMoreManagedUsers,
     refreshAdminAuditLog,
     refreshAccessRoles,
     refreshUsageSummaries,
@@ -337,6 +343,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     refreshAliases,
     refreshAliasAuditLog,
     onAssignUserRoles,
+    onCreateAdminAuditExport,
     onCreateManagedUser,
     onPrepareManagedUserDelete,
     onSetManagedUserStatus,
@@ -348,6 +355,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     onPublishAliases
   } = useAdminData({
     canReadAdminAuditLog,
+    canExportAdminAuditLog,
     canReadUsage,
     canReadCosts,
     canReadUsers,
@@ -363,6 +371,8 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
   const adminFilterKey = [
     adminUrlState.section ?? "overview",
     adminUrlState.query ?? "",
+    adminUrlState.userStatus ?? "",
+    adminUrlState.userSort ?? "emailAsc",
     adminUrlState.aliasStatus ?? "",
     adminUrlState.auditAction ?? "",
     adminUrlState.sort ?? "updatedDesc"
@@ -414,7 +424,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
 
   function loadAdminResources(intent: ResourceLoadIntent) {
     return runResourceLoad("admin", [
-      ...(canReadUsers ? [{ id: "users", label: "管理対象ユーザー", load: refreshManagedUsers }] : []),
+      ...(canReadUsers ? [{ id: "users", label: "管理対象ユーザー", load: () => refreshManagedUsers(adminUserQueryForState(adminUrlState)) }] : []),
       ...(canOpenAdminSettings ? [{ id: "roles", label: "ロール定義", load: refreshAccessRoles }] : []),
       ...(canReadAdminAuditLog ? [{ id: "audit", label: "管理操作履歴", load: () => refreshAdminAuditLog(adminAuditQueryForState(adminUrlState)) }] : []),
       ...(canReadUsage ? [{ id: "usage", label: "利用状況", load: refreshUsageSummaries }] : []),
@@ -426,7 +436,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
 
   function refreshAdminPart(partId: "users" | "roles" | "audit" | "usage" | "cost" | "aliases" | "aliasAudit") {
     const loaders = {
-      users: { id: "users", label: "管理対象ユーザー", load: refreshManagedUsers },
+      users: { id: "users", label: "管理対象ユーザー", load: () => refreshManagedUsers(adminUserQueryForState(adminUrlState)) },
       roles: { id: "roles", label: "ロール定義", load: refreshAccessRoles },
       audit: { id: "audit", label: "管理操作履歴", load: () => refreshAdminAuditLog(adminAuditQueryForState(adminUrlState)) },
       usage: { id: "usage", label: "利用状況", load: refreshUsageSummaries },
@@ -477,6 +487,8 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     previousAdminFilterKeyRef.current = adminFilterKey
     if ((adminUrlState.section ?? "overview") === "alias" && canReadAliases) {
       void refreshAdminAliasParts("refresh")
+    } else if (adminUrlState.section === "users" && canReadUsers) {
+      void refreshAdminPart("users")
     } else if (adminUrlState.section === "audit" && canReadAdminAuditLog) {
       void refreshAdminPart("audit")
     }
@@ -705,12 +717,14 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       debugRunsCount: isResourcePartAvailable(resourceStates.debug, "runs") ? debugRuns.length : null,
       benchmarkRunsCount: isResourcePartAvailable(resourceStates.benchmark, "runs") ? benchmarkRuns.length : null,
       managedUsers,
+      managedUserPage,
       adminAuditPage,
       accessRoleList,
       usageSummaries,
       costAudit,
       aliasPage,
       aliasAuditPage,
+      pendingAdminMutationKeys,
       urlState: adminUrlState,
       onUrlStateChange: onAdminUrlStateChange,
       loading: loading || isResourceStateBusy(resourceStates.admin),
@@ -728,6 +742,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       canReadUsage,
       canReadCosts,
       canReadAdminAuditLog,
+      canExportAdminAuditLog,
       canManageAliases,
       canReadAliases,
       canWriteAliases,
@@ -754,6 +769,11 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
           label: "管理操作履歴",
           load: () => refreshAdminAuditLog({ ...adminAuditQueryForState(adminUrlState), cursor: adminAuditPage.nextCursor }, true)
         }], "refresh")
+      },
+      onCreateAdminAuditExport,
+      onLoadMoreManagedUsers: async () => {
+        if (!managedUserPage?.nextCursor) return
+        await runResourceLoad("admin", [{ id: "users", label: "管理対象ユーザー", load: loadMoreManagedUsers }], "refresh")
       },
       onLoadMoreAliases: async () => {
         if (!aliasPage?.nextCursor) return
@@ -872,11 +892,15 @@ function readAdminWorkspaceUrlStateFromLocation(): AdminWorkspaceUrlState {
   const aliasStatus = params.get("aliasStatus")
   const auditAction = params.get("auditAction")
   const sort = params.get("sort")
+  const userStatus = params.get("userStatus")
+  const userSort = params.get("userSort")
   return {
     section: section && adminSections.has(section as NonNullable<AdminWorkspaceUrlState["section"]>)
       ? section as AdminWorkspaceUrlState["section"]
       : undefined,
     query: params.get("adminQuery") || undefined,
+    userStatus: userStatus && adminUserStatuses.has(userStatus as never) ? userStatus as AdminWorkspaceUrlState["userStatus"] : undefined,
+    userSort: userSort && adminUserSortKeys.has(userSort as never) ? userSort as AdminWorkspaceUrlState["userSort"] : undefined,
     aliasStatus: aliasStatus && aliasStatuses.has(aliasStatus as NonNullable<AdminWorkspaceUrlState["aliasStatus"]>)
       ? aliasStatus as AdminWorkspaceUrlState["aliasStatus"]
       : undefined,
@@ -931,6 +955,8 @@ function writeAdminWorkspaceUrlStateToLocation(state: AdminWorkspaceUrlState, hi
   url.searchParams.set("view", "admin")
   setSearchParam(url, "section", state.section && state.section !== "overview" ? state.section : undefined)
   setSearchParam(url, "adminQuery", state.query)
+  setSearchParam(url, "userStatus", state.userStatus)
+  setSearchParam(url, "userSort", state.userSort && state.userSort !== "emailAsc" ? state.userSort : undefined)
   setSearchParam(url, "aliasStatus", state.aliasStatus)
   setSearchParam(url, "auditAction", state.auditAction)
   setSearchParam(url, "sort", state.sort && state.sort !== "updatedDesc" ? state.sort : undefined)
@@ -945,6 +971,15 @@ function aliasListQueryForState(state: AdminWorkspaceUrlState) {
     query: state.query,
     status: state.aliasStatus,
     sort: state.sort ?? "updatedDesc" as const
+  }
+}
+
+function adminUserQueryForState(state: AdminWorkspaceUrlState) {
+  return {
+    limit: 50,
+    query: state.query,
+    status: state.userStatus,
+    sort: state.userSort ?? "emailAsc" as const
   }
 }
 

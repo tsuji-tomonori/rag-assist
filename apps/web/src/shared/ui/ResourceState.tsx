@@ -13,6 +13,7 @@ export type UiResourcePartState = {
   label: string
   status: "loading" | "ready" | "failed" | "permission" | "stale" | "retrying"
   asOf?: string
+  requestReference?: string
 }
 
 type UiResourceStateBase = {
@@ -160,6 +161,9 @@ export function ResourceStatePanel({
       </div>
       {presentation.description ? <p>{presentation.description}</p> : null}
       {state.kind === "partial" && <PartResultSummary parts={state.parts} />}
+      {state.parts.some((part) => part.requestReference) && (
+        <p className="ui-resource-state-meta">問い合わせ参照: {state.parts.flatMap((part) => part.requestReference ? [part.requestReference] : []).join(" / ")}</p>
+      )}
       {state.kind === "stale" && (
         <p className="ui-resource-state-meta">
           source: {state.target.source} / 最終確認: <time dateTime={state.asOf}>{formatAsOf(state.asOf)}</time>

@@ -7,7 +7,9 @@ import type {
   AliasDefinition,
   AliasListPage,
   ManagedUserAuditLogEntry,
-  ManagedUserAuditLogPage
+  ManagedUserAuditLogPage,
+  ManagedUserListPage,
+  ManagedUser
 } from "../types.js"
 
 type JsonObject = Record<string, unknown>
@@ -50,6 +52,13 @@ export function decodeManagedUserAuditLogPage(value: unknown): ManagedUserAuditL
   const metadata = decodePageMetadata(record, "管理操作履歴")
   if (!Array.isArray(record.auditLog)) throw new AdminContractError("管理操作履歴")
   return { ...metadata, auditLog: record.auditLog.map(decodeManagedUserAuditLogEntry) }
+}
+
+export function decodeManagedUserListPage(value: unknown): ManagedUserListPage {
+  const record = objectValue(value, "管理対象ユーザー一覧")
+  const metadata = decodePageMetadata(record, "管理対象ユーザー一覧", true)
+  if (!Array.isArray(record.users)) throw new AdminContractError("管理対象ユーザー一覧")
+  return { ...metadata, version: metadata.version!, users: record.users.map(decodeManagedUser) }
 }
 
 export function decodeAccessRoleList(value: unknown): AccessRoleList {
@@ -101,15 +110,38 @@ function decodeAliasAuditLogItem(value: unknown): AliasAuditLogItem {
 function decodeManagedUserAuditLogEntry(value: unknown): ManagedUserAuditLogEntry {
   const record = objectValue(value, "管理操作履歴")
   if (
-    !hasStrings(record, ["auditId", "actorUserId", "targetUserId", "targetEmail", "createdAt"])
-    || !hasOptionalStrings(record, ["actorEmail"])
-    || !isOneOf(record.action, ["user:create", "role:assign", "user:suspend", "user:unsuspend", "user:delete"])
+    !hasStrings(record, ["auditId", "action", "result", "reason", "tenantId", "targetType", "actorUserId", "targetUserId", "policyVersion", "source", "createdAt"])
+    || !hasOptionalStrings(record, ["actorEmail", "targetEmail", "completedAt"])
+    || !isOneOf(record.result, ["pending", "success", "denied", "conflict", "failed"])
+    || !isOneOf(record.source, ["security_audit_outbox", "legacy_admin_ledger"])
     || !isOptionalManagedUserStatus(record.beforeStatus)
     || !isOptionalManagedUserStatus(record.afterStatus)
     || !isStringArray(record.beforeGroups)
     || !isStringArray(record.afterGroups)
   ) throw new AdminContractError("管理操作履歴")
   return record as ManagedUserAuditLogEntry
+}
+
+function decodeManagedUser(value: unknown): ManagedUser {
+  const record = objectValue(value, "管理対象ユーザー")
+  const capability = objectValue(record.capability, "管理対象ユーザー capability")
+  const projection = objectValue(record.projection, "管理対象ユーザー projection")
+  if (
+    !hasStrings(record, ["userId", "email", "status", "createdAt", "updatedAt"])
+    || !hasOptionalStrings(record, ["displayName", "lastLoginAt"])
+    || !isOneOf(record.status, ["active", "suspended", "deleted"])
+    || !isStringArray(record.groups)
+    || !isStringArray(record.effectivePermissions)
+    || typeof capability.canAssignRoles !== "boolean"
+    || typeof capability.canSuspend !== "boolean"
+    || typeof capability.canUnsuspend !== "boolean"
+    || typeof capability.canDelete !== "boolean"
+    || !isStringArray(capability.blockers)
+    || !hasStrings(projection, ["source", "asOf", "reconciliationState"])
+    || !isOneOf(projection.source, ["authoritative_identity", "local_ledger"])
+    || !isOneOf(projection.reconciliationState, ["current", "pending"])
+  ) throw new AdminContractError("管理対象ユーザー")
+  return record as ManagedUser
 }
 
 function decodePageMetadata(record: JsonObject, resource: string, requireVersion = false): AdminListPageMetadata {

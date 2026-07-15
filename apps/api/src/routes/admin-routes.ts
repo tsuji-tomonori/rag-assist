@@ -7,6 +7,7 @@ import {
   AdministrativePrincipalTransferRequestSchema,
   AdministrativePrincipalTransferResponseSchema,
   AdminExportResponseSchema,
+  AdminAuditExportRequestSchema,
   AdminAuditLogQuerySchema,
   AdminAuditLogResponseSchema,
   AliasAuditLogQuerySchema,
@@ -22,6 +23,7 @@ import {
   ErrorResponseSchema,
   ManagedUserDeletionPreflightSchema,
   ManagedUserListResponseSchema,
+  ManagedUserListQuerySchema,
   ManagedUserSchema,
   PublishAliasesRequestSchema,
   PublishAliasesResponseSchema,
@@ -125,15 +127,23 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
       method: "get",
       path: "/admin/users",
       "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "user:read", operationKey: "user.read", resourceCondition: "adminManagedUser" }),
+      request: { query: ManagedUserListQuerySchema },
       responses: {
         200: { description: "List managed users", content: { "application/json": { schema: ManagedUserListResponseSchema } } },
+        400: { description: "Invalid page cursor", content: { "application/json": { schema: ErrorResponseSchema } } },
         403: { description: "Forbidden", content: { "application/json": { schema: ErrorResponseSchema } } }
       }
     }),
     async (c) => {
       const user = c.get("user")
       requirePermission(user, "user:read")
-      return c.json({ users: await service.listManagedUsers(user) }, 200)
+      const query = validQuery<z.infer<typeof ManagedUserListQuerySchema>>(c)
+      try {
+        return c.json(await service.listManagedUsersPage(user, query), 200)
+      } catch (error) {
+        if (error instanceof InvalidPageCursorError) return c.json({ error: error.message }, 400)
+        throw error
+      }
     }
   )
 
@@ -194,11 +204,14 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
       path: "/admin/audit-log/export",
       "x-memorag-authorization": routeAuthorization({
         mode: "required",
-        permission: "access:policy:read",
+        permission: "access:audit:export",
         operationKey: "audit.export",
         resourceCondition: "none",
         notes: ["audit export は sanitize 済み JSON を署名付き URL として返し、credential や raw prompt は含めません。"]
       }),
+      request: {
+        body: { required: true, content: { "application/json": { schema: AdminAuditExportRequestSchema } } }
+      },
       responses: {
         200: { description: "Create signed admin audit export URL", content: { "application/json": { schema: AdminExportResponseSchema } } },
         403: { description: "Forbidden", content: { "application/json": { schema: ErrorResponseSchema } } },
@@ -207,9 +220,10 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
     }),
     async (c) => {
       const user = c.get("user")
-      requirePermission(user, "access:policy:read")
+      requirePermission(user, "access:audit:export")
+      const body = validJson<z.infer<typeof AdminAuditExportRequestSchema>>(c)
       try {
-        return c.json(await service.createAdminExportDownloadUrl(user, "audit_log"), 200)
+        return c.json(await service.createAdminExportDownloadUrl(user, "audit_log", body), 200)
       } catch (err) {
         if (err instanceof Error && err.message.includes("DEBUG_DOWNLOAD_BUCKET_NAME")) return c.json({ error: "Export storage is not configured" }, 503)
         throw err

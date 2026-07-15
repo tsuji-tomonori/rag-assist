@@ -14,9 +14,9 @@ _静的に直接対応を確認できた test case はありません。`unit-te
 | --- | --- | --- | --- | --- |
 | F001 | `POST /debug-runs/{runId}/replay-plan handler` | if | `plan` が存在しない、または偽である | `apps/api/src/routes/debug-routes.ts:107 (POST /debug-runs/{runId}/replay-plan handler)` |
 | F002 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| F003 | `MemoRagService.createDebugReplayPlan` | if | `trace` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:2104 (MemoRagService.createDebugReplayPlan)` |
-| F004 | `MemoRagService.createDebugReplayPlan` | 三項条件 | `trace.replayVersionManifest` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2119 (MemoRagService.createDebugReplayPlan)` |
-| F005 | `MemoRagService.createDebugReplayPlan` | 三項条件 | `trace.replayVersionManifest.missingVersions.length` が `0` と等しい | `apps/api/src/rag/memorag-service.ts:2120 (MemoRagService.createDebugReplayPlan)` |
+| F003 | `MemoRagService.createDebugReplayPlan` | if | `trace` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:2267 (MemoRagService.createDebugReplayPlan)` |
+| F004 | `MemoRagService.createDebugReplayPlan` | 三項条件 | `trace.replayVersionManifest` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2282 (MemoRagService.createDebugReplayPlan)` |
+| F005 | `MemoRagService.createDebugReplayPlan` | 三項条件 | `trace.replayVersionManifest.missingVersions.length` が `0` と等しい | `apps/api/src/rag/memorag-service.ts:2283 (MemoRagService.createDebugReplayPlan)` |
 | F006 | `settleNonEnumerationTiming` | if | `remaining` が `0` より大きい | `apps/api/src/security/public-resource-response.ts:42 (settleNonEnumerationTiming)` |
 
 ## 3. コード由来テストケース
@@ -28,12 +28,12 @@ _静的に直接対応を確認できた test case はありません。`unit-te
 | TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/debug-routes.ts:107 (POST /debug-runs/{runId}/replay-plan handler)` |
 | TC004 | F002: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
 | TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC006 | F003: 条件成立 | `trace` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2104 (MemoRagService.createDebugReplayPlan)` |
-| TC007 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2104 (MemoRagService.createDebugReplayPlan)` |
-| TC008 | F004: 条件成立 | `trace.replayVersionManifest` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2119 (MemoRagService.createDebugReplayPlan)` |
-| TC009 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2119 (MemoRagService.createDebugReplayPlan)` |
-| TC010 | F005: 条件成立 | `trace.replayVersionManifest.missingVersions.length` が `0` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2120 (MemoRagService.createDebugReplayPlan)` |
-| TC011 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2120 (MemoRagService.createDebugReplayPlan)` |
+| TC006 | F003: 条件成立 | `trace` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2267 (MemoRagService.createDebugReplayPlan)` |
+| TC007 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2267 (MemoRagService.createDebugReplayPlan)` |
+| TC008 | F004: 条件成立 | `trace.replayVersionManifest` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2282 (MemoRagService.createDebugReplayPlan)` |
+| TC009 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2282 (MemoRagService.createDebugReplayPlan)` |
+| TC010 | F005: 条件成立 | `trace.replayVersionManifest.missingVersions.length` が `0` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2283 (MemoRagService.createDebugReplayPlan)` |
+| TC011 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2283 (MemoRagService.createDebugReplayPlan)` |
 | TC012 | F006: 条件成立 | `remaining` が `0` より大きい 場合の response / side effect が実装どおりである。 | `apps/api/src/security/public-resource-response.ts:42 (settleNonEnumerationTiming)` |
 | TC013 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/security/public-resource-response.ts:42 (settleNonEnumerationTiming)` |
 | TC014 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

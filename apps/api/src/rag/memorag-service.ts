@@ -3,7 +3,7 @@ import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 import { SFNClient, StartExecutionCommand, StopExecutionCommand } from "@aws-sdk/client-sfn"
 import { config } from "../config.js"
-import { hasPermission, rolePermissions, type Role } from "../authorization.js"
+import { getPermissionsForGroups, hasPermission, rolePermissions, type Role } from "../authorization.js"
 import {
   APPLICATION_ROLE_DISPLAY_CATALOG
 } from "@memorag-mvp/contract/access-control"
@@ -12,7 +12,7 @@ import { sanitizeProviderText, type AsyncAgentProviderArtifact, type AsyncAgentP
 import { debugTraceObjectKey, runChatOrchestration } from "./orchestration/chat-rag-orchestrator.js"
 import { llmOptions, normalizeMaxIterations, normalizeMemoryTopK, normalizeMinScore, normalizeSearchTopK, normalizeTopK, ragRuntimePolicy } from "../chat-orchestration/runtime-policy.js"
 import type { ChatInput, ChatOrchestrationResult } from "../chat-orchestration/types.js"
-import { DEBUG_TRACE_SANITIZE_POLICY_VERSION, DEBUG_TRACE_SCHEMA_VERSION, type AdminExportArtifact, type AgentProviderAvailability, type AgentProviderSetting, type AgentRuntimeProvider, type AsyncAgentRun, type AccessRoleDefinition, type AliasAuditLogItem, type AliasAuditLogPage, type AliasDefinition, type AliasListPage, type AuthoritativeAdmissionContext, type BenchmarkMode, type BenchmarkRun, type BenchmarkRunner, type BenchmarkRunThresholds, type BenchmarkSuite, type ChatRun, type ChatToolInvocation, type Chunk, type ConversationHistoryItem, type CostAuditSummary, type DebugReplayPlan, type DebugTrace, type DocumentGroup, type DocumentIngestRun, type DocumentManifest, type DocumentManifestSummary, type ExtractionWarning, type FavoriteItem, type FavoriteListItem, type FavoriteTargetType, type HumanQuestion, type IngestAdmissionContext, type JsonValue, type ManagedUser, type ManagedUserAuditAction, type ManagedUserAuditLogEntry, type ManagedUserAuditLogPage, type ManagedUserDeletionPreflight, type MemoryCard, type ParsedDocumentPreview, type PublishedAliasArtifact, type QualityActionCard, type ReindexMigration, type StagedPublicationFence, type StructuredBlock, type UserUsageSummary, type VectorRecord } from "../types.js"
+import { DEBUG_TRACE_SANITIZE_POLICY_VERSION, DEBUG_TRACE_SCHEMA_VERSION, type AdminExportArtifact, type AgentProviderAvailability, type AgentProviderSetting, type AgentRuntimeProvider, type AsyncAgentRun, type AccessRoleDefinition, type AliasAuditLogItem, type AliasAuditLogPage, type AliasDefinition, type AliasListPage, type AuthoritativeAdmissionContext, type BenchmarkMode, type BenchmarkRun, type BenchmarkRunner, type BenchmarkRunThresholds, type BenchmarkSuite, type ChatRun, type ChatToolInvocation, type Chunk, type ConversationHistoryItem, type CostAuditSummary, type DebugReplayPlan, type DebugTrace, type DocumentGroup, type DocumentIngestRun, type DocumentManifest, type DocumentManifestSummary, type ExtractionWarning, type FavoriteItem, type FavoriteListItem, type FavoriteTargetType, type HumanQuestion, type IngestAdmissionContext, type JsonValue, type ManagedUser, type ManagedUserAdminView, type ManagedUserAuditAction, type ManagedUserAuditLogEntry, type ManagedUserAuditLogPage, type ManagedUserDeletionPreflight, type ManagedUserListPage, type MemoryCard, type ParsedDocumentPreview, type PublishedAliasArtifact, type QualityActionCard, type ReindexMigration, type StagedPublicationFence, type StructuredBlock, type UserUsageSummary, type VectorRecord } from "../types.js"
 import type { ReplayDecisionReasonCode } from "../types.js"
 import type { AppUser } from "../auth.js"
 import type { CreatedDirectoryUser } from "../adapters/user-directory.js"
@@ -161,7 +161,11 @@ type AdminLedger = {
   users: ManagedUser[]
   usage: Record<string, Partial<Omit<UserUsageSummary, "userId" | "email" | "displayName">>>
   auditLog?: ManagedUserAuditLogEntry[]
+  _storageKey?: string
+  _storeVersion?: string
 }
+
+const legacyAdminLedgerKey = "admin/admin-ledger.json"
 
 type CreateManagedUserInput = {
   email: string
@@ -237,6 +241,19 @@ type AdminAuditListQuery = {
   action?: ManagedUserAuditAction
 }
 
+type ManagedUserListQuery = {
+  cursor?: string
+  limit?: number
+  query?: string
+  status?: "active" | "suspended"
+  sort?: "emailAsc" | "updatedDesc"
+}
+
+type AdminAuditExportInput = {
+  query: Omit<AdminAuditListQuery, "cursor" | "limit">
+  reason: string
+}
+
 type AliasMutationEvidence = {
   expectedVersion: string
   reason: string
@@ -252,7 +269,6 @@ export class AliasGovernanceError extends Error {
   }
 }
 
-const adminLedgerKey = "admin/admin-ledger.json"
 const aliasLedgerKey = "admin/alias-ledger.json"
 const reindexMigrationLedgerKey = "admin/reindex-migrations.json"
 
@@ -1582,6 +1598,62 @@ export class MemoRagService {
       .sort((a, b) => a.email.localeCompare(b.email))
   }
 
+  async listManagedUsersPage(actor: AppUser, query: ManagedUserListQuery = {}): Promise<ManagedUserListPage> {
+    const db = await this.loadAdminLedger(actor, { syncUserDirectory: true })
+    const users = db.users
+      .filter((user) => user.status !== "deleted")
+      .sort((a, b) => a.email.localeCompare(b.email))
+    const normalizedQuery = query.query?.trim().toLowerCase()
+    const activeRecoveryPrincipals = users.filter((user) => user.status === "active" && user.groups.includes("SYSTEM_ADMIN"))
+    const asOf = new Date().toISOString()
+    const source = this.deps.verifiedIdentityProvider ? "authoritative_identity" as const : "local_ledger" as const
+    const items = users
+      .filter((user) => !query.status || user.status === query.status)
+      .filter((user) => !normalizedQuery || [user.userId, user.email, user.displayName, ...user.groups]
+        .some((value) => value?.toLowerCase().includes(normalizedQuery)))
+      .map((user): ManagedUserAdminView => {
+        const blockers: string[] = []
+        if (actor.userId === user.userId) blockers.push("self_mutation")
+        if (user.status !== "active") blockers.push("target_inactive")
+        if (user.groups.includes("SYSTEM_ADMIN") && activeRecoveryPrincipals.length <= 1) blockers.push("last_recovery_principal")
+        return {
+          ...user,
+          capability: {
+            canAssignRoles: hasPermission(actor, "access:role:assign") && !blockers.includes("self_mutation") && user.status === "active",
+            canSuspend: hasPermission(actor, "user:suspend") && !blockers.includes("self_mutation") && user.status === "active" && !blockers.includes("last_recovery_principal"),
+            canUnsuspend: hasPermission(actor, "user:unsuspend") && user.status === "suspended",
+            canDelete: hasPermission(actor, "user:delete") && !blockers.includes("self_mutation") && user.status !== "deleted" && !blockers.includes("last_recovery_principal"),
+            blockers
+          },
+          effectivePermissions: getPermissionsForGroups(user.groups).sort(),
+          projection: { source, asOf, reconciliationState: "current" }
+        }
+      })
+      .sort((left, right) => query.sort === "updatedDesc"
+        ? right.updatedAt.localeCompare(left.updatedAt) || left.userId.localeCompare(right.userId)
+        : left.email.localeCompare(right.email) || left.userId.localeCompare(right.userId))
+    const sort = query.sort ?? "emailAsc"
+    const page = pageByStableCursor({
+      items,
+      limit: query.limit ?? 25,
+      cursor: query.cursor,
+      sort,
+      cursorValues: (user) => sort === "updatedDesc" ? [user.updatedAt, user.userId] : [user.email, user.userId],
+      isAfter: (user, values) => sort === "updatedDesc"
+        ? user.updatedAt.localeCompare(values[0] ?? "") < 0 || user.updatedAt === values[0] && user.userId.localeCompare(values[1] ?? "") > 0
+        : user.email.localeCompare(values[0] ?? "") > 0 || user.email === values[0] && user.userId.localeCompare(values[1] ?? "") > 0
+    })
+    return {
+      users: page.items,
+      total: page.total,
+      nextCursor: page.nextCursor,
+      truncated: page.truncated,
+      source,
+      asOf,
+      version: db._storeVersion ?? "absent"
+    }
+  }
+
   async getManagedUserDeletionPreflight(actor: AppUser, userId: string): Promise<ManagedUserDeletionPreflight | undefined> {
     const db = await this.loadAdminLedger(actor, { syncUserDirectory: true })
     const target = db.users.find((candidate) => candidate.userId === userId && candidate.status !== "deleted")
@@ -1882,10 +1954,38 @@ export class MemoRagService {
 
   async listAdminAuditLog(actor: AppUser, query: AdminAuditListQuery = {}): Promise<ManagedUserAuditLogPage> {
     const db = await this.loadAdminLedger(actor)
+    const tenantId = authoritativeActorTenantId(actor)
+    const usersById = new Map(db.users.map((user) => [user.userId, user]))
+    const securityIntents = await new ObjectStoreSecurityMutationAuditOutbox(this.deps.objectStore).listAll(tenantId)
+    const securityAuditLog: ManagedUserAuditLogEntry[] = securityIntents.map((intent) => {
+      const target = usersById.get(intent.draft.targetId)
+      const before = jsonRecord(intent.draft.before)
+      const after = jsonRecord(intent.after ?? intent.requestedCompletion?.after ?? intent.draft.proposedAfter)
+      return {
+        auditId: intent.intentId,
+        action: adminAuditActionForOperation(intent.draft.operation),
+        result: intent.status === "completed" ? intent.result! : "pending",
+        reason: intent.draft.reason,
+        tenantId,
+        targetType: intent.draft.targetType,
+        actorUserId: intent.draft.actorId,
+        targetUserId: intent.draft.targetId,
+        targetEmail: target?.email,
+        policyVersion: intent.draft.policyVersion,
+        source: "security_audit_outbox",
+        beforeStatus: managedUserStatusValue(before?.accountStatus),
+        afterStatus: managedUserStatusValue(after?.accountStatus),
+        beforeGroups: stringArrayValue(before?.roles ?? before?.groups),
+        afterGroups: stringArrayValue(after?.roles ?? after?.groups),
+        createdAt: intent.createdAt,
+        completedAt: intent.completedAt
+      }
+    })
     const normalizedQuery = query.query?.trim().toLowerCase()
-    const auditLog = [...(db.auditLog ?? [])]
+    const legacyAuditLog = (db.auditLog ?? []).map((entry) => normalizeLegacyAdminAuditEntry(entry, tenantId))
+    const auditLog = [...securityAuditLog, ...legacyAuditLog]
       .filter((entry) => !query.action || entry.action === query.action)
-      .filter((entry) => !normalizedQuery || [entry.actorEmail, entry.actorUserId, entry.targetEmail, entry.targetUserId]
+      .filter((entry) => !normalizedQuery || [entry.actorEmail, entry.actorUserId, entry.targetEmail, entry.targetUserId, entry.reason, entry.result, entry.policyVersion]
         .some((value) => value?.toLowerCase().includes(normalizedQuery)))
       .sort((left, right) => right.createdAt.localeCompare(left.createdAt) || left.auditId.localeCompare(right.auditId))
     const page = pageByStableCursor({
@@ -1902,7 +2002,7 @@ export class MemoRagService {
       total: page.total,
       nextCursor: page.nextCursor,
       truncated: page.truncated,
-      source: "managed-user-audit-ledger",
+      source: "security-audit-read-model",
       asOf: new Date().toISOString()
     }
   }
@@ -1923,7 +2023,7 @@ export class MemoRagService {
         auditOutbox: new ObjectStoreSecurityMutationAuditOutbox(this.deps.objectStore),
         cleanupCoordinator: new ObjectStoreRevocationCleanupCoordinator(this.deps.objectStore)
       })
-      await mutation.replaceRoles({
+      const result = await mutation.replaceRoles({
         actor,
         targetUserId: userId,
         roles: groups,
@@ -1937,7 +2037,15 @@ export class MemoRagService {
           committed = user
         }
       })
-      return committed
+      return committed ? {
+        ...committed,
+        operationEvidence: {
+          auditIntentId: result.auditIntentId,
+          sessionRevocation: "confirmed",
+          propagationState: "current",
+          effectivePermissions: getPermissionsForGroups([...result.afterRoles]).sort()
+        }
+      } : undefined
     }
 
     if (config.authEnabled) throw new Error("Authoritative role mutation is not configured")
@@ -2028,48 +2136,103 @@ export class MemoRagService {
       .slice(0, 200)
   }
 
-  async createAdminExportDownloadUrl(actor: AppUser, exportType: AdminExportArtifact["exportType"]): Promise<AdminExportArtifact> {
-    if (!config.debugDownloadBucketName) throw new Error("DEBUG_DOWNLOAD_BUCKET_NAME is not configured")
+  async createAdminExportDownloadUrl(
+    actor: AppUser,
+    exportType: AdminExportArtifact["exportType"],
+    auditInput?: AdminAuditExportInput
+  ): Promise<AdminExportArtifact> {
+    if (!config.debugDownloadBucketName && exportType !== "audit_log") throw new Error("DEBUG_DOWNLOAD_BUCKET_NAME is not configured")
+    const tenantId = authoritativeActorTenantId(actor)
+    if (exportType === "audit_log" && (!auditInput || !auditInput.reason || auditInput.reason.trim() !== auditInput.reason)) {
+      throw new Error("Audit export reason is required and must be canonical")
+    }
     const generatedAt = new Date().toISOString()
     const redaction = {
       policyVersion: "admin-export-redaction-v1",
       redactedFields: ["credentials", "secrets", "rawPrompt", "internalReasoning"],
       notes: ["管理 export は署名付き URL と sanitize 済み集計・監査メタデータだけを返します。"]
     }
-    const body = exportType === "audit_log"
-      ? {
-          exportType,
-          generatedAt,
-          redaction,
-          auditLog: (await this.listAdminAuditLog(actor, { limit: Number.MAX_SAFE_INTEGER })).auditLog
-        }
-      : {
-          exportType,
-          generatedAt,
-          redaction,
-          costSummary: await this.getCostAuditSummary(actor)
-        }
+    const outbox = this.deps.securityAuditOutbox ?? new ObjectStoreSecurityMutationAuditOutbox(this.deps.objectStore)
+    const exportIntent = exportType === "audit_log"
+      ? await outbox.prepare({
+          actorId: actor.userId,
+          tenantId,
+          targetType: "adminAuditExport",
+          targetId: stableHash(JSON.stringify(auditInput!.query)),
+          operation: "audit.export",
+          before: null,
+          proposedAfter: { query: auditInput!.query, redactionPolicyVersion: redaction.policyVersion },
+          reason: auditInput!.reason,
+          policyVersion: "admin-audit-export-v1"
+        })
+      : undefined
+    let body: JsonValue
+    try {
+      if (!config.debugDownloadBucketName) throw new Error("DEBUG_DOWNLOAD_BUCKET_NAME is not configured")
+      body = exportType === "audit_log"
+        ? {
+            exportType,
+            generatedAt,
+            redaction,
+            query: auditInput!.query,
+            auditLog: await this.listAllAdminAuditEntries(actor, auditInput!.query)
+          }
+        : {
+            exportType,
+            generatedAt,
+            redaction,
+            costSummary: await this.getCostAuditSummary(actor)
+          }
+    } catch (error) {
+      if (exportIntent) await outbox.complete(exportIntent.intentId, tenantId, "failed", { generated: false })
+      throw error
+    }
     const safeType = exportType.replace(/[^a-z0-9_-]/g, "_")
-    const objectKey = `downloads/admin-${safeType}-${generatedAt.replace(/[-:.]/g, "")}.json`
+    const objectKey = `downloads/${encodeURIComponent(tenantId)}/admin-${safeType}-${generatedAt.replace(/[-:.]/g, "")}.json`
     const fileName = objectKey.split("/").at(-1) ?? "admin-export.json"
     const contentDisposition = `attachment; filename="${fileName}"`
     const s3 = new S3Client({ region: config.region })
-    await s3.send(new PutObjectCommand({
-      Bucket: config.debugDownloadBucketName,
-      Key: objectKey,
-      Body: JSON.stringify(body, null, 2),
-      ContentType: "application/json; charset=utf-8",
-      ContentDisposition: contentDisposition
-    }))
+    try {
+      await s3.send(new PutObjectCommand({
+        Bucket: config.debugDownloadBucketName,
+        Key: objectKey,
+        Body: JSON.stringify(body, null, 2),
+        ContentType: "application/json; charset=utf-8",
+        ContentDisposition: contentDisposition
+      }))
 
-    const expiresInSeconds = Math.max(60, config.debugDownloadExpiresInSeconds)
-    const url = await getSignedUrl(s3, new GetObjectCommand({
-      Bucket: config.debugDownloadBucketName,
-      Key: objectKey,
-      ResponseContentType: "application/json; charset=utf-8",
-      ResponseContentDisposition: contentDisposition
-    }), { expiresIn: expiresInSeconds })
-    return { exportType, url, expiresInSeconds, objectKey, generatedAt, redaction }
+      const expiresInSeconds = Math.max(60, config.debugDownloadExpiresInSeconds)
+      const url = await getSignedUrl(s3, new GetObjectCommand({
+        Bucket: config.debugDownloadBucketName,
+        Key: objectKey,
+        ResponseContentType: "application/json; charset=utf-8",
+        ResponseContentDisposition: contentDisposition
+      }), { expiresIn: expiresInSeconds })
+      if (exportIntent) await outbox.complete(exportIntent.intentId, tenantId, "success", {
+        generated: true,
+        objectKey,
+        expiresInSeconds,
+        redactionPolicyVersion: redaction.policyVersion
+      })
+      return { exportType, url, expiresInSeconds, objectKey, generatedAt, redaction }
+    } catch (error) {
+      if (exportIntent) await outbox.complete(exportIntent.intentId, tenantId, "failed", { generated: false })
+      throw error
+    }
+  }
+
+  private async listAllAdminAuditEntries(
+    actor: AppUser,
+    query: Omit<AdminAuditListQuery, "cursor" | "limit">
+  ): Promise<ManagedUserAuditLogEntry[]> {
+    const entries: ManagedUserAuditLogEntry[] = []
+    let cursor: string | undefined
+    do {
+      const page = await this.listAdminAuditLog(actor, { ...query, cursor, limit: 100 })
+      entries.push(...page.auditLog)
+      cursor = page.nextCursor
+    } while (cursor)
+    return entries
   }
 
   async listDebugRuns(actor?: AppUser): Promise<DebugTrace[]> {
@@ -3087,7 +3250,15 @@ export class MemoRagService {
           accountStatus: status,
           groups: currentTarget.cognitoGroups
         })
-        return user
+        return {
+          ...user,
+          operationEvidence: {
+            auditIntentId: intent.intentId,
+            sessionRevocation: "confirmed",
+            propagationState: "current",
+            effectivePermissions: getPermissionsForGroups(user.groups).sort()
+          }
+        }
       } catch (error) {
         let observedStatus: ManagedUser["status"] = user.status
         try {
@@ -3140,16 +3311,29 @@ export class MemoRagService {
 
   private async loadAdminLedger(actor: AppUser, options: { syncUserDirectory?: boolean } = {}): Promise<AdminLedger> {
     let db: AdminLedger
+    const tenantId = authoritativeActorTenantId(actor)
+    const storageKey = adminLedgerKeyForTenant(tenantId)
     try {
-      db = JSON.parse(await this.deps.objectStore.getText(adminLedgerKey)) as AdminLedger
+      const stored = await this.deps.objectStore.getTextWithVersion(storageKey)
+      db = JSON.parse(stored.text) as AdminLedger
+      db._storeVersion = stored.version
     } catch (err) {
       if (!isMissingObjectError(err)) throw err
-      db = { users: [], usage: {} }
+      db = await this.loadOrMigrateLegacyAdminLedger(tenantId, storageKey)
     }
+    db._storageKey = storageKey
     db.auditLog ??= []
 
     const now = new Date().toISOString()
-    const actorEmail = actor.email ?? `${actor.userId}@local`
+    const authoritativeActor = this.deps.verifiedIdentityProvider
+      ? await this.deps.verifiedIdentityProvider.getCurrentIdentityBySubject(actor.userId)
+      : undefined
+    if (
+      this.deps.verifiedIdentityProvider
+      && (!authoritativeActor || authoritativeActor.accountStatus !== "active" || authoritativeActor.tenantId !== actor.tenantId)
+    ) throw forbiddenError("Forbidden")
+    const actorEmail = authoritativeActor?.email ?? actor.email ?? `${actor.userId}@local`
+    const actorGroups = normalizeRoles(authoritativeActor?.cognitoGroups ?? actor.cognitoGroups)
     const existingActor = db.users.find((user) => user.userId === actor.userId || user.email.toLowerCase() === actorEmail.toLowerCase())
     if (existingActor) {
       if (existingActor.userId !== actor.userId) {
@@ -3158,8 +3342,10 @@ export class MemoRagService {
         existingActor.userId = actor.userId
       }
       existingActor.email = actorEmail
-      existingActor.groups = normalizeRoles(actor.cognitoGroups)
-      existingActor.status = existingActor.status === "deleted" ? "active" : existingActor.status
+      existingActor.groups = actorGroups
+      if (!isDenyFirstStatus(existingActor.status) || authoritativeActor?.accountStatus !== "active") {
+        existingActor.status = authoritativeActor?.accountStatus ?? existingActor.status
+      }
       existingActor.lastLoginAt = now
       existingActor.updatedAt = now
     } else {
@@ -3168,7 +3354,7 @@ export class MemoRagService {
         email: actorEmail,
         displayName: actorEmail.split("@")[0],
         status: "active",
-        groups: normalizeRoles(actor.cognitoGroups),
+        groups: actorGroups,
         createdAt: now,
         updatedAt: now,
         lastLoginAt: now
@@ -3182,11 +3368,42 @@ export class MemoRagService {
         lastActivityAt: now
       }
     }
-    if (options.syncUserDirectory) await this.syncUserDirectory(db)
+    if (options.syncUserDirectory) await this.syncUserDirectory(db, authoritativeActorTenantId(actor))
     return db
   }
 
-  private async syncUserDirectory(db: AdminLedger): Promise<void> {
+  private async loadOrMigrateLegacyAdminLedger(tenantId: string, storageKey: string): Promise<AdminLedger> {
+    const configuredTenantId = (config.authEnabled ? config.authTenantId : config.localAuthTenantId).trim()
+    const migrationAllowed = config.authEnabled
+      ? configuredTenantId.length > 0 && tenantId === configuredTenantId
+      : config.nodeEnv !== "production" && (configuredTenantId.length === 0 || tenantId === configuredTenantId)
+    if (!migrationAllowed) return { users: [], usage: {} }
+
+    let legacy
+    try {
+      legacy = await this.deps.objectStore.getTextWithVersion(legacyAdminLedgerKey)
+    } catch (error) {
+      if (isMissingObjectError(error)) return { users: [], usage: {} }
+      throw error
+    }
+
+    const parsed = JSON.parse(legacy.text) as AdminLedger
+    const migrated: AdminLedger = {
+      users: Array.isArray(parsed.users) ? parsed.users : [],
+      usage: parsed.usage && typeof parsed.usage === "object" ? parsed.usage : {},
+      auditLog: Array.isArray(parsed.auditLog) ? parsed.auditLog : []
+    }
+    const serialized = JSON.stringify(migrated, null, 2)
+    try {
+      await this.deps.objectStore.putTextIfVersion(storageKey, serialized, undefined, "application/json")
+    } catch (error) {
+      if (!isConditionalObjectWriteError(error)) throw error
+    }
+    const committed = await this.deps.objectStore.getTextWithVersion(storageKey)
+    return { ...(JSON.parse(committed.text) as AdminLedger), _storeVersion: committed.version }
+  }
+
+  private async syncUserDirectory(db: AdminLedger, tenantId: string): Promise<void> {
     if (!this.deps.userDirectory) return
 
     const directoryUsers = await this.deps.userDirectory.listUsers()
@@ -3199,6 +3416,7 @@ export class MemoRagService {
       if (this.deps.verifiedIdentityProvider && !currentIdentity) {
         throw new Error("Authoritative directory identity is unavailable during reconciliation")
       }
+      if (currentIdentity && currentIdentity.tenantId !== tenantId) continue
       const groups = normalizeRoles(currentIdentity?.cognitoGroups ?? directoryUser.groups)
       const status = currentIdentity?.accountStatus ?? directoryUser.status
 
@@ -3211,7 +3429,7 @@ export class MemoRagService {
         existing.email = directoryUser.email
         existing.displayName = directoryUser.displayName
         if (this.deps.verifiedIdentityProvider) {
-          existing.status = status
+          if (!isDenyFirstStatus(existing.status) || status !== "active") existing.status = status
           existing.groups = groups
         } else if (existing.groups.length === 0) {
           existing.groups = groups
@@ -3237,7 +3455,25 @@ export class MemoRagService {
   }
 
   private async saveAdminLedger(db: AdminLedger): Promise<void> {
-    await this.deps.objectStore.putText(adminLedgerKey, JSON.stringify(db, null, 2), "application/json")
+    if (!db._storageKey) throw new Error("Admin ledger storage identity is missing")
+    const { _storageKey, _storeVersion, ...stored } = db
+    const serialized = JSON.stringify(stored, null, 2)
+    try {
+      await this.deps.objectStore.putTextIfVersion(
+        _storageKey,
+        serialized,
+        _storeVersion,
+        "application/json"
+      )
+    } catch (error) {
+      if ((error as { code?: string }).code === "PRECONDITION_FAILED") {
+        throw new Error("Admin ledger concurrent write conflict", { cause: error })
+      }
+      throw error
+    }
+    const committed = await this.deps.objectStore.getTextWithVersion(_storageKey)
+    if (committed.text !== serialized) throw new Error("Admin ledger concurrent write conflict")
+    db._storeVersion = committed.version
   }
 
   private async compensateCreatedDirectoryUser(username: string): Promise<void> {
@@ -3775,10 +4011,16 @@ export class MemoRagService {
     db.auditLog.unshift({
       auditId: randomUUID(),
       action,
+      result: "success",
+      reason: "Legacy managed-user ledger event",
+      tenantId: actor.tenantId ?? defaultTenantId,
+      targetType: "managedUser",
       actorUserId: actor.userId,
       actorEmail: actor.email,
       targetUserId: target.userId,
       targetEmail: target.email,
+      policyVersion: "legacy-admin-ledger-v1",
+      source: "legacy_admin_ledger",
       beforeStatus,
       afterStatus,
       beforeGroups,
@@ -5498,8 +5740,55 @@ function createAliasVersion(now: string): string {
   return `alias_${now.replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z")}_${randomUUID().slice(0, 8)}`
 }
 
+function adminAuditActionForOperation(operation: string): string {
+  if (operation === "applicationRole.replace") return "role:assign"
+  if (operation === "account.create") return "user:create"
+  if (operation === "account.suspended") return "user:suspend"
+  if (operation === "account.restore") return "user:unsuspend"
+  if (operation === "account.deleted") return "user:delete"
+  return operation
+}
+
+function normalizeLegacyAdminAuditEntry(entry: ManagedUserAuditLogEntry, tenantId: string): ManagedUserAuditLogEntry {
+  const legacy = entry as ManagedUserAuditLogEntry & Partial<Pick<ManagedUserAuditLogEntry,
+    "result" | "reason" | "tenantId" | "targetType" | "policyVersion" | "source">>
+  return {
+    ...legacy,
+    result: legacy.result ?? "success",
+    reason: legacy.reason ?? "Legacy managed-user ledger event",
+    tenantId: legacy.tenantId ?? tenantId,
+    targetType: legacy.targetType ?? "managedUser",
+    policyVersion: legacy.policyVersion ?? "legacy-admin-ledger-v1",
+    source: legacy.source ?? "legacy_admin_ledger",
+    beforeGroups: legacy.beforeGroups ?? [],
+    afterGroups: legacy.afterGroups ?? []
+  }
+}
+
+function jsonRecord(value: JsonValue): Record<string, JsonValue> | undefined {
+  return value !== null && typeof value === "object" && !Array.isArray(value)
+    ? value as Record<string, JsonValue>
+    : undefined
+}
+
+function stringArrayValue(value: JsonValue | undefined): string[] {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : []
+}
+
+function managedUserStatusValue(value: JsonValue | undefined): ManagedUser["status"] | undefined {
+  return value === "active" || value === "suspended" || value === "deleted" ? value : undefined
+}
+
+function isDenyFirstStatus(status: ManagedUser["status"]): boolean {
+  return status === "suspended" || status === "deleted"
+}
+
 function createManagedUserId(email: string): string {
   return email.toLowerCase().replace(/[^a-z0-9._-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "")
+}
+
+function adminLedgerKeyForTenant(tenantId: string): string {
+  return `admin/tenants/${encodeURIComponent(tenantId)}/admin-ledger.json`
 }
 
 function authoritativeActorTenantId(actor: AppUser): string {

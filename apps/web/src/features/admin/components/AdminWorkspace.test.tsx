@@ -176,6 +176,7 @@ function renderAdminWorkspace(overrides: Partial<Parameters<typeof AdminWorkspac
       debugRunsCount: 3,
       benchmarkRunsCount: 4,
       managedUsers: [managedUser],
+      managedUserPage: { users: [managedUser], total: 1, truncated: false, source: "authoritative_identity", asOf, version: "ledger-version-1" },
       adminAuditPage,
       accessRoleList,
       usageSummaries: [usageSummary],
@@ -317,12 +318,25 @@ describe("AdminWorkspace", () => {
     const spies = renderAdminWorkspace({ urlState: { section: "users" } })
     expect(screen.getByRole("table", { name: "ユーザー一覧" })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "managed@example.comの利用を停止" })).toBeInTheDocument()
-    expect(screen.getByText("取得元: 管理ユーザー API")).toBeInTheDocument()
+    expect(screen.getByText("取得元: authoritative_identity")).toBeInTheDocument()
     await userEvent.click(screen.getByRole("button", { name: "管理対象ユーザーを更新" }))
     expect(spies.onRefreshAdminPart).toHaveBeenCalledWith("users")
 
     await userEvent.click(screen.getByRole("button", { name: "利用状況・コスト" }))
     expect(screen.getByRole("table", { name: "利用状況" })).toBeInTheDocument()
+  })
+
+  it("対象行の mutation 中も別ユーザーの操作を無効化しない", () => {
+    const second = { ...managedUser, userId: "managed-2", email: "second@example.com", displayName: "Second" }
+    renderAdminWorkspace({
+      urlState: { section: "users" },
+      managedUsers: [managedUser, second],
+      managedUserPage: { users: [managedUser, second], total: 2, truncated: false, source: "authoritative_identity", asOf, version: "ledger-version-1" },
+      pendingAdminMutationKeys: ["status:managed-1"]
+    })
+
+    expect(screen.getByRole("button", { name: "managed@example.comの利用を停止" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "second@example.comの利用を停止" })).toBeEnabled()
   })
 
   it("ロールの日本語 metadata と raw ID、resource group との概念差を表示する", () => {
@@ -340,5 +354,27 @@ describe("AdminWorkspace", () => {
     expect(screen.getByText("取得元: admin-audit-ledger")).toBeInTheDocument()
     await userEvent.click(screen.getByRole("button", { name: /次の履歴を読み込む/ }))
     expect(spies.onLoadMoreAdminAudit).toHaveBeenCalledTimes(1)
+  })
+
+  it("監査 export は専用 capability と必須理由で現在の query を要求する", async () => {
+    const onCreateAdminAuditExport = vi.fn().mockResolvedValue({
+      exportType: "audit_log",
+      url: "https://example.com/export",
+      expiresInSeconds: 300,
+      objectKey: "downloads/tenant-1/audit.json",
+      generatedAt: asOf,
+      redaction: { policyVersion: "admin-export-redaction-v1", redactedFields: ["credentials"], notes: [] }
+    })
+    renderAdminWorkspace({
+      urlState: { section: "audit", query: "denied" },
+      canExportAdminAuditLog: true,
+      onCreateAdminAuditExport
+    })
+    const button = screen.getByRole("button", { name: "現在の条件を export" })
+    expect(button).toBeDisabled()
+    await userEvent.type(screen.getByLabelText("export 理由（必須）"), "四半期 access review")
+    await userEvent.click(button)
+    expect(onCreateAdminAuditExport).toHaveBeenCalledWith("四半期 access review")
+    expect(await screen.findByRole("link", { name: "有効期限内に取得" })).toHaveAttribute("href", "https://example.com/export")
   })
 })

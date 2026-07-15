@@ -76,7 +76,8 @@ export function useResourceStateController<Key extends string>(targets: Record<K
           : previousPart?.status === "ready" || previousPart?.status === "stale"
             ? "stale"
             : "failed",
-        asOf: previousPart?.asOf
+        asOf: previousPart?.asOf,
+        requestReference: `ui-${target.id}-${loader.id}-${requestId}`
       }
     })
     const parts = mergeParts(previous.parts, attemptedParts)

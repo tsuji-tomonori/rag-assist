@@ -64,6 +64,9 @@ test("pending audit listing is tenant-scoped and rejects cross-tenant identity l
   await outbox.prepare(draft("tenant-b", "source-b"))
 
   assert.deepEqual((await outbox.listPending("tenant-a")).map((intent) => intent.intentId), [tenantA.intentId])
+  await outbox.complete(tenantA.intentId, "tenant-a", "denied", tenantA.draft.before)
+  assert.deepEqual((await outbox.listAll("tenant-a")).map((intent) => [intent.intentId, intent.result]), [[tenantA.intentId, "denied"]])
+  assert.deepEqual((await outbox.listAll("tenant-b")).map((intent) => intent.draft.targetId), ["source-b"])
   await assert.rejects(() => outbox.get("tenant-b", tenantA.intentId), /not found/)
   await assert.rejects(() => outbox.listPending(" tenant-a"), /tenantId is invalid/)
 })

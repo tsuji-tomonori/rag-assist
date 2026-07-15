@@ -10,53 +10,53 @@
 | --- | --- | --- |
 | 到達 symbol | service manages reviewed alias artifacts and audit log | `apps/api/src/rag/memorag-service.test.ts:1380 (service manages reviewed alias artifacts and audit log)` |
 | 到達 symbol | service creates search improvement candidates as draft review items | `apps/api/src/rag/memorag-service.test.ts:1519 (service creates search improvement candidates as draft review items)` |
-| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:3240 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
+| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:3375 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
 | 到達 symbol | service search expands published reviewed aliases without returning alias details | `apps/api/src/search/hybrid-search.test.ts:1030 (service search expands published reviewed aliases without returning alias details)` |
 
 ## 2. 実装分岐から導くテスト要因
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `POST /admin/aliases/publish handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/admin-routes.ts:549 (POST /admin/aliases/publish handler)` |
-| F002 | `POST /admin/aliases/publish handler` | if | `error` が `AliasGovernanceError` の instance である | `apps/api/src/routes/admin-routes.ts:550 (POST /admin/aliases/publish handler)` |
+| F001 | `POST /admin/aliases/publish handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/admin-routes.ts:563 (POST /admin/aliases/publish handler)` |
+| F002 | `POST /admin/aliases/publish handler` | if | `error` が `AliasGovernanceError` の instance である | `apps/api/src/routes/admin-routes.ts:564 (POST /admin/aliases/publish handler)` |
 | F003 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| F004 | `MemoRagService.publishAliases` | if | `(state.storeVersion ?? "absent")` が `input.expectedVersion` と異なる | `apps/api/src/rag/memorag-service.ts:1485 (MemoRagService.publishAliases)` |
-| F005 | `MemoRagService.publishAliases` | if | `aliases.length` が `0` と等しい | `apps/api/src/rag/memorag-service.ts:1500 (MemoRagService.publishAliases)` |
-| F006 | `MemoRagService.publishAliases` | loop | `ledger.aliases` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1506 (MemoRagService.publishAliases)` |
-| F007 | `MemoRagService.publishAliases` | if | `published` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1508 (MemoRagService.publishAliases)` |
-| F008 | `MemoRagService.publishAliases` | if | `alias.searchImprovement` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1510 (MemoRagService.publishAliases)` |
-| F009 | `MemoRagService.publishAliases` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/rag/memorag-service.ts:1532 (MemoRagService.publishAliases)` |
-| F010 | `MemoRagService.publishAliases` | if | is conditional object write error の判定結果が真である | `apps/api/src/rag/memorag-service.ts:1533 (MemoRagService.publishAliases)` |
-| F011 | `aliasGovernanceStatus` | if | `error.result` が `"conflict"` と等しい | `apps/api/src/routes/admin-routes.ts:666 (aliasGovernanceStatus)` |
-| F012 | `aliasGovernanceStatus` | if | `error.result` が `"denied"` と等しい | `apps/api/src/routes/admin-routes.ts:667 (aliasGovernanceStatus)` |
+| F004 | `MemoRagService.publishAliases` | if | `(state.storeVersion ?? "absent")` が `input.expectedVersion` と異なる | `apps/api/src/rag/memorag-service.ts:1501 (MemoRagService.publishAliases)` |
+| F005 | `MemoRagService.publishAliases` | if | `aliases.length` が `0` と等しい | `apps/api/src/rag/memorag-service.ts:1516 (MemoRagService.publishAliases)` |
+| F006 | `MemoRagService.publishAliases` | loop | `ledger.aliases` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1522 (MemoRagService.publishAliases)` |
+| F007 | `MemoRagService.publishAliases` | if | `published` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1524 (MemoRagService.publishAliases)` |
+| F008 | `MemoRagService.publishAliases` | if | `alias.searchImprovement` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1526 (MemoRagService.publishAliases)` |
+| F009 | `MemoRagService.publishAliases` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/rag/memorag-service.ts:1548 (MemoRagService.publishAliases)` |
+| F010 | `MemoRagService.publishAliases` | if | is conditional object write error の判定結果が真である | `apps/api/src/rag/memorag-service.ts:1549 (MemoRagService.publishAliases)` |
+| F011 | `aliasGovernanceStatus` | if | `error.result` が `"conflict"` と等しい | `apps/api/src/routes/admin-routes.ts:680 (aliasGovernanceStatus)` |
+| F012 | `aliasGovernanceStatus` | if | `error.result` が `"denied"` と等しい | `apps/api/src/routes/admin-routes.ts:681 (aliasGovernanceStatus)` |
 
 ## 3. コード由来テストケース
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | 検索 alias を公開する が成功 response を返す。 | `apps/api/src/routes/admin-routes.ts:543 (POST /admin/aliases/publish handler)` |
-| TC002 | F001: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/admin-routes.ts:549 (POST /admin/aliases/publish handler)` |
-| TC003 | F002: 条件成立 | `error` が `AliasGovernanceError` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:550 (POST /admin/aliases/publish handler)` |
-| TC004 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:550 (POST /admin/aliases/publish handler)` |
+| TC001 | 正常系 | 検索 alias を公開する が成功 response を返す。 | `apps/api/src/routes/admin-routes.ts:557 (POST /admin/aliases/publish handler)` |
+| TC002 | F001: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/admin-routes.ts:563 (POST /admin/aliases/publish handler)` |
+| TC003 | F002: 条件成立 | `error` が `AliasGovernanceError` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:564 (POST /admin/aliases/publish handler)` |
+| TC004 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:564 (POST /admin/aliases/publish handler)` |
 | TC005 | F003: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
 | TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC007 | F004: 条件成立 | `(state.storeVersion ?? "absent")` が `input.expectedVersion` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1485 (MemoRagService.publishAliases)` |
-| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1485 (MemoRagService.publishAliases)` |
-| TC009 | F005: 条件成立 | `aliases.length` が `0` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1500 (MemoRagService.publishAliases)` |
-| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1500 (MemoRagService.publishAliases)` |
-| TC011 | F006: 0件 | 反復対象が空でも不正な副作用や例外を生じない。 | `apps/api/src/rag/memorag-service.ts:1506 (MemoRagService.publishAliases)` |
-| TC012 | F006: 複数件 | 各要素を順に処理し、順序・終了条件を守る。 | `apps/api/src/rag/memorag-service.ts:1506 (MemoRagService.publishAliases)` |
-| TC013 | F007: 条件成立 | `published` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1508 (MemoRagService.publishAliases)` |
-| TC014 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1508 (MemoRagService.publishAliases)` |
-| TC015 | F008: 条件成立 | `alias.searchImprovement` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1510 (MemoRagService.publishAliases)` |
-| TC016 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1510 (MemoRagService.publishAliases)` |
-| TC017 | F009: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/rag/memorag-service.ts:1532 (MemoRagService.publishAliases)` |
-| TC018 | F010: 条件成立 | is conditional object write error の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1533 (MemoRagService.publishAliases)` |
-| TC019 | F010: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1533 (MemoRagService.publishAliases)` |
-| TC020 | F011: 条件成立 | `error.result` が `"conflict"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:666 (aliasGovernanceStatus)` |
-| TC021 | F011: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:666 (aliasGovernanceStatus)` |
-| TC022 | F012: 条件成立 | `error.result` が `"denied"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:667 (aliasGovernanceStatus)` |
-| TC023 | F012: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:667 (aliasGovernanceStatus)` |
+| TC007 | F004: 条件成立 | `(state.storeVersion ?? "absent")` が `input.expectedVersion` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1501 (MemoRagService.publishAliases)` |
+| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1501 (MemoRagService.publishAliases)` |
+| TC009 | F005: 条件成立 | `aliases.length` が `0` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1516 (MemoRagService.publishAliases)` |
+| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1516 (MemoRagService.publishAliases)` |
+| TC011 | F006: 0件 | 反復対象が空でも不正な副作用や例外を生じない。 | `apps/api/src/rag/memorag-service.ts:1522 (MemoRagService.publishAliases)` |
+| TC012 | F006: 複数件 | 各要素を順に処理し、順序・終了条件を守る。 | `apps/api/src/rag/memorag-service.ts:1522 (MemoRagService.publishAliases)` |
+| TC013 | F007: 条件成立 | `published` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1524 (MemoRagService.publishAliases)` |
+| TC014 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1524 (MemoRagService.publishAliases)` |
+| TC015 | F008: 条件成立 | `alias.searchImprovement` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1526 (MemoRagService.publishAliases)` |
+| TC016 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1526 (MemoRagService.publishAliases)` |
+| TC017 | F009: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/rag/memorag-service.ts:1548 (MemoRagService.publishAliases)` |
+| TC018 | F010: 条件成立 | is conditional object write error の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1549 (MemoRagService.publishAliases)` |
+| TC019 | F010: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1549 (MemoRagService.publishAliases)` |
+| TC020 | F011: 条件成立 | `error.result` が `"conflict"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:680 (aliasGovernanceStatus)` |
+| TC021 | F011: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:680 (aliasGovernanceStatus)` |
+| TC022 | F012: 条件成立 | `error.result` が `"denied"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:681 (aliasGovernanceStatus)` |
+| TC023 | F012: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:681 (aliasGovernanceStatus)` |
 | TC024 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC025 | HTTP 400 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC026 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

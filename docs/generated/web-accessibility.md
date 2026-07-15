@@ -19,7 +19,7 @@
 
 | 機能 | feature | 操作要素 | 主な UI 説明 | 詳細 |
 | --- | --- | --- | --- | --- |
-| 管理 | admin | 85 | 「チャットへ戻る」を実行するボタン。<br>「管理操作履歴を絞り込む」を入力・送信するフォーム。<br>「対象・実行者を検索」に紐づく入力ラベル。<br>「対象・実行者を検索」を入力または選択する項目。 ほか 55 件 | [admin.md](web-features/admin.md) |
+| 管理 | admin | 104 | 「チャットへ戻る」を実行するボタン。<br>「管理操作履歴を絞り込む」を入力・送信するフォーム。<br>「対象・実行者を検索」に紐づく入力ラベル。<br>「対象・実行者を検索」を入力または選択する項目。 ほか 72 件 | [admin.md](web-features/admin.md) |
 | agents | agents | 4 | 「チャットへ戻る」を実行するボタン。<br>「非同期エージェント情報を更新」を実行するボタン。<br>「キャンセル」を実行するボタン。 | [agents.md](web-features/agents.md) |
 | アプリケーション枠 | app | 15 | 「チャットへ戻る」を実行するボタン。<br>「送信キー / Enterで送信 / Ctrl+Enterで送信」に紐づく入力ラベル。<br>「Enterで送信 / Ctrl+Enterで送信」を選ぶ選択項目。<br>「Enterで送信」を表す option 要素。 ほか 8 件 | [app.md](web-features/app.md) |
 | 認証 | auth | 26 | 「title」を入力・送信するフォーム。<br>「新しいパスワード」に紐づく入力ラベル。<br>「新しいパスワード」を入力または選択する項目。<br>「新しいパスワード（確認）」に紐づく入力ラベル。 ほか 14 件 | [auth.md](web-features/auth.md) |
@@ -51,44 +51,63 @@
 | アプリケーション枠 | TopBar | label | デバッグモード | 「デバッグモード」に紐づく入力ラベル。 | - | apps/web/src/app/components/TopBar.tsx:18 |
 | アプリケーション枠 | TopBar | input | デバッグモード | 「デバッグモード」を入力または選択する項目。 | - | apps/web/src/app/components/TopBar.tsx:20 |
 | アプリケーション枠 | TopBar | button | 新しい会話 | 「新しい会話」を実行するボタン。 | - | apps/web/src/app/components/TopBar.tsx:24 |
-| 管理 | AdminPanelDataStatus | button | `${label}を更新` | 「`${label}を更新`」を実行するボタン。 | 状態: disabled=loading \|\| isBusy | apps/web/src/features/admin/components/AdminPanelDataStatus.tsx:38 |
-| 管理 | AdminWorkspace | button | チャットへ戻る | 「チャットへ戻る」を実行するボタン。 | - | apps/web/src/features/admin/components/AdminWorkspace.tsx:189 |
-| 管理 | AdminWorkspace | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: aria-current=resolvedActiveSection === section.id ? "page" : undefined | apps/web/src/features/admin/components/AdminWorkspace.tsx:202 |
-| 管理 | AdminAuditPanel | form | 管理操作履歴を絞り込む | 「管理操作履歴を絞り込む」を入力・送信するフォーム。 | role: search | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:54 |
-| 管理 | AdminAuditPanel | label | 対象・実行者を検索 | 「対象・実行者を検索」に紐づく入力ラベル。 | - | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:55 |
-| 管理 | AdminAuditPanel | input | 対象・実行者を検索 | 「対象・実行者を検索」を入力または選択する項目。 | - | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:57 |
-| 管理 | AdminAuditPanel | label | 操作 / すべて | 「操作 / すべて」に紐づく入力ラベル。 | - | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:59 |
-| 管理 | AdminAuditPanel | select | すべて | 「すべて」を選ぶ選択項目。 | - | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:61 |
-| 管理 | AdminAuditPanel | option | すべて | 「すべて」を表す option 要素。 | - | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:69 |
-| 管理 | AdminAuditPanel | option | 操作 / すべて | 「操作 / すべて」を表す option 要素。 | - | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:70 |
-| 管理 | AdminAuditPanel | button | 検索 | 「検索」を実行するボタン。 | 状態: disabled=loading | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:73 |
-| 管理 | AdminAuditPanel | button | 条件を解除 | 「条件を解除」を実行するボタン。 | 状態: disabled=loading | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:75 |
-| 管理 | AdminAuditPanel | button | 次の履歴を読み込む（残り / 件） | 「次の履歴を読み込む（残り / 件）」を実行するボタン。 | 状態: disabled=loading | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:108 |
+| 管理 | AdminPanelDataStatus | button | `${label}を更新` | 「`${label}を更新`」を実行するボタン。 | 状態: disabled=loading \|\| isBusy | apps/web/src/features/admin/components/AdminPanelDataStatus.tsx:39 |
+| 管理 | AdminWorkspace | button | チャットへ戻る | 「チャットへ戻る」を実行するボタン。 | - | apps/web/src/features/admin/components/AdminWorkspace.tsx:201 |
+| 管理 | AdminWorkspace | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: aria-current=resolvedActiveSection === section.id ? "page" : undefined | apps/web/src/features/admin/components/AdminWorkspace.tsx:214 |
+| 管理 | AdminAuditPanel | form | 管理操作履歴を絞り込む | 「管理操作履歴を絞り込む」を入力・送信するフォーム。 | role: search | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:62 |
+| 管理 | AdminAuditPanel | label | 対象・実行者を検索 | 「対象・実行者を検索」に紐づく入力ラベル。 | - | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:63 |
+| 管理 | AdminAuditPanel | input | 対象・実行者を検索 | 「対象・実行者を検索」を入力または選択する項目。 | - | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:65 |
+| 管理 | AdminAuditPanel | label | 操作 / すべて | 「操作 / すべて」に紐づく入力ラベル。 | - | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:67 |
+| 管理 | AdminAuditPanel | select | すべて | 「すべて」を選ぶ選択項目。 | - | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:69 |
+| 管理 | AdminAuditPanel | option | すべて | 「すべて」を表す option 要素。 | - | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:77 |
+| 管理 | AdminAuditPanel | option | 操作 / すべて | 「操作 / すべて」を表す option 要素。 | - | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:78 |
+| 管理 | AdminAuditPanel | button | 検索 | 「検索」を実行するボタン。 | 状態: disabled=loading | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:81 |
+| 管理 | AdminAuditPanel | button | 条件を解除 | 「条件を解除」を実行するボタン。 | 状態: disabled=loading | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:83 |
+| 管理 | AdminAuditPanel | form | 現在の監査条件を export | 「現在の監査条件を export」を入力・送信するフォーム。 | - | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:90 |
+| 管理 | AdminAuditPanel | label | export 理由（必須） | 「export 理由（必須）」に紐づく入力ラベル。 | - | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:104 |
+| 管理 | AdminAuditPanel | input | export 理由（必須） | 「export 理由（必須）」を入力または選択する項目。 | - | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:104 |
+| 管理 | AdminAuditPanel | button | 現在の条件を export | 「現在の条件を export」を実行するボタン。 | 状態: disabled=loading \|\| exportReason.trim().length === 0 | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:105 |
+| 管理 | AdminAuditPanel | a | 有効期限内に取得 | 「有効期限内に取得」へ移動するリンク。 | - | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:110 |
+| 管理 | AdminAuditPanel | button | 次の履歴を読み込む（残り / 件） | 「次の履歴を読み込む（残り / 件）」を実行するボタン。 | 状態: disabled=loading | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:140 |
 | 管理 | AdminOverviewGrid | button | `${card.label}を開く` | 「`${card.label}を開く`」を実行するボタン。 | - | apps/web/src/features/admin/components/panels/AdminOverviewGrid.tsx:205 |
 | 管理 | AdminOverviewGrid | button | `${card.label}を開く` | 「`${card.label}を開く`」を実行するボタン。 | - | apps/web/src/features/admin/components/panels/AdminOverviewGrid.tsx:212 |
 | 管理 | AdminRolePanel | summary | 権限 ID / 件を表示 | 「権限 ID / 件を表示」の詳細を開閉する要素。 | - | apps/web/src/features/admin/components/panels/AdminRolePanel.tsx:55 |
-| 管理 | AdminUserPanel | AdminCreateUserForm | 未推定 | AdminCreateUserForm 要素。静的解析では具体的な操作名を推定できません。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:71 |
-| 管理 | AdminCreateUserForm | form | 管理対象ユーザー作成 | 「管理対象ユーザー作成」を入力・送信するフォーム。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:159 |
-| 管理 | AdminCreateUserForm | label | メール | 「メール」に紐づく入力ラベル。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:160 |
-| 管理 | AdminCreateUserForm | input | new-user@example.com | 「new-user@example.com」を入力または選択する項目。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:162 |
-| 管理 | AdminCreateUserForm | label | 表示名 | 「表示名」に紐づく入力ラベル。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:164 |
-| 管理 | AdminCreateUserForm | input | 任意 | 「任意」を入力または選択する項目。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:166 |
-| 管理 | AdminCreateUserForm | label | 初期ロール | 「初期ロール」に紐づく入力ラベル。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:168 |
-| 管理 | AdminCreateUserForm | select | 初期ロール | 「初期ロール」を選ぶ選択項目。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:175 |
-| 管理 | AdminCreateUserForm | option | ( / ) | 「( / )」を表す option 要素。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:177 |
-| 管理 | AdminCreateUserForm | button | 作成 | 「作成」を実行するボタン。 | 状態: disabled=loading \|\| email.trim().length === 0 | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:182 |
-| 管理 | ManagedUserRow | label | 未推定 | label 要素。静的解析では具体的な操作名を推定できません。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:297 |
-| 管理 | ManagedUserRow | input | 未推定 | input 要素。静的解析では具体的な操作名を推定できません。 | 状態: disabled=loading | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:298 |
-| 管理 | ManagedUserRow | label | 変更理由（必須） | 「変更理由（必須）」に紐づく入力ラベル。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:311 |
-| 管理 | ManagedUserRow | textarea | `${user.email}のロール変更理由` | 「`${user.email}のロール変更理由`」を複数行で入力する項目。 | 状態: disabled=loading | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:313 |
-| 管理 | ManagedUserRow | button | `${user.email}のロール変更を確認` | 「`${user.email}のロール変更を確認`」を実行するボタン。 | 状態: disabled=loading \|\| !roleChanged \|\| nextGroups.length === 0 \|\| roleReason.trim().length === 0 | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:322 |
-| 管理 | ManagedUserRow | button | `${user.email}の利用を再開` | 「`${user.email}の利用を再開`」を実行するボタン。 | 状態: disabled=loading | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:342 |
-| 管理 | ManagedUserRow | button | `${user.email}の利用を停止` | 「`${user.email}の利用を停止`」を実行するボタン。 | 状態: disabled=loading | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:347 |
-| 管理 | ManagedUserRow | button | `${user.email}を削除` | 「`${user.email}を削除`」を実行するボタン。 | 状態: disabled=loading | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:352 |
-| 管理 | ManagedUserRow | label | 後継管理者 | 「後継管理者」に紐づく入力ラベル。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:399 |
-| 管理 | ManagedUserRow | select | `${user.email}の後継管理者` | 「`${user.email}の後継管理者`」を選ぶ選択項目。 | 状態: disabled=loading | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:401 |
-| 管理 | ManagedUserRow | option | 選択してください | 「選択してください」を表す option 要素。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:409 |
-| 管理 | ManagedUserRow | option | candidate.userId | 「candidate.userId」を表す option 要素。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:411 |
+| 管理 | AdminUserPanel | form | 管理対象ユーザーを絞り込む | 「管理対象ユーザーを絞り込む」を入力・送信するフォーム。 | role: search | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:84 |
+| 管理 | AdminUserPanel | label | ユーザー・ロールを検索 | 「ユーザー・ロールを検索」に紐づく入力ラベル。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:88 |
+| 管理 | AdminUserPanel | input | ユーザー・ロールを検索 | 「ユーザー・ロールを検索」を入力または選択する項目。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:88 |
+| 管理 | AdminUserPanel | label | 状態 / すべて / 有効 / 停止中 | 「状態 / すべて / 有効 / 停止中」に紐づく入力ラベル。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:89 |
+| 管理 | AdminUserPanel | select | すべて / 有効 / 停止中 | 「すべて / 有効 / 停止中」を選ぶ選択項目。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:89 |
+| 管理 | AdminUserPanel | option | すべて | 「すべて」を表す option 要素。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:90 |
+| 管理 | AdminUserPanel | option | 有効 | 「有効」を表す option 要素。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:90 |
+| 管理 | AdminUserPanel | option | 停止中 | 「停止中」を表す option 要素。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:90 |
+| 管理 | AdminUserPanel | label | 並び順 / メール昇順 / 更新日時の新しい順 | 「並び順 / メール昇順 / 更新日時の新しい順」に紐づく入力ラベル。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:92 |
+| 管理 | AdminUserPanel | select | メール昇順 / 更新日時の新しい順 | 「メール昇順 / 更新日時の新しい順」を選ぶ選択項目。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:92 |
+| 管理 | AdminUserPanel | option | メール昇順 | 「メール昇順」を表す option 要素。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:93 |
+| 管理 | AdminUserPanel | option | 更新日時の新しい順 | 「更新日時の新しい順」を表す option 要素。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:93 |
+| 管理 | AdminUserPanel | button | 検索 | 「検索」を実行するボタン。 | 状態: disabled=loading | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:95 |
+| 管理 | AdminUserPanel | AdminCreateUserForm | 未推定 | AdminCreateUserForm 要素。静的解析では具体的な操作名を推定できません。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:98 |
+| 管理 | AdminUserPanel | button | 次のユーザーを読み込む（残り / 人） | 「次のユーザーを読み込む（残り / 人）」を実行するボタン。 | 状態: disabled=loading | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:143 |
+| 管理 | AdminCreateUserForm | form | 管理対象ユーザー作成 | 「管理対象ユーザー作成」を入力・送信するフォーム。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:189 |
+| 管理 | AdminCreateUserForm | label | メール | 「メール」に紐づく入力ラベル。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:190 |
+| 管理 | AdminCreateUserForm | input | new-user@example.com | 「new-user@example.com」を入力または選択する項目。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:192 |
+| 管理 | AdminCreateUserForm | label | 表示名 | 「表示名」に紐づく入力ラベル。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:194 |
+| 管理 | AdminCreateUserForm | input | 任意 | 「任意」を入力または選択する項目。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:196 |
+| 管理 | AdminCreateUserForm | label | 初期ロール | 「初期ロール」に紐づく入力ラベル。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:198 |
+| 管理 | AdminCreateUserForm | select | 初期ロール | 「初期ロール」を選ぶ選択項目。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:205 |
+| 管理 | AdminCreateUserForm | option | ( / ) | 「( / )」を表す option 要素。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:207 |
+| 管理 | AdminCreateUserForm | button | 作成 | 「作成」を実行するボタン。 | 状態: disabled=loading \|\| email.trim().length === 0 | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:212 |
+| 管理 | ManagedUserRow | label | 未推定 | label 要素。静的解析では具体的な操作名を推定できません。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:330 |
+| 管理 | ManagedUserRow | input | 未推定 | input 要素。静的解析では具体的な操作名を推定できません。 | 状態: disabled=loading | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:331 |
+| 管理 | ManagedUserRow | label | 変更理由（必須） | 「変更理由（必須）」に紐づく入力ラベル。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:344 |
+| 管理 | ManagedUserRow | textarea | `${user.email}のロール変更理由` | 「`${user.email}のロール変更理由`」を複数行で入力する項目。 | 状態: disabled=loading | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:346 |
+| 管理 | ManagedUserRow | button | `${user.email}のロール変更を確認` | 「`${user.email}のロール変更を確認`」を実行するボタン。 | 状態: disabled=loading \|\| !roleChanged \|\| nextGroups.length === 0 \|\| roleReason.trim().length === 0 | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:355 |
+| 管理 | ManagedUserRow | button | `${user.email}の利用を再開` | 「`${user.email}の利用を再開`」を実行するボタン。 | 状態: disabled=loading | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:376 |
+| 管理 | ManagedUserRow | button | `${user.email}の利用を停止` | 「`${user.email}の利用を停止`」を実行するボタン。 | 状態: disabled=loading | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:381 |
+| 管理 | ManagedUserRow | button | `${user.email}を削除` | 「`${user.email}を削除`」を実行するボタン。 | 状態: disabled=loading | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:386 |
+| 管理 | ManagedUserRow | label | 後継管理者 | 「後継管理者」に紐づく入力ラベル。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:434 |
+| 管理 | ManagedUserRow | select | `${user.email}の後継管理者` | 「`${user.email}の後継管理者`」を選ぶ選択項目。 | 状態: disabled=loading | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:436 |
+| 管理 | ManagedUserRow | option | 選択してください | 「選択してください」を表す option 要素。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:444 |
+| 管理 | ManagedUserRow | option | candidate.userId | 「candidate.userId」を表す option 要素。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:446 |
 | 管理 | AliasAdminPanel | button | 承認済み用語展開を公開 | 「承認済み用語展開を公開」を実行するボタン。 | 状態: disabled=loading | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:129 |
 | 管理 | AliasAdminPanel | form | 用語展開を絞り込む | 「用語展開を絞り込む」を入力・送信するフォーム。 | role: search | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:138 |
 | 管理 | AliasAdminPanel | label | 用語・展開語を検索 | 「用語・展開語を検索」に紐づく入力ラベル。 | - | apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:139 |
@@ -421,10 +440,10 @@
 | 共通 | ConfirmDialog | Button | キャンセル | 「キャンセル」を表す Button 要素。 | 状態: disabled=busy | apps/web/src/shared/ui/ConfirmDialog.tsx:108 |
 | 共通 | ConfirmDialog | Button | 未推定 | Button 要素。静的解析では具体的な操作名を推定できません。 | 状態: disabled=busy \|\| confirmDisabled | apps/web/src/shared/ui/ConfirmDialog.tsx:109 |
 | 共通 | IconButton | button | label | 「label」を実行するボタン。 | - | apps/web/src/shared/ui/IconButton.tsx:14 |
-| 共通 | ResourceStatePanel | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: aria-controls=state.target.regionId | apps/web/src/shared/ui/ResourceState.tsx:175 |
-| 共通 | ResourceStatePanel | button | 処理中 | 「処理中」を実行するボタン。 | 状態: aria-controls=state.target.regionId, disabled=true | apps/web/src/shared/ui/ResourceState.tsx:177 |
-| 共通 | ResourceStatePanel | button | 戻る | 「戻る」を実行するボタン。 | - | apps/web/src/shared/ui/ResourceState.tsx:178 |
-| 共通 | ResourceStatePanel | button | サポート情報 | 「サポート情報」を実行するボタン。 | - | apps/web/src/shared/ui/ResourceState.tsx:179 |
+| 共通 | ResourceStatePanel | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: aria-controls=state.target.regionId | apps/web/src/shared/ui/ResourceState.tsx:179 |
+| 共通 | ResourceStatePanel | button | 処理中 | 「処理中」を実行するボタン。 | 状態: aria-controls=state.target.regionId, disabled=true | apps/web/src/shared/ui/ResourceState.tsx:181 |
+| 共通 | ResourceStatePanel | button | 戻る | 「戻る」を実行するボタン。 | - | apps/web/src/shared/ui/ResourceState.tsx:182 |
+| 共通 | ResourceStatePanel | button | サポート情報 | 「サポート情報」を実行するボタン。 | - | apps/web/src/shared/ui/ResourceState.tsx:183 |
 
 ## 仕様書での読み替え
 

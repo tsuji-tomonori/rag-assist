@@ -70,7 +70,9 @@ export function adminAuditActionLabel(action: ManagedUserAuditLogEntry["action"]
   if (action === "role:assign") return "ロール付与"
   if (action === "user:suspend") return "停止"
   if (action === "user:unsuspend") return "再開"
-  return "削除"
+  if (action === "user:delete") return "削除"
+  if (action === "audit.export") return "監査 export"
+  return action
 }
 
 export function adminAuditSummary(entry: ManagedUserAuditLogEntry): string {
@@ -81,7 +83,9 @@ export function adminAuditSummary(entry: ManagedUserAuditLogEntry): string {
   }
   const before = entry.beforeStatus ? managedUserStatusLabel(entry.beforeStatus) : "-"
   const after = entry.afterStatus ? managedUserStatusLabel(entry.afterStatus) : "-"
-  return `${before} -> ${after}`
+  return before === "-" && after === "-" && entry.result
+    ? `${entry.result}: ${entry.reason ?? "理由未記録"}`
+    : `${before} -> ${after}`
 }
 
 export function statusLabel(status: HumanQuestion["status"]): string {

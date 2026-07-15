@@ -977,11 +977,29 @@ export const ManagedUserSchema = z.object({
   groups: z.array(z.string()),
   createdAt: z.string(),
   updatedAt: z.string(),
-  lastLoginAt: z.string().optional()
+  lastLoginAt: z.string().optional(),
+  operationEvidence: z.object({
+    auditIntentId: z.string(),
+    sessionRevocation: z.enum(["confirmed", "not_required"]),
+    propagationState: z.enum(["current", "reconciliation_required"]),
+    effectivePermissions: z.array(z.string())
+  }).optional()
 })
 
-export const ManagedUserListResponseSchema = z.object({
-  users: z.array(ManagedUserSchema)
+export const ManagedUserAdminViewSchema = ManagedUserSchema.extend({
+  capability: z.object({
+    canAssignRoles: z.boolean(),
+    canSuspend: z.boolean(),
+    canUnsuspend: z.boolean(),
+    canDelete: z.boolean(),
+    blockers: z.array(z.string())
+  }),
+  effectivePermissions: z.array(z.string()),
+  projection: z.object({
+    source: z.enum(["authoritative_identity", "local_ledger"]),
+    asOf: z.string(),
+    reconciliationState: z.enum(["current", "pending"])
+  })
 })
 
 export const ManagedUserDeletionPreflightSchema = z.object({
@@ -1019,20 +1037,27 @@ export const CreateManagedUserRequestSchema = z.object({
   groups: z.array(z.string().min(1)).min(1).max(12).optional().openapi({ example: ["CHAT_USER"] })
 })
 
-export const ManagedUserAuditActionSchema = z.enum(["user:create", "role:assign", "user:suspend", "user:unsuspend", "user:delete"])
+export const ManagedUserAuditActionSchema = z.string().trim().min(1).max(160)
 
 export const ManagedUserAuditLogEntrySchema = z.object({
   auditId: z.string(),
   action: ManagedUserAuditActionSchema,
+  result: z.enum(["pending", "success", "denied", "conflict", "failed"]),
+  reason: z.string(),
+  tenantId: z.string(),
+  targetType: z.string(),
   actorUserId: z.string(),
   actorEmail: z.string().optional(),
   targetUserId: z.string(),
-  targetEmail: z.string(),
+  targetEmail: z.string().optional(),
+  policyVersion: z.string(),
+  source: z.enum(["security_audit_outbox", "legacy_admin_ledger"]),
   beforeStatus: ManagedUserStatusSchema.optional(),
   afterStatus: ManagedUserStatusSchema.optional(),
   beforeGroups: z.array(z.string()),
   afterGroups: z.array(z.string()),
-  createdAt: z.string()
+  createdAt: z.string(),
+  completedAt: z.string().optional()
 })
 
 export const AdminListPageMetadataSchema = z.object({
@@ -1048,6 +1073,11 @@ export const AdminAuditLogResponseSchema = AdminListPageMetadataSchema.extend({
   auditLog: z.array(ManagedUserAuditLogEntrySchema)
 })
 
+export const ManagedUserListResponseSchema = AdminListPageMetadataSchema.extend({
+  version: z.string(),
+  users: z.array(ManagedUserAdminViewSchema)
+})
+
 const AdminPageCursorSchema = z.string().min(1).max(2048).optional()
 const AdminPageLimitSchema = z.coerce.number().int().min(1).max(100).optional()
 const AdminListSearchSchema = z.string().trim().min(1).max(120).optional()
@@ -1057,6 +1087,19 @@ export const AdminAuditLogQuerySchema = z.object({
   limit: AdminPageLimitSchema,
   query: AdminListSearchSchema,
   action: ManagedUserAuditActionSchema.optional()
+})
+
+export const ManagedUserListQuerySchema = z.object({
+  cursor: AdminPageCursorSchema,
+  limit: AdminPageLimitSchema,
+  query: AdminListSearchSchema,
+  status: ManagedUserStatusSchema.exclude(["deleted"]).optional(),
+  sort: z.enum(["emailAsc", "updatedDesc"]).optional()
+})
+
+export const AdminAuditExportRequestSchema = z.object({
+  query: AdminAuditLogQuerySchema.omit({ cursor: true, limit: true }).default({}),
+  reason: z.string().trim().min(1).max(1000)
 })
 
 export const AccessRoleDefinitionSchema = z.object({

@@ -8,7 +8,7 @@
 
 | # | CRUD/実行 | Target | Method | 自然言語での目的 | Caller | コード根拠 |
 | ---: | --- | --- | --- | --- | --- | --- |
-| 1 | 削除 | `this.deps.favoriteStore` | `delete` | `this.deps.favoriteStore` に対して delete を実行する。 | `MemoRagService.deleteFavorite` | `apps/api/src/rag/memorag-service.ts:3823 (MemoRagService.deleteFavorite)` |
+| 1 | 削除 | `this.deps.favoriteStore` | `delete` | `this.deps.favoriteStore` に対して delete を実行する。 | `MemoRagService.deleteFavorite` | `apps/api/src/rag/memorag-service.ts:4065 (MemoRagService.deleteFavorite)` |
 
 ## 外部サービス操作
 

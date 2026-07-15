@@ -3,6 +3,7 @@ import { Icon } from "../../../shared/components/Icon.js"
 import { LoadingStatus } from "../../../shared/components/LoadingSpinner.js"
 import type {
   AccessRoleList,
+  AdminExportArtifact,
   AliasAuditLogPage,
   AliasDefinition,
   AliasListPage,
@@ -10,6 +11,7 @@ import type {
   ManagedUser,
   ManagedUserAuditLogPage,
   ManagedUserDeletionPreflight,
+  ManagedUserListPage,
   UserUsageSummary
 } from "../types.js"
 import { AdminAuditPanel } from "./panels/AdminAuditPanel.js"
@@ -39,12 +41,14 @@ export function AdminWorkspace({
   debugRunsCount,
   benchmarkRunsCount,
   managedUsers,
+  managedUserPage,
   adminAuditPage,
   accessRoleList,
   usageSummaries,
   costAudit,
   aliasPage,
   aliasAuditPage,
+  pendingAdminMutationKeys,
   urlState,
   loading,
   canManageDocuments,
@@ -61,6 +65,7 @@ export function AdminWorkspace({
   canReadUsage,
   canReadCosts,
   canReadAdminAuditLog,
+  canExportAdminAuditLog,
   canManageAliases,
   canReadAliases,
   canWriteAliases,
@@ -78,6 +83,8 @@ export function AdminWorkspace({
   onRefreshAdminData,
   onRefreshAdminPart,
   onLoadMoreAdminAudit,
+  onCreateAdminAuditExport,
+  onLoadMoreManagedUsers,
   onLoadMoreAliases,
   onLoadMoreAliasAudit,
   onUrlStateChange,
@@ -96,6 +103,7 @@ export function AdminWorkspace({
   debugRunsCount: number | null
   benchmarkRunsCount: number | null
   managedUsers: ManagedUser[] | null
+  managedUserPage?: ManagedUserListPage | null
   adminAuditLog?: never
   adminAuditPage: ManagedUserAuditLogPage | null
   accessRoles?: never
@@ -106,6 +114,7 @@ export function AdminWorkspace({
   aliasPage: AliasListPage | null
   aliasAuditLog?: never
   aliasAuditPage: AliasAuditLogPage | null
+  pendingAdminMutationKeys?: string[]
   urlState: AdminWorkspaceUrlState
   loading: boolean
   canManageDocuments: boolean
@@ -122,6 +131,7 @@ export function AdminWorkspace({
   canReadUsage: boolean
   canReadCosts: boolean
   canReadAdminAuditLog: boolean
+  canExportAdminAuditLog?: boolean
   canManageAliases: boolean
   canReadAliases: boolean
   canWriteAliases: boolean
@@ -139,6 +149,8 @@ export function AdminWorkspace({
   onRefreshAdminData: () => Promise<void>
   onRefreshAdminPart: (partId: AdminResourcePartId) => Promise<void>
   onLoadMoreAdminAudit: () => Promise<void>
+  onCreateAdminAuditExport?: (reason: string) => Promise<AdminExportArtifact>
+  onLoadMoreManagedUsers?: () => Promise<void>
   onLoadMoreAliases: () => Promise<void>
   onLoadMoreAliasAudit: () => Promise<void>
   onUrlStateChange: (state: AdminWorkspaceUrlState, mode?: "push" | "replace") => void
@@ -247,11 +259,13 @@ export function AdminWorkspace({
             <div hidden={resolvedActiveSection !== "users"}>
               <AdminUserPanel
                 managedUsers={visibleManagedUsers}
+                page={managedUserPage ?? null}
                 accessRoles={visibleAccessRoleList?.roles ?? null}
                 part={part("users")}
                 usersLoadFailed={failedParts.has("users")}
                 rolesLoadFailed={failedParts.has("roles")}
                 loading={loading}
+                pendingMutationKeys={pendingAdminMutationKeys ?? []}
                 canCreateUsers={canCreateUsers}
                 canAssignRoles={canAssignRoles}
                 canSuspendUsers={canSuspendUsers}
@@ -262,6 +276,9 @@ export function AdminWorkspace({
                 onPrepareUserDelete={onPrepareUserDelete}
                 onSetUserStatus={onSetUserStatus}
                 onRefresh={() => onRefreshAdminPart("users")}
+                onLoadMore={onLoadMoreManagedUsers ?? (async () => undefined)}
+                urlState={urlState}
+                onUrlStateChange={onUrlStateChange}
               />
             </div>
           )}
@@ -289,6 +306,8 @@ export function AdminWorkspace({
                 onUrlStateChange={onUrlStateChange}
                 onRefresh={() => onRefreshAdminPart("audit")}
                 onLoadMore={onLoadMoreAdminAudit}
+                canExport={canExportAdminAuditLog ?? false}
+                onCreateExport={onCreateAdminAuditExport ?? (async () => { throw new Error("監査 export は利用できません") })}
               />
             </div>
           )}

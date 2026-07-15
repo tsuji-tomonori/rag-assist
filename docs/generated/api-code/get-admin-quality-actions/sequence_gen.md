@@ -38,11 +38,11 @@ sequenceDiagram
 
 | # | Caller | 境界 | 処理 | コード | 実装位置 |
 | ---: | --- | --- | --- | --- | --- |
-| 1 | `GET /admin/quality-actions handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/admin-routes.ts:597 (GET /admin/quality-actions handler)` |
-| 2 | `GET /admin/quality-actions handler` | Auth | "rag:doc:read" permission を必須条件として確認する。 | `requirePermission(user, "rag:doc:read")` | `apps/api/src/routes/admin-routes.ts:598 (GET /admin/quality-actions handler)` |
-| 3 | `GET /admin/quality-actions handler` | Service | service の list quality action cards 処理を呼び出す。 | `service.listQualityActionCards(user)` | `apps/api/src/routes/admin-routes.ts:599 (GET /admin/quality-actions handler)` |
-| 4 | `MemoRagService.listQualityActionCards` | Service | service の list documents 処理を呼び出す。 | `this.listDocuments(actor)` | `apps/api/src/rag/memorag-service.ts:2021 (MemoRagService.listQualityActionCards)` |
-| 5 | `MemoRagService.listDocuments` | Store | `this.deps.objectStore` に対して list keys を実行する。 | `this.deps.objectStore.listKeys(tenantManifestPrefix(this.deps, tenantId))` | `apps/api/src/rag/memorag-service.ts:802 (MemoRagService.listDocuments)` |
+| 1 | `GET /admin/quality-actions handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/admin-routes.ts:611 (GET /admin/quality-actions handler)` |
+| 2 | `GET /admin/quality-actions handler` | Auth | "rag:doc:read" permission を必須条件として確認する。 | `requirePermission(user, "rag:doc:read")` | `apps/api/src/routes/admin-routes.ts:612 (GET /admin/quality-actions handler)` |
+| 3 | `GET /admin/quality-actions handler` | Service | service の list quality action cards 処理を呼び出す。 | `service.listQualityActionCards(user)` | `apps/api/src/routes/admin-routes.ts:613 (GET /admin/quality-actions handler)` |
+| 4 | `MemoRagService.listQualityActionCards` | Service | service の list documents 処理を呼び出す。 | `this.listDocuments(actor)` | `apps/api/src/rag/memorag-service.ts:2129 (MemoRagService.listQualityActionCards)` |
+| 5 | `MemoRagService.listDocuments` | Store | `this.deps.objectStore` に対して list keys を実行する。 | `this.deps.objectStore.listKeys(tenantManifestPrefix(this.deps, tenantId))` | `apps/api/src/rag/memorag-service.ts:818 (MemoRagService.listDocuments)` |
 | 6 | `readTenantManifestByKey` | Store | `deps.objectStore` に対して get text を実行する。 | `deps.objectStore.getText(key)` | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:93 (readTenantManifestByKey)` |
 | 7 | `loadPublicationPointer` | Store | `deps.objectStore` に対して get text を実行する。 | `deps.objectStore.getText(key)` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1809 (loadPublicationPointer)` |
 | 8 | `FolderPermissionService.resolveEffectiveFolderPermissionDetail` | Store | `this.deps.documentGroupStore` に対して list を実行する。 | `this.deps.documentGroupStore.list(actorTenantId)` | `apps/api/src/folders/folder-permission-service.ts:145 (FolderPermissionService.resolveEffectiveFolderPermissionDetail)` |
@@ -55,7 +55,7 @@ sequenceDiagram
 | 15 | `DocumentPermissionService.loadLegacyDocumentGrants` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(documentShareLegacyLedgerKey)` | `apps/api/src/documents/document-permission-service.ts:537 (DocumentPermissionService.loadLegacyDocumentGrants)` |
 | 16 | `DocumentPermissionService.resolveUserMembershipPermission` | Store | `this.deps.userGroupStore` に対して get を実行する。 | `this.deps.userGroupStore.get(tenantId, groupId)` | `apps/api/src/documents/document-permission-service.ts:683 (DocumentPermissionService.resolveUserMembershipPermission)` |
 | 17 | `DocumentPermissionService.resolveUserMembershipPermission` | Store | `this.deps.groupMembershipStore` に対して list by group id を実行する。 | `this.deps.groupMembershipStore.listByGroupId(tenantId, groupId)` | `apps/api/src/documents/document-permission-service.ts:684 (DocumentPermissionService.resolveUserMembershipPermission)` |
-| 18 | `GET /admin/quality-actions handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json({ actions: await service.listQualityActionCards(user) }, 200)` | `apps/api/src/routes/admin-routes.ts:599 (GET /admin/quality-actions handler)` |
+| 18 | `GET /admin/quality-actions handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json({ actions: await service.listQualityActionCards(user) }, 200)` | `apps/api/src/routes/admin-routes.ts:613 (GET /admin/quality-actions handler)` |
 
 ## 分岐
 

@@ -192,7 +192,7 @@ const rolePermissions: Record<string, Permission[]> = {
   SKILL_PROFILE_ADMIN: ["skill:read", "skill:create", "skill:update", "skill:delete", "skill:share", "skill:generate_with_ai", "agent_profile:read", "agent_profile:create", "agent_profile:update", "agent_profile:delete", "agent_profile:share", "agent_profile:generate_with_ai"],
   ASYNC_AGENT_ADMIN: ["agent:cancel", "agent:read:self", "agent:read:managed", "agent:artifact:download", "agent:settings:manage", "skill:read", "agent_profile:read", "agent_preset:read:self"],
   USER_ADMIN: ["user:create", "user:read", "user:suspend", "user:unsuspend", "user:delete", "usage:read:all_users"],
-  ACCESS_ADMIN: ["access:role:create", "access:role:update", "access:role:assign", "access:policy:read"],
+  ACCESS_ADMIN: ["access:role:create", "access:role:update", "access:role:assign", "access:policy:read", "access:audit:export"],
   COST_AUDITOR: ["cost:read:all"],
   SYSTEM_ADMIN: [
     "chat:create", "chat:read:own", "chat:read:shared", "chat:share:own", "chat:delete:own", "chat:admin:read_all",
@@ -204,7 +204,7 @@ const rolePermissions: Record<string, Permission[]> = {
     "agent_profile:read", "agent_profile:create", "agent_profile:update", "agent_profile:delete", "agent_profile:share", "agent_profile:generate_with_ai",
     "agent_preset:read:self", "agent_preset:create:self", "agent_preset:update:self", "agent_preset:delete:self",
     "usage:read:own", "usage:read:all_users", "cost:read:own", "cost:read:all", "user:create", "user:read", "user:suspend", "user:unsuspend", "user:delete",
-    "access:role:create", "access:role:update", "access:role:assign", "access:policy:read"
+    "access:role:create", "access:role:update", "access:role:assign", "access:policy:read", "access:audit:export"
   ]
 }
 
@@ -288,7 +288,7 @@ function mockAppFetch(groups = ["SYSTEM_ADMIN"], initialHistory: ConversationHis
     }
   ]
   let reindexMigrations: unknown[] = []
-  let adminAuditLog: unknown[] = []
+  let adminAuditLog: Array<Record<string, unknown>> = []
   let lastChatResponse: unknown = undefined
   const roles = Object.entries(rolePermissions).map(([role, permissions]) => ({
     role,
@@ -297,13 +297,36 @@ function mockAppFetch(groups = ["SYSTEM_ADMIN"], initialHistory: ConversationHis
     kind: "systemPreset" as const,
     permissions
   }))
+  const managedUserViews = () => managedUsers.map((managedUser) => ({
+    ...managedUser,
+    capability: { canAssignRoles: true, canSuspend: true, canUnsuspend: managedUser.status === "suspended", canDelete: true, blockers: [] },
+    effectivePermissions: [...new Set(managedUser.groups.flatMap((group) => rolePermissions[group] ?? []))],
+    projection: { source: "authoritative_identity", asOf: "2026-05-02T00:00:00.000Z", reconciliationState: "current" }
+  }))
   const fetchMock = vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
     const requestUrl = String(url)
     const requestPath = requestUrl.startsWith("http") ? new URL(requestUrl).pathname : requestUrl
     if (requestUrl === "/config.json") return Promise.resolve(response({ apiBaseUrl: "http://api.test" }))
     if (requestUrl.endsWith("/me") && isGet(init)) return Promise.resolve(response(currentUserResponse(groups)))
-    if (requestUrl.endsWith("/admin/users") && isGet(init)) return Promise.resolve(response({ users: managedUsers }))
-    if (requestPath.endsWith("/admin/audit-log") && isGet(init)) return Promise.resolve(response({ auditLog: adminAuditLog, total: adminAuditLog.length, truncated: false, source: "admin-audit-ledger", asOf: "2026-05-02T00:00:00.000Z" }))
+    if (requestPath.endsWith("/admin/users") && isGet(init)) return Promise.resolve(response({ users: managedUserViews(), total: managedUsers.length, truncated: false, source: "authoritative_identity", asOf: "2026-05-02T00:00:00.000Z", version: "ledger-version-1" }))
+    if (requestPath.endsWith("/admin/audit-log") && isGet(init)) return Promise.resolve(response({
+      auditLog: adminAuditLog.map((entry, index) => ({
+        result: "success",
+        reason: "管理操作テスト",
+        tenantId: "local-test",
+        targetType: "managedUser",
+        policyVersion: "legacy-admin-ledger-v1",
+        source: "legacy_admin_ledger",
+        beforeGroups: [],
+        afterGroups: [],
+        targetUserId: `target-${index}`,
+        ...entry
+      })),
+      total: adminAuditLog.length,
+      truncated: false,
+      source: "security-audit-read-model",
+      asOf: "2026-05-02T00:00:00.000Z"
+    }))
     if (requestPath.endsWith("/admin/roles") && isGet(init)) return Promise.resolve(response({ roles, catalogVersion: "role-catalog-v2", source: "canonical-application-role-catalog", asOf: "2026-05-02T00:00:00.000Z" }))
     if (requestUrl.endsWith("/admin/usage") && isGet(init)) {
       return Promise.resolve(response({ users: [{ userId: "local-dev", email: "tester@example.com", chatMessages: 12, conversationCount: 3, questionCount: 1, documentCount: 2, benchmarkRunCount: 0, debugRunCount: 0, availableMetrics: ["chatMessages", "conversationCount", "questionCount", "documentCount", "benchmarkRunCount", "debugRunCount"], unavailableMetrics: [], lastActivityAt: "2026-05-02T00:00:00.000Z" }] }))
@@ -1599,9 +1622,9 @@ describe("App chat and upload flow", () => {
     await userEvent.click(screen.getByRole("button", { name: "tester@example.comの利用を停止" }))
     const suspendDialog = await screen.findByRole("dialog", { name: "このユーザーを停止しますか？" })
     await userEvent.click(within(suspendDialog).getByRole("button", { name: "停止" }))
-    expect(await screen.findByText("停止中")).toBeInTheDocument()
+    expect(within(await screen.findByRole("row", { name: /tester@example.com/ })).getByText("停止中")).toBeInTheDocument()
     await userEvent.click(screen.getByRole("button", { name: "tester@example.comの利用を再開" }))
-    expect(await screen.findByText("有効")).toBeInTheDocument()
+    await waitFor(() => expect(within(screen.getByRole("row", { name: /tester@example.com/ })).getByText("有効")).toBeInTheDocument())
 
     await userEvent.click(within(adminWorkspace).getByRole("button", { name: "用語展開" }))
     await userEvent.type(within(screen.getByLabelText("用語展開管理一覧")).getByLabelText("用語"), "sl")

@@ -2,7 +2,7 @@
 
 # GET /admin/users IF仕様
 
-- 実装 route: `apps/api/src/routes/admin-routes.ts:123 (GET /admin/users)`
+- 実装 route: `apps/api/src/routes/admin-routes.ts:125 (GET /admin/users)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 管理対象ユーザー一覧を取得する
@@ -21,7 +21,13 @@ _なし_
 
 ## Query Parameters
 
-_なし_
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `cursor` | `string` | no | `cursor` の値。項目名は cursor を表します。 クエリ文字列で検索または一覧条件を指定します。 | minLength=1<br>maxLength=2048 |
+| `limit` | `integer` | no | `limit` の値。項目名は limit を表します。 クエリ文字列で検索または一覧条件を指定します。 | minimum=1<br>maximum=100 |
+| `query` | `string` | no | 検索や benchmark に利用する query。 クエリ文字列で検索または一覧条件を指定します。 | minLength=1<br>maxLength=120 |
+| `status` | `enum(active \| suspended)` | no | 現在の処理状態または管理状態。 クエリ文字列で検索または一覧条件を指定します。 | enum=active, suspended |
+| `sort` | `enum(emailAsc \| updatedDesc)` | no | `sort` の値。項目名は sort を表します。 クエリ文字列で検索または一覧条件を指定します。 | enum=emailAsc, updatedDesc |
 
 ## Data
 
@@ -53,7 +59,8 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 9 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 31 field(s) |
+| `400` | リクエスト形式または入力値が不正です。 | `application/json` | 2 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 
@@ -63,6 +70,12 @@ Media type: `application/json`
 
 | 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
+| `total` | `integer` | yes | `response.total` の値。項目名は total を表します。 | minimum=0 |
+| `nextCursor` | `string` | no | `response.nextCursor` の値。項目名は next cursor を表します。 | - |
+| `truncated` | `boolean` | yes | `response.truncated` の値。項目名は truncated を表します。 | - |
+| `source` | `string` | yes | `response.source` の値。項目名は source を表します。 | - |
+| `asOf` | `string` | yes | `response.asOf` の値。項目名は as of を表します。 | - |
+| `version` | `string` | yes | `response.version` の値。項目名は version を表します。 | - |
 | `users` | `array<object>` | yes | `response.users` の値。項目名は users を表します。 | - |
 | `users[].userId` | `string` | yes | 対象ユーザーを一意に識別する ID。 | - |
 | `users[].email` | `string` | yes | ユーザーのメールアドレス。 | - |
@@ -72,6 +85,31 @@ Media type: `application/json`
 | `users[].createdAt` | `string` | yes | レコードを作成した日時。 | - |
 | `users[].updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
 | `users[].lastLoginAt` | `string` | no | `response.users[].lastLoginAt` の値。項目名は last login at を表します。 | - |
+| `users[].operationEvidence` | `object` | no | `response.users[].operationEvidence` の値。項目名は operation evidence を表します。 | - |
+| `users[].operationEvidence.auditIntentId` | `string` | yes | `response.users[].operationEvidence.auditIntentId` の値。項目名は audit intent id を表します。 | - |
+| `users[].operationEvidence.sessionRevocation` | `enum(confirmed \| not_required)` | yes | `response.users[].operationEvidence.sessionRevocation` の値。項目名は session revocation を表します。 | enum=confirmed, not_required |
+| `users[].operationEvidence.propagationState` | `enum(current \| reconciliation_required)` | yes | `response.users[].operationEvidence.propagationState` の値。項目名は propagation state を表します。 | enum=current, reconciliation_required |
+| `users[].operationEvidence.effectivePermissions` | `array<string>` | yes | `response.users[].operationEvidence.effectivePermissions` の値。項目名は effective permissions を表します。 | - |
+| `users[].capability` | `object` | yes | `response.users[].capability` の値。項目名は capability を表します。 | - |
+| `users[].capability.canAssignRoles` | `boolean` | yes | `response.users[].capability.canAssignRoles` の値。項目名は can assign roles を表します。 | - |
+| `users[].capability.canSuspend` | `boolean` | yes | `response.users[].capability.canSuspend` の値。項目名は can suspend を表します。 | - |
+| `users[].capability.canUnsuspend` | `boolean` | yes | `response.users[].capability.canUnsuspend` の値。項目名は can unsuspend を表します。 | - |
+| `users[].capability.canDelete` | `boolean` | yes | `response.users[].capability.canDelete` の値。項目名は can delete を表します。 | - |
+| `users[].capability.blockers` | `array<string>` | yes | `response.users[].capability.blockers` の値。項目名は blockers を表します。 | - |
+| `users[].effectivePermissions` | `array<string>` | yes | `response.users[].effectivePermissions` の値。項目名は effective permissions を表します。 | - |
+| `users[].projection` | `object` | yes | `response.users[].projection` の値。項目名は projection を表します。 | - |
+| `users[].projection.source` | `enum(authoritative_identity \| local_ledger)` | yes | `response.users[].projection.source` の値。項目名は source を表します。 | enum=authoritative_identity, local_ledger |
+| `users[].projection.asOf` | `string` | yes | `response.users[].projection.asOf` の値。項目名は as of を表します。 | - |
+| `users[].projection.reconciliationState` | `enum(current \| pending)` | yes | `response.users[].projection.reconciliationState` の値。項目名は reconciliation state を表します。 | enum=current, pending |
+
+##### `400` リクエスト形式または入力値が不正です。
+
+Media type: `application/json`
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ##### `401` 認証が必要です。
 

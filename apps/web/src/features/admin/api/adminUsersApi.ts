@@ -1,9 +1,9 @@
 import { del, get, post } from "../../../shared/api/http.js"
-import type { ManagedUser, ManagedUserDeletionPreflight } from "../types.js"
+import type { ManagedUser, ManagedUserDeletionPreflight, ManagedUserListPage, ManagedUserListQuery } from "../types.js"
+import { buildAdminQuery, decodeManagedUserListPage } from "./adminContract.js"
 
-export async function listManagedUsers(): Promise<ManagedUser[] | null> {
-  const result = await get<{ users?: ManagedUser[] }>("/admin/users")
-  return Array.isArray(result.users) ? result.users : null
+export async function listManagedUsers(query: ManagedUserListQuery = {}): Promise<ManagedUserListPage> {
+  return decodeManagedUserListPage(await get<unknown>(`/admin/users${buildAdminQuery(query)}`))
 }
 
 export async function createManagedUser(input: { email: string; displayName?: string; groups?: string[] }): Promise<ManagedUser> {

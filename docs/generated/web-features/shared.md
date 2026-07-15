@@ -38,10 +38,10 @@
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Button | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | - | - | apps/web/src/shared/ui/Button.tsx:19 | unknown |
 | IconButton | button | label | 「label」を実行するボタン。 | - | - | apps/web/src/shared/ui/IconButton.tsx:14 | confirmed |
-| ResourceStatePanel | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: aria-controls=state.target.regionId | onClick=onRetry | apps/web/src/shared/ui/ResourceState.tsx:175 | unknown |
-| ResourceStatePanel | button | 処理中 | 「処理中」を実行するボタン。 | 状態: aria-controls=state.target.regionId, disabled=true | - | apps/web/src/shared/ui/ResourceState.tsx:177 | confirmed |
-| ResourceStatePanel | button | 戻る | 「戻る」を実行するボタン。 | - | onClick=onBack | apps/web/src/shared/ui/ResourceState.tsx:178 | confirmed |
-| ResourceStatePanel | button | サポート情報 | 「サポート情報」を実行するボタン。 | - | onClick=onSupport | apps/web/src/shared/ui/ResourceState.tsx:179 | confirmed |
+| ResourceStatePanel | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: aria-controls=state.target.regionId | onClick=onRetry | apps/web/src/shared/ui/ResourceState.tsx:179 | unknown |
+| ResourceStatePanel | button | 処理中 | 「処理中」を実行するボタン。 | 状態: aria-controls=state.target.regionId, disabled=true | - | apps/web/src/shared/ui/ResourceState.tsx:181 | confirmed |
+| ResourceStatePanel | button | 戻る | 「戻る」を実行するボタン。 | - | onClick=onBack | apps/web/src/shared/ui/ResourceState.tsx:182 | confirmed |
+| ResourceStatePanel | button | サポート情報 | 「サポート情報」を実行するボタン。 | - | onClick=onSupport | apps/web/src/shared/ui/ResourceState.tsx:183 | confirmed |
 
 ## フォーム
 
@@ -62,7 +62,7 @@
 | ConfirmDialog | Button | キャンセル | 「キャンセル」を表す Button 要素。 | 状態: disabled=busy | onClick=onCancel | apps/web/src/shared/ui/ConfirmDialog.tsx:108 | confirmed |
 | ConfirmDialog | Button | 未推定 | Button 要素。静的解析では具体的な操作名を推定できません。 | 状態: disabled=busy \|\| confirmDisabled | onClick=() => void confirm() | apps/web/src/shared/ui/ConfirmDialog.tsx:109 | unknown |
 | IconButton | button | label | 「label」を実行するボタン。 | - | - | apps/web/src/shared/ui/IconButton.tsx:14 | confirmed |
-| ResourceStatePanel | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: aria-controls=state.target.regionId | onClick=onRetry | apps/web/src/shared/ui/ResourceState.tsx:175 | unknown |
-| ResourceStatePanel | button | 処理中 | 「処理中」を実行するボタン。 | 状態: aria-controls=state.target.regionId, disabled=true | - | apps/web/src/shared/ui/ResourceState.tsx:177 | confirmed |
-| ResourceStatePanel | button | 戻る | 「戻る」を実行するボタン。 | - | onClick=onBack | apps/web/src/shared/ui/ResourceState.tsx:178 | confirmed |
-| ResourceStatePanel | button | サポート情報 | 「サポート情報」を実行するボタン。 | - | onClick=onSupport | apps/web/src/shared/ui/ResourceState.tsx:179 | confirmed |
+| ResourceStatePanel | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: aria-controls=state.target.regionId | onClick=onRetry | apps/web/src/shared/ui/ResourceState.tsx:179 | unknown |
+| ResourceStatePanel | button | 処理中 | 「処理中」を実行するボタン。 | 状態: aria-controls=state.target.regionId, disabled=true | - | apps/web/src/shared/ui/ResourceState.tsx:181 | confirmed |
+| ResourceStatePanel | button | 戻る | 「戻る」を実行するボタン。 | - | onClick=onBack | apps/web/src/shared/ui/ResourceState.tsx:182 | confirmed |
+| ResourceStatePanel | button | サポート情報 | 「サポート情報」を実行するボタン。 | - | onClick=onSupport | apps/web/src/shared/ui/ResourceState.tsx:183 | confirmed |

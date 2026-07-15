@@ -613,6 +613,7 @@ Phase 1 では通常利用者の Cognito self sign-up UI を提供する。
 | ユーザー再開 | `POST /admin/users/{userId}/unsuspend` | `user:unsuspend` | `USER_ADMIN`, `SYSTEM_ADMIN` |
 | ユーザー削除 | `DELETE /admin/users/{userId}` | `user:delete` | `USER_ADMIN`, `SYSTEM_ADMIN` |
 | 管理操作履歴 | `GET /admin/audit-log` | `access:policy:read` | `ACCESS_ADMIN`, `SYSTEM_ADMIN` |
+| 管理操作履歴 export | `POST /admin/audit-log/export` | `access:audit:export` | `ACCESS_ADMIN`, `SYSTEM_ADMIN` |
 | ロール一覧 | `GET /admin/roles` | `access:policy:read` | `ACCESS_ADMIN`, `SYSTEM_ADMIN` |
 | ロール付与 | `POST /admin/users/{userId}/roles` | `access:role:assign` | `ACCESS_ADMIN`, `SYSTEM_ADMIN` |
 | alias 一覧 | `GET /admin/aliases` | `rag:alias:read` | `RAG_GROUP_MANAGER`, `SYSTEM_ADMIN` |
@@ -626,7 +627,11 @@ Phase 1 では通常利用者の Cognito self sign-up UI を提供する。
 | 全ユーザー利用状況 | `GET /admin/usage` | `usage:read:all_users` | `USER_ADMIN`, `SYSTEM_ADMIN` |
 | コスト監査 | `GET /admin/costs` | `cost:read:all` | `COST_AUDITOR`, `SYSTEM_ADMIN` |
 
-Phase 2 初期実装のユーザー管理は管理台帳 API を正とする。管理台帳 API はユーザー作成、role group 付与、停止、再開、削除を管理操作履歴へ記録する。Cognito Admin API への実変更、承認 workflow、監査ログの保全設計は後続 adapter/運用設計で扱う。
+Phase 2 のユーザー管理は、verified identity/directory adapter が設定される場合はそれを authoritative source とし、tenant 分割された管理台帳を projection/read model とする。未設定の非 production local 環境では tenant 分割管理台帳を正とする。role/account mutation は共通 security audit outbox と相関する operation evidence を返し、session revoke、effective permission、propagation/reconciliation を成功と推測せず表示できるようにする。
+
+`GET /admin/users` は `query`、`status`、`sort`、`cursor`、`limit` を受け、`total`、`nextCursor`、`truncated`、`source`、`asOf`、ledger `version` と各 user の server capability、effective permissions、projection source/as-of/reconciliation state を返す。不正 cursor は `400` とし、self、inactive target、最後の recovery principal などの blocker を server が最終判定する。
+
+`GET /admin/audit-log` は legacy 管理台帳の成功 event と tenant-scoped common security audit outbox を一つの read model に正規化し、`pending`、`success`、`denied`、`conflict`、`failed`、reason、target、policy version、source を返す。`POST /admin/audit-log/export` は read と分離した `access:audit:export`、同じ query と必須 reason を要求し、tenant 内の全 page を取得して redaction metadata を付け、export の成功/失敗自体も共通監査へ記録する。
 
 alias list/audit と管理操作履歴は `cursor`、`limit`、`query` および resource 固有 filter を受け、`total`、`nextCursor`、`truncated`、`source`、`asOf` を返す。cursor は sort と最後の複合 key を含む opaque token で、sort 不一致・不正 token は `400` とする。alias response は record `version`、list response は ledger `version` を返す。
 
