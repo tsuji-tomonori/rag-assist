@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { deleteManagedUser, getManagedUserDeletionPreflight } from "./adminUsersApi.js"
+import { deleteManagedUser, getManagedUserDeletionPreflight, listManagedUsers } from "./adminUsersApi.js"
 
 function successResponse(body: unknown) {
   return {
@@ -46,5 +46,14 @@ describe("adminUsersApi deletion transfer", () => {
       "/api/admin/users/target%2F1?successorUserId=successor+%26+1",
       { method: "DELETE", headers: {} }
     )
+  })
+
+  it("sends server-side user filters and accepts stable page metadata", async () => {
+    const page = { users: [], total: 0, truncated: false, source: "authoritative_identity", asOf: "now", version: "ledger-version-1" }
+    const fetchMock = vi.fn().mockResolvedValue(successResponse(page))
+    vi.stubGlobal("fetch", fetchMock)
+
+    await expect(listManagedUsers({ query: "admin", status: "active", sort: "updatedDesc", limit: 50 })).resolves.toEqual(page)
+    expect(fetchMock).toHaveBeenCalledWith("/api/admin/users?query=admin&status=active&sort=updatedDesc&limit=50", { headers: {} })
   })
 })

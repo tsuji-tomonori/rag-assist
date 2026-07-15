@@ -47,10 +47,10 @@ sequenceDiagram
 | 1 | `GET /favorites handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/favorite-routes.ts:19 (GET /favorites handler)` |
 | 2 | `GET /favorites handler` | Auth | "chat:read:own" permission を必須条件として確認する。 | `requirePermission(user, "chat:read:own")` | `apps/api/src/routes/favorite-routes.ts:20 (GET /favorites handler)` |
 | 3 | `GET /favorites handler` | Service | service の list favorites 処理を呼び出す。 | `service.listFavorites(user)` | `apps/api/src/routes/favorite-routes.ts:21 (GET /favorites handler)` |
-| 4 | `MemoRagService.listFavorites` | Store | `this.deps.favoriteStore` に対して list を実行する。 | `this.deps.favoriteStore.list(tenantPartitionedOwnerKey(user))` | `apps/api/src/rag/memorag-service.ts:3828 (MemoRagService.listFavorites)` |
-| 5 | `MemoRagService.listFavorites` | Store | `this.deps.conversationHistoryStore` に対して list を実行する。 | `this.deps.conversationHistoryStore.list(tenantPartitionedOwnerKey(user))` | `apps/api/src/rag/memorag-service.ts:3829 (MemoRagService.listFavorites)` |
-| 6 | `MemoRagService.listFavorites` | Service | service の list documents 処理を呼び出す。 | `this.listDocuments(user)` | `apps/api/src/rag/memorag-service.ts:3832 (MemoRagService.listFavorites)` |
-| 7 | `MemoRagService.listDocuments` | Store | `this.deps.objectStore` に対して list keys を実行する。 | `this.deps.objectStore.listKeys(tenantManifestPrefix(this.deps, tenantId))` | `apps/api/src/rag/memorag-service.ts:802 (MemoRagService.listDocuments)` |
+| 4 | `MemoRagService.listFavorites` | Store | `this.deps.favoriteStore` に対して list を実行する。 | `this.deps.favoriteStore.list(tenantPartitionedOwnerKey(user))` | `apps/api/src/rag/memorag-service.ts:4070 (MemoRagService.listFavorites)` |
+| 5 | `MemoRagService.listFavorites` | Store | `this.deps.conversationHistoryStore` に対して list を実行する。 | `this.deps.conversationHistoryStore.list(tenantPartitionedOwnerKey(user))` | `apps/api/src/rag/memorag-service.ts:4071 (MemoRagService.listFavorites)` |
+| 6 | `MemoRagService.listFavorites` | Service | service の list documents 処理を呼び出す。 | `this.listDocuments(user)` | `apps/api/src/rag/memorag-service.ts:4074 (MemoRagService.listFavorites)` |
+| 7 | `MemoRagService.listDocuments` | Store | `this.deps.objectStore` に対して list keys を実行する。 | `this.deps.objectStore.listKeys(tenantManifestPrefix(this.deps, tenantId))` | `apps/api/src/rag/memorag-service.ts:818 (MemoRagService.listDocuments)` |
 | 8 | `readTenantManifestByKey` | Store | `deps.objectStore` に対して get text を実行する。 | `deps.objectStore.getText(key)` | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:93 (readTenantManifestByKey)` |
 | 9 | `loadPublicationPointer` | Store | `deps.objectStore` に対して get text を実行する。 | `deps.objectStore.getText(key)` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1809 (loadPublicationPointer)` |
 | 10 | `FolderPermissionService.resolveEffectiveFolderPermissionDetail` | Store | `this.deps.documentGroupStore` に対して list を実行する。 | `this.deps.documentGroupStore.list(actorTenantId)` | `apps/api/src/folders/folder-permission-service.ts:145 (FolderPermissionService.resolveEffectiveFolderPermissionDetail)` |
@@ -63,8 +63,8 @@ sequenceDiagram
 | 17 | `DocumentPermissionService.loadLegacyDocumentGrants` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(documentShareLegacyLedgerKey)` | `apps/api/src/documents/document-permission-service.ts:537 (DocumentPermissionService.loadLegacyDocumentGrants)` |
 | 18 | `DocumentPermissionService.resolveUserMembershipPermission` | Store | `this.deps.userGroupStore` に対して get を実行する。 | `this.deps.userGroupStore.get(tenantId, groupId)` | `apps/api/src/documents/document-permission-service.ts:683 (DocumentPermissionService.resolveUserMembershipPermission)` |
 | 19 | `DocumentPermissionService.resolveUserMembershipPermission` | Store | `this.deps.groupMembershipStore` に対して list by group id を実行する。 | `this.deps.groupMembershipStore.listByGroupId(tenantId, groupId)` | `apps/api/src/documents/document-permission-service.ts:684 (DocumentPermissionService.resolveUserMembershipPermission)` |
-| 20 | `MemoRagService.listFavorites` | Service | service の list document groups 処理を呼び出す。 | `this.listDocumentGroups(user)` | `apps/api/src/rag/memorag-service.ts:3833 (MemoRagService.listFavorites)` |
-| 21 | `MemoRagService.listDocumentGroups` | Store | `this.deps.documentGroupStore` に対して list を実行する。 | `this.deps.documentGroupStore.list(authoritativeActorTenantId(user))` | `apps/api/src/rag/memorag-service.ts:918 (MemoRagService.listDocumentGroups)` |
+| 20 | `MemoRagService.listFavorites` | Service | service の list document groups 処理を呼び出す。 | `this.listDocumentGroups(user)` | `apps/api/src/rag/memorag-service.ts:4075 (MemoRagService.listFavorites)` |
+| 21 | `MemoRagService.listDocumentGroups` | Store | `this.deps.documentGroupStore` に対して list を実行する。 | `this.deps.documentGroupStore.list(authoritativeActorTenantId(user))` | `apps/api/src/rag/memorag-service.ts:934 (MemoRagService.listDocumentGroups)` |
 | 22 | `FolderPermissionService.assertFolderOperation` | Store | `this.deps.documentGroupStore` に対して get を実行する。 | `this.deps.documentGroupStore.get(actorTenantId, folderId)` | `apps/api/src/folders/folder-permission-service.ts:110 (FolderPermissionService.assertFolderOperation)` |
 | 23 | `GET /favorites handler` | Validation | parse により入力を検証する。 | `FavoriteSchema.parse(favorite)` | `apps/api/src/routes/favorite-routes.ts:21 (GET /favorites handler)` |
 | 24 | `GET /favorites handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json({ favorites: (await service.listFavorites(user)).map((favorite) => FavoriteSchema.parse(favorite)) }, 200)` | `apps/api/src/routes/favorite-routes.ts:21 (GET /favorites handler)` |
@@ -74,6 +74,6 @@ sequenceDiagram
 | ID | Function | 条件 | 実装位置 |
 | --- | --- | --- | --- |
 | B001 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| B002 | `MemoRagService.listFavorites` | `favorite.targetType` が `"chatSession"` と等しい | `apps/api/src/rag/memorag-service.ts:3835 (MemoRagService.listFavorites)` |
-| B003 | `MemoRagService.listFavorites` | `favorite.targetType` が `"document"` と等しい | `apps/api/src/rag/memorag-service.ts:3838 (MemoRagService.listFavorites)` |
-| B004 | `MemoRagService.listFavorites` | `favorite.targetType` が `"folder"` と等しい | `apps/api/src/rag/memorag-service.ts:3842 (MemoRagService.listFavorites)` |
+| B002 | `MemoRagService.listFavorites` | `favorite.targetType` が `"chatSession"` と等しい | `apps/api/src/rag/memorag-service.ts:4077 (MemoRagService.listFavorites)` |
+| B003 | `MemoRagService.listFavorites` | `favorite.targetType` が `"document"` と等しい | `apps/api/src/rag/memorag-service.ts:4080 (MemoRagService.listFavorites)` |
+| B004 | `MemoRagService.listFavorites` | `favorite.targetType` が `"folder"` と等しい | `apps/api/src/rag/memorag-service.ts:4084 (MemoRagService.listFavorites)` |

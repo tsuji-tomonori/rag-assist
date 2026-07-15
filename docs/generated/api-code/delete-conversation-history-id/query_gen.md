@@ -8,7 +8,7 @@
 
 | # | CRUD/実行 | Target | Method | 自然言語での目的 | Caller | コード根拠 |
 | ---: | --- | --- | --- | --- | --- | --- |
-| 1 | 削除 | `this.deps.conversationHistoryStore` | `delete` | `this.deps.conversationHistoryStore` に対して delete を実行する。 | `MemoRagService.deleteConversationHistory` | `apps/api/src/rag/memorag-service.ts:3811 (MemoRagService.deleteConversationHistory)` |
+| 1 | 削除 | `this.deps.conversationHistoryStore` | `delete` | `this.deps.conversationHistoryStore` に対して delete を実行する。 | `MemoRagService.deleteConversationHistory` | `apps/api/src/rag/memorag-service.ts:4053 (MemoRagService.deleteConversationHistory)` |
 
 ## 外部サービス操作
 

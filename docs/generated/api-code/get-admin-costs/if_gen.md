@@ -2,7 +2,7 @@
 
 # GET /admin/costs IF仕様
 
-- 実装 route: `apps/api/src/routes/admin-routes.ts:619 (GET /admin/costs)`
+- 実装 route: `apps/api/src/routes/admin-routes.ts:633 (GET /admin/costs)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 概算コストを取得する

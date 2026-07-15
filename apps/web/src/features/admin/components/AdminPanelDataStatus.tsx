@@ -33,6 +33,7 @@ export function AdminPanelDataStatus({
         </span>
         {isStale && <span>最新情報の取得に失敗したため、最後に確認できた内容です。</span>}
         {part?.status === "failed" && <span>取得に失敗しました。</span>}
+        {part?.requestReference && <span>問い合わせ参照: <code>{part.requestReference}</code></span>}
         {part?.status === "permission" && <span>この情報を参照する権限がありません。</span>}
       </div>
       <button type="button" disabled={loading || isBusy} onClick={() => void onRefresh()} aria-label={`${label}を更新`}>

@@ -191,7 +191,7 @@ export const ROLE_PERMISSION_CATALOG = {
     "user:delete",
     "usage:read:all_users"
   ],
-  ACCESS_ADMIN: ["access:role:create", "access:role:update", "access:role:assign", "access:policy:read"],
+  ACCESS_ADMIN: ["access:role:create", "access:role:update", "access:role:assign", "access:policy:read", "access:audit:export"],
   COST_AUDITOR: ["cost:read:all"],
   SYSTEM_ADMIN: [
     "chat:create",
@@ -270,6 +270,7 @@ export const ROLE_PERMISSION_CATALOG = {
     "access:role:update",
     "access:role:assign",
     "access:policy:read",
+    "access:audit:export",
     ...RESOURCE_OPERATION_FEATURE_PERMISSIONS
   ]
 } as const satisfies Record<ApplicationRole, readonly string[]>

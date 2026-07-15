@@ -25,7 +25,7 @@ _なし_
 | `cursor` | `string` | no | `cursor` の値。項目名は cursor を表します。 クエリ文字列で検索または一覧条件を指定します。 | minLength=1<br>maxLength=2048 |
 | `limit` | `integer` | no | `limit` の値。項目名は limit を表します。 クエリ文字列で検索または一覧条件を指定します。 | minimum=1<br>maximum=100 |
 | `query` | `string` | no | 検索や benchmark に利用する query。 クエリ文字列で検索または一覧条件を指定します。 | minLength=1<br>maxLength=120 |
-| `action` | `enum(user:create \| role:assign \| user:suspend \| user:unsuspend \| user:delete)` | no | `action` の値。項目名は action を表します。 クエリ文字列で検索または一覧条件を指定します。 | enum=user:create, role:assign, user:suspend, user:unsuspend, user:delete |
+| `action` | `string` | no | `action` の値。項目名は action を表します。 クエリ文字列で検索または一覧条件を指定します。 | minLength=1<br>maxLength=160 |
 
 ## Data
 
@@ -57,7 +57,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 18 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 25 field(s) |
 | `400` | リクエスト形式または入力値が不正です。 | `application/json` | 2 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
@@ -76,16 +76,23 @@ Media type: `application/json`
 | `version` | `string` | no | `response.version` の値。項目名は version を表します。 | - |
 | `auditLog` | `array<object>` | yes | 監査ログ一覧。 | - |
 | `auditLog[].auditId` | `string` | yes | `response.auditLog[].auditId` の値。項目名は audit id を表します。 | - |
-| `auditLog[].action` | `enum(user:create \| role:assign \| user:suspend \| user:unsuspend \| user:delete)` | yes | `response.auditLog[].action` の値。項目名は action を表します。 | enum=user:create, role:assign, user:suspend, user:unsuspend, user:delete |
+| `auditLog[].action` | `string` | yes | `response.auditLog[].action` の値。項目名は action を表します。 | minLength=1<br>maxLength=160 |
+| `auditLog[].result` | `enum(pending \| success \| denied \| conflict \| failed)` | yes | `response.auditLog[].result` の値。項目名は result を表します。 | enum=pending, success, denied, conflict, failed |
+| `auditLog[].reason` | `string` | yes | 判断や失敗の理由。 | - |
+| `auditLog[].tenantId` | `string` | yes | `response.auditLog[].tenantId` の値。項目名は tenant id を表します。 | - |
+| `auditLog[].targetType` | `string` | yes | `response.auditLog[].targetType` の値。項目名は target type を表します。 | - |
 | `auditLog[].actorUserId` | `string` | yes | `response.auditLog[].actorUserId` の値。項目名は actor user id を表します。 | - |
 | `auditLog[].actorEmail` | `string` | no | `response.auditLog[].actorEmail` の値。項目名は actor email を表します。 | - |
 | `auditLog[].targetUserId` | `string` | yes | `response.auditLog[].targetUserId` の値。項目名は target user id を表します。 | - |
-| `auditLog[].targetEmail` | `string` | yes | `response.auditLog[].targetEmail` の値。項目名は target email を表します。 | - |
+| `auditLog[].targetEmail` | `string` | no | `response.auditLog[].targetEmail` の値。項目名は target email を表します。 | - |
+| `auditLog[].policyVersion` | `string` | yes | `response.auditLog[].policyVersion` の値。項目名は policy version を表します。 | - |
+| `auditLog[].source` | `enum(security_audit_outbox \| legacy_admin_ledger)` | yes | `response.auditLog[].source` の値。項目名は source を表します。 | enum=security_audit_outbox, legacy_admin_ledger |
 | `auditLog[].beforeStatus` | `enum(active \| suspended \| deleted)` | no | `response.auditLog[].beforeStatus` の値。項目名は before status を表します。 | enum=active, suspended, deleted |
 | `auditLog[].afterStatus` | `enum(active \| suspended \| deleted)` | no | `response.auditLog[].afterStatus` の値。項目名は after status を表します。 | enum=active, suspended, deleted |
 | `auditLog[].beforeGroups` | `array<string>` | yes | `response.auditLog[].beforeGroups` の値。項目名は before groups を表します。 | - |
 | `auditLog[].afterGroups` | `array<string>` | yes | `response.auditLog[].afterGroups` の値。項目名は after groups を表します。 | - |
 | `auditLog[].createdAt` | `string` | yes | レコードを作成した日時。 | - |
+| `auditLog[].completedAt` | `string` | no | 処理が完了した日時。 | - |
 
 ##### `400` リクエスト形式または入力値が不正です。
 

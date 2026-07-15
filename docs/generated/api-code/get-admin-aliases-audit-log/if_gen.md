@@ -2,7 +2,7 @@
 
 # GET /admin/aliases/audit-log IF仕様
 
-- 実装 route: `apps/api/src/routes/admin-routes.ts:556 (GET /admin/aliases/audit-log)`
+- 実装 route: `apps/api/src/routes/admin-routes.ts:570 (GET /admin/aliases/audit-log)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 検索 alias 監査ログを取得する

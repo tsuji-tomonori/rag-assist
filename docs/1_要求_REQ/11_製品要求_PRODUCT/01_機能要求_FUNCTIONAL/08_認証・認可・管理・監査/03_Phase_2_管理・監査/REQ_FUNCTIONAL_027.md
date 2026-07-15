@@ -32,6 +32,10 @@
 - AC-FR027-009: `usage:read:all_users` を持つ利用者は全ユーザー利用状況一覧を参照できること。
 - AC-FR027-010: `cost:read:all` を持つ利用者は service/component 別の概算コスト監査情報を参照できること。
 - AC-FR027-011: Phase 2 管理 API は UI 表示制御だけに依存せず、route ごとに `requirePermission` で保護されること。
+- AC-FR027-012: 管理対象ユーザー一覧は server-side search/status/sort、安定 cursor、`total`、`truncated`、`source`、`asOf`、台帳 version と、対象ごとの server capability/effective permission/projection state を返すこと。
+- AC-FR027-013: 管理操作履歴は actor の authoritative tenant 内に限定し、共通 security audit の `pending`、`success`、`denied`、`conflict`、`failed` と reason、target、policy version、source を検索・ページング可能な形で返すこと。
+- AC-FR027-014: 管理操作履歴 export は閲覧とは別の `access:audit:export` permission、非空 reason、同一 query、tenant scope、全ページ取得、機微情報 redaction、export 自体の監査を強制すること。
+- AC-FR027-015: 管理台帳は authoritative tenant ごとに保存し、同時更新を条件付き write で fail closed にし、旧単一 tenant 台帳を設定済み tenant へ非破壊で一度だけ移行できること。
 
 ## 要件の源泉・背景
 

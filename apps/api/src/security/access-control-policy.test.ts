@@ -507,6 +507,16 @@ test("debug permissions are defined without removing the existing admin debug ga
   assert.equal(ROLE_PERMISSION_CATALOG.SYSTEM_ADMIN.includes("debug:trace:read:sanitized"), true)
 })
 
+test("admin audit export uses a permission distinct from audit read", async () => {
+  const policies = await openApiRoutePolicies()
+  const read = policies.find((item) => routeKey(item) === "GET /admin/audit-log")
+  const exportRoute = policies.find((item) => routeKey(item) === "POST /admin/audit-log/export")
+  assert.equal(read?.permission, "access:policy:read")
+  assert.equal(exportRoute?.permission, "access:audit:export")
+  assert.equal(ROLE_PERMISSION_CATALOG.ACCESS_ADMIN.includes("access:audit:export"), true)
+  assert.equal(ROLE_PERMISSION_CATALOG.SYSTEM_ADMIN.includes("access:audit:export"), true)
+})
+
 test("async agent permissions remain typed but are removed from role seeds and active routes", async () => {
   const authorizationSource = await readFile(accessControlCatalogPath, "utf8")
   for (const permission of [

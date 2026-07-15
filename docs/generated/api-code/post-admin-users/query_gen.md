@@ -8,29 +8,36 @@
 
 | # | CRUD/実行 | Target | Method | 自然言語での目的 | Caller | コード根拠 |
 | ---: | --- | --- | --- | --- | --- | --- |
-| 1 | 参照 | `this` | `loadAdminLedger` | `this` に対して load admin ledger を実行する。 | `MemoRagService.createManagedUser` | `apps/api/src/rag/memorag-service.ts:1809 (MemoRagService.createManagedUser)` |
-| 2 | 参照 | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `MemoRagService.loadAdminLedger` | `apps/api/src/rag/memorag-service.ts:3144 (MemoRagService.loadAdminLedger)` |
-| 3 | 作成・追記 | `this` | `saveAdminLedger` | `this` に対して save admin ledger を実行する。 | `MemoRagService.createManagedUser` | `apps/api/src/rag/memorag-service.ts:1834 (MemoRagService.createManagedUser)` |
-| 4 | 作成・追記 | `this.deps.objectStore` | `putText` | `this.deps.objectStore` に対して put text を実行する。 | `MemoRagService.saveAdminLedger` | `apps/api/src/rag/memorag-service.ts:3240 (MemoRagService.saveAdminLedger)` |
-| 5 | 作成・追記 | `this` | `saveAdminLedger` | `this` に対して save admin ledger を実行する。 | `MemoRagService.createManagedUser` | `apps/api/src/rag/memorag-service.ts:1848 (MemoRagService.createManagedUser)` |
-| 6 | 実行 | `this.saveAdminLedger(db)` | `catch` | `this.saveAdminLedger(db)` に対して catch を実行する。 | `MemoRagService.createManagedUser` | `apps/api/src/rag/memorag-service.ts:1848 (MemoRagService.createManagedUser)` |
-| 7 | 参照 | `this` | `loadAdminLedger` | `this` に対して load admin ledger を実行する。 | `MemoRagService.createManagedUser` | `apps/api/src/rag/memorag-service.ts:1865 (MemoRagService.createManagedUser)` |
-| 8 | 作成・追記 | `this` | `saveAdminLedger` | `this` に対して save admin ledger を実行する。 | `MemoRagService.createManagedUser` | `apps/api/src/rag/memorag-service.ts:1879 (MemoRagService.createManagedUser)` |
+| 1 | 参照 | `this` | `loadAdminLedger` | `this` に対して load admin ledger を実行する。 | `MemoRagService.createManagedUser` | `apps/api/src/rag/memorag-service.ts:1881 (MemoRagService.createManagedUser)` |
+| 2 | 実行 | `adminLedgerKeyForTenant` | `adminLedgerKeyForTenant` | `adminLedgerKeyForTenant` に対して admin ledger key for tenant を実行する。 | `MemoRagService.loadAdminLedger` | `apps/api/src/rag/memorag-service.ts:3315 (MemoRagService.loadAdminLedger)` |
+| 3 | 参照 | `this.deps.objectStore` | `getTextWithVersion` | `this.deps.objectStore` に対して get text with version を実行する。 | `MemoRagService.loadAdminLedger` | `apps/api/src/rag/memorag-service.ts:3317 (MemoRagService.loadAdminLedger)` |
+| 4 | 参照 | `this` | `loadOrMigrateLegacyAdminLedger` | `this` に対して load or migrate legacy admin ledger を実行する。 | `MemoRagService.loadAdminLedger` | `apps/api/src/rag/memorag-service.ts:3322 (MemoRagService.loadAdminLedger)` |
+| 5 | 参照 | `this.deps.objectStore` | `getTextWithVersion` | `this.deps.objectStore` に対して get text with version を実行する。 | `MemoRagService.loadOrMigrateLegacyAdminLedger` | `apps/api/src/rag/memorag-service.ts:3384 (MemoRagService.loadOrMigrateLegacyAdminLedger)` |
+| 6 | 作成・追記 | `this.deps.objectStore` | `putTextIfVersion` | `this.deps.objectStore` に対して put text if version を実行する。 | `MemoRagService.loadOrMigrateLegacyAdminLedger` | `apps/api/src/rag/memorag-service.ts:3398 (MemoRagService.loadOrMigrateLegacyAdminLedger)` |
+| 7 | 参照 | `this.deps.objectStore` | `getTextWithVersion` | `this.deps.objectStore` に対して get text with version を実行する。 | `MemoRagService.loadOrMigrateLegacyAdminLedger` | `apps/api/src/rag/memorag-service.ts:3402 (MemoRagService.loadOrMigrateLegacyAdminLedger)` |
+| 8 | 作成・追記 | `this` | `saveAdminLedger` | `this` に対して save admin ledger を実行する。 | `MemoRagService.createManagedUser` | `apps/api/src/rag/memorag-service.ts:1906 (MemoRagService.createManagedUser)` |
+| 9 | 作成・追記 | `this.deps.objectStore` | `putTextIfVersion` | `this.deps.objectStore` に対して put text if version を実行する。 | `MemoRagService.saveAdminLedger` | `apps/api/src/rag/memorag-service.ts:3462 (MemoRagService.saveAdminLedger)` |
+| 10 | 参照 | `this.deps.objectStore` | `getTextWithVersion` | `this.deps.objectStore` に対して get text with version を実行する。 | `MemoRagService.saveAdminLedger` | `apps/api/src/rag/memorag-service.ts:3474 (MemoRagService.saveAdminLedger)` |
+| 11 | 作成・追記 | `this` | `saveAdminLedger` | `this` に対して save admin ledger を実行する。 | `MemoRagService.createManagedUser` | `apps/api/src/rag/memorag-service.ts:1920 (MemoRagService.createManagedUser)` |
+| 12 | 実行 | `this.saveAdminLedger(db)` | `catch` | `this.saveAdminLedger(db)` に対して catch を実行する。 | `MemoRagService.createManagedUser` | `apps/api/src/rag/memorag-service.ts:1920 (MemoRagService.createManagedUser)` |
+| 13 | 参照 | `this` | `loadAdminLedger` | `this` に対して load admin ledger を実行する。 | `MemoRagService.createManagedUser` | `apps/api/src/rag/memorag-service.ts:1937 (MemoRagService.createManagedUser)` |
+| 14 | 作成・追記 | `this` | `saveAdminLedger` | `this` に対して save admin ledger を実行する。 | `MemoRagService.createManagedUser` | `apps/api/src/rag/memorag-service.ts:1951 (MemoRagService.createManagedUser)` |
 
 ## 外部サービス操作
 
 | # | CRUD/実行 | Target | Method | 自然言語での目的 | Caller | コード根拠 |
 | ---: | --- | --- | --- | --- | --- | --- |
-| 1 | 参照 | `this.deps.verifiedIdentityProvider` | `getCurrentIdentityBySubject` | `this.deps.verifiedIdentityProvider` へ get current identity by subject を実行する。 | `MemoRagService.createManagedUser` | `apps/api/src/rag/memorag-service.ts:1757 (MemoRagService.createManagedUser)` |
-| 2 | 実行 | `this` | `syncUserDirectory` | `this` へ sync user directory を実行する。 | `MemoRagService.loadAdminLedger` | `apps/api/src/rag/memorag-service.ts:3185 (MemoRagService.loadAdminLedger)` |
-| 3 | 参照 | `this.deps.userDirectory` | `listUsers` | `this.deps.userDirectory` へ list users を実行する。 | `MemoRagService.syncUserDirectory` | `apps/api/src/rag/memorag-service.ts:3192 (MemoRagService.syncUserDirectory)` |
-| 4 | 参照 | `this.deps.verifiedIdentityProvider` | `getCurrentIdentityBySubject` | `this.deps.verifiedIdentityProvider` へ get current identity by subject を実行する。 | `MemoRagService.syncUserDirectory` | `apps/api/src/rag/memorag-service.ts:3197 (MemoRagService.syncUserDirectory)` |
-| 5 | 作成・追記 | `this.deps.userDirectory` | `createUser` | `this.deps.userDirectory` へ create user を実行する。 | `MemoRagService.createManagedUser` | `apps/api/src/rag/memorag-service.ts:1813 (MemoRagService.createManagedUser)` |
-| 6 | 更新 | `this.deps.userDirectory` | `setUserGroups` | `this.deps.userDirectory` へ set user groups を実行する。 | `MemoRagService.createManagedUser` | `apps/api/src/rag/memorag-service.ts:1815 (MemoRagService.createManagedUser)` |
-| 7 | 削除 | `this.deps.userDirectory?` | `deleteUser` | `this.deps.userDirectory?` へ delete user を実行する。 | `MemoRagService.compensateCreatedDirectoryUser` | `apps/api/src/rag/memorag-service.ts:3245 (MemoRagService.compensateCreatedDirectoryUser)` |
-| 8 | 実行 | `this.deps.userDirectory?` | `disableUser` | `this.deps.userDirectory?` へ disable user を実行する。 | `MemoRagService.compensateCreatedDirectoryUser` | `apps/api/src/rag/memorag-service.ts:3252 (MemoRagService.compensateCreatedDirectoryUser)` |
-| 9 | 実行 | `this.deps.userDirectory?` | `revokeSessions` | `this.deps.userDirectory?` へ revoke sessions を実行する。 | `MemoRagService.compensateCreatedDirectoryUser` | `apps/api/src/rag/memorag-service.ts:3253 (MemoRagService.compensateCreatedDirectoryUser)` |
-| 10 | 実行 | `[<br>      this.deps.userDirectory?.disableUser?.(username),<br>      this.deps.userDirectory?.revokeSessions?.(username)<br>    ]` | `filter` | `[<br>      this.deps.userDirectory?.disableUser?.(username),<br>      this.deps.userDirectory?.revokeSessions?.(username)<br>    ]` へ filter を実行する。 | `MemoRagService.compensateCreatedDirectoryUser` | `apps/api/src/rag/memorag-service.ts:3251 (MemoRagService.compensateCreatedDirectoryUser)` |
+| 1 | 参照 | `this.deps.verifiedIdentityProvider` | `getCurrentIdentityBySubject` | `this.deps.verifiedIdentityProvider` へ get current identity by subject を実行する。 | `MemoRagService.createManagedUser` | `apps/api/src/rag/memorag-service.ts:1829 (MemoRagService.createManagedUser)` |
+| 2 | 参照 | `this.deps.verifiedIdentityProvider` | `getCurrentIdentityBySubject` | `this.deps.verifiedIdentityProvider` へ get current identity by subject を実行する。 | `MemoRagService.loadAdminLedger` | `apps/api/src/rag/memorag-service.ts:3329 (MemoRagService.loadAdminLedger)` |
+| 3 | 実行 | `this` | `syncUserDirectory` | `this` へ sync user directory を実行する。 | `MemoRagService.loadAdminLedger` | `apps/api/src/rag/memorag-service.ts:3371 (MemoRagService.loadAdminLedger)` |
+| 4 | 参照 | `this.deps.userDirectory` | `listUsers` | `this.deps.userDirectory` へ list users を実行する。 | `MemoRagService.syncUserDirectory` | `apps/api/src/rag/memorag-service.ts:3409 (MemoRagService.syncUserDirectory)` |
+| 5 | 参照 | `this.deps.verifiedIdentityProvider` | `getCurrentIdentityBySubject` | `this.deps.verifiedIdentityProvider` へ get current identity by subject を実行する。 | `MemoRagService.syncUserDirectory` | `apps/api/src/rag/memorag-service.ts:3414 (MemoRagService.syncUserDirectory)` |
+| 6 | 作成・追記 | `this.deps.userDirectory` | `createUser` | `this.deps.userDirectory` へ create user を実行する。 | `MemoRagService.createManagedUser` | `apps/api/src/rag/memorag-service.ts:1885 (MemoRagService.createManagedUser)` |
+| 7 | 更新 | `this.deps.userDirectory` | `setUserGroups` | `this.deps.userDirectory` へ set user groups を実行する。 | `MemoRagService.createManagedUser` | `apps/api/src/rag/memorag-service.ts:1887 (MemoRagService.createManagedUser)` |
+| 8 | 削除 | `this.deps.userDirectory?` | `deleteUser` | `this.deps.userDirectory?` へ delete user を実行する。 | `MemoRagService.compensateCreatedDirectoryUser` | `apps/api/src/rag/memorag-service.ts:3481 (MemoRagService.compensateCreatedDirectoryUser)` |
+| 9 | 実行 | `this.deps.userDirectory?` | `disableUser` | `this.deps.userDirectory?` へ disable user を実行する。 | `MemoRagService.compensateCreatedDirectoryUser` | `apps/api/src/rag/memorag-service.ts:3488 (MemoRagService.compensateCreatedDirectoryUser)` |
+| 10 | 実行 | `this.deps.userDirectory?` | `revokeSessions` | `this.deps.userDirectory?` へ revoke sessions を実行する。 | `MemoRagService.compensateCreatedDirectoryUser` | `apps/api/src/rag/memorag-service.ts:3489 (MemoRagService.compensateCreatedDirectoryUser)` |
+| 11 | 実行 | `[<br>      this.deps.userDirectory?.disableUser?.(username),<br>      this.deps.userDirectory?.revokeSessions?.(username)<br>    ]` | `filter` | `[<br>      this.deps.userDirectory?.disableUser?.(username),<br>      this.deps.userDirectory?.revokeSessions?.(username)<br>    ]` へ filter を実行する。 | `MemoRagService.compensateCreatedDirectoryUser` | `apps/api/src/rag/memorag-service.ts:3487 (MemoRagService.compensateCreatedDirectoryUser)` |
 
 ## 解析境界
 

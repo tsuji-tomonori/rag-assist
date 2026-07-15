@@ -2913,6 +2913,18 @@ test("service lists all Cognito directory users in the managed user ledger", asy
   assert.deepEqual(users.map((user) => user.email), ["admin@example.com", "member@example.com"])
   assert.equal(users.find((user) => user.userId === "member-sub")?.groups[0], "CHAT_USER")
 
+  const firstPage = await service.listManagedUsersPage(actor, { limit: 1, sort: "emailAsc" })
+  assert.equal(firstPage.users.length, 1)
+  assert.equal(firstPage.total, 2)
+  assert.equal(firstPage.truncated, true)
+  assert.ok(firstPage.nextCursor)
+  assert.equal(firstPage.users[0]?.capability.canAssignRoles, false, "self mutation is a server capability denial")
+  assert.ok(firstPage.users[0]?.capability.blockers.includes("last_recovery_principal"))
+  const secondPage = await service.listManagedUsersPage(actor, { limit: 1, sort: "emailAsc", cursor: firstPage.nextCursor })
+  assert.equal(secondPage.users[0]?.userId, "member-sub")
+  assert.equal(secondPage.users[0]?.capability.canAssignRoles, true)
+  assert.ok(secondPage.users[0]?.effectivePermissions.includes("chat:create"))
+
   const updated = await service.assignUserRoles(actor, "member-sub", ["ANSWER_EDITOR"])
   assert.deepEqual(updated?.groups, ["ANSWER_EDITOR"])
   assert.deepEqual(assignedGroups, [{ username: "member@example.com", groups: ["ANSWER_EDITOR"] }])
@@ -2958,6 +2970,129 @@ test("service merges Cognito directory users with existing ledger users by email
   assert.equal(matchingUsers.length, 1)
   assert.equal(matchingUsers[0]?.userId, "dup-sub")
   assert.deepEqual(matchingUsers[0]?.groups, ["ANSWER_EDITOR"])
+})
+
+test("audit export failure is tenant-scoped and recorded in the common audit read model", async () => {
+  const { service } = await createService()
+  const actor = { userId: "admin-sub", email: "admin@example.com", cognitoGroups: ["SYSTEM_ADMIN"], accountStatus: "active" as const, tenantId: "tenant-export" }
+
+  await assert.rejects(
+    () => service.createAdminExportDownloadUrl(actor, "audit_log", {
+      query: { action: "role:assign", query: "denied" },
+      reason: "Quarterly access review"
+    }),
+    /DEBUG_DOWNLOAD_BUCKET_NAME/
+  )
+
+  const page = await service.listAdminAuditLog(actor, { action: "audit.export" })
+  assert.equal(page.auditLog.length, 1)
+  assert.equal(page.auditLog[0]?.result, "failed")
+  assert.equal(page.auditLog[0]?.tenantId, "tenant-export")
+  assert.equal(page.auditLog[0]?.reason, "Quarterly access review")
+  assert.equal(page.auditLog[0]?.policyVersion, "admin-audit-export-v1")
+})
+
+test("admin audit export traversal follows every stable cursor page without silent truncation", async () => {
+  const { service, deps } = await createService()
+  const tenantId = "tenant-audit-pages"
+  const actor = { userId: "admin-pages", email: "admin@example.com", cognitoGroups: ["SYSTEM_ADMIN"], accountStatus: "active" as const, tenantId }
+  const auditLog = Array.from({ length: 205 }, (_, index) => ({
+    auditId: `legacy-${String(index).padStart(3, "0")}`,
+    action: "role:assign",
+    actorUserId: actor.userId,
+    targetUserId: `target-${index}`,
+    beforeGroups: ["CHAT_USER"],
+    afterGroups: ["ANSWER_EDITOR"],
+    createdAt: "2026-05-02T00:00:00.000Z"
+  }))
+  await deps.objectStore.putText(
+    `admin/tenants/${encodeURIComponent(tenantId)}/admin-ledger.json`,
+    JSON.stringify({ users: [], usage: {}, auditLog }, null, 2),
+    "application/json"
+  )
+
+  const first = await service.listAdminAuditLog(actor, { action: "role:assign", limit: 100 })
+  assert.equal(first.auditLog.length, 100)
+  assert.equal(first.total, 205)
+  assert.equal(first.truncated, true)
+  assert.ok(first.nextCursor)
+
+  const all = await (service as unknown as {
+    listAllAdminAuditEntries(user: AppUser, query: { action?: string; query?: string }): Promise<Array<{ auditId: string }>>
+  }).listAllAdminAuditEntries(actor, { action: "role:assign" })
+  assert.equal(all.length, 205)
+  assert.equal(new Set(all.map((entry) => entry.auditId)).size, 205)
+})
+
+test("concurrent managed-user projection writes fail closed instead of overwriting a sibling mutation", async () => {
+  let arrivals = 0
+  let release!: () => void
+  const barrier = new Promise<void>((resolve) => { release = resolve })
+  const { service, deps } = await createService({
+    userDirectory: {
+      listUsers: async () => [],
+      setUserGroups: async () => {
+        arrivals += 1
+        if (arrivals === 2) release()
+        await barrier
+      }
+    }
+  })
+  const sibling = new MemoRagService(deps)
+  const actor = { userId: "admin-sub", email: "admin@example.com", cognitoGroups: ["SYSTEM_ADMIN"], accountStatus: "active" as const, tenantId: "tenant-cas" }
+  const first = await service.createManagedUser(actor, { email: "first@example.com", groups: ["CHAT_USER"] })
+  const second = await service.createManagedUser(actor, { email: "second@example.com", groups: ["CHAT_USER"] })
+
+  const results = await Promise.allSettled([
+    service.assignUserRoles(actor, first.userId, ["ANSWER_EDITOR"], "First role update"),
+    sibling.assignUserRoles(actor, second.userId, ["BENCHMARK_OPERATOR"], "Second role update")
+  ])
+
+  assert.equal(results.filter((result) => result.status === "fulfilled").length, 1)
+  const rejected = results.find((result): result is PromiseRejectedResult => result.status === "rejected")
+  assert.match(String(rejected?.reason), /concurrent write conflict/)
+  const users = await service.listManagedUsers(actor)
+  const changed = users.filter((user) => user.groups[0] !== "CHAT_USER" && user.userId !== actor.userId)
+  assert.equal(changed.length, 1, "one CAS winner is preserved and the loser does not overwrite it")
+})
+
+test("legacy global managed-user ledger is copied once into the configured tenant partition without deleting the source", async () => {
+  const { service, deps } = await createService()
+  const legacyLedger = {
+    users: [{
+      userId: "legacy-member",
+      email: "legacy@example.com",
+      displayName: "Legacy member",
+      status: "active" as const,
+      groups: ["CHAT_USER"],
+      createdAt: "2026-01-01T00:00:00.000Z",
+      updatedAt: "2026-01-01T00:00:00.000Z"
+    }],
+    usage: { "legacy-member": { chatMessages: 3 } },
+    auditLog: []
+  }
+  await deps.objectStore.putText("admin/admin-ledger.json", JSON.stringify(legacyLedger, null, 2), "application/json")
+  const actor = { userId: "admin-local", email: "admin@example.com", cognitoGroups: ["SYSTEM_ADMIN"], accountStatus: "active" as const, tenantId: config.localAuthTenantId }
+
+  const page = await service.listManagedUsersPage(actor)
+
+  assert.ok(page.users.some((user) => user.userId === "legacy-member"))
+  assert.notEqual(page.version, "absent")
+  assert.deepEqual(JSON.parse(await deps.objectStore.getText("admin/admin-ledger.json")), legacyLedger)
+  assert.ok(JSON.parse(await deps.objectStore.getText(`admin/tenants/${encodeURIComponent(config.localAuthTenantId)}/admin-ledger.json`)))
+})
+
+test("managed-user ledgers and audit queries are tenant partitioned", async () => {
+  const { service } = await createService()
+  const tenantA = { userId: "admin-a", email: "admin-a@example.com", cognitoGroups: ["SYSTEM_ADMIN"], accountStatus: "active" as const, tenantId: "tenant-a" }
+  const tenantB = { userId: "admin-b", email: "admin-b@example.com", cognitoGroups: ["SYSTEM_ADMIN"], accountStatus: "active" as const, tenantId: "tenant-b" }
+  await service.createManagedUser(tenantA, { email: "member-a@example.com", groups: ["CHAT_USER"] })
+  await service.createManagedUser(tenantB, { email: "member-b@example.com", groups: ["CHAT_USER"] })
+
+  assert.deepEqual((await service.listManagedUsers(tenantA)).map((user) => user.email), ["admin-a@example.com", "member-a@example.com"])
+  assert.deepEqual((await service.listManagedUsers(tenantB)).map((user) => user.email), ["admin-b@example.com", "member-b@example.com"])
+  assert.equal((await service.listAdminAuditLog(tenantA, { query: "member-b" })).total, 0)
+  assert.equal((await service.listAdminAuditLog(tenantB, { query: "member-a" })).total, 0)
 })
 
 test("service chat returns refusal and error debug trace when external dependencies fail", async () => {

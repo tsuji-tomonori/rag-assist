@@ -70,4 +70,14 @@ describe("usePermissions", () => {
     expect(moveOnly.result.current.canShareDocumentGroups).toBe(false)
     expect(moveOnly.result.current.canManageDocuments).toBe(true)
   })
+
+  it("does not infer audit export authority from audit read authority", () => {
+    const readOnly = renderHook(() => usePermissions(user(["access:policy:read"])))
+    expect(readOnly.result.current.canReadAdminAuditLog).toBe(true)
+    expect(readOnly.result.current.canExportAdminAuditLog).toBe(false)
+
+    const exporter = renderHook(() => usePermissions(user(["access:audit:export"])))
+    expect(exporter.result.current.canReadAdminAuditLog).toBe(false)
+    expect(exporter.result.current.canExportAdminAuditLog).toBe(true)
+  })
 })

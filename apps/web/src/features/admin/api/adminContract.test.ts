@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { AdminContractError, buildAdminQuery, decodeAccessRoleList, decodeAliasAuditLogPage, decodeAliasListPage } from "./adminContract.js"
+import { AdminContractError, buildAdminQuery, decodeAccessRoleList, decodeAliasAuditLogPage, decodeAliasListPage, decodeManagedUserAuditLogPage, decodeManagedUserListPage } from "./adminContract.js"
 
 const alias = {
   aliasId: "alias-1",
@@ -62,5 +62,41 @@ describe("admin API contract decoders", () => {
   it("serializes only provided query fields", () => {
     expect(buildAdminQuery({ query: "休暇", status: "draft", cursor: undefined, limit: 50 }))
       .toBe("?query=%E4%BC%91%E6%9A%87&status=draft&limit=50")
+  })
+
+  it("requires server capability, projection evidence, and common audit result metadata", () => {
+    const metadata = { total: 1, truncated: false, source: "authoritative_identity", asOf: "now", version: "ledger-v1" }
+    const user = {
+      userId: "user-1",
+      email: "user@example.com",
+      status: "active",
+      groups: ["CHAT_USER"],
+      createdAt: "now",
+      updatedAt: "now",
+      capability: { canAssignRoles: true, canSuspend: true, canUnsuspend: false, canDelete: true, blockers: [] },
+      effectivePermissions: ["chat:create"],
+      projection: { source: "authoritative_identity", asOf: "now", reconciliationState: "current" }
+    }
+    expect(decodeManagedUserListPage({ ...metadata, users: [user] }).users[0]).toMatchObject({ capability: { canAssignRoles: true } })
+    expect(() => decodeManagedUserListPage({ ...metadata, version: undefined, users: [user] })).toThrow(AdminContractError)
+    expect(() => decodeManagedUserListPage({ ...metadata, users: [{ ...user, capability: undefined }] })).toThrow(AdminContractError)
+
+    const audit = {
+      auditId: "security_mutation_1",
+      action: "role:assign",
+      result: "denied",
+      reason: "self mutation",
+      tenantId: "tenant-1",
+      targetType: "applicationRolePrincipal",
+      actorUserId: "user-1",
+      targetUserId: "user-1",
+      policyVersion: "role-v1",
+      source: "security_audit_outbox",
+      beforeGroups: ["CHAT_USER"],
+      afterGroups: ["CHAT_USER"],
+      createdAt: "now"
+    }
+    expect(decodeManagedUserAuditLogPage({ ...metadata, auditLog: [audit] }).auditLog[0]?.result).toBe("denied")
+    expect(() => decodeManagedUserAuditLogPage({ ...metadata, auditLog: [{ ...audit, result: undefined }] })).toThrow(AdminContractError)
   })
 })

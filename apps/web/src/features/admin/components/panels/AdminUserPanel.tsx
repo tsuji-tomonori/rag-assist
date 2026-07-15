@@ -16,16 +16,19 @@ import { LoadingSpinner } from "../../../../shared/components/LoadingSpinner.js"
 import { managedUserStatusLabel } from "../../../../shared/utils/format.js"
 import { managedUserStatusPresentation } from "../../../../shared/ui/displayMetadata.js"
 import type { UiResourcePartState } from "../../../../shared/ui/ResourceState.js"
-import type { AccessRoleDefinition, ManagedUser, ManagedUserDeletionPreflight } from "../../types.js"
+import type { AccessRoleDefinition, ManagedUser, ManagedUserDeletionPreflight, ManagedUserListPage } from "../../types.js"
 import { AdminPanelDataStatus } from "../AdminPanelDataStatus.js"
+import type { AdminWorkspaceUrlState } from "../../urlState.js"
 
 export function AdminUserPanel({
   managedUsers,
+  page,
   accessRoles,
   part,
   usersLoadFailed = false,
   rolesLoadFailed = false,
   loading,
+  pendingMutationKeys,
   canCreateUsers,
   canAssignRoles,
   canSuspendUsers,
@@ -35,14 +38,19 @@ export function AdminUserPanel({
   onAssignRoles,
   onPrepareUserDelete,
   onSetUserStatus,
-  onRefresh
+  onRefresh,
+  onLoadMore,
+  urlState,
+  onUrlStateChange
 }: {
   managedUsers: ManagedUser[] | null
+  page: ManagedUserListPage | null
   accessRoles: AccessRoleDefinition[] | null
   part?: UiResourcePartState
   usersLoadFailed?: boolean
   rolesLoadFailed?: boolean
   loading: boolean
+  pendingMutationKeys: string[]
   canCreateUsers: boolean
   canAssignRoles: boolean
   canSuspendUsers: boolean
@@ -53,8 +61,14 @@ export function AdminUserPanel({
   onPrepareUserDelete: (userId: string) => Promise<ManagedUserDeletionPreflight | null>
   onSetUserStatus: (userId: string, action: "suspend" | "unsuspend" | "delete", successorUserId?: string) => Promise<OperationOutcome<ManagedUser> | void>
   onRefresh: () => Promise<void>
+  onLoadMore: () => Promise<void>
+  urlState: AdminWorkspaceUrlState
+  onUrlStateChange: (state: AdminWorkspaceUrlState, mode?: "push" | "replace") => void
 }) {
   const [operationFeedback, setOperationFeedback] = useState<OperationFeedbackEntry[]>([])
+  const [query, setQuery] = useState(urlState.query ?? "")
+
+  useEffect(() => setQuery(urlState.query ?? ""), [urlState.query])
 
   function recordOperationFeedback(entry: OperationFeedbackEntry) {
     setOperationFeedback((current) => upsertOperationFeedback(current, entry))
@@ -64,9 +78,22 @@ export function AdminUserPanel({
     <section className="admin-section-panel user-admin-panel" aria-label="ユーザー管理一覧">
       <div className="document-list-head">
         <h3>ユーザー管理</h3>
-        <span>{managedUsers ? `${managedUsers.length} 人` : usersLoadFailed ? "取得失敗" : "未確認"}</span>
+        <span>{managedUsers ? `${managedUsers.length} / ${page?.total ?? managedUsers.length} 人` : usersLoadFailed ? "取得失敗" : "未確認"}</span>
       </div>
-      <AdminPanelDataStatus label="管理対象ユーザー" part={part} source="管理ユーザー API" asOf={part?.asOf} loading={loading} onRefresh={onRefresh} />
+      <AdminPanelDataStatus label="管理対象ユーザー" part={part} source={page?.source} asOf={page?.asOf} loading={loading} onRefresh={onRefresh} />
+      <form className="admin-filter-form" role="search" aria-label="管理対象ユーザーを絞り込む" onSubmit={(event) => {
+        event.preventDefault()
+        onUrlStateChange({ ...urlState, section: "users", query: query.trim() || undefined }, "push")
+      }}>
+        <label><span>ユーザー・ロールを検索</span><input value={query} maxLength={120} onChange={(event) => setQuery(event.target.value)} /></label>
+        <label><span>状態</span><select value={urlState.userStatus ?? ""} onChange={(event) => onUrlStateChange({ ...urlState, section: "users", userStatus: event.target.value as "active" | "suspended" || undefined }, "push")}>
+          <option value="">すべて</option><option value="active">有効</option><option value="suspended">停止中</option>
+        </select></label>
+        <label><span>並び順</span><select value={urlState.userSort ?? "emailAsc"} onChange={(event) => onUrlStateChange({ ...urlState, section: "users", userSort: event.target.value as "emailAsc" | "updatedDesc" }, "push")}>
+          <option value="emailAsc">メール昇順</option><option value="updatedDesc">更新日時の新しい順</option>
+        </select></label>
+        <button type="submit" disabled={loading}>検索</button>
+      </form>
       {canCreateUsers && (
         <AdminCreateUserForm roles={accessRoles} rolesLoadFailed={rolesLoadFailed} loading={loading} onCreateUser={onCreateUser} />
       )}
@@ -99,7 +126,7 @@ export function AdminUserPanel({
               user={managedUser}
               roles={accessRoles}
               rolesLoadFailed={rolesLoadFailed}
-              loading={loading}
+              loading={pendingMutationKeys.some((key) => key.endsWith(`:${managedUser.userId}`))}
               canAssignRoles={canAssignRoles}
               canSuspend={canSuspendUsers}
               canUnsuspend={canUnsuspendUsers}
@@ -113,6 +140,9 @@ export function AdminUserPanel({
         )}
         </tbody>
       </table>
+      {page?.nextCursor && <button type="button" className="admin-load-more" disabled={loading} onClick={() => void onLoadMore()}>
+        次のユーザーを読み込む（残り {Math.max(0, page.total - page.users.length)} 人）
+      </button>}
     </section>
   )
 }
@@ -221,14 +251,16 @@ function ManagedUserRow({
   const [successorUserId, setSuccessorUserId] = useState("")
   const [roleAssignOpen, setRoleAssignOpen] = useState(false)
   const [roleReason, setRoleReason] = useState("")
-  const canShowRoleAssignment = canAssignRoles && availableRoles.length > 0
+  const canShowRoleAssignment = canAssignRoles && user.capability?.canAssignRoles !== false && availableRoles.length > 0
   const nextGroups = useMemo(() => [
     ...availableRoles.map((role) => role.role).filter((role) => selectedRoles.includes(role)),
     ...selectedRoles.filter((role) => !availableRoles.some((definition) => definition.role === role))
   ], [availableRoles, selectedRoles])
   const roleChanged = canShowRoleAssignment && !sameStringSet(user.groups, nextGroups)
-  const canShowSuspendAction = user.status === "suspended" ? canUnsuspend : canSuspend
-  const canShowDeleteAction = canDelete
+  const canShowSuspendAction = user.status === "suspended"
+    ? canUnsuspend && user.capability?.canUnsuspend !== false
+    : canSuspend && user.capability?.canSuspend !== false
+  const canShowDeleteAction = canDelete && user.capability?.canDelete !== false
   const eligibleSuccessors = useMemo(
     () => (deletionPreflight?.eligibleSuccessors ?? []).filter((candidate) => candidate.status === "active" && candidate.userId !== user.userId),
     [deletionPreflight, user.userId]
@@ -287,6 +319,7 @@ function ManagedUserRow({
       </td>
       <td data-label="状態">
         <StatusBadge presentation={managedUserStatusPresentation(user.status)} />
+        {user.projection && <small>正本: {user.projection.source === "authoritative_identity" ? "認証基盤" : "ローカル台帳"} / 同期: {user.projection.reconciliationState === "current" ? "反映済み" : "要再調整"}</small>}
       </td>
       <td data-label="ロール">
         {canShowRoleAssignment && (
@@ -335,6 +368,7 @@ function ManagedUserRow({
           <small className="role-diff-preview">変更前: {formatGroupList(user.groups)} / 変更後: {formatGroupList(nextGroups)}</small>
         )}
         <small>現在: {formatGroupList(user.groups)}</small>
+        {user.effectivePermissions && <small>有効 permission: {user.effectivePermissions.length} 件</small>}
       </td>
       <td data-label="操作">
         <div className="user-row-actions">
@@ -355,6 +389,7 @@ function ManagedUserRow({
           </button>}
           {!canShowSuspendAction && !canShowDeleteAction && <span className="admin-field-unavailable">利用可能な操作はありません</span>}
         </div>
+        {user.capability && user.capability.blockers.length > 0 && <small>server capability: {user.capability.blockers.map(capabilityBlockerLabel).join(" / ")}</small>}
         {statusCandidate && (
         <ConfirmDialog
           title={statusCandidate === "suspend" ? "このユーザーを停止しますか？" : "このユーザーを削除状態にしますか？"}
@@ -471,6 +506,13 @@ function ManagedUserRow({
 
 function formatGroupList(groups: string[]) {
   return groups.length > 0 ? groups.join(" / ") : "未設定"
+}
+
+function capabilityBlockerLabel(blocker: string): string {
+  if (blocker === "self_mutation") return "自分自身は変更不可"
+  if (blocker === "target_inactive") return "停止中の対象"
+  if (blocker === "last_recovery_principal") return "最後の復旧管理者"
+  return blocker
 }
 
 function sameStringSet(left: string[], right: string[]): boolean {

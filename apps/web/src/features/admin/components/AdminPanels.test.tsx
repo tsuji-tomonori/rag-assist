@@ -188,6 +188,7 @@ describe("admin panel boundary states", () => {
     const { rerender } = render(<AdminAuditPanel
       page={page} part={part()} loading={false} urlState={{ section: "audit", auditAction: "invalid" as never, query: " old " }}
       onUrlStateChange={onUrlStateChange} onRefresh={onRefresh} onLoadMore={onLoadMore}
+      canExport={false} onCreateExport={vi.fn()}
     />)
     expect(screen.getByText("条件に一致する管理操作履歴はありません。")).toBeInTheDocument()
     const search = screen.getByRole("search", { name: "管理操作履歴を絞り込む" })
@@ -199,7 +200,7 @@ describe("admin panel boundary states", () => {
     await userEvent.click(within(search).getByRole("button", { name: "条件を解除" }))
     expect(onUrlStateChange).toHaveBeenCalledWith(expect.objectContaining({ query: undefined, auditAction: undefined }), "push")
 
-    rerender(<AdminAuditPanel page={null} part={part("permission")} loading={false} urlState={{ section: "audit" }} onUrlStateChange={onUrlStateChange} onRefresh={onRefresh} onLoadMore={onLoadMore} />)
+    rerender(<AdminAuditPanel page={null} part={part("permission")} loading={false} urlState={{ section: "audit" }} onUrlStateChange={onUrlStateChange} onRefresh={onRefresh} onLoadMore={onLoadMore} canExport={false} onCreateExport={vi.fn()} />)
     expect(screen.getByText("管理操作履歴を取得できませんでした。")).toBeInTheDocument()
   })
 
@@ -226,6 +227,7 @@ describe("admin panel boundary states", () => {
     render(<AdminAuditPanel
       page={page} part={part()} loading={false} urlState={{ section: "audit", auditAction: "user:suspend" }}
       onUrlStateChange={onUrlStateChange} onRefresh={vi.fn().mockResolvedValue(undefined)} onLoadMore={onLoadMore}
+      canExport={false} onCreateExport={vi.fn()}
     />)
     expect(screen.getByText("実行者: actor-1")).toBeInTheDocument()
     expect(screen.getByText("監査 ID:")).toBeInTheDocument()

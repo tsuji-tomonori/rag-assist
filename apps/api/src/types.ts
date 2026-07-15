@@ -1467,6 +1467,30 @@ export type ManagedUser = {
   createdAt: string
   updatedAt: string
   lastLoginAt?: string
+  operationEvidence?: {
+    auditIntentId: string
+    sessionRevocation: "confirmed" | "not_required"
+    propagationState: "current" | "reconciliation_required"
+    effectivePermissions: string[]
+  }
+}
+
+export type ManagedUserCapability = {
+  canAssignRoles: boolean
+  canSuspend: boolean
+  canUnsuspend: boolean
+  canDelete: boolean
+  blockers: string[]
+}
+
+export type ManagedUserAdminView = ManagedUser & {
+  capability: ManagedUserCapability
+  effectivePermissions: string[]
+  projection: {
+    source: "authoritative_identity" | "local_ledger"
+    asOf: string
+    reconciliationState: "current" | "pending"
+  }
 }
 
 export type ManagedUserDeletionPreflight = {
@@ -1486,20 +1510,27 @@ export type ManagedUserDeletionPreflight = {
   }>
 }
 
-export type ManagedUserAuditAction = "user:create" | "role:assign" | "user:suspend" | "user:unsuspend" | "user:delete"
+export type ManagedUserAuditAction = string
 
 export type ManagedUserAuditLogEntry = {
   auditId: string
   action: ManagedUserAuditAction
+  result: "pending" | "success" | "denied" | "conflict" | "failed"
+  reason: string
+  tenantId: string
+  targetType: string
   actorUserId: string
   actorEmail?: string
   targetUserId: string
-  targetEmail: string
+  targetEmail?: string
+  policyVersion: string
+  source: "security_audit_outbox" | "legacy_admin_ledger"
   beforeStatus?: ManagedUserStatus
   afterStatus?: ManagedUserStatus
   beforeGroups: string[]
   afterGroups: string[]
   createdAt: string
+  completedAt?: string
 }
 
 export type AdminListPageMetadata = {
@@ -1513,6 +1544,11 @@ export type AdminListPageMetadata = {
 
 export type ManagedUserAuditLogPage = AdminListPageMetadata & {
   auditLog: ManagedUserAuditLogEntry[]
+}
+
+export type ManagedUserListPage = AdminListPageMetadata & {
+  version: string
+  users: ManagedUserAdminView[]
 }
 
 export type AccessRoleDefinition = {

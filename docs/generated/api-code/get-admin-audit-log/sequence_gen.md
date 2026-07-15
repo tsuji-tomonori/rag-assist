@@ -20,10 +20,21 @@ sequenceDiagram
   API->>Auth: "access：policy：read" permission を必須条件として確認する。
   API->>Service: service の list admin audit log 処理を呼び出す。
   Service->>Store: this に対して load admin ledger を実行する。
-  Service->>Store: this.deps.objectStore に対して get text を実行する。
+  Service->>Store: adminLedgerKeyForTenant に対して admin ledger key for tenant を実行する。
+  Service->>Store: this.deps.objectStore に対して get text with version を実行する。
+  Service->>Store: this に対して load or migrate legacy admin ledger を実行する。
+  Service->>Store: this.deps.objectStore に対して get text with version を実行する。
+  Service->>Store: this.deps.objectStore に対して put text if version を実行する。
+  Service->>Store: this.deps.objectStore に対して get text with version を実行する。
+  Service->>External: this.deps.verifiedIdentityProvider へ get current identity by subject を実行する。
   Service->>External: this へ sync user directory を実行する。
   Service->>External: this.deps.userDirectory へ list users を実行する。
   Service->>External: this.deps.verifiedIdentityProvider へ get current identity by subject を実行する。
+  Service->>Store: new ObjectStoreSecurityMutationAuditOutbox(this.deps.objectStore) に対して list all を実行する。
+  Service->>Store: this.objectStore に対して list keys を実行する。
+  Service->>Store: (await this.objectStore.listKeys(prefix))        に対して filter を実行する。
+  Service->>Store: (await this.objectStore.listKeys(prefix))       .filter((key) =＞ key.endsWith(".json"))        に対して sort を実行する。
+  Service->>Store: this.objectStore に対して get text with version を実行する。
   API-->>Client: HTTP 200 で JSON response を返す。
   API-->>Client: HTTP 400 で JSON response を返す。
 ```
@@ -32,21 +43,33 @@ sequenceDiagram
 
 | # | Caller | 境界 | 処理 | コード | 実装位置 |
 | ---: | --- | --- | --- | --- | --- |
-| 1 | `GET /admin/audit-log handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/admin-routes.ts:179 (GET /admin/audit-log handler)` |
-| 2 | `GET /admin/audit-log handler` | Auth | "access:policy:read" permission を必須条件として確認する。 | `requirePermission(user, "access:policy:read")` | `apps/api/src/routes/admin-routes.ts:180 (GET /admin/audit-log handler)` |
-| 3 | `GET /admin/audit-log handler` | Service | service の list admin audit log 処理を呼び出す。 | `service.listAdminAuditLog(user, query)` | `apps/api/src/routes/admin-routes.ts:183 (GET /admin/audit-log handler)` |
-| 4 | `MemoRagService.listAdminAuditLog` | Store | `this` に対して load admin ledger を実行する。 | `this.loadAdminLedger(actor)` | `apps/api/src/rag/memorag-service.ts:1884 (MemoRagService.listAdminAuditLog)` |
-| 5 | `MemoRagService.loadAdminLedger` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(adminLedgerKey)` | `apps/api/src/rag/memorag-service.ts:3144 (MemoRagService.loadAdminLedger)` |
-| 6 | `MemoRagService.loadAdminLedger` | External | `this` へ sync user directory を実行する。 | `this.syncUserDirectory(db)` | `apps/api/src/rag/memorag-service.ts:3185 (MemoRagService.loadAdminLedger)` |
-| 7 | `MemoRagService.syncUserDirectory` | External | `this.deps.userDirectory` へ list users を実行する。 | `this.deps.userDirectory.listUsers()` | `apps/api/src/rag/memorag-service.ts:3192 (MemoRagService.syncUserDirectory)` |
-| 8 | `MemoRagService.syncUserDirectory` | External | `this.deps.verifiedIdentityProvider` へ get current identity by subject を実行する。 | `this.deps.verifiedIdentityProvider.getCurrentIdentityBySubject(directoryUser.userId)` | `apps/api/src/rag/memorag-service.ts:3197 (MemoRagService.syncUserDirectory)` |
-| 9 | `GET /admin/audit-log handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json(await service.listAdminAuditLog(user, query), 200)` | `apps/api/src/routes/admin-routes.ts:183 (GET /admin/audit-log handler)` |
-| 10 | `GET /admin/audit-log handler` | HTTP/SSE | HTTP 400 で JSON response を返す。 | `c.json({ error: error.message }, 400)` | `apps/api/src/routes/admin-routes.ts:185 (GET /admin/audit-log handler)` |
+| 1 | `GET /admin/audit-log handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/admin-routes.ts:189 (GET /admin/audit-log handler)` |
+| 2 | `GET /admin/audit-log handler` | Auth | "access:policy:read" permission を必須条件として確認する。 | `requirePermission(user, "access:policy:read")` | `apps/api/src/routes/admin-routes.ts:190 (GET /admin/audit-log handler)` |
+| 3 | `GET /admin/audit-log handler` | Service | service の list admin audit log 処理を呼び出す。 | `service.listAdminAuditLog(user, query)` | `apps/api/src/routes/admin-routes.ts:193 (GET /admin/audit-log handler)` |
+| 4 | `MemoRagService.listAdminAuditLog` | Store | `this` に対して load admin ledger を実行する。 | `this.loadAdminLedger(actor)` | `apps/api/src/rag/memorag-service.ts:1956 (MemoRagService.listAdminAuditLog)` |
+| 5 | `MemoRagService.loadAdminLedger` | Store | `adminLedgerKeyForTenant` に対して admin ledger key for tenant を実行する。 | `adminLedgerKeyForTenant(tenantId)` | `apps/api/src/rag/memorag-service.ts:3315 (MemoRagService.loadAdminLedger)` |
+| 6 | `MemoRagService.loadAdminLedger` | Store | `this.deps.objectStore` に対して get text with version を実行する。 | `this.deps.objectStore.getTextWithVersion(storageKey)` | `apps/api/src/rag/memorag-service.ts:3317 (MemoRagService.loadAdminLedger)` |
+| 7 | `MemoRagService.loadAdminLedger` | Store | `this` に対して load or migrate legacy admin ledger を実行する。 | `this.loadOrMigrateLegacyAdminLedger(tenantId, storageKey)` | `apps/api/src/rag/memorag-service.ts:3322 (MemoRagService.loadAdminLedger)` |
+| 8 | `MemoRagService.loadOrMigrateLegacyAdminLedger` | Store | `this.deps.objectStore` に対して get text with version を実行する。 | `this.deps.objectStore.getTextWithVersion(legacyAdminLedgerKey)` | `apps/api/src/rag/memorag-service.ts:3384 (MemoRagService.loadOrMigrateLegacyAdminLedger)` |
+| 9 | `MemoRagService.loadOrMigrateLegacyAdminLedger` | Store | `this.deps.objectStore` に対して put text if version を実行する。 | `this.deps.objectStore.putTextIfVersion(storageKey, serialized, undefined, "application/json")` | `apps/api/src/rag/memorag-service.ts:3398 (MemoRagService.loadOrMigrateLegacyAdminLedger)` |
+| 10 | `MemoRagService.loadOrMigrateLegacyAdminLedger` | Store | `this.deps.objectStore` に対して get text with version を実行する。 | `this.deps.objectStore.getTextWithVersion(storageKey)` | `apps/api/src/rag/memorag-service.ts:3402 (MemoRagService.loadOrMigrateLegacyAdminLedger)` |
+| 11 | `MemoRagService.loadAdminLedger` | External | `this.deps.verifiedIdentityProvider` へ get current identity by subject を実行する。 | `this.deps.verifiedIdentityProvider.getCurrentIdentityBySubject(actor.userId)` | `apps/api/src/rag/memorag-service.ts:3329 (MemoRagService.loadAdminLedger)` |
+| 12 | `MemoRagService.loadAdminLedger` | External | `this` へ sync user directory を実行する。 | `this.syncUserDirectory(db, authoritativeActorTenantId(actor))` | `apps/api/src/rag/memorag-service.ts:3371 (MemoRagService.loadAdminLedger)` |
+| 13 | `MemoRagService.syncUserDirectory` | External | `this.deps.userDirectory` へ list users を実行する。 | `this.deps.userDirectory.listUsers()` | `apps/api/src/rag/memorag-service.ts:3409 (MemoRagService.syncUserDirectory)` |
+| 14 | `MemoRagService.syncUserDirectory` | External | `this.deps.verifiedIdentityProvider` へ get current identity by subject を実行する。 | `this.deps.verifiedIdentityProvider.getCurrentIdentityBySubject(directoryUser.userId)` | `apps/api/src/rag/memorag-service.ts:3414 (MemoRagService.syncUserDirectory)` |
+| 15 | `MemoRagService.listAdminAuditLog` | Store | `new ObjectStoreSecurityMutationAuditOutbox(this.deps.objectStore)` に対して list all を実行する。 | `new ObjectStoreSecurityMutationAuditOutbox(this.deps.objectStore).listAll(tenantId)` | `apps/api/src/rag/memorag-service.ts:1959 (MemoRagService.listAdminAuditLog)` |
+| 16 | `ObjectStoreSecurityMutationAuditOutbox.listAll` | Store | `this.objectStore` に対して list keys を実行する。 | `this.objectStore.listKeys(prefix)` | `apps/api/src/security/security-mutation-audit-outbox.ts:188 (ObjectStoreSecurityMutationAuditOutbox.listAll)` |
+| 17 | `ObjectStoreSecurityMutationAuditOutbox.listAll` | Store | `(await this.objectStore.listKeys(prefix))<br>      ` に対して filter を実行する。 | `(await this.objectStore.listKeys(prefix)) .filter((key) => key.endsWith(".json"))` | `apps/api/src/security/security-mutation-audit-outbox.ts:188 (ObjectStoreSecurityMutationAuditOutbox.listAll)` |
+| 18 | `ObjectStoreSecurityMutationAuditOutbox.listAll` | Store | `(await this.objectStore.listKeys(prefix))<br>      .filter((key) => key.endsWith(".json"))<br>      ` に対して sort を実行する。 | `(await this.objectStore.listKeys(prefix)) .filter((key) => key.endsWith(".json")) .sort()` | `apps/api/src/security/security-mutation-audit-outbox.ts:188 (ObjectStoreSecurityMutationAuditOutbox.listAll)` |
+| 19 | `ObjectStoreSecurityMutationAuditOutbox.listAll` | Store | `this.objectStore` に対して get text with version を実行する。 | `this.objectStore.getTextWithVersion(key)` | `apps/api/src/security/security-mutation-audit-outbox.ts:192 (ObjectStoreSecurityMutationAuditOutbox.listAll)` |
+| 20 | `GET /admin/audit-log handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json(await service.listAdminAuditLog(user, query), 200)` | `apps/api/src/routes/admin-routes.ts:193 (GET /admin/audit-log handler)` |
+| 21 | `GET /admin/audit-log handler` | HTTP/SSE | HTTP 400 で JSON response を返す。 | `c.json({ error: error.message }, 400)` | `apps/api/src/routes/admin-routes.ts:195 (GET /admin/audit-log handler)` |
 
 ## 分岐
 
 | ID | Function | 条件 | 実装位置 |
 | --- | --- | --- | --- |
-| B001 | `GET /admin/audit-log handler` | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/admin-routes.ts:184 (GET /admin/audit-log handler)` |
-| B002 | `GET /admin/audit-log handler` | `error` が `InvalidPageCursorError` の instance である | `apps/api/src/routes/admin-routes.ts:185 (GET /admin/audit-log handler)` |
+| B001 | `GET /admin/audit-log handler` | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/admin-routes.ts:194 (GET /admin/audit-log handler)` |
+| B002 | `GET /admin/audit-log handler` | `error` が `InvalidPageCursorError` の instance である | `apps/api/src/routes/admin-routes.ts:195 (GET /admin/audit-log handler)` |
 | B003 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| B004 | `MemoRagService.listAdminAuditLog` | `intent.status` が `"completed"` と等しい | `apps/api/src/rag/memorag-service.ts:1967 (MemoRagService.listAdminAuditLog)` |

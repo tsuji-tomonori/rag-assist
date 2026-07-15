@@ -9,28 +9,51 @@
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
 | 到達 symbol | service lists all Cognito directory users in the managed user ledger | `apps/api/src/rag/memorag-service.test.ts:2879 (service lists all Cognito directory users in the managed user ledger)` |
-| 到達 symbol | service merges Cognito directory users with existing ledger users by email | `apps/api/src/rag/memorag-service.test.ts:2929 (service merges Cognito directory users with existing ledger users by email)` |
-| 到達 symbol | account create role failure removes the authoritative identity and records failed without a ledger success | `apps/api/src/security/account-lifecycle-current-identity.test.ts:70 (account create role failure removes the authoritative identity and records failed without a ledger success)` |
-| 到達 symbol | session revoke failure keeps a deny-first suspended ledger and records reconciliation | `apps/api/src/security/account-lifecycle-current-identity.test.ts:102 (session revoke failure keeps a deny-first suspended ledger and records reconciliation)` |
-| 到達 symbol | identity disable failure still leaves a durable application deny and suspended reconciliation ledger | `apps/api/src/security/account-lifecycle-current-identity.test.ts:112 (identity disable failure still leaves a durable application deny and suspended reconciliation ledger)` |
-| 到達 symbol | delete is deny-first and signs out before authoritative deletion | `apps/api/src/security/account-lifecycle-current-identity.test.ts:151 (delete is deny-first and signs out before authoritative deletion)` |
+| 到達 symbol | legacy global managed-user ledger is copied once into the configured tenant partition without deleting the source | `apps/api/src/rag/memorag-service.test.ts:3059 (legacy global managed-user ledger is copied once into the configured tenant partition without deleting the source)` |
 
 ## 2. 実装分岐から導くテスト要因
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| F001 | `GET /admin/users handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/admin-routes.ts:143 (GET /admin/users handler)` |
+| F002 | `GET /admin/users handler` | if | `error` が `InvalidPageCursorError` の instance である | `apps/api/src/routes/admin-routes.ts:144 (GET /admin/users handler)` |
+| F003 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| F004 | `MemoRagService.listManagedUsersPage` | 三項条件 | `this.deps.verifiedIdentityProvider` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1609 (MemoRagService.listManagedUsersPage)` |
+| F005 | `MemoRagService.listManagedUsersPage` | if | `actor.userId` が `user.userId` と等しい | `apps/api/src/rag/memorag-service.ts:1616 (MemoRagService.listManagedUsersPage)` |
+| F006 | `MemoRagService.listManagedUsersPage` | if | `user.status` が `"active"` と異なる | `apps/api/src/rag/memorag-service.ts:1617 (MemoRagService.listManagedUsersPage)` |
+| F007 | `MemoRagService.listManagedUsersPage` | if | `user.groups` が "SYSTEM_ADMIN" を含む、かつ `activeRecoveryPrincipals.length` が `1` 以下である | `apps/api/src/rag/memorag-service.ts:1618 (MemoRagService.listManagedUsersPage)` |
+| F008 | `MemoRagService.listManagedUsersPage` | 三項条件 | `query.sort` が `"updatedDesc"` と等しい | `apps/api/src/rag/memorag-service.ts:1632 (MemoRagService.listManagedUsersPage)` |
+| F009 | `MemoRagService.listManagedUsersPage` | 三項条件 | `sort` が `"updatedDesc"` と等しい | `apps/api/src/rag/memorag-service.ts:1641 (MemoRagService.listManagedUsersPage)` |
+| F010 | `MemoRagService.listManagedUsersPage` | 三項条件 | `sort` が `"updatedDesc"` と等しい | `apps/api/src/rag/memorag-service.ts:1642 (MemoRagService.listManagedUsersPage)` |
 
 ## 3. コード由来テストケース
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | 管理対象ユーザー一覧を取得する が成功 response を返す。 | `apps/api/src/routes/admin-routes.ts:133 (GET /admin/users handler)` |
-| TC002 | F001: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC004 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
-| TC005 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
-| TC006 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC001 | 正常系 | 管理対象ユーザー一覧を取得する が成功 response を返す。 | `apps/api/src/routes/admin-routes.ts:137 (GET /admin/users handler)` |
+| TC002 | F001: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/admin-routes.ts:143 (GET /admin/users handler)` |
+| TC003 | F002: 条件成立 | `error` が `InvalidPageCursorError` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:144 (GET /admin/users handler)` |
+| TC004 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:144 (GET /admin/users handler)` |
+| TC005 | F003: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| TC007 | F004: 条件成立 | `this.deps.verifiedIdentityProvider` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1609 (MemoRagService.listManagedUsersPage)` |
+| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1609 (MemoRagService.listManagedUsersPage)` |
+| TC009 | F005: 条件成立 | `actor.userId` が `user.userId` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1616 (MemoRagService.listManagedUsersPage)` |
+| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1616 (MemoRagService.listManagedUsersPage)` |
+| TC011 | F006: 条件成立 | `user.status` が `"active"` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1617 (MemoRagService.listManagedUsersPage)` |
+| TC012 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1617 (MemoRagService.listManagedUsersPage)` |
+| TC013 | F007: 条件成立 | `user.groups` が "SYSTEM_ADMIN" を含む、かつ `activeRecoveryPrincipals.length` が `1` 以下である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1618 (MemoRagService.listManagedUsersPage)` |
+| TC014 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1618 (MemoRagService.listManagedUsersPage)` |
+| TC015 | F008: 条件成立 | `query.sort` が `"updatedDesc"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1632 (MemoRagService.listManagedUsersPage)` |
+| TC016 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1632 (MemoRagService.listManagedUsersPage)` |
+| TC017 | F009: 条件成立 | `sort` が `"updatedDesc"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1641 (MemoRagService.listManagedUsersPage)` |
+| TC018 | F009: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1641 (MemoRagService.listManagedUsersPage)` |
+| TC019 | F010: 条件成立 | `sort` が `"updatedDesc"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1642 (MemoRagService.listManagedUsersPage)` |
+| TC020 | F010: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1642 (MemoRagService.listManagedUsersPage)` |
+| TC021 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC022 | HTTP 400 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC023 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC024 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 
 ## 4. 検証方針
 

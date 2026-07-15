@@ -37,6 +37,7 @@ export function usePermissions(currentUser: CurrentUser | null) {
     const canReadUsage = hasPermission("usage:read:all_users")
     const canReadCosts = hasPermission("cost:read:all")
     const canReadAdminAuditLog = canOpenAdminSettings
+    const canExportAdminAuditLog = hasPermission("access:audit:export")
     const canManageDocuments =
       canWriteDocuments ||
       canDeleteDocuments ||
@@ -84,6 +85,7 @@ export function usePermissions(currentUser: CurrentUser | null) {
       canReadUsage,
       canReadCosts,
       canReadAdminAuditLog,
+      canExportAdminAuditLog,
       canManageDocuments,
       canManageAliases,
       canManageUsers,

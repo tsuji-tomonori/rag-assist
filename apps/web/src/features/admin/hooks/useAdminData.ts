@@ -2,7 +2,7 @@ import { useRef, useState } from "react"
 import { listAccessRoles } from "../api/accessRolesApi.js"
 import { assignUserRoles, createManagedUser, deleteManagedUser, getManagedUserDeletionPreflight, listManagedUsers, suspendManagedUser, unsuspendManagedUser } from "../api/adminUsersApi.js"
 import { createAlias, disableAlias, listAliasAuditLog, listAliases, publishAliases, reviewAlias, transitionAliasToDraft, updateAlias } from "../api/aliasesApi.js"
-import { listAdminAuditLog } from "../api/auditLogApi.js"
+import { createAdminAuditExport, listAdminAuditLog } from "../api/auditLogApi.js"
 import { getCostAuditSummary } from "../api/costApi.js"
 import { listUsageSummaries } from "../api/usageApi.js"
 import type {
@@ -17,6 +17,8 @@ import type {
   ManagedUser,
   ManagedUserAuditLogPage,
   ManagedUserDeletionPreflight,
+  ManagedUserListPage,
+  ManagedUserListQuery,
   UserUsageSummary
 } from "../types.js"
 import {
@@ -31,6 +33,7 @@ const defaultPageLimit = 50
 
 export function useAdminData({
   canReadAdminAuditLog,
+  canExportAdminAuditLog = false,
   canReadUsage,
   canReadCosts,
   canReadUsers,
@@ -44,6 +47,7 @@ export function useAdminData({
   setError
 }: {
   canReadAdminAuditLog: boolean
+  canExportAdminAuditLog?: boolean
   canReadUsage: boolean
   canReadCosts: boolean
   canReadUsers: boolean
@@ -56,7 +60,7 @@ export function useAdminData({
   setLoading: (loading: boolean) => void
   setError: (error: string | null) => void
 }) {
-  const [managedUsers, setManagedUsers] = useState<ManagedUser[] | null>(null)
+  const [managedUserPage, setManagedUserPage] = useState<ManagedUserListPage | null>(null)
   const [adminAuditPage, setAdminAuditPage] = useState<ManagedUserAuditLogPage | null>(null)
   const [accessRoleList, setAccessRoleList] = useState<AccessRoleList | null>(null)
   const [usageSummaries, setUsageSummaries] = useState<UserUsageSummary[] | null>(null)
@@ -64,12 +68,19 @@ export function useAdminData({
   const [aliasPage, setAliasPage] = useState<AliasListPage | null>(null)
   const [aliasAuditPage, setAliasAuditPage] = useState<AliasAuditLogPage | null>(null)
   const pendingMutationKeysRef = useRef(new Set<string>())
+  const [pendingMutationKeys, setPendingMutationKeys] = useState<string[]>([])
+  const managedUserQueryRef = useRef<ManagedUserListQuery>({ limit: defaultPageLimit, sort: "emailAsc" })
   const adminAuditQueryRef = useRef<AdminAuditLogQuery>({ limit: defaultPageLimit })
   const aliasQueryRef = useRef<AliasListQuery>({ limit: defaultPageLimit, sort: "updatedDesc" })
   const aliasAuditQueryRef = useRef<AliasAuditLogQuery>({ limit: defaultPageLimit })
 
-  async function refreshManagedUsers() {
-    setManagedUsers(await listManagedUsers())
+  async function refreshManagedUsers(query: ManagedUserListQuery = managedUserQueryRef.current, append = false) {
+    const normalized = { limit: defaultPageLimit, sort: "emailAsc" as const, ...query }
+    managedUserQueryRef.current = normalized
+    const nextPage = await listManagedUsers(normalized)
+    setManagedUserPage((current) => append && current
+      ? { ...nextPage, users: mergeByKey(current.users, nextPage.users, (user) => user.userId) }
+      : nextPage)
   }
 
   async function refreshAdminAuditLog(query: AdminAuditLogQuery = adminAuditQueryRef.current, append = false) {
@@ -79,6 +90,12 @@ export function useAdminData({
     setAdminAuditPage((current) => append && current
       ? { ...nextPage, auditLog: mergeByKey(current.auditLog, nextPage.auditLog, (entry) => entry.auditId) }
       : nextPage)
+  }
+
+  async function onCreateAdminAuditExport(reason: string) {
+    if (!canExportAdminAuditLog) throw new Error("監査履歴を export する権限がありません")
+    const { cursor: _cursor, limit: _limit, ...query } = adminAuditQueryRef.current
+    return createAdminAuditExport(query, reason)
   }
 
   async function refreshAccessRoles() {
@@ -159,12 +176,18 @@ export function useAdminData({
   async function onAssignUserRoles(userId: string, groups: string[], reason: string): Promise<OperationOutcome<ManagedUser>> {
     return runMutation(`role:${userId}`, "このユーザーのロールは変更処理中です", async () => {
       const updated = await assignUserRoles(userId, groups, reason)
-      setManagedUsers((current) => upsertManagedUser(current, updated))
+      setManagedUserPage((current) => current ? { ...current, users: upsertManagedUser(current.users, updated) } : current)
       return confirmAdminMutation({
         value: updated,
-        successMessage: "API がロール変更を確定し、許可された管理データを更新しました。",
+        successMessage: updated.operationEvidence?.sessionRevocation === "confirmed"
+          ? "API がロール変更、session 失効、有効 permission の反映を確定しました。"
+          : "API がロール変更を確定し、許可された管理データを更新しました。",
         partialMessage: "ロール変更は確定しましたが、関連する管理データを更新できませんでした。再実行せず更新してください。",
-        evidence: { resultReference: updated.userId, version: updated.updatedAt }
+        evidence: {
+          resultReference: updated.userId,
+          version: updated.updatedAt,
+          auditReference: updated.operationEvidence?.auditIntentId
+        }
       })
     })
   }
@@ -174,7 +197,7 @@ export function useAdminData({
     setError(null)
     try {
       const created = await createManagedUser(input)
-      setManagedUsers((current) => upsertManagedUser(current, created))
+      setManagedUserPage((current) => current ? { ...current, users: upsertManagedUser(current.users, created) } : current)
       await refreshAdminSideEffects()
     } catch (err) {
       setError(errorMessage(err))
@@ -203,14 +226,23 @@ export function useAdminData({
         : action === "unsuspend"
           ? await unsuspendManagedUser(userId)
           : await deleteManagedUser(userId, successorUserId)
-      setManagedUsers((current) => updated.status === "deleted"
-        ? current?.filter((user) => user.userId !== userId) ?? current
-        : upsertManagedUser(current, updated))
+      setManagedUserPage((current) => current ? {
+        ...current,
+        users: updated.status === "deleted"
+          ? current.users.filter((user) => user.userId !== userId)
+          : upsertManagedUser(current.users, updated)
+      } : current)
       return confirmAdminMutation({
         value: updated,
-        successMessage: "API がユーザー状態の変更を確定しました。",
+        successMessage: updated.operationEvidence?.sessionRevocation === "confirmed"
+          ? "API がユーザー状態、session 失効、権限反映を確定しました。"
+          : "API がユーザー状態の変更を確定しました。",
         partialMessage: "ユーザー状態の変更は確定しましたが、関連する管理データを更新できませんでした。再実行せず更新してください。",
-        evidence: { resultReference: updated.userId, version: updated.updatedAt }
+        evidence: {
+          resultReference: updated.userId,
+          version: updated.updatedAt,
+          auditReference: updated.operationEvidence?.auditIntentId
+        }
       })
     })
   }
@@ -309,6 +341,7 @@ export function useAdminData({
   ): Promise<OperationOutcome<T>> {
     if (pendingMutationKeysRef.current.has(mutationKey)) return failedOperation(new Error(duplicateMessage))
     pendingMutationKeysRef.current.add(mutationKey)
+    setPendingMutationKeys([...pendingMutationKeysRef.current])
     setLoading(true)
     setError(null)
     try {
@@ -319,12 +352,14 @@ export function useAdminData({
       return outcome
     } finally {
       pendingMutationKeysRef.current.delete(mutationKey)
+      setPendingMutationKeys([...pendingMutationKeysRef.current])
       setLoading(false)
     }
   }
 
   return {
-    managedUsers,
+    managedUsers: managedUserPage?.users ?? null,
+    managedUserPage,
     adminAuditLog: adminAuditPage?.auditLog ?? null,
     adminAuditPage,
     accessRoles: accessRoleList?.roles ?? null,
@@ -335,7 +370,11 @@ export function useAdminData({
     aliasPage,
     aliasAuditLog: aliasAuditPage?.auditLog ?? null,
     aliasAuditPage,
+    pendingAdminMutationKeys: pendingMutationKeys,
     refreshManagedUsers,
+    loadMoreManagedUsers: () => managedUserPage?.nextCursor
+      ? refreshManagedUsers({ ...managedUserQueryRef.current, cursor: managedUserPage.nextCursor }, true)
+      : Promise.resolve(),
     refreshAdminAuditLog,
     refreshAccessRoles,
     refreshUsageSummaries,
@@ -344,6 +383,7 @@ export function useAdminData({
     refreshAliasAuditLog,
     refreshAdminData,
     onAssignUserRoles,
+    onCreateAdminAuditExport,
     onCreateManagedUser,
     onPrepareManagedUserDelete,
     onSetManagedUserStatus,
@@ -356,8 +396,8 @@ export function useAdminData({
   }
 }
 
-function upsertManagedUser(current: ManagedUser[] | null, updated: ManagedUser): ManagedUser[] {
-  return [updated, ...(current ?? []).filter((user) => user.userId !== updated.userId)]
+function upsertManagedUser(current: ManagedUser[], updated: ManagedUser): ManagedUser[] {
+  return [updated, ...current.filter((user) => user.userId !== updated.userId)]
     .sort((left, right) => left.email.localeCompare(right.email))
 }
 

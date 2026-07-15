@@ -7,6 +7,8 @@ export type AdminAuditActionFilter = ManagedUserAuditAction | AliasAuditLogItem[
 export type AdminWorkspaceUrlState = {
   section?: AdminSectionId
   query?: string
+  userStatus?: "active" | "suspended"
+  userSort?: "emailAsc" | "updatedDesc"
   aliasStatus?: AliasDefinition["status"]
   auditAction?: AdminAuditActionFilter
   sort?: "updatedDesc" | "termAsc"
@@ -16,5 +18,7 @@ export type AdminWorkspaceUrlState = {
 export const adminSections = new Set<AdminSectionId>(["overview", "users", "roles", "usage-cost", "audit", "alias"])
 export const aliasStatuses = new Set<AliasDefinition["status"]>(["draft", "approved", "disabled"])
 export const aliasSortKeys = new Set<NonNullable<AdminWorkspaceUrlState["sort"]>>(["updatedDesc", "termAsc"])
+export const adminUserStatuses = new Set<NonNullable<AdminWorkspaceUrlState["userStatus"]>>(["active", "suspended"])
+export const adminUserSortKeys = new Set<NonNullable<AdminWorkspaceUrlState["userSort"]>>(["emailAsc", "updatedDesc"])
 export const adminAuditActions = new Set<ManagedUserAuditAction>(["user:create", "role:assign", "user:suspend", "user:unsuspend", "user:delete"])
 export const aliasAuditActions = new Set<AliasAuditLogItem["action"]>(["create", "update", "review", "transition", "disable", "publish"])

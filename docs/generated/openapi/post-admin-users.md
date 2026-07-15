@@ -58,7 +58,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 8 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 13 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 | `409` | 現在のリソース状態と要求された操作が競合しています。 | `application/json` | 2 field(s) |
@@ -77,6 +77,11 @@ Media type: `application/json`
 | `createdAt` | `string` | yes | レコードを作成した日時。 | - |
 | `updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
 | `lastLoginAt` | `string` | no | `response.lastLoginAt` の値。項目名は last login at を表します。 | - |
+| `operationEvidence` | `object` | no | `response.operationEvidence` の値。項目名は operation evidence を表します。 | - |
+| `operationEvidence.auditIntentId` | `string` | yes | `response.operationEvidence.auditIntentId` の値。項目名は audit intent id を表します。 | - |
+| `operationEvidence.sessionRevocation` | `enum(confirmed \| not_required)` | yes | `response.operationEvidence.sessionRevocation` の値。項目名は session revocation を表します。 | enum=confirmed, not_required |
+| `operationEvidence.propagationState` | `enum(current \| reconciliation_required)` | yes | `response.operationEvidence.propagationState` の値。項目名は propagation state を表します。 | enum=current, reconciliation_required |
+| `operationEvidence.effectivePermissions` | `array<string>` | yes | `response.operationEvidence.effectivePermissions` の値。項目名は effective permissions を表します。 | - |
 
 ##### `401` 認証が必要です。
 

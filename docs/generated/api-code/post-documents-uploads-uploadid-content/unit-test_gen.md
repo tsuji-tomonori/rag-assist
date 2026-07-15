@@ -14,7 +14,7 @@
 | 到達 symbol | FR-074 rejected document ingest persists observed replay evidence without publishing success | `apps/api/src/rag/memorag-service.test.ts:2643 (FR-074 rejected document ingest persists observed replay evidence without publishing success)` |
 | 到達 symbol | FR-090 ingest reauthorizes after the final event and compensates before persisting success | `apps/api/src/rag/memorag-service.test.ts:2753 (FR-090 ingest reauthorizes after the final event and compensates before persisting success)` |
 | 到達 symbol | FR-090 revoke after governance creation compensates all ingest artifacts and never publishes success | `apps/api/src/rag/memorag-service.test.ts:2813 (FR-090 revoke after governance creation compensates all ingest artifacts and never publishes success)` |
-| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:3240 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
+| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:3375 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
 
 ## 2. 実装分岐から導くテスト要因
 
