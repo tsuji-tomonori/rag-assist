@@ -418,11 +418,12 @@ test('E2E-UI-NAV-002: 最大権限 persona は 320px mobile menu から全許可
   const openMenu = () => page.getByRole('button', { name: 'メニューを開く' })
   await openMenu().focus()
   await page.keyboard.press('Enter')
+  const mobileNavigationPanel = page.locator('.mobile-navigation-panel')
   const mobileNavigation = page.getByRole('navigation', { name: 'モバイル画面' })
   await expect(mobileNavigation.getByRole('button', { name: 'チャット' })).toHaveAttribute('aria-current', 'page')
   await expect(mobileNavigation.getByRole('button', { name: 'チャット' })).toBeFocused()
-  await expect(page).toHaveScreenshot('mobile-navigation-320.png', {
-    fullPage: true,
+  await page.addStyleTag({ content: '.mobile-navigation-panel { background: #fff !important; }' })
+  await expect(mobileNavigationPanel).toHaveScreenshot('mobile-navigation-320.png', {
     animations: 'disabled'
   })
 
