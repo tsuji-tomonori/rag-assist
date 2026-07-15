@@ -43,7 +43,7 @@
 | `scripts/generate-dev-rag-quality-policy-draft.ts` | draft generator |
 | `scripts/generate-dev-rag-quality-policy-draft.test.ts` | 網羅性・安全境界 test |
 | `reports/working/20260716-0822-dev-rag-quality-policy-proposal.md` | 承認用の根拠・提案・未確定点 |
-| `tasks/do/20260716-0822-dev-rag-quality-policy-draft.md` | task と受け入れ条件 |
+| `tasks/done/20260716-0822-dev-rag-quality-policy-draft.md` | task と受け入れ条件 |
 
 ## 6. 実行した検証
 

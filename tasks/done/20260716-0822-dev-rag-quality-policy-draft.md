@@ -1,6 +1,6 @@
 # dev RAG 品質 policy draft の作成
 
-- 状態: do
+- 状態: done
 - タスク種別: ドキュメント更新
 
 ## 背景
@@ -41,13 +41,13 @@
 
 ## 受け入れ条件
 
-- [ ] draft JSON が `RagQualityPolicyProfile` の構造を持つ。
-- [ ] `RAG_REQUIRED_SIGNAL_IDS` と必須 case/endpoint/recovery slice に対応する gate が重複なく存在する。
-- [ ] zero-tolerance signal はすべて `eq 0` とする。
-- [ ] `approvedBy`、`approvedAt`、`thresholdApprovedBy`、`thresholdApprovedAt` が空で、promotion 判定が pass しない。
-- [ ] 閾値案ごとに confirmed / inferred / open_question の根拠が確認できる。
-- [ ] runtime/workload/price/evidence version の placeholder が承認・投入前に解決必須と明記される。
-- [ ] S3 upload、GitHub variable 更新、deploy を実行しない。
+- [x] draft JSON が `RagQualityPolicyProfile` の構造を持つ。
+- [x] `RAG_REQUIRED_SIGNAL_IDS` と必須 case/endpoint/recovery slice に対応する gate が重複なく存在する。
+- [x] zero-tolerance signal はすべて `eq 0` とする。
+- [x] `approvedBy`、`approvedAt`、`thresholdApprovedBy`、`thresholdApprovedAt` が空で、promotion 判定が pass しない。
+- [x] 閾値案ごとに confirmed / inferred / open_question の根拠が確認できる。
+- [x] runtime/workload/price/evidence version の placeholder が承認・投入前に解決必須と明記される。
+- [x] S3 upload、GitHub variable 更新、deploy を実行しない。
 
 ## 検証計画
 
