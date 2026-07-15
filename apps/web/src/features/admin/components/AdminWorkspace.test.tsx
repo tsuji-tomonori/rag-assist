@@ -341,4 +341,91 @@ describe("AdminWorkspace", () => {
     await userEvent.click(screen.getByRole("button", { name: /次の履歴を読み込む/ }))
     expect(spies.onLoadMoreAdminAudit).toHaveBeenCalledTimes(1)
   })
+
+  it("権限外 section を overview へ正規化し、取得前の actor と summary を捏造しない", () => {
+    renderAdminWorkspace({
+      user: null,
+      urlState: { section: "alias" },
+      documentsCount: null,
+      openQuestionsCount: null,
+      debugRunsCount: null,
+      benchmarkRunsCount: null,
+      managedUsers: null,
+      adminAuditPage: null,
+      accessRoleList: null,
+      usageSummaries: null,
+      costAudit: null,
+      aliasPage: null,
+      aliasAuditPage: null,
+      canManageDocuments: false,
+      canAnswerQuestions: false,
+      canReadDebugRuns: false,
+      canReadBenchmarkRuns: false,
+      canOpenAdminSettings: false,
+      canReadUsers: false,
+      canCreateUsers: false,
+      canSuspendUsers: false,
+      canUnsuspendUsers: false,
+      canDeleteUsers: false,
+      canAssignRoles: false,
+      canReadUsage: false,
+      canReadCosts: false,
+      canReadAdminAuditLog: false,
+      canManageAliases: false,
+      canReadAliases: false,
+      canWriteAliases: false,
+      canReviewAliases: false,
+      canDisableAliases: false,
+      canPublishAliases: false
+    })
+    expect(screen.getByText("権限未取得")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "概要" })).toHaveAttribute("aria-current", "page")
+    expect(screen.queryByRole("button", { name: "用語展開" })).not.toBeInTheDocument()
+    expect(screen.getByText("表示できる管理 summary はありません。")).toBeInTheDocument()
+  })
+
+  it("part 単位の permission/failed は旧成功 data を隠して再試行状態を表示する", () => {
+    renderAdminWorkspace({
+      dataState: {
+        kind: "content",
+        target: appUiStateTargets.admin,
+        asOf,
+        parts: [
+          { id: "users", label: "users", status: "permission" },
+          { id: "roles", label: "roles", status: "failed" },
+          { id: "audit", label: "audit", status: "failed" },
+          { id: "usage", label: "usage", status: "permission" },
+          { id: "cost", label: "cost", status: "failed" },
+          { id: "aliases", label: "aliases", status: "permission" },
+          { id: "aliasAudit", label: "aliasAudit", status: "failed" }
+        ]
+      }
+    })
+    expect(screen.getByRole("button", { name: "ユーザー管理を開く" })).toHaveTextContent("取得失敗")
+    expect(screen.getByRole("button", { name: "アクセス管理を開く" })).toHaveTextContent("取得失敗")
+    expect(screen.getByRole("button", { name: "利用状況を開く" })).toHaveTextContent("取得失敗")
+    expect(screen.getByRole("button", { name: "コスト監査を開く" })).toHaveTextContent("取得失敗")
+    expect(screen.getByRole("button", { name: "用語展開管理を開く" })).toHaveTextContent("取得失敗")
+  })
+
+  it("section 遷移時に domain 外 filter を除去する", async () => {
+    const spies = renderAdminWorkspace({
+      urlState: { section: "overview", aliasStatus: "draft", sort: "termAsc", selected: "alias-1", auditAction: "review" }
+    })
+    await userEvent.click(screen.getByRole("button", { name: "ユーザー" }))
+    expect(spies.onUrlStateChange).toHaveBeenCalledWith(expect.objectContaining({
+      section: "users",
+      aliasStatus: undefined,
+      sort: undefined,
+      selected: undefined,
+      auditAction: "review"
+    }), "push")
+
+    await userEvent.click(screen.getByRole("button", { name: "監査" }))
+    expect(spies.onUrlStateChange).toHaveBeenCalledWith(expect.objectContaining({ section: "audit", auditAction: undefined }), "push")
+
+    await userEvent.selectOptions(screen.getByLabelText("操作"), "user:create")
+    await userEvent.click(screen.getByRole("button", { name: "用語展開" }))
+    expect(spies.onUrlStateChange).toHaveBeenLastCalledWith(expect.objectContaining({ section: "alias", auditAction: undefined }), "push")
+  })
 })
