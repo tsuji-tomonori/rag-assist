@@ -1,4 +1,4 @@
-import type { CostAuditSummary, ManagedUser, ManagedUserAuditLogEntry } from "../../features/admin/types.js"
+import type { ManagedUser, ManagedUserAuditLogEntry } from "../../features/admin/types.js"
 import type { HumanQuestion } from "../../features/questions/types.js"
 import {
   benchmarkRunStatusPresentation,
@@ -28,6 +28,7 @@ export function formatShortDate(input?: string): string {
 }
 
 export function formatCurrency(value: number): string {
+  if (value > 0 && value < 0.0001) return `$${value.toExponential(4)}`
   return `$${value.toFixed(4)}`
 }
 
@@ -57,12 +58,6 @@ export function formatDateTime(input: string): string {
 
 export function managedUserStatusLabel(status: ManagedUser["status"]): string {
   return managedUserStatusPresentation(status).label
-}
-
-export function costConfidenceLabel(confidence: NonNullable<CostAuditSummary["items"]>[number]["confidence"]): string {
-  if (confidence === "actual_usage") return "実測"
-  if (confidence === "estimated_usage") return "概算"
-  return "手動見積"
 }
 
 export function adminAuditActionLabel(action: ManagedUserAuditLogEntry["action"]): string {

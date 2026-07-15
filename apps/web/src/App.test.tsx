@@ -191,9 +191,9 @@ const rolePermissions: Record<string, Permission[]> = {
   ASYNC_AGENT_USER: ["agent:cancel", "agent:read:self", "agent:artifact:download", "skill:read", "agent_profile:read", "agent_preset:read:self", "agent_preset:create:self", "agent_preset:update:self", "agent_preset:delete:self"],
   SKILL_PROFILE_ADMIN: ["skill:read", "skill:create", "skill:update", "skill:delete", "skill:share", "skill:generate_with_ai", "agent_profile:read", "agent_profile:create", "agent_profile:update", "agent_profile:delete", "agent_profile:share", "agent_profile:generate_with_ai"],
   ASYNC_AGENT_ADMIN: ["agent:cancel", "agent:read:self", "agent:read:managed", "agent:artifact:download", "agent:settings:manage", "skill:read", "agent_profile:read", "agent_preset:read:self"],
-  USER_ADMIN: ["user:create", "user:read", "user:suspend", "user:unsuspend", "user:delete", "usage:read:all_users"],
+  USER_ADMIN: ["user:create", "user:read", "user:suspend", "user:unsuspend", "user:delete", "usage:read:all_users", "usage:export"],
   ACCESS_ADMIN: ["access:role:create", "access:role:update", "access:role:assign", "access:policy:read", "access:audit:export"],
-  COST_AUDITOR: ["cost:read:all"],
+  COST_AUDITOR: ["cost:read:all", "cost:export"],
   SYSTEM_ADMIN: [
     "chat:create", "chat:read:own", "chat:read:shared", "chat:share:own", "chat:delete:own", "chat:admin:read_all",
     "answer:edit", "answer:publish", "rag:group:create", "rag:group:assign_manager", "rag:doc:read", "rag:doc:write:group", "rag:doc:delete:group", "rag:index:rebuild:group",
@@ -203,7 +203,7 @@ const rolePermissions: Record<string, Permission[]> = {
     "skill:read", "skill:create", "skill:update", "skill:delete", "skill:share", "skill:generate_with_ai",
     "agent_profile:read", "agent_profile:create", "agent_profile:update", "agent_profile:delete", "agent_profile:share", "agent_profile:generate_with_ai",
     "agent_preset:read:self", "agent_preset:create:self", "agent_preset:update:self", "agent_preset:delete:self",
-    "usage:read:own", "usage:read:all_users", "cost:read:own", "cost:read:all", "user:create", "user:read", "user:suspend", "user:unsuspend", "user:delete",
+    "usage:read:own", "usage:read:all_users", "usage:export", "cost:read:own", "cost:read:all", "cost:export", "user:create", "user:read", "user:suspend", "user:unsuspend", "user:delete",
     "access:role:create", "access:role:update", "access:role:assign", "access:policy:read", "access:audit:export"
   ]
 }

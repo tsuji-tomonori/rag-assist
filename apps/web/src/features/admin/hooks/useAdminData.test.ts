@@ -4,8 +4,8 @@ import { listAccessRoles } from "../api/accessRolesApi.js"
 import { assignUserRoles, createManagedUser, deleteManagedUser, getManagedUserDeletionPreflight, listManagedUsers, suspendManagedUser, unsuspendManagedUser } from "../api/adminUsersApi.js"
 import { createAlias, disableAlias, listAliasAuditLog, listAliases, publishAliases, reviewAlias, transitionAliasToDraft, updateAlias } from "../api/aliasesApi.js"
 import { listAdminAuditLog } from "../api/auditLogApi.js"
-import { getCostAuditSummary } from "../api/costApi.js"
-import { listUsageSummaries } from "../api/usageApi.js"
+import { createCostExport, getCostAuditSummary } from "../api/costApi.js"
+import { createUsageExport, listUsageSummaries } from "../api/usageApi.js"
 import type { AliasAuditLogPage, AliasDefinition, AliasListPage } from "../types.js"
 import { useAdminData } from "./useAdminData.js"
 
@@ -30,8 +30,8 @@ vi.mock("../api/aliasesApi.js", () => ({
   updateAlias: vi.fn()
 }))
 vi.mock("../api/auditLogApi.js", () => ({ listAdminAuditLog: vi.fn() }))
-vi.mock("../api/costApi.js", () => ({ getCostAuditSummary: vi.fn() }))
-vi.mock("../api/usageApi.js", () => ({ listUsageSummaries: vi.fn() }))
+vi.mock("../api/costApi.js", () => ({ createCostExport: vi.fn(), getCostAuditSummary: vi.fn() }))
+vi.mock("../api/usageApi.js", () => ({ createUsageExport: vi.fn(), listUsageSummaries: vi.fn() }))
 
 const aliasDraft: AliasDefinition = {
   aliasId: "alias-1",
@@ -124,8 +124,16 @@ describe("useAdminData", () => {
       source: "admin-audit-ledger",
       asOf: "now"
     })
-    vi.mocked(listUsageSummaries).mockResolvedValue([])
+    vi.mocked(listUsageSummaries).mockResolvedValue({
+      query: { periodStart: "2026-05-01T00:00:00.000Z", periodEnd: "2026-06-01T00:00:00.000Z", limit: 50 },
+      events: [], truncated: false, asOf: "2026-05-10T00:00:00.000Z", source: "usage_event_store",
+      rolloutMode: "active",
+      completeness: { eventCount: 0, actualQuantityCount: 0, estimatedQuantityCount: 0, missingQuantityCount: 0, unknownSubjectCount: 0, unknownRunCount: 0, unknownModelCount: 0, unknownFeatureCount: 0, unpricedQuantityCount: 0, state: "missing" },
+      breakdowns: { bySubject: [], byFeature: [], byProvider: [], byModel: [] }
+    })
     vi.mocked(getCostAuditSummary).mockResolvedValue(null)
+    vi.mocked(createUsageExport).mockResolvedValue({ exportType: "usage_summary", url: "https://example.test/usage", expiresInSeconds: 900, objectKey: "usage.json", generatedAt: "now", redaction: { policyVersion: "admin-export-redaction-v1", redactedFields: [], notes: [] } })
+    vi.mocked(createCostExport).mockResolvedValue({ exportType: "cost_summary", url: "https://example.test/cost", expiresInSeconds: 900, objectKey: "cost.json", generatedAt: "now", redaction: { policyVersion: "admin-export-redaction-v1", redactedFields: [], notes: [] } })
     vi.mocked(assignUserRoles).mockResolvedValue({ userId: "user-1", email: "a@example.com", status: "active", groups: ["CHAT_USER", "SYSTEM_ADMIN"], createdAt: "now", updatedAt: "now" })
     vi.mocked(createManagedUser).mockResolvedValue({ userId: "user-2", email: "c@example.com", status: "active", groups: ["CHAT_USER"], createdAt: "now", updatedAt: "now" })
     vi.mocked(suspendManagedUser).mockResolvedValue({ userId: "user-1", email: "a@example.com", status: "suspended", groups: ["CHAT_USER"], createdAt: "now", updatedAt: "now" })
@@ -213,6 +221,84 @@ describe("useAdminData", () => {
     expect(listAliasAuditLog).toHaveBeenCalledWith({ limit: 50 })
     expect(result.current.accessRoleList).toMatchObject({ catalogVersion: "role-v1" })
     expect(result.current.adminAuditPage).toMatchObject({ total: 1 })
+  })
+
+  it("usage と cost export は別権限で同じ cursor-free query と理由を送る", async () => {
+    const query = {
+      periodStart: "2026-05-01T00:00:00.000Z",
+      periodEnd: "2026-06-01T00:00:00.000Z",
+      subjectId: "subject-1",
+      provider: "bedrock",
+      cursor: "stale-cursor",
+      limit: 1
+    }
+    const { result } = renderHook(() => useAdminData(createProps({
+      canReadUsage: false,
+      canReadCosts: false,
+      canExportUsage: true,
+      canExportCosts: true
+    })))
+    await act(() => result.current.applyUsageCostQuery(query))
+    await act(() => result.current.onCreateUsageExport("Usage reconciliation"))
+    await act(() => result.current.onCreateCostExport("Cost reconciliation"))
+
+    const normalized = {
+      periodStart: query.periodStart,
+      periodEnd: query.periodEnd,
+      subjectId: "subject-1",
+      provider: "bedrock"
+    }
+    expect(createUsageExport).toHaveBeenCalledWith(normalized, "Usage reconciliation")
+    expect(createCostExport).toHaveBeenCalledWith(normalized, "Cost reconciliation")
+  })
+
+  it("usage と cost export は read 権限だけでは API を呼ばない", async () => {
+    const { result } = renderHook(() => useAdminData(createProps({ canReadUsage: true, canReadCosts: true })))
+    await expect(result.current.onCreateUsageExport("Denied usage export")).rejects.toThrow("権限がありません")
+    await expect(result.current.onCreateCostExport("Denied cost export")).rejects.toThrow("権限がありません")
+    expect(createUsageExport).not.toHaveBeenCalled()
+    expect(createCostExport).not.toHaveBeenCalled()
+  })
+
+  it("usage と cost の stable cursor page を重複なく追記し、終端では再取得しない", async () => {
+    const completeness = { eventCount: 1, actualQuantityCount: 1, estimatedQuantityCount: 0, missingQuantityCount: 0, unknownSubjectCount: 0, unknownRunCount: 0, unknownModelCount: 0, unknownFeatureCount: 0, unpricedQuantityCount: 0, state: "complete" as const }
+    const event = { schemaVersion: 1 as const, eventId: "event-1", tenantId: "tenant-1", quantities: [{ unit: "input_token" as const, value: 1, source: "provider" as const }], status: "succeeded" as const, idempotencyKey: "idem-1", occurredAt: "2026-05-01T00:00:00.000Z", recordedAt: "2026-05-01T00:00:01.000Z" }
+    const usageBase = { query: { periodStart: "2026-05-01T00:00:00.000Z", periodEnd: "2026-06-01T00:00:00.000Z", limit: 50 }, truncated: true, asOf: "now", source: "usage_event_store" as const, rolloutMode: "active" as const, completeness, breakdowns: { bySubject: [], byFeature: [], byProvider: [], byModel: [] } }
+    vi.mocked(listUsageSummaries)
+      .mockResolvedValueOnce({ ...usageBase, events: [event], nextCursor: "usage-next" })
+      .mockResolvedValueOnce({ ...usageBase, events: [event, { ...event, eventId: "event-2", idempotencyKey: "idem-2" }], truncated: false })
+    const costItem = { eventId: "event-1", subjectId: "user-1", runId: "run-1", feature: "chat", provider: "bedrock", region: "ap-northeast-1", modelId: "model-1", unit: "input_token" as const, quantity: 1, measurementSource: "provider" as const, pricingState: "actual" as const, catalogVersion: "v1", priceSource: "catalog", costUsd: 0.1, occurredAt: "2026-05-01T00:00:00.000Z" }
+    const costBase = { query: usageBase.query, currency: "USD" as const, truncated: true, asOf: "now", source: "usage_event_store+versioned_price_catalog" as const, rolloutMode: "active" as const, catalogVersions: ["v1"], completeness }
+    vi.mocked(getCostAuditSummary)
+      .mockResolvedValueOnce({ ...costBase, pricedCostUsd: 0.1, items: [costItem], nextCursor: "cost-next" })
+      .mockResolvedValueOnce({ ...costBase, pricedCostUsd: 0.2, items: [costItem, { ...costItem, eventId: "event-2" }], truncated: false })
+
+    const { result } = renderHook(() => useAdminData(createProps({ canReadUsage: true, canReadCosts: true, canReadAliases: false })))
+    await act(() => result.current.refreshUsageSummaries())
+    await act(() => result.current.refreshCostAudit())
+    await act(() => result.current.loadMoreUsage())
+    await act(() => result.current.loadMoreCosts())
+    expect(result.current.usageSummaries?.events.map((item) => item.eventId)).toEqual(["event-1", "event-2"])
+    expect(result.current.costAudit?.items.map((item) => item.eventId)).toEqual(["event-1", "event-2"])
+    expect(result.current.costAudit?.pricedCostUsd).toBeCloseTo(0.3)
+    expect(listUsageSummaries).toHaveBeenLastCalledWith(expect.objectContaining({ cursor: "usage-next" }))
+    expect(getCostAuditSummary).toHaveBeenLastCalledWith(expect.objectContaining({ cursor: "cost-next" }))
+    await act(() => result.current.loadMoreUsage())
+    await act(() => result.current.loadMoreCosts())
+    expect(listUsageSummaries).toHaveBeenCalledTimes(2)
+    expect(getCostAuditSummary).toHaveBeenCalledTimes(2)
+  })
+
+  it("権限がない refreshAdminData は管理 API を呼ばない", async () => {
+    const { result } = renderHook(() => useAdminData(createProps({ canReadAliases: false })))
+    await act(() => result.current.refreshAdminData())
+    expect(listManagedUsers).not.toHaveBeenCalled()
+    expect(listAdminAuditLog).not.toHaveBeenCalled()
+    expect(listAccessRoles).not.toHaveBeenCalled()
+    expect(listUsageSummaries).not.toHaveBeenCalled()
+    expect(getCostAuditSummary).not.toHaveBeenCalled()
+    expect(listAliases).not.toHaveBeenCalled()
+    expect(listAliasAuditLog).not.toHaveBeenCalled()
   })
 
   it("確定後の監査再取得失敗は再実行を促さない partial として返す", async () => {

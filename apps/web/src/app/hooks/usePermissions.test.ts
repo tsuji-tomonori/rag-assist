@@ -33,7 +33,9 @@ describe("usePermissions", () => {
       "agent:run",
       "user:create",
       "usage:read:all_users",
+      "usage:export",
       "cost:read:all",
+      "cost:export",
       "answer:edit"
     ])))
 
@@ -49,6 +51,8 @@ describe("usePermissions", () => {
     expect(result.current.canRunAgent).toBe(false)
     expect(result.current.canManageUsers).toBe(true)
     expect(result.current.canAuditOperations).toBe(true)
+    expect(result.current.canExportUsage).toBe(true)
+    expect(result.current.canExportCosts).toBe(true)
     expect(result.current.canSeeAdminSettings).toBe(true)
     expect(result.current.canCancelBenchmark).toBe(false)
     expect(result.current.canCancelAgent).toBe(false)
@@ -79,5 +83,19 @@ describe("usePermissions", () => {
     const exporter = renderHook(() => usePermissions(user(["access:audit:export"])))
     expect(exporter.result.current.canReadAdminAuditLog).toBe(false)
     expect(exporter.result.current.canExportAdminAuditLog).toBe(true)
+  })
+
+  it("does not infer usage or cost export authority from aggregate read authority", () => {
+    const readOnly = renderHook(() => usePermissions(user(["usage:read:all_users", "cost:read:all"])))
+    expect(readOnly.result.current.canReadUsage).toBe(true)
+    expect(readOnly.result.current.canReadCosts).toBe(true)
+    expect(readOnly.result.current.canExportUsage).toBe(false)
+    expect(readOnly.result.current.canExportCosts).toBe(false)
+
+    const exporter = renderHook(() => usePermissions(user(["usage:export", "cost:export"])))
+    expect(exporter.result.current.canReadUsage).toBe(false)
+    expect(exporter.result.current.canReadCosts).toBe(false)
+    expect(exporter.result.current.canExportUsage).toBe(true)
+    expect(exporter.result.current.canExportCosts).toBe(true)
   })
 })

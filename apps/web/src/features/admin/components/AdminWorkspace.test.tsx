@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event"
 import { useState } from "react"
 import { describe, expect, it, vi } from "vitest"
 import type { CurrentUser } from "../../../shared/types/common.js"
-import type { AccessRoleList, AliasAuditLogItem, AliasAuditLogPage, AliasDefinition, AliasListPage, CostAuditSummary, ManagedUser, ManagedUserAuditLogPage, UserUsageSummary } from "../types.js"
+import type { AccessRoleList, AliasAuditLogItem, AliasAuditLogPage, AliasDefinition, AliasListPage, CostAuditSummary, ManagedUser, ManagedUserAuditLogPage, UsageSummaryPage } from "../types.js"
 import type { AdminWorkspaceUrlState } from "../urlState.js"
 import { AdminWorkspace } from "./AdminWorkspace.js"
 import { appUiStateTargets } from "../../../app/uiStateTargets.js"
@@ -18,7 +18,7 @@ const accessRoleList: AccessRoleList = {
   asOf,
   roles: [
     { role: "CHAT_USER", displayName: "チャット利用者", description: "チャットを利用します。", kind: "systemPreset", permissions: ["chat:create"] },
-    { role: "COST_AUDITOR", displayName: "コスト監査担当", description: "コストを監査します。", kind: "systemPreset", permissions: ["cost:read:all"] },
+    { role: "COST_AUDITOR", displayName: "コスト監査担当", description: "コストを監査します。", kind: "systemPreset", permissions: ["cost:read:all", "cost:export"] },
     { role: "SYSTEM_ADMIN", displayName: "システム管理者", description: "システムを管理します。", kind: "systemPreset", permissions: ["user:read", "access:role:assign"] }
   ]
 }
@@ -111,28 +111,31 @@ const adminAuditPage: ManagedUserAuditLogPage = {
   asOf
 }
 
-const usageSummary: UserUsageSummary = {
-  userId: "managed-1",
-  email: "managed@example.com",
-  chatMessages: 3,
-  conversationCount: 2,
-  questionCount: 1,
-  documentCount: 4,
-  benchmarkRunCount: 0,
-  debugRunCount: 1,
-  availableMetrics: ["chatMessages", "conversationCount", "questionCount", "documentCount", "benchmarkRunCount", "debugRunCount"],
-  unavailableMetrics: []
+const usageSummary: UsageSummaryPage = {
+  query: { periodStart: "2026-05-01T00:00:00.000Z", periodEnd: "2026-06-01T00:00:00.000Z", limit: 50 },
+  events: [{
+    schemaVersion: 1, eventId: "usage-1", tenantId: "tenant-1", subjectId: "managed-1", runId: "run-1", feature: "chat", provider: "bedrock", region: "ap-northeast-1", modelId: "model-a",
+    quantities: [{ unit: "input_token", value: 1200, source: "provider" }], status: "succeeded", idempotencyKey: "run-1:0", occurredAt: asOf, recordedAt: asOf
+  }],
+  truncated: false,
+  asOf,
+      source: "usage_event_store",
+      rolloutMode: "active",
+  completeness: { eventCount: 1, actualQuantityCount: 1, estimatedQuantityCount: 0, missingQuantityCount: 0, unknownSubjectCount: 0, unknownRunCount: 0, unknownModelCount: 0, unknownFeatureCount: 0, unpricedQuantityCount: 0, state: "complete" },
+  breakdowns: { bySubject: [], byFeature: [], byProvider: [], byModel: [] }
 }
 
 const costAudit: CostAuditSummary = {
-  available: true,
-  periodStart: "2026-05-01T00:00:00.000Z",
-  periodEnd: "2026-05-31T00:00:00.000Z",
+  query: usageSummary.query,
   currency: "USD",
-  totalEstimatedUsd: 12.34,
-  items: [{ service: "bedrock", category: "chat", usage: 1200, unit: "tokens", unitCostUsd: 0.001, estimatedCostUsd: 1.2, confidence: "estimated_usage" }],
-  users: [{ userId: "managed-1", email: "managed@example.com", estimatedCostUsd: 1.2 }],
-  pricingCatalogUpdatedAt: "2026-05-01T00:00:00.000Z"
+  pricedCostUsd: 0.0000012,
+  items: [{ eventId: "usage-1", subjectId: "managed-1", runId: "run-1", feature: "chat", provider: "bedrock", region: "ap-northeast-1", modelId: "model-a", unit: "input_token", quantity: 1200, measurementSource: "provider", pricingState: "actual", catalogVersion: "catalog-v1", priceSource: "approved-billing-sheet", unitCostUsd: 0.000000001, costUsd: 0.0000012, occurredAt: asOf }],
+  truncated: false,
+  asOf,
+      source: "usage_event_store+versioned_price_catalog",
+      rolloutMode: "active",
+  catalogVersions: ["catalog-v1"],
+  completeness: usageSummary.completeness
 }
 
 function readyDataState() {
@@ -179,7 +182,7 @@ function renderAdminWorkspace(overrides: Partial<Parameters<typeof AdminWorkspac
       managedUserPage: { users: [managedUser], total: 1, truncated: false, source: "authoritative_identity", asOf, version: "ledger-version-1" },
       adminAuditPage,
       accessRoleList,
-      usageSummaries: [usageSummary],
+      usageSummaries: usageSummary,
       costAudit,
       aliasPage,
       aliasAuditPage,
@@ -326,6 +329,24 @@ describe("AdminWorkspace", () => {
     expect(screen.getByRole("table", { name: "利用状況" })).toBeInTheDocument()
   })
 
+  it("shadow rollout は未計測を zero と装わず usage/cost export を公開しない", async () => {
+    renderAdminWorkspace({
+      urlState: { section: "usage-cost" },
+      usageSummaries: { ...usageSummary, rolloutMode: "shadow", events: [], completeness: { ...usageSummary.completeness, eventCount: 0, actualQuantityCount: 0, state: "missing" } },
+      costAudit: { ...costAudit, rolloutMode: "shadow", items: [], pricedCostUsd: 0, completeness: { ...costAudit.completeness, eventCount: 0, actualQuantityCount: 0, state: "missing" } },
+      canExportUsage: true,
+      canExportCosts: true,
+      onCreateUsageExport: vi.fn(),
+      onCreateCostExport: vi.fn()
+    })
+
+    expect(screen.getAllByText(/usage accounting は shadow mode/)).toHaveLength(2)
+    expect(screen.getByText(/価格監査と export は active cutover まで利用できません/)).toBeInTheDocument()
+    expect(screen.queryByRole("form", { name: "現在の利用状況条件を export" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("form", { name: "現在のコスト条件を export" })).not.toBeInTheDocument()
+    expect(screen.getByText(/0 件は計測済み zero を意味しません/)).toBeInTheDocument()
+  })
+
   it("対象行の mutation 中も別ユーザーの操作を無効化しない", () => {
     const second = { ...managedUser, userId: "managed-2", email: "second@example.com", displayName: "Second" }
     renderAdminWorkspace({
@@ -376,5 +397,41 @@ describe("AdminWorkspace", () => {
     await userEvent.click(button)
     expect(onCreateAdminAuditExport).toHaveBeenCalledWith("四半期 access review")
     expect(await screen.findByRole("link", { name: "有効期限内に取得" })).toHaveAttribute("href", "https://example.com/export")
+  })
+
+  it("resource ごとの failure を data と混同せず overview に反映する", () => {
+    renderAdminWorkspace({
+      dataState: {
+        ...readyDataState(),
+        parts: readyDataState().parts.map((part) => ({ ...part, status: "failed" as const }))
+      }
+    })
+    expect(screen.getAllByText("取得失敗").length).toBeGreaterThanOrEqual(5)
+    expect(screen.getAllByText("状態メッセージから再試行できます")).toHaveLength(5)
+  })
+
+  it("利用できない deep link を overview へ戻し、権限未取得と処理中を正直に示す", async () => {
+    const onBack = vi.fn()
+    renderAdminWorkspace({
+      urlState: { section: "users" }, user: null, loading: true,
+      canManageDocuments: false, canAnswerQuestions: false, canReadDebugRuns: false, canReadBenchmarkRuns: false,
+      canOpenAdminSettings: false, canReadUsers: false, canReadUsage: false, canReadCosts: false,
+      canReadAdminAuditLog: false, canManageAliases: false, canReadAliases: false,
+      onBack
+    })
+    expect(screen.getByText("権限未取得")).toBeInTheDocument()
+    expect(screen.getByText("表示できる管理 summary はありません。")).toBeInTheDocument()
+    expect(screen.getByText("管理 API を処理中")).toBeInTheDocument()
+    await userEvent.click(screen.getByRole("button", { name: "チャットへ戻る" }))
+    expect(onBack).toHaveBeenCalled()
+  })
+
+  it.each([
+    ["audit" as const, "publish" as const, "監査"],
+    ["alias" as const, "role:assign" as const, "用語展開"]
+  ])("%s section へ移ると別 ledger の action filter を除去する", async (_section, auditAction, buttonName) => {
+    const spies = renderAdminWorkspace({ urlState: { section: "overview", auditAction } })
+    await userEvent.click(screen.getByRole("button", { name: buttonName }))
+    expect(spies.onUrlStateChange).toHaveBeenCalledWith(expect.objectContaining({ auditAction: undefined }), "push")
   })
 })

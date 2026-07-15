@@ -3,8 +3,8 @@ import { listAccessRoles } from "../api/accessRolesApi.js"
 import { assignUserRoles, createManagedUser, deleteManagedUser, getManagedUserDeletionPreflight, listManagedUsers, suspendManagedUser, unsuspendManagedUser } from "../api/adminUsersApi.js"
 import { createAlias, disableAlias, listAliasAuditLog, listAliases, publishAliases, reviewAlias, transitionAliasToDraft, updateAlias } from "../api/aliasesApi.js"
 import { createAdminAuditExport, listAdminAuditLog } from "../api/auditLogApi.js"
-import { getCostAuditSummary } from "../api/costApi.js"
-import { listUsageSummaries } from "../api/usageApi.js"
+import { createCostExport, getCostAuditSummary } from "../api/costApi.js"
+import { createUsageExport, listUsageSummaries } from "../api/usageApi.js"
 import type {
   AccessRoleList,
   AdminAuditLogQuery,
@@ -19,7 +19,8 @@ import type {
   ManagedUserDeletionPreflight,
   ManagedUserListPage,
   ManagedUserListQuery,
-  UserUsageSummary
+  UsageQuery,
+  UsageSummaryPage
 } from "../types.js"
 import {
   confirmedOperation,
@@ -36,6 +37,8 @@ export function useAdminData({
   canExportAdminAuditLog = false,
   canReadUsage,
   canReadCosts,
+  canExportUsage = false,
+  canExportCosts = false,
   canReadUsers,
   canOpenAdminSettings,
   canReadAliases,
@@ -50,6 +53,8 @@ export function useAdminData({
   canExportAdminAuditLog?: boolean
   canReadUsage: boolean
   canReadCosts: boolean
+  canExportUsage?: boolean
+  canExportCosts?: boolean
   canReadUsers: boolean
   canOpenAdminSettings: boolean
   canReadAliases: boolean
@@ -63,7 +68,7 @@ export function useAdminData({
   const [managedUserPage, setManagedUserPage] = useState<ManagedUserListPage | null>(null)
   const [adminAuditPage, setAdminAuditPage] = useState<ManagedUserAuditLogPage | null>(null)
   const [accessRoleList, setAccessRoleList] = useState<AccessRoleList | null>(null)
-  const [usageSummaries, setUsageSummaries] = useState<UserUsageSummary[] | null>(null)
+  const [usageSummaries, setUsageSummaries] = useState<UsageSummaryPage | null>(null)
   const [costAudit, setCostAudit] = useState<CostAuditSummary | null>(null)
   const [aliasPage, setAliasPage] = useState<AliasListPage | null>(null)
   const [aliasAuditPage, setAliasAuditPage] = useState<AliasAuditLogPage | null>(null)
@@ -73,6 +78,8 @@ export function useAdminData({
   const adminAuditQueryRef = useRef<AdminAuditLogQuery>({ limit: defaultPageLimit })
   const aliasQueryRef = useRef<AliasListQuery>({ limit: defaultPageLimit, sort: "updatedDesc" })
   const aliasAuditQueryRef = useRef<AliasAuditLogQuery>({ limit: defaultPageLimit })
+  const usageQueryRef = useRef<UsageQuery>(defaultUsageQuery())
+  const costQueryRef = useRef<UsageQuery>(defaultUsageQuery())
 
   async function refreshManagedUsers(query: ManagedUserListQuery = managedUserQueryRef.current, append = false) {
     const normalized = { limit: defaultPageLimit, sort: "emailAsc" as const, ...query }
@@ -102,12 +109,43 @@ export function useAdminData({
     setAccessRoleList(await listAccessRoles())
   }
 
-  async function refreshUsageSummaries() {
-    setUsageSummaries(await listUsageSummaries())
+  async function refreshUsageSummaries(query: UsageQuery = usageQueryRef.current, append = false) {
+    const normalized = { ...query, limit: defaultPageLimit }
+    usageQueryRef.current = normalized
+    const nextPage = await listUsageSummaries(normalized)
+    setUsageSummaries((current) => append && current && nextPage
+      ? { ...nextPage, events: mergeByKey(current.events, nextPage.events, (event) => event.eventId) }
+      : nextPage)
   }
 
-  async function refreshCostAudit() {
-    setCostAudit(await getCostAuditSummary())
+  async function refreshCostAudit(query: UsageQuery = costQueryRef.current, append = false) {
+    const normalized = { ...query, limit: defaultPageLimit }
+    costQueryRef.current = normalized
+    const nextPage = await getCostAuditSummary(normalized)
+    setCostAudit((current) => append && current && nextPage
+      ? { ...nextPage, items: mergeByKey(current.items, nextPage.items, (item) => `${item.eventId}:${item.unit}`), pricedCostUsd: current.pricedCostUsd + nextPage.pricedCostUsd }
+      : nextPage)
+  }
+
+  async function applyUsageCostQuery(query: UsageQuery) {
+    usageQueryRef.current = { ...query, limit: defaultPageLimit }
+    costQueryRef.current = { ...query, limit: defaultPageLimit }
+    await Promise.all([
+      canReadUsage ? refreshUsageSummaries(usageQueryRef.current) : Promise.resolve(),
+      canReadCosts ? refreshCostAudit(costQueryRef.current) : Promise.resolve()
+    ])
+  }
+
+  async function onCreateUsageExport(reason: string) {
+    if (!canExportUsage) throw new Error("利用状況を export する権限がありません")
+    const { cursor: _cursor, limit: _limit, ...query } = usageQueryRef.current
+    return createUsageExport(query, reason)
+  }
+
+  async function onCreateCostExport(reason: string) {
+    if (!canExportCosts) throw new Error("コスト監査を export する権限がありません")
+    const { cursor: _cursor, limit: _limit, ...query } = costQueryRef.current
+    return createCostExport(query, reason)
   }
 
   async function refreshAliases(query: AliasListQuery = aliasQueryRef.current, append = false) {
@@ -379,6 +417,11 @@ export function useAdminData({
     refreshAccessRoles,
     refreshUsageSummaries,
     refreshCostAudit,
+    applyUsageCostQuery,
+    loadMoreUsage: () => usageSummaries?.nextCursor ? refreshUsageSummaries({ ...usageQueryRef.current, cursor: usageSummaries.nextCursor }, true) : Promise.resolve(),
+    loadMoreCosts: () => costAudit?.nextCursor ? refreshCostAudit({ ...costQueryRef.current, cursor: costAudit.nextCursor }, true) : Promise.resolve(),
+    onCreateUsageExport,
+    onCreateCostExport,
     refreshAliases,
     refreshAliasAuditLog,
     refreshAdminData,
@@ -394,6 +437,12 @@ export function useAdminData({
     onDisableAlias,
     onPublishAliases
   }
+}
+
+function defaultUsageQuery(): UsageQuery {
+  const periodEnd = new Date()
+  const periodStart = new Date(Date.UTC(periodEnd.getUTCFullYear(), periodEnd.getUTCMonth(), 1))
+  return { periodStart: periodStart.toISOString(), periodEnd: periodEnd.toISOString(), limit: defaultPageLimit }
 }
 
 function upsertManagedUser(current: ManagedUser[], updated: ManagedUser): ManagedUser[] {
