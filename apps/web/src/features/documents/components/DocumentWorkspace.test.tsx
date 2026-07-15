@@ -1157,8 +1157,10 @@ describe("DocumentWorkspace", () => {
     await userEvent.type(screen.getByRole("textbox", { name: "削除理由" }), "obsolete document")
     await userEvent.click(screen.getByRole("button", { name: "削除" }))
 
-    expect(screen.getByRole("dialog", { name: "文書を削除しますか" })).toBeInTheDocument()
-    expect(screen.getByRole("alert")).toHaveTextContent("delete failed")
+    const dialog = screen.getByRole("dialog", { name: "文書を削除しますか" })
+    expect(dialog).toBeInTheDocument()
+    expect(within(dialog).getByRole("alert")).toHaveTextContent("delete failed")
+    expect(screen.getByRole("alert", { name: "文書削除: requirements.md" })).toHaveTextContent("失敗")
     await userEvent.click(screen.getByRole("button", { name: "キャンセル" }))
     await openFolderSettings()
     const recentOperations = screen.getByRole("list", { name: "最近の操作" })

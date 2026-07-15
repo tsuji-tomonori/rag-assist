@@ -1,6 +1,7 @@
 export { Badge } from "./Badge.js"
 export { Button } from "./Button.js"
 export { StatusBadge } from "./StatusBadge.js"
+export { OperationFeedback } from "./OperationFeedback.js"
 export { ConfirmDialog } from "./ConfirmDialog.js"
 export { EmptyState } from "./EmptyState.js"
 export { IconButton } from "./IconButton.js"
@@ -20,3 +21,18 @@ export {
 } from "./resourceStateModel.js"
 export type { UiResourcePartState, UiResourceState, UiStateTarget } from "./ResourceState.js"
 export type { SemanticPresentation, SemanticTone } from "./displayMetadata.js"
+export {
+  confirmedOperation,
+  failedOperation,
+  feedbackFromOutcome,
+  operationStatusPresentation,
+  partialOperation,
+  processingOperationFeedback,
+  upsertOperationFeedback
+} from "./operationOutcome.js"
+export type {
+  OperationEvidence,
+  OperationFeedbackEntry,
+  OperationOutcome,
+  OperationStatus
+} from "./operationOutcome.js"

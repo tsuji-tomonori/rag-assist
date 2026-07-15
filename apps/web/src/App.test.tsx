@@ -626,7 +626,7 @@ describe("App document management", () => {
     await userEvent.type(screen.getByRole("textbox", { name: "削除理由" }), "obsolete document")
     await userEvent.click(screen.getByRole("button", { name: "削除" }))
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("delete failed")
+    expect(await screen.findByRole("alert", { name: "文書削除: requirements.md" })).toHaveTextContent("delete failed")
   })
 
   it("uploads documents from the documents workspace", async () => {
@@ -939,7 +939,8 @@ describe("App chat and upload flow", () => {
     const startDialog = await screen.findByRole("dialog", { name: "性能テストを実行しますか？" })
     await userEvent.click(within(startDialog).getByRole("button", { name: "実行" }))
 
-    expect(await screen.findByText("bench-1")).toBeInTheDocument()
+    expect(await screen.findByRole("status", { name: "性能テスト起動: MLIT PDF figure/table RAG seed" })).toHaveTextContent("bench-1")
+    expect(screen.getAllByText("bench-1").length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText("完了後に集計").length).toBeGreaterThanOrEqual(1)
     expect(screen.getByRole("button", { name: "レポートMarkdownをダウンロード" })).toBeDisabled()
     expect(screen.getByRole("button", { name: "サマリJSONをダウンロード" })).toBeDisabled()

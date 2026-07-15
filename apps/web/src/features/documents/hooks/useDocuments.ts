@@ -2,6 +2,13 @@ import { useState } from "react"
 import { createDocumentGroup, cutoverReindexMigration, deleteDocument, getDocumentShare, getFolderSharePolicy, listDocumentGroups, listDocuments, listReindexMigrations, moveDocument, moveDocumentGroup, replaceFolderSharePolicy, requestDocumentExtractedTextDownload, rollbackReindexMigration, saveDocumentExtractedTextDownload, stageReindexMigration, updateDocumentGroup, updateDocumentShare, uploadDocumentFile } from "../api/documentsApi.js"
 import type { DocumentShareGrantInput, DocumentShareInfo, DocumentUploadProgress, FolderPolicyEntry, MoveDocumentGroupInput, UpdateDocumentGroupInput, VersionedFolderPolicy } from "../api/documentsApi.js"
 import type { DocumentGroup, DocumentManifest, ReindexMigration } from "../types.js"
+import {
+  confirmedOperation,
+  failedOperation,
+  partialOperation,
+  type OperationEvidence,
+  type OperationOutcome
+} from "../../../shared/ui/operationOutcome.js"
 
 export type DocumentOperationState = {
   isUploading: boolean
@@ -27,9 +34,8 @@ export type DocumentUploadState = {
   errorMessage?: string
 } | null
 
-export type DocumentOperationResult =
-  | { ok: true }
-  | { ok: false; error: string }
+export type DocumentOperationOutcome = OperationOutcome<unknown>
+export type DocumentOperationResult = DocumentOperationOutcome | { ok: true } | { ok: false; error: string }
 
 export type DocumentUploadResult =
   | { ok: true; document: DocumentManifest }
@@ -137,27 +143,55 @@ export function useDocuments({
     setReindexMigrations(await listReindexMigrations())
   }
 
-  function operationError(err: unknown, announceGlobally = true): DocumentOperationResult {
-    const error = err instanceof Error ? err.message : String(err)
-    if (announceGlobally) setError(error)
-    return { ok: false, error }
+  function operationError(err: unknown, announceGlobally = true): DocumentOperationOutcome {
+    const outcome = failedOperation(err)
+    if (announceGlobally) setError(outcome.message)
+    return outcome
+  }
+
+  async function refreshAfterConfirmedMutation<T>({
+    value,
+    refresh,
+    successMessage,
+    partialMessage,
+    evidence
+  }: {
+    value: T
+    refresh: () => Promise<void>
+    successMessage: string
+    partialMessage: string
+    evidence?: OperationEvidence
+  }): Promise<DocumentOperationOutcome> {
+    try {
+      await refresh()
+      return confirmedOperation(value, { message: successMessage, evidence })
+    } catch (err) {
+      console.warn("Failed to refresh document state after confirmed mutation", err)
+      setError(partialMessage)
+      return partialOperation(value, partialMessage, evidence)
+    }
   }
 
   async function onDelete(
     documentId?: string,
     input?: { expectedUpdatedAt: string; reason: string }
-  ): Promise<DocumentOperationResult> {
-    if (!documentId) return { ok: false, error: "削除対象の documentId が未指定です" }
-    if (!canDeleteDocuments) return { ok: false, error: "文書を削除する権限がありません" }
-    if (!input?.expectedUpdatedAt || !input.reason.trim()) return { ok: false, error: "文書 version と削除理由が必要です" }
+  ): Promise<DocumentOperationOutcome> {
+    if (!documentId) return failedOperation(new Error("削除対象の documentId が未指定です"))
+    if (!canDeleteDocuments) return failedOperation(new Error("文書を削除する権限がありません"))
+    if (!input?.expectedUpdatedAt || !input.reason.trim()) return failedOperation(new Error("文書 version と削除理由が必要です"))
 
     updateOperationState({ deletingDocumentId: documentId })
     setError(null)
     try {
-      await deleteDocument(documentId, { ...input, reason: input.reason.trim() })
+      const deleted = await deleteDocument(documentId, { ...input, reason: input.reason.trim() })
       setSelectedDocumentId("all")
-      await refreshDocuments()
-      return { ok: true }
+      return await refreshAfterConfirmedMutation({
+        value: deleted,
+        refresh: refreshDocuments,
+        successMessage: "API が文書削除を確定し、一覧を更新しました。",
+        partialMessage: "文書削除は API で確定しましたが、一覧を更新できませんでした。再実行せず更新してください。",
+        evidence: { resultReference: deleted.documentId }
+      })
     } catch (err) {
       return operationError(err, false)
     } finally {
@@ -165,13 +199,13 @@ export function useDocuments({
     }
   }
 
-  async function onDownloadExtractedText(documentId?: string): Promise<DocumentOperationResult> {
-    if (!documentId) return { ok: false, error: "ダウンロード対象の documentId が未指定です" }
+  async function onDownloadExtractedText(documentId?: string): Promise<DocumentOperationOutcome> {
+    if (!documentId) return failedOperation(new Error("ダウンロード対象の documentId が未指定です"))
     updateOperationState({ downloadingDocumentId: documentId })
     setError(null)
     try {
       saveDocumentExtractedTextDownload(await requestDocumentExtractedTextDownload(documentId))
-      return { ok: true }
+      return confirmedOperation(undefined, { evidence: { resultReference: documentId } })
     } catch (err) {
       return operationError(err)
     } finally {
@@ -219,14 +253,19 @@ export function useDocuments({
     }
   }
 
-  async function onUpdateDocumentGroup(groupId: string, input: UpdateDocumentGroupInput): Promise<DocumentOperationResult> {
-    if (!canShareDocumentGroups) return { ok: false, error: "フォルダ設定を更新する権限がありません" }
+  async function onUpdateDocumentGroup(groupId: string, input: UpdateDocumentGroupInput): Promise<DocumentOperationOutcome> {
+    if (!canShareDocumentGroups) return failedOperation(new Error("フォルダ設定を更新する権限がありません"))
     updateOperationState({ sharingGroupId: groupId })
     setError(null)
     try {
-      await updateDocumentGroup(groupId, input)
-      await refreshDocumentGroups()
-      return { ok: true }
+      const updated = await updateDocumentGroup(groupId, input)
+      return await refreshAfterConfirmedMutation({
+        value: updated,
+        refresh: refreshDocumentGroups,
+        successMessage: "フォルダ設定を確定し、一覧を更新しました。",
+        partialMessage: "フォルダ設定は確定しましたが、一覧を更新できませんでした。",
+        evidence: { resultReference: updated.groupId, version: updated.updatedAt }
+      })
     } catch (err) {
       return operationError(err)
     } finally {
@@ -234,18 +273,23 @@ export function useDocuments({
     }
   }
 
-  async function onShareDocumentGroup(groupId: string, input: UpdateDocumentGroupInput): Promise<DocumentOperationResult> {
+  async function onShareDocumentGroup(groupId: string, input: UpdateDocumentGroupInput): Promise<DocumentOperationOutcome> {
     return onUpdateDocumentGroup(groupId, input)
   }
 
-  async function onMoveDocumentGroup(groupId: string, input: MoveDocumentGroupInput): Promise<DocumentOperationResult> {
-    if (!canMoveDocumentGroups) return { ok: false, error: "フォルダを移動する権限がありません" }
+  async function onMoveDocumentGroup(groupId: string, input: MoveDocumentGroupInput): Promise<DocumentOperationOutcome> {
+    if (!canMoveDocumentGroups) return failedOperation(new Error("フォルダを移動する権限がありません"))
     updateOperationState({ movingGroupId: groupId })
     setError(null)
     try {
-      await moveDocumentGroup(groupId, input)
-      await Promise.all([refreshDocumentGroups(), refreshDocuments()])
-      return { ok: true }
+      const moved = await moveDocumentGroup(groupId, input)
+      return await refreshAfterConfirmedMutation({
+        value: moved,
+        refresh: async () => { await Promise.all([refreshDocumentGroups(), refreshDocuments()]) },
+        successMessage: "フォルダ移動を確定し、対象一覧を更新しました。",
+        partialMessage: "フォルダ移動は確定しましたが、対象一覧を更新できませんでした。",
+        evidence: { resultReference: moved.operationId, version: moved.folder.updatedAt }
+      })
     } catch (err) {
       try {
         await refreshDocumentGroups()
@@ -272,14 +316,23 @@ export function useDocuments({
     expectedVersion: string
     entries: FolderPolicyEntry[]
     reason: string
-  }): Promise<DocumentOperationResult> {
-    if (!canShareDocumentGroups) return { ok: false, error: "フォルダ共有を更新する権限がありません" }
+  }): Promise<DocumentOperationOutcome> {
+    if (!canShareDocumentGroups) return failedOperation(new Error("フォルダ共有を更新する権限がありません"))
     updateOperationState({ sharingGroupId: groupId })
     setError(null)
     try {
-      await replaceFolderSharePolicy(groupId, input)
-      await refreshDocumentGroups()
-      return { ok: true }
+      const replaced = await replaceFolderSharePolicy(groupId, input)
+      return await refreshAfterConfirmedMutation({
+        value: replaced,
+        refresh: refreshDocumentGroups,
+        successMessage: "共有方針を確定し、フォルダ一覧を更新しました。",
+        partialMessage: "共有方針は確定しましたが、フォルダ一覧を更新できませんでした。",
+        evidence: {
+          resultReference: replaced.policy.policyId,
+          version: replaced.version,
+          auditReference: replaced.auditIntentId
+        }
+      })
     } catch (err) {
       return operationError(err)
     } finally {
@@ -300,13 +353,18 @@ export function useDocuments({
     grants: DocumentShareGrantInput[]
     expectedVersion: string
     reason: string
-  }): Promise<DocumentOperationResult> {
+  }): Promise<DocumentOperationOutcome> {
     updateOperationState({ sharingDocumentId: documentId })
     setError(null)
     try {
-      await updateDocumentShare(documentId, input)
-      await refreshDocuments()
-      return { ok: true }
+      const shared = await updateDocumentShare(documentId, input)
+      return await refreshAfterConfirmedMutation({
+        value: shared,
+        refresh: refreshDocuments,
+        successMessage: "文書共有方針を確定し、一覧を更新しました。",
+        partialMessage: "文書共有方針は確定しましたが、一覧を更新できませんでした。",
+        evidence: { resultReference: documentId, version: shared.version }
+      })
     } catch (err) {
       return operationError(err)
     } finally {
@@ -319,14 +377,19 @@ export function useDocuments({
     newTitle?: string
     reason: string
     expectedUpdatedAt?: string
-  }): Promise<DocumentOperationResult> {
+  }): Promise<DocumentOperationOutcome> {
     updateOperationState({ movingDocumentId: documentId })
     setError(null)
     try {
-      await moveDocument(documentId, input)
+      const moved = await moveDocument(documentId, input)
       setSelectedDocumentId("all")
-      await refreshDocuments()
-      return { ok: true }
+      return await refreshAfterConfirmedMutation({
+        value: moved,
+        refresh: refreshDocuments,
+        successMessage: "文書移動を確定し、一覧を更新しました。",
+        partialMessage: "文書移動は確定しましたが、一覧を更新できませんでした。",
+        evidence: { resultReference: moved.document.documentId, version: moved.document.updatedAt }
+      })
     } catch (err) {
       return operationError(err)
     } finally {
@@ -334,14 +397,19 @@ export function useDocuments({
     }
   }
 
-  async function onStageReindex(documentId: string): Promise<DocumentOperationResult> {
-    if (!canReindexDocuments) return { ok: false, error: "再インデックスを実行する権限がありません" }
+  async function onStageReindex(documentId: string): Promise<DocumentOperationOutcome> {
+    if (!canReindexDocuments) return failedOperation(new Error("再インデックスを実行する権限がありません"))
     updateOperationState({ stagingReindexDocumentId: documentId })
     setError(null)
     try {
-      await stageReindexMigration(documentId)
-      await Promise.all([refreshDocuments(), refreshReindexMigrations()])
-      return { ok: true }
+      const migration = await stageReindexMigration(documentId)
+      return await refreshAfterConfirmedMutation({
+        value: migration,
+        refresh: async () => { await Promise.all([refreshDocuments(), refreshReindexMigrations()]) },
+        successMessage: "再インデックスのステージングを確定しました。",
+        partialMessage: "ステージングは確定しましたが、対象一覧を更新できませんでした。",
+        evidence: { actor: migration.createdBy, resultReference: migration.migrationId, version: migration.updatedAt }
+      })
     } catch (err) {
       return operationError(err, false)
     } finally {
@@ -349,14 +417,19 @@ export function useDocuments({
     }
   }
 
-  async function onCutoverReindex(migrationId: string): Promise<DocumentOperationResult> {
-    if (!canReindexDocuments) return { ok: false, error: "再インデックスを実行する権限がありません" }
+  async function onCutoverReindex(migrationId: string): Promise<DocumentOperationOutcome> {
+    if (!canReindexDocuments) return failedOperation(new Error("再インデックスを実行する権限がありません"))
     updateOperationState({ cutoverMigrationId: migrationId })
     setError(null)
     try {
-      await cutoverReindexMigration(migrationId)
-      await Promise.all([refreshDocuments(), refreshReindexMigrations()])
-      return { ok: true }
+      const migration = await cutoverReindexMigration(migrationId)
+      return await refreshAfterConfirmedMutation({
+        value: migration,
+        refresh: async () => { await Promise.all([refreshDocuments(), refreshReindexMigrations()]) },
+        successMessage: "再インデックスの切替を確定しました。",
+        partialMessage: "切替は確定しましたが、対象一覧を更新できませんでした。",
+        evidence: { actor: migration.createdBy, resultReference: migration.migrationId, version: migration.updatedAt }
+      })
     } catch (err) {
       return operationError(err, false)
     } finally {
@@ -364,14 +437,19 @@ export function useDocuments({
     }
   }
 
-  async function onRollbackReindex(migrationId: string): Promise<DocumentOperationResult> {
-    if (!canReindexDocuments) return { ok: false, error: "再インデックスを実行する権限がありません" }
+  async function onRollbackReindex(migrationId: string): Promise<DocumentOperationOutcome> {
+    if (!canReindexDocuments) return failedOperation(new Error("再インデックスを実行する権限がありません"))
     updateOperationState({ rollbackMigrationId: migrationId })
     setError(null)
     try {
-      await rollbackReindexMigration(migrationId)
-      await Promise.all([refreshDocuments(), refreshReindexMigrations()])
-      return { ok: true }
+      const migration = await rollbackReindexMigration(migrationId)
+      return await refreshAfterConfirmedMutation({
+        value: migration,
+        refresh: async () => { await Promise.all([refreshDocuments(), refreshReindexMigrations()]) },
+        successMessage: "再インデックスの切戻しを確定しました。",
+        partialMessage: "切戻しは確定しましたが、対象一覧を更新できませんでした。",
+        evidence: { actor: migration.createdBy, resultReference: migration.migrationId, version: migration.updatedAt }
+      })
     } catch (err) {
       return operationError(err, false)
     } finally {

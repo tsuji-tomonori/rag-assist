@@ -21,6 +21,14 @@ import {
   isResourcePartAvailable,
   isResourceStateBusy
 } from "../../../shared/ui/resourceStateModel.js"
+import {
+  OperationFeedback,
+  feedbackFromOutcome,
+  processingOperationFeedback,
+  upsertOperationFeedback,
+  type OperationFeedbackEntry,
+  type OperationOutcome
+} from "../../../shared/ui/index.js"
 
 const benchmarkArtifacts = [
   { kind: "report", label: "レポート", description: "レポートMarkdown" },
@@ -61,9 +69,9 @@ export function BenchmarkWorkspace({
   onSuiteChange: (suiteId: string) => void
   onModelChange: (modelId: string) => void
   onConcurrencyChange: (concurrency: number) => void
-  onStart: () => Promise<void>
+  onStart: () => Promise<OperationOutcome<BenchmarkRun>>
   onRefresh: () => void
-  onCancel: (runId: string) => Promise<void>
+  onCancel: (runId: string) => Promise<OperationOutcome<BenchmarkRun>>
   onBack: () => void
 }) {
   const selectedSuite = suites.find((suite) => suite.suiteId === suiteId)
@@ -79,6 +87,9 @@ export function BenchmarkWorkspace({
     ? hasConfirmedResourceResult(dataState)
     : isResourcePartAvailable(dataState, "suites")
   const [confirmStartOpen, setConfirmStartOpen] = useState(false)
+  const [cancelCandidate, setCancelCandidate] = useState<BenchmarkRun | null>(null)
+  const [operationFeedback, setOperationFeedback] = useState<OperationFeedbackEntry[]>([])
+  const unboundFeedback = operationFeedback.filter((entry) => !entry.targetId || !runs.some((run) => run.runId === entry.targetId))
 
   return (
     <section className="benchmark-workspace" aria-label="性能テスト">
@@ -105,6 +116,12 @@ export function BenchmarkWorkspace({
         <BenchmarkMetricCard title="処理中の実行" value={String(runningCount)} subValue="待機中と実行中の合計" tone={runningCount > 0 ? "info" : "neutral"} />
         <BenchmarkMetricCard title="失敗した実行" value={String(failedCount)} subValue="実行ログで原因を確認" tone={failedCount > 0 ? "danger" : "neutral"} />
       </div> : null}
+
+      {unboundFeedback.length > 0 && (
+        <div className="benchmark-operation-feedback" aria-label="性能テスト操作結果">
+          {unboundFeedback.map((entry) => <OperationFeedback key={entry.id} entry={entry} />)}
+        </div>
+      )}
 
       <div className="benchmark-layout">
         <section className="benchmark-run-panel">
@@ -222,11 +239,14 @@ export function BenchmarkWorkspace({
                               <span>{artifact.label}</span>
                             </button>
                           ))}
-                          <button className="benchmark-cancel-action" type="button" title="ジョブをキャンセル" aria-label={`${run.runId}のジョブをキャンセル`} disabled={!canCancel || loading || !["queued", "running"].includes(run.status)} onClick={() => void onCancel(run.runId)}>
+                          <button className="benchmark-cancel-action" type="button" title="ジョブをキャンセル" aria-label={`${run.runId}のジョブをキャンセル`} disabled={!canCancel || loading || !["queued", "running"].includes(run.status)} onClick={() => setCancelCandidate(run)}>
                             {loading ? <LoadingSpinner className="button-spinner" /> : <Icon name="stop" />}
                           </button>
                         </div>
                         {run.error ? <p className="benchmark-run-error">実行ログで詳細を確認してください。</p> : null}
+                        {operationFeedback.filter((entry) => entry.targetId === run.runId).map((entry) => (
+                          <OperationFeedback key={entry.id} entry={entry} className="benchmark-row-feedback" />
+                        ))}
                       </td>
                     </tr>
                   ))
@@ -252,8 +272,56 @@ export function BenchmarkWorkspace({
           ]}
           onCancel={() => setConfirmStartOpen(false)}
           onConfirm={async () => {
-            await onStart()
-            setConfirmStartOpen(false)
+            const base = {
+              id: `benchmark-start-${selectedSuite?.suiteId ?? "unselected"}`,
+              actionLabel: "性能テスト起動",
+              targetLabel: selectedSuite?.label ?? "未選択のテスト設定",
+              details: [
+                { label: "影響", value: "実行基盤を起動し、コストと待ち時間が発生" },
+                { label: "回復条件", value: "起動後は対象 run の取消操作で停止" }
+              ]
+            }
+            setOperationFeedback((current) => upsertOperationFeedback(current, processingOperationFeedback(base)))
+            const outcome = await onStart()
+            const confirmedBase = outcome.ok && outcome.value
+              ? { ...base, targetId: outcome.value.runId }
+              : base
+            setOperationFeedback((current) => upsertOperationFeedback(current, feedbackFromOutcome(confirmedBase, outcome)))
+            if (outcome.ok) setConfirmStartOpen(false)
+          }}
+        />
+      )}
+      {cancelCandidate && (
+        <ConfirmDialog
+          title="この性能テストを取り消しますか？"
+          description="実行中の処理を停止します。取消結果が確認できない場合は、再実行せず先に一覧を更新してください。"
+          confirmLabel="取り消す"
+          tone="danger"
+          loading={operationFeedback.some((entry) => entry.id === `benchmark-cancel-${cancelCandidate.runId}` && entry.status === "processing")}
+          details={[
+            `対象: ${suites.find((suite) => suite.suiteId === cancelCandidate.suiteId)?.label ?? cancelCandidate.suiteId}`,
+            `実行識別子: ${cancelCandidate.runId}`,
+            "影響: 未完了の測定と成果物生成を停止します",
+            "回復条件: 取消後は再開できず、新しい実行が必要です",
+            "確認が必要な理由: 未完了結果の破棄と追加コストを判断するため"
+          ]}
+          onCancel={() => setCancelCandidate(null)}
+          onConfirm={async () => {
+            const target = cancelCandidate
+            const base = {
+              id: `benchmark-cancel-${target.runId}`,
+              actionLabel: "性能テスト取消",
+              targetLabel: suites.find((suite) => suite.suiteId === target.suiteId)?.label ?? target.runId,
+              targetId: target.runId,
+              details: [
+                { label: "影響", value: "未完了の測定と成果物生成を停止" },
+                { label: "回復条件", value: "取消後は新しい実行が必要" }
+              ]
+            }
+            setOperationFeedback((current) => upsertOperationFeedback(current, processingOperationFeedback(base)))
+            const outcome = await onCancel(target.runId)
+            setOperationFeedback((current) => upsertOperationFeedback(current, feedbackFromOutcome(base, outcome)))
+            if (outcome.ok) setCancelCandidate(null)
           }}
         />
       )}

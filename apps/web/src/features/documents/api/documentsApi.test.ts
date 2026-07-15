@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 import { resetRuntimeConfigForTests } from "../../../shared/api/runtimeConfig.js"
 import {
   createDocumentGroup,
+  deleteDocument,
   getDocumentShare,
   getFolderSharePolicy,
   listDocumentGroups,
@@ -142,6 +143,28 @@ describe("documents API authorized collection and extracted-text download", () =
         grants: [{ principalType: "user", principalId: "user-b", permissionLevel: "readOnly" }],
         expectedVersion: "share-version-7",
         reason: "review access"
+      })
+    })
+  })
+
+  it("文書削除の API 確定結果を破棄せず対象と削除件数を返す", async () => {
+    const deleted = { documentId: "doc/versioned", deletedVectorCount: 12 }
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(jsonResponse({ apiBaseUrl: "http://api.example.test" }))
+      .mockResolvedValueOnce(jsonResponse(deleted))
+    vi.stubGlobal("fetch", fetchMock)
+
+    await expect(deleteDocument("doc/versioned", {
+      expectedUpdatedAt: "2026-07-11T00:00:00.000Z",
+      reason: "重複資料を整理"
+    })).resolves.toEqual(deleted)
+
+    expect(fetchMock).toHaveBeenNthCalledWith(2, "http://api.example.test/documents/doc%2Fversioned", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        expectedUpdatedAt: "2026-07-11T00:00:00.000Z",
+        reason: "重複資料を整理"
       })
     })
   })

@@ -12,6 +12,13 @@ import {
   hasConfirmedResourceResult,
   isResourcePartAvailable
 } from "../../../shared/ui/resourceStateModel.js"
+import {
+  OperationFeedback,
+  feedbackFromOutcome,
+  processingOperationFeedback,
+  type OperationFeedbackEntry,
+  type OperationOutcome
+} from "../../../shared/ui/index.js"
 
 export function HistoryWorkspace({
   dataState,
@@ -27,7 +34,7 @@ export function HistoryWorkspace({
   history: ConversationHistoryItem[]
   favoriteOnly?: boolean
   onSelect: (item: ConversationHistoryItem) => void
-  onDelete: (id: string) => void
+  onDelete: (id: string) => Promise<OperationOutcome>
   onToggleFavorite: (item: ConversationHistoryItem) => void
   onRetry: () => void
   onBack: () => void
@@ -36,6 +43,7 @@ export function HistoryWorkspace({
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest" | "messages">("newest")
   const [favoritesOnly, setFavoritesOnly] = useState(favoriteOnly)
   const [deleteCandidate, setDeleteCandidate] = useState<ConversationHistoryItem | null>(null)
+  const [deleteFeedback, setDeleteFeedback] = useState<OperationFeedbackEntry | null>(null)
   const favoriteCount = history.filter((item) => item.isFavorite).length
   const hasHistoryResult = dataState.parts.length === 0
     ? hasConfirmedResourceResult(dataState)
@@ -73,6 +81,7 @@ export function HistoryWorkspace({
           <span>{hasHistoryResult ? `${history.length} 件の会話 / ${favoriteCount} 件のお気に入り` : "会話履歴を確認中"}</span>
         </div>
       </header>
+      {deleteFeedback && <OperationFeedback entry={deleteFeedback} className="history-operation-feedback" />}
       <ResourceStateBoundary
         state={dataState}
         isEmpty={history.length === 0}
@@ -131,7 +140,12 @@ export function HistoryWorkspace({
                     <span>{formatDateTime(item.updatedAt)}</span>
                     <HistorySearchSummary result={result} />
                   </button>
-                  <button className="history-delete-button" type="button" onClick={() => setDeleteCandidate(item)}>
+                  <button
+                    className="history-delete-button"
+                    type="button"
+                    disabled={deleteFeedback?.status === "processing"}
+                    onClick={() => setDeleteCandidate(item)}
+                  >
                     削除
                   </button>
                 </div>
@@ -147,14 +161,31 @@ export function HistoryWorkspace({
           description="削除した会話履歴はこの画面から復元できません。必要な内容が残っていないか確認してください。"
           confirmLabel="削除"
           details={[
-            `対象:${deleteCandidate.title}`,
-            `更新日時:${formatDateTime(deleteCandidate.updatedAt)}`,
-            `メッセージ数:${deleteCandidate.messages.length}`
+            `対象: ${deleteCandidate.title}`,
+            `影響: この会話履歴と画面から参照するメッセージを削除します`,
+            `回復条件: この画面からは復元できません`,
+            `確認が必要な理由: 必要な会話内容を失わないため`,
+            `更新日時: ${formatDateTime(deleteCandidate.updatedAt)}`,
+            `メッセージ数: ${deleteCandidate.messages.length}`
           ]}
+          loading={deleteFeedback?.status === "processing" && deleteFeedback.targetId === deleteCandidate.id}
           onCancel={() => setDeleteCandidate(null)}
-          onConfirm={() => {
-            onDelete(deleteCandidate.id)
-            setDeleteCandidate(null)
+          onConfirm={async () => {
+            const target = deleteCandidate
+            const feedbackBase = {
+              id: `history-delete-${target.id}`,
+              actionLabel: "会話履歴削除",
+              targetLabel: target.title,
+              targetId: target.id,
+              details: [
+                { label: "影響", value: `${target.messages.length} メッセージの会話履歴を削除` },
+                { label: "回復条件", value: "この画面からは復元不可" }
+              ]
+            }
+            setDeleteFeedback(processingOperationFeedback(feedbackBase))
+            const outcome = await onDelete(target.id)
+            setDeleteFeedback(feedbackFromOutcome(feedbackBase, outcome))
+            if (outcome.ok) setDeleteCandidate(null)
           }}
         />
       )}

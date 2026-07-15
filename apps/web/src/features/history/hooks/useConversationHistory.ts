@@ -5,11 +5,13 @@ import type { Message } from "../../chat/types.js"
 import type { FavoriteItem } from "../../favorites/types.js"
 import { deleteFavorite, saveFavorite } from "../../favorites/api/favoritesApi.js"
 import type { HumanQuestion } from "../../questions/types.js"
+import { confirmedOperation, failedOperation, type OperationOutcome } from "../../../shared/ui/operationOutcome.js"
 
 export function useConversationHistory({ setError }: { setError: (error: string | null) => void }) {
   const [history, setHistory] = useState<ConversationHistoryItem[]>([])
   const [currentConversationId, setCurrentConversationId] = useState(() => createConversationId())
   const historyRef = useRef<ConversationHistoryItem[]>([])
+  const deletingHistoryIdsRef = useRef(new Set<string>())
 
   useEffect(() => {
     historyRef.current = history
@@ -50,12 +52,27 @@ export function useConversationHistory({ setError }: { setError: (error: string 
     }
   }, [setError])
 
-  const deleteHistoryItem = useCallback((id: string) => {
-    setHistory((prev) => prev.filter((entry) => entry.id !== id))
-    deleteConversationHistory(id).catch((err) => {
+  const deleteHistoryItem = useCallback(async (id: string): Promise<OperationOutcome> => {
+    if (deletingHistoryIdsRef.current.has(id)) {
+      return failedOperation(new Error("この会話履歴は削除処理中です"))
+    }
+    deletingHistoryIdsRef.current.add(id)
+    setError(null)
+    try {
+      await deleteConversationHistory(id)
+      setHistory((prev) => prev.filter((entry) => entry.id !== id))
+      return confirmedOperation(undefined, {
+        message: "API が会話履歴の削除を確定しました。",
+        evidence: { resultReference: id }
+      })
+    } catch (err) {
       console.warn("Failed to delete conversation history", err)
-      setError(err instanceof Error ? err.message : String(err))
-    })
+      const outcome = failedOperation(err)
+      setError(outcome.message)
+      return outcome
+    } finally {
+      deletingHistoryIdsRef.current.delete(id)
+    }
   }, [setError])
 
   const updateHistoryQuestionTickets = useCallback((updatedQuestions: HumanQuestion[]) => {

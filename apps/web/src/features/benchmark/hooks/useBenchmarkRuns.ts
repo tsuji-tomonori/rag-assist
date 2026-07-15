@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react"
+import { useCallback, useRef, useState } from "react"
 import {
   cancelBenchmarkRun,
   listBenchmarkRuns,
@@ -6,6 +6,7 @@ import {
   startBenchmarkRun
 } from "../api/benchmarkApi.js"
 import type { BenchmarkRun, BenchmarkSuite } from "../types.js"
+import { confirmedOperation, failedOperation, type OperationOutcome } from "../../../shared/ui/operationOutcome.js"
 
 const defaultModelId = "amazon.nova-lite-v1:0"
 
@@ -25,6 +26,8 @@ export function useBenchmarkRuns({
   const [benchmarkSuiteId, setBenchmarkSuiteId] = useState("")
   const [benchmarkModelId, setBenchmarkModelId] = useState(defaultModelId)
   const [benchmarkConcurrency, setBenchmarkConcurrency] = useState(1)
+  const startingRef = useRef(false)
+  const cancellingRunIdsRef = useRef(new Set<string>())
 
   const refreshBenchmarkRuns = useCallback(async () => {
     setBenchmarkRuns(await listBenchmarkRuns())
@@ -36,14 +39,17 @@ export function useBenchmarkRuns({
     setBenchmarkSuiteId((current) => suites.find((suite) => suite.suiteId === current)?.suiteId ?? suites[0]?.suiteId ?? "")
   }, [])
 
-  async function onStartBenchmark() {
+  async function onStartBenchmark(): Promise<OperationOutcome<BenchmarkRun>> {
+    if (startingRef.current) return failedOperation(new Error("性能テストは起動処理中です"))
     setLoading(true)
     setError(null)
+    startingRef.current = true
     try {
       const selectedSuite = benchmarkSuites.find((suite) => suite.suiteId === benchmarkSuiteId)
       if (!selectedSuite) {
-        setError("実行可能な benchmark suite を取得できていません。更新後に再実行してください。")
-        return
+        const outcome = failedOperation(new Error("実行可能な benchmark suite を取得できていません。更新後に再実行してください。"))
+        setError(outcome.message)
+        return outcome
       }
       const created = await startBenchmarkRun({
         suiteId: benchmarkSuiteId,
@@ -57,22 +63,46 @@ export function useBenchmarkRuns({
         concurrency: benchmarkConcurrency
       })
       setBenchmarkRuns((prev) => [created, ...prev.filter((run) => run.runId !== created.runId)])
+      return confirmedOperation(created, {
+        message: "API が性能テストの起動を受け付けました。実行状態は対象行で更新してください。",
+        evidence: {
+          actor: created.createdBy,
+          resultReference: created.runId,
+          version: created.updatedAt
+        }
+      })
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      const outcome = failedOperation(err)
+      setError(outcome.message)
+      return outcome
     } finally {
+      startingRef.current = false
       setLoading(false)
     }
   }
 
-  async function onCancelBenchmark(runId: string) {
+  async function onCancelBenchmark(runId: string): Promise<OperationOutcome<BenchmarkRun>> {
+    if (cancellingRunIdsRef.current.has(runId)) return failedOperation(new Error("この性能テストは取消処理中です"))
+    cancellingRunIdsRef.current.add(runId)
     setLoading(true)
     setError(null)
     try {
       const cancelled = await cancelBenchmarkRun(runId)
       setBenchmarkRuns((prev) => [cancelled, ...prev.filter((run) => run.runId !== runId)])
+      return confirmedOperation(cancelled, {
+        message: "API が性能テストの取消結果を確定しました。",
+        evidence: {
+          actor: cancelled.createdBy,
+          resultReference: cancelled.runId,
+          version: cancelled.updatedAt
+        }
+      })
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      const outcome = failedOperation(err)
+      setError(outcome.message)
+      return outcome
     } finally {
+      cancellingRunIdsRef.current.delete(runId)
       setLoading(false)
     }
   }

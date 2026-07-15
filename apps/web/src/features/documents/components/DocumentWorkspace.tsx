@@ -12,8 +12,18 @@ import {
   isResourceStateBusy
 } from "../../../shared/ui/resourceStateModel.js"
 import { documentPermissionLabel, principalTypeLabel } from "../../../shared/ui/displayMetadata.js"
+import {
+  OperationFeedback,
+  confirmedOperation,
+  failedOperation,
+  feedbackFromOutcome,
+  processingOperationFeedback,
+  upsertOperationFeedback,
+  type OperationFeedbackEntry,
+  type OperationStatus
+} from "../../../shared/ui/index.js"
 import type { DocumentShareGrantInput, DocumentShareInfo, FolderPolicyEntry, MoveDocumentGroupInput, UpdateDocumentGroupInput, VersionedFolderPolicy } from "../api/documentsApi.js"
-import type { CreateDocumentGroupInput, DocumentOperationResult, DocumentOperationState, DocumentUploadResult, DocumentUploadState } from "../hooks/useDocuments.js"
+import type { CreateDocumentGroupInput, DocumentOperationOutcome, DocumentOperationResult, DocumentOperationState, DocumentUploadResult, DocumentUploadState } from "../hooks/useDocuments.js"
 import type { DocumentGroup, DocumentManifest, ReindexMigration } from "../types.js"
 import { DocumentConfirmDialog } from "./workspace/DocumentConfirmDialog.js"
 import { DocumentAddDialog, type DocumentUploadDestination } from "./workspace/DocumentAddDialog.js"
@@ -180,6 +190,7 @@ export function DocumentWorkspace({
   const [copiedDocumentId, setCopiedDocumentId] = useState<string | null>(null)
   const [lastUploadedDocument, setLastUploadedDocument] = useState<DocumentManifest | null>(null)
   const [sessionOperationEvents, setSessionOperationEvents] = useState<DocumentOperationEvent[]>([])
+  const [operationFeedback, setOperationFeedback] = useState<OperationFeedbackEntry[]>([])
   const [documentShareTarget, setDocumentShareTarget] = useState<DocumentManifest | null>(null)
   const [documentMoveTarget, setDocumentMoveTarget] = useState<DocumentManifest | null>(null)
   const [documentShareInfo, setDocumentShareInfo] = useState<DocumentShareInfo | null>(null)
@@ -594,17 +605,31 @@ export function DocumentWorkspace({
     if (!canSubmitShare || !folderSharePolicy || !onReplaceFolderShare) return
     const target = shareTargetGroup?.name ?? shareTargetGroupId
     const detail = `resource groups: ${shareDraft.groups.join(", ") || "なし"}`
+    const feedbackBase = {
+      id: `folder-share-${shareTargetGroupId}`,
+      actionLabel: "フォルダ共有更新",
+      targetLabel: target,
+      targetId: shareTargetGroupId,
+      reason: folderShareReason.trim(),
+      details: [
+        { label: "影響", value: "フォルダ配下の継承共有を変更" },
+        { label: "回復条件", value: "新しい policy version を確認して再更新" }
+      ],
+      showUnavailableEvidence: true
+    }
+    setOperationFeedback((current) => upsertOperationFeedback(current, processingOperationFeedback(feedbackBase)))
     const result = normalizeOperationResult(await onReplaceFolderShare(shareTargetGroupId, {
       expectedVersion: folderSharePolicy.version,
       entries: nextFolderShareEntries,
       reason: folderShareReason.trim()
     }))
+    setOperationFeedback((current) => upsertOperationFeedback(current, feedbackFromOutcome(feedbackBase, result)))
     if (result.ok) {
-      recordSessionOperation("共有更新", target, detail, "反映済み")
+      recordSessionOperation("共有更新", target, detail, documentOperationResultLabel(result.status))
       setShareClearConfirmed(false)
       setFolderSettingsOpen(false)
     } else {
-      recordSessionOperation("共有更新", target, `${detail} / error: ${result.error}`, "失敗")
+      recordSessionOperation("共有更新", target, `${detail} / error: ${result.error}`, documentOperationResultLabel(result.status))
     }
   }
 
@@ -682,16 +707,22 @@ export function DocumentWorkspace({
     setConfirmError(null)
     let actionLabel: string
     let target: string
+    let targetId: string
     let detail: string
-    let result: DocumentOperationResult
+    let reason: string | undefined
+    let result: DocumentOperationOutcome
     if (action.kind === "delete") {
       actionLabel = "文書削除"
       target = action.document.fileName
+      targetId = action.document.documentId
       detail = `documentId: ${action.document.documentId}`
       if (!deleteReason.trim()) {
         setConfirmError("削除理由を入力してください")
         return
       }
+      reason = deleteReason.trim()
+      const feedbackBase = documentActionFeedbackBase(actionLabel, target, targetId, reason, "元資料・manifest・検索ベクトルを削除", "再利用には再アップロードが必要")
+      setOperationFeedback((current) => upsertOperationFeedback(current, processingOperationFeedback(feedbackBase)))
       result = normalizeOperationResult(await onDelete(action.document.documentId, {
         expectedUpdatedAt: action.document.updatedAt ?? action.document.createdAt,
         reason: deleteReason.trim()
@@ -699,28 +730,46 @@ export function DocumentWorkspace({
     } else if (action.kind === "stage") {
       actionLabel = "reindex stage"
       target = action.document.fileName
+      targetId = action.document.documentId
       detail = `documentId: ${action.document.documentId}`
+      const feedbackBase = documentActionFeedbackBase(actionLabel, target, targetId, undefined, "staged document を作成", "切替前は現行 document を継続利用")
+      setOperationFeedback((current) => upsertOperationFeedback(current, processingOperationFeedback(feedbackBase)))
       result = normalizeOperationResult(await onStageReindex(action.document.documentId))
     } else if (action.kind === "cutover") {
       actionLabel = "reindex cutover"
       target = action.migration.migrationId
+      targetId = action.migration.migrationId
       detail = `${action.migration.sourceDocumentId} → ${action.migration.stagedDocumentId}`
+      const feedbackBase = documentActionFeedbackBase(actionLabel, target, targetId, undefined, "検索対象を staged document へ切替", "切替済み状態なら rollback 可能")
+      setOperationFeedback((current) => upsertOperationFeedback(current, processingOperationFeedback(feedbackBase)))
       result = normalizeOperationResult(await onCutoverReindex(action.migration.migrationId))
     } else {
       actionLabel = "reindex rollback"
       target = action.migration.migrationId
+      targetId = action.migration.migrationId
       detail = `${action.migration.sourceDocumentId} → ${action.migration.stagedDocumentId}`
+      const feedbackBase = documentActionFeedbackBase(actionLabel, target, targetId, undefined, "検索対象を切替前へ戻す", "再切替は状態確認後に実行")
+      setOperationFeedback((current) => upsertOperationFeedback(current, processingOperationFeedback(feedbackBase)))
       result = normalizeOperationResult(await onRollbackReindex(action.migration.migrationId))
     }
 
+    const feedbackBase = action.kind === "delete"
+      ? documentActionFeedbackBase(actionLabel, target, targetId, reason, "元資料・manifest・検索ベクトルを削除", "再利用には再アップロードが必要")
+      : action.kind === "stage"
+        ? documentActionFeedbackBase(actionLabel, target, targetId, undefined, "staged document を作成", "切替前は現行 document を継続利用")
+        : action.kind === "cutover"
+          ? documentActionFeedbackBase(actionLabel, target, targetId, undefined, "検索対象を staged document へ切替", "切替済み状態なら rollback 可能")
+          : documentActionFeedbackBase(actionLabel, target, targetId, undefined, "検索対象を切替前へ戻す", "再切替は状態確認後に実行")
+    setOperationFeedback((current) => upsertOperationFeedback(current, feedbackFromOutcome(feedbackBase, result)))
+
     if (result.ok) {
-      recordSessionOperation(actionLabel, target, detail, "反映済み")
+      recordSessionOperation(actionLabel, target, detail, documentOperationResultLabel(result.status))
       setDeleteReason("")
       setConfirmAction(null)
       return
     }
-    setConfirmError(result.error)
-    recordSessionOperation(actionLabel, target, `${detail} / error: ${result.error}`, "失敗")
+    setConfirmError(result.message)
+    recordSessionOperation(actionLabel, target, `${detail} / error: ${result.error}`, documentOperationResultLabel(result.status))
   }
 
   function selectFolder(folderId: string, groupId: string) {
@@ -792,16 +841,30 @@ export function DocumentWorkspace({
           { principalType: documentSharePrincipalType, principalId: documentSharePrincipalId.trim(), permissionLevel: documentSharePermissionLevel }
         ]
       : documentShareDraftGrants
+    const feedbackBase = {
+      id: `document-share-${documentShareTarget.documentId}`,
+      actionLabel: "文書共有更新",
+      targetLabel: documentShareTarget.fileName,
+      targetId: documentShareTarget.documentId,
+      reason: documentShareReason.trim(),
+      details: [
+        { label: "影響", value: `${next.length} 件の直接 grant を完全置換` },
+        { label: "回復条件", value: "最新 policy version を再取得して再更新" }
+      ],
+      showUnavailableEvidence: true
+    }
+    setOperationFeedback((current) => upsertOperationFeedback(current, processingOperationFeedback(feedbackBase)))
     const result = normalizeOperationResult(await onShareDocument(documentShareTarget.documentId, {
       grants: next,
       expectedVersion: documentShareInfo.version,
       reason: documentShareReason
     }))
+    setOperationFeedback((current) => upsertOperationFeedback(current, feedbackFromOutcome(feedbackBase, result)))
     if (result.ok) {
-      recordSessionOperation("ファイル共有", documentShareTarget.fileName, `direct grants: ${next.length}`, "反映済み")
+      recordSessionOperation("ファイル共有", documentShareTarget.fileName, `direct grants: ${next.length}`, documentOperationResultLabel(result.status))
       closeDocumentShareModal()
     } else {
-      recordSessionOperation("ファイル共有", documentShareTarget.fileName, `error: ${result.error}`, "失敗")
+      recordSessionOperation("ファイル共有", documentShareTarget.fileName, `error: ${result.error}`, documentOperationResultLabel(result.status))
     }
   }
 
@@ -847,6 +910,12 @@ export function DocumentWorkspace({
         </div>
         {loading && !isResourceStateBusy(resolvedDataState) && <LoadingStatus label="ドキュメント一覧を更新中" />}
       </header>
+
+      {operationFeedback.length > 0 && (
+        <div className="document-operation-feedback" aria-label="文書操作結果">
+          {operationFeedback.slice(0, 3).map((entry) => <OperationFeedback key={entry.id} entry={entry} />)}
+        </div>
+      )}
 
       <ResourceStateBoundary state={resolvedDataState} onRetry={onRetryLoad} onBack={onBack}>
       {hasCatalogResult ? (
@@ -1206,8 +1275,10 @@ export function DocumentWorkspace({
   )
 }
 
-function normalizeOperationResult(result: DocumentOperationResult | void): DocumentOperationResult {
-  return result ?? { ok: true }
+function normalizeOperationResult(result: DocumentOperationResult | void) {
+  if (!result) return confirmedOperation()
+  if ("status" in result) return result
+  return result.ok ? confirmedOperation() : failedOperation(new Error(result.error))
 }
 
 function normalizeUploadResult(result: DocumentUploadResult | DocumentOperationResult | void): { ok: true; document?: DocumentManifest } | { ok: false; error: string } {
@@ -1238,6 +1309,35 @@ function isConfirmActionRunning(action: ConfirmAction | null, operationState: Do
   if (action.kind === "stage") return operationState.stagingReindexDocumentId === action.document.documentId
   if (action.kind === "cutover") return operationState.cutoverMigrationId === action.migration.migrationId
   return operationState.rollbackMigrationId === action.migration.migrationId
+}
+
+function documentActionFeedbackBase(
+  actionLabel: string,
+  targetLabel: string,
+  targetId: string,
+  reason: string | undefined,
+  impact: string,
+  recovery: string
+) {
+  return {
+    id: `document-action-${actionLabel}-${targetId}`,
+    actionLabel,
+    targetLabel,
+    targetId,
+    ...(reason ? { reason } : {}),
+    details: [
+      { label: "影響", value: impact },
+      { label: "回復条件", value: recovery }
+    ],
+    showUnavailableEvidence: true
+  }
+}
+
+function documentOperationResultLabel(status: Exclude<OperationStatus, "processing">): DocumentOperationEvent["result"] {
+  if (status === "success") return "反映済み"
+  if (status === "partial") return "一部確認済み"
+  if (status === "unknown") return "結果未確認"
+  return "失敗"
 }
 
 function canManageDocumentGroup(group: DocumentGroup): boolean {

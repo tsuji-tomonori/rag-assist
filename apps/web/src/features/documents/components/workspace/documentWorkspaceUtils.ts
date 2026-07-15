@@ -24,7 +24,7 @@ export type DocumentOperationEvent = {
   target: string
   occurredAt?: string
   actor?: string
-  result: "反映済み" | "要求済み" | "進行中" | "失敗"
+  result: "反映済み" | "要求済み" | "進行中" | "失敗" | "一部確認済み" | "結果未確認"
   detail?: string
 }
 
@@ -289,6 +289,7 @@ export function buildOperationEvents({
 
 export function operationResultClassName(result: DocumentOperationEvent["result"]): string {
   if (result === "失敗") return "failed"
+  if (result === "結果未確認" || result === "一部確認済み") return "requested"
   if (result === "進行中") return "active"
   if (result === "要求済み") return "requested"
   return "done"

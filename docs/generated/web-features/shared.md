@@ -27,6 +27,7 @@
 | ConfirmDialog | ConfirmDialog は 共通 領域の UI 構成要素 です。単独画面ではなく、他の UI から利用されます。 | UI 構成要素 | apps/web/src/shared/ui/ConfirmDialog.tsx | ConfirmDialog | Button, dd, div, dl, dt, h3, p |
 | EmptyState | EmptyState は 共通 領域の UI 構成要素 です。単独画面ではなく、他の UI から利用されます。 | UI 構成要素 | apps/web/src/shared/ui/EmptyState.tsx | EmptyState | div, span, strong |
 | IconButton | IconButton は 共通 領域の UI 構成要素 です。単独画面ではなく、他の UI から利用されます。 | UI 構成要素 | apps/web/src/shared/ui/IconButton.tsx | IconButton | button |
+| OperationFeedback | OperationFeedback は 共通 領域の UI 構成要素 です。単独画面ではなく、他の UI から利用されます。 | UI 構成要素 | apps/web/src/shared/ui/OperationFeedback.tsx | OperationFeedback | FeedbackRow, StatusBadge, dd, div, dl, dt, header, p, section, span, strong |
 | Panel | Panel は 共通 領域の UI 構成要素 です。単独画面ではなく、他の UI から利用されます。 | UI 構成要素 | apps/web/src/shared/ui/Panel.tsx | Panel | Element |
 | ResourceStateBoundary | ResourceStateBoundary は 共通 領域の UI 構成要素 です。単独画面ではなく、他の UI から利用されます。 | UI 構成要素 | apps/web/src/shared/ui/ResourceState.tsx | ResourceStateBoundary, ResourceStatePanel | PartResultSummary, ResourceStatePanel, button, dd, div, dl, dt, p, span, strong, time |
 | StatusBadge | StatusBadge は 共通 領域の UI 構成要素 です。単独画面ではなく、他の UI から利用されます。 | UI 構成要素 | apps/web/src/shared/ui/StatusBadge.tsx | StatusBadge | Badge, span |

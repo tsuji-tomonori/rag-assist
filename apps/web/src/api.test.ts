@@ -104,7 +104,7 @@ describe("API client", () => {
         ok: true,
         json: vi.fn().mockResolvedValue({ documentId: "doc-2", fileName: "b.txt", chunkCount: 1, memoryCardCount: 1, createdAt: "now" })
       })
-      .mockResolvedValueOnce({ ok: true, text: vi.fn().mockResolvedValue("") })
+      .mockResolvedValueOnce({ ok: true, json: vi.fn().mockResolvedValue({ documentId: "doc-2", deletedVectorCount: 1 }) })
 
     vi.stubGlobal("fetch", fetchMock)
 
@@ -113,7 +113,7 @@ describe("API client", () => {
     await expect(deleteDocument("doc-2", {
       expectedUpdatedAt: "now",
       reason: "test cleanup"
-    })).resolves.toBeUndefined()
+    })).resolves.toEqual({ documentId: "doc-2", deletedVectorCount: 1 })
 
     expect(fetchMock).toHaveBeenNthCalledWith(2, "http://api.example.test/documents", { headers: {} })
     expect(fetchMock).toHaveBeenNthCalledWith(

@@ -238,6 +238,11 @@ export type DocumentExtractedTextDownload = {
   fileName: string
 }
 
+export type DeleteDocumentResponse = {
+  documentId: string
+  deletedVectorCount: number
+}
+
 export async function listDocumentsPage(options: { cursor?: string; limit?: number } = {}): Promise<AuthorizedCollectionPage<DocumentManifest, "documents">> {
   return get<AuthorizedCollectionPage<DocumentManifest, "documents">>(collectionRequestPath("/documents", options))
 }
@@ -337,8 +342,8 @@ export async function moveDocument(documentId: string, input: {
   return post<{ document: DocumentManifest }>(`/documents/${encodeURIComponent(documentId)}/move`, input)
 }
 
-export async function deleteDocument(documentId: string, input: { expectedUpdatedAt: string; reason: string }): Promise<void> {
-  return delJson(`/documents/${encodeURIComponent(documentId)}`, input)
+export async function deleteDocument(documentId: string, input: { expectedUpdatedAt: string; reason: string }): Promise<DeleteDocumentResponse> {
+  return delJson<DeleteDocumentResponse>(`/documents/${encodeURIComponent(documentId)}`, input, true)
 }
 
 export async function reindexDocument(documentId: string): Promise<DocumentManifest> {

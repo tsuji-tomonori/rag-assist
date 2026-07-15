@@ -106,7 +106,7 @@ describe("useDocuments", () => {
       version: "folder-version-2",
       auditIntentId: "audit-1"
     })
-    vi.mocked(deleteDocument).mockResolvedValue(undefined)
+    vi.mocked(deleteDocument).mockResolvedValue({ documentId: "doc-1", deletedVectorCount: 1 })
     vi.mocked(requestDocumentExtractedTextDownload).mockResolvedValue({ blob: new Blob(["extracted"]), fileName: "a.txt" })
     vi.mocked(stageReindexMigration).mockResolvedValue({
       migrationId: "migration-1",
@@ -178,9 +178,9 @@ describe("useDocuments", () => {
     expect(stageReindexMigration).toHaveBeenCalledWith("doc-1")
     expect(cutoverReindexMigration).toHaveBeenCalledWith("migration-1")
     expect(rollbackReindexMigration).toHaveBeenCalledWith("migration-1")
-    expect(stageResult).toEqual({ ok: true })
-    expect(cutoverResult).toEqual({ ok: true })
-    expect(rollbackResult).toEqual({ ok: true })
+    expect(stageResult).toMatchObject({ ok: true, status: "success", evidence: { resultReference: "migration-1" } })
+    expect(cutoverResult).toMatchObject({ ok: true, status: "success" })
+    expect(rollbackResult).toMatchObject({ ok: true, status: "success" })
     expect(listDocuments).toHaveBeenCalledTimes(3)
     expect(listReindexMigrations).toHaveBeenCalledTimes(3)
     expect(props.setError).toHaveBeenCalledWith(null)
@@ -196,9 +196,9 @@ describe("useDocuments", () => {
     expect(stageReindexMigration).not.toHaveBeenCalled()
     expect(cutoverReindexMigration).not.toHaveBeenCalled()
     expect(rollbackReindexMigration).not.toHaveBeenCalled()
-    expect(stageResult).toEqual({ ok: false, error: "再インデックスを実行する権限がありません" })
-    expect(cutoverResult).toEqual({ ok: false, error: "再インデックスを実行する権限がありません" })
-    expect(rollbackResult).toEqual({ ok: false, error: "再インデックスを実行する権限がありません" })
+    expect(stageResult).toMatchObject({ ok: false, status: "failure", error: "再インデックスを実行する権限がありません" })
+    expect(cutoverResult).toMatchObject({ ok: false, status: "failure", error: "再インデックスを実行する権限がありません" })
+    expect(rollbackResult).toMatchObject({ ok: false, status: "failure", error: "再インデックスを実行する権限がありません" })
   })
 
   it("削除権限がない場合は削除 API を呼ばない", async () => {
@@ -207,7 +207,36 @@ describe("useDocuments", () => {
     const deleteResult = await act(() => result.current.onDelete("doc-1", deleteInput))
 
     expect(deleteDocument).not.toHaveBeenCalled()
-    expect(deleteResult).toEqual({ ok: false, error: "文書を削除する権限がありません" })
+    expect(deleteResult).toMatchObject({ ok: false, status: "failure", error: "文書を削除する権限がありません" })
+  })
+
+  it("削除確定後の一覧更新失敗を mutation 失敗にせず partial として返す", async () => {
+    const props = createProps()
+    vi.mocked(listDocuments).mockRejectedValueOnce(new Error("refresh failed"))
+    const { result } = renderHook(() => useDocuments(props))
+
+    const outcome = await act(() => result.current.onDelete("doc-1", deleteInput))
+
+    expect(outcome).toMatchObject({
+      ok: true,
+      status: "partial",
+      evidence: { resultReference: "doc-1" }
+    })
+    expect(outcome.message).toContain("再実行せず更新してください")
+    expect(outcome.message).not.toContain("refresh failed")
+    expect(props.setError).toHaveBeenCalledWith("文書削除は API で確定しましたが、一覧を更新できませんでした。再実行せず更新してください。")
+  })
+
+  it("削除の通信断を確定失敗にせず unknown として返す", async () => {
+    const props = createProps()
+    vi.mocked(deleteDocument).mockRejectedValueOnce(new TypeError("Failed to fetch"))
+    const { result } = renderHook(() => useDocuments(props))
+
+    const outcome = await act(() => result.current.onDelete("doc-1", deleteInput))
+
+    expect(outcome).toMatchObject({ ok: false, status: "unknown" })
+    expect(listDocuments).not.toHaveBeenCalled()
+    expect(props.setError).not.toHaveBeenCalledWith(expect.stringContaining("Failed to fetch"))
   })
 
   it("閲覧可能文書の抽出テキストを実 API から取得して保存する", async () => {
@@ -218,7 +247,7 @@ describe("useDocuments", () => {
 
     expect(requestDocumentExtractedTextDownload).toHaveBeenCalledWith("doc-1")
     expect(saveDocumentExtractedTextDownload).toHaveBeenCalledWith(expect.objectContaining({ fileName: "a.txt" }))
-    expect(downloadResult).toEqual({ ok: true })
+    expect(downloadResult).toMatchObject({ ok: true, status: "success" })
     expect(result.current.operationState.downloadingDocumentId).toBeNull()
   })
 
@@ -229,7 +258,7 @@ describe("useDocuments", () => {
 
     const operationResult = await act(() => result.current.onStageReindex("doc-1"))
 
-    expect(operationResult).toEqual({ ok: false, error: "stage failed" })
+    expect(operationResult).toMatchObject({ ok: false, status: "failure", error: "stage failed" })
     expect(props.setError).not.toHaveBeenCalledWith("stage failed")
     expect(result.current.operationState.stagingReindexDocumentId).toBeNull()
   })
@@ -288,15 +317,15 @@ describe("useDocuments", () => {
     expect(createDocumentGroup).not.toHaveBeenCalled()
     expect(updateDocumentGroup).not.toHaveBeenCalled()
     expect(readonlyUploadResult).toEqual({ ok: false, error: "文書をアップロードする権限がありません" })
-    expect(readonlyShareResult).toEqual({ ok: false, error: "フォルダ設定を更新する権限がありません" })
+    expect(readonlyShareResult).toMatchObject({ ok: false, status: "failure", error: "フォルダ設定を更新する権限がありません" })
 
     const missingTargetResult = await act(() => result.current.onDelete(undefined, deleteInput))
     const deleteResult = await act(() => result.current.onDelete("doc-1", deleteInput))
     await act(() => result.current.onDelete("missing-doc", deleteInput))
 
     expect(deleteDocument).toHaveBeenCalledWith("missing-doc", deleteInput)
-    expect(missingTargetResult).toEqual({ ok: false, error: "削除対象の documentId が未指定です" })
-    expect(deleteResult).toEqual({ ok: true })
+    expect(missingTargetResult).toMatchObject({ ok: false, status: "failure", error: "削除対象の documentId が未指定です" })
+    expect(deleteResult).toMatchObject({ ok: true, status: "success", evidence: { resultReference: "doc-1" } })
     expect(result.current.selectedDocumentId).toBe("all")
     expect(result.current.operationState.deletingDocumentId).toBeNull()
   })
@@ -384,8 +413,8 @@ describe("useDocuments", () => {
       reason: "整理",
       expectedUpdatedAt: "now"
     })
-    expect(shareResult).toEqual({ ok: true })
-    expect(moveResult).toEqual({ ok: true })
+    expect(shareResult).toMatchObject({ ok: true, status: "success", evidence: { version: "share-version-2" } })
+    expect(moveResult).toMatchObject({ ok: true, status: "success" })
     expect(result.current.selectedDocumentId).toBe("all")
     expect(result.current.operationState.sharingDocumentId).toBeNull()
     expect(result.current.operationState.movingDocumentId).toBeNull()
@@ -405,7 +434,7 @@ describe("useDocuments", () => {
     const moveResult = await act(() => result.current.onMoveDocumentGroup("group-1", input))
 
     expect(moveDocumentGroup).toHaveBeenCalledWith("group-1", input)
-    expect(moveResult).toEqual({ ok: true })
+    expect(moveResult).toMatchObject({ ok: true, status: "success", evidence: { resultReference: "folder-move-1" } })
     expect(listDocumentGroups).toHaveBeenCalledTimes(1)
     expect(listDocuments).toHaveBeenCalledTimes(1)
     expect(result.current.operationState.movingGroupId).toBeNull()
@@ -421,7 +450,7 @@ describe("useDocuments", () => {
     }
 
     const deniedResult = await act(() => denied.result.current.onMoveDocumentGroup("group-1", input))
-    expect(deniedResult).toEqual({ ok: false, error: "フォルダを移動する権限がありません" })
+    expect(deniedResult).toMatchObject({ ok: false, status: "failure", error: "フォルダを移動する権限がありません" })
     expect(moveDocumentGroup).not.toHaveBeenCalled()
 
     const props = createProps()
@@ -429,8 +458,9 @@ describe("useDocuments", () => {
     const allowed = renderHook(() => useDocuments(props))
     const conflictResult = await act(() => allowed.result.current.onMoveDocumentGroup("group-1", input))
 
-    expect(conflictResult).toEqual({
+    expect(conflictResult).toMatchObject({
       ok: false,
+      status: "failure",
       error: "フォルダが他の操作で更新されました。最新状態を再読み込みしてから再実行してください。"
     })
     expect(listDocumentGroups).toHaveBeenCalledTimes(1)
@@ -455,7 +485,7 @@ describe("useDocuments", () => {
       expectedVersion: "share-version-stale",
       reason: "stale update"
     })
-    expect(shareResult).toEqual({ ok: false, error: "document share policy version conflict" })
+    expect(shareResult).toMatchObject({ ok: false, status: "failure", error: "document share policy version conflict" })
     expect(listDocuments).not.toHaveBeenCalled()
     expect(result.current.operationState.sharingDocumentId).toBeNull()
   })
@@ -539,12 +569,12 @@ describe("useDocuments", () => {
     const cutoverResult = await act(() => result.current.onCutoverReindex("migration-1"))
     const rollbackResult = await act(() => result.current.onRollbackReindex("migration-1"))
 
-    expect(deleteResult).toEqual({ ok: false, error: "delete failed" })
+    expect(deleteResult).toMatchObject({ ok: false, status: "failure", error: "delete failed" })
     expect(uploadResult).toEqual({ ok: false, error: "upload failed" })
-    expect(shareResult).toEqual({ ok: false, error: "share group failed" })
-    expect(stageResult).toEqual({ ok: false, error: "stage failed" })
-    expect(cutoverResult).toEqual({ ok: false, error: "cutover failed" })
-    expect(rollbackResult).toEqual({ ok: false, error: "rollback failed" })
+    expect(shareResult).toMatchObject({ ok: false, status: "failure", error: "share group failed" })
+    expect(stageResult).toMatchObject({ ok: false, status: "failure", error: "stage failed" })
+    expect(cutoverResult).toMatchObject({ ok: false, status: "failure", error: "cutover failed" })
+    expect(rollbackResult).toMatchObject({ ok: false, status: "failure", error: "rollback failed" })
     expect(props.setError).not.toHaveBeenCalledWith("delete failed")
     expect(props.setError).toHaveBeenCalledWith("upload failed")
     expect(props.setError).toHaveBeenCalledWith("create group failed")
@@ -574,8 +604,8 @@ describe("useDocuments", () => {
     expect(props.setError).toHaveBeenCalledWith("upload failed")
     expect(props.setError).toHaveBeenCalledWith("create group failed")
     expect(props.setError).toHaveBeenCalledWith("share group failed")
-    expect(cutoverResult).toEqual({ ok: false, error: "cutover failed" })
-    expect(rollbackResult).toEqual({ ok: false, error: "rollback failed" })
+    expect(cutoverResult).toMatchObject({ ok: false, status: "failure", error: "cutover failed" })
+    expect(rollbackResult).toMatchObject({ ok: false, status: "failure", error: "rollback failed" })
     expect(props.setError).not.toHaveBeenCalledWith("cutover failed")
     expect(props.setError).not.toHaveBeenCalledWith("rollback failed")
   })

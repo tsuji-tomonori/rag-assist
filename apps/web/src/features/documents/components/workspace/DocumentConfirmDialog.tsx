@@ -61,7 +61,12 @@ function confirmDetails(action: ConfirmAction, documents: DocumentManifest[], do
       message: "元資料、manifest、検索ベクトルが削除されます。復元が必要な場合は再アップロードが必要です。",
       confirmLabel: "削除",
       danger: true,
-      rows: documentRows(action.document, documentGroups)
+      rows: [
+        ...documentRows(action.document, documentGroups),
+        { label: "影響", value: "元資料、manifest、検索ベクトルを削除" },
+        { label: "回復条件", value: "再利用には元資料の再アップロードが必要" },
+        { label: "確認が必要な理由", value: "検索・回答の根拠から対象を恒久的に除外するため" }
+      ]
     }
   }
   if (action.kind === "stage") {
@@ -70,7 +75,12 @@ function confirmDetails(action: ConfirmAction, documents: DocumentManifest[], do
       message: "現在の文書とは別に staged document を作成します。検索結果への反映は切替後です。",
       confirmLabel: "ステージング",
       danger: false,
-      rows: documentRows(action.document, documentGroups)
+      rows: [
+        ...documentRows(action.document, documentGroups),
+        { label: "影響", value: "staged document を作成し、切替前の検索対象は維持" },
+        { label: "回復条件", value: "切替前は staged document を破棄して現行状態を維持可能" },
+        { label: "確認が必要な理由", value: "追加リソースと後続の切替判断が必要になるため" }
+      ]
     }
   }
   const sourceDocument = documents.find((document) => document.documentId === action.migration.sourceDocumentId)
@@ -87,7 +97,9 @@ function confirmDetails(action: ConfirmAction, documents: DocumentManifest[], do
       { label: "切替先の文書識別子", value: action.migration.stagedDocumentId },
       { label: "対象ファイル", value: sourceDocument?.fileName ?? "未取得" },
       { label: "現在の状態", value: reindexMigrationStatusPresentation(action.migration.status).label },
-      { label: "切戻し可否", value: action.kind === "cutover" ? "切替後に切替済み状態なら可能" : "切戻し後は切戻し済み状態" }
+      { label: "影響", value: action.kind === "cutover" ? "検索対象を staged document へ切替" : "検索対象を切替前の document へ戻す" },
+      { label: "切戻し可否", value: action.kind === "cutover" ? "切替後に切替済み状態なら可能" : "切戻し後は切戻し済み状態" },
+      { label: "確認が必要な理由", value: "検索・回答が参照する document version を変更するため" }
     ]
   }
 }
