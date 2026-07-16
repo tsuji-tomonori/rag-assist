@@ -787,7 +787,7 @@
       "label": "認証",
       "screens": [],
       "componentCount": 2,
-      "interactionCount": 26
+      "interactionCount": 27
     },
     {
       "feature": "benchmark",
@@ -866,7 +866,9 @@
       ],
       "jsxUsages": [
         "AppShell",
-        "LoginPage"
+        "LoginPage",
+        "main",
+        "p"
       ],
       "certainty": "confirmed"
     },
@@ -7303,9 +7305,51 @@
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:213:form",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:242:button",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 213,
+      "line": 242,
+      "feature": "auth",
+      "component": "LoginPage",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "未推定",
+      "a11y": {
+        "accessibleName": "未推定",
+        "accessibleNameSource": "missing",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=hostedUiUnavailable || isSubmitting || !onHostedUiLogin"
+        ],
+        "status": "missing",
+        "reason": "アクセシブル名が静的解析で確認できません。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => void submitHostedUiLogin()"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "hostedUiUnavailable || isSubmitting || !onHostedUiLogin"
+        },
+        {
+          "name": "onClick",
+          "value": "() => void submitHostedUiLogin()"
+        }
+      ],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:264:form",
+      "file": "apps/web/src/features/auth/components/LoginPage.tsx",
+      "line": 264,
       "feature": "auth",
       "component": "LoginPage",
       "element": "form",
@@ -7343,9 +7387,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:220:label",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:271:label",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 220,
+      "line": 271,
       "feature": "auth",
       "component": "LoginPage",
       "element": "label",
@@ -7365,9 +7409,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:221:input",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:272:input",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 221,
+      "line": 272,
       "feature": "auth",
       "component": "LoginPage",
       "element": "input",
@@ -7419,9 +7463,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:230:label",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:281:label",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 230,
+      "line": 281,
       "feature": "auth",
       "component": "LoginPage",
       "element": "label",
@@ -7441,9 +7485,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:231:input",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:282:input",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 231,
+      "line": 282,
       "feature": "auth",
       "component": "LoginPage",
       "element": "input",
@@ -7495,9 +7539,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:242:label",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:293:label",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 242,
+      "line": 293,
       "feature": "auth",
       "component": "LoginPage",
       "element": "label",
@@ -7517,9 +7561,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:243:input",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:294:input",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 243,
+      "line": 294,
       "feature": "auth",
       "component": "LoginPage",
       "element": "input",
@@ -7571,9 +7615,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:244:label",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:295:label",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 244,
+      "line": 295,
       "feature": "auth",
       "component": "LoginPage",
       "element": "label",
@@ -7593,9 +7637,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:245:input",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:296:input",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 245,
+      "line": 296,
       "feature": "auth",
       "component": "LoginPage",
       "element": "input",
@@ -7647,9 +7691,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:257:label",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:308:label",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 257,
+      "line": 308,
       "feature": "auth",
       "component": "LoginPage",
       "element": "label",
@@ -7669,9 +7713,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:258:input",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:309:input",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 258,
+      "line": 309,
       "feature": "auth",
       "component": "LoginPage",
       "element": "input",
@@ -7723,9 +7767,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:259:label",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:310:label",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 259,
+      "line": 310,
       "feature": "auth",
       "component": "LoginPage",
       "element": "label",
@@ -7745,9 +7789,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:260:input",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:311:input",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 260,
+      "line": 311,
       "feature": "auth",
       "component": "LoginPage",
       "element": "input",
@@ -7799,9 +7843,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:262:label",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:313:label",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 262,
+      "line": 313,
       "feature": "auth",
       "component": "LoginPage",
       "element": "label",
@@ -7821,9 +7865,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:263:input",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:314:input",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 263,
+      "line": 314,
       "feature": "auth",
       "component": "LoginPage",
       "element": "input",
@@ -7875,9 +7919,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:274:label",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:325:label",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 274,
+      "line": 325,
       "feature": "auth",
       "component": "LoginPage",
       "element": "label",
@@ -7897,9 +7941,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:275:input",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:326:input",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 275,
+      "line": 326,
       "feature": "auth",
       "component": "LoginPage",
       "element": "input",
@@ -7951,9 +7995,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:276:label",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:327:label",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 276,
+      "line": 327,
       "feature": "auth",
       "component": "LoginPage",
       "element": "label",
@@ -7973,9 +8017,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:277:input",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:328:input",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 277,
+      "line": 328,
       "feature": "auth",
       "component": "LoginPage",
       "element": "input",
@@ -8027,9 +8071,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:281:label",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:332:label",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 281,
+      "line": 332,
       "feature": "auth",
       "component": "LoginPage",
       "element": "label",
@@ -8049,9 +8093,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:281:input",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:332:input",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 281,
+      "line": 332,
       "feature": "auth",
       "component": "LoginPage",
       "element": "input",
@@ -8091,9 +8135,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:285:button",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:336:button",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 285,
+      "line": 336,
       "feature": "auth",
       "component": "LoginPage",
       "element": "button",
@@ -8124,9 +8168,9 @@
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:293:button",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:344:button",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 293,
+      "line": 344,
       "feature": "auth",
       "component": "LoginPage",
       "element": "button",
@@ -8166,9 +8210,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:294:button",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:345:button",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 294,
+      "line": 345,
       "feature": "auth",
       "component": "LoginPage",
       "element": "button",
@@ -8208,9 +8252,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:297:button",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:348:button",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 297,
+      "line": 348,
       "feature": "auth",
       "component": "LoginPage",
       "element": "button",

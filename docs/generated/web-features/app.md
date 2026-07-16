@@ -21,7 +21,7 @@
 
 | コンポーネント | 説明 | 役割 | ファイル | export | 使用 JSX 要素 |
 | --- | --- | --- | --- | --- | --- |
-| App | App は アプリケーション枠 領域の UI 構成要素 です。関連画面: 個人設定。 | UI 構成要素 | apps/web/src/App.tsx | App | AppShell, LoginPage |
+| App | App は アプリケーション枠 領域の UI 構成要素 です。関連画面: 個人設定。 | UI 構成要素 | apps/web/src/App.tsx | App | AppShell, LoginPage, main, p |
 | AppRoutes | AppRoutes は アプリケーション枠 領域の アプリケーション共通制御 です。関連画面: 個人設定。 | アプリケーション共通制御 | apps/web/src/app/AppRoutes.tsx | AppRoutes | AdminWorkspace, AssigneeWorkspace, BenchmarkWorkspace, ChatView, DocumentWorkspace, FavoritesWorkspace, HistoryWorkspace, PersonalSettingsView |
 | AppShell | AppShell は アプリケーション枠 領域の アプリケーション共通制御 です。関連画面: 個人設定。 | アプリケーション共通制御 | apps/web/src/app/AppShell.tsx | AppShell | AppRoutes, RailNav, ResourceStatePanel, TopBar, div, main, section |
 | PersonalSettingsView | PersonalSettingsView は アプリケーション枠 領域の 画面または画面内 UI コンポーネント です。関連画面: 個人設定。 | 画面または画面内 UI コンポーネント | apps/web/src/app/components/PersonalSettingsView.tsx | PersonalSettingsView | button, dd, div, dl, dt, footer, h2, header, label, option, section, select, span |

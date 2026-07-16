@@ -4,7 +4,8 @@ import {
   getRuntimeConfig,
   joinApiPath,
   resetRuntimeConfigForTests,
-  resolveApiBaseUrl
+  resolveApiBaseUrl,
+  resolveHostedUiRuntimeConfig
 } from "./runtimeConfig.js"
 
 describe("SPA REST runtime config", () => {
@@ -85,5 +86,35 @@ describe("SPA REST runtime config", () => {
     for (const configured of productionCases) {
       expect(resolveApiBaseUrl({ ...configured, isProduction: true })).toBe("/api")
     }
+  })
+
+  it("accepts only the generated Cognito domain and exact same-origin callback/logout URLs", () => {
+    const hostedConfig = {
+      cognitoRegion: "ap-northeast-1",
+      cognitoUserPoolId: "ap-northeast-1_pool1",
+      cognitoUserPoolClientId: "client1",
+      cognitoHostedUiBaseUrl: "https://memorag.auth.ap-northeast-1.amazoncognito.com",
+      cognitoRedirectUri: "https://app.example.com/auth/callback",
+      cognitoLogoutUri: "https://app.example.com/"
+    }
+    expect(resolveHostedUiRuntimeConfig(hostedConfig, "https://app.example.com")).toEqual(hostedConfig)
+
+    for (const invalid of [
+      { cognitoHostedUiBaseUrl: "https://evil.example.com" },
+      { cognitoHostedUiBaseUrl: "https://nested.memorag.auth.ap-northeast-1.amazoncognito.com" },
+      { cognitoHostedUiBaseUrl: "http://memorag.auth.ap-northeast-1.amazoncognito.com" },
+      { cognitoRedirectUri: "https://evil.example.com/auth/callback" },
+      { cognitoRedirectUri: "https://app.example.com/auth/callback/extra" },
+      { cognitoLogoutUri: "https://app.example.com/after-logout" },
+      { cognitoUserPoolId: "other-region_pool1" },
+      { cognitoUserPoolClientId: "client with spaces" }
+    ]) {
+      expect(resolveHostedUiRuntimeConfig({ ...hostedConfig, ...invalid }, "https://app.example.com")).toBeUndefined()
+    }
+    expect(resolveHostedUiRuntimeConfig({
+      ...hostedConfig,
+      cognitoRedirectUri: "http://app.example.com/auth/callback",
+      cognitoLogoutUri: "http://app.example.com/"
+    }, "http://app.example.com")).toBeUndefined()
   })
 })

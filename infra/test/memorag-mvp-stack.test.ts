@@ -81,10 +81,27 @@ test("implements the designed serverless resources", () => {
   template.resourceCountIs("AWS::S3::Bucket", 5)
   template.resourceCountIs("AWS::Cognito::UserPool", 1)
   template.resourceCountIs("AWS::Cognito::UserPoolClient", 1)
+  template.resourceCountIs("AWS::Cognito::UserPoolDomain", 1)
   template.resourceCountIs("AWS::Cognito::UserPoolGroup", APPLICATION_ROLES.length)
   template.hasResourceProperties("AWS::Cognito::UserPool", {
     AdminCreateUserConfig: { AllowAdminCreateUserOnly: true }
   })
+  template.hasResourceProperties("AWS::Cognito::UserPoolClient", {
+    GenerateSecret: false,
+    AllowedOAuthFlowsUserPoolClient: true,
+    AllowedOAuthFlows: ["code"],
+    AllowedOAuthScopes: Match.arrayWith(["openid", "email", "profile"]),
+    CallbackURLs: ["http://localhost:5173/auth/callback"],
+    LogoutURLs: ["http://localhost:5173/"],
+    SupportedIdentityProviders: ["COGNITO"]
+  })
+  const userPoolClients = template.findResources("AWS::Cognito::UserPoolClient")
+  assert.equal(Object.values(userPoolClients).length, 1)
+  const webClient = Object.values(userPoolClients)[0] as any
+  assert.ok(webClient)
+  assert.deepEqual(webClient.Properties.AllowedOAuthFlows, ["code"])
+  assert.equal(JSON.stringify(webClient.Properties.AllowedOAuthFlows).includes("implicit"), false)
+  assert.equal(webClient.Properties.GenerateSecret, false)
   template.resourceCountIs("AWS::SecretsManager::Secret", 1)
   template.resourceCountIs("AWS::KMS::Key", 1)
   template.hasResourceProperties("AWS::KMS::Key", {
@@ -498,6 +515,7 @@ test("routes exact and nested API paths without rewriting API errors as SPA succ
   assert.equal(executeCloudFrontFunction(apiFunction.Properties.FunctionCode, "/api/v1/health"), "/v1/health")
   assert.equal(executeCloudFrontFunction(apiFunction.Properties.FunctionCode, "/other"), "/other")
   assert.equal(executeCloudFrontFunction(spaFunction.Properties.FunctionCode, "/settings/profile"), "/index.html")
+  assert.equal(executeCloudFrontFunction(spaFunction.Properties.FunctionCode, "/auth/callback"), "/index.html")
   assert.equal(executeCloudFrontFunction(spaFunction.Properties.FunctionCode, "/assets/missing.js"), "/assets/missing.js")
 
   const apiBehaviors = distributionConfig.CacheBehaviors
@@ -540,16 +558,34 @@ test("keeps the deployed SPA on same-origin /api without changing internal execu
   const frontendConfig = createDeployedFrontendRuntimeConfig({
     cognitoRegion: "ap-northeast-1",
     cognitoUserPoolId: "pool-1",
-    cognitoUserPoolClientId: "client-1"
+    cognitoUserPoolClientId: "client-1",
+    cognitoHostedUiBaseUrl: "https://memorag.auth.ap-northeast-1.amazoncognito.com",
+    cognitoRedirectUri: "https://app.example.com/auth/callback",
+    cognitoLogoutUri: "https://app.example.com/"
   })
   assert.deepEqual(frontendConfig, {
     apiBaseUrl: "/api",
     authMode: "cognito",
     cognitoRegion: "ap-northeast-1",
     cognitoUserPoolId: "pool-1",
-    cognitoUserPoolClientId: "client-1"
+    cognitoUserPoolClientId: "client-1",
+    cognitoHostedUiBaseUrl: "https://memorag.auth.ap-northeast-1.amazoncognito.com",
+    cognitoRedirectUri: "https://app.example.com/auth/callback",
+    cognitoLogoutUri: "https://app.example.com/"
   })
   assert.doesNotMatch(JSON.stringify(frontendConfig), /execute-api|amazonaws\.com\/prod/)
+
+  const productionTemplate = synthesize({
+    deploymentEnvironment: "prod",
+    corsAllowedOrigins: "https://app.example.com",
+    ragAlertEmail: "rag-on-call@example.com"
+  })
+  productionTemplate.hasResourceProperties("AWS::Cognito::UserPoolClient", {
+    GenerateSecret: false,
+    AllowedOAuthFlows: ["code"],
+    CallbackURLs: ["https://app.example.com/auth/callback"],
+    LogoutURLs: ["https://app.example.com/"]
+  })
 
   const template = synthesize().toJSON()
   for (const outputName of ["ApiUrl", "OpenApiUrl"]) {

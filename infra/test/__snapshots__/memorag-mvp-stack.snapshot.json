@@ -2698,19 +2698,16 @@
       "Properties": {
         "AccessTokenValidity": 60,
         "AllowedOAuthFlows": [
-          "implicit",
           "code"
         ],
         "AllowedOAuthFlowsUserPoolClient": true,
         "AllowedOAuthScopes": [
-          "profile",
-          "phone",
-          "email",
           "openid",
-          "aws.cognito.signin.user.admin"
+          "email",
+          "profile"
         ],
         "CallbackURLs": [
-          "https://example.com"
+          "http://localhost:5173/auth/callback"
         ],
         "ExplicitAuthFlows": [
           "ALLOW_USER_PASSWORD_AUTH",
@@ -2719,6 +2716,9 @@
         ],
         "GenerateSecret": false,
         "IdTokenValidity": 60,
+        "LogoutURLs": [
+          "http://localhost:5173/"
+        ],
         "PreventUserExistenceErrors": "ENABLED",
         "RefreshTokenValidity": 43200,
         "SupportedIdentityProviders": [

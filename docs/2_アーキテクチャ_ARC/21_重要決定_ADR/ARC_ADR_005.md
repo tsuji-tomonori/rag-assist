@@ -57,7 +57,17 @@ production のCORS設定はCloudFront public HTTPS origin 1件だけを exact or
 
 CloudFront `distributionDomainName` tokenをLambda environmentの自動defaultにはしない。後続の `/api/*` behaviorがREST API/Lambdaへ依存した際に、Lambdaからdistributionへの逆依存を作ってCloudFormation dependency cycleを生じ得るためである。production deployでは確定済みCloudFront public originをcontextへ明示する。
 
-認証はCognito Hosted UI + Authorization Code + PKCEを採用する。REST APIのJWT検証はAPI Gateway Cognito User Pool Authorizerで行い、業務認可はLambdaまたはapplication middlewareで実施する。
+認証はCognito Hosted UI + Authorization Code + PKCE S256を採用する。public SPA clientはclient secretを生成せず、implicit grantを許可しない。callback URLはproduction public originのexact `/auth/callback`、logout URLは同originのexact `/`だけをallowlistし、wildcard、execute-api origin、任意redirect originを登録しない。REST APIのJWT検証はAPI Gateway Cognito User Pool Authorizerで行い、業務認可はLambdaまたはapplication middlewareで実施する。
+
+production browserはHosted UIをprimary signin/logout経路とし、Hosted UI runtime configが欠損・不正な場合にemail/password formへfallbackしない。authorization requestごとにcryptographically randomなstate、nonce、code verifierを生成し、challenge methodはS256だけを使う。一時情報はsession storageへ短時間だけ保持し、callback開始時にone-time consumeして成功・失敗・replay後に残さない。
+
+Cognito/Hosted UI browser設定はsame-origin `/config.json`だけから読み、`VITE_COGNITO_*` build-time overrideを設けない。production build環境へ任意domain、callback、client IDを注入してもbundle/runtime候補へ混入しない境界を維持する。
+
+callbackはexact origin/path、単一code/state、state一致、transient expiryを検証してからtoken endpointへcode/verifierを送る。取得したID/access tokenはCognito JWKSのRS256署名、issuer、ID token audience、access token client binding、token use、nonce、expiryを検証してからsessionへ反映する。queryのcode/state/errorは処理後にbrowser historyから除去する。
+
+既存benchmark / CodeBuildとAPI audience contractは同じapp client IDを使うため、段階4ではclient IDを分割しない。password/SRP auth flowはinternal benchmark互換のためapp clientに残るが、production browser code pathはHosted UIへfail closedに分離する。direct auth/originの技術的制限とclient分割要否は最終hardening段階で扱う。
+
+FR025のself sign-up UXは独立要件であり、本段階のHosted UI signin/callback/logout実装をもって完了扱いにしない。
 
 WebSocketは長いJWTをqueryに直接持たせず、REST APIで短命ticketを発行し、API Gateway WebSocket APIの `$connect` Lambda authorizerでticketを検証する。
 

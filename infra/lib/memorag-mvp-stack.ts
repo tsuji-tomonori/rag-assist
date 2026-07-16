@@ -43,13 +43,19 @@ export function createDeployedFrontendRuntimeConfig(props: {
   readonly cognitoRegion: string
   readonly cognitoUserPoolId: string
   readonly cognitoUserPoolClientId: string
+  readonly cognitoHostedUiBaseUrl: string
+  readonly cognitoRedirectUri: string
+  readonly cognitoLogoutUri: string
 }) {
   return {
     apiBaseUrl: "/api",
     authMode: "cognito" as const,
     cognitoRegion: props.cognitoRegion,
     cognitoUserPoolId: props.cognitoUserPoolId,
-    cognitoUserPoolClientId: props.cognitoUserPoolClientId
+    cognitoUserPoolClientId: props.cognitoUserPoolClientId,
+    cognitoHostedUiBaseUrl: props.cognitoHostedUiBaseUrl,
+    cognitoRedirectUri: props.cognitoRedirectUri,
+    cognitoLogoutUri: props.cognitoLogoutUri
   }
 }
 
@@ -110,6 +116,8 @@ export class MemoRagMvpStack extends Stack {
       this.node.tryGetContext("corsAllowedOrigins") as string | undefined,
       deploymentEnvironment
     )
+    const cognitoRedirectUri = new URL("/auth/callback", `${corsAllowedOrigin}/`).toString()
+    const cognitoLogoutUri = new URL("/", `${corsAllowedOrigin}/`).toString()
     const costCenter = String(this.node.tryGetContext("costCenter") ?? "memorag-mvp")
     const commonResourceTags = {
       ...defaultResourceTags,
@@ -418,12 +426,22 @@ export class MemoRagMvpStack extends Stack {
       authFlows: { userPassword: true, userSrp: true },
       generateSecret: false,
       preventUserExistenceErrors: true,
+      oAuth: {
+        flows: {
+          authorizationCodeGrant: true,
+          implicitCodeGrant: false
+        },
+        scopes: [cognito.OAuthScope.OPENID, cognito.OAuthScope.EMAIL, cognito.OAuthScope.PROFILE],
+        callbackUrls: [cognitoRedirectUri],
+        logoutUrls: [cognitoLogoutUri]
+      },
+      supportedIdentityProviders: [cognito.UserPoolClientIdentityProvider.COGNITO],
       accessTokenValidity: Duration.hours(1),
       idTokenValidity: Duration.hours(1),
       refreshTokenValidity: Duration.days(30)
     })
 
-    userPool.addDomain("UserPoolDomain", {
+    const userPoolDomain = userPool.addDomain("UserPoolDomain", {
       cognitoDomain: { domainPrefix: `memorag-${suffix}` }
     })
 
@@ -1536,7 +1554,10 @@ function handler(event) {
           s3deploy.Source.jsonData("config.json", createDeployedFrontendRuntimeConfig({
             cognitoRegion: cdk.Aws.REGION,
             cognitoUserPoolId: userPool.userPoolId,
-            cognitoUserPoolClientId: userPoolClient.userPoolClientId
+            cognitoUserPoolClientId: userPoolClient.userPoolClientId,
+            cognitoHostedUiBaseUrl: userPoolDomain.baseUrl(),
+            cognitoRedirectUri,
+            cognitoLogoutUri
           }))
         ],
         destinationBucket: frontendBucket,

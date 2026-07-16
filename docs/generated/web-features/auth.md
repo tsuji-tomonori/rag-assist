@@ -26,59 +26,61 @@
 
 | コンポーネント | 要素 | ラベル | 操作説明 | 状態・補足 | ハンドラ | 場所 | 確度 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| LoginPage | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: disabled=isSubmitting \|\| !isCurrentPasswordValid | - | apps/web/src/features/auth/components/LoginPage.tsx:285 | unknown |
-| LoginPage | button | アカウント作成 | 「アカウント作成」を実行するボタン。 | 状態: disabled=isSubmitting | onClick=() => switchMode("signUp") | apps/web/src/features/auth/components/LoginPage.tsx:293 | confirmed |
-| LoginPage | button | 確認コード入力 | 「確認コード入力」を実行するボタン。 | 状態: disabled=isSubmitting | onClick=() => switchMode("confirmSignUp") | apps/web/src/features/auth/components/LoginPage.tsx:294 | confirmed |
-| LoginPage | button | サインインへ戻る | 「サインインへ戻る」を実行するボタン。 | 状態: disabled=isSubmitting | onClick=() => switchMode("signIn") | apps/web/src/features/auth/components/LoginPage.tsx:297 | confirmed |
+| LoginPage | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: disabled=hostedUiUnavailable \|\| isSubmitting \|\| !onHostedUiLogin | onClick=() => void submitHostedUiLogin() | apps/web/src/features/auth/components/LoginPage.tsx:242 | unknown |
+| LoginPage | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: disabled=isSubmitting \|\| !isCurrentPasswordValid | - | apps/web/src/features/auth/components/LoginPage.tsx:336 | unknown |
+| LoginPage | button | アカウント作成 | 「アカウント作成」を実行するボタン。 | 状態: disabled=isSubmitting | onClick=() => switchMode("signUp") | apps/web/src/features/auth/components/LoginPage.tsx:344 | confirmed |
+| LoginPage | button | 確認コード入力 | 「確認コード入力」を実行するボタン。 | 状態: disabled=isSubmitting | onClick=() => switchMode("confirmSignUp") | apps/web/src/features/auth/components/LoginPage.tsx:345 | confirmed |
+| LoginPage | button | サインインへ戻る | 「サインインへ戻る」を実行するボタン。 | 状態: disabled=isSubmitting | onClick=() => switchMode("signIn") | apps/web/src/features/auth/components/LoginPage.tsx:348 | confirmed |
 
 ## フォーム
 
 | コンポーネント | ラベル | フォーム説明 | 状態・補足 | 送信ハンドラ | 場所 | 確度 |
 | --- | --- | --- | --- | --- | --- | --- |
-| LoginPage | title | 「title」を入力・送信するフォーム。 | 説明参照: error ? "login-error" : notice ? "login-notice" : undefined | onSubmit=onSubmit | apps/web/src/features/auth/components/LoginPage.tsx:213 | confirmed |
+| LoginPage | title | 「title」を入力・送信するフォーム。 | 説明参照: error ? "login-error" : notice ? "login-notice" : undefined | onSubmit=onSubmit | apps/web/src/features/auth/components/LoginPage.tsx:264 | confirmed |
 
 ## 入力項目
 
 | コンポーネント | 要素 | ラベル | 入力項目の説明 | 状態・補足 | ハンドラ | 場所 | 確度 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| LoginPage | input | 新しいパスワード | 「新しいパスワード」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setNewPassword(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:221 | confirmed |
-| LoginPage | input | 新しいパスワード（確認） | 「新しいパスワード（確認）」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setConfirmPassword(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:231 | confirmed |
-| LoginPage | input | メールアドレス | 「メールアドレス」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setEmail(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:243 | confirmed |
-| LoginPage | input | 確認コード | 「確認コード」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setConfirmationCode(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:245 | confirmed |
-| LoginPage | input | メールアドレス | 「メールアドレス」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setEmail(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:258 | confirmed |
-| LoginPage | input | パスワード | 「パスワード」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setPassword(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:260 | confirmed |
-| LoginPage | input | パスワード（確認） | 「パスワード（確認）」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setSignUpPasswordConfirm(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:263 | confirmed |
-| LoginPage | input | メールアドレス | 「メールアドレス」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setEmail(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:275 | confirmed |
-| LoginPage | input | パスワード | 「パスワード」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setPassword(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:277 | confirmed |
-| LoginPage | input | ログイン状態を保持 | 「ログイン状態を保持」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setRemember(e.target.checked) | apps/web/src/features/auth/components/LoginPage.tsx:281 | confirmed |
+| LoginPage | input | 新しいパスワード | 「新しいパスワード」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setNewPassword(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:272 | confirmed |
+| LoginPage | input | 新しいパスワード（確認） | 「新しいパスワード（確認）」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setConfirmPassword(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:282 | confirmed |
+| LoginPage | input | メールアドレス | 「メールアドレス」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setEmail(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:294 | confirmed |
+| LoginPage | input | 確認コード | 「確認コード」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setConfirmationCode(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:296 | confirmed |
+| LoginPage | input | メールアドレス | 「メールアドレス」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setEmail(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:309 | confirmed |
+| LoginPage | input | パスワード | 「パスワード」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setPassword(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:311 | confirmed |
+| LoginPage | input | パスワード（確認） | 「パスワード（確認）」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setSignUpPasswordConfirm(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:314 | confirmed |
+| LoginPage | input | メールアドレス | 「メールアドレス」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setEmail(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:326 | confirmed |
+| LoginPage | input | パスワード | 「パスワード」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setPassword(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:328 | confirmed |
+| LoginPage | input | ログイン状態を保持 | 「ログイン状態を保持」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setRemember(e.target.checked) | apps/web/src/features/auth/components/LoginPage.tsx:332 | confirmed |
 
 ## UI 操作要素の全量
 
 | コンポーネント | 要素 | ラベル | UI 説明 | 状態・補足 | ハンドラ | 場所 | 確度 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | LoginHeroGraphic | svg | 未推定 | svg 要素。静的解析では具体的な操作名を推定できません。 | role: img | - | apps/web/src/features/auth/components/LoginHeroGraphic.tsx:3 | unknown |
-| LoginPage | form | title | 「title」を入力・送信するフォーム。 | 説明参照: error ? "login-error" : notice ? "login-notice" : undefined | onSubmit=onSubmit | apps/web/src/features/auth/components/LoginPage.tsx:213 | confirmed |
-| LoginPage | label | 新しいパスワード | 「新しいパスワード」に紐づく入力ラベル。 | - | - | apps/web/src/features/auth/components/LoginPage.tsx:220 | confirmed |
-| LoginPage | input | 新しいパスワード | 「新しいパスワード」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setNewPassword(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:221 | confirmed |
-| LoginPage | label | 新しいパスワード（確認） | 「新しいパスワード（確認）」に紐づく入力ラベル。 | - | - | apps/web/src/features/auth/components/LoginPage.tsx:230 | confirmed |
-| LoginPage | input | 新しいパスワード（確認） | 「新しいパスワード（確認）」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setConfirmPassword(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:231 | confirmed |
-| LoginPage | label | メールアドレス | 「メールアドレス」に紐づく入力ラベル。 | - | - | apps/web/src/features/auth/components/LoginPage.tsx:242 | confirmed |
-| LoginPage | input | メールアドレス | 「メールアドレス」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setEmail(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:243 | confirmed |
-| LoginPage | label | 確認コード | 「確認コード」に紐づく入力ラベル。 | - | - | apps/web/src/features/auth/components/LoginPage.tsx:244 | confirmed |
-| LoginPage | input | 確認コード | 「確認コード」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setConfirmationCode(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:245 | confirmed |
-| LoginPage | label | メールアドレス | 「メールアドレス」に紐づく入力ラベル。 | - | - | apps/web/src/features/auth/components/LoginPage.tsx:257 | confirmed |
-| LoginPage | input | メールアドレス | 「メールアドレス」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setEmail(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:258 | confirmed |
-| LoginPage | label | パスワード | 「パスワード」に紐づく入力ラベル。 | - | - | apps/web/src/features/auth/components/LoginPage.tsx:259 | confirmed |
-| LoginPage | input | パスワード | 「パスワード」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setPassword(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:260 | confirmed |
-| LoginPage | label | パスワード（確認） | 「パスワード（確認）」に紐づく入力ラベル。 | - | - | apps/web/src/features/auth/components/LoginPage.tsx:262 | confirmed |
-| LoginPage | input | パスワード（確認） | 「パスワード（確認）」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setSignUpPasswordConfirm(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:263 | confirmed |
-| LoginPage | label | メールアドレス | 「メールアドレス」に紐づく入力ラベル。 | - | - | apps/web/src/features/auth/components/LoginPage.tsx:274 | confirmed |
-| LoginPage | input | メールアドレス | 「メールアドレス」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setEmail(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:275 | confirmed |
-| LoginPage | label | パスワード | 「パスワード」に紐づく入力ラベル。 | - | - | apps/web/src/features/auth/components/LoginPage.tsx:276 | confirmed |
-| LoginPage | input | パスワード | 「パスワード」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setPassword(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:277 | confirmed |
-| LoginPage | label | ログイン状態を保持 | 「ログイン状態を保持」に紐づく入力ラベル。 | - | - | apps/web/src/features/auth/components/LoginPage.tsx:281 | confirmed |
-| LoginPage | input | ログイン状態を保持 | 「ログイン状態を保持」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setRemember(e.target.checked) | apps/web/src/features/auth/components/LoginPage.tsx:281 | confirmed |
-| LoginPage | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: disabled=isSubmitting \|\| !isCurrentPasswordValid | - | apps/web/src/features/auth/components/LoginPage.tsx:285 | unknown |
-| LoginPage | button | アカウント作成 | 「アカウント作成」を実行するボタン。 | 状態: disabled=isSubmitting | onClick=() => switchMode("signUp") | apps/web/src/features/auth/components/LoginPage.tsx:293 | confirmed |
-| LoginPage | button | 確認コード入力 | 「確認コード入力」を実行するボタン。 | 状態: disabled=isSubmitting | onClick=() => switchMode("confirmSignUp") | apps/web/src/features/auth/components/LoginPage.tsx:294 | confirmed |
-| LoginPage | button | サインインへ戻る | 「サインインへ戻る」を実行するボタン。 | 状態: disabled=isSubmitting | onClick=() => switchMode("signIn") | apps/web/src/features/auth/components/LoginPage.tsx:297 | confirmed |
+| LoginPage | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: disabled=hostedUiUnavailable \|\| isSubmitting \|\| !onHostedUiLogin | onClick=() => void submitHostedUiLogin() | apps/web/src/features/auth/components/LoginPage.tsx:242 | unknown |
+| LoginPage | form | title | 「title」を入力・送信するフォーム。 | 説明参照: error ? "login-error" : notice ? "login-notice" : undefined | onSubmit=onSubmit | apps/web/src/features/auth/components/LoginPage.tsx:264 | confirmed |
+| LoginPage | label | 新しいパスワード | 「新しいパスワード」に紐づく入力ラベル。 | - | - | apps/web/src/features/auth/components/LoginPage.tsx:271 | confirmed |
+| LoginPage | input | 新しいパスワード | 「新しいパスワード」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setNewPassword(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:272 | confirmed |
+| LoginPage | label | 新しいパスワード（確認） | 「新しいパスワード（確認）」に紐づく入力ラベル。 | - | - | apps/web/src/features/auth/components/LoginPage.tsx:281 | confirmed |
+| LoginPage | input | 新しいパスワード（確認） | 「新しいパスワード（確認）」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setConfirmPassword(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:282 | confirmed |
+| LoginPage | label | メールアドレス | 「メールアドレス」に紐づく入力ラベル。 | - | - | apps/web/src/features/auth/components/LoginPage.tsx:293 | confirmed |
+| LoginPage | input | メールアドレス | 「メールアドレス」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setEmail(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:294 | confirmed |
+| LoginPage | label | 確認コード | 「確認コード」に紐づく入力ラベル。 | - | - | apps/web/src/features/auth/components/LoginPage.tsx:295 | confirmed |
+| LoginPage | input | 確認コード | 「確認コード」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setConfirmationCode(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:296 | confirmed |
+| LoginPage | label | メールアドレス | 「メールアドレス」に紐づく入力ラベル。 | - | - | apps/web/src/features/auth/components/LoginPage.tsx:308 | confirmed |
+| LoginPage | input | メールアドレス | 「メールアドレス」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setEmail(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:309 | confirmed |
+| LoginPage | label | パスワード | 「パスワード」に紐づく入力ラベル。 | - | - | apps/web/src/features/auth/components/LoginPage.tsx:310 | confirmed |
+| LoginPage | input | パスワード | 「パスワード」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setPassword(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:311 | confirmed |
+| LoginPage | label | パスワード（確認） | 「パスワード（確認）」に紐づく入力ラベル。 | - | - | apps/web/src/features/auth/components/LoginPage.tsx:313 | confirmed |
+| LoginPage | input | パスワード（確認） | 「パスワード（確認）」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setSignUpPasswordConfirm(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:314 | confirmed |
+| LoginPage | label | メールアドレス | 「メールアドレス」に紐づく入力ラベル。 | - | - | apps/web/src/features/auth/components/LoginPage.tsx:325 | confirmed |
+| LoginPage | input | メールアドレス | 「メールアドレス」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setEmail(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:326 | confirmed |
+| LoginPage | label | パスワード | 「パスワード」に紐づく入力ラベル。 | - | - | apps/web/src/features/auth/components/LoginPage.tsx:327 | confirmed |
+| LoginPage | input | パスワード | 「パスワード」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setPassword(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:328 | confirmed |
+| LoginPage | label | ログイン状態を保持 | 「ログイン状態を保持」に紐づく入力ラベル。 | - | - | apps/web/src/features/auth/components/LoginPage.tsx:332 | confirmed |
+| LoginPage | input | ログイン状態を保持 | 「ログイン状態を保持」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setRemember(e.target.checked) | apps/web/src/features/auth/components/LoginPage.tsx:332 | confirmed |
+| LoginPage | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: disabled=isSubmitting \|\| !isCurrentPasswordValid | - | apps/web/src/features/auth/components/LoginPage.tsx:336 | unknown |
+| LoginPage | button | アカウント作成 | 「アカウント作成」を実行するボタン。 | 状態: disabled=isSubmitting | onClick=() => switchMode("signUp") | apps/web/src/features/auth/components/LoginPage.tsx:344 | confirmed |
+| LoginPage | button | 確認コード入力 | 「確認コード入力」を実行するボタン。 | 状態: disabled=isSubmitting | onClick=() => switchMode("confirmSignUp") | apps/web/src/features/auth/components/LoginPage.tsx:345 | confirmed |
+| LoginPage | button | サインインへ戻る | 「サインインへ戻る」を実行するボタン。 | 状態: disabled=isSubmitting | onClick=() => switchMode("signIn") | apps/web/src/features/auth/components/LoginPage.tsx:348 | confirmed |

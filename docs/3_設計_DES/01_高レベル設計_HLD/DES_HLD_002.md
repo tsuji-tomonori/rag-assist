@@ -143,6 +143,62 @@ relative baseとrequest pathは共通helperで結合し、base末尾slashとpath
 - `/ws/*` behavior、WebSocket ticket、Hosted UI + PKCE、security response headers、direct execute-api restrictionは後続段階とする。
 - 実AWSのCloudFront→API Gateway疎通はunit/CDK testで代替しない。preview環境で認証、SSE、large payload、401/403/404/5xx status/bodyを確認する。
 
+## 段階4 Hosted UI + Authorization Code + PKCE 実装契約
+
+production SPAのprimary signin/logout経路をCognito Hosted UIへ固定する。deployed `config.json`は既存Cognito識別子に加えて次を配布する。
+
+```json
+{
+  "cognitoHostedUiBaseUrl": "https://<prefix>.auth.<region>.amazoncognito.com",
+  "cognitoRedirectUri": "https://<public-origin>/auth/callback",
+  "cognitoLogoutUri": "https://<public-origin>/"
+}
+```
+
+public originはTC-003 CORS single sourceと同じ検証済みexact originから生成する。production callback/logoutにwildcard、localhost、execute-api URL、別origin、追加path/query/hashを許可しない。Hosted UI baseはstackが作成したCognito managed domainと同じregionのHTTPS URLに限定する。
+
+Cognito app clientは次のcontractを持つ。
+
+- `AllowedOAuthFlows = [code]`。implicit grantは無効。
+- `AllowedOAuthScopes = openid email profile`。
+- `GenerateSecret = false`。browser config、authorization request、token requestへclient secretを配布しない。
+- callbackはexact `<public-origin>/auth/callback`、logoutはexact `<public-origin>/`。
+- 既存benchmark/API audience互換のためclient IDとpassword/SRP auth flowは段階4では維持する。ただしproduction browserのUI/runtimeはdirect password flowを選択せず、Hosted UI設定不正時はunavailableへfail closedにする。
+
+### Authorization request
+
+SPAはrequestごとにWeb Cryptoでstate 32 byte、nonce 32 byte、code verifier 64 byteを生成する。code challengeは`BASE64URL(SHA-256(verifier))`とし、`code_challenge_method=S256`、`response_type=code`を固定する。plain/no challenge、implicit token response、password、client secretへfallbackしない。
+
+transient recordはstate、nonce、verifier、5分expiryだけを`sessionStorage`へ保存する。新しいrequestは旧recordを置換する。callback処理はrecordを読んだ直後にstorageから削除し、state不一致、期限切れ、provider error、token exchange失敗、JWT検証失敗を含む全結果で再利用を拒否する。
+
+### Callback / token検証
+
+callbackは次の順でfail closedに処理する。
+
+1. transient recordをone-time consumeする。
+2. transient expiry、exact callback origin/pathを検証する。
+3. `state`が単一かつ保存値と一致することを検証する。duplicate、欠損、不一致を拒否する。
+4. provider errorとcodeの矛盾を拒否し、単一authorization codeだけを受理する。
+5. `/oauth2/token`へauthorization code、client ID、exact redirect URI、code verifierをform送信する。client secretは送らない。
+6. ID tokenをCognito JWKSでRS256署名検証し、issuer、audience=app client ID、`token_use=id`、nonce、expiry、emailを検証する。
+7. access tokenも同じissuer/JWKSで署名検証し、`token_use=access`、`client_id` binding、expiryを検証する。
+8. 両tokenの短い方のexpiryでsessionを作成し、callback queryをhistoryから除去する。
+
+API requestへID tokenを付ける既存contract、API Gateway/API middlewareのJWT・active status・permission・tenant/resource boundary、RAG safetyは変更しない。browserのgroup claimは表示/不要取得抑制にだけ使い、最終認可は引き続きAPI側で行う。
+
+### UI / environment境界
+
+- productionはHosted UI buttonだけをsignin actionとして表示し、email/password、remember、self sign-up actionを表示しない。
+- Hosted UI config欠損・malformed・cross-origin callbackの場合は設定errorを表示し、credentials formへfallbackしない。
+- Cognito/Hosted UI browser設定はsame-origin `/config.json`を唯一の入力とし、`VITE_COGNITO_*` build-time overrideを持たない。悪意あるbuild環境値をproduction bundleへ埋め込まない。
+- explicit local authとlegacy credential flowはnon-production dev/test境界だけに残す。
+- logoutはlocal session/transientをclearしてからHosted UI `/logout`へ移動し、exact logout URIへ戻す。
+- FR025 self sign-up、WebSocket ticket、direct execute-api restrictionは本段階の完了条件へ含めない。
+
+### 検証境界
+
+CDK assertionはOAuth flow、scope、secret、callback/logoutのsynthesized contractを検証する。Web unit testはS256 request、state/nonce/expiry、one-time consume、token request、issuer/audience/client binding claim contract、production primary/fail-closed、logout URLを検証する。これらは実AWS Hosted UI、managed login cookie、MFA、redirect、JWKS CORS、logoutを代替しないため、stacked deploy後のpreview browser検証を別gateとして残す。
+
 ## 責務分担
 
 | コンポーネント | 責務 | 非責務 |
@@ -175,7 +231,9 @@ relative baseとrequest pathは共通helperで結合し、base末尾slashとpath
 | API error / SPA fallback分離 | global custom error不存在、default/API Function分離、missing asset保持のnegative assertion |
 | deployed SPA config非漏洩 / internal consumer分離 | `infra/test/memorag-mvp-stack.test.ts` のconfig helper・execute-api非包含・internal URL維持assertion |
 | production fail-closed / dev override / URL join | `apps/web/src/shared/api/runtimeConfig.test.ts` とWeb API tests |
-| 後続 PKCE / WS / direct origin制限 | 後続 PR の assertion、integration、browser/E2E、実環境確認 |
+| Hosted UI OAuth client / exact redirect / secretなし | `infra/test/memorag-mvp-stack.test.ts` |
+| PKCE S256 / callback / one-time transient / JWT claim contract | `apps/web/src/features/auth/api/hostedUiAuth.test.ts` とLoginPage tests |
+| 後続 WS / direct origin制限 | 後続 PR の assertion、integration、browser/E2E、実環境確認 |
 
 ## 関連文書
 

@@ -4,6 +4,18 @@ export type RuntimeConfig = {
   cognitoRegion?: string
   cognitoUserPoolId?: string
   cognitoUserPoolClientId?: string
+  cognitoHostedUiBaseUrl?: string
+  cognitoRedirectUri?: string
+  cognitoLogoutUri?: string
+}
+
+export type HostedUiRuntimeConfig = {
+  readonly cognitoRegion: string
+  readonly cognitoUserPoolId: string
+  readonly cognitoUserPoolClientId: string
+  readonly cognitoHostedUiBaseUrl: string
+  readonly cognitoRedirectUri: string
+  readonly cognitoLogoutUri: string
 }
 
 let runtimeConfigPromise: Promise<RuntimeConfig> | undefined
@@ -14,17 +26,50 @@ export async function getRuntimeConfig(): Promise<RuntimeConfig> {
     .catch(() => ({}))
 
   const fileConfig = await runtimeConfigPromise
+  const isProduction = import.meta.env.PROD
   return {
     ...fileConfig,
     apiBaseUrl: resolveApiBaseUrl({
       viteApiBaseUrl: import.meta.env.VITE_API_BASE_URL,
       fileApiBaseUrl: fileConfig.apiBaseUrl,
-      isProduction: import.meta.env.PROD
+      isProduction
     }),
-    authMode: (import.meta.env.VITE_AUTH_MODE as RuntimeConfig["authMode"] | undefined) || fileConfig.authMode,
-    cognitoRegion: import.meta.env.VITE_COGNITO_REGION || fileConfig.cognitoRegion,
-    cognitoUserPoolId: import.meta.env.VITE_COGNITO_USER_POOL_ID || fileConfig.cognitoUserPoolId,
-    cognitoUserPoolClientId: import.meta.env.VITE_COGNITO_USER_POOL_CLIENT_ID || fileConfig.cognitoUserPoolClientId
+    authMode: isProduction
+      ? fileConfig.authMode
+      : (import.meta.env.VITE_AUTH_MODE as RuntimeConfig["authMode"] | undefined) || fileConfig.authMode,
+    cognitoRegion: fileConfig.cognitoRegion,
+    cognitoUserPoolId: fileConfig.cognitoUserPoolId,
+    cognitoUserPoolClientId: fileConfig.cognitoUserPoolClientId,
+    cognitoHostedUiBaseUrl: fileConfig.cognitoHostedUiBaseUrl,
+    cognitoRedirectUri: fileConfig.cognitoRedirectUri,
+    cognitoLogoutUri: fileConfig.cognitoLogoutUri
+  }
+}
+
+export function resolveHostedUiRuntimeConfig(
+  config: RuntimeConfig,
+  currentOrigin: string
+): HostedUiRuntimeConfig | undefined {
+  const cognitoRegion = stringValue(config.cognitoRegion)
+  const cognitoUserPoolId = stringValue(config.cognitoUserPoolId)
+  const cognitoUserPoolClientId = stringValue(config.cognitoUserPoolClientId)
+  if (!cognitoRegion || !cognitoUserPoolId || !cognitoUserPoolClientId) return undefined
+  if (!/^[a-z]{2}(?:-gov)?-[a-z]+-\d$/.test(cognitoRegion)) return undefined
+  if (!cognitoUserPoolId.startsWith(`${cognitoRegion}_`) || !/^[a-z0-9_-]+$/i.test(cognitoUserPoolId)) return undefined
+  if (!/^[a-z0-9]+$/i.test(cognitoUserPoolClientId)) return undefined
+
+  const cognitoHostedUiBaseUrl = normalizeHostedUiBaseUrl(config.cognitoHostedUiBaseUrl, cognitoRegion)
+  const cognitoRedirectUri = normalizeExactSameOriginUrl(config.cognitoRedirectUri, currentOrigin, "/auth/callback")
+  const cognitoLogoutUri = normalizeExactSameOriginUrl(config.cognitoLogoutUri, currentOrigin, "/")
+  if (!cognitoHostedUiBaseUrl || !cognitoRedirectUri || !cognitoLogoutUri) return undefined
+
+  return {
+    cognitoRegion,
+    cognitoUserPoolId,
+    cognitoUserPoolClientId,
+    cognitoHostedUiBaseUrl,
+    cognitoRedirectUri,
+    cognitoLogoutUri
   }
 }
 
@@ -85,10 +130,47 @@ function parseRuntimeConfig(input: unknown): RuntimeConfig {
     authMode: record.authMode === "cognito" || record.authMode === "local" ? record.authMode : undefined,
     cognitoRegion: stringValue(record.cognitoRegion),
     cognitoUserPoolId: stringValue(record.cognitoUserPoolId),
-    cognitoUserPoolClientId: stringValue(record.cognitoUserPoolClientId)
+    cognitoUserPoolClientId: stringValue(record.cognitoUserPoolClientId),
+    cognitoHostedUiBaseUrl: stringValue(record.cognitoHostedUiBaseUrl),
+    cognitoRedirectUri: stringValue(record.cognitoRedirectUri),
+    cognitoLogoutUri: stringValue(record.cognitoLogoutUri)
   }
 }
 
 function stringValue(value: unknown): string | undefined {
   return typeof value === "string" && value.trim() ? value : undefined
+}
+
+function normalizeHostedUiBaseUrl(value: unknown, region: string): string | undefined {
+  if (typeof value !== "string") return undefined
+  try {
+    const url = new URL(value)
+    if (url.protocol !== "https:" || url.username || url.password || url.search || url.hash) return undefined
+    if (url.pathname !== "/") return undefined
+    const managedDomainSuffix = `.auth.${region}.amazoncognito.com`
+    if (!url.hostname.endsWith(managedDomainSuffix)) return undefined
+    const domainPrefix = url.hostname.slice(0, -managedDomainSuffix.length)
+    if (!domainPrefix || !/^[a-z0-9-]+$/.test(domainPrefix)) return undefined
+    return url.toString().replace(/\/$/, "")
+  } catch {
+    return undefined
+  }
+}
+
+function normalizeExactSameOriginUrl(value: unknown, currentOrigin: string, pathname: string): string | undefined {
+  if (typeof value !== "string") return undefined
+  try {
+    const expectedOriginUrl = new URL(currentOrigin)
+    if (expectedOriginUrl.protocol !== "https:" && !isLoopbackHostname(expectedOriginUrl.hostname)) return undefined
+    const expectedOrigin = expectedOriginUrl.origin
+    const url = new URL(value)
+    if (url.origin !== expectedOrigin || url.pathname !== pathname || url.search || url.hash) return undefined
+    return url.toString()
+  } catch {
+    return undefined
+  }
+}
+
+function isLoopbackHostname(hostname: string): boolean {
+  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]"
 }
