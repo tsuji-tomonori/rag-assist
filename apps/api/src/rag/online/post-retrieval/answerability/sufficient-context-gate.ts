@@ -63,10 +63,10 @@ export function createSufficientContextGateNode(deps: Dependencies) {
 }
 
 function canProceedWithGroundedEvidence(state: ChatOrchestrationState, judgement: SufficientContextJudgement): boolean {
-  if (judgement.label !== "PARTIAL" && judgement.label !== "UNANSWERABLE") return false
+  if (judgement.label !== "PARTIAL") return false
   if (!state.answerability.isAnswerable) return false
   if (state.selectedChunks.length === 0) return false
-  if (judgement.supportedFacts.length === 0 && judgement.supportingChunkIds.length === 0 && (judgement.label !== "UNANSWERABLE" || !hasQuestionAnchoredEvidence(state))) return false
+  if (judgement.supportedFacts.length === 0 && judgement.supportingChunkIds.length === 0) return false
   if (hasUnresolvedPrimaryMissingFact(state, judgement)) return false
   if (!hasSupportedPrimaryEvidence(state, judgement)) return false
   if (hasPrimaryConflict(state, judgement)) return false
