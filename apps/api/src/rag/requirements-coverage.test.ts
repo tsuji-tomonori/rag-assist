@@ -119,7 +119,7 @@ const traceByRequirement: Record<string, string[]> = {
   "NFR-015": ["debugApi.test.ts", "access-control-policy.test.ts", "docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md"],
   "NFR-016": ["tools/web-inventory/ui-traceability.mjs", "tools/web-inventory/ui-traceability.test.mjs", "tools/web-inventory/ui-traceability.json"],
   "NFR-017": ["tools/web-inventory/ui-traceability.json", "tasks/done/20260714-issue-345-ui-language-primitives.md"],
-  "NFR-018": [".github/workflows/memorag-ci.yml", "apps/web/e2e/visual-regression.spec.ts", "tasks/todo/20260714-issue-345-ui-automated-quality-gates.md", "tasks/todo/20260714-issue-345-manual-a11y-evidence.md"],
+  "NFR-018": [".github/workflows/memorag-ci.yml", "apps/web/e2e/visual-regression.spec.ts", "tasks/do/20260714-issue-345-ui-automated-quality-gates.md", "tasks/todo/20260714-issue-345-manual-a11y-evidence.md"],
   "SQ-001": ["benchmark/run.test.ts", "apps/api/src/search/hybrid-search.test.ts"],
   "SQ-002": ["benchmark/run.test.ts", "benchmark/corpus.test.ts"],
   "SQ-003": ["docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md"],
