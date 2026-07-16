@@ -82,6 +82,7 @@ strict base `fab8471c` を同じ workflow / runner で比較した run [29505240
 
 - draft stacked PR #378、`semver:patch`、日本語の受け入れ条件コメント（`4992946509`）、セルフレビュー（`4992946821`）を完了した。
 - 本レポート確定 commit 後の latest-head GitHub CI は監視し、結果を PR top-level comment に記録する。
+- superseded MemoRAG CI run [29505860694](https://github.com/tsuji-tomonori/rag-assist/actions/runs/29505860694) は head `d5717f47` で 14:16:45 に開始し、newer head `42574f4a` push 後の 14:18:31 に API typecheck が cancelled、14:18:34 に terminal となった。`.github/workflows/memorag-ci.yml` は同じ branch の newer run で旧 run を止める `cancel-in-progress: true` を定義しており、時系列も一致する。これは product / test failure ではなく concurrency cancellation であり、latest-head run を判定の正本とする。
 - full visual E2E success と task done は PR #361 の merge dependency。strict base と同一失敗で新変更起因ではないが、成功済みとして扱わない。
 - manual screen reader / 実機確認は未実施。unit / semantic / axe / mobile navigation / loading-state E2E を自動回帰 evidence とする。
 - `npm ci` は既存 8 vulnerabilities（low 2 / moderate 1 / high 5）を報告した。今回の primitive 移動とは独立しており、`npm audit fix` は行っていない。

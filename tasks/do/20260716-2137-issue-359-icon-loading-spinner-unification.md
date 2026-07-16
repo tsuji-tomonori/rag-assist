@@ -164,3 +164,4 @@ generated Web inventory
 - セルフレビューコメント: comment `4992946821`。差分固有の blocking / should-fix はなし。merge readiness は #361 / #367 / #373 dependency により blocked。
 - task は full visual E2E success 未達のため `do` を維持し、`tasks/done` へ移動しない。
 - 本 lifecycle 記録 commit 後の latest-head GitHub CI を監視し、結果は PR top-level comment に追記する。
+- superseded CI run [29505860694](https://github.com/tsuji-tomonori/rag-assist/actions/runs/29505860694) は head `d5717f47` で 14:16:45 開始。newer head `42574f4a` push 後の 14:18:31 に API typecheck が cancelled、14:18:34 に terminal となった。`.github/workflows/memorag-ci.yml` の branch-scoped `cancel-in-progress: true` と時系列が一致するため、product / test failure ではなく newer head push による concurrency cancellation。最終判定には使用しない。
