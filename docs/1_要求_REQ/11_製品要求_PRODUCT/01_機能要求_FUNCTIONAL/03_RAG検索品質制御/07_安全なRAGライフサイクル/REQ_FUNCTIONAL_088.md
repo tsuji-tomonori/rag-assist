@@ -2,7 +2,7 @@
 
 - 要件ID: `FR-088`
 - 種別: `REQ_FUNCTIONAL`
-- 状態: Draft
+- 状態: Draft（実装・unit/service integration test 確認済み）
 - 優先度: S
 
 ## 分類（L0-L3）
@@ -36,7 +36,7 @@ trace は再現性に有用だが、raw question、会話、根拠、回答、AC
 | 受け入れ基準 | `AC-FR088-001`, `AC-FR088-002` |
 | 優先度 | S |
 | 安定性 | High |
-| Confidence | inferred |
+| Confidence | confirmed |
 | 所有者 | Security / Privacy / RAG Ops |
 | 変更履歴 | 2026-07-11 初版 |
 
@@ -66,9 +66,14 @@ trace は再現性に有用だが、raw question、会話、根拠、回答、AC
 | 実現可能性 | OK | schema projection、field/content sanitizer、visibility policy で実現可能 |
 | 検証可能性 | OK | secret/PII/unauthorized canary の stored/view/download assertion で確認できる |
 | ニーズ適合 | OK | 調査可能性を保ちながら trace 経由の情報漏えいを防ぐ |
-| 実装適合 | OK（confirmed） | save/view/download 共通の `trace-sanitizer.ts` が secret/PII/raw body/unauthorized evidence を allowlist/hash/redaction し、sanitizer/graph tests が生値非保存を検証する |
+| 実装適合 | OK（confirmed） | persistence 前の sanitizer と view/download projection を unit test と service integration test が検証する |
 
 ## トレース
 
 - 後方: `FR-074`、`GAP-RD-018`、debug trace redaction 作業レポート。
-- 前方: trace visibility schema、save/export sanitizer、secret/unauthorized fixture tests。
+- 前方: `apps/api/src/rag/_shared/security/trace-sanitizer.ts` の persistence/view sanitizer。
+- 前方: `apps/api/src/rag/trace-sanitizer.test.ts` の raw field/secret/PII/unknown field の最小化・冪等性 test。
+- 前方: `apps/api/src/rag/memorag-service.test.ts` の通常応答 redacted trace persistence、debug trace download metadata、`formatDebugTraceJson` の view projection test。
+- `confirmed`: `MemoRagService` は保存前に `sanitizeDebugTraceForPersistence`、表示/download JSON に `sanitizeDebugTraceForView` を適用する。
+- `conflict`: 旧 Confidence `inferred` と実装適合 `confirmed` の内部不整合を、直接 unit/service evidence に基づき `confirmed` へ統一した。
+- `open_question`: なし。
