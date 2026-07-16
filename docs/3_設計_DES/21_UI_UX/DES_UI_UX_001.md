@@ -292,10 +292,10 @@ Checkboxes are checked only for evidence actually obtained.
 | --- | --- | --- |
 | mobile navigation automation completed; representative screen reader、400% browser zoom、safe-area/virtual-keyboard real-device evidence remains | `FR-094`, `SQ-016` | `tasks/do/20260714-issue-345-mobile-navigation.md`, `tasks/todo/20260714-issue-345-manual-a11y-evidence.md` |
 | representative target/risk/result feedback is automated for questions and admin alias operations; manual evidence remains | `FR-096`, `SQ-016`, `NFR-018` | `tasks/done/20260714-issue-345-risky-operation-feedback.md`, `tasks/done/20260714-issue-345-chat-assignee-journey.md`, `tasks/done/20260714-1011-admin-ui-governance-quality.md`, `tasks/todo/20260714-issue-345-manual-a11y-evidence.md` |
-| chat/assignee/requester-history automated journey implemented; representative screen-reader/zoom/real-device evidence remains | existing chat/question requirements, `FR-095`, `SQ-016` | `tasks/done/20260714-issue-345-chat-assignee-journey.md`, `tasks/todo/20260714-issue-345-manual-a11y-evidence.md`, `tasks/todo/20260714-issue-345-cross-screen-a11y-responsive.md` |
+| chat/assignee/requester-history automated journey implemented; representative screen-reader/zoom/real-device evidence remains | existing chat/question requirements, `FR-095`, `SQ-016` | `tasks/done/20260714-issue-345-chat-assignee-journey.md`, `tasks/todo/20260714-issue-345-manual-a11y-evidence.md`, `tasks/do/20260714-issue-345-cross-screen-a11y-responsive.md` |
 | admin alias governance/URL/cursor/reflow automation、shared security audit projection、active cutover 前の usage/cost shadow integrity は実装済み。manual a11y は未実施 | `FR-027`, `FR-096`〜`FR-098`, `SQ-016` | `tasks/done/20260714-1011-admin-ui-governance-quality.md`, `tasks/done/20260714-1011-admin-access-audit-state.md`, `tasks/done/20260714-1011-admin-usage-cost-integrity.md`, `tasks/todo/20260714-issue-345-manual-a11y-evidence.md` |
-| cross-screen a11y/responsive violations | `SQ-016` | `tasks/todo/20260714-issue-345-cross-screen-a11y-responsive.md` |
-| representative wording/token/primitive migration implemented; remaining cross-screen brand/layout color and manual/browser evidence | `NFR-017`, `SQ-016`, `NFR-018` | `tasks/done/20260714-issue-345-ui-language-primitives.md`, `tasks/todo/20260714-issue-345-cross-screen-a11y-responsive.md`, `tasks/do/20260714-issue-345-ui-automated-quality-gates.md`, `tasks/todo/20260714-issue-345-manual-a11y-evidence.md` |
+| cross-screen a11y/responsive Phase A matrix/audit実装中、remediation未完了 | `SQ-016` | `tasks/do/20260714-issue-345-cross-screen-a11y-responsive.md` |
+| representative wording/token/primitive migration implemented; remaining cross-screen brand/layout color and manual/browser evidence | `NFR-017`, `SQ-016`, `NFR-018` | `tasks/done/20260714-issue-345-ui-language-primitives.md`, `tasks/do/20260714-issue-345-cross-screen-a11y-responsive.md`, `tasks/do/20260714-issue-345-ui-automated-quality-gates.md`, `tasks/todo/20260714-issue-345-manual-a11y-evidence.md` |
 | required axe/mobile/visual/browser gate missing | `NFR-018` | `tasks/do/20260714-issue-345-ui-automated-quality-gates.md` |
 | manual screen-reader/zoom/real-device evidence missing | `SQ-016`, `NFR-018` | `tasks/todo/20260714-issue-345-manual-a11y-evidence.md` |
 
@@ -328,3 +328,12 @@ No proposed default is recorded as executed evidence until its task produces the
 - Scheduled scope: Firefox / WebKit の `@ui-quality` を週次と手動 dispatch で実行する。scheduled result は PR-required Chromium と別 job / result とし、未実行を pass に変換しない。
 - Evidence: Playwright HTML report、test-results、trace、screenshot、video を retention 14日で保存する。
 - Exclusion: automation は representative screen reader、実 browser zoom、touch / virtual keyboard、real-device の手動証跡を代替しない。
+
+## Cross-screen Phase A matrix / audit（2026-07-16）
+
+- `tools/web-inventory/ui-quality-matrix.json` は8 AppViews × `AC-SQ016-001`〜`008` のautomated / manual / overall statusを保持し、route、permission、persona、primary journeyはcanonical `ui-traceability.json` から結合する。
+- `ui-quality-matrix.mjs` はcanonical view/AC drift、status語彙、evidence path、manual evidenceなしのfalse pass、overall status derivationを検証し、`docs/generated/web-ui-quality-matrix.md` を生成する。
+- `cross-screen-audit.ts` はcomputed DOMからroot/nested overflow、accessible-name candidate、focus activation/obscuration candidate、24×24未満target candidate、reduced-motion残存、state semantics countを収集する。
+- `E2E-UI-CROSS-SCREEN-AUDIT-001` は最大権限personaで8 AppViews × 320 / 375 / 768 / 1280pxを走査し、1280pxではaxe serious / criticalもbaselineへ含め、Playwright artifactへJSONを添付する。
+- target-size、focus-obscuration、motionの静的・computed候補はWCAG例外や実操作の確認が必要なため、candidateだけで適合を断定しない。
+- Phase BはAppShell / RailNav、Phase C以降はfeature batchのremediationをownerとし、auth production filesとmanual evidence scopeはPhase Aで変更しない。

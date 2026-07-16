@@ -128,7 +128,7 @@
           "apps/web/src/features/questions/hooks/useQuestions.ts"
         ],
         "gapTasks": [
-          "tasks/todo/20260714-issue-345-cross-screen-a11y-responsive.md",
+          "tasks/do/20260714-issue-345-cross-screen-a11y-responsive.md",
           "tasks/todo/20260714-issue-345-manual-a11y-evidence.md"
         ]
       }
@@ -240,7 +240,7 @@
           "apps/web/src/shared/ui/OperationFeedback.tsx"
         ],
         "gapTasks": [
-          "tasks/todo/20260714-issue-345-cross-screen-a11y-responsive.md",
+          "tasks/do/20260714-issue-345-cross-screen-a11y-responsive.md",
           "tasks/todo/20260714-issue-345-manual-a11y-evidence.md"
         ]
       }
@@ -348,7 +348,7 @@
           "apps/web/src/shared/ui/OperationFeedback.tsx"
         ],
         "gapTasks": [
-          "tasks/todo/20260714-issue-345-cross-screen-a11y-responsive.md",
+          "tasks/do/20260714-issue-345-cross-screen-a11y-responsive.md",
           "tasks/todo/20260714-issue-345-manual-a11y-evidence.md"
         ]
       }
@@ -412,7 +412,7 @@
           "apps/web/src/features/favorites/components/FavoritesWorkspace.tsx"
         ],
         "gapTasks": [
-          "tasks/todo/20260714-issue-345-cross-screen-a11y-responsive.md",
+          "tasks/do/20260714-issue-345-cross-screen-a11y-responsive.md",
           "tasks/todo/20260714-issue-345-manual-a11y-evidence.md"
         ]
       }
@@ -17179,6 +17179,9 @@
           "AC-SQ016-001",
           "AC-SQ016-002",
           "AC-SQ016-003",
+          "AC-SQ016-004",
+          "AC-SQ016-005",
+          "AC-SQ016-006",
           "AC-SQ016-007",
           "AC-SQ016-008"
         ],
@@ -17249,6 +17252,14 @@
         "status": "implemented",
         "evidence": [
           "apps/web/e2e/visual-regression.spec.ts"
+        ]
+      },
+      {
+        "id": "E2E-UI-CROSS-SCREEN-AUDIT-001",
+        "status": "implemented",
+        "evidence": [
+          "apps/web/e2e/visual-regression.spec.ts",
+          "apps/web/e2e/cross-screen-audit.ts"
         ]
       },
       {

@@ -63,17 +63,17 @@ tasks:
       - npm run docs:api-code:check
 
   docs:web-inventory:
-    desc: Generate Markdown and JSON Web UI inventory
+    desc: Generate Web UI inventory and cross-screen quality matrix
     cmds:
       - npm run docs:web-inventory
 
   docs:web-inventory:check:
-    desc: Check generated Web UI inventory freshness and semantic trace references
+    desc: Check Web UI inventory, quality matrix freshness, and semantic trace references
     cmds:
       - npm run docs:web-inventory:check
 
   docs:web-trace:test:
-    desc: Test UI semantic trace validation and broken-reference classifications
+    desc: Test UI semantic trace and quality matrix validation classifications
     cmds:
       - npm run docs:web-trace:test
 
