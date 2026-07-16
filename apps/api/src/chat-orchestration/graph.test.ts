@@ -1094,7 +1094,7 @@ test("fixed workflow answers English ChatRAG VPN follow-up without refusal conta
 
 async function createTestDeps(): Promise<Dependencies> {
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-agent-test-"))
-  return {
+  return { ragGuardProfile: safeTestRagGuardProfile(),
     objectStore: new LocalObjectStore(dataDir),
     memoryVectorStore: new LocalVectorStore(dataDir, "memory-vectors.json"),
     evidenceVectorStore: new LocalVectorStore(dataDir, "evidence-vectors.json"),
@@ -1356,6 +1356,50 @@ function replayDiagnostics(candidateCount: number, deniedCandidateCount: number)
       semantic: 0,
       hybrid: 0,
       memory: 0
+    }
+  }
+}
+
+test("FR-089 orchestration rejects an injected unsafe profile before downstream access", async () => {
+  const deps = await createTestDeps()
+  let downstreamAccessed = false
+  const guardedObjectStore = new Proxy(deps.objectStore, {
+    get(target, property, receiver) {
+      downstreamAccessed = true
+      return Reflect.get(target, property, receiver)
+    }
+  })
+
+  await assert.rejects(
+    () => runChatOrchestration({
+      ...deps,
+      objectStore: guardedObjectStore,
+      ragGuardProfile: {
+        ...deps.ragGuardProfile,
+        guards: { ...deps.ragGuardProfile.guards, grounding: false }
+      }
+    }, { question: "must not reach the orchestration graph" }),
+    (error) => error instanceof Error
+      && error.name === "UnsafeRagDegradationProfileError"
+      && error.message.includes("grounding")
+  )
+  assert.equal(downstreamAccessed, false)
+})
+
+function safeTestRagGuardProfile(): Dependencies["ragGuardProfile"] {
+  return {
+    id: "test-safe-rag",
+    version: "test-safe-rag-v1",
+    guards: {
+      authentication: true,
+      authorization: true,
+      classification_usage: true,
+      prompt_injection: true,
+      tool_policy: true,
+      grounding: true,
+      citation: true,
+      output_secret: true,
+      trace_redaction: true
     }
   }
 }

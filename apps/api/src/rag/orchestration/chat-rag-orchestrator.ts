@@ -19,7 +19,7 @@ import { ProductionRagObservationProducer, bestEffortCapture } from "../quality-
 import { RESOURCE_OPERATION_AUTHORIZATION_POLICY_VERSION } from "../../security/resource-operation-authorization.js"
 import { tenantPartitionId } from "../../security/tenant-partition.js"
 import {
-  STANDARD_RAG_GUARD_PROFILE,
+  // The active guard profile is supplied by Dependencies, never by a module constant.
   assertSafeRagGuardProfile,
   measurePartialRuntimeRagGuards,
   type MandatoryRagGuard,
@@ -713,7 +713,7 @@ export async function runChatOrchestration(
   progress?: ProgressSink,
   securityResourceRefs: readonly string[] = []
 ): Promise<ChatOrchestrationResult> {
-  assertSafeRagGuardProfile(STANDARD_RAG_GUARD_PROFILE)
+  assertSafeRagGuardProfile(deps.ragGuardProfile)
   await assertRagSafetyInterlock({
     objectStore: deps.objectStore,
     runtimeProfileVersion: ragRuntimePolicy.profile.version,

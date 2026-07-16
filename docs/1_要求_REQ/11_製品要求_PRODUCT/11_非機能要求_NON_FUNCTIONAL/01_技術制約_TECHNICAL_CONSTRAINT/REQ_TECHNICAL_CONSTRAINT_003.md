@@ -116,3 +116,4 @@
 ## 関連文書
 
 - `docs/2_アーキテクチャ_ARC/21_重要決定_ADR/ARC_ADR_005.md`
+- `docs/3_設計_DES/01_高レベル設計_HLD/DES_HLD_002.md`

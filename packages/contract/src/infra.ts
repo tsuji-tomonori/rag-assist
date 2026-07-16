@@ -1,7 +1,10 @@
+import type { DeploymentEnvironment } from "./cors.js"
+
 export type BooleanEnv = "true" | "false"
 
 export type ApiRuntimeEnv = {
   NODE_ENV: "production" | "development" | "test"
+  DEPLOYMENT_ENVIRONMENT: DeploymentEnvironment
   USE_LOCAL_VECTOR_STORE: BooleanEnv
   MOCK_BEDROCK: BooleanEnv
   DOCS_BUCKET_NAME: string
@@ -45,6 +48,7 @@ export type ApiRuntimeEnv = {
   DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS: string
   RAG_MONITORING_REQUIRED: "1"
   RAG_SAFETY_STATE_TTL_SECONDS: string
+  RAG_GUARD_PROFILE_JSON: string
 }
 
 export type ApiFunctionRuntimeEnv = ApiRuntimeEnv & {

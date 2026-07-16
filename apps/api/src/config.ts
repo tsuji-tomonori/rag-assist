@@ -1,4 +1,9 @@
 import path from "node:path"
+import {
+  isProductionDeploymentEnvironment,
+  parseCorsAllowedOrigins,
+  parseDeploymentEnvironment
+} from "@memorag-mvp/contract/cors"
 import { config as loadDotEnv } from "dotenv"
 
 loadDotEnv({ path: path.resolve(process.cwd(), ".env") })
@@ -52,7 +57,16 @@ function requireProductionValue(name: string, value: string): void {
 const authEnabled = boolEnv("AUTH_ENABLED", isProduction)
 const benchmarkEvaluationEnabledRaw = process.env.BENCHMARK_EVALUATION_ENABLED
 const benchmarkEvaluationEnabled = boolEnv("BENCHMARK_EVALUATION_ENABLED", false)
-const corsAllowedOrigins = csvEnv("CORS_ALLOWED_ORIGINS", isProduction ? [] : ["*"])
+const deploymentEnvironment = parseDeploymentEnvironment(
+  process.env.DEPLOYMENT_ENVIRONMENT,
+  isProduction ? "prod" : "local"
+)
+const isProductionDeployment = isProductionDeploymentEnvironment(deploymentEnvironment)
+const corsAllowedOrigins = parseCorsAllowedOrigins(process.env.CORS_ALLOWED_ORIGINS, {
+  mode: isProductionDeployment ? "production" : "non-production",
+  requireSingleOrigin: isProduction || isProductionDeployment,
+  allowWildcard: !isProduction && !isProductionDeployment
+})
 const docsBucketName = process.env.DOCS_BUCKET_NAME ?? ""
 const favoritesTableName = process.env.FAVORITES_TABLE_NAME ?? ""
 const cognitoRegion = process.env.COGNITO_REGION ?? region
@@ -67,7 +81,6 @@ const localAuthAccountStatus = process.env.LOCAL_AUTH_ACCOUNT_STATUS ?? ""
 const localAuthTenantId = process.env.LOCAL_AUTH_TENANT_ID ?? ""
 
 if (isProduction && !authEnabled) throw new Error("AUTH_ENABLED must be true in production")
-if (isProduction && corsAllowedOrigins.length === 0) throw new Error("CORS_ALLOWED_ORIGINS is required in production")
 requireProductionValue("DOCS_BUCKET_NAME", docsBucketName)
 requireProductionValue("FAVORITES_TABLE_NAME", favoritesTableName)
 if (authEnabled) {
@@ -88,6 +101,7 @@ if (benchmarkEvaluationEnabled) {
 
 export const config = {
   nodeEnv,
+  deploymentEnvironment,
   region,
   port: numberEnv("PORT", 8787),
   authEnabled,
@@ -143,6 +157,7 @@ export const config = {
   defaultMemoryModelId: process.env.DEFAULT_MEMORY_MODEL_ID ?? process.env.DEFAULT_MODEL_ID ?? "amazon.nova-lite-v1:0",
   embeddingModelId: process.env.EMBEDDING_MODEL_ID ?? "amazon.titan-embed-text-v2:0",
   embeddingDimensions: numberEnv("EMBEDDING_DIMENSIONS", 1024),
+  ragGuardProfileJson: process.env.RAG_GUARD_PROFILE_JSON,
   ragProfileId: process.env.RAG_PROFILE_ID ?? "default",
   ragDomainPolicyId: process.env.RAG_DOMAIN_POLICY_ID ?? "default-answer-policy",
   ragAdaptiveRetrieval: boolEnv("RAG_ADAPTIVE_RETRIEVAL", false),

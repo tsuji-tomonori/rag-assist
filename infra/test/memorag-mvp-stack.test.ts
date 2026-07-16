@@ -5,11 +5,14 @@ import test from "node:test"
 import * as cdk from "aws-cdk-lib"
 import { Match, Template } from "aws-cdk-lib/assertions"
 import { APPLICATION_ROLES } from "@memorag-mvp/contract/access-control"
-import { MemoRagMvpStack } from "../lib/memorag-mvp-stack"
+import { MemoRagMvpStack, resolveDeployedCorsAllowedOrigin } from "../lib/memorag-mvp-stack"
 
 function synthesize(context?: Record<string, string>) {
   const app = new cdk.App({
-    context
+    context: {
+      corsAllowedOrigins: "http://localhost:5173",
+      ...context
+    }
   })
   const stack = new MemoRagMvpStack(app, "MemoRagMvpStackTest", {
     env: { account: "111111111111", region: "ap-northeast-1" },
@@ -167,7 +170,7 @@ test("implements the designed serverless resources", () => {
   template.hasResourceProperties("AWS::ApiGateway::GatewayResponse", {
     ResponseType: "DEFAULT_4XX",
     ResponseParameters: Match.objectLike({
-      "gatewayresponse.header.Access-Control-Allow-Origin": "'*'",
+      "gatewayresponse.header.Access-Control-Allow-Origin": "'http://localhost:5173'",
       "gatewayresponse.header.Access-Control-Allow-Headers": "'Content-Type, Authorization, Last-Event-ID'",
       "gatewayresponse.header.Access-Control-Allow-Methods": "'GET, POST, DELETE, OPTIONS'"
     })
@@ -175,7 +178,7 @@ test("implements the designed serverless resources", () => {
   template.hasResourceProperties("AWS::ApiGateway::GatewayResponse", {
     ResponseType: "DEFAULT_5XX",
     ResponseParameters: Match.objectLike({
-      "gatewayresponse.header.Access-Control-Allow-Origin": "'*'"
+      "gatewayresponse.header.Access-Control-Allow-Origin": "'http://localhost:5173'"
     })
   })
   template.hasResourceProperties("AWS::CloudFront::Distribution", {
@@ -269,13 +272,29 @@ test("implements the designed serverless resources", () => {
         AUTH_TENANT_ID: Match.anyValue(),
         BENCHMARK_EVALUATION_ENABLED: "true",
         BENCHMARK_EVALUATION_TENANT_ID: Match.anyValue(),
-        CORS_ALLOWED_ORIGINS: "*",
+        DEPLOYMENT_ENVIRONMENT: "dev",
+        CORS_ALLOWED_ORIGINS: "http://localhost:5173",
         COGNITO_USER_POOL_ID: Match.anyValue(),
         COGNITO_APP_CLIENT_ID: Match.anyValue(),
         DEBUG_DOWNLOAD_BUCKET_NAME: Match.anyValue(),
         DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS: "900",
         RAG_MONITORING_REQUIRED: "1",
         RAG_SAFETY_STATE_TTL_SECONDS: "600",
+        RAG_GUARD_PROFILE_JSON: JSON.stringify({
+          id: "standard-safe-rag",
+          version: "standard-safe-rag-v1",
+          guards: {
+            authentication: true,
+            authorization: true,
+            classification_usage: true,
+            prompt_injection: true,
+            tool_policy: true,
+            grounding: true,
+            citation: true,
+            output_secret: true,
+            trace_redaction: true
+          }
+        }),
         PDF_OCR_FALLBACK_ENABLED: "true",
         PDF_OCR_FALLBACK_TIMEOUT_MS: "45000"
       })
@@ -488,10 +507,17 @@ test("deploys a scheduled least-privilege revocation reconciliation worker", () 
 
 test("production monitoring requires an explicit quality and safety owner notification target", () => {
   assert.throws(
-    () => synthesize({ deploymentEnvironment: "prod" }),
+    () => synthesize({
+      deploymentEnvironment: "prod",
+      corsAllowedOrigins: "https://app.example.com"
+    }),
     /ragAlertTopicArn or ragAlertEmail/
   )
-  const template = synthesize({ deploymentEnvironment: "prod", ragAlertEmail: "rag-on-call@example.com" })
+  const template = synthesize({
+    deploymentEnvironment: "prod",
+    corsAllowedOrigins: "https://app.example.com",
+    ragAlertEmail: "rag-on-call@example.com"
+  })
   template.hasResourceProperties("AWS::SNS::Subscription", {
     Protocol: "email",
     Endpoint: "rag-on-call@example.com"
@@ -506,6 +532,49 @@ test("production monitoring requires an explicit quality and safety owner notifi
       })])
     })
   })
+})
+
+test("TC-003 deployed CORS configuration fails closed before synth", () => {
+  for (const value of [
+    undefined,
+    "",
+    " ",
+    "*",
+    "app.example.com",
+    "http://app.example.com",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://[::1]:5173",
+    "https://app.example.com/path",
+    "https://app.example.com,https://admin.example.com"
+  ]) {
+    assert.throws(
+      () => resolveDeployedCorsAllowedOrigin(value, "prod"),
+      /CORS_ALLOWED_ORIGINS/
+    )
+  }
+  assert.throws(
+    () => resolveDeployedCorsAllowedOrigin("*", "dev"),
+    /must not include \*/
+  )
+  assert.equal(
+    resolveDeployedCorsAllowedOrigin("http://localhost:5173", "dev"),
+    "http://localhost:5173"
+  )
+  assert.equal(
+    resolveDeployedCorsAllowedOrigin("https://app.example.com", "prod"),
+    "https://app.example.com"
+  )
+})
+
+test("production synth does not inherit the repository localhost CORS default", () => {
+  assert.throws(
+    () => synthesize({
+      deploymentEnvironment: "prod",
+      ragAlertEmail: "rag-on-call@example.com"
+    }),
+    /invalid origin/
+  )
 })
 
 test("stackProvidesDefaultSupportAssigneeGroupIdToApiFunctions", () => {
@@ -651,6 +720,14 @@ test("keeps CORS preflight routes unauthenticated", () => {
     assert.equal(method.AuthorizationType, "NONE")
     assert.equal(method.AuthorizerId, undefined)
     assert.equal(method.RequestValidatorId, undefined)
+    const integrationResponses = method.Integration?.IntegrationResponses ?? []
+    assert.ok(integrationResponses.length > 0)
+    for (const response of integrationResponses) {
+      assert.equal(
+        response.ResponseParameters?.["method.response.header.Access-Control-Allow-Origin"],
+        "'http://localhost:5173'"
+      )
+    }
   }
 
   const protectedMethods = methods.filter((method: any) => method.HttpMethod !== "OPTIONS")

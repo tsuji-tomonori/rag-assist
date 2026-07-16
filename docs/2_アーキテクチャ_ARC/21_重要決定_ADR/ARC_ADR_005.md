@@ -41,9 +41,26 @@ WebSocket API behaviorもAPI Gateway origin向けであるため、viewerの `Ho
 
 本番APIのCORSは、広いallowlistやwildcardでブラウザ導線を成立させる用途に使わない。本番ブラウザ導線はsame-origin前提とし、CORS allowlistはlocal、dev、preview環境に限定する。
 
+production のCORS設定はCloudFront public HTTPS origin 1件だけを exact origin として許可する。これは単一入口の帰結であり、複数production originをallowlistへ追加して入口分裂を維持しない。CDK context `corsAllowedOrigins` を唯一の入力とし、API Lambda、API Gateway preflight、default 4xx/5xx GatewayResponseへ同じ検証済みoriginを配布する。API Gatewayはrequest `Origin` を反射しない。
+
+`deploymentEnvironment=prod` または `production` では、unset、blank、wildcard、HTTP、malformed、複数origin、localhost/loopbackをsynth前に拒否する。deployed dev/preview/stagingもstatic GatewayResponseとの契約を一意にするためexact origin 1件とし、standalone local/test APIに限って複数の明示exact originまたは単独の明示wildcardを許可する。暗黙wildcard defaultは持たない。
+
+CloudFront `distributionDomainName` tokenをLambda environmentの自動defaultにはしない。後続の `/api/*` behaviorがREST API/Lambdaへ依存した際に、Lambdaからdistributionへの逆依存を作ってCloudFormation dependency cycleを生じ得るためである。production deployでは確定済みCloudFront public originをcontextへ明示する。
+
 認証はCognito Hosted UI + Authorization Code + PKCEを採用する。REST APIのJWT検証はAPI Gateway Cognito User Pool Authorizerで行い、業務認可はLambdaまたはapplication middlewareで実施する。
 
 WebSocketは長いJWTをqueryに直接持たせず、REST APIで短命ticketを発行し、API Gateway WebSocket APIの `$connect` Lambda authorizerでticketを検証する。
+
+## Migration Order
+
+1. CORS origin contractをAPI runtimeとCDKで共有し、production/deployed stackをfail-closedにする。
+2. CloudFront `/api/*` behavior、prefix rewrite、cache無効化、viewer `Host` 非転送を実装する。
+3. SPAのREST接続先を `/api/*` 相対pathへ切り替え、production bundleからdirect API originを除去する。
+4. Cognito Hosted UI + Authorization Code + PKCEとCloudFront callback routeを実装する。
+5. 短命・単回WebSocket ticketとCloudFront `/ws/*` behaviorを実装する。
+6. direct originを制限し、CORS wildcard 0、SPA direct origin 0、認証・認可・ログ相関を最終検証する。
+
+各段階は前段の自動/実環境検証を切替条件とし、後段未実装の間は `TC-003` 全体をVerified扱いにしない。詳細な責務、rollback条件、検証対応は `DES_HLD_002` を正とする。
 
 ## Options
 
@@ -94,6 +111,10 @@ WebSocket ticketは次を満たす。
 ## Related Requirements
 
 - `TC-003`: CloudFront単一入口と本番CORS最小化。
+
+## Related Design
+
+- `docs/3_設計_DES/01_高レベル設計_HLD/DES_HLD_002.md`: 単一入口への段階移行、CORS single source、failure timing、後続PR境界。
 
 ## References
 

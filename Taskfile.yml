@@ -92,8 +92,10 @@ tasks:
     desc: Run the Hono API locally with mock Bedrock and local vector store
     env:
       PORT: '{{.API_PORT}}'
+      CORS_ALLOWED_ORIGINS: 'http://localhost:5173'
       MOCK_BEDROCK: 'true'
       USE_LOCAL_VECTOR_STORE: 'true'
+      RAG_GUARD_PROFILE_JSON: '{"id":"standard-safe-rag","version":"standard-safe-rag-v1","guards":{"authentication":true,"authorization":true,"classification_usage":true,"prompt_injection":true,"tool_policy":true,"grounding":true,"citation":true,"output_secret":true,"trace_redaction":true}}'
       LOCAL_DATA_DIR: '.local-data'
     cmds:
       - npm run dev -w @memorag-mvp/api
