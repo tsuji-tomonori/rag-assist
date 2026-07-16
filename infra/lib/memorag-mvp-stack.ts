@@ -27,6 +27,12 @@ import * as cr from "aws-cdk-lib/custom-resources"
 import { NagSuppressions } from "cdk-nag"
 import type { Construct } from "constructs"
 import { APPLICATION_ROLES, COGNITO_SESSION_INVALID_AT_ATTRIBUTE_NAME } from "@memorag-mvp/contract/access-control"
+import {
+  isProductionDeploymentEnvironment,
+  parseCorsAllowedOrigins,
+  parseDeploymentEnvironment,
+  type DeploymentEnvironment
+} from "@memorag-mvp/contract/cors"
 import type { ApiFunctionRuntimeEnv, ApiRuntimeEnv } from "@memorag-mvp/contract/infra"
 
 export interface MemoRagMvpStackProps extends StackProps {
@@ -64,11 +70,32 @@ const standardRagGuardProfileJson = JSON.stringify({
   }
 })
 
+export function resolveDeployedCorsAllowedOrigin(
+  rawValue: string | undefined,
+  deploymentEnvironment: DeploymentEnvironment
+): string {
+  const origins = parseCorsAllowedOrigins(rawValue, {
+    mode: isProductionDeploymentEnvironment(deploymentEnvironment) ? "production" : "non-production",
+    requireSingleOrigin: true,
+    allowWildcard: false
+  })
+  const origin = origins[0]
+  if (!origin) throw new Error("CORS_ALLOWED_ORIGINS must contain exactly one origin")
+  return origin
+}
+
 export class MemoRagMvpStack extends Stack {
   constructor(scope: Construct, id: string, props?: MemoRagMvpStackProps) {
     super(scope, id, props)
 
-    const deploymentEnvironment = String(this.node.tryGetContext("deploymentEnvironment") ?? "dev")
+    const deploymentEnvironment = parseDeploymentEnvironment(
+      this.node.tryGetContext("deploymentEnvironment") as string | undefined,
+      "dev"
+    )
+    const corsAllowedOrigin = resolveDeployedCorsAllowedOrigin(
+      this.node.tryGetContext("corsAllowedOrigins") as string | undefined,
+      deploymentEnvironment
+    )
     const costCenter = String(this.node.tryGetContext("costCenter") ?? "memorag-mvp")
     const commonResourceTags = {
       ...defaultResourceTags,
@@ -427,6 +454,7 @@ export class MemoRagMvpStack extends Stack {
     })
     const apiEnvironment = {
       NODE_ENV: "production",
+      DEPLOYMENT_ENVIRONMENT: deploymentEnvironment,
       USE_LOCAL_VECTOR_STORE: "false",
       MOCK_BEDROCK: "false",
       DOCS_BUCKET_NAME: docsBucket.bucketName,
@@ -462,7 +490,7 @@ export class MemoRagMvpStack extends Stack {
       AUTH_TENANT_ID: cdk.Aws.ACCOUNT_ID,
       BENCHMARK_EVALUATION_ENABLED: "true",
       BENCHMARK_EVALUATION_TENANT_ID: `benchmark-${cdk.Aws.ACCOUNT_ID}`,
-      CORS_ALLOWED_ORIGINS: "*",
+      CORS_ALLOWED_ORIGINS: corsAllowedOrigin,
       COGNITO_REGION: cdk.Aws.REGION,
       COGNITO_USER_POOL_ID: userPool.userPoolId,
       COGNITO_APP_CLIENT_ID: userPoolClient.userPoolClientId,
@@ -933,7 +961,7 @@ export class MemoRagMvpStack extends Stack {
         })
       },
       defaultCorsPreflightOptions: {
-        allowOrigins: apigw.Cors.ALL_ORIGINS,
+        allowOrigins: [corsAllowedOrigin],
         allowMethods: ["GET", "POST", "DELETE", "OPTIONS"],
         allowHeaders: ["Content-Type", "Authorization", "Last-Event-ID"],
         maxAge: Duration.days(1)
@@ -941,7 +969,7 @@ export class MemoRagMvpStack extends Stack {
     })
     const restApiBaseUrl = `https://${restApi.restApiId}.execute-api.${cdk.Aws.REGION}.${cdk.Aws.URL_SUFFIX}/prod/`
     const restApiCorsGatewayResponseHeaders = {
-      "Access-Control-Allow-Origin": "'*'",
+      "Access-Control-Allow-Origin": `'${corsAllowedOrigin}'`,
       "Access-Control-Allow-Headers": "'Content-Type, Authorization, Last-Event-ID'",
       "Access-Control-Allow-Methods": "'GET, POST, DELETE, OPTIONS'"
     }

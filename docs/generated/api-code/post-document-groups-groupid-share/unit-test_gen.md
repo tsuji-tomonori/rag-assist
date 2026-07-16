@@ -13,7 +13,7 @@
 | 到達 symbol | service recalculates descendant canonical paths and local lock items on rename | `apps/api/src/rag/memorag-service.test.ts:705 (service recalculates descendant canonical paths and local lock items on rename)` |
 | 到達 symbol | service legacy metadata update ignores runtime parent mutation fields | `apps/api/src/rag/memorag-service.test.ts:732 (service legacy metadata update ignores runtime parent mutation fields)` |
 | 到達 symbol | service enforces document group management and search scope boundaries | `apps/api/src/rag/memorag-service.test.ts:805 (service enforces document group management and search scope boundaries)` |
-| 到達 symbol | document group create and legacy settings routes reject embedded ACL authority | `apps/api/src/security/access-control-policy.test.ts:279 (document group create and legacy settings routes reject embedded ACL authority)` |
+| 到達 symbol | document group create and legacy settings routes reject embedded ACL authority | `apps/api/src/security/access-control-policy.test.ts:289 (document group create and legacy settings routes reject embedded ACL authority)` |
 
 ## 2. 実装分岐から導くテスト要因
 

@@ -3840,6 +3840,7 @@
         "Environment": {
           "Variables": {
             "NODE_ENV": "production",
+            "DEPLOYMENT_ENVIRONMENT": "dev",
             "USE_LOCAL_VECTOR_STORE": "false",
             "MOCK_BEDROCK": "false",
             "DOCS_BUCKET_NAME": {
@@ -3928,7 +3929,7 @@
                 ]
               ]
             },
-            "CORS_ALLOWED_ORIGINS": "*",
+            "CORS_ALLOWED_ORIGINS": "http://localhost:5173",
             "COGNITO_REGION": {
               "Ref": "AWS::Region"
             },
@@ -4963,6 +4964,7 @@
         "Environment": {
           "Variables": {
             "NODE_ENV": "production",
+            "DEPLOYMENT_ENVIRONMENT": "dev",
             "USE_LOCAL_VECTOR_STORE": "false",
             "MOCK_BEDROCK": "false",
             "DOCS_BUCKET_NAME": {
@@ -5051,7 +5053,7 @@
                 ]
               ]
             },
-            "CORS_ALLOWED_ORIGINS": "*",
+            "CORS_ALLOWED_ORIGINS": "http://localhost:5173",
             "COGNITO_REGION": {
               "Ref": "AWS::Region"
             },
@@ -5646,6 +5648,7 @@
         "Environment": {
           "Variables": {
             "NODE_ENV": "production",
+            "DEPLOYMENT_ENVIRONMENT": "dev",
             "USE_LOCAL_VECTOR_STORE": "false",
             "MOCK_BEDROCK": "false",
             "DOCS_BUCKET_NAME": {
@@ -5734,7 +5737,7 @@
                 ]
               ]
             },
-            "CORS_ALLOWED_ORIGINS": "*",
+            "CORS_ALLOWED_ORIGINS": "http://localhost:5173",
             "COGNITO_REGION": {
               "Ref": "AWS::Region"
             },
@@ -6062,6 +6065,7 @@
         "Environment": {
           "Variables": {
             "NODE_ENV": "production",
+            "DEPLOYMENT_ENVIRONMENT": "dev",
             "USE_LOCAL_VECTOR_STORE": "false",
             "MOCK_BEDROCK": "false",
             "DOCS_BUCKET_NAME": {
@@ -6150,7 +6154,7 @@
                 ]
               ]
             },
-            "CORS_ALLOWED_ORIGINS": "*",
+            "CORS_ALLOWED_ORIGINS": "http://localhost:5173",
             "COGNITO_REGION": {
               "Ref": "AWS::Region"
             },
@@ -6432,6 +6436,7 @@
         "Environment": {
           "Variables": {
             "NODE_ENV": "production",
+            "DEPLOYMENT_ENVIRONMENT": "dev",
             "USE_LOCAL_VECTOR_STORE": "false",
             "MOCK_BEDROCK": "false",
             "DOCS_BUCKET_NAME": {
@@ -6520,7 +6525,7 @@
                 ]
               ]
             },
-            "CORS_ALLOWED_ORIGINS": "*",
+            "CORS_ALLOWED_ORIGINS": "http://localhost:5173",
             "COGNITO_REGION": {
               "Ref": "AWS::Region"
             },
@@ -6989,6 +6994,7 @@
         "Environment": {
           "Variables": {
             "NODE_ENV": "production",
+            "DEPLOYMENT_ENVIRONMENT": "dev",
             "USE_LOCAL_VECTOR_STORE": "false",
             "MOCK_BEDROCK": "false",
             "DOCS_BUCKET_NAME": {
@@ -7077,7 +7083,7 @@
                 ]
               ]
             },
-            "CORS_ALLOWED_ORIGINS": "*",
+            "CORS_ALLOWED_ORIGINS": "http://localhost:5173",
             "COGNITO_REGION": {
               "Ref": "AWS::Region"
             },
@@ -7410,6 +7416,7 @@
         "Environment": {
           "Variables": {
             "NODE_ENV": "production",
+            "DEPLOYMENT_ENVIRONMENT": "dev",
             "USE_LOCAL_VECTOR_STORE": "false",
             "MOCK_BEDROCK": "false",
             "DOCS_BUCKET_NAME": {
@@ -7498,7 +7505,7 @@
                 ]
               ]
             },
-            "CORS_ALLOWED_ORIGINS": "*",
+            "CORS_ALLOWED_ORIGINS": "http://localhost:5173",
             "COGNITO_REGION": {
               "Ref": "AWS::Region"
             },
@@ -7905,6 +7912,7 @@
         "Environment": {
           "Variables": {
             "NODE_ENV": "production",
+            "DEPLOYMENT_ENVIRONMENT": "dev",
             "USE_LOCAL_VECTOR_STORE": "false",
             "MOCK_BEDROCK": "false",
             "DOCS_BUCKET_NAME": {
@@ -7993,7 +8001,7 @@
                 ]
               ]
             },
-            "CORS_ALLOWED_ORIGINS": "*",
+            "CORS_ALLOWED_ORIGINS": "http://localhost:5173",
             "COGNITO_REGION": {
               "Ref": "AWS::Region"
             },
@@ -8809,6 +8817,7 @@
         "Environment": {
           "Variables": {
             "NODE_ENV": "production",
+            "DEPLOYMENT_ENVIRONMENT": "dev",
             "USE_LOCAL_VECTOR_STORE": "false",
             "MOCK_BEDROCK": "false",
             "DOCS_BUCKET_NAME": {
@@ -8897,7 +8906,7 @@
                 ]
               ]
             },
-            "CORS_ALLOWED_ORIGINS": "*",
+            "CORS_ALLOWED_ORIGINS": "http://localhost:5173",
             "COGNITO_REGION": {
               "Ref": "AWS::Region"
             },
@@ -9233,6 +9242,7 @@
         "Environment": {
           "Variables": {
             "NODE_ENV": "production",
+            "DEPLOYMENT_ENVIRONMENT": "dev",
             "USE_LOCAL_VECTOR_STORE": "false",
             "MOCK_BEDROCK": "false",
             "DOCS_BUCKET_NAME": {
@@ -9321,7 +9331,7 @@
                 ]
               ]
             },
-            "CORS_ALLOWED_ORIGINS": "*",
+            "CORS_ALLOWED_ORIGINS": "http://localhost:5173",
             "COGNITO_REGION": {
               "Ref": "AWS::Region"
             },
@@ -9627,6 +9637,7 @@
         "Environment": {
           "Variables": {
             "NODE_ENV": "production",
+            "DEPLOYMENT_ENVIRONMENT": "dev",
             "USE_LOCAL_VECTOR_STORE": "false",
             "MOCK_BEDROCK": "false",
             "DOCS_BUCKET_NAME": {
@@ -9715,7 +9726,7 @@
                 ]
               ]
             },
-            "CORS_ALLOWED_ORIGINS": "*",
+            "CORS_ALLOWED_ORIGINS": "http://localhost:5173",
             "COGNITO_REGION": {
               "Ref": "AWS::Region"
             },
@@ -10250,7 +10261,7 @@
       "UpdateReplacePolicy": "Retain",
       "DeletionPolicy": "Retain"
     },
-    "RestApiDeployment180EC5032ef45d9fea11e79ee1d6401947564acb": {
+    "RestApiDeployment180EC503908985d569540910826fb487110279bd": {
       "Type": "AWS::ApiGateway::Deployment",
       "Properties": {
         "Description": "Automatically created by the RestApi construct",
@@ -10339,7 +10350,7 @@
           "Format": "{\"requestId\":\"$context.requestId\",\"ip\":\"$context.identity.sourceIp\",\"user\":\"$context.identity.user\",\"requestTime\":\"$context.requestTime\",\"httpMethod\":\"$context.httpMethod\",\"resourcePath\":\"$context.resourcePath\",\"status\":\"$context.status\",\"protocol\":\"$context.protocol\",\"responseLength\":\"$context.responseLength\"}"
         },
         "DeploymentId": {
-          "Ref": "RestApiDeployment180EC5032ef45d9fea11e79ee1d6401947564acb"
+          "Ref": "RestApiDeployment180EC503908985d569540910826fb487110279bd"
         },
         "MethodSettings": [
           {
@@ -10396,7 +10407,8 @@
             {
               "ResponseParameters": {
                 "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,Last-Event-ID'",
-                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Origin": "'http://localhost:5173'",
+                "method.response.header.Vary": "'Origin'",
                 "method.response.header.Access-Control-Allow-Methods": "'GET,POST,DELETE,OPTIONS'",
                 "method.response.header.Access-Control-Max-Age": "'86400'"
               },
@@ -10413,6 +10425,7 @@
             "ResponseParameters": {
               "method.response.header.Access-Control-Allow-Headers": true,
               "method.response.header.Access-Control-Allow-Origin": true,
+              "method.response.header.Vary": true,
               "method.response.header.Access-Control-Allow-Methods": true,
               "method.response.header.Access-Control-Max-Age": true
             },
@@ -10564,7 +10577,8 @@
             {
               "ResponseParameters": {
                 "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,Last-Event-ID'",
-                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Origin": "'http://localhost:5173'",
+                "method.response.header.Vary": "'Origin'",
                 "method.response.header.Access-Control-Allow-Methods": "'GET,POST,DELETE,OPTIONS'",
                 "method.response.header.Access-Control-Max-Age": "'86400'"
               },
@@ -10581,6 +10595,7 @@
             "ResponseParameters": {
               "method.response.header.Access-Control-Allow-Headers": true,
               "method.response.header.Access-Control-Allow-Origin": true,
+              "method.response.header.Vary": true,
               "method.response.header.Access-Control-Allow-Methods": true,
               "method.response.header.Access-Control-Max-Age": true
             },
@@ -10726,7 +10741,8 @@
             {
               "ResponseParameters": {
                 "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,Last-Event-ID'",
-                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Origin": "'http://localhost:5173'",
+                "method.response.header.Vary": "'Origin'",
                 "method.response.header.Access-Control-Allow-Methods": "'GET,POST,DELETE,OPTIONS'",
                 "method.response.header.Access-Control-Max-Age": "'86400'"
               },
@@ -10743,6 +10759,7 @@
             "ResponseParameters": {
               "method.response.header.Access-Control-Allow-Headers": true,
               "method.response.header.Access-Control-Allow-Origin": true,
+              "method.response.header.Vary": true,
               "method.response.header.Access-Control-Allow-Methods": true,
               "method.response.header.Access-Control-Max-Age": true
             },
@@ -10888,7 +10905,8 @@
             {
               "ResponseParameters": {
                 "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,Last-Event-ID'",
-                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Origin": "'http://localhost:5173'",
+                "method.response.header.Vary": "'Origin'",
                 "method.response.header.Access-Control-Allow-Methods": "'GET,POST,DELETE,OPTIONS'",
                 "method.response.header.Access-Control-Max-Age": "'86400'"
               },
@@ -10905,6 +10923,7 @@
             "ResponseParameters": {
               "method.response.header.Access-Control-Allow-Headers": true,
               "method.response.header.Access-Control-Allow-Origin": true,
+              "method.response.header.Vary": true,
               "method.response.header.Access-Control-Allow-Methods": true,
               "method.response.header.Access-Control-Max-Age": true
             },
@@ -11050,7 +11069,8 @@
             {
               "ResponseParameters": {
                 "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,Last-Event-ID'",
-                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Origin": "'http://localhost:5173'",
+                "method.response.header.Vary": "'Origin'",
                 "method.response.header.Access-Control-Allow-Methods": "'GET,POST,DELETE,OPTIONS'",
                 "method.response.header.Access-Control-Max-Age": "'86400'"
               },
@@ -11067,6 +11087,7 @@
             "ResponseParameters": {
               "method.response.header.Access-Control-Allow-Headers": true,
               "method.response.header.Access-Control-Allow-Origin": true,
+              "method.response.header.Vary": true,
               "method.response.header.Access-Control-Allow-Methods": true,
               "method.response.header.Access-Control-Max-Age": true
             },
@@ -11104,7 +11125,8 @@
             {
               "ResponseParameters": {
                 "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,Last-Event-ID'",
-                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Origin": "'http://localhost:5173'",
+                "method.response.header.Vary": "'Origin'",
                 "method.response.header.Access-Control-Allow-Methods": "'GET,POST,DELETE,OPTIONS'",
                 "method.response.header.Access-Control-Max-Age": "'86400'"
               },
@@ -11121,6 +11143,7 @@
             "ResponseParameters": {
               "method.response.header.Access-Control-Allow-Headers": true,
               "method.response.header.Access-Control-Allow-Origin": true,
+              "method.response.header.Vary": true,
               "method.response.header.Access-Control-Allow-Methods": true,
               "method.response.header.Access-Control-Max-Age": true
             },
@@ -11263,7 +11286,8 @@
             {
               "ResponseParameters": {
                 "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,Last-Event-ID'",
-                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Origin": "'http://localhost:5173'",
+                "method.response.header.Vary": "'Origin'",
                 "method.response.header.Access-Control-Allow-Methods": "'GET,POST,DELETE,OPTIONS'",
                 "method.response.header.Access-Control-Max-Age": "'86400'"
               },
@@ -11280,6 +11304,7 @@
             "ResponseParameters": {
               "method.response.header.Access-Control-Allow-Headers": true,
               "method.response.header.Access-Control-Allow-Origin": true,
+              "method.response.header.Vary": true,
               "method.response.header.Access-Control-Allow-Methods": true,
               "method.response.header.Access-Control-Max-Age": true
             },
@@ -11425,7 +11450,8 @@
             {
               "ResponseParameters": {
                 "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,Last-Event-ID'",
-                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Origin": "'http://localhost:5173'",
+                "method.response.header.Vary": "'Origin'",
                 "method.response.header.Access-Control-Allow-Methods": "'GET,POST,DELETE,OPTIONS'",
                 "method.response.header.Access-Control-Max-Age": "'86400'"
               },
@@ -11442,6 +11468,7 @@
             "ResponseParameters": {
               "method.response.header.Access-Control-Allow-Headers": true,
               "method.response.header.Access-Control-Allow-Origin": true,
+              "method.response.header.Vary": true,
               "method.response.header.Access-Control-Allow-Methods": true,
               "method.response.header.Access-Control-Max-Age": true
             },
@@ -11689,7 +11716,8 @@
             {
               "ResponseParameters": {
                 "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,Last-Event-ID'",
-                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Origin": "'http://localhost:5173'",
+                "method.response.header.Vary": "'Origin'",
                 "method.response.header.Access-Control-Allow-Methods": "'GET,POST,DELETE,OPTIONS'",
                 "method.response.header.Access-Control-Max-Age": "'86400'"
               },
@@ -11706,6 +11734,7 @@
             "ResponseParameters": {
               "method.response.header.Access-Control-Allow-Headers": true,
               "method.response.header.Access-Control-Allow-Origin": true,
+              "method.response.header.Vary": true,
               "method.response.header.Access-Control-Allow-Methods": true,
               "method.response.header.Access-Control-Max-Age": true
             },
@@ -11848,7 +11877,8 @@
             {
               "ResponseParameters": {
                 "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,Last-Event-ID'",
-                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Origin": "'http://localhost:5173'",
+                "method.response.header.Vary": "'Origin'",
                 "method.response.header.Access-Control-Allow-Methods": "'GET,POST,DELETE,OPTIONS'",
                 "method.response.header.Access-Control-Max-Age": "'86400'"
               },
@@ -11865,6 +11895,7 @@
             "ResponseParameters": {
               "method.response.header.Access-Control-Allow-Headers": true,
               "method.response.header.Access-Control-Allow-Origin": true,
+              "method.response.header.Vary": true,
               "method.response.header.Access-Control-Allow-Methods": true,
               "method.response.header.Access-Control-Max-Age": true
             },
@@ -11902,7 +11933,8 @@
             {
               "ResponseParameters": {
                 "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,Last-Event-ID'",
-                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Origin": "'http://localhost:5173'",
+                "method.response.header.Vary": "'Origin'",
                 "method.response.header.Access-Control-Allow-Methods": "'GET,POST,DELETE,OPTIONS'",
                 "method.response.header.Access-Control-Max-Age": "'86400'"
               },
@@ -11919,6 +11951,7 @@
             "ResponseParameters": {
               "method.response.header.Access-Control-Allow-Headers": true,
               "method.response.header.Access-Control-Allow-Origin": true,
+              "method.response.header.Vary": true,
               "method.response.header.Access-Control-Allow-Methods": true,
               "method.response.header.Access-Control-Max-Age": true
             },
@@ -12061,7 +12094,8 @@
             {
               "ResponseParameters": {
                 "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,Last-Event-ID'",
-                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Origin": "'http://localhost:5173'",
+                "method.response.header.Vary": "'Origin'",
                 "method.response.header.Access-Control-Allow-Methods": "'GET,POST,DELETE,OPTIONS'",
                 "method.response.header.Access-Control-Max-Age": "'86400'"
               },
@@ -12078,6 +12112,7 @@
             "ResponseParameters": {
               "method.response.header.Access-Control-Allow-Headers": true,
               "method.response.header.Access-Control-Allow-Origin": true,
+              "method.response.header.Vary": true,
               "method.response.header.Access-Control-Allow-Methods": true,
               "method.response.header.Access-Control-Max-Age": true
             },
@@ -12220,7 +12255,8 @@
             {
               "ResponseParameters": {
                 "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,Last-Event-ID'",
-                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Origin": "'http://localhost:5173'",
+                "method.response.header.Vary": "'Origin'",
                 "method.response.header.Access-Control-Allow-Methods": "'GET,POST,DELETE,OPTIONS'",
                 "method.response.header.Access-Control-Max-Age": "'86400'"
               },
@@ -12237,6 +12273,7 @@
             "ResponseParameters": {
               "method.response.header.Access-Control-Allow-Headers": true,
               "method.response.header.Access-Control-Allow-Origin": true,
+              "method.response.header.Vary": true,
               "method.response.header.Access-Control-Allow-Methods": true,
               "method.response.header.Access-Control-Max-Age": true
             },
@@ -12379,7 +12416,8 @@
             {
               "ResponseParameters": {
                 "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,Last-Event-ID'",
-                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Origin": "'http://localhost:5173'",
+                "method.response.header.Vary": "'Origin'",
                 "method.response.header.Access-Control-Allow-Methods": "'GET,POST,DELETE,OPTIONS'",
                 "method.response.header.Access-Control-Max-Age": "'86400'"
               },
@@ -12396,6 +12434,7 @@
             "ResponseParameters": {
               "method.response.header.Access-Control-Allow-Headers": true,
               "method.response.header.Access-Control-Allow-Origin": true,
+              "method.response.header.Vary": true,
               "method.response.header.Access-Control-Allow-Methods": true,
               "method.response.header.Access-Control-Max-Age": true
             },
@@ -12538,7 +12577,8 @@
             {
               "ResponseParameters": {
                 "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,Last-Event-ID'",
-                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Origin": "'http://localhost:5173'",
+                "method.response.header.Vary": "'Origin'",
                 "method.response.header.Access-Control-Allow-Methods": "'GET,POST,DELETE,OPTIONS'",
                 "method.response.header.Access-Control-Max-Age": "'86400'"
               },
@@ -12555,6 +12595,7 @@
             "ResponseParameters": {
               "method.response.header.Access-Control-Allow-Headers": true,
               "method.response.header.Access-Control-Allow-Origin": true,
+              "method.response.header.Vary": true,
               "method.response.header.Access-Control-Allow-Methods": true,
               "method.response.header.Access-Control-Max-Age": true
             },
@@ -12697,7 +12738,8 @@
             {
               "ResponseParameters": {
                 "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,Last-Event-ID'",
-                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Origin": "'http://localhost:5173'",
+                "method.response.header.Vary": "'Origin'",
                 "method.response.header.Access-Control-Allow-Methods": "'GET,POST,DELETE,OPTIONS'",
                 "method.response.header.Access-Control-Max-Age": "'86400'"
               },
@@ -12714,6 +12756,7 @@
             "ResponseParameters": {
               "method.response.header.Access-Control-Allow-Headers": true,
               "method.response.header.Access-Control-Allow-Origin": true,
+              "method.response.header.Vary": true,
               "method.response.header.Access-Control-Allow-Methods": true,
               "method.response.header.Access-Control-Max-Age": true
             },
@@ -12856,7 +12899,8 @@
             {
               "ResponseParameters": {
                 "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,Last-Event-ID'",
-                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Origin": "'http://localhost:5173'",
+                "method.response.header.Vary": "'Origin'",
                 "method.response.header.Access-Control-Allow-Methods": "'GET,POST,DELETE,OPTIONS'",
                 "method.response.header.Access-Control-Max-Age": "'86400'"
               },
@@ -12873,6 +12917,7 @@
             "ResponseParameters": {
               "method.response.header.Access-Control-Allow-Headers": true,
               "method.response.header.Access-Control-Allow-Origin": true,
+              "method.response.header.Vary": true,
               "method.response.header.Access-Control-Allow-Methods": true,
               "method.response.header.Access-Control-Max-Age": true
             },
@@ -12910,7 +12955,8 @@
             {
               "ResponseParameters": {
                 "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,Last-Event-ID'",
-                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Origin": "'http://localhost:5173'",
+                "method.response.header.Vary": "'Origin'",
                 "method.response.header.Access-Control-Allow-Methods": "'GET,POST,DELETE,OPTIONS'",
                 "method.response.header.Access-Control-Max-Age": "'86400'"
               },
@@ -12927,6 +12973,7 @@
             "ResponseParameters": {
               "method.response.header.Access-Control-Allow-Headers": true,
               "method.response.header.Access-Control-Allow-Origin": true,
+              "method.response.header.Vary": true,
               "method.response.header.Access-Control-Allow-Methods": true,
               "method.response.header.Access-Control-Max-Age": true
             },
@@ -13069,7 +13116,8 @@
             {
               "ResponseParameters": {
                 "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,Last-Event-ID'",
-                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Origin": "'http://localhost:5173'",
+                "method.response.header.Vary": "'Origin'",
                 "method.response.header.Access-Control-Allow-Methods": "'GET,POST,DELETE,OPTIONS'",
                 "method.response.header.Access-Control-Max-Age": "'86400'"
               },
@@ -13086,6 +13134,7 @@
             "ResponseParameters": {
               "method.response.header.Access-Control-Allow-Headers": true,
               "method.response.header.Access-Control-Allow-Origin": true,
+              "method.response.header.Vary": true,
               "method.response.header.Access-Control-Allow-Methods": true,
               "method.response.header.Access-Control-Max-Age": true
             },
@@ -13231,7 +13280,8 @@
             {
               "ResponseParameters": {
                 "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,Last-Event-ID'",
-                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Origin": "'http://localhost:5173'",
+                "method.response.header.Vary": "'Origin'",
                 "method.response.header.Access-Control-Allow-Methods": "'GET,POST,DELETE,OPTIONS'",
                 "method.response.header.Access-Control-Max-Age": "'86400'"
               },
@@ -13248,6 +13298,7 @@
             "ResponseParameters": {
               "method.response.header.Access-Control-Allow-Headers": true,
               "method.response.header.Access-Control-Allow-Origin": true,
+              "method.response.header.Vary": true,
               "method.response.header.Access-Control-Allow-Methods": true,
               "method.response.header.Access-Control-Max-Age": true
             },
@@ -13390,7 +13441,8 @@
             {
               "ResponseParameters": {
                 "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,Last-Event-ID'",
-                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Origin": "'http://localhost:5173'",
+                "method.response.header.Vary": "'Origin'",
                 "method.response.header.Access-Control-Allow-Methods": "'GET,POST,DELETE,OPTIONS'",
                 "method.response.header.Access-Control-Max-Age": "'86400'"
               },
@@ -13407,6 +13459,7 @@
             "ResponseParameters": {
               "method.response.header.Access-Control-Allow-Headers": true,
               "method.response.header.Access-Control-Allow-Origin": true,
+              "method.response.header.Vary": true,
               "method.response.header.Access-Control-Allow-Methods": true,
               "method.response.header.Access-Control-Max-Age": true
             },
@@ -13444,7 +13497,8 @@
             {
               "ResponseParameters": {
                 "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,Last-Event-ID'",
-                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Origin": "'http://localhost:5173'",
+                "method.response.header.Vary": "'Origin'",
                 "method.response.header.Access-Control-Allow-Methods": "'GET,POST,DELETE,OPTIONS'",
                 "method.response.header.Access-Control-Max-Age": "'86400'"
               },
@@ -13461,6 +13515,7 @@
             "ResponseParameters": {
               "method.response.header.Access-Control-Allow-Headers": true,
               "method.response.header.Access-Control-Allow-Origin": true,
+              "method.response.header.Vary": true,
               "method.response.header.Access-Control-Allow-Methods": true,
               "method.response.header.Access-Control-Max-Age": true
             },
@@ -13585,7 +13640,7 @@
       "Type": "AWS::ApiGateway::GatewayResponse",
       "Properties": {
         "ResponseParameters": {
-          "gatewayresponse.header.Access-Control-Allow-Origin": "'*'",
+          "gatewayresponse.header.Access-Control-Allow-Origin": "'http://localhost:5173'",
           "gatewayresponse.header.Access-Control-Allow-Headers": "'Content-Type, Authorization, Last-Event-ID'",
           "gatewayresponse.header.Access-Control-Allow-Methods": "'GET, POST, DELETE, OPTIONS'"
         },
@@ -13599,7 +13654,7 @@
       "Type": "AWS::ApiGateway::GatewayResponse",
       "Properties": {
         "ResponseParameters": {
-          "gatewayresponse.header.Access-Control-Allow-Origin": "'*'",
+          "gatewayresponse.header.Access-Control-Allow-Origin": "'http://localhost:5173'",
           "gatewayresponse.header.Access-Control-Allow-Headers": "'Content-Type, Authorization, Last-Event-ID'",
           "gatewayresponse.header.Access-Control-Allow-Methods": "'GET, POST, DELETE, OPTIONS'"
         },

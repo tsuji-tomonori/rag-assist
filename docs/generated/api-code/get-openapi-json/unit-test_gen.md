@@ -11,9 +11,9 @@
 | route request | GET /openapi.json is the runtime OpenAPI source of truth | `apps/api/src/openapi-runtime-source.test.ts:16 (GET /openapi.json is the runtime OpenAPI source of truth)` |
 | route request | OpenAPI quality gate validates lifecycle metadata and generated Markdown freshness | `apps/api/src/openapi-runtime-source.test.ts:40 (OpenAPI quality gate validates lifecycle metadata and generated Markdown freshness)` |
 | route request | representative oRPC contract routes stay mapped to runtime OpenAPI operations | `apps/api/src/openapi-runtime-source.test.ts:57 (representative oRPC contract routes stay mapped to runtime OpenAPI operations)` |
-| route request | document share update documents conflict response in OpenAPI | `apps/api/src/security/access-control-policy.test.ts:414 (document share update documents conflict response in OpenAPI)` |
-| route request | document deletion owns the required reason/version request body and read routes do not | `apps/api/src/security/access-control-policy.test.ts:423 (document deletion owns the required reason/version request body and read routes do not)` |
-| route request | resource-group membership routes require the mutate feature, target full authority, CAS, and minimal errors | `apps/api/src/security/access-control-policy.test.ts:435 (resource-group membership routes require the mutate feature, target full authority, CAS, and minimal errors)` |
+| route request | document share update documents conflict response in OpenAPI | `apps/api/src/security/access-control-policy.test.ts:424 (document share update documents conflict response in OpenAPI)` |
+| route request | document deletion owns the required reason/version request body and read routes do not | `apps/api/src/security/access-control-policy.test.ts:433 (document deletion owns the required reason/version request body and read routes do not)` |
+| route request | resource-group membership routes require the mutate feature, target full authority, CAS, and minimal errors | `apps/api/src/security/access-control-policy.test.ts:445 (resource-group membership routes require the mutate feature, target full authority, CAS, and minimal errors)` |
 
 ## 2. 実装分岐から導くテスト要因
 
