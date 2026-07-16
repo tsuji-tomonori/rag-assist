@@ -1,6 +1,6 @@
 # Issue #358: FR-014 UNANSWERABLE policy の fail-closed 化
 
-- 状態: do
+- 状態: done（final-head CI の外部証跡は PR コメントで追記）
 - 対象: Issue #358 / FR-014 / AC-FR014-003〜006
 - ブランチ: `codex/issue-358-fr014-unanswerable-policy`
 - 起点: PR #375 final head `01ff8b75`（PR #369を含む）
@@ -27,7 +27,7 @@
 - [x] FR-014正本文書にlabelごとの分岐、再判定なし、将来の追加retrieval境界を明記する。
 - [ ] API targeted / full suite、lint、typecheck、docs checks、final-head GitHub Actionsを確認する。
 - [x] benchmark期待語句、QA sample固有値、dataset固有分岐をproduct runtimeへ追加しない。
-- [ ] 日本語draft PR、AC comment、self-review、task/report lifecycleを完了する。
+- [x] 日本語draft PR、AC comment、self-review、task/report lifecycleを完了する。
 - [x] merge / deploy / releaseを実施しない。
 
 ## 検証結果（PR 作成前）
@@ -42,6 +42,15 @@
 - `git diff --check`: 成功
 - `npm ci`: 成功（既存の8 vulnerabilitiesを報告。変更による追加とは確認していない）
 - `npm run docs:openapi:check` は sandbox の tsx IPC `EPERM` で実行不可。等価な `node --import tsx src/validate-openapi-docs.ts` を実行して成功。権限昇格は行っていない。
+
+## PR lifecycle
+
+- draft PR: #384
+- acceptance comment: https://github.com/tsuji-tomonori/rag-assist/pull/384#issuecomment-4994119708
+- self-review comment: https://github.com/tsuji-tomonori/rag-assist/pull/384#issuecomment-4994119687
+- semver: `semver:patch`（label付与前の初回checkは失敗、付与後の再実行は成功）
+- GitHub Appsは繰り返しタイムアウトしたため、`gh`へフォールバックした。
+- final-head CI: lifecycle commit push後に確認し、PR top-level commentへ記録する。
 
 ## 検証計画
 
