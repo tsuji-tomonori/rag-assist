@@ -4,7 +4,8 @@
 - Issue: #359 Phase 1b
 - branch: `codex/issue-359-web-root-shims`
 - base: `origin/main` / `e12abb07`
-- task: `tasks/do/20260716-1958-issue-359-web-root-auth-shims.md`
+- task: `tasks/done/20260716-1958-issue-359-web-root-auth-shims.md`
+- PR: #368 `https://github.com/tsuji-tomonori/rag-assist/pull/368`
 
 ## 受けた指示
 
@@ -74,6 +75,7 @@
 | `git diff --check` | pass | whitespace error 0 |
 | `npm run test:e2e -w @memorag-mvp/web -- e2e/visual-regression.spec.ts --grep 'ログイン画面\|チャット空状態'` | blocked / 未実施 | sandbox 内で `tsx` IPC socket `/tmp/tsx-1000/223.pipe` の `listen EPERM`。sandbox 外の実行承認待ちが長時間継続し中断された |
 | `npm run test:e2e:smoke -w @memorag-mvp/web` | 未実施 | 同じ local API 起動制約があるため成功扱いにしていない |
+| `git diff --exit-code origin/main -- apps/web/playwright.config.ts apps/web/package.json apps/api/package.json package.json` | pass | E2E 起動経路は main と差分0。今回差分外の sandbox 制約と確認 |
 
 ## 指示への fit 評価
 
@@ -87,3 +89,11 @@
 - `src/api.ts` と `api.test.ts` の feature/shared 分割は follow-up task で行う。
 - PR #338 の `useAppShellState*` 変更と auth type import 行が rebase 時に競合する可能性がある。挙動上の重複はない。
 - build の chunk-size warning と `npm install` が報告した dependency vulnerability は今回の import-only scope 以前からの既存事項で、本 task では変更していない。
+
+## PR lifecycle
+
+- 初回 commit `b8487594` を push した。
+- GitHub Apps の PR 作成は60秒 timeout し、同一 head の PR が存在しないことを確認してから `gh` fallback で PR #368 を作成した。
+- `semver:patch` label を設定した。
+- 日本語の受け入れ確認コメントとセルフレビューコメントを投稿した。
+- E2E/smoke の未達をコメントと PR 本文に残し、達成済みとは記載していない。
