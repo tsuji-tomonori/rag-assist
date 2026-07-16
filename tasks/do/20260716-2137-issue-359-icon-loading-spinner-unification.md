@@ -155,3 +155,12 @@ generated Web inventory
 - 本タスクで完了済み: 実装、全 consumer 移行、legacy guard、unit / coverage / semantic / docs / root CI、smoke E2E、strict base 比較。
 - 未達: full visual E2E success、task done、受け入れ条件の全項目完了。
 - recovery: PR #361 merge 後に最新 base へ追従し、full E2E と latest-head CI を再実行して task done を判定する。
+
+## PR lifecycle
+
+- draft stacked PR: [#378](https://github.com/tsuji-tomonori/rag-assist/pull/378)（base: `main`、stack: #367 → #373 → #378）
+- label: `semver:patch`
+- 受け入れ条件コメント: comment `4992946509`。達成 / 未達を日本語で明記し、判定は partially complete。
+- セルフレビューコメント: comment `4992946821`。差分固有の blocking / should-fix はなし。merge readiness は #361 / #367 / #373 dependency により blocked。
+- task は full visual E2E success 未達のため `do` を維持し、`tasks/done` へ移動しない。
+- 本 lifecycle 記録 commit 後の latest-head GitHub CI を監視し、結果は PR top-level comment に追記する。

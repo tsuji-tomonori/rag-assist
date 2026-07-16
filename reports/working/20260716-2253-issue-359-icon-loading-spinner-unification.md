@@ -5,7 +5,7 @@
 - ブランチ: `codex/issue-359-icon-loading-spinner-unification`
 - 起点: PR #373 final head `fab8471c2cd8fdb17d1478393ad6e7ae7213cd98`
 - 依存順: PR #367 → PR #373 → 本タスク PR
-- 状態: partially complete（PR #361 の visual tolerance merge dependency）
+- 状態: partially complete（draft PR #378、PR #361 の visual tolerance merge dependency）
 
 ## 受けた指示
 
@@ -61,7 +61,7 @@ Icon / LoadingSpinner の production entry を `shared/ui` に一本化し、互
 | 変更ファイル限定 pre-commit | 成功 |
 | GitHub E2E smoke | implementation head / strict base とも成功 |
 | GitHub E2E full | 両 head とも同一 6 visual snapshot mismatch、21 / 27 成功。PR #361 待ち |
-| latest-head GitHub CI | 未実施（PR lifecycle 後に確認予定） |
+| latest-head GitHub CI | 本レポート確定 commit 後に監視し、PR comment へ結果を記録 |
 
 ローカル Playwright の関連 6 tests は、`npx playwright test e2e/visual-regression.spec.ts --grep 'E2E-UI-(SEMANTIC-001|NAV-002|STATE-001)'` 実行時、test 開始前に `Error: listen EPERM: operation not permitted /tmp/tsx-1000/224.pipe` で Playwright webServer が起動できなかった。権限昇格は行わず、既存 `.github/workflows/e2e.yml` の GitHub-hosted smoke / full E2E を代替 evidence とする。
 
@@ -80,7 +80,8 @@ strict base `fab8471c` を同じ workflow / runner で比較した run [29505240
 
 ## 未対応・制約・リスク
 
-- draft PR、semver label、受け入れ条件コメント、セルフレビュー、latest-head CI は、このレポート更新後の lifecycle で完了させる。
+- draft stacked PR #378、`semver:patch`、日本語の受け入れ条件コメント（`4992946509`）、セルフレビュー（`4992946821`）を完了した。
+- 本レポート確定 commit 後の latest-head GitHub CI は監視し、結果を PR top-level comment に記録する。
 - full visual E2E success と task done は PR #361 の merge dependency。strict base と同一失敗で新変更起因ではないが、成功済みとして扱わない。
 - manual screen reader / 実機確認は未実施。unit / semantic / axe / mobile navigation / loading-state E2E を自動回帰 evidence とする。
 - `npm ci` は既存 8 vulnerabilities（low 2 / moderate 1 / high 5）を報告した。今回の primitive 移動とは独立しており、`npm audit fix` は行っていない。
