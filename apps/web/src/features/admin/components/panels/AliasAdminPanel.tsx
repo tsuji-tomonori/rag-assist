@@ -1,5 +1,5 @@
 import { type FormEvent, useEffect, useState } from "react"
-import { ConfirmDialog } from "../../../../shared/components/ConfirmDialog.js"
+import { ConfirmDialog } from "../../../../shared/ui/index.js"
 import {
   EmptyState,
   OperationFeedback,
@@ -313,11 +313,11 @@ export function AliasAdminPanel({
           title={commandDialogTitle(commandCandidate.command)}
           description="画面に表示した version と理由を API に送り、server が状態遷移を検証します。"
           details={[
-            `用語: ${commandCandidate.alias.term}`,
-            `現在の状態: ${aliasStatusPresentation(commandCandidate.alias.status).label}`,
-            `expected version: ${commandCandidate.alias.version}`,
-            `影響: ${commandImpact(commandCandidate.command)}`,
-            "回復条件: 最新状態を更新し、許可された明示的な遷移を理由付きで実行します"
+            { label: "用語", value: commandCandidate.alias.term },
+            { label: "現在の状態", value: aliasStatusPresentation(commandCandidate.alias.status).label },
+            { label: "expected version", value: String(commandCandidate.alias.version) },
+            { label: "影響", value: commandImpact(commandCandidate.command) },
+            { label: "回復条件", value: "最新状態を更新し、許可された明示的な遷移を理由付きで実行します" }
           ]}
           confirmLabel={commandLabel(commandCandidate.command)}
           tone={commandCandidate.command === "disable" ? "danger" : "warning"}
@@ -347,10 +347,10 @@ export function AliasAdminPanel({
           title={`${editCandidate.term}を更新しますか？`}
           description="変更内容、expected version、理由を server に送り、競合時は更新せず再取得を促します。"
           details={[
-            `変更前: ${editCandidate.term} → ${editCandidate.expansions.join("、")}`,
-            `変更後: ${editTerm.trim()} → ${parseExpansionList(editExpansions).join("、") || "未入力"}`,
-            `expected version: ${editCandidate.version}`,
-            "影響: 更新後も下書きとしてレビュー待ちになります"
+            { label: "変更前", value: `${editCandidate.term} → ${editCandidate.expansions.join("、")}` },
+            { label: "変更後", value: `${editTerm.trim()} → ${parseExpansionList(editExpansions).join("、") || "未入力"}` },
+            { label: "expected version", value: String(editCandidate.version) },
+            { label: "影響", value: "更新後も下書きとしてレビュー待ちになります" }
           ]}
           confirmLabel="更新"
           tone="warning"
@@ -390,10 +390,10 @@ export function AliasAdminPanel({
           title="承認済みの用語展開を公開しますか？"
           description="server がこのテナントの承認済み定義を選び、検索用の公開版を作成します。"
           details={[
-            `expected ledger version: ${page.version}`,
-            "対象: server が公開時点に承認済みと確認した同一テナントの定義",
-            "影響: 公開後の検索時用語展開が変わります",
-            "回復条件: 以前の公開版へ戻す UI/API は現時点で未提供です"
+            { label: "expected ledger version", value: String(page.version) },
+            { label: "対象", value: "server が公開時点に承認済みと確認した同一テナントの定義" },
+            { label: "影響", value: "公開後の検索時用語展開が変わります" },
+            { label: "回復条件", value: "以前の公開版へ戻す UI/API は現時点で未提供です" }
           ]}
           confirmLabel="公開"
           tone="warning"

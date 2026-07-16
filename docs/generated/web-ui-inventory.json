@@ -853,8 +853,8 @@
       "feature": "shared",
       "label": "共通",
       "screens": [],
-      "componentCount": 10,
-      "interactionCount": 10
+      "componentCount": 9,
+      "interactionCount": 8
     }
   ],
   "components": [
@@ -2029,24 +2029,6 @@
       "certainty": "inferred"
     },
     {
-      "file": "apps/web/src/shared/components/ConfirmDialog.tsx",
-      "feature": "shared",
-      "exports": [
-        "ConfirmDialog"
-      ],
-      "jsxUsages": [
-        "Button",
-        "dd",
-        "div",
-        "dl",
-        "dt",
-        "h2",
-        "p",
-        "section"
-      ],
-      "certainty": "confirmed"
-    },
-    {
       "file": "apps/web/src/shared/components/Icon.tsx",
       "feature": "shared",
       "exports": [
@@ -2106,8 +2088,9 @@
         "div",
         "dl",
         "dt",
-        "h3",
-        "p"
+        "h2",
+        "p",
+        "section"
       ],
       "certainty": "confirmed"
     },
@@ -16687,90 +16670,6 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/shared/components/ConfirmDialog.tsx:111:Button",
-      "file": "apps/web/src/shared/components/ConfirmDialog.tsx",
-      "line": 111,
-      "feature": "shared",
-      "component": "ConfirmDialog",
-      "element": "Button",
-      "isIntrinsic": false,
-      "label": "未推定",
-      "a11y": {
-        "accessibleName": "未推定",
-        "accessibleNameSource": "missing",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [
-          "disabled=busy"
-        ],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [
-        {
-          "name": "onClick",
-          "value": "onCancel"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "type",
-          "value": "button"
-        },
-        {
-          "name": "onClick",
-          "value": "onCancel"
-        },
-        {
-          "name": "disabled",
-          "value": "busy"
-        }
-      ],
-      "certainty": "unknown"
-    },
-    {
-      "id": "apps/web/src/shared/components/ConfirmDialog.tsx:112:Button",
-      "file": "apps/web/src/shared/components/ConfirmDialog.tsx",
-      "line": 112,
-      "feature": "shared",
-      "component": "ConfirmDialog",
-      "element": "Button",
-      "isIntrinsic": false,
-      "label": "未推定",
-      "a11y": {
-        "accessibleName": "未推定",
-        "accessibleNameSource": "missing",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [
-          "disabled=busy || confirmDisabled"
-        ],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [
-        {
-          "name": "onClick",
-          "value": "() => void confirm()"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "type",
-          "value": "button"
-        },
-        {
-          "name": "onClick",
-          "value": "() => void confirm()"
-        },
-        {
-          "name": "disabled",
-          "value": "busy || confirmDisabled"
-        }
-      ],
-      "certainty": "unknown"
-    },
-    {
       "id": "apps/web/src/shared/components/Icon.tsx:29:svg",
       "file": "apps/web/src/shared/components/Icon.tsx",
       "line": 29,
@@ -16820,17 +16719,17 @@
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/shared/ui/ConfirmDialog.tsx:108:Button",
+      "id": "apps/web/src/shared/ui/ConfirmDialog.tsx:142:Button",
       "file": "apps/web/src/shared/ui/ConfirmDialog.tsx",
-      "line": 108,
+      "line": 142,
       "feature": "shared",
       "component": "ConfirmDialog",
       "element": "Button",
       "isIntrinsic": false,
-      "label": "キャンセル",
+      "label": "未推定",
       "a11y": {
-        "accessibleName": "キャンセル",
-        "accessibleNameSource": "visible-text",
+        "accessibleName": "未推定",
+        "accessibleNameSource": "missing",
         "descriptionRefs": "-",
         "role": "-",
         "state": [
@@ -16859,12 +16758,12 @@
           "value": "busy"
         }
       ],
-      "certainty": "confirmed"
+      "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/shared/ui/ConfirmDialog.tsx:109:Button",
+      "id": "apps/web/src/shared/ui/ConfirmDialog.tsx:143:Button",
       "file": "apps/web/src/shared/ui/ConfirmDialog.tsx",
-      "line": 109,
+      "line": 143,
       "feature": "shared",
       "component": "ConfirmDialog",
       "element": "Button",

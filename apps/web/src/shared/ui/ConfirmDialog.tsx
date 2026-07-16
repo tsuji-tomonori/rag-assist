@@ -1,54 +1,75 @@
-import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react"
+import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react"
 import { Button } from "./Button.js"
+
+export type ConfirmDialogDetail = {
+  label: string
+  value: ReactNode
+}
 
 export function ConfirmDialog({
   title,
-  message,
-  rows,
-  confirmLabel,
+  description,
+  details = [],
+  tone = "danger",
+  confirmLabel = "実行",
+  cancelLabel = "キャンセル",
   loading = false,
   confirmDisabled = false,
   errorMessage,
-  danger = false,
+  children,
   onCancel,
-  onConfirm,
-  children
+  onConfirm
 }: {
   title: string
-  message: string
-  rows?: Array<{ label: string; value: string }>
-  confirmLabel: string
+  description: string
+  details?: ConfirmDialogDetail[]
+  tone?: "danger" | "warning"
+  confirmLabel?: string
+  cancelLabel?: string
   loading?: boolean
   confirmDisabled?: boolean
   errorMessage?: string | null
-  danger?: boolean
+  children?: ReactNode
   onCancel: () => void
   onConfirm: () => Promise<void> | void
-  children?: ReactNode
 }) {
-  const dialogRef = useRef<HTMLDivElement | null>(null)
+  const dialogRef = useRef<HTMLElement | null>(null)
   const cancelButtonRef = useRef<HTMLButtonElement | null>(null)
   const returnFocusRef = useRef<HTMLElement | null>(null)
   const [confirming, setConfirming] = useState(false)
+  const titleId = useId()
+  const descriptionId = useId()
+  const errorId = useId()
   const busy = loading || confirming
-  const descriptionId = "confirm-dialog-description"
-  const errorId = errorMessage ? "confirm-dialog-error" : undefined
 
   useEffect(() => {
     returnFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
-    cancelButtonRef.current?.focus()
+    if (cancelButtonRef.current?.disabled) dialogRef.current?.focus()
+    else cancelButtonRef.current?.focus()
     return () => {
-      returnFocusRef.current?.focus()
+      if (returnFocusRef.current?.isConnected) returnFocusRef.current.focus()
     }
   }, [])
 
   useEffect(() => {
     function onKeyDown(event: globalThis.KeyboardEvent) {
-      if (event.key === "Escape" && !busy) onCancel()
+      if (event.key !== "Escape" || busy) return
+      if (!dialogRef.current?.contains(document.activeElement)) return
+      event.preventDefault()
+      event.stopPropagation()
+      onCancel()
     }
     window.addEventListener("keydown", onKeyDown)
     return () => window.removeEventListener("keydown", onKeyDown)
   }, [busy, onCancel])
+
+  useEffect(() => {
+    if (!busy) return
+    const activeElement = document.activeElement
+    if (activeElement instanceof HTMLElement && dialogRef.current?.contains(activeElement)) {
+      dialogRef.current.focus()
+    }
+  }, [busy])
 
   async function confirm() {
     if (busy) return
@@ -60,12 +81,16 @@ export function ConfirmDialog({
     }
   }
 
-  function trapFocus(event: KeyboardEvent<HTMLDivElement>) {
+  function trapFocus(event: KeyboardEvent<HTMLElement>) {
     if (event.key !== "Tab") return
     const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
       'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
     )
-    if (!focusable || focusable.length === 0) return
+    if (!focusable || focusable.length === 0) {
+      event.preventDefault()
+      dialogRef.current?.focus()
+      return
+    }
     const first = focusable[0]
     const last = focusable[focusable.length - 1]
     if (!first || !last) return
@@ -78,39 +103,48 @@ export function ConfirmDialog({
     }
   }
 
+  const describedBy = errorMessage ? `${descriptionId} ${errorId}` : descriptionId
+
   return (
     <div className="confirm-dialog-backdrop" role="presentation">
-      <div
+      <section
         ref={dialogRef}
-        className="confirm-dialog"
+        className={`confirm-dialog ${tone}`}
         role="dialog"
         aria-modal="true"
-        aria-labelledby="confirm-dialog-title"
-        aria-describedby={errorId ? `${descriptionId} ${errorId}` : descriptionId}
+        aria-labelledby={titleId}
+        aria-describedby={describedBy}
         aria-busy={busy}
+        tabIndex={-1}
         onKeyDown={trapFocus}
       >
-        <h3 id="confirm-dialog-title">{title}</h3>
-        <p id={descriptionId}>{message}</p>
-        {rows && rows.length > 0 && (
-          <dl>
-            {rows.map((row) => (
-              <div key={row.label}>
-                <dt>{row.label}</dt>
-                <dd>{row.value}</dd>
-              </div>
-            ))}
-          </dl>
-        )}
-        {children}
-        {errorMessage && <p id={errorId} className="confirm-dialog-error" role="alert">{errorMessage}</p>}
+        <div className="confirm-dialog-body">
+          <h2 id={titleId}>{title}</h2>
+          <p id={descriptionId}>{description}</p>
+          {details.length > 0 && (
+            <dl>
+              {details.map((detail, index) => (
+                <div key={`${detail.label}-${index}`}>
+                  <dt>{detail.label}</dt>
+                  <dd>{detail.value}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+          {children}
+          {errorMessage && (
+            <p id={errorId} className="confirm-dialog-error" role="alert">
+              {errorMessage}
+            </p>
+          )}
+        </div>
         <div className="confirm-dialog-actions">
-          <Button ref={cancelButtonRef} type="button" onClick={onCancel} disabled={busy}>キャンセル</Button>
-          <Button type="button" variant={danger ? "danger" : "warning"} onClick={() => void confirm()} disabled={busy || confirmDisabled}>
+          <Button ref={cancelButtonRef} type="button" onClick={onCancel} disabled={busy}>{cancelLabel}</Button>
+          <Button type="button" variant={tone} onClick={() => void confirm()} disabled={busy || confirmDisabled}>
             {busy ? "処理中" : confirmLabel}
           </Button>
         </div>
-      </div>
+      </section>
     </div>
   )
 }

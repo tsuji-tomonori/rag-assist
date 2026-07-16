@@ -19,12 +19,11 @@
 
 | コンポーネント | 説明 | 役割 | ファイル | export | 使用 JSX 要素 |
 | --- | --- | --- | --- | --- | --- |
-| ConfirmDialog | ConfirmDialog は 共通 領域の 画面または画面内 UI コンポーネント です。単独画面ではなく、他の UI から利用されます。 | 画面または画面内 UI コンポーネント | apps/web/src/shared/components/ConfirmDialog.tsx | ConfirmDialog | Button, dd, div, dl, dt, h2, p, section |
 | Icon | Icon は 共通 領域の 画面または画面内 UI コンポーネント です。単独画面ではなく、他の UI から利用されます。 | 画面または画面内 UI コンポーネント | apps/web/src/shared/components/Icon.tsx | Icon | path, svg |
 | LoadingSpinner | LoadingSpinner は 共通 領域の 画面または画面内 UI コンポーネント です。単独画面ではなく、他の UI から利用されます。 | 画面または画面内 UI コンポーネント | apps/web/src/shared/components/LoadingSpinner.tsx | LoadingSpinner, LoadingStatus | LoadingSpinner, div, span |
 | Badge | Badge は 共通 領域の UI 構成要素 です。単独画面ではなく、他の UI から利用されます。 | UI 構成要素 | apps/web/src/shared/ui/Badge.tsx | Badge | span |
 | Button | Button は 共通 領域の UI 構成要素 です。単独画面ではなく、他の UI から利用されます。 | UI 構成要素 | apps/web/src/shared/ui/Button.tsx | Button | button |
-| ConfirmDialog | ConfirmDialog は 共通 領域の UI 構成要素 です。単独画面ではなく、他の UI から利用されます。 | UI 構成要素 | apps/web/src/shared/ui/ConfirmDialog.tsx | ConfirmDialog | Button, dd, div, dl, dt, h3, p |
+| ConfirmDialog | ConfirmDialog は 共通 領域の UI 構成要素 です。単独画面ではなく、他の UI から利用されます。 | UI 構成要素 | apps/web/src/shared/ui/ConfirmDialog.tsx | ConfirmDialog | Button, dd, div, dl, dt, h2, p, section |
 | EmptyState | EmptyState は 共通 領域の UI 構成要素 です。単独画面ではなく、他の UI から利用されます。 | UI 構成要素 | apps/web/src/shared/ui/EmptyState.tsx | EmptyState | div, span, strong |
 | OperationFeedback | OperationFeedback は 共通 領域の UI 構成要素 です。単独画面ではなく、他の UI から利用されます。 | UI 構成要素 | apps/web/src/shared/ui/OperationFeedback.tsx | OperationFeedback | FeedbackRow, StatusBadge, dd, div, dl, dt, header, p, section, span, strong |
 | ResourceStateBoundary | ResourceStateBoundary は 共通 領域の UI 構成要素 です。単独画面ではなく、他の UI から利用されます。 | UI 構成要素 | apps/web/src/shared/ui/ResourceState.tsx | ResourceStateBoundary, ResourceStatePanel | PartResultSummary, ResourceStatePanel, button, dd, div, dl, dt, p, span, strong, time |
@@ -52,12 +51,10 @@
 
 | コンポーネント | 要素 | ラベル | UI 説明 | 状態・補足 | ハンドラ | 場所 | 確度 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| ConfirmDialog | Button | 未推定 | Button 要素。静的解析では具体的な操作名を推定できません。 | 状態: disabled=busy | onClick=onCancel | apps/web/src/shared/components/ConfirmDialog.tsx:111 | unknown |
-| ConfirmDialog | Button | 未推定 | Button 要素。静的解析では具体的な操作名を推定できません。 | 状態: disabled=busy \|\| confirmDisabled | onClick=() => void confirm() | apps/web/src/shared/components/ConfirmDialog.tsx:112 | unknown |
 | Icon | svg | 未推定 | svg 要素。静的解析では具体的な操作名を推定できません。 | - | - | apps/web/src/shared/components/Icon.tsx:29 | unknown |
 | Button | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | - | - | apps/web/src/shared/ui/Button.tsx:19 | unknown |
-| ConfirmDialog | Button | キャンセル | 「キャンセル」を表す Button 要素。 | 状態: disabled=busy | onClick=onCancel | apps/web/src/shared/ui/ConfirmDialog.tsx:108 | confirmed |
-| ConfirmDialog | Button | 未推定 | Button 要素。静的解析では具体的な操作名を推定できません。 | 状態: disabled=busy \|\| confirmDisabled | onClick=() => void confirm() | apps/web/src/shared/ui/ConfirmDialog.tsx:109 | unknown |
+| ConfirmDialog | Button | 未推定 | Button 要素。静的解析では具体的な操作名を推定できません。 | 状態: disabled=busy | onClick=onCancel | apps/web/src/shared/ui/ConfirmDialog.tsx:142 | unknown |
+| ConfirmDialog | Button | 未推定 | Button 要素。静的解析では具体的な操作名を推定できません。 | 状態: disabled=busy \|\| confirmDisabled | onClick=() => void confirm() | apps/web/src/shared/ui/ConfirmDialog.tsx:143 | unknown |
 | ResourceStatePanel | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: aria-controls=state.target.regionId | onClick=onRetry | apps/web/src/shared/ui/ResourceState.tsx:179 | unknown |
 | ResourceStatePanel | button | 処理中 | 「処理中」を実行するボタン。 | 状態: aria-controls=state.target.regionId, disabled=true | - | apps/web/src/shared/ui/ResourceState.tsx:181 | confirmed |
 | ResourceStatePanel | button | 戻る | 「戻る」を実行するボタン。 | - | onClick=onBack | apps/web/src/shared/ui/ResourceState.tsx:182 | confirmed |

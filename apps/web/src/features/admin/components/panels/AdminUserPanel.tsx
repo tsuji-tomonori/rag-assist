@@ -1,5 +1,5 @@
 import { type FormEvent, useEffect, useMemo, useState } from "react"
-import { ConfirmDialog } from "../../../../shared/components/ConfirmDialog.js"
+import { ConfirmDialog } from "../../../../shared/ui/index.js"
 import {
   EmptyState,
   OperationFeedback,
@@ -399,20 +399,20 @@ function ManagedUserRow({
               ? "所有資源を後継管理者へ移管した後、このユーザーを恒久削除します。"
               : "所有資源がないことを確認済みです。このユーザーを恒久削除します。"}
           details={[
-            `ユーザー: ${user.displayName || user.email}`,
-            `メール: ${user.email}`,
-            `現在の状態: ${managedUserStatusLabel(user.status)}`,
+            { label: "ユーザー", value: user.displayName || user.email },
+            { label: "メール", value: user.email },
+            { label: "現在の状態", value: managedUserStatusLabel(user.status) },
             statusCandidate === "suspend"
-              ? "回復条件: 再開権限を持つ管理者が再開できます"
-              : "回復条件: 恒久削除後はこの画面から復元できません",
+              ? { label: "回復条件", value: "再開権限を持つ管理者が再開できます" }
+              : { label: "回復条件", value: "恒久削除後はこの画面から復元できません" },
             statusCandidate === "suspend"
-              ? "確認が必要な理由: 対象ユーザーの利用を直ちに停止するため"
-              : "確認が必要な理由: 所有資源と管理主体を失わないため",
+              ? { label: "確認が必要な理由", value: "対象ユーザーの利用を直ちに停止するため" }
+              : { label: "確認が必要な理由", value: "所有資源と管理主体を失わないため" },
             ...(statusCandidate === "delete" && deletionPreflight
               ? [
-                  `所有フォルダ: ${deletionPreflight.ownedResources.folders}`,
-                  `所有リソースグループ: ${deletionPreflight.ownedResources.resourceGroups}`,
-                  `所有文書: ${deletionPreflight.ownedResources.documents}`
+                  { label: "所有フォルダ", value: String(deletionPreflight.ownedResources.folders) },
+                  { label: "所有リソースグループ", value: String(deletionPreflight.ownedResources.resourceGroups) },
+                  { label: "所有文書", value: String(deletionPreflight.ownedResources.documents) }
                 ]
               : [])
           ]}
@@ -460,14 +460,14 @@ function ManagedUserRow({
           title="ロール割り当てを変更しますか？"
           description="変更前後の差分と監査に記録する理由を確認してから確定します。"
           details={[
-            `ユーザー: ${user.displayName || user.email}`,
-            `メール: ${user.email}`,
-            `変更前: ${formatGroupList(user.groups)}`,
-            `変更後: ${formatGroupList(nextGroups)}`,
-            `理由: ${roleReason.trim() || "未入力"}`,
-            "影響: 対象ユーザーの利用可能な管理・操作権限が変わります",
-            "回復条件: 最新 role set を確認し、理由付きで再変更できます",
-            "確認が必要な理由: 自己昇格や管理者不在を server guard で拒否する高権限操作のため"
+            { label: "ユーザー", value: user.displayName || user.email },
+            { label: "メール", value: user.email },
+            { label: "変更前", value: formatGroupList(user.groups) },
+            { label: "変更後", value: formatGroupList(nextGroups) },
+            { label: "理由", value: roleReason.trim() || "未入力" },
+            { label: "影響", value: "対象ユーザーの利用可能な管理・操作権限が変わります" },
+            { label: "回復条件", value: "最新 role set を確認し、理由付きで再変更できます" },
+            { label: "確認が必要な理由", value: "自己昇格や管理者不在を server guard で拒否する高権限操作のため" }
           ]}
           confirmLabel="変更"
           tone="warning"

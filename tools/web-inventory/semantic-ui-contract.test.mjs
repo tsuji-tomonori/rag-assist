@@ -64,20 +64,18 @@ test('status primitive exposes a non-color marker and representative views do no
 })
 
 test('confirmation dialogs share native focus semantics and semantic Button intents', async () => {
-  const [componentDialog, uiDialog, button] = await Promise.all([
-    read('apps/web/src/shared/components/ConfirmDialog.tsx'),
+  const [uiDialog, button] = await Promise.all([
     read('apps/web/src/shared/ui/ConfirmDialog.tsx'),
     read('apps/web/src/shared/ui/Button.tsx')
   ])
 
-  for (const dialog of [componentDialog, uiDialog]) {
-    assert.match(dialog, /role="dialog"/)
-    assert.match(dialog, /aria-modal="true"/)
-    assert.match(dialog, /aria-busy=\{busy\}/)
-    assert.match(dialog, /onKeyDown=\{trapFocus\}/)
-    assert.match(dialog, /<Button/)
-    assert.doesNotMatch(dialog, /confirm-dialog-primary/)
-  }
+  await assert.rejects(read('apps/web/src/shared/components/ConfirmDialog.tsx'), { code: 'ENOENT' })
+  assert.match(uiDialog, /role="dialog"/)
+  assert.match(uiDialog, /aria-modal="true"/)
+  assert.match(uiDialog, /aria-busy=\{busy\}/)
+  assert.match(uiDialog, /onKeyDown=\{trapFocus\}/)
+  assert.match(uiDialog, /<Button/)
+  assert.doesNotMatch(uiDialog, /confirm-dialog-primary/)
   assert.match(button, /"warning"/)
   assert.match(button, /"danger"/)
 })
