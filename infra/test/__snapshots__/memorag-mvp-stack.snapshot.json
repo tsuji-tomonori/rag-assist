@@ -2668,7 +2668,7 @@
           {
             "AttributeDataType": "Number",
             "Mutable": true,
-            "Name": "session_invalid_after"
+            "Name": "session_invalid_at"
           }
         ],
         "SmsVerificationMessage": "The verification code to your new account is {####}",
