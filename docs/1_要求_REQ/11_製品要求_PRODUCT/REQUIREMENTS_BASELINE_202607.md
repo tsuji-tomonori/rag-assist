@@ -120,7 +120,7 @@ SWEBOK v4.0a Chapter 1 に従い、要求は次を満たす粒度にする。
 - `FR-064`: read-only 共有資源の発見・選択
 - `FR-065`: 文書移動の両端認可
 - `FR-066`: 共有解除・失効・削除の deny-first 伝播
-- `FR-067`: 一時添付の所有者・会話・期限境界。active/expired/removed/revoked contextをtenant+user+sessionへ永続束縛し、保存・再読時にauthoritative manifestで再検証する。
+- `FR-067`: 一時添付の所有者・会話・期限境界。active/expired/removed/revoked contextをtenant+user+sessionへ永続束縛し、保存・検索scope正規化・回答/citation確定前にauthoritative manifestとcurrent authorizationで再検証する。
 - `FR-076`: 文書・フォルダー・resource group の操作別認可行列
 - `FR-081`: resource group membership integrity
 - `FR-085`: 共有 policy の optimistic concurrency と integrity

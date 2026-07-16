@@ -270,6 +270,7 @@ export type SearchScope = {
   documentIds?: string[]
   includeTemporary?: boolean
   temporaryScopeId?: string
+  temporaryScopeIds?: string[]
 }
 
 export type DocumentGroup = {
@@ -1175,6 +1176,23 @@ export type ChatResponsePayload = {
   debug?: DebugTrace
 }
 
+export type ChatConversationInput = {
+  conversationId: string
+  turnId?: string
+  turnIndex?: number
+  turns: Array<ConversationHistoryTurn & {
+    citations?: Array<Partial<Citation>>
+    createdAt?: string
+  }>
+  turnDependency?: string
+  state?: {
+    activeEntities?: string[]
+    activeDocuments?: string[]
+    activeTopics?: string[]
+    constraints?: string[]
+  }
+}
+
 export type ChatRunStatus = "queued" | "running" | "succeeded" | "failed" | "cancelled"
 
 export type ChatRun = {
@@ -1187,6 +1205,7 @@ export type ChatRun = {
   securityResourceRefs?: string[]
   question: string
   conversationHistory?: ConversationHistoryTurn[]
+  conversation?: ChatConversationInput
   clarificationContext?: ClarificationContext
   modelId: string
   embeddingModelId?: string

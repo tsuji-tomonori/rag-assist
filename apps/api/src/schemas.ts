@@ -1504,7 +1504,8 @@ export const SearchScopeSchema = z.object({
   groupIds: z.array(z.string().min(1)).max(20).optional(),
   documentIds: z.array(z.string().min(1)).max(100).optional(),
   includeTemporary: z.boolean().optional(),
-  temporaryScopeId: z.string().min(1).optional()
+  temporaryScopeId: z.string().min(1).optional(),
+  temporaryScopeIds: z.array(z.string().min(1)).max(20).optional()
 })
 
 export const ChatRequestSchema = z.object({
@@ -1533,6 +1534,7 @@ export const ChatRequestSchema = z.object({
 
 export const SearchRequestSchema = z.object({
   query: z.string().min(1).openapi({ example: "経費精算 承認条件" }),
+  conversationId: z.string().min(1).optional(),
   topK: z.number().int().min(1).max(ragRuntimePolicy.retrieval.searchRagMaxTopK).optional().openapi({ example: 10 }),
   lexicalTopK: z.number().int().min(0).max(ragRuntimePolicy.retrieval.searchRagMaxSourceTopK).optional().openapi({ example: 80 }),
   semanticTopK: z.number().int().min(0).max(ragRuntimePolicy.retrieval.searchRagMaxSourceTopK).optional().openapi({ example: 80 }),
@@ -1548,7 +1550,7 @@ export const SearchRequestSchema = z.object({
   scope: SearchScopeSchema.optional()
 })
 
-export const BenchmarkSearchRequestSchema = SearchRequestSchema.omit({ filters: true, scope: true }).extend({
+export const BenchmarkSearchRequestSchema = SearchRequestSchema.omit({ filters: true, scope: true, conversationId: true }).extend({
   suiteId: z.string().min(1).openapi({ example: "search-standard-v1" })
 }).strict()
 
@@ -1705,6 +1707,7 @@ export const ChatRunSchema = z.object({
   userGroups: z.array(z.string()).optional(),
   question: z.string(),
   conversationHistory: z.array(ConversationHistoryTurnSchema).optional(),
+  conversation: ConversationInputSchema.optional(),
   clarificationContext: ClarificationContextSchema.optional(),
   modelId: z.string(),
   embeddingModelId: z.string().optional(),

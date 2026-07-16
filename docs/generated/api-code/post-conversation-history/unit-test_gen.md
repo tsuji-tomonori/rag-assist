@@ -11,6 +11,7 @@
 | 到達 symbol | conversationHistoryList_includesOldFavoriteBeforeRecentNonFavorites | `apps/api/src/rag/memorag-service.test.ts:1686 (conversationHistoryList_includesOldFavoriteBeforeRecentNonFavorites)` |
 | 到達 symbol | favoriteCreateRechecksChatSessionOwner | `apps/api/src/rag/memorag-service.test.ts:1726 (favoriteCreateRechecksChatSessionOwner)` |
 | 到達 symbol | MT-TEMP-001/003/004 session context persists only authoritative owner-bound temporary evidence | `apps/api/src/search/temporary-attachment-boundary.test.ts:79 (MT-TEMP-001/003/004 session context persists only authoritative owner-bound temporary evidence)` |
+| 到達 symbol | MT-TEMP-001-006 chat run normalizes B1 context, preserves legacy scope, and rejects client-only or cross-owner carry | `apps/api/src/search/temporary-attachment-boundary.test.ts:135 (MT-TEMP-001-006 chat run normalizes B1 context, preserves legacy scope, and rejects client-only or cross-owner carry)` |
 
 ## 2. 実装分岐から導くテスト要因
 

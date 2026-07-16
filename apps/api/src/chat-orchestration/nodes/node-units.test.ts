@@ -2181,7 +2181,7 @@ test("traced node formats debug trace details for major agent updates", async ()
           contextText: "前回の文脈"
         }
       },
-      expected: /conversation=conv-1/
+      expected: /conversation=present/
     },
     {
       label: "normalize_query",

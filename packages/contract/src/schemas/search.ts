@@ -36,6 +36,7 @@ export const SafeDegradationDecisionSchema = z.object({
 
 export const SearchRequestSchema = z.object({
   query: z.string().min(1),
+  conversationId: z.string().min(1).optional(),
   topK: z.number().int().min(1).max(RAG_CONTRACT_LIMITS.maxSearchTopK).optional(),
   lexicalTopK: z.number().int().min(0).max(RAG_CONTRACT_LIMITS.maxSearchSourceTopK).optional(),
   semanticTopK: z.number().int().min(0).max(RAG_CONTRACT_LIMITS.maxSearchSourceTopK).optional(),

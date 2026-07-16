@@ -20,20 +20,20 @@
 | F002 | `POST /admin/usage/export handler` | if | `error` が `Error` の instance である、かつ `error.message` が "DEBUG_DOWNLOAD_BUCKET_NAME" を含む | `apps/api/src/routes/admin-routes.ts:666 (POST /admin/usage/export handler)` |
 | F003 | `POST /admin/usage/export handler` | if | `error` が `Error` の instance である、かつ `error.message` が "Usage accounting read path is not active" を含む | `apps/api/src/routes/admin-routes.ts:667 (POST /admin/usage/export handler)` |
 | F004 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| F005 | `MemoRagService.createAdminExportDownloadUrl` | if | `exportInput` が存在しない、または偽である、または `exportInput.reason` が存在しない、または偽である、または `exportInput.reason.trim()` が `exportInput.reason` と異なる | `apps/api/src/rag/memorag-service.ts:2211 (MemoRagService.createAdminExportDownloadUrl)` |
-| F006 | `MemoRagService.createAdminExportDownloadUrl` | if | `exportType` が `"audit_log"` と異なる、かつ `this.usageRolloutMode()` が `"active"` と異なる | `apps/api/src/rag/memorag-service.ts:2214 (MemoRagService.createAdminExportDownloadUrl)` |
-| F007 | `MemoRagService.createAdminExportDownloadUrl` | 三項条件 | `exportType` が `"audit_log"` と等しい | `apps/api/src/rag/memorag-service.ts:2224 (MemoRagService.createAdminExportDownloadUrl)` |
-| F008 | `MemoRagService.createAdminExportDownloadUrl` | 三項条件 | `exportType` が `"usage_summary"` と等しい | `apps/api/src/rag/memorag-service.ts:2224 (MemoRagService.createAdminExportDownloadUrl)` |
-| F009 | `MemoRagService.createAdminExportDownloadUrl` | 三項条件 | `exportType` が `"audit_log"` と等しい | `apps/api/src/rag/memorag-service.ts:2234 (MemoRagService.createAdminExportDownloadUrl)` |
-| F010 | `MemoRagService.createAdminExportDownloadUrl` | 三項条件 | `exportType` が `"usage_summary"` と等しい | `apps/api/src/rag/memorag-service.ts:2236 (MemoRagService.createAdminExportDownloadUrl)` |
-| F011 | `MemoRagService.createAdminExportDownloadUrl` | if | `config.debugDownloadBucketName` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:2242 (MemoRagService.createAdminExportDownloadUrl)` |
-| F012 | `MemoRagService.createAdminExportDownloadUrl` | if | `exportType` が `"audit_log"` と等しい | `apps/api/src/rag/memorag-service.ts:2243 (MemoRagService.createAdminExportDownloadUrl)` |
-| F013 | `MemoRagService.createAdminExportDownloadUrl` | if | `exportType` が `"usage_summary"` と等しい | `apps/api/src/rag/memorag-service.ts:2250 (MemoRagService.createAdminExportDownloadUrl)` |
-| F014 | `MemoRagService.createAdminExportDownloadUrl` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/rag/memorag-service.ts:2267 (MemoRagService.createAdminExportDownloadUrl)` |
-| F015 | `MemoRagService.createAdminExportDownloadUrl` | if | `exportIntent` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2268 (MemoRagService.createAdminExportDownloadUrl)` |
-| F016 | `MemoRagService.createAdminExportDownloadUrl` | if | `exportIntent` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2292 (MemoRagService.createAdminExportDownloadUrl)` |
-| F017 | `MemoRagService.createAdminExportDownloadUrl` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/rag/memorag-service.ts:2299 (MemoRagService.createAdminExportDownloadUrl)` |
-| F018 | `MemoRagService.createAdminExportDownloadUrl` | if | `exportIntent` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2300 (MemoRagService.createAdminExportDownloadUrl)` |
+| F005 | `MemoRagService.createAdminExportDownloadUrl` | if | `exportInput` が存在しない、または偽である、または `exportInput.reason` が存在しない、または偽である、または `exportInput.reason.trim()` が `exportInput.reason` と異なる | `apps/api/src/rag/memorag-service.ts:2212 (MemoRagService.createAdminExportDownloadUrl)` |
+| F006 | `MemoRagService.createAdminExportDownloadUrl` | if | `exportType` が `"audit_log"` と異なる、かつ `this.usageRolloutMode()` が `"active"` と異なる | `apps/api/src/rag/memorag-service.ts:2215 (MemoRagService.createAdminExportDownloadUrl)` |
+| F007 | `MemoRagService.createAdminExportDownloadUrl` | 三項条件 | `exportType` が `"audit_log"` と等しい | `apps/api/src/rag/memorag-service.ts:2225 (MemoRagService.createAdminExportDownloadUrl)` |
+| F008 | `MemoRagService.createAdminExportDownloadUrl` | 三項条件 | `exportType` が `"usage_summary"` と等しい | `apps/api/src/rag/memorag-service.ts:2225 (MemoRagService.createAdminExportDownloadUrl)` |
+| F009 | `MemoRagService.createAdminExportDownloadUrl` | 三項条件 | `exportType` が `"audit_log"` と等しい | `apps/api/src/rag/memorag-service.ts:2235 (MemoRagService.createAdminExportDownloadUrl)` |
+| F010 | `MemoRagService.createAdminExportDownloadUrl` | 三項条件 | `exportType` が `"usage_summary"` と等しい | `apps/api/src/rag/memorag-service.ts:2237 (MemoRagService.createAdminExportDownloadUrl)` |
+| F011 | `MemoRagService.createAdminExportDownloadUrl` | if | `config.debugDownloadBucketName` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:2243 (MemoRagService.createAdminExportDownloadUrl)` |
+| F012 | `MemoRagService.createAdminExportDownloadUrl` | if | `exportType` が `"audit_log"` と等しい | `apps/api/src/rag/memorag-service.ts:2244 (MemoRagService.createAdminExportDownloadUrl)` |
+| F013 | `MemoRagService.createAdminExportDownloadUrl` | if | `exportType` が `"usage_summary"` と等しい | `apps/api/src/rag/memorag-service.ts:2251 (MemoRagService.createAdminExportDownloadUrl)` |
+| F014 | `MemoRagService.createAdminExportDownloadUrl` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/rag/memorag-service.ts:2268 (MemoRagService.createAdminExportDownloadUrl)` |
+| F015 | `MemoRagService.createAdminExportDownloadUrl` | if | `exportIntent` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2269 (MemoRagService.createAdminExportDownloadUrl)` |
+| F016 | `MemoRagService.createAdminExportDownloadUrl` | if | `exportIntent` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2293 (MemoRagService.createAdminExportDownloadUrl)` |
+| F017 | `MemoRagService.createAdminExportDownloadUrl` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/rag/memorag-service.ts:2300 (MemoRagService.createAdminExportDownloadUrl)` |
+| F018 | `MemoRagService.createAdminExportDownloadUrl` | if | `exportIntent` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2301 (MemoRagService.createAdminExportDownloadUrl)` |
 
 ## 3. コード由来テストケース
 
@@ -47,32 +47,32 @@
 | TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:667 (POST /admin/usage/export handler)` |
 | TC007 | F004: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
 | TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC009 | F005: 条件成立 | `exportInput` が存在しない、または偽である、または `exportInput.reason` が存在しない、または偽である、または `exportInput.reason.trim()` が `exportInput.reason` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2211 (MemoRagService.createAdminExportDownloadUrl)` |
-| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2211 (MemoRagService.createAdminExportDownloadUrl)` |
-| TC011 | F006: 条件成立 | `exportType` が `"audit_log"` と異なる、かつ `this.usageRolloutMode()` が `"active"` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2214 (MemoRagService.createAdminExportDownloadUrl)` |
-| TC012 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2214 (MemoRagService.createAdminExportDownloadUrl)` |
-| TC013 | F007: 条件成立 | `exportType` が `"audit_log"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2224 (MemoRagService.createAdminExportDownloadUrl)` |
-| TC014 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2224 (MemoRagService.createAdminExportDownloadUrl)` |
-| TC015 | F008: 条件成立 | `exportType` が `"usage_summary"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2224 (MemoRagService.createAdminExportDownloadUrl)` |
-| TC016 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2224 (MemoRagService.createAdminExportDownloadUrl)` |
-| TC017 | F009: 条件成立 | `exportType` が `"audit_log"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2234 (MemoRagService.createAdminExportDownloadUrl)` |
-| TC018 | F009: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2234 (MemoRagService.createAdminExportDownloadUrl)` |
-| TC019 | F010: 条件成立 | `exportType` が `"usage_summary"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2236 (MemoRagService.createAdminExportDownloadUrl)` |
-| TC020 | F010: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2236 (MemoRagService.createAdminExportDownloadUrl)` |
-| TC021 | F011: 条件成立 | `config.debugDownloadBucketName` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2242 (MemoRagService.createAdminExportDownloadUrl)` |
-| TC022 | F011: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2242 (MemoRagService.createAdminExportDownloadUrl)` |
-| TC023 | F012: 条件成立 | `exportType` が `"audit_log"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2243 (MemoRagService.createAdminExportDownloadUrl)` |
-| TC024 | F012: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2243 (MemoRagService.createAdminExportDownloadUrl)` |
-| TC025 | F013: 条件成立 | `exportType` が `"usage_summary"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2250 (MemoRagService.createAdminExportDownloadUrl)` |
-| TC026 | F013: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2250 (MemoRagService.createAdminExportDownloadUrl)` |
-| TC027 | F014: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/rag/memorag-service.ts:2267 (MemoRagService.createAdminExportDownloadUrl)` |
-| TC028 | F015: 条件成立 | `exportIntent` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2268 (MemoRagService.createAdminExportDownloadUrl)` |
-| TC029 | F015: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2268 (MemoRagService.createAdminExportDownloadUrl)` |
-| TC030 | F016: 条件成立 | `exportIntent` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2292 (MemoRagService.createAdminExportDownloadUrl)` |
-| TC031 | F016: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2292 (MemoRagService.createAdminExportDownloadUrl)` |
-| TC032 | F017: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/rag/memorag-service.ts:2299 (MemoRagService.createAdminExportDownloadUrl)` |
-| TC033 | F018: 条件成立 | `exportIntent` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2300 (MemoRagService.createAdminExportDownloadUrl)` |
-| TC034 | F018: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2300 (MemoRagService.createAdminExportDownloadUrl)` |
+| TC009 | F005: 条件成立 | `exportInput` が存在しない、または偽である、または `exportInput.reason` が存在しない、または偽である、または `exportInput.reason.trim()` が `exportInput.reason` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2212 (MemoRagService.createAdminExportDownloadUrl)` |
+| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2212 (MemoRagService.createAdminExportDownloadUrl)` |
+| TC011 | F006: 条件成立 | `exportType` が `"audit_log"` と異なる、かつ `this.usageRolloutMode()` が `"active"` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2215 (MemoRagService.createAdminExportDownloadUrl)` |
+| TC012 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2215 (MemoRagService.createAdminExportDownloadUrl)` |
+| TC013 | F007: 条件成立 | `exportType` が `"audit_log"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2225 (MemoRagService.createAdminExportDownloadUrl)` |
+| TC014 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2225 (MemoRagService.createAdminExportDownloadUrl)` |
+| TC015 | F008: 条件成立 | `exportType` が `"usage_summary"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2225 (MemoRagService.createAdminExportDownloadUrl)` |
+| TC016 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2225 (MemoRagService.createAdminExportDownloadUrl)` |
+| TC017 | F009: 条件成立 | `exportType` が `"audit_log"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2235 (MemoRagService.createAdminExportDownloadUrl)` |
+| TC018 | F009: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2235 (MemoRagService.createAdminExportDownloadUrl)` |
+| TC019 | F010: 条件成立 | `exportType` が `"usage_summary"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2237 (MemoRagService.createAdminExportDownloadUrl)` |
+| TC020 | F010: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2237 (MemoRagService.createAdminExportDownloadUrl)` |
+| TC021 | F011: 条件成立 | `config.debugDownloadBucketName` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2243 (MemoRagService.createAdminExportDownloadUrl)` |
+| TC022 | F011: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2243 (MemoRagService.createAdminExportDownloadUrl)` |
+| TC023 | F012: 条件成立 | `exportType` が `"audit_log"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2244 (MemoRagService.createAdminExportDownloadUrl)` |
+| TC024 | F012: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2244 (MemoRagService.createAdminExportDownloadUrl)` |
+| TC025 | F013: 条件成立 | `exportType` が `"usage_summary"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2251 (MemoRagService.createAdminExportDownloadUrl)` |
+| TC026 | F013: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2251 (MemoRagService.createAdminExportDownloadUrl)` |
+| TC027 | F014: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/rag/memorag-service.ts:2268 (MemoRagService.createAdminExportDownloadUrl)` |
+| TC028 | F015: 条件成立 | `exportIntent` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2269 (MemoRagService.createAdminExportDownloadUrl)` |
+| TC029 | F015: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2269 (MemoRagService.createAdminExportDownloadUrl)` |
+| TC030 | F016: 条件成立 | `exportIntent` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2293 (MemoRagService.createAdminExportDownloadUrl)` |
+| TC031 | F016: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2293 (MemoRagService.createAdminExportDownloadUrl)` |
+| TC032 | F017: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/rag/memorag-service.ts:2300 (MemoRagService.createAdminExportDownloadUrl)` |
+| TC033 | F018: 条件成立 | `exportIntent` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2301 (MemoRagService.createAdminExportDownloadUrl)` |
+| TC034 | F018: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2301 (MemoRagService.createAdminExportDownloadUrl)` |
 | TC035 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC036 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC037 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

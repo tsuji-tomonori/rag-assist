@@ -48,6 +48,7 @@ import { buildReplayVersionManifest } from "../../../_shared/replay/replay-versi
 import { replaySourceSnapshotFromManifest } from "../../../_shared/replay/replay-source-snapshot.js"
 import { sanitizeDebugTraceForPersistence } from "../../../_shared/security/trace-sanitizer.js"
 import { UNTRUSTED_CONTENT_POLICY_VERSION } from "../../../_shared/security/untrusted-content-policy.js"
+import { temporaryScopeIds } from "../../../_shared/security/session-local-evidence-scope.js"
 import {
   readTenantManifest,
   readTenantManifestByKey,
@@ -57,6 +58,7 @@ import {
 
 export type SearchInput = {
   query: string
+  conversationId?: string
   topK?: number
   lexicalTopK?: number
   semanticTopK?: number
@@ -726,11 +728,12 @@ async function registerTemporaryAttachmentCleanupCandidates(
     const expiryTime = Date.parse(expiresAt)
     const expired = !Number.isFinite(expiryTime) || expiryTime <= now.getTime()
     const ownerSuspended = ownerUserId === user.userId && user.accountStatus !== "active"
-    const requestedScopeId = scope?.temporaryScopeId
+    const requestedScopeIds = temporaryScopeIds(scope)
+    const requestedScopeId = requestedScopeIds[0]
     const staleConversation = ownerUserId === user.userId
       && Boolean(requestedScopeId)
       && Boolean(scope?.includeTemporary || scope?.mode === "temporary")
-      && requestedScopeId !== temporaryScopeId
+      && !requestedScopeIds.includes(temporaryScopeId)
     if (!expired && !ownerSuspended && !staleConversation) continue
 
     const trigger = expired ? "expired" as const
@@ -1393,7 +1396,7 @@ function manifestMatchesScope(manifest: DocumentManifest, scope: SearchScope | u
   const metadata = manifest.metadata ?? {}
   const scopeType = stringValue(metadata.scopeType)
   const temporaryMatch = Boolean(
-    scope?.includeTemporary && scope.temporaryScopeId && stringValue(metadata.temporaryScopeId) === scope.temporaryScopeId
+    scope?.includeTemporary && temporaryScopeIds(scope).includes(stringValue(metadata.temporaryScopeId) ?? "")
   )
   if (!scope || scope.mode === "all" || !scope.mode) {
     if (scopeType !== "chat") return true
@@ -1409,7 +1412,7 @@ function manifestMatchesScope(manifest: DocumentManifest, scope: SearchScope | u
     return temporaryMatch || requested.has(manifest.documentId)
   }
   if (scope.mode === "temporary") {
-    return Boolean(scope.temporaryScopeId && stringValue(metadata.temporaryScopeId) === scope.temporaryScopeId)
+    return temporaryScopeIds(scope).includes(stringValue(metadata.temporaryScopeId) ?? "")
   }
   return true
 }
@@ -1433,7 +1436,7 @@ async function manifestMatchesScopeForUser(
   if (!scope || scope.mode !== "groups") return manifestMatchesScope(manifest, scope)
   const metadata = manifest.metadata ?? {}
   const temporaryMatch = Boolean(
-    scope.includeTemporary && scope.temporaryScopeId && stringValue(metadata.temporaryScopeId) === scope.temporaryScopeId
+    scope.includeTemporary && temporaryScopeIds(scope).includes(stringValue(metadata.temporaryScopeId) ?? "")
   )
   if (temporaryMatch) return true
   const requested = new Set(scope.groupIds ?? [])

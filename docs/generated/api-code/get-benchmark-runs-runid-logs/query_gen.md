@@ -8,14 +8,14 @@
 
 | # | CRUD/実行 | Target | Method | 自然言語での目的 | Caller | コード根拠 |
 | ---: | --- | --- | --- | --- | --- | --- |
-| 1 | 参照 | `this.deps.benchmarkRunStore` | `get` | `this.deps.benchmarkRunStore` に対して get を実行する。 | `MemoRagService.getBenchmarkCodeBuildLogText` | `apps/api/src/rag/memorag-service.ts:4769 (MemoRagService.getBenchmarkCodeBuildLogText)` |
+| 1 | 参照 | `this.deps.benchmarkRunStore` | `get` | `this.deps.benchmarkRunStore` に対して get を実行する。 | `MemoRagService.getBenchmarkCodeBuildLogText` | `apps/api/src/rag/memorag-service.ts:4780 (MemoRagService.getBenchmarkCodeBuildLogText)` |
 
 ## 外部サービス操作
 
 | # | CRUD/実行 | Target | Method | 自然言語での目的 | Caller | コード根拠 |
 | ---: | --- | --- | --- | --- | --- | --- |
 | 1 | 参照 | `service` | `getBenchmarkCodeBuildLogText` | `service` へ get benchmark code build log text を実行する。 | `GET /benchmark-runs/{runId}/logs handler` | `apps/api/src/routes/benchmark-routes.ts:244 (GET /benchmark-runs/{runId}/logs handler)` |
-| 2 | 参照 | `this.deps.codeBuildLogReader?` | `getText` | `this.deps.codeBuildLogReader?` へ get text を実行する。 | `MemoRagService.getBenchmarkCodeBuildLogText` | `apps/api/src/rag/memorag-service.ts:4772 (MemoRagService.getBenchmarkCodeBuildLogText)` |
+| 2 | 参照 | `this.deps.codeBuildLogReader?` | `getText` | `this.deps.codeBuildLogReader?` へ get text を実行する。 | `MemoRagService.getBenchmarkCodeBuildLogText` | `apps/api/src/rag/memorag-service.ts:4783 (MemoRagService.getBenchmarkCodeBuildLogText)` |
 
 ## 解析境界
 
