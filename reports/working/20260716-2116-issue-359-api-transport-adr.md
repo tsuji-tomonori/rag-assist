@@ -82,5 +82,13 @@ root `npm run ci` は未実施とする。変更はtask、ADR、reportのMarkdow
 - 全面移行時期、oRPC streaming、OpenAPI client generation比較、external consumer期限は未確定である。
 - dependency準備の `npm install --ignore-scripts` は既存の8 vulnerabilitiesを報告した。dependencyと `package-lock.json` は変更していない。
 - code behaviorを変更しないため、runtime smoke、API/Web/benchmark unit test、root CIは実施していない。
-- PR、受け入れ条件コメント、セルフレビュー、task done移動はcommit/push後に実施し、結果をtaskへ記録する。
+- Draft PR #371、`semver:patch` label、受け入れ条件コメント、セルフレビュー、task done移動を完了した。
+- GitHub AppsでPR作成・label・受け入れコメントを実施した。受け入れコメントは60秒超で中断したが投稿成功を確認し、以降の操作は`gh` fallbackを使用した。
 - merge、deploy、releaseは実施しない。
+
+## 9. PR lifecycle
+
+- Draft PR: https://github.com/tsuji-tomonori/rag-assist/pull/371
+- 受け入れ条件確認: https://github.com/tsuji-tomonori/rag-assist/pull/371#issuecomment-4991779015
+- セルフレビュー: https://github.com/tsuji-tomonori/rag-assist/pull/371#issuecomment-4991784752
+- 初回semver checkはlabel付与前にfailureとなり、`semver:patch`付与後のcheckはsuccessを確認した。
