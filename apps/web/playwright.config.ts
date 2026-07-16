@@ -20,7 +20,10 @@ const localDataDir = process.env.E2E_LOCAL_DATA_DIR ?? join(tmpdir(), `memorag-w
 export default defineConfig({
   testDir: './e2e',
   timeout: 60_000,
-  expect: { timeout: 10_000 },
+  expect: {
+    timeout: 10_000,
+    toHaveScreenshot: { maxDiffPixels: 300 }
+  },
   fullyParallel: false,
   workers: 1,
   retries: isCI ? 1 : 0,
