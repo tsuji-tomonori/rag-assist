@@ -78,7 +78,18 @@ Issue #359 Phase 1c として、参照ゼロを証明できる `IconButton` / `P
 
 ## 未対応・制約・リスク
 
-- PR 作成、受け入れ条件コメント、セルフレビュー、task done 移動は本レポート作成時点では後続工程。完了後に本節を更新する。
+- Draft PR #367 を作成し、受け入れ条件コメントとセルフレビューコメントを投稿した。全受け入れ条件を満たし、blocking 指摘なしと判定した。
+- GitHub Apps による PR 作成は 122 秒以上応答停止し、成功結果を取得できなかった。対象 head の PR が未作成であることを確認してから `gh` fallback で作成した。Apps 操作は成功扱いにしていない。
 - PR #338 と generated Web docs に競合可能性がある。製品ソースの意味的競合ではなく、統合順に応じた再生成で解消可能。
 - `npm ci` が報告した依存脆弱性 8 件と build の chunk size warning は本変更起因ではなく、Issue #359 Phase 1c の範囲外。
 - merge / deploy / release は実施しない。
+
+## PR lifecycle
+
+- Draft PR: https://github.com/tsuji-tomonori/rag-assist/pull/367
+- 第1コミット: `8114a8f9`
+- 受け入れ条件コメント: https://github.com/tsuji-tomonori/rag-assist/pull/367#issuecomment-4991174585
+- セルフレビューコメント: https://github.com/tsuji-tomonori/rag-assist/pull/367#issuecomment-4991174783
+- ラベル: `semver:patch`
+- PR 状態: draft（`gh pr view` による確認）
+- GitHub CI（第1コミット `8114a8f9`）: MemoRAG CI 成功、`semver:patch` 追加後の validate-semver-label 成功、promotion gate は仕様どおり skipped。ラベル追加前の validate-semver-label failure は後続 run で解消済み。
