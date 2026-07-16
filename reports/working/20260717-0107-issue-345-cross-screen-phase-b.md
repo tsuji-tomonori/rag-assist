@@ -44,6 +44,8 @@ Phase A evidence / fail matrixを確認し、AppShell / RailNav / target / focus
 - initial visual failure 5件はmuted foreground / 44px RailNav targetによる意図した差分だった。actual / expected / diffを比較し、layout/content欠損がないことを確認してLinux Chromium snapshotを更新した。
 - repair run `29515990630`はcross-screen auditを含む9 testをpassし、composite management visualのassignee snapshot差分だけでfailureになった。artifact `8382697984`、SHA-256 `ba773df0f420a702e0292511e326f199a416895cef84f96d98bbf9aa7a2110d2`のactual / diffを確認し、assignee 4-column desktop layoutと情報表示に欠損がないためsnapshotを更新した。
 - composite management visualは1画面のsnapshot failureで後続画面を未実行にしないよう、4 screenshotをsoft assertionへ変更した。soft failureもtest全体をfailureにするためgateを弱めず、次回artifactでbenchmark / adminを含む全差分を一括収集する。
+- collection run `29516346107`はcross-screen auditを含む9 testをpassし、soft assertionがbenchmark 3,387 pixels / admin 3,743 pixelsのvisual差分を同時に収集した。artifact `8382851928`、SHA-256 `e7083703b815ab525285124900c8d7610e01f19ce8c29746664cf38c4d41037c`のactual / diffを確認し、muted foregroundと44px RailNav / back targetによる意図した差分で、layout・content・操作の欠損がないため両snapshotを更新した。
+- 同artifactのcross-screen baseline schema v2は32 entries、root overflow 0、unresolved finding 0、axe serious / critical blocker 0、例外23件（`not_applicable` 16、`supported_scroll` 7）を記録した。全例外に要素・理由・owner・代替操作があり、owner内訳はshared `.sr-only` 12、chat装飾4、documents scroll6、benchmark input1だった。
 
 ## 成果物
 
