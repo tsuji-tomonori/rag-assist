@@ -1,6 +1,6 @@
 # dev RAG 品質 policy の承認反映と CD 自動準備
 
-- 状態: do
+- 状態: done
 - タスク種別: 修正
 
 ## 背景
@@ -60,16 +60,16 @@
 
 ## 受け入れ条件
 
-- [ ] `memorag-dev-rag-quality@2026-07-16.draft-1` に `approvedBy=tsuji-tomonori` と承認時刻が入り、全 gate の threshold 承認情報も同じ承認へ固定される。
-- [ ] workflow が GitHub variables / dispatch input の S3 URI を要求しない。
-- [ ] workflow が CloudFormation output `DocumentsBucketName` から docs bucket を自動解決する。
-- [ ] workflow が placeholder 解決済み policy snapshot と active policy を S3 upload し、その URI を自動設定する。
-- [ ] workflow が profile/version/version dimensions の一致する個別 observation のみを JSON array bundle にし、versioned S3 URI を自動設定する。
-- [ ] 必須 observation が不足する場合は値を補わず deploy を保留し、理由を workflow summary と artifact に残す。
-- [ ] observation が揃う場合は promotion gate が build / synth / deploy より前に実行され、fail を迂回できない。
-- [ ] CDK bootstrap / synth / deploy が policy と一致する version context を受け取る。
-- [ ] 対象テスト、lint/typecheck、docs validation、`git diff --check` が成功する。
-- [ ] 実 deploy と PR merge は実行せず、未実施として明記する。
+- [x] `memorag-dev-rag-quality@2026-07-16.draft-1` に `approvedBy=tsuji-tomonori` と承認時刻が入り、全 gate の threshold 承認情報も同じ承認へ固定される。
+- [x] workflow が GitHub variables / dispatch input の S3 URI を要求しない。
+- [x] workflow が CloudFormation output `DocumentsBucketName` から docs bucket を自動解決する。
+- [x] workflow が placeholder 解決済み policy snapshot と active policy を S3 upload し、その URI を自動設定する。
+- [x] workflow が profile/version/version dimensions の一致する個別 observation のみを JSON array bundle にし、versioned S3 URI を自動設定する。
+- [x] 必須 observation が不足する場合は値を補わず deploy を保留し、理由を workflow summary と artifact に残す。
+- [x] observation が揃う場合は promotion gate が build / synth / deploy より前に実行され、fail を迂回できない。
+- [x] CDK bootstrap / synth / deploy が policy と一致する version context を受け取る。
+- [x] 対象テスト、lint/typecheck、docs validation、`git diff --check` が成功する。
+- [x] 実 deploy と PR merge は実行せず、未実施として明記する。
 
 ## ドキュメント保守計画
 
