@@ -43,7 +43,7 @@
 | chat | AC-SQ016-006 | blocked | blocked | blocked | reduced-motion baselineとdevice evidence待ち |
 | chat | AC-SQ016-007 | blocked | blocked | blocked | content-state matrixのfeature evidence待ち |
 | chat | AC-SQ016-008 | not_applicable | blocked | blocked | manual required scopeは未実施 |
-| assignee | AC-SQ016-001 | blocked | blocked | blocked | computed reflow baselineと実browser zoom evidence待ち |
+| assignee | AC-SQ016-001 | fail | blocked | fail | CI baselineで768px時にsection.assignee-workspaceのroot overflow（scrollWidth 810 / clientWidth 768）を検出。実browser zoom evidenceは未実施 |
 | assignee | AC-SQ016-002 | blocked | blocked | blocked | focus candidate auditとkeyboard journey evidence待ち |
 | assignee | AC-SQ016-003 | blocked | blocked | blocked | axe/name-state baselineとscreen reader evidence待ち |
 | assignee | AC-SQ016-004 | blocked | blocked | blocked | computed/axe contrast baselineとmanual review待ち |
@@ -54,7 +54,7 @@
 | history | AC-SQ016-001 | blocked | blocked | blocked | computed reflow baselineと実browser zoom evidence待ち |
 | history | AC-SQ016-002 | blocked | blocked | blocked | focus candidate auditとkeyboard journey evidence待ち |
 | history | AC-SQ016-003 | blocked | blocked | blocked | axe/name-state baselineとscreen reader evidence待ち |
-| history | AC-SQ016-004 | blocked | blocked | blocked | computed/axe contrast baselineとmanual review待ち |
+| history | AC-SQ016-004 | fail | blocked | fail | CIの1280px axe baselineでp要素のserious color-contrastを検出。manual reviewは未実施 |
 | history | AC-SQ016-005 | blocked | blocked | blocked | target candidateの例外分類とremediation待ち |
 | history | AC-SQ016-006 | blocked | blocked | blocked | reduced-motion baselineとdevice evidence待ち |
 | history | AC-SQ016-007 | blocked | blocked | blocked | content-state matrixのfeature evidence待ち |
@@ -62,15 +62,15 @@
 | favorites | AC-SQ016-001 | blocked | blocked | blocked | computed reflow baselineと実browser zoom evidence待ち |
 | favorites | AC-SQ016-002 | blocked | blocked | blocked | focus candidate auditとkeyboard journey evidence待ち |
 | favorites | AC-SQ016-003 | blocked | blocked | blocked | axe/name-state baselineとscreen reader evidence待ち |
-| favorites | AC-SQ016-004 | blocked | blocked | blocked | computed/axe contrast baselineとmanual review待ち |
+| favorites | AC-SQ016-004 | fail | blocked | fail | CIの1280px axe baselineでp要素のserious color-contrastを検出。manual reviewは未実施 |
 | favorites | AC-SQ016-005 | blocked | blocked | blocked | target candidateの例外分類とremediation待ち |
 | favorites | AC-SQ016-006 | blocked | blocked | blocked | reduced-motion baselineとdevice evidence待ち |
 | favorites | AC-SQ016-007 | blocked | blocked | blocked | content-state matrixのfeature evidence待ち |
 | favorites | AC-SQ016-008 | not_applicable | blocked | blocked | manual required scopeは未実施 |
 | benchmark | AC-SQ016-001 | blocked | blocked | blocked | computed reflow baselineと実browser zoom evidence待ち |
-| benchmark | AC-SQ016-002 | blocked | blocked | blocked | focus candidate auditとkeyboard journey evidence待ち |
+| benchmark | AC-SQ016-002 | fail | blocked | fail | CIの1280px axe baselineで.benchmark-table-wrapのserious scrollable-region-focusableを検出。manual keyboard journeyは未実施 |
 | benchmark | AC-SQ016-003 | blocked | blocked | blocked | axe/name-state baselineとscreen reader evidence待ち |
-| benchmark | AC-SQ016-004 | blocked | blocked | blocked | computed/axe contrast baselineとmanual review待ち |
+| benchmark | AC-SQ016-004 | fail | blocked | fail | CIの1280px axe baselineでbenchmark mode label 2件のserious color-contrastを検出。manual reviewは未実施 |
 | benchmark | AC-SQ016-005 | blocked | blocked | blocked | target candidateの例外分類とremediation待ち |
 | benchmark | AC-SQ016-006 | blocked | blocked | blocked | reduced-motion baselineとdevice evidence待ち |
 | benchmark | AC-SQ016-007 | blocked | blocked | blocked | content-state matrixのfeature evidence待ち |
@@ -78,7 +78,7 @@
 | admin | AC-SQ016-001 | blocked | blocked | blocked | computed reflow baselineと実browser zoom evidence待ち |
 | admin | AC-SQ016-002 | blocked | blocked | blocked | focus candidate auditとkeyboard journey evidence待ち |
 | admin | AC-SQ016-003 | blocked | blocked | blocked | axe/name-state baselineとscreen reader evidence待ち |
-| admin | AC-SQ016-004 | blocked | blocked | blocked | computed/axe contrast baselineとmanual review待ち |
+| admin | AC-SQ016-004 | fail | blocked | fail | CIの1280px axe baselineで性能テストbutton内spanのserious color-contrastを検出。manual reviewは未実施 |
 | admin | AC-SQ016-005 | blocked | blocked | blocked | target candidateの例外分類とremediation待ち |
 | admin | AC-SQ016-006 | blocked | blocked | blocked | reduced-motion baselineとdevice evidence待ち |
 | admin | AC-SQ016-007 | blocked | blocked | blocked | content-state matrixのfeature evidence待ち |

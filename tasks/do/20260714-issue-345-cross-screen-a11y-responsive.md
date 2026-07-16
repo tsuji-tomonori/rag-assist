@@ -58,7 +58,7 @@
 - [x] harnessのunit testと代表Playwright auditを追加し、既存PR #361 UI quality gateと共存する。
 - [x] `SQ-016`、`DES_UI_UX_001`、task、作業レポートがPhase境界とevidence ownershipを同期する。
 - [x] targeted test、Web typecheck、docs check、pre-commit、`git diff --check`がpassする。
-- [ ] PR #361にstackしたdraft PRを作成し、日本語の受け入れ条件commentとセルフレビューcommentを残す。
+- [x] PR #361にstackしたdraft PRを作成し、日本語の受け入れ条件commentとセルフレビューcommentを残す。
 
 ### Phase A 検証状況
 
@@ -69,7 +69,11 @@
 - `npm run docs:web-inventory:check`: pass。
 - `task docs:check`: 初回は新規generated fileのprovenance marker不足を検出。generatorへ登録markerを追加・再生成後、全段pass。
 - `npm test -w @memorag-mvp/web`: 61 files / 442 tests pass。
-- targeted Playwright `E2E-UI-CROSS-SCREEN-AUDIT-001`: local実行はsandboxが `tsx` IPCとlocalhost `0.0.0.0:8787` listenを `EPERM` で拒否したため未完了。権限昇格は行わず、`--list` でChromium 1 testとして解決できることを確認し、browser baselineはdraft PR CIで検証する。
+- targeted Playwright `E2E-UI-CROSS-SCREEN-AUDIT-001`: local実行はsandboxが `tsx` IPCとlocalhost `0.0.0.0:8787` listenを `EPERM` で拒否したため権限昇格せず、`--list` でChromium 1 testとして解決できることを確認した。draft PR #381のWeb UI CI run `29510297571`では23,294msでpassし、artifact `8380363474` に32 entries（8画面×320/375/768/1280px）のbaselineを保存した。
+- CI baselineはcomputed serious 1件（assignee 768px root overflow）、axe serious rule 5件（history/favorites/benchmark/adminのcolor contrastとbenchmarkのscrollable region focus）を検出した。matrixの該当ACをfailへ更新し、Phase B/Cのremediation対象として残した。
+- candidate 64件（target-size 4件、nested overflow 60件）はWCAG例外または意図的scroll/truncationの分類前であり、blockedを維持した。
+- PR #381へ受け入れ条件comment `4993651815` とセルフレビューcomment `4993652363` をGitHub Appsで記録した。
+- MemoRAG CI run `29510297527` はAPI branch coverage 80.42%（目標85%）のみfailure。Phase AでAPI fileは変更しておらず、既存改善task `tasks/todo/20260712-coverage-api-c1-recovery.md` の未解決事項として記録し、PR全体をgreenとは扱わない。
 
 ## 実行計画
 
