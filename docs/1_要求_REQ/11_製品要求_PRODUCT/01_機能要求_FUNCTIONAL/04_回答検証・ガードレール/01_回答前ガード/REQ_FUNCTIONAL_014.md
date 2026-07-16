@@ -26,6 +26,9 @@
 - AC-FR014-004: 判定結果は debug trace または state から確認できること。
 - AC-FR014-005: `PARTIAL` の場合でも、質問へ直接必要な primary fact が検索済み evidence で支持され、missing / conflicting が secondary または inferred fact に限られる場合は、回答生成へ進めること。
 - AC-FR014-006: primary fact が missing または unresolved conflicting の場合は、`PARTIAL` でも回答生成前に拒否できること。
+- AC-FR014-007: `UNANSWERABLE` は prior heuristic、質問語との一致、supporting chunk の有無にかかわらず `isAnswerable=false`、定型回答不能、引用0件へ遷移し、回答生成を実行しないこと。
+- AC-FR014-008: `UNANSWERABLE` 判定の `label`、`confidence`、`reason`、missing / conflicting fact、supporting chunk は state / debug trace に保持し、判定を `PARTIAL` または `ANSWERABLE` として記録し直さないこと。
+- AC-FR014-009: 同じ検索済み evidence に対する再判定は行わないこと。false refusal 回復のため再判定が必要な場合は、追加検索で evidence set を変更した別 iteration とし、回数上限と各判定を trace できること。
 
 ## 要件の源泉・背景
 
@@ -35,7 +38,7 @@
 ## 要件の目的・意図
 
 - 目的: 資料から回答できない質問に回答しない品質を上げる。
-- 意図: Sufficient Context 型の判定を導入し、最終回答前の許可判定を明示する。
+- 意図: Sufficient Context 型の判定を導入し、最終回答前の許可判定を明示する。`PARTIAL` の限定継続と `UNANSWERABLE` の拒否を混同せず、同じ evidence への再judgeで拒否を上書きしない。
 - 区分: 機能要求。
 
 ## 要求属性
@@ -49,10 +52,10 @@
 | 種類 | 機能要求 |
 | 依存関係 | `selectedChunks`、`answerability` state、Bedrock text model |
 | 衝突 | LLM judge 呼び出しによる遅延とコスト増 |
-| 受け入れ基準 | `AC-FR014-001` から `AC-FR014-006` |
+| 受け入れ基準 | `AC-FR014-001` から `AC-FR014-009` |
 | 優先度 | S |
 | 安定性 | Medium |
-| 変更履歴 | 2026-05-01 初版、2026-05-07 primary fact 支持時の `PARTIAL` 継続条件を追加 |
+| 変更履歴 | 2026-05-01 初版、2026-05-07 primary fact 支持時の `PARTIAL` 継続条件を追加、2026-07-17 `UNANSWERABLE` fail-closed と再判定境界を明確化 |
 
 ## 妥当性確認
 

@@ -751,7 +751,7 @@
       "branchCount": 881,
       "projectedBranchCount": 51,
       "dataAccessCount": 88,
-      "relatedTestCount": 69
+      "relatedTestCount": 70
     },
     {
       "method": "DELETE",
@@ -972,7 +972,7 @@
       "branchCount": 890,
       "projectedBranchCount": 53,
       "dataAccessCount": 92,
-      "relatedTestCount": 74
+      "relatedTestCount": 75
     },
     {
       "method": "GET",
