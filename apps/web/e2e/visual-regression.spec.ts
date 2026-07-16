@@ -622,6 +622,18 @@ test.beforeEach(async ({ page }) => {
 test('ログイン画面の visual regression @visual', async ({ page }) => {
   await page.goto('/')
   await expect(page.getByRole('button', { name: 'サインイン' })).toBeVisible()
+  await page.evaluate(() => {
+    const overlay = document.createElement('div')
+    overlay.dataset.visualFailureProbe = 'intentional-expected-failure'
+    overlay.setAttribute('aria-hidden', 'true')
+    Object.assign(overlay.style, {
+      background: '#ff00ff',
+      inset: '0',
+      position: 'fixed',
+      zIndex: '2147483647'
+    })
+    document.body.append(overlay)
+  })
   await expect(page).toHaveScreenshot('login.png', { fullPage: true, animations: 'disabled' })
 })
 
