@@ -5,7 +5,15 @@ import { defineConfig, devices } from '@playwright/test'
 
 const isCI = !!process.env.CI
 const scenario = process.env.E2E_SCENARIO ?? 'all'
-const grep = scenario === 'smoke' ? /@smoke/ : undefined
+const grep =
+  scenario === 'smoke'
+    ? /@smoke/
+    : scenario === 'ui-quality'
+      ? /@ui-quality|@mobile-required|@visual/
+      : scenario === 'cross-browser'
+        ? /@ui-quality/
+        : undefined
+const crossBrowser = process.env.E2E_CROSS_BROWSER === '1'
 const systemChrome = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ?? (existsSync('/usr/bin/google-chrome') ? '/usr/bin/google-chrome' : undefined)
 const localDataDir = process.env.E2E_LOCAL_DATA_DIR ?? join(tmpdir(), `memorag-web-e2e-${process.pid}`)
 
@@ -21,7 +29,8 @@ export default defineConfig({
   use: {
     baseURL: 'http://127.0.0.1:4173',
     trace: 'on-first-retry',
-    launchOptions: systemChrome ? { executablePath: systemChrome, args: ['--no-sandbox'] } : undefined
+    screenshot: 'only-on-failure',
+    video: 'retain-on-failure'
   },
   webServer: [
     {
@@ -37,5 +46,19 @@ export default defineConfig({
       timeout: 120_000
     }
   ],
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }]
+  projects: [
+    {
+      name: 'chromium',
+      use: {
+        ...devices['Desktop Chrome'],
+        launchOptions: systemChrome ? { executablePath: systemChrome, args: ['--no-sandbox'] } : undefined
+      }
+    },
+    ...(crossBrowser
+      ? [
+          { name: 'firefox-scheduled', use: { ...devices['Desktop Firefox'] } },
+          { name: 'webkit-scheduled', use: { ...devices['Desktop Safari'] } }
+        ]
+      : [])
+  ]
 })
