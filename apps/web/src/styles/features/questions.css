@@ -57,7 +57,7 @@
 }
 
 .assignee-toolbar label span {
-  color: var(--color-text-muted);
+  color: var(--color-text-muted-strong);
   font-size: 12px;
   font-weight: 900;
 }
@@ -245,7 +245,7 @@
 .question-kanban-card > span:not(.kanban-card-title),
 .question-kanban-card time,
 .kanban-empty {
-  color: var(--color-text-muted);
+  color: var(--color-text-muted-strong);
   font-size: 12px;
   font-weight: 800;
 }
