@@ -1,6 +1,6 @@
 # Benchmark pipeline contracts
 
-`benchmarks/` は、RAG benchmark を品質ゲートとして実行するための入力定義と共通 I/F を置く場所です。既存の `benchmark/` workspace は互換 runner として維持し、このツリーでは suite、corpus、case、run spec、promotion gate、artifact の責務分離を明示します。
+`benchmark/` は、RAG benchmark runner と、品質ゲートとして実行する suite 入力定義・共通 I/F の正本です。この workspace では suite、corpus、case、run spec、promotion gate、artifact の責務分離を明示します。
 
 ## 共通論理パイプライン
 
@@ -19,7 +19,7 @@ prepare_dataset
 ## ディレクトリ
 
 ```text
-benchmarks/
+benchmark/
   _shared/
     schemas/
     scripts/
@@ -38,15 +38,14 @@ benchmarks/
       expected/
       fixtures/
 
-artifacts/
-  benchmarks/
+artifacts/benchmarks/
 ```
 
-`benchmarks/suites/<useCase>/<suiteId>/` を 1 つの benchmark 単位にします。`suiteId` は `suite.json`、`corpus.json`、`benchmark.run.json`、`cases.jsonl`、artifact path で同じ値を使います。
+`benchmark/suites/<useCase>/<suiteId>/` を 1 つの benchmark 単位にします。`suiteId` は `suite.json`、`corpus.json`、`benchmark.run.json`、`cases.jsonl`、artifact path で同じ値を使います。
 
 ## 責務
 
-- `init.sh`: suite 固有の corpus seed entrypoint。実処理は `benchmarks/_shared/scripts/init-suite.sh` に委譲します。
+- `init.sh`: suite 固有の corpus seed entrypoint。実処理は `benchmark/_shared/scripts/init-suite.sh` に委譲します。
 - `corpus.json`: benchmark scope と投入 document を定義します。`benchmarkScope.scopeType` は `benchmark` で固定します。
 - `benchmark.run.json`: cases、target config、answer policy、promotion gate、artifact output を宣言します。
 - `cases.jsonl`: 1 行 1 case の gold data です。
@@ -55,16 +54,16 @@ artifacts/
 ## コマンド
 
 ```bash
-./benchmarks/suites/internal_qa/leave_policy_v1/init.sh \
+./benchmark/suites/internal_qa/leave_policy_v1/init.sh \
   --env dev \
   --reset-corpus \
   --out ./artifacts/benchmarks/leave_policy_v1/init/2026-05-21.001
 
-./benchmarks/_shared/scripts/validate-suite.sh \
-  --suite-dir ./benchmarks/suites/internal_qa/leave_policy_v1
+./benchmark/_shared/scripts/validate-suite.sh \
+  --suite-dir ./benchmark/suites/internal_qa/leave_policy_v1
 
-./benchmarks/_shared/scripts/run-suite.sh \
-  --spec ./benchmarks/suites/internal_qa/leave_policy_v1/benchmark.run.json \
+./benchmark/_shared/scripts/run-suite.sh \
+  --spec ./benchmark/suites/internal_qa/leave_policy_v1/benchmark.run.json \
   --env dev \
   --out ./artifacts/benchmarks/leave_policy_v1/runs/benchrun_001
 ```

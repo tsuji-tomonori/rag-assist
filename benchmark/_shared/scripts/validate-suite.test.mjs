@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 import { validateSuite } from "./validate-suite.mjs";
 
 const repoRoot = resolve(new URL("../../..", import.meta.url).pathname);
-const sampleSuiteDir = resolve(repoRoot, "benchmarks/suites/internal_qa/leave_policy_v1");
+const sampleSuiteDir = resolve(repoRoot, "benchmark/suites/internal_qa/leave_policy_v1");
 
 function createSuite(overrides = {}) {
   const dir = join(tmpdir(), `rag-assist-benchmark-suite-${Date.now()}-${Math.random().toString(16).slice(2)}`);
@@ -114,7 +114,7 @@ function createSuite(overrides = {}) {
     promotionGate: { ...promotionGate, ...(overrides.promotionGate ?? {}) },
   };
 
-  writeFileSync(join(dir, "init.sh"), '#!/usr/bin/env bash\nexec "$REPO_ROOT/benchmarks/_shared/scripts/init-suite.sh" --suite-dir "$SUITE_DIR" "$@"\n');
+  writeFileSync(join(dir, "init.sh"), '#!/usr/bin/env bash\nexec "$REPO_ROOT/benchmark/_shared/scripts/init-suite.sh" --suite-dir "$SUITE_DIR" "$@"\n');
   writeFileSync(join(dir, "suite.json"), `${JSON.stringify(next.suite, null, 2)}\n`);
   writeFileSync(join(dir, "corpus.json"), `${JSON.stringify(next.corpus, null, 2)}\n`);
   writeFileSync(join(dir, "benchmark.run.json"), `${JSON.stringify(next.runSpec, null, 2)}\n`);
