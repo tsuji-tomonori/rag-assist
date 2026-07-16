@@ -583,11 +583,12 @@ test("authorization metadata uses generic forbidden error bodies by default", as
   }
 })
 
-test("security audit reconciliation worker is single-tenant and rechecks authoritative source state", async () => {
-  const [workerSource, reconcilerSource, sourceResolverSource, outboxSource] = await Promise.all([
+test("security audit reconciliation worker is single-tenant and rechecks authoritative domain state", async () => {
+  const [workerSource, reconcilerSource, sourceResolverSource, membershipResolverSource, outboxSource] = await Promise.all([
     readFile(path.resolve(process.cwd(), "src/security-mutation-audit-reconciliation-worker.ts"), "utf8"),
     readFile(path.resolve(process.cwd(), "src/security/security-mutation-audit-reconciler.ts"), "utf8"),
     readFile(path.resolve(process.cwd(), "src/rag/offline/pre-retrieval/admission/source-governance-audit-reconciler.ts"), "utf8"),
+    readFile(path.resolve(process.cwd(), "src/security/resource-group-membership-audit-reconciler.ts"), "utf8"),
     readFile(path.resolve(process.cwd(), "src/security/security-mutation-audit-outbox.ts"), "utf8")
   ])
 
@@ -598,6 +599,10 @@ test("security audit reconciliation worker is single-tenant and rechecks authori
   assert.match(sourceResolverSource, /readSourceGovernanceRecordById/)
   assert.match(sourceResolverSource, /source_governance\.approve_publish/)
   assert.match(sourceResolverSource, /source_governance\.restrict/)
+  assert.match(workerSource, /ResourceGroupMembershipAuditAuthoritativeResolver\(deps\.groupMembershipStore\)/)
+  assert.match(membershipResolverSource, /getVersionedGroupState\(tenantId, targetId\)/)
+  assert.match(membershipResolverSource, /crossed its identity boundary/)
+  assert.match(membershipResolverSource, /no durable non-success result/)
   assert.match(outboxSource, /intentPrefix\(tenantId\)/)
 })
 

@@ -9125,6 +9125,35 @@
         "PolicyDocument": {
           "Statement": [
             {
+              "Action": [
+                "dynamodb:GetItem",
+                "dynamodb:Query"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "DocumentGroupsTableA5108040",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentGroupsTableA5108040",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
               "Action": "s3:ListBucket",
               "Condition": {
                 "StringLike": {

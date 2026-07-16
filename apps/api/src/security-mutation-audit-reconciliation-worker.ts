@@ -5,6 +5,7 @@ import {
   SecurityMutationAuditReconciler,
   type SecurityMutationAuditReconciliationResult
 } from "./security/security-mutation-audit-reconciler.js"
+import { ResourceGroupMembershipAuditAuthoritativeResolver } from "./security/resource-group-membership-audit-reconciler.js"
 
 export type SecurityMutationAuditReconciliationEvent = Readonly<{
   tenantId?: unknown
@@ -41,7 +42,8 @@ export async function handler(
   const outbox = deps.securityAuditReconciliationOutbox
   if (!outbox) throw new Error("Security mutation audit reconciliation outbox is not configured")
   const reconciler = new SecurityMutationAuditReconciler(outbox, [
-    new SourceGovernanceAuditAuthoritativeResolver(deps.objectStore, outbox)
+    new SourceGovernanceAuditAuthoritativeResolver(deps.objectStore, outbox),
+    new ResourceGroupMembershipAuditAuthoritativeResolver(deps.groupMembershipStore)
   ])
   return createSecurityMutationAuditReconciliationHandler({
     authorizedTenantId: config.authTenantId,

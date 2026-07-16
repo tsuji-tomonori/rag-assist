@@ -789,7 +789,7 @@ test("keeps benchmark CodeBuild runner generic and fails when auth token resolut
   assert.match(authorizationPolicyJson, /s3:DeleteObject/)
 })
 
-test("deploys the tenant-scoped security audit reconciliation worker with bounded S3 authority", () => {
+test("deploys the tenant-scoped security audit reconciliation worker with bounded audit and membership read authority", () => {
   const template = synthesize()
   const worker = getResourceByLogicalIdPrefix(template, "SecurityAuditReconciliationFunction")
   assert.equal(worker.Properties.Timeout, 60)
@@ -814,9 +814,13 @@ test("deploys the tenant-scoped security audit reconciliation worker with bounde
   assert.match(policies, /s3:PutObject/)
   assert.match(policies, /security-audit\/intents/)
   assert.match(policies, /source-governance/)
+  assert.match(policies, /dynamodb:GetItem/)
+  assert.match(policies, /dynamodb:Query/)
+  assert.match(policies, /DocumentGroupsTable/)
+  assert.match(policies, /index\/\*/)
   assert.doesNotMatch(policies, /s3:DeleteObject/)
   assert.doesNotMatch(policies, /bedrock:InvokeModel/)
-  assert.doesNotMatch(policies, /dynamodb:/)
+  assert.doesNotMatch(policies, /dynamodb:(?:BatchGetItem|Scan|PutItem|UpdateItem|DeleteItem|TransactWriteItems)/)
 })
 
 test("passes only explicitly configured versioned workload and price evidence into benchmark CodeBuild", () => {

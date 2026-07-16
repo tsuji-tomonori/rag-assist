@@ -631,6 +631,10 @@ export class MemoRagMvpStack extends Stack {
       logGroup: securityAuditReconciliationLogGroup,
       environment: apiEnvironment
     })
+    securityAuditReconciliationFn.addToRolePolicy(new iam.PolicyStatement({
+      actions: ["dynamodb:GetItem", "dynamodb:Query"],
+      resources: [documentGroupsTable.tableArn, `${documentGroupsTable.tableArn}/index/*`]
+    }))
     const securityAuditReconciliationSchedule = new events.Rule(this, "SecurityAuditReconciliationSchedule", {
       description: "Finalize tenant-scoped security mutation audits after authoritative state reconciliation.",
       schedule: events.Schedule.rate(Duration.minutes(1))
