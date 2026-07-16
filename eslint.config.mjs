@@ -37,7 +37,8 @@ export default tseslint.config(
           allowDefaultProject: [
             "apps/web/playwright.config.ts",
             "apps/web/vitest.config.ts",
-            "apps/web/e2e/*.ts"
+            "apps/web/e2e/*.ts",
+            "scripts/*.ts"
           ]
         },
         tsconfigRootDir
