@@ -8,7 +8,7 @@
 
 | # | CRUD/実行 | Target | Method | 自然言語での目的 | Caller | コード根拠 |
 | ---: | --- | --- | --- | --- | --- | --- |
-| 1 | 参照 | `this.deps.conversationHistoryStore` | `get` | `this.deps.conversationHistoryStore` に対して get を実行する。 | `MemoRagService.getConversationHistory` | `apps/api/src/rag/memorag-service.ts:5181 (MemoRagService.getConversationHistory)` |
+| 1 | 参照 | `this.deps.conversationHistoryStore` | `get` | `this.deps.conversationHistoryStore` に対して get を実行する。 | `MemoRagService.getConversationHistory` | `apps/api/src/rag/memorag-service.ts:5192 (MemoRagService.getConversationHistory)` |
 
 ## 外部サービス操作
 

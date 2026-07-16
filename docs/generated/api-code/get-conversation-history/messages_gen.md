@@ -18,8 +18,8 @@
 | M003 | OpenAPI contract | `403` | 対象操作を実行する権限がありません。 | OpenAPI で宣言された HTTP 403 response | runtime OpenAPI |
 | M004 | OpenAPI contract | `500` | サーバー内部で処理エラーが発生しました。 | OpenAPI で宣言された HTTP 500 response | runtime OpenAPI |
 | M005 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| M006 | 例外 | `-` | User identity is required for tenant-partitioned storage | `userId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:5974 (tenantPartitionedOwnerKey)` |
-| M007 | 例外 | `-` | Authoritative tenant is required for user storage | `config.authEnabled` が存在し、真である、または `config.nodeEnv` が `"production"` と等しい | `apps/api/src/rag/memorag-service.ts:5976 (tenantPartitionedOwnerKey)` |
+| M006 | 例外 | `-` | User identity is required for tenant-partitioned storage | `userId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:6101 (tenantPartitionedOwnerKey)` |
+| M007 | 例外 | `-` | Authoritative tenant is required for user storage | `config.authEnabled` が存在し、真である、または `config.nodeEnv` が `"production"` と等しい | `apps/api/src/rag/memorag-service.ts:6103 (tenantPartitionedOwnerKey)` |
 | M008 | 例外 | `-` | Session document context must match conversation id | `context.sessionId` が `sessionId` と異なる | `apps/api/src/adapters/conversation-history-store.ts:38 (normalizeSessionDocumentContext)` |
 
 ## 読み方

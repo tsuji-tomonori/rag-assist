@@ -31,6 +31,7 @@ import {
   RevocationCleanupValidationError
 } from "./revocation-cleanup-coordinator.js"
 import { ObjectStoreRevocationCleanupRepairOutbox } from "./revocation-cleanup-repair-outbox.js"
+import { temporaryScopeIds } from "./session-local-evidence-scope.js"
 
 const objectActionPrefix = "object:"
 const benchmarkObjectActionPrefix = "benchmark-object:"
@@ -670,7 +671,7 @@ export class ProductionRevocationCleanupDriver implements RevocationCleanupDrive
       const documentId = reference.slice("document:".length)
       return run.searchScope?.documentIds?.includes(documentId) === true
     }
-    if (reference.startsWith("temporary-scope:")) return run.searchScope?.temporaryScopeId === reference.slice("temporary-scope:".length)
+    if (reference.startsWith("temporary-scope:")) return temporaryScopeIds(run.searchScope).includes(reference.slice("temporary-scope:".length))
     if (reference.startsWith("temporary:")) return run.searchScope?.documentIds?.includes(reference.slice("temporary:".length)) === true
     const groupId = resourceGroupReferenceId(reference)
     return Boolean(groupId && run.searchScope?.groupIds?.includes(groupId))

@@ -132,6 +132,101 @@ test("MT-TEMP-001/003/004 session context persists only authoritative owner-boun
   assert.equal(attemptedRestore.sessionDocumentContext?.temporaryEvidence[0]?.status, "removed", "terminal context state cannot be revived by client input")
 })
 
+test("MT-TEMP-001-006 chat run normalizes B1 context, preserves legacy scope, and rejects client-only or cross-owner carry", async () => {
+  const dataDir = await mkdtemp(path.join(tmpdir(), "session-scope-normalization-"))
+  const deps = localDependencies(dataDir)
+  const service = new MemoRagService(deps)
+  for (const [documentId, temporaryScopeId] of [["active", "tmp-1"], ["active-2", "tmp-2"]] as const) {
+    await deps.objectStore.putText(`documents/${documentId}/source.txt`, `${documentId} の根拠です。`)
+    await deps.objectStore.putText(`manifests/${documentId}.json`, JSON.stringify(temporaryManifest({
+      documentId,
+      temporaryScopeId,
+      expiresAt: "2999-01-01T00:00:00.000Z"
+    })))
+  }
+  const owner = { userId: "owner-1", email: "owner@example.com", tenantId: "tenant-a", accountStatus: "active" as const, cognitoGroups: ["CHAT_USER"] }
+  await service.saveConversationHistory(owner, {
+    id: "conversation-1",
+    title: "multi scope",
+    updatedAt: "2026-07-17T00:00:00.000Z",
+    messages: [],
+    citationMemory: [
+      { citation: { documentId: "active", fileName: "client-name.txt", chunkId: "chunk-0000" } },
+      { citation: { documentId: "unknown", fileName: "secret.txt", chunkId: "chunk-secret" } }
+    ],
+    sessionDocumentContext: {
+      schemaVersion: 1,
+      sessionId: "conversation-1",
+      temporaryEvidence: [
+        { temporaryScopeId: "tmp-1", documentId: "active", status: "active", expiresAt: "2999-01-01T00:00:00.000Z", updatedAt: "2026-07-17T00:00:00.000Z" },
+        { temporaryScopeId: "tmp-2", documentId: "active-2", status: "active", expiresAt: "2999-01-01T00:00:00.000Z", updatedAt: "2026-07-17T00:00:00.000Z" },
+        { temporaryScopeId: "removed", documentId: "removed", status: "removed", expiresAt: "2999-01-01T00:00:00.000Z", updatedAt: "2026-07-17T00:00:00.000Z" }
+      ],
+      updatedAt: "2026-07-17T00:00:00.000Z"
+    }
+  })
+  const multiScopeIndex = await getLexicalIndex(deps, owner, { tenantId: "tenant-a" }, {
+    mode: "temporary",
+    includeTemporary: true,
+    temporaryScopeId: "tmp-1",
+    temporaryScopeIds: ["tmp-1", "tmp-2"]
+  })
+  assert.deepEqual(multiScopeIndex.docs.map((document) => document.documentId).sort(), ["active", "active-2"], "MT-RETRIEVE-001/002 multi-scope retrieval uses the normalized union")
+  const scopedSearch = await service.search({
+    query: "根拠",
+    conversationId: "conversation-1",
+    lexicalTopK: 10,
+    semanticTopK: 0,
+    scope: { mode: "temporary", includeTemporary: true, temporaryScopeId: "tmp-1" }
+  }, owner)
+  assert.deepEqual(scopedSearch.results.map((result) => result.documentId).sort(), ["active", "active-2"], "search resolves temporary scopes from the authoritative conversation context")
+  const clientOnlySearch = await service.search({
+    query: "根拠",
+    lexicalTopK: 10,
+    semanticTopK: 0,
+    scope: { mode: "temporary", includeTemporary: true, temporaryScopeId: "tmp-1" }
+  }, owner)
+  assert.deepEqual(clientOnlySearch.results, [], "search request alone cannot add a temporary scope")
+
+  const started = await service.startChatRun({
+    question: "前の根拠を確認して",
+    conversation: {
+      conversationId: "conversation-1",
+      turns: [{ role: "assistant", text: "client text", citations: [{ documentId: "unknown", fileName: "secret.txt", chunkId: "chunk-secret" }] }]
+    },
+    searchScope: { mode: "documents", documentIds: ["ordinary-doc"], includeTemporary: true, temporaryScopeId: "tmp-1" }
+  }, owner)
+  const stored = await deps.chatRunStore.get("tenant-a", started.runId)
+  assert.deepEqual(stored?.searchScope, {
+    mode: "documents",
+    documentIds: ["ordinary-doc"],
+    includeTemporary: true,
+    temporaryScopeId: "tmp-1",
+    temporaryScopeIds: ["tmp-1", "tmp-2"]
+  })
+  assert.deepEqual(stored?.conversation?.turns.at(-1)?.citations, [{
+    documentId: "active",
+    fileName: "active.txt",
+    chunkId: "chunk-0000",
+    pageStart: 1,
+    pageEnd: 1
+  }], "only authoritative source document/chunk anchors survive")
+
+  const clientOnly = await service.startChatRun({
+    question: "client-only",
+    conversation: { conversationId: "unknown-conversation", turns: [] },
+    searchScope: { mode: "temporary", includeTemporary: true, temporaryScopeId: "client-only" }
+  }, owner)
+  assert.deepEqual((await deps.chatRunStore.get("tenant-a", clientOnly.runId))?.searchScope?.temporaryScopeIds, [])
+
+  const otherOwner = await service.startChatRun({
+    question: "cross-owner",
+    conversation: { conversationId: "conversation-1", turns: [] },
+    searchScope: { mode: "temporary", includeTemporary: true, temporaryScopeId: "tmp-1" }
+  }, { ...owner, userId: "owner-2" })
+  assert.deepEqual((await deps.chatRunStore.get("tenant-a", otherOwner.runId))?.searchScope?.temporaryScopeIds, [])
+})
+
 function temporaryManifest(input: { documentId: string; temporaryScopeId: string; expiresAt: string }): DocumentManifest {
   return {
     documentId: input.documentId,

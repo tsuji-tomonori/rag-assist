@@ -170,7 +170,8 @@ export const SearchScopeSchema = z.object({
   groupIds: z.array(z.string().min(1)).max(20).optional(),
   documentIds: z.array(z.string().min(1)).max(100).optional(),
   includeTemporary: z.boolean().optional(),
-  temporaryScopeId: z.string().min(1).optional()
+  temporaryScopeId: z.string().min(1).optional(),
+  temporaryScopeIds: z.array(z.string().min(1)).max(20).optional()
 })
 
 export const ChatRequestSchema = z.object({

@@ -12,7 +12,7 @@ import { sanitizeProviderText, type AsyncAgentProviderArtifact, type AsyncAgentP
 import { debugTraceObjectKey, runChatOrchestration } from "./orchestration/chat-rag-orchestrator.js"
 import { llmOptions, normalizeMaxIterations, normalizeMemoryTopK, normalizeMinScore, normalizeSearchTopK, normalizeTopK, ragRuntimePolicy } from "../chat-orchestration/runtime-policy.js"
 import type { ChatInput, ChatOrchestrationResult } from "../chat-orchestration/types.js"
-import { DEBUG_TRACE_SANITIZE_POLICY_VERSION, DEBUG_TRACE_SCHEMA_VERSION, LEGACY_DEBUG_TRACE_TARGET_TYPE_DEFAULT, type AdminExportArtifact, type AgentProviderAvailability, type AgentProviderSetting, type AgentRuntimeProvider, type AsyncAgentRun, type AccessRoleDefinition, type AliasAuditLogItem, type AliasAuditLogPage, type AliasDefinition, type AliasListPage, type AuthoritativeAdmissionContext, type BenchmarkMode, type BenchmarkRun, type BenchmarkRunner, type BenchmarkRunThresholds, type BenchmarkSuite, type ChatRun, type ChatToolInvocation, type Chunk, type ConversationHistoryItem, type CostAuditSummary, type DebugReplayPlan, type DebugTrace, type DocumentGroup, type DocumentIngestRun, type DocumentManifest, type DocumentManifestSummary, type ExtractionWarning, type FavoriteItem, type FavoriteListItem, type FavoriteTargetType, type HumanQuestion, type IngestAdmissionContext, type JsonValue, type ManagedUser, type ManagedUserAdminView, type ManagedUserAuditAction, type ManagedUserAuditLogEntry, type ManagedUserAuditLogPage, type ManagedUserDeletionPreflight, type ManagedUserListPage, type MemoryCard, type ParsedDocumentPreview, type PublishedAliasArtifact, type QualityActionCard, type ReindexMigration, type StagedPublicationFence, type StructuredBlock, type UserUsageSummary, type VectorRecord } from "../types.js"
+import { DEBUG_TRACE_SANITIZE_POLICY_VERSION, DEBUG_TRACE_SCHEMA_VERSION, LEGACY_DEBUG_TRACE_TARGET_TYPE_DEFAULT, type AdminExportArtifact, type AgentProviderAvailability, type AgentProviderSetting, type AgentRuntimeProvider, type AsyncAgentRun, type AccessRoleDefinition, type AliasAuditLogItem, type AliasAuditLogPage, type AliasDefinition, type AliasListPage, type AuthoritativeAdmissionContext, type BenchmarkMode, type BenchmarkRun, type BenchmarkRunner, type BenchmarkRunThresholds, type BenchmarkSuite, type ChatRun, type ChatToolInvocation, type Chunk, type Citation, type ConversationHistoryItem, type CostAuditSummary, type DebugReplayPlan, type DebugTrace, type DocumentGroup, type DocumentIngestRun, type DocumentManifest, type DocumentManifestSummary, type ExtractionWarning, type FavoriteItem, type FavoriteListItem, type FavoriteTargetType, type HumanQuestion, type IngestAdmissionContext, type JsonValue, type ManagedUser, type ManagedUserAdminView, type ManagedUserAuditAction, type ManagedUserAuditLogEntry, type ManagedUserAuditLogPage, type ManagedUserDeletionPreflight, type ManagedUserListPage, type MemoryCard, type ParsedDocumentPreview, type PublishedAliasArtifact, type QualityActionCard, type ReindexMigration, type StagedPublicationFence, type StructuredBlock, type UserUsageSummary, type VectorRecord } from "../types.js"
 import type { ReplayDecisionReasonCode } from "../types.js"
 import type { AppUser } from "../auth.js"
 import type { CreatedDirectoryUser } from "../adapters/user-directory.js"
@@ -25,6 +25,7 @@ import { parseJsonObject } from "./_shared/json.js"
 import { loadChunksForManifest, loadStructuredBlocksForManifest } from "./_shared/storage/manifest-chunks.js"
 import { documentQualityProfileFromMetadata, qualityGateForNormalRag } from "./_shared/policies/quality-policy.js"
 import { sanitizeDebugTraceForPersistence, sanitizeDebugTraceForView } from "./_shared/security/trace-sanitizer.js"
+import { normalizeSessionLocalEvidenceScope } from "./_shared/security/session-local-evidence-scope.js"
 import { buildReplayVersionManifest } from "./_shared/replay/replay-version-manifest.js"
 import { stableHash } from "./_shared/security/derived-record-security.js"
 import { createPublicationPointerSnapshot, isManifestCurrentPublication, publicationIdentity, StagedPublicationCoordinator, type PublicationScope, type StagedPublicationRun } from "./_shared/publication/staged-publication-coordinator.js"
@@ -2394,7 +2395,8 @@ export class MemoRagService {
 
   async chat(input: ChatInput, user?: AppUser): Promise<ChatOrchestrationResult> {
     const actor = user ?? localTestActor(this.deps)
-    if (actor) await this.assertSearchScopeReadable(actor, input.searchScope)
+    const normalizedInput = actor ? await this.normalizeChatInputSessionEvidence(actor, input) : input
+    if (actor) await this.assertSearchScopeReadable(actor, normalizedInput.searchScope)
     const operationId = `chat-sync:${randomUUID()}`
     const authorize = actor ? (boundary: WorkerAuthorizationBoundary) => this.assertCurrentWorkerAuthorization({
       runId: operationId,
@@ -2405,7 +2407,7 @@ export class MemoRagService {
       snapshotGroups: actor.cognitoGroups,
       requiredPermissions: ["chat:create"],
       authorizeResource: async (currentActor) => {
-        await this.assertSearchScopeReadable(currentActor, input.searchScope)
+        await this.assertSearchScopeReadable(currentActor, normalizedInput.searchScope)
         return true
       }
     }, boundary) : undefined
@@ -2416,7 +2418,7 @@ export class MemoRagService {
     try {
       const result = await runChatOrchestration(
         this.usageTrackedDependencies(currentActor, operationId, "chat"),
-        input,
+        normalizedInput,
         currentActor,
         authorize ? {
           emit: async () => undefined,
@@ -2426,7 +2428,7 @@ export class MemoRagService {
           recordObservationArtifact: (runId) => { observationArtifactId = runId },
           recordPersistedTrace: (trace) => { persistedTrace = trace }
         } : undefined,
-        currentActor ? await this.securityResourceRefsForActor(currentActor, input.searchScope) : []
+        currentActor ? await this.securityResourceRefsForActor(currentActor, normalizedInput.searchScope) : []
       )
       if (authorize) await authorize("durable_commit")
       return result
@@ -2444,7 +2446,8 @@ export class MemoRagService {
   }
 
   async startChatRun(input: ChatInput, user: AppUser): Promise<{ runId: string; status: ChatRun["status"]; eventsPath: string }> {
-    await this.assertSearchScopeReadable(user, input.searchScope)
+    const normalizedInput = await this.normalizeChatInputSessionEvidence(user, input)
+    await this.assertSearchScopeReadable(user, normalizedInput.searchScope)
     const tenantId = authoritativeActorTenantId(user)
     const now = new Date().toISOString()
     const runId = createChatRunId(now)
@@ -2456,21 +2459,22 @@ export class MemoRagService {
       tenantId,
       userEmail: user.email,
       userGroups: user.cognitoGroups,
-      securityResourceRefs: await this.securityResourceRefsForActor(user, input.searchScope),
-      question: input.question,
-      conversationHistory: input.conversationHistory,
-      clarificationContext: input.clarificationContext,
-      modelId: input.modelId ?? config.defaultModelId,
-      embeddingModelId: input.embeddingModelId ?? config.embeddingModelId,
-      clueModelId: input.clueModelId ?? input.modelId ?? config.defaultMemoryModelId,
-      topK: normalizeTopK(input.topK),
-      memoryTopK: normalizeMemoryTopK(input.memoryTopK),
-      minScore: normalizeMinScore(input.minScore),
-      strictGrounded: input.strictGrounded,
-      useMemory: input.useMemory,
-      maxIterations: normalizeMaxIterations(input.maxIterations),
-      searchScope: input.searchScope,
-      includeDebug: input.includeDebug ?? input.debug ?? false,
+      securityResourceRefs: await this.securityResourceRefsForActor(user, normalizedInput.searchScope),
+      question: normalizedInput.question,
+      conversationHistory: normalizedInput.conversationHistory,
+      conversation: normalizedInput.conversation,
+      clarificationContext: normalizedInput.clarificationContext,
+      modelId: normalizedInput.modelId ?? config.defaultModelId,
+      embeddingModelId: normalizedInput.embeddingModelId ?? config.embeddingModelId,
+      clueModelId: normalizedInput.clueModelId ?? normalizedInput.modelId ?? config.defaultMemoryModelId,
+      topK: normalizeTopK(normalizedInput.topK),
+      memoryTopK: normalizeMemoryTopK(normalizedInput.memoryTopK),
+      minScore: normalizeMinScore(normalizedInput.minScore),
+      strictGrounded: normalizedInput.strictGrounded,
+      useMemory: normalizedInput.useMemory,
+      maxIterations: normalizeMaxIterations(normalizedInput.maxIterations),
+      searchScope: normalizedInput.searchScope,
+      includeDebug: normalizedInput.includeDebug ?? normalizedInput.debug ?? false,
       createdAt: now,
       updatedAt: now,
       ttl
@@ -2528,24 +2532,26 @@ export class MemoRagService {
         ttl
       })
       const currentUser = await this.authorizeChatRunBoundary(run, "protected_read")
+      const normalizedInput = await this.normalizeChatInputSessionEvidence(currentUser, {
+        question: run.question,
+        conversationHistory: run.conversationHistory,
+        conversation: run.conversation,
+        clarificationContext: run.clarificationContext,
+        modelId: run.modelId,
+        embeddingModelId: run.embeddingModelId,
+        clueModelId: run.clueModelId,
+        topK: run.topK,
+        memoryTopK: run.memoryTopK,
+        minScore: run.minScore,
+        strictGrounded: run.strictGrounded,
+        useMemory: run.useMemory,
+        maxIterations: run.maxIterations,
+        searchScope: run.searchScope,
+        includeDebug: run.includeDebug
+      })
       const result = await runChatOrchestration(
         this.usageTrackedDependencies(currentUser, runId, "chat"),
-        {
-          question: run.question,
-          conversationHistory: run.conversationHistory,
-          clarificationContext: run.clarificationContext,
-          modelId: run.modelId,
-          embeddingModelId: run.embeddingModelId,
-          clueModelId: run.clueModelId,
-          topK: run.topK,
-          memoryTopK: run.memoryTopK,
-          minScore: run.minScore,
-          strictGrounded: run.strictGrounded,
-          useMemory: run.useMemory,
-          maxIterations: run.maxIterations,
-          searchScope: run.searchScope,
-          includeDebug: run.includeDebug
-        },
+        normalizedInput,
         currentUser,
         {
           authorizeProtectedRead: () => this.authorizeChatRunBoundary(run!, "protected_read").then(() => undefined),
@@ -3105,8 +3111,13 @@ export class MemoRagService {
   }
 
   async search(input: SearchInput, user: AppUser): Promise<SearchResponse> {
-    await this.assertSearchScopeReadable(user, input.scope)
-    return searchRag(this.deps, input, user)
+    const normalized = await this.normalizeChatInputSessionEvidence(user, {
+      question: input.query,
+      conversation: input.conversationId ? { conversationId: input.conversationId, turns: [] } : undefined,
+      searchScope: input.scope
+    })
+    await this.assertSearchScopeReadable(user, normalized.searchScope)
+    return searchRag(this.deps, { ...input, scope: normalized.searchScope }, user)
   }
 
   async createQuestion(input: CreateQuestionInput, user?: AppUser): Promise<HumanQuestion> {
@@ -5187,6 +5198,122 @@ export class MemoRagService {
     if (!(await this.deps.conversationHistoryStore.get(ownerKey, id))) return false
     await this.deps.conversationHistoryStore.delete(ownerKey, id)
     return true
+  }
+
+  private async normalizeChatInputSessionEvidence(actor: AppUser, input: ChatInput): Promise<ChatInput> {
+    const conversationId = input.conversation?.conversationId
+    const history = conversationId
+      ? await this.deps.conversationHistoryStore.get(tenantPartitionedOwnerKey(actor), conversationId)
+      : undefined
+    const context = history?.sessionDocumentContext
+    const authorizedTemporaryScopeIds: string[] = []
+    const authorizedTemporaryDocumentIds = new Set<string>()
+    for (const reference of context?.temporaryEvidence ?? []) {
+      if (reference.status !== "active" || Date.parse(reference.expiresAt) <= Date.now()) continue
+      const manifest = await this.getManifest(reference.documentId, authoritativeActorTenantId(actor)).catch(() => undefined)
+      if (!manifest || manifest.documentId !== reference.documentId || !(await this.isCurrentSessionTemporaryManifest(actor, manifest, reference.temporaryScopeId))) continue
+      authorizedTemporaryScopeIds.push(reference.temporaryScopeId)
+      authorizedTemporaryDocumentIds.add(reference.documentId)
+    }
+
+    const scopeResult = normalizeSessionLocalEvidenceScope({
+      requestedScope: input.searchScope,
+      conversationId,
+      context,
+      currentlyAuthorizedTemporaryScopeIds: authorizedTemporaryScopeIds
+    })
+    const previousCitations = await this.authorizePreviousConversationCitations(
+      actor,
+      history,
+      scopeResult.searchScope,
+      authorizedTemporaryDocumentIds
+    )
+    const turns: NonNullable<ChatInput["conversation"]>["turns"] = input.conversation?.turns
+      .map((turn) => ({ ...turn, citations: undefined })) ?? []
+    if (previousCitations.length > 0) {
+      turns.push({ role: "assistant", text: "", citations: previousCitations })
+    }
+    return {
+      ...input,
+      searchScope: scopeResult.searchScope,
+      sessionScopeNormalization: {
+        ...scopeResult.summary,
+        previousCitationAnchorCount: previousCitations.length
+      },
+      conversation: input.conversation
+        ? {
+            ...input.conversation,
+            turns,
+            state: {
+              ...input.conversation.state,
+              activeDocuments: previousCitations
+                .map((citation) => citation.documentId)
+                .filter((documentId): documentId is string => Boolean(documentId))
+            }
+          }
+        : undefined
+    }
+  }
+
+  private async isCurrentSessionTemporaryManifest(actor: AppUser, manifest: DocumentManifest, temporaryScopeId: string): Promise<boolean> {
+    const metadata = manifest.metadata ?? {}
+    const expiresAt = stringValue(metadata.expiresAt)
+    const tenantId = manifest.admission?.tenantId ?? stringValue(metadata.tenantId)
+    const ownerUserId = manifest.admission?.ownerUserId ?? stringValue(metadata.ownerUserId)
+    if (
+      tenantId !== authoritativeActorTenantId(actor)
+      || ownerUserId !== actor.userId
+      || stringValue(metadata.scopeType) !== "chat"
+      || stringValue(metadata.temporaryScopeId) !== temporaryScopeId
+      || manifest.lifecycleStatus !== "active"
+      || !expiresAt
+      || Date.parse(expiresAt) <= Date.now()
+    ) return false
+    const permission = await new DocumentPermissionService(this.deps).resolveEffectiveDocumentPermission(actor, manifest)
+    return permission === "readOnly" || permission === "full"
+  }
+
+  private async authorizePreviousConversationCitations(
+    actor: AppUser,
+    history: ConversationHistoryItem | undefined,
+    scope: NonNullable<ChatInput["searchScope"]>,
+    authorizedTemporaryDocumentIds: ReadonlySet<string>
+  ): Promise<Array<Partial<Citation>>> {
+    const accepted: Array<Partial<Citation>> = []
+    const seen = new Set<string>()
+    const allowedTemporaryScopeIds = new Set(scope.temporaryScopeIds ?? [])
+    const permissions = new DocumentPermissionService(this.deps)
+    for (const item of history?.citationMemory ?? []) {
+      const documentId = item.citation.documentId
+      const chunkId = item.citation.chunkId
+      if (!documentId || !chunkId) continue
+      const key = `${documentId}:${chunkId}`
+      if (seen.has(key)) continue
+      const manifest = await this.getManifest(documentId, authoritativeActorTenantId(actor)).catch(() => undefined)
+      if (!manifest || manifest.lifecycleStatus !== "active") continue
+      const metadata = manifest.metadata ?? {}
+      if ((manifest.admission?.tenantId ?? stringValue(metadata.tenantId)) !== authoritativeActorTenantId(actor)) continue
+      if (stringValue(metadata.scopeType) === "chat") {
+        const temporaryScopeId = stringValue(metadata.temporaryScopeId)
+        if (!temporaryScopeId || !allowedTemporaryScopeIds.has(temporaryScopeId) || !authorizedTemporaryDocumentIds.has(documentId)) continue
+      }
+      const permission = await permissions.resolveEffectiveDocumentPermission(actor, manifest)
+      if (permission !== "readOnly" && permission !== "full") continue
+      const chunks = await loadChunksForManifest(this.deps, manifest).catch(() => [])
+      const chunk = chunks.find((candidate) => candidate.id === chunkId)
+      if (!chunk) continue
+      seen.add(key)
+      accepted.push({
+        documentId,
+        documentVersion: manifest.documentVersion,
+        fileName: manifest.fileName,
+        chunkId,
+        pageStart: chunk.pageStart,
+        pageEnd: chunk.pageEnd
+      })
+      if (accepted.length >= 12) break
+    }
+    return accepted
   }
 
   private async resolveSessionDocumentContext(subject: AppUser | string, input: SaveConversationHistoryInput, ownerKey: string): Promise<ConversationHistoryItem["sessionDocumentContext"]> {

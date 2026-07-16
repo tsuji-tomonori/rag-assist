@@ -1,6 +1,20 @@
 import assert from "node:assert/strict"
 import test from "node:test"
-import { ChatResponseSchema, ConversationHistoryItemSchema, DebugTraceSchema, DocumentIngestRunSchema, DocumentUploadRequestSchema, SearchResponseSchema, WorkerEventSchema, WorkerResultSchema } from "../schemas.js"
+import { ChatRequestSchema, ChatResponseSchema, ConversationHistoryItemSchema, DebugTraceSchema, DocumentIngestRunSchema, DocumentUploadRequestSchema, SearchRequestSchema, SearchResponseSchema, WorkerEventSchema, WorkerResultSchema } from "../schemas.js"
+
+test("MT-TEMP-001-006 search scope keeps single compatibility and rejects more than 20 temporary scopes", () => {
+  const compatible = ChatRequestSchema.safeParse({
+    question: "添付を検索",
+    conversation: { conversationId: "conversation-1", turns: [] },
+    searchScope: { mode: "temporary", temporaryScopeId: "tmp-1", temporaryScopeIds: ["tmp-1", "tmp-2"] }
+  })
+  assert.equal(compatible.success, true)
+  assert.equal(SearchRequestSchema.safeParse({
+    query: "添付",
+    conversationId: "conversation-1",
+    scope: { temporaryScopeIds: Array.from({ length: 21 }, (_, index) => `tmp-${index}`) }
+  }).success, false)
+})
 
 test("document metadata schema accepts recursive JSON alias metadata", () => {
   const result = DocumentUploadRequestSchema.safeParse({

@@ -47,6 +47,7 @@ test("fixed MemoRAG workflow answers from selected evidence and records fixed tr
     [
       "analyze_input",
       "build_temporal_context",
+      "normalize_search_scope",
       "detect_tool_intent",
       "build_conversation_state",
       "decontextualize_query",
@@ -333,6 +334,7 @@ test("fixed workflow executes nodes in the declared order", async () => {
     [
       "analyze_input",
       "build_temporal_context",
+      "normalize_search_scope",
       "detect_tool_intent",
       "build_conversation_state",
       "decontextualize_query",
@@ -376,6 +378,7 @@ test("fixed workflow answers explicit temporal calculations from computed facts 
     [
       "analyze_input",
       "build_temporal_context",
+      "normalize_search_scope",
       "detect_tool_intent",
       "build_conversation_state",
       "decontextualize_query",

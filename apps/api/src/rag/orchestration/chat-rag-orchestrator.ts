@@ -281,7 +281,9 @@ export function createChatOrchestrationGraph(deps: Dependencies, user: AppUser =
       deps,
       user,
       chunks: [...unique.values()],
-      purpose: "normal_answer"
+      purpose: "normal_answer",
+      scope: state.searchScope,
+      conversationId: state.conversation?.conversationId
     })
     const eligibleKeys = new Set(result.eligible.map((chunk) => chunk.key))
     const selectedDenied = state.selectedChunks.some((chunk) => !eligibleKeys.has(chunk.key))
@@ -313,6 +315,9 @@ export function createChatOrchestrationGraph(deps: Dependencies, user: AppUser =
   const nodes = {
     analyzeInput: tracedNode("analyze_input", analyzeInput),
     buildTemporalContext: tracedNode("build_temporal_context", buildTemporalContext),
+    recordScopeNormalization: tracedNode("normalize_search_scope", async (state) => state.sessionScopeNormalization
+      ? { sessionScopeNormalization: state.sessionScopeNormalization }
+      : {}),
     detectToolIntent: tracedNode("detect_tool_intent", detectToolIntent),
     buildConversationState: tracedNode("build_conversation_state", buildConversationState),
     decontextualizeQuery: tracedNode("decontextualize_query", decontextualizeQuery),
@@ -347,6 +352,7 @@ export function createChatOrchestrationGraph(deps: Dependencies, user: AppUser =
       if (state.answerability.reason === "invalid_temporal_context") {
         return applyNode(state, "finalize_refusal", nodes.finalizeRefusal, progress)
       }
+      state = await applyNode(state, "normalize_search_scope", nodes.recordScopeNormalization, progress)
       state = await applyNode(state, "detect_tool_intent", nodes.detectToolIntent, progress)
       state = await applyNode(state, "build_conversation_state", nodes.buildConversationState, progress)
       state = await applyNode(state, "decontextualize_query", nodes.decontextualizeQuery, progress)
@@ -759,6 +765,7 @@ export async function runChatOrchestration(
     },
     searchFilters: input.searchFilters,
     searchScope: input.searchScope,
+    sessionScopeNormalization: input.sessionScopeNormalization,
     memoryCards: [],
     clues: [],
     expandedQueries: [],
