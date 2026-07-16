@@ -38,7 +38,7 @@
 | 安定性 | High |
 | Confidence | inferred |
 | 所有者 | SRE / Security / RAG Quality |
-| 変更履歴 | 2026-07-11 初版 |
+| 変更履歴 | 2026-07-11 初版。2026-07-16 実 guard profile 設定の fail-closed 検証と failure timing を明記 |
 
 ## 受け入れ条件
 
@@ -50,9 +50,18 @@
 
 ### AC-FR089-002 unsafe fallback rejection
 
-- Given: fast/degraded profile または cost/load policy が一つ以上の必須 guard を無効化する構成を要求する
-- When: profile を有効化するか、その経路へ routing する
-- Then: 構成または route を拒否し、guard 省略経路を実行せず、全 fallback path の結果に authorization、classification/usage、injection/tool、grounding、citation、secret/output、redaction の判定記録を残す
+- Given: guard profile 設定が unset/blank、invalid JSON、必須 guard 欠落、unknown key/value、all-off、または一つ以上の必須 guard 無効化を含む
+- When: API/worker が依存を生成する
+- Then: 起動時に構成を拒否し、既定 profile や暗黙の true で補完しない
+- And: 依存生成後に unsafe profile が注入された場合も orchestration 実行開始時に再拒否し、object store、model、検索 graph を実行しない
+- And: 全 fallback path の結果に authorization、classification/usage、injection/tool、grounding、citation、secret/output、redaction の判定記録を残す
+
+## 設定と failure timing
+
+- `RAG_GUARD_PROFILE_JSON` は `id`、`version`、`guards` の完全な JSON object とし、`guards` は九つの必須 guard を boolean で過不足なく指定する。
+- `config` → `createDependencies` で strict parse と全 guard 有効検査を行い、誤設定は API/worker の起動を失敗させる。
+- `Dependencies.ragGuardProfile` → `runChatOrchestration` で実行直前に再検査し、起動後の不正注入も downstream access より前に拒否する。
+- IaC、repository test、docs generator、local development/Docker は用途ごとに完全な safe profile を明示し、production runtime の default fallback は持たない。
 
 ## 妥当性確認
 
@@ -66,9 +75,9 @@
 | 実現可能性 | OK | guard 共通 pipeline、profile validation、fail-closed routing で実現可能 |
 | 検証可能性 | OK | dependency fault injection と guard-bypass profile negative test で確認できる |
 | ニーズ適合 | OK | 可用性を追求して機密性・根拠性・引用正確性を犠牲にしない |
-| 実装適合 | OK（confirmed） | `safe-degradation-policy.ts` が dependency timeout/error/cost/circuit state と auth/classification/usage/injection/tool/grounding/citation/secret/redaction invariants を同時強制する matrix test を持つ |
+| 実装適合 | OK（confirmed） | `safe-degradation-policy.ts` の strict parser、`dependencies.ts` の起動時検査、`chat-rag-orchestrator.ts` の実 profile 再検査を、policy/dependencies/graph/infra test が safe、unset、unknown、partial、all-off、単一 off で実証する |
 
 ## トレース
 
 - 後方: `SQ-008`、`FR-068`、`FR-070`、`FR-071`、`FR-073`、`FR-088`。
-- 前方: fallback policy validator、dependency fault-injection suite、safe degradation promotion gate。
+- 前方: `apps/api/src/rag/_shared/security/safe-degradation-policy.ts`、`apps/api/src/dependencies.ts`、`apps/api/src/rag/orchestration/chat-rag-orchestrator.ts`、`infra/lib/memorag-mvp-stack.ts`、policy/dependencies/graph/infra test。

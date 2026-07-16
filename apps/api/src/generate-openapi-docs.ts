@@ -15,8 +15,10 @@ import {
   type OperationObject,
   type RouteAuthorizationMetadataObject
 } from "./openapi-doc-quality.js"
+import { STANDARD_RAG_GUARD_PROFILE } from "./rag/_shared/security/safe-degradation-policy.js"
 
 process.env.MOCK_BEDROCK ??= "true"
+process.env.RAG_GUARD_PROFILE_JSON ??= JSON.stringify(STANDARD_RAG_GUARD_PROFILE)
 process.env.USE_LOCAL_VECTOR_STORE ??= "true"
 process.env.USE_LOCAL_QUESTION_STORE ??= "true"
 process.env.USE_LOCAL_CONVERSATION_HISTORY_STORE ??= "true"

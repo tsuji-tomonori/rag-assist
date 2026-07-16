@@ -3618,7 +3618,7 @@ async function createService(options: {
   const baseEvidenceStore = new LocalVectorStore(dataDir, "evidence-vectors.json")
   const baseChatRunEventStore = new LocalChatRunEventStore(dataDir)
   const baseDocumentIngestRunEventStore = new LocalDocumentIngestRunEventStore(dataDir)
-  const deps = {
+  const deps = { ragGuardProfile: { id: "test-safe-rag", version: "test-safe-rag-v1", guards: { authentication: true, authorization: true, classification_usage: true, prompt_injection: true, tool_policy: true, grounding: true, citation: true, output_secret: true, trace_redaction: true } },
     objectStore: {
       putText: async (...args: Parameters<LocalObjectStore["putText"]>) => {
         await baseObjectStore.putText(...args)

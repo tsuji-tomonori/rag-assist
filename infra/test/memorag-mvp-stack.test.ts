@@ -276,6 +276,21 @@ test("implements the designed serverless resources", () => {
         DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS: "900",
         RAG_MONITORING_REQUIRED: "1",
         RAG_SAFETY_STATE_TTL_SECONDS: "600",
+        RAG_GUARD_PROFILE_JSON: JSON.stringify({
+          id: "standard-safe-rag",
+          version: "standard-safe-rag-v1",
+          guards: {
+            authentication: true,
+            authorization: true,
+            classification_usage: true,
+            prompt_injection: true,
+            tool_policy: true,
+            grounding: true,
+            citation: true,
+            output_secret: true,
+            trace_redaction: true
+          }
+        }),
         PDF_OCR_FALLBACK_ENABLED: "true",
         PDF_OCR_FALLBACK_TIMEOUT_MS: "45000"
       })
