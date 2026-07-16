@@ -45,9 +45,9 @@
 | アプリケーション枠 | RailNav | a | ホーム | 「ホーム」へ移動するリンク。 | - | apps/web/src/app/components/RailNav.tsx:82 |
 | アプリケーション枠 | RailNav | AccountButton | 未推定 | AccountButton 要素。静的解析では具体的な操作名を推定できません。 | - | apps/web/src/app/components/RailNav.tsx:90 |
 | アプリケーション枠 | RailNav | button | メニューを閉じる / メニューを開く | 「メニューを閉じる / メニューを開く」を実行するボタン。 | 状態: aria-expanded=mobileMenuOpen, aria-controls=mobileMenuId | apps/web/src/app/components/RailNav.tsx:97 |
-| アプリケーション枠 | RailNav | AccountButton | 未推定 | AccountButton 要素。静的解析では具体的な操作名を推定できません。 | - | apps/web/src/app/components/RailNav.tsx:115 |
-| アプリケーション枠 | DestinationButtons | button | destination.label | 「destination.label」を実行するボタン。 | 状態: aria-current=activeView === destination.view ? "page" : undefined | apps/web/src/app/components/RailNav.tsx:137 |
-| アプリケーション枠 | AccountButton | button | 個人設定 | 「個人設定」を実行するボタン。 | 状態: aria-current=active ? "page" : undefined | apps/web/src/app/components/RailNav.tsx:163 |
+| アプリケーション枠 | RailNav | AccountButton | 未推定 | AccountButton 要素。静的解析では具体的な操作名を推定できません。 | - | apps/web/src/app/components/RailNav.tsx:116 |
+| アプリケーション枠 | DestinationButtons | button | destination.label | 「destination.label」を実行するボタン。 | 状態: aria-current=activeView === destination.view ? "page" : undefined | apps/web/src/app/components/RailNav.tsx:138 |
+| アプリケーション枠 | AccountButton | button | 個人設定 | 「個人設定」を実行するボタン。 | 状態: aria-current=active ? "page" : undefined | apps/web/src/app/components/RailNav.tsx:165 |
 | アプリケーション枠 | TopBar | label | デバッグモード | 「デバッグモード」に紐づく入力ラベル。 | - | apps/web/src/app/components/TopBar.tsx:18 |
 | アプリケーション枠 | TopBar | input | デバッグモード | 「デバッグモード」を入力または選択する項目。 | - | apps/web/src/app/components/TopBar.tsx:20 |
 | アプリケーション枠 | TopBar | button | 新しい会話 | 「新しい会話」を実行するボタン。 | - | apps/web/src/app/components/TopBar.tsx:24 |
@@ -231,8 +231,8 @@
 | 性能テスト | BenchmarkWorkspace | input | 並列数 | 「並列数」を入力または選択する項目。 | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:165 |
 | 性能テスト | BenchmarkWorkspace | button | 性能テストを実行 | 「性能テストを実行」を実行するボタン。 | 状態: disabled=loading \|\| !canRun \|\| !selectedSuite \|\| !hasSuitesResult | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:174 |
 | 性能テスト | BenchmarkWorkspace | button | 更新 | 「更新」を実行するボタン。 | 状態: disabled=loading | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:178 |
-| 性能テスト | BenchmarkWorkspace | button | `${artifact.description}をダウンロード` | 「`${artifact.description}をダウンロード`」を実行するボタン。 | 状態: disabled=!canDownload \|\| !canDownloadArtifact(run, artifact.kind) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:230 |
-| 性能テスト | BenchmarkWorkspace | button | `${run.runId}のジョブをキャンセル` | 「`${run.runId}のジョブをキャンセル`」を実行するボタン。 | 状態: disabled=!canCancel \|\| loading \|\| !["queued", "running"].includes(run.status) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:242 |
+| 性能テスト | BenchmarkWorkspace | button | `${artifact.description}をダウンロード` | 「`${artifact.description}をダウンロード`」を実行するボタン。 | 状態: disabled=!canDownload \|\| !canDownloadArtifact(run, artifact.kind) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:235 |
+| 性能テスト | BenchmarkWorkspace | button | `${run.runId}のジョブをキャンセル` | 「`${run.runId}のジョブをキャンセル`」を実行するボタン。 | 状態: disabled=!canCancel \|\| loading \|\| !["queued", "running"].includes(run.status) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:247 |
 | チャット | AnswerCopyAction | button | 回答をコピー済み / 回答をコピー | 「回答をコピー済み / 回答をコピー」を実行するボタン。 | 状態: disabled=!canCopy | apps/web/src/features/chat/components/answer/AnswerCopyAction.tsx:18 |
 | チャット | CitationList | a | 未推定 | a 要素。静的解析では具体的な操作名を推定できません。 | - | apps/web/src/features/chat/components/answer/CitationList.tsx:13 |
 | チャット | ClarificationOptions | button | この候補で質問する | 「この候補で質問する」を実行するボタン。 | 状態: disabled=disabled | apps/web/src/features/chat/components/answer/ClarificationOptions.tsx:19 |
@@ -415,16 +415,16 @@
 | ドキュメント | DocumentFilePanel | option | ファイル名順 | 「ファイル名順」を表す option 要素。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:224 |
 | ドキュメント | DocumentFilePanel | option | チャンク数順 | 「チャンク数順」を表す option 要素。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:225 |
 | ドキュメント | DocumentFilePanel | option | 種別順 | 「種別順」を表す option 要素。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:226 |
-| ドキュメント | DocumentFilePanel | button | ドキュメントを追加 | 「ドキュメントを追加」を実行するボタン。 | 状態: disabled=!canOpenDocumentAdd | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:254 |
-| ドキュメント | DocumentFilePanel | button | 条件をクリア | 「条件をクリア」を実行するボタン。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:261 |
-| ドキュメント | DocumentFilePanel | button | `${document.fileName}の詳細を表示` | 「`${document.fileName}の詳細を表示`」を実行するボタン。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:283 |
-| ドキュメント | DocumentFilePanel | label | 表示件数 | 「表示件数」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:308 |
-| ドキュメント | DocumentFilePanel | select | 表示件数 | 「表示件数」を選ぶ選択項目。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:310 |
-| ドキュメント | DocumentFilePanel | option | 件 | 「件」を表す option 要素。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:312 |
-| ドキュメント | DocumentFilePanel | button | 前のページ | 「前のページ」を実行するボタン。 | 状態: disabled=documentPage <= 1 \|\| filteredDocumentsCount === 0 | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:316 |
-| ドキュメント | DocumentFilePanel | button | 次のページ | 「次のページ」を実行するボタン。 | 状態: disabled=documentPage >= documentPageCount \|\| filteredDocumentsCount === 0 | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:325 |
-| ドキュメント | ReindexMigrationStrip | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: disabled=operationState.cutoverMigrationId === migration.migrationId \|\| migration.status !== "stag… | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:382 |
-| ドキュメント | ReindexMigrationStrip | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: disabled=operationState.rollbackMigrationId === migration.migrationId \|\| migration.status !== "cut… | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:385 |
+| ドキュメント | DocumentFilePanel | button | ドキュメントを追加 | 「ドキュメントを追加」を実行するボタン。 | 状態: disabled=!canOpenDocumentAdd | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:259 |
+| ドキュメント | DocumentFilePanel | button | 条件をクリア | 「条件をクリア」を実行するボタン。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:266 |
+| ドキュメント | DocumentFilePanel | button | `${document.fileName}の詳細を表示` | 「`${document.fileName}の詳細を表示`」を実行するボタン。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:288 |
+| ドキュメント | DocumentFilePanel | label | 表示件数 | 「表示件数」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:313 |
+| ドキュメント | DocumentFilePanel | select | 表示件数 | 「表示件数」を選ぶ選択項目。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:315 |
+| ドキュメント | DocumentFilePanel | option | 件 | 「件」を表す option 要素。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:317 |
+| ドキュメント | DocumentFilePanel | button | 前のページ | 「前のページ」を実行するボタン。 | 状態: disabled=documentPage <= 1 \|\| filteredDocumentsCount === 0 | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:321 |
+| ドキュメント | DocumentFilePanel | button | 次のページ | 「次のページ」を実行するボタン。 | 状態: disabled=documentPage >= documentPageCount \|\| filteredDocumentsCount === 0 | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:330 |
+| ドキュメント | ReindexMigrationStrip | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: disabled=operationState.cutoverMigrationId === migration.migrationId \|\| migration.status !== "stag… | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:387 |
+| ドキュメント | ReindexMigrationStrip | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: disabled=operationState.rollbackMigrationId === migration.migrationId \|\| migration.status !== "cut… | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:390 |
 | ドキュメント | DocumentFolderTree | label | フォルダを検索 | 「フォルダを検索」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/workspace/DocumentFolderTree.tsx:27 |
 | ドキュメント | DocumentFolderTree | input | フォルダを検索 | 「フォルダを検索」を入力または選択する項目。 | - | apps/web/src/features/documents/components/workspace/DocumentFolderTree.tsx:28 |
 | ドキュメント | DocumentFolderTree | button | フォルダ検索をクリア | 「フォルダ検索をクリア」を実行するボタン。 | 状態: disabled=!folderSearch | apps/web/src/features/documents/components/workspace/DocumentFolderTree.tsx:36 |

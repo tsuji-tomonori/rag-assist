@@ -33,6 +33,17 @@ test('NONUI-UI-SEMANTIC-001: semantic status tokens meet WCAG AA text contrast',
     const background = cssVariable(css, `status-${tone}-background`)
     assert.ok(contrastRatio(foreground, background) >= 4.5, `${tone} status contrast must be at least 4.5:1`)
   }
+
+  for (const foregroundName of ['color-text-muted', 'color-text-muted-strong']) {
+    const foreground = cssVariable(css, foregroundName)
+    for (const backgroundName of ['color-surface', 'color-surface-muted', 'color-surface-subtle']) {
+      const background = cssVariable(css, backgroundName)
+      assert.ok(
+        contrastRatio(foreground, background) >= 4.5,
+        `${foregroundName} on ${backgroundName} must be at least 4.5:1`
+      )
+    }
+  }
 })
 
 test('status primitive exposes a non-color marker and representative views do not render raw status enums', async () => {
@@ -69,4 +80,12 @@ test('confirmation dialogs share native focus semantics and semantic Button inte
   }
   assert.match(button, /"warning"/)
   assert.match(button, /"danger"/)
+})
+
+test('AppShell keeps primary navigation outside the single main landmark', async () => {
+  const shell = await read('apps/web/src/app/AppShell.tsx')
+
+  assert.match(shell, /<div className="app-frame">/)
+  assert.match(shell, /<main className="main-area">/)
+  assert.doesNotMatch(shell, /<main className="app-frame">/)
 })

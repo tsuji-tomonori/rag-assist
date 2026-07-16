@@ -179,8 +179,8 @@ button:has(.button-spinner) {
 }
 
 .rail-logo {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   margin: 20px 0 28px;
   display: grid;
   place-items: center;
@@ -268,6 +268,7 @@ button:has(.button-spinner) {
   display: none;
 }
 
+.rail-logo:focus-visible,
 .rail-item:focus-visible,
 .account-button:focus-visible,
 .mobile-menu-button:focus-visible,

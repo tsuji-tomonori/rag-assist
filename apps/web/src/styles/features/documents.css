@@ -987,6 +987,11 @@
   overflow: auto;
 }
 
+.document-file-table:focus-visible {
+  outline: 3px solid #143f8f;
+  outline-offset: -3px;
+}
+
 .document-file-table > .ui-empty-state {
   min-height: 100%;
   align-content: center;
@@ -1141,6 +1146,11 @@
     gap: 8px;
     padding: 12px;
     background: #fff;
+  }
+
+  .document-file-table.is-manager .document-file-row {
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .document-file-row:last-child {

@@ -82,6 +82,14 @@
 3. Phase C以降: feature batchごとにdefect ownerを一意化し、severity順に修復する。
 4. automatedとmanual evidenceを結合して未達を再修復する。
 
+## Phase B: AppShell・確定fail remediation（2026-07-17）
+
+- 専用task: `tasks/do/20260717-0054-issue-345-cross-screen-phase-b.md`
+- PR #381 final head `b6acb24ff81acd08981ada8ebb3df63810f6d57b`をbaseに、AppShell / RailNav、assignee 768px overflow、history / favorites / benchmark / admin contrast、benchmark focusabilityを修正する。
+- target / nested overflowは根拠なしにpassへ変えず、要素・意図・owner・代替操作をartifactへ記録し、未解決candidateをPlaywright failureとする。
+- Login / auth production fileはPR #382との競合を避けて変更しない。
+- representative screen reader、実browser 200% / 400% zoom、touch / real-deviceは本taskの未検証scopeとして残す。
+
 ## ドキュメントメンテナンス計画
 
 `SQ-016`, `DES_UI_UX_001`、generated accessibility inventory、defect/task/evidence report を同期する。適合を自動 check だけから断定しない。

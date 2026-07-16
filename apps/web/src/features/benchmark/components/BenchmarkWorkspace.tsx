@@ -187,7 +187,12 @@ export function BenchmarkWorkspace({
             <h3>実行履歴</h3>
             <span>{runs.length} 件</span>
           </div>
-          <div className="benchmark-table-wrap">
+          <div
+            className="benchmark-table-wrap"
+            role="region"
+            aria-label="性能テスト実行履歴。左右にスクロールできます"
+            tabIndex={0}
+          >
             <table className="benchmark-table">
               <thead>
                 <tr>

@@ -949,7 +949,10 @@ test('E2E-UI-CROSS-SCREEN-AUDIT-001: 8 AppViewsのcomputed quality baselineを�
             }))
         : []
       const criterionStatuses = { ...computed.criterionStatuses }
-      if (axeBlockers.length > 0) criterionStatuses['AC-SQ016-003'] = 'fail'
+      if (axeBlockers.some((violation) => violation.id === 'scrollable-region-focusable')) criterionStatuses['AC-SQ016-002'] = 'fail'
+      if (axeBlockers.some((violation) => !['color-contrast', 'scrollable-region-focusable'].includes(violation.id))) {
+        criterionStatuses['AC-SQ016-003'] = 'fail'
+      }
       if (axeBlockers.some((violation) => violation.id === 'color-contrast')) criterionStatuses['AC-SQ016-004'] = 'fail'
       baseline.push({ view: viewStep.view, route: viewStep.url, region: viewStep.region, computed, axeBlockers, criterionStatuses })
     }
@@ -958,8 +961,24 @@ test('E2E-UI-CROSS-SCREEN-AUDIT-001: 8 AppViewsのcomputed quality baselineを�
   expect(new Set(baseline.map((entry) => entry.view))).toEqual(new Set(viewSteps.map((entry) => entry.view)))
   expect(baseline).toHaveLength(viewSteps.length * viewports.length)
   expect(baseline.every((entry) => entry.computed.root.clientWidth > 0)).toBe(true)
+  const seriousFindings = baseline.flatMap((entry) => entry.computed.findings.filter((finding) => finding.severity === 'serious'))
+  const unresolvedLayoutAndTargetFindings = baseline.flatMap((entry) => entry.computed.findings.filter((finding) =>
+    finding.code === 'overflow' || finding.code === 'target-size'
+  ))
+  const axeBlockers = baseline.flatMap((entry) => entry.axeBlockers)
+  expect(seriousFindings).toEqual([])
+  expect(unresolvedLayoutAndTargetFindings).toEqual([])
+  expect(axeBlockers).toEqual([])
+  expect(baseline.flatMap((entry) => entry.computed.exceptions).every((entry) =>
+    Boolean(entry.reason && entry.owner && entry.alternativeOperation)
+  )).toBe(true)
   await testInfo.attach('cross-screen-quality-baseline.json', {
-    body: Buffer.from(`${JSON.stringify({ schemaVersion: 1, requirement: 'SQ-016', baseline }, null, 2)}\n`),
+    body: Buffer.from(`${JSON.stringify({
+      schemaVersion: 2,
+      requirement: 'SQ-016',
+      candidatePolicy: '例外は要素、理由、owner、代替操作を必須とし、unresolved overflow/target candidateはtest failureにします',
+      baseline
+    }, null, 2)}\n`),
     contentType: 'application/json'
   })
 })

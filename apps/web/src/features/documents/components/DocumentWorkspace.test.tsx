@@ -892,6 +892,7 @@ describe("DocumentWorkspace", () => {
     )
 
     const table = screen.getByRole("table", { name: "登録文書" })
+    expect(table).toHaveAttribute("tabindex", "0")
     expect(screen.getByText("1-25 / 30 件を表示（フォルダ内 30 件 / 全体 30 件）")).toBeInTheDocument()
     expect(screen.getByText("ページ 1 / 2")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "前のページ" })).toBeDisabled()

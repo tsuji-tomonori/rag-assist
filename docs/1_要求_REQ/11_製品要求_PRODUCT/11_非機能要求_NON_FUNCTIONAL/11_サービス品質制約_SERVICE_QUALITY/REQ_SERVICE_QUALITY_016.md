@@ -76,6 +76,14 @@
 - Phase B以降はAppShell / RailNavとfeature batchのremediationをownerとし、Phase AのbaselineだけからSQ-016適合を宣言しない。
 - representative screen reader、実browser 200% / 400% zoom、touch / real-deviceはmanual evidence taskのrequired scopeに残す。
 
+## Phase B remediation contract（2026-07-17）
+
+- Phase Aで確定したroot overflow、serious color contrast、keyboardから到達できないhorizontal scroll regionは、Phase Bでproduction sourceとregression assertionを同時に修正する。
+- 24×24 minimumに加え、RailNavのprimary navigationは44px class targetとして明示的に監査する。target-size candidateは例外へ自動変換せず、未解決ならPlaywrightをfailureにする。
+- nested overflowは、要素、分類、意図、owner、代替操作をartifactへ記録できる場合に限り、装飾・visually hidden label・keyboard操作可能なscroll regionとして分類する。根拠を記録できないcandidateはfailureのまま残す。
+- automated reflow / axe / computed target evidenceがpassしても、representative screen reader、実browser 200% / 400% zoom、touch / real-deviceが未実施である間は該当manual statusとoverall statusを`blocked`に保つ。
+- Login / auth、API permission、RAG retrieval / grounding、benchmark dataset behaviorはPhase Bの変更対象外とする。
+
 ## 関連文書・task
 
 - `docs/3_設計_DES/21_UI_UX/DES_UI_UX_001.md`
