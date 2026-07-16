@@ -3,13 +3,15 @@ import type { ComputedFact, RetrievalRiskSignal, TemporalContext } from "../../.
 import { ragRuntimePolicy } from "../../../../chat-orchestration/runtime-policy.js"
 import { formatQuestionRequirementsForPrompt } from "../../../../chat-orchestration/question-requirements.js"
 import { assembleContext, formatContextXml, textAnswerRelevanceScore } from "../../post-retrieval/context-packing/context-packer.js"
-import { selectAnswerPolicyForMetadata, type AnswerPolicy } from "../../../_shared/policies/answer-policy.js"
+import type { AnswerPolicy } from "../../../_shared/policies/answer-policy.js"
 import { guardUntrustedPromptText, type UntrustedContentSource } from "../../../_shared/security/untrusted-content-policy.js"
 export { buildMemoryCardPrompt } from "../../../offline/generation/prompt-assets/memory-card-prompt.js"
 
 type FinalAnswerPromptOptions = {
   style?: "benchmark_grounded_short"
 }
+
+const minimumGeneralEvidenceRelevanceScore = 8
 
 export function formatConversationHistory(
   history: Array<{ role: "user" | "assistant"; text: string }>,
@@ -49,7 +51,7 @@ export function buildFinalAnswerPrompt(
   conversationHistory = "",
   options: FinalAnswerPromptOptions = {}
 ): string {
-  const policy = selectAnswerPolicyForChunks(chunks)
+  const policy = ragRuntimePolicy.profile.answerPolicy
   const assembly = assembleContext({ question, chunks, tokenBudget: 3000 })
   const context = formatContextXml(assembly)
   const computedFactsJson = JSON.stringify(computedFacts, null, 2)
@@ -79,7 +81,6 @@ ${questionRequirementRules}
 - <context>と<computedFacts>のどちらからも判断できない場合は isAnswerable=false とし、answer は「資料からは回答できません。」だけにする。
 - 回答できる場合は isAnswerable=true とし、簡潔に日本語で回答する。
 - 質問が分類、一覧、洗い出しを求める場合は、<context>内で分類対象として明示された項目だけを列挙し、目次、章名、活動名、参考文献名を分類項目として混ぜない。
-${policy.id === "swebok-requirements-policy" ? "- SWEBOK 要求分類 policy が有効です。要求活動や実務上の考慮は、<context>に分類として明示されていない限り分類項目にしない。" : ""}
 - usedChunkIds には根拠に使ったchunk idを入れる。
 - usedComputedFactIds には根拠に使った computed fact id を入れる。
 - 出力はJSONのみ。Markdownやコードフェンスは禁止。
@@ -169,7 +170,7 @@ ${context || "根拠チャンクはありません。"}
 }
 
 export function buildAnswerSupportPrompt(question: string, answer: string, chunks: RetrievedVector[], computedFacts: ComputedFact[] = []): string {
-  const policy = selectAnswerPolicyForChunks(chunks)
+  const policy = ragRuntimePolicy.profile.answerPolicy
   const assembly = assembleContext({ question, chunks, tokenBudget: 2400 })
   const context = formatContextXml(assembly)
   const computedFactsJson = JSON.stringify(computedFacts, null, 2)
@@ -217,7 +218,7 @@ ${context || "根拠チャンクはありません。"}
 }
 
 export function buildPolicyComputationExtractionPrompt(question: string, chunks: RetrievedVector[]): string {
-  const policy = selectAnswerPolicyForChunks(chunks)
+  const policy = ragRuntimePolicy.profile.answerPolicy
   const context = formatContextXml(assembleContext({ question, chunks, tokenBudget: 3200 }))
   const textMap = formatPolicyComputationTextMap(policy)
 
@@ -407,28 +408,7 @@ ${context || "根拠チャンクはありません。"}
 }
 
 export function selectFinalAnswerChunks(question: string, chunks: RetrievedVector[]): RetrievedVector[] {
-  const policy = selectAnswerPolicyForChunks(chunks)
-  if (!isRequirementsClassificationQuestion(question) || policy.id !== "swebok-requirements-policy") {
-    return rankGeneralAnswerChunks(question, chunks)
-  }
-
-  const scored = chunks
-    .map((chunk, index) => ({
-      chunk,
-      index,
-      score: classificationEvidenceScore(question, chunk.metadata.text ?? "")
-    }))
-    .filter((item) => item.score > 0)
-    .sort((a, b) => b.score - a.score || a.index - b.index)
-
-  const selected = scored.filter((item) => !isTableOfContentsLike(item.chunk.metadata.text ?? "")).map((item) => item.chunk)
-  const sectionAnchored = selected.filter((chunk) => hasClassificationSectionEvidence(chunk.metadata.text ?? ""))
-
-  if (sectionAnchored.length > 0) return sectionAnchored.slice(0, Math.min(4, chunks.length))
-  if (selected.length > 0) return selected.slice(0, Math.min(4, chunks.length))
-
-  const nonToc = chunks.filter((chunk) => !isTableOfContentsLike(chunk.metadata.text ?? ""))
-  return nonToc.length > 0 ? nonToc : chunks
+  return rankGeneralAnswerChunks(question, chunks)
 }
 
 function rankGeneralAnswerChunks(question: string, chunks: RetrievedVector[]): RetrievedVector[] {
@@ -439,7 +419,9 @@ function rankGeneralAnswerChunks(question: string, chunks: RetrievedVector[]): R
       score: textAnswerRelevanceScore(question, chunk.metadata.text ?? "")
     }))
     .sort((a, b) => b.score - a.score || b.chunk.score - a.chunk.score || a.index - b.index)
-  return scored.map((item) => item.chunk)
+  const relevant = scored.filter((item) => item.score >= minimumGeneralEvidenceRelevanceScore)
+  const nonToc = relevant.filter((item) => !isTableOfContentsLike(item.chunk.metadata.text ?? ""))
+  return (nonToc.length > 0 ? nonToc : relevant).map((item) => item.chunk)
 }
 
 function formatThresholdEffectRules(policy: AnswerPolicy): string {
@@ -472,66 +454,8 @@ function escapeUntrustedXml(input: string, source: UntrustedContentSource): stri
   return escapeXml(guardUntrustedPromptText(input, source).text)
 }
 
-function intentAnchors(question: string): string[] {
-  const anchors: string[] = []
-  if (isRequirementsClassificationQuestion(question)) {
-    anchors.push(...ragRuntimePolicy.profile.answerPolicy.classificationAnchors)
-  }
-  return anchors
-}
-
-export function isRequirementsClassificationQuestion(question: string): boolean {
-  return question.includes("分類") && /ソフトウェア要求|要求/.test(question)
-}
-
-function classificationEvidenceScore(question: string, text: string): number {
-  let score = 0
-  for (const anchor of intentAnchors(question)) {
-    if (text.includes(anchor)) score += anchor.length >= 8 ? 8 : 3
-  }
-  if (hasClassificationSectionEvidence(text)) score += 40
-  if (/第\s*2\s*層|製品要求から|非機能要求から|↓|\/\s*ソフトウェアプロジェクト要求/.test(text)) score += 12
-  if (/SWEBOK\s*では、?ソフトウェア要求を大きく次のように整理/.test(text)) score += 10
-  if (text.includes("画像生成用プロンプト")) score -= 12
-  if (isTableOfContentsLike(text)) score -= 16
-  return score
-}
-
-function hasClassificationSectionEvidence(text: string): boolean {
-  return text.includes("ソフトウェア要求の分類") && /SWEBOK\s*では、?ソフトウェア要求を大きく次のように整理/.test(text)
-}
-
-export function hasUsableRequirementsClassificationEvidence(text: string): boolean {
-  const categoryCount = countRequirementsClassificationTerms(text)
-  if (categoryCount >= 2) return true
-  return hasClassificationSectionEvidence(text) && categoryCount >= 1
-}
-
-export function hasInvalidRequirementsClassificationAnswer(answer: string, policy: AnswerPolicy = ragRuntimePolicy.profile.answerPolicy): boolean {
-  return policy.invalidAnswerPatterns.some((pattern) => pattern.test(answer))
-}
-
-function countRequirementsClassificationTerms(text: string): number {
-  const patterns = [
-    /ソフトウェア製品要求|software product requirements?/i,
-    /ソフトウェアプロジェクト要求|software project requirements?/i,
-    /機能要求|functional requirements?/i,
-    /非機能要求|non[-\s]?functional requirements?/i,
-    /技術制約|technical constraints?/i,
-    /サービス品質制約|quality constraints?|quality requirements?/i
-  ]
-  return patterns.filter((pattern) => pattern.test(text)).length
-}
-
 function isTableOfContentsLike(text: string): boolean {
   const dotLeaderCount = text.match(/\. \. \./g)?.length ?? 0
   const headingWithPageCount = text.match(/^\s*\d+(?:\.\d+)?\s+.+\s+\d+\s*$/gm)?.length ?? 0
   return dotLeaderCount >= 4 || (text.includes("目次") && headingWithPageCount >= 4)
-}
-
-function selectAnswerPolicyForChunks(chunks: RetrievedVector[]): AnswerPolicy {
-  return selectAnswerPolicyForMetadata(
-    chunks.map((chunk) => chunk.metadata as unknown as Record<string, unknown>),
-    ragRuntimePolicy.profile.answerPolicy
-  )
 }

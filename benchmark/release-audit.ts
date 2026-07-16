@@ -8,7 +8,7 @@ import { BenchmarkRunSchema } from "@memorag-mvp/contract"
 export const ragReleaseAuditVersion = "rag-release-audit-v1" as const
 
 export type DatasetSpecificBranchFinding = {
-  ruleId: "dataset_expected_field_in_runtime" | "dataset_identity_branch_in_runtime"
+  ruleId: "dataset_expected_field_in_runtime" | "dataset_identity_branch_in_runtime" | "known_dataset_domain_lexicon_in_runtime"
   file: string
   line: number
   excerpt: string
@@ -37,6 +37,7 @@ export type RagReleaseAudit = {
 
 const expectedRuntimeField = /\b(?:expectedContains|expectedRegex|expectedFiles|expectedFileNames|expectedDocumentIds|expectedPages|expectedFactSlots|expectedAnswer|referenceAnswer)\b/g
 const datasetIdentityBranch = /\b(?:if|else\s+if|case)\b[^\n]*(?:benchmarkSuiteId|suiteId|datasetVersion|caseId)[^\n]*(?:===|==|case\s+)[^\n]*["'`][A-Za-z0-9_.:/-]+["'`]/g
+const knownDatasetDomainLexicon = /\bSWEBOK\b|ソフトウェア要求の分類|ソフトウェア製品要求|ソフトウェアプロジェクト要求|Requirements Elicitation|Requirements Scrubbing/g
 const sourceExtensions = new Set([".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"])
 
 export async function buildRagReleaseAudit(input: {
@@ -90,7 +91,8 @@ export function scanRuntimeSource(file: string, text: string): DatasetSpecificBr
   const findings: DatasetSpecificBranchFinding[] = []
   for (const [ruleId, pattern] of [
     ["dataset_expected_field_in_runtime", expectedRuntimeField],
-    ["dataset_identity_branch_in_runtime", datasetIdentityBranch]
+    ["dataset_identity_branch_in_runtime", datasetIdentityBranch],
+    ["known_dataset_domain_lexicon_in_runtime", knownDatasetDomainLexicon]
   ] as const) {
     pattern.lastIndex = 0
     for (const match of text.matchAll(pattern)) {

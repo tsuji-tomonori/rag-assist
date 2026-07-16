@@ -4,7 +4,9 @@
 
 ## 状態
 
-- todo
+- do
+
+2026-07-16 更新: Issue #358 の `FR-045` / `SQ-003` 是正として `tasks/do/20260716-1916-issue-358-dataset-overfit-removal.md` に統合した。domain policy として固有 rule を production に残す旧方針は、metadata による dataset 固有分岐を許すため採用しない。production evidence 採用経路を domain-neutral に統一し、source audit と複数 corpus test で完了確認後に本 task も `done` へ移す。
 
 関連要件・gap: `FR-075`, `SQ-003`, `SQ-007`, `GAP-RD-019`
 
