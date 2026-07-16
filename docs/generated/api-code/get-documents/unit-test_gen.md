@@ -27,6 +27,7 @@
 | 到達 symbol | FR-090 ingest reauthorizes after the final event and compensates before persisting success | `apps/api/src/rag/memorag-service.test.ts:2784 (FR-090 ingest reauthorizes after the final event and compensates before persisting success)` |
 | 到達 symbol | FR-090 revoke after governance creation compensates all ingest artifacts and never publishes success | `apps/api/src/rag/memorag-service.test.ts:2844 (FR-090 revoke after governance creation compensates all ingest artifacts and never publishes success)` |
 | 到達 symbol | FR-060 same documentId is physically partitioned and never reveals the other tenant body or candidates | `apps/api/src/rag/tenant-artifact-partition.test.ts:27 (FR-060 same documentId is physically partitioned and never reveals the other tenant body or candidates)` |
+| 到達 symbol | MT-TEMP-001/003/004 session context persists only authoritative owner-bound temporary evidence | `apps/api/src/search/temporary-attachment-boundary.test.ts:79 (MT-TEMP-001/003/004 session context persists only authoritative owner-bound temporary evidence)` |
 
 ## 2. 実装分岐から導くテスト要因
 

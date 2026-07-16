@@ -18,6 +18,9 @@ sequenceDiagram
   API->>Auth: "chat：create" permission を必須条件として確認する。
   API->>Auth: schema 検証済みの JSON request body を取得する。
   API->>Service: service の save conversation history 処理を呼び出す。
+  API->>Service: service の resolve session document context 処理を呼び出す。
+  Service->>Store: this.deps.conversationHistoryStore に対して get を実行する。
+  Service->>Store: deps.objectStore に対して get text を実行する。
   Service->>Store: this.deps.conversationHistoryStore に対して save を実行する。
   API->>Auth: parse により入力を検証する。
   API-->>Client: HTTP 200 で JSON response を返す。
@@ -27,13 +30,16 @@ sequenceDiagram
 
 | # | Caller | 境界 | 処理 | コード | 実装位置 |
 | ---: | --- | --- | --- | --- | --- |
-| 1 | `POST /conversation-history handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/conversation-history-routes.ts:47 (POST /conversation-history handler)` |
-| 2 | `POST /conversation-history handler` | Auth | "chat:create" permission を必須条件として確認する。 | `requirePermission(user, "chat:create")` | `apps/api/src/routes/conversation-history-routes.ts:48 (POST /conversation-history handler)` |
-| 3 | `POST /conversation-history handler` | Validation | schema 検証済みの JSON request body を取得する。 | `validJson<z.infer<typeof ConversationHistoryItemSchema>>(c)` | `apps/api/src/routes/conversation-history-routes.ts:49 (POST /conversation-history handler)` |
-| 4 | `POST /conversation-history handler` | Service | service の save conversation history 処理を呼び出す。 | `service.saveConversationHistory(user, body)` | `apps/api/src/routes/conversation-history-routes.ts:50 (POST /conversation-history handler)` |
-| 5 | `MemoRagService.saveConversationHistory` | Store | `this.deps.conversationHistoryStore` に対して save を実行する。 | `this.deps.conversationHistoryStore.save(ownerKey, { ...input, isFavorite: false })` | `apps/api/src/rag/memorag-service.ts:4129 (MemoRagService.saveConversationHistory)` |
-| 6 | `POST /conversation-history handler` | Validation | parse により入力を検証する。 | `ConversationHistoryItemSchema.parse(await service.saveConversationHistory(user, body))` | `apps/api/src/routes/conversation-history-routes.ts:50 (POST /conversation-history handler)` |
-| 7 | `POST /conversation-history handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json(ConversationHistoryItemSchema.parse(await service.saveConversationHistory(user, body)), 200)` | `apps/api/src/routes/conversation-history-routes.ts:50 (POST /conversation-history handler)` |
+| 1 | `POST /conversation-history handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/conversation-history-routes.ts:68 (POST /conversation-history handler)` |
+| 2 | `POST /conversation-history handler` | Auth | "chat:create" permission を必須条件として確認する。 | `requirePermission(user, "chat:create")` | `apps/api/src/routes/conversation-history-routes.ts:69 (POST /conversation-history handler)` |
+| 3 | `POST /conversation-history handler` | Validation | schema 検証済みの JSON request body を取得する。 | `validJson<z.infer<typeof ConversationHistoryItemSchema>>(c)` | `apps/api/src/routes/conversation-history-routes.ts:70 (POST /conversation-history handler)` |
+| 4 | `POST /conversation-history handler` | Service | service の save conversation history 処理を呼び出す。 | `service.saveConversationHistory(user, body)` | `apps/api/src/routes/conversation-history-routes.ts:71 (POST /conversation-history handler)` |
+| 5 | `MemoRagService.saveConversationHistory` | Service | service の resolve session document context 処理を呼び出す。 | `this.resolveSessionDocumentContext(subject, input, ownerKey)` | `apps/api/src/rag/memorag-service.ts:4129 (MemoRagService.saveConversationHistory)` |
+| 6 | `MemoRagService.resolveSessionDocumentContext` | Store | `this.deps.conversationHistoryStore` に対して get を実行する。 | `this.deps.conversationHistoryStore.get(ownerKey, input.id)` | `apps/api/src/rag/memorag-service.ts:5193 (MemoRagService.resolveSessionDocumentContext)` |
+| 7 | `readTenantManifest` | Store | `deps.objectStore` に対して get text を実行する。 | `deps.objectStore.getText(key)` | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:83 (readTenantManifest)` |
+| 8 | `MemoRagService.saveConversationHistory` | Store | `this.deps.conversationHistoryStore` に対して save を実行する。 | `this.deps.conversationHistoryStore.save(ownerKey, { ...input, sessionDocumentContext: await this.resolveSessionDocumentContext(subject, input, ownerKey), isFavorite: false })` | `apps/api/src/rag/memorag-service.ts:4129 (MemoRagService.saveConversationHistory)` |
+| 9 | `POST /conversation-history handler` | Validation | parse により入力を検証する。 | `ConversationHistoryItemSchema.parse(await service.saveConversationHistory(user, body))` | `apps/api/src/routes/conversation-history-routes.ts:71 (POST /conversation-history handler)` |
+| 10 | `POST /conversation-history handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json(ConversationHistoryItemSchema.parse(await service.saveConversationHistory(user, body)), 200)` | `apps/api/src/routes/conversation-history-routes.ts:71 (POST /conversation-history handler)` |
 
 ## 分岐
 

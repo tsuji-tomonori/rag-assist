@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "generator": "npm run docs:api-code",
   "sourceRoot": "apps/api/src",
-  "operationCount": 97,
+  "operationCount": 98,
   "documentsPerOperation": [
     "detail-design_gen.md",
     "if_gen.md",
@@ -513,8 +513,8 @@
       "openApi": true,
       "routeSource": "apps/api/src/routes/conversation-history-routes.ts:8 (GET /conversation-history)",
       "handlerSource": "apps/api/src/routes/conversation-history-routes.ts:21 (GET /conversation-history handler)",
-      "functionCount": 7,
-      "branchCount": 8,
+      "functionCount": 11,
+      "branchCount": 13,
       "projectedBranchCount": 1,
       "dataAccessCount": 2,
       "relatedTestCount": 1
@@ -524,26 +524,39 @@
       "path": "/conversation-history",
       "slug": "post-conversation-history",
       "openApi": true,
-      "routeSource": "apps/api/src/routes/conversation-history-routes.ts:29 (POST /conversation-history)",
-      "handlerSource": "apps/api/src/routes/conversation-history-routes.ts:46 (POST /conversation-history handler)",
-      "functionCount": 9,
-      "branchCount": 8,
+      "routeSource": "apps/api/src/routes/conversation-history-routes.ts:50 (POST /conversation-history)",
+      "handlerSource": "apps/api/src/routes/conversation-history-routes.ts:67 (POST /conversation-history handler)",
+      "functionCount": 28,
+      "branchCount": 26,
       "projectedBranchCount": 1,
-      "dataAccessCount": 1,
-      "relatedTestCount": 2
+      "dataAccessCount": 3,
+      "relatedTestCount": 3
     },
     {
       "method": "DELETE",
       "path": "/conversation-history/{id}",
       "slug": "delete-conversation-history-id",
       "openApi": true,
-      "routeSource": "apps/api/src/routes/conversation-history-routes.ts:54 (DELETE /conversation-history/{id})",
-      "handlerSource": "apps/api/src/routes/conversation-history-routes.ts:67 (DELETE /conversation-history/{id} handler)",
-      "functionCount": 9,
-      "branchCount": 8,
-      "projectedBranchCount": 1,
-      "dataAccessCount": 1,
+      "routeSource": "apps/api/src/routes/conversation-history-routes.ts:75 (DELETE /conversation-history/{id})",
+      "handlerSource": "apps/api/src/routes/conversation-history-routes.ts:88 (DELETE /conversation-history/{id} handler)",
+      "functionCount": 10,
+      "branchCount": 10,
+      "projectedBranchCount": 2,
+      "dataAccessCount": 2,
       "relatedTestCount": 0
+    },
+    {
+      "method": "GET",
+      "path": "/conversation-history/{id}",
+      "slug": "get-conversation-history-id",
+      "openApi": true,
+      "routeSource": "apps/api/src/routes/conversation-history-routes.ts:29 (GET /conversation-history/{id})",
+      "handlerSource": "apps/api/src/routes/conversation-history-routes.ts:40 (GET /conversation-history/{id} handler)",
+      "functionCount": 13,
+      "branchCount": 15,
+      "projectedBranchCount": 3,
+      "dataAccessCount": 1,
+      "relatedTestCount": 1
     },
     {
       "method": "GET",
@@ -738,7 +751,7 @@
       "branchCount": 209,
       "projectedBranchCount": 14,
       "dataAccessCount": 14,
-      "relatedTestCount": 19
+      "relatedTestCount": 20
     },
     {
       "method": "POST",
@@ -760,8 +773,8 @@
       "openApi": true,
       "routeSource": "apps/api/src/routes/document-routes.ts:1567 (DELETE /documents/{documentId})",
       "handlerSource": "apps/api/src/routes/document-routes.ts:1589 (DELETE /documents/{documentId} handler)",
-      "functionCount": 181,
-      "branchCount": 343,
+      "functionCount": 183,
+      "branchCount": 345,
       "projectedBranchCount": 17,
       "dataAccessCount": 38,
       "relatedTestCount": 7
