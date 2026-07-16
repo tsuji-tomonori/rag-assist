@@ -4,7 +4,7 @@
 
 - origin/main の専用 worktree で #339 vs merged #357/current main を再監査し、#339 を superseded draft として整理する。
 - #338 の古い42-file patchは適用せず、session-local evidence の原要求・未完 ID・current main evidenceを回収する。
-- large replacement PRを避け、Phase A evidence/docs、Phase B server/security、Phase C Web/history UI の3段へ分割する。
+- large replacement PRを避け、Phase A evidence/docs、Phase B1 context store/API/security、Phase B2 RAG integration、Phase C Web/history UI の4段へ分割する。
 - #338/#339 は close/mergeせず、deploy/releaseも行わない。
 
 ## 要件整理
@@ -26,16 +26,19 @@
 
 - current mainは同一会話の次ターンへの単一 temporary scope継承、tenant/owner/conversation/expiry retrieval boundary、tenant+user partitioned history、通常 document listからchat scopeを除く実装を持つ。
 - authoritative session context、removed/revoked state、複数 scope normalization、history restore、temporary citation label、TEMP007/008 dedicated evidenceは未完である。
-- server securityとWeb stateを同一PRにせず、Phase B/Cへ分割した。Phase BはPhase A final headからstack可能で、Phase A merge待ちを条件にしない。
+- authoritative storage/API security、RAG behavior、Web stateを同一PRにせず、Phase B1/B2/Cへ分割した。Phase B1はPhase A final headからstack可能で、Phase A merge待ちを条件にしない。
 
 ## 実施作業
 
 - Phase A taskに#339 evidence matrixと#338 requirement/current evidence traceを記録した。
-- Phase B server contract taskとPhase C Web/history UI taskをatomic AC付きで作成した。
+- Phase B1 context store/API/security、Phase B2 RAG integration、Phase C Web/history UI taskをatomic AC付きで作成した。
 - GitHub Appsで#339をdraftへ変更し、bodyへsuperseded noticeを追記した。
 - #339にcurrent-main再監査commentを投稿した: https://github.com/tsuji-tomonori/rag-assist/pull/339#issuecomment-4992878724
 - #339はopen/draftのまま維持し、close/mergeしていない。
 - GitHub Appsのdraft変換は応答に約160秒かかったが成功したため、`gh` fallbackは使用しなかった。
+- draft PR #377を作成した: https://github.com/tsuji-tomonori/rag-assist/pull/377
+- PR #377へ受け入れ条件確認commentを投稿した: https://github.com/tsuji-tomonori/rag-assist/pull/377#issuecomment-4993045801
+- PR #377へセルフレビューcommentを投稿した: https://github.com/tsuji-tomonori/rag-assist/pull/377#issuecomment-4993046075
 
 ## 検証結果
 
@@ -50,13 +53,17 @@
 - `task docs:check`: 成功。docs validation、OpenAPI、97 APIs / 582 source-backed docs、Web trace/inventory、infra inventory、hidden Unicodeを確認した。
 - infra test: 37/38成功。唯一の失敗はoffline install環境のCDK custom resource runtimeが`nodejs24.x`を生成し、repository snapshotの`nodejs22.x`と異なる環境依存差分だった。Usage/Costを含むresource testと残る37 testsは成功した。snapshotは変更せず、lockfile準拠のGitHub Actionsで最終判定する。
 - dependencyは`npm install --offline --ignore-scripts --package-lock=false`で準備し、dependency versionと`package-lock.json`は変更していない。
+- GitHub Actions MemoRAG CI初回run `29505851381`: 成功。lockfile準拠環境でinfra test、API/Web coverage、全build、CDK synthを含むjobが成功した。
+- Semver Label Checkはlabel付与前の初回run `29505851353`が失敗し、`semver:patch`付与後のrun `29505861549`が成功した。初回失敗を未記録のまま成功扱いにしていない。
 
 ## 成果物
 
-- `tasks/do/20260716-2300-issue-359-pr338-pr339-convergence.md`
-- `tasks/todo/20260716-2300-session-local-evidence-server-contract.md`
+- `tasks/done/20260716-2300-issue-359-pr338-pr339-convergence.md`
+- `tasks/todo/20260716-2300-session-local-evidence-context-store-api.md`
+- `tasks/todo/20260716-2300-session-local-evidence-rag-integration.md`
 - `tasks/todo/20260716-2300-session-local-evidence-web-history-ui.md`
 - #339 draft/body/comment metadata update。
+- draft PR #377 body/受け入れ条件comment/セルフレビューcomment。
 
 ## 指示へのfit評価
 
@@ -66,7 +73,7 @@
 
 ## 未対応・制約・リスク
 
-- #338 body/commentのsuperseded link更新はPhase B/C replacement PR作成後に実施する。
-- Phase B/Cの実装、product docs/OpenAPI/generated docs更新は未着手である。
-- Phase A draft PR、受け入れ条件comment、self-review、task done、GitHub Actions final-head CIはこの後に実施する。
+- #338 body/commentのsuperseded link更新はPhase B1/B2/C replacement PR作成後に実施する。
+- Phase B1/B2/Cの実装、product docs/OpenAPI/generated docs更新は未着手である。
+- lifecycle commit後のGitHub Actions final-head CIはpush後に確認し、PR body/commentへ結果を追記する。
 - #338/#339 close/merge、deploy、releaseは実施しない。
