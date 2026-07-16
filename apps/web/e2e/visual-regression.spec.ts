@@ -655,19 +655,19 @@ test('管理系画面の visual regression @visual', async ({ page }) => {
 
   await page.getByTitle('ドキュメント').click()
   await expect(page.getByRole('region', { name: 'ドキュメント管理', exact: true })).toBeVisible()
-  await expect(page).toHaveScreenshot('documents-workspace.png', { fullPage: true, animations: 'disabled' })
+  await expect.soft(page).toHaveScreenshot('documents-workspace.png', { fullPage: true, animations: 'disabled' })
 
   await page.getByTitle('担当者対応').click()
   await expect(page.getByRole('region', { name: '担当者対応', exact: true })).toBeVisible()
-  await expect(page).toHaveScreenshot('assignee-workspace.png', { fullPage: true, animations: 'disabled' })
+  await expect.soft(page).toHaveScreenshot('assignee-workspace.png', { fullPage: true, animations: 'disabled' })
 
   await page.getByTitle('性能テスト').click()
   await expect(page.getByRole('region', { name: '性能テスト', exact: true })).toBeVisible()
-  await expect(page).toHaveScreenshot('benchmark-workspace.png', { fullPage: true, animations: 'disabled' })
+  await expect.soft(page).toHaveScreenshot('benchmark-workspace.png', { fullPage: true, animations: 'disabled' })
 
   await page.getByTitle('管理者設定').click()
   await expect(page.getByRole('region', { name: '管理者設定', exact: true })).toBeVisible()
-  await expect(page).toHaveScreenshot('admin-workspace.png', { fullPage: true, animations: 'disabled' })
+  await expect.soft(page).toHaveScreenshot('admin-workspace.png', { fullPage: true, animations: 'disabled' })
 })
 
 test('E2E-UI-SEMANTIC-001: 状態表示と確認ダイアログは axe 違反を生じない @semantic-ui', async ({ page }) => {

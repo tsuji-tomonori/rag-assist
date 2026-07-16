@@ -42,6 +42,8 @@ Phase A evidence / fail matrixを確認し、AppShell / RailNav / target / focus
 - draft PR #385 initial Web UI Quality run `29515009875`: failure。artifact `8382337939`、SHA-256 `2e923bbd912f33131356a58a8b4158261ea726cd29b0e892e889d5ead3120528`を保存した。
 - initial artifactのcross-screen gateはserious findingを0件、未解決overflow / targetをdocuments 320pxのpagination summary 1件だけと判定してfailureにした。axe blocker assertionはその後段で未到達のため、repair後artifactで確定する。summaryのellipsisを折り返しへ変更し、情報損失を解消した。
 - initial visual failure 5件はmuted foreground / 44px RailNav targetによる意図した差分だった。actual / expected / diffを比較し、layout/content欠損がないことを確認してLinux Chromium snapshotを更新した。
+- repair run `29515990630`はcross-screen auditを含む9 testをpassし、composite management visualのassignee snapshot差分だけでfailureになった。artifact `8382697984`、SHA-256 `ba773df0f420a702e0292511e326f199a416895cef84f96d98bbf9aa7a2110d2`のactual / diffを確認し、assignee 4-column desktop layoutと情報表示に欠損がないためsnapshotを更新した。
+- composite management visualは1画面のsnapshot failureで後続画面を未実行にしないよう、4 screenshotをsoft assertionへ変更した。soft failureもtest全体をfailureにするためgateを弱めず、次回artifactでbenchmark / adminを含む全差分を一括収集する。
 
 ## 成果物
 

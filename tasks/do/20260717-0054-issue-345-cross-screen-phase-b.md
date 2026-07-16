@@ -94,6 +94,7 @@ Phase A CI baselineで、assigneeは768px viewportに対してroot scrollWidth 8
 - local Playwrightはsandboxの`tsx` IPC listen `EPERM`でbrowser前blocked。権限昇格せずdraft PR CIを使用する。
 - draft PR #385 initial Web UI Quality run `29515009875`は、documents 320px pagination summaryの未解決overflow 1件と、意図したforeground / RailNav target変更によるvisual snapshot差分5件を検出してfailure。
 - initial artifact `8382337939`をactual / expected / diffまで確認し、pagination summaryをellipsisから折り返しへ修正、意図したLinux Chromium snapshotを更新した。repair後のfinal-head artifact / CIは確認中。
+- repair run `29515990630`はcross-screen auditを含む9 testをpassし、assignee snapshot差分だけでfailure。artifact `8382697984`を画像確認してsnapshotを更新し、composite visualはsoft assertionで後続画面の差分も収集しつつfailure semanticsを維持するよう変更した。
 
 ## 未決事項・リスク
 
