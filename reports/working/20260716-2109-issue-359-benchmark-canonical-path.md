@@ -85,3 +85,12 @@ PR #366 が変更する `benchmark/release-audit.ts` と `benchmark/release-audi
 - sample PDF は数百 byte の synthetic placeholder であり、実 ingest 品質の corpus ではない。
 - PR #366 と同じ `benchmark/` workspace を触るため、ファイル直接重複はないが merge 順序による branch-level conflict の可能性は残る。`release-audit*` を未変更にすることで競合面を限定した。
 - `npm ci` は成功したが、既存 dependency audit は8件（low 2、moderate 1、high 5）を報告した。本 path 移管の範囲外であり自動修正していない。
+
+## PR lifecycle
+
+- PR #370 `♻️ benchmark正本パスを一本化` を GitHub Apps で作成した。
+- `semver:patch` label を付与した。
+- 日本語の受け入れ条件確認を top-level comment に記録し、技術的な条件をすべて満たすと判定した。
+- 日本語のセルフレビューを top-level comment に記録し、blocking 指摘なしと判定した。
+- task を `tasks/done/` へ移動する完了更新を同じ branch に追加する。
+- merge / deploy / release は実施していない。

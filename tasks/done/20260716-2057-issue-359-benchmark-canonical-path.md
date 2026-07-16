@@ -1,6 +1,6 @@
 # Issue #359 benchmark 正本 path の一本化
 
-- 状態: do
+- 状態: done
 - タスク種別: 修正
 - 対象 issue: #359 Phase 2（PR 2a〜2c の第一段、完全収束を目標）
 - 作業ブランチ: `codex/issue-359-benchmark-canonical-path`
@@ -104,7 +104,15 @@ suite contract の導入時に、workspace 正本 path、test 接続、旧 root 
 - [x] `npm run ci`、関連 docs check、`git diff --check`、pre-commit が成功する。
 - [x] `benchmark/release-audit*` に差分がない。
 - [x] PR #366 との重複なし、残余競合リスクを PR と report に記録する。
-- [ ] 日本語 PR、受け入れ条件コメント、セルフレビュー、task done、作業完了レポートを完了する。
+- [x] 日本語 PR、受け入れ条件コメント、セルフレビュー、task done、作業完了レポートを完了する。
+
+## PR lifecycle
+
+- PR: #370 `♻️ benchmark正本パスを一本化`
+- label: `semver:patch`
+- 受け入れ条件コメント: GitHub Apps で記録済み
+- セルフレビュー: blocking 指摘なしとして GitHub Apps で記録済み
+- merge / deploy / release: 未実施（対象外）
 
 ## 検証計画
 
