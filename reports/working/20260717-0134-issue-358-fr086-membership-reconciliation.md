@@ -47,5 +47,8 @@ FR-086全体を完了扱いにせず、source以外で最初のproduction resolv
 - resource group lifecycle、folder/document share・move・delete、principal transfer、application roleのresolverは後続Phase。
 - bounded retry、quarantine、poison intentのbatch isolationも後続Phase。
 - 実AWS DynamoDB/EventBridge worker実行は未検証。CDK synth/testとfinal-head CIで構成を検証する。
-- final-head GitHub Actions、PR comments、task `done` lifecycleはPR作成後。
+- Draft PR #386: https://github.com/tsuji-tomonori/rag-assist/pull/386
+- AC comment: https://github.com/tsuji-tomonori/rag-assist/pull/386#issuecomment-4994537031
+- self-review: https://github.com/tsuji-tomonori/rag-assist/pull/386#issuecomment-4994537225
+- repair head `ec9cd9d2`のMemoRAG CI run `29517378745`とsemver run `29517378800`は成功。task lifecycle commit後のfinal-head CIは追加確認する。
 - stacked baseはPR #375 final head。merge / deploy / releaseは実施しない。

@@ -1,6 +1,6 @@
 # Issue #358: FR-086 resource-group membership reconciliation（Phase 1）
 
-- 状態: do
+- 状態: done
 - 対象: Issue #358 / FR-086 / AC-FR086-001〜003
 - ブランチ: `codex/issue-358-fr086-security-reconciliation`
 - 起点: PR #375 final head `01ff8b75`
@@ -18,9 +18,9 @@
 - [x] duplicate worker / retryはCASによりaudit event 1件へ収束する。
 - [x] resource-group membership以外の未登録resolverと、retry上限・隔離・batch継続を後続taskとして明示し、FR-086全体を完了扱いにしない。
 - [x] worker/dependencies/IAMが必要最小のtenant・store権限に限定され、route-level authorizationを迂回しないことを確認する。
-- [ ] API security policy test、targeted/full test、lint、typecheck、docs checks、final-head CIを確認する。
+- [x] API security policy test、targeted/full test、lint、typecheck、docs checks、implementation final-head CIを確認する。
 - [x] benchmark期待語句、QA sample固有値、dataset固有分岐をproduct runtimeへ追加しない。
-- [ ] 日本語draft PR、AC comment、self-review、task/report lifecycleを完了する。
+- [x] 日本語draft PR、AC comment、self-review、task/report lifecycleを完了する。
 - [x] merge / deploy / releaseを実施しない。
 
 ## 実施計画
@@ -64,3 +64,6 @@ reconciliation workerはcaller入力を権限根拠にせず、設定済みtenan
 - `git diff --check`: 成功
 - `npm ci`: 成功（既存8 vulnerabilitiesを報告）
 - PR初回CI: infra inventory staleのため失敗（run `29516680418`）。generated inventoryを同期して再実行対象とした
+- PR #386 repair head `ec9cd9d2`: MemoRAG CI run `29517378745`成功、semver run `29517378800`成功
+- AC comment: https://github.com/tsuji-tomonori/rag-assist/pull/386#issuecomment-4994537031
+- self-review: https://github.com/tsuji-tomonori/rag-assist/pull/386#issuecomment-4994537225
