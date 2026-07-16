@@ -61,7 +61,7 @@ test("CognitoVerifiedIdentityProvider exposes the authoritative session revocati
     async send(command) {
       if (command instanceof AdminGetUserCommand) {
         const output = identityOutput(true)
-        output.UserAttributes?.push({ Name: "custom:session_invalid_after", Value: "1783728000123" })
+        output.UserAttributes?.push({ Name: "custom:session_invalid_at", Value: "1783728000123" })
         return output
       }
       if (command instanceof AdminListGroupsForUserCommand) return { $metadata: {}, Groups: [] }

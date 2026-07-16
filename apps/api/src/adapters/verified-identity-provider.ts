@@ -7,6 +7,7 @@ import {
   type AdminListGroupsForUserCommandOutput,
   type ListUsersCommandOutput
 } from "@aws-sdk/client-cognito-identity-provider"
+import { COGNITO_SESSION_INVALID_AT_USER_ATTRIBUTE } from "@memorag-mvp/contract/access-control"
 import { config } from "../config.js"
 
 export type AccountStatus = "active" | "suspended" | "deleted"
@@ -69,7 +70,7 @@ export class CognitoVerifiedIdentityProvider implements VerifiedIdentityProvider
     }
 
     const email = attributes.get("email")?.trim()
-    const sessionInvalidAfterEpochMs = parseOptionalEpochMs(attributes.get("custom:session_invalid_after"))
+    const sessionInvalidAfterEpochMs = parseOptionalEpochMs(attributes.get(COGNITO_SESSION_INVALID_AT_USER_ATTRIBUTE))
     const cognitoGroups = await this.listCurrentGroups(canonicalUsername)
     return {
       username: result.Username?.trim() || canonicalUsername,

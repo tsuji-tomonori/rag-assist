@@ -221,7 +221,7 @@ test("Cognito user directory applies account lifecycle and global session revoca
     {
       UserPoolId: "pool-1",
       Username: "cognito-user",
-      UserAttributes: [{ Name: "custom:session_invalid_after", Value: "1783728000123" }]
+      UserAttributes: [{ Name: "custom:session_invalid_at", Value: "1783728000123" }]
     },
     { UserPoolId: "pool-1", Username: "cognito-user" },
     { UserPoolId: "pool-1", Username: "cognito-user" },

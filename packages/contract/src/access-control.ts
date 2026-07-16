@@ -1,5 +1,8 @@
 export const ROLE_CATALOG_VERSION = "memorag-access-role-catalog-v2" as const
 
+export const COGNITO_SESSION_INVALID_AT_ATTRIBUTE_NAME = "session_invalid_at" as const
+export const COGNITO_SESSION_INVALID_AT_USER_ATTRIBUTE = `custom:${COGNITO_SESSION_INVALID_AT_ATTRIBUTE_NAME}` as const
+
 export const APPLICATION_ROLES = [
   "CHAT_USER",
   "ANSWER_EDITOR",

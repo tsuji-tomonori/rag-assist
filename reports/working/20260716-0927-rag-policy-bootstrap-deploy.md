@@ -57,6 +57,7 @@ repository-local の実装・検証は要件に適合する。GitHub PR、CI、m
 
 ## 未対応・制約・リスク
 
-- 現時点では PR 未作成・未 merge・未 deploy のため、タスク状態は `do` を維持する。
+- PR #362 は CI 成功後に merge 済み（merge commit `1e332da7c90bfb90e7f48bec1dbc564d4b4226f3`）。bootstrap run `29463654225` は authorization、artifact upload、build、synth まで成功したが、Cognito custom attribute `session_invalid_after` が AWS の20文字上限を超えて CloudFormation update が rollback した。完了 marker と deployment outputs は未作成である。
+- 原因修正として attribute を共有 contract の `session_invalid_at` へ統一し、最大20文字の contract test、API writer/reader test、CDK snapshot を更新する。修正 PR の CI/merge と bootstrap 再実行が完了するまでタスク状態は `do` を維持する。
 - bootstrap は promotion pass ではない。deploy 後も observation が揃うまで通常 main push の deploy は保留される。
 - production source sample から全必須 observation が収束する時刻と unavailable signal は実 deploy 後の運用確認対象である。
