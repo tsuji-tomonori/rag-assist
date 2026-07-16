@@ -41,5 +41,6 @@ FR-014 の正本文書、実装、unit/integration test を同期し、grounding
 ## 未対応・制約・リスク
 
 - 変更は stacked base（PR #375、PR #369、PR #365を含む）上で作成しており、取り込み順の管理が必要。
-- final-head CI、PR acceptance comment、self-review、task の `done` 移動は PR 作成後に実施する。
+- draft PR #384を作成し、acceptance commentとself-review commentを投稿した。GitHub Appsは繰り返しタイムアウトしたため、`gh`へフォールバックした。
+- taskを`done`へ移動する lifecycle commit後の final-head CI は、PR top-level commentで外部証跡として記録する。
 - merge / deploy / release は実施しない。
