@@ -1,6 +1,6 @@
 import { useState } from "react"
 import type { BenchmarkRun, BenchmarkSuite } from "../types.js"
-import { ConfirmDialog } from "../../../shared/components/ConfirmDialog.js"
+import { ConfirmDialog } from "../../../shared/ui/index.js"
 import { Icon } from "../../../shared/components/Icon.js"
 import { LoadingSpinner, LoadingStatus } from "../../../shared/components/LoadingSpinner.js"
 import { downloadBenchmarkArtifact } from "../../../shared/utils/downloads.js"
@@ -265,10 +265,10 @@ export function BenchmarkWorkspace({
           tone="warning"
           loading={loading}
           details={[
-            `テスト設定: ${selectedSuite?.label ?? "未設定"}`,
-            `データセット: ${selectedSuite?.datasetS3Key ?? "未設定"}`,
-            `モデル: ${modelId}`,
-            `並列数: ${concurrency}`
+            { label: "テスト設定", value: selectedSuite?.label ?? "未設定" },
+            { label: "データセット", value: selectedSuite?.datasetS3Key ?? "未設定" },
+            { label: "モデル", value: modelId },
+            { label: "並列数", value: String(concurrency) }
           ]}
           onCancel={() => setConfirmStartOpen(false)}
           onConfirm={async () => {
@@ -299,11 +299,11 @@ export function BenchmarkWorkspace({
           tone="danger"
           loading={operationFeedback.some((entry) => entry.id === `benchmark-cancel-${cancelCandidate.runId}` && entry.status === "processing")}
           details={[
-            `対象: ${suites.find((suite) => suite.suiteId === cancelCandidate.suiteId)?.label ?? cancelCandidate.suiteId}`,
-            `実行識別子: ${cancelCandidate.runId}`,
-            "影響: 未完了の測定と成果物生成を停止します",
-            "回復条件: 取消後は再開できず、新しい実行が必要です",
-            "確認が必要な理由: 未完了結果の破棄と追加コストを判断するため"
+            { label: "対象", value: suites.find((suite) => suite.suiteId === cancelCandidate.suiteId)?.label ?? cancelCandidate.suiteId },
+            { label: "実行識別子", value: cancelCandidate.runId },
+            { label: "影響", value: "未完了の測定と成果物生成を停止します" },
+            { label: "回復条件", value: "取消後は再開できず、新しい実行が必要です" },
+            { label: "確認が必要な理由", value: "未完了結果の破棄と追加コストを判断するため" }
           ]}
           onCancel={() => setCancelCandidate(null)}
           onConfirm={async () => {

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import type { ConversationHistoryItem } from "../types.js"
-import { ConfirmDialog } from "../../../shared/components/ConfirmDialog.js"
+import { ConfirmDialog } from "../../../shared/ui/index.js"
 import { Icon } from "../../../shared/components/Icon.js"
 import { formatDateTime } from "../../../shared/utils/format.js"
 import { searchConversationHistory, type ConversationHistorySearchResult } from "../utils/conversationHistorySearch.js"
@@ -180,12 +180,12 @@ export function HistoryWorkspace({
           description="削除した会話履歴はこの画面から復元できません。必要な内容が残っていないか確認してください。"
           confirmLabel="削除"
           details={[
-            `対象: ${deleteCandidate.title}`,
-            `影響: この会話履歴と画面から参照するメッセージを削除します`,
-            `回復条件: この画面からは復元できません`,
-            `確認が必要な理由: 必要な会話内容を失わないため`,
-            `更新日時: ${formatDateTime(deleteCandidate.updatedAt)}`,
-            `メッセージ数: ${deleteCandidate.messages.length}`
+            { label: "対象", value: deleteCandidate.title },
+            { label: "影響", value: "この会話履歴と画面から参照するメッセージを削除します" },
+            { label: "回復条件", value: "この画面からは復元できません" },
+            { label: "確認が必要な理由", value: "必要な会話内容を失わないため" },
+            { label: "更新日時", value: formatDateTime(deleteCandidate.updatedAt) },
+            { label: "メッセージ数", value: String(deleteCandidate.messages.length) }
           ]}
           loading={deleteFeedback?.status === "processing" && deleteFeedback.targetId === deleteCandidate.id}
           onCancel={() => setDeleteCandidate(null)}
