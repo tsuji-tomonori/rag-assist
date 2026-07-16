@@ -46,17 +46,20 @@ Phase A evidence / fail matrixを確認し、AppShell / RailNav / target / focus
 - composite management visualは1画面のsnapshot failureで後続画面を未実行にしないよう、4 screenshotをsoft assertionへ変更した。soft failureもtest全体をfailureにするためgateを弱めず、次回artifactでbenchmark / adminを含む全差分を一括収集する。
 - collection run `29516346107`はcross-screen auditを含む9 testをpassし、soft assertionがbenchmark 3,387 pixels / admin 3,743 pixelsのvisual差分を同時に収集した。artifact `8382851928`、SHA-256 `e7083703b815ab525285124900c8d7610e01f19ce8c29746664cf38c4d41037c`のactual / diffを確認し、muted foregroundと44px RailNav / back targetによる意図した差分で、layout・content・操作の欠損がないため両snapshotを更新した。
 - 同artifactのcross-screen baseline schema v2は32 entries、root overflow 0、unresolved finding 0、axe serious / critical blocker 0、例外23件（`not_applicable` 16、`supported_scroll` 7）を記録した。全例外に要素・理由・owner・代替操作があり、owner内訳はshared `.sr-only` 12、chat装飾4、documents scroll6、benchmark input1だった。
+- snapshot更新後のWeb UI Quality run `29516940570`は10 tests / 10 pass。artifact `8383090126`、SHA-256 `f8c2195f6df4fd481b9d2cf369583ec56eea73c41d78d7fdf32619c5e381297d`をfinal implementation evidenceとして再解析した。
+- final implementation artifactは32 entries、root overflow 0、unresolved finding 0、axe serious / critical blocker 0、例外25件（`not_applicable` 16、`supported_scroll` 9）、根拠欠落0だった。owner内訳はshared `.sr-only` 12、chat装飾4、documents scroll6、benchmark input1、assignee input2。viewportごとのnative input差は値と操作を失わないfocus / arrow / Home / End代替として記録されている。
+- matrixは全8 AppViewsの`AC-SQ016-001` / `005` / `006`をautomated pass、Phase A failだったhistory / favorites / benchmark / adminの`AC-SQ016-004`とbenchmark `AC-SQ016-002`をautomated passへ更新した。manual statusとoverallは全項目blockedのまま維持する。
 
 ## 成果物
 
 - production / audit / test差分: `apps/web/`、`tools/web-inventory/semantic-ui-contract.test.mjs`
 - canonical docs: `REQ_SERVICE_QUALITY_016.md`、`DES_UI_UX_001.md`
 - task: `tasks/do/20260717-0054-issue-345-cross-screen-phase-b.md`
-- matrix: repair後のfinal-head CI artifact確認後に`tools/web-inventory/ui-quality-matrix.json`とgenerated projectionを更新する。
+- matrix: `tools/web-inventory/ui-quality-matrix.json`と`docs/generated/web-ui-quality-matrix.md`へartifact実測を反映した。
 
 ## 指示へのfit評価
 
-実装・local static/unit/build検証とinitial CI repairは指示範囲にfitしている。Login / auth競合を避け、例外を自動passへ昇格させていない。repair後のPlaywright browser evidence、matrix確定、日本語draft PR comment、final-head CIは未完了のため、本レポートとtaskを完了扱いしない。
+実装・local static/unit/build検証、CI repair、Playwright artifact / matrix同期は指示範囲にfitしている。Login / auth競合を避け、例外を自動passへ昇格させていない。日本語draft PR comment、task lifecycle、最終documentation head CIは未完了のため、本レポートとtaskを完了扱いしない。
 
 ## 未対応・制約・リスク
 

@@ -96,6 +96,7 @@ Phase A CI baselineで、assigneeは768px viewportに対してroot scrollWidth 8
 - initial artifact `8382337939`をactual / expected / diffまで確認し、pagination summaryをellipsisから折り返しへ修正、意図したLinux Chromium snapshotを更新した。repair後のfinal-head artifact / CIは確認中。
 - repair run `29515990630`はcross-screen auditを含む9 testをpassし、assignee snapshot差分だけでfailure。artifact `8382697984`を画像確認してsnapshotを更新し、composite visualはsoft assertionで後続画面の差分も収集しつつfailure semanticsを維持するよう変更した。
 - collection run `29516346107`はbenchmark / admin差分を同時収集。artifact `8382851928`のactual / diffを確認し、意図したcontrast / target変更としてsnapshotを更新した。同artifactの32 baseline entriesはroot overflow / unresolved finding / axe blocker 0、根拠付き例外23件だった。
+- snapshot更新後のWeb UI Quality run `29516940570`は10 / 10 pass。artifact `8383090126`は32 baseline entries、root overflow / unresolved finding / axe blocker 0、根拠付き例外25件、根拠欠落0。matrixとgenerated projectionへ反映した。
 
 ## 未決事項・リスク
 

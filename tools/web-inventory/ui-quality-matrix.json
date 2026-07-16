@@ -127,12 +127,12 @@
     {
       "view": "chat",
       "criteria": {
-        "AC-SQ016-001": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "computed reflow baselineと実browser zoom evidence待ち" },
+        "AC-SQ016-001": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "CI run 29516940570 / artifact 8383090126の4 viewportでroot/unresolved overflow 0。実browser zoomは未検証" },
         "AC-SQ016-002": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "focus candidate auditとkeyboard journey evidence待ち" },
         "AC-SQ016-003": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "axe/name-state baselineとscreen reader evidence待ち" },
         "AC-SQ016-004": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "computed/axe contrast baselineとmanual review待ち" },
-        "AC-SQ016-005": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "target candidateの例外分類とremediation待ち" },
-        "AC-SQ016-006": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "reduced-motion baselineとdevice evidence待ち" },
+        "AC-SQ016-005": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "4 viewportで24px minimumと44px primary targetの未解決candidate 0。manual touch evidenceは未実施" },
+        "AC-SQ016-006": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "4 viewportのreduced-motion computed auditはpass。orientation / safe-area / virtual-keyboard実機は未検証" },
         "AC-SQ016-007": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "content-state matrixのfeature evidence待ち" },
         "AC-SQ016-008": { "automated": "not_applicable", "manual": "blocked", "overall": "blocked", "note": "manual required scopeは未実施" }
       }
@@ -140,12 +140,12 @@
     {
       "view": "assignee",
       "criteria": {
-        "AC-SQ016-001": { "automated": "fail", "manual": "blocked", "overall": "fail", "note": "CI baselineで768px時にsection.assignee-workspaceのroot overflow（scrollWidth 810 / clientWidth 768）を検出。実browser zoom evidenceは未実施" },
+        "AC-SQ016-001": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "4 / 2 / 1 column remediation後、CI run 29516940570の320/375/768/1280pxでroot/unresolved overflow 0。実browser zoomは未検証" },
         "AC-SQ016-002": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "focus candidate auditとkeyboard journey evidence待ち" },
         "AC-SQ016-003": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "axe/name-state baselineとscreen reader evidence待ち" },
         "AC-SQ016-004": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "computed/axe contrast baselineとmanual review待ち" },
-        "AC-SQ016-005": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "target candidateの例外分類とremediation待ち" },
-        "AC-SQ016-006": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "reduced-motion baselineとdevice evidence待ち" },
+        "AC-SQ016-005": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "checkboxを24px、RailNav primary targetを44px classへ修正し、4 viewportで未解決candidate 0。manual touch evidenceは未実施" },
+        "AC-SQ016-006": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "4 viewportのreduced-motion computed auditはpass。orientation / safe-area / virtual-keyboard実機は未検証" },
         "AC-SQ016-007": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "content-state matrixのfeature evidence待ち" },
         "AC-SQ016-008": { "automated": "not_applicable", "manual": "blocked", "overall": "blocked", "note": "manual required scopeは未実施" }
       }
@@ -153,12 +153,12 @@
     {
       "view": "history",
       "criteria": {
-        "AC-SQ016-001": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "computed reflow baselineと実browser zoom evidence待ち" },
+        "AC-SQ016-001": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "CI run 29516940570 / artifact 8383090126の4 viewportでroot/unresolved overflow 0。実browser zoomは未検証" },
         "AC-SQ016-002": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "focus candidate auditとkeyboard journey evidence待ち" },
         "AC-SQ016-003": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "axe/name-state baselineとscreen reader evidence待ち" },
-        "AC-SQ016-004": { "automated": "fail", "manual": "blocked", "overall": "fail", "note": "CIの1280px axe baselineでp要素のserious color-contrastを検出。manual reviewは未実施" },
-        "AC-SQ016-005": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "target candidateの例外分類とremediation待ち" },
-        "AC-SQ016-006": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "reduced-motion baselineとdevice evidence待ち" },
+        "AC-SQ016-004": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "muted foreground remediation後、1280px axe serious/critical blocker 0。manual contrast reviewは未実施" },
+        "AC-SQ016-005": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "4 viewportで24px minimumと44px primary targetの未解決candidate 0。manual touch evidenceは未実施" },
+        "AC-SQ016-006": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "4 viewportのreduced-motion computed auditはpass。orientation / safe-area / virtual-keyboard実機は未検証" },
         "AC-SQ016-007": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "content-state matrixのfeature evidence待ち" },
         "AC-SQ016-008": { "automated": "not_applicable", "manual": "blocked", "overall": "blocked", "note": "manual required scopeは未実施" }
       }
@@ -166,12 +166,12 @@
     {
       "view": "favorites",
       "criteria": {
-        "AC-SQ016-001": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "computed reflow baselineと実browser zoom evidence待ち" },
+        "AC-SQ016-001": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "CI run 29516940570 / artifact 8383090126の4 viewportでroot/unresolved overflow 0。実browser zoomは未検証" },
         "AC-SQ016-002": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "focus candidate auditとkeyboard journey evidence待ち" },
         "AC-SQ016-003": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "axe/name-state baselineとscreen reader evidence待ち" },
-        "AC-SQ016-004": { "automated": "fail", "manual": "blocked", "overall": "fail", "note": "CIの1280px axe baselineでp要素のserious color-contrastを検出。manual reviewは未実施" },
-        "AC-SQ016-005": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "target candidateの例外分類とremediation待ち" },
-        "AC-SQ016-006": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "reduced-motion baselineとdevice evidence待ち" },
+        "AC-SQ016-004": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "muted foreground remediation後、1280px axe serious/critical blocker 0。manual contrast reviewは未実施" },
+        "AC-SQ016-005": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "4 viewportで24px minimumと44px primary targetの未解決candidate 0。manual touch evidenceは未実施" },
+        "AC-SQ016-006": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "4 viewportのreduced-motion computed auditはpass。orientation / safe-area / virtual-keyboard実機は未検証" },
         "AC-SQ016-007": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "content-state matrixのfeature evidence待ち" },
         "AC-SQ016-008": { "automated": "not_applicable", "manual": "blocked", "overall": "blocked", "note": "manual required scopeは未実施" }
       }
@@ -179,12 +179,12 @@
     {
       "view": "benchmark",
       "criteria": {
-        "AC-SQ016-001": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "computed reflow baselineと実browser zoom evidence待ち" },
-        "AC-SQ016-002": { "automated": "fail", "manual": "blocked", "overall": "fail", "note": "CIの1280px axe baselineで.benchmark-table-wrapのserious scrollable-region-focusableを検出。manual keyboard journeyは未実施" },
+        "AC-SQ016-001": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "CI run 29516940570 / artifact 8383090126の4 viewportでroot/unresolved overflow 0。native input 1件はownerとkeyboard代替操作付きsupported_scroll。実browser zoomは未検証" },
+        "AC-SQ016-002": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "実行履歴をaccessible name / focus indicator付きscroll regionへ修正し、scrollable-region-focusable blocker 0。manual keyboard journeyは未実施" },
         "AC-SQ016-003": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "axe/name-state baselineとscreen reader evidence待ち" },
-        "AC-SQ016-004": { "automated": "fail", "manual": "blocked", "overall": "fail", "note": "CIの1280px axe baselineでbenchmark mode label 2件のserious color-contrastを検出。manual reviewは未実施" },
-        "AC-SQ016-005": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "target candidateの例外分類とremediation待ち" },
-        "AC-SQ016-006": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "reduced-motion baselineとdevice evidence待ち" },
+        "AC-SQ016-004": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "mode labelをAA muted tokenへ統一し、1280px axe serious/critical blocker 0。manual contrast reviewは未実施" },
+        "AC-SQ016-005": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "4 viewportで24px minimumと44px primary targetの未解決candidate 0。manual touch evidenceは未実施" },
+        "AC-SQ016-006": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "4 viewportのreduced-motion computed auditはpass。orientation / safe-area / virtual-keyboard実機は未検証" },
         "AC-SQ016-007": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "content-state matrixのfeature evidence待ち" },
         "AC-SQ016-008": { "automated": "not_applicable", "manual": "blocked", "overall": "blocked", "note": "manual required scopeは未実施" }
       }
@@ -192,12 +192,12 @@
     {
       "view": "admin",
       "criteria": {
-        "AC-SQ016-001": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "computed reflow baselineと実browser zoom evidence待ち" },
+        "AC-SQ016-001": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "CI run 29516940570 / artifact 8383090126の4 viewportでroot/unresolved overflow 0。実browser zoomは未検証" },
         "AC-SQ016-002": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "focus candidate auditとkeyboard journey evidence待ち" },
         "AC-SQ016-003": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "axe/name-state baselineとscreen reader evidence待ち" },
-        "AC-SQ016-004": { "automated": "fail", "manual": "blocked", "overall": "fail", "note": "CIの1280px axe baselineで性能テストbutton内spanのserious color-contrastを検出。manual reviewは未実施" },
-        "AC-SQ016-005": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "target candidateの例外分類とremediation待ち" },
-        "AC-SQ016-006": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "reduced-motion baselineとdevice evidence待ち" },
+        "AC-SQ016-004": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "muted foreground remediation後、1280px axe serious/critical blocker 0。manual contrast reviewは未実施" },
+        "AC-SQ016-005": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "4 viewportで24px minimumと44px primary targetの未解決candidate 0。manual touch evidenceは未実施" },
+        "AC-SQ016-006": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "4 viewportのreduced-motion computed auditはpass。orientation / safe-area / virtual-keyboard実機は未検証" },
         "AC-SQ016-007": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "content-state matrixのfeature evidence待ち" },
         "AC-SQ016-008": { "automated": "not_applicable", "manual": "blocked", "overall": "blocked", "note": "manual required scopeは未実施" }
       }
@@ -205,12 +205,12 @@
     {
       "view": "documents",
       "criteria": {
-        "AC-SQ016-001": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "computed reflow baselineと実browser zoom evidence待ち" },
+        "AC-SQ016-001": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "4 viewportでroot/unresolved overflow 0。desktop row 6件はfocus可能なtable ownerとkeyboard代替操作付きsupported_scroll。実browser zoomは未検証" },
         "AC-SQ016-002": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "focus candidate auditとkeyboard journey evidence待ち" },
         "AC-SQ016-003": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "axe/name-state baselineとscreen reader evidence待ち" },
         "AC-SQ016-004": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "computed/axe contrast baselineとmanual review待ち" },
-        "AC-SQ016-005": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "target candidateの例外分類とremediation待ち" },
-        "AC-SQ016-006": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "reduced-motion baselineとdevice evidence待ち" },
+        "AC-SQ016-005": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "4 viewportで24px minimumと44px primary targetの未解決candidate 0。manual touch evidenceは未実施" },
+        "AC-SQ016-006": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "4 viewportのreduced-motion computed auditはpass。orientation / safe-area / virtual-keyboard実機は未検証" },
         "AC-SQ016-007": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "content-state matrixのfeature evidence待ち" },
         "AC-SQ016-008": { "automated": "not_applicable", "manual": "blocked", "overall": "blocked", "note": "manual required scopeは未実施" }
       }
@@ -218,12 +218,12 @@
     {
       "view": "profile",
       "criteria": {
-        "AC-SQ016-001": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "computed reflow baselineと実browser zoom evidence待ち" },
+        "AC-SQ016-001": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "CI run 29516940570 / artifact 8383090126の4 viewportでroot/unresolved overflow 0。実browser zoomは未検証" },
         "AC-SQ016-002": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "focus candidate auditとkeyboard journey evidence待ち" },
         "AC-SQ016-003": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "axe/name-state baselineとscreen reader evidence待ち" },
         "AC-SQ016-004": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "computed/axe contrast baselineとmanual review待ち" },
-        "AC-SQ016-005": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "target candidateの例外分類とremediation待ち" },
-        "AC-SQ016-006": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "reduced-motion baselineとdevice evidence待ち" },
+        "AC-SQ016-005": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "4 viewportで24px minimumと44px primary targetの未解決candidate 0。manual touch evidenceは未実施" },
+        "AC-SQ016-006": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "4 viewportのreduced-motion computed auditはpass。orientation / safe-area / virtual-keyboard実機は未検証" },
         "AC-SQ016-007": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "content-state matrixのfeature evidence待ち" },
         "AC-SQ016-008": { "automated": "not_applicable", "manual": "blocked", "overall": "blocked", "note": "manual required scopeは未実施" }
       }
