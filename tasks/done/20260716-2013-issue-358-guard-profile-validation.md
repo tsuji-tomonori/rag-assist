@@ -1,8 +1,8 @@
 # Issue #358 FR-089 実 guard profile 設定検証
 
-保存先: `tasks/do/20260716-2013-issue-358-guard-profile-validation.md`
+保存先: `tasks/done/20260716-2013-issue-358-guard-profile-validation.md`
 
-状態: do
+状態: done
 
 タスク種別: 修正
 
@@ -39,22 +39,22 @@
 
 ## Done 条件
 
-- [ ] すべての受け入れ条件を満たす。
-- [ ] 変更範囲に応じた API/infra/root/docs 検証が成功する。
-- [ ] FR-089 文書・coverage・generated docs と実装が同期する。
-- [ ] 日本語 PR、受け入れ条件確認コメント、セルフレビューコメントを作成する。
-- [ ] PR コメント後に本 task を `tasks/done/` へ移動し、同一 branch へ commit/push する。
+- [x] すべての受け入れ条件を満たす。
+- [x] 変更範囲に応じた API/infra/root/docs 検証が成功する。
+- [x] FR-089 文書・coverage・generated docs と実装が同期する。
+- [x] 日本語 PR、受け入れ条件確認コメント、セルフレビューコメントを作成する。
+- [x] PR コメント後に本 task を `tasks/done/` へ移動し、同一 branch へ commit/push する。
 
 ## 受け入れ条件
 
-- [ ] production runtime が `STANDARD_RAG_GUARD_PROFILE` を検査対象にせず、設定から得た profile を検査する。
-- [ ] 完全かつ全 guard 有効な設定だけが依存生成に成功する。
-- [ ] unset/blank、invalid JSON、top-level または guard の unknown key/value、guard 欠落、all-off、単一 off は依存生成時に拒否される。
-- [ ] parsed profile が `Dependencies` へ保持され、orchestration runtime まで到達する。
-- [ ] 依存生成後に unsafe profile が注入された場合も graph/model/store 実行前に拒否される。
-- [ ] authentication、authorization、classification usage、prompt injection、tool policy、grounding、citation、output secret、trace redaction の必須集合を維持する。
-- [ ] IaC が完全な safe profile を明示設定し、環境未設定へ依存しない。
-- [ ] FR-089 要件と requirements coverage が failure timing と実証 test を参照する。
+- [x] production runtime が `STANDARD_RAG_GUARD_PROFILE` を検査対象にせず、設定から得た profile を検査する。
+- [x] 完全かつ全 guard 有効な設定だけが依存生成に成功する。
+- [x] unset/blank、invalid JSON、top-level または guard の unknown key/value、guard 欠落、all-off、単一 off は依存生成時に拒否される。
+- [x] parsed profile が `Dependencies` へ保持され、orchestration runtime まで到達する。
+- [x] 依存生成後に unsafe profile が注入された場合も graph/model/store 実行前に拒否される。
+- [x] authentication、authorization、classification usage、prompt injection、tool policy、grounding、citation、output secret、trace redaction の必須集合を維持する。
+- [x] IaC が完全な safe profile を明示設定し、環境未設定へ依存しない。
+- [x] FR-089 要件と requirements coverage が failure timing と実証 test を参照する。
 
 ## 検証計画
 
@@ -78,3 +78,12 @@
 - JSON 環境変数は引用・IaC snapshot の更新が必要。canonical serializer を使い、設定表現の drift を抑える。
 - `Dependencies` 追加は test fixture に波及する。chat runtime 到達に必要な fixture だけを明示更新し、型回避の `as unknown as Dependencies` を新たに増やさない。
 - PR 分割1と共通 coverage/generated ファイルで競合する可能性があるため、FR-089 に直接必要な行だけを変更する。
+
+## 完了結果
+
+- Draft PR: https://github.com/tsuji-tomonori/rag-assist/pull/369
+- 受け入れ条件確認コメント: https://github.com/tsuji-tomonori/rag-assist/pull/369#issuecomment-4991611771
+- セルフレビューコメント: https://github.com/tsuji-tomonori/rag-assist/pull/369#issuecomment-4991612007
+- PR #365 の commit を非破壊 merge し、PR #365 の先行 merge が必要な stacked PR として本文・コメントへ明記した。
+- post-merge root `npm run ci`: contract 4、API 806、Web 442、Infra 38、Benchmark 102 tests と全 build が成功した。
+- `task verify`、`task docs:check`、API coverage、pre-commit hooks、`git diff --check` が成功した。

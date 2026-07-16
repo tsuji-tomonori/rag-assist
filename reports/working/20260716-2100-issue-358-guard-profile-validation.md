@@ -64,7 +64,16 @@
 ## 未対応・制約・リスク
 
 - この branch は PR #365 の commit を含む stacked branch であり、PR #365 の merge 前には merge しない。PR #365 merge 後は main との差分が FR-089 中心へ収束する想定である。
-- PR 作成、受け入れ条件コメント、セルフレビュー、task の done 移動は、このレポート commit/push 後に実施し、結果を追記する。
+- Draft PR #369 を作成し、受け入れ条件確認コメントとセルフレビューコメントを追加した。task はコメント後に `tasks/done/` へ移動した。
+- GitHub Apps の PR 作成は60秒を超えて応答したため中断したが、終了結果で PR #369 の作成成功を確認した。以降の semver label と top-level comment 操作は `gh` fallback を使用した。
 - dependency install 時の `npm audit` は既存の 8 vulnerabilities を報告した。本タスクでは dependency version を変更しておらず、`package-lock.json` に差分はない。
 - Web production build は既存の 500 kB 超 chunk warning を出したが、build は成功した。
 - merge、deploy、release は実施しない。
+
+## PR lifecycle
+
+- Draft PR: https://github.com/tsuji-tomonori/rag-assist/pull/369
+- Label: `semver:patch`
+- 受け入れ条件確認: https://github.com/tsuji-tomonori/rag-assist/pull/369#issuecomment-4991611771
+- セルフレビュー: https://github.com/tsuji-tomonori/rag-assist/pull/369#issuecomment-4991612007
+- PR #365 の先行 merge が必要であり、それまでは PR #369 を merge しない旨を本文とコメントへ明記した。
