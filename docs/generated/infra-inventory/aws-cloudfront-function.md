@@ -10,7 +10,7 @@
 
 用途概要: CloudFormation resource
 
-リソース数: 2
+リソース数: 3
 
 ## Logical ID 一覧
 
@@ -18,6 +18,7 @@
 | --- | --- | --- |
 | [Api Prefix Rewrite Function](#api-prefix-rewrite-function) | `ApiPrefixRewriteFunction62A7D75E` | Api Prefix Rewrite Function (AWS::CloudFront::Function) |
 | [Spa Route Rewrite Function](#spa-route-rewrite-function) | `SpaRouteRewriteFunction2441F411` | Spa Route Rewrite Function (AWS::CloudFront::Function) |
+| [Web Socket Stage Rewrite Function](#web-socket-stage-rewrite-function) | `WebSocketStageRewriteFunction229ED7B5` | Web Socket Stage Rewrite Function (AWS::CloudFront::Function) |
 
 ## Logical ID 別設定
 
@@ -47,4 +48,18 @@ Logical ID: `SpaRouteRewriteFunction2441F411`
 | `FunctionCode` | <br>function handler(event) {<br>  var request = event.request;<br>  var uri = request.uri;<br>  var lastPathSegment = uri.substring(uri.lastIndexOf("/") + 1);<br><br>  if (lastPathSegment.indexOf(".") === -1) {<br>    request.uri = "/index.html";<br>  }<br><br>  return request;<br>}<br> |
 | `FunctionConfig` | {"Comment":"Rewrite only SPA client routes to index.html; preserve static asset errors","Runtime":"cloudfront-js-1.0"} |
 | `Name` | ap-northeast-1MemoRagMvpStackTeRewriteFunction9EBBE6F6 |
+| `Tags` | [{"Key":"Application","Value":"MemoRAG"},{"Key":"CostCenter","Value":"memorag-mvp"},{"Key":"Environment","Value":"dev"},{"Key":"ManagedBy","Value":"aws-cdk"},{"Key":"Project","Value":"memorag-bedrock-mvp"},{"Key":"Repository","Value":"tsuji-tomonori/rag-assist"}] |
+
+### Web Socket Stage Rewrite Function
+
+Logical ID: `WebSocketStageRewriteFunction229ED7B5`
+
+用途推定: Web Socket Stage Rewrite Function (AWS::CloudFront::Function)
+
+| 設定項目 | 値 |
+| --- | --- |
+| `AutoPublish` | true |
+| `FunctionCode` | <br>function handler(event) {<br>  var request = event.request;<br><br>  if (request.uri === "/ws/v1") {<br>    request.uri = "/prod";<br>  }<br><br>  return request;<br>}<br> |
+| `FunctionConfig` | {"Comment":"Rewrite the exact same-origin WebSocket entry to the API Gateway stage path","Runtime":"cloudfront-js-1.0"} |
+| `Name` | ap-northeast-1MemoRagMvpStackTeRewriteFunctionE448B710 |
 | `Tags` | [{"Key":"Application","Value":"MemoRAG"},{"Key":"CostCenter","Value":"memorag-mvp"},{"Key":"Environment","Value":"dev"},{"Key":"ManagedBy","Value":"aws-cdk"},{"Key":"Project","Value":"memorag-bedrock-mvp"},{"Key":"Repository","Value":"tsuji-tomonori/rag-assist"}] |

@@ -1240,6 +1240,112 @@
       "UpdateReplacePolicy": "Delete",
       "DeletionPolicy": "Delete"
     },
+    "WebSocketTicketsTable7F084D73": {
+      "Type": "AWS::DynamoDB::Table",
+      "Properties": {
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "ticketHash",
+            "AttributeType": "S"
+          }
+        ],
+        "BillingMode": "PAY_PER_REQUEST",
+        "KeySchema": [
+          {
+            "AttributeName": "ticketHash",
+            "KeyType": "HASH"
+          }
+        ],
+        "PointInTimeRecoverySpecification": {
+          "PointInTimeRecoveryEnabled": true
+        },
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ],
+        "TimeToLiveSpecification": {
+          "AttributeName": "ttl",
+          "Enabled": true
+        }
+      },
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete"
+    },
+    "WebSocketConnectionsTable7F0028CC": {
+      "Type": "AWS::DynamoDB::Table",
+      "Properties": {
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "connectionId",
+            "AttributeType": "S"
+          }
+        ],
+        "BillingMode": "PAY_PER_REQUEST",
+        "KeySchema": [
+          {
+            "AttributeName": "connectionId",
+            "KeyType": "HASH"
+          }
+        ],
+        "PointInTimeRecoverySpecification": {
+          "PointInTimeRecoveryEnabled": true
+        },
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ],
+        "TimeToLiveSpecification": {
+          "AttributeName": "ttl",
+          "Enabled": true
+        }
+      },
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete"
+    },
     "BenchmarkRunsTableD0841636": {
       "Type": "AWS::DynamoDB::Table",
       "Properties": {
@@ -2709,6 +2815,7 @@
         "CallbackURLs": [
           "http://localhost:5173/auth/callback"
         ],
+        "EnableTokenRevocation": true,
         "ExplicitAuthFlows": [
           "ALLOW_USER_PASSWORD_AUTH",
           "ALLOW_USER_SRP_AUTH",
@@ -3856,6 +3963,12 @@
             "FAVORITES_TABLE_NAME": {
               "Ref": "FavoritesTable4DA8A306"
             },
+            "WEBSOCKET_TICKETS_TABLE_NAME": {
+              "Ref": "WebSocketTicketsTable7F084D73"
+            },
+            "WEBSOCKET_CONNECTIONS_TABLE_NAME": {
+              "Ref": "WebSocketConnectionsTable7F0028CC"
+            },
             "BENCHMARK_RUNS_TABLE_NAME": {
               "Ref": "BenchmarkRunsTableD0841636"
             },
@@ -4980,6 +5093,12 @@
             "FAVORITES_TABLE_NAME": {
               "Ref": "FavoritesTable4DA8A306"
             },
+            "WEBSOCKET_TICKETS_TABLE_NAME": {
+              "Ref": "WebSocketTicketsTable7F084D73"
+            },
+            "WEBSOCKET_CONNECTIONS_TABLE_NAME": {
+              "Ref": "WebSocketConnectionsTable7F0028CC"
+            },
             "BENCHMARK_RUNS_TABLE_NAME": {
               "Ref": "BenchmarkRunsTableD0841636"
             },
@@ -5150,6 +5269,696 @@
         "HeavyApiFunctionServiceRoleOverflowPolicy13079BA64",
         "HeavyApiFunctionServiceRole25A7AE5E"
       ]
+    },
+    "WebSocketAuthorizerLogGroup425965CD": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "RetentionInDays": 7,
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ]
+      },
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete"
+    },
+    "WebSocketAuthorizerFunctionServiceRole08D28BB9": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ]
+      }
+    },
+    "WebSocketAuthorizerFunctionServiceRoleDefaultPolicy3BB71984": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "dynamodb:UpdateItem",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "WebSocketTicketsTable7F084D73",
+                  "Arn"
+                ]
+              }
+            },
+            {
+              "Action": "s3:GetObject",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentsBucket9EC9DEB9",
+                          "Arn"
+                        ]
+                      },
+                      "/security/account-revocations/*"
+                    ]
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentsBucket9EC9DEB9",
+                          "Arn"
+                        ]
+                      },
+                      "/security/administrative-principal-transfer-fences/*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "cognito-idp:AdminGetUser",
+                "cognito-idp:AdminListGroupsForUser"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "UserPool6BA7E5F2",
+                  "Arn"
+                ]
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "WebSocketAuthorizerFunctionServiceRoleDefaultPolicy3BB71984",
+        "Roles": [
+          {
+            "Ref": "WebSocketAuthorizerFunctionServiceRole08D28BB9"
+          }
+        ]
+      }
+    },
+    "WebSocketAuthorizerFunctionFF1787E3": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Architectures": [
+          "arm64"
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-111111111111-ap-northeast-1",
+          "S3Key": "<asset-hash>.zip"
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_ENV": "production",
+            "DEPLOYMENT_ENVIRONMENT": "dev",
+            "USE_LOCAL_VECTOR_STORE": "false",
+            "MOCK_BEDROCK": "false",
+            "DOCS_BUCKET_NAME": {
+              "Ref": "DocumentsBucket9EC9DEB9"
+            },
+            "QUESTION_TABLE_NAME": {
+              "Ref": "HumanQuestionsTable5DA9688B"
+            },
+            "DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID": "ANSWER_EDITOR",
+            "CONVERSATION_HISTORY_TABLE_NAME": {
+              "Ref": "ConversationHistoryTable59A3534C"
+            },
+            "FAVORITES_TABLE_NAME": {
+              "Ref": "FavoritesTable4DA8A306"
+            },
+            "WEBSOCKET_TICKETS_TABLE_NAME": {
+              "Ref": "WebSocketTicketsTable7F084D73"
+            },
+            "WEBSOCKET_CONNECTIONS_TABLE_NAME": {
+              "Ref": "WebSocketConnectionsTable7F0028CC"
+            },
+            "BENCHMARK_RUNS_TABLE_NAME": {
+              "Ref": "BenchmarkRunsTableD0841636"
+            },
+            "ACTIVE_RUN_AUTHORIZATION_INDEX_TABLE_NAME": {
+              "Ref": "ActiveRunAuthorizationIndexTable2D018C99"
+            },
+            "CHAT_RUNS_TABLE_NAME": {
+              "Ref": "ChatRunsTable8446CD95"
+            },
+            "CHAT_RUN_EVENTS_TABLE_NAME": {
+              "Ref": "ChatRunEventsTable7455A50E"
+            },
+            "USAGE_EVENTS_TABLE_NAME": {
+              "Ref": "UsageEventsTable215FE3DD"
+            },
+            "USAGE_ACCOUNTING_MODE": "shadow",
+            "DOCUMENT_INGEST_RUNS_TABLE_NAME": {
+              "Ref": "DocumentIngestRunsTableEA8F8CCA"
+            },
+            "DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME": {
+              "Ref": "DocumentIngestRunEventsTableF4692EBE"
+            },
+            "DOCUMENT_GROUPS_TABLE_NAME": {
+              "Ref": "DocumentGroupsTableA5108040"
+            },
+            "BENCHMARK_BUCKET_NAME": {
+              "Ref": "BenchmarkBucketDD7D1D2F"
+            },
+            "BENCHMARK_DEFAULT_DATASET_KEY": "datasets/agent/standard-v1.jsonl",
+            "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+            "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
+            "USE_LOCAL_CHAT_RUN_STORE": "false",
+            "USE_LOCAL_USAGE_EVENT_STORE": "false",
+            "USAGE_PRICING_CATALOG_JSON": "[]",
+            "VECTOR_BUCKET_NAME": {
+              "Fn::Join": [
+                "",
+                [
+                  "memorag-",
+                  {
+                    "Ref": "AWS::AccountId"
+                  },
+                  "-",
+                  {
+                    "Ref": "AWS::Region"
+                  },
+                  "-c85f22a0"
+                ]
+              ]
+            },
+            "MEMORY_VECTOR_INDEX_NAME": "memory-index",
+            "EVIDENCE_VECTOR_INDEX_NAME": "evidence-index",
+            "DEFAULT_MODEL_ID": "amazon.nova-lite-v1:0",
+            "DEFAULT_MEMORY_MODEL_ID": "amazon.nova-lite-v1:0",
+            "EMBEDDING_MODEL_ID": "amazon.titan-embed-text-v2:0",
+            "EMBEDDING_DIMENSIONS": "1024",
+            "MIN_RETRIEVAL_SCORE": "0.20",
+            "AUTH_ENABLED": "true",
+            "AUTH_TENANT_ID": {
+              "Ref": "AWS::AccountId"
+            },
+            "BENCHMARK_EVALUATION_ENABLED": "true",
+            "BENCHMARK_EVALUATION_TENANT_ID": {
+              "Fn::Join": [
+                "",
+                [
+                  "benchmark-",
+                  {
+                    "Ref": "AWS::AccountId"
+                  }
+                ]
+              ]
+            },
+            "CORS_ALLOWED_ORIGINS": "http://localhost:5173",
+            "COGNITO_REGION": {
+              "Ref": "AWS::Region"
+            },
+            "COGNITO_USER_POOL_ID": {
+              "Ref": "UserPool6BA7E5F2"
+            },
+            "COGNITO_APP_CLIENT_ID": {
+              "Ref": "UserPoolWebClient4C9370B0"
+            },
+            "DEBUG_DOWNLOAD_BUCKET_NAME": {
+              "Ref": "DebugDownloadBucketAB6A16BE"
+            },
+            "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+            "RAG_MONITORING_REQUIRED": "1",
+            "RAG_SAFETY_STATE_TTL_SECONDS": "600",
+            "RAG_GUARD_PROFILE_JSON": "{\"id\":\"standard-safe-rag\",\"version\":\"standard-safe-rag-v1\",\"guards\":{\"authentication\":true,\"authorization\":true,\"classification_usage\":true,\"prompt_injection\":true,\"tool_policy\":true,\"grounding\":true,\"citation\":true,\"output_secret\":true,\"trace_redaction\":true}}"
+          }
+        },
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "WebSocketAuthorizerLogGroup425965CD"
+          }
+        },
+        "MemorySize": 512,
+        "Role": {
+          "Fn::GetAtt": [
+            "WebSocketAuthorizerFunctionServiceRole08D28BB9",
+            "Arn"
+          ]
+        },
+        "Runtime": "nodejs22.x",
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ],
+        "Timeout": 10
+      },
+      "DependsOn": [
+        "WebSocketAuthorizerFunctionServiceRoleDefaultPolicy3BB71984",
+        "WebSocketAuthorizerFunctionServiceRole08D28BB9"
+      ]
+    },
+    "WebSocketAuthorizerFunctionApiGatewayWebSocketAuthorizerInvoke74A76142": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "WebSocketAuthorizerFunctionFF1787E3",
+            "Arn"
+          ]
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":execute-api:ap-northeast-1:111111111111:",
+              {
+                "Ref": "WebSocketApi"
+              },
+              "/*"
+            ]
+          ]
+        }
+      }
+    },
+    "WebSocketConnectionLogGroup5B357526": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "RetentionInDays": 7,
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ]
+      },
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete"
+    },
+    "WebSocketConnectionFunctionServiceRole9D6CD2B7": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ]
+      }
+    },
+    "WebSocketConnectionFunctionServiceRoleDefaultPolicy220B2E3D": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "dynamodb:PutItem",
+                "dynamodb:DeleteItem"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "WebSocketConnectionsTable7F0028CC",
+                  "Arn"
+                ]
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "WebSocketConnectionFunctionServiceRoleDefaultPolicy220B2E3D",
+        "Roles": [
+          {
+            "Ref": "WebSocketConnectionFunctionServiceRole9D6CD2B7"
+          }
+        ]
+      }
+    },
+    "WebSocketConnectionFunction6F8378E3": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Architectures": [
+          "arm64"
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-111111111111-ap-northeast-1",
+          "S3Key": "<asset-hash>.zip"
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_ENV": "production",
+            "DEPLOYMENT_ENVIRONMENT": "dev",
+            "USE_LOCAL_VECTOR_STORE": "false",
+            "MOCK_BEDROCK": "false",
+            "DOCS_BUCKET_NAME": {
+              "Ref": "DocumentsBucket9EC9DEB9"
+            },
+            "QUESTION_TABLE_NAME": {
+              "Ref": "HumanQuestionsTable5DA9688B"
+            },
+            "DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID": "ANSWER_EDITOR",
+            "CONVERSATION_HISTORY_TABLE_NAME": {
+              "Ref": "ConversationHistoryTable59A3534C"
+            },
+            "FAVORITES_TABLE_NAME": {
+              "Ref": "FavoritesTable4DA8A306"
+            },
+            "WEBSOCKET_TICKETS_TABLE_NAME": {
+              "Ref": "WebSocketTicketsTable7F084D73"
+            },
+            "WEBSOCKET_CONNECTIONS_TABLE_NAME": {
+              "Ref": "WebSocketConnectionsTable7F0028CC"
+            },
+            "BENCHMARK_RUNS_TABLE_NAME": {
+              "Ref": "BenchmarkRunsTableD0841636"
+            },
+            "ACTIVE_RUN_AUTHORIZATION_INDEX_TABLE_NAME": {
+              "Ref": "ActiveRunAuthorizationIndexTable2D018C99"
+            },
+            "CHAT_RUNS_TABLE_NAME": {
+              "Ref": "ChatRunsTable8446CD95"
+            },
+            "CHAT_RUN_EVENTS_TABLE_NAME": {
+              "Ref": "ChatRunEventsTable7455A50E"
+            },
+            "USAGE_EVENTS_TABLE_NAME": {
+              "Ref": "UsageEventsTable215FE3DD"
+            },
+            "USAGE_ACCOUNTING_MODE": "shadow",
+            "DOCUMENT_INGEST_RUNS_TABLE_NAME": {
+              "Ref": "DocumentIngestRunsTableEA8F8CCA"
+            },
+            "DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME": {
+              "Ref": "DocumentIngestRunEventsTableF4692EBE"
+            },
+            "DOCUMENT_GROUPS_TABLE_NAME": {
+              "Ref": "DocumentGroupsTableA5108040"
+            },
+            "BENCHMARK_BUCKET_NAME": {
+              "Ref": "BenchmarkBucketDD7D1D2F"
+            },
+            "BENCHMARK_DEFAULT_DATASET_KEY": "datasets/agent/standard-v1.jsonl",
+            "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+            "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
+            "USE_LOCAL_CHAT_RUN_STORE": "false",
+            "USE_LOCAL_USAGE_EVENT_STORE": "false",
+            "USAGE_PRICING_CATALOG_JSON": "[]",
+            "VECTOR_BUCKET_NAME": {
+              "Fn::Join": [
+                "",
+                [
+                  "memorag-",
+                  {
+                    "Ref": "AWS::AccountId"
+                  },
+                  "-",
+                  {
+                    "Ref": "AWS::Region"
+                  },
+                  "-c85f22a0"
+                ]
+              ]
+            },
+            "MEMORY_VECTOR_INDEX_NAME": "memory-index",
+            "EVIDENCE_VECTOR_INDEX_NAME": "evidence-index",
+            "DEFAULT_MODEL_ID": "amazon.nova-lite-v1:0",
+            "DEFAULT_MEMORY_MODEL_ID": "amazon.nova-lite-v1:0",
+            "EMBEDDING_MODEL_ID": "amazon.titan-embed-text-v2:0",
+            "EMBEDDING_DIMENSIONS": "1024",
+            "MIN_RETRIEVAL_SCORE": "0.20",
+            "AUTH_ENABLED": "true",
+            "AUTH_TENANT_ID": {
+              "Ref": "AWS::AccountId"
+            },
+            "BENCHMARK_EVALUATION_ENABLED": "true",
+            "BENCHMARK_EVALUATION_TENANT_ID": {
+              "Fn::Join": [
+                "",
+                [
+                  "benchmark-",
+                  {
+                    "Ref": "AWS::AccountId"
+                  }
+                ]
+              ]
+            },
+            "CORS_ALLOWED_ORIGINS": "http://localhost:5173",
+            "COGNITO_REGION": {
+              "Ref": "AWS::Region"
+            },
+            "COGNITO_USER_POOL_ID": {
+              "Ref": "UserPool6BA7E5F2"
+            },
+            "COGNITO_APP_CLIENT_ID": {
+              "Ref": "UserPoolWebClient4C9370B0"
+            },
+            "DEBUG_DOWNLOAD_BUCKET_NAME": {
+              "Ref": "DebugDownloadBucketAB6A16BE"
+            },
+            "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+            "RAG_MONITORING_REQUIRED": "1",
+            "RAG_SAFETY_STATE_TTL_SECONDS": "600",
+            "RAG_GUARD_PROFILE_JSON": "{\"id\":\"standard-safe-rag\",\"version\":\"standard-safe-rag-v1\",\"guards\":{\"authentication\":true,\"authorization\":true,\"classification_usage\":true,\"prompt_injection\":true,\"tool_policy\":true,\"grounding\":true,\"citation\":true,\"output_secret\":true,\"trace_redaction\":true}}"
+          }
+        },
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "WebSocketConnectionLogGroup5B357526"
+          }
+        },
+        "MemorySize": 512,
+        "Role": {
+          "Fn::GetAtt": [
+            "WebSocketConnectionFunctionServiceRole9D6CD2B7",
+            "Arn"
+          ]
+        },
+        "Runtime": "nodejs22.x",
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ],
+        "Timeout": 10
+      },
+      "DependsOn": [
+        "WebSocketConnectionFunctionServiceRoleDefaultPolicy220B2E3D",
+        "WebSocketConnectionFunctionServiceRole9D6CD2B7"
+      ]
+    },
+    "WebSocketConnectionFunctionApiGatewayWebSocketLifecycleInvoke4BCE77CE": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "WebSocketConnectionFunction6F8378E3",
+            "Arn"
+          ]
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":execute-api:ap-northeast-1:111111111111:",
+              {
+                "Ref": "WebSocketApi"
+              },
+              "/*"
+            ]
+          ]
+        }
+      }
     },
     "ChatRunWorkerLogGroup5ACB3363": {
       "Type": "AWS::Logs::LogGroup",
@@ -5664,6 +6473,12 @@
             "FAVORITES_TABLE_NAME": {
               "Ref": "FavoritesTable4DA8A306"
             },
+            "WEBSOCKET_TICKETS_TABLE_NAME": {
+              "Ref": "WebSocketTicketsTable7F084D73"
+            },
+            "WEBSOCKET_CONNECTIONS_TABLE_NAME": {
+              "Ref": "WebSocketConnectionsTable7F0028CC"
+            },
             "BENCHMARK_RUNS_TABLE_NAME": {
               "Ref": "BenchmarkRunsTableD0841636"
             },
@@ -6081,6 +6896,12 @@
             "FAVORITES_TABLE_NAME": {
               "Ref": "FavoritesTable4DA8A306"
             },
+            "WEBSOCKET_TICKETS_TABLE_NAME": {
+              "Ref": "WebSocketTicketsTable7F084D73"
+            },
+            "WEBSOCKET_CONNECTIONS_TABLE_NAME": {
+              "Ref": "WebSocketConnectionsTable7F0028CC"
+            },
             "BENCHMARK_RUNS_TABLE_NAME": {
               "Ref": "BenchmarkRunsTableD0841636"
             },
@@ -6451,6 +7272,12 @@
             },
             "FAVORITES_TABLE_NAME": {
               "Ref": "FavoritesTable4DA8A306"
+            },
+            "WEBSOCKET_TICKETS_TABLE_NAME": {
+              "Ref": "WebSocketTicketsTable7F084D73"
+            },
+            "WEBSOCKET_CONNECTIONS_TABLE_NAME": {
+              "Ref": "WebSocketConnectionsTable7F0028CC"
             },
             "BENCHMARK_RUNS_TABLE_NAME": {
               "Ref": "BenchmarkRunsTableD0841636"
@@ -7010,6 +7837,12 @@
             "FAVORITES_TABLE_NAME": {
               "Ref": "FavoritesTable4DA8A306"
             },
+            "WEBSOCKET_TICKETS_TABLE_NAME": {
+              "Ref": "WebSocketTicketsTable7F084D73"
+            },
+            "WEBSOCKET_CONNECTIONS_TABLE_NAME": {
+              "Ref": "WebSocketConnectionsTable7F0028CC"
+            },
             "BENCHMARK_RUNS_TABLE_NAME": {
               "Ref": "BenchmarkRunsTableD0841636"
             },
@@ -7431,6 +8264,12 @@
             },
             "FAVORITES_TABLE_NAME": {
               "Ref": "FavoritesTable4DA8A306"
+            },
+            "WEBSOCKET_TICKETS_TABLE_NAME": {
+              "Ref": "WebSocketTicketsTable7F084D73"
+            },
+            "WEBSOCKET_CONNECTIONS_TABLE_NAME": {
+              "Ref": "WebSocketConnectionsTable7F0028CC"
             },
             "BENCHMARK_RUNS_TABLE_NAME": {
               "Ref": "BenchmarkRunsTableD0841636"
@@ -7927,6 +8766,12 @@
             },
             "FAVORITES_TABLE_NAME": {
               "Ref": "FavoritesTable4DA8A306"
+            },
+            "WEBSOCKET_TICKETS_TABLE_NAME": {
+              "Ref": "WebSocketTicketsTable7F084D73"
+            },
+            "WEBSOCKET_CONNECTIONS_TABLE_NAME": {
+              "Ref": "WebSocketConnectionsTable7F0028CC"
             },
             "BENCHMARK_RUNS_TABLE_NAME": {
               "Ref": "BenchmarkRunsTableD0841636"
@@ -8833,6 +9678,12 @@
             "FAVORITES_TABLE_NAME": {
               "Ref": "FavoritesTable4DA8A306"
             },
+            "WEBSOCKET_TICKETS_TABLE_NAME": {
+              "Ref": "WebSocketTicketsTable7F084D73"
+            },
+            "WEBSOCKET_CONNECTIONS_TABLE_NAME": {
+              "Ref": "WebSocketConnectionsTable7F0028CC"
+            },
             "BENCHMARK_RUNS_TABLE_NAME": {
               "Ref": "BenchmarkRunsTableD0841636"
             },
@@ -9258,6 +10109,12 @@
             "FAVORITES_TABLE_NAME": {
               "Ref": "FavoritesTable4DA8A306"
             },
+            "WEBSOCKET_TICKETS_TABLE_NAME": {
+              "Ref": "WebSocketTicketsTable7F084D73"
+            },
+            "WEBSOCKET_CONNECTIONS_TABLE_NAME": {
+              "Ref": "WebSocketConnectionsTable7F0028CC"
+            },
             "BENCHMARK_RUNS_TABLE_NAME": {
               "Ref": "BenchmarkRunsTableD0841636"
             },
@@ -9652,6 +10509,12 @@
             },
             "FAVORITES_TABLE_NAME": {
               "Ref": "FavoritesTable4DA8A306"
+            },
+            "WEBSOCKET_TICKETS_TABLE_NAME": {
+              "Ref": "WebSocketTicketsTable7F084D73"
+            },
+            "WEBSOCKET_CONNECTIONS_TABLE_NAME": {
+              "Ref": "WebSocketConnectionsTable7F0028CC"
             },
             "BENCHMARK_RUNS_TABLE_NAME": {
               "Ref": "BenchmarkRunsTableD0841636"
@@ -10113,6 +10976,35 @@
         ],
         "Threshold": 1,
         "TreatMissingData": "breaching"
+      }
+    },
+    "WebSocketTicketIssuePolicy9E5D74D0": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "dynamodb:PutItem",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "WebSocketTicketsTable7F084D73",
+                  "Arn"
+                ]
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "WebSocketTicketIssuePolicy9E5D74D0",
+        "Roles": [
+          {
+            "Ref": "ApiFunctionServiceRole52B9747B"
+          },
+          {
+            "Ref": "HeavyApiFunctionServiceRole25A7AE5E"
+          }
+        ]
       }
     },
     "RestApiAccessLogGroup246D1CE0": {
@@ -14949,6 +15841,220 @@
       "UpdateReplacePolicy": "Delete",
       "DeletionPolicy": "Delete"
     },
+    "WebSocketApi": {
+      "Type": "AWS::ApiGatewayV2::Api",
+      "Properties": {
+        "Name": "memorag-websocket-c85f22a0",
+        "ProtocolType": "WEBSOCKET",
+        "RouteSelectionExpression": "$request.body.action",
+        "Tags": {
+          "Application": "MemoRAG",
+          "CostCenter": "memorag-mvp",
+          "Environment": "dev",
+          "ManagedBy": "aws-cdk",
+          "Project": "memorag-bedrock-mvp",
+          "Repository": "tsuji-tomonori/rag-assist"
+        }
+      }
+    },
+    "WebSocketConnectAuthorizer": {
+      "Type": "AWS::ApiGatewayV2::Authorizer",
+      "Properties": {
+        "ApiId": {
+          "Ref": "WebSocketApi"
+        },
+        "AuthorizerType": "REQUEST",
+        "AuthorizerUri": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":apigateway:ap-northeast-1::lambda:path/2015-03-31/functions/",
+              {
+                "Fn::GetAtt": [
+                  "WebSocketAuthorizerFunctionFF1787E3",
+                  "Arn"
+                ]
+              },
+              "/invocations"
+            ]
+          ]
+        },
+        "IdentitySource": [
+          "route.request.header.Sec-WebSocket-Protocol"
+        ],
+        "Name": "memorag-websocket-ticket-authorizer"
+      }
+    },
+    "WebSocketLifecycleIntegration": {
+      "Type": "AWS::ApiGatewayV2::Integration",
+      "Properties": {
+        "ApiId": {
+          "Ref": "WebSocketApi"
+        },
+        "IntegrationMethod": "POST",
+        "IntegrationType": "AWS_PROXY",
+        "IntegrationUri": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":apigateway:ap-northeast-1::lambda:path/2015-03-31/functions/",
+              {
+                "Fn::GetAtt": [
+                  "WebSocketConnectionFunction6F8378E3",
+                  "Arn"
+                ]
+              },
+              "/invocations"
+            ]
+          ]
+        }
+      }
+    },
+    "WebSocketConnectRoute": {
+      "Type": "AWS::ApiGatewayV2::Route",
+      "Properties": {
+        "ApiId": {
+          "Ref": "WebSocketApi"
+        },
+        "AuthorizationType": "CUSTOM",
+        "AuthorizerId": {
+          "Ref": "WebSocketConnectAuthorizer"
+        },
+        "RouteKey": "$connect",
+        "Target": {
+          "Fn::Join": [
+            "",
+            [
+              "integrations/",
+              {
+                "Ref": "WebSocketLifecycleIntegration"
+              }
+            ]
+          ]
+        }
+      }
+    },
+    "WebSocketDisconnectRoute": {
+      "Type": "AWS::ApiGatewayV2::Route",
+      "Properties": {
+        "ApiId": {
+          "Ref": "WebSocketApi"
+        },
+        "AuthorizationType": "NONE",
+        "RouteKey": "$disconnect",
+        "Target": {
+          "Fn::Join": [
+            "",
+            [
+              "integrations/",
+              {
+                "Ref": "WebSocketLifecycleIntegration"
+              }
+            ]
+          ]
+        }
+      }
+    },
+    "WebSocketDefaultRoute": {
+      "Type": "AWS::ApiGatewayV2::Route",
+      "Properties": {
+        "ApiId": {
+          "Ref": "WebSocketApi"
+        },
+        "AuthorizationType": "NONE",
+        "RouteKey": "$default",
+        "Target": {
+          "Fn::Join": [
+            "",
+            [
+              "integrations/",
+              {
+                "Ref": "WebSocketLifecycleIntegration"
+              }
+            ]
+          ]
+        }
+      }
+    },
+    "WebSocketAccessLogGroupEE932001": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "RetentionInDays": 7,
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ]
+      },
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete"
+    },
+    "WebSocketStage": {
+      "Type": "AWS::ApiGatewayV2::Stage",
+      "Properties": {
+        "AccessLogSettings": {
+          "DestinationArn": {
+            "Fn::GetAtt": [
+              "WebSocketAccessLogGroupEE932001",
+              "Arn"
+            ]
+          },
+          "Format": "{\"requestId\":\"$context.requestId\",\"eventType\":\"$context.eventType\",\"routeKey\":\"$context.routeKey\",\"status\":\"$context.status\",\"connectionId\":\"$context.connectionId\"}"
+        },
+        "ApiId": {
+          "Ref": "WebSocketApi"
+        },
+        "AutoDeploy": true,
+        "DefaultRouteSettings": {
+          "DataTraceEnabled": false,
+          "DetailedMetricsEnabled": true,
+          "LoggingLevel": "OFF"
+        },
+        "StageName": "prod",
+        "Tags": {
+          "Application": "MemoRAG",
+          "CostCenter": "memorag-mvp",
+          "Environment": "dev",
+          "ManagedBy": "aws-cdk",
+          "Project": "memorag-bedrock-mvp",
+          "Repository": "tsuji-tomonori/rag-assist"
+        }
+      },
+      "DependsOn": [
+        "WebSocketConnectRoute",
+        "WebSocketDefaultRoute",
+        "WebSocketDisconnectRoute"
+      ]
+    },
     "SpaRouteRewriteFunction2441F411": {
       "Type": "AWS::CloudFront::Function",
       "Properties": {
@@ -15025,6 +16131,68 @@
         ]
       }
     },
+    "WebSocketStageRewriteFunction229ED7B5": {
+      "Type": "AWS::CloudFront::Function",
+      "Properties": {
+        "AutoPublish": true,
+        "FunctionCode": "\nfunction handler(event) {\n  var request = event.request;\n\n  if (request.uri === \"/ws/v1\") {\n    request.uri = \"/prod\";\n  }\n\n  return request;\n}\n",
+        "FunctionConfig": {
+          "Comment": "Rewrite the exact same-origin WebSocket entry to the API Gateway stage path",
+          "Runtime": "cloudfront-js-1.0"
+        },
+        "Name": "ap-northeast-1MemoRagMvpStackTeRewriteFunctionE448B710",
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ]
+      }
+    },
+    "WebSocketOriginRequestPolicy5FA3946C": {
+      "Type": "AWS::CloudFront::OriginRequestPolicy",
+      "Properties": {
+        "OriginRequestPolicyConfig": {
+          "Comment": "Forward only WebSocket upgrade and subprotocol headers; omit cookies and query strings",
+          "CookiesConfig": {
+            "CookieBehavior": "none"
+          },
+          "HeadersConfig": {
+            "HeaderBehavior": "whitelist",
+            "Headers": [
+              "Sec-WebSocket-Key",
+              "Sec-WebSocket-Version",
+              "Sec-WebSocket-Protocol",
+              "Sec-WebSocket-Extensions"
+            ]
+          },
+          "Name": "MemoRagMvpStackTestWebSocketOriginRequestPolicyCD742FFB",
+          "QueryStringsConfig": {
+            "QueryStringBehavior": "none"
+          }
+        }
+      }
+    },
     "FrontendDistributionOrigin1S3OriginAccessControl51A3EFC6": {
       "Type": "AWS::CloudFront::OriginAccessControl",
       "Properties": {
@@ -15096,6 +16264,32 @@
               "PathPattern": "api/*",
               "TargetOriginId": "MemoRagMvpStackTestFrontendDistributionOrigin26156DC89",
               "ViewerProtocolPolicy": "redirect-to-https"
+            },
+            {
+              "AllowedMethods": [
+                "GET",
+                "HEAD",
+                "OPTIONS"
+              ],
+              "CachePolicyId": "4135ea2d-6df8-44a3-9df3-4b5a84be39ad",
+              "Compress": true,
+              "FunctionAssociations": [
+                {
+                  "EventType": "viewer-request",
+                  "FunctionARN": {
+                    "Fn::GetAtt": [
+                      "WebSocketStageRewriteFunction229ED7B5",
+                      "FunctionARN"
+                    ]
+                  }
+                }
+              ],
+              "OriginRequestPolicyId": {
+                "Ref": "WebSocketOriginRequestPolicy5FA3946C"
+              },
+              "PathPattern": "ws/v1",
+              "TargetOriginId": "MemoRagMvpStackTestFrontendDistributionOrigin3EA4E0C0B",
+              "ViewerProtocolPolicy": "https-only"
             }
           ],
           "DefaultCacheBehavior": {
@@ -15223,6 +16417,33 @@
                   ]
                 ]
               }
+            },
+            {
+              "CustomOriginConfig": {
+                "OriginProtocolPolicy": "https-only",
+                "OriginSSLProtocols": [
+                  "TLSv1.2"
+                ]
+              },
+              "DomainName": {
+                "Fn::Join": [
+                  "",
+                  [
+                    {
+                      "Ref": "WebSocketApi"
+                    },
+                    ".execute-api.",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ".",
+                    {
+                      "Ref": "AWS::URLSuffix"
+                    }
+                  ]
+                ]
+              },
+              "Id": "MemoRagMvpStackTestFrontendDistributionOrigin3EA4E0C0B"
             }
           ]
         },

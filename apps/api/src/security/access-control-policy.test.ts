@@ -23,6 +23,7 @@ type RoutePolicy = {
 }
 
 const operationMatrixSubset = new Map<string, { operationKey: string; resourceCondition: string }>([
+  ["POST /websocket/tickets", { operationKey: "realtime.connect", resourceCondition: "none" }],
   ["POST /chat", { operationKey: "chat.send", resourceCondition: "documentGroupRead" }],
   ["POST /chat-runs", { operationKey: "chat.run.start", resourceCondition: "documentGroupRead" }],
   ["GET /chat-runs/{runId}/events", { operationKey: "chat.run.events.read", resourceCondition: "ownedRun" }],

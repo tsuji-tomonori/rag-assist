@@ -69,6 +69,12 @@ export const HealthResponseSchema = z.object({
   timestamp: z.string()
 })
 
+export const WebSocketTicketResponseSchema = z.object({
+  ticket: z.string().regex(/^memorag-ticket\.[A-Za-z0-9_-]{43}$/),
+  protocol: z.literal("memorag.v1"),
+  expiresAt: z.string().datetime()
+})
+
 export const DocumentUploadRequestSchema = z.object({
   fileName: z.string().min(1).openapi({ example: "handbook.md" }),
   text: z.string().optional().openapi({ example: "経費精算は申請から30日以内に行う必要があります。" }),

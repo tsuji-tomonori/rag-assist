@@ -24,7 +24,7 @@
 | 到達 symbol | search includes owner-owned group scoped documents despite ordinary folder denial | `apps/api/src/rag/memorag-service.test.ts:1105 (search includes owner-owned group scoped documents despite ordinary folder denial)` |
 | 到達 symbol | service enforces full document group permission for delete and reindex operations | `apps/api/src/rag/memorag-service.test.ts:1132 (service enforces full document group permission for delete and reindex operations)` |
 | 到達 symbol | service search denies group-scoped manifests to non-members without legacy ACLs | `apps/api/src/search/hybrid-search.test.ts:486 (service search denies group-scoped manifests to non-members without legacy ACLs)` |
-| 到達 symbol | document group create and legacy settings routes reject embedded ACL authority | `apps/api/src/security/access-control-policy.test.ts:289 (document group create and legacy settings routes reject embedded ACL authority)` |
+| 到達 symbol | document group create and legacy settings routes reject embedded ACL authority | `apps/api/src/security/access-control-policy.test.ts:290 (document group create and legacy settings routes reject embedded ACL authority)` |
 
 ## 2. 実装分岐から導くテスト要因
 

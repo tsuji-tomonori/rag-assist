@@ -10,7 +10,7 @@
 
 用途概要: IAM inline policy
 
-リソース数: 18
+リソース数: 21
 
 ## Logical ID 一覧
 
@@ -34,6 +34,9 @@
 | [S3Vectors Provider Fn Service Role Default Policy](#s3vectors-provider-fn-service-role-default-policy) | `S3VectorsProviderFnServiceRoleDefaultPolicy0DE2AFB7` | S3Vectors Provider Fn Service Role Default Policy (IAM inline policy) |
 | [S3Vectors Providerframeworkon Event Service Role Default Policy](#s3vectors-providerframeworkon-event-service-role-default-policy) | `S3VectorsProviderframeworkonEventServiceRoleDefaultPolicy486C3756` | S3Vectors Providerframeworkon Event Service Role Default Policy (IAM inline policy) |
 | [Security Audit Reconciliation Function Service Role Default Policy](#security-audit-reconciliation-function-service-role-default-policy) | `SecurityAuditReconciliationFunctionServiceRoleDefaultPolicy77DBBA3A` | Security Audit Reconciliation Function Service Role Default Policy (IAM inline policy) |
+| [Web Socket Authorizer Function Service Role Default Policy](#web-socket-authorizer-function-service-role-default-policy) | `WebSocketAuthorizerFunctionServiceRoleDefaultPolicy3BB71984` | Web Socket Authorizer Function Service Role Default Policy (IAM inline policy) |
+| [Web Socket Connection Function Service Role Default Policy](#web-socket-connection-function-service-role-default-policy) | `WebSocketConnectionFunctionServiceRoleDefaultPolicy220B2E3D` | Web Socket Connection Function Service Role Default Policy (IAM inline policy) |
+| [Web Socket Ticket Issue Policy](#web-socket-ticket-issue-policy) | `WebSocketTicketIssuePolicy9E5D74D0` | Web Socket Ticket Issue Policy (IAM inline policy) |
 
 ## Logical ID 別設定
 
@@ -288,3 +291,45 @@ Logical ID: `SecurityAuditReconciliationFunctionServiceRoleDefaultPolicy77DBBA3A
 | `statementCount` | 2 |
 | `actions` | [s3:GetObject, s3:ListBucket, s3:PutObject] |
 | `resources` | [GetAtt:DocumentsBucket9EC9DEB9.Arn, Join:["",[{"Fn::GetAtt":["DocumentsBucket9EC9DEB9","Arn"]},"/security-audit/intents/",{"Ref":"AWS::AccountId"},"/*"]], Join:["",[{"Fn::GetAtt":["DocumentsBucket9EC9DEB9","Arn"]},"/source-governance/",{"Ref":"AWS::AccountId"},"/*"]]] |
+
+### Web Socket Authorizer Function Service Role Default Policy
+
+Logical ID: `WebSocketAuthorizerFunctionServiceRoleDefaultPolicy3BB71984`
+
+用途推定: Web Socket Authorizer Function Service Role Default Policy (IAM inline policy)
+
+| 設定項目 | 値 |
+| --- | --- |
+| `policyName` | WebSocketAuthorizerFunctionServiceRoleDefaultPolicy3BB71984 |
+| `roles` | [Ref:WebSocketAuthorizerFunctionServiceRole08D28BB9] |
+| `statementCount` | 3 |
+| `actions` | [cognito-idp:AdminGetUser, cognito-idp:AdminListGroupsForUser, dynamodb:UpdateItem, s3:GetObject] |
+| `resources` | [GetAtt:UserPool6BA7E5F2.Arn, GetAtt:WebSocketTicketsTable7F084D73.Arn, Join:["",[{"Fn::GetAtt":["DocumentsBucket9EC9DEB9","Arn"]},"/security/account-revocations/*"]], Join:["",[{"Fn::GetAtt":["DocumentsBucket9EC9DEB9","Arn"]},"/security/administrative-principal-transfer-fences/*"]]] |
+
+### Web Socket Connection Function Service Role Default Policy
+
+Logical ID: `WebSocketConnectionFunctionServiceRoleDefaultPolicy220B2E3D`
+
+用途推定: Web Socket Connection Function Service Role Default Policy (IAM inline policy)
+
+| 設定項目 | 値 |
+| --- | --- |
+| `policyName` | WebSocketConnectionFunctionServiceRoleDefaultPolicy220B2E3D |
+| `roles` | [Ref:WebSocketConnectionFunctionServiceRole9D6CD2B7] |
+| `statementCount` | 1 |
+| `actions` | [dynamodb:DeleteItem, dynamodb:PutItem] |
+| `resources` | [GetAtt:WebSocketConnectionsTable7F0028CC.Arn] |
+
+### Web Socket Ticket Issue Policy
+
+Logical ID: `WebSocketTicketIssuePolicy9E5D74D0`
+
+用途推定: Web Socket Ticket Issue Policy (IAM inline policy)
+
+| 設定項目 | 値 |
+| --- | --- |
+| `policyName` | WebSocketTicketIssuePolicy9E5D74D0 |
+| `roles` | [Ref:ApiFunctionServiceRole52B9747B, Ref:HeavyApiFunctionServiceRole25A7AE5E] |
+| `statementCount` | 1 |
+| `actions` | [dynamodb:PutItem] |
+| `resources` | [GetAtt:WebSocketTicketsTable7F084D73.Arn] |

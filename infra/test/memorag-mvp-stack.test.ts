@@ -88,6 +88,7 @@ test("implements the designed serverless resources", () => {
   })
   template.hasResourceProperties("AWS::Cognito::UserPoolClient", {
     GenerateSecret: false,
+    EnableTokenRevocation: true,
     AllowedOAuthFlowsUserPoolClient: true,
     AllowedOAuthFlows: ["code"],
     AllowedOAuthScopes: Match.arrayWith(["openid", "email", "profile"]),
@@ -499,7 +500,7 @@ test("routes exact and nested API paths without rewriting API errors as SPA succ
   const functionEntries = Object.entries(resources).filter(([, resource]) => (
     (resource as any).Type === "AWS::CloudFront::Function"
   ))
-  assert.equal(functionEntries.length, 2)
+  assert.equal(functionEntries.length, 3)
   const spaFunctionEntry = functionEntries.find(([, resource]) => (
     (resource as any).Properties.FunctionConfig.Comment.includes("SPA client routes")
   ))
@@ -518,8 +519,8 @@ test("routes exact and nested API paths without rewriting API errors as SPA succ
   assert.equal(executeCloudFrontFunction(spaFunction.Properties.FunctionCode, "/auth/callback"), "/index.html")
   assert.equal(executeCloudFrontFunction(spaFunction.Properties.FunctionCode, "/assets/missing.js"), "/assets/missing.js")
 
-  const apiBehaviors = distributionConfig.CacheBehaviors
-  assert.deepEqual(apiBehaviors.map((behavior: any) => behavior.PathPattern), ["api", "api/*"])
+  assert.deepEqual(distributionConfig.CacheBehaviors.map((behavior: any) => behavior.PathPattern), ["api", "api/*", "ws/v1"])
+  const apiBehaviors = distributionConfig.CacheBehaviors.filter((behavior: any) => behavior.PathPattern.startsWith("api"))
   for (const behavior of apiBehaviors) {
     assert.deepEqual(behavior.AllowedMethods, ["GET", "HEAD", "OPTIONS", "PUT", "PATCH", "POST", "DELETE"])
     assert.equal(behavior.CachePolicyId, "4135ea2d-6df8-44a3-9df3-4b5a84be39ad")
@@ -552,6 +553,146 @@ test("routes exact and nested API paths without rewriting API errors as SPA succ
     "Fn::GetAtt": [spaFunctionLogicalId, "FunctionARN"]
   })
   assert.equal(JSON.stringify(distributionConfig.DefaultCacheBehavior).includes(apiFunctionLogicalId), false)
+})
+
+test("routes exact same-origin WebSocket entry with single-use ticket authorizer and redacted logs", () => {
+  const template = synthesize()
+  const resources = template.toJSON().Resources ?? {}
+
+  template.hasResourceProperties("AWS::ApiGatewayV2::Api", {
+    ProtocolType: "WEBSOCKET",
+    RouteSelectionExpression: "$request.body.action"
+  })
+  template.hasResourceProperties("AWS::ApiGatewayV2::Authorizer", {
+    AuthorizerType: "REQUEST",
+    IdentitySource: ["route.request.header.Sec-WebSocket-Protocol"]
+  })
+  const webSocketAuthorizer = Object.values(resources).find((resource: any) => (
+    resource.Type === "AWS::ApiGatewayV2::Authorizer"
+  )) as any
+  assert.ok(webSocketAuthorizer)
+  assert.equal(webSocketAuthorizer.Properties.AuthorizerResultTtlInSeconds, undefined)
+  template.hasResourceProperties("AWS::ApiGatewayV2::Route", {
+    RouteKey: "$connect",
+    AuthorizationType: "CUSTOM",
+    AuthorizerId: Match.anyValue()
+  })
+  template.hasResourceProperties("AWS::ApiGatewayV2::Route", {
+    RouteKey: "$disconnect",
+    AuthorizationType: "NONE"
+  })
+  template.hasResourceProperties("AWS::ApiGatewayV2::Route", {
+    RouteKey: "$default",
+    AuthorizationType: "NONE"
+  })
+  template.hasResourceProperties("AWS::ApiGatewayV2::Stage", {
+    StageName: "prod",
+    AutoDeploy: true,
+    AccessLogSettings: Match.objectLike({
+      DestinationArn: Match.anyValue(),
+      Format: Match.stringLikeRegexp("requestId.*eventType.*routeKey.*status.*connectionId")
+    }),
+    DefaultRouteSettings: {
+      DataTraceEnabled: false,
+      DetailedMetricsEnabled: true,
+      LoggingLevel: "OFF"
+    }
+  })
+
+  const ticketTables = Object.values(resources).filter((resource: any) => (
+    resource.Type === "AWS::DynamoDB::Table"
+    && resource.Properties.KeySchema?.some((key: any) => key.AttributeName === "ticketHash")
+  )) as any[]
+  assert.equal(ticketTables.length, 1)
+  assert.equal(ticketTables[0].Properties.TimeToLiveSpecification.AttributeName, "ttl")
+  const connectionTables = Object.values(resources).filter((resource: any) => (
+    resource.Type === "AWS::DynamoDB::Table"
+    && resource.Properties.KeySchema?.some((key: any) => key.AttributeName === "connectionId")
+  )) as any[]
+  assert.equal(connectionTables.length, 1)
+  assert.equal(connectionTables[0].Properties.TimeToLiveSpecification.AttributeName, "ttl")
+
+  const distribution = Object.values(resources).find((resource: any) => resource.Type === "AWS::CloudFront::Distribution") as any
+  assert.ok(distribution)
+  const wsBehavior = distribution.Properties.DistributionConfig.CacheBehaviors
+    .find((behavior: any) => behavior.PathPattern === "ws/v1")
+  assert.ok(wsBehavior)
+  assert.deepEqual(wsBehavior.AllowedMethods, ["GET", "HEAD", "OPTIONS"])
+  assert.equal(wsBehavior.CachePolicyId, "4135ea2d-6df8-44a3-9df3-4b5a84be39ad")
+  assert.equal(wsBehavior.ViewerProtocolPolicy, "https-only")
+  assert.equal(wsBehavior.FunctionAssociations.length, 1)
+
+  const wsFunctionArn = wsBehavior.FunctionAssociations[0].FunctionARN
+  const wsFunctionLogicalId = wsFunctionArn["Fn::GetAtt"]?.[0]
+  const wsFunction = resources[wsFunctionLogicalId]
+  assert.ok(wsFunction)
+  assert.equal(executeCloudFrontFunction(wsFunction.Properties.FunctionCode, "/ws/v1"), "/prod")
+  assert.equal(executeCloudFrontFunction(wsFunction.Properties.FunctionCode, "/ws/v1/other"), "/ws/v1/other")
+
+  const originPolicyId = wsBehavior.OriginRequestPolicyId?.Ref
+  const originPolicy = resources[originPolicyId]
+  assert.ok(originPolicy)
+  const policyConfig = originPolicy.Properties.OriginRequestPolicyConfig
+  assert.equal(policyConfig.QueryStringsConfig.QueryStringBehavior, "none")
+  assert.equal(policyConfig.CookiesConfig.CookieBehavior, "none")
+  assert.equal(policyConfig.HeadersConfig.HeaderBehavior, "whitelist")
+  assert.deepEqual(policyConfig.HeadersConfig.Headers.sort(), [
+    "Sec-WebSocket-Extensions",
+    "Sec-WebSocket-Key",
+    "Sec-WebSocket-Protocol",
+    "Sec-WebSocket-Version"
+  ].sort())
+
+  const stage = Object.values(resources).find((resource: any) => (
+    resource.Type === "AWS::ApiGatewayV2::Stage"
+  )) as any
+  const serializedAccessLog = stage.Properties.AccessLogSettings.Format
+  assert.doesNotMatch(serializedAccessLog, /query|header|cookie|protocol|ticket|token|authorization|jwt/i)
+
+  const authorizerPolicies = Object.entries(resources)
+    .filter(([logicalId, resource]) => logicalId.startsWith("WebSocketAuthorizerFunctionServiceRoleDefaultPolicy") && (resource as any).Type === "AWS::IAM::Policy")
+    .map(([, resource]) => JSON.stringify((resource as any).Properties.PolicyDocument))
+    .join("\n")
+  assert.match(authorizerPolicies, /dynamodb:UpdateItem/)
+  assert.doesNotMatch(authorizerPolicies, /dynamodb:(?:PutItem|DeleteItem|GetItem|Scan)/)
+  assert.match(authorizerPolicies, /cognito-idp:AdminGetUser/)
+  assert.match(authorizerPolicies, /s3:GetObject/)
+  assert.match(authorizerPolicies, /security\/account-revocations/)
+  assert.match(authorizerPolicies, /security\/administrative-principal-transfer-fences/)
+  const ticketTableLogicalId = Object.entries(resources).find(([, resource]) => (
+    (resource as any).Type === "AWS::DynamoDB::Table"
+    && (resource as any).Properties.KeySchema?.some((key: any) => key.AttributeName === "ticketHash")
+  ))?.[0]
+  assert.ok(ticketTableLogicalId)
+  const ticketIssuePolicies = Object.entries(resources).filter(([logicalId, resource]) => (
+    logicalId.startsWith("WebSocketTicketIssuePolicy") && (resource as any).Type === "AWS::IAM::Policy"
+  ))
+  assert.equal(ticketIssuePolicies.length, 1)
+  const ticketIssuePolicy = ticketIssuePolicies[0]![1] as any
+  assert.deepEqual(ticketIssuePolicy.Properties.PolicyDocument.Statement, [{
+    Action: "dynamodb:PutItem",
+    Effect: "Allow",
+    Resource: { "Fn::GetAtt": [ticketTableLogicalId, "Arn"] }
+  }])
+  assert.equal(ticketIssuePolicy.Properties.Roles.length, 2)
+  assert.match(JSON.stringify(ticketIssuePolicy.Properties.Roles), /ApiFunctionServiceRole/)
+  assert.match(JSON.stringify(ticketIssuePolicy.Properties.Roles), /HeavyApiFunctionServiceRole/)
+  const connectionPolicies = Object.entries(resources)
+    .filter(([logicalId, resource]) => logicalId.startsWith("WebSocketConnectionFunctionServiceRoleDefaultPolicy") && (resource as any).Type === "AWS::IAM::Policy")
+    .map(([, resource]) => JSON.stringify((resource as any).Properties.PolicyDocument))
+    .join("\n")
+  assert.match(connectionPolicies, /dynamodb:PutItem/)
+  assert.match(connectionPolicies, /dynamodb:DeleteItem/)
+  assert.doesNotMatch(connectionPolicies, /dynamodb:(?:UpdateItem|GetItem|Scan)/)
+  const frontendConfig = createDeployedFrontendRuntimeConfig({
+    cognitoRegion: "ap-northeast-1",
+    cognitoUserPoolId: "pool-1",
+    cognitoUserPoolClientId: "client-1",
+    cognitoHostedUiBaseUrl: "https://memorag.auth.ap-northeast-1.amazoncognito.com",
+    cognitoRedirectUri: "https://app.example.com/auth/callback",
+    cognitoLogoutUri: "https://app.example.com/"
+  })
+  assert.doesNotMatch(JSON.stringify(frontendConfig), /execute-api.*websocket|wss:/i)
 })
 
 test("keeps the deployed SPA on same-origin /api without changing internal execute-api consumers", () => {

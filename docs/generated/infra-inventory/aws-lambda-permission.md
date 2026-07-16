@@ -10,7 +10,7 @@
 
 用途概要: Lambda invoke permission
 
-リソース数: 41
+リソース数: 43
 
 ## Logical ID 一覧
 
@@ -57,6 +57,8 @@
 | [Rest Apisearch POST Api Permission Test Memo Rag Mvp Stack Test Rest Api748483EDPOS Tsearch](#rest-apisearch-post-api-permission-test-memo-rag-mvp-stack-test-rest-api748483edpos-tsearch) | `RestApisearchPOSTApiPermissionTestMemoRagMvpStackTestRestApi748483EDPOSTsearch6EE8A05D` | Rest Apisearch POST Api Permission Test Memo Rag Mvp Stack Test Rest Api748483EDPOS Tsearch (Lambda invoke permission) |
 | [Revocation Cleanup Schedule Allow Event Rule Memo Rag Mvp Stack Test Revocation Cleanup Function3573F11BF4ADB52E](#revocation-cleanup-schedule-allow-event-rule-memo-rag-mvp-stack-test-revocation-cleanup-function3573f11bf4adb52e) | `RevocationCleanupScheduleAllowEventRuleMemoRagMvpStackTestRevocationCleanupFunction3573F11BF4ADB52E` | Revocation Cleanup Schedule Allow Event Rule Memo Rag Mvp Stack Test Revocation Cleanup Function3573F11BF4ADB52E (Lambda invoke permission) |
 | [Security Audit Reconciliation Schedule Allow Event Rule Memo Rag Mvp Stack Test Security Audit Reconciliation Function AE02055288EA6965](#security-audit-reconciliation-schedule-allow-event-rule-memo-rag-mvp-stack-test-security-audit-reconciliation-function-ae02055288ea6965) | `SecurityAuditReconciliationScheduleAllowEventRuleMemoRagMvpStackTestSecurityAuditReconciliationFunctionAE02055288EA6965` | Security Audit Reconciliation Schedule Allow Event Rule Memo Rag Mvp Stack Test Security Audit Reconciliation Function AE02055288EA6965 (Lambda invoke permission) |
+| [Web Socket Authorizer Function Api Gateway Web Socket Authorizer Invoke](#web-socket-authorizer-function-api-gateway-web-socket-authorizer-invoke) | `WebSocketAuthorizerFunctionApiGatewayWebSocketAuthorizerInvoke74A76142` | Web Socket Authorizer Function Api Gateway Web Socket Authorizer Invoke (Lambda invoke permission) |
+| [Web Socket Connection Function Api Gateway Web Socket Lifecycle Invoke](#web-socket-connection-function-api-gateway-web-socket-lifecycle-invoke) | `WebSocketConnectionFunctionApiGatewayWebSocketLifecycleInvoke4BCE77CE` | Web Socket Connection Function Api Gateway Web Socket Lifecycle Invoke (Lambda invoke permission) |
 
 ## Logical ID 別設定
 
@@ -592,3 +594,29 @@ Logical ID: `SecurityAuditReconciliationScheduleAllowEventRuleMemoRagMvpStackTes
 | `principal` | events.amazonaws.com |
 | `functionName` | GetAtt:SecurityAuditReconciliationFunction9A53A79D.Arn |
 | `sourceArn` | GetAtt:SecurityAuditReconciliationSchedule6C1B6D38.Arn |
+
+### Web Socket Authorizer Function Api Gateway Web Socket Authorizer Invoke
+
+Logical ID: `WebSocketAuthorizerFunctionApiGatewayWebSocketAuthorizerInvoke74A76142`
+
+用途推定: Web Socket Authorizer Function Api Gateway Web Socket Authorizer Invoke (Lambda invoke permission)
+
+| 設定項目 | 値 |
+| --- | --- |
+| `action` | lambda:InvokeFunction |
+| `principal` | apigateway.amazonaws.com |
+| `functionName` | GetAtt:WebSocketAuthorizerFunctionFF1787E3.Arn |
+| `sourceArn` | Join:["",["arn:",{"Ref":"AWS::Partition"},":execute-api:ap-northeast-1:111111111111:",{"Ref":"WebSocketApi"},"/*"]] |
+
+### Web Socket Connection Function Api Gateway Web Socket Lifecycle Invoke
+
+Logical ID: `WebSocketConnectionFunctionApiGatewayWebSocketLifecycleInvoke4BCE77CE`
+
+用途推定: Web Socket Connection Function Api Gateway Web Socket Lifecycle Invoke (Lambda invoke permission)
+
+| 設定項目 | 値 |
+| --- | --- |
+| `action` | lambda:InvokeFunction |
+| `principal` | apigateway.amazonaws.com |
+| `functionName` | GetAtt:WebSocketConnectionFunction6F8378E3.Arn |
+| `sourceArn` | Join:["",["arn:",{"Ref":"AWS::Partition"},":execute-api:ap-northeast-1:111111111111:",{"Ref":"WebSocketApi"},"/*"]] |

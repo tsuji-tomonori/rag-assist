@@ -10,7 +10,7 @@
 
 用途概要: CloudWatch Logs log group
 
-リソース数: 18
+リソース数: 21
 
 ## Logical ID 一覧
 
@@ -34,6 +34,9 @@
 | [S3Vectors Provider Framework Log Group](#s3vectors-provider-framework-log-group) | `S3VectorsProviderFrameworkLogGroupB49A141A` | S3Vectors Provider Framework Log Group (CloudWatch Logs log group) |
 | [S3Vectors Provider Log Group](#s3vectors-provider-log-group) | `S3VectorsProviderLogGroupE19D8C96` | S3Vectors Provider Log Group (CloudWatch Logs log group) |
 | [Security Audit Reconciliation Log Group](#security-audit-reconciliation-log-group) | `SecurityAuditReconciliationLogGroup3B5C9710` | Security Audit Reconciliation Log Group (CloudWatch Logs log group) |
+| [Web Socket Access Log Group](#web-socket-access-log-group) | `WebSocketAccessLogGroupEE932001` | Web Socket Access Log Group (CloudWatch Logs log group) |
+| [Web Socket Authorizer Log Group](#web-socket-authorizer-log-group) | `WebSocketAuthorizerLogGroup425965CD` | Web Socket Authorizer Log Group (CloudWatch Logs log group) |
+| [Web Socket Connection Log Group](#web-socket-connection-log-group) | `WebSocketConnectionLogGroup5B357526` | Web Socket Connection Log Group (CloudWatch Logs log group) |
 
 ## Logical ID 別設定
 
@@ -216,3 +219,33 @@ Logical ID: `SecurityAuditReconciliationLogGroup3B5C9710`
 | 設定項目 | 値 |
 | --- | --- |
 | `retentionInDays` | 30 |
+
+### Web Socket Access Log Group
+
+Logical ID: `WebSocketAccessLogGroupEE932001`
+
+用途推定: Web Socket Access Log Group (CloudWatch Logs log group)
+
+| 設定項目 | 値 |
+| --- | --- |
+| `retentionInDays` | 7 |
+
+### Web Socket Authorizer Log Group
+
+Logical ID: `WebSocketAuthorizerLogGroup425965CD`
+
+用途推定: Web Socket Authorizer Log Group (CloudWatch Logs log group)
+
+| 設定項目 | 値 |
+| --- | --- |
+| `retentionInDays` | 7 |
+
+### Web Socket Connection Log Group
+
+Logical ID: `WebSocketConnectionLogGroup5B357526`
+
+用途推定: Web Socket Connection Log Group (CloudWatch Logs log group)
+
+| 設定項目 | 値 |
+| --- | --- |
+| `retentionInDays` | 7 |

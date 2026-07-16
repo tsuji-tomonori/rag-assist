@@ -3,6 +3,7 @@ import * as path from "node:path"
 import * as cdk from "aws-cdk-lib"
 import { Duration, RemovalPolicy, Size, Stack, type StackProps } from "aws-cdk-lib"
 import * as apigw from "aws-cdk-lib/aws-apigateway"
+import * as apigwv2 from "aws-cdk-lib/aws-apigatewayv2"
 import * as cloudfront from "aws-cdk-lib/aws-cloudfront"
 import * as codebuild from "aws-cdk-lib/aws-codebuild"
 import * as cloudwatch from "aws-cdk-lib/aws-cloudwatch"
@@ -253,6 +254,22 @@ export class MemoRagMvpStack extends Stack {
       removalPolicy: RemovalPolicy.DESTROY
     })
 
+    const webSocketTicketsTable = new dynamodb.Table(this, "WebSocketTicketsTable", {
+      partitionKey: { name: "ticketHash", type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      timeToLiveAttribute: "ttl",
+      pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: true },
+      removalPolicy: RemovalPolicy.DESTROY
+    })
+
+    const webSocketConnectionsTable = new dynamodb.Table(this, "WebSocketConnectionsTable", {
+      partitionKey: { name: "connectionId", type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      timeToLiveAttribute: "ttl",
+      pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: true },
+      removalPolicy: RemovalPolicy.DESTROY
+    })
+
     const benchmarkRunsTable = new dynamodb.Table(this, "BenchmarkRunsTable", {
       partitionKey: { name: "runId", type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
@@ -425,6 +442,7 @@ export class MemoRagMvpStack extends Stack {
     const userPoolClient = userPool.addClient("WebClient", {
       authFlows: { userPassword: true, userSrp: true },
       generateSecret: false,
+      enableTokenRevocation: true,
       preventUserExistenceErrors: true,
       oAuth: {
         flows: {
@@ -494,6 +512,8 @@ export class MemoRagMvpStack extends Stack {
       DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID: defaultSupportAssigneeGroupId,
       CONVERSATION_HISTORY_TABLE_NAME: conversationHistoryTable.tableName,
       FAVORITES_TABLE_NAME: favoritesTable.tableName,
+      WEBSOCKET_TICKETS_TABLE_NAME: webSocketTicketsTable.tableName,
+      WEBSOCKET_CONNECTIONS_TABLE_NAME: webSocketConnectionsTable.tableName,
       BENCHMARK_RUNS_TABLE_NAME: benchmarkRunsTable.tableName,
       ACTIVE_RUN_AUTHORIZATION_INDEX_TABLE_NAME: activeRunAuthorizationIndexTable.tableName,
       CHAT_RUNS_TABLE_NAME: chatRunsTable.tableName,
@@ -563,6 +583,35 @@ export class MemoRagMvpStack extends Stack {
       environment: apiFunctionEnvironment
     })
     const apiFns = [apiFn, heavyApiFn]
+
+    const webSocketAuthorizerLogGroup = new logs.LogGroup(this, "WebSocketAuthorizerLogGroup", {
+      retention: logs.RetentionDays.ONE_WEEK,
+      removalPolicy: RemovalPolicy.DESTROY
+    })
+    const webSocketAuthorizerFn = new lambda.Function(this, "WebSocketAuthorizerFunction", {
+      code: lambda.Code.fromAsset(path.join(__dirname, "../lambda-dist/websocket-authorizer")),
+      handler: "index.handler",
+      runtime: lambda.Runtime.NODEJS_22_X,
+      architecture: lambda.Architecture.ARM_64,
+      memorySize: 512,
+      timeout: Duration.seconds(10),
+      logGroup: webSocketAuthorizerLogGroup,
+      environment: apiEnvironment
+    })
+    const webSocketConnectionLogGroup = new logs.LogGroup(this, "WebSocketConnectionLogGroup", {
+      retention: logs.RetentionDays.ONE_WEEK,
+      removalPolicy: RemovalPolicy.DESTROY
+    })
+    const webSocketConnectionFn = new lambda.Function(this, "WebSocketConnectionFunction", {
+      code: lambda.Code.fromAsset(path.join(__dirname, "../lambda-dist/websocket-connection-handler")),
+      handler: "index.handler",
+      runtime: lambda.Runtime.NODEJS_22_X,
+      architecture: lambda.Architecture.ARM_64,
+      memorySize: 512,
+      timeout: Duration.seconds(10),
+      logGroup: webSocketConnectionLogGroup,
+      environment: apiEnvironment
+    })
 
     const chatRunWorkerLogGroup = new logs.LogGroup(this, "ChatRunWorkerLogGroup", {
       retention: logs.RetentionDays.ONE_WEEK,
@@ -798,6 +847,13 @@ export class MemoRagMvpStack extends Stack {
       documentGroupsTable.grantReadWriteData(fn)
       activeRunAuthorizationIndexTable.grantReadWriteData(fn)
     }
+    new iam.Policy(this, "WebSocketTicketIssuePolicy", {
+      roles: apiFns.map((fn) => fn.role!),
+      statements: [new iam.PolicyStatement({
+        actions: ["dynamodb:PutItem"],
+        resources: [webSocketTicketsTable.tableArn]
+      })]
+    })
     docsBucket.grantReadWrite(chatRunWorkerFn)
     docsBucket.grantReadWrite(documentIngestRunWorkerFn)
     docsBucket.grantReadWrite(ragQualityMonitorFn)
@@ -955,6 +1011,27 @@ export class MemoRagMvpStack extends Stack {
         })
       )
     }
+    webSocketAuthorizerFn.addToRolePolicy(new iam.PolicyStatement({
+      actions: ["dynamodb:UpdateItem"],
+      resources: [webSocketTicketsTable.tableArn]
+    }))
+    webSocketConnectionFn.addToRolePolicy(new iam.PolicyStatement({
+      actions: ["dynamodb:PutItem", "dynamodb:DeleteItem"],
+      resources: [webSocketConnectionsTable.tableArn]
+    }))
+    webSocketAuthorizerFn.addToRolePolicy(new iam.PolicyStatement({
+      actions: ["s3:GetObject"],
+      resources: [
+        docsBucket.arnForObjects("security/account-revocations/*"),
+        docsBucket.arnForObjects("security/administrative-principal-transfer-fences/*")
+      ]
+    }))
+    webSocketAuthorizerFn.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ["cognito-idp:AdminGetUser", "cognito-idp:AdminListGroupsForUser"],
+        resources: [userPool.userPoolArn]
+      })
+    )
     revocationCleanupFn.addToRolePolicy(
       new iam.PolicyStatement({
         actions: ["cognito-idp:AdminUpdateUserAttributes", "cognito-idp:AdminUserGlobalSignOut"],
@@ -1482,6 +1559,104 @@ export class MemoRagMvpStack extends Stack {
       }))
     }
 
+    const webSocketApi = new apigwv2.CfnApi(this, "WebSocketApi", {
+      name: `memorag-websocket-${suffix}`,
+      protocolType: "WEBSOCKET",
+      routeSelectionExpression: "$request.body.action"
+    })
+    const webSocketAuthorizer = new apigwv2.CfnAuthorizer(this, "WebSocketConnectAuthorizer", {
+      apiId: webSocketApi.ref,
+      name: "memorag-websocket-ticket-authorizer",
+      authorizerType: "REQUEST",
+      authorizerUri: cdk.Stack.of(this).formatArn({
+        service: "apigateway",
+        account: "",
+        resource: "lambda",
+        resourceName: `path/2015-03-31/functions/${webSocketAuthorizerFn.functionArn}/invocations`,
+        arnFormat: cdk.ArnFormat.COLON_RESOURCE_NAME
+      }),
+      identitySource: ["route.request.header.Sec-WebSocket-Protocol"]
+    })
+    const webSocketIntegration = new apigwv2.CfnIntegration(this, "WebSocketLifecycleIntegration", {
+      apiId: webSocketApi.ref,
+      integrationType: "AWS_PROXY",
+      integrationMethod: "POST",
+      integrationUri: cdk.Stack.of(this).formatArn({
+        service: "apigateway",
+        account: "",
+        resource: "lambda",
+        resourceName: `path/2015-03-31/functions/${webSocketConnectionFn.functionArn}/invocations`,
+        arnFormat: cdk.ArnFormat.COLON_RESOURCE_NAME
+      })
+    })
+    const webSocketConnectRoute = new apigwv2.CfnRoute(this, "WebSocketConnectRoute", {
+      apiId: webSocketApi.ref,
+      routeKey: "$connect",
+      authorizationType: "CUSTOM",
+      authorizerId: webSocketAuthorizer.ref,
+      target: `integrations/${webSocketIntegration.ref}`
+    })
+    const webSocketDisconnectRoute = new apigwv2.CfnRoute(this, "WebSocketDisconnectRoute", {
+      apiId: webSocketApi.ref,
+      routeKey: "$disconnect",
+      authorizationType: "NONE",
+      target: `integrations/${webSocketIntegration.ref}`
+    })
+    const webSocketDefaultRoute = new apigwv2.CfnRoute(this, "WebSocketDefaultRoute", {
+      apiId: webSocketApi.ref,
+      routeKey: "$default",
+      authorizationType: "NONE",
+      target: `integrations/${webSocketIntegration.ref}`
+    })
+    for (const route of [webSocketDisconnectRoute, webSocketDefaultRoute]) {
+      NagSuppressions.addResourceSuppressions(route, [{
+        id: "AwsSolutions-APIG4",
+        reason: "API Gateway WebSocket REQUEST authorizers run only on $connect. These lifecycle routes are reachable only after the authenticated $connect succeeds; $disconnect performs an idempotent exact connection delete and $default fails closed without product-message processing."
+      }])
+    }
+    const webSocketAccessLogGroup = new logs.LogGroup(this, "WebSocketAccessLogGroup", {
+      retention: logs.RetentionDays.ONE_WEEK,
+      removalPolicy: RemovalPolicy.DESTROY
+    })
+    const webSocketStage = new apigwv2.CfnStage(this, "WebSocketStage", {
+      apiId: webSocketApi.ref,
+      stageName: "prod",
+      autoDeploy: true,
+      accessLogSettings: {
+        destinationArn: webSocketAccessLogGroup.logGroupArn,
+        format: JSON.stringify({
+          requestId: "$context.requestId",
+          eventType: "$context.eventType",
+          routeKey: "$context.routeKey",
+          status: "$context.status",
+          connectionId: "$context.connectionId"
+        })
+      },
+      defaultRouteSettings: {
+        dataTraceEnabled: false,
+        detailedMetricsEnabled: true,
+        loggingLevel: "OFF"
+      }
+    })
+    webSocketStage.addDependency(webSocketConnectRoute)
+    webSocketStage.addDependency(webSocketDisconnectRoute)
+    webSocketStage.addDependency(webSocketDefaultRoute)
+
+    const webSocketInvokeArn = cdk.Stack.of(this).formatArn({
+      service: "execute-api",
+      resource: webSocketApi.ref,
+      resourceName: "*",
+      arnFormat: cdk.ArnFormat.SLASH_RESOURCE_NAME
+    })
+    webSocketAuthorizerFn.addPermission("ApiGatewayWebSocketAuthorizerInvoke", {
+      principal: new iam.ServicePrincipal("apigateway.amazonaws.com"),
+      sourceArn: webSocketInvokeArn
+    })
+    webSocketConnectionFn.addPermission("ApiGatewayWebSocketLifecycleInvoke", {
+      principal: new iam.ServicePrincipal("apigateway.amazonaws.com"),
+      sourceArn: webSocketInvokeArn
+    })
+
     const spaRouteRewriteFunction = new cloudfront.Function(this, "SpaRouteRewriteFunction", {
       comment: "Rewrite only SPA client routes to index.html; preserve static asset errors",
       code: cloudfront.FunctionCode.fromInline(`
@@ -1514,6 +1689,20 @@ function handler(event) {
 }
 `)
     })
+    const webSocketStageRewriteFunction = new cloudfront.Function(this, "WebSocketStageRewriteFunction", {
+      comment: "Rewrite the exact same-origin WebSocket entry to the API Gateway stage path",
+      code: cloudfront.FunctionCode.fromInline(`
+function handler(event) {
+  var request = event.request;
+
+  if (request.uri === "/ws/v1") {
+    request.uri = "/prod";
+  }
+
+  return request;
+}
+`)
+    })
     const apiBehavior: cloudfront.BehaviorOptions = {
       origin: new origins.RestApiOrigin(restApi),
       allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
@@ -1523,6 +1712,31 @@ function handler(event) {
       functionAssociations: [{
         eventType: cloudfront.FunctionEventType.VIEWER_REQUEST,
         function: apiPrefixRewriteFunction
+      }]
+    }
+    const webSocketOriginRequestPolicy = new cloudfront.OriginRequestPolicy(this, "WebSocketOriginRequestPolicy", {
+      comment: "Forward only WebSocket upgrade and subprotocol headers; omit cookies and query strings",
+      headerBehavior: cloudfront.OriginRequestHeaderBehavior.allowList(
+        "Sec-WebSocket-Key",
+        "Sec-WebSocket-Version",
+        "Sec-WebSocket-Protocol",
+        "Sec-WebSocket-Extensions"
+      ),
+      cookieBehavior: cloudfront.OriginRequestCookieBehavior.none(),
+      queryStringBehavior: cloudfront.OriginRequestQueryStringBehavior.none()
+    })
+    const webSocketBehavior: cloudfront.BehaviorOptions = {
+      origin: new origins.HttpOrigin(
+        `${webSocketApi.ref}.execute-api.${cdk.Aws.REGION}.${cdk.Aws.URL_SUFFIX}`,
+        { protocolPolicy: cloudfront.OriginProtocolPolicy.HTTPS_ONLY }
+      ),
+      allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
+      cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
+      originRequestPolicy: webSocketOriginRequestPolicy,
+      viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.HTTPS_ONLY,
+      functionAssociations: [{
+        eventType: cloudfront.FunctionEventType.VIEWER_REQUEST,
+        function: webSocketStageRewriteFunction
       }]
     }
     const distribution = new cloudfront.Distribution(this, "FrontendDistribution", {
@@ -1541,7 +1755,8 @@ function handler(event) {
       },
       additionalBehaviors: {
         api: apiBehavior,
-        "api/*": apiBehavior
+        "api/*": apiBehavior,
+        "ws/v1": webSocketBehavior
       }
     })
 

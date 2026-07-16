@@ -2,7 +2,7 @@
   "generatedBy": "tools/infra-inventory/generate-infra-inventory.mjs",
   "source": "infra/test/__snapshots__/memorag-mvp-stack.snapshot.json",
   "stackName": "MemoRagMvpStack",
-  "totalResources": 253,
+  "totalResources": 276,
   "totalsByDomain": [
     {
       "domain": "Storage",
@@ -10,11 +10,11 @@
     },
     {
       "domain": "Data",
-      "count": 11
+      "count": 13
     },
     {
       "domain": "Compute",
-      "count": 19
+      "count": 21
     },
     {
       "domain": "API",
@@ -34,11 +34,11 @@
     },
     {
       "domain": "Security/IAM",
-      "count": 42
+      "count": 47
     },
     {
       "domain": "Observability",
-      "count": 18
+      "count": 21
     },
     {
       "domain": "Custom",
@@ -53,12 +53,12 @@
     },
     {
       "type": "AWS::DynamoDB::Table",
-      "count": 11,
+      "count": 13,
       "purpose": "DynamoDB table"
     },
     {
       "type": "AWS::Lambda::Function",
-      "count": 15,
+      "count": 17,
       "purpose": "Lambda function"
     },
     {
@@ -133,17 +133,17 @@
     },
     {
       "type": "AWS::Logs::LogGroup",
-      "count": 18,
+      "count": 21,
       "purpose": "CloudWatch Logs log group"
     },
     {
       "type": "AWS::IAM::Role",
-      "count": 20,
+      "count": 22,
       "purpose": "IAM role"
     },
     {
       "type": "AWS::IAM::Policy",
-      "count": 18,
+      "count": 21,
       "purpose": "IAM inline policy"
     },
     {
@@ -178,7 +178,7 @@
     },
     {
       "type": "AWS::Lambda::Permission",
-      "count": 41,
+      "count": 43,
       "purpose": "Lambda invoke permission"
     },
     {
@@ -207,8 +207,38 @@
       "purpose": "API Gateway Cognito authorizer"
     },
     {
+      "type": "AWS::ApiGatewayV2::Api",
+      "count": 1,
+      "purpose": "CloudFormation resource"
+    },
+    {
+      "type": "AWS::ApiGatewayV2::Authorizer",
+      "count": 1,
+      "purpose": "CloudFormation resource"
+    },
+    {
+      "type": "AWS::ApiGatewayV2::Integration",
+      "count": 1,
+      "purpose": "CloudFormation resource"
+    },
+    {
+      "type": "AWS::ApiGatewayV2::Route",
+      "count": 3,
+      "purpose": "CloudFormation resource"
+    },
+    {
+      "type": "AWS::ApiGatewayV2::Stage",
+      "count": 1,
+      "purpose": "CloudFormation resource"
+    },
+    {
       "type": "AWS::CloudFront::Function",
-      "count": 2,
+      "count": 3,
+      "purpose": "CloudFormation resource"
+    },
+    {
+      "type": "AWS::CloudFront::OriginRequestPolicy",
+      "count": 1,
       "purpose": "CloudFormation resource"
     },
     {
@@ -765,6 +795,60 @@
       "detailFilePath": "infra-inventory/aws-dynamodb-table.md"
     },
     {
+      "logicalId": "WebSocketConnectionsTable7F0028CC",
+      "logicalName": "Web Socket Connections Table",
+      "type": "AWS::DynamoDB::Table",
+      "purpose": "Web Socket Connections Table (DynamoDB table)",
+      "settings": {
+        "keySchema": [
+          {
+            "AttributeName": "connectionId",
+            "KeyType": "HASH"
+          }
+        ],
+        "attributeDefinitions": [
+          {
+            "AttributeName": "connectionId",
+            "AttributeType": "S"
+          }
+        ],
+        "billingMode": "PAY_PER_REQUEST",
+        "pointInTimeRecoveryEnabled": true,
+        "timeToLive": {
+          "AttributeName": "ttl",
+          "Enabled": true
+        }
+      },
+      "detailFilePath": "infra-inventory/aws-dynamodb-table.md"
+    },
+    {
+      "logicalId": "WebSocketTicketsTable7F084D73",
+      "logicalName": "Web Socket Tickets Table",
+      "type": "AWS::DynamoDB::Table",
+      "purpose": "Web Socket Tickets Table (DynamoDB table)",
+      "settings": {
+        "keySchema": [
+          {
+            "AttributeName": "ticketHash",
+            "KeyType": "HASH"
+          }
+        ],
+        "attributeDefinitions": [
+          {
+            "AttributeName": "ticketHash",
+            "AttributeType": "S"
+          }
+        ],
+        "billingMode": "PAY_PER_REQUEST",
+        "pointInTimeRecoveryEnabled": true,
+        "timeToLive": {
+          "AttributeName": "ttl",
+          "Enabled": true
+        }
+      },
+      "detailFilePath": "infra-inventory/aws-dynamodb-table.md"
+    },
+    {
       "logicalId": "ApiFunctionCE271BD4",
       "logicalName": "Api Function",
       "type": "AWS::Lambda::Function",
@@ -829,7 +913,9 @@
           "USE_LOCAL_CHAT_RUN_STORE": "false",
           "USE_LOCAL_USAGE_EVENT_STORE": "false",
           "USE_LOCAL_VECTOR_STORE": "false",
-          "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"
+          "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]",
+          "WEBSOCKET_CONNECTIONS_TABLE_NAME": "Ref:WebSocketConnectionsTable7F0028CC",
+          "WEBSOCKET_TICKETS_TABLE_NAME": "Ref:WebSocketTicketsTable7F084D73"
         },
         "role": "GetAtt:ApiFunctionServiceRole52B9747B.Arn"
       },
@@ -894,7 +980,9 @@
           "USE_LOCAL_CHAT_RUN_STORE": "false",
           "USE_LOCAL_USAGE_EVENT_STORE": "false",
           "USE_LOCAL_VECTOR_STORE": "false",
-          "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"
+          "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]",
+          "WEBSOCKET_CONNECTIONS_TABLE_NAME": "Ref:WebSocketConnectionsTable7F0028CC",
+          "WEBSOCKET_TICKETS_TABLE_NAME": "Ref:WebSocketTicketsTable7F084D73"
         },
         "role": "GetAtt:BenchmarkRunAuthorizationFunctionServiceRole23F15ADE.Arn"
       },
@@ -959,7 +1047,9 @@
           "USE_LOCAL_CHAT_RUN_STORE": "false",
           "USE_LOCAL_USAGE_EVENT_STORE": "false",
           "USE_LOCAL_VECTOR_STORE": "false",
-          "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"
+          "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]",
+          "WEBSOCKET_CONNECTIONS_TABLE_NAME": "Ref:WebSocketConnectionsTable7F0028CC",
+          "WEBSOCKET_TICKETS_TABLE_NAME": "Ref:WebSocketTicketsTable7F084D73"
         },
         "role": "GetAtt:ChatRunEventsStreamFunctionServiceRole41BBFB5A.Arn"
       },
@@ -1024,7 +1114,9 @@
           "USE_LOCAL_CHAT_RUN_STORE": "false",
           "USE_LOCAL_USAGE_EVENT_STORE": "false",
           "USE_LOCAL_VECTOR_STORE": "false",
-          "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"
+          "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]",
+          "WEBSOCKET_CONNECTIONS_TABLE_NAME": "Ref:WebSocketConnectionsTable7F0028CC",
+          "WEBSOCKET_TICKETS_TABLE_NAME": "Ref:WebSocketTicketsTable7F084D73"
         },
         "role": "GetAtt:ChatRunMarkFailedFunctionServiceRoleAAD50CA8.Arn"
       },
@@ -1089,7 +1181,9 @@
           "USE_LOCAL_CHAT_RUN_STORE": "false",
           "USE_LOCAL_USAGE_EVENT_STORE": "false",
           "USE_LOCAL_VECTOR_STORE": "false",
-          "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"
+          "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]",
+          "WEBSOCKET_CONNECTIONS_TABLE_NAME": "Ref:WebSocketConnectionsTable7F0028CC",
+          "WEBSOCKET_TICKETS_TABLE_NAME": "Ref:WebSocketTicketsTable7F084D73"
         },
         "role": "GetAtt:ChatRunWorkerFunctionServiceRoleBED42CDB.Arn"
       },
@@ -1187,7 +1281,9 @@
           "USE_LOCAL_CHAT_RUN_STORE": "false",
           "USE_LOCAL_USAGE_EVENT_STORE": "false",
           "USE_LOCAL_VECTOR_STORE": "false",
-          "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"
+          "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]",
+          "WEBSOCKET_CONNECTIONS_TABLE_NAME": "Ref:WebSocketConnectionsTable7F0028CC",
+          "WEBSOCKET_TICKETS_TABLE_NAME": "Ref:WebSocketTicketsTable7F084D73"
         },
         "role": "GetAtt:DocumentIngestRunMarkFailedFunctionServiceRole8A5F469D.Arn"
       },
@@ -1255,7 +1351,9 @@
           "USE_LOCAL_CHAT_RUN_STORE": "false",
           "USE_LOCAL_USAGE_EVENT_STORE": "false",
           "USE_LOCAL_VECTOR_STORE": "false",
-          "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"
+          "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]",
+          "WEBSOCKET_CONNECTIONS_TABLE_NAME": "Ref:WebSocketConnectionsTable7F0028CC",
+          "WEBSOCKET_TICKETS_TABLE_NAME": "Ref:WebSocketTicketsTable7F084D73"
         },
         "role": "GetAtt:DocumentIngestRunWorkerFunctionServiceRole7BEAC0ED.Arn"
       },
@@ -1326,7 +1424,9 @@
           "USE_LOCAL_CHAT_RUN_STORE": "false",
           "USE_LOCAL_USAGE_EVENT_STORE": "false",
           "USE_LOCAL_VECTOR_STORE": "false",
-          "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"
+          "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]",
+          "WEBSOCKET_CONNECTIONS_TABLE_NAME": "Ref:WebSocketConnectionsTable7F0028CC",
+          "WEBSOCKET_TICKETS_TABLE_NAME": "Ref:WebSocketTicketsTable7F084D73"
         },
         "role": "GetAtt:HeavyApiFunctionServiceRole25A7AE5E.Arn"
       },
@@ -1392,7 +1492,9 @@
           "USE_LOCAL_CHAT_RUN_STORE": "false",
           "USE_LOCAL_USAGE_EVENT_STORE": "false",
           "USE_LOCAL_VECTOR_STORE": "false",
-          "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"
+          "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]",
+          "WEBSOCKET_CONNECTIONS_TABLE_NAME": "Ref:WebSocketConnectionsTable7F0028CC",
+          "WEBSOCKET_TICKETS_TABLE_NAME": "Ref:WebSocketTicketsTable7F084D73"
         },
         "role": "GetAtt:RagQualityMonitorFunctionServiceRole1754DFBD.Arn"
       },
@@ -1457,7 +1559,9 @@
           "USE_LOCAL_CHAT_RUN_STORE": "false",
           "USE_LOCAL_USAGE_EVENT_STORE": "false",
           "USE_LOCAL_VECTOR_STORE": "false",
-          "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"
+          "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]",
+          "WEBSOCKET_CONNECTIONS_TABLE_NAME": "Ref:WebSocketConnectionsTable7F0028CC",
+          "WEBSOCKET_TICKETS_TABLE_NAME": "Ref:WebSocketTicketsTable7F084D73"
         },
         "role": "GetAtt:RevocationCleanupFunctionServiceRole15557E81.Arn"
       },
@@ -1554,9 +1658,145 @@
           "USE_LOCAL_CHAT_RUN_STORE": "false",
           "USE_LOCAL_USAGE_EVENT_STORE": "false",
           "USE_LOCAL_VECTOR_STORE": "false",
-          "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"
+          "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]",
+          "WEBSOCKET_CONNECTIONS_TABLE_NAME": "Ref:WebSocketConnectionsTable7F0028CC",
+          "WEBSOCKET_TICKETS_TABLE_NAME": "Ref:WebSocketTicketsTable7F084D73"
         },
         "role": "GetAtt:SecurityAuditReconciliationFunctionServiceRoleF4787D99.Arn"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-function.md"
+    },
+    {
+      "logicalId": "WebSocketAuthorizerFunctionFF1787E3",
+      "logicalName": "Web Socket Authorizer Function",
+      "type": "AWS::Lambda::Function",
+      "purpose": "Web Socket Authorizer Function (Lambda function)",
+      "settings": {
+        "handler": "index.handler",
+        "runtime": "nodejs22.x",
+        "architectures": [
+          "arm64"
+        ],
+        "memorySize": 512,
+        "timeoutSeconds": 10,
+        "environment": {
+          "ACTIVE_RUN_AUTHORIZATION_INDEX_TABLE_NAME": "Ref:ActiveRunAuthorizationIndexTable2D018C99",
+          "AUTH_ENABLED": "true",
+          "AUTH_TENANT_ID": "Ref:AWS::AccountId",
+          "BENCHMARK_BUCKET_NAME": "Ref:BenchmarkBucketDD7D1D2F",
+          "BENCHMARK_DEFAULT_DATASET_KEY": "datasets/agent/standard-v1.jsonl",
+          "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+          "BENCHMARK_EVALUATION_ENABLED": "true",
+          "BENCHMARK_EVALUATION_TENANT_ID": "Join:[\"\",[\"benchmark-\",{\"Ref\":\"AWS::AccountId\"}]]",
+          "BENCHMARK_RUNS_TABLE_NAME": "Ref:BenchmarkRunsTableD0841636",
+          "CHAT_RUN_EVENTS_TABLE_NAME": "Ref:ChatRunEventsTable7455A50E",
+          "CHAT_RUNS_TABLE_NAME": "Ref:ChatRunsTable8446CD95",
+          "COGNITO_APP_CLIENT_ID": "Ref:UserPoolWebClient4C9370B0",
+          "COGNITO_REGION": "Ref:AWS::Region",
+          "COGNITO_USER_POOL_ID": "Ref:UserPool6BA7E5F2",
+          "CONVERSATION_HISTORY_TABLE_NAME": "Ref:ConversationHistoryTable59A3534C",
+          "CORS_ALLOWED_ORIGINS": "http://localhost:5173",
+          "DEBUG_DOWNLOAD_BUCKET_NAME": "Ref:DebugDownloadBucketAB6A16BE",
+          "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+          "DEFAULT_MEMORY_MODEL_ID": "amazon.nova-lite-v1:0",
+          "DEFAULT_MODEL_ID": "amazon.nova-lite-v1:0",
+          "DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID": "ANSWER_EDITOR",
+          "DEPLOYMENT_ENVIRONMENT": "dev",
+          "DOCS_BUCKET_NAME": "Ref:DocumentsBucket9EC9DEB9",
+          "DOCUMENT_GROUPS_TABLE_NAME": "Ref:DocumentGroupsTableA5108040",
+          "DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME": "Ref:DocumentIngestRunEventsTableF4692EBE",
+          "DOCUMENT_INGEST_RUNS_TABLE_NAME": "Ref:DocumentIngestRunsTableEA8F8CCA",
+          "EMBEDDING_DIMENSIONS": "1024",
+          "EMBEDDING_MODEL_ID": "amazon.titan-embed-text-v2:0",
+          "EVIDENCE_VECTOR_INDEX_NAME": "evidence-index",
+          "FAVORITES_TABLE_NAME": "Ref:FavoritesTable4DA8A306",
+          "MEMORY_VECTOR_INDEX_NAME": "memory-index",
+          "MIN_RETRIEVAL_SCORE": "0.20",
+          "MOCK_BEDROCK": "false",
+          "NODE_ENV": "production",
+          "QUESTION_TABLE_NAME": "Ref:HumanQuestionsTable5DA9688B",
+          "RAG_GUARD_PROFILE_JSON": "{\"id\":\"standard-safe-rag\",\"version\":\"standard-safe-rag-v1\",\"guards\":{\"authentication\":true,\"authorization\":true,\"classification_usage\":true,\"prompt_injection\":true,\"tool_policy\":true,\"grounding\":true,\"citation\":true,\"output_secret\":true,\"trace_redaction\":true}}",
+          "RAG_MONITORING_REQUIRED": "1",
+          "RAG_SAFETY_STATE_TTL_SECONDS": "600",
+          "USAGE_ACCOUNTING_MODE": "shadow",
+          "USAGE_EVENTS_TABLE_NAME": "Ref:UsageEventsTable215FE3DD",
+          "USAGE_PRICING_CATALOG_JSON": "[]",
+          "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
+          "USE_LOCAL_CHAT_RUN_STORE": "false",
+          "USE_LOCAL_USAGE_EVENT_STORE": "false",
+          "USE_LOCAL_VECTOR_STORE": "false",
+          "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]",
+          "WEBSOCKET_CONNECTIONS_TABLE_NAME": "Ref:WebSocketConnectionsTable7F0028CC",
+          "WEBSOCKET_TICKETS_TABLE_NAME": "Ref:WebSocketTicketsTable7F084D73"
+        },
+        "role": "GetAtt:WebSocketAuthorizerFunctionServiceRole08D28BB9.Arn"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-function.md"
+    },
+    {
+      "logicalId": "WebSocketConnectionFunction6F8378E3",
+      "logicalName": "Web Socket Connection Function",
+      "type": "AWS::Lambda::Function",
+      "purpose": "Web Socket Connection Function (Lambda function)",
+      "settings": {
+        "handler": "index.handler",
+        "runtime": "nodejs22.x",
+        "architectures": [
+          "arm64"
+        ],
+        "memorySize": 512,
+        "timeoutSeconds": 10,
+        "environment": {
+          "ACTIVE_RUN_AUTHORIZATION_INDEX_TABLE_NAME": "Ref:ActiveRunAuthorizationIndexTable2D018C99",
+          "AUTH_ENABLED": "true",
+          "AUTH_TENANT_ID": "Ref:AWS::AccountId",
+          "BENCHMARK_BUCKET_NAME": "Ref:BenchmarkBucketDD7D1D2F",
+          "BENCHMARK_DEFAULT_DATASET_KEY": "datasets/agent/standard-v1.jsonl",
+          "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+          "BENCHMARK_EVALUATION_ENABLED": "true",
+          "BENCHMARK_EVALUATION_TENANT_ID": "Join:[\"\",[\"benchmark-\",{\"Ref\":\"AWS::AccountId\"}]]",
+          "BENCHMARK_RUNS_TABLE_NAME": "Ref:BenchmarkRunsTableD0841636",
+          "CHAT_RUN_EVENTS_TABLE_NAME": "Ref:ChatRunEventsTable7455A50E",
+          "CHAT_RUNS_TABLE_NAME": "Ref:ChatRunsTable8446CD95",
+          "COGNITO_APP_CLIENT_ID": "Ref:UserPoolWebClient4C9370B0",
+          "COGNITO_REGION": "Ref:AWS::Region",
+          "COGNITO_USER_POOL_ID": "Ref:UserPool6BA7E5F2",
+          "CONVERSATION_HISTORY_TABLE_NAME": "Ref:ConversationHistoryTable59A3534C",
+          "CORS_ALLOWED_ORIGINS": "http://localhost:5173",
+          "DEBUG_DOWNLOAD_BUCKET_NAME": "Ref:DebugDownloadBucketAB6A16BE",
+          "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+          "DEFAULT_MEMORY_MODEL_ID": "amazon.nova-lite-v1:0",
+          "DEFAULT_MODEL_ID": "amazon.nova-lite-v1:0",
+          "DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID": "ANSWER_EDITOR",
+          "DEPLOYMENT_ENVIRONMENT": "dev",
+          "DOCS_BUCKET_NAME": "Ref:DocumentsBucket9EC9DEB9",
+          "DOCUMENT_GROUPS_TABLE_NAME": "Ref:DocumentGroupsTableA5108040",
+          "DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME": "Ref:DocumentIngestRunEventsTableF4692EBE",
+          "DOCUMENT_INGEST_RUNS_TABLE_NAME": "Ref:DocumentIngestRunsTableEA8F8CCA",
+          "EMBEDDING_DIMENSIONS": "1024",
+          "EMBEDDING_MODEL_ID": "amazon.titan-embed-text-v2:0",
+          "EVIDENCE_VECTOR_INDEX_NAME": "evidence-index",
+          "FAVORITES_TABLE_NAME": "Ref:FavoritesTable4DA8A306",
+          "MEMORY_VECTOR_INDEX_NAME": "memory-index",
+          "MIN_RETRIEVAL_SCORE": "0.20",
+          "MOCK_BEDROCK": "false",
+          "NODE_ENV": "production",
+          "QUESTION_TABLE_NAME": "Ref:HumanQuestionsTable5DA9688B",
+          "RAG_GUARD_PROFILE_JSON": "{\"id\":\"standard-safe-rag\",\"version\":\"standard-safe-rag-v1\",\"guards\":{\"authentication\":true,\"authorization\":true,\"classification_usage\":true,\"prompt_injection\":true,\"tool_policy\":true,\"grounding\":true,\"citation\":true,\"output_secret\":true,\"trace_redaction\":true}}",
+          "RAG_MONITORING_REQUIRED": "1",
+          "RAG_SAFETY_STATE_TTL_SECONDS": "600",
+          "USAGE_ACCOUNTING_MODE": "shadow",
+          "USAGE_EVENTS_TABLE_NAME": "Ref:UsageEventsTable215FE3DD",
+          "USAGE_PRICING_CATALOG_JSON": "[]",
+          "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
+          "USE_LOCAL_CHAT_RUN_STORE": "false",
+          "USE_LOCAL_USAGE_EVENT_STORE": "false",
+          "USE_LOCAL_VECTOR_STORE": "false",
+          "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]",
+          "WEBSOCKET_CONNECTIONS_TABLE_NAME": "Ref:WebSocketConnectionsTable7F0028CC",
+          "WEBSOCKET_TICKETS_TABLE_NAME": "Ref:WebSocketTicketsTable7F084D73"
+        },
+        "role": "GetAtt:WebSocketConnectionFunctionServiceRole9D6CD2B7.Arn"
       },
       "detailFilePath": "infra-inventory/aws-lambda-function.md"
     },
@@ -2642,6 +2882,10 @@
           {
             "id": "MemoRagMvpStackTestFrontendDistributionOrigin26156DC89",
             "domainName": "{\"Fn::Select\":[2,{\"Fn::Split\":[\"/\",{\"Fn::Join\":[\"\",[\"https://\",{\"Ref\":\"RestApi0C43BF4B\"},\".execute-api.ap-northeast-1.\",{\"Ref\":\"AWS::URLSuffix\"},\"/\",{\"Ref\":\"RestApiDeploymentStage…"
+          },
+          {
+            "id": "MemoRagMvpStackTestFrontendDistributionOrigin3EA4E0C0B",
+            "domainName": "Join:[\"\",[{\"Ref\":\"WebSocketApi\"},\".execute-api.\",{\"Ref\":\"AWS::Region\"},\".\",{\"Ref\":\"AWS::URLSuffix\"}]]"
           }
         ],
         "logging": {
@@ -2986,6 +3230,36 @@
       "detailFilePath": "infra-inventory/aws-logs-loggroup.md"
     },
     {
+      "logicalId": "WebSocketAccessLogGroupEE932001",
+      "logicalName": "Web Socket Access Log Group",
+      "type": "AWS::Logs::LogGroup",
+      "purpose": "Web Socket Access Log Group (CloudWatch Logs log group)",
+      "settings": {
+        "retentionInDays": 7
+      },
+      "detailFilePath": "infra-inventory/aws-logs-loggroup.md"
+    },
+    {
+      "logicalId": "WebSocketAuthorizerLogGroup425965CD",
+      "logicalName": "Web Socket Authorizer Log Group",
+      "type": "AWS::Logs::LogGroup",
+      "purpose": "Web Socket Authorizer Log Group (CloudWatch Logs log group)",
+      "settings": {
+        "retentionInDays": 7
+      },
+      "detailFilePath": "infra-inventory/aws-logs-loggroup.md"
+    },
+    {
+      "logicalId": "WebSocketConnectionLogGroup5B357526",
+      "logicalName": "Web Socket Connection Log Group",
+      "type": "AWS::Logs::LogGroup",
+      "purpose": "Web Socket Connection Log Group (CloudWatch Logs log group)",
+      "settings": {
+        "retentionInDays": 7
+      },
+      "detailFilePath": "infra-inventory/aws-logs-loggroup.md"
+    },
+    {
       "logicalId": "ApiFunctionServiceRole52B9747B",
       "logicalName": "Api Function Service Role",
       "type": "AWS::IAM::Role",
@@ -3282,6 +3556,38 @@
       "logicalName": "Security Audit Reconciliation Function Service Role",
       "type": "AWS::IAM::Role",
       "purpose": "Security Audit Reconciliation Function Service Role (IAM role)",
+      "settings": {
+        "assumedBy": [
+          "Service:lambda.amazonaws.com"
+        ],
+        "managedPolicyArns": [
+          "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole\"]]"
+        ],
+        "inlinePolicyCount": 0
+      },
+      "detailFilePath": "infra-inventory/aws-iam-role.md"
+    },
+    {
+      "logicalId": "WebSocketAuthorizerFunctionServiceRole08D28BB9",
+      "logicalName": "Web Socket Authorizer Function Service Role",
+      "type": "AWS::IAM::Role",
+      "purpose": "Web Socket Authorizer Function Service Role (IAM role)",
+      "settings": {
+        "assumedBy": [
+          "Service:lambda.amazonaws.com"
+        ],
+        "managedPolicyArns": [
+          "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole\"]]"
+        ],
+        "inlinePolicyCount": 0
+      },
+      "detailFilePath": "infra-inventory/aws-iam-role.md"
+    },
+    {
+      "logicalId": "WebSocketConnectionFunctionServiceRole9D6CD2B7",
+      "logicalName": "Web Socket Connection Function Service Role",
+      "type": "AWS::IAM::Role",
+      "purpose": "Web Socket Connection Function Service Role (IAM role)",
       "settings": {
         "assumedBy": [
           "Service:lambda.amazonaws.com"
@@ -4056,6 +4362,74 @@
           "GetAtt:DocumentsBucket9EC9DEB9.Arn",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/security-audit/intents/\",{\"Ref\":\"AWS::AccountId\"},\"/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/source-governance/\",{\"Ref\":\"AWS::AccountId\"},\"/*\"]]"
+        ]
+      },
+      "detailFilePath": "infra-inventory/aws-iam-policy.md"
+    },
+    {
+      "logicalId": "WebSocketAuthorizerFunctionServiceRoleDefaultPolicy3BB71984",
+      "logicalName": "Web Socket Authorizer Function Service Role Default Policy",
+      "type": "AWS::IAM::Policy",
+      "purpose": "Web Socket Authorizer Function Service Role Default Policy (IAM inline policy)",
+      "settings": {
+        "policyName": "WebSocketAuthorizerFunctionServiceRoleDefaultPolicy3BB71984",
+        "roles": [
+          "Ref:WebSocketAuthorizerFunctionServiceRole08D28BB9"
+        ],
+        "statementCount": 3,
+        "actions": [
+          "cognito-idp:AdminGetUser",
+          "cognito-idp:AdminListGroupsForUser",
+          "dynamodb:UpdateItem",
+          "s3:GetObject"
+        ],
+        "resources": [
+          "GetAtt:UserPool6BA7E5F2.Arn",
+          "GetAtt:WebSocketTicketsTable7F084D73.Arn",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/security/account-revocations/*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/security/administrative-principal-transfer-fences/*\"]]"
+        ]
+      },
+      "detailFilePath": "infra-inventory/aws-iam-policy.md"
+    },
+    {
+      "logicalId": "WebSocketConnectionFunctionServiceRoleDefaultPolicy220B2E3D",
+      "logicalName": "Web Socket Connection Function Service Role Default Policy",
+      "type": "AWS::IAM::Policy",
+      "purpose": "Web Socket Connection Function Service Role Default Policy (IAM inline policy)",
+      "settings": {
+        "policyName": "WebSocketConnectionFunctionServiceRoleDefaultPolicy220B2E3D",
+        "roles": [
+          "Ref:WebSocketConnectionFunctionServiceRole9D6CD2B7"
+        ],
+        "statementCount": 1,
+        "actions": [
+          "dynamodb:DeleteItem",
+          "dynamodb:PutItem"
+        ],
+        "resources": [
+          "GetAtt:WebSocketConnectionsTable7F0028CC.Arn"
+        ]
+      },
+      "detailFilePath": "infra-inventory/aws-iam-policy.md"
+    },
+    {
+      "logicalId": "WebSocketTicketIssuePolicy9E5D74D0",
+      "logicalName": "Web Socket Ticket Issue Policy",
+      "type": "AWS::IAM::Policy",
+      "purpose": "Web Socket Ticket Issue Policy (IAM inline policy)",
+      "settings": {
+        "policyName": "WebSocketTicketIssuePolicy9E5D74D0",
+        "roles": [
+          "Ref:ApiFunctionServiceRole52B9747B",
+          "Ref:HeavyApiFunctionServiceRole25A7AE5E"
+        ],
+        "statementCount": 1,
+        "actions": [
+          "dynamodb:PutItem"
+        ],
+        "resources": [
+          "GetAtt:WebSocketTicketsTable7F084D73.Arn"
         ]
       },
       "detailFilePath": "infra-inventory/aws-iam-policy.md"
@@ -5003,6 +5377,32 @@
       "detailFilePath": "infra-inventory/aws-lambda-permission.md"
     },
     {
+      "logicalId": "WebSocketAuthorizerFunctionApiGatewayWebSocketAuthorizerInvoke74A76142",
+      "logicalName": "Web Socket Authorizer Function Api Gateway Web Socket Authorizer Invoke",
+      "type": "AWS::Lambda::Permission",
+      "purpose": "Web Socket Authorizer Function Api Gateway Web Socket Authorizer Invoke (Lambda invoke permission)",
+      "settings": {
+        "action": "lambda:InvokeFunction",
+        "principal": "apigateway.amazonaws.com",
+        "functionName": "GetAtt:WebSocketAuthorizerFunctionFF1787E3.Arn",
+        "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"WebSocketApi\"},\"/*\"]]"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
+    },
+    {
+      "logicalId": "WebSocketConnectionFunctionApiGatewayWebSocketLifecycleInvoke4BCE77CE",
+      "logicalName": "Web Socket Connection Function Api Gateway Web Socket Lifecycle Invoke",
+      "type": "AWS::Lambda::Permission",
+      "purpose": "Web Socket Connection Function Api Gateway Web Socket Lifecycle Invoke (Lambda invoke permission)",
+      "settings": {
+        "action": "lambda:InvokeFunction",
+        "principal": "apigateway.amazonaws.com",
+        "functionName": "GetAtt:WebSocketConnectionFunction6F8378E3.Arn",
+        "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"WebSocketApi\"},\"/*\"]]"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
+    },
+    {
       "logicalId": "RestApiAccount7C83CF5A",
       "logicalName": "Rest Api Account",
       "type": "AWS::ApiGateway::Account",
@@ -5078,6 +5478,209 @@
         ]
       },
       "detailFilePath": "infra-inventory/aws-apigateway-authorizer.md"
+    },
+    {
+      "logicalId": "WebSocketApi",
+      "logicalName": "Web Socket Api",
+      "type": "AWS::ApiGatewayV2::Api",
+      "purpose": "Web Socket Api (AWS::ApiGatewayV2::Api)",
+      "settings": {
+        "Name": "memorag-websocket-c85f22a0",
+        "ProtocolType": "WEBSOCKET",
+        "RouteSelectionExpression": "$request.body.action",
+        "Tags": {
+          "Application": "MemoRAG",
+          "CostCenter": "memorag-mvp",
+          "Environment": "dev",
+          "ManagedBy": "aws-cdk",
+          "Project": "memorag-bedrock-mvp",
+          "Repository": "tsuji-tomonori/rag-assist"
+        }
+      },
+      "detailFilePath": "infra-inventory/aws-apigatewayv2-api.md"
+    },
+    {
+      "logicalId": "WebSocketConnectAuthorizer",
+      "logicalName": "Web Socket Connect Authorizer",
+      "type": "AWS::ApiGatewayV2::Authorizer",
+      "purpose": "Web Socket Connect Authorizer (AWS::ApiGatewayV2::Authorizer)",
+      "settings": {
+        "ApiId": {
+          "Ref": "WebSocketApi"
+        },
+        "AuthorizerType": "REQUEST",
+        "AuthorizerUri": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":apigateway:ap-northeast-1::lambda:path/2015-03-31/functions/",
+              {
+                "Fn::GetAtt": [
+                  "WebSocketAuthorizerFunctionFF1787E3",
+                  "Arn"
+                ]
+              },
+              "/invocations"
+            ]
+          ]
+        },
+        "IdentitySource": [
+          "route.request.header.Sec-WebSocket-Protocol"
+        ],
+        "Name": "memorag-websocket-ticket-authorizer"
+      },
+      "detailFilePath": "infra-inventory/aws-apigatewayv2-authorizer.md"
+    },
+    {
+      "logicalId": "WebSocketLifecycleIntegration",
+      "logicalName": "Web Socket Lifecycle Integration",
+      "type": "AWS::ApiGatewayV2::Integration",
+      "purpose": "Web Socket Lifecycle Integration (AWS::ApiGatewayV2::Integration)",
+      "settings": {
+        "ApiId": {
+          "Ref": "WebSocketApi"
+        },
+        "IntegrationMethod": "POST",
+        "IntegrationType": "AWS_PROXY",
+        "IntegrationUri": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":apigateway:ap-northeast-1::lambda:path/2015-03-31/functions/",
+              {
+                "Fn::GetAtt": [
+                  "WebSocketConnectionFunction6F8378E3",
+                  "Arn"
+                ]
+              },
+              "/invocations"
+            ]
+          ]
+        }
+      },
+      "detailFilePath": "infra-inventory/aws-apigatewayv2-integration.md"
+    },
+    {
+      "logicalId": "WebSocketConnectRoute",
+      "logicalName": "Web Socket Connect Route",
+      "type": "AWS::ApiGatewayV2::Route",
+      "purpose": "Web Socket Connect Route (AWS::ApiGatewayV2::Route)",
+      "settings": {
+        "ApiId": {
+          "Ref": "WebSocketApi"
+        },
+        "AuthorizationType": "CUSTOM",
+        "AuthorizerId": {
+          "Ref": "WebSocketConnectAuthorizer"
+        },
+        "RouteKey": "$connect",
+        "Target": {
+          "Fn::Join": [
+            "",
+            [
+              "integrations/",
+              {
+                "Ref": "WebSocketLifecycleIntegration"
+              }
+            ]
+          ]
+        }
+      },
+      "detailFilePath": "infra-inventory/aws-apigatewayv2-route.md"
+    },
+    {
+      "logicalId": "WebSocketDefaultRoute",
+      "logicalName": "Web Socket Default Route",
+      "type": "AWS::ApiGatewayV2::Route",
+      "purpose": "Web Socket Default Route (AWS::ApiGatewayV2::Route)",
+      "settings": {
+        "ApiId": {
+          "Ref": "WebSocketApi"
+        },
+        "AuthorizationType": "NONE",
+        "RouteKey": "$default",
+        "Target": {
+          "Fn::Join": [
+            "",
+            [
+              "integrations/",
+              {
+                "Ref": "WebSocketLifecycleIntegration"
+              }
+            ]
+          ]
+        }
+      },
+      "detailFilePath": "infra-inventory/aws-apigatewayv2-route.md"
+    },
+    {
+      "logicalId": "WebSocketDisconnectRoute",
+      "logicalName": "Web Socket Disconnect Route",
+      "type": "AWS::ApiGatewayV2::Route",
+      "purpose": "Web Socket Disconnect Route (AWS::ApiGatewayV2::Route)",
+      "settings": {
+        "ApiId": {
+          "Ref": "WebSocketApi"
+        },
+        "AuthorizationType": "NONE",
+        "RouteKey": "$disconnect",
+        "Target": {
+          "Fn::Join": [
+            "",
+            [
+              "integrations/",
+              {
+                "Ref": "WebSocketLifecycleIntegration"
+              }
+            ]
+          ]
+        }
+      },
+      "detailFilePath": "infra-inventory/aws-apigatewayv2-route.md"
+    },
+    {
+      "logicalId": "WebSocketStage",
+      "logicalName": "Web Socket Stage",
+      "type": "AWS::ApiGatewayV2::Stage",
+      "purpose": "Web Socket Stage (AWS::ApiGatewayV2::Stage)",
+      "settings": {
+        "AccessLogSettings": {
+          "DestinationArn": {
+            "Fn::GetAtt": [
+              "WebSocketAccessLogGroupEE932001",
+              "Arn"
+            ]
+          },
+          "Format": "{\"requestId\":\"$context.requestId\",\"eventType\":\"$context.eventType\",\"routeKey\":\"$context.routeKey\",\"status\":\"$context.status\",\"connectionId\":\"$context.connectionId\"}"
+        },
+        "ApiId": {
+          "Ref": "WebSocketApi"
+        },
+        "AutoDeploy": true,
+        "DefaultRouteSettings": {
+          "DataTraceEnabled": false,
+          "DetailedMetricsEnabled": true,
+          "LoggingLevel": "OFF"
+        },
+        "StageName": "prod",
+        "Tags": {
+          "Application": "MemoRAG",
+          "CostCenter": "memorag-mvp",
+          "Environment": "dev",
+          "ManagedBy": "aws-cdk",
+          "Project": "memorag-bedrock-mvp",
+          "Repository": "tsuji-tomonori/rag-assist"
+        }
+      },
+      "detailFilePath": "infra-inventory/aws-apigatewayv2-stage.md"
     },
     {
       "logicalId": "ApiPrefixRewriteFunction62A7D75E",
@@ -5162,6 +5765,76 @@
         ]
       },
       "detailFilePath": "infra-inventory/aws-cloudfront-function.md"
+    },
+    {
+      "logicalId": "WebSocketStageRewriteFunction229ED7B5",
+      "logicalName": "Web Socket Stage Rewrite Function",
+      "type": "AWS::CloudFront::Function",
+      "purpose": "Web Socket Stage Rewrite Function (AWS::CloudFront::Function)",
+      "settings": {
+        "AutoPublish": true,
+        "FunctionCode": "\nfunction handler(event) {\n  var request = event.request;\n\n  if (request.uri === \"/ws/v1\") {\n    request.uri = \"/prod\";\n  }\n\n  return request;\n}\n",
+        "FunctionConfig": {
+          "Comment": "Rewrite the exact same-origin WebSocket entry to the API Gateway stage path",
+          "Runtime": "cloudfront-js-1.0"
+        },
+        "Name": "ap-northeast-1MemoRagMvpStackTeRewriteFunctionE448B710",
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ]
+      },
+      "detailFilePath": "infra-inventory/aws-cloudfront-function.md"
+    },
+    {
+      "logicalId": "WebSocketOriginRequestPolicy5FA3946C",
+      "logicalName": "Web Socket Origin Request Policy",
+      "type": "AWS::CloudFront::OriginRequestPolicy",
+      "purpose": "Web Socket Origin Request Policy (AWS::CloudFront::OriginRequestPolicy)",
+      "settings": {
+        "OriginRequestPolicyConfig": {
+          "Comment": "Forward only WebSocket upgrade and subprotocol headers; omit cookies and query strings",
+          "CookiesConfig": {
+            "CookieBehavior": "none"
+          },
+          "HeadersConfig": {
+            "HeaderBehavior": "whitelist",
+            "Headers": [
+              "Sec-WebSocket-Key",
+              "Sec-WebSocket-Version",
+              "Sec-WebSocket-Protocol",
+              "Sec-WebSocket-Extensions"
+            ]
+          },
+          "Name": "MemoRagMvpStackTestWebSocketOriginRequestPolicyCD742FFB",
+          "QueryStringsConfig": {
+            "QueryStringBehavior": "none"
+          }
+        }
+      },
+      "detailFilePath": "infra-inventory/aws-cloudfront-originrequestpolicy.md"
     },
     {
       "logicalId": "RagQualityControlLoopFailureAlarmD9AA7805",

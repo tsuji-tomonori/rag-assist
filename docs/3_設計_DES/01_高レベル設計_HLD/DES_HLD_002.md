@@ -11,7 +11,7 @@
 
 本設計は、現在の SPA / REST API / WebSocket の分離入口から、CloudFront same-origin 単一入口へ安全に移行する順序と、移行期間中の CORS 設定契約を定義する。
 
-本設計だけでは `TC-003` 全体を実装済みにしない。REST用CloudFront behaviorとSPA REST same-origin設定は段階2・3で実装するが、Hosted UI + PKCE、WebSocket ticket / behavior、direct origin technical restriction、signup は個別の後続実装で検証する。
+本設計だけでは `TC-003` 全体を実装済みにしない。REST用CloudFront behavior、SPA REST same-origin設定、Hosted UI + PKCE、WebSocket ticket / exact behaviorは段階2から5で実装するが、direct origin technical restrictionとsignupは個別の後続実装で検証する。
 
 ## 目標構成
 
@@ -20,7 +20,7 @@ flowchart LR
   Browser[Browser SPA] -->|https://app.example.com/*| CF[CloudFront]
   CF -->|default| S3[Private S3 SPA origin]
   CF -->|/api/* prefix rewrite| REST[API Gateway REST]
-  CF -->|/ws/* prefix rewrite| WS[API Gateway WebSocket]
+  CF -->|exact /ws/v1 → /prod| WS[API Gateway WebSocket]
   REST --> API[API Lambda]
   WS --> CONNECT[$connect authorizer]
   API --> Ticket[Short-lived one-time WS ticket]
@@ -29,7 +29,7 @@ flowchart LR
 ```
 
 - Browser が保持する production origin は CloudFront public origin 1件だけとする。
-- SPA は REST を `/api/*`、WebSocket を `/ws/*` の相対 path で呼び出す。
+- SPA は REST を `/api/*`、WebSocket をexact `/ws/v1` の相対 path で呼び出す。
 - REST / WebSocket の execute-api origin は Browser 設定へ公開しない。
 - CloudFront から origin への転送、API 認証、application authorization は別責務とし、CORS を認証・認可の代替にしない。
 
@@ -72,10 +72,10 @@ Taskfile の local API は `http://localhost:5173` を明示する。test が暗
 | 2 | CloudFront `api` / `api/*` behavior と prefix rewrite | cache disabled、viewer `Host` 非転送、認証 header 転送、API errorをSPAへrewriteしない | 先行変更で実装済み。direct REST origin はまだ emergency rollback用 |
 | 3 | SPA REST 接続先を `/api` 相対baseへ変更 | production bundle/configから execute-api / stage URLを除去し、production overrideもsame-originへfail closed | 本変更。CloudFront API behaviorのCI成功後に切替 |
 | 4 | Hosted UI + Authorization Code + PKCE | callbackをCloudFront SPA routeへ限定 | signup方針とは別PR。既存認可を迂回しない |
-| 5 | 短命・単回 WebSocket ticketと `/ws/*` behavior | Bearer認証済み発行、TTL 30–120秒、tenant/user binding | ticket検証とconnection保存を同時に導入 |
+| 5 | 短命・単回 WebSocket ticketとexact `/ws/v1` behavior | Bearer認証済み発行、60秒TTL、user/tenant/session binding、query credential 0 | ticket検証とconnection保存を同時に導入。実AWS upgradeはpreview gate |
 | 6 | direct origin制限と最終検証 | SPA設定からdirect origin 0、CORS wildcard 0、401/403/5xx/WS失敗を観測 | 全経路確認後にのみ緊急direct経路を閉じる |
 
-本変更は順序3までを実装する。順序4以降とdirect origin technical restrictionは後続PRであり、REST same-origin化だけで `TC-003` 全体を完了扱いにしない。
+本変更は順序5までを実装する。順序6のdirect origin technical restrictionは後続PRであり、WebSocket same-origin化だけで `TC-003` 全体を完了扱いにしない。
 
 ## 段階2 REST behavior 実装契約
 
@@ -199,16 +199,78 @@ API requestへID tokenを付ける既存contract、API Gateway/API middlewareの
 
 CDK assertionはOAuth flow、scope、secret、callback/logoutのsynthesized contractを検証する。Web unit testはS256 request、state/nonce/expiry、one-time consume、token request、issuer/audience/client binding claim contract、production primary/fail-closed、logout URLを検証する。これらは実AWS Hosted UI、managed login cookie、MFA、redirect、JWKS CORS、logoutを代替しないため、stacked deploy後のpreview browser検証を別gateとして残す。
 
+## 段階5 WebSocket single-entry / ticket 実装契約
+
+### 公開pathとorigin rewrite
+
+browserの公開WebSocket URLはsame-origin `wss://<public-origin>/ws/v1` exact pathとする。CloudFront ordered behaviorは`ws/v1`だけに一致し、`/ws/v1/*`、`/ws/*`、default SPA behaviorへ範囲を広げない。viewer-request Functionはbehavior/origin選択後に `/ws/v1` をAPI Gateway WebSocket stage path `/prod`へrewriteする。URI rewriteは選択済みoriginを変えないというCloudFront Function制約を前提にする。
+
+origin request policyはcookie/query stringを転送せず、次のrequest headerだけを許可する。
+
+- `Sec-WebSocket-Key`
+- `Sec-WebSocket-Version`
+- `Sec-WebSocket-Protocol`
+- `Sec-WebSocket-Extensions`
+
+viewer `Host`は転送せず、API Gateway execute-api origin domainの`Host`を使用する。cacheは無効、viewer protocolはHTTPS only、handshakeはGET/HTTP/1.1としてCloudFrontからoriginへ中継する。SPA runtime configへexecute-api WebSocket URLを配布しない。
+
+### Credential transport
+
+CloudFront standard access logはoriginへ転送するか否かに関係なく完全なquery stringを記録する。そのため長期JWTだけでなく短命ticketもquery/path/cookieへ置かない。browserはWebSocket constructorのsubprotocol配列として次の2値だけを提示する。
+
+1. 固定application protocol `memorag.v1`
+2. `memorag-ticket.<256-bit base64url>` 形式のopaque ticket protocol
+
+API Gateway `$connect` REQUEST authorizerは`route.request.header.Sec-WebSocket-Protocol`をidentity sourceとする。WebSocket authorizerではHTTP API専用のresult cache設定を使用せず、接続ごとにticketを評価する。`$connect` integrationは両protocolのshapeを再確認し、成功responseの`Sec-WebSocket-Protocol`には固定値`memorag.v1`だけを返す。unsupported/malformed protocol、credential query、integration failureはconnection successへfallbackしない。
+
+### Ticket issuance / consume
+
+`POST /websocket/tickets`は既存public allowlistへ追加せず、ID token、active identity、authoritative tenantを検証した`authenticated` routeとする。発行時はCognito ID tokenの`origin_jti`、`jti`、`iat`、`exp`を必須にし、session/token bindingが欠損または不正なら発行しない。responseは`Cache-Control: no-store`を返し、opaque ticket、固定protocol、expiryだけを含む。
+
+ticket raw valueは256-bit random、TTLは60秒で、session token expiryを超えない。DynamoDB recordにはraw valueを保存せずSHA-256 hashをpartition keyとして、次を保存する。
+
+- non-secret `ticketId` correlation ID
+- `issued | consumed | revoked` state
+- `userId`、authoritative username、`tenantId`
+- Cognito `origin_jti` session ID、`jti` token ID、token issued/expiry
+- ticket issued/expiry、DynamoDB TTL
+
+`$connect` authorizerはhash keyを`state = issued AND ticket expiry > now AND token expiry > now`のconditional updateで`consumed`へatomicに遷移する。同じticketの同時利用/replayは最大1接続だけがconsumeに成功する。ticketをconsumeした後のidentity provider障害でもticketをissuedへ戻さず、接続をdenyして新規発行を要求する。
+
+consume後はauthoritative identity providerを再読込し、user/username/tenant一致、active status、application account-revocation registry、administrative-principal transfer fence、Cognito session invalidation epochを検証する。ticket内token issued time以前または同時刻にsession invalidationが進んでいればdenyする。missing、malformed、expired、replayed、revoked、mismatch、provider/store failureは内部情報を返さないgeneric 401/403へfail closedにする。
+
+### Connection lifecycle / logging
+
+`$connect` integrationはauthorizer contextだけから`connectionId`、user/tenant/session/token/ticket correlation、connect time、token expiry/TTLをconnection tableへ保存する。raw ticket、JWT、email、group、業務payloadは保存しない。重複connection IDのputは拒否する。
+
+`$disconnect`はconnection ID exact keyをidempotent deleteする。disconnect eventはbest-effortであるため、token expiry TTLでもstale recordを回収する。disconnect後のreconnectは新しいticketを必要とし、consumed ticketを再利用できない。`$default`は段階5で業務messageを受理せずgeneric 400とし、payload成功へfallbackしない。
+
+Lambdaはraw event/header/query/ticket/JWTを出力せず、allowlistしたrequest ID、connection ID、ticket correlation ID、route、outcome、reason codeだけをJSON logへ出す。API Gateway WebSocket execution logとdata traceは無効化する。access logはrequest ID、event type、route、status、connection IDだけを含め、query/header/authorizer contextを含めない。
+
+Lambda authorizerは`$connect`でのみ実行され、既接続socketへ後続revocationを遡及適用しない。段階5はserver push/業務messageを対象外とし、将来の送信経路は送信直前のauthoritative connection/session再認可を設計・実装するまで追加しない。
+
+### Error / preview gate
+
+自動testはexpiry、concurrent consume、replay、revocation、binding mismatch、provider failure、malformed protocol、query credential、connect/disconnect/default、redacted log、exact behavior/stage rewriteを検証する。ただしCDK assertionはCloudFront/API Gatewayの実upgrade、101 response、subprotocol echo、idle timeout、best-effort disconnectを代替しない。stacked deploy後のpreviewで次を確認する。
+
+1. same-origin `/ws/v1`が101を返し、selected protocolが`memorag.v1`になる。
+2. expired/replayed/revoked ticketが401/403となり、secretがCloudFront/API Gateway/Lambda logへ出ない。
+3. network disconnect/idle timeout後に旧ticketでreconnectできず、新ticketでのみ接続できる。
+4. malformed upgrade、unsupported protocol、integration errorがconnection successへfallbackしない。
+
+API Gateway WebSocket execute-api endpointは段階6まで技術的に到達可能なrollback境界として残る。SPAへは配布せず、direct origin restrictionを実装済みとして扱わない。
+
 ## 責務分担
 
 | コンポーネント | 責務 | 非責務 |
 | --- | --- | --- |
 | shared CORS contract | origin syntax、environment rule、件数、wildcard、loopbackを検証 | 認証・認可、runtime response生成 |
-| CDK | CORS single source、CloudFront REST behavior、SPA fallback分離、deployed SPA `/api` configを構成 | request Originの反射、application permission判定 |
+| CDK | CORS single source、CloudFront REST/exact WebSocket behavior、SPA fallback分離、deployed SPA `/api` configを構成 | request Originの反射、application permission判定 |
 | API middleware | 許可済みoriginへだけCORS headerを付与 | CORSによるJWT/permission代替 |
 | API auth / authorization | JWT、active status、feature/resource/tenant境界を維持 | Browser originを本人性の根拠にすること |
-| CloudFront | SPA/RESTのsame-origin path routing。後続でWS単一入口とsecurity headersを追加 | application permission判定 |
-| WebSocket ticket（後続） | 短命・単回・user/tenant binding | 長期JWTのquery露出 |
+| CloudFront | SPA/REST/WebSocketのsame-origin path routing、WS upgrade/subprotocol headerの最小転送 | application permission判定、secret queryの安全な保存 |
+| WebSocket ticket API/store | 60秒、single-use、hash-at-rest、user/tenant/session binding | 長期JWTのquery露出、既接続socketの継続認可 |
+| `$connect` authorizer/integration | atomic consume、authoritative再認可、connection binding、protocol echo | 業務message、server push |
 
 ## Security invariant
 
@@ -217,6 +279,9 @@ CDK assertionはOAuth flow、scope、secret、callback/logoutのsynthesized cont
 - route-level permission、resource ownership、tenant boundary、RAG grounding/citation/security guardを変更しない。
 - CORS拒否はBrowserのcross-origin読取制御であり、APIの401/403、JWT、permission、ownershipを代替しない。
 - API Gateway default error responseは内部origin、token、権限外resource名を返さない。
+- WebSocket secretはquery/path/cookie/log/persistent recordへ平文で置かない。
+- `$connect`のidentity/provider/store failureは接続許可へfallbackしない。
+- server pushは送信直前のauthoritative再認可なしに追加しない。
 
 ## 検証対応
 
@@ -233,7 +298,11 @@ CDK assertionはOAuth flow、scope、secret、callback/logoutのsynthesized cont
 | production fail-closed / dev override / URL join | `apps/web/src/shared/api/runtimeConfig.test.ts` とWeb API tests |
 | Hosted UI OAuth client / exact redirect / secretなし | `infra/test/memorag-mvp-stack.test.ts` |
 | PKCE S256 / callback / one-time transient / JWT claim contract | `apps/web/src/features/auth/api/hostedUiAuth.test.ts` とLoginPage tests |
-| 後続 WS / direct origin制限 | 後続 PR の assertion、integration、browser/E2E、実環境確認 |
+| WS ticket entropy/TTL/binding/concurrent consume/replay/revocation | `apps/api/src/websocket-ticket-service.test.ts`、`apps/api/src/websocket-authorizer.test.ts` |
+| WS connect/disconnect/default/redaction | `apps/api/src/websocket-connection-handler.test.ts` |
+| exact `/ws/v1`、stage rewrite、header allowlist、query/cookie none、access log | `infra/test/memorag-mvp-stack.test.ts` |
+| WS実upgrade/subprotocol/idle reconnect | preview browser/E2E gate（unit/CDKでは代替しない） |
+| direct origin制限 | 段階6の assertion、integration、実環境確認 |
 
 ## 関連文書
 

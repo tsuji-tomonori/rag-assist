@@ -121,6 +121,8 @@ export const config = {
   defaultSupportAssigneeGroupId: process.env.DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID ?? "",
   conversationHistoryTableName: process.env.CONVERSATION_HISTORY_TABLE_NAME ?? "memorag-conversation-history",
   favoritesTableName: favoritesTableName || "memorag-favorites",
+  webSocketTicketsTableName: process.env.WEBSOCKET_TICKETS_TABLE_NAME ?? "memorag-websocket-tickets",
+  webSocketConnectionsTableName: process.env.WEBSOCKET_CONNECTIONS_TABLE_NAME ?? "memorag-websocket-connections",
   dynamoDbEndpoint: process.env.DYNAMODB_ENDPOINT ?? "",
   benchmarkRunsTableName: process.env.BENCHMARK_RUNS_TABLE_NAME ?? "memorag-benchmark-runs",
   activeRunAuthorizationIndexTableName: process.env.ACTIVE_RUN_AUTHORIZATION_INDEX_TABLE_NAME ?? "memorag-active-run-authorization-index",

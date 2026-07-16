@@ -10,7 +10,7 @@
 
 用途概要: Lambda function
 
-リソース数: 15
+リソース数: 17
 
 ## Logical ID 一覧
 
@@ -31,6 +31,8 @@
 | [S3Vectors Provider Fn](#s3vectors-provider-fn) | `S3VectorsProviderFn215E3A4E` | S3Vectors Provider Fn (Lambda function) |
 | [S3Vectors Providerframeworkon Event](#s3vectors-providerframeworkon-event) | `S3VectorsProviderframeworkonEventEB240CE8` | S3Vectors Providerframeworkon Event (Lambda function) |
 | [Security Audit Reconciliation Function](#security-audit-reconciliation-function) | `SecurityAuditReconciliationFunction9A53A79D` | Security Audit Reconciliation Function (Lambda function) |
+| [Web Socket Authorizer Function](#web-socket-authorizer-function) | `WebSocketAuthorizerFunctionFF1787E3` | Web Socket Authorizer Function (Lambda function) |
+| [Web Socket Connection Function](#web-socket-connection-function) | `WebSocketConnectionFunction6F8378E3` | Web Socket Connection Function (Lambda function) |
 
 ## Logical ID 別設定
 
@@ -105,6 +107,8 @@ Logical ID: `ApiFunctionCE271BD4`
 | `USE_LOCAL_USAGE_EVENT_STORE` | false |
 | `USE_LOCAL_VECTOR_STORE` | false |
 | `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |
+| `WEBSOCKET_CONNECTIONS_TABLE_NAME` | Ref:WebSocketConnectionsTable7F0028CC |
+| `WEBSOCKET_TICKETS_TABLE_NAME` | Ref:WebSocketTicketsTable7F084D73 |
 
 ### Benchmark Run Authorization Function
 
@@ -171,6 +175,8 @@ Logical ID: `BenchmarkRunAuthorizationFunction16D4CD86`
 | `USE_LOCAL_USAGE_EVENT_STORE` | false |
 | `USE_LOCAL_VECTOR_STORE` | false |
 | `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |
+| `WEBSOCKET_CONNECTIONS_TABLE_NAME` | Ref:WebSocketConnectionsTable7F0028CC |
+| `WEBSOCKET_TICKETS_TABLE_NAME` | Ref:WebSocketTicketsTable7F084D73 |
 
 ### Chat Run Events Stream Function
 
@@ -237,6 +243,8 @@ Logical ID: `ChatRunEventsStreamFunctionA12E11AC`
 | `USE_LOCAL_USAGE_EVENT_STORE` | false |
 | `USE_LOCAL_VECTOR_STORE` | false |
 | `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |
+| `WEBSOCKET_CONNECTIONS_TABLE_NAME` | Ref:WebSocketConnectionsTable7F0028CC |
+| `WEBSOCKET_TICKETS_TABLE_NAME` | Ref:WebSocketTicketsTable7F084D73 |
 
 ### Chat Run Mark Failed Function
 
@@ -303,6 +311,8 @@ Logical ID: `ChatRunMarkFailedFunction23223E28`
 | `USE_LOCAL_USAGE_EVENT_STORE` | false |
 | `USE_LOCAL_VECTOR_STORE` | false |
 | `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |
+| `WEBSOCKET_CONNECTIONS_TABLE_NAME` | Ref:WebSocketConnectionsTable7F0028CC |
+| `WEBSOCKET_TICKETS_TABLE_NAME` | Ref:WebSocketTicketsTable7F084D73 |
 
 ### Chat Run Worker Function
 
@@ -369,6 +379,8 @@ Logical ID: `ChatRunWorkerFunction3C85A553`
 | `USE_LOCAL_USAGE_EVENT_STORE` | false |
 | `USE_LOCAL_VECTOR_STORE` | false |
 | `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |
+| `WEBSOCKET_CONNECTIONS_TABLE_NAME` | Ref:WebSocketConnectionsTable7F0028CC |
+| `WEBSOCKET_TICKETS_TABLE_NAME` | Ref:WebSocketTicketsTable7F084D73 |
 
 ### Custom CDK Bucket Deployment8693BB64968944B69AAFB0CC9EB8756C81C01536
 
@@ -469,6 +481,8 @@ Logical ID: `DocumentIngestRunMarkFailedFunction41F16DD3`
 | `USE_LOCAL_USAGE_EVENT_STORE` | false |
 | `USE_LOCAL_VECTOR_STORE` | false |
 | `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |
+| `WEBSOCKET_CONNECTIONS_TABLE_NAME` | Ref:WebSocketConnectionsTable7F0028CC |
+| `WEBSOCKET_TICKETS_TABLE_NAME` | Ref:WebSocketTicketsTable7F084D73 |
 
 ### Document Ingest Run Worker Function
 
@@ -538,6 +552,8 @@ Logical ID: `DocumentIngestRunWorkerFunctionBBDBF694`
 | `USE_LOCAL_USAGE_EVENT_STORE` | false |
 | `USE_LOCAL_VECTOR_STORE` | false |
 | `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |
+| `WEBSOCKET_CONNECTIONS_TABLE_NAME` | Ref:WebSocketConnectionsTable7F0028CC |
+| `WEBSOCKET_TICKETS_TABLE_NAME` | Ref:WebSocketTicketsTable7F084D73 |
 
 ### Heavy Api Function
 
@@ -610,6 +626,8 @@ Logical ID: `HeavyApiFunction4BC152A5`
 | `USE_LOCAL_USAGE_EVENT_STORE` | false |
 | `USE_LOCAL_VECTOR_STORE` | false |
 | `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |
+| `WEBSOCKET_CONNECTIONS_TABLE_NAME` | Ref:WebSocketConnectionsTable7F0028CC |
+| `WEBSOCKET_TICKETS_TABLE_NAME` | Ref:WebSocketTicketsTable7F084D73 |
 
 ### Rag Quality Monitor Function
 
@@ -677,6 +695,8 @@ Logical ID: `RagQualityMonitorFunction9BE8E903`
 | `USE_LOCAL_USAGE_EVENT_STORE` | false |
 | `USE_LOCAL_VECTOR_STORE` | false |
 | `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |
+| `WEBSOCKET_CONNECTIONS_TABLE_NAME` | Ref:WebSocketConnectionsTable7F0028CC |
+| `WEBSOCKET_TICKETS_TABLE_NAME` | Ref:WebSocketTicketsTable7F084D73 |
 
 ### Revocation Cleanup Function
 
@@ -743,6 +763,8 @@ Logical ID: `RevocationCleanupFunctionE7C00D6D`
 | `USE_LOCAL_USAGE_EVENT_STORE` | false |
 | `USE_LOCAL_VECTOR_STORE` | false |
 | `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |
+| `WEBSOCKET_CONNECTIONS_TABLE_NAME` | Ref:WebSocketConnectionsTable7F0028CC |
+| `WEBSOCKET_TICKETS_TABLE_NAME` | Ref:WebSocketTicketsTable7F084D73 |
 
 ### S3Vectors Provider Fn
 
@@ -842,3 +864,141 @@ Logical ID: `SecurityAuditReconciliationFunction9A53A79D`
 | `USE_LOCAL_USAGE_EVENT_STORE` | false |
 | `USE_LOCAL_VECTOR_STORE` | false |
 | `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |
+| `WEBSOCKET_CONNECTIONS_TABLE_NAME` | Ref:WebSocketConnectionsTable7F0028CC |
+| `WEBSOCKET_TICKETS_TABLE_NAME` | Ref:WebSocketTicketsTable7F084D73 |
+
+### Web Socket Authorizer Function
+
+Logical ID: `WebSocketAuthorizerFunctionFF1787E3`
+
+用途推定: Web Socket Authorizer Function (Lambda function)
+
+| 設定項目 | 値 |
+| --- | --- |
+| `handler` | index.handler |
+| `runtime` | nodejs22.x |
+| `architectures` | [arm64] |
+| `memorySize` | 512 |
+| `timeoutSeconds` | 10 |
+| `role` | [Web Socket Authorizer Function Service Role](aws-iam-role.md#web-socket-authorizer-function-service-role) (`WebSocketAuthorizerFunctionServiceRole08D28BB9`) |
+
+#### Environment variables
+
+| Key | Value |
+| --- | --- |
+| `ACTIVE_RUN_AUTHORIZATION_INDEX_TABLE_NAME` | Ref:ActiveRunAuthorizationIndexTable2D018C99 |
+| `AUTH_ENABLED` | true |
+| `AUTH_TENANT_ID` | Ref:AWS::AccountId |
+| `BENCHMARK_BUCKET_NAME` | Ref:BenchmarkBucketDD7D1D2F |
+| `BENCHMARK_DEFAULT_DATASET_KEY` | datasets/agent/standard-v1.jsonl |
+| `BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS` | 900 |
+| `BENCHMARK_EVALUATION_ENABLED` | true |
+| `BENCHMARK_EVALUATION_TENANT_ID` | Join:["",["benchmark-",{"Ref":"AWS::AccountId"}]] |
+| `BENCHMARK_RUNS_TABLE_NAME` | Ref:BenchmarkRunsTableD0841636 |
+| `CHAT_RUN_EVENTS_TABLE_NAME` | Ref:ChatRunEventsTable7455A50E |
+| `CHAT_RUNS_TABLE_NAME` | Ref:ChatRunsTable8446CD95 |
+| `COGNITO_APP_CLIENT_ID` | Ref:UserPoolWebClient4C9370B0 |
+| `COGNITO_REGION` | Ref:AWS::Region |
+| `COGNITO_USER_POOL_ID` | Ref:UserPool6BA7E5F2 |
+| `CONVERSATION_HISTORY_TABLE_NAME` | Ref:ConversationHistoryTable59A3534C |
+| `CORS_ALLOWED_ORIGINS` | http://localhost:5173 |
+| `DEBUG_DOWNLOAD_BUCKET_NAME` | Ref:DebugDownloadBucketAB6A16BE |
+| `DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS` | 900 |
+| `DEFAULT_MEMORY_MODEL_ID` | amazon.nova-lite-v1:0 |
+| `DEFAULT_MODEL_ID` | amazon.nova-lite-v1:0 |
+| `DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID` | ANSWER_EDITOR |
+| `DEPLOYMENT_ENVIRONMENT` | dev |
+| `DOCS_BUCKET_NAME` | Ref:DocumentsBucket9EC9DEB9 |
+| `DOCUMENT_GROUPS_TABLE_NAME` | Ref:DocumentGroupsTableA5108040 |
+| `DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME` | Ref:DocumentIngestRunEventsTableF4692EBE |
+| `DOCUMENT_INGEST_RUNS_TABLE_NAME` | Ref:DocumentIngestRunsTableEA8F8CCA |
+| `EMBEDDING_DIMENSIONS` | 1024 |
+| `EMBEDDING_MODEL_ID` | amazon.titan-embed-text-v2:0 |
+| `EVIDENCE_VECTOR_INDEX_NAME` | evidence-index |
+| `FAVORITES_TABLE_NAME` | Ref:FavoritesTable4DA8A306 |
+| `MEMORY_VECTOR_INDEX_NAME` | memory-index |
+| `MIN_RETRIEVAL_SCORE` | 0.20 |
+| `MOCK_BEDROCK` | false |
+| `NODE_ENV` | production |
+| `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
+| `RAG_GUARD_PROFILE_JSON` | {"id":"standard-safe-rag","version":"standard-safe-rag-v1","guards":{"authentication":true,"authorization":true,"classification_usage":true,"prompt_injection":true,"tool_policy":true,"grounding":true,"citation":true,"output_secret":true,"trace_redaction":true}} |
+| `RAG_MONITORING_REQUIRED` | 1 |
+| `RAG_SAFETY_STATE_TTL_SECONDS` | 600 |
+| `USAGE_ACCOUNTING_MODE` | shadow |
+| `USAGE_EVENTS_TABLE_NAME` | Ref:UsageEventsTable215FE3DD |
+| `USAGE_PRICING_CATALOG_JSON` | [] |
+| `USE_LOCAL_BENCHMARK_RUN_STORE` | false |
+| `USE_LOCAL_CHAT_RUN_STORE` | false |
+| `USE_LOCAL_USAGE_EVENT_STORE` | false |
+| `USE_LOCAL_VECTOR_STORE` | false |
+| `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |
+| `WEBSOCKET_CONNECTIONS_TABLE_NAME` | Ref:WebSocketConnectionsTable7F0028CC |
+| `WEBSOCKET_TICKETS_TABLE_NAME` | Ref:WebSocketTicketsTable7F084D73 |
+
+### Web Socket Connection Function
+
+Logical ID: `WebSocketConnectionFunction6F8378E3`
+
+用途推定: Web Socket Connection Function (Lambda function)
+
+| 設定項目 | 値 |
+| --- | --- |
+| `handler` | index.handler |
+| `runtime` | nodejs22.x |
+| `architectures` | [arm64] |
+| `memorySize` | 512 |
+| `timeoutSeconds` | 10 |
+| `role` | [Web Socket Connection Function Service Role](aws-iam-role.md#web-socket-connection-function-service-role) (`WebSocketConnectionFunctionServiceRole9D6CD2B7`) |
+
+#### Environment variables
+
+| Key | Value |
+| --- | --- |
+| `ACTIVE_RUN_AUTHORIZATION_INDEX_TABLE_NAME` | Ref:ActiveRunAuthorizationIndexTable2D018C99 |
+| `AUTH_ENABLED` | true |
+| `AUTH_TENANT_ID` | Ref:AWS::AccountId |
+| `BENCHMARK_BUCKET_NAME` | Ref:BenchmarkBucketDD7D1D2F |
+| `BENCHMARK_DEFAULT_DATASET_KEY` | datasets/agent/standard-v1.jsonl |
+| `BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS` | 900 |
+| `BENCHMARK_EVALUATION_ENABLED` | true |
+| `BENCHMARK_EVALUATION_TENANT_ID` | Join:["",["benchmark-",{"Ref":"AWS::AccountId"}]] |
+| `BENCHMARK_RUNS_TABLE_NAME` | Ref:BenchmarkRunsTableD0841636 |
+| `CHAT_RUN_EVENTS_TABLE_NAME` | Ref:ChatRunEventsTable7455A50E |
+| `CHAT_RUNS_TABLE_NAME` | Ref:ChatRunsTable8446CD95 |
+| `COGNITO_APP_CLIENT_ID` | Ref:UserPoolWebClient4C9370B0 |
+| `COGNITO_REGION` | Ref:AWS::Region |
+| `COGNITO_USER_POOL_ID` | Ref:UserPool6BA7E5F2 |
+| `CONVERSATION_HISTORY_TABLE_NAME` | Ref:ConversationHistoryTable59A3534C |
+| `CORS_ALLOWED_ORIGINS` | http://localhost:5173 |
+| `DEBUG_DOWNLOAD_BUCKET_NAME` | Ref:DebugDownloadBucketAB6A16BE |
+| `DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS` | 900 |
+| `DEFAULT_MEMORY_MODEL_ID` | amazon.nova-lite-v1:0 |
+| `DEFAULT_MODEL_ID` | amazon.nova-lite-v1:0 |
+| `DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID` | ANSWER_EDITOR |
+| `DEPLOYMENT_ENVIRONMENT` | dev |
+| `DOCS_BUCKET_NAME` | Ref:DocumentsBucket9EC9DEB9 |
+| `DOCUMENT_GROUPS_TABLE_NAME` | Ref:DocumentGroupsTableA5108040 |
+| `DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME` | Ref:DocumentIngestRunEventsTableF4692EBE |
+| `DOCUMENT_INGEST_RUNS_TABLE_NAME` | Ref:DocumentIngestRunsTableEA8F8CCA |
+| `EMBEDDING_DIMENSIONS` | 1024 |
+| `EMBEDDING_MODEL_ID` | amazon.titan-embed-text-v2:0 |
+| `EVIDENCE_VECTOR_INDEX_NAME` | evidence-index |
+| `FAVORITES_TABLE_NAME` | Ref:FavoritesTable4DA8A306 |
+| `MEMORY_VECTOR_INDEX_NAME` | memory-index |
+| `MIN_RETRIEVAL_SCORE` | 0.20 |
+| `MOCK_BEDROCK` | false |
+| `NODE_ENV` | production |
+| `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
+| `RAG_GUARD_PROFILE_JSON` | {"id":"standard-safe-rag","version":"standard-safe-rag-v1","guards":{"authentication":true,"authorization":true,"classification_usage":true,"prompt_injection":true,"tool_policy":true,"grounding":true,"citation":true,"output_secret":true,"trace_redaction":true}} |
+| `RAG_MONITORING_REQUIRED` | 1 |
+| `RAG_SAFETY_STATE_TTL_SECONDS` | 600 |
+| `USAGE_ACCOUNTING_MODE` | shadow |
+| `USAGE_EVENTS_TABLE_NAME` | Ref:UsageEventsTable215FE3DD |
+| `USAGE_PRICING_CATALOG_JSON` | [] |
+| `USE_LOCAL_BENCHMARK_RUN_STORE` | false |
+| `USE_LOCAL_CHAT_RUN_STORE` | false |
+| `USE_LOCAL_USAGE_EVENT_STORE` | false |
+| `USE_LOCAL_VECTOR_STORE` | false |
+| `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |
+| `WEBSOCKET_CONNECTIONS_TABLE_NAME` | Ref:WebSocketConnectionsTable7F0028CC |
+| `WEBSOCKET_TICKETS_TABLE_NAME` | Ref:WebSocketTicketsTable7F084D73 |

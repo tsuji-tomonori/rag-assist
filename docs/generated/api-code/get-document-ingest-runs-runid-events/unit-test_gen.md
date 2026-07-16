@@ -20,7 +20,7 @@
 | 到達 symbol | FR-074 worker failure persists an unknown-null replay manifest and a redacted trace | `apps/api/src/rag/memorag-service.test.ts:2715 (FR-074 worker failure persists an unknown-null replay manifest and a redacted trace)` |
 | 到達 symbol | FR-090 ingest reauthorizes after the final event and compensates before persisting success | `apps/api/src/rag/memorag-service.test.ts:2784 (FR-090 ingest reauthorizes after the final event and compensates before persisting success)` |
 | 到達 symbol | FR-090 revoke after governance creation compensates all ingest artifacts and never publishes success | `apps/api/src/rag/memorag-service.test.ts:2844 (FR-090 revoke after governance creation compensates all ingest artifacts and never publishes success)` |
-| 到達 symbol | chat and document ingest SSE routes keep Last-Event-ID reconnect and event format | `apps/api/src/security/access-control-policy.test.ts:568 (chat and document ingest SSE routes keep Last-Event-ID reconnect and event format)` |
+| 到達 symbol | chat and document ingest SSE routes keep Last-Event-ID reconnect and event format | `apps/api/src/security/access-control-policy.test.ts:569 (chat and document ingest SSE routes keep Last-Event-ID reconnect and event format)` |
 
 ## 2. 実装分岐から導くテスト要因
 
