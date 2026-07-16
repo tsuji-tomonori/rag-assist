@@ -23,6 +23,7 @@ tasks:
   verify:
     desc: Run local static verification for all workspaces
     cmds:
+      - npm run check:taskfile-aliases
       - npm run lint
       - npm run typecheck --workspaces --if-present
       - npm run build --workspaces --if-present
@@ -306,57 +307,3 @@ tasks:
     cmds:
       - mkdir -p "$(dirname "$ZIP_OUT")"
       - zip -r -FS "$ZIP_OUT" . -x "node_modules/*" "*/node_modules/*" "dist/*" "*/dist/*" "cdk.out/*" "infra/cdk.out/*" "infra/lambda-dist/*" ".local-data/*" "*/.local-data/*" "*.log"
-
-  memorag:install:
-    desc: Backward-compatible alias for install
-    cmds:
-      - task: install
-
-  memorag:verify:
-    desc: Backward-compatible alias for verify
-    cmds:
-      - task: verify
-
-  memorag:dev:api:
-    desc: Backward-compatible alias for dev:api
-    cmds:
-      - task: dev:api
-
-  memorag:dev:web:
-    desc: Backward-compatible alias for dev:web
-    cmds:
-      - task: dev:web
-
-  memorag:smoke:api:
-    desc: Backward-compatible alias for smoke:api
-    cmds:
-      - task: smoke:api
-
-  memorag:cdk:test:
-    desc: Backward-compatible alias for cdk:test
-    cmds:
-      - task: cdk:test
-
-  memorag:cdk:synth:yaml:
-    desc: Backward-compatible alias for cdk:synth:yaml
-    cmds:
-      - task: cdk:synth:yaml
-
-  memorag:cdk:bootstrap:
-    desc: Backward-compatible alias for cdk:bootstrap
-    cmds:
-      - task: cdk:bootstrap
-
-  memorag:cdk:deploy:ci:
-    desc: Backward-compatible alias for cdk:deploy:ci
-    cmds:
-      - task: cdk:deploy:ci
-
-  memorag:zip:
-    desc: Backward-compatible alias for zip archive creation
-    vars:
-      ZIP_OUT: '{{.ZIP_OUT | default ".workspace/memorag-bedrock-mvp.zip"}}'
-    cmds:
-      - task: zip
-        vars:
-          ZIP_OUT: '{{.ZIP_OUT}}'
