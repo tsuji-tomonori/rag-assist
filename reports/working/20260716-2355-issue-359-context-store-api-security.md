@@ -21,6 +21,9 @@
 - 保存時manifest再検証、read時TTL正規化、context省略時の既存state保持、terminal-state復活防止を実装した。
 - chat evidenceを通常文書一覧から除外し、通常文書write mutationへ流用できないguardとMT-TEMP-007/008 testを追加した。
 - REQ/DES DATA/DES API、OpenAPI、source-backed API docsを同期した。
+- stacked draft PR #380を作成した: https://github.com/tsuji-tomonori/rag-assist/pull/380
+- 受け入れ条件comment: https://github.com/tsuji-tomonori/rag-assist/pull/380#issuecomment-4993795760
+- セルフレビューcomment: https://github.com/tsuji-tomonori/rag-assist/pull/380#issuecomment-4993796723
 
 ## 検証結果
 
@@ -31,6 +34,8 @@
 - root `task verify`: lint、全workspace typecheck/build成功。初回lintでtest importのtype-only指摘1件を検出し、修正後に再実行して成功した。
 - docs validation、OpenAPI quality/freshness、98 APIs / 588 source-backed API docs、Web trace/inventory、infra inventory、hidden Unicode: 成功。
 - `task docs:openapi`はsandbox内のtsx IPC socketが`EPERM`となったため、同じgeneratorを`node --import tsx`で実行して成功した。生成物freshnessも成功した。
+- GitHub Actions MemoRAG CI初回run `29509221982`: 成功。lint/typecheck/docs/infra・benchmark・API・Web test/coverage/build/CDK synthを含む。
+- `semver:minor` labelは付与済み。stacked PR baseのためValidate Semver Label runは観測されていない。GitHub Appsのlabel操作は約38分後に成功応答したため、`gh` fallbackは使用しなかった。
 
 ## 成果物
 
@@ -49,5 +54,5 @@
 
 - B2の毎ターンnormalization、retrieval/answer確定前reauthorization、citation/traceは未着手である。
 - Cのhistory restore/chip/remove/citation labelとUI state/a11yは未着手である。
-- stacked draft PR、受け入れ条件comment、self-review、task done、GitHub Actions lifecycleはこの後に実施する。
+- lifecycle commit後のGitHub Actions final-head CIはpush後に確認し、PR body/commentへ結果を追記する。
 - #338 close/merge、deploy/releaseは実施しない。

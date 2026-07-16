@@ -1,6 +1,6 @@
 # Issue #359 Phase B1: session-local context store / API / security
 
-- 状態: do
+- 状態: done
 - タスク種別: contract・store・API・security 実装
 - base: Phase A final head（docs-only stacked）、または Phase A が merge 済みならその時点の最新 `origin/main`
 - 関連 PR: `#338`
@@ -23,8 +23,10 @@
 - [x] readOnly/権限なし actorの通常保存・移動・共有 mutationをserver-sideで拒否し、MT-TEMP-008 negative testを追加する。
 - [x] route/schema/store変更に必要なpermission、owner boundary、response allowlist、`access-control-policy.test.ts`を同期する。
 - [x] contract/REQ/DES DATA/API/OPS、OpenAPI、source-backed API docsをcurrent contractに同期する。
-- [ ] targeted contract/store/API/security test、typecheck、docs check、root CI、GitHub Actions final-head CIが成功する。
-- [ ] Phase A final head向けstacked draft PR、受け入れ条件comment、self-review、task/report lifecycleを完了する。
+- [x] targeted contract/store/API/security test、typecheck、docs check、root CI、GitHub Actions初回head CIが成功する。
+- [x] Phase A final head向けstacked draft PR、受け入れ条件comment、self-review、task/report lifecycleを完了する。
+
+最終 lifecycle commit のGitHub Actionsはpush後に外部状態として確認し、PR body/commentへ結果を追記する。
 
 ## 対象外
 
