@@ -2,7 +2,7 @@
 
 - 要件ID: `FR-020`
 - 種別: `REQ_FUNCTIONAL`
-- 状態: Draft
+- 状態: Draft（実装・直接 behavior test 確認済み）
 - 優先度: B
 
 ## 分類（L0-L3）
@@ -21,15 +21,15 @@
 
 ## 受け入れ条件（この要件専用）
 
-- AC-FR020-001: raw chunk は最終回答の引用根拠として維持されること。
-- AC-FR020-002: section、document、concept memory は検索補助として扱われること。
-- AC-FR020-003: 高抽象度 memory hit から raw chunk へ drill-down できる親子関係を保持すること。
-- AC-FR020-004: ACL、tenant、source などの絞り込みメタデータが抽象度をまたいで維持されること。
+- [x] AC-FR020-001: raw chunk は evidence vector として維持され、memory record と分離されること。
+- [x] AC-FR020-002: section、document、concept memory は `kind: memory` の検索補助 record として永続化されること。
+- [x] AC-FR020-003: 高抽象度 memory は `sourceChunkIds` と section metadata により raw chunk へ drill-down できる関係を保持すること。
+- [x] AC-FR020-004: tenant、source、docType、department と source locator metadata が抽象度をまたいで維持されること。ACL/認可境界は derived security envelope と検索時認可で維持すること。
 
 ## 要件の源泉・背景
 
 - 源泉: ユーザー提示の RAPTOR / GraphRAG / S3 Vectors 多抽象度方針、現行 `memorag-service.ts` の実装確認。
-- 背景: 現行 ingestion は chunk と document-level memory card が中心であり、section や cross-domain concept の抽象度を明示的には扱っていない。
+- 背景: 現行 ingestion は raw chunk に加えて `MemoRagService.createMemoryCards`、`createSectionMemoryCards`、`createConceptMemoryCards` から document/section/concept memory を生成し、memory ledger と memory vector に保存する。
 
 ## 要件の目的・意図
 
@@ -51,7 +51,7 @@
 | 受け入れ基準 | `AC-FR020-001` から `AC-FR020-004` |
 | 優先度 | B |
 | 安定性 | Low |
-| 変更履歴 | 2026-05-01 初版 |
+| 変更履歴 | 2026-05-01 初版。2026-07-16 public ingest の実装・直接 behavior test に同期 |
 
 ## 妥当性確認
 
@@ -65,3 +65,12 @@
 | 実現可能性 | OK | ingestion 拡張で実装可能 |
 | 検証可能性 | OK | manifest と検索結果で確認可能 |
 | ニーズ適合 | OK | 中長期の検索価値に対応 |
+
+## 実装・検証トレース
+
+- `confirmed`: `apps/api/src/rag/memorag-service.ts` の `MemoRagService.createMemoryCards`、`createSectionMemoryCards`、`createConceptMemoryCards`。
+- `confirmed`: `apps/api/src/rag/offline/pre-retrieval/ingestion/ingest-run.service.ts` が raw evidence vector と memory vector を分離し、memory ledger、`sourceChunkIds`、filter metadata、security envelope を保存する。
+- `confirmed`: `apps/api/src/rag/multi-abstraction-memory.test.ts` は public `MemoRagService.ingest` 経路から document/section/concept、raw chunk trace、section metadata、tenant/source/docType/department、evidence/memory 分離、memory/evidence security envelope の tenant/document/version/authorization/source locator を直接検証する。
+- `confirmed`: `apps/api/src/chat-orchestration/nodes/retrieve-memory.test.ts` は memory hit に ordinary deny、継承 allow、明示 private、benchmark tenant/corpus filter を適用する検索時認可を検証する。
+- `conflict`: 旧 coverage の `memorag-service.test.ts` は memory ledger key の存在、`adapters/local-stores.test.ts` は generic memory record だけを確認しており、本要件の直接 behavior test ではなかったため差し替えた。
+- `open_question`: なし。

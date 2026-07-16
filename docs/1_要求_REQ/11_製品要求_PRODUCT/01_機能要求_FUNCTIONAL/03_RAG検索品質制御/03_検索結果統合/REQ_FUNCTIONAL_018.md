@@ -2,7 +2,7 @@
 
 - 要件ID: `FR-018`
 - 種別: `REQ_FUNCTIONAL`
-- 状態: Draft
+- 状態: Draft（実装・直接 test 確認済み）
 - 優先度: A
 
 ## 分類（L0-L3）
@@ -20,15 +20,15 @@
 
 ## 受け入れ条件（この要件専用）
 
-- AC-FR018-001: `rank-fusion.ts` に RRF を実装し、同じ chunk key の順位寄与を合算できること。
-- AC-FR018-002: RRF の `k` と list weight を設定値または関数引数で変更できること。
-- AC-FR018-003: 統合後の chunk は score 降順で安定的に返ること。
-- AC-FR018-004: 既存の単一 query 検索結果では現行と同等の並びを維持できること。
+- [x] AC-FR018-001: `rrfFuse` は同じ result key の順位寄与を複数 list から合算できること。
+- [x] AC-FR018-002: RRF の `k` と list weight を設定値または関数引数で変更できること。
+- [x] AC-FR018-003: 統合後の result は RRF score 降順で返ること。
+- [x] AC-FR018-004: 単一 list の hit と複数 list に固有の hit を脱落させず統合できること。
 
 ## 要件の源泉・背景
 
 - 源泉: ユーザー提示の RAG-Fusion / RRF 方針、現行 `search-evidence.ts` の実装確認。
-- 背景: 現行検索は複数 query の hit を key 単位で最大 score 統合しており、複数 clue で安定して上位に出る chunk を優遇しにくい。
+- 背景: `hybrid-retriever.ts` の `rrfFuse` は lexical/semantic result list を、`search-evidence.ts` は複数 request-time result list を RRF で統合する。旧記載の max-score merge と `rank-fusion.ts` は現行 source に存在しない。
 
 ## 要件の目的・意図
 
@@ -50,7 +50,7 @@
 | 受け入れ基準 | `AC-FR018-001` から `AC-FR018-004` |
 | 優先度 | A |
 | 安定性 | High |
-| 変更履歴 | 2026-05-01 初版 |
+| 変更履歴 | 2026-05-01 初版。2026-07-16 `rrfFuse` と直接 test の current evidence に同期 |
 
 ## 妥当性確認
 
@@ -58,9 +58,17 @@
 |---|---|---|
 | 必要性 | OK | 複数 clue 検索を活かすため必要 |
 | 十分性 | OK | RRF、設定、互換性を含む |
-| 理解容易性 | OK | 既存 max score 置換として明確 |
+| 理解容易性 | OK | `rrfFuse` の入出力 behavior として明確 |
 | 一貫性 | OK | search-evidence の責務に合う |
 | 標準・契約適合 | OK | RAG検索改善方針に合う |
 | 実現可能性 | OK | 小さい純関数から実装可能 |
 | 検証可能性 | OK | unit test で順位確認可能 |
 | ニーズ適合 | OK | 検索品質改善に寄与 |
+
+## 実装・検証トレース
+
+- `confirmed`: `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts` の `rrfFuse` と、その呼び出し元 hybrid retrieval。
+- `confirmed`: `apps/api/src/rag/online/retrieval/request-time/search-evidence.ts` の複数 result list 統合。
+- `confirmed`: `apps/api/src/search/hybrid-search.test.ts` の重複 hit 加点、独立 lexical hit 保持、`k` 境界 test。
+- `confirmed`: `apps/api/src/rag/__tests__/runtime-layout.test.ts` の新 runtime layout から BM25/RRF behavior を保持する test。
+- `conflict`: 旧 `rank-fusion.ts` 参照と max-score 現状説明は現行 source と不一致のため削除した。
