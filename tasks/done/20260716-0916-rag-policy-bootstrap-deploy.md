@@ -1,8 +1,9 @@
 # RAG quality policy 初回 bootstrap deploy
 
-- 状態: do
+- 状態: done
 - primary type: 修正
 - 着手: 2026-07-16 09:16 JST
+- 完了: 2026-07-16 10:41 JST
 
 ## 指示
 
@@ -29,10 +30,18 @@
 
 ## 受け入れ条件
 
-- [ ] 通常の `main` push は observation 不足時に build/synth/deploy を開始しない。
-- [ ] bootstrap は `workflow_dispatch` の dev 実行に限定され、対象 SHA と `memorag-dev-rag-quality@2026-07-16.draft-1` の完全一致を要求する。
-- [ ] bootstrap 時も承認済み policy と自動解決した S3 URI/version context を使い、架空 observation や合格値を生成しない。
-- [ ] workflow contract test、lint、docs check、変更範囲に見合う build が成功する。
-- [ ] PR の CI 成功後に merge し、bootstrap workflow の CDK deploy と deployment outputs artifact を確認する。
-- [ ] PR に日本語の受け入れ条件確認とセルフレビューを記録する。
-- [ ] 作業完了レポートを `reports/working/` に残す。
+- [x] 通常の `main` push は observation 不足時に build/synth/deploy を開始しない。
+- [x] bootstrap は `workflow_dispatch` の dev 実行に限定され、対象 SHA と `memorag-dev-rag-quality@2026-07-16.draft-1` の完全一致を要求する。
+- [x] bootstrap 時も承認済み policy と自動解決した S3 URI/version context を使い、架空 observation や合格値を生成しない。
+- [x] workflow contract test、lint、docs check、変更範囲に見合う build が成功する。
+- [x] PR の CI 成功後に merge し、bootstrap workflow の CDK deploy と deployment outputs artifact を確認する。
+- [x] PR に日本語の受け入れ条件確認とセルフレビューを記録する。
+- [x] 作業完了レポートを `reports/working/` に残す。
+
+## 完了結果
+
+- workflow implementation: PR #362 / merge `1e332da7c90bfb90e7f48bec1dbc564d4b4226f3`
+- Cognito deploy fix: PR #363 / merge `cc67e6bb0bc52cba534b349e69bbd900f72affe1`
+- successful bootstrap deploy: run `29464411514`
+- deployment outputs artifact: `memorag-cdk-outputs-dev` / ID `8362469628`
+- bootstrap completion: `2026-07-16T01:38:45Z`
