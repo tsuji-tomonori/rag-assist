@@ -1,7 +1,7 @@
 # Issue #345 cross-screen Phase B 作業レポート
 
 - 日時: 2026-07-17 01:07 JST
-- 状態: in progress（draft PR final-head CI evidence待ち）
+- 状態: in progress（CI repair後のfinal-head evidence待ち）
 - 対象branch: `codex/issue-345-cross-screen-phase-b`
 - base: PR #381 final head `b6acb24ff81acd08981ada8ebb3df63810f6d57b`
 
@@ -39,17 +39,20 @@ Phase A evidence / fail matrixを確認し、AppShell / RailNav / target / focus
 - `npm run docs:web-trace:test`: pass。
 - `git diff --check`: pass。
 - targeted Playwright cross-screen audit: local sandboxが`tsx` IPC listenを`EPERM`で拒否し、browser実行前にblocked。権限昇格せず、draft PR CI artifactを正式証跡にする。
+- draft PR #385 initial Web UI Quality run `29515009875`: failure。artifact `8382337939`、SHA-256 `2e923bbd912f33131356a58a8b4158261ea726cd29b0e892e889d5ead3120528`を保存した。
+- initial artifactのcross-screen gateはserious findingを0件、未解決overflow / targetをdocuments 320pxのpagination summary 1件だけと判定してfailureにした。axe blocker assertionはその後段で未到達のため、repair後artifactで確定する。summaryのellipsisを折り返しへ変更し、情報損失を解消した。
+- initial visual failure 5件はmuted foreground / 44px RailNav targetによる意図した差分だった。actual / expected / diffを比較し、layout/content欠損がないことを確認してLinux Chromium snapshotを更新した。
 
 ## 成果物
 
 - production / audit / test差分: `apps/web/`、`tools/web-inventory/semantic-ui-contract.test.mjs`
 - canonical docs: `REQ_SERVICE_QUALITY_016.md`、`DES_UI_UX_001.md`
 - task: `tasks/do/20260717-0054-issue-345-cross-screen-phase-b.md`
-- matrix: final-head CI artifact確認後に`tools/web-inventory/ui-quality-matrix.json`とgenerated projectionを更新する。
+- matrix: repair後のfinal-head CI artifact確認後に`tools/web-inventory/ui-quality-matrix.json`とgenerated projectionを更新する。
 
 ## 指示へのfit評価
 
-実装・local static/unit/build検証は指示範囲にfitしている。Login / auth競合を避け、例外を自動passへ昇格させていない。Playwright browser evidence、matrix確定、日本語draft PR comment、final-head CIは未完了のため、本レポートとtaskを完了扱いしない。
+実装・local static/unit/build検証とinitial CI repairは指示範囲にfitしている。Login / auth競合を避け、例外を自動passへ昇格させていない。repair後のPlaywright browser evidence、matrix確定、日本語draft PR comment、final-head CIは未完了のため、本レポートとtaskを完了扱いしない。
 
 ## 未対応・制約・リスク
 

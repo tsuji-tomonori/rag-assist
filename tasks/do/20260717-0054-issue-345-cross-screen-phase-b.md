@@ -88,6 +88,13 @@ Phase A CI baselineで、assigneeは768px viewportに対してroot scrollWidth 8
 - candidate例外を便宜的にpassへ昇格していないか。
 - docsと実装、matrixとartifact、test assertionが同じ判定を示すか。
 
+## 実行状況
+
+- local typecheck、Web 61 files / 443 tests、build、full lint、semantic / trace、docs check、pre-commitはpass。
+- local Playwrightはsandboxの`tsx` IPC listen `EPERM`でbrowser前blocked。権限昇格せずdraft PR CIを使用する。
+- draft PR #385 initial Web UI Quality run `29515009875`は、documents 320px pagination summaryの未解決overflow 1件と、意図したforeground / RailNav target変更によるvisual snapshot差分5件を検出してfailure。
+- initial artifact `8382337939`をactual / expected / diffまで確認し、pagination summaryをellipsisから折り返しへ修正、意図したLinux Chromium snapshotを更新した。repair後のfinal-head artifact / CIは確認中。
+
 ## 未決事項・リスク
 
 - screen reader、200%/400% zoom、touch / real-deviceはmanual evidence taskの未完了scopeであり、自動検証だけから適合を宣言しない。
