@@ -285,6 +285,6 @@ Logical ID: `SecurityAuditReconciliationFunctionServiceRoleDefaultPolicy77DBBA3A
 | --- | --- |
 | `policyName` | SecurityAuditReconciliationFunctionServiceRoleDefaultPolicy77DBBA3A |
 | `roles` | [Ref:SecurityAuditReconciliationFunctionServiceRoleF4787D99] |
-| `statementCount` | 3 |
+| `statementCount` | 4 |
 | `actions` | [dynamodb:GetItem, dynamodb:Query, s3:GetObject, s3:ListBucket, s3:PutObject] |
-| `resources` | [GetAtt:DocumentGroupsTableA5108040.Arn, GetAtt:DocumentsBucket9EC9DEB9.Arn, Join:["",[{"Fn::GetAtt":["DocumentGroupsTableA5108040","Arn"]},"/index/*"]], Join:["",[{"Fn::GetAtt":["DocumentsBucket9EC9DEB9","Arn"]},"/security-audit/intents/",{"Ref":"AWS::AccountId"},"/*"]], Join:["",[{"Fn::GetAtt":["DocumentsBucket9EC9DEB9","Arn"]},"/source-governance/",{"Ref":"AWS::AccountId"},"/*"]]] |
+| `resources` | [GetAtt:DocumentGroupsTableA5108040.Arn, GetAtt:DocumentsBucket9EC9DEB9.Arn, Join:["",[{"Fn::GetAtt":["DocumentGroupsTableA5108040","Arn"]},"/index/*"]], Join:["",[{"Fn::GetAtt":["DocumentsBucket9EC9DEB9","Arn"]},"/security-audit/intents/",{"Ref":"AWS::AccountId"},"/*"]], Join:["",[{"Fn::GetAtt":["DocumentsBucket9EC9DEB9","Arn"]},"/security/resource-group-lifecycle/create/",{"Ref":"AWS::AccountId"},"/*"]], Join:["",[{"Fn::GetAtt":["DocumentsBucket9EC9DEB9","Arn"]},"/source-governance/",{"Ref":"AWS::AccountId"},"/*"]]] |

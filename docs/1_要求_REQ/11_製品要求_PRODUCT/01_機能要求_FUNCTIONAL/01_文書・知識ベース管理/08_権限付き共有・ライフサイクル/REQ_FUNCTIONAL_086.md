@@ -94,7 +94,7 @@
 | 実現可能性 | OK | transaction、durable publication intent、または mutation result と相関可能な event store で実現可能 |
 | 検証可能性 | OK | 操作×結果の matrix、必須 field schema、audit-write failure injection、state/event correlation で検証できる |
 | ニーズ適合 | OK | 管理者・監査担当が権限変更の主体、対象、理由、結果を横断調査できる |
-| 実装適合 | Partial（confirmed / open） | 共通 outbox と各 producer は存在する。production worker の authoritative resolver は source governance、resource-group membership、resource-group update が confirmed。他 target と poison-intent isolation は open |
+| 実装適合 | Partial（confirmed / open） | 共通 outbox と各 producer は存在する。production worker の authoritative resolver は source governance、resource-group membership、resource-group update/create が confirmed。他 target と poison-intent isolation は open |
 
 ## Production reconciliation coverage
 
@@ -103,11 +103,12 @@
 | `source / source_governance.approve_publish, source_governance.restrict` | confirmed | `SourceGovernanceAuditAuthoritativeResolver`。tenant-scoped source recordとdurable markerを再確認する |
 | `resourceGroup / membership.replace` | confirmed | `ResourceGroupMembershipAuditAuthoritativeResolver`。tenant/group identity、current memberships、durable requested completionを照合し、mutation自体は再実行しない |
 | `resourceGroup / update` | confirmed | `ResourceGroupUpdateAuditAuthoritativeResolver`。tenant-scoped current groupとbefore/proposedAfterまたはdurable requested completionを照合し、update自体は再実行しない |
-| `resourceGroup / create, delete` | open | lifecycle intent、membership、cleanup registrationを含む複合mutationのため、group state単独で完了を推測しない |
+| `resourceGroup / create` | confirmed | `ResourceGroupCreateAuditAuthoritativeResolver`。tenant-scoped current group、initial owner membership、audit IDに相関するdurable lifecycle intentの`membership_created`以降をすべて照合する |
+| `resourceGroup / delete` | open | lifecycle intent、membership deny、cleanup registrationを含む複合mutationのため、group archive state単独で完了を推測しない |
 | folder/document share・move・delete、administrative principal transfer、application role | open | outbox producerとdomain recovery stateは存在するが、production workerへauthoritative resolverが未登録 |
 | 継続失敗のbounded retry / quarantine / batch isolation | open | 現行reconcilerはresolver errorでtenant batchを停止するため、別Phaseで可観測かつfail-closedな隔離境界が必要 |
 
-resource-group membership と update のpending intentは、current authoritative stateが`proposedAfter`と一致する場合のみ`success`へ確定する。durable `requestedCompletion`がある場合はcurrent stateとの一致を再確認し、そのresultを維持する。current stateが`before`のままresult markerがない場合、またはbefore/proposedAfterのどちらにも一致しない場合は結果を推測せずpendingのままfail closedにする。create/deleteは複数storeとcleanup registrationを含むため、lifecycle intentの各段階を合わせて証明する後続resolverへ分離する。
+resource-group membership と update のpending intentは、current authoritative stateが`proposedAfter`と一致する場合のみ`success`へ確定する。createはcurrent groupだけでなく、initial owner membershipと対象audit IDに相関するdurable lifecycle intentが`membership_created`以降であることを必須とし、`prepared`/`group_created`の部分状態を確定しない。durable `requestedCompletion`がある場合もcurrent stateとの一致を再確認し、そのresultを維持する。deleteはcleanup registrationまで含むため、lifecycle intentの各段階を合わせて証明する後続resolverへ分離する。
 
 ## トレース
 

@@ -799,6 +799,10 @@ export class MemoRagMvpStack extends Stack {
       actions: ["s3:GetObject", "s3:PutObject"],
       resources: securityAuditObjectPatterns.map((pattern) => docsBucket.arnForObjects(pattern))
     }))
+    securityAuditReconciliationFn.addToRolePolicy(new iam.PolicyStatement({
+      actions: ["s3:GetObject"],
+      resources: [docsBucket.arnForObjects(`security/resource-group-lifecycle/create/${cdk.Aws.ACCOUNT_ID}/*`)]
+    }))
     revocationCleanupFn.addToRolePolicy(new iam.PolicyStatement({
       actions: ["s3:ListBucket"],
       resources: [benchmarkBucket.bucketArn],

@@ -814,6 +814,7 @@ test("deploys the tenant-scoped security audit reconciliation worker with bounde
   assert.match(policies, /s3:PutObject/)
   assert.match(policies, /security-audit\/intents/)
   assert.match(policies, /source-governance/)
+  assert.match(policies, /security\/resource-group-lifecycle\/create/)
   assert.match(policies, /dynamodb:GetItem/)
   assert.match(policies, /dynamodb:Query/)
   assert.match(policies, /DocumentGroupsTable/)
@@ -821,6 +822,14 @@ test("deploys the tenant-scoped security audit reconciliation worker with bounde
   assert.doesNotMatch(policies, /s3:DeleteObject/)
   assert.doesNotMatch(policies, /bedrock:InvokeModel/)
   assert.doesNotMatch(policies, /dynamodb:(?:BatchGetItem|Scan|PutItem|UpdateItem|DeleteItem|TransactWriteItems)/)
+
+  const lifecycleStatements = Object.entries(resources)
+    .filter(([logicalId, resource]) => logicalId.startsWith("SecurityAuditReconciliationFunctionServiceRoleDefaultPolicy") && (resource as any).Type === "AWS::IAM::Policy")
+    .flatMap(([, resource]) => (resource as any).Properties.PolicyDocument.Statement as any[])
+    .filter((statement) => JSON.stringify(statement.Resource).includes("security/resource-group-lifecycle/create"))
+  assert.equal(lifecycleStatements.length, 1)
+  assert.equal(lifecycleStatements[0].Action, "s3:GetObject")
+  assert.doesNotMatch(JSON.stringify(lifecycleStatements[0]), /s3:(?:ListBucket|PutObject|DeleteObject)/)
 })
 
 test("passes only explicitly configured versioned workload and price evidence into benchmark CodeBuild", () => {

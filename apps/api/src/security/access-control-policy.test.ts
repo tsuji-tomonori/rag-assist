@@ -584,12 +584,13 @@ test("authorization metadata uses generic forbidden error bodies by default", as
 })
 
 test("security audit reconciliation worker is single-tenant and rechecks authoritative domain state", async () => {
-  const [workerSource, reconcilerSource, sourceResolverSource, membershipResolverSource, groupUpdateResolverSource, outboxSource] = await Promise.all([
+  const [workerSource, reconcilerSource, sourceResolverSource, membershipResolverSource, groupUpdateResolverSource, groupCreateResolverSource, outboxSource] = await Promise.all([
     readFile(path.resolve(process.cwd(), "src/security-mutation-audit-reconciliation-worker.ts"), "utf8"),
     readFile(path.resolve(process.cwd(), "src/security/security-mutation-audit-reconciler.ts"), "utf8"),
     readFile(path.resolve(process.cwd(), "src/rag/offline/pre-retrieval/admission/source-governance-audit-reconciler.ts"), "utf8"),
     readFile(path.resolve(process.cwd(), "src/security/resource-group-membership-audit-reconciler.ts"), "utf8"),
     readFile(path.resolve(process.cwd(), "src/security/resource-group-update-audit-reconciler.ts"), "utf8"),
+    readFile(path.resolve(process.cwd(), "src/security/resource-group-create-audit-reconciler.ts"), "utf8"),
     readFile(path.resolve(process.cwd(), "src/security/security-mutation-audit-outbox.ts"), "utf8")
   ])
 
@@ -608,6 +609,11 @@ test("security audit reconciliation worker is single-tenant and rechecks authori
   assert.match(groupUpdateResolverSource, /groups\.get\(tenantId, targetId\)/)
   assert.match(groupUpdateResolverSource, /crossed its identity boundary/)
   assert.match(groupUpdateResolverSource, /no durable non-success result/)
+  assert.match(workerSource, /ResourceGroupCreateAuditAuthoritativeResolver\(deps\.objectStore, deps\.userGroupStore, deps\.groupMembershipStore\)/)
+  assert.match(groupCreateResolverSource, /security\/resource-group-lifecycle\/create/)
+  assert.match(groupCreateResolverSource, /auditIntentId !== auditIntentId/)
+  assert.match(groupCreateResolverSource, /status !== "membership_created"/)
+  assert.doesNotMatch(groupCreateResolverSource, /\.create\(|replaceGroupState\(/)
   assert.match(outboxSource, /intentPrefix\(tenantId\)/)
 })
 
