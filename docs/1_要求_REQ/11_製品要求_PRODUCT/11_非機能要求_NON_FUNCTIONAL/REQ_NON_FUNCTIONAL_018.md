@@ -76,4 +76,3 @@
 - `@visual` fixture は OS / browser の微小な anti-aliasing 差を最大300 pixelsまで許容し、それを超える deterministic screenshot mismatch を failure にする。HTML report、test-results、trace、screenshot、video を artifact として保持する。
 - Firefox / WebKit は週次および手動 dispatch の scheduled scope とする。未実行・失敗は Chromium pass と混同せず、artifact と workflow result で追跡する。
 - manual keyboard、representative screen reader、実 browser 200% / 400% zoom、touch / real-device evidence は本 gate で代替せず、`tasks/todo/20260714-issue-345-manual-a11y-evidence.md` の完了まで未達として扱う。
-

@@ -1249,4 +1249,3 @@ test('E2E-UI-A11Y-GATE-001: representative view は serious/critical axe 違反�
     await expectNoSeriousOrCriticalAxeViolations(page, destination.region)
   }
 })
-
