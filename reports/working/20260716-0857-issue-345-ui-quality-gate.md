@@ -29,6 +29,8 @@ Issue #345 の draft PR #361 を latest `main` へ収束し、残る安全な自
 - latest `main` を競合なしで取り込み、`package-lock.json` が `npm ci` 後も無変更であることを確認
 - task の分類・RCA・受け入れ条件実績を補完し、既存3ファイルのEOF余分空行を除去
 - Chromium 9件、Firefox / WebKit各1件をlocal fixtureで実行
+- PR #361 final headから専用検証branchを作り、spec-onlyの不透明overlayで300 pixels超のfailure pathを実証
+- failure後もPlaywright HTML report、初回・retryのactual / expected / diff / screenshot / video、retry traceをartifactへ保持できることを実査
 
 ## 検証状況
 
@@ -44,6 +46,17 @@ Issue #345 の draft PR #361 を latest `main` へ収束し、残る安全な自
 - `PLAYWRIGHT_BROWSERS_PATH=/tmp/pw-issue345 npm run test:e2e:cross-browser -w @memorag-mvp/web`: Firefox / WebKit 2 / 2 pass。browser binariesはworkspace外の`/tmp`へ取得。
 - `git diff --check`: pass。
 
+### 300 pixels超 visual failure artifact検証
+
+- 検証branch `codex/issue-345-ui-quality-visual-failure-validation` はPR #361 head `a1f0b254926d6d81fe922cb47a495535f7e103d9` から作成した。
+- probe commit `86645496d4ad89ccd8b013c0df95173549f04065` は `apps/web/e2e/visual-regression.spec.ts` だけを変更し、login screenshot直前に全画面不透明overlayを12行追加した。比較はahead 1 / behind 0、1 file changed、12 additions / 0 deletionsで、product、CSS、snapshot、config差分はない。
+- Web UI Quality run `29507669849`、Required Chromium job `87652582717` は `878072 pixels (ratio 0.96 of all image pixels) are different` を初回・retryとも検出し、1 failed / 8 passed、process exit code 1で期待どおりfailureした。
+- failure後の `Upload required UI evidence` stepはsuccessし、artifact `web-ui-quality-chromium-1`（ID `8379228289`、2,945,081 bytes、SHA-256 `5d41a8c86a2601fb9d85412fcae0cae3f7a8df187ad34509d32fcb4c1c23df6d`、created `2026-07-16T14:42:10Z`、expires `2026-07-30T14:42:10Z`）を生成した。
+- artifactを取得・展開し、`playwright-report/index.html`、初回・retry双方の `login-actual.png` / `login-diff.png` / `login-expected.png` / `test-failed-1.png` / `video.webm`、retryの `trace.zip` が存在することを確認した。
+- run: https://github.com/tsuji-tomonori/rag-assist/actions/runs/29507669849
+- artifact: https://github.com/tsuji-tomonori/rag-assist/actions/runs/29507669849/artifacts/8379228289
+- 検証branchは証跡URLの再現性のため残し、PR作成、merge、削除、force pushは行っていない。PR #361本体にはprobe fixtureを混ぜていない。
+
 ### CI初回結果
 
 - Web UI Quality run `29460420911`: failure（2 passed / 7 failed）。axe がchat composer noteの serious contrast違反を検出し、visualはstable capture後も85〜219 pixels差でfailureした。artifact `8360958884` を保存済み。
@@ -55,13 +68,12 @@ Issue #345 の draft PR #361 を latest `main` へ収束し、残る安全な自
 
 ### 未実施・pending
 
-- 300 pixels超の意図的な visual mismatch failureとartifact取得: 未検証。既存baselineを意図的に壊す専用fixtureがなく、現在のpass結果だけでは受け入れ条件のfailure証跡を満たさない。
 - browser matrixのowner最終判断: `OQ-UI-001` が未決。
 - screen reader、実 browser 200% / 400% zoom、touch / real-device: manual evidence taskで未完了。
-- latest merge後のGitHub CI: push前のため未確認。
+- 証跡更新commit後のlatest GitHub CI: push前のため未確認。
 
 ## Fit評価
 
-総合fit: 4.4 / 5.0（88%）
+総合fit: 4.6 / 5.0（92%）
 
-主要な自動品質gate、正本文書同期、latest main収束、Chromium / Firefox / WebKitの自動検証まで対応した。visual failure artifact、owner判断、manual a11y / zoom / real-device証跡が未確認のため、taskとPRはpartially completeとして維持する。
+主要な自動品質gate、正本文書同期、latest main収束、Chromium / Firefox / WebKitの自動検証、300 pixels超のvisual failureとfailure artifactの実証まで対応した。owner判断、manual a11y / zoom / real-device証跡が未確認のため、taskとPRはpartially completeとして維持する。
