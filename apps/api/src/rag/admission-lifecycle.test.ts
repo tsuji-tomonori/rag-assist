@@ -198,7 +198,7 @@ test("FR-090 ingest reauthorizes immediately before and after the durable bundle
   assert.deepEqual(harness.memoryRecords, [])
 })
 
-test("FR-093 document quarantine interlock retains ingest only as non-publishable staging", async () => {
+test("FR-093 quarantined runtime retains ingest only as non-publishable staging", async () => {
   const harness = createPipelineHarness()
   const safetyState: RagSafetyState = {
     schemaVersion: 1,
@@ -206,10 +206,10 @@ test("FR-093 document quarantine interlock retains ingest only as non-publishabl
     policyId: "production-rag",
     policyVersion: "approved-1",
     activeRuntimeProfileVersion: ragRuntimePolicy.profile.version,
-    quarantinedRuntimeProfileVersions: [],
-    promotionFrozen: false,
-    documentQuarantineRequired: true,
-    responseMode: "normal",
+    quarantinedRuntimeProfileVersions: [ragRuntimePolicy.profile.version],
+    promotionFrozen: true,
+    documentQuarantineRequired: false,
+    responseMode: "limited",
     updatedAt: "2026-07-11T00:00:00.000Z",
     validUntil: "2099-01-01T00:00:00.000Z"
   }
