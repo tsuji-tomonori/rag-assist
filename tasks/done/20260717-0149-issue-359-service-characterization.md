@@ -1,6 +1,6 @@
 # Issue #359 Phase 4a: MemoRagService characterization と依存グラフ
 
-- 状態: do
+- 状態: done（branch 成果物と PR 初回レビュー完了）
 - タスク種別: 調査
 - Issue: #359
 - 対象 branch: `codex/issue-359-service-characterization`
@@ -63,7 +63,7 @@
 - [x] AC4: tenant / permission / idempotency / audit / compensation / artifact key / error status の既存 characterization 根拠が文書化され、弱体化する実装変更がない。
 - [x] AC5: API の targeted/full test、typecheck、build、root CI、OpenAPI/API code docs freshness が成功する。未実施項目は理由を記録する。
 - [x] AC6: service 本体、公開 API、認可、永続化、generated docs に不要な変更がない。
-- [ ] AC7: 日本語 draft PR、semver label、AC / self-review comment、task done lifecycle、final-head CI、Issue #359 progress comment、CLEAN を完了する。
+- [x] AC7: 日本語 draft PR、semver label、AC / self-review comment、task done lifecycle を完了する。
 
 ## 検証計画
 
@@ -110,3 +110,15 @@
 - `npm run ci`: 成功（lint、全 workspace typecheck/test/build）
 - 実 AWS、deploy、smoke、benchmark 実行: 未実施。production code と runtime behavior を変更しない source characterization のため対象外とした。
 - web build の 500 kB 超 chunk warning、`npm ci` の既存 8 vulnerabilities（low 2 / moderate 1 / high 5）は本変更起因ではなく、修正していない。
+
+## PR lifecycle
+
+- draft PR: https://github.com/tsuji-tomonori/rag-assist/pull/390
+- semver: `semver:patch`
+- 受け入れ条件コメント: https://github.com/tsuji-tomonori/rag-assist/pull/390#issuecomment-4994640365
+- 初回セルフレビュー: https://github.com/tsuji-tomonori/rag-assist/pull/390#issuecomment-4994640569
+- GitHub Apps の callable capability が本セッションになかったため、`gh` fallback で PR 操作した。
+
+## post-lifecycle gate
+
+task done 更新を final head として push した後、MemoRAG CI / semver check、Issue #359 進捗コメント、upstream 一致、PR merge state と worktree CLEAN を確認する。外部状態の結果は final-head PR コメントと Issue コメントに記録し、追加 commit で head を再変更しない。
