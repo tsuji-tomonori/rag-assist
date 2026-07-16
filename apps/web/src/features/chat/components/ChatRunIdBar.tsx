@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react"
-import { Icon } from "../../../shared/components/Icon.js"
+import { Icon } from "../../../shared/ui/Icon.js"
 
 export function ChatRunIdBar({ runId, pending }: { runId: string | null; pending: boolean }) {
   const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "error">("idle")

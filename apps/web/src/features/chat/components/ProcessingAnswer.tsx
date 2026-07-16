@@ -1,4 +1,4 @@
-import { LoadingSpinner } from "../../../shared/components/LoadingSpinner.js"
+import { LoadingSpinner } from "../../../shared/ui/LoadingSpinner.js"
 import { StatusBadge } from "../../../shared/ui/StatusBadge.js"
 
 export function ProcessingAnswer({ label }: { label: string }) {

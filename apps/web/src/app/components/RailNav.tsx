@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
 import type { AuthSession } from "../../authClient.js"
-import { Icon, type IconName } from "../../shared/components/Icon.js"
+import { Icon, type IconName } from "../../shared/ui/Icon.js"
 import type { AppView } from "../types.js"
 
 type NavigationDestination = {

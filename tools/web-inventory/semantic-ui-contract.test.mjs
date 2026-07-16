@@ -102,3 +102,28 @@ test('retired unused UI primitives remain absent while Badge stays in use', asyn
   assert.match(statusBadge, /import\s*\{\s*Badge\s*\}\s*from\s*"\.\/Badge\.js"/)
   assert.match(statusBadge, /<Badge\b/)
 })
+
+test('Icon and loading primitives use the shared UI entry without legacy component paths', async () => {
+  const [icon, loading, uiIndex] = await Promise.all([
+    read('apps/web/src/shared/ui/Icon.tsx'),
+    read('apps/web/src/shared/ui/LoadingSpinner.tsx'),
+    read('apps/web/src/shared/ui/index.ts')
+  ])
+  await Promise.all([
+    assert.rejects(read('apps/web/src/shared/components/Icon.tsx'), { code: 'ENOENT' }),
+    assert.rejects(read('apps/web/src/shared/components/LoadingSpinner.tsx'), { code: 'ENOENT' })
+  ])
+
+  const paths = await sourceFiles('apps/web/src')
+  const sources = await Promise.all(paths.map(async (path) => `${path}\n${await read(path)}`))
+  const webSource = sources.join('\n')
+
+  assert.match(icon, /aria-hidden="true"/)
+  assert.match(loading, /role="status"/)
+  assert.match(loading, /aria-live="polite"/)
+  assert.match(loading, /aria-busy="true"/)
+  assert.match(uiIndex, /export\s*\{\s*Icon\s*\}\s*from\s*"\.\/Icon\.js"/)
+  assert.match(uiIndex, /export\s+type\s*\{\s*IconName\s*\}\s*from\s*"\.\/Icon\.js"/)
+  assert.match(uiIndex, /export\s*\{\s*LoadingSpinner,\s*LoadingStatus\s*\}\s*from\s*"\.\/LoadingSpinner\.js"/)
+  assert.doesNotMatch(webSource, /shared\/components\/(?:Icon|LoadingSpinner)(?:\.[cm]?[jt]sx?)?/)
+})

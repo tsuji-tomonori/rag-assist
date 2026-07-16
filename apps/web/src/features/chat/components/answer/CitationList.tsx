@@ -1,4 +1,4 @@
-import { Icon } from "../../../../shared/components/Icon.js"
+import { Icon } from "../../../../shared/ui/Icon.js"
 import type { Message } from "../../types.js"
 
 export function CitationList({ citations }: { citations: NonNullable<Message["result"]>["citations"] }) {

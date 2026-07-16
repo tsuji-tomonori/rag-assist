@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react"
-import { Icon } from "../../../shared/components/Icon.js"
-import { LoadingStatus } from "../../../shared/components/LoadingSpinner.js"
+import { Icon } from "../../../shared/ui/Icon.js"
+import { LoadingStatus } from "../../../shared/ui/LoadingSpinner.js"
 import { formatDateTime } from "../../../shared/utils/format.js"
 import { StatusBadge } from "../../../shared/ui/StatusBadge.js"
 import {

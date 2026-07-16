@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import type { ConversationHistoryItem } from "../types.js"
 import { ConfirmDialog } from "../../../shared/ui/index.js"
-import { Icon } from "../../../shared/components/Icon.js"
+import { Icon } from "../../../shared/ui/Icon.js"
 import { formatDateTime } from "../../../shared/utils/format.js"
 import { searchConversationHistory, type ConversationHistorySearchResult } from "../utils/conversationHistorySearch.js"
 import {

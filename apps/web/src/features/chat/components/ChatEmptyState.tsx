@@ -1,4 +1,4 @@
-import { Icon } from "../../../shared/components/Icon.js"
+import { Icon } from "../../../shared/ui/Icon.js"
 
 export function ChatEmptyState({ documentsCount, onSelectPrompt }: { documentsCount: number; onSelectPrompt: (value: string) => void }) {
   const prompts = [

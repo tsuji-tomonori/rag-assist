@@ -1,5 +1,5 @@
 import { useMemo } from "react"
-import { Icon } from "../../../shared/components/Icon.js"
+import { Icon } from "../../../shared/ui/Icon.js"
 import type { FavoriteItem } from "../types.js"
 import {
   ResourceStateBoundary,

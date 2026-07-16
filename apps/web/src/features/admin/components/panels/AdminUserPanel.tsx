@@ -12,7 +12,7 @@ import {
   type OperationFeedbackEntry,
   type OperationOutcome
 } from "../../../../shared/ui/index.js"
-import { LoadingSpinner } from "../../../../shared/components/LoadingSpinner.js"
+import { LoadingSpinner } from "../../../../shared/ui/LoadingSpinner.js"
 import { managedUserStatusLabel } from "../../../../shared/utils/format.js"
 import { managedUserStatusPresentation } from "../../../../shared/ui/displayMetadata.js"
 import type { UiResourcePartState } from "../../../../shared/ui/ResourceState.js"

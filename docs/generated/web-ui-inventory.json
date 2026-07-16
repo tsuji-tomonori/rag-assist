@@ -1670,6 +1670,7 @@
         "EvidenceDebugTable",
         "FactCoverageTable",
         "Icon",
+        "LoadingSpinner",
         "StatusBadge",
         "article",
         "button",
@@ -1701,6 +1702,7 @@
       ],
       "jsxUsages": [
         "Icon",
+        "LoadingSpinner",
         "footer",
         "span",
         "strong"
@@ -2029,32 +2031,6 @@
       "certainty": "inferred"
     },
     {
-      "file": "apps/web/src/shared/components/Icon.tsx",
-      "feature": "shared",
-      "exports": [
-        "Icon"
-      ],
-      "jsxUsages": [
-        "path",
-        "svg"
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "file": "apps/web/src/shared/components/LoadingSpinner.tsx",
-      "feature": "shared",
-      "exports": [
-        "LoadingSpinner",
-        "LoadingStatus"
-      ],
-      "jsxUsages": [
-        "LoadingSpinner",
-        "div",
-        "span"
-      ],
-      "certainty": "confirmed"
-    },
-    {
       "file": "apps/web/src/shared/ui/Badge.tsx",
       "feature": "shared",
       "exports": [
@@ -2104,6 +2080,32 @@
         "div",
         "span",
         "strong"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/shared/ui/Icon.tsx",
+      "feature": "shared",
+      "exports": [
+        "Icon"
+      ],
+      "jsxUsages": [
+        "path",
+        "svg"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/shared/ui/LoadingSpinner.tsx",
+      "feature": "shared",
+      "exports": [
+        "LoadingSpinner",
+        "LoadingStatus"
+      ],
+      "jsxUsages": [
+        "LoadingSpinner",
+        "div",
+        "span"
       ],
       "certainty": "confirmed"
     },
@@ -10282,9 +10284,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/debug/components/panel/DebugPanelBody.tsx:59:DebugFlowNodeButton",
+      "id": "apps/web/src/features/debug/components/panel/DebugPanelBody.tsx:60:DebugFlowNodeButton",
       "file": "apps/web/src/features/debug/components/panel/DebugPanelBody.tsx",
-      "line": 59,
+      "line": 60,
       "feature": "debug",
       "component": "DebugPanelBody",
       "element": "DebugFlowNodeButton",
@@ -10314,9 +10316,9 @@
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/debug/components/panel/DebugPanelBody.tsx:152:button",
+      "id": "apps/web/src/features/debug/components/panel/DebugPanelBody.tsx:153:button",
       "file": "apps/web/src/features/debug/components/panel/DebugPanelBody.tsx",
-      "line": 152,
+      "line": 153,
       "feature": "debug",
       "component": "DebugFlowNodeButton",
       "element": "button",
@@ -10356,9 +10358,9 @@
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/debug/components/panel/DebugPanelBody.tsx:226:button",
+      "id": "apps/web/src/features/debug/components/panel/DebugPanelBody.tsx:227:button",
       "file": "apps/web/src/features/debug/components/panel/DebugPanelBody.tsx",
-      "line": 226,
+      "line": 227,
       "feature": "debug",
       "component": "DebugStepList",
       "element": "button",
@@ -16670,33 +16672,6 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/shared/components/Icon.tsx:29:svg",
-      "file": "apps/web/src/shared/components/Icon.tsx",
-      "line": 29,
-      "feature": "shared",
-      "component": "Icon",
-      "element": "svg",
-      "isIntrinsic": true,
-      "label": "未推定",
-      "a11y": {
-        "accessibleName": "未推定",
-        "accessibleNameSource": "missing",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [
-        {
-          "name": "aria-hidden",
-          "value": "true"
-        }
-      ],
-      "certainty": "unknown"
-    },
-    {
       "id": "apps/web/src/shared/ui/Button.tsx:19:button",
       "file": "apps/web/src/shared/ui/Button.tsx",
       "line": 19,
@@ -16798,6 +16773,33 @@
         {
           "name": "disabled",
           "value": "busy || confirmDisabled"
+        }
+      ],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/shared/ui/Icon.tsx:29:svg",
+      "file": "apps/web/src/shared/ui/Icon.tsx",
+      "line": 29,
+      "feature": "shared",
+      "component": "Icon",
+      "element": "svg",
+      "isIntrinsic": true,
+      "label": "未推定",
+      "a11y": {
+        "accessibleName": "未推定",
+        "accessibleNameSource": "missing",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "aria-hidden",
+          "value": "true"
         }
       ],
       "certainty": "unknown"

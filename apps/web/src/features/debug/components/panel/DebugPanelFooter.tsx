@@ -1,5 +1,6 @@
 import type { DebugTrace } from "../../types.js"
-import { Icon } from "../../../../shared/components/Icon.js"
+import { Icon } from "../../../../shared/ui/Icon.js"
+import { LoadingSpinner } from "../../../../shared/ui/LoadingSpinner.js"
 import { formatLatency } from "../../../../shared/utils/format.js"
 import type { DebugReplayEnvelope } from "../../utils/debugTraceReplay.js"
 
@@ -27,7 +28,7 @@ export function DebugPanelFooter({
   return (
     <footer className={`debug-footer ${pending ? "processing" : activeTrace?.status ?? "idle"}`}>
       <span className="footer-status">
-        {pending ? <span className="loading-spinner" aria-hidden="true" /> : <Icon name={activeTrace?.status === "warning" ? "warning" : "check"} />}
+        {pending ? <LoadingSpinner /> : <Icon name={activeTrace?.status === "warning" ? "warning" : "check"} />}
         <strong>{statusLabel}</strong>
       </span>
       <span>{pending ? "検索と回答生成を実行しています" : activeTrace ? (activeTrace.isAnswerable ? "正常に完了しました" : "回答拒否として完了しました") : "質問すると実行トレースを保存します"}</span>

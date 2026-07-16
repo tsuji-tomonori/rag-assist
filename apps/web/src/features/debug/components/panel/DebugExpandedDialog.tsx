@@ -1,5 +1,5 @@
 import type { ReactNode } from "react"
-import { Icon } from "../../../../shared/components/Icon.js"
+import { Icon } from "../../../../shared/ui/Icon.js"
 import type { DebugStep } from "../../types.js"
 import type { DebugReplayEnvelope } from "../../utils/debugTraceReplay.js"
 

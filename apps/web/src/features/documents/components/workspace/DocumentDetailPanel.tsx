@@ -1,6 +1,6 @@
 import type { FormEvent, RefObject } from "react"
-import { Icon } from "../../../../shared/components/Icon.js"
-import { LoadingSpinner } from "../../../../shared/components/LoadingSpinner.js"
+import { Icon } from "../../../../shared/ui/Icon.js"
+import { LoadingSpinner } from "../../../../shared/ui/LoadingSpinner.js"
 import { formatDateTime } from "../../../../shared/utils/format.js"
 import type { DocumentGroup, DocumentManifest } from "../../types.js"
 import type { DocumentOperationState, DocumentUploadState } from "../../hooks/useDocuments.js"

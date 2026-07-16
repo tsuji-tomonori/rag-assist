@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react"
-import { Icon } from "../../../shared/components/Icon.js"
+import { Icon } from "../../../shared/ui/Icon.js"
 
 export function UserPromptBubble({ text }: { text: string }) {
   const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "error">("idle")
