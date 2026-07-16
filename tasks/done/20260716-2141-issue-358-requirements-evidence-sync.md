@@ -1,6 +1,6 @@
 # Issue #358 要件 evidence・coverage 同期
 
-- 状態: do
+- 状態: done
 - タスク種別: 要件文書・coverage 是正
 - 対象 Issue: `#358`
 - 対象要件: `FR-018`, `FR-020`, `FR-024`, `FR-053`, `FR-054`, `FR-055`, `FR-088`, `NFR-012`
@@ -111,17 +111,18 @@ GitHub Apps で PR #366 の changed filenames と patch を確認した。`requi
 
 ## 受け入れ条件 / Done 条件
 
-- [ ] 8 要件の現状判定が `confirmed / inferred / conflict / open_question` を区別して記録される。
-- [ ] FR-018 の RRF trace が実在 symbol と test behavior を参照し、存在しない `rank-fusion.ts` を参照しない。
-- [ ] FR-020 の path-only coverage を public ingest の直接 behavior test に差し替え、三抽象度、raw trace、metadata を検証する。
-- [ ] FR-024 AC-006 の conflict を隠さず、Issue #358 で決定済みの Phase 2 管理パネルと permission/API enforcement を現行正規契約にする。
-- [ ] FR-053/054/055 の状態と checkbox が current source/test/CI evidence と一致する。
-- [ ] NFR-012 の metadata allowlist が中央 sanitizer の current policy と一致する。
-- [ ] FR-088 の confidence と coverage が sanitizer unit/service integration evidence と一致する。
-- [ ] PR #366 の `FR-045` coverage hunk と重複しない。
-- [ ] 不足実装・test は検証可能な後続 todo に分離される。
-- [ ] docs check、targeted requirements coverage、変更範囲に見合う API validation が pass する。未実施は理由を記録する。
+- [x] 8 要件の現状判定が `confirmed / inferred / conflict / open_question` を区別して記録される。
+- [x] FR-018 の RRF trace が実在 symbol と test behavior を参照し、存在しない `rank-fusion.ts` を参照しない。
+- [x] FR-020 の path-only coverage を public ingest の直接 behavior test に差し替え、三抽象度、raw trace、metadata を検証する。
+- [x] FR-024 AC-006 の conflict を隠さず、Issue #358 で決定済みの Phase 2 管理パネルと permission/API enforcement を現行正規契約にする。
+- [x] FR-053/054/055 の状態と checkbox が current source/test/CI evidence と一致する。
+- [x] NFR-012 の metadata allowlist が中央 sanitizer の current policy と一致する。
+- [x] FR-088 の confidence と coverage が sanitizer unit/service integration evidence と一致する。
+- [x] PR #366 の `FR-045` coverage hunk と重複しない。
+- [x] 不足実装・test は検証可能な後続 todo に分離される。
+- [x] docs check、targeted requirements coverage、変更範囲に見合う API validation が pass する。未実施は理由を記録する。
 - [ ] PR、受け入れ条件コメント、セルフレビュー、task done 移動、作業レポート、最終 CI 確認まで完了する。
+  - PR、2コメント、task done 移動、作業レポートは完了。final-head CI は本 task/report commit の push 後に確認する。
 
 ## 検証計画
 
@@ -137,3 +138,12 @@ GitHub Apps で PR #366 の changed filenames と patch を確認した。`requi
 - canonical atomic requirements と coverage のみを更新する。
 - API contract/behavior は不変のため README と OpenAPI は更新しない。新しい ingest の direct test は source-backed generated API docs の単体テスト trace に含まれるため、公式 generator で該当 generated docs と manifest を更新する。
 - specification recovery 成果物は作成しない。
+
+## 完了 evidence
+
+- 実装・文書 commit: `985b5705`
+- draft PR: https://github.com/tsuji-tomonori/rag-assist/pull/375
+- 受け入れ条件コメント: https://github.com/tsuji-tomonori/rag-assist/pull/375#issuecomment-4992583700
+- セルフレビュー: https://github.com/tsuji-tomonori/rag-assist/pull/375#issuecomment-4992586524
+- implementation head CI: https://github.com/tsuji-tomonori/rag-assist/actions/runs/29502596156 （success、API/Web coverage・build・CDK synth を含む）
+- final head CI は本 task/report の完了 commit を push 後に確認し、結果を PR top-level comment に記録する。
