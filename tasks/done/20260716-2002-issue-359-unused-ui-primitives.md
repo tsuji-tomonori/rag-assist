@@ -100,7 +100,7 @@ typecheck / build は未使用の export とファイルを許容し、現在の
 
 ## 完了確認
 
-- Draft PR: https://github.com/tsuji-tomonori/rag-assist/pull/367
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/367
 - 受け入れ条件コメント: https://github.com/tsuji-tomonori/rag-assist/pull/367#issuecomment-4991174585
 - セルフレビューコメント: https://github.com/tsuji-tomonori/rag-assist/pull/367#issuecomment-4991174783
 - 判定: 全受け入れ条件を満たし、blocking 指摘なし。
