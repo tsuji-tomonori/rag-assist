@@ -5,22 +5,35 @@
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
+  "typesVersions": {
+    "*": {
+      "infra": [
+        "./src/infra.ts"
+      ],
+      "access-control": [
+        "./src/access-control.ts"
+      ],
+      "rag-quality-control": [
+        "./src/rag-quality-control.ts"
+      ]
+    }
+  },
   "exports": {
     ".": {
       "types": "./src/index.ts",
       "import": "./src/index.ts"
     },
     "./infra": {
-      "types": "./infra.d.ts",
+      "types": "./src/infra.ts",
       "import": "./src/infra.ts"
     },
     "./access-control": {
-      "types": "./access-control.d.ts",
+      "types": "./src/access-control.ts",
       "import": "./src/access-control.ts",
       "require": "./src/access-control.ts"
     },
     "./rag-quality-control": {
-      "types": "./rag-quality-control.d.ts",
+      "types": "./src/rag-quality-control.ts",
       "import": "./src/rag-quality-control.ts",
       "require": "./src/rag-quality-control.ts"
     }
