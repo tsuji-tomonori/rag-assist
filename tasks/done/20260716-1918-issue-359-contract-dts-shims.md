@@ -1,6 +1,6 @@
 # Issue #359 contract 手書き declaration shim 削除
 
-- 状態: do
+- 状態: done
 - タスク種別: 修正
 - 対象 Issue: #359 Phase 1d
 - branch: `codex/issue-359-contract-dts-shims`
@@ -100,15 +100,15 @@ NodeNext への影響:
 
 ## 受け入れ条件
 
-- [ ] `packages/contract/` 直下の対象3 `.d.ts` が削除され、再導入 guard が成功する。
-- [ ] `@memorag-mvp/contract/access-control`、`rag-quality-control`、`infra` の公開 subpath が正規 `src/*.ts` へ型解決される。
-- [ ] 認可型・定数、RAG 品質型、infra runtime env 型の consumer compile が成功する。
-- [ ] contract の test、typecheck、declaration build が成功する。
-- [ ] NodeNext `.js` import / declaration specifier が維持される。
-- [ ] API、Web、infra、benchmark の targeted typecheck/build が成功する。
-- [ ] `npm run ci` と `task docs:check` が成功する。
-- [ ] benchmark / `Taskfile.yml` の変更を含めない。
-- [ ] work report、規約準拠 commit/push、main 向け PR、受け入れ条件コメント、セルフレビューコメント、task done 更新が完了する。
+- [x] `packages/contract/` 直下の対象3 `.d.ts` が削除され、再導入 guard が成功する。
+- [x] `@memorag-mvp/contract/access-control`、`rag-quality-control`、`infra` の公開 subpath が正規 `src/*.ts` へ型解決される。
+- [x] 認可型・定数、RAG 品質型、infra runtime env 型の consumer compile が成功する。
+- [x] contract の test、typecheck、declaration build が成功する。
+- [x] NodeNext `.js` import / declaration specifier が維持される。
+- [x] API、Web、infra、benchmark の targeted typecheck/build が成功する。
+- [x] `npm run ci` と `task docs:check` が成功する。
+- [x] benchmark / `Taskfile.yml` の変更を含めない。
+- [x] work report、規約準拠 commit/push、main 向け PR、受け入れ条件コメント、セルフレビューコメント、task done 更新が完了する。
 
 ## 検証計画
 
@@ -155,3 +155,14 @@ NodeNext への影響:
 - `git diff --check`: pass
 - 初回は共有 root の stale workspace symlink / 不足 dependency と `tsx` IPC 制約で失敗したが、専用 worktree で `npm install` 後に root CI を通常権限で再実行し成功した。
 - `npm install` は package-lock 差分を生成しなかったが、audit は8件（low 2 / moderate 1 / high 5）を報告した。本 task では dependency 更新を行わない。
+
+## PR lifecycle
+
+- 実装 commit: `32bdb54628e66ba9cca676f4ad2938ff6e5bcd35`
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/365
+- 受け入れ条件コメント: https://github.com/tsuji-tomonori/rag-assist/pull/365#issuecomment-4990977389
+- PR 作成時セルフレビュー: https://github.com/tsuji-tomonori/rag-assist/pull/365#issuecomment-4990977543
+- semver: `semver:patch`
+- GitHub Apps の PR 作成2回と label 操作1回が応答停止したため、repository skill の fallback 規定に従い `gh pr create` / `gh pr edit` / `gh api` を使用した。
+- GitHub Actions は task 完了判定時点で実行中。未確認の check を pass として扱っていない。
+- merge / deploy / release は未実施。

@@ -20,7 +20,7 @@
 | R4 | shim 再導入 guard を追加 | 高 | 対応済み・検証済み |
 | R5 | benchmark / Taskfile 変更を分離 | 高 | 対応済み |
 | R6 | root CI と docs check を成功させる | 高 | 対応済み |
-| R7 | PR lifecycle を完了 | 高 | PR 作成前のため継続中 |
+| R7 | PR lifecycle を完了 | 高 | 対応済み |
 
 ## 3. 検討・判断したこと
 
@@ -71,26 +71,29 @@
 
 | 評価軸 | 評価 | 理由 |
 |---|---:|---|
-| 指示網羅性 | 4.7/5 | 実装・検証済み。PR lifecycle はこれから実施 |
+| 指示網羅性 | 5/5 | 実装・検証・PR lifecycle を実施 |
 | 制約遵守 | 5/5 | benchmark / Taskfile /挙動変更を含めず、merge等も未実施 |
 | 成果物品質 | 4.9/5 | resolver 差を比較検証し、再導入 guard を追加 |
 | 説明責任 | 4.9/5 | 初回失敗、修復、open PR 競合、audit を明記 |
 | 検収容易性 | 4.9/5 | task、test、report、コマンド結果を対応付けた |
 
-**総合fit: 4.8/5（約96%）**
+**総合fit: 4.9/5（約98%）**
 
-理由: 実装と要求範囲のローカル検証は完了した。PR 作成・コメント・task done 更新は workflow 後半として継続する。
+理由: 実装、要求範囲のローカル検証、PR、受け入れ条件・セルフレビューコメント、task done 更新を完了した。GitHub Apps の応答停止は規定の `gh` fallback で処理し、GitHub Actions は実行中として未確認を明記した。
 
 ## 8. 未対応・制約・リスク
 
-- 未対応: PR 作成、受け入れ条件コメント、セルフレビューコメント、task done 更新は本レポート作成時点では未実施。
-- 制約: GitHub Actions の新規 PR head 結果は PR 作成後まで未確認。
+- 未対応: なし。merge / deploy / release は禁止事項のため実施していない。
+- 制約: GitHub Actions の PR head 結果は task lifecycle 更新時点で実行中。未確認の check を pass として扱わない。
 - 競合リスク: open PR #339 は `packages/contract/infra.d.ts` を変更し、2026-06-01 更新の head は現在 `CONFLICTING` である。後発の PR #357 は merge 済みで usage/cost 実装を main に収束しているため、#339 の内容は実質的に置き換えられた可能性が高いが、close/supersede は reviewer 判断であり断定しない。#339 を再利用する場合は `src/infra.ts` の現行型を正として競合解消する必要がある。
 - dependency audit: `npm install` は8件（low 2 / moderate 1 / high 5）を報告した。lockfile を変える dependency remediation は本 task 対象外。
 - 既存警告: Web build の 500 kB 超 chunk と infra bundle size warning は root CI を失敗させていない。
 
-## 9. 次に行うこと
+## 9. PR lifecycle 結果
 
-- 規約準拠 commit / push と GitHub Apps PR 作成を行う。
-- PR へ受け入れ条件結果とセルフレビュー結果を日本語で投稿する。
-- task を `tasks/done/` に移し、report の PR lifecycle 状態を更新して追加 commit / push する。
+- 実装 commit: `32bdb54628e66ba9cca676f4ad2938ff6e5bcd35`
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/365
+- 受け入れ条件コメント: https://github.com/tsuji-tomonori/rag-assist/pull/365#issuecomment-4990977389
+- PR 作成時セルフレビュー: https://github.com/tsuji-tomonori/rag-assist/pull/365#issuecomment-4990977543
+- task を `tasks/done/` へ移動し、同 branch の第2 commit / push 対象にした。
+- GitHub Apps の `create_pull_request` が2回、label 操作が1回応答停止したため、fallback 規定に従い `gh pr create`、`gh pr edit`、`gh api` を使用した。
