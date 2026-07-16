@@ -1,6 +1,6 @@
 # Issue #358 TC-003 CloudFront `/api/*` behavior
 
-- 状態: do
+- 状態: done
 - タスク種別: 機能追加
 - 作成日: 2026-07-16
 - 起点: `codex/issue-358-tc003-cors-fail-closed` final head `948832c3`
@@ -73,27 +73,27 @@ CloudFront単一入口はaccepted designとして定義されたが、Distributi
 
 ## 実装チェックリスト
 
-- [ ] CloudFront API origin / ordered behavior / prefix Functionを実装する。
-- [ ] SPA fallbackをdefault behavior専用Functionへ移し、global error responseを撤去する。
-- [ ] forwarding / cache / methods / rewrite / negative invariantをCDK assertionで固定する。
-- [ ] snapshotとgenerated infra docsを同期する。
-- [ ] ADR / HLDに段階2の実装契約、SPA error分離、未実装境界を記録する。
-- [ ] targeted infra test / typecheck / build、root CI、docs checksを実行する。
-- [ ] 日本語commit、draft PR、受け入れ条件コメント、セルフレビュー、task done、作業レポート、final-head CI確認を完了する。
+- [x] CloudFront API origin / ordered behavior / prefix Functionを実装する。
+- [x] SPA fallbackをdefault behavior専用Functionへ移し、global error responseを撤去する。
+- [x] forwarding / cache / methods / rewrite / negative invariantをCDK assertionで固定する。
+- [x] snapshotとgenerated infra docsを同期する。
+- [x] ADR / HLDに段階2の実装契約、SPA error分離、未実装境界を記録する。
+- [x] targeted infra test / typecheck / build、root CI相当のGitHub Actions、docs checksを実行する。
+- [x] 日本語commit、draft PR、受け入れ条件コメント、セルフレビュー、task done、作業レポート、implementation-head CI確認を完了する。
 
 ## 受け入れ条件
 
-- [ ] `/api/v1/health` viewer requestがREST API Gateway originへ `/v1/health` として転送される設定である。
-- [ ] `/api` もSPAへfallbackせずREST API root `/` へ転送される。
-- [ ] API behaviorはall methodsを許可し、CloudFront cacheを無効化する。
-- [ ] API behaviorは `AllViewerExceptHostHeader` を使い、viewer `Host` を除外しつつquery string、`Authorization`、`Last-Event-ID` をoriginへ転送する。
-- [ ] Distribution-level 403/404 custom error responseがなく、APIの401/403/404/5xxをSPA HTMLまたはHTTP 200へ変換しない。
-- [ ] SPA client route fallbackはS3 default behaviorだけに関連付くviewer-request Functionで維持される。
-- [ ] public endpoint、Cognito authorizer、route permission、tenant/resource boundary、RAG safetyを変更しない。
-- [ ] SPA API接続先切替、WebSocket、Hosted UI、direct origin制限を実装済みと扱わない。
-- [ ] snapshot / generated infra docs / ADR / HLDが実装に同期する。
-- [ ] selected validations、root CI、docs checks、final-head GitHub CIが成功する。
-- [ ] 日本語の受け入れ条件コメントとセルフレビューをPR top-level commentに残す。
+- [x] `/api/v1/health` viewer requestがREST API Gateway originへ `/v1/health` として転送される設定である。
+- [x] `/api` もSPAへfallbackせずREST API root `/` へ転送される。
+- [x] API behaviorはall methodsを許可し、CloudFront cacheを無効化する。
+- [x] API behaviorは `AllViewerExceptHostHeader` を使い、viewer `Host` を除外しつつquery string、`Authorization`、`Last-Event-ID` をoriginへ転送する。
+- [x] Distribution-level 403/404 custom error responseがなく、APIの401/403/404/5xxをSPA HTMLまたはHTTP 200へ変換しない。
+- [x] SPA client route fallbackはS3 default behaviorだけに関連付くviewer-request Functionで維持される。
+- [x] public endpoint、Cognito authorizer、route permission、tenant/resource boundary、RAG safetyを変更しない。
+- [x] SPA API接続先切替、WebSocket、Hosted UI、direct origin制限を実装済みと扱わない。
+- [x] snapshot / generated infra docs / ADR / HLDが実装に同期する。
+- [x] selected validations、implementation-head GitHub CI、docs checksが成功する。final-head CIは完了更新push後に確認する。
+- [x] 日本語の受け入れ条件コメントとセルフレビューをPR top-level commentに残す。
 
 ## 検証計画
 
@@ -128,3 +128,15 @@ Taskfile commandを使う場合は実体を確認してから実行し、sandbox
 - PRが作成され、受け入れ条件確認とセルフレビューが日本語top-level commentとして残る。
 - PR作成後にtaskを `tasks/done/` へ移動し、完了更新を同branchへcommit/pushする。
 - final-head GitHub CIの完了結果を確認する。
+
+## 完了結果
+
+- PR: `https://github.com/tsuji-tomonori/rag-assist/pull/376`（draft）
+- merge順 blocker: `#365 → #369 → #374 → #376`
+- implementation commit: `192f37dd`
+- 受け入れ条件コメント: `https://github.com/tsuji-tomonori/rag-assist/pull/376#issuecomment-4992843066`
+- セルフレビュー: `https://github.com/tsuji-tomonori/rag-assist/pull/376#issuecomment-4992847712`
+- GitHub Actions implementation-head run `29504313501`: main CI success、promotion gate skip
+- semver label run `29504874578`: `semver:minor` 1件でsuccess
+- local root CI: sandboxのtsx IPC / loopback listen `EPERM` でblocked。sandbox外の未承認実行は中断し、成功扱いにしていない
+- final-head CI: 本done更新commitのpush後に監視し、結果をPR commentへ追記する
