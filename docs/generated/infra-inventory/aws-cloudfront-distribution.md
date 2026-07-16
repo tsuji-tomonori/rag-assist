@@ -32,6 +32,5 @@ Logical ID: `FrontendDistributionE6EAF405`
 | `defaultRootObject` | index.html |
 | `httpVersion` | http2 |
 | `defaultViewerProtocolPolicy` | redirect-to-https |
-| `origins` | [{"id":"MemoRagMvpStackTestFrontendDistributionOrigin143ACDEE5","domainName":"GetAtt:FrontendBucketEFE2E19C.RegionalDomainName","originAccessControlId":"GetAtt:FrontendDistributionOrigin1S3OriginAccessControl51A3EFC6.Id"}] |
+| `origins` | [{"id":"MemoRagMvpStackTestFrontendDistributionOrigin143ACDEE5","domainName":"GetAtt:FrontendBucketEFE2E19C.RegionalDomainName","originAccessControlId":"GetAtt:FrontendDistributionOrigin1S3OriginAccessControl51A3EFC6.Id"},{"id":"MemoRagMvpStackTestFrontendDistributionOrigin26156DC89","domainName":"{\"Fn::Select\":[2,{\"Fn::Split\":[\"/\",{\"Fn::Join\":[\"\",[\"https://\",{\"Ref\":\"RestApi0C43BF4B\"},\".execute-api.ap-northeast-1.\",{\"Ref\":\"AWS::URLSuffix\"},\"/\",{\"Ref\":\"RestApiDeploymentStage…"}] |
 | `logging` | {"Bucket":{"Fn::GetAtt":["AccessLogsBucket83982689","RegionalDomainName"]},"Prefix":"cloudfront/frontend/"} |
-| `customErrorResponses` | [{"ErrorCode":403,"ResponseCode":200,"ResponsePagePath":"/index.html"},{"ErrorCode":404,"ResponseCode":200,"ResponsePagePath":"/index.html"}] |

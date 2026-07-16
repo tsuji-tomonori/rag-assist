@@ -11,7 +11,7 @@
 ## 全体サマリ
 
 - 対象スタック: `MemoRagMvpStack`
-- CloudFormation resources: 251
+- CloudFormation resources: 253
 
 | 領域 | 件数 |
 | --- | ---: |
@@ -62,6 +62,7 @@
 | `AWS::ApiGateway::GatewayResponse` | 2 | API Gateway error response | [詳細](infra-inventory/aws-apigateway-gatewayresponse.md) |
 | `AWS::ApiGateway::RequestValidator` | 1 | API Gateway request validator | [詳細](infra-inventory/aws-apigateway-requestvalidator.md) |
 | `AWS::ApiGateway::Authorizer` | 1 | API Gateway Cognito authorizer | [詳細](infra-inventory/aws-apigateway-authorizer.md) |
+| `AWS::CloudFront::Function` | 2 | CloudFormation resource | [詳細](infra-inventory/aws-cloudfront-function.md) |
 | `AWS::CloudWatch::Alarm` | 4 | CloudFormation resource | [詳細](infra-inventory/aws-cloudwatch-alarm.md) |
 | `AWS::Events::Rule` | 3 | CloudFormation resource | [詳細](infra-inventory/aws-events-rule.md) |
 | `AWS::SNS::Topic` | 1 | CloudFormation resource | [詳細](infra-inventory/aws-sns-topic.md) |
@@ -105,6 +106,7 @@
 | `AWS::ApiGateway::GatewayResponse` | [aws-apigateway-gatewayresponse.md](infra-inventory/aws-apigateway-gatewayresponse.md) |
 | `AWS::ApiGateway::RequestValidator` | [aws-apigateway-requestvalidator.md](infra-inventory/aws-apigateway-requestvalidator.md) |
 | `AWS::ApiGateway::Authorizer` | [aws-apigateway-authorizer.md](infra-inventory/aws-apigateway-authorizer.md) |
+| `AWS::CloudFront::Function` | [aws-cloudfront-function.md](infra-inventory/aws-cloudfront-function.md) |
 | `AWS::CloudWatch::Alarm` | [aws-cloudwatch-alarm.md](infra-inventory/aws-cloudwatch-alarm.md) |
 | `AWS::Events::Rule` | [aws-events-rule.md](infra-inventory/aws-events-rule.md) |
 | `AWS::SNS::Topic` | [aws-sns-topic.md](infra-inventory/aws-sns-topic.md) |

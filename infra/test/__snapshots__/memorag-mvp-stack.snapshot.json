@@ -14949,6 +14949,82 @@
       "UpdateReplacePolicy": "Delete",
       "DeletionPolicy": "Delete"
     },
+    "SpaRouteRewriteFunction2441F411": {
+      "Type": "AWS::CloudFront::Function",
+      "Properties": {
+        "AutoPublish": true,
+        "FunctionCode": "\nfunction handler(event) {\n  var request = event.request;\n  var uri = request.uri;\n  var lastPathSegment = uri.substring(uri.lastIndexOf(\"/\") + 1);\n\n  if (lastPathSegment.indexOf(\".\") === -1) {\n    request.uri = \"/index.html\";\n  }\n\n  return request;\n}\n",
+        "FunctionConfig": {
+          "Comment": "Rewrite only SPA client routes to index.html; preserve static asset errors",
+          "Runtime": "cloudfront-js-1.0"
+        },
+        "Name": "ap-northeast-1MemoRagMvpStackTeRewriteFunction9EBBE6F6",
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ]
+      }
+    },
+    "ApiPrefixRewriteFunction62A7D75E": {
+      "Type": "AWS::CloudFront::Function",
+      "Properties": {
+        "AutoPublish": true,
+        "FunctionCode": "\nfunction handler(event) {\n  var request = event.request;\n\n  if (request.uri === \"/api\") {\n    request.uri = \"/\";\n  } else if (request.uri.indexOf(\"/api/\") === 0) {\n    request.uri = request.uri.substring(4);\n  }\n\n  return request;\n}\n",
+        "FunctionConfig": {
+          "Comment": "Strip the CloudFront /api prefix before forwarding to REST API Gateway",
+          "Runtime": "cloudfront-js-1.0"
+        },
+        "Name": "ap-northeast-1MemoRagMvpStackTxRewriteFunction029A6A1F",
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ]
+      }
+    },
     "FrontendDistributionOrigin1S3OriginAccessControl51A3EFC6": {
       "Type": "AWS::CloudFront::OriginAccessControl",
       "Properties": {
@@ -14964,21 +15040,78 @@
       "Type": "AWS::CloudFront::Distribution",
       "Properties": {
         "DistributionConfig": {
-          "CustomErrorResponses": [
+          "CacheBehaviors": [
             {
-              "ErrorCode": 403,
-              "ResponseCode": 200,
-              "ResponsePagePath": "/index.html"
+              "AllowedMethods": [
+                "GET",
+                "HEAD",
+                "OPTIONS",
+                "PUT",
+                "PATCH",
+                "POST",
+                "DELETE"
+              ],
+              "CachePolicyId": "4135ea2d-6df8-44a3-9df3-4b5a84be39ad",
+              "Compress": true,
+              "FunctionAssociations": [
+                {
+                  "EventType": "viewer-request",
+                  "FunctionARN": {
+                    "Fn::GetAtt": [
+                      "ApiPrefixRewriteFunction62A7D75E",
+                      "FunctionARN"
+                    ]
+                  }
+                }
+              ],
+              "OriginRequestPolicyId": "b689b0a8-53d0-40ab-baf2-68738e2966ac",
+              "PathPattern": "api",
+              "TargetOriginId": "MemoRagMvpStackTestFrontendDistributionOrigin26156DC89",
+              "ViewerProtocolPolicy": "redirect-to-https"
             },
             {
-              "ErrorCode": 404,
-              "ResponseCode": 200,
-              "ResponsePagePath": "/index.html"
+              "AllowedMethods": [
+                "GET",
+                "HEAD",
+                "OPTIONS",
+                "PUT",
+                "PATCH",
+                "POST",
+                "DELETE"
+              ],
+              "CachePolicyId": "4135ea2d-6df8-44a3-9df3-4b5a84be39ad",
+              "Compress": true,
+              "FunctionAssociations": [
+                {
+                  "EventType": "viewer-request",
+                  "FunctionARN": {
+                    "Fn::GetAtt": [
+                      "ApiPrefixRewriteFunction62A7D75E",
+                      "FunctionARN"
+                    ]
+                  }
+                }
+              ],
+              "OriginRequestPolicyId": "b689b0a8-53d0-40ab-baf2-68738e2966ac",
+              "PathPattern": "api/*",
+              "TargetOriginId": "MemoRagMvpStackTestFrontendDistributionOrigin26156DC89",
+              "ViewerProtocolPolicy": "redirect-to-https"
             }
           ],
           "DefaultCacheBehavior": {
             "CachePolicyId": "658327ea-f89d-4fab-a63d-7e88639e58f6",
             "Compress": true,
+            "FunctionAssociations": [
+              {
+                "EventType": "viewer-request",
+                "FunctionARN": {
+                  "Fn::GetAtt": [
+                    "SpaRouteRewriteFunction2441F411",
+                    "FunctionARN"
+                  ]
+                }
+              }
+            ],
             "TargetOriginId": "MemoRagMvpStackTestFrontendDistributionOrigin143ACDEE5",
             "ViewerProtocolPolicy": "redirect-to-https"
           },
@@ -15012,6 +15145,83 @@
               },
               "S3OriginConfig": {
                 "OriginAccessIdentity": ""
+              }
+            },
+            {
+              "CustomOriginConfig": {
+                "OriginProtocolPolicy": "https-only",
+                "OriginSSLProtocols": [
+                  "TLSv1.2"
+                ]
+              },
+              "DomainName": {
+                "Fn::Select": [
+                  2,
+                  {
+                    "Fn::Split": [
+                      "/",
+                      {
+                        "Fn::Join": [
+                          "",
+                          [
+                            "https://",
+                            {
+                              "Ref": "RestApi0C43BF4B"
+                            },
+                            ".execute-api.ap-northeast-1.",
+                            {
+                              "Ref": "AWS::URLSuffix"
+                            },
+                            "/",
+                            {
+                              "Ref": "RestApiDeploymentStageprod3855DE66"
+                            },
+                            "/"
+                          ]
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              "Id": "MemoRagMvpStackTestFrontendDistributionOrigin26156DC89",
+              "OriginPath": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "/",
+                    {
+                      "Fn::Select": [
+                        3,
+                        {
+                          "Fn::Split": [
+                            "/",
+                            {
+                              "Fn::Join": [
+                                "",
+                                [
+                                  "https://",
+                                  {
+                                    "Ref": "RestApi0C43BF4B"
+                                  },
+                                  ".execute-api.ap-northeast-1.",
+                                  {
+                                    "Ref": "AWS::URLSuffix"
+                                  },
+                                  "/",
+                                  {
+                                    "Ref": "RestApiDeploymentStageprod3855DE66"
+                                  },
+                                  "/"
+                                ]
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                ]
               }
             }
           ]

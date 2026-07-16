@@ -2,6 +2,7 @@ import assert from "node:assert/strict"
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import path from "node:path"
 import test from "node:test"
+import { runInNewContext } from "node:vm"
 import * as cdk from "aws-cdk-lib"
 import { Match, Template } from "aws-cdk-lib/assertions"
 import { APPLICATION_ROLES } from "@memorag-mvp/contract/access-control"
@@ -61,6 +62,13 @@ function getResourceByLogicalIdPrefix(template: Template, logicalIdPrefix: strin
   const matchingEntry = matchingEntries[0]
   assert.ok(matchingEntry)
   return matchingEntry[1] as any
+}
+
+function executeCloudFrontFunction(functionCode: string, uri: string): string {
+  const result = runInNewContext(`${functionCode}\nhandler(event)`, {
+    event: { request: { uri } }
+  }) as { uri: string }
+  return result.uri
 }
 
 test("implements the designed serverless resources", () => {
@@ -457,6 +465,71 @@ test("implements the designed serverless resources", () => {
   for (const stateMachine of stateMachines) {
     assert.equal((stateMachine as any).Properties.TracingConfiguration, undefined)
   }
+})
+
+test("routes exact and nested API paths without rewriting API errors as SPA success responses", () => {
+  const resources = synthesize().toJSON().Resources ?? {}
+  const distributionEntries = Object.entries(resources).filter(([, resource]) => (
+    (resource as any).Type === "AWS::CloudFront::Distribution"
+  ))
+  assert.equal(distributionEntries.length, 1)
+  const distributionConfig = (distributionEntries[0]?.[1] as any).Properties.DistributionConfig
+
+  const functionEntries = Object.entries(resources).filter(([, resource]) => (
+    (resource as any).Type === "AWS::CloudFront::Function"
+  ))
+  assert.equal(functionEntries.length, 2)
+  const spaFunctionEntry = functionEntries.find(([, resource]) => (
+    (resource as any).Properties.FunctionConfig.Comment.includes("SPA client routes")
+  ))
+  const apiFunctionEntry = functionEntries.find(([, resource]) => (
+    (resource as any).Properties.FunctionConfig.Comment.includes("/api prefix")
+  ))
+  assert.ok(spaFunctionEntry)
+  assert.ok(apiFunctionEntry)
+
+  const [spaFunctionLogicalId, spaFunction] = spaFunctionEntry
+  const [apiFunctionLogicalId, apiFunction] = apiFunctionEntry
+  assert.equal(executeCloudFrontFunction(apiFunction.Properties.FunctionCode, "/api"), "/")
+  assert.equal(executeCloudFrontFunction(apiFunction.Properties.FunctionCode, "/api/v1/health"), "/v1/health")
+  assert.equal(executeCloudFrontFunction(apiFunction.Properties.FunctionCode, "/other"), "/other")
+  assert.equal(executeCloudFrontFunction(spaFunction.Properties.FunctionCode, "/settings/profile"), "/index.html")
+  assert.equal(executeCloudFrontFunction(spaFunction.Properties.FunctionCode, "/assets/missing.js"), "/assets/missing.js")
+
+  const apiBehaviors = distributionConfig.CacheBehaviors
+  assert.deepEqual(apiBehaviors.map((behavior: any) => behavior.PathPattern), ["api", "api/*"])
+  for (const behavior of apiBehaviors) {
+    assert.deepEqual(behavior.AllowedMethods, ["GET", "HEAD", "OPTIONS", "PUT", "PATCH", "POST", "DELETE"])
+    assert.equal(behavior.CachePolicyId, "4135ea2d-6df8-44a3-9df3-4b5a84be39ad")
+    // AWS managed AllViewerExceptHostHeader forwards Authorization, Last-Event-ID,
+    // cookies, and all query strings while replacing the viewer Host for API Gateway.
+    assert.equal(behavior.OriginRequestPolicyId, "b689b0a8-53d0-40ab-baf2-68738e2966ac")
+    assert.equal(behavior.FunctionAssociations.length, 1)
+    assert.equal(behavior.FunctionAssociations[0].EventType, "viewer-request")
+    assert.deepEqual(behavior.FunctionAssociations[0].FunctionARN, {
+      "Fn::GetAtt": [apiFunctionLogicalId, "FunctionARN"]
+    })
+    assert.equal(JSON.stringify(behavior).includes(spaFunctionLogicalId), false)
+    assert.equal(behavior.ForwardedValues, undefined)
+  }
+
+  const apiOrigin = distributionConfig.Origins.find((origin: any) => (
+    origin.Id === apiBehaviors[0].TargetOriginId
+  ))
+  assert.ok(apiOrigin)
+  assert.match(JSON.stringify(apiOrigin.DomainName), /RestApi.*execute-api/)
+  assert.match(JSON.stringify(apiOrigin.OriginPath), /RestApiDeploymentStageprod/)
+  assert.deepEqual(apiOrigin.CustomOriginConfig, {
+    OriginProtocolPolicy: "https-only",
+    OriginSSLProtocols: ["TLSv1.2"]
+  })
+
+  assert.equal(distributionConfig.CustomErrorResponses, undefined)
+  assert.equal(distributionConfig.DefaultCacheBehavior.FunctionAssociations.length, 1)
+  assert.deepEqual(distributionConfig.DefaultCacheBehavior.FunctionAssociations[0].FunctionARN, {
+    "Fn::GetAtt": [spaFunctionLogicalId, "FunctionARN"]
+  })
+  assert.equal(JSON.stringify(distributionConfig.DefaultCacheBehavior).includes(apiFunctionLogicalId), false)
 })
 
 test("deploys a scheduled least-privilege revocation reconciliation worker", () => {

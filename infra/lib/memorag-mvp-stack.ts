@@ -1450,6 +1450,49 @@ export class MemoRagMvpStack extends Stack {
       }))
     }
 
+    const spaRouteRewriteFunction = new cloudfront.Function(this, "SpaRouteRewriteFunction", {
+      comment: "Rewrite only SPA client routes to index.html; preserve static asset errors",
+      code: cloudfront.FunctionCode.fromInline(`
+function handler(event) {
+  var request = event.request;
+  var uri = request.uri;
+  var lastPathSegment = uri.substring(uri.lastIndexOf("/") + 1);
+
+  if (lastPathSegment.indexOf(".") === -1) {
+    request.uri = "/index.html";
+  }
+
+  return request;
+}
+`)
+    })
+    const apiPrefixRewriteFunction = new cloudfront.Function(this, "ApiPrefixRewriteFunction", {
+      comment: "Strip the CloudFront /api prefix before forwarding to REST API Gateway",
+      code: cloudfront.FunctionCode.fromInline(`
+function handler(event) {
+  var request = event.request;
+
+  if (request.uri === "/api") {
+    request.uri = "/";
+  } else if (request.uri.indexOf("/api/") === 0) {
+    request.uri = request.uri.substring(4);
+  }
+
+  return request;
+}
+`)
+    })
+    const apiBehavior: cloudfront.BehaviorOptions = {
+      origin: new origins.RestApiOrigin(restApi),
+      allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
+      cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
+      originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
+      viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+      functionAssociations: [{
+        eventType: cloudfront.FunctionEventType.VIEWER_REQUEST,
+        function: apiPrefixRewriteFunction
+      }]
+    }
     const distribution = new cloudfront.Distribution(this, "FrontendDistribution", {
       defaultRootObject: "index.html",
       enableLogging: true,
@@ -1458,12 +1501,16 @@ export class MemoRagMvpStack extends Stack {
       minimumProtocolVersion: cloudfront.SecurityPolicyProtocol.TLS_V1_2_2021,
       defaultBehavior: {
         origin: origins.S3BucketOrigin.withOriginAccessControl(frontendBucket),
-        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS
+        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+        functionAssociations: [{
+          eventType: cloudfront.FunctionEventType.VIEWER_REQUEST,
+          function: spaRouteRewriteFunction
+        }]
       },
-      errorResponses: [
-        { httpStatus: 403, responseHttpStatus: 200, responsePagePath: "/index.html" },
-        { httpStatus: 404, responseHttpStatus: 200, responsePagePath: "/index.html" }
-      ]
+      additionalBehaviors: {
+        api: apiBehavior,
+        "api/*": apiBehavior
+      }
     })
 
     const webDist = path.join(__dirname, "../../apps/web/dist")

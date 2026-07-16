@@ -2,7 +2,7 @@
   "generatedBy": "tools/infra-inventory/generate-infra-inventory.mjs",
   "source": "infra/test/__snapshots__/memorag-mvp-stack.snapshot.json",
   "stackName": "MemoRagMvpStack",
-  "totalResources": 251,
+  "totalResources": 253,
   "totalsByDomain": [
     {
       "domain": "Storage",
@@ -205,6 +205,11 @@
       "type": "AWS::ApiGateway::Authorizer",
       "count": 1,
       "purpose": "API Gateway Cognito authorizer"
+    },
+    {
+      "type": "AWS::CloudFront::Function",
+      "count": 2,
+      "purpose": "CloudFormation resource"
     },
     {
       "type": "AWS::CloudWatch::Alarm",
@@ -2633,6 +2638,10 @@
             "id": "MemoRagMvpStackTestFrontendDistributionOrigin143ACDEE5",
             "domainName": "GetAtt:FrontendBucketEFE2E19C.RegionalDomainName",
             "originAccessControlId": "GetAtt:FrontendDistributionOrigin1S3OriginAccessControl51A3EFC6.Id"
+          },
+          {
+            "id": "MemoRagMvpStackTestFrontendDistributionOrigin26156DC89",
+            "domainName": "{\"Fn::Select\":[2,{\"Fn::Split\":[\"/\",{\"Fn::Join\":[\"\",[\"https://\",{\"Ref\":\"RestApi0C43BF4B\"},\".execute-api.ap-northeast-1.\",{\"Ref\":\"AWS::URLSuffix\"},\"/\",{\"Ref\":\"RestApiDeploymentStage…"
           }
         ],
         "logging": {
@@ -2643,19 +2652,7 @@
             ]
           },
           "Prefix": "cloudfront/frontend/"
-        },
-        "customErrorResponses": [
-          {
-            "ErrorCode": 403,
-            "ResponseCode": 200,
-            "ResponsePagePath": "/index.html"
-          },
-          {
-            "ErrorCode": 404,
-            "ResponseCode": 200,
-            "ResponsePagePath": "/index.html"
-          }
-        ]
+        }
       },
       "detailFilePath": "infra-inventory/aws-cloudfront-distribution.md"
     },
@@ -5081,6 +5078,90 @@
         ]
       },
       "detailFilePath": "infra-inventory/aws-apigateway-authorizer.md"
+    },
+    {
+      "logicalId": "ApiPrefixRewriteFunction62A7D75E",
+      "logicalName": "Api Prefix Rewrite Function",
+      "type": "AWS::CloudFront::Function",
+      "purpose": "Api Prefix Rewrite Function (AWS::CloudFront::Function)",
+      "settings": {
+        "AutoPublish": true,
+        "FunctionCode": "\nfunction handler(event) {\n  var request = event.request;\n\n  if (request.uri === \"/api\") {\n    request.uri = \"/\";\n  } else if (request.uri.indexOf(\"/api/\") === 0) {\n    request.uri = request.uri.substring(4);\n  }\n\n  return request;\n}\n",
+        "FunctionConfig": {
+          "Comment": "Strip the CloudFront /api prefix before forwarding to REST API Gateway",
+          "Runtime": "cloudfront-js-1.0"
+        },
+        "Name": "ap-northeast-1MemoRagMvpStackTxRewriteFunction029A6A1F",
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ]
+      },
+      "detailFilePath": "infra-inventory/aws-cloudfront-function.md"
+    },
+    {
+      "logicalId": "SpaRouteRewriteFunction2441F411",
+      "logicalName": "Spa Route Rewrite Function",
+      "type": "AWS::CloudFront::Function",
+      "purpose": "Spa Route Rewrite Function (AWS::CloudFront::Function)",
+      "settings": {
+        "AutoPublish": true,
+        "FunctionCode": "\nfunction handler(event) {\n  var request = event.request;\n  var uri = request.uri;\n  var lastPathSegment = uri.substring(uri.lastIndexOf(\"/\") + 1);\n\n  if (lastPathSegment.indexOf(\".\") === -1) {\n    request.uri = \"/index.html\";\n  }\n\n  return request;\n}\n",
+        "FunctionConfig": {
+          "Comment": "Rewrite only SPA client routes to index.html; preserve static asset errors",
+          "Runtime": "cloudfront-js-1.0"
+        },
+        "Name": "ap-northeast-1MemoRagMvpStackTeRewriteFunction9EBBE6F6",
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ]
+      },
+      "detailFilePath": "infra-inventory/aws-cloudfront-function.md"
     },
     {
       "logicalId": "RagQualityControlLoopFailureAlarmD9AA7805",

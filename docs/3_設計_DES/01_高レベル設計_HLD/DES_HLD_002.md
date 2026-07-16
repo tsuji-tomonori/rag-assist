@@ -11,7 +11,7 @@
 
 本設計は、現在の SPA / REST API / WebSocket の分離入口から、CloudFront same-origin 単一入口へ安全に移行する順序と、移行期間中の CORS 設定契約を定義する。
 
-本設計だけでは `TC-003` 全体を実装済みにしない。CloudFront behavior、Hosted UI + PKCE、WebSocket ticket、SPA direct origin 除去、signup は個別の後続実装で検証する。
+本設計だけでは `TC-003` 全体を実装済みにしない。REST用CloudFront behaviorは段階2で実装するが、Hosted UI + PKCE、WebSocket ticket / behavior、SPA direct origin 除去、signup は個別の後続実装で検証する。
 
 ## 目標構成
 
@@ -68,24 +68,51 @@ Taskfile の local API は `http://localhost:5173` を明示する。test が暗
 
 | 順序 | 実装単位 | 安全条件 | rollback / blocker |
 | ---: | --- | --- | --- |
-| 1 | CORS fail-closed と shared contract | production exact origin 1件、wildcard 0、API/IaC negative test | 本変更。CloudFront behavior 未実装のため `TC-003` 全体は未達のまま |
-| 2 | CloudFront `/api/*` behavior と prefix rewrite | cache disabled、viewer `Host` 非転送、認証 header 転送 | direct REST origin はまだ emergency rollback用。SPA切替前に到達性を検証 |
+| 1 | CORS fail-closed と shared contract | production exact origin 1件、wildcard 0、API/IaC negative test | 先行変更で実装済み。単独では `TC-003` 全体未達 |
+| 2 | CloudFront `api` / `api/*` behavior と prefix rewrite | cache disabled、viewer `Host` 非転送、認証 header 転送、API errorをSPAへrewriteしない | 本変更。direct REST origin はまだ emergency rollback用。SPA切替前に到達性を検証 |
 | 3 | SPA REST 接続先を `/api/*` 相対 pathへ変更 | production bundleから execute-api / stage URLを除去 | CloudFront API behavior成功後のみ切替 |
 | 4 | Hosted UI + Authorization Code + PKCE | callbackをCloudFront SPA routeへ限定 | signup方針とは別PR。既存認可を迂回しない |
 | 5 | 短命・単回 WebSocket ticketと `/ws/*` behavior | Bearer認証済み発行、TTL 30–120秒、tenant/user binding | ticket検証とconnection保存を同時に導入 |
 | 6 | direct origin制限と最終検証 | SPA設定からdirect origin 0、CORS wildcard 0、401/403/5xx/WS失敗を観測 | 全経路確認後にのみ緊急direct経路を閉じる |
 
-順序2以降は後続 PR であり、本設計更新と順序1の実装だけで完了扱いにしない。
+本変更は順序2までを実装する。順序3以降は後続PRであり、REST behaviorの追加だけで `TC-003` 全体を完了扱いにしない。
+
+## 段階2 REST behavior 実装契約
+
+CloudFront DistributionはREST API Gatewayを `RestApiOrigin` として持ち、次のordered behaviorをdefault S3 behaviorより先に評価する。
+
+| Viewer path pattern | Prefix rewrite | Origin path | Method / cache | Origin request |
+| --- | --- | --- | --- | --- |
+| `api` | `/api` → `/` | REST API deployment stage `prod` | all methods / `CachingDisabled` | `AllViewerExceptHostHeader` |
+| `api/*` | `/api/...` → `/...` | REST API deployment stage `prod` | all methods / `CachingDisabled` | `AllViewerExceptHostHeader` |
+
+AWS managed `AllViewerExceptHostHeader` はviewerの `Host` をAPI Gatewayへ転送せず、API Gateway origin domainの `Host` を使う。`Authorization`、`Last-Event-ID` を含むviewer header、cookie、全query stringはoriginへ転送する。CloudFront cache keyへ認証情報を入れて応答を共有するのではなく、`CachingDisabled` で認証付きresponseを保存しない。
+
+prefix rewriteはviewer-request CloudFront Functionで行う。`/api` exact behaviorを別に持つのは、`api/*` に一致しないAPI root requestがdefault SPA behaviorへ落ちることを防ぐためである。Functionは `/api` または `/api/` prefixだけを変換し、他URIを変更しない。
+
+### SPA fallback と API error の分離
+
+Distribution-level 403/404 custom error responseは設定しない。これはorigin種別を区別せず、APIの認証・認可失敗やresource not foundを `/index.html`、HTTP 200へ変換するためである。
+
+SPA client route fallbackはdefault S3 behaviorのviewer-request Functionだけに関連付ける。最終path segmentに拡張子がないURIを `/index.html` へrewriteし、`/assets/missing.js` のような拡張子付きstatic assetはrewriteしない。このためmissing static assetはS3 originの403/404を保持し、SPA HTMLを成功responseとして返さない。拡張子なしstatic objectを将来配信する場合は専用behaviorまたは明示除外を追加する。
+
+API behaviorsはAPI prefix Functionだけを持ち、SPA Functionを持たない。したがってAPI Gatewayの401/403/404/5xx status/bodyはCloudFrontでSPA HTMLまたは200へ変換されない。CORS、Cognito authorizer、application permission、resource/tenant境界はこのrouting層とは別責務として維持する。
+
+### 段階2の未実装境界
+
+- SPA `config.json` の `apiBaseUrl` はまだexecute-api stage URLを保持する。相対 `/api` への切替は段階3で行う。
+- `/ws/*` behavior、WebSocket ticket、Hosted UI + PKCE、direct origin制限は後続段階とする。
+- CDK assertionはsynthesized policyとrewriteを検証するが、実AWSでの認証、SSE、large payload、error body/statusの疎通を代替しない。段階3へ進む前にpreview環境で確認する。
 
 ## 責務分担
 
 | コンポーネント | 責務 | 非責務 |
 | --- | --- | --- |
 | shared CORS contract | origin syntax、environment rule、件数、wildcard、loopbackを検証 | 認証・認可、runtime response生成 |
-| CDK | single sourceを検証しLambda/API Gatewayへ配布 | request Originの反射、CloudFront API behaviorの先行実装 |
+| CDK | CORS single sourceをLambda/API Gatewayへ配布し、CloudFront REST behaviorとSPA fallback分離を構成 | request Originの反射、application permission判定、SPA接続先の先行切替 |
 | API middleware | 許可済みoriginへだけCORS headerを付与 | CORSによるJWT/permission代替 |
 | API auth / authorization | JWT、active status、feature/resource/tenant境界を維持 | Browser originを本人性の根拠にすること |
-| CloudFront（後続） | SPA/REST/WSの単一入口、path routing、security headers | application permission判定 |
+| CloudFront | SPA/RESTのpath routing。後続でWS単一入口とsecurity headersを追加 | application permission判定 |
 | WebSocket ticket（後続） | 短命・単回・user/tenant binding | 長期JWTのquery露出 |
 
 ## Security invariant
@@ -105,7 +132,9 @@ Taskfile の local API は `http://localhost:5173` を明示する。test が暗
 | public/preflight/auth boundary | `apps/api/src/security/access-control-policy.test.ts` |
 | CDK synth-time fail-closed / single source | `infra/test/memorag-mvp-stack.test.ts` |
 | generated IaC state | CDK snapshot、`docs/generated/infra-*` freshness check |
-| 後続 CloudFront / PKCE / WS / SPA | 後続 PR の assertion、integration、browser/E2E、実環境確認 |
+| CloudFront REST behavior / prefix / cache / forwarding | `infra/test/memorag-mvp-stack.test.ts` のbehavior・managed policy・Function assertion |
+| API error / SPA fallback分離 | global custom error不存在、default/API Function分離、missing asset保持のnegative assertion |
+| 後続 PKCE / WS / SPA切替 | 後続 PR の assertion、integration、browser/E2E、実環境確認 |
 
 ## 関連文書
 
