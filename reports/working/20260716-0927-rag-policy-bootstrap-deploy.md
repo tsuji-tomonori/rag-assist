@@ -53,11 +53,22 @@ PR #360 merge 後の run `29460724158` は policy を active 化したが、112 
 
 ## 指示への fit 評価
 
-repository-local の実装・検証は要件に適合する。GitHub PR、CI、merge、実 deploy、outputs artifact 確認は外部状態を伴う後続工程として、このレポートを更新して最終結果を記録するまで未完了扱いとする。
+repository-local の実装・検証、GitHub PR/CI/merge、実 CDK deploy、一回性 marker、deployment outputs artifact の全てを確認した。承認済み dev policy と自動解決した S3 URI/version context を使い、不足 observation や合格値を合成せずに初回 runtime 反映を完了している。
+
+## 外部実行結果
+
+- PR #362: CI 成功後に merge（`1e332da7c90bfb90e7f48bec1dbc564d4b4226f3`）。初回 bootstrap 制御を導入。
+- deploy run `29463654225`: authorization、artifact upload、build、synth は成功。Cognito custom attribute `session_invalid_after` の21文字が AWS 上限20を超え、CloudFormation が rollback。完了 marker は未作成。
+- PR #363: attribute を共有 contract の `session_invalid_at`（18文字）へ統一し、CI 成功後に merge（`cc67e6bb0bc52cba534b349e69bbd900f72affe1`）。
+- deploy run `29464411514`: 2026-07-16 10:38 JST に CDK deploy、bootstrap completion marker、deployment outputs upload がすべて成功。
+- outputs artifact: `memorag-cdk-outputs-dev` / artifact ID `8362469628`。`infra/cdk-outputs.json` と `artifacts/rag-bootstrap/bootstrap-completion.json` を取得して内容を確認。
+- policy URI: `s3://memoragmvpstack-documentsbucket9ec9deb9-giqftcaymarh/quality-control/promotion-candidates/2026-07-16.draft-1/cc67e6bb0bc52cba534b349e69bbd900f72affe1/29464411514/policy.json`
+- observations URI: 同 prefix の `observations.json`。
+- frontend: `https://d1k7muyw0zb6oo.cloudfront.net` は HTTP 200。
+- API `/health` と `/openapi.json` の無認証 probe は HTTP 401。現行の認証境界と一致するため、認証済み API smoke は未実施として区別する。
 
 ## 未対応・制約・リスク
 
-- PR #362 は CI 成功後に merge 済み（merge commit `1e332da7c90bfb90e7f48bec1dbc564d4b4226f3`）。bootstrap run `29463654225` は authorization、artifact upload、build、synth まで成功したが、Cognito custom attribute `session_invalid_after` が AWS の20文字上限を超えて CloudFormation update が rollback した。完了 marker と deployment outputs は未作成である。
-- 原因修正として attribute を共有 contract の `session_invalid_at` へ統一し、最大20文字の contract test、API writer/reader test、CDK snapshot を更新する。修正 PR の CI/merge と bootstrap 再実行が完了するまでタスク状態は `do` を維持する。
 - bootstrap は promotion pass ではない。deploy 後も observation が揃うまで通常 main push の deploy は保留される。
-- production source sample から全必須 observation が収束する時刻と unavailable signal は実 deploy 後の運用確認対象である。
+- production source sample から全必須 observation が収束する時刻と unavailable signal は継続運用の確認対象であり、今回の初回 deploy 完了と区別する。
+- Cognito MFA と API WAF の cdk-nag warning、GitHub Actions Node.js 20 deprecation warning は既存の非 blocking warning として残る。
