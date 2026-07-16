@@ -58,7 +58,9 @@ reconciliation workerはcaller入力を権限根拠にせず、設定済みtenan
 - root full lint: 成功（`npm run lint -w @memorag-mvp/api` はworkspaceにlint scriptがなく失敗したため、正規root scriptで再実行）
 - infra full test: 38 / 38成功。初回はbuildとtestの同時bundleでasset競合し14件失敗、単独再実行後はsnapshotのみ期待差分、snapshot更新後に更新フラグなしで38 / 38成功
 - CloudFormation snapshot: workerへdocument-groups table/indexの`dynamodb:GetItem` / `dynamodb:Query`だけを追加
-- OpenAPI / source-backed API docs / canonical docs / infra inventory / hidden Unicode: 成功
+- OpenAPI / source-backed API docs / canonical docs / hidden Unicode: 成功
+- infra inventory: PR初回CIでworker IAM追加に対するgenerated inventory staleを検出。正規generatorでIAM policy / resource inventoryを更新し、check再実行後に成功
 - product runtime source audit: dataset-specific branch 0件
 - `git diff --check`: 成功
 - `npm ci`: 成功（既存8 vulnerabilitiesを報告）
+- PR初回CI: infra inventory staleのため失敗（run `29516680418`）。generated inventoryを同期して再実行対象とした

@@ -25,7 +25,8 @@ resolverはmutationを再実行しない。tenant/group-scoped authoritative mem
 - API full suite: 811 / 811成功。
 - API / infra typecheck、API / infra build、root full lint: 成功。
 - infra full test: snapshot更新後、更新フラグなしで38 / 38成功。
-- OpenAPI、source-backed API docs（97 APIs / 582 documents）、canonical docs、infra inventory、hidden Unicode: 成功。
+- OpenAPI、source-backed API docs（97 APIs / 582 documents）、canonical docs、hidden Unicode: 成功。
+- infra inventory: PR初回CIでstaleを検出後、正規generatorでIAM policy / resource inventoryを同期し、check成功。
 - product runtime source audit: dataset-specific branch 0件。
 - `git diff --check`: 成功。
 - `npm ci`: 成功。既存8 vulnerabilitiesを報告。
@@ -35,6 +36,7 @@ resolverはmutationを再実行しない。tenant/group-scoped authoritative mem
 - access-control policy testをrepository環境変数なしで直接実行してguard profile起動前fail。正規test環境を指定して再実行し成功。
 - `npm run lint -w @memorag-mvp/api` はworkspaceにlint scriptがなく失敗。正規root `npm run lint`で成功。
 - infra build/testを同時実行して同じ`lambda-dist`を競合更新し14件asset missing。単独再実行ではsnapshot差分1件のみとなり、意図したIAM差分を更新後、通常再実行で38 / 38成功。
+- PR初回MemoRAG CI run `29516680418` は、worker IAM追加に対するgenerated infra inventory未同期を検出して失敗。`npm run docs:infra-inventory`で生成物を更新し、`npm run docs:infra-inventory:check`成功後に修復commitとCI再実行へ進めた。
 
 ## 指示への fit 評価
 
