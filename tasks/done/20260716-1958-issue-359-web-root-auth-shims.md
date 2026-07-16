@@ -1,6 +1,6 @@
 # Issue #359 Web root auth shim の feature entry 収束
 
-- 状態: done（E2E/smoke は環境制約による未実施を残余リスクとして記録）
+- 状態: done
 - 種別: 修正
 - Issue: #359 Phase 1b
 - 作業ブランチ: `codex/issue-359-web-root-shims`
@@ -17,7 +17,7 @@
 - [x] root `LoginPage.tsx`、`LoginPage.test.tsx`、`authClient.ts`、`authClient.test.ts` を削除し、保持すべき test を feature 側へ統合する。
 - [x] legacy root shim の再導入を検出する guard test を追加する。
 - [x] production UI のデータ由来、認証状態、アクセシブルな name/role/state を変更していないことをレビューする。
-- [ ] 対象 test、Web full coverage/typecheck/build、root CI、Web inventory/trace/semantic、login E2E/smoke を実行し、成功させる（E2E/smoke のみ sandbox 制約で未実施）。
+- [x] 対象 test、Web full coverage/typecheck/build、root CI、Web inventory/trace/semantic、login E2E/smoke を実行し、成功させる。
 - [x] 作業レポート、commit/push、main 向け PR、受け入れ確認コメント、セルフレビュー、task done 更新を完了する。
 
 ## なぜなぜ分析 / RCA
@@ -78,7 +78,7 @@ root authClient.test.ts ────────────────┘
 - [x] `npm run ci` が成功する。
 - [x] `npm run test:coverage -w @memorag-mvp/web` が成功する。
 - [x] `npm run docs:web-inventory:check`、`npm run docs:web-trace:test`、`npm run test:web-semantic-ui` が成功する。
-- [ ] login flow の Playwright E2E/smoke が成功する。
+- [x] login flow の Playwright E2E/smoke が成功する。
 - [x] README / `docs/` / API / 運用手順の挙動記述は変更不要と確認し、generated inventory が fresh である。
 
 ## 完了記録
@@ -88,4 +88,4 @@ root authClient.test.ts ────────────────┘
 - 受け入れ確認コメント: `https://github.com/tsuji-tomonori/rag-assist/pull/368#issuecomment-4991329078`
 - セルフレビューコメント: `https://github.com/tsuji-tomonori/rag-assist/pull/368#issuecomment-4991329080`
 - GitHub Apps は60秒 timeout し、同一 head の PR が未作成であることを確認してから `gh` fallback を使用した。
-- `playwright.config.ts`、Web/API/root package scripts は `origin/main` と差分0であり、E2E の `tsx` IPC `listen EPERM` は今回差分外の sandbox 制約である。login E2E/smoke は未実施のため受け入れ条件を達成済みにはしていない。
+- sandbox 内では `tsx` IPC `listen EPERM` だったが、ユーザー承認の sandbox 外実行で対象 login E2E が Chromium 2/2 pass（login visual 845ms、sign-in 後 chat empty 736ms、計5.7秒）した。localhost の test API/Web と Chrome のみを利用し、外部/production 状態は変更していない。

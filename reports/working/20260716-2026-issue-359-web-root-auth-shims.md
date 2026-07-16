@@ -73,19 +73,19 @@
 | `npm run test:web-semantic-ui` | pass | 1 test |
 | `npm run ci` | pass | lint、全 workspace typecheck/test/build。API 801、Web 441、infra 38、benchmark 102、contract 1 test pass |
 | `git diff --check` | pass | whitespace error 0 |
-| `npm run test:e2e -w @memorag-mvp/web -- e2e/visual-regression.spec.ts --grep 'ログイン画面\|チャット空状態'` | blocked / 未実施 | sandbox 内で `tsx` IPC socket `/tmp/tsx-1000/223.pipe` の `listen EPERM`。sandbox 外の実行承認待ちが長時間継続し中断された |
-| `npm run test:e2e:smoke -w @memorag-mvp/web` | 未実施 | 同じ local API 起動制約があるため成功扱いにしていない |
+| `npm run test:e2e -w @memorag-mvp/web -- e2e/visual-regression.spec.ts --grep 'ログイン画面\|チャット空状態'` | pass | ユーザー承認の sandbox 外実行。Chromium 2/2（login visual 845ms、sign-in 後 chat empty 736ms）、計5.7秒 |
+| `npm run test:e2e:smoke -w @memorag-mvp/web` | 未実施 | 広域 smoke suite は今回差分外。対象 login journey 2件を直接実行して受け入れを確認 |
 | `git diff --exit-code origin/main -- apps/web/playwright.config.ts apps/web/package.json apps/api/package.json package.json` | pass | E2E 起動経路は main と差分0。今回差分外の sandbox 制約と確認 |
 
 ## 指示への fit 評価
 
 - Login/auth root shim の正規 path 収束、test 移管、再導入 guard、契約維持、no-mock/a11yレビュー、root/Web/docs 自動検証は満たした。
 - `src/api.ts` は安全性と open PR overlap を理由に独立 task とし、不確かな一括削除を行わなかった。
-- login E2E/smoke は環境制約により未実施であり、受け入れ条件を満たした扱いにはしていない。
+- sandbox 外の対象 login E2E 2件が成功し、login journey の受け入れ条件を確認した。
 
 ## 未対応・制約・リスク
 
-- login E2E/smoke は sandbox 外実行が必要。失敗コマンドと localhost のみの影響範囲を親 task へ共有済み。
+- 対象 login E2E は sandbox 外で成功した。実行対象は localhost の test API/Web と Chrome のみで、外部/production 状態変更はない。広域 smoke suite は実施していない。
 - `src/api.ts` と `api.test.ts` の feature/shared 分割は follow-up task で行う。
 - PR #338 の `useAppShellState*` 変更と auth type import 行が rebase 時に競合する可能性がある。挙動上の重複はない。
 - build の chunk-size warning と `npm install` が報告した dependency vulnerability は今回の import-only scope 以前からの既存事項で、本 task では変更していない。
@@ -96,4 +96,4 @@
 - GitHub Apps の PR 作成は60秒 timeout し、同一 head の PR が存在しないことを確認してから `gh` fallback で PR #368 を作成した。
 - `semver:patch` label を設定した。
 - 日本語の受け入れ確認コメントとセルフレビューコメントを投稿した。
-- E2E/smoke の未達をコメントと PR 本文に残し、達成済みとは記載していない。
+- sandbox 外の対象 login E2E 2件の成功を task/report/PR へ反映した。
