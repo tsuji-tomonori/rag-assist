@@ -6,7 +6,11 @@ import { runInNewContext } from "node:vm"
 import * as cdk from "aws-cdk-lib"
 import { Match, Template } from "aws-cdk-lib/assertions"
 import { APPLICATION_ROLES } from "@memorag-mvp/contract/access-control"
-import { MemoRagMvpStack, resolveDeployedCorsAllowedOrigin } from "../lib/memorag-mvp-stack"
+import {
+  createDeployedFrontendRuntimeConfig,
+  MemoRagMvpStack,
+  resolveDeployedCorsAllowedOrigin
+} from "../lib/memorag-mvp-stack"
 
 function synthesize(context?: Record<string, string>) {
   const app = new cdk.App({
@@ -530,6 +534,37 @@ test("routes exact and nested API paths without rewriting API errors as SPA succ
     "Fn::GetAtt": [spaFunctionLogicalId, "FunctionARN"]
   })
   assert.equal(JSON.stringify(distributionConfig.DefaultCacheBehavior).includes(apiFunctionLogicalId), false)
+})
+
+test("keeps the deployed SPA on same-origin /api without changing internal execute-api consumers", () => {
+  const frontendConfig = createDeployedFrontendRuntimeConfig({
+    cognitoRegion: "ap-northeast-1",
+    cognitoUserPoolId: "pool-1",
+    cognitoUserPoolClientId: "client-1"
+  })
+  assert.deepEqual(frontendConfig, {
+    apiBaseUrl: "/api",
+    authMode: "cognito",
+    cognitoRegion: "ap-northeast-1",
+    cognitoUserPoolId: "pool-1",
+    cognitoUserPoolClientId: "client-1"
+  })
+  assert.doesNotMatch(JSON.stringify(frontendConfig), /execute-api|amazonaws\.com\/prod/)
+
+  const template = synthesize().toJSON()
+  for (const outputName of ["ApiUrl", "OpenApiUrl"]) {
+    assert.match(JSON.stringify(template.Outputs?.[outputName]?.Value), /RestApi.*execute-api/)
+  }
+
+  const benchmarkTargetValues = Object.values(template.Resources ?? {}).flatMap((resource: any) => {
+    if (resource.Type !== "AWS::Lambda::Function") return []
+    const value = resource.Properties.Environment?.Variables?.BENCHMARK_TARGET_API_BASE_URL
+    return value === undefined ? [] : [value]
+  })
+  assert.ok(benchmarkTargetValues.length > 0)
+  for (const value of benchmarkTargetValues) {
+    assert.match(JSON.stringify(value), /RestApi.*execute-api/)
+  }
 })
 
 test("deploys a scheduled least-privilege revocation reconciliation worker", () => {

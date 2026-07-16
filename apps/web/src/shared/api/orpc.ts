@@ -2,18 +2,18 @@ import { createORPCClient } from "@orpc/client"
 import { RPCLink } from "@orpc/client/fetch"
 import type { ApiClient } from "@memorag-mvp/contract"
 import { createHeaders } from "./http.js"
-import { getApiBaseUrl } from "./runtimeConfig.js"
+import { getApiBaseUrl, joinApiPath } from "./runtimeConfig.js"
 
 let cachedBaseUrl: string | undefined
 let cachedClient: ApiClient | undefined
 
 export async function getOrpcClient(): Promise<ApiClient> {
-  const baseUrl = (await getApiBaseUrl()).replace(/\/$/, "")
+  const baseUrl = await getApiBaseUrl()
 
   if (cachedClient && cachedBaseUrl === baseUrl) return cachedClient
 
   const link = new RPCLink({
-    url: `${baseUrl}/rpc`,
+    url: joinApiPath(baseUrl, "/rpc"),
     headers: () => createHeaders(false) as Record<string, string>,
     fetch: async (request, init) => {
       const body = request.method === "GET" || request.method === "HEAD" ? undefined : await request.clone().text()

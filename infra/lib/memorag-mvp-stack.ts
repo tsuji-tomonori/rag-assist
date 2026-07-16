@@ -39,6 +39,20 @@ export interface MemoRagMvpStackProps extends StackProps {
   readonly includeFrontendDeployment?: boolean
 }
 
+export function createDeployedFrontendRuntimeConfig(props: {
+  readonly cognitoRegion: string
+  readonly cognitoUserPoolId: string
+  readonly cognitoUserPoolClientId: string
+}) {
+  return {
+    apiBaseUrl: "/api",
+    authMode: "cognito" as const,
+    cognitoRegion: props.cognitoRegion,
+    cognitoUserPoolId: props.cognitoUserPoolId,
+    cognitoUserPoolClientId: props.cognitoUserPoolClientId
+  }
+}
+
 const defaultResourceTags = {
   Project: "memorag-bedrock-mvp",
   Application: "MemoRAG",
@@ -1519,13 +1533,11 @@ function handler(event) {
       new s3deploy.BucketDeployment(this, "DeployFrontend", {
         sources: [
           s3deploy.Source.asset(webDist),
-          s3deploy.Source.jsonData("config.json", {
-            apiBaseUrl: restApiBaseUrl,
-            authMode: "cognito",
+          s3deploy.Source.jsonData("config.json", createDeployedFrontendRuntimeConfig({
             cognitoRegion: cdk.Aws.REGION,
             cognitoUserPoolId: userPool.userPoolId,
             cognitoUserPoolClientId: userPoolClient.userPoolClientId
-          })
+          }))
         ],
         destinationBucket: frontendBucket,
         distribution,
