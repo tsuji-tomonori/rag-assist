@@ -26,7 +26,7 @@ import * as tasks from "aws-cdk-lib/aws-stepfunctions-tasks"
 import * as cr from "aws-cdk-lib/custom-resources"
 import { NagSuppressions } from "cdk-nag"
 import type { Construct } from "constructs"
-import { APPLICATION_ROLES } from "@memorag-mvp/contract/access-control"
+import { APPLICATION_ROLES, COGNITO_SESSION_INVALID_AT_ATTRIBUTE_NAME } from "@memorag-mvp/contract/access-control"
 import type { ApiFunctionRuntimeEnv, ApiRuntimeEnv } from "@memorag-mvp/contract/infra"
 
 export interface MemoRagMvpStackProps extends StackProps {
@@ -350,7 +350,7 @@ export class MemoRagMvpStack extends Stack {
       mfaSecondFactor: { sms: false, otp: true },
       passwordPolicy: { minLength: 12, requireLowercase: true, requireUppercase: true, requireDigits: true, requireSymbols: true },
       customAttributes: {
-        session_invalid_after: new cognito.NumberAttribute({ mutable: true, min: 0 })
+        [COGNITO_SESSION_INVALID_AT_ATTRIBUTE_NAME]: new cognito.NumberAttribute({ mutable: true, min: 0 })
       },
       accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
       removalPolicy: RemovalPolicy.DESTROY

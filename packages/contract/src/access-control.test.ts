@@ -2,6 +2,8 @@ import assert from "node:assert/strict"
 import test from "node:test"
 import {
   APPLICATION_ROLES,
+  COGNITO_SESSION_INVALID_AT_ATTRIBUTE_NAME,
+  COGNITO_SESSION_INVALID_AT_USER_ATTRIBUTE,
   APPLICATION_ROLE_DISPLAY_CATALOG,
   DEFAULT_APPLICATION_ROLE,
   RESOURCE_OPERATION_FEATURE_PERMISSIONS,
@@ -10,6 +12,12 @@ import {
   UNASSIGNED_APPLICATION_PERMISSIONS,
   isApplicationRole
 } from "./access-control.js"
+
+test("Cognito session revocation attribute stays within the service name limit", () => {
+  assert.equal(COGNITO_SESSION_INVALID_AT_ATTRIBUTE_NAME, "session_invalid_at")
+  assert.ok(COGNITO_SESSION_INVALID_AT_ATTRIBUTE_NAME.length <= 20)
+  assert.equal(COGNITO_SESSION_INVALID_AT_USER_ATTRIBUTE, "custom:session_invalid_at")
+})
 
 test("canonical role catalog has a version and exactly one definition for every role", () => {
   assert.match(ROLE_CATALOG_VERSION, /^memorag-access-role-catalog-v\d+$/)

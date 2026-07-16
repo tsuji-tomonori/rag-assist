@@ -17,6 +17,7 @@ import { rolePermissions } from "../authorization.js"
 import type { ManagedUser } from "../types.js"
 import {
   APPLICATION_ROLES,
+  COGNITO_SESSION_INVALID_AT_USER_ATTRIBUTE,
   isApplicationRole,
   type ApplicationRole
 } from "@memorag-mvp/contract/access-control"
@@ -203,7 +204,7 @@ export class CognitoUserDirectory implements UserDirectory {
     await this.client.send(new AdminUpdateUserAttributesCommand({
       UserPoolId: this.userPoolId,
       Username: username,
-      UserAttributes: [{ Name: "custom:session_invalid_after", Value: String(this.now().getTime()) }]
+      UserAttributes: [{ Name: COGNITO_SESSION_INVALID_AT_USER_ATTRIBUTE, Value: String(this.now().getTime()) }]
     }))
     await this.client.send(new AdminUserGlobalSignOutCommand({ UserPoolId: this.userPoolId, Username: username }))
   }
