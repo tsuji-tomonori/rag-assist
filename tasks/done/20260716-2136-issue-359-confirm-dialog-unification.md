@@ -1,6 +1,6 @@
 # Issue #359 Phase 3a ConfirmDialog primitive 一本化
 
-- 状態: do
+- 状態: done
 - タスク種別: 修正
 - 対象 issue: #359 Phase 3a
 - 作業ブランチ: `codex/issue-359-confirm-dialog-unification`
@@ -149,7 +149,7 @@ shared/ui/ConfirmDialog (正本化)
 - [x] Web targeted tests、full coverage、typecheck、build、semantic / inventory / trace checks が成功する。
 - [x] 対象 Playwright keyboard/dialog journey が実行可能なら成功し、不可なら理由と残余リスクを記録する。
 - [x] root CI、docs check、pre-commit、`git diff --check` が成功する。
-- [ ] 日本語 PR、受け入れ条件コメント、セルフレビュー、task done、report、final CI SUCCESS を完了する。
+- [x] 日本語 PR、受け入れ条件コメント、セルフレビュー、task done、report、final CI SUCCESS を完了する。
 
 ## Done 条件
 
@@ -178,6 +178,14 @@ shared/ui/ConfirmDialog (正本化)
 - `npm run ci`: passed（API 801、Web 446、infra 38、benchmark 102 tests を含む）。
 - 変更ファイル限定 `pre-commit run --files ...`: passed。
 - `git diff --check`: passed。
+
+## PR lifecycle
+
+- draft PR: #373 `♿️ ConfirmDialog の操作契約を一本化する`
+- semver label: `semver:patch`。ラベル付与前の validation 1回は失敗し、付与後の再評価は成功。
+- 日本語の受け入れ条件確認コメントとセルフレビューコメントを投稿済み。
+- implementation head `f57cdbfae1c671764894bc91097d40fd36096a77`: MemoRAG CI run `29500604375` success、Validate Semver Label run `29500674855` success。
+- merge blocker: PR #367 の先行 merge。merge / deploy / release は未実施。
 
 ## ドキュメント保守計画
 
