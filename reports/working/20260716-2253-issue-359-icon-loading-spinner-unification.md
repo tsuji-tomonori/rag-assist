@@ -5,7 +5,7 @@
 - ブランチ: `codex/issue-359-icon-loading-spinner-unification`
 - 起点: PR #373 final head `fab8471c2cd8fdb17d1478393ad6e7ae7213cd98`
 - 依存順: PR #367 → PR #373 → 本タスク PR
-- 状態: PR lifecycle / GitHub E2E 待ち
+- 状態: partially complete（PR #361 の visual tolerance merge dependency）
 
 ## 受けた指示
 
@@ -59,10 +59,17 @@ Icon / LoadingSpinner の production entry を `shared/ui` に一本化し、互
 | root `npm run ci` | 成功（API 801 / Web 449 / Infra 38 / Benchmark 102、全 build 成功） |
 | `git diff --check` | 成功 |
 | 変更ファイル限定 pre-commit | 成功 |
-| GitHub E2E smoke / full | 未実施（push 後に workflow dispatch 予定） |
+| GitHub E2E smoke | implementation head / strict base とも成功 |
+| GitHub E2E full | 両 head とも同一 6 visual snapshot mismatch、21 / 27 成功。PR #361 待ち |
 | latest-head GitHub CI | 未実施（PR lifecycle 後に確認予定） |
 
 ローカル Playwright の関連 6 tests は、`npx playwright test e2e/visual-regression.spec.ts --grep 'E2E-UI-(SEMANTIC-001|NAV-002|STATE-001)'` 実行時、test 開始前に `Error: listen EPERM: operation not permitted /tmp/tsx-1000/224.pipe` で Playwright webServer が起動できなかった。権限昇格は行わず、既存 `.github/workflows/e2e.yml` の GitHub-hosted smoke / full E2E を代替 evidence とする。
+
+implementation head `f4dfa8d0` の GitHub E2E run [29504363097](https://github.com/tsuji-tomonori/rag-assist/actions/runs/29504363097) は `smoke` が成功した。full は 27 件中 21 件が成功し、6 visual snapshots が `login=19`、`chat-empty=85`、`chat-answer-citations=60`、`debug-panel=142`、`documents-workspace=219`、`chat-empty-mobile=89` pixels（各 ratio 0.01）の差で失敗した。failed job を 1 回再実行した attempt 2 も同一 6 件・同一 pixel 数で失敗したため、偶発的 flake ではない。
+
+strict base `fab8471c` を同じ workflow / runner で比較した run [29505240296](https://github.com/tsuji-tomonori/rag-assist/actions/runs/29505240296) も、`smoke` 成功、full 21 / 27 成功、同一 6 件・同一 pixel 数の visual failure だった。strict base から E2E source、snapshot、CSS、package lock に変更はなく、Icon / LoadingSpinner は 100% rename、Debug spinner は同じ `span.loading-spinner[aria-hidden=true]` DOM contract である。したがって今回の behavior regression ではなく、既存 baseline / runner anti-aliasing mismatch と確定した。
+
+正規解決は既存 draft PR #361 が導入する `maxDiffPixels=300` である。本 PR では snapshot / tolerance を重複変更せず、PR #361 の merge dependency として明示する。full E2E success は未達なので task を done にせず `tasks/do` に維持する。
 
 ## 指示への fit 評価
 
@@ -73,7 +80,8 @@ Icon / LoadingSpinner の production entry を `shared/ui` に一本化し、互
 
 ## 未対応・制約・リスク
 
-- GitHub E2E、draft PR、semver label、受け入れ条件コメント、セルフレビュー、task done、latest-head CI は、このレポート作成後の lifecycle で完了させる。
+- draft PR、semver label、受け入れ条件コメント、セルフレビュー、latest-head CI は、このレポート更新後の lifecycle で完了させる。
+- full visual E2E success と task done は PR #361 の merge dependency。strict base と同一失敗で新変更起因ではないが、成功済みとして扱わない。
 - manual screen reader / 実機確認は未実施。unit / semantic / axe / mobile navigation / loading-state E2E を自動回帰 evidence とする。
 - `npm ci` は既存 8 vulnerabilities（low 2 / moderate 1 / high 5）を報告した。今回の primitive 移動とは独立しており、`npm audit fix` は行っていない。
 - stacked PR は PR #367 / #373 の merge 前には main 差分に依存 commit を含む。PR #338 は ChatComposer import と generated Web docs、PR #361 は Playwright 周辺、PR #368 は LoginPage / RailNav に競合余地がある。

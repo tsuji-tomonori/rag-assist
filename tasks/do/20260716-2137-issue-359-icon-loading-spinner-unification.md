@@ -137,6 +137,9 @@ generated Web inventory
 - `pre-commit run --files <changed-files>`: 成功（git-secrets、hidden Unicode、whitespace、large file、merge conflict、mixed line ending）。
 - `git diff --check`: 成功。
 - local Playwright: `npx playwright test e2e/visual-regression.spec.ts --grep 'E2E-UI-(SEMANTIC-001|NAV-002|STATE-001)'` は test 開始前に `listen EPERM: operation not permitted /tmp/tsx-1000/224.pipe` で webServer 起動不能。権限昇格は行わず、push 後に既存 GitHub Actions `e2e.yml` の smoke / full E2E で代替する。
+- implementation head GitHub E2E run [29504363097](https://github.com/tsuji-tomonori/rag-assist/actions/runs/29504363097): `smoke` 成功。full は 27 件中 21 件成功、visual snapshot 6 件が `login=19`、`chat-empty=85`、`chat-answer-citations=60`、`debug-panel=142`、`documents-workspace=219`、`chat-empty-mobile=89` pixels（各 ratio 0.01）の差で失敗。failed job を 1 回再実行した attempt 2 も同一 6 件・同一 pixel 数だった。
+- strict base `fab8471c` GitHub E2E run [29505240296](https://github.com/tsuji-tomonori/rag-assist/actions/runs/29505240296): `smoke` 成功。full は implementation head と完全に同じ 6 件・同じ pixel 数で失敗した。strict base から E2E source / snapshot / CSS / package lock に変更がなく、今回の behavior regression ではなく既存 baseline / runner mismatch と確定した。
+- full visual の正規解決は PR #361 が追加する `maxDiffPixels=300`。本 PR では snapshot / tolerance を重複変更せず、PR #361 の merge dependency として残す。このため「関連 Playwright E2E が成功」と task done は未達のままにする。
 - manual screen reader / 実機確認: 未実施。既存 semantic E2E、axe、mobile navigation、loading state の GitHub E2E を自動回帰 evidence とする。
 
 ## 最終監査（PR 前）
@@ -144,3 +147,11 @@ generated Web inventory
 - production source の legacy import と raw `<span className="loading-spinner">` は 0 件。legacy path 文字列は task / historical report / ENOENT guard の説明・検証用途だけに残る。
 - `Icon.tsx` / `LoadingSpinner.tsx`、Debug panel 置換箇所に mock / demo / fixture / fallback はない。
 - CSS は未変更。`LoginPage.tsx`、`RailNav.tsx`、`TopBar.tsx` を含む consumer は import 行だけを変更し、auth / navigation / product behavior は変更していない。
+
+## Blocked boundary
+
+- 状態: partially complete / `tasks/do` 維持
+- blocker: PR #361 未 merge のため、既存 `e2e.yml` full visual 6 件が strict base と implementation head の双方で同じ anti-aliasing pixel 差により失敗する。
+- 本タスクで完了済み: 実装、全 consumer 移行、legacy guard、unit / coverage / semantic / docs / root CI、smoke E2E、strict base 比較。
+- 未達: full visual E2E success、task done、受け入れ条件の全項目完了。
+- recovery: PR #361 merge 後に最新 base へ追従し、full E2E と latest-head CI を再実行して task done を判定する。
