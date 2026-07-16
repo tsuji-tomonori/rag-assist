@@ -1,6 +1,6 @@
 import { act, renderHook } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import type { AuthSession } from "../../authClient.js"
+import type { AuthSession } from "../../features/auth/api/authClient.js"
 import type { Permission } from "../../shared/types/common.js"
 import { publicSafeUiError, useAppShellState } from "./useAppShellState.js"
 

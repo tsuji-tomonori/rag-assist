@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest"
-import { listDocuments, resetRuntimeConfigForTests } from "./api.js"
+import { listDocuments } from "../../documents/api/documentsApi.js"
+import { resetRuntimeConfigForTests } from "../../../shared/api/runtimeConfig.js"
 import { completeNewPasswordChallenge, confirmSignUp, getStoredAuthSession, signIn, signOut, signUp } from "./authClient.js"
 
 function response(body: unknown, ok = true) {

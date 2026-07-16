@@ -1,0 +1,89 @@
+# Issue #359 Web root auth shim 収束 作業レポート
+
+- 作成日時: 2026-07-16 20:26 JST
+- Issue: #359 Phase 1b
+- branch: `codex/issue-359-web-root-shims`
+- base: `origin/main` / `e12abb07`
+- task: `tasks/do/20260716-1958-issue-359-web-root-auth-shims.md`
+
+## 受けた指示
+
+- `App.tsx` と全 auth consumer を feature 正規 path へ変更して root `LoginPage.tsx` / `authClient.ts` を削除する。
+- root の重複 test を feature 実体と同居させ、login / sign-up / confirm / new-password / logout 契約を維持する。
+- `src/api.ts` は production/test/open PR 参照を棚卸しし、安全性を証明できない場合は独立 task に分ける。
+- root CI、Web coverage/typecheck/build、Web inventory/trace/semantic、login E2E/smoke を検証する。
+- no-mock production UI、a11y metadata、README/docs 影響、PR #361/#338 の競合を確認する。
+
+## 要件整理と判断
+
+- root `LoginPage.tsx` と `authClient.ts` はそれぞれ feature 実体を再 export する1行 shim だった。
+- root test の方が認証拒否、pending、初回パスワード変更、sign-up/confirm を広く保持していたため、単純削除せず feature test へ統合した。
+- `src/api.ts` は production import がない一方、約700行の `api.test.ts`、`App.test.tsx`、auth test が依存している。さらに open PR #338 が `App.test.tsx` を変更中のため、今回の auth shim 削除とは分離した。
+- PR #361 は Taskfile/package/playwright/CSS/generated docs を変更中だが、今回 package/Taskfile を変更しないため直接 path overlap はない。
+- PR #338 は `App.test.tsx`、`useAppShellState*`、chat feature、generated Web docs を変更中である。今回 `App.test.tsx` を変更しなかったが、`useAppShellState*` の auth type import 行には rebase 時の軽微な競合可能性がある。
+
+## RCA 要約
+
+- confirmed: 2026-05-03 の feature 分割後も root 再 export と root test/consumer が残り、正規 entry が一意になっていなかった。
+- inferred: 互換性確保後の終了条件と legacy path 再導入 guard がなく、近い root 相対 import が継続した。
+- root cause: feature 分割の Done 条件に全 consumer 移行、test の実体同居、legacy entry 禁止が含まれていなかった。
+
+## 実施作業
+
+- `App.tsx`、`AppShell`、app components/hooks/tests、auth component/hook の `AuthSession` / auth function import を `features/auth` 正規 path へ変更した。
+- root `LoginPage.tsx` と `authClient.ts` を削除した。
+- root `LoginPage.test.tsx` の5 journey と feature 側のパスワード条件 test を `features/auth/components/LoginPage.test.tsx` に統合した。
+- root `authClient.test.ts` を `features/auth/api/authClient.test.ts` へ移し、documents/runtime config も正規 module を直接参照させた。
+- `features/auth/authBoundary.test.ts` を追加し、legacy root entry 2本が再導入されると失敗する guard を設けた。
+- `src/api.ts` 削除を `tasks/todo/20260716-1958-issue-359-web-api-barrel-removal.md` へ分離した。
+
+## 成果物
+
+- feature 正規 path を直接参照する Web auth consumer
+- root `LoginPage.tsx` / `authClient.ts` の削除
+- feature 実体と同居する Login/auth client contract test
+- legacy root auth entrypoint 再導入 guard
+- root API barrel follow-up task
+
+## UI / no-mock / accessibility レビュー
+
+- production TSX の JSX、表示値、API/state/config 由来、loading/error/notice/permission state は変更していない。
+- 固定件数、架空ユーザー、demo fallback、未実装操作を production UI に追加していない。
+- Login form の visible label、accessible name、button role/disabled state、`role="alert"` / `role="status"`、`aria-live`、keyboard 操作は変更していない。
+- component test で login、remember、pending、alert/status、new-password、sign-up/confirm、password requirement state を維持した。
+- 手動 screen reader、real device、200%/400% zoom は UI behavior 変更がないため追加実施していない。
+
+## ドキュメント影響
+
+- README、`docs/`、API、運用手順に記載される挙動・公開契約は変更していないため手修正不要と判断した。
+- `npm run docs:web-inventory:check` が成功し、feature 実体を正本とする generated inventory が fresh であることを確認した。
+- task/report はリポジトリ運用規約に従って追加した。
+
+## 検証結果
+
+| コマンド | 結果 | 要約 |
+| --- | --- | --- |
+| `npm test -w @memorag-mvp/web -- src/features/auth/components/LoginPage.test.tsx src/features/auth/api/authClient.test.ts src/features/auth/authBoundary.test.ts` | pass | 3 files / 21 tests |
+| `npm run typecheck -w @memorag-mvp/web` | pass | TypeScript error 0 |
+| `npm run test:coverage -w @memorag-mvp/web` | pass | 61 files / 441 tests、statements 90.8% |
+| `npm run build -w @memorag-mvp/web` | pass | Vite build 成功。既存の 500 kB chunk warning あり |
+| `npm run docs:web-inventory:check` | pass | inventory fresh |
+| `npm run docs:web-trace:test` | pass | 1 test |
+| `npm run test:web-semantic-ui` | pass | 1 test |
+| `npm run ci` | pass | lint、全 workspace typecheck/test/build。API 801、Web 441、infra 38、benchmark 102、contract 1 test pass |
+| `git diff --check` | pass | whitespace error 0 |
+| `npm run test:e2e -w @memorag-mvp/web -- e2e/visual-regression.spec.ts --grep 'ログイン画面\|チャット空状態'` | blocked / 未実施 | sandbox 内で `tsx` IPC socket `/tmp/tsx-1000/223.pipe` の `listen EPERM`。sandbox 外の実行承認待ちが長時間継続し中断された |
+| `npm run test:e2e:smoke -w @memorag-mvp/web` | 未実施 | 同じ local API 起動制約があるため成功扱いにしていない |
+
+## 指示への fit 評価
+
+- Login/auth root shim の正規 path 収束、test 移管、再導入 guard、契約維持、no-mock/a11yレビュー、root/Web/docs 自動検証は満たした。
+- `src/api.ts` は安全性と open PR overlap を理由に独立 task とし、不確かな一括削除を行わなかった。
+- login E2E/smoke は環境制約により未実施であり、受け入れ条件を満たした扱いにはしていない。
+
+## 未対応・制約・リスク
+
+- login E2E/smoke は sandbox 外実行が必要。失敗コマンドと localhost のみの影響範囲を親 task へ共有済み。
+- `src/api.ts` と `api.test.ts` の feature/shared 分割は follow-up task で行う。
+- PR #338 の `useAppShellState*` 変更と auth type import 行が rebase 時に競合する可能性がある。挙動上の重複はない。
+- build の chunk-size warning と `npm install` が報告した dependency vulnerability は今回の import-only scope 以前からの既存事項で、本 task では変更していない。
