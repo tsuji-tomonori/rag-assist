@@ -32,6 +32,16 @@ tasks:
     cmds:
       - npm run typecheck --workspaces --if-present
 
+  web:ui-quality:
+    desc: Run required Chromium axe, mobile, and visual UI quality checks
+    cmds:
+      - npm run test:e2e:ui-quality -w @memorag-mvp/web
+
+  web:ui-quality:cross-browser:
+    desc: Run scheduled Firefox and WebKit accessibility checks
+    cmds:
+      - npm run test:e2e:cross-browser -w @memorag-mvp/web
+
   docs:openapi:
     desc: Generate Markdown API reference from the Hono OpenAPI document
     cmds:
