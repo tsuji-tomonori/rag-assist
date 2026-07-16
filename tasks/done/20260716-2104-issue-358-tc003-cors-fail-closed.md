@@ -1,10 +1,10 @@
 # Issue #358 TC-003 design record / CORS fail-closed
 
-- 状態: do
+- 状態: done
 - タスク種別: 修正
 - 起点: `codex/issue-358-guard-profile-validation` final head `a1291e23`
 - branch: `codex/issue-358-tc003-cors-fail-closed`
-- stacked merge 順: PR #365 → FR-089 PR → 本 PR
+- stacked merge 順: PR #365 → PR #369 → PR #374
 
 ## 背景・目的
 
@@ -29,7 +29,7 @@ CloudFront `/api/*` behavior、Hosted UI + PKCE、WebSocket ticket、SPA の dir
 ### 推定・未確定
 
 - 推定: 2026-05 の一時 wildcard 復旧が期限・撤去 gate を持たず、runtime、IaC、security test の恒久契約へ残った。
-- 未確定: FR-089 PR 番号は本 task 開始時点で未作成。PR 作成前に head branch から再取得する。
+- 解決済み: FR-089 PR は #369、本 task PR は #374 と確定した。
 
 ### 根本原因
 
@@ -95,17 +95,17 @@ CloudFront `/api/*` behavior、Hosted UI + PKCE、WebSocket ticket、SPA の dir
 
 ## 受け入れ条件
 
-- [ ] `TC-003` の CloudFront `/api/*`、Hosted UI PKCE、WebSocket ticket、SPA direct origin 除去、CORS single source の目標と移行順が正規 ADR/design に記録される。
-- [ ] production 相当の unset、blank、wildcard、HTTP、malformed、複数 origin、localhost/loopback が API 起動前または CDK synth 前に拒否される。
-- [ ] non-production は暗黙 wildcard を持たず、明示した exact origin または開発用 wildcard だけを扱う。
-- [ ] Lambda env、API Gateway preflight、default error response が同じ検証済み CORS origin から生成される。
-- [ ] config / contract / IaC / security negative tests が failure timing と拒否ケースを固定する。
-- [ ] 公開 endpoint、route permission、tenant/resource boundary、RAG safety を弱めない。
-- [ ] benchmark、release-audit、Web UI、PR #338 領域を変更しない。
-- [ ] snapshot / generated infra docs と canonical docs が実装に同期する。
-- [ ] targeted API / contract / infra checks、root CI、docs checks が成功する。
-- [ ] PR 本文に PR #365 → FR-089 PR → 本 PR の merge 順を blocker として明記する。
-- [ ] 日本語の受け入れ条件コメント、セルフレビュー、task done、作業レポート、final-head CI 確認を完了する。
+- [x] `TC-003` の CloudFront `/api/*`、Hosted UI PKCE、WebSocket ticket、SPA direct origin 除去、CORS single source の目標と移行順が正規 ADR/design に記録される。
+- [x] production 相当の unset、blank、wildcard、HTTP、malformed、複数 origin、localhost/loopback が API 起動前または CDK synth 前に拒否される。
+- [x] non-production は暗黙 wildcard を持たず、明示した exact origin または開発用 wildcard だけを扱う。
+- [x] Lambda env、API Gateway preflight、default error response が同じ検証済み CORS origin から生成される。
+- [x] config / contract / IaC / security negative tests が failure timing と拒否ケースを固定する。
+- [x] 公開 endpoint、route permission、tenant/resource boundary、RAG safety を弱めない。
+- [x] benchmark、release-audit、Web UI、PR #338 領域を変更しない。
+- [x] snapshot / generated infra docs と canonical docs が実装に同期する。
+- [x] targeted API / contract / infra checks、root CI、docs checks が成功する。
+- [x] PR 本文に PR #365 → PR #369 → PR #374 の merge 順を blocker として明記する。
+- [x] 日本語の受け入れ条件コメント、セルフレビュー、task done、作業レポート、implementation-head GitHub CI 確認を完了する。
 
 ## 検証計画
 
@@ -135,6 +135,16 @@ Taskfile command を使う場合は実体を確認してから実行し、sandbo
 - `CORS_ALLOWED_ORIGINS` を暗黙 wildcard に依存するローカル起動は、Taskfile/.env の明示設定が必要になる。
 - CloudFront `/api/*` behavior は本 PR の対象外なので、ready 状態でも TC-003 全体は未達のまま。
 - stacked predecessor の merge 前に本 PR を mergeすると、FR-089 / #365 の変更履歴と差分が混在する。
+
+## 完了結果
+
+- PR: `https://github.com/tsuji-tomonori/rag-assist/pull/374`（draft）
+- merge順 blocker: `#365 → #369 → #374`
+- implementation commit: `5390dd75`
+- 受け入れ条件コメント: `https://github.com/tsuji-tomonori/rag-assist/pull/374#issuecomment-4992272766`
+- セルフレビュー: `https://github.com/tsuji-tomonori/rag-assist/pull/374#issuecomment-4992273375`
+- GitHub Actions implementation-head run `29501173928`: main CI success、semver label check success、promotion gate skip
+- latest-head CI: 本done更新commitのpush後に監視し、結果をPR commentへ追記する。
 
 ## Done 条件
 
