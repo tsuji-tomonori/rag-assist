@@ -33,9 +33,9 @@ sequenceDiagram
 | 2 | `POST /debug-runs/{runId}/download handler` | Auth | "chat:admin:read_all" permission を必須条件として確認する。 | `requirePermission(user, "chat:admin:read_all")` | `apps/api/src/routes/debug-routes.ts:128 (POST /debug-runs/{runId}/download handler)` |
 | 3 | `POST /debug-runs/{runId}/download handler` | Validation | schema 検証済みの path parameter を取得する。 | `validParam<{ runId: string }>(c)` | `apps/api/src/routes/debug-routes.ts:129 (POST /debug-runs/{runId}/download handler)` |
 | 4 | `POST /debug-runs/{runId}/download handler` | Service | service の create debug trace download url 処理を呼び出す。 | `service.createDebugTraceDownloadUrl(runId, user)` | `apps/api/src/routes/debug-routes.ts:131 (POST /debug-runs/{runId}/download handler)` |
-| 5 | `MemoRagService.createDebugTraceDownloadUrl` | Service | service の get debug run 処理を呼び出す。 | `this.getDebugRun(runId, actor)` | `apps/api/src/rag/memorag-service.ts:4868 (MemoRagService.createDebugTraceDownloadUrl)` |
-| 6 | `MemoRagService.getDebugRun` | Store | `this.deps.objectStore` に対して list keys を実行する。 | `this.deps.objectStore.listKeys(prefix)` | `apps/api/src/rag/memorag-service.ts:2449 (MemoRagService.getDebugRun)` |
-| 7 | `MemoRagService.getDebugRun` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(key)` | `apps/api/src/rag/memorag-service.ts:2452 (MemoRagService.getDebugRun)` |
+| 5 | `MemoRagService.createDebugTraceDownloadUrl` | Service | service の get debug run 処理を呼び出す。 | `this.getDebugRun(runId, actor)` | `apps/api/src/rag/memorag-service.ts:4809 (MemoRagService.createDebugTraceDownloadUrl)` |
+| 6 | `MemoRagService.getDebugRun` | Store | `this.deps.objectStore` に対して list keys を実行する。 | `this.deps.objectStore.listKeys(prefix)` | `apps/api/src/rag/memorag-service.ts:2453 (MemoRagService.getDebugRun)` |
+| 7 | `MemoRagService.getDebugRun` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(key)` | `apps/api/src/rag/memorag-service.ts:2456 (MemoRagService.getDebugRun)` |
 | 8 | `POST /debug-runs/{runId}/download handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json(download, 200)` | `apps/api/src/routes/debug-routes.ts:136 (POST /debug-runs/{runId}/download handler)` |
 
 ## 分岐
@@ -44,6 +44,6 @@ sequenceDiagram
 | --- | --- | --- | --- |
 | B001 | `POST /debug-runs/{runId}/download handler` | `download` が存在しない、または偽である | `apps/api/src/routes/debug-routes.ts:132 (POST /debug-runs/{runId}/download handler)` |
 | B002 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| B003 | `MemoRagService.createDebugTraceDownloadUrl` | `config.debugDownloadBucketName` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4867 (MemoRagService.createDebugTraceDownloadUrl)` |
-| B004 | `MemoRagService.createDebugTraceDownloadUrl` | `trace` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4869 (MemoRagService.createDebugTraceDownloadUrl)` |
+| B003 | `MemoRagService.createDebugTraceDownloadUrl` | `config.debugDownloadBucketName` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4808 (MemoRagService.createDebugTraceDownloadUrl)` |
+| B004 | `MemoRagService.createDebugTraceDownloadUrl` | `trace` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4810 (MemoRagService.createDebugTraceDownloadUrl)` |
 | B005 | `settleNonEnumerationTiming` | `remaining` が `0` より大きい | `apps/api/src/security/public-resource-response.ts:42 (settleNonEnumerationTiming)` |

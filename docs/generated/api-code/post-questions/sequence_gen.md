@@ -31,7 +31,7 @@ sequenceDiagram
 | 2 | `POST /questions handler` | Auth | "chat:create" permission を必須条件として確認する。 | `requirePermission(user, "chat:create")` | `apps/api/src/routes/question-routes.ts:45 (POST /questions handler)` |
 | 3 | `POST /questions handler` | Validation | schema 検証済みの JSON request body を取得する。 | `validJson<z.infer<typeof CreateQuestionRequestSchema>>(c)` | `apps/api/src/routes/question-routes.ts:46 (POST /questions handler)` |
 | 4 | `POST /questions handler` | Service | service の create question 処理を呼び出す。 | `service.createQuestion(body, user)` | `apps/api/src/routes/question-routes.ts:47 (POST /questions handler)` |
-| 5 | `MemoRagService.createQuestion` | Service | service の create 処理を呼び出す。 | `this.questionService.create(input, user)` | `apps/api/src/rag/memorag-service.ts:3216 (MemoRagService.createQuestion)` |
+| 5 | `MemoRagService.createQuestion` | Service | service の create 処理を呼び出す。 | `this.questionService.create(input, user)` | `apps/api/src/rag/memorag-service.ts:3220 (MemoRagService.createQuestion)` |
 | 6 | `QuestionService.create` | Store | `this.ports.questionStore` に対して create を実行する。 | `this.ports.questionStore.create({ ...input, requesterUserId: user?.userId, requesterName: input.requesterName?.trim() \|\| this.ports.resolveUserDisplayName(user), requesterDepartment: input.requesterDepartment?.trim() \|\|…` | `apps/api/src/questions/question-service.ts:32 (QuestionService.create)` |
 | 7 | `POST /questions handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json(await service.createQuestion(body, user), 200)` | `apps/api/src/routes/question-routes.ts:47 (POST /questions handler)` |
 

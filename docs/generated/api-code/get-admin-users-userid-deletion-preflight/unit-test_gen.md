@@ -16,12 +16,12 @@
 | --- | --- | --- | --- | --- |
 | F001 | `GET /admin/users/{userId}/deletion-preflight handler` | if | `preflight` が存在しない、または偽である | `apps/api/src/routes/admin-routes.ts:174 (GET /admin/users/{userId}/deletion-preflight handler)` |
 | F002 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| F003 | `MemoRagService.getManagedUserDeletionPreflight` | if | `target` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1848 (MemoRagService.getManagedUserDeletionPreflight)` |
-| F004 | `MemoRagService.getManagedUserDeletionPreflight` | if | `this.deps.verifiedIdentityProvider` が存在し、真である、かつ `this.deps.userDirectory` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1851 (MemoRagService.getManagedUserDeletionPreflight)` |
-| F005 | `MemoRagService.getManagedUserDeletionPreflight` | if | `currentActor` が存在しない、または偽である、または `currentTarget` が存在しない、または偽である、または `currentActor.accountStatus` が `"active"` と異なる、または `currentActor.tenantId` が `currentTarget.tenantId` と異なる、または `actor.tenantId` が `currentActor.tenantId` と異なる、または `currentActor.userId` が `currentTarget.userId` と等しい | `apps/api/src/rag/memorag-service.ts:1857 (MemoRagService.getManagedUserDeletionPreflight)` |
-| F006 | `MemoRagService.getManagedUserDeletionPreflight` | 三項条件 | `ownedResources.total` が `0` と等しい | `apps/api/src/rag/memorag-service.ts:1878 (MemoRagService.getManagedUserDeletionPreflight)` |
-| F007 | `MemoRagService.getManagedUserDeletionPreflight` | if | `config.authEnabled` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1909 (MemoRagService.getManagedUserDeletionPreflight)` |
-| F008 | `MemoRagService.getManagedUserDeletionPreflight` | 三項条件 | `ownedResources.total` が `0` と等しい | `apps/api/src/rag/memorag-service.ts:1920 (MemoRagService.getManagedUserDeletionPreflight)` |
+| F003 | `MemoRagService.getManagedUserDeletionPreflight` | if | `target` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1852 (MemoRagService.getManagedUserDeletionPreflight)` |
+| F004 | `MemoRagService.getManagedUserDeletionPreflight` | if | `this.deps.verifiedIdentityProvider` が存在し、真である、かつ `this.deps.userDirectory` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1855 (MemoRagService.getManagedUserDeletionPreflight)` |
+| F005 | `MemoRagService.getManagedUserDeletionPreflight` | if | `currentActor` が存在しない、または偽である、または `currentTarget` が存在しない、または偽である、または `currentActor.accountStatus` が `"active"` と異なる、または `currentActor.tenantId` が `currentTarget.tenantId` と異なる、または `actor.tenantId` が `currentActor.tenantId` と異なる、または `currentActor.userId` が `currentTarget.userId` と等しい | `apps/api/src/rag/memorag-service.ts:1861 (MemoRagService.getManagedUserDeletionPreflight)` |
+| F006 | `MemoRagService.getManagedUserDeletionPreflight` | 三項条件 | `ownedResources.total` が `0` と等しい | `apps/api/src/rag/memorag-service.ts:1882 (MemoRagService.getManagedUserDeletionPreflight)` |
+| F007 | `MemoRagService.getManagedUserDeletionPreflight` | if | `config.authEnabled` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1913 (MemoRagService.getManagedUserDeletionPreflight)` |
+| F008 | `MemoRagService.getManagedUserDeletionPreflight` | 三項条件 | `ownedResources.total` が `0` と等しい | `apps/api/src/rag/memorag-service.ts:1924 (MemoRagService.getManagedUserDeletionPreflight)` |
 
 ## 3. コード由来テストケース
 
@@ -32,18 +32,18 @@
 | TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:174 (GET /admin/users/{userId}/deletion-preflight handler)` |
 | TC004 | F002: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
 | TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC006 | F003: 条件成立 | `target` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1848 (MemoRagService.getManagedUserDeletionPreflight)` |
-| TC007 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1848 (MemoRagService.getManagedUserDeletionPreflight)` |
-| TC008 | F004: 条件成立 | `this.deps.verifiedIdentityProvider` が存在し、真である、かつ `this.deps.userDirectory` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1851 (MemoRagService.getManagedUserDeletionPreflight)` |
-| TC009 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1851 (MemoRagService.getManagedUserDeletionPreflight)` |
-| TC010 | F005: 条件成立 | `currentActor` が存在しない、または偽である、または `currentTarget` が存在しない、または偽である、または `currentActor.accountStatus` が `"active"` と異なる、または `currentActor.tenantId` が `currentTarget.tenantId` と異なる、または `actor.tenantId` が `currentActor.tenantId` と異なる、または `currentActor.userId` が `currentTarget.userId` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1857 (MemoRagService.getManagedUserDeletionPreflight)` |
-| TC011 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1857 (MemoRagService.getManagedUserDeletionPreflight)` |
-| TC012 | F006: 条件成立 | `ownedResources.total` が `0` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1878 (MemoRagService.getManagedUserDeletionPreflight)` |
-| TC013 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1878 (MemoRagService.getManagedUserDeletionPreflight)` |
-| TC014 | F007: 条件成立 | `config.authEnabled` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1909 (MemoRagService.getManagedUserDeletionPreflight)` |
-| TC015 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1909 (MemoRagService.getManagedUserDeletionPreflight)` |
-| TC016 | F008: 条件成立 | `ownedResources.total` が `0` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1920 (MemoRagService.getManagedUserDeletionPreflight)` |
-| TC017 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1920 (MemoRagService.getManagedUserDeletionPreflight)` |
+| TC006 | F003: 条件成立 | `target` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1852 (MemoRagService.getManagedUserDeletionPreflight)` |
+| TC007 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1852 (MemoRagService.getManagedUserDeletionPreflight)` |
+| TC008 | F004: 条件成立 | `this.deps.verifiedIdentityProvider` が存在し、真である、かつ `this.deps.userDirectory` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1855 (MemoRagService.getManagedUserDeletionPreflight)` |
+| TC009 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1855 (MemoRagService.getManagedUserDeletionPreflight)` |
+| TC010 | F005: 条件成立 | `currentActor` が存在しない、または偽である、または `currentTarget` が存在しない、または偽である、または `currentActor.accountStatus` が `"active"` と異なる、または `currentActor.tenantId` が `currentTarget.tenantId` と異なる、または `actor.tenantId` が `currentActor.tenantId` と異なる、または `currentActor.userId` が `currentTarget.userId` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1861 (MemoRagService.getManagedUserDeletionPreflight)` |
+| TC011 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1861 (MemoRagService.getManagedUserDeletionPreflight)` |
+| TC012 | F006: 条件成立 | `ownedResources.total` が `0` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1882 (MemoRagService.getManagedUserDeletionPreflight)` |
+| TC013 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1882 (MemoRagService.getManagedUserDeletionPreflight)` |
+| TC014 | F007: 条件成立 | `config.authEnabled` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1913 (MemoRagService.getManagedUserDeletionPreflight)` |
+| TC015 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1913 (MemoRagService.getManagedUserDeletionPreflight)` |
+| TC016 | F008: 条件成立 | `ownedResources.total` が `0` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1924 (MemoRagService.getManagedUserDeletionPreflight)` |
+| TC017 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1924 (MemoRagService.getManagedUserDeletionPreflight)` |
 | TC018 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC019 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC020 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

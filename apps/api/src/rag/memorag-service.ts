@@ -13,6 +13,11 @@ import { AgentProviderCatalogService } from "../async-agent/provider-catalog-ser
 import { AsyncAgentRunRepository } from "../async-agent/async-agent-run-repository.js"
 import { AsyncAgentArtifactRepository } from "../async-agent/async-agent-artifact-repository.js"
 import { AsyncAgentRunQueryService } from "../async-agent/async-agent-run-query-service.js"
+import {
+  AsyncAgentRunCreationService,
+  createAsyncAgentRunId,
+  type CreateAsyncAgentRunInput
+} from "../async-agent/async-agent-run-creation-service.js"
 import { BenchmarkRunQueryService } from "../benchmark/benchmark-run-query-service.js"
 import { BenchmarkRunCancellationService } from "../benchmark/benchmark-run-cancellation-service.js"
 import { BenchmarkRunReauthorizationService } from "../benchmark/benchmark-run-reauthorization-service.js"
@@ -155,17 +160,6 @@ type MemoryJson = {
   keywords?: string[]
   likelyQuestions?: string[]
   constraints?: string[]
-}
-
-type CreateAsyncAgentRunInput = {
-  provider: AgentRuntimeProvider
-  modelId: string
-  instruction: string
-  selectedFolderIds?: string[]
-  selectedDocumentIds?: string[]
-  selectedSkillIds?: string[]
-  selectedAgentProfileIds?: string[]
-  budget?: AsyncAgentRun["budget"]
 }
 
 type AdminLedger = {
@@ -449,6 +443,7 @@ const benchmarkSuites: BenchmarkSuite[] = [
 export class MemoRagService {
   private readonly agentProviderCatalogService: AgentProviderCatalogService
   private readonly asyncAgentArtifactRepository: AsyncAgentArtifactRepository
+  private readonly asyncAgentRunCreationService: AsyncAgentRunCreationService
   private readonly asyncAgentRunQueryService: AsyncAgentRunQueryService
   private readonly asyncAgentRunRepository: AsyncAgentRunRepository
   private readonly benchmarkArtifactDownloadService: BenchmarkArtifactDownloadService
@@ -471,6 +466,15 @@ export class MemoRagService {
       sanitizeText: sanitizeProviderText
     })
     this.asyncAgentRunRepository = new AsyncAgentRunRepository(deps.objectStore)
+    this.asyncAgentRunCreationService = new AsyncAgentRunCreationService({
+      runRepository: this.asyncAgentRunRepository,
+      authorizeSelections: (actor, input) => this.assertAsyncAgentSelectionsReadable(actor, input),
+      findProvider: (provider) => this.agentProviderCatalogService.findRuntimeProvider(provider),
+      tenantIdForActor: (actor) => actor.tenantId ?? defaultTenantId,
+      now: () => new Date().toISOString(),
+      createRunId: createAsyncAgentRunId,
+      createMountId: () => `mount_${randomUUID().slice(0, 12)}`
+    })
     this.asyncAgentRunQueryService = new AsyncAgentRunQueryService({
       runRepository: this.asyncAgentRunRepository,
       tenantIdForActor: authoritativeActorTenantId,
@@ -4268,70 +4272,7 @@ export class MemoRagService {
   }
 
   async createAsyncAgentRun(user: AppUser, input: CreateAsyncAgentRunInput): Promise<AsyncAgentRun> {
-    await this.assertAsyncAgentSelectionsReadable(user, input)
-
-    const now = new Date().toISOString()
-    const agentRunId = createAsyncAgentRunId(now)
-    const provider = this.agentProviderCatalogService.findRuntimeProvider(input.provider)
-    const availability = provider?.availability ?? "provider_unavailable"
-    const blocked = availability !== "available"
-    const selectedFolderIds = uniqueStrings(input.selectedFolderIds ?? [])
-    const selectedDocumentIds = uniqueStrings(input.selectedDocumentIds ?? [])
-    const workspaceId = `workspace_${agentRunId}`
-    const run: AsyncAgentRun = {
-      agentRunId,
-      runId: agentRunId,
-      tenantId: user.tenantId ?? defaultTenantId,
-      requesterUserId: user.userId,
-      requesterEmail: user.email,
-      requesterGroups: [...user.cognitoGroups],
-      provider: input.provider,
-      modelId: input.modelId,
-      status: blocked ? "blocked" : "queued",
-      providerAvailability: availability,
-      failureReasonCode: blocked ? availability === "not_configured" || availability === "disabled" ? "not_configured" : "provider_unavailable" : undefined,
-      failureReason: blocked
-        ? availability === "not_configured" || availability === "disabled"
-          ? "Provider execution is not configured. G1 records the run contract without starting a provider."
-          : "Provider is unavailable. G1 does not create mock provider executions."
-        : undefined,
-      instruction: input.instruction,
-      selectedFolderIds,
-      selectedDocumentIds,
-      selectedSkillIds: uniqueStrings(input.selectedSkillIds ?? []),
-      selectedAgentProfileIds: uniqueStrings(input.selectedAgentProfileIds ?? []),
-      workspaceId,
-      workspaceMounts: [
-        ...selectedFolderIds.map((folderId) => ({
-          mountId: `mount_${randomUUID().slice(0, 12)}`,
-          workspaceId,
-          sourceType: "folder" as const,
-          sourceId: folderId,
-          mountedPath: `/workspace/read-only/folders/${folderId}`,
-          accessMode: "readOnly" as const,
-          permissionCheckedAt: now
-        })),
-        ...selectedDocumentIds.map((documentId) => ({
-          mountId: `mount_${randomUUID().slice(0, 12)}`,
-          workspaceId,
-          sourceType: "document" as const,
-          sourceId: documentId,
-          mountedPath: `/workspace/read-only/documents/${documentId}`,
-          accessMode: "readOnly" as const,
-          permissionCheckedAt: now
-        }))
-      ],
-      artifactIds: [],
-      artifacts: [],
-      budget: input.budget,
-      createdBy: user.userId,
-      createdAt: now,
-      completedAt: blocked ? now : undefined,
-      updatedAt: now
-    }
-
-    await this.asyncAgentRunRepository.save(run)
-    return run
+    return this.asyncAgentRunCreationService.create(user, input)
   }
 
   async listAsyncAgentRuns(user: AppUser): Promise<AsyncAgentRun[]> {
@@ -5024,11 +4965,6 @@ function benchmarkRevocationTrigger(error: PermissionRevokedError): "account_rev
 function createBenchmarkRunId(now: string): string {
   const compact = now.replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z")
   return `bench_${compact}_${randomUUID().slice(0, 8)}`
-}
-
-function createAsyncAgentRunId(now: string): string {
-  const compact = now.replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z")
-  return `agent_${compact}_${randomUUID().slice(0, 8)}`
 }
 
 function createChatRunId(now: string): string {

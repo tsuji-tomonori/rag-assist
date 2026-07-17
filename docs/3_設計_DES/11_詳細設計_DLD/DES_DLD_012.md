@@ -502,6 +502,20 @@ serviceは`AsyncAgentRunRepository.list/get`と、authoritative actor tenant、l
 
 `async-agent-run-query-service.test.ts`はnarrow source/delegate guard、authoritative tenant、filter/sort/100件limit、missing-before-authorization、same-tenant forbidden、error propagation、authorized artifact projectionを固定する。既存repository/facade contractとAPI full suiteを二重実行する。actual S3/AWS、manual UIは非変更領域のため未実施とし、local/GitHub CIをactual AWS成功の代替とは扱わない。
 
+## Phase 4o: async-agent run creation service の抽出境界
+
+Issue #359 Phase 4o では、selection authorization後にcanonical runを構築して保存するcreate orchestrationだけを`AsyncAgentRunCreationService`へ抽出する。selection authorization policy自体、list/get/cancel/execute、current worker authorization、provider execution、artifact/writebackは同じunitへ含めない。
+
+serviceはrun repositoryの`save`、selection authorization、provider definition lookup、actor tenant resolver、clock、run/mount ID factoryのnarrow portsだけを受ける。保持するcontractは次のとおり。
+
+- selection authorizationをclock/ID/provider lookup/saveより先に完了し、denial後は後続effectを一切実行しない。
+- provider availabilityが`available`ならqueued、`disabled`/`not_configured`ならblocked + `not_configured`、missing/`provider_unavailable`ならblocked + `provider_unavailable`とする。mock execution/artifactは作らない。
+- tenant/requester/email/groupsはactor snapshot、run/workspace/mount IDsはfactory、selection IDsはtrim/dedupe/sortしたcanonical値から構築する。
+- folder mountsの後にdocument mountsを配置し、`/workspace/read-only/{folders|documents}/{sourceId}`、`readOnly`、同一permission timestampを維持する。
+- save failureは伝播し、false successを返さない。facade public signature、route/RBAC、repository key、query/cancel/execute/provider execution/writeback/RAG/schemaは変更しない。
+
+`async-agent-run-creation-service.test.ts`はnarrow source/delegate、authorization-before-effects、available canonical queued mapping、blocked no-mock variants、canonical selection/mount order、save failure、run ID formatを固定する。actual S3/AWS、manual UIは非変更領域のため未実施とする。
+
 ## Error / compatibility 方針
 
 - facade の同名 method と TypeScript signature を維持する。
