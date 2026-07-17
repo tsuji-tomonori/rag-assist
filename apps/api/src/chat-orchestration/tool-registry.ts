@@ -1,3 +1,4 @@
+import type { ApplicationPermission } from "@memorag-mvp/contract/access-control"
 import type { ChatToolDefinition, ChatToolInvocation, ChatToolInvocationStatus, DebugStep, JsonValue } from "../types.js"
 
 export const CHAT_TOOL_REGISTRY_VERSION = "chat-tool-registry-v1"
@@ -24,7 +25,7 @@ const ragTool = (
   displayName: string,
   description: string,
   traceLabels: string[],
-  requiredFeaturePermission = "rag:run"
+  requiredFeaturePermission: ApplicationPermission
 ): ChatToolDefinition => ({
   toolId,
   name: toolId,
@@ -93,10 +94,10 @@ const implementedRagTools: ChatToolDefinition[] = [
   ], "chat:create"),
   ragTool("rag.rerank", "検索候補 rerank", "検索候補を score、layout、previous citation anchor、page continuity に基づいて再順位付けする。", [
     "rerank_chunks"
-  ]),
+  ], "chat:create"),
   ragTool("rag.select_final_context", "最終回答文脈選択", "minScore、diversity、context budget を保ちながら最終回答 context を確定する。", [
     "rerank_chunks"
-  ]),
+  ], "chat:create"),
   ragTool("rag.compute_policy_facts", "ポリシー計算", "日付・金額・閾値条件を根拠つき computedFacts として計算する。", [
     "detect_tool_intent",
     "extract_policy_computations",
@@ -111,13 +112,13 @@ const implementedRagTools: ChatToolDefinition[] = [
   ], "chat:create"),
   ragTool("rag.validate_citations", "citation 検証", "回答 citation と質問要求 slot の充足を検証する。", [
     "validate_citations"
-  ]),
+  ], "chat:create"),
   ragTool("rag.verify_answer_support", "回答支持検証", "生成後回答の各文が evidence / computedFacts に支持されるか検証する。", [
     "verify_answer_support"
-  ]),
+  ], "chat:create"),
   ragTool("rag.repair_supported_only", "支持済み事実のみの回答修復", "不支持文を除き、支持された事実だけで回答を修復する。", [
     "verify_answer_support"
-  ]),
+  ], "chat:create"),
   ragTool("rag.explain_unavailable", "回答不能説明", "根拠不足・矛盾・権限外などの回答不能理由を安全な利用者向け文面に整形する。", [
     "finalize_refusal"
   ], "chat:create")

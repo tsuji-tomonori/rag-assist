@@ -12,10 +12,12 @@
 
 Phase F では、上記に加えて仕様 4A/4B の `ChatToolDefinition` registry と multi-turn 状態を扱う。現行 `chat-orchestration` graph node は内部 pipeline step であり、`toolId` / permission / approval / audit metadata を持つ registry とは別概念として整理する。
 
-## Phase F-pre 調査結果
+## 現行実装状況
 
 - `apps/api/src/chat-orchestration/` には RAG pipeline、`decontextualizedQuery`、previous citation anchoring、RequiredFact、answerability / sufficient context / citation / support verification が部分実装されている。
-- `ChatToolDefinition` / `ChatToolInvocation` の schema、registry、toolId ごとの認可・承認・監査 metadata は未実装。
+- `ChatToolDefinition` / `ChatToolInvocation` の schema と registry があり、enabled graph-backed RAG tool は既存 trace から監査 metadata へ投影される。
+- enabled graph-backed RAG tool の required feature permission は、現行 sync / async chat authorization boundary と同じ正規 `ApplicationPermission` の `chat:create` を明示する。helper は unknown permission の default を持たず、catalog membership と `CHAT_USER` grant を test する。
+- chat route / worker は `chat:create` と search-scope resource authorization を再検証する。一方、registry metadata を tool 単位の executor で評価して拒否 trace を生成する経路は未実装である。
 - conversation history store は raw `messages` 中心で、仕様 4A の `rollingSummary`、`queryFocusedSummary`、`citationMemory`、`taskState` は永続化されていない。
 - 後続実装では ChatRAG follow-up 軽量化、required fact planning 汎化、policy computation 汎化、answer support verification、minScore filter、diversity、context budget を踏襲する。
 
@@ -23,11 +25,11 @@ Phase F では、上記に加えて仕様 4A/4B の `ChatToolDefinition` registr
 
 - [ ] 旧 `AgentRun` 相当の同期チャット処理が `ChatOrchestrationRun` として trace / store / contract 上で参照できる。
 - [ ] チャット内 tool 実行は実行ユーザーの feature permission と resource permission を超えない。
-- [x] `ChatToolDefinition` は `toolId`、入出力 schema、必要 feature permission、必要 resource permission、承認要否、監査要否、有効状態を持つ。
+- [x] `ChatToolDefinition` は `toolId`、入出力 schema、必要 feature permission、必要 resource permission、承認要否、監査要否、有効状態を持ち、enabled tool の feature permission は正規 application permission catalog と一致する。
 - [x] `ChatToolInvocation` は実行者、toolId、入出力概要、状態、承認、時刻、結果を監査可能にする。
 - [x] multi-turn 状態は raw messages だけに依存せず、文脈独立化クエリ、rolling summary、query-focused summary、citation memory、task state の保存方針を持つ。
 - [ ] 既存の grounded refusal、citation validation、answer support verification の挙動を維持する。
 
 ## 備考
 
-Phase D / F で同期チャット処理の名称移行、tool registry、multi-turn optional state の基盤を追加した。後続 phase では disabled tool の本実装、承認 UI、専用 invocation store、resource permission 実行時 check を詳細化する。
+Phase D / F で同期チャット処理の名称移行、tool registry、multi-turn optional state の基盤を追加した。Issue #358 の bounded prerequisite で enabled tool の feature permission metadata を `chat:create` へ正規化したが、これを per-tool runtime enforcement の完了とは扱わない。後続 phase では disabled tool の本実装、承認 UI、専用 invocation store、feature / resource permission の実行時 check と拒否 trace を詳細化する。

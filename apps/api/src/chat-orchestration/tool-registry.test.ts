@@ -1,5 +1,6 @@
 import assert from "node:assert/strict"
 import test from "node:test"
+import { ROLE_PERMISSION_CATALOG, UNASSIGNED_APPLICATION_PERMISSIONS } from "@memorag-mvp/contract/access-control"
 import { ChatToolDefinitionSchema, ChatToolInvocationSchema } from "../schemas.js"
 import { CHAT_TOOL_DEFINITIONS, RAG_CHAT_TOOL_NODE_MAPPINGS, RAG_IMPLEMENTED_TOOL_IDS, buildChatToolInvocationsFromTrace, listEnabledChatToolDefinitions } from "./tool-registry.js"
 
@@ -17,6 +18,31 @@ test("chat tool registry exposes implemented RAG tools with permission, approval
     assert.ok(definition.requiredFeaturePermission.length > 0)
     assert.ok(definition.traceLabels.length > 0)
   }
+})
+
+test("enabled RAG tools use canonical feature permissions granted to CHAT_USER", () => {
+  const enabled = listEnabledChatToolDefinitions()
+  const canonicalPermissions = new Set<string>([
+    ...Object.values(ROLE_PERMISSION_CATALOG).flat(),
+    ...UNASSIGNED_APPLICATION_PERMISSIONS
+  ])
+  const chatUserPermissions = new Set<string>(ROLE_PERMISSION_CATALOG.CHAT_USER)
+
+  assert.deepEqual(
+    enabled.filter((tool) => !canonicalPermissions.has(tool.requiredFeaturePermission)).map((tool) => tool.toolId),
+    [],
+    "enabled tool permissions must exist in the canonical application permission catalog"
+  )
+  assert.deepEqual(
+    enabled.filter((tool) => !chatUserPermissions.has(tool.requiredFeaturePermission)).map((tool) => tool.toolId),
+    [],
+    "enabled graph-backed tools must not exceed the current CHAT_USER feature grant"
+  )
+  assert.deepEqual(
+    enabled.filter((tool) => tool.requiredFeaturePermission !== "chat:create").map((tool) => tool.toolId),
+    [],
+    "all enabled graph-backed tools execute within the current chat:create boundary"
+  )
 })
 
 test("non-RAG and follow-up dependent tools remain disabled metadata, not executable placeholders", () => {
