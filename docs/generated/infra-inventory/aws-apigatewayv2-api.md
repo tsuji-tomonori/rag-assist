@@ -28,6 +28,7 @@ Logical ID: `WebSocketApi`
 
 | 設定項目 | 値 |
 | --- | --- |
+| `DisableExecuteApiEndpoint` | false |
 | `Name` | memorag-websocket-c85f22a0 |
 | `ProtocolType` | WEBSOCKET |
 | `RouteSelectionExpression` | $request.body.action |

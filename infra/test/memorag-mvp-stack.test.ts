@@ -9,8 +9,17 @@ import { APPLICATION_ROLES } from "@memorag-mvp/contract/access-control"
 import {
   createDeployedFrontendRuntimeConfig,
   MemoRagMvpStack,
+  resolveApiGatewayOriginConfiguration,
   resolveDeployedCorsAllowedOrigin
 } from "../lib/memorag-mvp-stack"
+
+const productionApiOriginContext = {
+  restApiOriginDomainName: "rest-origin.example.com",
+  webSocketApiOriginDomainName: "ws-origin.example.com",
+  apiGatewayOriginCertificateArn: "arn:aws:acm:ap-northeast-1:111111111111:certificate/12345678-1234-1234-1234-123456789abc",
+  apiGatewayOriginHostedZoneId: "Z0123456789ABC",
+  apiGatewayOriginHostedZoneName: "example.com"
+} as const
 
 function synthesize(context?: Record<string, string>) {
   const app = new cdk.App({
@@ -695,7 +704,7 @@ test("routes exact same-origin WebSocket entry with single-use ticket authorizer
   assert.doesNotMatch(JSON.stringify(frontendConfig), /execute-api.*websocket|wss:/i)
 })
 
-test("keeps the deployed SPA on same-origin /api without changing internal execute-api consumers", () => {
+test("keeps browser and public API outputs on CloudFront while using a production custom origin internally", () => {
   const frontendConfig = createDeployedFrontendRuntimeConfig({
     cognitoRegion: "ap-northeast-1",
     cognitoUserPoolId: "pool-1",
@@ -719,7 +728,8 @@ test("keeps the deployed SPA on same-origin /api without changing internal execu
   const productionTemplate = synthesize({
     deploymentEnvironment: "prod",
     corsAllowedOrigins: "https://app.example.com",
-    ragAlertEmail: "rag-on-call@example.com"
+    ragAlertEmail: "rag-on-call@example.com",
+    ...productionApiOriginContext
   })
   productionTemplate.hasResourceProperties("AWS::Cognito::UserPoolClient", {
     GenerateSecret: false,
@@ -730,17 +740,162 @@ test("keeps the deployed SPA on same-origin /api without changing internal execu
 
   const template = synthesize().toJSON()
   for (const outputName of ["ApiUrl", "OpenApiUrl"]) {
-    assert.match(JSON.stringify(template.Outputs?.[outputName]?.Value), /RestApi.*execute-api/)
+    assert.match(JSON.stringify(template.Outputs?.[outputName]?.Value), /FrontendDistribution.*DomainName/)
+    assert.doesNotMatch(JSON.stringify(template.Outputs?.[outputName]?.Value), /execute-api/)
   }
 
-  const benchmarkTargetValues = Object.values(template.Resources ?? {}).flatMap((resource: any) => {
+  const developmentBenchmarkTargetValues = Object.values(template.Resources ?? {}).flatMap((resource: any) => {
     if (resource.Type !== "AWS::Lambda::Function") return []
     const value = resource.Properties.Environment?.Variables?.BENCHMARK_TARGET_API_BASE_URL
     return value === undefined ? [] : [value]
   })
-  assert.ok(benchmarkTargetValues.length > 0)
-  for (const value of benchmarkTargetValues) {
+  assert.ok(developmentBenchmarkTargetValues.length > 0)
+  for (const value of developmentBenchmarkTargetValues) {
     assert.match(JSON.stringify(value), /RestApi.*execute-api/)
+  }
+
+  const productionResources = productionTemplate.toJSON().Resources ?? {}
+  const productionBenchmarkTargetValues = Object.values(productionResources).flatMap((resource: any) => {
+    if (resource.Type !== "AWS::Lambda::Function") return []
+    const value = resource.Properties.Environment?.Variables?.BENCHMARK_TARGET_API_BASE_URL
+    return value === undefined ? [] : [value]
+  })
+  assert.ok(productionBenchmarkTargetValues.length > 0)
+  for (const value of productionBenchmarkTargetValues) {
+    assert.equal(value, "https://rest-origin.example.com/")
+  }
+})
+
+test("disables production execute-api endpoints and routes CloudFront through distinct mapped custom domains", () => {
+  const template = synthesize({
+    deploymentEnvironment: "prod",
+    corsAllowedOrigins: "https://app.example.com",
+    ragAlertEmail: "rag-on-call@example.com",
+    ...productionApiOriginContext
+  })
+  const resources = template.toJSON().Resources ?? {}
+
+  template.hasResourceProperties("AWS::ApiGateway::RestApi", {
+    DisableExecuteApiEndpoint: true,
+    EndpointConfiguration: Match.objectLike({ Types: ["REGIONAL"] })
+  })
+  template.hasResourceProperties("AWS::ApiGatewayV2::Api", {
+    ProtocolType: "WEBSOCKET",
+    DisableExecuteApiEndpoint: true
+  })
+  template.hasResourceProperties("AWS::ApiGateway::DomainName", {
+    DomainName: productionApiOriginContext.restApiOriginDomainName,
+    RegionalCertificateArn: productionApiOriginContext.apiGatewayOriginCertificateArn,
+    SecurityPolicy: "TLS_1_2",
+    EndpointConfiguration: { Types: ["REGIONAL"] }
+  })
+  template.hasResourceProperties("AWS::ApiGateway::BasePathMapping", {
+    DomainName: Match.anyValue(),
+    RestApiId: Match.anyValue(),
+    Stage: Match.anyValue()
+  })
+  template.hasResourceProperties("AWS::ApiGatewayV2::DomainName", {
+    DomainName: productionApiOriginContext.webSocketApiOriginDomainName,
+    DomainNameConfigurations: [{
+      CertificateArn: productionApiOriginContext.apiGatewayOriginCertificateArn,
+      EndpointType: "REGIONAL",
+      SecurityPolicy: "TLS_1_2"
+    }]
+  })
+  template.hasResourceProperties("AWS::ApiGatewayV2::ApiMapping", {
+    ApiId: Match.anyValue(),
+    DomainName: Match.anyValue(),
+    Stage: "prod"
+  })
+
+  const aliasRecords = Object.values(resources).filter((resource: any) => (
+    resource.Type === "AWS::Route53::RecordSet"
+  )) as any[]
+  assert.equal(aliasRecords.length, 2)
+  assert.deepEqual(
+    aliasRecords.map((record) => record.Properties.Name).sort(),
+    [
+      productionApiOriginContext.restApiOriginDomainName,
+      productionApiOriginContext.webSocketApiOriginDomainName
+    ].sort()
+  )
+  for (const record of aliasRecords) {
+    assert.equal(record.Properties.HostedZoneId, productionApiOriginContext.apiGatewayOriginHostedZoneId)
+    assert.equal(record.Properties.Type, "A")
+    assert.equal(record.Properties.AliasTarget.EvaluateTargetHealth, false)
+  }
+
+  const distribution = Object.values(resources).find((resource: any) => (
+    resource.Type === "AWS::CloudFront::Distribution"
+  )) as any
+  assert.ok(distribution)
+  const distributionConfig = distribution.Properties.DistributionConfig
+  const originDomainNames = distributionConfig.Origins.map((origin: any) => origin.DomainName)
+  assert.ok(
+    originDomainNames.includes(productionApiOriginContext.restApiOriginDomainName),
+    `REST custom origin missing: ${JSON.stringify(originDomainNames)}`
+  )
+  assert.ok(
+    originDomainNames.includes(productionApiOriginContext.webSocketApiOriginDomainName),
+    `WebSocket custom origin missing: ${JSON.stringify(originDomainNames)}`
+  )
+  assert.doesNotMatch(JSON.stringify(originDomainNames), /RestApi.*execute-api|WebSocketApi.*execute-api/)
+
+  const wsBehavior = distributionConfig.CacheBehaviors.find((behavior: any) => behavior.PathPattern === "ws/v1")
+  const wsFunctionLogicalId = wsBehavior.FunctionAssociations[0].FunctionARN["Fn::GetAtt"]?.[0]
+  const wsFunction = resources[wsFunctionLogicalId]
+  assert.ok(wsFunction)
+  assert.equal(executeCloudFrontFunction(wsFunction.Properties.FunctionCode, "/ws/v1"), "/")
+
+  for (const outputName of ["ApiUrl", "OpenApiUrl"]) {
+    const value = JSON.stringify(template.toJSON().Outputs?.[outputName]?.Value)
+    assert.match(value, /FrontendDistribution.*DomainName/)
+    assert.doesNotMatch(value, /execute-api|rest-origin|ws-origin/)
+  }
+  assert.doesNotMatch(JSON.stringify(template.toJSON().Outputs), /execute-api|rest-origin|ws-origin/)
+})
+
+test("production API Gateway custom origin configuration fails closed before synth", () => {
+  const valid = {
+    deploymentEnvironment: "prod" as const,
+    restApiDomainName: productionApiOriginContext.restApiOriginDomainName,
+    webSocketApiDomainName: productionApiOriginContext.webSocketApiOriginDomainName,
+    certificateArn: productionApiOriginContext.apiGatewayOriginCertificateArn,
+    hostedZoneId: productionApiOriginContext.apiGatewayOriginHostedZoneId,
+    hostedZoneName: productionApiOriginContext.apiGatewayOriginHostedZoneName,
+    region: "ap-northeast-1"
+  }
+  assert.deepEqual(resolveApiGatewayOriginConfiguration(valid), {
+    restApiDomainName: productionApiOriginContext.restApiOriginDomainName,
+    webSocketApiDomainName: productionApiOriginContext.webSocketApiOriginDomainName,
+    certificateArn: productionApiOriginContext.apiGatewayOriginCertificateArn,
+    hostedZoneId: productionApiOriginContext.apiGatewayOriginHostedZoneId,
+    hostedZoneName: productionApiOriginContext.apiGatewayOriginHostedZoneName
+  })
+  assert.equal(resolveApiGatewayOriginConfiguration({
+    ...valid,
+    deploymentEnvironment: "dev",
+    restApiDomainName: undefined,
+    webSocketApiDomainName: undefined,
+    certificateArn: undefined,
+    hostedZoneId: undefined,
+    hostedZoneName: undefined
+  }), undefined)
+
+  for (const [override, message] of [
+    [{ restApiDomainName: undefined }, /restApiOriginDomainName/],
+    [{ restApiDomainName: "HTTPS://rest-origin.example.com" }, /lowercase DNS name/],
+    [{ restApiDomainName: "rest-origin.execute-api.example.com" }, /execute-api/],
+    [{ webSocketApiDomainName: valid.restApiDomainName }, /distinct/],
+    [{ webSocketApiDomainName: "ws-origin.other.example" }, /subdomain/],
+    [{ hostedZoneId: "example-zone" }, /hosted zone ID/],
+    [{ certificateArn: "arn:aws:acm:us-east-1:111111111111:certificate/abc" }, /stack region/],
+    [{ certificateArn: "not-an-arn" }, /ACM certificate ARN/]
+  ] as const) {
+    assert.throws(
+      () => resolveApiGatewayOriginConfiguration({ ...valid, ...override }),
+      message
+    )
   }
 })
 
@@ -801,7 +956,8 @@ test("production monitoring requires an explicit quality and safety owner notifi
   const template = synthesize({
     deploymentEnvironment: "prod",
     corsAllowedOrigins: "https://app.example.com",
-    ragAlertEmail: "rag-on-call@example.com"
+    ragAlertEmail: "rag-on-call@example.com",
+    ...productionApiOriginContext
   })
   template.hasResourceProperties("AWS::SNS::Subscription", {
     Protocol: "email",

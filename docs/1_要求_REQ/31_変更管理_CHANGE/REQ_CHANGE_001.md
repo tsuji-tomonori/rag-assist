@@ -46,7 +46,7 @@
 | `CHG-002` | なし | なし | `reports/working/` から正規 REQ/ARC/DES/OPS への trace | `REQ_CHANGE_002` |
 | `TC-001` | `ASR-RETRIEVAL-001` | `ARC_ADR_001` | `DES_HLD_001`, `DES_DLD_001` | `SQ-001` |
 | `TC-002` | `ASR-SEC-001` | `ARC_ADR_001` | `DES_API_001` | 各要求の受け入れ条件 |
-| `TC-003` | `ASR-SEC-001`, `ASR-OPER-001` | `ARC_ADR_005`, `DES_HLD_002` | CORS fail-closedを先行し、CloudFront `/api/*`、SPA direct origin除去、Hosted UI PKCE、WebSocket ticket `/ws/*`、direct origin制限の順に移行。追跡: `tasks/todo/20260522-2120-cloudfront-single-entry-implementation.md` | `REQ_TECHNICAL_CONSTRAINT_003` |
+| `TC-003` | `ASR-SEC-001`, `ASR-OPER-001` | `ARC_ADR_005`, `DES_HLD_002` | CORS、CloudFront `/api/*`、SPA relative API、Hosted UI PKCE、WebSocket ticket、default endpoint無効化/custom originはsource/CDK実装済み。実AWSのDNS/certificate、REST/101、default endpoint 403、security header/失敗メトリクスをpreview gateとして追跡: `tasks/do/20260717-1045-issue-358-tc003-direct-endpoint.md` | `REQ_TECHNICAL_CONSTRAINT_003` |
 
 ## 機能分類トレーサビリティ
 

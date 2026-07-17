@@ -17,16 +17,22 @@
 - AC-TC003-002: S3 SPA bucketはprivate bucketとし、CloudFront OAC経由だけで配信すること。
 - AC-TC003-003: S3 website endpointを本番SPA originとして使わないこと。
 - AC-TC003-004: `/api/v1/health` はCloudFront経由でAPI Gateway REST APIへ届き、origin側では `/v1/health` として扱えること。
-- AC-TC003-005: `/ws/v1?ticket=xxx` はCloudFront経由でAPI Gateway WebSocket APIへ届き、origin側では `/v1?ticket=xxx` として扱えること。
+- AC-TC003-005: `/ws/v1` はCloudFront経由でAPI Gateway WebSocket APIのroot mappingへ届き、ticketはquery/path/cookieではなく `Sec-WebSocket-Protocol` で扱うこと。
 - AC-TC003-006: API behaviorはcache policyを無効化し、認証付きAPI応答をCloudFront cacheに保存しないこと。
 - AC-TC003-007: REST API behaviorはviewerの `Host` をoriginへそのまま渡さないorigin request policyを使うこと。
-- AC-TC003-008: WebSocket behaviorはupgradeに必要なheaderとquery stringをoriginへ転送すること。
+- AC-TC003-008: WebSocket behaviorはupgradeとsubprotocol negotiationに必要なheaderだけをoriginへ転送し、cookieとquery stringを転送しないこと。
 - AC-TC003-036: WebSocket behaviorはviewerの `Host` headerをAPI Gateway WebSocket originへ転送しないこと。
-- AC-TC003-037: WebSocket behaviorはquery stringをoriginへ転送すること。
+- AC-TC003-037: WebSocket behaviorはcredentialを含み得るquery stringをoriginへ転送しないこと。
 - AC-TC003-038: WebSocket behaviorは `Sec-WebSocket-Key` と `Sec-WebSocket-Version` をoriginへ転送すること。
 - AC-TC003-039: WebSocket behaviorはclientが使う場合に `Sec-WebSocket-Protocol` と `Sec-WebSocket-Extensions` をoriginへ転送すること。
 - AC-TC003-040: WebSocket behaviorはcache policyを無効化すること。
-- AC-TC003-041: WebSocket originへ送られる `Host` はCloudFront viewer domainではなくAPI Gateway origin domainであること。
+- AC-TC003-041: WebSocket originへ送られる `Host` はCloudFront viewer domainではなく、WebSocket専用API Gateway custom origin domainであること。
+- AC-TC003-042: production相当構成ではREST APIのdefault `execute-api` endpointを無効化すること。
+- AC-TC003-043: production相当構成ではWebSocket APIのdefault `execute-api` endpointを無効化すること。
+- AC-TC003-044: RESTとWebSocketは共有できない別々のRegional custom domainとroot mappingを持ち、CloudFront originはそれらを使用すること。
+- AC-TC003-045: productionのcustom domain、同一region ACM certificate、Route 53 hosted zoneが欠落・不正・矛盾する場合はsynth前に拒否すること。
+- AC-TC003-046: custom domainのRoute 53 aliasを同じstackで構成し、default endpoint無効化とCloudFront origin切替を分離しないこと。
+- AC-TC003-047: browser/外部運用向け `ApiUrl` と `OpenApiUrl` はCloudFront `/api/` を返し、内部benchmark targetは循環依存を避けてREST custom domainを使うこと。
 
 ### SPA / CORS
 
@@ -51,7 +57,7 @@
 
 ### WebSocket
 
-- AC-TC003-024: `/api/v1/ws-ticket` はBearer tokenなしではticketを発行しないこと。
+- AC-TC003-024: `POST /websocket/tickets` はBearer tokenなしではticketを発行しないこと。
 - AC-TC003-025: WebSocket ticketは30秒から120秒のTTLを持つこと。
 - AC-TC003-026: TTL超過後のticketは `$connect` で拒否されること。
 - AC-TC003-027: ticketは2回目の `$connect` で拒否されること。
@@ -81,8 +87,8 @@
 
 ## 状態管理
 
-- Draft理由: 本要件はCloudFront単一入口構成の受け入れ条件を先に固定するための要求定義であり、CloudFront/CDK、API middleware、SPA相対パス化、Cognito callback、WebSocket ticket実装は未完了である。
-- 昇格条件: 後続実装で `AC-TC003-001` から `AC-TC003-041` を自動テストまたは実環境検証で確認し、CloudFront/CDK、API middleware、SPA、Cognito、WebSocket ticketの設計文書または実装PRへ紐づいた時点で Accepted / Verified 相当へ更新する。
+- Draft理由: source/CDK上のCloudFront/CDK、SPA相対パス、Hosted UI + PKCE、WebSocket ticket、default endpoint無効化は実装済みだが、実AWS/browserのREST/WebSocket疎通、101/subprotocol、default endpoint 403、security header、メトリクスの全AC evidenceは未完了である。
+- 昇格条件: `AC-TC003-001` から `AC-TC003-047` を自動テストまたは実環境検証で確認し、未実施のpreview gateをpass扱いせず、CloudFront/CDK、API middleware、SPA、Cognito、WebSocket ticketの設計文書または実装PRへ紐づいた時点で Accepted / Verified 相当へ更新する。
 
 ## 要求属性
 
@@ -95,10 +101,10 @@
 | 種類 | 技術制約 |
 | 依存関係 | `ARC_ADR_005`, Cognito Hosted UI, API Gateway REST API, API Gateway WebSocket API, CloudFront, S3 OAC |
 | 衝突 | direct execute-api接続や広いCORS allowlistを前提にした既存設定がある場合は移行が必要 |
-| 受け入れ基準 | `AC-TC003-001` から `AC-TC003-041` |
+| 受け入れ基準 | `AC-TC003-001` から `AC-TC003-047` |
 | 優先度 | A |
 | 安定性 | High |
-| 変更履歴 | 2026-05-22 初版 |
+| 変更履歴 | 2026-05-22 初版。2026-07-17 WebSocket secret transportをheader-onlyへ同期し、default endpoint無効化とcustom originのACを追加 |
 
 ## 妥当性確認
 

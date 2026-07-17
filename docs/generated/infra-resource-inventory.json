@@ -5413,10 +5413,10 @@
       "detailFilePath": "infra-inventory/aws-apigateway-account.md"
     },
     {
-      "logicalId": "RestApiDeployment180EC503908985d569540910826fb487110279bd",
-      "logicalName": "Rest Api Deployment180EC503908985d569540910826fb487110279bd",
+      "logicalId": "RestApiDeployment180EC503b319f06a3f88f70f7fd4955c07479167",
+      "logicalName": "Rest Api Deployment180EC503b319f06a3f88f70f7fd4955c",
       "type": "AWS::ApiGateway::Deployment",
-      "purpose": "Rest Api Deployment180EC503908985d569540910826fb487110279bd (API Gateway deployment)",
+      "purpose": "Rest Api Deployment180EC503b319f06a3f88f70f7fd4955c (API Gateway deployment)",
       "settings": {
         "restApiId": "Ref:RestApi0C43BF4B",
         "description": "Automatically created by the RestApi construct"
@@ -5485,6 +5485,7 @@
       "type": "AWS::ApiGatewayV2::Api",
       "purpose": "Web Socket Api (AWS::ApiGatewayV2::Api)",
       "settings": {
+        "DisableExecuteApiEndpoint": false,
         "Name": "memorag-websocket-c85f22a0",
         "ProtocolType": "WEBSOCKET",
         "RouteSelectionExpression": "$request.body.action",
@@ -5775,7 +5776,7 @@
         "AutoPublish": true,
         "FunctionCode": "\nfunction handler(event) {\n  var request = event.request;\n\n  if (request.uri === \"/ws/v1\") {\n    request.uri = \"/prod\";\n  }\n\n  return request;\n}\n",
         "FunctionConfig": {
-          "Comment": "Rewrite the exact same-origin WebSocket entry to the API Gateway stage path",
+          "Comment": "Rewrite the exact same-origin WebSocket entry to the configured API Gateway origin path",
           "Runtime": "cloudfront-js-1.0"
         },
         "Name": "ap-northeast-1MemoRagMvpStackTeRewriteFunctionE448B710",

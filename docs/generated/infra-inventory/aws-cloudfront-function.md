@@ -60,6 +60,6 @@ Logical ID: `WebSocketStageRewriteFunction229ED7B5`
 | --- | --- |
 | `AutoPublish` | true |
 | `FunctionCode` | <br>function handler(event) {<br>  var request = event.request;<br><br>  if (request.uri === "/ws/v1") {<br>    request.uri = "/prod";<br>  }<br><br>  return request;<br>}<br> |
-| `FunctionConfig` | {"Comment":"Rewrite the exact same-origin WebSocket entry to the API Gateway stage path","Runtime":"cloudfront-js-1.0"} |
+| `FunctionConfig` | {"Comment":"Rewrite the exact same-origin WebSocket entry to the configured API Gateway origin path","Runtime":"cloudfront-js-1.0"} |
 | `Name` | ap-northeast-1MemoRagMvpStackTeRewriteFunctionE448B710 |
 | `Tags` | [{"Key":"Application","Value":"MemoRAG"},{"Key":"CostCenter","Value":"memorag-mvp"},{"Key":"Environment","Value":"dev"},{"Key":"ManagedBy","Value":"aws-cdk"},{"Key":"Project","Value":"memorag-bedrock-mvp"},{"Key":"Repository","Value":"tsuji-tomonori/rag-assist"}] |

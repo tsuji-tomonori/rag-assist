@@ -4,6 +4,7 @@ import * as cdk from "aws-cdk-lib"
 import { Duration, RemovalPolicy, Size, Stack, type StackProps } from "aws-cdk-lib"
 import * as apigw from "aws-cdk-lib/aws-apigateway"
 import * as apigwv2 from "aws-cdk-lib/aws-apigatewayv2"
+import * as acm from "aws-cdk-lib/aws-certificatemanager"
 import * as cloudfront from "aws-cdk-lib/aws-cloudfront"
 import * as codebuild from "aws-cdk-lib/aws-codebuild"
 import * as cloudwatch from "aws-cdk-lib/aws-cloudwatch"
@@ -19,6 +20,7 @@ import * as logs from "aws-cdk-lib/aws-logs"
 import * as cognito from "aws-cdk-lib/aws-cognito"
 import * as s3 from "aws-cdk-lib/aws-s3"
 import * as s3deploy from "aws-cdk-lib/aws-s3-deployment"
+import * as route53 from "aws-cdk-lib/aws-route53"
 import * as sns from "aws-cdk-lib/aws-sns"
 import * as subscriptions from "aws-cdk-lib/aws-sns-subscriptions"
 import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager"
@@ -38,6 +40,84 @@ import type { ApiFunctionRuntimeEnv, ApiRuntimeEnv } from "@memorag-mvp/contract
 
 export interface MemoRagMvpStackProps extends StackProps {
   readonly includeFrontendDeployment?: boolean
+}
+
+export interface ApiGatewayOriginConfiguration {
+  readonly restApiDomainName: string
+  readonly webSocketApiDomainName: string
+  readonly certificateArn: string
+  readonly hostedZoneId: string
+  readonly hostedZoneName: string
+}
+
+function parseDnsName(rawValue: unknown, fieldName: string): string {
+  const value = String(rawValue ?? "").trim()
+  if (!value) throw new Error(`Production deployment requires ${fieldName}`)
+  if (value !== value.toLowerCase() || value.endsWith(".")) {
+    throw new Error(`${fieldName} must be a lowercase DNS name without a trailing dot`)
+  }
+  if (value.length > 253 || !value.includes(".")) {
+    throw new Error(`${fieldName} must be a valid fully qualified DNS name`)
+  }
+  for (const label of value.split(".")) {
+    if (!/^(?!-)[a-z0-9-]{1,63}(?<!-)$/.test(label)) {
+      throw new Error(`${fieldName} must be a valid fully qualified DNS name`)
+    }
+  }
+  if (value.includes(".execute-api.")) {
+    throw new Error(`${fieldName} must not use an execute-api domain`)
+  }
+  return value
+}
+
+export function resolveApiGatewayOriginConfiguration(props: {
+  readonly deploymentEnvironment: DeploymentEnvironment
+  readonly restApiDomainName: unknown
+  readonly webSocketApiDomainName: unknown
+  readonly certificateArn: unknown
+  readonly hostedZoneId: unknown
+  readonly hostedZoneName: unknown
+  readonly region: string
+}): ApiGatewayOriginConfiguration | undefined {
+  if (!isProductionDeploymentEnvironment(props.deploymentEnvironment)) return undefined
+
+  const restApiDomainName = parseDnsName(props.restApiDomainName, "restApiOriginDomainName")
+  const webSocketApiDomainName = parseDnsName(props.webSocketApiDomainName, "webSocketApiOriginDomainName")
+  if (restApiDomainName === webSocketApiDomainName) {
+    throw new Error("REST and WebSocket APIs require distinct API Gateway custom domain names")
+  }
+
+  const hostedZoneName = parseDnsName(props.hostedZoneName, "apiGatewayOriginHostedZoneName")
+  for (const [fieldName, domainName] of [
+    ["restApiOriginDomainName", restApiDomainName],
+    ["webSocketApiOriginDomainName", webSocketApiDomainName]
+  ] as const) {
+    if (!domainName.endsWith(`.${hostedZoneName}`)) {
+      throw new Error(`${fieldName} must be a subdomain of apiGatewayOriginHostedZoneName`)
+    }
+  }
+
+  const hostedZoneId = String(props.hostedZoneId ?? "").trim()
+  if (!/^Z[A-Z0-9]{5,31}$/.test(hostedZoneId)) {
+    throw new Error("apiGatewayOriginHostedZoneId must be a valid Route 53 hosted zone ID")
+  }
+
+  const certificateArn = String(props.certificateArn ?? "").trim()
+  const certificateArnMatch = /^arn:(aws|aws-us-gov|aws-cn):acm:([^:]+):\d{12}:certificate\/[A-Za-z0-9-]+$/.exec(certificateArn)
+  if (!certificateArnMatch) {
+    throw new Error("apiGatewayOriginCertificateArn must be a valid ACM certificate ARN")
+  }
+  if (!cdk.Token.isUnresolved(props.region) && certificateArnMatch[2] !== props.region) {
+    throw new Error("apiGatewayOriginCertificateArn must be in the API Gateway stack region")
+  }
+
+  return {
+    restApiDomainName,
+    webSocketApiDomainName,
+    certificateArn,
+    hostedZoneId,
+    hostedZoneName
+  }
 }
 
 export function createDeployedFrontendRuntimeConfig(props: {
@@ -154,6 +234,15 @@ export class MemoRagMvpStack extends Stack {
     if (deploymentEnvironment === "prod" && !ragAlertTopicArn && !ragAlertEmail) {
       throw new Error("Production deployment requires ragAlertTopicArn or ragAlertEmail for the RAG quality/safety owner")
     }
+    const apiGatewayOriginConfiguration = resolveApiGatewayOriginConfiguration({
+      deploymentEnvironment,
+      restApiDomainName: this.node.tryGetContext("restApiOriginDomainName"),
+      webSocketApiDomainName: this.node.tryGetContext("webSocketApiOriginDomainName"),
+      certificateArn: this.node.tryGetContext("apiGatewayOriginCertificateArn"),
+      hostedZoneId: this.node.tryGetContext("apiGatewayOriginHostedZoneId"),
+      hostedZoneName: this.node.tryGetContext("apiGatewayOriginHostedZoneName"),
+      region: this.region
+    })
 
     const accessLogsBucket = new s3.Bucket(this, "AccessLogsBucket", {
       encryption: s3.BucketEncryption.S3_MANAGED,
@@ -1051,6 +1140,7 @@ export class MemoRagMvpStack extends Stack {
     })
     const restApi = new apigw.RestApi(this, "RestApi", {
       endpointTypes: [apigw.EndpointType.REGIONAL],
+      disableExecuteApiEndpoint: apiGatewayOriginConfiguration !== undefined,
       deployOptions: {
         stageName: "prod",
         loggingLevel: apigw.MethodLoggingLevel.INFO,
@@ -1076,7 +1166,13 @@ export class MemoRagMvpStack extends Stack {
         maxAge: Duration.days(1)
       }
     })
-    const restApiBaseUrl = `https://${restApi.restApiId}.execute-api.${cdk.Aws.REGION}.${cdk.Aws.URL_SUFFIX}/prod/`
+    if (apiGatewayOriginConfiguration) {
+      restApi.node.tryRemoveChild("Endpoint")
+    }
+    const restApiDefaultBaseUrl = `https://${restApi.restApiId}.execute-api.${cdk.Aws.REGION}.${cdk.Aws.URL_SUFFIX}/prod/`
+    const restApiServiceBaseUrl = apiGatewayOriginConfiguration
+      ? `https://${apiGatewayOriginConfiguration.restApiDomainName}/`
+      : restApiDefaultBaseUrl
     const restApiCorsGatewayResponseHeaders = {
       "Access-Control-Allow-Origin": `'${corsAllowedOrigin}'`,
       "Access-Control-Allow-Headers": "'Content-Type, Authorization, Last-Event-ID'",
@@ -1538,7 +1634,7 @@ export class MemoRagMvpStack extends Stack {
     }))
     for (const fn of apiFns) {
       fn.addEnvironment("BENCHMARK_STATE_MACHINE_ARN", benchmarkStateMachine.stateMachineArn)
-      fn.addEnvironment("BENCHMARK_TARGET_API_BASE_URL", restApiBaseUrl)
+      fn.addEnvironment("BENCHMARK_TARGET_API_BASE_URL", restApiServiceBaseUrl)
       benchmarkStateMachine.grantStartExecution(fn)
       benchmarkStateMachine.grant(fn, "states:StopExecution", "states:DescribeExecution")
     }
@@ -1562,7 +1658,8 @@ export class MemoRagMvpStack extends Stack {
     const webSocketApi = new apigwv2.CfnApi(this, "WebSocketApi", {
       name: `memorag-websocket-${suffix}`,
       protocolType: "WEBSOCKET",
-      routeSelectionExpression: "$request.body.action"
+      routeSelectionExpression: "$request.body.action",
+      disableExecuteApiEndpoint: apiGatewayOriginConfiguration !== undefined
     })
     const webSocketAuthorizer = new apigwv2.CfnAuthorizer(this, "WebSocketConnectAuthorizer", {
       apiId: webSocketApi.ref,
@@ -1642,6 +1739,71 @@ export class MemoRagMvpStack extends Stack {
     webSocketStage.addDependency(webSocketDisconnectRoute)
     webSocketStage.addDependency(webSocketDefaultRoute)
 
+    let restApiCloudFrontOrigin: cloudfront.IOrigin = new origins.RestApiOrigin(restApi)
+    let webSocketCloudFrontOrigin: cloudfront.IOrigin = new origins.HttpOrigin(
+      `${webSocketApi.ref}.execute-api.${cdk.Aws.REGION}.${cdk.Aws.URL_SUFFIX}`,
+      { protocolPolicy: cloudfront.OriginProtocolPolicy.HTTPS_ONLY }
+    )
+    let webSocketOriginPath = "/prod"
+
+    if (apiGatewayOriginConfiguration) {
+      const apiGatewayOriginCertificate = acm.Certificate.fromCertificateArn(
+        this,
+        "ApiGatewayOriginCertificate",
+        apiGatewayOriginConfiguration.certificateArn
+      )
+      const restApiDomainName = new apigw.DomainName(this, "RestApiOriginDomainName", {
+        domainName: apiGatewayOriginConfiguration.restApiDomainName,
+        certificate: apiGatewayOriginCertificate,
+        endpointType: apigw.EndpointType.REGIONAL,
+        securityPolicy: apigw.SecurityPolicy.TLS_1_2
+      })
+      restApiDomainName.addBasePathMapping(restApi, { stage: restApi.deploymentStage })
+      new route53.CfnRecordSet(this, "RestApiOriginAliasRecord", {
+        hostedZoneId: apiGatewayOriginConfiguration.hostedZoneId,
+        name: apiGatewayOriginConfiguration.restApiDomainName,
+        type: "A",
+        aliasTarget: {
+          dnsName: restApiDomainName.domainNameAliasDomainName,
+          hostedZoneId: restApiDomainName.domainNameAliasHostedZoneId,
+          evaluateTargetHealth: false
+        }
+      })
+
+      const webSocketApiDomainName = new apigwv2.CfnDomainName(this, "WebSocketApiOriginDomainName", {
+        domainName: apiGatewayOriginConfiguration.webSocketApiDomainName,
+        domainNameConfigurations: [{
+          certificateArn: apiGatewayOriginConfiguration.certificateArn,
+          endpointType: "REGIONAL",
+          securityPolicy: "TLS_1_2"
+        }]
+      })
+      const webSocketApiMapping = new apigwv2.CfnApiMapping(this, "WebSocketApiOriginMapping", {
+        apiId: webSocketApi.ref,
+        domainName: webSocketApiDomainName.ref,
+        stage: webSocketStage.stageName
+      })
+      webSocketApiMapping.addDependency(webSocketStage)
+      new route53.CfnRecordSet(this, "WebSocketApiOriginAliasRecord", {
+        hostedZoneId: apiGatewayOriginConfiguration.hostedZoneId,
+        name: apiGatewayOriginConfiguration.webSocketApiDomainName,
+        type: "A",
+        aliasTarget: {
+          dnsName: webSocketApiDomainName.attrRegionalDomainName,
+          hostedZoneId: webSocketApiDomainName.attrRegionalHostedZoneId,
+          evaluateTargetHealth: false
+        }
+      })
+
+      restApiCloudFrontOrigin = new origins.HttpOrigin(apiGatewayOriginConfiguration.restApiDomainName, {
+        protocolPolicy: cloudfront.OriginProtocolPolicy.HTTPS_ONLY
+      })
+      webSocketCloudFrontOrigin = new origins.HttpOrigin(apiGatewayOriginConfiguration.webSocketApiDomainName, {
+        protocolPolicy: cloudfront.OriginProtocolPolicy.HTTPS_ONLY
+      })
+      webSocketOriginPath = "/"
+    }
+
     const webSocketInvokeArn = cdk.Stack.of(this).formatArn({
       service: "execute-api",
       resource: webSocketApi.ref,
@@ -1690,13 +1852,13 @@ function handler(event) {
 `)
     })
     const webSocketStageRewriteFunction = new cloudfront.Function(this, "WebSocketStageRewriteFunction", {
-      comment: "Rewrite the exact same-origin WebSocket entry to the API Gateway stage path",
+      comment: "Rewrite the exact same-origin WebSocket entry to the configured API Gateway origin path",
       code: cloudfront.FunctionCode.fromInline(`
 function handler(event) {
   var request = event.request;
 
   if (request.uri === "/ws/v1") {
-    request.uri = "/prod";
+    request.uri = "${webSocketOriginPath}";
   }
 
   return request;
@@ -1704,7 +1866,7 @@ function handler(event) {
 `)
     })
     const apiBehavior: cloudfront.BehaviorOptions = {
-      origin: new origins.RestApiOrigin(restApi),
+      origin: restApiCloudFrontOrigin,
       allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
       cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
       originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
@@ -1726,10 +1888,7 @@ function handler(event) {
       queryStringBehavior: cloudfront.OriginRequestQueryStringBehavior.none()
     })
     const webSocketBehavior: cloudfront.BehaviorOptions = {
-      origin: new origins.HttpOrigin(
-        `${webSocketApi.ref}.execute-api.${cdk.Aws.REGION}.${cdk.Aws.URL_SUFFIX}`,
-        { protocolPolicy: cloudfront.OriginProtocolPolicy.HTTPS_ONLY }
-      ),
+      origin: webSocketCloudFrontOrigin,
       allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
       cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
       originRequestPolicy: webSocketOriginRequestPolicy,
@@ -1823,8 +1982,9 @@ function handler(event) {
       true
     )
 
-    new cdk.CfnOutput(this, "ApiUrl", { value: restApiBaseUrl })
-    new cdk.CfnOutput(this, "OpenApiUrl", { value: `${restApiBaseUrl}openapi.json` })
+    const publicApiBaseUrl = `https://${distribution.distributionDomainName}/api/`
+    new cdk.CfnOutput(this, "ApiUrl", { value: publicApiBaseUrl })
+    new cdk.CfnOutput(this, "OpenApiUrl", { value: `${publicApiBaseUrl}openapi.json` })
     new cdk.CfnOutput(this, "FrontendUrl", { value: `https://${distribution.distributionDomainName}` })
     new cdk.CfnOutput(this, "VectorBucketName", { value: vectorBucketName })
     new cdk.CfnOutput(this, "MemoryVectorIndexName", { value: memoryVectorIndexName })

@@ -228,7 +228,7 @@ SWEBOK v4.0a Chapter 1 に従い、要求は次を満たす粒度にする。
 | GAP-RD-018 | trace raw data と redaction 宣言が一致せず、`FR-074`, `FR-088` と衝突する。 | conflict | `20260713-2256-trace-evaluation-isolation.md` |
 | GAP-RD-019 | product runtime に domain/dataset 固有 rule があり、`FR-075`, `SQ-007` に部分適合または衝突する。 | conflict | `20260713-2256-trace-evaluation-isolation.md`, `20260506-1203-requirements-classification-policy.md` |
 | GAP-RD-020 | CDK self-signup disabled と `FR-025`/Web が衝突し、post-confirmation handler が未接続。 | conflict | `20260713-2258-self-signup-policy-implementation.md` |
-| GAP-RD-021 | CloudFront/PKCE/CORS の accepted target と deploy/runtime が一致せず、`FR-054`, `TC-003` に未達。 | conflict | `20260522-2120-cloudfront-single-entry-implementation.md` |
+| GAP-RD-021 | CloudFront/CORS/SPA relative API/PKCE/WebSocket ticket/default endpoint無効化はsource/CDKでaccepted targetへ同期した。実AWSのDNS/certificate、REST/101、default endpoint 403、security header/失敗メトリクス evidenceが未完で、`TC-003` 全体は未達。 | confirmed | `20260717-1045-issue-358-tc003-direct-endpoint.md` |
 | GAP-RD-022 | role catalog が backend/infra/Web でずれ、mutation guard/audit が不足し、`FR-079`, `FR-080`, `FR-086` に未達。 | conflict | `20260713-2251-canonical-resource-authorization.md` |
 | GAP-RD-023 | move が manifest、vector metadata、subtree/index/policy を一公開単位で更新せず、`FR-061`, `FR-065`, `FR-087`, `SQ-009` に未達。 | confirmed | `20260517-1241-document-move-between-folders.md` |
 | GAP-RD-024 | 本番 stage/slice 別 drift、alert、safe action の control loop がなく、`FR-089`, `FR-093`, `SQ-008`, `SQ-012`–`SQ-015` に未達。 | confirmed | `20260713-2257-production-rag-monitoring.md` |
