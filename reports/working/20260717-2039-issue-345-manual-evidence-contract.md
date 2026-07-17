@@ -55,5 +55,11 @@
 - manual keyboard、representative screen reader、実 browser 200%/400% zoom、real-device は未実施。
 - baseline は Issue #345 全体の completion/merge-ready evidence ではない。
 - GitHub Apps connector は利用可能 tool に出ていないため、PR 操作は `gh` fallback とし、その制約を PR に明記する。
-- Draft PR、GitHub CI、受け入れ条件/self-review comment、Issue 進捗、task done lifecycle は作業継続中。
+- Draft PR: https://github.com/tsuji-tomonori/rag-assist/pull/429
+- implementation head `9ebae2ef952839e343db293399bd15b91be1b026` の required CI: https://github.com/tsuji-tomonori/rag-assist/actions/runs/29577928962 success（新設 manual evidence step を含む）。
+- semver CI: https://github.com/tsuji-tomonori/rag-assist/actions/runs/29577939896 success。
+- 受け入れ条件 comment: https://github.com/tsuji-tomonori/rag-assist/pull/429#issuecomment-5002940046
+- セルフレビュー comment: https://github.com/tsuji-tomonori/rag-assist/pull/429#issuecomment-5002942219
+- task は bounded unit の完了として done へ移動する。一方、manual evidence task と Issue #345 は未完了のまま維持する。
+- lifecycle commit 後の final-head CI と Issue 進捗 comment は継続中。
 - merge、deploy、release は行わない。
