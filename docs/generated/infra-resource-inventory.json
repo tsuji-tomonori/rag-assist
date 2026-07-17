@@ -4058,6 +4058,7 @@
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/documents/share-grants.json\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/documents/share-grants/\",{\"Ref\":\"AWS::AccountId\"},\"/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/security-audit/intents/\",{\"Ref\":\"AWS::AccountId\"},\"/*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/security/ownership-transfer/\",{\"Ref\":\"AWS::AccountId\"},\"/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/security/resource-group-lifecycle/create/\",{\"Ref\":\"AWS::AccountId\"},\"/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/security/resource-group-lifecycle/delete/\",{\"Ref\":\"AWS::AccountId\"},\"/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/security/revocation-cleanup-repairs/*\"]]",
