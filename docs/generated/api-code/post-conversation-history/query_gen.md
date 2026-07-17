@@ -8,7 +8,7 @@
 
 | # | CRUD/実行 | Target | Method | 自然言語での目的 | Caller | コード根拠 |
 | ---: | --- | --- | --- | --- | --- | --- |
-| 1 | 作成・追記 | `this.deps.conversationHistoryStore` | `save` | `this.deps.conversationHistoryStore` に対して save を実行する。 | `MemoRagService.saveConversationHistory` | `apps/api/src/rag/memorag-service.ts:4136 (MemoRagService.saveConversationHistory)` |
+| 1 | 作成・追記 | `this.deps.conversationHistoryStore` | `save` | `this.deps.conversationHistoryStore` に対して save を実行する。 | `MemoRagService.saveConversationHistory` | `apps/api/src/rag/memorag-service.ts:4141 (MemoRagService.saveConversationHistory)` |
 
 ## 外部サービス操作
 

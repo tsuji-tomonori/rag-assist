@@ -32,8 +32,8 @@ sequenceDiagram
 | 2 | `POST /benchmark-runs/{runId}/cancel handler` | Auth | "benchmark:cancel" permission を必須条件として確認する。 | `requirePermission(actor, "benchmark:cancel")` | `apps/api/src/routes/benchmark-routes.ts:189 (POST /benchmark-runs/{runId}/cancel handler)` |
 | 3 | `POST /benchmark-runs/{runId}/cancel handler` | Validation | schema 検証済みの path parameter を取得する。 | `validParam<{ runId: string }>(c)` | `apps/api/src/routes/benchmark-routes.ts:190 (POST /benchmark-runs/{runId}/cancel handler)` |
 | 4 | `POST /benchmark-runs/{runId}/cancel handler` | Service | service の cancel benchmark run 処理を呼び出す。 | `service.cancelBenchmarkRun(actor, runId)` | `apps/api/src/routes/benchmark-routes.ts:191 (POST /benchmark-runs/{runId}/cancel handler)` |
-| 5 | `MemoRagService.cancelBenchmarkRun` | Store | `this.deps.benchmarkRunStore` に対して get を実行する。 | `this.deps.benchmarkRunStore.get(tenantId, runId)` | `apps/api/src/rag/memorag-service.ts:4694 (MemoRagService.cancelBenchmarkRun)` |
-| 6 | `MemoRagService.cancelBenchmarkRun` | Store | `this.deps.benchmarkRunStore` に対して update を実行する。 | `this.deps.benchmarkRunStore.update(tenantId, runId, { status: "cancelled", completedAt: new Date().toISOString() })` | `apps/api/src/rag/memorag-service.ts:4703 (MemoRagService.cancelBenchmarkRun)` |
+| 5 | `MemoRagService.cancelBenchmarkRun` | Store | `this.deps.benchmarkRunStore` に対して get を実行する。 | `this.deps.benchmarkRunStore.get(tenantId, runId)` | `apps/api/src/rag/memorag-service.ts:4688 (MemoRagService.cancelBenchmarkRun)` |
+| 6 | `MemoRagService.cancelBenchmarkRun` | Store | `this.deps.benchmarkRunStore` に対して update を実行する。 | `this.deps.benchmarkRunStore.update(tenantId, runId, { status: "cancelled", completedAt: new Date().toISOString() })` | `apps/api/src/rag/memorag-service.ts:4697 (MemoRagService.cancelBenchmarkRun)` |
 | 7 | `POST /benchmark-runs/{runId}/cancel handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json(run, 200)` | `apps/api/src/routes/benchmark-routes.ts:193 (POST /benchmark-runs/{runId}/cancel handler)` |
 
 ## 分岐
@@ -42,5 +42,5 @@ sequenceDiagram
 | --- | --- | --- | --- |
 | B001 | `POST /benchmark-runs/{runId}/cancel handler` | `run` が存在しない、または偽である | `apps/api/src/routes/benchmark-routes.ts:192 (POST /benchmark-runs/{runId}/cancel handler)` |
 | B002 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| B003 | `MemoRagService.cancelBenchmarkRun` | `run` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4695 (MemoRagService.cancelBenchmarkRun)` |
-| B004 | `MemoRagService.cancelBenchmarkRun` | `run.executionArn` が存在し、真である | `apps/api/src/rag/memorag-service.ts:4696 (MemoRagService.cancelBenchmarkRun)` |
+| B003 | `MemoRagService.cancelBenchmarkRun` | `run` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4689 (MemoRagService.cancelBenchmarkRun)` |
+| B004 | `MemoRagService.cancelBenchmarkRun` | `run.executionArn` が存在し、真である | `apps/api/src/rag/memorag-service.ts:4690 (MemoRagService.cancelBenchmarkRun)` |

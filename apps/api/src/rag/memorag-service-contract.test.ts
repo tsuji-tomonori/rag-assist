@@ -270,7 +270,6 @@ const expectedConstructorSites = {
 
 const expectedDirectDependencyReads = [
   "accountRevocationRegistry",
-  "asyncAgentProviders",
   "benchmarkArtifactStore",
   "benchmarkRunStore",
   "chatRunEventStore",

@@ -8,8 +8,8 @@
 
 | # | CRUD/実行 | Target | Method | 自然言語での目的 | Caller | コード根拠 |
 | ---: | --- | --- | --- | --- | --- | --- |
-| 1 | 参照 | `this.deps.conversationHistoryStore` | `list` | `this.deps.conversationHistoryStore` に対して list を実行する。 | `MemoRagService.listConversationHistory` | `apps/api/src/rag/memorag-service.ts:4142 (MemoRagService.listConversationHistory)` |
-| 2 | 参照 | `this.deps.favoriteStore` | `list` | `this.deps.favoriteStore` に対して list を実行する。 | `MemoRagService.listConversationHistory` | `apps/api/src/rag/memorag-service.ts:4143 (MemoRagService.listConversationHistory)` |
+| 1 | 参照 | `this.deps.conversationHistoryStore` | `list` | `this.deps.conversationHistoryStore` に対して list を実行する。 | `MemoRagService.listConversationHistory` | `apps/api/src/rag/memorag-service.ts:4147 (MemoRagService.listConversationHistory)` |
+| 2 | 参照 | `this.deps.favoriteStore` | `list` | `this.deps.favoriteStore` に対して list を実行する。 | `MemoRagService.listConversationHistory` | `apps/api/src/rag/memorag-service.ts:4148 (MemoRagService.listConversationHistory)` |
 
 ## 外部サービス操作
 

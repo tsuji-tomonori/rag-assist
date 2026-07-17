@@ -9,6 +9,7 @@ import {
 } from "@memorag-mvp/contract/access-control"
 import type { Dependencies } from "../dependencies.js"
 import { sanitizeProviderText, type AsyncAgentProviderArtifact, type AsyncAgentProviderInput, type AsyncAgentProviderResult } from "../async-agent/provider.js"
+import { AgentProviderCatalogService } from "../async-agent/provider-catalog-service.js"
 import { debugTraceObjectKey, runChatOrchestration } from "./orchestration/chat-rag-orchestrator.js"
 import { llmOptions, normalizeMaxIterations, normalizeMemoryTopK, normalizeMinScore, normalizeSearchTopK, normalizeTopK, ragRuntimePolicy } from "../chat-orchestration/runtime-policy.js"
 import type { ChatInput, ChatOrchestrationResult } from "../chat-orchestration/types.js"
@@ -445,10 +446,14 @@ const benchmarkSuites: BenchmarkSuite[] = [
 ]
 
 export class MemoRagService {
+  private readonly agentProviderCatalogService: AgentProviderCatalogService
   private readonly favoriteService: FavoriteService
   private readonly questionService: QuestionService
 
   constructor(private readonly deps: Dependencies) {
+    this.agentProviderCatalogService = new AgentProviderCatalogService({
+      registry: deps.asyncAgentProviders
+    })
     this.favoriteService = new FavoriteService({
       favoriteStore: deps.favoriteStore,
       conversationHistoryStore: deps.conversationHistoryStore,
@@ -4178,22 +4183,11 @@ export class MemoRagService {
     reason?: string
     configuredModelIds: string[]
   }> {
-    return this.deps.asyncAgentProviders?.list() ?? []
+    return this.agentProviderCatalogService.listRuntimeProviders()
   }
 
   listAgentProviderSettings(): AgentProviderSetting[] {
-    return this.listAgentRuntimeProviders().map((provider) => ({
-      provider: provider.provider,
-      displayName: provider.displayName,
-      availability: provider.availability,
-      credentialMode: provider.availability === "disabled"
-        ? "disabled"
-        : provider.availability === "not_configured"
-          ? "not_configured"
-          : "environment",
-      configuredModelIds: provider.configuredModelIds,
-      reason: provider.reason
-    }))
+    return this.agentProviderCatalogService.listProviderSettings()
   }
 
   async createAsyncAgentRun(user: AppUser, input: CreateAsyncAgentRunInput): Promise<AsyncAgentRun> {
@@ -4201,7 +4195,7 @@ export class MemoRagService {
 
     const now = new Date().toISOString()
     const agentRunId = createAsyncAgentRunId(now)
-    const provider = this.listAgentRuntimeProviders().find((candidate) => candidate.provider === input.provider)
+    const provider = this.agentProviderCatalogService.findRuntimeProvider(input.provider)
     const availability = provider?.availability ?? "provider_unavailable"
     const blocked = availability !== "available"
     const selectedFolderIds = uniqueStrings(input.selectedFolderIds ?? [])
@@ -4377,7 +4371,7 @@ export class MemoRagService {
       throw error
     }
     const now = new Date().toISOString()
-    const provider = this.deps.asyncAgentProviders?.get(run.provider)
+    const provider = this.agentProviderCatalogService.getAdapter(run.provider)
     const providerDefinition = provider?.definition()
     if (!provider || providerDefinition?.availability !== "available") {
       const updated: AsyncAgentRun = {

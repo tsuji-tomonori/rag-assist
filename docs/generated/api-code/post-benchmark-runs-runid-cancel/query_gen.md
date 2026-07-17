@@ -8,8 +8,8 @@
 
 | # | CRUD/実行 | Target | Method | 自然言語での目的 | Caller | コード根拠 |
 | ---: | --- | --- | --- | --- | --- | --- |
-| 1 | 参照 | `this.deps.benchmarkRunStore` | `get` | `this.deps.benchmarkRunStore` に対して get を実行する。 | `MemoRagService.cancelBenchmarkRun` | `apps/api/src/rag/memorag-service.ts:4694 (MemoRagService.cancelBenchmarkRun)` |
-| 2 | 更新 | `this.deps.benchmarkRunStore` | `update` | `this.deps.benchmarkRunStore` に対して update を実行する。 | `MemoRagService.cancelBenchmarkRun` | `apps/api/src/rag/memorag-service.ts:4703 (MemoRagService.cancelBenchmarkRun)` |
+| 1 | 参照 | `this.deps.benchmarkRunStore` | `get` | `this.deps.benchmarkRunStore` に対して get を実行する。 | `MemoRagService.cancelBenchmarkRun` | `apps/api/src/rag/memorag-service.ts:4688 (MemoRagService.cancelBenchmarkRun)` |
+| 2 | 更新 | `this.deps.benchmarkRunStore` | `update` | `this.deps.benchmarkRunStore` に対して update を実行する。 | `MemoRagService.cancelBenchmarkRun` | `apps/api/src/rag/memorag-service.ts:4697 (MemoRagService.cancelBenchmarkRun)` |
 
 ## 外部サービス操作
 

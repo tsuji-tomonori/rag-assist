@@ -28,7 +28,7 @@ sequenceDiagram
 | 1 | `GET /benchmark-runs handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/benchmark-routes.ts:143 (GET /benchmark-runs handler)` |
 | 2 | `GET /benchmark-runs handler` | Auth | "benchmark:read" permission を必須条件として確認する。 | `requirePermission(actor, "benchmark:read")` | `apps/api/src/routes/benchmark-routes.ts:144 (GET /benchmark-runs handler)` |
 | 3 | `GET /benchmark-runs handler` | Service | service の list benchmark runs 処理を呼び出す。 | `service.listBenchmarkRuns(actor)` | `apps/api/src/routes/benchmark-routes.ts:145 (GET /benchmark-runs handler)` |
-| 4 | `MemoRagService.listBenchmarkRuns` | Store | `this.deps.benchmarkRunStore` に対して list を実行する。 | `this.deps.benchmarkRunStore.list(authoritativeActorTenantId(actor))` | `apps/api/src/rag/memorag-service.ts:4685 (MemoRagService.listBenchmarkRuns)` |
+| 4 | `MemoRagService.listBenchmarkRuns` | Store | `this.deps.benchmarkRunStore` に対して list を実行する。 | `this.deps.benchmarkRunStore.list(authoritativeActorTenantId(actor))` | `apps/api/src/rag/memorag-service.ts:4679 (MemoRagService.listBenchmarkRuns)` |
 | 5 | `GET /benchmark-runs handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json({ benchmarkRuns: await service.listBenchmarkRuns(actor) }, 200)` | `apps/api/src/routes/benchmark-routes.ts:145 (GET /benchmark-runs handler)` |
 
 ## 分岐

@@ -112,7 +112,7 @@ facade の private field は `constructor(private readonly deps: Dependencies)` 
 | security/audit | `accountRevocationRegistry`, `administrativePrincipalTransferFence`, `resourceUserPrincipalDirectory`, `securityAuditOutbox`, `securityAuditReconciliationOutbox` |
 | local/migration seam | `localTestIngestAdmissionContext`, `legacyGlobalDocumentArtifacts` |
 
-Phase 4c 後の service source から `this.deps.<key>` として直接読まれる key は 26。`questionStore` は `QuestionService` の narrow port として constructor で渡され、facade 内では直接読まない。残る `folderPolicyStore`、`administrativePrincipalTransferFence`、`securityAuditReconciliationOutbox`、`legacyGlobalDocumentArtifacts` は `Dependencies` 全体を受け取る helper/service 側で間接利用される。この区別は「直接参照がないので削除可能」という誤判定を避けるために必要である。
+Phase 4d 後の service source から `this.deps.<key>` として直接読まれる key は 25。`questionStore` は `QuestionService`、`asyncAgentProviders` は `AgentProviderCatalogService` の narrow port として constructor で渡され、facade 内では直接読まない。残る `folderPolicyStore`、`administrativePrincipalTransferFence`、`securityAuditReconciliationOutbox`、`legacyGlobalDocumentArtifacts` は `Dependencies` 全体を受け取る helper/service 側で間接利用される。この区別は「直接参照がないので削除可能」という誤判定を避けるために必要である。
 
 ### 直接 AWS 依存
 
@@ -236,6 +236,30 @@ subservice へ `Dependencies` 全体、global config object、AWS client、RAG/u
 
 `question-service.test.ts` は narrow-port source guard、requester/default assignment/diagnostics canonicalization、idempotency key forwarding、read boundary、answer/resolve、display-name fallback を domain unit test として固定する。既存 question route test、facade test、Phase 4a public signature snapshot は二重実行期間として残す。route authorization の再配置、alias search-improvement lifecycle、conversation history は後続の独立判断とする。
 
+## Phase 4d: async agent provider catalog の抽出境界
+
+Issue #359 Phase 4d では、async agent provider の一覧、管理設定 projection、作成時の provider definition 検索、実行時の adapter 解決を `AgentProviderCatalogService` へ抽出する。run store、selection authorization、artifact persistence、secret redaction、writeback、実行結果の status/compensation は facade の責務として維持し、provider lifecycle 全体を同じ変更単位へ含めない。
+
+`AgentProviderCatalogService` が受け取る port は次に限定する。
+
+| port | 用途 |
+|---|---|
+| optional provider registry の `list` | runtime provider 一覧、設定 projection、作成時の provider availability 解決 |
+| optional provider registry の `get` | 実行時の provider adapter 解決 |
+
+subservice へ `Dependencies` 全体、global config object、AWS client、run/artifact store、authorization policy は渡さない。registry が構成されていない場合も架空 provider や demo fallback を返さず、一覧は空、definition / adapter lookup は `undefined` とする。
+
+保持する contract:
+
+- `MemoRagService` の `listAgentRuntimeProviders` / `listAgentProviderSettings` の method 名、引数、返却型を変更しない。
+- runtime provider の registry 順序、display name、availability、reason、configured model ID を変更しない。
+- credential mode は `disabled` を `disabled`、`not_configured` を `not_configured`、その他を従来どおり `environment` へ投影する。
+- create は registry の `list().find(...)` と同じ definition lookup を使い、未登録時を `provider_unavailable` とする既存 status 判定を維持する。
+- execute は registry の `get(...)` と同じ adapter lookup を使い、adapter definition の availability に基づく既存 blocked / failure reason 判定を維持する。
+- provider adapter の `execute`、artifact sanitizer/persistence、permission revoked、writeback、run compensation は facade に残す。
+
+`provider-catalog-service.test.ts` は narrow-port source guard、optional registry、provider 順序と全 availability の setting projection、definition / adapter lookup を固定する。既存 async-agent facade/route test、Phase 4a public signature snapshot は二重実行期間として残す。run lifecycle、provider command 実行、artifact ownership/permission の抽出は後続の独立判断とする。
+
 ## Error / compatibility 方針
 
 - facade の同名 method と TypeScript signature を維持する。
@@ -252,7 +276,7 @@ subservice へ `Dependencies` 全体、global config object、AWS client、RAG/u
 | consumer | route / worker / oRPC の呼出 method が source inventory と一致する |
 | Pick | production の明示 `Pick` が inventory と一致し、method が facade public contract に存在する |
 | constructor | production/test の constructor file と expression 数が一致する |
-| Dependencies | 31 key、private readonly field、Phase 4c 後の 26 direct read が一致する |
+| Dependencies | 31 key、private readonly field、Phase 4d 後の 25 direct read が一致する |
 | narrow dependency | `Dependencies` 全体を渡す既存 receiver/call の集合が増えない |
 | AWS / policy | direct import の追加・削除が明示差分になる |
 | behavior | API full suite、typecheck、build、root CI が成功する |
