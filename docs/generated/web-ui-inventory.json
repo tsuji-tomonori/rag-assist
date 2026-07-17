@@ -780,7 +780,7 @@
         "profile"
       ],
       "componentCount": 7,
-      "interactionCount": 15
+      "interactionCount": 16
     },
     {
       "feature": "auth",
@@ -899,9 +899,9 @@
         "RailNav",
         "ResourceStatePanel",
         "TopBar",
+        "a",
         "div",
-        "main",
-        "section"
+        "main"
       ],
       "certainty": "confirmed"
     },
@@ -2203,6 +2203,28 @@
     }
   ],
   "interactions": [
+    {
+      "id": "apps/web/src/app/AppShell.tsx:13:a",
+      "file": "apps/web/src/app/AppShell.tsx",
+      "line": 13,
+      "feature": "app",
+      "component": "AppShell",
+      "element": "a",
+      "isIntrinsic": true,
+      "label": "メインコンテンツへ移動",
+      "a11y": {
+        "accessibleName": "メインコンテンツへ移動",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
     {
       "id": "apps/web/src/app/components/PersonalSettingsView.tsx:25:button",
       "file": "apps/web/src/app/components/PersonalSettingsView.tsx",
@@ -17277,6 +17299,13 @@
         "status": "implemented",
         "evidence": [
           "apps/web/e2e/question-journey.spec.ts"
+        ]
+      },
+      {
+        "id": "E2E-UI-SKIP-001",
+        "status": "implemented",
+        "evidence": [
+          "apps/web/e2e/skip-link.spec.ts"
         ]
       },
       {

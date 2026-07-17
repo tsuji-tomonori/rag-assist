@@ -117,6 +117,11 @@
       "evidence": ["apps/web/e2e/question-journey.spec.ts"]
     },
     {
+      "id": "E2E-UI-SKIP-001",
+      "status": "implemented",
+      "evidence": ["apps/web/e2e/skip-link.spec.ts"]
+    },
+    {
       "id": "E2E-UI-MANUAL-001",
       "status": "manual",
       "task": "tasks/todo/20260714-issue-345-manual-a11y-evidence.md"

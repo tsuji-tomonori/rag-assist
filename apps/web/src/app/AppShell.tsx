@@ -9,10 +9,14 @@ export function AppShell({ authSession, onSignOut }: { authSession: AuthSession;
   const { error, routeNotice, railProps, topBarProps, routeProps } = useAppShellState({ authSession, onSignOut })
 
   return (
-    <main className="app-frame">
+    <div className="app-frame">
+      <a className="skip-link" href="#main-content">
+        メインコンテンツへ移動
+      </a>
+
       <RailNav {...railProps} />
 
-      <section className="main-area">
+      <main className="main-area" id="main-content" tabIndex={-1}>
         <TopBar {...topBarProps} />
 
         {(error || routeNotice) && (
@@ -37,7 +41,7 @@ export function AppShell({ authSession, onSignOut }: { authSession: AuthSession;
         )}
 
         <AppRoutes {...routeProps} />
-      </section>
-    </main>
+      </main>
+    </div>
   )
 }

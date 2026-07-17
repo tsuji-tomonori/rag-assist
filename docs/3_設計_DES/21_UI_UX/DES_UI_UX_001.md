@@ -210,6 +210,12 @@ The UI does not infer success from a dismissed dialog or timeout and does not re
 
 Automated accessibility, DOM snapshots, and accessibility tree inspection do not replace keyboard, representative screen-reader, zoom, or real-device evidence.
 
+### Application shell bypass navigation
+
+- 認証後 shell は layout root を landmark にせず、rail navigation と一意な `main#main-content` landmark を sibling として分離する。
+- DOM の最初の focusable control は「メインコンテンツへ移動」native anchor とし、通常は viewport 外、keyboard focus 時は viewport 内へ表示する。
+- `E2E-UI-SKIP-001` は 1280×720 / 320×720 Chromium で最初の `Tab`、focus-visible indicator、`Enter` activation、main focus、landmark 一意性、horizontal containment を検証する。screen-reader/real-device/Firefox/WebKit の実測を代替しない。
+
 ## Trace manifest schema
 
 `tools/web-inventory/ui-traceability.json` uses this conceptual shape:

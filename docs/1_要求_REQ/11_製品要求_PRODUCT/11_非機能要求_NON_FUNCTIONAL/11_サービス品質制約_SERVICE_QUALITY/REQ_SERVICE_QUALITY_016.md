@@ -57,7 +57,7 @@
 | 受け入れ基準 | `AC-SQ016-001`〜`AC-SQ016-008` |
 | 優先度 | S |
 | 安定性 | High |
-| 変更履歴 | 2026-07-14 Issue #345 から追加 |
+| 変更履歴 | 2026-07-14 Issue #345 から追加。2026-07-17 `AC-SQ016-002` の shell skip link 自動証跡を追加 |
 
 ## 妥当性確認
 
@@ -67,6 +67,11 @@
 | 一貫性 | pass | existing chat-only `SQ-004` remains a narrower condition. |
 | 実現可能性 | pass with manual dependency | code/test fixes are feasible; screen-reader/real-device evidence requires the named environments. |
 | 検証可能性 | pass | numeric thresholds and journey evidence are explicit. |
+
+## 現在の自動証跡（2026-07-17）
+
+- `E2E-UI-SKIP-001`: 認証後 shell の最初の keyboard focus で skip link を表示し、desktop 1280×720 / mobile 320×720 の双方で反復 navigation を越えて一意な `main` landmark へ focus を移す。
+- 上記は Chromium keyboard automation であり、representative screen reader、real device、Firefox、WebKit の手動・browser evidence を代替しない。
 
 ## 関連文書・task
 

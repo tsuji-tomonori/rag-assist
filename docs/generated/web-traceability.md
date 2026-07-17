@@ -59,6 +59,7 @@
 | E2E-UI-DOCUMENTS-001 | implemented | apps/web/e2e/visual-regression.spec.ts | - |
 | E2E-UI-QUESTION-001 | implemented | apps/web/e2e/question-journey.spec.ts | - |
 | E2E-UI-QUESTION-002 | implemented | apps/web/e2e/question-journey.spec.ts | - |
+| E2E-UI-SKIP-001 | implemented | apps/web/e2e/skip-link.spec.ts | - |
 | E2E-UI-MANUAL-001 | manual | - | tasks/todo/20260714-issue-345-manual-a11y-evidence.md |
 
 ## 判定上の注意
