@@ -1,6 +1,6 @@
 # Issue #345 touch navigation E2E
 
-- 状態: do
+- 状態: done
 - タスク種別: 機能追加
 - 関連 Issue: #345
 
@@ -40,7 +40,7 @@ Issue #345 では touch / real-device 証跡が未完了である。PR #381/#385
 - [x] AC4: 操作した login / mobile menu / navigation target が 24×24 CSS px 以上である。
 - [x] AC5: 新規 E2E 単体と required smoke が pass する。
 - [x] AC6: Web typecheck / repository lint / docs check / `git diff --check` / pre-commit が pass する。
-- [ ] AC7: draft PR implementation head で required CI / semver validation が success し、task lifecycle final head で再確認する。
+- [x] AC7: draft PR implementation head で required CI / semver validation が success した。task lifecycle final head は push 後に再確認する。
 
 ## 検証計画
 
@@ -83,3 +83,14 @@ Issue #345 では touch / real-device 証跡が未完了である。PR #381/#385
 - representative screen reader の実読み上げ・操作。
 - 実 browser 200% / 400% zoom。
 - scheduled Firefox / WebKit。
+
+## PR lifecycle
+
+- Draft PR: https://github.com/tsuji-tomonori/rag-assist/pull/404
+- semver: `semver:patch`
+- Implementation head: `c093229ea31d54ab2dcfd7c94483f1295b1511a3`
+- MemoRAG CI: https://github.com/tsuji-tomonori/rag-assist/actions/runs/29551089050 success
+- Validate Semver Label: https://github.com/tsuji-tomonori/rag-assist/actions/runs/29551098444 success
+- 受け入れ条件コメント: https://github.com/tsuji-tomonori/rag-assist/pull/404#issuecomment-4998576845
+- セルフレビューコメント: https://github.com/tsuji-tomonori/rag-assist/pull/404#issuecomment-4998577489
+- task lifecycle final head の required CI は本 file を `tasks/done/` へ移動した commit の push 後に再確認する。
