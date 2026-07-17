@@ -16,7 +16,7 @@ Phase4l final headから残存debtを再監査し、安全な非重複unitを継
 - `apps/api/src/async-agent/async-agent-artifact-repository.ts`
 - `apps/api/src/async-agent/async-agent-artifact-repository.test.ts`（6 tests）
 - facade composition/delegate、DES Phase4m、canonical API-code docs（286 generated files）
-- task `tasks/do/20260717-2309-issue-359-async-agent-artifact-repository-extraction.md`
+- task `tasks/done/20260717-2309-issue-359-async-agent-artifact-repository-extraction.md`
 
 ## 検証
 
@@ -31,7 +31,7 @@ Phase4l final headから残存debtを再監査し、安全な非重複unitを継
 - staged pre-commit: success（sandbox index lock制限後、権限委譲して同一command再実行）
 - implementation-head GitHub CI: success（9m09s、run `29587939084`、promotion gate skipped）
 - Draft PR #435、`semver:patch`、AC `issuecomment-5004282980`、self-review `issuecomment-5004284087`
-- final-head CI/Issue progressはlifecycle commit後に記録する
+- final-head CIはPRの最終検証コメント、Issue progressはIssue #359の進捗コメントへ、final-head監査後に記録する
 
 ## fit・制約
 
