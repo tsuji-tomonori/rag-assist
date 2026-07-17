@@ -4,13 +4,19 @@ import { tmpdir } from "node:os"
 import path from "node:path"
 import test from "node:test"
 import { LocalObjectStore } from "../adapters/local-object-store.js"
+import { folderArchiveCleanupRegistration } from "../folders/folder-archive-service.js"
+import { ObjectStoreRevocationCleanupCoordinator } from "../rag/_shared/security/revocation-cleanup-coordinator.js"
+import { ObjectStoreRevocationCleanupRepairOutbox } from "../rag/_shared/security/revocation-cleanup-repair-outbox.js"
 import type { DocumentGroup } from "../types.js"
 import { FolderDeleteAuditAuthoritativeResolver } from "./folder-delete-audit-reconciler.js"
 import { ObjectStoreSecurityMutationAuditOutbox, type SecurityMutationAuditIntent } from "./security-mutation-audit-outbox.js"
 import { SecurityMutationAuditReconciler } from "./security-mutation-audit-reconciler.js"
 
 test("FR-086 folder delete resolver supports only the exact target and operation", () => {
-  const resolver = new FolderDeleteAuditAuthoritativeResolver({ get: async () => undefined })
+  const resolver = new FolderDeleteAuditAuthoritativeResolver(
+    new LocalObjectStore("."),
+    { get: async () => undefined }
+  )
   assert.equal(resolver.supports(draft()), true)
   assert.equal(resolver.supports({ ...draft(), operation: "move" }), false)
   assert.equal(resolver.supports({ ...draft(), targetType: "document" }), false)
@@ -18,10 +24,12 @@ test("FR-086 folder delete resolver supports only the exact target and operation
 
 test("FR-086 folder delete resolver converges duplicate workers after the exact archive commit", async () => {
   const dataDir = await mkdtemp(path.join(tmpdir(), "folder-delete-audit-"))
-  const outbox = new ObjectStoreSecurityMutationAuditOutbox(new LocalObjectStore(dataDir))
+  const objects = new LocalObjectStore(dataDir)
+  const outbox = new ObjectStoreSecurityMutationAuditOutbox(objects)
   const prepared = await outbox.prepare(draft())
+  await registerFolderCleanup(objects, prepared.intentId)
   const reconciler = new SecurityMutationAuditReconciler(outbox, [
-    new FolderDeleteAuditAuthoritativeResolver({ get: async () => archivedFolder() })
+    new FolderDeleteAuditAuthoritativeResolver(objects, { get: async () => archivedFolder() })
   ])
 
   const results = await Promise.all(Array.from({ length: 8 }, () => reconciler.reconcileTenant("tenant-1")))
@@ -35,7 +43,9 @@ test("FR-086 folder delete resolver converges duplicate workers after the exact 
 })
 
 test("FR-086 folder delete resolver keeps durable success and non-success only at their exact states", async () => {
-  const archived = new FolderDeleteAuditAuthoritativeResolver({ get: async () => archivedFolder() })
+  const objects = new LocalObjectStore(await mkdtemp(path.join(tmpdir(), "folder-delete-audit-")))
+  await registerFolderCleanup(objects, intent().intentId)
+  const archived = new FolderDeleteAuditAuthoritativeResolver(objects, { get: async () => archivedFolder() })
   const success = intent({
     status: "finalization_pending",
     requestedCompletion: {
@@ -46,7 +56,7 @@ test("FR-086 folder delete resolver keeps durable success and non-success only a
   })
   assert.deepEqual(await archived.resolve(success), { result: "success", after: audit(archivedFolder()) })
 
-  const active = new FolderDeleteAuditAuthoritativeResolver({ get: async () => activeFolder() })
+  const active = new FolderDeleteAuditAuthoritativeResolver(objects, { get: async () => activeFolder() })
   const conflict = intent({
     status: "finalization_pending",
     requestedCompletion: {
@@ -69,12 +79,15 @@ test("FR-086 folder delete resolver keeps durable success and non-success only a
 
 test("FR-086 folder delete resolver finalizes a durable early failure without reading a target", async () => {
   let reads = 0
-  const resolver = new FolderDeleteAuditAuthoritativeResolver({
-    get: async () => {
-      reads += 1
-      return undefined
+  const resolver = new FolderDeleteAuditAuthoritativeResolver(
+    new LocalObjectStore(await mkdtemp(path.join(tmpdir(), "folder-delete-audit-"))),
+    {
+      get: async () => {
+        reads += 1
+        return undefined
+      }
     }
-  })
+  )
   const early = intent({
     status: "finalization_pending",
     draft: {
@@ -94,30 +107,34 @@ test("FR-086 folder delete resolver finalizes a durable early failure without re
 })
 
 test("FR-086 folder delete resolver rejects before, missing, third, cross-tenant, and corrupt current state", async () => {
-  const active = new FolderDeleteAuditAuthoritativeResolver({ get: async () => activeFolder() })
+  const objects = new LocalObjectStore(await mkdtemp(path.join(tmpdir(), "folder-delete-audit-")))
+  const active = new FolderDeleteAuditAuthoritativeResolver(objects, { get: async () => activeFolder() })
   await assert.rejects(() => active.resolve(intent()), /no durable non-success result/)
 
-  const missing = new FolderDeleteAuditAuthoritativeResolver({ get: async () => undefined })
+  const missing = new FolderDeleteAuditAuthoritativeResolver(objects, { get: async () => undefined })
   await assert.rejects(() => missing.resolve(intent()), /target is unavailable/)
 
-  const third = new FolderDeleteAuditAuthoritativeResolver({
+  const third = new FolderDeleteAuditAuthoritativeResolver(objects, {
     get: async () => ({ ...archivedFolder(), updatedAt: "2026-07-17T00:03:00.000Z" })
   })
   await assert.rejects(() => third.resolve(intent()), /matches neither/)
 
-  const crossed = new FolderDeleteAuditAuthoritativeResolver({
+  const crossed = new FolderDeleteAuditAuthoritativeResolver(objects, {
     get: async () => ({ ...archivedFolder(), tenantId: "tenant-2" })
   })
   await assert.rejects(() => crossed.resolve(intent()), /crossed its identity boundary/)
 
-  const corrupt = new FolderDeleteAuditAuthoritativeResolver({
+  const corrupt = new FolderDeleteAuditAuthoritativeResolver(objects, {
     get: async () => ({ ...archivedFolder(), canonicalPath: "not-absolute" })
   })
   await assert.rejects(() => corrupt.resolve(intent()), /crossed its identity boundary/)
 })
 
 test("FR-086 folder delete resolver rejects invalid transition, policy, and early proposal evidence", async () => {
-  const resolver = new FolderDeleteAuditAuthoritativeResolver({ get: async () => archivedFolder() })
+  const resolver = new FolderDeleteAuditAuthoritativeResolver(
+    new LocalObjectStore(await mkdtemp(path.join(tmpdir(), "folder-delete-audit-"))),
+    { get: async () => archivedFolder() }
+  )
   await assert.rejects(
     () => resolver.resolve(intent({ draft: { ...draft(), proposedAfter: audit(activeFolder()) } })),
     /transition is invalid/
@@ -133,6 +150,32 @@ test("FR-086 folder delete resolver rejects invalid transition, policy, and earl
       requestedCompletion: { result: "failed", after: null, requestedAt: "2026-07-17T00:02:00.000Z" }
     })),
     /early audit proposal is invalid/
+  )
+})
+
+test("FR-086 folder delete resolver retains pending audit until exact cleanup evidence exists", async () => {
+  const objects = new LocalObjectStore(await mkdtemp(path.join(tmpdir(), "folder-delete-audit-")))
+  const resolver = new FolderDeleteAuditAuthoritativeResolver(objects, { get: async () => archivedFolder() })
+  const auditIntent = intent()
+
+  await assert.rejects(
+    () => resolver.resolve(auditIntent),
+    /cleanup repair is not authoritatively registered/
+  )
+
+  const registration = folderArchiveCleanupRegistration(auditIntent.intentId, archivedFolder())
+  const repairs = new ObjectStoreRevocationCleanupRepairOutbox(objects)
+  const prepared = await repairs.prepare({
+    expectedBeforeDenyVersion: activeFolder().updatedAt,
+    cleanupRegistration: registration,
+    preparedAt: archivedFolder().updatedAt
+  })
+  const committed = await repairs.markDenyCommitted(prepared, archivedFolder().updatedAt)
+  await repairs.markCleanupRegistered(committed, archivedFolder().updatedAt)
+
+  await assert.rejects(
+    () => resolver.resolve(auditIntent),
+    /cleanup ledger is not authoritatively registered/
   )
 })
 
@@ -205,4 +248,18 @@ function audit(folder: DocumentGroup) {
     status: folder.status ?? "active",
     updatedAt: folder.updatedAt
   }
+}
+
+async function registerFolderCleanup(objects: LocalObjectStore, auditIntentId: string): Promise<void> {
+  const archived = archivedFolder()
+  const registration = folderArchiveCleanupRegistration(auditIntentId, archived)
+  const repairs = new ObjectStoreRevocationCleanupRepairOutbox(objects)
+  const prepared = await repairs.prepare({
+    expectedBeforeDenyVersion: activeFolder().updatedAt,
+    cleanupRegistration: registration,
+    preparedAt: archived.updatedAt
+  })
+  const committed = await repairs.markDenyCommitted(prepared, archived.updatedAt)
+  await new ObjectStoreRevocationCleanupCoordinator(objects).register(registration)
+  await repairs.markCleanupRegistered(committed, archived.updatedAt)
 }

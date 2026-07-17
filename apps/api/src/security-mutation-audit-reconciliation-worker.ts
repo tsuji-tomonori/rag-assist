@@ -70,7 +70,7 @@ export async function handler(
       memberships: deps.groupMembershipStore,
       identities: identityProvider
     }),
-    new FolderDeleteAuditAuthoritativeResolver(deps.documentGroupStore),
+    new FolderDeleteAuditAuthoritativeResolver(deps.objectStore, deps.documentGroupStore),
     new DocumentMoveAuditAuthoritativeResolver({
       objects: deps.objectStore,
       groups: deps.documentGroupStore,

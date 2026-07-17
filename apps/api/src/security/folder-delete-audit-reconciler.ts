@@ -1,4 +1,15 @@
+import { createHash } from "node:crypto"
 import type { DocumentGroupStore } from "../adapters/document-group-store.js"
+import type { ObjectStore } from "../adapters/object-store.js"
+import { folderArchiveCleanupRegistration } from "../folders/folder-archive-service.js"
+import {
+  ObjectStoreRevocationCleanupCoordinator,
+  REVOCATION_CLEANUP_POLICY_VERSION,
+  REVOCATION_CLEANUP_SCOPES,
+  type RegisterRevocationCleanupInput,
+  type RevocationCleanupManifest
+} from "../rag/_shared/security/revocation-cleanup-coordinator.js"
+import { ObjectStoreRevocationCleanupRepairOutbox } from "../rag/_shared/security/revocation-cleanup-repair-outbox.js"
 import type { DocumentGroup } from "../types.js"
 import type {
   SecurityMutationAuditAuthoritativeResolution,
@@ -13,7 +24,10 @@ const folderArchivePolicyVersion = "folder-archive-policy-v1"
 
 /** Reconciles an empty-folder archive audit without repeating any domain mutation. */
 export class FolderDeleteAuditAuthoritativeResolver implements SecurityMutationAuditAuthoritativeResolver {
-  constructor(private readonly groups: Pick<DocumentGroupStore, "get">) {}
+  constructor(
+    private readonly objects: ObjectStore,
+    private readonly groups: Pick<DocumentGroupStore, "get">
+  ) {}
 
   supports(draft: SecurityMutationAuditDraft): boolean {
     return draft.targetType === "folder" && draft.operation === "delete"
@@ -60,17 +74,52 @@ export class FolderDeleteAuditAuthoritativeResolver implements SecurityMutationA
       if (!sameJson(requested, expected)) {
         throw new Error("Folder delete requested result does not match its authoritative state")
       }
+      if (intent.requestedCompletion.result === "success") {
+        await this.assertCleanupRegistered(intent, before.updatedAt, current)
+      }
       return {
         result: intent.requestedCompletion.result,
         after: intent.requestedCompletion.after
       }
     }
 
-    if (sameJson(authoritative, proposed)) return { result: "success", after: intent.draft.proposedAfter }
+    if (sameJson(authoritative, proposed)) {
+      await this.assertCleanupRegistered(intent, before.updatedAt, current)
+      return { result: "success", after: intent.draft.proposedAfter }
+    }
     if (sameJson(authoritative, before)) {
       throw new Error("Pending folder delete audit has no durable non-success result")
     }
     throw new Error("Authoritative folder matches neither the before nor proposed delete audit state")
+  }
+
+  private async assertCleanupRegistered(
+    intent: SecurityMutationAuditIntent,
+    expectedBeforeDenyVersion: string,
+    archived: DocumentGroup
+  ): Promise<void> {
+    const registration = folderArchiveCleanupRegistration(intent.intentId, archived)
+    const repair = await new ObjectStoreRevocationCleanupRepairOutbox(this.objects).get(
+      registration.tenantId,
+      "folder",
+      registration.resourceId,
+      registration.operationId
+    )
+    if (
+      !repair
+      || (repair.status !== "cleanup_registered" && repair.status !== "cleanup_completed")
+      || repair.expectedBeforeDenyVersion !== expectedBeforeDenyVersion
+      || !sameJson(repair.cleanupRegistration, registration)
+    ) throw new Error("Folder delete cleanup repair is not authoritatively registered")
+
+    const manifest = await new ObjectStoreRevocationCleanupCoordinator(this.objects).get(
+      registration.tenantId,
+      registration.operationId
+    )
+    if (!manifest || manifest.status === "superseded") {
+      throw new Error("Folder delete cleanup ledger is not authoritatively registered")
+    }
+    assertCleanupManifestRegistration(manifest, registration)
   }
 }
 
@@ -169,6 +218,41 @@ function isCanonicalTimestamp(value: unknown): value is string {
 
 function sameJson(left: unknown, right: unknown): boolean {
   return JSON.stringify(left) === JSON.stringify(right)
+}
+
+function assertCleanupManifestRegistration(
+  manifest: RevocationCleanupManifest,
+  registration: RegisterRevocationCleanupInput & { operationId: string }
+): void {
+  const expectedPurposes = [...new Set(registration.deniedPurposes ?? [])].sort()
+  if (
+    manifest.schemaVersion !== 1
+    || manifest.policyVersion !== REVOCATION_CLEANUP_POLICY_VERSION
+    || manifest.operationId !== registration.operationId
+    || manifest.tenantId !== registration.tenantId
+    || manifest.resourceType !== registration.resourceType
+    || manifest.resourceId !== registration.resourceId
+    || manifest.trigger !== registration.trigger
+    || !sameJson(manifest.deniedPurposes, expectedPurposes)
+    || manifest.authoritativeDeny?.status !== "effective"
+    || manifest.authoritativeDeny.version !== registration.authoritativeDenyVersion
+    || manifest.authoritativeDeny.confirmedAt !== registration.authoritativeDenyConfirmedAt
+    || !["cleanup_pending", "reconciliation_required", "completed"].includes(manifest.status)
+    || !Array.isArray(manifest.scopes)
+    || !Array.isArray(manifest.targets)
+    || manifest.scopes.length !== REVOCATION_CLEANUP_SCOPES.length
+    || !REVOCATION_CLEANUP_SCOPES.every((scope) => manifest.scopes.filter((entry) => entry.scope === scope).length === 1)
+  ) throw new Error("Folder delete cleanup ledger identity is invalid")
+
+  const targetIds = new Set(manifest.targets.map((target) => target.targetId))
+  for (const target of registration.knownTargets ?? []) {
+    const expectedTargetId = createHash("sha256")
+      .update(`${target.scope}\u0000${target.reference}`)
+      .digest("hex")
+    if (!targetIds.has(expectedTargetId)) {
+      throw new Error("Folder delete cleanup ledger is missing a registered target")
+    }
+  }
 }
 
 function assertIdentifier(value: string, field: string): void {

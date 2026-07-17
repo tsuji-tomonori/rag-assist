@@ -672,6 +672,8 @@ export class ProductionRevocationCleanupDriver implements RevocationCleanupDrive
     }
     if (reference.startsWith("temporary-scope:")) return run.searchScope?.temporaryScopeId === reference.slice("temporary-scope:".length)
     if (reference.startsWith("temporary:")) return run.searchScope?.documentIds?.includes(reference.slice("temporary:".length)) === true
+    const folderId = folderReferenceId(manifest, reference)
+    if (folderId) return run.searchScope?.groupIds?.includes(folderId) === true
     const groupId = resourceGroupReferenceId(reference)
     return Boolean(groupId && run.searchScope?.groupIds?.includes(groupId))
   }
@@ -707,6 +709,8 @@ export class ProductionRevocationCleanupDriver implements RevocationCleanupDrive
     if (reference.startsWith("document:")) return run.documentId === reference.slice("document:".length)
     if (reference.startsWith("temporary:")) return run.documentId === reference.slice("temporary:".length)
     if (reference.startsWith("temporary-scope:")) return run.metadata?.temporaryScopeId === reference.slice("temporary-scope:".length)
+    const folderId = folderReferenceId(manifest, reference)
+    if (folderId) return ingestFolderIds(run).includes(folderId)
     const groupId = resourceGroupReferenceId(reference)
     return Boolean(groupId && ingestFolderIds(run).includes(groupId))
   }
@@ -1122,6 +1126,16 @@ class DefaultAuthoritativeRevocationDenyVerifier implements AuthoritativeRevocat
   }
 
   private async folderDeny(manifest: RevocationCleanupManifest): Promise<boolean> {
+    if (manifest.trigger === "archived") {
+      const folder = await this.deps.documentGroupStore.get(manifest.tenantId, manifest.resourceId)
+      if (!folder) throw new Error("Authoritative folder is unavailable")
+      if (folder.tenantId !== manifest.tenantId || folder.groupId !== manifest.resourceId) {
+        throw new RevocationCleanupValidationError("Authoritative folder crossed its tenant boundary")
+      }
+      return folder.status === "archived"
+        && manifest.authoritativeDeny.version === `folder:${folder.updatedAt}`
+        && manifest.authoritativeDeny.confirmedAt === folder.updatedAt
+    }
     if (manifest.trigger !== "share_revoked") throw new RevocationCleanupValidationError("Unsupported folder deny trigger")
     const state = await this.deps.folderPolicyStore.getVersionedByFolderId(manifest.tenantId, manifest.resourceId)
     if (state.version === manifest.authoritativeDeny.version) return true
@@ -1343,6 +1357,11 @@ function resourceGroupReferenceId(reference: string): string | undefined {
   if (reference.startsWith("resource-group:")) return reference.split(":")[1]
   const match = /^resource-group\/([^/]+)\//u.exec(reference)
   return match?.[1] ? decodeURIComponent(match[1]) : undefined
+}
+
+function folderReferenceId(manifest: RevocationCleanupManifest, reference: string): string | undefined {
+  const match = /^folder:([^:]+)$/u.exec(reference)
+  return manifest.resourceType === "folder" && match?.[1] === manifest.resourceId ? match[1] : undefined
 }
 
 function revokedGroupMember(

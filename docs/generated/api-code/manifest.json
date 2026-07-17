@@ -643,10 +643,10 @@
       "openApi": true,
       "routeSource": "apps/api/src/routes/document-routes.ts:779 (DELETE /document-groups/{groupId})",
       "handlerSource": "apps/api/src/routes/document-routes.ts:802 (DELETE /document-groups/{groupId} handler)",
-      "functionCount": 62,
-      "branchCount": 142,
-      "projectedBranchCount": 13,
-      "dataAccessCount": 10,
+      "functionCount": 105,
+      "branchCount": 202,
+      "projectedBranchCount": 17,
+      "dataAccessCount": 20,
       "relatedTestCount": 0
     },
     {
