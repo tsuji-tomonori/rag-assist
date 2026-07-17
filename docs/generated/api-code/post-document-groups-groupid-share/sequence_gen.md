@@ -65,7 +65,7 @@ sequenceDiagram
 | B002 | `POST /document-groups/{groupId}/share handler` | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:720 (POST /document-groups/{groupId}/share handler)` |
 | B003 | `POST /document-groups/{groupId}/share handler` | is document group input error の判定結果が真である | `apps/api/src/routes/document-routes.ts:721 (POST /document-groups/{groupId}/share handler)` |
 | B004 | `POST /document-groups/{groupId}/share handler` | `err` が `Error` の instance である、かつ starts with の判定結果が真である | `apps/api/src/routes/document-routes.ts:722 (POST /document-groups/{groupId}/share handler)` |
-| B005 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| B005 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | B006 | `MemoRagService.updateDocumentGroupSharing` | `group` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1115 (MemoRagService.updateDocumentGroupSharing)` |
 | B007 | `MemoRagService.updateDocumentGroupSharing` | `(await folderPermissions.resolveEffectiveFolderPermission(actor, group.groupId))` が `"full"` と異なる | `apps/api/src/rag/memorag-service.ts:1117 (MemoRagService.updateDocumentGroupSharing)` |
 | B008 | `MemoRagService.updateDocumentGroupSharing` | `input.name` が `undefined` と異なる | `apps/api/src/rag/memorag-service.ts:1123 (MemoRagService.updateDocumentGroupSharing)` |

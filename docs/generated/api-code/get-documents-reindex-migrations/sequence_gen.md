@@ -31,7 +31,7 @@ sequenceDiagram
 | 2 | `GET /documents/reindex-migrations handler` | Auth | "rag:index:rebuild:group" permission を必須条件として確認する。 | `requirePermission(c.get("user"), "rag:index:rebuild:group")` | `apps/api/src/routes/document-routes.ts:1405 (GET /documents/reindex-migrations handler)` |
 | 3 | `GET /documents/reindex-migrations handler` | Service | service の list reindex migrations 処理を呼び出す。 | `service.listReindexMigrations()` | `apps/api/src/routes/document-routes.ts:1406 (GET /documents/reindex-migrations handler)` |
 | 4 | `MemoRagService.listReindexMigrations` | Store | `this` に対して load reindex migration ledger を実行する。 | `this.loadReindexMigrationLedger()` | `apps/api/src/rag/memorag-service.ts:898 (MemoRagService.listReindexMigrations)` |
-| 5 | `MemoRagService.loadReindexMigrationLedger` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(reindexMigrationLedgerKey)` | `apps/api/src/rag/memorag-service.ts:3743 (MemoRagService.loadReindexMigrationLedger)` |
+| 5 | `MemoRagService.loadReindexMigrationLedger` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(reindexMigrationLedgerKey)` | `apps/api/src/rag/memorag-service.ts:3761 (MemoRagService.loadReindexMigrationLedger)` |
 | 6 | `MemoRagService.listReindexMigrations` | Store | `(await this.loadReindexMigrationLedger())` に対して sort を実行する。 | `(await this.loadReindexMigrationLedger()).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))` | `apps/api/src/rag/memorag-service.ts:898 (MemoRagService.listReindexMigrations)` |
 | 7 | `GET /documents/reindex-migrations handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json({ migrations: await service.listReindexMigrations() }, 200)` | `apps/api/src/routes/document-routes.ts:1406 (GET /documents/reindex-migrations handler)` |
 
@@ -39,4 +39,4 @@ sequenceDiagram
 
 | ID | Function | 条件 | 実装位置 |
 | --- | --- | --- | --- |
-| B001 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| B001 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |

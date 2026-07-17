@@ -92,3 +92,11 @@ test("source governance approval permission は審査責任を持つ role だけ
   ).includes("rag:source:approve"))
   assert.deepEqual(roles, ["RAG_GROUP_MANAGER", "SYSTEM_ADMIN"])
 })
+
+test("security audit quarantine redrive permission は system recovery role だけへ割り当てる", () => {
+  const roles = APPLICATION_ROLES.filter((role) => (
+    ROLE_PERMISSION_CATALOG[role] as readonly string[]
+  ).includes("access:audit:redrive"))
+  assert.deepEqual(roles, ["SYSTEM_ADMIN"])
+  assert.equal(ROLE_CATALOG_VERSION, "memorag-access-role-catalog-v3")
+})

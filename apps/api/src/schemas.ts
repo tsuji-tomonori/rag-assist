@@ -1102,6 +1102,21 @@ export const AdminAuditExportRequestSchema = z.object({
   reason: z.string().trim().min(1).max(1000)
 })
 
+export const SecurityAuditQuarantineRedriveRequestSchema = z.object({
+  idempotencyKey: z.string()
+    .regex(/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/)
+    .openapi({ example: "redrive-20260717-001" }),
+  reason: z.string().trim().min(1).max(1000).openapi({ example: "resolver deployment後の手動再投入" })
+})
+
+export const SecurityAuditQuarantineRedriveResponseSchema = z.object({
+  intentId: z.string(),
+  status: z.enum(["pending", "finalization_pending"]),
+  idempotencyKey: z.string(),
+  requestedAt: z.string(),
+  redriveCount: z.number().int().positive()
+})
+
 export const AccessRoleDefinitionSchema = z.object({
   role: z.string(),
   displayName: z.string(),

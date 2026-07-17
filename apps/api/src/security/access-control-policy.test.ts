@@ -65,6 +65,7 @@ const operationMatrixSubset = new Map<string, { operationKey: string; resourceCo
   ["POST /documents/reindex-migrations/{migrationId}/cutover", { operationKey: "document.reindex.cutover", resourceCondition: "documentGroupFull" }],
   ["POST /documents/reindex-migrations/{migrationId}/rollback", { operationKey: "document.reindex.rollback", resourceCondition: "documentGroupFull" }],
   ["POST /admin/audit-log/export", { operationKey: "audit.export", resourceCondition: "none" }],
+  ["POST /admin/security-audit/quarantines/{intentId}/redrive", { operationKey: "security_audit.quarantine.redrive", resourceCondition: "tenantAuditIntent" }],
   ["POST /admin/usage/export", { operationKey: "usage.export", resourceCondition: "none" }],
   ["GET /admin/aliases", { operationKey: "alias.read", resourceCondition: "tenantCollection" }],
   ["POST /admin/aliases", { operationKey: "alias.create", resourceCondition: "tenantCollection" }],
@@ -383,6 +384,7 @@ test("protected API routes document three-layer authorization metadata", async (
     "POST /documents/reindex-migrations/{migrationId}/cutover",
     "POST /documents/reindex-migrations/{migrationId}/rollback",
     "DELETE /documents/{documentId}",
+    "POST /admin/security-audit/quarantines/{intentId}/redrive",
     "GET /benchmark-runs/{runId}",
     "POST /benchmark-runs/{runId}/cancel",
     "POST /benchmark-runs/{runId}/download",
@@ -516,6 +518,29 @@ test("admin audit export uses a permission distinct from audit read", async () =
   assert.equal(exportRoute?.permission, "access:audit:export")
   assert.equal(ROLE_PERMISSION_CATALOG.ACCESS_ADMIN.includes("access:audit:export"), true)
   assert.equal(ROLE_PERMISSION_CATALOG.SYSTEM_ADMIN.includes("access:audit:export"), true)
+})
+
+test("security audit quarantine redrive is tenant-scoped and restricted to SYSTEM_ADMIN recovery", async () => {
+  const policies = await openApiRoutePolicies()
+  const redrive = policies.find((item) => routeKey(item) === "POST /admin/security-audit/quarantines/{intentId}/redrive")
+  assert.equal(redrive?.permission, "access:audit:redrive")
+  assert.equal(redrive?.resourceCondition, "tenantAuditIntent")
+  assert.deepEqual(redrive?.operation["x-memorag-authorization"]?.allowedRoles, ["SYSTEM_ADMIN"])
+  assert.equal((ROLE_PERMISSION_CATALOG.ACCESS_ADMIN as readonly string[]).includes("access:audit:redrive"), false)
+  assert.equal(ROLE_PERMISSION_CATALOG.SYSTEM_ADMIN.includes("access:audit:redrive"), true)
+
+  const [routeSource, serviceSource, outboxSource] = await Promise.all([
+    readFile(path.resolve(process.cwd(), "src/routes/admin-routes.ts"), "utf8"),
+    readFile(path.resolve(process.cwd(), "src/security/security-mutation-audit-quarantine-service.ts"), "utf8"),
+    readFile(path.resolve(process.cwd(), "src/security/security-mutation-audit-outbox.ts"), "utf8")
+  ])
+  assert.match(routeSource, /requirePermission\(actor, ["']access:audit:redrive["']\)/)
+  assert.match(serviceSource, /hasPermission\(actor, ["']access:audit:redrive["']\)/)
+  assert.match(serviceSource, /const tenantId = actor\.tenantId/)
+  assert.match(serviceSource, /redriveQuarantined\(tenantId, intentId/)
+  assert.match(outboxSource, /status:\s*restoredStatus[\s\S]*?redriveHistory:\s*history/)
+  assert.match(outboxSource, /putTextIfVersion\(/)
+  assert.doesNotMatch(serviceSource, /\.resolve\(|reconcileTenant|Document.*Resolver|ResourceGroup.*Resolver/)
 })
 
 test("async agent permissions remain typed but are removed from role seeds and active routes", async () => {

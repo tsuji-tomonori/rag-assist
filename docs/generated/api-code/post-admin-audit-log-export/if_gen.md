@@ -2,7 +2,7 @@
 
 # POST /admin/audit-log/export IF仕様
 
-- 実装 route: `apps/api/src/routes/admin-routes.ts:203 (POST /admin/audit-log/export)`
+- 実装 route: `apps/api/src/routes/admin-routes.ts:270 (POST /admin/audit-log/export)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 管理操作履歴 export URL を作成する

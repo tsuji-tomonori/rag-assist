@@ -65,5 +65,5 @@ sequenceDiagram
 | B001 | `GET /documents/{documentId}/share handler` | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:887 (GET /documents/{documentId}/share handler)` |
 | B002 | `GET /documents/{documentId}/share handler` | is forbidden error の判定結果が真である | `apps/api/src/routes/document-routes.ts:888 (GET /documents/{documentId}/share handler)` |
 | B003 | `GET /documents/{documentId}/share handler` | `err` が `Error` の instance である、かつ `err.message` が "ENOENT" を含む、または `err.message` が "NoSuchKey" を含む | `apps/api/src/routes/document-routes.ts:889 (GET /documents/{documentId}/share handler)` |
-| B004 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| B004 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | B005 | `MemoRagService.getDocumentShareInfo` | can share document の判定結果が真ではない | `apps/api/src/rag/memorag-service.ts:1180 (MemoRagService.getDocumentShareInfo)` |

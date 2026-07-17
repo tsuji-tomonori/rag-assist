@@ -18,8 +18,8 @@
 | M003 | OpenAPI contract | `401` | 認証が必要です。 | OpenAPI で宣言された HTTP 401 response | runtime OpenAPI |
 | M004 | OpenAPI contract | `403` | 対象操作を実行する権限がありません。 | OpenAPI で宣言された HTTP 403 response | runtime OpenAPI |
 | M005 | OpenAPI contract | `500` | サーバー内部で処理エラーが発生しました。 | OpenAPI で宣言された HTTP 500 response | runtime OpenAPI |
-| M006 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| M007 | 例外 | `-` | worker_tenant_missing | `tenantId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4797 (MemoRagService.assertCurrentWorkerAuthorization)` |
+| M006 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |
+| M007 | 例外 | `-` | worker_tenant_missing | `tenantId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4815 (MemoRagService.assertCurrentWorkerAuthorization)` |
 | M008 | 例外 | `-` | worker_identity_not_canonical | canonical の判定結果が真ではない、または canonical の判定結果が真ではない、または canonical の判定結果が真ではない | `apps/api/src/security/current-worker-authorization.ts:46 (CurrentWorkerAuthorization.assertAuthorized)` |
 | M009 | 例外 | `-` | authoritative_identity_unavailable | 例外を捕捉した場合 | `apps/api/src/security/current-worker-authorization.ts:53 (CurrentWorkerAuthorization.assertAuthorized)` |
 | M010 | 例外 | `-` | account_deleted | `identity` が存在しない、または偽である | `apps/api/src/security/current-worker-authorization.ts:55 (CurrentWorkerAuthorization.assertAuthorized)` |
@@ -28,9 +28,9 @@
 | M013 | 例外 | `-` | tenant_membership_revoked | `identity.tenantId` が `request.tenantId` と異なる | `apps/api/src/security/current-worker-authorization.ts:58 (CurrentWorkerAuthorization.assertAuthorized)` |
 | M014 | 例外 | `-` | role_permission_revoked | every の判定結果が真ではない | `apps/api/src/security/current-worker-authorization.ts:69 (CurrentWorkerAuthorization.assertAuthorized)` |
 | M015 | 例外 | `-` | resource_policy_revoked | `resourceAllowed` が存在しない、または偽である | `apps/api/src/security/current-worker-authorization.ts:78 (CurrentWorkerAuthorization.assertAuthorized)` |
-| M016 | 例外 | `-` | authoritative_identity_provider_missing | `config.authEnabled` が存在し、真である | `apps/api/src/rag/memorag-service.ts:4806 (MemoRagService.assertCurrentWorkerAuthorization)` |
-| M017 | 例外 | `-` | local_fixture_permission_missing | `config.nodeEnv` が `"test"` と異なる、かつ every の判定結果が真ではない | `apps/api/src/rag/memorag-service.ts:4816 (MemoRagService.assertCurrentWorkerAuthorization)` |
-| M018 | 例外 | `-` | local_fixture_resource_policy_denied | `resourceAllowed` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4824 (MemoRagService.assertCurrentWorkerAuthorization)` |
+| M016 | 例外 | `-` | authoritative_identity_provider_missing | `config.authEnabled` が存在し、真である | `apps/api/src/rag/memorag-service.ts:4824 (MemoRagService.assertCurrentWorkerAuthorization)` |
+| M017 | 例外 | `-` | local_fixture_permission_missing | `config.nodeEnv` が `"test"` と異なる、かつ every の判定結果が真ではない | `apps/api/src/rag/memorag-service.ts:4834 (MemoRagService.assertCurrentWorkerAuthorization)` |
+| M018 | 例外 | `-` | local_fixture_resource_policy_denied | `resourceAllowed` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4842 (MemoRagService.assertCurrentWorkerAuthorization)` |
 | M019 | 例外 | `-` | `Security resource ${name} is invalid` | `value` が存在しない、または偽である、または `value.trim()` が `value` と異なる | `apps/api/src/security/security-resource-reference.ts:12 (securityResourceReference)` |
 | M020 | 例外 | `-` | Run admission resource-group identity crossed its tenant boundary | `membership.tenantId` が `tenantId` と異なる、または `membership.memberId` が `groupId` と異なる | `apps/api/src/rag/memorag-service.ts:1288 (MemoRagService.securityResourceRefsForActor)` |
 | M021 | 例外 | `-` | RAG safety state is unavailable. | `required` が存在し、真である | `apps/api/src/rag/quality-control/production-rag-monitor.ts:313 (assertRagSafetyInterlock)` |

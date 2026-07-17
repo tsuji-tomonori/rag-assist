@@ -24,7 +24,7 @@
 | 到達 symbol | search includes owner-owned group scoped documents despite ordinary folder denial | `apps/api/src/rag/memorag-service.test.ts:1105 (search includes owner-owned group scoped documents despite ordinary folder denial)` |
 | 到達 symbol | service enforces full document group permission for delete and reindex operations | `apps/api/src/rag/memorag-service.test.ts:1132 (service enforces full document group permission for delete and reindex operations)` |
 | 到達 symbol | service search denies group-scoped manifests to non-members without legacy ACLs | `apps/api/src/search/hybrid-search.test.ts:486 (service search denies group-scoped manifests to non-members without legacy ACLs)` |
-| 到達 symbol | document group create and legacy settings routes reject embedded ACL authority | `apps/api/src/security/access-control-policy.test.ts:279 (document group create and legacy settings routes reject embedded ACL authority)` |
+| 到達 symbol | document group create and legacy settings routes reject embedded ACL authority | `apps/api/src/security/access-control-policy.test.ts:280 (document group create and legacy settings routes reject embedded ACL authority)` |
 
 ## 2. 実装分岐から導くテスト要因
 
@@ -33,7 +33,7 @@
 | F001 | `POST /document-groups handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:604 (POST /document-groups handler)` |
 | F002 | `POST /document-groups handler` | if | is document group input error の判定結果が真である | `apps/api/src/routes/document-routes.ts:605 (POST /document-groups handler)` |
 | F003 | `POST /document-groups handler` | if | `err` が `Error` の instance である、かつ starts with の判定結果が真である | `apps/api/src/routes/document-routes.ts:606 (POST /document-groups handler)` |
-| F004 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| F004 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | F005 | `MemoRagService.createDocumentGroup` | if | `tenantId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1054 (MemoRagService.createDocumentGroup)` |
 | F006 | `MemoRagService.createDocumentGroup` | if | `actorUserId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1055 (MemoRagService.createDocumentGroup)` |
 | F007 | `MemoRagService.createDocumentGroup` | 三項条件 | `input.parentGroupId` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1057 (MemoRagService.createDocumentGroup)` |
@@ -55,8 +55,8 @@
 | TC004 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:605 (POST /document-groups handler)` |
 | TC005 | F003: 条件成立 | `err` が `Error` の instance である、かつ starts with の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:606 (POST /document-groups handler)` |
 | TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:606 (POST /document-groups handler)` |
-| TC007 | F004: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| TC007 | F004: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
+| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | TC009 | F005: 条件成立 | `tenantId` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1054 (MemoRagService.createDocumentGroup)` |
 | TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1054 (MemoRagService.createDocumentGroup)` |
 | TC011 | F006: 条件成立 | `actorUserId` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1055 (MemoRagService.createDocumentGroup)` |

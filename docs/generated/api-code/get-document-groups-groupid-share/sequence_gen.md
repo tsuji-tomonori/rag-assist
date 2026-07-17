@@ -55,7 +55,7 @@ sequenceDiagram
 | --- | --- | --- | --- |
 | B001 | `GET /document-groups/{groupId}/share handler` | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:641 (GET /document-groups/{groupId}/share handler)` |
 | B002 | `GET /document-groups/{groupId}/share handler` | `error` が `HTTPException` の instance である、かつ `error.status` が `403` と等しい | `apps/api/src/routes/document-routes.ts:642 (GET /document-groups/{groupId}/share handler)` |
-| B003 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| B003 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | B004 | `FolderPermissionService.assertFolderPermission` | folder permission satisfies の判定結果が真ではない | `apps/api/src/folders/folder-permission-service.ts:258 (FolderPermissionService.assertFolderPermission)` |
 | B005 | `uploadTenantId` | `purpose` が `"benchmarkSeed"` と等しい | `apps/api/src/routes/document-routes.ts:156 (uploadTenantId)` |
 | B006 | `uploadTenantId` | `config.benchmarkEvaluationEnabled` が存在しない、または偽である、または trim の判定結果が真ではない | `apps/api/src/routes/document-routes.ts:157 (uploadTenantId)` |

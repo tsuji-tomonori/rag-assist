@@ -11,6 +11,45 @@ export type SecurityMutationAuditReconciliationFailureCode =
   | "authoritative_resolution_failed"
   | "audit_completion_failed"
 
+export type SecurityMutationAuditReconciliationEvidence = Readonly<{
+  attempts: number
+  maxAttempts: number
+  lastFailureCode: SecurityMutationAuditReconciliationFailureCode
+  lastAttemptedAt: string
+  quarantinedAt?: string
+}>
+
+export type SecurityMutationAuditRedriveRecord = Readonly<{
+  idempotencyKey: string
+  actorId: string
+  reason: string
+  policyVersion: string
+  requestedAt: string
+  restoredStatus: "pending" | "finalization_pending"
+  previousReconciliation: SecurityMutationAuditReconciliationEvidence
+}>
+
+export type SecurityMutationAuditRedriveCommand = Readonly<{
+  actorId: string
+  idempotencyKey: string
+  reason: string
+  policyVersion: string
+}>
+
+export type SecurityMutationAuditRedriveResult = Readonly<{
+  intentId: string
+  status: "pending" | "finalization_pending"
+  idempotencyKey: string
+  requestedAt: string
+  redriveCount: number
+}>
+
+export type SecurityMutationAuditRedriveErrorCode =
+  | "not_found"
+  | "not_quarantined"
+  | "idempotency_conflict"
+  | "unavailable"
+
 export type SecurityMutationAuditDraft = Readonly<{
   actorId: string
   tenantId: string
@@ -35,13 +74,8 @@ export type SecurityMutationAuditIntent = Readonly<{
   }>
   result?: SecurityMutationResult
   after?: JsonValue
-  reconciliation?: Readonly<{
-    attempts: number
-    maxAttempts: number
-    lastFailureCode: SecurityMutationAuditReconciliationFailureCode
-    lastAttemptedAt: string
-    quarantinedAt?: string
-  }>
+  reconciliation?: SecurityMutationAuditReconciliationEvidence
+  redriveHistory?: readonly SecurityMutationAuditRedriveRecord[]
   createdAt: string
   completedAt?: string
 }>
@@ -63,6 +97,18 @@ export interface SecurityMutationAuditReconciliationOutboxPort extends SecurityM
     failureCode: SecurityMutationAuditReconciliationFailureCode,
     maxAttempts: number
   ): Promise<SecurityMutationAuditIntent>
+  redriveQuarantined(
+    tenantId: string,
+    intentId: string,
+    input: SecurityMutationAuditRedriveCommand
+  ): Promise<SecurityMutationAuditRedriveResult>
+}
+
+export class SecurityMutationAuditRedriveError extends Error {
+  constructor(readonly code: SecurityMutationAuditRedriveErrorCode, options?: ErrorOptions) {
+    super("Security mutation audit quarantine redrive failed", options)
+    this.name = "SecurityMutationAuditRedriveError"
+  }
 }
 
 export class SecurityMutationAuditCompletionPendingError extends Error {
@@ -253,6 +299,64 @@ export class ObjectStoreSecurityMutationAuditOutbox implements SecurityMutationA
     throw new Error("Security mutation audit reconciliation failure recording did not converge")
   }
 
+  async redriveQuarantined(
+    tenantId: string,
+    intentId: string,
+    input: SecurityMutationAuditRedriveCommand
+  ): Promise<SecurityMutationAuditRedriveResult> {
+    assertIdentifier(tenantId, "tenantId")
+    assertIdentifier(intentId, "intentId")
+    validateRedriveInput(input)
+    const key = intentKey(tenantId, intentId)
+
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const current = await this.readRedriveCandidate(tenantId, intentId)
+      const existing = findRedrive(current.intent, input.idempotencyKey)
+      if (existing) return sameRedriveResult(current.intent, existing, input)
+      if (current.intent.status !== "quarantined" || !current.intent.reconciliation) {
+        throw new SecurityMutationAuditRedriveError("not_quarantined")
+      }
+
+      const restoredStatus = current.intent.requestedCompletion ? "finalization_pending" : "pending"
+      const record: SecurityMutationAuditRedriveRecord = {
+        idempotencyKey: input.idempotencyKey,
+        actorId: input.actorId,
+        reason: input.reason,
+        policyVersion: input.policyVersion,
+        requestedAt: this.now().toISOString(),
+        restoredStatus,
+        previousReconciliation: current.intent.reconciliation
+      }
+      const history = [...(current.intent.redriveHistory ?? []), record]
+      const updated: SecurityMutationAuditIntent = {
+        ...current.intent,
+        status: restoredStatus,
+        reconciliation: undefined,
+        redriveHistory: history
+      }
+      try {
+        await this.objectStore.putTextIfVersion(
+          key,
+          JSON.stringify(updated, null, 2),
+          current.version,
+          "application/json"
+        )
+        return redriveResult(updated.intentId, record, history.length)
+      } catch (error) {
+        if (isConditionalWriteError(error)) continue
+        throw new SecurityMutationAuditRedriveError("unavailable", { cause: error })
+      }
+    }
+
+    const winner = await this.readRedriveCandidate(tenantId, intentId)
+    const existing = findRedrive(winner.intent, input.idempotencyKey)
+    if (existing) return sameRedriveResult(winner.intent, existing, input)
+    if (winner.intent.status !== "quarantined") {
+      throw new SecurityMutationAuditRedriveError("not_quarantined")
+    }
+    throw new SecurityMutationAuditRedriveError("unavailable")
+  }
+
   async listAll(tenantId: string): Promise<SecurityMutationAuditIntent[]> {
     assertIdentifier(tenantId, "tenantId")
     const prefix = intentPrefix(tenantId)
@@ -283,6 +387,21 @@ export class ObjectStoreSecurityMutationAuditOutbox implements SecurityMutationA
     return {
       intent: parseAndValidateIntent(stored.text, tenantId, intentId),
       version: stored.version
+    }
+  }
+
+  private async readRedriveCandidate(
+    tenantId: string,
+    intentId: string
+  ): Promise<{ intent: SecurityMutationAuditIntent; version: string }> {
+    try {
+      return await this.readVersioned(tenantId, intentId)
+    } catch (error) {
+      if (error instanceof Error && error.message === "Security mutation audit intent was not found") {
+        throw new SecurityMutationAuditRedriveError("not_found", { cause: error })
+      }
+      if (error instanceof SecurityMutationAuditRedriveError) throw error
+      throw new SecurityMutationAuditRedriveError("unavailable", { cause: error })
     }
   }
 }
@@ -362,6 +481,7 @@ function parseAndValidateIntent(
   }
   if (!isCanonicalTimestamp(intent.createdAt)) throw new Error("Security mutation audit timestamp is invalid")
   if (intent.reconciliation) validateReconciliation(intent.reconciliation, intent.status)
+  validateRedriveHistory(intent.redriveHistory, intent.requestedCompletion)
   return intent
 }
 
@@ -399,6 +519,80 @@ function validateRequestedCompletion(
   ) throw new Error("Security mutation audit completion request is invalid")
 }
 
+function validateRedriveHistory(
+  history: SecurityMutationAuditIntent["redriveHistory"],
+  requestedCompletion: SecurityMutationAuditIntent["requestedCompletion"]
+): void {
+  if (history === undefined) return
+  if (!Array.isArray(history) || history.length === 0) {
+    throw new Error("Security mutation audit redrive history is invalid")
+  }
+  const keys = new Set<string>()
+  for (const record of history) {
+    if (
+      !isCanonicalIdempotencyKey(record.idempotencyKey)
+      || !isCanonicalBoundedText(record.actorId, 256)
+      || !isCanonicalBoundedText(record.reason, 1_000)
+      || !isCanonicalBoundedText(record.policyVersion, 256)
+      || !isCanonicalTimestamp(record.requestedAt)
+      || (record.restoredStatus !== "pending" && record.restoredStatus !== "finalization_pending")
+      || (record.restoredStatus === "finalization_pending" && !requestedCompletion)
+      || keys.has(record.idempotencyKey)
+    ) throw new Error("Security mutation audit redrive history is invalid")
+    validateReconciliation(record.previousReconciliation, "quarantined")
+    keys.add(record.idempotencyKey)
+  }
+}
+
+function validateRedriveInput(
+  input: SecurityMutationAuditRedriveCommand
+): void {
+  if (
+    !isCanonicalBoundedText(input.actorId, 256)
+    || !isCanonicalIdempotencyKey(input.idempotencyKey)
+    || !isCanonicalBoundedText(input.reason, 1_000)
+    || !isCanonicalBoundedText(input.policyVersion, 256)
+  ) throw new SecurityMutationAuditRedriveError("unavailable")
+}
+
+function findRedrive(
+  intent: SecurityMutationAuditIntent,
+  idempotencyKey: string
+): SecurityMutationAuditRedriveRecord | undefined {
+  return intent.redriveHistory?.find((record) => record.idempotencyKey === idempotencyKey)
+}
+
+function sameRedriveResult(
+  intent: SecurityMutationAuditIntent,
+  record: SecurityMutationAuditRedriveRecord,
+  input: SecurityMutationAuditRedriveCommand
+): SecurityMutationAuditRedriveResult {
+  if (
+    record.actorId !== input.actorId
+    || record.reason !== input.reason
+    || record.policyVersion !== input.policyVersion
+  ) {
+    throw new SecurityMutationAuditRedriveError("idempotency_conflict")
+  }
+  const index = intent.redriveHistory?.findIndex((candidate) => candidate.idempotencyKey === record.idempotencyKey) ?? -1
+  if (index < 0) throw new SecurityMutationAuditRedriveError("unavailable")
+  return redriveResult(intent.intentId, record, index + 1)
+}
+
+function redriveResult(
+  intentId: string,
+  record: SecurityMutationAuditRedriveRecord,
+  redriveCount: number
+): SecurityMutationAuditRedriveResult {
+  return {
+    intentId,
+    status: record.restoredStatus,
+    idempotencyKey: record.idempotencyKey,
+    requestedAt: record.requestedAt,
+    redriveCount
+  }
+}
+
 function assertSameCompletion(
   intent: SecurityMutationAuditIntent,
   result: SecurityMutationResult,
@@ -414,6 +608,14 @@ function assertIdentifier(value: string, field: string): void {
 
 function isCanonicalTimestamp(value: string | undefined): boolean {
   return Boolean(value && Number.isFinite(Date.parse(value)) && new Date(value).toISOString() === value)
+}
+
+function isCanonicalBoundedText(value: unknown, maxLength: number): value is string {
+  return typeof value === "string" && value.length > 0 && value.length <= maxLength && value.trim() === value
+}
+
+function isCanonicalIdempotencyKey(value: unknown): value is string {
+  return typeof value === "string" && /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(value)
 }
 
 function sameJson(left: JsonValue | undefined, right: JsonValue | undefined): boolean {

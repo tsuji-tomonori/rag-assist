@@ -20,7 +20,7 @@
 | F004 | `POST /documents/{documentId}/source-governance/restrict handler` | if | `error` が `SourceGovernanceConflictError` の instance である | `apps/api/src/routes/document-routes.ts:571 (POST /documents/{documentId}/source-governance/restrict handler)` |
 | F005 | `POST /documents/{documentId}/source-governance/restrict handler` | if | `error` が `SourceGovernanceUnavailableError` の instance である | `apps/api/src/routes/document-routes.ts:572 (POST /documents/{documentId}/source-governance/restrict handler)` |
 | F006 | `POST /documents/{documentId}/source-governance/restrict handler` | if | `error` が `Error` の instance である、かつ `error.message` が "ENOENT" を含む、または `error.message` が "NoSuchKey" を含む | `apps/api/src/routes/document-routes.ts:573 (POST /documents/{documentId}/source-governance/restrict handler)` |
-| F007 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| F007 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | F008 | `publicSourceGovernanceRecord` | 三項条件 | `stagedPublication` が存在し、真である | `apps/api/src/routes/document-routes.ts:114 (publicSourceGovernanceRecord)` |
 
 ## 3. コード由来テストケース
@@ -39,8 +39,8 @@
 | TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:572 (POST /documents/{documentId}/source-governance/restrict handler)` |
 | TC011 | F006: 条件成立 | `error` が `Error` の instance である、かつ `error.message` が "ENOENT" を含む、または `error.message` が "NoSuchKey" を含む 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:573 (POST /documents/{documentId}/source-governance/restrict handler)` |
 | TC012 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:573 (POST /documents/{documentId}/source-governance/restrict handler)` |
-| TC013 | F007: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC014 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| TC013 | F007: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
+| TC014 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | TC015 | F008: 条件成立 | `stagedPublication` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:114 (publicSourceGovernanceRecord)` |
 | TC016 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:114 (publicSourceGovernanceRecord)` |
 | TC017 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

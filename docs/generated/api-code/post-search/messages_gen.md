@@ -18,7 +18,7 @@
 | M003 | OpenAPI contract | `401` | 認証が必要です。 | OpenAPI で宣言された HTTP 401 response | runtime OpenAPI |
 | M004 | OpenAPI contract | `403` | 対象操作を実行する権限がありません。 | OpenAPI で宣言された HTTP 403 response | runtime OpenAPI |
 | M005 | OpenAPI contract | `500` | サーバー内部で処理エラーが発生しました。 | OpenAPI で宣言された HTTP 500 response | runtime OpenAPI |
-| M006 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| M006 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | M007 | 例外 | `-` | RAG safety state is unavailable. | `required` が存在し、真である | `apps/api/src/rag/quality-control/production-rag-monitor.ts:313 (assertRagSafetyInterlock)` |
 | M008 | 例外 | `-` | RAG safety state is invalid or unsupported. | `state.schemaVersion` が `1` と異なる、または is integer の判定結果が真ではない、または `state.stateVersion` が `1` より小さい、または trim の判定結果が真ではない、または trim の判定結果が真ではない、または trim の判定結果が真ではない、または is array の判定結果が真ではない、または some の判定結果が真である、または `typeof state.promotionFrozen` が `"boolean"` と異なる、または `typeof state.documentQuarantineRequired` が `"boolean"` と異なる、または `["normal", "limited", "refuse"]` が state.responseMode を含まない、または is finite の判定結果が真ではない、または is finite の判定結果が真ではない、または `Date.parse(state.validUntil)` が `Date.parse(state.updatedAt)` 以下である | `apps/api/src/rag/quality-control/production-rag-monitor.ts:361 (assertRagSafetyState)` |
 | M009 | 例外 | `-` | RAG safety state is expired. | is finite の判定結果が真ではない、または `Date.parse(state.validUntil)` が `Date.parse(now)` 以下である | `apps/api/src/rag/quality-control/production-rag-monitor.ts:319 (assertRagSafetyInterlock)` |

@@ -17,7 +17,7 @@
 | F001 | `GET /documents/{documentId}/parsed-preview handler` | if | `preview` が存在しない、または偽である | `apps/api/src/routes/document-routes.ts:1558 (GET /documents/{documentId}/parsed-preview handler)` |
 | F002 | `GET /documents/{documentId}/parsed-preview handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:1560 (GET /documents/{documentId}/parsed-preview handler)` |
 | F003 | `GET /documents/{documentId}/parsed-preview handler` | if | `err` が `Error` の instance である、かつ starts with の判定結果が真である | `apps/api/src/routes/document-routes.ts:1561 (GET /documents/{documentId}/parsed-preview handler)` |
-| F004 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| F004 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | F005 | `MemoRagService.getParsedDocumentPreview` | if | is missing object error の判定結果が真である | `apps/api/src/rag/memorag-service.ts:983 (MemoRagService.getParsedDocumentPreview)` |
 | F006 | `MemoRagService.getParsedDocumentPreview` | if | `manifest` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:986 (MemoRagService.getParsedDocumentPreview)` |
 | F007 | `MemoRagService.getParsedDocumentPreview` | if | 条件式 `await this.canAccessDocumentManifest(user, manifest)` が成立しない | `apps/api/src/rag/memorag-service.ts:987 (MemoRagService.getParsedDocumentPreview)` |
@@ -32,8 +32,8 @@
 | TC004 | F002: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/document-routes.ts:1560 (GET /documents/{documentId}/parsed-preview handler)` |
 | TC005 | F003: 条件成立 | `err` が `Error` の instance である、かつ starts with の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1561 (GET /documents/{documentId}/parsed-preview handler)` |
 | TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1561 (GET /documents/{documentId}/parsed-preview handler)` |
-| TC007 | F004: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| TC007 | F004: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
+| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | TC009 | F005: 条件成立 | is missing object error の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:983 (MemoRagService.getParsedDocumentPreview)` |
 | TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:983 (MemoRagService.getParsedDocumentPreview)` |
 | TC011 | F006: 条件成立 | `manifest` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:986 (MemoRagService.getParsedDocumentPreview)` |

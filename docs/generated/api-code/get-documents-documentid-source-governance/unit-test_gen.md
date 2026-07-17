@@ -16,7 +16,7 @@ _静的に直接対応を確認できた test case はありません。`unit-te
 | F002 | `GET /documents/{documentId}/source-governance handler` | if | `error` が `SourceGovernanceDeniedError` の instance である | `apps/api/src/routes/document-routes.ts:1306 (GET /documents/{documentId}/source-governance handler)` |
 | F003 | `GET /documents/{documentId}/source-governance handler` | if | `error` が `SourceGovernanceUnavailableError` の instance である | `apps/api/src/routes/document-routes.ts:1307 (GET /documents/{documentId}/source-governance handler)` |
 | F004 | `GET /documents/{documentId}/source-governance handler` | if | `error` が `Error` の instance である、かつ `error.message` が "ENOENT" を含む、または `error.message` が "NoSuchKey" を含む | `apps/api/src/routes/document-routes.ts:1308 (GET /documents/{documentId}/source-governance handler)` |
-| F005 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| F005 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | F006 | `publicSourceGovernanceRecord` | 三項条件 | `stagedPublication` が存在し、真である | `apps/api/src/routes/document-routes.ts:114 (publicSourceGovernanceRecord)` |
 
 ## 3. コード由来テストケース
@@ -31,8 +31,8 @@ _静的に直接対応を確認できた test case はありません。`unit-te
 | TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1307 (GET /documents/{documentId}/source-governance handler)` |
 | TC007 | F004: 条件成立 | `error` が `Error` の instance である、かつ `error.message` が "ENOENT" を含む、または `error.message` が "NoSuchKey" を含む 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1308 (GET /documents/{documentId}/source-governance handler)` |
 | TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1308 (GET /documents/{documentId}/source-governance handler)` |
-| TC009 | F005: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| TC009 | F005: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
+| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | TC011 | F006: 条件成立 | `stagedPublication` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:114 (publicSourceGovernanceRecord)` |
 | TC012 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:114 (publicSourceGovernanceRecord)` |
 | TC013 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

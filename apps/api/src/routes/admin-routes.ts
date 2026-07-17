@@ -10,6 +10,8 @@ import {
   AdminAuditExportRequestSchema,
   AdminAuditLogQuerySchema,
   AdminAuditLogResponseSchema,
+  SecurityAuditQuarantineRedriveRequestSchema,
+  SecurityAuditQuarantineRedriveResponseSchema,
   AliasAuditLogQuerySchema,
   AliasAuditLogResponseSchema,
   AliasDefinitionSchema,
@@ -41,8 +43,13 @@ import { ApplicationRoleMutationError } from "../security/application-role-mutat
 import { AdministrativePrincipalTransferError } from "../security/administrative-principal-transfer-service.js"
 import { AliasGovernanceError } from "../rag/memorag-service.js"
 import { InvalidPageCursorError } from "../admin/keyset-pagination.js"
+import {
+  SecurityMutationAuditQuarantineService,
+  SecurityMutationAuditQuarantineServiceError
+} from "../security/security-mutation-audit-quarantine-service.js"
+import { SecurityMutationAuditRedriveError } from "../security/security-mutation-audit-outbox.js"
 
-export function registerAdminRoutes({ app, service }: ApiRouteContext) {
+export function registerAdminRoutes({ app, deps, service }: ApiRouteContext) {
   app.openapi(
     looseRoute({
       method: "post",
@@ -70,6 +77,66 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
           return c.json({ error: "Managed user already exists" }, 409)
         }
         throw err
+      }
+    }
+  )
+
+  app.openapi(
+    looseRoute({
+      method: "post",
+      path: "/admin/security-audit/quarantines/{intentId}/redrive",
+      "x-memorag-authorization": routeAuthorization({
+        mode: "required",
+        permission: "access:audit:redrive",
+        operationKey: "security_audit.quarantine.redrive",
+        resourceCondition: "tenantAuditIntent",
+        errorDisclosure: "resource-hidden",
+        notes: [
+          "verified actor tenant配下のexact quarantined intentだけを、durable operator auditと同じCASでscheduled reconciliationへ戻します。",
+          "resolverやdomain mutationはAPIから直接実行しません。"
+        ]
+      }),
+      request: {
+        params: z.object({
+          intentId: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._:-]{0,255}$/)
+        }),
+        body: {
+          required: true,
+          content: { "application/json": { schema: SecurityAuditQuarantineRedriveRequestSchema } }
+        }
+      },
+      responses: {
+        200: { description: "Quarantined audit intent accepted for scheduled redrive", content: { "application/json": { schema: SecurityAuditQuarantineRedriveResponseSchema } } },
+        400: { description: "Invalid redrive request", content: { "application/json": { schema: ErrorResponseSchema } } },
+        403: { description: "Forbidden", content: { "application/json": { schema: ErrorResponseSchema } } },
+        404: { description: "Quarantined audit intent not found", content: { "application/json": { schema: ErrorResponseSchema } } },
+        409: { description: "Intent is not quarantined or idempotency key conflicts", content: { "application/json": { schema: ErrorResponseSchema } } },
+        503: { description: "監査 intent の手動再投入を永続化できません", content: { "application/json": { schema: ErrorResponseSchema } } }
+      }
+    }),
+    async (c) => {
+      const actor = c.get("user")
+      requirePermission(actor, "access:audit:redrive")
+      const { intentId } = validParam<{ intentId: string }>(c)
+      const body = validJson<z.infer<typeof SecurityAuditQuarantineRedriveRequestSchema>>(c)
+      const outbox = deps.securityAuditReconciliationOutbox
+      if (!outbox) return c.json({ error: "Security audit redrive unavailable" }, 503)
+      try {
+        return c.json(await new SecurityMutationAuditQuarantineService(outbox).redrive(actor, intentId, body), 200)
+      } catch (error) {
+        if (error instanceof SecurityMutationAuditQuarantineServiceError) {
+          if (error.code === "forbidden") throw new HTTPException(403, { message: "Forbidden" })
+          if (error.code === "invalid_request") return c.json({ error: "Invalid redrive request" }, 400)
+          return c.json({ error: "Security audit redrive unavailable" }, 503)
+        }
+        if (error instanceof SecurityMutationAuditRedriveError) {
+          if (error.code === "not_found") return c.json({ error: "Quarantined audit intent not found" }, 404)
+          if (error.code === "not_quarantined" || error.code === "idempotency_conflict") {
+            return c.json({ error: "Security audit redrive conflict" }, 409)
+          }
+          return c.json({ error: "Security audit redrive unavailable" }, 503)
+        }
+        throw error
       }
     }
   )

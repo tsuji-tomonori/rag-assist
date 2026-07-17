@@ -67,7 +67,7 @@ sequenceDiagram
 | ID | Function | 条件 | 実装位置 |
 | --- | --- | --- | --- |
 | B001 | `GET /documents/{documentId}/extracted-text handler` | `download` が存在しない、または偽である | `apps/api/src/routes/document-routes.ts:1521 (GET /documents/{documentId}/extracted-text handler)` |
-| B002 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| B002 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | B003 | `MemoRagService.getDocumentExtractedText` | is missing object error の判定結果が真である | `apps/api/src/rag/memorag-service.ts:996 (MemoRagService.getDocumentExtractedText)` |
 | B004 | `MemoRagService.getDocumentExtractedText` | `manifest` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:999 (MemoRagService.getDocumentExtractedText)` |
 | B005 | `MemoRagService.getDocumentExtractedText` | 条件式 `await isManifestCurrentPublication(this.deps, manifest, publicationSnapshot)` が成立しない | `apps/api/src/rag/memorag-service.ts:1001 (MemoRagService.getDocumentExtractedText)` |

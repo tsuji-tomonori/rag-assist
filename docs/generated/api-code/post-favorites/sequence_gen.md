@@ -48,9 +48,9 @@ sequenceDiagram
 | 2 | `POST /favorites handler` | Auth | "chat:create" permission を必須条件として確認する。 | `requirePermission(user, "chat:create")` | `apps/api/src/routes/favorite-routes.ts:43 (POST /favorites handler)` |
 | 3 | `POST /favorites handler` | Validation | schema 検証済みの JSON request body を取得する。 | `validJson<z.infer<typeof CreateFavoriteRequestSchema>>(c)` | `apps/api/src/routes/favorite-routes.ts:44 (POST /favorites handler)` |
 | 4 | `POST /favorites handler` | Service | service の save favorite 処理を呼び出す。 | `service.saveFavorite(user, body)` | `apps/api/src/routes/favorite-routes.ts:45 (POST /favorites handler)` |
-| 5 | `MemoRagService.saveFavorite` | Store | `this.deps.favoriteStore` に対して save を実行する。 | `this.deps.favoriteStore.save(tenantPartitionedOwnerKey(user), input)` | `apps/api/src/rag/memorag-service.ts:4155 (MemoRagService.saveFavorite)` |
-| 6 | `MemoRagService.saveFavorite` | Service | service の resolve favorite visibility 処理を呼び出す。 | `this.resolveFavoriteVisibility(user, favorite)` | `apps/api/src/rag/memorag-service.ts:4156 (MemoRagService.saveFavorite)` |
-| 7 | `MemoRagService.resolveFavoriteVisibility` | Store | `this.deps.conversationHistoryStore` に対して list を実行する。 | `this.deps.conversationHistoryStore.list(tenantPartitionedOwnerKey(user))` | `apps/api/src/rag/memorag-service.ts:4189 (MemoRagService.resolveFavoriteVisibility)` |
+| 5 | `MemoRagService.saveFavorite` | Store | `this.deps.favoriteStore` に対して save を実行する。 | `this.deps.favoriteStore.save(tenantPartitionedOwnerKey(user), input)` | `apps/api/src/rag/memorag-service.ts:4173 (MemoRagService.saveFavorite)` |
+| 6 | `MemoRagService.saveFavorite` | Service | service の resolve favorite visibility 処理を呼び出す。 | `this.resolveFavoriteVisibility(user, favorite)` | `apps/api/src/rag/memorag-service.ts:4174 (MemoRagService.saveFavorite)` |
+| 7 | `MemoRagService.resolveFavoriteVisibility` | Store | `this.deps.conversationHistoryStore` に対して list を実行する。 | `this.deps.conversationHistoryStore.list(tenantPartitionedOwnerKey(user))` | `apps/api/src/rag/memorag-service.ts:4207 (MemoRagService.resolveFavoriteVisibility)` |
 | 8 | `MemoRagService.listDocuments` | Store | `this.deps.objectStore` に対して list keys を実行する。 | `this.deps.objectStore.listKeys(tenantManifestPrefix(this.deps, tenantId))` | `apps/api/src/rag/memorag-service.ts:903 (MemoRagService.listDocuments)` |
 | 9 | `readTenantManifestByKey` | Store | `deps.objectStore` に対して get text を実行する。 | `deps.objectStore.getText(key)` | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:93 (readTenantManifestByKey)` |
 | 10 | `loadPublicationPointer` | Store | `deps.objectStore` に対して get text を実行する。 | `deps.objectStore.getText(key)` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1809 (loadPublicationPointer)` |
@@ -73,5 +73,5 @@ sequenceDiagram
 
 | ID | Function | 条件 | 実装位置 |
 | --- | --- | --- | --- |
-| B001 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| B002 | `MemoRagService.saveFavorite` | favorite target resolver implemented の判定結果が真ではない | `apps/api/src/rag/memorag-service.ts:4152 (MemoRagService.saveFavorite)` |
+| B001 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |
+| B002 | `MemoRagService.saveFavorite` | favorite target resolver implemented の判定結果が真ではない | `apps/api/src/rag/memorag-service.ts:4170 (MemoRagService.saveFavorite)` |

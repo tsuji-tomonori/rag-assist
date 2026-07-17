@@ -19,7 +19,7 @@
 | M004 | OpenAPI contract | `403` | 対象操作を実行する権限がありません。 | OpenAPI で宣言された HTTP 403 response | runtime OpenAPI |
 | M005 | OpenAPI contract | `500` | サーバー内部で処理エラーが発生しました。 | OpenAPI で宣言された HTTP 500 response | runtime OpenAPI |
 | M006 | OpenAPI contract | `503` | benchmark 評価が無効または設定不備のため利用できません | OpenAPI で宣言された HTTP 503 response | runtime OpenAPI |
-| M007 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| M007 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | M008 | 例外 | `-` | Forbidden | is dedicated benchmark runner の判定結果が真ではない | `apps/api/src/benchmark/evaluation-context.ts:77 (resolveBenchmarkEvaluationContext)` |
 | M009 | 例外 | `-` | Benchmark evaluation is unavailable | `settings.enabled` が存在しない、または偽である | `apps/api/src/benchmark/evaluation-context.ts:80 (resolveBenchmarkEvaluationContext)` |
 | M010 | 例外 | `-` | Benchmark evaluation is unavailable | `tenantId` が存在しない、または偽である、または `tenantId` が `runner.tenantId` と等しい | `apps/api/src/benchmark/evaluation-context.ts:85 (resolveBenchmarkEvaluationContext)` |

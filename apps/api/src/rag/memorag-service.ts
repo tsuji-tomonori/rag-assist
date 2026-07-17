@@ -2042,11 +2042,11 @@ export class MemoRagService {
     const tenantId = authoritativeActorTenantId(actor)
     const usersById = new Map(db.users.map((user) => [user.userId, user]))
     const securityIntents = await new ObjectStoreSecurityMutationAuditOutbox(this.deps.objectStore).listAll(tenantId)
-    const securityAuditLog: ManagedUserAuditLogEntry[] = securityIntents.map((intent) => {
+    const securityAuditLog: ManagedUserAuditLogEntry[] = securityIntents.flatMap((intent) => {
       const target = usersById.get(intent.draft.targetId)
       const before = jsonRecord(intent.draft.before)
       const after = jsonRecord(intent.after ?? intent.requestedCompletion?.after ?? intent.draft.proposedAfter)
-      return {
+      const mutationEntry: ManagedUserAuditLogEntry = {
         auditId: intent.intentId,
         action: adminAuditActionForOperation(intent.draft.operation),
         result: intent.status === "completed" ? intent.result! : "pending",
@@ -2065,6 +2065,24 @@ export class MemoRagService {
         createdAt: intent.createdAt,
         completedAt: intent.completedAt
       }
+      const redriveEntries: ManagedUserAuditLogEntry[] = (intent.redriveHistory ?? []).map((record, index) => ({
+        auditId: `${intent.intentId}:redrive:${index + 1}`,
+        action: "security_audit.quarantine.redrive",
+        result: "success",
+        reason: record.reason,
+        tenantId,
+        targetType: "securityMutationAuditIntent",
+        actorUserId: record.actorId,
+        actorEmail: usersById.get(record.actorId)?.email,
+        targetUserId: intent.intentId,
+        policyVersion: record.policyVersion,
+        source: "security_audit_outbox",
+        beforeGroups: [],
+        afterGroups: [],
+        createdAt: record.requestedAt,
+        completedAt: record.requestedAt
+      }))
+      return [mutationEntry, ...redriveEntries]
     })
     const normalizedQuery = query.query?.trim().toLowerCase()
     const legacyAuditLog = (db.auditLog ?? []).map((entry) => normalizeLegacyAdminAuditEntry(entry, tenantId))

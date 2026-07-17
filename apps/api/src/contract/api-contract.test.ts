@@ -5,8 +5,10 @@ import path from "node:path"
 import { spawn } from "node:child_process"
 import test from "node:test"
 import { LocalFolderPolicyStore } from "../adapters/local-folder-policy-store.js"
+import { LocalObjectStore } from "../adapters/local-object-store.js"
 import { isBenchmarkSeedUpload, isBenchmarkSeedUploadedObjectIngest } from "../app.js"
 import { authorizeDocumentDelete, authorizeDocumentUpload, authorizeUploadedDocumentIngest } from "../routes/benchmark-seed.js"
+import { ObjectStoreSecurityMutationAuditOutbox } from "../security/security-mutation-audit-outbox.js"
 
 process.env.NODE_ENV = "test"
 process.env.MEMORAG_ALLOW_LEGACY_LOCAL_STORE_FOR_TESTS = "true"
@@ -34,6 +36,26 @@ test("HTTP contract validates major endpoint responses against /openapi.json", a
   const fixtures = await loadFixtures()
   const port = 18000 + Math.floor(Math.random() * 1000)
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-contract-"))
+  const auditOutbox = new ObjectStoreSecurityMutationAuditOutbox(new LocalObjectStore(dataDir))
+  const quarantinedAuditIntent = await auditOutbox.prepare({
+    actorId: "source-manager-1",
+    tenantId: "local-test",
+    targetType: "source",
+    targetId: "source-contract-redrive",
+    operation: "source_governance.approve_publish",
+    before: { status: "unreviewed" },
+    proposedAfter: { status: "published" },
+    reason: "contract quarantine fixture",
+    policyVersion: "source-governance-approval-v1"
+  })
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    await auditOutbox.recordReconciliationFailure(
+      "local-test",
+      quarantinedAuditIntent.intentId,
+      "authoritative_resolution_failed",
+      3
+    )
+  }
   const tsxBin = path.resolve(process.cwd(), "../../node_modules/.bin/tsx")
   const server = spawn(tsxBin, ["src/local.ts"], {
     cwd: process.cwd(),
@@ -389,6 +411,59 @@ test("HTTP contract validates major endpoint responses against /openapi.json", a
     assert.ok(roles.body.roles.some((role: { role: string }) => role.role === "SYSTEM_ADMIN"))
     validateSchema(roles.body, responseSchema(openapi, "/admin/roles", "get", 200), openapi)
 
+    const redriveBody = { idempotencyKey: "contract-redrive-001", reason: "resolver rollout verified" }
+    const redriveAuditIntent = await fetch(
+      `http://127.0.0.1:${port}/admin/security-audit/quarantines/${quarantinedAuditIntent.intentId}/redrive`,
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(redriveBody)
+      }
+    )
+    assert.equal(redriveAuditIntent.status, 200)
+    const redriveResponse = await redriveAuditIntent.json() as Record<string, unknown>
+    assert.equal(redriveResponse.status, "pending")
+    assert.equal(redriveResponse.redriveCount, 1)
+    validateSchema(
+      redriveResponse,
+      responseSchema(openapi, "/admin/security-audit/quarantines/{intentId}/redrive", "post", 200),
+      openapi
+    )
+    const duplicateRedrive = await fetch(
+      `http://127.0.0.1:${port}/admin/security-audit/quarantines/${quarantinedAuditIntent.intentId}/redrive`,
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(redriveBody)
+      }
+    )
+    assert.equal(duplicateRedrive.status, 200)
+    assert.deepEqual(await duplicateRedrive.json(), redriveResponse)
+    assert.equal((await fetch(
+      `http://127.0.0.1:${port}/admin/security-audit/quarantines/${quarantinedAuditIntent.intentId}/redrive`,
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ idempotencyKey: "invalid key", reason: "malformed probe" })
+      }
+    )).status, 400)
+    assert.equal((await fetch(
+      `http://127.0.0.1:${port}/admin/security-audit/quarantines/${quarantinedAuditIntent.intentId}/redrive`,
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ ...redriveBody, reason: "payload drift" })
+      }
+    )).status, 409)
+    assert.equal((await fetch(
+      `http://127.0.0.1:${port}/admin/security-audit/quarantines/security_mutation_missing/redrive`,
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ idempotencyKey: "contract-redrive-missing", reason: "missing probe" })
+      }
+    )).status, 404)
+
     const createAlias = await fetch(`http://127.0.0.1:${port}/admin/aliases`, {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -436,6 +511,7 @@ test("HTTP contract validates major endpoint responses against /openapi.json", a
     const adminAuditLog = await getJson(`http://127.0.0.1:${port}/admin/audit-log`)
     assert.equal(Array.isArray(adminAuditLog.body.auditLog), true)
     assert.ok(adminAuditLog.body.auditLog.some((entry: { action: string }) => entry.action === "user:create"))
+    assert.ok(adminAuditLog.body.auditLog.some((entry: { action: string }) => entry.action === "security_audit.quarantine.redrive"))
     validateSchema(adminAuditLog.body, responseSchema(openapi, "/admin/audit-log", "get", 200), openapi)
 
     const usage = await getJson(`http://127.0.0.1:${port}/admin/usage`)
@@ -454,7 +530,7 @@ test("HTTP contract validates major endpoint responses against /openapi.json", a
   }
 })
 
-test("benchmark query endpoint requires authentication when auth is enabled", async () => {
+test("protected benchmark and security-audit recovery endpoints require authentication", async () => {
   const port = 19000 + Math.floor(Math.random() * 1000)
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-contract-auth-"))
   const tsxBin = path.resolve(process.cwd(), "../../node_modules/.bin/tsx")
@@ -482,6 +558,15 @@ test("benchmark query endpoint requires authentication when auth is enabled", as
     })
 
     assert.equal(res.status, 401)
+    const redrive = await fetch(
+      `http://127.0.0.1:${port}/admin/security-audit/quarantines/security_mutation_probe/redrive`,
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ idempotencyKey: "auth-probe", reason: "authentication probe" })
+      }
+    )
+    assert.equal(redrive.status, 401)
   } finally {
     server.kill("SIGTERM")
   }
@@ -1826,6 +1911,11 @@ test("Phase 2 admin endpoints enforce user, access, usage, and cost permissions"
       body: JSON.stringify({ email: "blocked@example.com" })
     })).status, 403)
     assert.equal((await fetch(`http://127.0.0.1:${port}/admin/audit-log`)).status, 403)
+    assert.equal((await fetch(`http://127.0.0.1:${port}/admin/security-audit/quarantines/security_mutation_probe/redrive`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ idempotencyKey: "permission-probe", reason: "permission boundary probe" })
+    })).status, 403)
     assert.equal((await fetch(`http://127.0.0.1:${port}/admin/roles`)).status, 403)
     assert.equal((await fetch(`http://127.0.0.1:${port}/admin/aliases`)).status, 403)
     assert.equal((await fetch(`http://127.0.0.1:${port}/admin/aliases/publish`, {

@@ -49,7 +49,7 @@ sequenceDiagram
 
 | ID | Function | 条件 | 実装位置 |
 | --- | --- | --- | --- |
-| B001 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| B001 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | B002 | `MemoRagService.listDocumentGroups` | `detail.permission` が `"none"` と異なる | `apps/api/src/rag/memorag-service.ts:1023 (MemoRagService.listDocumentGroups)` |
 | B003 | `MemoRagService.listDocumentGroups` | 例外が発生した場合に catch 処理へ移る | `apps/api/src/rag/memorag-service.ts:1026 (MemoRagService.listDocumentGroups)` |
 | B004 | `MemoRagService.listDocumentGroups` | `error` が `ResourceOperationAuthorizationError` の instance である | `apps/api/src/rag/memorag-service.ts:1027 (MemoRagService.listDocumentGroups)` |

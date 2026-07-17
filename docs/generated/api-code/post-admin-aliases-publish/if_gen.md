@@ -2,7 +2,7 @@
 
 # POST /admin/aliases/publish IF仕様
 
-- 実装 route: `apps/api/src/routes/admin-routes.ts:546 (POST /admin/aliases/publish)`
+- 実装 route: `apps/api/src/routes/admin-routes.ts:613 (POST /admin/aliases/publish)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 検索 alias を公開する

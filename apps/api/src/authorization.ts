@@ -35,6 +35,7 @@ export type AuthorizationResourceCondition =
   | "folderMove"
   | "documentUploadSession"
   | "tenantCollection"
+  | "tenantAuditIntent"
   | "tenantRun"
   | "benchmarkSeedScope"
   | "benchmarkEvaluationScope"

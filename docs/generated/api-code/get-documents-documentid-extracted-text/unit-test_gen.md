@@ -15,7 +15,7 @@
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
 | F001 | `GET /documents/{documentId}/extracted-text handler` | if | `download` が存在しない、または偽である | `apps/api/src/routes/document-routes.ts:1521 (GET /documents/{documentId}/extracted-text handler)` |
-| F002 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| F002 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | F003 | `MemoRagService.getDocumentExtractedText` | if | is missing object error の判定結果が真である | `apps/api/src/rag/memorag-service.ts:996 (MemoRagService.getDocumentExtractedText)` |
 | F004 | `MemoRagService.getDocumentExtractedText` | if | `manifest` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:999 (MemoRagService.getDocumentExtractedText)` |
 | F005 | `MemoRagService.getDocumentExtractedText` | if | 条件式 `await isManifestCurrentPublication(this.deps, manifest, publicationSnapshot)` が成立しない | `apps/api/src/rag/memorag-service.ts:1001 (MemoRagService.getDocumentExtractedText)` |
@@ -31,8 +31,8 @@
 | TC001 | 正常系 | 文書の抽出テキストを取得する が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:1515 (GET /documents/{documentId}/extracted-text handler)` |
 | TC002 | F001: 条件成立 | `download` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1521 (GET /documents/{documentId}/extracted-text handler)` |
 | TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1521 (GET /documents/{documentId}/extracted-text handler)` |
-| TC004 | F002: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| TC004 | F002: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
+| TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | TC006 | F003: 条件成立 | is missing object error の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:996 (MemoRagService.getDocumentExtractedText)` |
 | TC007 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:996 (MemoRagService.getDocumentExtractedText)` |
 | TC008 | F004: 条件成立 | `manifest` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:999 (MemoRagService.getDocumentExtractedText)` |

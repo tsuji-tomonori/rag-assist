@@ -8,8 +8,8 @@
 
 | # | CRUD/実行 | Target | Method | 自然言語での目的 | Caller | コード根拠 |
 | ---: | --- | --- | --- | --- | --- | --- |
-| 1 | 作成・追記 | `this.deps.favoriteStore` | `save` | `this.deps.favoriteStore` に対して save を実行する。 | `MemoRagService.saveFavorite` | `apps/api/src/rag/memorag-service.ts:4155 (MemoRagService.saveFavorite)` |
-| 2 | 参照 | `this.deps.conversationHistoryStore` | `list` | `this.deps.conversationHistoryStore` に対して list を実行する。 | `MemoRagService.resolveFavoriteVisibility` | `apps/api/src/rag/memorag-service.ts:4189 (MemoRagService.resolveFavoriteVisibility)` |
+| 1 | 作成・追記 | `this.deps.favoriteStore` | `save` | `this.deps.favoriteStore` に対して save を実行する。 | `MemoRagService.saveFavorite` | `apps/api/src/rag/memorag-service.ts:4173 (MemoRagService.saveFavorite)` |
+| 2 | 参照 | `this.deps.conversationHistoryStore` | `list` | `this.deps.conversationHistoryStore` に対して list を実行する。 | `MemoRagService.resolveFavoriteVisibility` | `apps/api/src/rag/memorag-service.ts:4207 (MemoRagService.resolveFavoriteVisibility)` |
 | 3 | 参照 | `this.deps.objectStore` | `listKeys` | `this.deps.objectStore` に対して list keys を実行する。 | `MemoRagService.listDocuments` | `apps/api/src/rag/memorag-service.ts:903 (MemoRagService.listDocuments)` |
 | 4 | 参照 | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `readTenantManifestByKey` | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:93 (readTenantManifestByKey)` |
 | 5 | 参照 | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `loadPublicationPointer` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1809 (loadPublicationPointer)` |

@@ -18,7 +18,7 @@
 | M003 | OpenAPI contract | `403` | 対象操作を実行する権限がありません。 | OpenAPI で宣言された HTTP 403 response | runtime OpenAPI |
 | M004 | OpenAPI contract | `404` | 指定したリソースが見つかりません。 | OpenAPI で宣言された HTTP 404 response | runtime OpenAPI |
 | M005 | OpenAPI contract | `503` | フォルダ共有 policy store を利用できません | OpenAPI で宣言された HTTP 503 response | runtime OpenAPI |
-| M006 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| M006 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | M007 | 例外 | `403` | Forbidden | folder permission satisfies の判定結果が真ではない | `apps/api/src/folders/folder-permission-service.ts:258 (FolderPermissionService.assertFolderPermission)` |
 | M008 | 例外 | `503` | Benchmark evaluation is unavailable | `config.benchmarkEvaluationEnabled` が存在しない、または偽である、または trim の判定結果が真ではない | `apps/api/src/routes/document-routes.ts:158 (uploadTenantId)` |
 | M009 | 例外 | `403` | Forbidden | `tenantId` が存在しない、または偽である | `apps/api/src/routes/document-routes.ts:163 (uploadTenantId)` |

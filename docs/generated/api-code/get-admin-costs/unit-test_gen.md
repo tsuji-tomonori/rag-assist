@@ -15,20 +15,20 @@
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `GET /admin/costs handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/admin-routes.ts:688 (GET /admin/costs handler)` |
-| F002 | `GET /admin/costs handler` | if | is invalid usage query の判定結果が真である | `apps/api/src/routes/admin-routes.ts:689 (GET /admin/costs handler)` |
-| F003 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| F001 | `GET /admin/costs handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/admin-routes.ts:755 (GET /admin/costs handler)` |
+| F002 | `GET /admin/costs handler` | if | is invalid usage query の判定結果が真である | `apps/api/src/routes/admin-routes.ts:756 (GET /admin/costs handler)` |
+| F003 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |
 
 ## 3. コード由来テストケース
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | 概算コストを取得する が成功 response を返す。 | `apps/api/src/routes/admin-routes.ts:683 (GET /admin/costs handler)` |
-| TC002 | F001: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/admin-routes.ts:688 (GET /admin/costs handler)` |
-| TC003 | F002: 条件成立 | is invalid usage query の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:689 (GET /admin/costs handler)` |
-| TC004 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:689 (GET /admin/costs handler)` |
-| TC005 | F003: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| TC001 | 正常系 | 概算コストを取得する が成功 response を返す。 | `apps/api/src/routes/admin-routes.ts:750 (GET /admin/costs handler)` |
+| TC002 | F001: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/admin-routes.ts:755 (GET /admin/costs handler)` |
+| TC003 | F002: 条件成立 | is invalid usage query の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:756 (GET /admin/costs handler)` |
+| TC004 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:756 (GET /admin/costs handler)` |
+| TC005 | F003: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
+| TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | TC007 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC008 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC009 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

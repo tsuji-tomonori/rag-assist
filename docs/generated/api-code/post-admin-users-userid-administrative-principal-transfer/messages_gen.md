@@ -20,9 +20,9 @@
 | M005 | OpenAPI contract | `404` | 指定したリソースが見つかりません。 | OpenAPI で宣言された HTTP 404 response | runtime OpenAPI |
 | M006 | OpenAPI contract | `409` | 現在のリソース状態と要求された操作が競合しています。 | OpenAPI で宣言された HTTP 409 response | runtime OpenAPI |
 | M007 | OpenAPI contract | `503` | 移管 reconciliation が必要 | OpenAPI で宣言された HTTP 503 response | runtime OpenAPI |
-| M008 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| M008 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | M009 | 例外 | `-` | Transfer reason is required and must be canonical | trim の判定結果が真ではない、または `input.reason.trim()` が `input.reason` と異なる | `apps/api/src/rag/memorag-service.ts:1837 (MemoRagService.transferManagedUserAdministrativePrincipal)` |
-| M010 | 例外 | `-` | Authoritative directory identity is unavailable during reconciliation | `this.deps.verifiedIdentityProvider` が存在し、真である、かつ `currentIdentity` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:3512 (MemoRagService.syncUserDirectory)` |
+| M010 | 例外 | `-` | Authoritative directory identity is unavailable during reconciliation | `this.deps.verifiedIdentityProvider` が存在し、真である、かつ `currentIdentity` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:3530 (MemoRagService.syncUserDirectory)` |
 | M011 | 例外 | `-` | Actor cannot transfer administrative principals | is active account の判定結果が真ではない、または is canonical の判定結果が真ではない、または `actor.tenantId` が `tenantId` と異なる、または 利用者が "user:delete" permission を持たない | `apps/api/src/security/administrative-principal-transfer-service.ts:521 (AdministrativePrincipalTransferService.validateActor)` |
 | M012 | 例外 | `-` | Source administrative principal is invalid | is canonical の判定結果が真ではない | `apps/api/src/security/administrative-principal-transfer-service.ts:106 (AdministrativePrincipalTransferService.inspectBeforePermanentDelete)` |
 | M013 | 例外 | `-` | Ownership inventory is not configured | `this.deps.documentGroupStore` が存在しない、または偽である、または `this.deps.userGroupStore` が存在しない、または偽である、または `this.deps.objectStore` が存在しない、または偽である | `apps/api/src/security/administrative-principal-transfer-service.ts:526 (AdministrativePrincipalTransferService.inventory)` |
@@ -54,10 +54,10 @@
 | M039 | 例外 | `-` | `Ownership transfer worker lost its durable fence and cannot roll back safely: ${errorMessage(error)}; fence: ${errorMessage(fenceError)}` | 例外を捕捉した場合 | `apps/api/src/security/administrative-principal-transfer-service.ts:400 (AdministrativePrincipalTransferService.transfer)` |
 | M040 | 例外 | `-` | `Ownership transfer failed and requires reconciliation: ${errorMessage(error)}; rollback: ${errorMessage(rollbackError)}` | 例外を捕捉した場合 | `apps/api/src/security/administrative-principal-transfer-service.ts:423 (AdministrativePrincipalTransferService.transfer)` |
 | M041 | 例外 | `-` | `Ownership transfer failed and was rolled back: ${errorMessage(error)}` | 例外を捕捉した場合 | `apps/api/src/security/administrative-principal-transfer-service.ts:432 (AdministrativePrincipalTransferService.transfer)` |
-| M042 | HTTP 実装応答 | `404` | User not found | `result` が存在しない、または偽である | `apps/api/src/routes/admin-routes.ts:108 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
-| M043 | 例外 | `403` | Forbidden | `error` が `Error` の instance である、かつ starts with の判定結果が真である | `apps/api/src/routes/admin-routes.ts:112 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
-| M044 | HTTP 実装応答 | `503` | Administrative principal transfer unavailable | `error.reconciliationRequired` が存在し、真である | `apps/api/src/routes/admin-routes.ts:115 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
-| M045 | HTTP 実装応答 | `409` | Administrative principal transfer conflict | test の判定結果が真である | `apps/api/src/routes/admin-routes.ts:117 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
+| M042 | HTTP 実装応答 | `404` | User not found | `result` が存在しない、または偽である | `apps/api/src/routes/admin-routes.ts:175 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
+| M043 | 例外 | `403` | Forbidden | `error` が `Error` の instance である、かつ starts with の判定結果が真である | `apps/api/src/routes/admin-routes.ts:179 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
+| M044 | HTTP 実装応答 | `503` | Administrative principal transfer unavailable | `error.reconciliationRequired` が存在し、真である | `apps/api/src/routes/admin-routes.ts:182 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
+| M045 | HTTP 実装応答 | `409` | Administrative principal transfer conflict | test の判定結果が真である | `apps/api/src/routes/admin-routes.ts:184 (POST /admin/users/{userId}/administrative-principal-transfer handler)` |
 
 ## 読み方
 

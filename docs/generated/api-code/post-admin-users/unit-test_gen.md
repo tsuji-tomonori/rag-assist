@@ -20,9 +20,9 @@
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `POST /admin/users handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/admin-routes.ts:68 (POST /admin/users handler)` |
-| F002 | `POST /admin/users handler` | if | `err` が `Error` の instance である、かつ `err.message` が `"Managed user already exists"` と等しい | `apps/api/src/routes/admin-routes.ts:69 (POST /admin/users handler)` |
-| F003 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| F001 | `POST /admin/users handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/admin-routes.ts:75 (POST /admin/users handler)` |
+| F002 | `POST /admin/users handler` | if | `err` が `Error` の instance である、かつ `err.message` が `"Managed user already exists"` と等しい | `apps/api/src/routes/admin-routes.ts:76 (POST /admin/users handler)` |
+| F003 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | F004 | `MemoRagService.createManagedUser` | if | `groups.length` が `0` と等しい | `apps/api/src/rag/memorag-service.ts:1908 (MemoRagService.createManagedUser)` |
 | F005 | `MemoRagService.createManagedUser` | if | `this.deps.verifiedIdentityProvider` が存在し、真である、かつ `this.deps.userDirectory` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1910 (MemoRagService.createManagedUser)` |
 | F006 | `MemoRagService.createManagedUser` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/rag/memorag-service.ts:1915 (MemoRagService.createManagedUser)` |
@@ -44,12 +44,12 @@
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | 管理対象ユーザーを作成する が成功 response を返す。 | `apps/api/src/routes/admin-routes.ts:62 (POST /admin/users handler)` |
-| TC002 | F001: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/admin-routes.ts:68 (POST /admin/users handler)` |
-| TC003 | F002: 条件成立 | `err` が `Error` の instance である、かつ `err.message` が `"Managed user already exists"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:69 (POST /admin/users handler)` |
-| TC004 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:69 (POST /admin/users handler)` |
-| TC005 | F003: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| TC001 | 正常系 | 管理対象ユーザーを作成する が成功 response を返す。 | `apps/api/src/routes/admin-routes.ts:69 (POST /admin/users handler)` |
+| TC002 | F001: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/admin-routes.ts:75 (POST /admin/users handler)` |
+| TC003 | F002: 条件成立 | `err` が `Error` の instance である、かつ `err.message` が `"Managed user already exists"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:76 (POST /admin/users handler)` |
+| TC004 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:76 (POST /admin/users handler)` |
+| TC005 | F003: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
+| TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | TC007 | F004: 条件成立 | `groups.length` が `0` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1908 (MemoRagService.createManagedUser)` |
 | TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1908 (MemoRagService.createManagedUser)` |
 | TC009 | F005: 条件成立 | `this.deps.verifiedIdentityProvider` が存在し、真である、かつ `this.deps.userDirectory` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1910 (MemoRagService.createManagedUser)` |

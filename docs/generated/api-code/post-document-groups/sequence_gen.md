@@ -57,7 +57,7 @@ sequenceDiagram
 | B001 | `POST /document-groups handler` | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:604 (POST /document-groups handler)` |
 | B002 | `POST /document-groups handler` | is document group input error の判定結果が真である | `apps/api/src/routes/document-routes.ts:605 (POST /document-groups handler)` |
 | B003 | `POST /document-groups handler` | `err` が `Error` の instance である、かつ starts with の判定結果が真である | `apps/api/src/routes/document-routes.ts:606 (POST /document-groups handler)` |
-| B004 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| B004 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | B005 | `MemoRagService.createDocumentGroup` | `tenantId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1054 (MemoRagService.createDocumentGroup)` |
 | B006 | `MemoRagService.createDocumentGroup` | `actorUserId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1055 (MemoRagService.createDocumentGroup)` |
 | B007 | `MemoRagService.createDocumentGroup` | `input.parentGroupId` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1057 (MemoRagService.createDocumentGroup)` |

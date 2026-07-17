@@ -17,17 +17,17 @@
 | M002 | OpenAPI contract | `401` | 認証が必要です。 | OpenAPI で宣言された HTTP 401 response | runtime OpenAPI |
 | M003 | OpenAPI contract | `403` | 対象操作を実行する権限がありません。 | OpenAPI で宣言された HTTP 403 response | runtime OpenAPI |
 | M004 | OpenAPI contract | `409` | 現在のリソース状態と要求された操作が競合しています。 | OpenAPI で宣言された HTTP 409 response | runtime OpenAPI |
-| M005 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| M005 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | M006 | 例外 | `-` | Authoritative account creation is not configured | `this.deps.userDirectory.createUser` が存在しない、または偽である、または `this.deps.userDirectory.setUserGroups` が存在しない、または偽である、または `this.deps.userDirectory.deleteUser` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1964 (MemoRagService.createManagedUser)` |
-| M007 | 例外 | `-` | Authoritative directory identity is unavailable during reconciliation | `this.deps.verifiedIdentityProvider` が存在し、真である、かつ `currentIdentity` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:3512 (MemoRagService.syncUserDirectory)` |
+| M007 | 例外 | `-` | Authoritative directory identity is unavailable during reconciliation | `this.deps.verifiedIdentityProvider` が存在し、真である、かつ `currentIdentity` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:3530 (MemoRagService.syncUserDirectory)` |
 | M008 | 例外 | `-` | Managed user already exists | some の判定結果が真である | `apps/api/src/rag/memorag-service.ts:1968 (MemoRagService.createManagedUser)` |
 | M009 | 例外 | `-` | Authoritative identity was not created active | `created.status` が `"active"` と異なる | `apps/api/src/rag/memorag-service.ts:1971 (MemoRagService.createManagedUser)` |
-| M010 | 例外 | `-` | Admin ledger storage identity is missing | `db._storageKey` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:3553 (MemoRagService.saveAdminLedger)` |
-| M011 | 例外 | `-` | Admin ledger concurrent write conflict | `(error as { code?: string }).code` が `"PRECONDITION_FAILED"` と等しい | `apps/api/src/rag/memorag-service.ts:3565 (MemoRagService.saveAdminLedger)` |
-| M012 | 例外 | `-` | Admin ledger concurrent write conflict | `committed.text` が `serialized` と異なる | `apps/api/src/rag/memorag-service.ts:3570 (MemoRagService.saveAdminLedger)` |
+| M010 | 例外 | `-` | Admin ledger storage identity is missing | `db._storageKey` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:3571 (MemoRagService.saveAdminLedger)` |
+| M011 | 例外 | `-` | Admin ledger concurrent write conflict | `(error as { code?: string }).code` が `"PRECONDITION_FAILED"` と等しい | `apps/api/src/rag/memorag-service.ts:3583 (MemoRagService.saveAdminLedger)` |
+| M012 | 例外 | `-` | Admin ledger concurrent write conflict | `committed.text` が `serialized` と異なる | `apps/api/src/rag/memorag-service.ts:3588 (MemoRagService.saveAdminLedger)` |
 | M013 | 例外 | `-` | Authoritative account creation is not configured | `config.authEnabled` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2021 (MemoRagService.createManagedUser)` |
 | M014 | 例外 | `-` | Managed user already exists | `existing` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2024 (MemoRagService.createManagedUser)` |
-| M015 | HTTP 実装応答 | `409` | Managed user already exists | `err` が `Error` の instance である、かつ `err.message` が `"Managed user already exists"` と等しい | `apps/api/src/routes/admin-routes.ts:70 (POST /admin/users handler)` |
+| M015 | HTTP 実装応答 | `409` | Managed user already exists | `err` が `Error` の instance である、かつ `err.message` が `"Managed user already exists"` と等しい | `apps/api/src/routes/admin-routes.ts:77 (POST /admin/users handler)` |
 
 ## 読み方
 

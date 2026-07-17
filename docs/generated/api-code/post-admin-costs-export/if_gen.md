@@ -2,7 +2,7 @@
 
 # POST /admin/costs/export IF仕様
 
-- 実装 route: `apps/api/src/routes/admin-routes.ts:695 (POST /admin/costs/export)`
+- 実装 route: `apps/api/src/routes/admin-routes.ts:762 (POST /admin/costs/export)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 概算コスト export URL を作成する

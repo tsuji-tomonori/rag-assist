@@ -17,9 +17,9 @@
 | M002 | OpenAPI contract | `400` | リクエスト形式または入力値が不正です。 | OpenAPI で宣言された HTTP 400 response | runtime OpenAPI |
 | M003 | OpenAPI contract | `401` | 認証が必要です。 | OpenAPI で宣言された HTTP 401 response | runtime OpenAPI |
 | M004 | OpenAPI contract | `403` | 対象操作を実行する権限がありません。 | OpenAPI で宣言された HTTP 403 response | runtime OpenAPI |
-| M005 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| M006 | 例外 | `-` | Document group name is required | `trimmed` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:6103 (validateDocumentGroupName)` |
-| M007 | 例外 | `-` | Document group name contains unsupported characters | `trimmed` が "/" を含む、または contains control character の判定結果が真である | `apps/api/src/rag/memorag-service.ts:6104 (validateDocumentGroupName)` |
+| M005 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |
+| M006 | 例外 | `-` | Document group name is required | `trimmed` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:6121 (validateDocumentGroupName)` |
+| M007 | 例外 | `-` | Document group name contains unsupported characters | `trimmed` が "/" を含む、または contains control character の判定結果が真である | `apps/api/src/rag/memorag-service.ts:6122 (validateDocumentGroupName)` |
 | M008 | 例外 | `-` | Parent document group not found | `input.parentGroupId` が存在し、真である、かつ `parent` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1058 (MemoRagService.createDocumentGroup)` |
 | M009 | 例外 | `-` | Document group canonical path already exists | some の判定結果が真である | `apps/api/src/rag/memorag-service.ts:1082 (MemoRagService.createDocumentGroup)` |
 | M010 | 例外 | `403` | Forbidden | `err` が `Error` の instance である、かつ starts with の判定結果が真である | `apps/api/src/routes/document-routes.ts:606 (POST /document-groups handler)` |

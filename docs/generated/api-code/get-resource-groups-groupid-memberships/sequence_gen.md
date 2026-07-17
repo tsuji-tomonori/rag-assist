@@ -59,4 +59,4 @@ sequenceDiagram
 | B001 | `GET /resource-groups/{groupId}/memberships handler` | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/resource-group-routes.ts:304 (GET /resource-groups/{groupId}/memberships handler)` |
 | B002 | `GET /resource-groups/{groupId}/memberships handler` | `error` が `ResourceGroupMembershipMutationError` の instance である、かつ `error.result` が `"denied"` と等しい | `apps/api/src/routes/resource-group-routes.ts:305 (GET /resource-groups/{groupId}/memberships handler)` |
 | B003 | `GET /resource-groups/{groupId}/memberships handler` | `error` が `ResourceGroupMembershipUnavailableError` の instance である | `apps/api/src/routes/resource-group-routes.ts:308 (GET /resource-groups/{groupId}/memberships handler)` |
-| B004 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| B004 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |

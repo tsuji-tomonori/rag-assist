@@ -75,7 +75,7 @@ sequenceDiagram
 | 2 | `POST /benchmark/search handler` | Auth | "benchmark:query" permission を必須条件として確認する。 | `requirePermission(user, "benchmark:query")` | `apps/api/src/routes/benchmark-routes.ts:87 (POST /benchmark/search handler)` |
 | 3 | `POST /benchmark/search handler` | Validation | schema 検証済みの JSON request body を取得する。 | `validJson<z.infer<typeof BenchmarkSearchRequestSchema>>(c)` | `apps/api/src/routes/benchmark-routes.ts:88 (POST /benchmark/search handler)` |
 | 4 | `POST /benchmark/search handler` | Service | service の search 処理を呼び出す。 | `service.search(invocation.serviceInput, invocation.subject)` | `apps/api/src/routes/benchmark-routes.ts:90 (POST /benchmark/search handler)` |
-| 5 | `MemoRagService.search` | Service | service の assert search scope readable 処理を呼び出す。 | `this.assertSearchScopeReadable(user, input.scope)` | `apps/api/src/rag/memorag-service.ts:3108 (MemoRagService.search)` |
+| 5 | `MemoRagService.search` | Service | service の assert search scope readable 処理を呼び出す。 | `this.assertSearchScopeReadable(user, input.scope)` | `apps/api/src/rag/memorag-service.ts:3126 (MemoRagService.search)` |
 | 6 | `FolderPermissionService.resolveEffectiveFolderPermissionDetail` | Store | `this.deps.documentGroupStore` に対して list を実行する。 | `this.deps.documentGroupStore.list(actorTenantId)` | `apps/api/src/folders/folder-permission-service.ts:145 (FolderPermissionService.resolveEffectiveFolderPermissionDetail)` |
 | 7 | `FolderPermissionService.resolveUserMembershipPermission` | Store | `this.deps.userGroupStore` に対して get を実行する。 | `this.deps.userGroupStore.get(tenantId, groupId)` | `apps/api/src/folders/folder-permission-service.ts:780 (FolderPermissionService.resolveUserMembershipPermission)` |
 | 8 | `FolderPermissionService.resolveUserMembershipPermission` | Store | `this.deps.groupMembershipStore` に対して list by group id を実行する。 | `this.deps.groupMembershipStore.listByGroupId(tenantId, groupId)` | `apps/api/src/folders/folder-permission-service.ts:781 (FolderPermissionService.resolveUserMembershipPermission)` |
@@ -127,6 +127,6 @@ sequenceDiagram
 
 | ID | Function | 条件 | 実装位置 |
 | --- | --- | --- | --- |
-| B001 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| B001 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | B002 | `benchmarkHttp` | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/benchmark-routes.ts:262 (benchmarkHttp)` |
 | B003 | `benchmarkHttp` | `error` が `BenchmarkEvaluationContextError` の instance である | `apps/api/src/routes/benchmark-routes.ts:263 (benchmarkHttp)` |

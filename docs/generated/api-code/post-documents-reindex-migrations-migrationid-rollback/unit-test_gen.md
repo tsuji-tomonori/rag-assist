@@ -20,7 +20,7 @@
 | F001 | `POST /documents/reindex-migrations/{migrationId}/rollback handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:1487 (POST /documents/reindex-migrations/{migrationId}/rollback handler)` |
 | F002 | `POST /documents/reindex-migrations/{migrationId}/rollback handler` | if | is forbidden error の判定結果が真である | `apps/api/src/routes/document-routes.ts:1488 (POST /documents/reindex-migrations/{migrationId}/rollback handler)` |
 | F003 | `POST /documents/reindex-migrations/{migrationId}/rollback handler` | if | `err` が `Error` の instance である、かつ `err.message` が "not found" を含む | `apps/api/src/routes/document-routes.ts:1489 (POST /documents/reindex-migrations/{migrationId}/rollback handler)` |
-| F004 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| F004 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | F005 | `MemoRagService.rollbackReindexMigration` | if | `migration` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:773 (MemoRagService.rollbackReindexMigration)` |
 | F006 | `MemoRagService.rollbackReindexMigration` | 三項条件 | `migration.publicationRunId` が存在し、真である | `apps/api/src/rag/memorag-service.ts:776 (MemoRagService.rollbackReindexMigration)` |
 | F007 | `MemoRagService.rollbackReindexMigration` | if | `migration.status` が `"cutover"` と異なる、かつ 「`compensation` が存在し、真である、かつ `migration.status` が `"rolled_back"` と等しい」ではない | `apps/api/src/rag/memorag-service.ts:779 (MemoRagService.rollbackReindexMigration)` |
@@ -38,8 +38,8 @@
 | TC004 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1488 (POST /documents/reindex-migrations/{migrationId}/rollback handler)` |
 | TC005 | F003: 条件成立 | `err` が `Error` の instance である、かつ `err.message` が "not found" を含む 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1489 (POST /documents/reindex-migrations/{migrationId}/rollback handler)` |
 | TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1489 (POST /documents/reindex-migrations/{migrationId}/rollback handler)` |
-| TC007 | F004: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| TC007 | F004: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
+| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | TC009 | F005: 条件成立 | `migration` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:773 (MemoRagService.rollbackReindexMigration)` |
 | TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:773 (MemoRagService.rollbackReindexMigration)` |
 | TC011 | F006: 条件成立 | `migration.publicationRunId` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:776 (MemoRagService.rollbackReindexMigration)` |

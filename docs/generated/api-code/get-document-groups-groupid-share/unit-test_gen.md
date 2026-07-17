@@ -16,7 +16,7 @@
 | --- | --- | --- | --- | --- |
 | F001 | `GET /document-groups/{groupId}/share handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:641 (GET /document-groups/{groupId}/share handler)` |
 | F002 | `GET /document-groups/{groupId}/share handler` | if | `error` が `HTTPException` の instance である、かつ `error.status` が `403` と等しい | `apps/api/src/routes/document-routes.ts:642 (GET /document-groups/{groupId}/share handler)` |
-| F003 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| F003 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | F004 | `FolderPermissionService.assertFolderPermission` | if | folder permission satisfies の判定結果が真ではない | `apps/api/src/folders/folder-permission-service.ts:258 (FolderPermissionService.assertFolderPermission)` |
 | F005 | `uploadTenantId` | if | `purpose` が `"benchmarkSeed"` と等しい | `apps/api/src/routes/document-routes.ts:156 (uploadTenantId)` |
 | F006 | `uploadTenantId` | if | `config.benchmarkEvaluationEnabled` が存在しない、または偽である、または trim の判定結果が真ではない | `apps/api/src/routes/document-routes.ts:157 (uploadTenantId)` |
@@ -31,8 +31,8 @@
 | TC002 | F001: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/document-routes.ts:641 (GET /document-groups/{groupId}/share handler)` |
 | TC003 | F002: 条件成立 | `error` が `HTTPException` の instance である、かつ `error.status` が `403` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:642 (GET /document-groups/{groupId}/share handler)` |
 | TC004 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:642 (GET /document-groups/{groupId}/share handler)` |
-| TC005 | F003: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| TC005 | F003: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
+| TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | TC007 | F004: 条件成立 | folder permission satisfies の判定結果が真ではない 場合の response / side effect が実装どおりである。 | `apps/api/src/folders/folder-permission-service.ts:258 (FolderPermissionService.assertFolderPermission)` |
 | TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/folders/folder-permission-service.ts:258 (FolderPermissionService.assertFolderPermission)` |
 | TC009 | F005: 条件成立 | `purpose` が `"benchmarkSeed"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:156 (uploadTenantId)` |
