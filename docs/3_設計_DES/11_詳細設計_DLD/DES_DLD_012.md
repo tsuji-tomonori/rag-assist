@@ -112,7 +112,7 @@ facade が broad dependency を保持する private field は `constructor(priva
 | security/audit | `accountRevocationRegistry`, `administrativePrincipalTransferFence`, `resourceUserPrincipalDirectory`, `securityAuditOutbox`, `securityAuditReconciliationOutbox` |
 | local/migration seam | `localTestIngestAdmissionContext`, `legacyGlobalDocumentArtifacts` |
 
-Phase 4j 後の service source から `this.deps.<key>` として直接読まれる key は 23。`questionStore` は `QuestionService`、`asyncAgentProviders` は `AgentProviderCatalogService`、`codeBuildLogReader` は `BenchmarkRunQueryService`、`benchmarkArtifactStore` は `BenchmarkArtifactRevocationCleanupDriverFactory` の narrow port として constructor で渡され、facade 内では直接読まない。`benchmarkRunStore` は query / cancellation / artifact download / reauthorization / cleanup driver factory へ渡す一方、create orchestration では facade が直接読むため direct read key に残る。facade 内の `this.deps.benchmarkRunStore` occurrence は Phase 4i の4から3へ減る。残る `folderPolicyStore`、`administrativePrincipalTransferFence`、`securityAuditReconciliationOutbox`、`legacyGlobalDocumentArtifacts` は `Dependencies` 全体を受け取る helper/service 側で間接利用される。この区別は「直接参照がないので削除可能」という誤判定を避けるために必要である。
+Phase 4k 後の service source から `this.deps.<key>` として直接読まれる key は 22。`questionStore` は `QuestionService`、`asyncAgentProviders` は `AgentProviderCatalogService`、`codeBuildLogReader` は `BenchmarkRunQueryService`、`benchmarkArtifactStore` は `BenchmarkArtifactRevocationCleanupDriverFactory`、`benchmarkRunStore` は benchmark query / cancellation / artifact download / reauthorization / cleanup / creation の各 narrow port として constructor で渡され、facade method 内では直接読まない。facade 内の `this.deps.benchmarkRunStore` occurrence は Phase 4j の3から0へ減る。残る `folderPolicyStore`、`administrativePrincipalTransferFence`、`securityAuditReconciliationOutbox`、`legacyGlobalDocumentArtifacts` は `Dependencies` 全体を受け取る helper/service 側で間接利用される。この区別は「直接参照がないので削除可能」という誤判定を避けるために必要である。
 
 ### 直接 AWS 依存
 
@@ -421,6 +421,38 @@ factory が受け取る port は次に限定する。
 
 `benchmark-artifact-revocation-cleanup-driver.test.ts` は narrow source guard、canonical targets、exact tenant/run deny probe、full predicate、store failure、scope discovery、missing adapter、partition escape、exact delete、adapter failure、exact residual prefix、unexpected / other-tenant exclusion、facade register→reconcile orderを固定する。既存 `benchmark-run-authorization-worker.test.ts` は failed state 永続化後の tenant-partitioned deletion、他 tenant 非削除、delete failure 時の `reconciliation_required` manifest を production composition で継続検証する。actual Step Functions worker / IAM / DynamoDB / S3 cleanup は credential と external state を伴うため未実施とし、port characterization、integration test、local/GitHub CI を検証根拠にする。
 
+## Phase 4k: benchmark run create orchestration の抽出境界
+
+Issue #359 Phase 4k では、残存していた benchmark suite/input validation、authoritative queued-run construction、initial persistence、4 current-authorization boundaries、external execution start、execution ARN commit、failed compensation を `BenchmarkRunCreationService` へ抽出する。run factory だけを先に分けると side-effect state machine と compensation が facade に残るため、1 public command の complete rollback unit として扱う。
+
+service が受け取る port/config は次に限定する。
+
+| port/config | 用途 |
+|---|---|
+| `benchmarkRunStore.create/update` | queued intent、execution ARN、failed compensation の tenant/run durable mutation |
+| authoritative tenant/security resource resolvers | caller override を受けない owner/tenant/security envelope |
+| suite catalog と server defaults | suite/mode/runner validation、model/concurrency/dataset の server-side source |
+| topK/memoryTopK/minScore normalizers | shared RAG runtime policy による bounded tuning |
+| `authorizeBoundary` | `start` / `protected_read` / `external_side_effect` / `durable_commit` の current authorization |
+| `BenchmarkExecutionStarter` | Phase 4h で分離済みの Step Functions command mapping |
+| `executionEnabled`、clock、run ID factory | local disabled branch と deterministic timestamps/identity |
+
+保持・強化する contract:
+
+- unknown suite、mode mismatch、non-codebuild runner は clock/ID/security/store/auth/start より前に reject する。
+- run の tenant/creator/security refs は authoritative actor resolver、suite/dataset/model/policy は server catalog/config、artifact path は `tenantPartitionId(tenantId)` と generated run ID から構築する。caller supplied tenant/owner/path や mock production fallback は受け取らない。
+- initial queued `create` を execution より先に durable 化する。execution disabled 時は queued run を返し、worker境界/start/ARN update を実行しない。
+- execution enabled 時は `create → start auth → protected_read auth → external_side_effect auth → starter → durable_commit auth → executionArn update` の固定順とし、全成功時だけ ARN を commit する。
+- 各 permission denial は後続 boundary/start/success commit を止め、non-disclosing `failed/errorCode=permission_revoked` を永続化して返す。durable-commit denial は starter 後でも execution ARN を success commit しない。
+- non-permission boundary/start error は `failed/errorCode=execution_error` を永続化して original error identity を rethrowする。failed compensation 自体の failure は false success に変換しない。
+- Phase 4k characterization で、従来の execution ARN update が `return` のみで `await` されず、Promise rejection が同じ catch を迂回することを検出した。service では `return await` により commit failure を compensation catch へ接続し、failed-state update を試行してから original commit error を rethrowする。
+- external start 後の durable denial/errorで Step Functions stop を追加することは、新規外部副作用と ownership/運用 policy判断を伴うため本 unit では行わない。failed durable state と worker current reauthorization を既存 fail-closed fence として維持し、actual AWS停止保証は未検証とする。
+- facade public signature、benchmark route `benchmark:run`、tenant/non-enumeration、query/cancel/download/reauthorization/cleanup、worker/API schema、RAG trust、Web UI、infra definition は変更しない。
+
+`benchmark-run-creation-service.test.ts` は narrow source guard、validation-before-port、authoritative canonical run、search tuning forwarding、execution-disabled branch、4-boundary exact order、各 boundary denial、initial create failure、non-permission authorization/start failure、execution ARN commit compensation、compensation failureを固定する。starter/reauthorization/cleanup/facade contract と API full suite を二重実行する。actual Step Functions / IAM / DynamoDB / S3、manual UI は credentials/external state または非変更領域のため未実施とし、local/GitHub CI を actual AWS 成功の代替とは扱わない。
+
+Phase 4a で定義した段階抽出のうち、本書で追跡した benchmark query/cancel/download/start/reauthorization/cleanup/create の bounded responsibilities は Phase 4k で facade delegate 化を完了する。Issue #359 全体の巨大 facade debt、他 domain、actual AWS operational evidence の完了を意味しない。
+
 ## Error / compatibility 方針
 
 - facade の同名 method と TypeScript signature を維持する。
@@ -437,7 +469,7 @@ factory が受け取る port は次に限定する。
 | consumer | route / worker / oRPC の呼出 method が source inventory と一致する |
 | Pick | production の明示 `Pick` が inventory と一致し、method が facade public contract に存在する |
 | constructor | production/test の constructor file と expression 数が一致する |
-| Dependencies | 31 key、broad private readonly field、Phase 4j 後の 23 direct read key と `benchmarkRunStore` の facade occurrence 3 が一致する |
+| Dependencies | 31 key、broad private readonly field、Phase 4k 後の 22 direct read key と `benchmarkRunStore` の facade direct occurrence 0 が一致する |
 | narrow dependency | `Dependencies` 全体を渡す既存 receiver/call の集合が増えない |
 | AWS / policy | direct import の追加・削除が明示差分になる |
 | behavior | API full suite、typecheck、build、root CI が成功する |

@@ -14,13 +14,15 @@ import {
 
 const sourceRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..")
 const adapterSource = readFileSync(path.join(sourceRoot, "benchmark/benchmark-execution-starter.ts"), "utf8")
+const creationServiceSource = readFileSync(path.join(sourceRoot, "benchmark/benchmark-run-creation-service.ts"), "utf8")
 const facadeSource = readFileSync(path.join(sourceRoot, "rag/memorag-service.ts"), "utf8")
 
 test("benchmark execution start mapping is isolated from the facade behind a narrow adapter", () => {
   assert.doesNotMatch(adapterSource, /Dependencies|benchmarkRunStore|authoritativeActorTenantId|from "\.\.\/config\.js"/)
   assert.match(adapterSource, /implements BenchmarkExecutionStarter/)
   assert.match(facadeSource, /private readonly benchmarkExecutionStarter: BenchmarkExecutionStarter/)
-  assert.match(facadeSource, /this\.benchmarkExecutionStarter\.start\(run, outputPrefix\)/)
+  assert.match(facadeSource, /executionStarter: this\.benchmarkExecutionStarter/)
+  assert.match(creationServiceSource, /this\.ports\.executionStarter\.start\(run, outputPrefix\)/)
   assert.doesNotMatch(facadeSource, /private async startBenchmarkExecution/)
 })
 

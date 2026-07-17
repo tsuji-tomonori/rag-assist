@@ -13,6 +13,10 @@ import { AgentProviderCatalogService } from "../async-agent/provider-catalog-ser
 import { BenchmarkRunQueryService } from "../benchmark/benchmark-run-query-service.js"
 import { BenchmarkRunCancellationService } from "../benchmark/benchmark-run-cancellation-service.js"
 import { BenchmarkRunReauthorizationService } from "../benchmark/benchmark-run-reauthorization-service.js"
+import {
+  BenchmarkRunCreationService,
+  type CreateBenchmarkRunInput
+} from "../benchmark/benchmark-run-creation-service.js"
 import { BenchmarkArtifactRevocationCleanupDriverFactory } from "../benchmark/benchmark-artifact-revocation-cleanup-driver.js"
 import { stopBenchmarkExecution } from "../benchmark/benchmark-execution-stopper.js"
 import {
@@ -27,7 +31,7 @@ import { signBenchmarkArtifact } from "../benchmark/benchmark-artifact-signer.js
 import { debugTraceObjectKey, runChatOrchestration } from "./orchestration/chat-rag-orchestrator.js"
 import { llmOptions, normalizeMaxIterations, normalizeMemoryTopK, normalizeMinScore, normalizeSearchTopK, normalizeTopK, ragRuntimePolicy } from "../chat-orchestration/runtime-policy.js"
 import type { ChatInput, ChatOrchestrationResult } from "../chat-orchestration/types.js"
-import { DEBUG_TRACE_SANITIZE_POLICY_VERSION, DEBUG_TRACE_SCHEMA_VERSION, type AdminExportArtifact, type AgentProviderAvailability, type AgentProviderSetting, type AgentRuntimeProvider, type AsyncAgentRun, type AccessRoleDefinition, type AliasAuditLogItem, type AliasAuditLogPage, type AliasDefinition, type AliasListPage, type AuthoritativeAdmissionContext, type BenchmarkMode, type BenchmarkRun, type BenchmarkRunner, type BenchmarkRunThresholds, type BenchmarkSuite, type ChatRun, type ChatToolInvocation, type Chunk, type ConversationHistoryItem, type CostAuditSummary, type DebugReplayPlan, type DebugTrace, type DocumentGroup, type DocumentIngestRun, type DocumentManifest, type DocumentManifestSummary, type ExtractionWarning, type FavoriteListItem, type FavoriteTargetType, type HumanQuestion, type IngestAdmissionContext, type JsonValue, type ManagedUser, type ManagedUserAdminView, type ManagedUserAuditAction, type ManagedUserAuditLogEntry, type ManagedUserAuditLogPage, type ManagedUserDeletionPreflight, type ManagedUserListPage, type MemoryCard, type ParsedDocumentPreview, type PublishedAliasArtifact, type QualityActionCard, type ReindexMigration, type StagedPublicationFence, type StructuredBlock, type UserUsageSummary, type VectorRecord } from "../types.js"
+import { DEBUG_TRACE_SANITIZE_POLICY_VERSION, DEBUG_TRACE_SCHEMA_VERSION, type AdminExportArtifact, type AgentProviderAvailability, type AgentProviderSetting, type AgentRuntimeProvider, type AsyncAgentRun, type AccessRoleDefinition, type AliasAuditLogItem, type AliasAuditLogPage, type AliasDefinition, type AliasListPage, type AuthoritativeAdmissionContext, type BenchmarkRun, type BenchmarkSuite, type ChatRun, type ChatToolInvocation, type Chunk, type ConversationHistoryItem, type CostAuditSummary, type DebugReplayPlan, type DebugTrace, type DocumentGroup, type DocumentIngestRun, type DocumentManifest, type DocumentManifestSummary, type ExtractionWarning, type FavoriteListItem, type FavoriteTargetType, type HumanQuestion, type IngestAdmissionContext, type JsonValue, type ManagedUser, type ManagedUserAdminView, type ManagedUserAuditAction, type ManagedUserAuditLogEntry, type ManagedUserAuditLogPage, type ManagedUserDeletionPreflight, type ManagedUserListPage, type MemoryCard, type ParsedDocumentPreview, type PublishedAliasArtifact, type QualityActionCard, type ReindexMigration, type StagedPublicationFence, type StructuredBlock, type UserUsageSummary, type VectorRecord } from "../types.js"
 import type { ReplayDecisionReasonCode } from "../types.js"
 import type { AppUser } from "../auth.js"
 import type { CreatedDirectoryUser } from "../adapters/user-directory.js"
@@ -148,19 +152,6 @@ type MemoryJson = {
   keywords?: string[]
   likelyQuestions?: string[]
   constraints?: string[]
-}
-
-type CreateBenchmarkRunInput = {
-  suiteId?: string
-  mode?: BenchmarkMode
-  runner?: BenchmarkRunner
-  modelId?: string
-  embeddingModelId?: string
-  topK?: number
-  memoryTopK?: number
-  minScore?: number
-  concurrency?: number
-  thresholds?: BenchmarkRunThresholds
 }
 
 type CreateAsyncAgentRunInput = {
@@ -458,6 +449,7 @@ export class MemoRagService {
   private readonly benchmarkArtifactRevocationCleanupDriverFactory: BenchmarkArtifactRevocationCleanupDriverFactory
   private readonly benchmarkExecutionStarter: BenchmarkExecutionStarter
   private readonly benchmarkRunCancellationService: BenchmarkRunCancellationService
+  private readonly benchmarkRunCreationService: BenchmarkRunCreationService
   private readonly benchmarkRunQueryService: BenchmarkRunQueryService
   private readonly benchmarkRunReauthorizationService: BenchmarkRunReauthorizationService
   private readonly favoriteService: FavoriteService
@@ -488,18 +480,38 @@ export class MemoRagService {
       benchmarkRunStore: deps.benchmarkRunStore,
       artifactStore: deps.benchmarkArtifactStore
     })
+    this.benchmarkExecutionStarter = new AwsBenchmarkExecutionStarter({
+      region: config.region,
+      stateMachineArn: config.benchmarkStateMachineArn,
+      bucketName: config.benchmarkBucketName,
+      targetApiBaseUrl: config.benchmarkTargetApiBaseUrl
+    })
+    this.benchmarkRunCreationService = new BenchmarkRunCreationService({
+      benchmarkRunStore: deps.benchmarkRunStore,
+      suites: benchmarkSuites,
+      defaults: {
+        suiteId: "standard-agent-v1",
+        runner: "codebuild",
+        modelId: config.defaultModelId,
+        embeddingModelId: config.embeddingModelId
+      },
+      executionEnabled: Boolean(config.benchmarkStateMachineArn),
+      tenantIdForActor: authoritativeActorTenantId,
+      securityResourceRefsForActor: (actor) => this.securityResourceRefsForActor(actor),
+      normalizeTopK: (mode, value) => mode === "search" ? normalizeSearchTopK(value) : normalizeTopK(value),
+      normalizeMemoryTopK,
+      normalizeMinScore,
+      authorizeBoundary: (run, boundary) => this.authorizeBenchmarkRunBoundary(run, boundary),
+      executionStarter: this.benchmarkExecutionStarter,
+      now: () => new Date().toISOString(),
+      createRunId: createBenchmarkRunId
+    })
     this.benchmarkArtifactDownloadService = new BenchmarkArtifactDownloadService({
       benchmarkRunStore: deps.benchmarkRunStore,
       tenantIdForActor: authoritativeActorTenantId,
       signArtifact: signBenchmarkArtifact,
       bucketName: config.benchmarkBucketName,
       downloadExpiresInSeconds: config.benchmarkDownloadExpiresInSeconds
-    })
-    this.benchmarkExecutionStarter = new AwsBenchmarkExecutionStarter({
-      region: config.region,
-      stateMachineArn: config.benchmarkStateMachineArn,
-      bucketName: config.benchmarkBucketName,
-      targetApiBaseUrl: config.benchmarkTargetApiBaseUrl
     })
     this.favoriteService = new FavoriteService({
       favoriteStore: deps.favoriteStore,
@@ -4570,66 +4582,7 @@ export class MemoRagService {
   }
 
   async createBenchmarkRun(user: AppUser, input: CreateBenchmarkRunInput): Promise<BenchmarkRun> {
-    const suite = benchmarkSuites.find((candidate) => candidate.suiteId === (input.suiteId ?? "standard-agent-v1"))
-    if (!suite) throw new Error(`Unknown benchmark suite: ${input.suiteId}`)
-    if ((input.mode ?? suite.mode) !== suite.mode) throw new Error(`Suite ${suite.suiteId} does not support mode ${input.mode}`)
-    if ((input.runner ?? "codebuild") !== "codebuild") throw new Error("Only codebuild runner is supported in this version")
-
-    const now = new Date().toISOString()
-    const runId = createBenchmarkRunId(now)
-    const tenantId = authoritativeActorTenantId(user)
-    const outputPrefix = `runs/${tenantPartitionId(tenantId)}/${runId}`
-    const run: BenchmarkRun = {
-      runId,
-      status: "queued",
-      mode: suite.mode,
-      runner: "codebuild",
-      suiteId: suite.suiteId,
-      datasetS3Key: suite.datasetS3Key,
-      createdBy: user.userId,
-      tenantId,
-      securityResourceRefs: await this.securityResourceRefsForActor(user),
-      createdAt: now,
-      updatedAt: now,
-      modelId: input.modelId ?? config.defaultModelId,
-      embeddingModelId: input.embeddingModelId ?? config.embeddingModelId,
-      topK: input.topK === undefined
-        ? suite.mode === "search"
-          ? ragRuntimePolicy.retrieval.defaultSearchBenchmarkTopK
-          : ragRuntimePolicy.retrieval.defaultTopK
-        : suite.mode === "search"
-          ? normalizeSearchTopK(input.topK)
-          : normalizeTopK(input.topK),
-      memoryTopK: normalizeMemoryTopK(input.memoryTopK),
-      minScore: normalizeMinScore(input.minScore),
-      concurrency: input.concurrency ?? suite.defaultConcurrency,
-      thresholds: input.thresholds,
-      summaryS3Key: `${outputPrefix}/summary.json`,
-      reportS3Key: `${outputPrefix}/report.md`,
-      resultsS3Key: `${outputPrefix}/results.jsonl`
-    }
-
-    await this.deps.benchmarkRunStore.create(run)
-    if (!config.benchmarkStateMachineArn) return run
-
-    try {
-      await this.authorizeBenchmarkRunBoundary(run, "start")
-      await this.authorizeBenchmarkRunBoundary(run, "protected_read")
-      await this.authorizeBenchmarkRunBoundary(run, "external_side_effect")
-      const executionArn = await this.benchmarkExecutionStarter.start(run, outputPrefix)
-      await this.authorizeBenchmarkRunBoundary(run, "durable_commit")
-      return this.deps.benchmarkRunStore.update(run.tenantId, run.runId, { executionArn })
-    } catch (err) {
-      const permissionRevoked = isPermissionRevokedError(err)
-      const failed = await this.deps.benchmarkRunStore.update(run.tenantId, run.runId, {
-        status: "failed",
-        completedAt: new Date().toISOString(),
-        error: permissionRevoked ? "permission_revoked" : err instanceof Error ? err.message : String(err),
-        errorCode: permissionRevoked ? "permission_revoked" : "execution_error"
-      })
-      if (permissionRevoked) return failed
-      throw err
-    }
+    return this.benchmarkRunCreationService.create(user, input)
   }
 
   async reauthorizeBenchmarkRunExecution(

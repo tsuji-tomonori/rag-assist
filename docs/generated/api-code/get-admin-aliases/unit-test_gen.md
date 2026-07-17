@@ -22,9 +22,9 @@
 | F001 | `GET /admin/aliases handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/admin-routes.ts:378 (GET /admin/aliases handler)` |
 | F002 | `GET /admin/aliases handler` | if | `error` が `InvalidPageCursorError` の instance である | `apps/api/src/routes/admin-routes.ts:379 (GET /admin/aliases handler)` |
 | F003 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| F004 | `MemoRagService.listAliases` | 三項条件 | `sort` が `"termAsc"` と等しい | `apps/api/src/rag/memorag-service.ts:1425 (MemoRagService.listAliases)` |
-| F005 | `MemoRagService.listAliases` | 三項条件 | `sort` が `"termAsc"` と等しい | `apps/api/src/rag/memorag-service.ts:1433 (MemoRagService.listAliases)` |
-| F006 | `MemoRagService.listAliases` | 三項条件 | `sort` が `"termAsc"` と等しい | `apps/api/src/rag/memorag-service.ts:1436 (MemoRagService.listAliases)` |
+| F004 | `MemoRagService.listAliases` | 三項条件 | `sort` が `"termAsc"` と等しい | `apps/api/src/rag/memorag-service.ts:1437 (MemoRagService.listAliases)` |
+| F005 | `MemoRagService.listAliases` | 三項条件 | `sort` が `"termAsc"` と等しい | `apps/api/src/rag/memorag-service.ts:1445 (MemoRagService.listAliases)` |
+| F006 | `MemoRagService.listAliases` | 三項条件 | `sort` が `"termAsc"` と等しい | `apps/api/src/rag/memorag-service.ts:1448 (MemoRagService.listAliases)` |
 
 ## 3. コード由来テストケース
 
@@ -36,12 +36,12 @@
 | TC004 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:379 (GET /admin/aliases handler)` |
 | TC005 | F003: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
 | TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC007 | F004: 条件成立 | `sort` が `"termAsc"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1425 (MemoRagService.listAliases)` |
-| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1425 (MemoRagService.listAliases)` |
-| TC009 | F005: 条件成立 | `sort` が `"termAsc"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1433 (MemoRagService.listAliases)` |
-| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1433 (MemoRagService.listAliases)` |
-| TC011 | F006: 条件成立 | `sort` が `"termAsc"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1436 (MemoRagService.listAliases)` |
-| TC012 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1436 (MemoRagService.listAliases)` |
+| TC007 | F004: 条件成立 | `sort` が `"termAsc"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1437 (MemoRagService.listAliases)` |
+| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1437 (MemoRagService.listAliases)` |
+| TC009 | F005: 条件成立 | `sort` が `"termAsc"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1445 (MemoRagService.listAliases)` |
+| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1445 (MemoRagService.listAliases)` |
+| TC011 | F006: 条件成立 | `sort` が `"termAsc"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1448 (MemoRagService.listAliases)` |
+| TC012 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1448 (MemoRagService.listAliases)` |
 | TC013 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC014 | HTTP 400 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC015 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

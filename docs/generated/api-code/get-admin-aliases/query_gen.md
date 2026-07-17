@@ -8,12 +8,12 @@
 
 | # | CRUD/実行 | Target | Method | 自然言語での目的 | Caller | コード根拠 |
 | ---: | --- | --- | --- | --- | --- | --- |
-| 1 | 参照 | `this` | `loadAliasLedger` | `this` に対して load alias ledger を実行する。 | `MemoRagService.listAliases` | `apps/api/src/rag/memorag-service.ts:1416 (MemoRagService.listAliases)` |
-| 2 | 参照 | `this.deps.objectStore` | `getTextWithVersion` | `this.deps.objectStore` に対して get text with version を実行する。 | `MemoRagService.loadAliasLedger` | `apps/api/src/rag/memorag-service.ts:3649 (MemoRagService.loadAliasLedger)` |
-| 3 | 実行 | `normalizeAliasLedger` | `normalizeAliasLedger` | `normalizeAliasLedger` に対して normalize alias ledger を実行する。 | `MemoRagService.loadAliasLedger` | `apps/api/src/rag/memorag-service.ts:3653 (MemoRagService.loadAliasLedger)` |
-| 4 | 実行 | `ledger.aliases<br>      ` | `filter` | `ledger.aliases<br>      ` に対して filter を実行する。 | `MemoRagService.listAliases` | `apps/api/src/rag/memorag-service.ts:1420 (MemoRagService.listAliases)` |
-| 5 | 実行 | `ledger.aliases<br>      .filter((alias) => aliasTenantId(alias) === tenantId)<br>      ` | `filter` | `ledger.aliases<br>      .filter((alias) => aliasTenantId(alias) === tenantId)<br>      ` に対して filter を実行する。 | `MemoRagService.listAliases` | `apps/api/src/rag/memorag-service.ts:1420 (MemoRagService.listAliases)` |
-| 6 | 実行 | `ledger.aliases<br>      .filter((alias) => aliasTenantId(alias) === tenantId)<br>      .filter((alias) => !query.status \|\| alias.status === query.status)<br>      ` | `filter` | `ledger.aliases<br>      .filter((alias) => aliasTenantId(alias) === tenantId)<br>      .filter((alias) => !query.status \|\| alias.status === query.status)<br>      ` に対して filter を実行する。 | `MemoRagService.listAliases` | `apps/api/src/rag/memorag-service.ts:1420 (MemoRagService.listAliases)` |
+| 1 | 参照 | `this` | `loadAliasLedger` | `this` に対して load alias ledger を実行する。 | `MemoRagService.listAliases` | `apps/api/src/rag/memorag-service.ts:1428 (MemoRagService.listAliases)` |
+| 2 | 参照 | `this.deps.objectStore` | `getTextWithVersion` | `this.deps.objectStore` に対して get text with version を実行する。 | `MemoRagService.loadAliasLedger` | `apps/api/src/rag/memorag-service.ts:3661 (MemoRagService.loadAliasLedger)` |
+| 3 | 実行 | `normalizeAliasLedger` | `normalizeAliasLedger` | `normalizeAliasLedger` に対して normalize alias ledger を実行する。 | `MemoRagService.loadAliasLedger` | `apps/api/src/rag/memorag-service.ts:3665 (MemoRagService.loadAliasLedger)` |
+| 4 | 実行 | `ledger.aliases<br>      ` | `filter` | `ledger.aliases<br>      ` に対して filter を実行する。 | `MemoRagService.listAliases` | `apps/api/src/rag/memorag-service.ts:1432 (MemoRagService.listAliases)` |
+| 5 | 実行 | `ledger.aliases<br>      .filter((alias) => aliasTenantId(alias) === tenantId)<br>      ` | `filter` | `ledger.aliases<br>      .filter((alias) => aliasTenantId(alias) === tenantId)<br>      ` に対して filter を実行する。 | `MemoRagService.listAliases` | `apps/api/src/rag/memorag-service.ts:1432 (MemoRagService.listAliases)` |
+| 6 | 実行 | `ledger.aliases<br>      .filter((alias) => aliasTenantId(alias) === tenantId)<br>      .filter((alias) => !query.status \|\| alias.status === query.status)<br>      ` | `filter` | `ledger.aliases<br>      .filter((alias) => aliasTenantId(alias) === tenantId)<br>      .filter((alias) => !query.status \|\| alias.status === query.status)<br>      ` に対して filter を実行する。 | `MemoRagService.listAliases` | `apps/api/src/rag/memorag-service.ts:1432 (MemoRagService.listAliases)` |
 
 ## 外部サービス操作
 

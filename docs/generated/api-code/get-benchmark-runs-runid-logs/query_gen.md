@@ -15,7 +15,7 @@
 | # | CRUD/実行 | Target | Method | 自然言語での目的 | Caller | コード根拠 |
 | ---: | --- | --- | --- | --- | --- | --- |
 | 1 | 参照 | `service` | `getBenchmarkCodeBuildLogText` | `service` へ get benchmark code build log text を実行する。 | `GET /benchmark-runs/{runId}/logs handler` | `apps/api/src/routes/benchmark-routes.ts:244 (GET /benchmark-runs/{runId}/logs handler)` |
-| 2 | 参照 | `this.benchmarkRunQueryService` | `getCodeBuildLogText` | `this.benchmarkRunQueryService` へ get code build log text を実行する。 | `MemoRagService.getBenchmarkCodeBuildLogText` | `apps/api/src/rag/memorag-service.ts:4686 (MemoRagService.getBenchmarkCodeBuildLogText)` |
+| 2 | 参照 | `this.benchmarkRunQueryService` | `getCodeBuildLogText` | `this.benchmarkRunQueryService` へ get code build log text を実行する。 | `MemoRagService.getBenchmarkCodeBuildLogText` | `apps/api/src/rag/memorag-service.ts:4639 (MemoRagService.getBenchmarkCodeBuildLogText)` |
 | 3 | 参照 | `this.ports.codeBuildLogReader?` | `getText` | `this.ports.codeBuildLogReader?` へ get text を実行する。 | `BenchmarkRunQueryService.getCodeBuildLogText` | `apps/api/src/benchmark/benchmark-run-query-service.ts:27 (BenchmarkRunQueryService.getCodeBuildLogText)` |
 
 ## 解析境界

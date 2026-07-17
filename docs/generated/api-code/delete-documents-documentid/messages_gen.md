@@ -26,7 +26,7 @@
 | M011 | 例外 | `-` | `Document manifest tenant mismatch${key ? `: ${key}` : ""}` | `manifestTenantId` が存在しない、または偽である、かつ `options.allowMissingTenant` が存在しない、または偽である、または `manifestTenantId` が存在し、真である、かつ `manifestTenantId` が `normalizedTenantId` と異なる | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:111 (assertManifestTenant)` |
 | M012 | 例外 | `403` | Forbidden | `err` が `Error` の instance である、かつ starts with の判定結果が真である | `apps/api/src/routes/benchmark-seed.ts:405 (authorizeDocumentDelete)` |
 | M013 | 例外 | `403` | Forbidden | 利用者が "benchmark:seed_corpus" permission を持たない | `apps/api/src/routes/benchmark-seed.ts:411 (authorizeDocumentDelete)` |
-| M014 | 例外 | `-` | Benchmark evaluation tenant is not configured | `tenantId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1022 (MemoRagService.getBenchmarkDocumentManifest)` |
+| M014 | 例外 | `-` | Benchmark evaluation tenant is not configured | `tenantId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1034 (MemoRagService.getBenchmarkDocumentManifest)` |
 | M015 | 例外 | `403` | Forbidden | 例外を捕捉した場合 | `apps/api/src/routes/benchmark-seed.ts:417 (authorizeDocumentDelete)` |
 | M016 | 例外 | `403` | Forbidden | is benchmark seed document manifest の判定結果が真ではない、かつ 「`deletionRetry` が存在し、真である、かつ is benchmark seed document identity の判定結果が真である」ではない | `apps/api/src/routes/benchmark-seed.ts:421 (authorizeDocumentDelete)` |
 | M017 | 例外 | `403` | Forbidden | `tenantId` が存在しない、または偽である、または `ownerUserId` が存在しない、または偽である | `apps/api/src/routes/document-routes.ts:1602 (DELETE /documents/{documentId} handler)` |

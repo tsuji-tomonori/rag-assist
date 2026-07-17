@@ -22,9 +22,9 @@
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
 | F001 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| F002 | `MemoRagService.listDocumentGroups` | if | `detail.permission` が `"none"` と異なる | `apps/api/src/rag/memorag-service.ts:1096 (MemoRagService.listDocumentGroups)` |
-| F003 | `MemoRagService.listDocumentGroups` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/rag/memorag-service.ts:1099 (MemoRagService.listDocumentGroups)` |
-| F004 | `MemoRagService.listDocumentGroups` | if | `error` が `ResourceOperationAuthorizationError` の instance である | `apps/api/src/rag/memorag-service.ts:1100 (MemoRagService.listDocumentGroups)` |
+| F002 | `MemoRagService.listDocumentGroups` | if | `detail.permission` が `"none"` と異なる | `apps/api/src/rag/memorag-service.ts:1108 (MemoRagService.listDocumentGroups)` |
+| F003 | `MemoRagService.listDocumentGroups` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/rag/memorag-service.ts:1111 (MemoRagService.listDocumentGroups)` |
+| F004 | `MemoRagService.listDocumentGroups` | if | `error` が `ResourceOperationAuthorizationError` の instance である | `apps/api/src/rag/memorag-service.ts:1112 (MemoRagService.listDocumentGroups)` |
 | F005 | `decodeCollectionCursor` | if | `cursor` が存在しない、または偽である | `apps/api/src/routes/document-routes.ts:279 (decodeCollectionCursor)` |
 | F006 | `decodeCollectionCursor` | if | test の判定結果が真ではない | `apps/api/src/routes/document-routes.ts:283 (decodeCollectionCursor)` |
 | F007 | `decodeCollectionCursor` | if | `Buffer.from(decoded, "utf-8").toString("base64url")` が `normalized` と異なる | `apps/api/src/routes/document-routes.ts:284 (decodeCollectionCursor)` |
@@ -39,11 +39,11 @@
 | TC001 | 正常系 | 文書グループ一覧を取得する が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:520 (GET /document-groups handler)` |
 | TC002 | F001: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
 | TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC004 | F002: 条件成立 | `detail.permission` が `"none"` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1096 (MemoRagService.listDocumentGroups)` |
-| TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1096 (MemoRagService.listDocumentGroups)` |
-| TC006 | F003: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/rag/memorag-service.ts:1099 (MemoRagService.listDocumentGroups)` |
-| TC007 | F004: 条件成立 | `error` が `ResourceOperationAuthorizationError` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1100 (MemoRagService.listDocumentGroups)` |
-| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1100 (MemoRagService.listDocumentGroups)` |
+| TC004 | F002: 条件成立 | `detail.permission` が `"none"` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1108 (MemoRagService.listDocumentGroups)` |
+| TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1108 (MemoRagService.listDocumentGroups)` |
+| TC006 | F003: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/rag/memorag-service.ts:1111 (MemoRagService.listDocumentGroups)` |
+| TC007 | F004: 条件成立 | `error` が `ResourceOperationAuthorizationError` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1112 (MemoRagService.listDocumentGroups)` |
+| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1112 (MemoRagService.listDocumentGroups)` |
 | TC009 | F005: 条件成立 | `cursor` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:279 (decodeCollectionCursor)` |
 | TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:279 (decodeCollectionCursor)` |
 | TC011 | F006: 条件成立 | test の判定結果が真ではない 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:283 (decodeCollectionCursor)` |

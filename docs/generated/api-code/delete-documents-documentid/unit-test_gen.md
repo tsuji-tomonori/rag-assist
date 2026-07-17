@@ -35,7 +35,7 @@
 | F013 | `authorizeDocumentDelete` | if | 利用者が "benchmark:seed_corpus" permission を持たない | `apps/api/src/routes/benchmark-seed.ts:410 (authorizeDocumentDelete)` |
 | F014 | `authorizeDocumentDelete` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/benchmark-seed.ts:416 (authorizeDocumentDelete)` |
 | F015 | `authorizeDocumentDelete` | if | is benchmark seed document manifest の判定結果が真ではない、かつ 「`deletionRetry` が存在し、真である、かつ is benchmark seed document identity の判定結果が真である」ではない | `apps/api/src/routes/benchmark-seed.ts:420 (authorizeDocumentDelete)` |
-| F016 | `MemoRagService.getBenchmarkDocumentManifest` | if | `tenantId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1022 (MemoRagService.getBenchmarkDocumentManifest)` |
+| F016 | `MemoRagService.getBenchmarkDocumentManifest` | if | `tenantId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1034 (MemoRagService.getBenchmarkDocumentManifest)` |
 | F017 | `stringValue` | 三項条件 | `typeof value` が `"string"` と等しい | `apps/api/src/routes/document-routes.ts:450 (stringValue)` |
 
 ## 3. コード由来テストケース
@@ -70,8 +70,8 @@
 | TC026 | F014: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/benchmark-seed.ts:416 (authorizeDocumentDelete)` |
 | TC027 | F015: 条件成立 | is benchmark seed document manifest の判定結果が真ではない、かつ 「`deletionRetry` が存在し、真である、かつ is benchmark seed document identity の判定結果が真である」ではない 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/benchmark-seed.ts:420 (authorizeDocumentDelete)` |
 | TC028 | F015: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/benchmark-seed.ts:420 (authorizeDocumentDelete)` |
-| TC029 | F016: 条件成立 | `tenantId` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1022 (MemoRagService.getBenchmarkDocumentManifest)` |
-| TC030 | F016: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1022 (MemoRagService.getBenchmarkDocumentManifest)` |
+| TC029 | F016: 条件成立 | `tenantId` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1034 (MemoRagService.getBenchmarkDocumentManifest)` |
+| TC030 | F016: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1034 (MemoRagService.getBenchmarkDocumentManifest)` |
 | TC031 | F017: 条件成立 | `typeof value` が `"string"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:450 (stringValue)` |
 | TC032 | F017: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:450 (stringValue)` |
 | TC033 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
