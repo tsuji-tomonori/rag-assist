@@ -28,7 +28,10 @@ Phase4l final headから残存debtを再監査し、安全な非重複unitを継
 - docs generation/check: success（97 APIs / 582 documents）
 - source audit: dataset-specific branch 0 / manifest mismatch 0
 - `git diff --check`: success
-- staged pre-commitと両head GitHub CIはPR lifecycleで記録する
+- staged pre-commit: success（sandbox index lock制限後、権限委譲して同一command再実行）
+- implementation-head GitHub CI: success（9m09s、run `29587939084`、promotion gate skipped）
+- Draft PR #435、`semver:patch`、AC `issuecomment-5004282980`、self-review `issuecomment-5004284087`
+- final-head CI/Issue progressはlifecycle commit後に記録する
 
 ## fit・制約
 
