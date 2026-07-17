@@ -1,6 +1,6 @@
 # Issue #358 FR-086 application role 監査 resolver
 
-- 状態: do
+- 状態: done
 - タスク種別: 修正
 - 対象: Issue #358 P1-A / FR-086 / `applicationRole.replace`
 - stacked base: PR #399 `codex/issue-358-fr086-retry-quarantine`
@@ -95,7 +95,7 @@ producer 追加時に target/operation ごとの authoritative resolver coverage
 - [x] AC6: missing、cross-tenant、inactive、corrupt roles、before/third state、unsupported intent を fail closed にする。
 - [x] AC7: resolver は role mutation/session revoke を再実行せず、worker registry/docs/coverage と同期する。
 - [x] AC8: selected targeted/full API、typecheck/build/lint/docs/source audit/pre-commit が成功する。
-- [ ] AC9: draft stacked PR に base #399、semver、未検証 AWS、rollback、後続 resolver を記載し、日本語 AC/self-review/final-head CI evidence を残す。
+- [x] AC9: draft stacked PR に base #399、semver、未検証 AWS、rollback、後続 resolver を記載し、日本語 AC/self-review/final-head CI evidence を残す。
 
 ## 検証計画
 
@@ -135,3 +135,13 @@ producer 追加時に target/operation ごとの authoritative resolver coverage
 - `git diff --check` / `pre-commit run`: 成功。
 - 初回 API typecheck の optional provider / readonly JSON 型エラーと、infra snapshot stale は実装修正・snapshot/inventory 再生成後に再検証して解消した。
 - 実 AWS Cognito / EventBridge / Lambda worker は未検証であり、AC9 の PR に制約として記録する。
+
+## PR lifecycle evidence
+
+- Draft PR: https://github.com/tsuji-tomonori/rag-assist/pull/401
+- base / head: `codex/issue-358-fr086-retry-quarantine` / `codex/issue-358-fr086-application-role-resolver`
+- semver: `semver:patch`
+- 受け入れ条件コメント: https://github.com/tsuji-tomonori/rag-assist/pull/401#issuecomment-4998278123
+- セルフレビューコメント: https://github.com/tsuji-tomonori/rag-assist/pull/401#issuecomment-4998277484
+- initial head CI: `1c1fd2d8d1df570831843bbe0219c6d1b2208f0a` / MemoRAG CI run #1146 success
+- final-head CI はこの task 完了更新 commit 後に GitHub Apps で確認し、PR top-level comment と Issue #358 進捗コメントへ SHA / run / conclusion を記録する。CI evidence 追記による無限の head 更新を避けるため、本 task file は再編集しない。

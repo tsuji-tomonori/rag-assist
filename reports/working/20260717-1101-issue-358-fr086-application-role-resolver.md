@@ -61,3 +61,12 @@ domain resolver は指定 open PR にない exact operation に限定し、mutat
 - #395/#388 も共有 infra / generated inventory を変更するため rebase 時に機械的競合の可能性があるが、resolver / contract file は非重複。
 - rollback は本 branch の commits を revert し、worker resolver 登録と read-only IAM を除去する。外部 state mutation は追加していない。
 - merge / deploy / release は実施しない。
+
+## PR lifecycle
+
+- Draft PR: https://github.com/tsuji-tomonori/rag-assist/pull/401
+- base: PR #399 / `codex/issue-358-fr086-retry-quarantine`
+- label: `semver:patch`
+- 日本語の受け入れ条件コメントとセルフレビューコメントを登録済み。
+- initial head `1c1fd2d8d1df570831843bbe0219c6d1b2208f0a` の MemoRAG CI run #1146 は success。
+- task 完了更新後の final-head CI は PR top-level comment と Issue #358 進捗コメントへ記録する。evidence 自体で head を再更新し続けないため、本レポートは再編集しない。
