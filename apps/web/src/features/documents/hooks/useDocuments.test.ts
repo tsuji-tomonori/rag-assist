@@ -494,7 +494,7 @@ describe("useDocuments", () => {
     const props = createProps()
     vi.mocked(uploadDocumentFile).mockImplementationOnce(async (input) => {
       input.onProgress?.({ phase: "transferring" })
-      input.onProgress?.({ phase: "embedding", runId: "run-1" })
+      input.onProgress?.({ phase: "extracting", runId: "run-1" })
       return { documentId: "doc-progress", fileName: input.file.name, chunkCount: 2, memoryCardCount: 0, createdAt: "now" }
     })
     const { result } = renderHook(() => useDocuments(props))

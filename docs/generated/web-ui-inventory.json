@@ -14103,9 +14103,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:565:button",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:576:button",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
-      "line": 565,
+      "line": 576,
       "feature": "documents",
       "component": "UploadProgressPanel",
       "element": "button",
@@ -14139,9 +14139,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:566:button",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:577:button",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
-      "line": 566,
+      "line": 577,
       "feature": "documents",
       "component": "UploadProgressPanel",
       "element": "button",
@@ -14175,9 +14175,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:567:button",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:578:button",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
-      "line": 567,
+      "line": 578,
       "feature": "documents",
       "component": "UploadProgressPanel",
       "element": "button",

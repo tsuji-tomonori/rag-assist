@@ -5,7 +5,7 @@ import test from "node:test"
 
 const traceByRequirement: Record<string, string[]> = {
   "FR-001": ["text-processing.test.ts", "memorag-service.test.ts", "App.test.tsx"],
-  "FR-002": ["memorag-service.test.ts", "text-processing.test.ts"],
+  "FR-002": ["apps/web/src/api.test.ts", "apps/web/src/features/documents/hooks/useDocuments.test.ts", "apps/web/src/features/documents/components/DocumentWorkspace.test.tsx", "apps/api/src/contract/api-contract.test.ts"],
   "FR-003": ["graph.test.ts", "memorag-service.test.ts"],
   "FR-004": ["graph.test.ts", "prompts.test.ts"],
   "FR-005": ["graph.test.ts", "prompts.test.ts"],
