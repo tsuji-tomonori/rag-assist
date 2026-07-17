@@ -49,6 +49,10 @@ Issue #358のFR-086について、未収束security mutation audit intentのboun
 - quarantine解除、手動再投入、管理API/運用UI、alarm/metricは後続。現時点の可観測性はdurable intentとworker resultである。
 - folder/document share・move・delete、principal transfer、application role authoritative resolverは後続。
 - 実AWS S3/EventBridge/Lambda duplicate deliveryは未検証。local CAS fault testsとfinal-head CIを証跡にする。
-- stacked baseはPR #394 branch。Draft PR、AC/self-review、final-head CIのURLはlifecycle commitで追記する。
+- stacked baseはPR #394 branch。Draft PR #399を作成した。
+- 初期head `36c8f04d` のMemoRAG CI run 29547370000はsuccess。
+- PR受け入れ条件: https://github.com/tsuji-tomonori/rag-assist/pull/399#issuecomment-4998125479
+- PRセルフレビュー: https://github.com/tsuji-tomonori/rag-assist/pull/399#issuecomment-4998127131
+- task/report lifecycle commit後のfinal-head CIは継続確認し、PRコメントとIssue #358へ記録する。
 - Issue #358全体は未完了として維持する。
 - merge / deploy / releaseは実施しない。
