@@ -10,6 +10,7 @@ import {
 import type { Dependencies } from "../dependencies.js"
 import { sanitizeProviderText, type AsyncAgentProviderArtifact, type AsyncAgentProviderInput, type AsyncAgentProviderResult } from "../async-agent/provider.js"
 import { AgentProviderCatalogService } from "../async-agent/provider-catalog-service.js"
+import { AsyncAgentRunRepository } from "../async-agent/async-agent-run-repository.js"
 import { BenchmarkRunQueryService } from "../benchmark/benchmark-run-query-service.js"
 import { BenchmarkRunCancellationService } from "../benchmark/benchmark-run-cancellation-service.js"
 import { BenchmarkRunReauthorizationService } from "../benchmark/benchmark-run-reauthorization-service.js"
@@ -445,6 +446,7 @@ const benchmarkSuites: BenchmarkSuite[] = [
 
 export class MemoRagService {
   private readonly agentProviderCatalogService: AgentProviderCatalogService
+  private readonly asyncAgentRunRepository: AsyncAgentRunRepository
   private readonly benchmarkArtifactDownloadService: BenchmarkArtifactDownloadService
   private readonly benchmarkArtifactRevocationCleanupDriverFactory: BenchmarkArtifactRevocationCleanupDriverFactory
   private readonly benchmarkExecutionStarter: BenchmarkExecutionStarter
@@ -459,6 +461,7 @@ export class MemoRagService {
     this.agentProviderCatalogService = new AgentProviderCatalogService({
       registry: deps.asyncAgentProviders
     })
+    this.asyncAgentRunRepository = new AsyncAgentRunRepository(deps.objectStore)
     this.benchmarkRunQueryService = new BenchmarkRunQueryService({
       benchmarkRunStore: deps.benchmarkRunStore,
       codeBuildLogReader: deps.codeBuildLogReader,
@@ -4312,12 +4315,12 @@ export class MemoRagService {
       updatedAt: now
     }
 
-    await this.saveAsyncAgentRun(run)
+    await this.asyncAgentRunRepository.save(run)
     return run
   }
 
   async listAsyncAgentRuns(user: AppUser): Promise<AsyncAgentRun[]> {
-    const runs = await this.loadAsyncAgentRuns(authoritativeActorTenantId(user))
+    const runs = await this.asyncAgentRunRepository.list(authoritativeActorTenantId(user))
     const canReadManaged = hasPermission(user, "agent:read:managed")
     return runs
       .filter((run) => canReadManaged || run.requesterUserId === user.userId)
@@ -4326,14 +4329,14 @@ export class MemoRagService {
   }
 
   async getAsyncAgentRun(user: AppUser, agentRunId: string): Promise<AsyncAgentRun | undefined> {
-    const run = await this.loadAsyncAgentRun(authoritativeActorTenantId(user), agentRunId)
+    const run = await this.asyncAgentRunRepository.get(authoritativeActorTenantId(user), agentRunId)
     if (!run) return undefined
     if (!this.canReadAsyncAgentRun(user, run)) throw forbiddenError("Forbidden")
     return run
   }
 
   async cancelAsyncAgentRun(user: AppUser, agentRunId: string): Promise<AsyncAgentRun | undefined> {
-    const run = await this.loadAsyncAgentRun(authoritativeActorTenantId(user), agentRunId)
+    const run = await this.asyncAgentRunRepository.get(authoritativeActorTenantId(user), agentRunId)
     if (!run) return undefined
     if (!this.canReadAsyncAgentRun(user, run)) throw forbiddenError("Forbidden")
     if (run.status === "completed" || run.status === "failed" || run.status === "cancelled" || run.status === "expired") return run
@@ -4346,7 +4349,7 @@ export class MemoRagService {
       completedAt: now,
       updatedAt: now
     }
-    await this.saveAsyncAgentRun(updated)
+    await this.asyncAgentRunRepository.save(updated)
     return updated
   }
 
@@ -4414,12 +4417,12 @@ export class MemoRagService {
       updatedAt: now,
       artifacts: run.artifacts.map((candidate) => candidate.artifactId === artifactId ? nextArtifact : candidate)
     }
-    await this.saveAsyncAgentRun(updatedRun)
+    await this.asyncAgentRunRepository.save(updatedRun)
     return nextArtifact
   }
 
   async executeAsyncAgentRun(tenantId: string, runId: string): Promise<AsyncAgentRun> {
-    const run = await this.loadAsyncAgentRun(tenantId, runId)
+    const run = await this.asyncAgentRunRepository.get(tenantId, runId)
     if (!run) throw new Error(`Async agent run not found: ${runId}`)
     if (run.status === "blocked" || run.status === "failed" || run.status === "cancelled" || run.status === "completed") return run
     try {
@@ -4442,7 +4445,7 @@ export class MemoRagService {
         completedAt: now,
         updatedAt: now
       }
-      await this.saveAsyncAgentRun(updated)
+      await this.asyncAgentRunRepository.save(updated)
       return updated
     }
 
@@ -4453,7 +4456,7 @@ export class MemoRagService {
       startedAt: run.startedAt ?? now,
       updatedAt: now
     }
-    await this.saveAsyncAgentRun(running)
+    await this.asyncAgentRunRepository.save(running)
 
     const input: AsyncAgentProviderInput = {
       agentRunId: running.agentRunId,
@@ -4519,7 +4522,7 @@ export class MemoRagService {
       if (isPermissionRevokedError(error)) return this.failAsyncAgentPermission(running, artifacts)
       throw error
     }
-    await this.saveAsyncAgentRun(updated)
+    await this.asyncAgentRunRepository.save(updated)
     return updated
   }
 
@@ -4539,7 +4542,7 @@ export class MemoRagService {
       completedAt,
       updatedAt: completedAt
     }
-    await this.saveAsyncAgentRun(failed)
+    await this.asyncAgentRunRepository.save(failed)
     return failed
   }
 
@@ -4563,7 +4566,7 @@ export class MemoRagService {
     const persisted = await Promise.all(normalizedArtifacts.map(async (artifact) => {
       const artifactId = `artifact_${randomUUID().slice(0, 12)}`
       const fileName = sanitizeArtifactFileName(artifact.fileName)
-      const storageRef = `${asyncAgentRunPrefix(run.tenantId)}${encodeURIComponent(run.agentRunId)}/artifacts/${artifactId}/${fileName}`
+      const storageRef = `${asyncAgentArtifactPrefix(run.tenantId)}${encodeURIComponent(run.agentRunId)}/artifacts/${artifactId}/${fileName}`
       const text = sanitizeProviderText(artifact.text)
       await this.deps.objectStore.putText(storageRef, text)
       return {
@@ -4865,39 +4868,6 @@ export class MemoRagService {
     return hasPermission(user, "agent:read:managed")
   }
 
-  private async loadAsyncAgentRuns(tenantId: string): Promise<AsyncAgentRun[]> {
-    const prefix = asyncAgentRunPrefix(tenantId)
-    const keys = await this.deps.objectStore.listKeys(prefix)
-    const runs = await Promise.all(
-      keys
-        .filter((key) => key.startsWith(prefix) && /^agent-runs\/tenant:[a-f0-9]{24}\/runs\/[^/]+\.json$/u.test(key))
-        .map(async (key) => JSON.parse(await this.deps.objectStore.getText(key)) as AsyncAgentRun)
-    )
-    return runs.map((run) => assertAsyncAgentTenant(normalizeAsyncAgentRun(run), tenantId))
-  }
-
-  private async loadAsyncAgentRun(tenantId: string, agentRunId: string): Promise<AsyncAgentRun | undefined> {
-    try {
-      const run = normalizeAsyncAgentRun(JSON.parse(await this.deps.objectStore.getText(asyncAgentRunObjectKey(tenantId, agentRunId))) as AsyncAgentRun)
-      return assertAsyncAgentTenant(run, tenantId)
-    } catch (error: unknown) {
-      if (isMissingObjectError(error)) {
-        try {
-          await this.deps.objectStore.getText(`agent-runs/${encodeURIComponent(agentRunId)}.json`)
-          throw new Error("Legacy unscoped async agent run requires tenant migration", { cause: error })
-        } catch (legacyError) {
-          if (isMissingObjectError(legacyError)) return undefined
-          throw legacyError
-        }
-      }
-      throw error
-    }
-  }
-
-  private async saveAsyncAgentRun(run: AsyncAgentRun): Promise<void> {
-    await this.deps.objectStore.putText(asyncAgentRunObjectKey(run.tenantId, run.agentRunId), JSON.stringify(run, null, 2), "application/json; charset=utf-8")
-  }
-
   private async startChatRunExecution(tenantId: string, runId: string): Promise<string> {
     const states = new SFNClient({ region: config.region })
     const response = await states.send(
@@ -5151,33 +5121,14 @@ function createDocumentIngestRunId(now: string): string {
   return `ingest_${compact}_${randomUUID().slice(0, 8)}`
 }
 
-function asyncAgentRunPrefix(tenantId: string): string {
+function asyncAgentArtifactPrefix(tenantId: string): string {
   return `agent-runs/${tenantPartitionId(tenantId)}/runs/`
-}
-
-function asyncAgentRunObjectKey(tenantId: string, agentRunId: string): string {
-  return `${asyncAgentRunPrefix(tenantId)}${encodeURIComponent(agentRunId)}.json`
 }
 
 function workerExecutionName(tenantId: string, runId: string): string {
   return `${tenantPartitionId(tenantId).replace(":", "-")}-${runId}`
     .replace(/[^a-zA-Z0-9_-]/g, "-")
     .slice(0, 80)
-}
-
-function normalizeAsyncAgentRun(run: AsyncAgentRun): AsyncAgentRun {
-  return {
-    ...run,
-    runId: run.runId ?? run.agentRunId,
-    workspaceMounts: run.workspaceMounts ?? [],
-    artifactIds: run.artifactIds ?? [],
-    artifacts: run.artifacts ?? []
-  }
-}
-
-function assertAsyncAgentTenant(run: AsyncAgentRun, tenantId: string): AsyncAgentRun {
-  if (run.tenantId !== tenantId) throw new Error("Async agent run tenant storage integrity mismatch")
-  return run
 }
 
 function buildParsedDocumentPreview(manifest: DocumentManifest): ParsedDocumentPreview {

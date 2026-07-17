@@ -16,9 +16,9 @@
 | --- | --- | --- | --- | --- |
 | F001 | `POST /chat-runs handler` | if | `(body.includeDebug ?? body.debug ?? false)` が `true` と等しい | `apps/api/src/routes/chat-routes.ts:69 (POST /chat-runs handler)` |
 | F002 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| F003 | `MemoRagService.startChatRun` | if | `config.chatRunStateMachineArn` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2574 (MemoRagService.startChatRun)` |
-| F004 | `MemoRagService.startChatRun` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/rag/memorag-service.ts:2577 (MemoRagService.startChatRun)` |
-| F005 | `MemoRagService.startChatRun` | 三項条件 | `err` が `Error` の instance である | `apps/api/src/rag/memorag-service.ts:2578 (MemoRagService.startChatRun)` |
+| F003 | `MemoRagService.startChatRun` | if | `config.chatRunStateMachineArn` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2577 (MemoRagService.startChatRun)` |
+| F004 | `MemoRagService.startChatRun` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/rag/memorag-service.ts:2580 (MemoRagService.startChatRun)` |
+| F005 | `MemoRagService.startChatRun` | 三項条件 | `err` が `Error` の instance である | `apps/api/src/rag/memorag-service.ts:2581 (MemoRagService.startChatRun)` |
 
 ## 3. コード由来テストケース
 
@@ -29,11 +29,11 @@
 | TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/chat-routes.ts:69 (POST /chat-runs handler)` |
 | TC004 | F002: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
 | TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC006 | F003: 条件成立 | `config.chatRunStateMachineArn` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2574 (MemoRagService.startChatRun)` |
-| TC007 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2574 (MemoRagService.startChatRun)` |
-| TC008 | F004: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/rag/memorag-service.ts:2577 (MemoRagService.startChatRun)` |
-| TC009 | F005: 条件成立 | `err` が `Error` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2578 (MemoRagService.startChatRun)` |
-| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2578 (MemoRagService.startChatRun)` |
+| TC006 | F003: 条件成立 | `config.chatRunStateMachineArn` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2577 (MemoRagService.startChatRun)` |
+| TC007 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2577 (MemoRagService.startChatRun)` |
+| TC008 | F004: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/rag/memorag-service.ts:2580 (MemoRagService.startChatRun)` |
+| TC009 | F005: 条件成立 | `err` が `Error` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2581 (MemoRagService.startChatRun)` |
+| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2581 (MemoRagService.startChatRun)` |
 | TC011 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC012 | HTTP 400 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC013 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

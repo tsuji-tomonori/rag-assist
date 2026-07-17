@@ -41,7 +41,7 @@
 | 31 | 作成・追記 | `this.deps.objectStore` | `putTextIfVersion` | `this.deps.objectStore` に対して put text if version を実行する。 | `StagedPublicationCoordinator.begin` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:222 (StagedPublicationCoordinator.begin)` |
 | 32 | 作成・追記 | `this.deps.objectStore` | `putTextIfVersion` | `this.deps.objectStore` に対して put text if version を実行する。 | `StagedPublicationCoordinator.acquireLease` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:617 (StagedPublicationCoordinator.acquireLease)` |
 | 33 | 参照 | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `readTenantManifestByKey` | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:93 (readTenantManifestByKey)` |
-| 34 | 参照 | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `MemoRagService.stageApprovedSourceGovernancePublication` | `apps/api/src/rag/memorag-service.ts:3929 (MemoRagService.stageApprovedSourceGovernancePublication)` |
+| 34 | 参照 | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `MemoRagService.stageApprovedSourceGovernancePublication` | `apps/api/src/rag/memorag-service.ts:3932 (MemoRagService.stageApprovedSourceGovernancePublication)` |
 | 35 | 参照 | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `loadStructuredBlocksForManifest` | `apps/api/src/rag/_shared/storage/manifest-chunks.ts:35 (loadStructuredBlocksForManifest)` |
 | 36 | 参照 | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `StagedPublicationCoordinator.loadManifest` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1490 (StagedPublicationCoordinator.loadManifest)` |
 | 37 | 参照 | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `StagedPublicationCoordinator.validateStagedManifest` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:733 (StagedPublicationCoordinator.validateStagedManifest)` |
@@ -99,7 +99,7 @@
 | # | CRUD/実行 | Target | Method | 自然言語での目的 | Caller | コード根拠 |
 | ---: | --- | --- | --- | --- | --- | --- |
 | 1 | 参照 | `this.identityProvider` | `getCurrentIdentityBySubject` | `this.identityProvider` へ get current identity by subject を実行する。 | `CurrentWorkerAuthorization.assertAuthorized` | `apps/api/src/security/current-worker-authorization.ts:51 (CurrentWorkerAuthorization.assertAuthorized)` |
-| 2 | 実行 | `textModel` | `generate` | `textModel` へ generate を実行する。 | `MemoRagService.createMemoryCards` | `apps/api/src/rag/memorag-service.ts:4956 (MemoRagService.createMemoryCards)` |
+| 2 | 実行 | `textModel` | `generate` | `textModel` へ generate を実行する。 | `MemoRagService.createMemoryCards` | `apps/api/src/rag/memorag-service.ts:4926 (MemoRagService.createMemoryCards)` |
 | 3 | 実行 | `deps.textModel` | `embed` | `deps.textModel` へ embed を実行する。 | `embedWithCache` | `apps/api/src/rag/offline/pre-retrieval/embedding/embedding-cache.ts:29 (embedWithCache)` |
 
 ## 解析境界

@@ -112,13 +112,13 @@ facade が broad dependency を保持する private field は `constructor(priva
 | security/audit | `accountRevocationRegistry`, `administrativePrincipalTransferFence`, `resourceUserPrincipalDirectory`, `securityAuditOutbox`, `securityAuditReconciliationOutbox` |
 | local/migration seam | `localTestIngestAdmissionContext`, `legacyGlobalDocumentArtifacts` |
 
-Phase 4k 後の service source から `this.deps.<key>` として直接読まれる key は 22。`questionStore` は `QuestionService`、`asyncAgentProviders` は `AgentProviderCatalogService`、`codeBuildLogReader` は `BenchmarkRunQueryService`、`benchmarkArtifactStore` は `BenchmarkArtifactRevocationCleanupDriverFactory`、`benchmarkRunStore` は benchmark query / cancellation / artifact download / reauthorization / cleanup / creation の各 narrow port として constructor で渡され、facade method 内では直接読まない。facade 内の `this.deps.benchmarkRunStore` occurrence は Phase 4j の3から0へ減る。残る `folderPolicyStore`、`administrativePrincipalTransferFence`、`securityAuditReconciliationOutbox`、`legacyGlobalDocumentArtifacts` は `Dependencies` 全体を受け取る helper/service 側で間接利用される。この区別は「直接参照がないので削除可能」という誤判定を避けるために必要である。
+Phase 4l 後の service source から `this.deps.<key>` として直接読まれる key は 22。`questionStore` は `QuestionService`、`asyncAgentProviders` は `AgentProviderCatalogService`、`codeBuildLogReader` は `BenchmarkRunQueryService`、`benchmarkArtifactStore` は `BenchmarkArtifactRevocationCleanupDriverFactory`、`benchmarkRunStore` は benchmark query / cancellation / artifact download / reauthorization / cleanup / creation の各 narrow port として constructor で渡され、facade method 内では直接読まない。async-agent run metadata の list/get/save は `objectStore` の narrow port を `AsyncAgentRunRepository` へ渡すが、artifact persistence など他 responsibility が残るため `objectStore` 自体は facade direct dependency のままである。facade 内の `this.deps.benchmarkRunStore` occurrence は Phase 4j の3から0を維持する。残る `folderPolicyStore`、`administrativePrincipalTransferFence`、`securityAuditReconciliationOutbox`、`legacyGlobalDocumentArtifacts` は `Dependencies` 全体を受け取る helper/service 側で間接利用される。この区別は「直接参照がないので削除可能」という誤判定を避けるために必要である。
 
 ### 直接 AWS 依存
 
 facade は port 経由だけではなく、次の AWS module を直接 import する。
 
-- `@aws-sdk/client-s3`: async agent / artifact object の取得・保存
+- `@aws-sdk/client-s3`: async agent artifact object の取得・保存（run metadata は Phase 4l で repository port 化）
 - `@aws-sdk/s3-request-presigner`: debug / benchmark / admin artifact download URL
 - `@aws-sdk/client-sfn`: chat / ingest execution start（benchmark cancellation の stop mapping は `benchmark-execution-stopper.ts`、benchmark start mapping は `benchmark-execution-starter.ts` へ移管）
 
@@ -453,6 +453,23 @@ service が受け取る port/config は次に限定する。
 
 Phase 4a で定義した段階抽出のうち、本書で追跡した benchmark query/cancel/download/start/reauthorization/cleanup/create の bounded responsibilities は Phase 4k で facade delegate 化を完了する。Issue #359 全体の巨大 facade debt、他 domain、actual AWS operational evidence の完了を意味しない。
 
+## Phase 4l: async-agent run repository の抽出境界
+
+Issue #359 Phase 4l では、async-agent 全実行 lifecycle のうち tenant partition された run metadata の list/get/save だけを `AsyncAgentRunRepository` へ抽出する。create/execute/cancel、current worker authorization、provider invocation、artifact persistence/writeback/cleanup を同じ変更単位へ含めず、object-store namespace と compatibility/integrity contract を独立した rollback unit とする。
+
+repository が受け取る port は `ObjectStore` の `listKeys`、`getText`、`putText` のみに限定する。broad `Dependencies`、facade、auth/provider、AWS client、global config は受け取らない。
+
+保持する contract:
+
+- scoped key は `agent-runs/${tenantPartitionId(tenantId)}/runs/${encodeURIComponent(agentRunId)}.json` とし、raw tenant ID を storage key へ出さない。同じ raw run ID も tenant partition ごとに物理分離する。
+- list は requested tenant の exact prefix で問い合わせ、prefix 一致かつ `^agent-runs/tenant:[a-f0-9]{24}/runs/[^/]+\.json$` に一致する flat JSON object だけを読む。nested path、malformed partition、他 tenant key は読まない。
+- deserialize は既存 compatibility として missing `runId` を `agentRunId`、missing `workspaceMounts` / `artifactIds` / `artifacts` を空配列にする。それ以外の schema補完や parse error recovery は追加しない。
+- decoded `run.tenantId` が requested tenant と異なる場合は storage integrity mismatch として fail closed にする。list/get のどちらでも cross-tenant record を返さない。
+- scoped object が missing の場合だけ legacy unscoped key を probeする。双方 missing は `undefined`、legacy object が存在すれば scoped missing error を cause に持つ migration-required error、legacy probe の operational error はそのまま伝播する。tenant ownership を決められない legacy object の自動移行/delete は行わない。
+- save は canonical scoped keyへ pretty JSONを `application/json; charset=utf-8` で書く。公開 method、route/RBAC/non-enumeration、execute authorization order、provider/artifact writeback、schema、RAG trust は変更しない。
+
+`async-agent-run-repository.test.ts` は narrow source guard、exact tenant prefix/list allowlist、same-ID tenant isolation、legacy default normalization、tenant mismatch、missing variants、legacy migration detection、non-missing/parse error propagation、save key/content type を固定する。既存 async-agent facade test と public contract/API full suite を二重実行する。actual S3/AWS と legacy migration tooling、manual UI は未実施とし、local/GitHub CI を actual AWS 成功の代替とは扱わない。
+
 ## Error / compatibility 方針
 
 - facade の同名 method と TypeScript signature を維持する。
@@ -469,7 +486,7 @@ Phase 4a で定義した段階抽出のうち、本書で追跡した benchmark 
 | consumer | route / worker / oRPC の呼出 method が source inventory と一致する |
 | Pick | production の明示 `Pick` が inventory と一致し、method が facade public contract に存在する |
 | constructor | production/test の constructor file と expression 数が一致する |
-| Dependencies | 31 key、broad private readonly field、Phase 4k 後の 22 direct read key と `benchmarkRunStore` の facade direct occurrence 0 が一致する |
+| Dependencies | 31 key、broad private readonly field、Phase 4l 後の 22 direct read key と `benchmarkRunStore` の facade direct occurrence 0 が一致する |
 | narrow dependency | `Dependencies` 全体を渡す既存 receiver/call の集合が増えない |
 | AWS / policy | direct import の追加・削除が明示差分になる |
 | behavior | API full suite、typecheck、build、root CI が成功する |
