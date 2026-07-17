@@ -95,7 +95,7 @@ export function ChatView({
   return (
     <section className={`split-workspace ${canShowDebugPanel ? "" : "debug-off"}`}>
       <section className="chat-card" aria-label="チャット">
-        <ResourceStateBoundary state={dataState}>
+        <ResourceStateBoundary state={dataState} className="chat-resource-boundary">
         <MessageList
           messages={messages}
           questions={questions}
