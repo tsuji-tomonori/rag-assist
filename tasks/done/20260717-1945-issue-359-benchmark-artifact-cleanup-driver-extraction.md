@@ -1,6 +1,6 @@
 # Issue #359 Phase 4j: benchmark artifact revocation cleanup driver 抽出
 
-- 状態: do
+- 状態: done
 - タスク種別: 修正
 - Issue: #359
 - stacked base: PR #425 / `codex/issue-359-benchmark-run-reauthorization-extraction`
@@ -96,15 +96,27 @@ benchmark cleanup driver に、facade orchestrationと destructive artifact adap
 
 ## 受け入れ条件
 
-- [ ] driver factory は run store `get` と optional artifact store `deleteObject/listKeys` だけを port として受け、`Dependencies`、config、object store、identity provider、facade class に依存しない。
-- [ ] authoritative deny probe は exact tenant/run lookup を使い、failed + permission-revoked + exact version の論理積だけを true とし、missing/mismatch を false、store error を reject に保つ。
-- [ ] discover は evaluation artifact scope にだけ canonical known targets を返し、その他 scope は空にする。
-- [ ] cleanup は missing adapter、wrong scope、unknown/other-partition reference を fail closed で拒否し、allowed target だけを1回 delete する。
-- [ ] residual verification は exact tenant/run prefix だけを list し、existing known targets のみを返す。unexpected/other-tenant key を対象へ昇格させない。
-- [ ] facade は durable manifest `register` 後に `reconcile` を呼び、registration failure では cleanup を開始せず、reconcile failure は登録済み retry intent を保持する既存 order/compensation を維持する。
-- [ ] worker reauthorization/current policy、tenant/non-enumeration、route/RBAC、RAG trust、worker event/output、manifest schema を変更しない。
-- [ ] targeted API test、API full test、root `npm run ci`、docs freshness、source audit、`git diff --check`、pre-commit が成功する。
-- [ ] Draft stacked PR に `semver:patch` を設定し、日本語 AC / self-review、report/task done、final-head CI、Issue #359 進捗まで記録する。
+- [x] driver factory は run store `get` と optional artifact store `deleteObject/listKeys` だけを port として受け、`Dependencies`、config、object store、identity provider、facade class に依存しない。
+- [x] authoritative deny probe は exact tenant/run lookup を使い、failed + permission-revoked + exact version の論理積だけを true とし、missing/mismatch を false、store error を reject に保つ。
+- [x] discover は evaluation artifact scope にだけ canonical known targets を返し、その他 scope は空にする。
+- [x] cleanup は missing adapter、wrong scope、unknown/other-partition reference を fail closed で拒否し、allowed target だけを1回 delete する。
+- [x] residual verification は exact tenant/run prefix だけを list し、existing known targets のみを返す。unexpected/other-tenant key を対象へ昇格させない。
+- [x] facade は durable manifest `register` 後に `reconcile` を呼び、registration failure では cleanup を開始せず、reconcile failure は登録済み retry intent を保持する既存 order/compensation を維持する。
+- [x] worker reauthorization/current policy、tenant/non-enumeration、route/RBAC、RAG trust、worker event/output、manifest schema を変更しない。
+- [x] targeted API test、API full test、root `npm run ci`、docs freshness、source audit、`git diff --check`、pre-commit が成功する。
+- [x] Draft stacked PR に `semver:patch` を設定し、日本語 AC / self-review、report/task done を記録した。task-done commit の final-head CI と Issue #359 進捗は push 後の外部証跡として記録する。
+
+## 完了結果
+
+- implementation commit: `ac7f3429be854ba1b917e5db1f46418e3146390b`
+- Draft stacked PR: #428（base: `codex/issue-359-benchmark-run-reauthorization-extraction`、`semver:patch`）
+- 初期 AC comment: https://github.com/tsuji-tomonori/rag-assist/pull/428#issuecomment-5002590149
+- 初期 self-review comment: https://github.com/tsuji-tomonori/rag-assist/pull/428#issuecomment-5002590146
+- implementation-head GitHub Actions: success（run 29575933175 / job 87870246844）
+- local validation: targeted、API full 861/861、root CI、docs check、source audit、diff check、pre-commit 成功
+- actual AWS cleanup / manual UI: 未実施
+- merge / deploy / release: 未実施
+- remaining Phase 4 responsibility: benchmark create orchestration
 
 ## 検証計画
 

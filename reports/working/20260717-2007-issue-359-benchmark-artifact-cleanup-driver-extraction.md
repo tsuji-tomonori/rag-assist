@@ -4,7 +4,7 @@
 - 対象: benchmark artifact revocation cleanup driver の narrow factory 抽出
 - stacked base: PR #425 / `codex/issue-359-benchmark-run-reauthorization-extraction`
 - 作業 branch: `codex/issue-359-benchmark-artifact-cleanup-driver-extraction`
-- 状態: 実装・ローカル検証完了、PR lifecycle 実施前
+- 状態: repository deliverables 完了、task-done lifecycle commit 前
 
 ## 受けた指示
 
@@ -56,7 +56,7 @@ Issue #359 の次の非重複 Phase 4 unit として、create orchestration と 
 - `npm run rag:release:source-audit`: 成功。dataset-specific branch 0、artifact manifest mismatch 0。
 - `git diff --check`: 成功。
 - staged `pre-commit run`: 成功（git-secrets、hidden Unicode、trailing whitespace、EOF、large file、merge conflict、debug statement、mixed line ending）。
-- GitHub Actions は PR lifecycle で実施予定。
+- GitHub Actions implementation head: success（run 29575933175 / job 87870246844）。
 
 ## 成果物
 
@@ -81,6 +81,8 @@ Issue #359 の次の非重複 Phase 4 unit として、create orchestration と 
 - actual Step Functions worker / IAM / DynamoDB / S3 cleanup は AWS credentials と external state を伴うため未実施。local characterization、integration/full test、CI は actual AWS 成功の代替ではない。
 - Web UI は変更対象外で、manual UI test は未実施。
 - GitHub Apps の callable connector が利用できない場合のみ `gh` fallback を使い、その理由を PR に明記する。
-- commit/push、Draft stacked PR、semver label、AC/self-review comments、implementation/final-head CI、Issue #359 progress、task done/clean-upstream はこの後に実施する。
+- implementation commit `ac7f3429` と Draft stacked PR #428（base PR #425 branch、`semver:patch`）を作成済み。
+- 初期 AC / self-review comment と implementation-head CI success を記録済み。
+- task-done commit/push 後の final-head CI、最終 AC/self-review、Issue #359 progress、clean/upstream はこの後に実施する。
 - 残る Phase 4 responsibility は benchmark create orchestration である。
 - merge/deploy/release は行わない。
