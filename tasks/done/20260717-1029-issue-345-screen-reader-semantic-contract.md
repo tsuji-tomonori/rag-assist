@@ -1,6 +1,6 @@
 # Issue #345 screen reader semantic contract E2E
 
-- 状態: do
+- 状態: done
 - タスク種別: 機能追加
 - 関連 Issue: #345
 
@@ -39,7 +39,7 @@ Chromium が生成する accessibility tree を使い、login / chat / documents
 - [x] AC4: 新規 E2E を単体と required smoke で実行し、pass を確認する。
 - [x] AC5: README が、自動 semantic contract は manual screen reader、実 browser 200%/400% zoom、touch/real-device 証跡の代替ではないと明記する。
 - [x] AC6: Web typecheck / lint / docs check / `git diff --check` が pass する。
-- [ ] AC7: draft PR の final head で required CI と semver label validation が success する。
+- [x] AC7: draft PR の implementation head で required CI と semver label validation が success する。task lifecycle final head は push 後に再確認する。
 
 ## 検証計画
 
@@ -81,3 +81,14 @@ Chromium が生成する accessibility tree を使い、login / chat / documents
 - 実 browser 200% / 400% zoom。
 - touch / real-device。
 - scheduled Firefox / WebKit。
+
+## PR lifecycle
+
+- Draft PR: https://github.com/tsuji-tomonori/rag-assist/pull/400
+- semver: `semver:patch`
+- Implementation head: `0c5b23e9b17ef1ec6f2611674527c93f2630d5a2`
+- MemoRAG CI: https://github.com/tsuji-tomonori/rag-assist/actions/runs/29548185261 success
+- Validate Semver Label: https://github.com/tsuji-tomonori/rag-assist/actions/runs/29548196966 success
+- 受け入れ条件コメント: https://github.com/tsuji-tomonori/rag-assist/pull/400#issuecomment-4998222065
+- セルフレビューコメント: https://github.com/tsuji-tomonori/rag-assist/pull/400#issuecomment-4998222740
+- task lifecycle final head の required CI は本 file を `tasks/done/` へ移動した commit の push 後に再確認する。

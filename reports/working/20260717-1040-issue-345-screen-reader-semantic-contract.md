@@ -17,7 +17,7 @@
 | R2 | 実 accessibility tree の semantic contract を自動検査 | 対応 |
 | R3 | 自動 proxy と manual evidence の境界を明記 | 対応 |
 | R4 | 最小十分な local 検証 | 対応 |
-| R5 | PR lifecycle と final-head CI | PR 作成後に対応 |
+| R5 | PR lifecycle と final-head CI | draft PR/コメント/初期CIは対応。task lifecycle final-head CIはcommit push後に再確認 |
 
 ## 3. 検討・判断
 
@@ -42,7 +42,19 @@
 | `tasks/do/20260717-1029-issue-345-screen-reader-semantic-contract.md` | 受け入れ条件と検証記録 |
 | 本レポート | 判断・実績・制約の記録 |
 
-## 6. 検証結果
+## 6. PR lifecycle
+
+- Draft PR: https://github.com/tsuji-tomonori/rag-assist/pull/400
+- semver: `semver:patch`
+- Implementation head: `0c5b23e9b17ef1ec6f2611674527c93f2630d5a2`
+- MemoRAG CI: https://github.com/tsuji-tomonori/rag-assist/actions/runs/29548185261 success
+- Validate Semver Label: https://github.com/tsuji-tomonori/rag-assist/actions/runs/29548196966 success
+- 受け入れ条件コメント: https://github.com/tsuji-tomonori/rag-assist/pull/400#issuecomment-4998222065
+- セルフレビューコメント: https://github.com/tsuji-tomonori/rag-assist/pull/400#issuecomment-4998222740
+- GitHub Apps の callable operation がないため `gh` fallback を使用した。
+- task lifecycle final head の required CI は lifecycle commit push 後に再確認する。
+
+## 7. 検証結果
 
 - `npm ci`: pass。既存 dependency audit は 8 vulnerabilities（2 low / 1 moderate / 5 high）。
 - 新規 E2E: 初回は sandbox の `tsx` IPC listen `EPERM`。承認後の sandbox 外再実行で 1/1 pass。
@@ -50,21 +62,21 @@
 - optional full E2E: 28/28 pass。現 branch / base で既存 baseline failure なし。
 - Web typecheck / repository lint / `task docs:check` / `git diff --check`: pass。
 
-## 7. 指示への fit 評価
+## 8. 指示への fit 評価
 
 | 評価軸 | 評価 | 理由 |
 |---|---:|---|
-| 指示網羅性 | 4/5 | 自動 gate と local 検証は完了。PR lifecycle/CI は本レポート作成後に追記予定。 |
+| 指示網羅性 | 4.5/5 | 自動 gate、local検証、draft PR、semver、AC/self-review、初期CIは完了。lifecycle final-head CIはpush後に確認。 |
 | 制約遵守 | 5/5 | 手動証跡を捨造せず、merge/deploy/release なし。 |
 | 成果物品質 | 4.5/5 | 実 AX tree と JSON attachment で回帰調査可能。 |
 | 説明責任 | 5/5 | Chromium 固有性と manual gap を明記。 |
 | 検収容易性 | 4.5/5 | 専用 ID、実行コマンド、attachment を用意。 |
 
-**総合fit: 4.6/5（約92%）**
+**総合fit: 4.7/5（約94%）**
 
 PR final-head CI と GitHub 上の lifecycle を完了した後に最終評価を更新する。
 
-## 8. 未対応・制約・リスク
+## 9. 未対応・制約・リスク
 
 - representative screen reader の実読み上げ・操作は未検証。
 - 実 browser 200% / 400% zoom、touch / real-device、scheduled Firefox / WebKit は未検証。
