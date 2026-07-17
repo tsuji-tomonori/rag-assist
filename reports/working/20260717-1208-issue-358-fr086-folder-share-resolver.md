@@ -38,7 +38,9 @@ Issue #358 の残課題と open Draft PR を再確認し、重複しない最小
 - `git diff --check`: 成功。
 - `npm ci`: 成功。dependency file の変更はない。npm audit は既存 8 vulnerabilities（low 2 / moderate 1 / high 5）を報告した。
 - `pre-commit run`（staged files）: 成功。初回 `--all-files` は既存レポートの末尾空白を修正して停止したため、その無関係な変更を復元して対象 files に限定した。
-- GitHub final-head CI は PR lifecycle で追記する。
+- Draft PR #405 を #401 base で作成し、`semver:patch`、日本語 AC comment / self-review を付与した。
+- implementation head `471bdcc657c510a258ae192f89e09dc88208f860` の MemoRAG CI run 29551796247 は `success`（2026-07-17 03:11:42Z–03:20:01Z）。
+- task-only lifecycle commit 後の final-head CI は PR comment と Issue #358 進捗に追記する。
 
 ## 指示への fit 評価
 

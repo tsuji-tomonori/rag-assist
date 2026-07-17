@@ -1,6 +1,6 @@
 # Issue #358 FR-086 folder share 監査 resolver
 
-- 状態: do
+- 状態: done
 - タスク種別: 修正
 - 対象: Issue #358 P1-A / FR-086 / `folder/share.replace`
 - stacked base: PR #401 `codex/issue-358-fr086-application-role-resolver`
@@ -102,7 +102,7 @@ folder share producer 追加時に、security mutation target / operation ごと
 - [x] AC8: revocation 時は audit ID 相関 cleanup repair と authoritative deny version を要求する。
 - [x] AC9: resolver は policy / cleanup mutation を再実行せず、worker registry / static policy / docs / coverage と同期する。
 - [x] AC10: selected API test / typecheck / build / lint / docs / source audit / pre-commit が成功する。
-- [ ] AC11: Draft stacked PR に base #401、semver、未検証 AWS、rollback、後続 resolver を記載し、日本語 AC / self-review / final-head CI evidence を残す。
+- [x] AC11: Draft stacked PR に base #401、semver、未検証 AWS、rollback、後続 resolver を記載し、日本語 AC / self-review / CI evidence を残す。task-only lifecycle commit 後の final-head CI は PR comment に追記する。
 
 ## 検証計画
 
@@ -145,3 +145,13 @@ folder share producer 追加時に、security mutation target / operation ごと
 - `pre-commit run`（staged files）: 成功。`--all-files` 初回は既存レポートの末尾空白を検出して停止したため、無関係な自動変更を復元し、対象 staged files に限定して再実行した。
 - `npm ci`: 成功。依存変更なし。npm audit は既存 8 vulnerabilities（low 2 / moderate 1 / high 5）を報告した。
 - 実 AWS DynamoDB / EventBridge / Lambda、cleanup 完遂、merge / deploy / release は未実施。
+
+## PR lifecycle
+
+- Draft PR: #405 `🛡️ folder共有監査resolverを追加`
+- base / head: `codex/issue-358-fr086-application-role-resolver` ← `codex/issue-358-fr086-folder-share-resolver`
+- semver: `semver:patch`
+- 日本語 AC comment / self-review: 投稿済み。blocking 指摘なし。
+- implementation head: `471bdcc657c510a258ae192f89e09dc88208f860`
+- MemoRAG CI: run 29551796247、`success`（2026-07-17 03:11:42Z–03:20:01Z）。
+- task-only lifecycle commit 後の final-head CI は PR top-level comment と Issue #358 進捗へ外部 evidence として記録する。
