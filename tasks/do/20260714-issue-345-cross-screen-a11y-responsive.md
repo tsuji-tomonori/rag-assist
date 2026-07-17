@@ -84,11 +84,13 @@
 
 ## Phase B: AppShell・確定fail remediation（2026-07-17）
 
-- 専用task: `tasks/do/20260717-0054-issue-345-cross-screen-phase-b.md`
+- 専用task: `tasks/done/20260717-0054-issue-345-cross-screen-phase-b.md`
 - PR #381 final head `b6acb24ff81acd08981ada8ebb3df63810f6d57b`をbaseに、AppShell / RailNav、assignee 768px overflow、history / favorites / benchmark / admin contrast、benchmark focusabilityを修正する。
 - target / nested overflowは根拠なしにpassへ変えず、要素・意図・owner・代替操作をartifactへ記録し、未解決candidateをPlaywright failureとする。
 - Login / auth production fileはPR #382との競合を避けて変更しない。
 - representative screen reader、実browser 200% / 400% zoom、touch / real-deviceは本taskの未検証scopeとして残す。
+- Phase B implementation head `dbf5a7d00b372e23bb4b0184f186dcc708288af6`でWeb UI Quality run `29543391307`とMemoRAG CI run `29543391329`がsuccess。artifact `8393069549`は32 baseline entries、root overflow / unresolved finding / axe blocker 0、根拠付き例外25件を記録した。
+- Phase B automated scopeは完了した。Issue #345全体はrepresentative screen reader、実browser zoom、touch / real-deviceのmanual evidence未検証により`do`を維持する。
 
 ## ドキュメントメンテナンス計画
 

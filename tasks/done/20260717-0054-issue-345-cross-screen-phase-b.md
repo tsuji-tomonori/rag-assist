@@ -1,6 +1,6 @@
 # Issue #345 Phase B: AppShell・横断a11y/responsive defectを修復する
 
-状態: do
+状態: done
 
 タスク種別: 修正
 
@@ -59,14 +59,14 @@ Phase A CI baselineで、assigneeは768px viewportに対してroot scrollWidth 8
 
 ## 受け入れ条件
 
-- [ ] assigneeが320/375/768/1280pxでroot horizontal overflowを発生させず、content/functionを失わない。
-- [ ] history / favorites / benchmark / adminのPhase A color-contrast seriousが0件になる。
-- [ ] benchmark tableのhorizontal scroll領域へkeyboardでfocusでき、focus indicatorと利用目的のaccessible nameがある。
-- [ ] RailNav / AppShellのprimary controlsが24×24 minimumを満たし、primary targetは44〜48px classを維持する。例外は要素、意図、代替操作、ownerを証跡化する。
-- [ ] target-size / nested overflow candidateを機械的にpassへ変えず、修正済みまたは根拠付きblockedへ分類する。
-- [ ] Login / auth production file、API、permission、RAG behavior、benchmark dataset固有分岐を変更しない。
-- [ ] unit / semantic contract / Playwright audit、Web typecheck/test/build、docs check、pre-commit、`git diff --check`がpassする。
-- [ ] PR #381へstackした日本語draft PR、受け入れ条件comment、セルフレビューcommentを作成し、final-head CIを確認する。
+- [x] assigneeが320/375/768/1280pxでroot horizontal overflowを発生させず、content/functionを失わない。
+- [x] history / favorites / benchmark / adminのPhase A color-contrast seriousが0件になる。
+- [x] benchmark tableのhorizontal scroll領域へkeyboardでfocusでき、focus indicatorと利用目的のaccessible nameがある。
+- [x] RailNav / AppShellのprimary controlsが24×24 minimumを満たし、primary targetは44〜48px classを維持する。例外は要素、意図、代替操作、ownerを証跡化する。
+- [x] target-size / nested overflow candidateを機械的にpassへ変えず、修正済みまたは根拠付きblockedへ分類する。
+- [x] Login / auth production file、製品API、permission、RAG behavior、benchmark dataset固有分岐を変更しない。API配下の変更はSQ-016 task lifecycleを検証するtest-only trace path 1行だけとする。
+- [x] unit / semantic contract / Playwright audit、Web typecheck/test/build、docs check、pre-commit、`git diff --check`がpassする。
+- [x] PR #381へstackした日本語draft PR、受け入れ条件comment、セルフレビューcommentを作成し、final-head CIを確認する。
 
 ## 検証計画
 
@@ -93,13 +93,17 @@ Phase A CI baselineで、assigneeは768px viewportに対してroot scrollWidth 8
 - local typecheck、Web 61 files / 443 tests、build、full lint、semantic / trace、docs check、pre-commitはpass。
 - local Playwrightはsandboxの`tsx` IPC listen `EPERM`でbrowser前blocked。権限昇格せずdraft PR CIを使用する。
 - draft PR #385 initial Web UI Quality run `29515009875`は、documents 320px pagination summaryの未解決overflow 1件と、意図したforeground / RailNav target変更によるvisual snapshot差分5件を検出してfailure。
-- initial artifact `8382337939`をactual / expected / diffまで確認し、pagination summaryをellipsisから折り返しへ修正、意図したLinux Chromium snapshotを更新した。repair後のfinal-head artifact / CIは確認中。
+- initial artifact `8382337939`をactual / expected / diffまで確認し、pagination summaryをellipsisから折り返しへ修正、意図したLinux Chromium snapshotを更新した。
 - repair run `29515990630`はcross-screen auditを含む9 testをpassし、assignee snapshot差分だけでfailure。artifact `8382697984`を画像確認してsnapshotを更新し、composite visualはsoft assertionで後続画面の差分も収集しつつfailure semanticsを維持するよう変更した。
 - collection run `29516346107`はbenchmark / admin差分を同時収集。artifact `8382851928`のactual / diffを確認し、意図したcontrast / target変更としてsnapshotを更新した。同artifactの32 baseline entriesはroot overflow / unresolved finding / axe blocker 0、根拠付き例外23件だった。
 - snapshot更新後のWeb UI Quality run `29516940570`は10 / 10 pass。artifact `8383090126`は32 baseline entries、root overflow / unresolved finding / axe blocker 0、根拠付き例外25件、根拠欠落0。matrixとgenerated projectionへ反映した。
+- MemoRAG CI run `29517480207`のfailureはcoverage閾値ではなく、Phase Aでoverall taskを`tasks/todo/`から`tasks/do/`へ移した一方、`apps/api/src/rag/requirements-coverage.test.ts`のSQ-016 trace pathがstaleだったことによるAPI test 1件の`ENOENT`だった。
+- test-only trace pathを`tasks/do/20260714-issue-345-cross-screen-a11y-responsive.md`へ同期し、targeted testとCI同等のAPI coverage 801 / 801 testsがpassした。
+- implementation head `dbf5a7d00b372e23bb4b0184f186dcc708288af6`でWeb UI Quality run `29543391307`とMemoRAG CI run `29543391329`がsuccess。Web artifact `8393069549`を確認した。
+- PR #385へ受け入れ条件comment `4997641285`、セルフレビューcomment `4997642807`をGitHub Appsで記録した。
 
 ## 未決事項・リスク
 
 - screen reader、200%/400% zoom、touch / real-deviceはmanual evidence taskの未完了scopeであり、自動検証だけから適合を宣言しない。
-- PR #382がLogin/authを変更するため、競合回避だけでなくauthorization境界を弱めないことをdiffで確認する。
-- Phase Aで既知のMemoRAG CI API branch coverage failureは本PhaseのAPI変更では解消しない。Web scopeの結果と分離して報告する。
+- PR #382がLogin/authを変更するため、競合回避だけでなくauthorization境界を弱めていないことをdiffで確認した。
+- Phase Bの自動化対象は完了したが、Issue #345全体はmanual evidenceが未検証のため`tasks/do/20260714-issue-345-cross-screen-a11y-responsive.md`で継続する。
