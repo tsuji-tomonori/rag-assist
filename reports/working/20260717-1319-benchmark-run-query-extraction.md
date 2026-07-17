@@ -4,7 +4,7 @@
 - Issue: #359
 - branch: `codex/issue-359-benchmark-run-query-extraction`
 - stacked base: PR #403 final head `486c3428`
-- 状態: 実装・local validation 完了、draft PR lifecycle 実施中
+- 状態: draft PR #407 作成・初回 CI 成功・task 完了
 
 ## 受けた指示
 
@@ -55,6 +55,7 @@ PR #403 完遂後の Issue #359 残件と既存 Draft stacked PR 群を再確認
 - `npm run rag:release:source-audit`（dataset-specific branch 0、artifact mismatch 0）
 - `npm run ci`（API 826、Web 442、Infra 38、Benchmark 102 を含む全 workspace）
 - `git diff --check`
+- GitHub Actions run #29555015730（実装 head `38edf1fd`）: 成功（8分27秒、promotion gate は skip）
 
 修復履歴:
 
@@ -80,8 +81,10 @@ PR #403 完遂後の Issue #359 残件と既存 Draft stacked PR 群を再確認
 
 ## PR lifecycle
 
-- draft stacked PR: 未作成
+- draft stacked PR: #407 `♻️ Issue #359: benchmark run query を narrow port へ抽出`
 - base: `codex/issue-359-agent-provider-catalog-extraction`（PR #403）
-- label: `semver:patch` 予定
-- 日本語 AC コメント / セルフレビュー / final-head CI / Issue #359 進捗: PR 作成後に実施
-- task: PR コメント後に `tasks/done/` へ移動予定
+- label: `semver:patch`
+- 日本語 AC コメント: 記録済み
+- 日本語セルフレビュー: blocking 指摘なしとして記録済み
+- task: PR コメント後に `tasks/done/` へ移動
+- task completion commit 後の final-head CI、Issue #359 進捗コメント、clean/upstream は post-completion check で確認する。

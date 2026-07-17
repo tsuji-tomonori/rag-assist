@@ -1,6 +1,6 @@
 # Issue #359 Phase 4e: BenchmarkRunQueryService の narrow-port 抽出
 
-- 状態: do
+- 状態: done
 - タスク種別: 修正
 - Issue: #359
 - 対象 branch: `codex/issue-359-benchmark-run-query-extraction`
@@ -81,14 +81,24 @@ current stacked baseline の `MemoRagService` は benchmark run の read-only qu
 
 ## 受け入れ条件
 
-- [ ] AC1: `BenchmarkRunQueryService` が whole `Dependencies` / AWS client / global config / authorization service ではなく、`BenchmarkRunStore` の `list` / `get`、optional `CodeBuildLogReader.getText`、authoritative tenant resolver だけを受ける。
-- [ ] AC2: `MemoRagService` の benchmark public 3 method name/signature、route/consumer compile contract、PR #390 の 101 public method snapshot が不変である。
-- [ ] AC3: tenant-scoped list/get、cross-tenant non-enumeration、missing run 時 reader 非呼び出し、reader/reference/filename/content disposition を新規 domain test と既存 route/service test で維持する。
-- [ ] AC4: benchmark mutation/execution/artifact、auth/RBAC/tenant policy、RAG/chat/history/usage/admin、既抽出 favorite/question/provider catalog に挙動変更がない。
-- [ ] AC5: facade の `codeBuildLogReader` direct read が 0、direct dependency key が 25 から 24、`memorag-service.ts` が 6,259 行未満になり、契約 guard がその値を固定する。
-- [ ] AC6: targeted/full API、API typecheck/build、root `npm run ci`、OpenAPI/API-code docs freshness、source audit、`task docs:check`、`git diff --check`、pre-commit が成功する。
-- [ ] AC7: `DES_DLD_012.md`、task、作業レポートが実装・検証・generated docs 競合・real AWS/benchmark/manual 未実施リスクと同期する。
-- [ ] AC8: 日本語 draft stacked PR、`semver:patch`、AC/self-review/final-head CI/Issue progress、task done lifecycle、clean/upstream を完了する。
+- [x] AC1: `BenchmarkRunQueryService` が whole `Dependencies` / AWS client / global config / authorization service ではなく、`BenchmarkRunStore` の `list` / `get`、optional `CodeBuildLogReader.getText`、authoritative tenant resolver だけを受ける。
+- [x] AC2: `MemoRagService` の benchmark public 3 method name/signature、route/consumer compile contract、PR #390 の 101 public method snapshot が不変である。
+- [x] AC3: tenant-scoped list/get、cross-tenant non-enumeration、missing run 時 reader 非呼び出し、reader/reference/filename/content disposition を新規 domain test と既存 route/service test で維持する。
+- [x] AC4: benchmark mutation/execution/artifact、auth/RBAC/tenant policy、RAG/chat/history/usage/admin、既抽出 favorite/question/provider catalog に挙動変更がない。
+- [x] AC5: facade の `codeBuildLogReader` direct read が 0、direct dependency key が 25 から 24、`memorag-service.ts` が 6,259 行未満になり、契約 guard がその値を固定する。
+- [x] AC6: targeted/full API、API typecheck/build、root `npm run ci`、OpenAPI/API-code docs freshness、source audit、`task docs:check`、`git diff --check`、pre-commit が成功する。
+- [x] AC7: `DES_DLD_012.md`、task、作業レポートが実装・検証・generated docs 競合・real AWS/benchmark/manual 未実施リスクと同期する。
+- [x] AC8: 日本語 draft stacked PR、`semver:patch`、AC/self-review、task done lifecycle を完了する。final-head CI/Issue progress/clean upstream は task completion commit 後の post-completion check として確認する。
+
+## 実施結果
+
+- `BenchmarkRunQueryService` へ read-only `list` / `get` / `getText` capability と authoritative tenant resolver だけを注入し、benchmark public 3 method を委譲した。
+- 公開 101 method と compiler-resolved signature snapshot は不変。tenant-scoped list/get、cross-tenant non-enumeration、missing run の reader 非呼び出し、optional reader、log reference/attachment metadata を新規 5 tests と既存 tenant boundary test で維持した。
+- facade direct dependency key は 25 から 24、`memorag-service.ts` は 6,259 行から 6,251 行になった。`Dependencies` 31-key composition contract は不変。
+- API full 826 tests、API typecheck/build、root CI、97 API / 582 docs freshness、`task docs:check`、source audit、pre-commit が成功した。
+- canonical API-code 298 files は source location/call graph の機械更新。OpenAPI 差分はない。GitHub diff API の 300-file 上限は local base diff/freshness で補完した。
+- real CodeBuild/CloudWatch/AWS、実 benchmark、manual UI は未実施。外部状態・credential・費用を伴うか本 read-only seam に非該当である。
+- Draft stacked PR #407 を作成し、`semver:patch`、日本語 AC、セルフレビューを記録した。実装 head `38edf1fd` の GitHub Actions run #29555015730 は 8分27秒で成功し、promotion gate は skip だった。
 
 ## 検証計画
 
