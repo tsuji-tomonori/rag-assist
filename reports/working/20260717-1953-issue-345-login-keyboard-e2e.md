@@ -21,7 +21,7 @@
 - LoginPage component test に empty submit と rejected authentication の focus/retry contract を追加。
 - `apps/web/e2e/login-keyboard.spec.ts` に `E2E-UI-LOGIN-KEYBOARD-001` を追加。Tab order、Space/Enter、native invalid focus、focus indicator、chat 到達、horizontal containment を 1280×720 / 320×720 で検証する。
 - `SQ-016`、`DES_UI_UX_001`、UI trace manifest、generated Web trace/inventory を同期。
-- task: `tasks/do/20260717-1937-issue-345-login-keyboard-e2e.md`
+- task: `tasks/done/20260717-1937-issue-345-login-keyboard-e2e.md`
 
 ## 検証
 
@@ -36,6 +36,19 @@
 - `npm run rag:release:source-audit`: dataset-specific branch 0 / artifact mismatch 0
 - `npm run ci`: pass（contract 1、API 802、Web 442、infra 38、benchmark 102 tests）
 - `git diff --check`: pass
+- implementation-head MemoRAG CI: [run 29575196283](https://github.com/tsuji-tomonori/rag-assist/actions/runs/29575196283) success
+- semver validation: [run 29575208758](https://github.com/tsuji-tomonori/rag-assist/actions/runs/29575208758) success
+
+## PR / lifecycle
+
+- implementation commit: `d40d3fb3`
+- Draft PR: [#427](https://github.com/tsuji-tomonori/rag-assist/pull/427)
+- semver: `semver:patch` 1 件
+- 受け入れ条件 comment: https://github.com/tsuji-tomonori/rag-assist/pull/427#issuecomment-5002466879
+- セルフレビュー comment: https://github.com/tsuji-tomonori/rag-assist/pull/427#issuecomment-5002467740
+- PR 作成直後の semver run `29575196233` は label 付与前に起動して failure。`semver:patch` 付与後の再評価で success となった。
+- GitHub Apps PR 操作 connector が利用できない実行環境のため、所定 fallback として `gh` を使用した。
+- lifecycle commit push 後の final-head CI、Issue #345 進捗 comment、clean/upstream は branch 最終確認として実施する。
 
 ## 指示への fit 評価
 
