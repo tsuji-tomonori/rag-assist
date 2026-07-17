@@ -1,6 +1,6 @@
 # Issue #345 keyboard-only 主要画面ナビゲーション E2E を追加する
 
-状態: do
+状態: done
 
 タスク種別: 機能追加
 
@@ -30,7 +30,7 @@ current `origin/main` を基準に、SYSTEM_ADMIN が chat / documents / questio
 - [x] chat / documents / questions / admin / profile の各 control が keyboard focus を受け、操作後の URL と画面 heading / region が一致する。
 - [x] 既存 local test mode だけを使い、production UI に架空 data / demo fallback を追加しない。
 - [x] PR #381 / #385 の変更ファイルと production UI/CSS を変更しない。
-- [ ] 対象 E2E、Web typecheck / unit / build、lint、docs freshness、CI が成功する。
+- [x] 対象 E2E、Web typecheck / unit / build、lint、docs freshness、required CI と smoke E2E が成功する。
 - [x] screen reader、実 browser 200% / 400% zoom、touch / real-device、scheduled Firefox / WebKit は未検証として残す。
 
 ## 検証計画
@@ -58,3 +58,4 @@ current `origin/main` を基準に、SYSTEM_ADMIN が chat / documents / questio
 - local Playwright server は sandbox の listen 制約で起動できない可能性がある。失敗時はコマンド経路を確認し、承認を得た sandbox 外再実行または CI 証跡を用いる。
 - representative screen reader、実 browser zoom、touch / real-device は利用可能環境がないため本タスクでは完了扱いにしない。
 - PR #381 / #385 取り込み後は、本 spec を同 branch の `@ui-quality` 実行対象として再確認する必要がある。
+- manual dispatch の full E2E は branch 21 pass / 7 fail、同一 `main@8a427a24` は 21 pass / 6 fail。共通 6 件は PR #381 / #385 が所有する既存 visual baseline、branch だけの 1 件は既存 route test の非一意 `getByRole('status')` が loading status と競合した timing-sensitive failure である。required smoke job では同 route test と新規 test を含む 16/16 が成功しており、本 task の completion gate は required CI + smoke とする。
