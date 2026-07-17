@@ -9351,6 +9351,20 @@
                       "/documents/share-grants.json"
                     ]
                   ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentsBucket9EC9DEB9",
+                          "Arn"
+                        ]
+                      },
+                      "/tenant-artifacts/*/folder-mutations/move/*"
+                    ]
+                  ]
                 }
               ]
             }
