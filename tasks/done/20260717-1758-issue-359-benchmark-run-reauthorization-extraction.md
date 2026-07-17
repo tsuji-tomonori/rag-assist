@@ -1,6 +1,6 @@
 # Issue #359 Phase 4i: benchmark run reauthorization 抽出
 
-- 状態: do
+- 状態: done
 - タスク種別: 修正
 - Issue: #359
 - stacked base: PR #421 / `codex/issue-359-benchmark-execution-starter-extraction`
@@ -91,15 +91,15 @@ benchmark worker reauthorization に、run state transition と facade-owned aut
 
 ## 受け入れ条件
 
-- [ ] run store lookup は入力 `tenantId` / `runId` の exact pair を使い、missing / cross-tenant を同一 permission-revoked contract に保つ。
-- [ ] already-revoked / inactive status guard と start=queued、その他=running の boundary matrix を維持する。
-- [ ] authorization 成功時は run をそのまま返し、clock / update / cleanup を呼ばない。
-- [ ] `PermissionRevokedError` 時だけ single clock で failed state を更新し、更新済み run を cleanup へ渡した後、元 error identity を再送出する。
-- [ ] non-permission authorization failure は update / cleanup せずそのまま伝播する。
-- [ ] service source は `Dependencies`、config、object store、identity provider、facade class に依存せず、facade public method は narrow delegate のみになる。
-- [ ] current authorization policy、artifact cleanup driver、worker event/output、tenant/non-enumeration、route/RBAC、RAG trust を変更しない。
-- [ ] targeted API test、API full test、root `npm run ci`、docs freshness、source audit、`git diff --check`、pre-commit が成功する。
-- [ ] Draft stacked PR に `semver:patch` を設定し、日本語 AC / self-review、report/task done、final-head CI、Issue #359 進捗まで記録する。
+- [x] run store lookup は入力 `tenantId` / `runId` の exact pair を使い、missing / cross-tenant を同一 permission-revoked contract に保つ。
+- [x] already-revoked / inactive status guard と start=queued、その他=running の boundary matrix を維持する。
+- [x] authorization 成功時は run をそのまま返し、clock / update / cleanup を呼ばない。
+- [x] `PermissionRevokedError` 時だけ single clock で failed state を更新し、更新済み run を cleanup へ渡した後、元 error identity を再送出する。
+- [x] non-permission authorization failure は update / cleanup せずそのまま伝播する。
+- [x] service source は `Dependencies`、config、object store、identity provider、facade class に依存せず、facade public method は narrow delegate のみになる。
+- [x] current authorization policy、artifact cleanup driver、worker event/output、tenant/non-enumeration、route/RBAC、RAG trust を変更しない。
+- [x] targeted API test、API full test、root `npm run ci`、docs freshness、source audit、`git diff --check`、pre-commit が成功する。
+- [x] Draft stacked PR に `semver:patch` を設定し、日本語 AC / self-review、report/task done を記録する。lifecycle commit の final-head CI と Issue #359 進捗は commit 後の外部証跡で確認する。
 
 ## 検証計画
 
@@ -130,3 +130,17 @@ benchmark worker reauthorization に、run state transition と facade-owned aut
 - canonical API-code generation は source line/call graph 由来で多数ファイルを機械更新する。
 - actual AWS Step Functions worker / IAM / DynamoDB / S3 cleanup は未検証となる。
 - stacked PR は #407 → #414 → #418 → #421 → Phase 4i の順序が必要である。
+
+## 完了結果
+
+- Draft PR: https://github.com/tsuji-tomonori/rag-assist/pull/425
+- stacked base: PR #421 / `codex/issue-359-benchmark-execution-starter-extraction`
+- 実装 head: `407a0d23e5e5bf3b7ac926da32018d0956929bd0`
+- semver: `semver:patch`
+- AC comment: https://github.com/tsuji-tomonori/rag-assist/pull/425#issuecomment-5002052194
+- self-review comment: https://github.com/tsuji-tomonori/rag-assist/pull/425#issuecomment-5002053583
+- implementation-head CI: SUCCESS（MemoRAG CI run `29573219498`）
+- final-head CI / Issue #359 progress: lifecycle commit push 後に外部証跡として確認・投稿する。先取りして成功とは記録しない。
+- GitHub Apps: callable connector が提供されなかったため `gh` fallback を使用した。
+- actual Step Functions worker / IAM / DynamoDB / S3 cleanup / manual UI: 未実施。credential と external state を伴い、local test を実環境成功の代替とはしない。
+- merge / deploy / release: 未実施。

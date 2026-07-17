@@ -4,7 +4,7 @@
 - Issue: #359
 - stacked base: PR #421 / `codex/issue-359-benchmark-execution-starter-extraction`
 - 作業ブランチ: `codex/issue-359-benchmark-run-reauthorization-extraction`
-- 状態: PR lifecycle 実施中
+- 状態: task done / lifecycle commit 前
 
 ## 受けた指示
 
@@ -49,11 +49,12 @@ README、public HTTP/OpenAPI、API examples、Web UI、運用設定は public co
 - `task docs:check`: 成功。docs validation、OpenAPI quality、API-code freshness、Web trace / inventory、Infra inventory、hidden Unicode check を完走。
 - `npm run rag:release:source-audit`: 成功。audit `sha256:151719916db1e342554afa7cdd14141d32d66b1e42ae0d32b130d7a715b27959`、dataset-specific branch 0、artifact mismatch 0。
 - `git diff --check`: 成功。
-- staged pre-commit / GitHub Actions: PR lifecycle で実施予定。
+- staged `pre-commit run`: 全 hook 成功。
+- implementation-head GitHub Actions: MemoRAG CI run `29573219498` が SUCCESS（8m59s）。explicit RAG candidate promotion gate は通常 PR のため skipped。
 
 ## 指示への fit 評価
 
-実装・test・docs・ローカル全量検証は要求に適合する。policy / cleanup driver、worker event/output、route/RBAC、tenant/non-enumeration、RAG trust は変更していない。stacked Draft PR、semver、AC/self-review、task done、final-head CI、Issue 進捗、clean/upstream 一致は後続 lifecycle で記録するため、現時点は partially complete である。
+実装・test・docs・ローカル全量検証、Draft stacked PR、semver、初回 AC/self-review、implementation-head CI、task/report done は要求に適合する。policy / cleanup driver、worker event/output、route/RBAC、tenant/non-enumeration、RAG trust は変更していない。final-head CI、Issue 進捗、clean/upstream 一致は lifecycle commit 後に確認するため、最終完了判定は先取りしない。現時点の fit は 4.9 / 5.0 と評価する。
 
 ## 未対応・制約・リスク
 
@@ -62,3 +63,17 @@ README、public HTTP/OpenAPI、API examples、Web UI、運用設定は public co
 - GitHub Apps の callable connector が利用できないため、GitHub 操作は `gh` fallback を使用し、その理由を PR / Issue に明記する。
 - merge / deploy / release は実施しない。
 - Phase 4 の残存は benchmark create orchestration と revocation cleanup driver である。
+
+## PR lifecycle 記録
+
+- Draft PR: https://github.com/tsuji-tomonori/rag-assist/pull/425
+- stacked base: PR #421 / `codex/issue-359-benchmark-execution-starter-extraction`
+- head branch: `codex/issue-359-benchmark-run-reauthorization-extraction`
+- implementation head: `407a0d23e5e5bf3b7ac926da32018d0956929bd0`
+- semver: `semver:patch`
+- AC comment: https://github.com/tsuji-tomonori/rag-assist/pull/425#issuecomment-5002052194
+- self-review comment: https://github.com/tsuji-tomonori/rag-assist/pull/425#issuecomment-5002053583
+- implementation-head CI: SUCCESS（MemoRAG CI run `29573219498`）
+- final-head CI / Issue #359 progress: lifecycle commit push 後に外部証跡として確認・投稿する。先取りして成功とは記録しない。
+- GitHub Apps: callable connector 未提供のため `gh` fallback を使用。PR 本文にも制約を明記した。
+- merge / deploy / release: 未実施。
