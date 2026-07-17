@@ -32,8 +32,8 @@ sequenceDiagram
 | 2 | `GET /debug-runs/{runId} handler` | Auth | "chat:admin:read_all" permission を必須条件として確認する。 | `requirePermission(user, "chat:admin:read_all")` | `apps/api/src/routes/debug-routes.ts:66 (GET /debug-runs/{runId} handler)` |
 | 3 | `GET /debug-runs/{runId} handler` | Validation | schema 検証済みの path parameter を取得する。 | `validParam<{ runId: string }>(c)` | `apps/api/src/routes/debug-routes.ts:67 (GET /debug-runs/{runId} handler)` |
 | 4 | `GET /debug-runs/{runId} handler` | Service | service の get debug run 処理を呼び出す。 | `service.getDebugRun(runId, user)` | `apps/api/src/routes/debug-routes.ts:69 (GET /debug-runs/{runId} handler)` |
-| 5 | `MemoRagService.getDebugRun` | Store | `this.deps.objectStore` に対して list keys を実行する。 | `this.deps.objectStore.listKeys(prefix)` | `apps/api/src/rag/memorag-service.ts:2388 (MemoRagService.getDebugRun)` |
-| 6 | `MemoRagService.getDebugRun` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(key)` | `apps/api/src/rag/memorag-service.ts:2391 (MemoRagService.getDebugRun)` |
+| 5 | `MemoRagService.getDebugRun` | Store | `this.deps.objectStore` に対して list keys を実行する。 | `this.deps.objectStore.listKeys(prefix)` | `apps/api/src/rag/memorag-service.ts:2399 (MemoRagService.getDebugRun)` |
+| 6 | `MemoRagService.getDebugRun` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(key)` | `apps/api/src/rag/memorag-service.ts:2402 (MemoRagService.getDebugRun)` |
 | 7 | `GET /debug-runs/{runId} handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json(trace, 200)` | `apps/api/src/routes/debug-routes.ts:74 (GET /debug-runs/{runId} handler)` |
 
 ## 分岐
@@ -42,5 +42,5 @@ sequenceDiagram
 | --- | --- | --- | --- |
 | B001 | `GET /debug-runs/{runId} handler` | `trace` が存在しない、または偽である | `apps/api/src/routes/debug-routes.ts:70 (GET /debug-runs/{runId} handler)` |
 | B002 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| B003 | `MemoRagService.getDebugRun` | `key` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:2390 (MemoRagService.getDebugRun)` |
+| B003 | `MemoRagService.getDebugRun` | `key` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:2401 (MemoRagService.getDebugRun)` |
 | B004 | `settleNonEnumerationTiming` | `remaining` が `0` より大きい | `apps/api/src/security/public-resource-response.ts:42 (settleNonEnumerationTiming)` |

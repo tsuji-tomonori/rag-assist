@@ -384,8 +384,8 @@
       "routeSource": "apps/api/src/routes/benchmark-routes.ts:197 (POST /benchmark-runs/{runId}/download)",
       "handlerSource": "apps/api/src/routes/benchmark-routes.ts:214 (POST /benchmark-runs/{runId}/download handler)",
       "functionCount": 15,
-      "branchCount": 15,
-      "projectedBranchCount": 9,
+      "branchCount": 14,
+      "projectedBranchCount": 2,
       "dataAccessCount": 1,
       "relatedTestCount": 2
     },

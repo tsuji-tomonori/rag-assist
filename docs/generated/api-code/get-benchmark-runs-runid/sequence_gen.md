@@ -32,7 +32,7 @@ sequenceDiagram
 | 2 | `GET /benchmark-runs/{runId} handler` | Auth | "benchmark:read" permission を必須条件として確認する。 | `requirePermission(actor, "benchmark:read")` | `apps/api/src/routes/benchmark-routes.ts:165 (GET /benchmark-runs/{runId} handler)` |
 | 3 | `GET /benchmark-runs/{runId} handler` | Validation | schema 検証済みの path parameter を取得する。 | `validParam<{ runId: string }>(c)` | `apps/api/src/routes/benchmark-routes.ts:166 (GET /benchmark-runs/{runId} handler)` |
 | 4 | `GET /benchmark-runs/{runId} handler` | Service | service の get benchmark run 処理を呼び出す。 | `service.getBenchmarkRun(actor, runId)` | `apps/api/src/routes/benchmark-routes.ts:167 (GET /benchmark-runs/{runId} handler)` |
-| 5 | `MemoRagService.getBenchmarkRun` | Service | service の get 処理を呼び出す。 | `this.benchmarkRunQueryService.get(actor, runId)` | `apps/api/src/rag/memorag-service.ts:4699 (MemoRagService.getBenchmarkRun)` |
+| 5 | `MemoRagService.getBenchmarkRun` | Service | service の get 処理を呼び出す。 | `this.benchmarkRunQueryService.get(actor, runId)` | `apps/api/src/rag/memorag-service.ts:4710 (MemoRagService.getBenchmarkRun)` |
 | 6 | `BenchmarkRunQueryService.get` | Store | `this.ports.benchmarkRunStore` に対して get を実行する。 | `this.ports.benchmarkRunStore.get(this.ports.tenantIdForActor(actor), runId)` | `apps/api/src/benchmark/benchmark-run-query-service.ts:20 (BenchmarkRunQueryService.get)` |
 | 7 | `GET /benchmark-runs/{runId} handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json(run, 200)` | `apps/api/src/routes/benchmark-routes.ts:169 (GET /benchmark-runs/{runId} handler)` |
 

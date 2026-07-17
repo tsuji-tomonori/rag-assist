@@ -295,8 +295,8 @@ const expectedDirectDependencyReads = [
   "verifiedIdentityProvider"
 ]
 
-const expectedPhase4fDirectDependencyReadCounts = {
-  benchmarkRunStore: 7
+const expectedPhase4gDirectDependencyReadCounts = {
+  benchmarkRunStore: 6
 }
 
 const expectedBroadDependencyPasses = {
@@ -386,7 +386,7 @@ test("the remaining broad private Dependencies field and its direct reads stay s
   assert.equal(dependencyTypeContract, true)
   assert.deepEqual(scanDependencyKeys(), [...expectedDependencyKeys])
   assert.deepEqual(scanDirectDependencyReads(), expectedDirectDependencyReads)
-  assert.deepEqual(scanPhase4fDirectDependencyReadCounts(), expectedPhase4fDirectDependencyReadCounts)
+  assert.deepEqual(scanPhase4gDirectDependencyReadCounts(), expectedPhase4gDirectDependencyReadCounts)
   assert.deepEqual(scanBroadDependencyPasses(), expectedBroadDependencyPasses)
   assert.deepEqual(scanImports((moduleName) => moduleName.startsWith("@aws-sdk/")), expectedAwsImports)
   assert.deepEqual(
@@ -495,7 +495,7 @@ function scanDirectDependencyReads(): string[] {
   )].sort()
 }
 
-function scanPhase4fDirectDependencyReadCounts(): typeof expectedPhase4fDirectDependencyReadCounts {
+function scanPhase4gDirectDependencyReadCounts(): typeof expectedPhase4gDirectDependencyReadCounts {
   const source = readFileSync(servicePath, "utf8")
   return {
     benchmarkRunStore: [...source.matchAll(/this\.deps\.benchmarkRunStore/g)].length

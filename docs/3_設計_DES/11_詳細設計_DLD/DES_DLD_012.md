@@ -112,7 +112,7 @@ facade が broad dependency を保持する private field は `constructor(priva
 | security/audit | `accountRevocationRegistry`, `administrativePrincipalTransferFence`, `resourceUserPrincipalDirectory`, `securityAuditOutbox`, `securityAuditReconciliationOutbox` |
 | local/migration seam | `localTestIngestAdmissionContext`, `legacyGlobalDocumentArtifacts` |
 
-Phase 4f 後の service source から `this.deps.<key>` として直接読まれる key は 24。`questionStore` は `QuestionService`、`asyncAgentProviders` は `AgentProviderCatalogService`、`codeBuildLogReader` は `BenchmarkRunQueryService` の narrow port として constructor で渡され、facade 内では直接読まない。`benchmarkRunStore` は query / cancellation service へ渡す一方、create、reauthorize、artifact download / cleanup path でも facade が直接読むため direct read key に残る。ただし facade 内の `this.deps.benchmarkRunStore` occurrence は cancellation の `get` / `update` 移管により 9 から 7 へ減る。残る `folderPolicyStore`、`administrativePrincipalTransferFence`、`securityAuditReconciliationOutbox`、`legacyGlobalDocumentArtifacts` は `Dependencies` 全体を受け取る helper/service 側で間接利用される。この区別は「直接参照がないので削除可能」という誤判定を避けるために必要である。
+Phase 4g 後の service source から `this.deps.<key>` として直接読まれる key は 24。`questionStore` は `QuestionService`、`asyncAgentProviders` は `AgentProviderCatalogService`、`codeBuildLogReader` は `BenchmarkRunQueryService` の narrow port として constructor で渡され、facade 内では直接読まない。`benchmarkRunStore` は query / cancellation / artifact download service へ渡す一方、create、reauthorize、revocation cleanup path でも facade が直接読むため direct read key に残る。ただし facade 内の `this.deps.benchmarkRunStore` occurrence は artifact download の `get` 移管により 7 から 6 へ減る。残る `folderPolicyStore`、`administrativePrincipalTransferFence`、`securityAuditReconciliationOutbox`、`legacyGlobalDocumentArtifacts` は `Dependencies` 全体を受け取る helper/service 側で間接利用される。この区別は「直接参照がないので削除可能」という誤判定を避けるために必要である。
 
 ### 直接 AWS 依存
 
@@ -313,6 +313,34 @@ subservice へ `Dependencies` 全体、AWS client、global config、authorizatio
 - create/reauthorize/download/cleanup/execution start、route permission/status mapping、RAG trust boundary は変更しない。
 
 `benchmark-run-cancellation-service.test.ts` は narrow-port source guard、authoritative tenant と cross-tenant non-enumeration、stop-before-update、cause / ARN mapping、ARN なし、stop failure、terminal status の既存挙動を固定する。`benchmark-execution-stopper.test.ts` は AWS command input を固定する。既存 `benchmark-tenant-boundary.test.ts`、facade test、Phase 4a public signature snapshot は二重実行期間として残す。
+
+## Phase 4g: benchmark artifact download の抽出境界
+
+Issue #359 Phase 4g では、benchmark run artifact download URL の tenant lookup、artifact key 選択、attachment metadata、TTL 正規化を `BenchmarkArtifactDownloadService` へ抽出し、S3 `GetObjectCommand` と presigner の mapping を `benchmark-artifact-signer.ts` へ移す。create、reauthorize、revocation cleanup、execution start は別の mutation / worker boundary として facade に維持する。
+
+`BenchmarkArtifactDownloadService` が受け取る port は次に限定する。
+
+| port | 用途 |
+|---|---|
+| `BenchmarkRunStore.get` | authoritative tenant partition 内の run 取得 |
+| authoritative tenant resolver | current actor から既存 fail-closed tenant ID を解決 |
+| artifact signer | bucket / object key / content disposition / TTL を S3 adapter へ渡す |
+| bucket / download TTL value | composition root で解決した configuration value |
+
+subservice へ `Dependencies` 全体、global config object、AWS client、authorization service、mutation port を渡さない。S3 client、region、`GetObjectCommand`、presigner は AWS adapter 内だけで解決する。
+
+保持する contract:
+
+- `MemoRagService.createBenchmarkArtifactDownloadUrl` の method 名、引数、返却型と `createBenchmarkArtifactDownloadMetadata` export を変更しない。
+- authoritative actor tenant ID を store partition に渡し、missing / cross-tenant run は同じ `undefined` として signer を呼ばない。
+- `logs` は保存済み CodeBuild log URL と build ID（未設定時は run ID）を返し、S3 signer を呼ばない。log URL 未設定時は架空 URL を生成せず `undefined` にする。
+- summary / results / report は run の既存 object key を使い、key 未設定時は `undefined`、bucket 未設定時は既存 configuration error を維持する。
+- S3 artifact の TTL は最低60秒、logs は保存 URL に付帯する従来 configuration value をそのまま返す。
+- filename の unsafe character を `_` に変換し、report `.md`、summary `.json`、results `.jsonl` と `attachment` content disposition を維持する。
+- signer failure はそのまま伝播させ、URL を推定または fallback 生成しない。
+- create/reauthorize/cleanup/execution start、route permission/status mapping、RAG trust boundary、Web UI は変更しない。
+
+`benchmark-artifact-download-service.test.ts` は narrow-port source guard、authoritative tenant / non-enumeration、logs URL、artifact key / metadata、missing bucket/key、TTL、signer failure を固定する。`benchmark-artifact-signer.test.ts` は S3 command input と presigner TTL を固定する。既存 facade test、tenant-boundary test、Phase 4a public signature snapshot は二重実行期間として残す。
 
 ## Error / compatibility 方針
 

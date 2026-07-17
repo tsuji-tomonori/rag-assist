@@ -13,6 +13,11 @@ import { AgentProviderCatalogService } from "../async-agent/provider-catalog-ser
 import { BenchmarkRunQueryService } from "../benchmark/benchmark-run-query-service.js"
 import { BenchmarkRunCancellationService } from "../benchmark/benchmark-run-cancellation-service.js"
 import { stopBenchmarkExecution } from "../benchmark/benchmark-execution-stopper.js"
+import {
+  BenchmarkArtifactDownloadService,
+  type BenchmarkDownloadArtifact
+} from "../benchmark/benchmark-artifact-download-service.js"
+import { signBenchmarkArtifact } from "../benchmark/benchmark-artifact-signer.js"
 import { debugTraceObjectKey, runChatOrchestration } from "./orchestration/chat-rag-orchestrator.js"
 import { llmOptions, normalizeMaxIterations, normalizeMemoryTopK, normalizeMinScore, normalizeSearchTopK, normalizeTopK, ragRuntimePolicy } from "../chat-orchestration/runtime-policy.js"
 import type { ChatInput, ChatOrchestrationResult } from "../chat-orchestration/types.js"
@@ -167,8 +172,6 @@ type CreateAsyncAgentRunInput = {
   selectedAgentProfileIds?: string[]
   budget?: AsyncAgentRun["budget"]
 }
-
-type BenchmarkDownloadArtifact = "report" | "summary" | "results" | "logs"
 
 type AdminLedger = {
   users: ManagedUser[]
@@ -450,6 +453,7 @@ const benchmarkSuites: BenchmarkSuite[] = [
 
 export class MemoRagService {
   private readonly agentProviderCatalogService: AgentProviderCatalogService
+  private readonly benchmarkArtifactDownloadService: BenchmarkArtifactDownloadService
   private readonly benchmarkRunCancellationService: BenchmarkRunCancellationService
   private readonly benchmarkRunQueryService: BenchmarkRunQueryService
   private readonly favoriteService: FavoriteService
@@ -469,6 +473,13 @@ export class MemoRagService {
       tenantIdForActor: authoritativeActorTenantId,
       stopExecution: stopBenchmarkExecution,
       now: () => new Date().toISOString()
+    })
+    this.benchmarkArtifactDownloadService = new BenchmarkArtifactDownloadService({
+      benchmarkRunStore: deps.benchmarkRunStore,
+      tenantIdForActor: authoritativeActorTenantId,
+      signArtifact: signBenchmarkArtifact,
+      bucketName: config.benchmarkBucketName,
+      downloadExpiresInSeconds: config.benchmarkDownloadExpiresInSeconds
     })
     this.favoriteService = new FavoriteService({
       favoriteStore: deps.favoriteStore,
@@ -4704,29 +4715,7 @@ export class MemoRagService {
   }
 
   async createBenchmarkArtifactDownloadUrl(actor: AppUser, runId: string, artifact: BenchmarkDownloadArtifact): Promise<{ url: string; expiresInSeconds: number; objectKey: string } | undefined> {
-    const run = await this.deps.benchmarkRunStore.get(authoritativeActorTenantId(actor), runId)
-    if (!run) return undefined
-    if (artifact === "logs") {
-      if (!run.codeBuildLogUrl) return undefined
-      return {
-        url: run.codeBuildLogUrl,
-        expiresInSeconds: config.benchmarkDownloadExpiresInSeconds,
-        objectKey: run.codeBuildBuildId ?? run.runId
-      }
-    }
-    if (!config.benchmarkBucketName) throw new Error("BENCHMARK_BUCKET_NAME is not configured")
-    const objectKey = artifact === "summary" ? run.summaryS3Key : artifact === "results" ? run.resultsS3Key : run.reportS3Key
-    if (!objectKey) return undefined
-
-    const expiresInSeconds = Math.max(60, config.benchmarkDownloadExpiresInSeconds)
-    const s3 = new S3Client({ region: config.region })
-    const downloadMetadata = createBenchmarkArtifactDownloadMetadata(runId, artifact, objectKey)
-    const url = await getSignedUrl(s3, new GetObjectCommand({
-      Bucket: config.benchmarkBucketName,
-      Key: downloadMetadata.objectKey,
-      ResponseContentDisposition: downloadMetadata.contentDisposition
-    }), { expiresIn: expiresInSeconds })
-    return { url, expiresInSeconds, objectKey }
+    return this.benchmarkArtifactDownloadService.createDownload(actor, runId, artifact)
   }
 
   async getBenchmarkCodeBuildLogText(actor: AppUser, runId: string): Promise<{ text: string; fileName: string; contentDisposition: string } | undefined> {
@@ -5466,25 +5455,6 @@ function toJsonValue(value: unknown): JsonValue | undefined {
   return JSON.parse(JSON.stringify(value)) as JsonValue
 }
 
-function artifactExtension(artifact: BenchmarkDownloadArtifact): string {
-  if (artifact === "report") return ".md"
-  if (artifact === "summary") return ".json"
-  return ".jsonl"
-}
-
-export function createBenchmarkArtifactDownloadMetadata(
-  runId: string,
-  artifact: "report" | "summary" | "results",
-  objectKey: string
-): { fileName: string; objectKey: string; contentDisposition: string } {
-  const fileName = `benchmark-${artifact}-${runId.replace(/[^a-zA-Z0-9._-]/g, "_")}${artifactExtension(artifact)}`
-  return {
-    fileName,
-    objectKey,
-    contentDisposition: `attachment; filename="${fileName}"`
-  }
-}
-
 function reindexPublicationScope(
   actor: AppUser,
   manifest: DocumentManifest,
@@ -5503,6 +5473,8 @@ function reindexPublicationScope(
   })
   return { tenantId, actorId: actor.userId, sourceId, sourceVersion, purpose: "reindex" }
 }
+
+export { createBenchmarkArtifactDownloadMetadata } from "../benchmark/benchmark-artifact-download-service.js"
 
 function reindexAdmissionContext(manifest: DocumentManifest, fence: StagedPublicationFence): AuthoritativeAdmissionContext {
   const admission = manifest.admission

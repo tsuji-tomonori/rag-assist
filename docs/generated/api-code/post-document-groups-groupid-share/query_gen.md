@@ -8,15 +8,15 @@
 
 | # | CRUD/実行 | Target | Method | 自然言語での目的 | Caller | コード根拠 |
 | ---: | --- | --- | --- | --- | --- | --- |
-| 1 | 参照 | `this.deps.documentGroupStore` | `list` | `this.deps.documentGroupStore` に対して list を実行する。 | `MemoRagService.updateDocumentGroupSharing` | `apps/api/src/rag/memorag-service.ts:1155 (MemoRagService.updateDocumentGroupSharing)` |
+| 1 | 参照 | `this.deps.documentGroupStore` | `list` | `this.deps.documentGroupStore` に対して list を実行する。 | `MemoRagService.updateDocumentGroupSharing` | `apps/api/src/rag/memorag-service.ts:1166 (MemoRagService.updateDocumentGroupSharing)` |
 | 2 | 参照 | `this.deps.documentGroupStore` | `list` | `this.deps.documentGroupStore` に対して list を実行する。 | `FolderPermissionService.resolveEffectiveFolderPermissionDetail` | `apps/api/src/folders/folder-permission-service.ts:145 (FolderPermissionService.resolveEffectiveFolderPermissionDetail)` |
 | 3 | 参照 | `this.deps.userGroupStore` | `get` | `this.deps.userGroupStore` に対して get を実行する。 | `FolderPermissionService.resolveUserMembershipPermission` | `apps/api/src/folders/folder-permission-service.ts:780 (FolderPermissionService.resolveUserMembershipPermission)` |
 | 4 | 参照 | `this.deps.groupMembershipStore` | `listByGroupId` | `this.deps.groupMembershipStore` に対して list by group id を実行する。 | `FolderPermissionService.resolveUserMembershipPermission` | `apps/api/src/folders/folder-permission-service.ts:781 (FolderPermissionService.resolveUserMembershipPermission)` |
 | 5 | 参照 | `this.deps.folderPolicyStore` | `findByFolderId` | `this.deps.folderPolicyStore` に対して find by folder id を実行する。 | `FolderPermissionService.resolvePolicyContext` | `apps/api/src/folders/folder-permission-service.ts:695 (FolderPermissionService.resolvePolicyContext)` |
 | 6 | 参照 | `this.deps.folderPolicyStore` | `get` | `this.deps.folderPolicyStore` に対して get を実行する。 | `FolderPermissionService.resolvePolicyContext` | `apps/api/src/folders/folder-permission-service.ts:711 (FolderPermissionService.resolvePolicyContext)` |
 | 7 | 参照 | `this.deps.documentGroupStore` | `get` | `this.deps.documentGroupStore` に対して get を実行する。 | `FolderPermissionService.assertFolderOperation` | `apps/api/src/folders/folder-permission-service.ts:110 (FolderPermissionService.assertFolderOperation)` |
-| 8 | 更新 | `this.deps.documentGroupStore` | `updateWithPathLocks` | `this.deps.documentGroupStore` に対して update with path locks を実行する。 | `MemoRagService.updateDocumentGroupSharing` | `apps/api/src/rag/memorag-service.ts:1185 (MemoRagService.updateDocumentGroupSharing)` |
-| 9 | 更新 | `this.deps.documentGroupStore` | `updateWithPathLocks` | `this.deps.documentGroupStore` に対して update with path locks を実行する。 | `MemoRagService.updateDocumentGroupSharing` | `apps/api/src/rag/memorag-service.ts:1188 (MemoRagService.updateDocumentGroupSharing)` |
+| 8 | 更新 | `this.deps.documentGroupStore` | `updateWithPathLocks` | `this.deps.documentGroupStore` に対して update with path locks を実行する。 | `MemoRagService.updateDocumentGroupSharing` | `apps/api/src/rag/memorag-service.ts:1196 (MemoRagService.updateDocumentGroupSharing)` |
+| 9 | 更新 | `this.deps.documentGroupStore` | `updateWithPathLocks` | `this.deps.documentGroupStore` に対して update with path locks を実行する。 | `MemoRagService.updateDocumentGroupSharing` | `apps/api/src/rag/memorag-service.ts:1199 (MemoRagService.updateDocumentGroupSharing)` |
 
 ## 外部サービス操作
 
