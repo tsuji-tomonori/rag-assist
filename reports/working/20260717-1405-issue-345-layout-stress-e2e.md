@@ -19,7 +19,7 @@
 | R3 | root/対象領域の幅と fixture 条件を JSON 化 | 高 | 対応 |
 | R4 | #358/#359/既存 #345 PR と非重複 | 高 | 対応 |
 | R5 | 自動証跡の限界を明記 | 高 | 対応 |
-| R6 | stacked PR lifecycle と両 head CI | 高 | 後続 lifecycle で対応 |
+| R6 | stacked PR lifecycle と両 head CI | 高 | initial 完了、final は lifecycle commit 後に確認 |
 
 ## 3. 検討・判断したこと
 
@@ -54,26 +54,28 @@
 | 成果物 | 形式 | 内容 | 指示との対応 |
 |---|---|---|---|
 | `apps/web/e2e/layout-stress.spec.ts` | TypeScript | reduced-motion / layout stress E2E と JSON evidence | R1〜R5 |
-| `tasks/do/20260717-1354-issue-345-layout-stress-e2e.md` | Markdown | AC・検証・リスク・stacked lifecycle | R1〜R6 |
+| `tasks/done/20260717-1354-issue-345-layout-stress-e2e.md` | Markdown | AC・検証・リスク・stacked lifecycle | R1〜R6 |
 | `reports/working/20260717-1405-issue-345-layout-stress-e2e.md` | Markdown | 作業と fit の記録 | R1〜R6 |
 
 ## 7. 指示への fit 評価
 
 | 評価軸 | 評価 | 理由 |
 |---|---:|---|
-| 指示網羅性 | 4.5/5 | E2E と local validation は完了、PR lifecycle は後続 |
+| 指示網羅性 | 4.8/5 | E2E、local validation、Draft PR、initial CI は完了 |
 | 制約遵守 | 5/5 | 非重複、test-only、非代替、禁止操作を維持 |
 | 成果物品質 | 4.5/5 | 代表条件は機械可読だが browser/device 全網羅ではない |
 | 説明責任 | 5/5 | 初回 fail、境界、audit、未検証を明記 |
-| 検収容易性 | 4.5/5 | AC と JSON evidence を対応付け、CI 証跡は後続 |
+| 検収容易性 | 4.8/5 | AC、JSON evidence、PR/CI 証跡を対応付けた |
 
-**総合 fit: 4.7/5（約94%）**
+**総合 fit: 4.8/5（約96%）**
 
-理由: 実装と local validation は完了したが、Draft stacked PR と initial/final CI は report 作成時点で後続のため。
+理由: 実装、local validation、Draft stacked PR、initial CI は完了した。final head CI と Issue コメントは lifecycle commit 後の off-repo 証跡として残るため。
 
 ## 8. 未対応・制約・リスク
 
-- 未対応: Draft stacked PR、initial/final CI、PR/Issue コメントは後続 lifecycle で記録する。
+- Draft stacked PR #410 を #408 branch 向けに作成し、implementation head `69c3bf47` の required CI run 29556582461 が success した。
+- PR metadata 上 `semver:patch` が唯一の semver label であることを確認した。`validate-semver-label.yml` は `branches: [main]` のため stacked base では非適用であり、未起動を success とは扱わない。
+- 受け入れ条件とセルフレビューを日本語 top-level comment に記録した。final head CI と Issue #345 コメントは完了報告前に off-repo 証跡として記録する。
 - 制約: 320px Chromium と deterministic E2E fixture の代表条件であり、全 locale / 文字列 / 件数 / browser を網羅しない。
 - リスク: reduced-motion は chat scroll behavior の代表証跡であり、全 CSS animation を証明しない。
 - 未検証: 実 browser zoom、文字のみ拡大、browser chrome、OS scaling、DPR、representative screen reader、real-device、scheduled Firefox / WebKit。
