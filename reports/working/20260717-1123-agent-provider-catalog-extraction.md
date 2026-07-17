@@ -4,7 +4,7 @@
 - Issue: #359
 - branch: `codex/issue-359-agent-provider-catalog-extraction`
 - stacked base: PR #397 final head `b9e6a707`
-- 状態: PR lifecycle 前の実装・ローカル検証完了
+- 状態: draft PR #403 作成・初回 CI 成功・task 完了
 
 ## 受けた指示
 
@@ -53,6 +53,7 @@ PR #397 final head から Issue #359 を継続し、Issue と PR #383 / #390 / #
 - `npm run rag:release:source-audit`（dataset-specific branch 0、artifact mismatch 0）
 - `npm run ci`（API 821、Web 442、Infra 38、Benchmark 102 を含む全 workspace）
 - `git diff --check`
+- GitHub Actions run #29549928756（実装 head `fb6a4d19`）: 成功（8分38秒、promotion gate は skip）
 
 修復履歴:
 
@@ -74,3 +75,13 @@ PR #397 final head から Issue #359 を継続し、Issue と PR #383 / #390 / #
 - generated docs は 297 file の機械更新を含み stacked PR 間で path conflict になり得る。base 順に merge/rebase し、最終 base で canonical generator を再実行する必要がある。
 - async-agent run lifecycle、artifact/writeback、authorization、provider execution/result policy は facade に残る。後続で独立した security/data/compensation 単位として扱う。
 - merge、deploy、release は指示どおり行わない。
+
+## PR lifecycle
+
+- draft stacked PR: #403 `♻️ Issue #359: provider catalog を narrow port へ抽出`
+- base: `codex/issue-359-question-service-extraction`（PR #397）
+- label: `semver:patch`
+- 日本語 AC コメント: 記録済み
+- 日本語セルフレビュー: blocking 指摘なしとして記録済み
+- task: PR コメント後に `tasks/done/` へ移動
+- task completion commit 後の final-head CI、Issue #359 進捗コメント、clean/upstream は post-completion check で確認する。

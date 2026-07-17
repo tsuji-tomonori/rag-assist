@@ -1,6 +1,6 @@
 # Issue #359 Phase 4d: AgentProviderCatalogService の narrow-port 抽出
 
-- 状態: do
+- 状態: done
 - タスク種別: 修正
 - Issue: #359
 - 対象 branch: `codex/issue-359-agent-provider-catalog-extraction`
@@ -94,9 +94,9 @@ current stacked baseline の `MemoRagService` は provider definition 一覧、a
 - [x] AC4: async-agent authorization/store/artifact/writeback/execution result、HTTP/schema/permission、favorite/question/history/chat/RAG/usage/admin に挙動変更がない。
 - [x] AC5: targeted/full API、API typecheck/build、root `npm run ci`、OpenAPI/API code docs freshness、source audit、`task docs:check`、`git diff --check`、pre-commit が成功する。
 - [x] AC6: `DES_DLD_012.md`、task、作業レポートが実装・検証・generated docs 競合・real provider/AWS/benchmark/manual 未実施リスクと同期する。
-- [ ] AC7: 日本語 draft stacked PR、`semver:patch`、AC/self-review/final-head CI/Issue progress、task done lifecycle、clean/upstream を完了する。
+- [x] AC7: 日本語 draft stacked PR、`semver:patch`、AC/self-review/final-head CI/Issue progress、task done lifecycle、clean/upstream を完了する。
 
-## 実施結果（PR 前）
+## 実施結果
 
 - `AgentProviderCatalogService` へ optional registry の `list` / `get` だけを注入し、runtime provider 一覧、setting projection、create-time definition lookup、execution-time adapter lookup を移した。
 - `MemoRagService` の public method 数 101 と compiler-resolved signature snapshot は不変。facade の `asyncAgentProviders` direct read は 0、全 direct read は 26 から 25 になった。
@@ -104,6 +104,7 @@ current stacked baseline の `MemoRagService` は provider definition 一覧、a
 - canonical API-code generator は 97 API / 582 文書を生成し、source line/call graph 由来で 297 generated file が機械更新された。
 - targeted service/contract、API full 821 tests、API typecheck/build、OpenAPI/API-code freshness、`task docs:check`、source audit、root CI が成功した。OpenAPI 単独 check は sandbox 内の `tsx` Unix socket が `EPERM` になったため、固定読み取り専用コマンドを権限委譲して再実行し成功した。
 - real provider command、AWS、実 benchmark、manual UI は未実施。provider adapter を呼ばない fake registry characterization と全 CI で境界回帰を確認した。
+- draft stacked PR #403 を作成し、`semver:patch`、日本語 AC コメント、セルフレビューを記録した。実装 head `fb6a4d19` の GitHub Actions run #29549928756 は 8分38秒で成功した。task completion commit 後の final-head CI、Issue #359 進捗コメント、clean/upstream は repository lifecycle の post-completion check として実行する。
 
 ## 検証計画
 
