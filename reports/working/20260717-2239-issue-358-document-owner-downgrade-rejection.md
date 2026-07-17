@@ -42,15 +42,20 @@
 - `npm run ci`: Contract 4、API 905、Web 442、Infra 38、Benchmark 102、lint/typecheck/buildを含め成功。既存size warningのみ。
 - `git diff --check`: 成功。
 - `pre-commit run`: 全hook成功。
-- remote implementation/final-head CIはcommit/PR lifecycleで実施し、本レポートを追記する。
+- remote implementation-head CI: run `29585166471`、head `bffb8a924afad9a43e8e4d2237bb2aaf52f2178a`で成功。主要job `Lint, type-check, test, build, and synth`は成功し、本PRで対象外の`Explicit RAG candidate promotion gate`はworkflow条件によりskip。
+- remote final-head CIはtask lifecycle commit後に実施し、PRの最終external evidenceへ記録する。
 
 ## 成果物
 
 - implementation/test: `apps/api/src/documents/document-permission-service.ts`、同test。
 - canonical requirements: FR-077、FR-085。
 - generated docs: `docs/generated/api-code/`の依存ファイル。
-- task: `tasks/do/20260717-2211-issue-358-document-owner-downgrade-rejection.md`。
+- task: `tasks/done/20260717-2211-issue-358-document-owner-downgrade-rejection.md`。
 - report: `reports/working/20260717-2239-issue-358-document-owner-downgrade-rejection.md`。
+- implementation commit: `bffb8a924afad9a43e8e4d2237bb2aaf52f2178a`。
+- Draft PR: #434 `https://github.com/tsuji-tomonori/rag-assist/pull/434`。baseはPR #432 branch、labelは`semver:patch`、状態はDraft/open/CLEAN。
+- 初回受け入れ条件コメント: `https://github.com/tsuji-tomonori/rag-assist/pull/434#issuecomment-5003921493`。
+- 初回セルフレビューコメント: `https://github.com/tsuji-tomonori/rag-assist/pull/434#issuecomment-5003921791`。
 
 ## 指示へのfit評価
 
