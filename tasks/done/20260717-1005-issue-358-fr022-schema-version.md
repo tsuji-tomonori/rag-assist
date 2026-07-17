@@ -1,6 +1,6 @@
 # Issue #358 FR-022 schemaVersion 契約統一
 
-- 状態: do
+- 状態: done
 - タスク種別: 修正
 - 対象: Issue #358 P1-A / FR-022
 
@@ -99,7 +99,7 @@
 - [x] AC6: list read は保存先を書き換えず、副作用のない backward-compatible read である。
 - [x] AC7: API/shared contract、runtime type、Web type、store、fixture、FR-022/DES/coverage/generated docs の version 語彙が一致する。
 - [x] AC8: 選定した test/typecheck/build/lint/docs/source audit が成功する。
-- [ ] AC9: draft PR に semver、重複 PR、未検証の実 AWS migration、rollback を記載し、日本語 AC/self-review/final-head CI evidence を残す。
+- [x] AC9: draft PR に semver、重複 PR、未検証の実 AWS migration、rollback を記載し、日本語 AC/self-review/final-head CI evidence を残す。
 
 ## 検証計画
 
@@ -135,3 +135,13 @@
 - `git diff --check`: 成功。
 - 初回の contract direct `tsx` は sandbox IPC 制約、Web direct root Vitest は workspace config 不適用、requirements coverage の root 実行は cwd 前提で失敗した。いずれも repository 定義に沿う runner/cwd へ修正し、同じ対象を成功まで再実行した。
 - 実 AWS item 分布と production migration は対象外かつ未検証。
+
+## PR / CI evidence
+
+- Draft PR: https://github.com/tsuji-tomonori/rag-assist/pull/398
+- semver: `semver:patch`。label 適用後の Validate Semver Label run 1613 は成功。
+- AC コメント: https://github.com/tsuji-tomonori/rag-assist/pull/398#issuecomment-4998106747
+- セルフレビューコメント: https://github.com/tsuji-tomonori/rag-assist/pull/398#issuecomment-4998107623
+- 初期 implementation head `b11f14cbec312463fa6fe7f83b0ae9bcc58e6ab7` の MemoRAG CI run 1139 は成功。
+- label 適用前の Validate Semver Label run 1612 は失敗したが、同じ head に `semver:patch` を付与した後の run 1613 が成功し、期待する最終状態へ収束した。
+- lifecycle commit 後の final-head CI と Issue #358 進捗コメントは、最終 push 後に追記確認する。
