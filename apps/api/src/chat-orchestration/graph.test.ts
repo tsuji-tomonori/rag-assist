@@ -22,7 +22,7 @@ import { MockBedrockTextModel } from "../adapters/mock-bedrock.js"
 import { MemoRagService } from "../rag/memorag-service.js"
 import { answerReplayCandidateCounts, answerReplayDecision, applyChatOrchestrationUpdate, runChatOrchestration } from "./graph.js"
 import type { ChatOrchestrationState } from "./state.js"
-import type { DebugStep, DebugTrace } from "../types.js"
+import { CHAT_ORCHESTRATION_TRACE_TARGET_TYPE, type DebugStep, type DebugTrace } from "../types.js"
 
 test("fixed MemoRAG workflow answers from selected evidence and records fixed trace steps", async () => {
   const service = new MemoRagService(await createTestDeps())
@@ -1205,6 +1205,7 @@ function assertSafeDebugStep(
 
 function assertSanitizedDebugTrace(trace: DebugTrace | undefined): asserts trace is DebugTrace {
   assert.ok(trace)
+  assert.equal(trace.targetType, CHAT_ORCHESTRATION_TRACE_TARGET_TYPE)
   assert.equal(trace.visibility, "operator_sanitized")
   assert.match(trace.question, /^sha256:[0-9a-f]{64}$/)
   assert.equal(trace.answerPreview, "[redacted:document-content]")

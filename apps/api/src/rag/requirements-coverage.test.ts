@@ -52,7 +52,7 @@ const traceByRequirement: Record<string, string[]> = {
   "FR-046": ["DebugPanel.test.tsx", "debugApi.test.ts", "docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md"],
   "FR-047": ["benchmark/run.test.ts", "benchmark/corpus.test.ts", "docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md"],
   "FR-048": ["benchmarkApi.test.ts", "useBenchmarkRuns.test.ts", "docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md"],
-  "FR-049": ["tasks/todo/20260713-2259-chat-orchestration-completion.md"],
+  "FR-049": ["apps/api/src/rag/orchestration/chat-rag-orchestrator.ts", "apps/api/src/chat-orchestration/graph.test.ts", "apps/api/src/rag/memorag-service.test.ts", "apps/api/src/contract/debug-trace-target-contract.test.ts", "packages/contract/src/schemas/chat.test.ts", "docs/2_アーキテクチャ_ARC/21_重要決定_ADR/ARC_ADR_007.md", "tasks/todo/20260713-2259-chat-orchestration-completion.md"],
   "FR-050": ["tasks/todo/20260713-2300-async-agent-execution.md"],
   "FR-051": ["tasks/todo/20260713-2301-user-preferences.md"],
   "FR-052": ["docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md"],

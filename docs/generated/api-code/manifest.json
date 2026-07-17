@@ -569,7 +569,7 @@
       "branchCount": 29,
       "projectedBranchCount": 4,
       "dataAccessCount": 2,
-      "relatedTestCount": 9
+      "relatedTestCount": 10
     },
     {
       "method": "POST",

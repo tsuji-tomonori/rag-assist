@@ -12,7 +12,7 @@ import { sanitizeProviderText, type AsyncAgentProviderArtifact, type AsyncAgentP
 import { debugTraceObjectKey, runChatOrchestration } from "./orchestration/chat-rag-orchestrator.js"
 import { llmOptions, normalizeMaxIterations, normalizeMemoryTopK, normalizeMinScore, normalizeSearchTopK, normalizeTopK, ragRuntimePolicy } from "../chat-orchestration/runtime-policy.js"
 import type { ChatInput, ChatOrchestrationResult } from "../chat-orchestration/types.js"
-import { DEBUG_TRACE_SANITIZE_POLICY_VERSION, DEBUG_TRACE_SCHEMA_VERSION, type AdminExportArtifact, type AgentProviderAvailability, type AgentProviderSetting, type AgentRuntimeProvider, type AsyncAgentRun, type AccessRoleDefinition, type AliasAuditLogItem, type AliasAuditLogPage, type AliasDefinition, type AliasListPage, type AuthoritativeAdmissionContext, type BenchmarkMode, type BenchmarkRun, type BenchmarkRunner, type BenchmarkRunThresholds, type BenchmarkSuite, type ChatRun, type ChatToolInvocation, type Chunk, type ConversationHistoryItem, type CostAuditSummary, type DebugReplayPlan, type DebugTrace, type DocumentGroup, type DocumentIngestRun, type DocumentManifest, type DocumentManifestSummary, type ExtractionWarning, type FavoriteItem, type FavoriteListItem, type FavoriteTargetType, type HumanQuestion, type IngestAdmissionContext, type JsonValue, type ManagedUser, type ManagedUserAdminView, type ManagedUserAuditAction, type ManagedUserAuditLogEntry, type ManagedUserAuditLogPage, type ManagedUserDeletionPreflight, type ManagedUserListPage, type MemoryCard, type ParsedDocumentPreview, type PublishedAliasArtifact, type QualityActionCard, type ReindexMigration, type StagedPublicationFence, type StructuredBlock, type UserUsageSummary, type VectorRecord } from "../types.js"
+import { DEBUG_TRACE_SANITIZE_POLICY_VERSION, DEBUG_TRACE_SCHEMA_VERSION, LEGACY_DEBUG_TRACE_TARGET_TYPE_DEFAULT, type AdminExportArtifact, type AgentProviderAvailability, type AgentProviderSetting, type AgentRuntimeProvider, type AsyncAgentRun, type AccessRoleDefinition, type AliasAuditLogItem, type AliasAuditLogPage, type AliasDefinition, type AliasListPage, type AuthoritativeAdmissionContext, type BenchmarkMode, type BenchmarkRun, type BenchmarkRunner, type BenchmarkRunThresholds, type BenchmarkSuite, type ChatRun, type ChatToolInvocation, type Chunk, type ConversationHistoryItem, type CostAuditSummary, type DebugReplayPlan, type DebugTrace, type DocumentGroup, type DocumentIngestRun, type DocumentManifest, type DocumentManifestSummary, type ExtractionWarning, type FavoriteItem, type FavoriteListItem, type FavoriteTargetType, type HumanQuestion, type IngestAdmissionContext, type JsonValue, type ManagedUser, type ManagedUserAdminView, type ManagedUserAuditAction, type ManagedUserAuditLogEntry, type ManagedUserAuditLogPage, type ManagedUserDeletionPreflight, type ManagedUserListPage, type MemoryCard, type ParsedDocumentPreview, type PublishedAliasArtifact, type QualityActionCard, type ReindexMigration, type StagedPublicationFence, type StructuredBlock, type UserUsageSummary, type VectorRecord } from "../types.js"
 import type { ReplayDecisionReasonCode } from "../types.js"
 import type { AppUser } from "../auth.js"
 import type { CreatedDirectoryUser } from "../adapters/user-directory.js"
@@ -2368,7 +2368,7 @@ export class MemoRagService {
     }
     return {
       runId: trace.runId,
-      targetType: trace.targetType ?? "rag_run",
+      targetType: trace.targetType ?? LEGACY_DEBUG_TRACE_TARGET_TYPE_DEFAULT,
       sourceTraceVisibility: trace.visibility ?? "operator_sanitized",
       createdAt: new Date().toISOString(),
       replayable: false,
@@ -5998,7 +5998,7 @@ function withDebugTraceContractMetadata(trace: DebugTrace): DebugTrace {
   return {
     ...trace,
     schemaVersion: DEBUG_TRACE_SCHEMA_VERSION,
-    targetType: trace.targetType ?? "rag_run",
+    targetType: trace.targetType ?? LEGACY_DEBUG_TRACE_TARGET_TYPE_DEFAULT,
     visibility: trace.visibility ?? "operator_sanitized",
     sanitizePolicyVersion: trace.sanitizePolicyVersion ?? DEBUG_TRACE_SANITIZE_POLICY_VERSION,
     exportRedaction: trace.exportRedaction ?? {

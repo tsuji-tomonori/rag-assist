@@ -794,7 +794,11 @@ export type ConversationHistoryTurn = {
 }
 
 export type DebugStepStatus = "success" | "warning" | "error"
-export type DebugTraceTargetType = "rag_run" | "ingest_run" | "chat_orchestration_run" | "async_agent_run" | "tool_invocation"
+export const DEBUG_TRACE_TARGET_TYPES = ["rag_run", "ingest_run", "chat_orchestration_run", "async_agent_run", "tool_invocation"] as const
+export const CHAT_ORCHESTRATION_TRACE_TARGET_TYPE = "chat_orchestration_run" as const
+export const RAG_TRACE_TARGET_TYPE = "rag_run" as const
+export const LEGACY_DEBUG_TRACE_TARGET_TYPE_DEFAULT = RAG_TRACE_TARGET_TYPE
+export type DebugTraceTargetType = typeof DEBUG_TRACE_TARGET_TYPES[number]
 export type DebugTraceVisibility = "user_safe" | "support_sanitized" | "operator_sanitized" | "internal_restricted"
 
 export const DEBUG_TRACE_SANITIZE_POLICY_VERSION = "debug-trace-sanitize-v1"

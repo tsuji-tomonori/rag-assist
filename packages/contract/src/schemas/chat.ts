@@ -300,6 +300,12 @@ export const DebugStepSchema = z.object({
   completedAt: z.string()
 })
 
+export const DEBUG_TRACE_TARGET_TYPES = ["rag_run", "ingest_run", "chat_orchestration_run", "async_agent_run", "tool_invocation"] as const
+export const CHAT_ORCHESTRATION_TRACE_TARGET_TYPE = "chat_orchestration_run" as const
+export const RAG_TRACE_TARGET_TYPE = "rag_run" as const
+export const LEGACY_DEBUG_TRACE_TARGET_TYPE_DEFAULT = RAG_TRACE_TARGET_TYPE
+export const DebugTraceTargetTypeSchema = z.enum(DEBUG_TRACE_TARGET_TYPES)
+
 export const DebugTraceSchema = z.object({
   schemaVersion: z.literal(1).default(1),
   runId: z.string(),
@@ -307,6 +313,7 @@ export const DebugTraceSchema = z.object({
   parentTraceIds: z.array(z.string()).optional(),
   tenantPartitionId: z.string().optional(),
   actorPartitionId: z.string().optional(),
+  targetType: DebugTraceTargetTypeSchema.optional().default(LEGACY_DEBUG_TRACE_TARGET_TYPE_DEFAULT),
   question: z.string(),
   modelId: z.string(),
   embeddingModelId: z.string(),
@@ -413,6 +420,7 @@ export type ChatRequest = z.input<typeof ChatRequestSchema>
 export type Citation = z.output<typeof CitationSchema>
 export type ClarificationOption = z.output<typeof ClarificationOptionSchema>
 export type Clarification = z.output<typeof ClarificationSchema>
+export type DebugTraceTargetType = z.output<typeof DebugTraceTargetTypeSchema>
 export type DebugTrace = z.output<typeof DebugTraceSchema>
 export type ChatResponse = z.output<typeof ChatResponseSchema>
 export type ChatRunStartResponse = z.output<typeof ChatRunStartResponseSchema>
