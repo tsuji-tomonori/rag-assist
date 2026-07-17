@@ -4054,6 +4054,7 @@
           "GetAtt:DocumentsBucket9EC9DEB9.Arn",
           "GetAtt:UserPool6BA7E5F2.Arn",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentGroupsTableA5108040\",\"Arn\"]},\"/index/*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/document-mutations/move/\",{\"Ref\":\"AWS::AccountId\"},\"/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/documents/share-grants.json\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/documents/share-grants/\",{\"Ref\":\"AWS::AccountId\"},\"/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/security-audit/intents/\",{\"Ref\":\"AWS::AccountId\"},\"/*\"]]",
@@ -4062,7 +4063,8 @@
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/security/revocation-cleanup-repairs/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/security/revocation-cleanup/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/source-governance/\",{\"Ref\":\"AWS::AccountId\"},\"/*\"]]",
-          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/tenant-artifacts/*/folder-mutations/move/*\"]]"
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/tenant-artifacts/*/folder-mutations/move/*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/tenant-artifacts/*/manifests/*\"]]"
         ]
       },
       "detailFilePath": "infra-inventory/aws-iam-policy.md"
