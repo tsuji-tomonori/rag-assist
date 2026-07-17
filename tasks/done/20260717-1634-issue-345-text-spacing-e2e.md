@@ -1,6 +1,6 @@
 # Issue #345 text-spacing override proxy E2E
 
-- 状態: do
+- 状態: done
 - タスク種別: 修正
 - 関連 Issue: #345
 - Stacked base: PR #416 final head `4706ce69e3230cf20ef68b1d11cc66f862d05da7`
@@ -70,7 +70,7 @@ Issue #345 は WCAG 2.2 AA、320px responsive、長文・拡大時の reflow を
 - [x] AC5: viewport、URL、computed spacing、active view、root/region width、代表 control rect を JSON evidence に添付する。
 - [x] AC6: user stylesheet / browser setting / screen reader / real-device / 実 zoom の合格証跡へ読み替えない boundary を test/report/PR に明記する。
 - [x] AC7: 対象 E2E、required smoke、full E2E、Web typecheck、repository lint、Web build、docs check、diff check、pre-commit が pass する。
-- [ ] AC8: PR #416 branch 向け Draft stacked PR の implementation/final head required CI と semver metadata を確認する。
+- [x] AC8: PR #416 branch 向け Draft stacked PR #420 を作成し、`semver:patch` 1 件、implementation head required CI success を確認した。task/report 完了 commit 後の final-head required CI は PR top-level comment へ記録する。
 - [x] AC9: Web E2E が専用 TypeScript project に所属し、spec 数の増加が typed ESLint の default-project 既定上限へ累積しない。
 
 ## 実装時検証結果
@@ -85,6 +85,18 @@ Issue #345 は WCAG 2.2 AA、320px responsive、長文・拡大時の reflow を
 - `task docs:check`: pass
 - `git diff --check`: pass
 - changed-files pre-commit: pass
+
+## PR / CI / comment 証跡
+
+- Draft stacked PR: https://github.com/tsuji-tomonori/rag-assist/pull/420
+- base: PR #416 branch `codex/issue-345-viewport-keyboard-proxy` / `4706ce69e3230cf20ef68b1d11cc66f862d05da7`
+- implementation head: `36736d64a2d971ecb0da7bbe4f13c2afae444daf`
+- required CI run `29564787095`: success（`Lint, type-check, test, build, and synth`）。promotion gate は条件どおり skipped。
+- semver label: `semver:patch` 1 件。
+- セルフレビュー（blocking なし）: https://github.com/tsuji-tomonori/rag-assist/pull/420#issuecomment-5000424280
+- 受け入れ条件確認: https://github.com/tsuji-tomonori/rag-assist/pull/420#issuecomment-5000492103
+- GitHub Apps の callable capability が公開されていないため、PR 操作は `gh` fallback を使用した。
+- task/report 完了 commit 後の final-head required CI と Issue #345 証跡は PR / Issue comment に記録する。
 
 ## 検証計画
 
