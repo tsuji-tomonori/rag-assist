@@ -1,6 +1,6 @@
 # Issue #359 Phase 4n: async-agent run query service 抽出
 
-- 状態: do
+- 状態: done
 - Issue: #359
 - stacked base: PR #435 / `codex/issue-359-async-agent-artifact-repository-extraction`
 - exact base: `a988f8e734174bb16349a539f30a40f0ca471dc0`
@@ -31,14 +31,22 @@ repositoryを抽出済みでも、read projectionとauthorization orderが巨大
 
 ## 受け入れ条件
 
-- [ ] serviceはrun repositoryの`list`/`get`とnarrow auth portsだけに依存する。
-- [ ] listはactor tenantのみを読み、self/managed filter、updatedAt降順、100件上限を維持する。
-- [ ] getはcross-tenant/missingを`undefined`、same-tenant unauthorizedを403として非列挙順序を維持する。
-- [ ] repositoryのnon-missing failureを隠さず伝播する。
-- [ ] artifact list/getはauthorized runだけをprojectionし、missing semanticsを維持する。
-- [ ] facade public/API/auth policy/create/cancel/execute/provider/writeback/RAG/schemaは非変更でdelegateになる。
-- [ ] targeted/API full/root CI、docs generation/check、source audit、diff/pre-commit、GitHub CIが成功する。
-- [ ] Draft stacked PR、semver、日本語AC/self-review、report/task done、Issue progressを記録する。
+- [x] serviceはrun repositoryの`list`/`get`とnarrow auth portsだけに依存する。
+- [x] listはactor tenantのみを読み、self/managed filter、updatedAt降順、100件上限を維持する。
+- [x] getはcross-tenant/missingを`undefined`、same-tenant unauthorizedを403として非列挙順序を維持する。
+- [x] repositoryのnon-missing failureを隠さず伝播する。
+- [x] artifact list/getはauthorized runだけをprojectionし、missing semanticsを維持する。
+- [x] facade public/API/auth policy/create/cancel/execute/provider/writeback/RAG/schemaは非変更でdelegateになる。
+- [x] targeted/API full/root CI、docs generation/check、source audit、diff/pre-commit、implementation-head GitHub CIが成功した。final-head CI結果はPRの最終検証コメントへ記録する。
+- [x] Draft stacked PR #436、`semver:patch`、日本語AC/self-review、report/task doneを記録した。Issue progressはfinal-head監査後にIssueへ記録する。
+
+## 完了証跡
+
+- implementation commit: `7939c80c353ea7b79c5b9ae37989d0884476987a`
+- Draft PR: #436 / base PR #435 exact `a988f8e734174bb16349a539f30a40f0ca471dc0`
+- initial AC: `issuecomment-5004837037`
+- initial self-review: `issuecomment-5004837237`
+- implementation-head CI: success（7分24秒、run `29592276195`、promotion gate skipped）
 
 ## Done条件・計画
 
