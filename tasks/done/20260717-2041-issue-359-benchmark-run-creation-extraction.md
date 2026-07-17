@@ -1,6 +1,6 @@
 # Issue #359 Phase 4k: benchmark run create orchestration 抽出
 
-- 状態: do
+- 状態: done
 - タスク種別: 修正
 - Issue: #359
 - stacked base: PR #428 / `codex/issue-359-benchmark-artifact-cleanup-driver-extraction`
@@ -108,16 +108,27 @@ benchmark create command の input/policy/run construction と side-effect state
 
 ## 受け入れ条件
 
-- [ ] create service は store `create/update`、tenant/security resolver、4-boundary authorizer、execution starter、suite/config/policy input、clock/id の narrow ports だけに依存し、`Dependencies`、facade、AWS client、global config を import しない。
-- [ ] unknown suite、mode mismatch、non-codebuild runner は run ID/clock/security ref/store/auth/start より前に reject し、外部・durable side effect を行わない。
-- [ ] queued run は authoritative actor tenant/user、server suite、security refs、config/runtime defaults と normalized values から構築し、tenant-partitioned summary/report/results keys を持つ。production mock/default fallback を追加しない。
-- [ ] initial store create は authorization/start/update より先で、failure 時は後続 action を行わない。execution disabled は queued run をそのまま返し、4境界/start/update を行わない。
-- [ ] execution enabled は `create → start → protected_read → external_side_effect → starter → durable_commit → executionArn update` の順序を保ち、全成功時だけ ARN を commit する。
-- [ ] 4境界の各 permission denial は後続 boundary/start/success commit を行わず failed permission-revoked run を永続化して返す。durable-commit denial は starter 後でも executionArn を成功 commit しない。
-- [ ] non-permission boundary/starter/commit error は failed execution-error を永続化後に元 error を rethrowし、permission error と混同しない。compensation failure は false success を返さない。
-- [ ] facade public signature、route `benchmark:run`、tenant/non-enumeration、worker current policy、query/cancel/download/reauthorization/cleanup、RAG trust、worker/API schema を変更しない。
-- [ ] targeted tests、API typecheck/full、root `npm run ci`、docs generation/check、source audit、`git diff --check`、pre-commit が成功する。
-- [ ] Draft stacked PR に `semver:patch`、日本語 AC/self-review、report/task done、implementation/final-head CI、Issue #359 Phase 4 progress を記録する。
+- [x] create service は store `create/update`、tenant/security resolver、4-boundary authorizer、execution starter、suite/config/policy input、clock/id の narrow ports だけに依存し、`Dependencies`、facade、AWS client、global config を import しない。
+- [x] unknown suite、mode mismatch、non-codebuild runner は run ID/clock/security ref/store/auth/start より前に reject し、外部・durable side effect を行わない。
+- [x] queued run は authoritative actor tenant/user、server suite、security refs、config/runtime defaults と normalized values から構築し、tenant-partitioned summary/report/results keys を持つ。production mock/default fallback を追加しない。
+- [x] initial store create は authorization/start/update より先で、failure 時は後続 action を行わない。execution disabled は queued run をそのまま返し、4境界/start/update を行わない。
+- [x] execution enabled は `create → start → protected_read → external_side_effect → starter → durable_commit → executionArn update` の順序を保ち、全成功時だけ ARN を commit する。
+- [x] 4境界の各 permission denial は後続 boundary/start/success commit を行わず failed permission-revoked run を永続化して返す。durable-commit denial は starter 後でも executionArn を成功 commit しない。
+- [x] non-permission boundary/starter/commit error は failed execution-error を永続化後に元 error を rethrowし、permission error と混同しない。compensation failure は false success を返さない。
+- [x] facade public signature、route `benchmark:run`、tenant/non-enumeration、worker current policy、query/cancel/download/reauthorization/cleanup、RAG trust、worker/API schema を変更しない。
+- [x] targeted tests、API typecheck/full、root `npm run ci`、docs generation/check、source audit、`git diff --check`、pre-commit が成功する。
+- [x] Draft stacked PR #431 に `semver:patch`、日本語 AC/self-review、report/task done、implementation/final-head CI、Issue #359 Phase 4 progress を記録する。implementation-head CI は成功済み。final-head CI と Issue progress は lifecycle commit 後に PR/Issue comment へ記録する。
+
+## 完了証跡
+
+- implementation commit: `e55e406b7f983f813805efa3f578a8e50ceb0691`
+- Draft stacked PR: #431
+- stacked base: PR #428 branch / `b95d8abc33e5a7fa232e9f47a7bc4da6373ceca1`
+- semver: `semver:patch`
+- AC comment: `issuecomment-5003411743`
+- self-review comment: `issuecomment-5003413664`
+- implementation-head GitHub Actions: success（9m09s）
+- final-head GitHub Actions と Issue #359 progress: lifecycle commit push 後に外部証跡として記録する。
 
 ## 検証計画
 

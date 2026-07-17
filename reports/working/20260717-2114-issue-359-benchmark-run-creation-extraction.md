@@ -47,7 +47,11 @@ PR #428 final head `b95d8abc` を起点に、Issue #359 の残存 Phase 4 create
 - `npm run rag:release:source-audit`: pass（dataset-specific branch 0、artifact manifest mismatch 0）
 - `git diff --check`: pass
 
-PR 作成後に staged pre-commit、GitHub Actions implementation-head / final-head を追加確認する。実施前のものは成功扱いにしていない。
+- staged `pre-commit run`: pass
+- Draft stacked PR #431（base PR #428 branch）、`semver:patch`、日本語 AC/self-review: recorded
+- GitHub Actions implementation-head `e55e406b`: pass（9m09s）
+
+task done lifecycle commit を final head として push 後、GitHub Actions を再実行し、結果を PR/Issue comment に記録する。未実施の final-head CI は成功扱いにしていない。
 
 ## 指示への fit 評価
 
@@ -65,5 +69,5 @@ PR 作成後に staged pre-commit、GitHub Actions implementation-head / final-h
 - stacked baseline には repository-wide docs structure file が存在しないため、既存 canonical DES を更新した。
 - `npm ci` は成功したが、既存 audit summary は 8 vulnerabilities（low 2 / moderate 1 / high 5）。本変更による dependency/lockfile 差分はない。
 - Vite build は既存の 500 kB chunk warning を出すが成功した。
-- GitHub Apps の callable connector が利用できない場合は repository rule に従い `gh` fallback を用い、PRに制約を明記する。
+- GitHub Apps の callable connector が利用できないため repository rule に従い `gh` fallback を使用し、PR本文に制約を明記した。
 - Issue #359 全体の巨大 facade debt、他 domain、actual AWS operational evidence は本 Phase 4k 完了の範囲外であり、Issue を close しない。
