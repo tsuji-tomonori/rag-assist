@@ -23,6 +23,7 @@
 | M008 | 例外 | `-` | Authoritative tenant is required | `normalized` が存在しない、または偽である | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:121 (requiredTenantId)` |
 | M009 | 例外 | `-` | Authoritative tenant is required | `normalized` が存在しない、または偽である | `apps/api/src/security/tenant-partition.ts:5 (tenantPartitionId)` |
 | M010 | 例外 | `-` | `Document manifest tenant mismatch${key ? `: ${key}` : ""}` | `manifestTenantId` が存在しない、または偽である、かつ `options.allowMissingTenant` が存在しない、または偽である、または `manifestTenantId` が存在し、真である、かつ `manifestTenantId` が `normalizedTenantId` と異なる | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:111 (assertManifestTenant)` |
+| M011 | 例外 | `-` | document tenant is missing, invalid, or conflicting | `tenantId` が存在しない、または偽である | `apps/api/src/documents/document-permission-service.ts:748 (requireManifestTenantId)` |
 
 ## 読み方
 

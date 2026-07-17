@@ -411,6 +411,56 @@ test("direct document grants are isolated by tenant", async () => {
   assert.deepEqual(tenantAShare.directDocumentGrants.map((grant) => grant.principalId), ["user-b"])
 })
 
+test("document share grant helpers use an admission-only authoritative tenant without default fallback", async () => {
+  const { service, objectStore } = await createDocumentPermissionFixture()
+  const document = {
+    ...manifest("doc-admission-tenant", "tenant-a"),
+    metadata: {},
+    admission: admission("tenant-a")
+  }
+  await putLegacyLedger(objectStore, [
+    grant("tenant-a", document.documentId, "tenant-reader", "readOnly"),
+    grant("default", document.documentId, "default-reader", "full")
+  ])
+
+  const share = await service.getShareInfo(manager, document)
+
+  assert.deepEqual(
+    share.directDocumentGrants.map((item) => [item.tenantId, item.principalId, item.permissionLevel]),
+    [["tenant-a", "tenant-reader", "readOnly"]]
+  )
+  assert.deepEqual((await service.getVersionedDocumentSharePolicy(document)).grants, share.directDocumentGrants)
+})
+
+test("document share grant helpers reject missing, invalid, and conflicting resource tenant before side effects", async () => {
+  const documents: DocumentManifest[] = [
+    { ...manifest("doc-tenant-missing", "tenant-a"), metadata: {}, admission: undefined },
+    { ...manifest("doc-tenant-invalid", "tenant-a"), metadata: { tenantId: " tenant-a " }, admission: undefined },
+    { ...manifest("doc-tenant-non-string", "tenant-a"), metadata: { tenantId: 42 }, admission: admission("tenant-a") },
+    { ...manifest("doc-tenant-conflict", "tenant-a"), admission: admission("tenant-b") }
+  ]
+  for (const document of documents) {
+    const fixture = await createSecureDocumentPermissionFixture()
+
+    await assert.rejects(
+      () => fixture.service.getShareInfo(secureOwner(), document),
+      (error: unknown) => error instanceof DocumentShareValidationError
+        && error.message === "document tenant is missing, invalid, or conflicting"
+    )
+    await assert.rejects(
+      () => fixture.service.replaceVersionedDocumentSharePolicy(secureOwner(), document, {
+        expectedVersion: "not-read",
+        grants: [],
+        reason: "tenant boundary"
+      }),
+      DocumentShareValidationError
+    )
+
+    assert.equal(fixture.directory.reads, 0)
+    assert.deepEqual(await fixture.objectStore.listKeys(""), [])
+  }
+})
+
 test("legacy global ledger is used only when per-document grant file is missing", async () => {
   const { service, objectStore } = await createDocumentPermissionFixture()
   const doc = manifest("doc-1", "tenant-a")
@@ -546,12 +596,14 @@ async function createSecureDocumentPermissionFixture() {
 
 class TestResourcePrincipalDirectory implements ResourceUserPrincipalDirectory {
   private readonly users = new Map<string, ResourceUserPrincipal>()
+  reads = 0
 
   set(user: ResourceUserPrincipal): void {
     this.users.set(user.userId, user)
   }
 
   async getUser(userId: string): Promise<ResourceUserPrincipal | undefined> {
+    this.reads += 1
     return this.users.get(userId)
   }
 }
@@ -591,6 +643,18 @@ function manifest(documentId: string, tenantId: string): DocumentManifest {
     chunkCount: 1,
     memoryCardCount: 0,
     createdAt: "2026-05-01T00:00:00.000Z"
+  }
+}
+
+function admission(tenantId: string) {
+  return {
+    schemaVersion: 1 as const,
+    status: "approved" as const,
+    tenantId,
+    inspectionStatus: "passed" as const,
+    reasons: [],
+    rejectedProtectedMetadataKeys: [],
+    admittedAt: "2026-05-01T00:00:00.000Z"
   }
 }
 

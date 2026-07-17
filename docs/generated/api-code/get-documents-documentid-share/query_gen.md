@@ -14,11 +14,11 @@
 | 4 | 参照 | `this.deps.groupMembershipStore` | `listByGroupId` | `this.deps.groupMembershipStore` に対して list by group id を実行する。 | `FolderPermissionService.resolveUserMembershipPermission` | `apps/api/src/folders/folder-permission-service.ts:781 (FolderPermissionService.resolveUserMembershipPermission)` |
 | 5 | 参照 | `this.deps.folderPolicyStore` | `findByFolderId` | `this.deps.folderPolicyStore` に対して find by folder id を実行する。 | `FolderPermissionService.resolvePolicyContext` | `apps/api/src/folders/folder-permission-service.ts:695 (FolderPermissionService.resolvePolicyContext)` |
 | 6 | 参照 | `this.deps.folderPolicyStore` | `get` | `this.deps.folderPolicyStore` に対して get を実行する。 | `FolderPermissionService.resolvePolicyContext` | `apps/api/src/folders/folder-permission-service.ts:711 (FolderPermissionService.resolvePolicyContext)` |
-| 7 | 参照 | `objectStore` | `getTextWithVersion` | `objectStore` に対して get text with version を実行する。 | `getTextWithVersion` | `apps/api/src/documents/document-permission-service.ts:946 (getTextWithVersion)` |
-| 8 | 参照 | `objectStore` | `getText` | `objectStore` に対して get text を実行する。 | `getTextWithVersion` | `apps/api/src/documents/document-permission-service.ts:947 (getTextWithVersion)` |
-| 9 | 参照 | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `DocumentPermissionService.loadLegacyDocumentGrants` | `apps/api/src/documents/document-permission-service.ts:537 (DocumentPermissionService.loadLegacyDocumentGrants)` |
-| 10 | 参照 | `this.deps.userGroupStore` | `get` | `this.deps.userGroupStore` に対して get を実行する。 | `DocumentPermissionService.resolveUserMembershipPermission` | `apps/api/src/documents/document-permission-service.ts:683 (DocumentPermissionService.resolveUserMembershipPermission)` |
-| 11 | 参照 | `this.deps.groupMembershipStore` | `listByGroupId` | `this.deps.groupMembershipStore` に対して list by group id を実行する。 | `DocumentPermissionService.resolveUserMembershipPermission` | `apps/api/src/documents/document-permission-service.ts:684 (DocumentPermissionService.resolveUserMembershipPermission)` |
+| 7 | 参照 | `objectStore` | `getTextWithVersion` | `objectStore` に対して get text with version を実行する。 | `getTextWithVersion` | `apps/api/src/documents/document-permission-service.ts:955 (getTextWithVersion)` |
+| 8 | 参照 | `objectStore` | `getText` | `objectStore` に対して get text を実行する。 | `getTextWithVersion` | `apps/api/src/documents/document-permission-service.ts:956 (getTextWithVersion)` |
+| 9 | 参照 | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `DocumentPermissionService.loadLegacyDocumentGrants` | `apps/api/src/documents/document-permission-service.ts:533 (DocumentPermissionService.loadLegacyDocumentGrants)` |
+| 10 | 参照 | `this.deps.userGroupStore` | `get` | `this.deps.userGroupStore` に対して get を実行する。 | `DocumentPermissionService.resolveUserMembershipPermission` | `apps/api/src/documents/document-permission-service.ts:679 (DocumentPermissionService.resolveUserMembershipPermission)` |
+| 11 | 参照 | `this.deps.groupMembershipStore` | `listByGroupId` | `this.deps.groupMembershipStore` に対して list by group id を実行する。 | `DocumentPermissionService.resolveUserMembershipPermission` | `apps/api/src/documents/document-permission-service.ts:680 (DocumentPermissionService.resolveUserMembershipPermission)` |
 
 ## 外部サービス操作
 

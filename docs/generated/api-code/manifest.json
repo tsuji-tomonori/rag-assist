@@ -176,7 +176,7 @@
       "routeSource": "apps/api/src/routes/admin-routes.ts:663 (GET /admin/quality-actions)",
       "handlerSource": "apps/api/src/routes/admin-routes.ts:679 (GET /admin/quality-actions handler)",
       "functionCount": 123,
-      "branchCount": 255,
+      "branchCount": 259,
       "projectedBranchCount": 1,
       "dataAccessCount": 13,
       "relatedTestCount": 0
@@ -436,7 +436,7 @@
       "routeSource": "apps/api/src/routes/benchmark-routes.ts:26 (POST /benchmark/query)",
       "handlerSource": "apps/api/src/routes/benchmark-routes.ts:50 (POST /benchmark/query handler)",
       "functionCount": 644,
-      "branchCount": 1391,
+      "branchCount": 1395,
       "projectedBranchCount": 15,
       "dataAccessCount": 73,
       "relatedTestCount": 0
@@ -449,7 +449,7 @@
       "routeSource": "apps/api/src/routes/benchmark-routes.ts:60 (POST /benchmark/search)",
       "handlerSource": "apps/api/src/routes/benchmark-routes.ts:85 (POST /benchmark/search handler)",
       "functionCount": 333,
-      "branchCount": 682,
+      "branchCount": 686,
       "projectedBranchCount": 3,
       "dataAccessCount": 45,
       "relatedTestCount": 10
@@ -462,7 +462,7 @@
       "routeSource": "apps/api/src/routes/chat-routes.ts:38 (POST /chat)",
       "handlerSource": "apps/api/src/routes/chat-routes.ts:38 (POST /chat handler)",
       "functionCount": 640,
-      "branchCount": 1385,
+      "branchCount": 1389,
       "projectedBranchCount": 14,
       "dataAccessCount": 73,
       "relatedTestCount": 0
@@ -475,7 +475,7 @@
       "routeSource": "apps/api/src/routes/chat-routes.ts:48 (POST /chat-runs)",
       "handlerSource": "apps/api/src/routes/chat-routes.ts:65 (POST /chat-runs handler)",
       "functionCount": 653,
-      "branchCount": 1412,
+      "branchCount": 1416,
       "projectedBranchCount": 5,
       "dataAccessCount": 90,
       "relatedTestCount": 1
@@ -748,7 +748,7 @@
       "routeSource": "apps/api/src/routes/document-routes.ts:820 (GET /documents)",
       "handlerSource": "apps/api/src/routes/document-routes.ts:835 (GET /documents handler)",
       "functionCount": 102,
-      "branchCount": 209,
+      "branchCount": 213,
       "projectedBranchCount": 14,
       "dataAccessCount": 14,
       "relatedTestCount": 19
@@ -774,7 +774,7 @@
       "routeSource": "apps/api/src/routes/document-routes.ts:1567 (DELETE /documents/{documentId})",
       "handlerSource": "apps/api/src/routes/document-routes.ts:1589 (DELETE /documents/{documentId} handler)",
       "functionCount": 181,
-      "branchCount": 343,
+      "branchCount": 347,
       "projectedBranchCount": 17,
       "dataAccessCount": 38,
       "relatedTestCount": 7
@@ -787,7 +787,7 @@
       "routeSource": "apps/api/src/routes/document-routes.ts:1495 (GET /documents/{documentId}/extracted-text)",
       "handlerSource": "apps/api/src/routes/document-routes.ts:1515 (GET /documents/{documentId}/extracted-text handler)",
       "functionCount": 100,
-      "branchCount": 195,
+      "branchCount": 199,
       "projectedBranchCount": 9,
       "dataAccessCount": 13,
       "relatedTestCount": 1
@@ -800,7 +800,7 @@
       "routeSource": "apps/api/src/routes/document-routes.ts:931 (POST /documents/{documentId}/move)",
       "handlerSource": "apps/api/src/routes/document-routes.ts:950 (POST /documents/{documentId}/move handler)",
       "functionCount": 137,
-      "branchCount": 275,
+      "branchCount": 279,
       "projectedBranchCount": 5,
       "dataAccessCount": 24,
       "relatedTestCount": 8
@@ -813,7 +813,7 @@
       "routeSource": "apps/api/src/routes/document-routes.ts:1531 (GET /documents/{documentId}/parsed-preview)",
       "handlerSource": "apps/api/src/routes/document-routes.ts:1551 (GET /documents/{documentId}/parsed-preview handler)",
       "functionCount": 108,
-      "branchCount": 205,
+      "branchCount": 209,
       "projectedBranchCount": 7,
       "dataAccessCount": 11,
       "relatedTestCount": 1
@@ -826,7 +826,7 @@
       "routeSource": "apps/api/src/routes/document-routes.ts:1362 (POST /documents/{documentId}/reindex)",
       "handlerSource": "apps/api/src/routes/document-routes.ts:1379 (POST /documents/{documentId}/reindex handler)",
       "functionCount": 421,
-      "branchCount": 987,
+      "branchCount": 991,
       "projectedBranchCount": 4,
       "dataAccessCount": 134,
       "relatedTestCount": 1
@@ -839,7 +839,7 @@
       "routeSource": "apps/api/src/routes/document-routes.ts:1410 (POST /documents/{documentId}/reindex/stage)",
       "handlerSource": "apps/api/src/routes/document-routes.ts:1427 (POST /documents/{documentId}/reindex/stage handler)",
       "functionCount": 342,
-      "branchCount": 781,
+      "branchCount": 785,
       "projectedBranchCount": 11,
       "dataAccessCount": 57,
       "relatedTestCount": 7
@@ -852,7 +852,7 @@
       "routeSource": "apps/api/src/routes/document-routes.ts:867 (GET /documents/{documentId}/share)",
       "handlerSource": "apps/api/src/routes/document-routes.ts:880 (GET /documents/{documentId}/share handler)",
       "functionCount": 97,
-      "branchCount": 184,
+      "branchCount": 188,
       "projectedBranchCount": 5,
       "dataAccessCount": 11,
       "relatedTestCount": 3
@@ -865,7 +865,7 @@
       "routeSource": "apps/api/src/routes/document-routes.ts:895 (PUT /documents/{documentId}/share)",
       "handlerSource": "apps/api/src/routes/document-routes.ts:914 (PUT /documents/{documentId}/share handler)",
       "functionCount": 152,
-      "branchCount": 292,
+      "branchCount": 296,
       "projectedBranchCount": 6,
       "dataAccessCount": 27,
       "relatedTestCount": 3
@@ -930,7 +930,7 @@
       "routeSource": "apps/api/src/routes/document-routes.ts:1443 (POST /documents/reindex-migrations/{migrationId}/cutover)",
       "handlerSource": "apps/api/src/routes/document-routes.ts:1454 (POST /documents/reindex-migrations/{migrationId}/cutover handler)",
       "functionCount": 272,
-      "branchCount": 623,
+      "branchCount": 627,
       "projectedBranchCount": 14,
       "dataAccessCount": 105,
       "relatedTestCount": 7
@@ -943,7 +943,7 @@
       "routeSource": "apps/api/src/routes/document-routes.ts:1469 (POST /documents/reindex-migrations/{migrationId}/rollback)",
       "handlerSource": "apps/api/src/routes/document-routes.ts:1480 (POST /documents/reindex-migrations/{migrationId}/rollback handler)",
       "functionCount": 386,
-      "branchCount": 863,
+      "branchCount": 867,
       "projectedBranchCount": 10,
       "dataAccessCount": 106,
       "relatedTestCount": 4
@@ -995,7 +995,7 @@
       "routeSource": "apps/api/src/routes/favorite-routes.ts:8 (GET /favorites)",
       "handlerSource": "apps/api/src/routes/favorite-routes.ts:18 (GET /favorites handler)",
       "functionCount": 114,
-      "branchCount": 227,
+      "branchCount": 231,
       "projectedBranchCount": 4,
       "dataAccessCount": 17,
       "relatedTestCount": 1
@@ -1008,7 +1008,7 @@
       "routeSource": "apps/api/src/routes/favorite-routes.ts:25 (POST /favorites)",
       "handlerSource": "apps/api/src/routes/favorite-routes.ts:41 (POST /favorites handler)",
       "functionCount": 118,
-      "branchCount": 228,
+      "branchCount": 232,
       "projectedBranchCount": 2,
       "dataAccessCount": 17,
       "relatedTestCount": 2
@@ -1281,7 +1281,7 @@
       "routeSource": "apps/api/src/routes/chat-routes.ts:195 (POST /search)",
       "handlerSource": "apps/api/src/routes/chat-routes.ts:212 (POST /search handler)",
       "functionCount": 329,
-      "branchCount": 675,
+      "branchCount": 679,
       "projectedBranchCount": 1,
       "dataAccessCount": 45,
       "relatedTestCount": 9
