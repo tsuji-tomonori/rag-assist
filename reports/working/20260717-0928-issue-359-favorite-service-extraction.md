@@ -15,7 +15,7 @@
 | R2 | `MemoRagService` の公開契約を維持して narrow-port subservice へ抽出する | 高 | 対応 |
 | R3 | tenant / visibility / redaction / inaccessible 契約を維持する | 高 | domain/facade/full test で対応 |
 | R4 | 設計・generated docs を実装と同期する | 高 | 対応 |
-| R5 | local/full CI と PR lifecycle を完遂する | 高 | local gate 完了、PR gate 継続中 |
+| R5 | local/full CI と PR lifecycle を完遂する | 高 | draft PR、label、AC/self-review 完了。final-head CI は lifecycle commit 後の外部 gate |
 | R6 | merge / deploy / release をしない | 高 | 遵守 |
 
 ## 3. 検討・判断したこと
@@ -45,7 +45,8 @@
 | `apps/api/src/rag/memorag-service.ts` | TypeScript | public facade の委譲 | R2 |
 | `docs/3_設計_DES/11_詳細設計_DLD/DES_DLD_012.md` | Markdown | Phase 4b boundary と互換方針 | R4 |
 | `docs/generated/api-code/` | generated Markdown/JSON | 97 APIs / 582 docs の current source projection | R4 |
-| `tasks/do/20260717-0904-issue-359-favorite-service-extraction.md` | Markdown | RCA、AC、検証、lifecycle | R1-R6 |
+| `tasks/done/20260717-0904-issue-359-favorite-service-extraction.md` | Markdown | RCA、AC、検証、lifecycle | R1-R6 |
+| PR #393 | GitHub draft PR | #390 branch を base にした stacked PR、`semver:patch`、日本語 AC/self-review | R5 |
 
 ## 6. 検証
 
@@ -67,15 +68,15 @@
 
 | 評価軸 | 評価 | 理由 |
 |---|---:|---|
-| 指示網羅性 | 4.5/5 | local implementation/validation 完了、PR final lifecycle はこれから記録 |
+| 指示網羅性 | 5/5 | implementation/local validation と draft PR/label/AC/self-review を完了。final-head CI は lifecycle commit 後に外部確認 |
 | 制約遵守 | 5/5 | #387/#339 の semantic scope を避け、merge/deploy/release 未実施 |
 | 成果物品質 | 4.5/5 | guard が配置ミスを検出し修復、公開 contract と security projection を維持 |
 | 説明責任 | 5/5 | 初期 failure、generated 差分、残リスクを記録 |
-| 検収容易性 | 4.5/5 | task/設計/test/report を対応付け、PR evidence は lifecycle 後追記 |
+| 検収容易性 | 5/5 | task/設計/test/report と PR #393 の日本語 evidence を対応付けた |
 
-**総合fit: 4.7/5（約94%）**
+**総合fit: 4.9/5（約98%）**
 
-local deliverable と validation は満たした。PR lifecycle 完了後に task/report を更新し、最終 fit を確定する。
+repository deliverable、local validation、draft PR の受け入れ証跡は満たした。report を含む lifecycle commit を final head として push した後、GitHub Actions、Issue #359 進捗 comment、CLEAN/upstream 一致を外部 gate として確認する。
 
 ## 8. 未対応・制約・リスク
 
@@ -83,8 +84,18 @@ local deliverable と validation は満たした。PR lifecycle 完了後に tas
 - document/folder visibility callback は既存 facade method を経由する互換 seam であり、domain 間依存の最終分離ではない。
 - source line/call graph の再生成で generated API docs 312 files が更新され、#387 との機械的 conflict が起こり得る。semantic review を伴う merge 順管理が必要。
 - real AWS smoke は未実施。外部 AWS state を変更する validation は本 refactor の範囲外。
-- GitHub Apps の callable capability が本セッションにない場合は `gh` fallback を使い、理由を PR/report に記録する。
+- GitHub Apps の callable capability が本セッションになかったため、認証済み `gh` fallback を使用し、理由を PR 本文に記録した。
 - merge / deploy / release は実施しない。
+
+## 10. PR lifecycle 証跡
+
+- 実装 commit: `4a6344b7`
+- stacked draft PR: https://github.com/tsuji-tomonori/rag-assist/pull/393
+- base: `codex/issue-359-service-characterization`（PR #390 branch）
+- label: `semver:patch`
+- 日本語 AC comment: https://github.com/tsuji-tomonori/rag-assist/pull/393#issuecomment-4997810997
+- 日本語 self-review comment: https://github.com/tsuji-tomonori/rag-assist/pull/393#issuecomment-4997810999
+- final-head CI と Issue #359 進捗 comment は、この report を含む lifecycle commit push 後に確認・投稿する。
 
 ## 9. 次に改善できること
 
