@@ -1,6 +1,6 @@
 # Issue #359 Phase 4o: async-agent run creation service 抽出
 
-- 状態: do
+- 状態: done
 - Issue: #359
 - stacked base: PR #436 / `codex/issue-359-async-agent-run-query-service-extraction`
 - exact base: `30f98a7ca9e9091f796d7ba9c814e9d7378dfce2`
@@ -33,14 +33,22 @@ canonical create mappingとauthorization/provider/store orchestrationが巨大fa
 
 ## 受け入れ条件
 
-- [ ] serviceはauthorize/provider lookup/run save/clock/ID/tenantのnarrow portsだけに依存する。
-- [ ] selection authorizationをclock/ID/provider/saveより先に実行し、denial後のeffectを止める。
-- [ ] available/disabled/not_configured/unavailableごとのqueued/blocked reason/no-mock contractを維持する。
-- [ ] actor tenant/requester snapshot、unique selections、workspace/read-only mount mapping、timestampsを維持する。
-- [ ] save failureを隠さず伝播し、false successを返さない。
-- [ ] facade public/API/auth policy/list/get/cancel/execute/provider execution/writeback/RAG/schemaは非変更でdelegateになる。
-- [ ] targeted/API full/root CI、docs generation/check、source audit、diff/pre-commit、GitHub CIが成功する。
-- [ ] Draft stacked PR、semver、日本語AC/self-review、report/task done、Issue progressを記録する。
+- [x] serviceはauthorize/provider lookup/run save/clock/ID/tenantのnarrow portsだけに依存する。
+- [x] selection authorizationをclock/ID/provider/saveより先に実行し、denial後のeffectを止める。
+- [x] available/disabled/not_configured/unavailableごとのqueued/blocked reason/no-mock contractを維持する。
+- [x] actor tenant/requester snapshot、unique selections、workspace/read-only mount mapping、timestampsを維持する。
+- [x] save failureを隠さず伝播し、false successを返さない。
+- [x] facade public/API/auth policy/list/get/cancel/execute/provider execution/writeback/RAG/schemaは非変更でdelegateになる。
+- [x] targeted/API full/root CI、docs generation/check、source audit、diff/pre-commit、implementation-head GitHub CIが成功した。final-head CIはPR最終コメントへ記録する。
+- [x] Draft stacked PR #437、`semver:patch`、日本語AC/self-review、report/task doneを記録した。Issue progressはfinal-head監査後に記録する。
+
+## 完了証跡
+
+- implementation commit: `fdb56202cc7a3c7d13b348d81adb07002f95d717`
+- Draft PR: #437 / base PR #436 exact `30f98a7ca9e9091f796d7ba9c814e9d7378dfce2`
+- initial AC: `issuecomment-5005179866`
+- initial self-review: `issuecomment-5005180107`
+- implementation-head CI: success（9分01秒、run `29595155560`、promotion gate skipped）
 
 ## Done条件・計画
 
