@@ -60,4 +60,10 @@ Issue #358 の残存 resolver を再確認し、最小の exact mutation resolve
 
 ## PR lifecycle
 
-- Draft stacked PR、semver label、AC/self-review、final-head CI、Issue #358 progress は実装 commit 後に追記する。
+- Draft stacked PR #409: https://github.com/tsuji-tomonori/rag-assist/pull/409
+- base: `codex/issue-358-fr086-folder-share-resolver`（#405）
+- label: `semver:patch`
+- 日本語 AC comment: #4999045405
+- 日本語 self-review comment: #4999045607（blocking 指摘なし）
+- implementation commit `266787f75bedfeabdc59854e86d733194c08c8e9` の MemoRAG CI #1160: success
+- task done lifecycle commit push 後の final-head CI と Issue #358 progress は外部証跡として追記する。
