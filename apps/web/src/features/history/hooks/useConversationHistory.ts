@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { deleteConversationHistory, listConversationHistory, saveConversationHistory } from "../api/conversationHistoryApi.js"
-import type { ConversationHistoryItem } from "../types.js"
+import { CONVERSATION_HISTORY_SCHEMA_VERSION, type ConversationHistoryItem } from "../types.js"
 import type { Message } from "../../chat/types.js"
 import type { FavoriteItem } from "../../favorites/types.js"
 import { deleteFavorite, saveFavorite } from "../../favorites/api/favoritesApi.js"
@@ -118,7 +118,7 @@ export function useConversationHistory({ setError }: { setError: (error: string 
 
 function buildConversationHistoryItem(id: string, titleCandidate: string, messages: Message[], isFavorite = false): ConversationHistoryItem {
   return {
-    schemaVersion: 1,
+    schemaVersion: CONVERSATION_HISTORY_SCHEMA_VERSION,
     id,
     title: summarizeTitle(titleCandidate),
     updatedAt: new Date().toISOString(),

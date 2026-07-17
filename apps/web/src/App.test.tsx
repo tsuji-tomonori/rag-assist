@@ -1117,7 +1117,7 @@ describe("App chat and upload flow", () => {
         ([url, init]) => String(url).endsWith("/conversation-history") && (init as RequestInit | undefined)?.method === "POST"
       )
       expect(savedHistory).toBeTruthy()
-      expect(requestBody(savedHistory)).toMatchObject({ schemaVersion: 1 })
+      expect(requestBody(savedHistory)).toMatchObject({ schemaVersion: 2 })
     })
     await userEvent.click(screen.getByText("新しい会話"))
     await userEvent.type(screen.getByLabelText("質問"), "分類二")
@@ -1197,7 +1197,7 @@ describe("App chat and upload flow", () => {
     await waitFor(() => {
       const savedHistory = requestBodies(fetchMock, "/conversation-history").find((body) => body.messages?.length === 2)
       expect(savedHistory).toMatchObject({
-        schemaVersion: 1,
+        schemaVersion: 2,
         title: "分類を教えて",
         isFavorite: false,
         messages: [

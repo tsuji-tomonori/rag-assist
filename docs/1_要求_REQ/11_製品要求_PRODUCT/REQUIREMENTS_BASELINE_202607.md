@@ -204,6 +204,10 @@ SWEBOK v4.0a Chapter 1 に従い、要求は次を満たす粒度にする。
 
 ## 現行コードとの主要な不一致
 
+### FR-022 schemaVersion 契約の解消方針
+
+`FR-022` の version 未指定 legacy item、multi-turn state 導入後の v2、Web producer、store read default の衝突は、missing persisted=v1 / new・update write=v2 / read-only mixed-version compatibility / unknown fail-closed として統一する。自動 evidence は `conversation-history-version-contract.test.ts`、local/DynamoDB store test、`useConversationHistory.test.ts` で追跡する。実 AWS item の version 分布と production migration は未検証であり、CI pass を実環境 migration 完了の証拠にはしない。
+
 2026-07-13 の audit では `FR-056`–`FR-093` と `SQ-005`–`SQ-015` に完全実装と判定できる項目はなく、`partial`、`missing`、`conflict` のいずれかである。次の表を gap と実装 todo の正規対応とする。
 
 | ID | 現状と要求上の扱い | Confidence | 実装 todo |

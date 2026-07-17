@@ -1,5 +1,5 @@
 import assert from "node:assert/strict"
-import { mkdtemp } from "node:fs/promises"
+import { mkdtemp, readFile, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import path from "node:path"
 import test from "node:test"
@@ -153,6 +153,7 @@ test("local conversation history store persists per-user conversations and delet
   assert.deepEqual(await store.list("user-1"), [])
 
   await store.save("user-1", {
+    schemaVersion: 1,
     id: "conversation-1",
     title: "分類について",
     updatedAt: "2026-05-02T00:00:00.000Z",
@@ -224,3 +225,40 @@ test("local conversation history store persists per-user conversations and delet
   assert.deepEqual((await store.list("user-1")).map((item) => item.id), ["conversation-favorite"])
   assert.equal((await store.list("user-2")).length, 1)
 })
+
+test("FR-022 local conversation history store reads mixed versions without write-on-read", async () => {
+  const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-history-version-test-"))
+  const filePath = path.join(dataDir, "conversation-history.json")
+  const stored = JSON.stringify({
+    conversations: [
+      storedHistory("legacy-missing"),
+      storedHistory("legacy-v1", 1),
+      storedHistory("current-v2", 2)
+    ]
+  }, null, 2)
+  await writeFile(filePath, stored)
+  const store = new LocalConversationHistoryStore(dataDir)
+
+  const history = await store.list("user-1")
+
+  assert.deepEqual(
+    Object.fromEntries(history.map((item) => [item.id, item.schemaVersion])),
+    { "legacy-missing": 1, "legacy-v1": 1, "current-v2": 2 }
+  )
+  assert.equal(await readFile(filePath, "utf8"), stored, "read normalization must not rewrite persisted data")
+
+  await writeFile(filePath, JSON.stringify({ conversations: [storedHistory("unknown", 3)] }))
+  await assert.rejects(() => store.list("user-1"), /Unsupported conversation history schema version: 3/)
+})
+
+function storedHistory(id: string, schemaVersion?: number) {
+  return {
+    ...(schemaVersion === undefined ? {} : { schemaVersion }),
+    userId: "user-1",
+    id,
+    title: id,
+    updatedAt: "2026-07-17T00:00:00.000Z",
+    isFavorite: false,
+    messages: []
+  }
+}

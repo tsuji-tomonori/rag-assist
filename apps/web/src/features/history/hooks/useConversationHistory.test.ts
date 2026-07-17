@@ -57,7 +57,10 @@ describe("useConversationHistory", () => {
     expect(result.current.currentConversationId).toMatch(/^conv-1-[a-z0-9]{6}$/)
     expect(result.current.history[0]?.isFavorite).toBe(true)
     expect(result.current.history[0]?.title.length).toBeLessThanOrEqual(37)
-    expect(saveConversationHistory).toHaveBeenCalled()
+    expect(saveConversationHistory).toHaveBeenLastCalledWith(expect.objectContaining({
+      schemaVersion: 2,
+      id: "conv-1"
+    }))
   })
 
   it("updates linked question tickets and reports persistence errors", async () => {

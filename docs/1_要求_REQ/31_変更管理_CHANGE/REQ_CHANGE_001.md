@@ -35,6 +35,7 @@
 | `FR-019`, `FR-020`, `FR-039`, `FR-040`, `SQ-002` | `ASR-EVAL-001` | `ARC_ADR_001` | `DES_HLD_001`, `DES_DATA_001`, `DES_API_001` | `REQ_ACCEPTANCE_001`, `SQ-001` |
 | `NFR-010` | `ASR-SEC-001` | `ARC_ADR_001` | `DES_API_001`, `DES_DATA_001` | `REQ_ACCEPTANCE_001` |
 | `FR-021`, `FR-031`, `FR-032`, `FR-033`, `FR-034`, `FR-035`, `FR-036`, `FR-037`, `FR-024`, `NFR-013` | `ASR-SEC-001` | `ARC_ADR_001` | `DES_HLD_001`, `DES_DLD_007`, `DES_API_001`, `DES_DATA_001` | `REQ_ACCEPTANCE_001`; `NFR-011` は Superseded compatibility trace |
+| `FR-022` | なし | `ARC_ADR_001` | `DES_API_001`, `DES_DATA_001` の legacy v1/current v2 migration contract | `conversation-history-version-contract.test.ts`, local/DynamoDB store test, `useConversationHistory.test.ts` |
 | `FR-025` | `ASR-SEC-002` | `ARC_ADR_001` | `DES_HLD_001`, `DES_DLD_004`, `DES_API_001` | `REQ_FUNCTIONAL_025`; legacy trace は `NFR-011` disposition |
 | `FR-023`, `NFR-012` | `ASR-SEC-001`, `ASR-RETRIEVAL-001` | `ARC_ADR_001` | `DES_DLD_002`, `DES_DLD_003`, `DES_API_001`, `DES_DATA_001` | `REQ_ACCEPTANCE_001`, `SQ-001` |
 | `FR-042`, `FR-043`, `FR-044`, `SQ-004` | `ASR-TRUST-001` | `ARC_ADR_001` | `DES_HLD_001`, `DES_API_001` | 各要求の受け入れ条件 |

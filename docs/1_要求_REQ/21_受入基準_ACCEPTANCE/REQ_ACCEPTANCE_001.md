@@ -129,9 +129,11 @@ Given 認証済み利用者が会話を行う。
 
 When Web UI が会話履歴 item を保存する。
 
-Then API は `schemaVersion: 1` の item を userId 単位で保存する。
+Then API は新規 item を current `schemaVersion: 2` として userId 単位で保存する。
 
 And 別 userId の履歴として返さない。
+
+And version 未指定の保存済み legacy item は v1 として読めるが、一覧取得だけでは保存先を書き換えない。
 
 ### AC-EVAL-001: RAG 品質評価
 

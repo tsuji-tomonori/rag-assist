@@ -356,7 +356,7 @@ local 開発では Hono の `GET /chat-runs/{runId}/events` が同じ `ChatRunEv
 
 ```json
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "id": "conversation-20260502-001",
   "title": "ソフトウェア要求の分類",
   "updatedAt": "2026-05-02T00:00:00.000Z",
@@ -375,7 +375,7 @@ local 開発では Hono の `GET /chat-runs/{runId}/events` が同じ `ChatRunEv
 
 ```json
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "id": "conversation-20260502-001",
   "title": "ソフトウェア要求の分類",
   "updatedAt": "2026-05-02T00:00:00.000Z",
@@ -394,9 +394,11 @@ local 開発では Hono の `GET /chat-runs/{runId}/events` が同じ `ChatRunEv
 
 - `schemaVersion` は会話履歴 item の構造を識別する。
 - `isFavorite` は未指定時 `false` として補完される。
-- 現行の `schemaVersion` は `1` とする。
-- API は `schemaVersion` 未指定の保存要求を v1 として補完する。
-- 将来スキーマを変更する場合は、既存 item の読み取り互換性を維持するか、version ごとの変換を追加する。
+- current write の `schemaVersion` は `2` とする。
+- API は `schemaVersion` 未指定の新規保存要求を v2 として補完する。
+- version 未指定の保存済み item は legacy v1 として返し、explicit v1/v2 と混在しても読み取れる。
+- v1 item を更新保存すると v2 へ昇格する。GET/list read だけでは保存値を書き換えない。
+- v1/v2 以外の version は推測変換せず validation/store error とする。
 
 ## `/questions`
 

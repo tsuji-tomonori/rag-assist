@@ -25,7 +25,7 @@ const traceByRequirement: Record<string, string[]> = {
   "FR-019": ["benchmark/run.ts", "node-units.test.ts"],
   "FR-020": ["memorag-service.test.ts", "local-stores.test.ts"],
   "FR-021": ["questions-access.test.ts", "App.test.tsx"],
-  "FR-022": ["useConversationHistory.test.ts", "conversationHistorySearch.test.ts"],
+  "FR-022": ["conversation-history-version-contract.test.ts", "dynamodb-conversation-history-store.test.ts", "local-stores.test.ts", "useConversationHistory.test.ts"],
   "FR-023": ["hybrid-search.test.ts", "useAdminData.test.ts"],
   "FR-024": ["authorization.test.ts", "access-control-policy.test.ts"],
   "FR-025": ["LoginPage.test.tsx", "authClient.test.ts"],

@@ -39,9 +39,30 @@ test("conversationHistoryStore_doesNotSliceBeforeFavoriteEnrichment", async () =
   assert.equal(histories.at(-1)?.id, "conv-1")
 })
 
-function history(id: string, updatedAt: string) {
+test("FR-022 dynamo history store reads missing, v1, and v2 together and rejects unknown versions", async () => {
+  const store = new DynamoDbConversationHistoryStore("ConversationHistoryTable", { send: async () => ({
+    Items: [
+      marshall(history("legacy-missing", "2026-05-01T00:00:00.000Z", undefined)),
+      marshall(history("legacy-v1", "2026-05-02T00:00:00.000Z", 1)),
+      marshall(history("current-v2", "2026-05-03T00:00:00.000Z", 2))
+    ]
+  }) } as never)
+
+  const histories = await store.list("user-a")
+  assert.deepEqual(
+    Object.fromEntries(histories.map((item) => [item.id, item.schemaVersion])),
+    { "current-v2": 2, "legacy-v1": 1, "legacy-missing": 1 }
+  )
+
+  const invalidStore = new DynamoDbConversationHistoryStore("ConversationHistoryTable", { send: async () => ({
+    Items: [marshall(history("unknown", "2026-05-04T00:00:00.000Z", 3))]
+  }) } as never)
+  await assert.rejects(() => invalidStore.list("user-a"), /Unsupported conversation history schema version: 3/)
+})
+
+function history(id: string, updatedAt: string, schemaVersion: number | undefined = 1) {
   return {
-    schemaVersion: 1,
+    ...(schemaVersion === undefined ? {} : { schemaVersion }),
     userId: "user-a",
     id,
     title: id,

@@ -1961,9 +1961,12 @@ export type ConversationMessage = {
   questionTicket?: HumanQuestion
 }
 
+export const CONVERSATION_HISTORY_LEGACY_SCHEMA_VERSION = 1
 export const CONVERSATION_HISTORY_SCHEMA_VERSION = 2
 
-export type ConversationHistorySchemaVersion = 1 | typeof CONVERSATION_HISTORY_SCHEMA_VERSION
+export type ConversationHistorySchemaVersion =
+  | typeof CONVERSATION_HISTORY_LEGACY_SCHEMA_VERSION
+  | typeof CONVERSATION_HISTORY_SCHEMA_VERSION
 
 export type ConversationDecontextualizedQuery = {
   originalQuestion: string

@@ -1,10 +1,15 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises"
 import path from "node:path"
-import { CONVERSATION_HISTORY_SCHEMA_VERSION, type ConversationHistoryItem, type ConversationHistorySchemaVersion } from "../types.js"
-import { normalizeConversationHistoryInput, type ConversationHistoryStore, type SaveConversationHistoryInput } from "./conversation-history-store.js"
+import type { ConversationHistoryItem } from "../types.js"
+import {
+  normalizeConversationHistoryInput,
+  normalizeStoredConversationHistoryItem,
+  type ConversationHistoryStore,
+  type SaveConversationHistoryInput
+} from "./conversation-history-store.js"
 
 type StoredConversationHistoryItem = Omit<ConversationHistoryItem, "schemaVersion"> & {
-  schemaVersion?: ConversationHistorySchemaVersion
+  schemaVersion?: unknown
   userId: string
 }
 
@@ -69,8 +74,5 @@ function compareHistoryItems(a: StoredConversationHistoryItem, b: StoredConversa
 
 function stripUserId(item: StoredConversationHistoryItem): ConversationHistoryItem {
   const { userId: _userId, ...conversation } = item
-  return {
-    ...conversation,
-    schemaVersion: conversation.schemaVersion ?? CONVERSATION_HISTORY_SCHEMA_VERSION
-  }
+  return normalizeStoredConversationHistoryItem(conversation)
 }
