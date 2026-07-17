@@ -10,7 +10,7 @@
 
 用途概要: Lambda invoke permission
 
-リソース数: 41
+リソース数: 42
 
 ## Logical ID 一覧
 
@@ -57,6 +57,7 @@
 | [Rest Apisearch POST Api Permission Test Memo Rag Mvp Stack Test Rest Api748483EDPOS Tsearch](#rest-apisearch-post-api-permission-test-memo-rag-mvp-stack-test-rest-api748483edpos-tsearch) | `RestApisearchPOSTApiPermissionTestMemoRagMvpStackTestRestApi748483EDPOSTsearch6EE8A05D` | Rest Apisearch POST Api Permission Test Memo Rag Mvp Stack Test Rest Api748483EDPOS Tsearch (Lambda invoke permission) |
 | [Revocation Cleanup Schedule Allow Event Rule Memo Rag Mvp Stack Test Revocation Cleanup Function3573F11BF4ADB52E](#revocation-cleanup-schedule-allow-event-rule-memo-rag-mvp-stack-test-revocation-cleanup-function3573f11bf4adb52e) | `RevocationCleanupScheduleAllowEventRuleMemoRagMvpStackTestRevocationCleanupFunction3573F11BF4ADB52E` | Revocation Cleanup Schedule Allow Event Rule Memo Rag Mvp Stack Test Revocation Cleanup Function3573F11BF4ADB52E (Lambda invoke permission) |
 | [Security Audit Reconciliation Schedule Allow Event Rule Memo Rag Mvp Stack Test Security Audit Reconciliation Function AE02055288EA6965](#security-audit-reconciliation-schedule-allow-event-rule-memo-rag-mvp-stack-test-security-audit-reconciliation-function-ae02055288ea6965) | `SecurityAuditReconciliationScheduleAllowEventRuleMemoRagMvpStackTestSecurityAuditReconciliationFunctionAE02055288EA6965` | Security Audit Reconciliation Schedule Allow Event Rule Memo Rag Mvp Stack Test Security Audit Reconciliation Function AE02055288EA6965 (Lambda invoke permission) |
+| [User Pool Post Confirmation Cognito](#user-pool-post-confirmation-cognito) | `UserPoolPostConfirmationCognito0E6001F8` | User Pool Post Confirmation Cognito (Lambda invoke permission) |
 
 ## Logical ID 別設定
 
@@ -592,3 +593,16 @@ Logical ID: `SecurityAuditReconciliationScheduleAllowEventRuleMemoRagMvpStackTes
 | `principal` | events.amazonaws.com |
 | `functionName` | GetAtt:SecurityAuditReconciliationFunction9A53A79D.Arn |
 | `sourceArn` | GetAtt:SecurityAuditReconciliationSchedule6C1B6D38.Arn |
+
+### User Pool Post Confirmation Cognito
+
+Logical ID: `UserPoolPostConfirmationCognito0E6001F8`
+
+用途推定: User Pool Post Confirmation Cognito (Lambda invoke permission)
+
+| 設定項目 | 値 |
+| --- | --- |
+| `action` | lambda:InvokeFunction |
+| `principal` | cognito-idp.amazonaws.com |
+| `functionName` | GetAtt:PostConfirmationFunction3DFFAE63.Arn |
+| `sourceArn` | GetAtt:UserPool6BA7E5F2.Arn |

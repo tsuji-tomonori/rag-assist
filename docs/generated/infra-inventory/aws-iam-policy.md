@@ -10,7 +10,7 @@
 
 用途概要: IAM inline policy
 
-リソース数: 18
+リソース数: 19
 
 ## Logical ID 一覧
 
@@ -29,6 +29,7 @@
 | [Document Ingest Run State Machine Role Default Policy](#document-ingest-run-state-machine-role-default-policy) | `DocumentIngestRunStateMachineRoleDefaultPolicy40421B5F` | Document Ingest Run State Machine Role Default Policy (IAM inline policy) |
 | [Document Ingest Run Worker Function Service Role Default Policy](#document-ingest-run-worker-function-service-role-default-policy) | `DocumentIngestRunWorkerFunctionServiceRoleDefaultPolicyE7C95FCE` | Document Ingest Run Worker Function Service Role Default Policy (IAM inline policy) |
 | [Heavy Api Function Service Role Default Policy](#heavy-api-function-service-role-default-policy) | `HeavyApiFunctionServiceRoleDefaultPolicyC207D4DE` | Heavy Api Function Service Role Default Policy (IAM inline policy) |
+| [Post Confirmation Function Service Role Default Policy](#post-confirmation-function-service-role-default-policy) | `PostConfirmationFunctionServiceRoleDefaultPolicy49917DA4` | Post Confirmation Function Service Role Default Policy (IAM inline policy) |
 | [Rag Quality Monitor Function Service Role Default Policy](#rag-quality-monitor-function-service-role-default-policy) | `RagQualityMonitorFunctionServiceRoleDefaultPolicy28D810D0` | Rag Quality Monitor Function Service Role Default Policy (IAM inline policy) |
 | [Revocation Cleanup Function Service Role Default Policy](#revocation-cleanup-function-service-role-default-policy) | `RevocationCleanupFunctionServiceRoleDefaultPolicy688B596B` | Revocation Cleanup Function Service Role Default Policy (IAM inline policy) |
 | [S3Vectors Provider Fn Service Role Default Policy](#s3vectors-provider-fn-service-role-default-policy) | `S3VectorsProviderFnServiceRoleDefaultPolicy0DE2AFB7` | S3Vectors Provider Fn Service Role Default Policy (IAM inline policy) |
@@ -218,6 +219,20 @@ Logical ID: `HeavyApiFunctionServiceRoleDefaultPolicyC207D4DE`
 | `statementCount` | 21 |
 | `actions` | [bedrock:InvokeModel, bedrock:InvokeModelWithResponseStream, dynamodb:BatchGetItem, dynamodb:BatchWriteItem, dynamodb:ConditionCheckItem, dynamodb:DeleteItem, dynamodb:DescribeTable, dynamodb:GetItem, dynamodb:GetRecords, dynamodb:GetShardIterator, dynamodb:PutItem, dynamodb:Query, dynamodb:Scan, dynamodb:UpdateItem, s3:Abort*, s3:DeleteObject*, s3:GetBucket*, s3:GetObject*, s3:List*, s3:PutObject, s3:PutObjectLegalHold, s3:PutObjectRetention, s3:PutObjectTagging, s3:PutObjectVersionTagging] |
 | `resources` | [*, GetAtt:BenchmarkBucketDD7D1D2F.Arn, GetAtt:BenchmarkRunsTableD0841636.Arn, GetAtt:ChatRunEventsTable7455A50E.Arn, GetAtt:ChatRunsTable8446CD95.Arn, GetAtt:ConversationHistoryTable59A3534C.Arn, GetAtt:DebugDownloadBucketAB6A16BE.Arn, GetAtt:DocumentIngestRunEventsTableF4692EBE.Arn, GetAtt:DocumentIngestRunsTableEA8F8CCA.Arn, GetAtt:DocumentsBucket9EC9DEB9.Arn, GetAtt:FavoritesTable4DA8A306.Arn, GetAtt:HumanQuestionsTable5DA9688B.Arn, GetAtt:UsageEventsTable215FE3DD.Arn, Join:["",[{"Fn::GetAtt":["BenchmarkBucketDD7D1D2F","Arn"]},"/*"]], Join:["",[{"Fn::GetAtt":["BenchmarkRunsTableD0841636","Arn"]},"/index/*"]], Join:["",[{"Fn::GetAtt":["ChatRunsTable8446CD95","Arn"]},"/index/*"]], Join:["",[{"Fn::GetAtt":["DebugDownloadBucketAB6A16BE","Arn"]},"/*"]], Join:["",[{"Fn::GetAtt":["DocumentIngestRunsTableEA8F8CCA","Arn"]},"/index/*"]], Join:["",[{"Fn::GetAtt":["DocumentsBucket9EC9DEB9","Arn"]},"/*"]], Join:["",[{"Fn::GetAtt":["HumanQuestionsTable5DA9688B","Arn"]},"/index/*"]], Join:["",[{"Fn::GetAtt":["UsageEventsTable215FE3DD","Arn"]},"/index/*"]]] |
+
+### Post Confirmation Function Service Role Default Policy
+
+Logical ID: `PostConfirmationFunctionServiceRoleDefaultPolicy49917DA4`
+
+用途推定: Post Confirmation Function Service Role Default Policy (IAM inline policy)
+
+| 設定項目 | 値 |
+| --- | --- |
+| `policyName` | PostConfirmationFunctionServiceRoleDefaultPolicy49917DA4 |
+| `roles` | [Ref:PostConfirmationFunctionServiceRoleE856FC83] |
+| `statementCount` | 1 |
+| `actions` | [cognito-idp:AdminAddUserToGroup] |
+| `resources` | [Join:["",["arn:",{"Ref":"AWS::Partition"},":cognito-idp:ap-northeast-1:111111111111:userpool/*"]]] |
 
 ### Rag Quality Monitor Function Service Role Default Policy
 
