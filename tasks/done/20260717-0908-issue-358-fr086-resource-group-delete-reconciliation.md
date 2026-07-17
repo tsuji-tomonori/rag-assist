@@ -1,6 +1,6 @@
 # Issue #358: FR-086 resource-group delete reconciliation（Phase 2c）
 
-- 状態: do
+- 状態: done
 - 対象: Issue #358 / FR-086 / `resourceGroup.delete`
 - ブランチ: `codex/issue-358-fr086-resource-group-delete`
 - 起点: PR #391 lifecycle head `3662f880`
@@ -19,7 +19,7 @@ resource-group deleteはmembership deny、group archive、2系統のrevocation c
 - [x] durable requested completionがある場合もauthoritative stateとcleanup証跡を再検証し、矛盾時はfinalizeしない。early null non-successはtarget stateを捏造しない。
 - [x] duplicate workerは既存CASでaudit event 1件へ収束し、resolverはmembership/group/cleanup mutationを再実行しない。
 - [x] worker IAMはdelete lifecycle markerのaccount限定prefixと、hash key方式のcleanup repair/ledger namespaceへの`GetObject`だけに限定する。runtimeはauthorized tenant・resource・audit IDからdeterministic keyだけを読み、List/Put/Deleteを付与しない。
-- [ ] docs/coverage/security policy/infra snapshot+inventory、selected/full tests、lint/typecheck/build、PR comments、implementation-head CIを完了する。
+- [x] docs/coverage/security policy/infra snapshot+inventory、selected/full tests、lint/typecheck/build、PR comments、implementation-head CIを完了する。
 - [x] 他domain resolver、bounded retry/quarantine/poison isolationを後続とし、FR-086全体を完了扱いにしない。
 - [x] merge / deploy / releaseを実施しない。
 
@@ -34,3 +34,12 @@ resource-group deleteはmembership deny、group archive、2系統のrevocation c
 ## Done条件
 
 成果物と検証がfinal PR headに揃い、未検証の実AWS worker、他domain resolver、retry/quarantineを明記し、merge / deploy / releaseを行わないこと。
+
+## 完了証跡
+
+- Draft PR: https://github.com/tsuji-tomonori/rag-assist/pull/394
+- initial-head MemoRAG CI: https://github.com/tsuji-tomonori/rag-assist/actions/runs/29545190334
+- 受け入れ条件コメント: https://github.com/tsuji-tomonori/rag-assist/pull/394#issuecomment-4997869922
+- セルフレビューコメント: https://github.com/tsuji-tomonori/rag-assist/pull/394#issuecomment-4997871149
+- local API full coverage: 825 / 825成功、statement/line 90.46%
+- final-head CIは本task/report lifecycle commit後に確認し、PRコメントとIssue #358へ記録する。

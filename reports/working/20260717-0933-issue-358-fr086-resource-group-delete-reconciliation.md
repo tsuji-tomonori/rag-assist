@@ -48,6 +48,10 @@ resolverはroute認可、deny、archive、cleanup registrationを再実行せず
 - bounded retry、quarantine、poison-intent batch isolationは後続Phase。
 - cleanup namespaceのIAMはhash key方式のためtenant-exact ARNにできない。read-only actionとdeterministic runtime keyで境界を補強している。
 - 実AWS S3/DynamoDB/EventBridge worker実行は未検証。local test、final-head CI、CDK synth/testを証跡にする。
-- stacked baseはPR #391のbranch。Draft PR、受け入れ条件コメント、セルフレビュー、final-head CIのURLはlifecycle commitで追記する。
+- stacked baseはPR #391のbranch。Draft PR #394を作成した。
+- 初期head `ad781f95` のMemoRAG CI run 29545190334はsuccess。
+- PR受け入れ条件コメント: https://github.com/tsuji-tomonori/rag-assist/pull/394#issuecomment-4997869922
+- PRセルフレビューコメント: https://github.com/tsuji-tomonori/rag-assist/pull/394#issuecomment-4997871149
+- task/report lifecycle commit後のfinal-head CIは継続確認し、PRコメントとIssue #358へ記録する。
 - Issue #358全体は未完了として維持する。
 - merge / deploy / releaseは実施しない。
