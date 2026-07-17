@@ -61,7 +61,8 @@
 | E2E-UI-QUESTION-002 | implemented | apps/web/e2e/question-journey.spec.ts | - |
 | E2E-UI-SKIP-001 | implemented | apps/web/e2e/skip-link.spec.ts | - |
 | E2E-UI-LOGIN-KEYBOARD-001 | implemented | apps/web/e2e/login-keyboard.spec.ts<br>apps/web/src/LoginPage.test.tsx | - |
-| E2E-UI-MANUAL-001 | manual | - | tasks/todo/20260714-issue-345-manual-a11y-evidence.md |
+| NONUI-UI-MANUAL-EVIDENCE-001 | implemented | tools/web-inventory/manual-a11y-evidence.test.mjs | - |
+| E2E-UI-MANUAL-001 | manual | reports/working/issue-345-manual-a11y-evidence-baseline.json | tasks/todo/20260714-issue-345-manual-a11y-evidence.md |
 
 ## 判定上の注意
 

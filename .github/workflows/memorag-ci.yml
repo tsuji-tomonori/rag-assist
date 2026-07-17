@@ -103,6 +103,13 @@ jobs:
         run: npm run docs:web-trace:test
         continue-on-error: true
 
+      - name: Validate manual accessibility evidence contract
+        id: manual_a11y_evidence
+        run: |
+          npm run docs:manual-a11y-evidence:test
+          npm run docs:manual-a11y-evidence:check
+        continue-on-error: true
+
       - name: Test semantic UI contract
         id: web_semantic_ui
         run: npm run test:web-semantic-ui
@@ -262,6 +269,7 @@ jobs:
               ['all', 'Canonical docs structure', '${{ steps.docs_structure.outcome }}', 'layout / trace / generated provenance / hidden Unicode', '`python3 scripts/validate_docs.py` + `npm run docs:hidden-unicode:check`'],
               ['web', 'Type-check', '${{ steps.web_typecheck.outcome }}', '-', '`npm run typecheck -w @memorag-mvp/web`'],
               ['web', 'Semantic UI trace validator test', '${{ steps.web_trace_test.outcome }}', 'missing / orphan / duplicate / invalid / stale classifications', '`npm run docs:web-trace:test`'],
+              ['web', 'Manual accessibility evidence contract', '${{ steps.manual_a11y_evidence.outcome }}', 'structural validity only; blocked/not_run remains not release-ready', '`npm run docs:manual-a11y-evidence:test` + `npm run docs:manual-a11y-evidence:check`'],
               ['web', 'Semantic status contract test', '${{ steps.web_semantic_ui.outcome }}', 'display vocabulary / dialog intents / multiple cues / WCAG AA token contrast', '`npm run test:web-semantic-ui`'],
               ['web', 'Generated inventory check', '${{ steps.web_inventory.outcome }}', '-', '`npm run docs:web-inventory:check`'],
               ['infra', 'Generated inventory check', '${{ steps.infra_inventory.outcome }}', '-', '`npm run docs:infra-inventory:check`'],
@@ -333,7 +341,7 @@ jobs:
           echo "CI result comment was skipped because this PR is from a fork and GITHUB_TOKEN has read-only permissions." >> $GITHUB_STEP_SUMMARY
 
       - name: Fail when CI checks failed
-        if: ${{ always() && (steps.install.outcome != 'success' || steps.web_lint.outcome != 'success' || steps.api_lint.outcome != 'success' || steps.infra_lint.outcome != 'success' || steps.infra_typecheck.outcome != 'success' || steps.api_typecheck.outcome != 'success' || steps.openapi_docs.outcome != 'success' || steps.api_code_docs.outcome != 'success' || steps.docs_structure.outcome != 'success' || steps.web_typecheck.outcome != 'success' || steps.web_trace_test.outcome != 'success' || steps.web_semantic_ui.outcome != 'success' || steps.web_inventory.outcome != 'success' || steps.infra_inventory.outcome != 'success' || steps.benchmark_typecheck.outcome != 'success' || steps.rag_release_source_audit.outcome != 'success' || steps.infra_test.outcome != 'success' || steps.benchmark_test.outcome != 'success' || steps.api_test.outcome != 'success' || steps.web_test.outcome != 'success' || steps.infra_build.outcome != 'success' || steps.api_build.outcome != 'success' || steps.web_build.outcome != 'success' || steps.benchmark_build.outcome != 'success' || steps.cdk_synth.outcome != 'success' || steps.dynamodb_gsi_guard.outcome != 'success') }}
+        if: ${{ always() && (steps.install.outcome != 'success' || steps.web_lint.outcome != 'success' || steps.api_lint.outcome != 'success' || steps.infra_lint.outcome != 'success' || steps.infra_typecheck.outcome != 'success' || steps.api_typecheck.outcome != 'success' || steps.openapi_docs.outcome != 'success' || steps.api_code_docs.outcome != 'success' || steps.docs_structure.outcome != 'success' || steps.web_typecheck.outcome != 'success' || steps.web_trace_test.outcome != 'success' || steps.manual_a11y_evidence.outcome != 'success' || steps.web_semantic_ui.outcome != 'success' || steps.web_inventory.outcome != 'success' || steps.infra_inventory.outcome != 'success' || steps.benchmark_typecheck.outcome != 'success' || steps.rag_release_source_audit.outcome != 'success' || steps.infra_test.outcome != 'success' || steps.benchmark_test.outcome != 'success' || steps.api_test.outcome != 'success' || steps.web_test.outcome != 'success' || steps.infra_build.outcome != 'success' || steps.api_build.outcome != 'success' || steps.web_build.outcome != 'success' || steps.benchmark_build.outcome != 'success' || steps.cdk_synth.outcome != 'success' || steps.dynamodb_gsi_guard.outcome != 'success') }}
         run: exit 1
 
   rag-promotion-gate:

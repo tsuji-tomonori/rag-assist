@@ -67,6 +67,21 @@ tasks:
     cmds:
       - npm run docs:web-trace:test
 
+  docs:manual-a11y-evidence:test:
+    desc: Test the versioned manual accessibility evidence contract
+    cmds:
+      - npm run docs:manual-a11y-evidence:test
+
+  docs:manual-a11y-evidence:check:
+    desc: Validate manual accessibility evidence structure without promoting blockers to pass
+    cmds:
+      - npm run docs:manual-a11y-evidence:check
+
+  docs:manual-a11y-evidence:require-pass:
+    desc: Require every approved manual accessibility evidence item to pass for release readiness
+    cmds:
+      - npm run docs:manual-a11y-evidence:require-pass
+
   docs:infra-inventory:
     desc: Generate Markdown and JSON AWS resource inventory from the CDK snapshot
     cmds:
@@ -84,6 +99,8 @@ tasks:
       - npm run docs:openapi:check
       - npm run docs:api-code:check
       - npm run docs:web-trace:test
+      - npm run docs:manual-a11y-evidence:test
+      - npm run docs:manual-a11y-evidence:check
       - npm run docs:web-inventory:check
       - npm run docs:infra-inventory:check
       - npm run docs:hidden-unicode:check

@@ -127,8 +127,14 @@
       "evidence": ["apps/web/e2e/login-keyboard.spec.ts", "apps/web/src/LoginPage.test.tsx"]
     },
     {
+      "id": "NONUI-UI-MANUAL-EVIDENCE-001",
+      "status": "implemented",
+      "evidence": ["tools/web-inventory/manual-a11y-evidence.test.mjs"]
+    },
+    {
       "id": "E2E-UI-MANUAL-001",
       "status": "manual",
+      "evidence": ["reports/working/issue-345-manual-a11y-evidence-baseline.json"],
       "task": "tasks/todo/20260714-issue-345-manual-a11y-evidence.md"
     }
   ],
