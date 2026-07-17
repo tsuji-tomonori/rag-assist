@@ -4,7 +4,7 @@
 - Issue: #359
 - branch: `codex/issue-359-question-service-extraction`
 - stacked base: `codex/issue-359-favorite-service-extraction`（PR #393 final head `2217ac80`）
-- 状態: 実装・ローカル検証完了、draft PR lifecycle 実施前
+- 状態: 実装・ローカル検証・draft PR lifecycle 完了、task done commit 後の final-head CI 待ち
 
 ## 受けた指示と要件整理
 
@@ -50,6 +50,7 @@ PR #387 の chat/history/RAG、PR #339 の usage/cost/admin、PR #393 の favori
 - `npm run rag:release:source-audit`: dataset 固有分岐 0、artifact manifest mismatch 0
 - `git diff --check`
 - `pre-commit run`: staged 312 files の全 hook が成功
+- GitHub Actions MemoRAG CI run `29547092334`: 実装 head `c61bf640` で success
 
 修正して再実行した項目:
 
@@ -71,4 +72,16 @@ PR #387 の chat/history/RAG、PR #339 の usage/cost/admin、PR #393 の favori
 - real AWS smoke、benchmark 実行、deploy/release は外部状態・費用を伴い、挙動変更のない構造抽出の範囲外のため未実施。local/full CI と GitHub Actions を gate とする。
 - generated API docs は 304 file diff（staged 全体は 312 files）を占め、PR #387/#393 と機械的 conflict が発生し得る。stacked base 順に merge/rebase 後、canonical generator を再実行する。
 - route authorization は domain service 外に残る。subservice は認可済み caller を前提とし、後続で再配置する場合は security policy test と HTTP contract を独立に見直す。
-- draft PR、label、AC/self-review comment、task done、final-head CI、Issue comment、clean/upstream 確認は後続 lifecycle で実施する。
+- draft stacked PR #397 を作成し、`semver:patch`、AC comment、セルフレビュー comment、実装 head CI success を確認した。task done commit 後の final-head CI、Issue comment、clean/upstream 確認は後続 lifecycle で実施する。
+
+## PR lifecycle 記録
+
+- draft PR: https://github.com/tsuji-tomonori/rag-assist/pull/397
+- base: `codex/issue-359-favorite-service-extraction`
+- implementation head: `c61bf64064e94db99abad2cc2975bbc2689c200f`
+- semver label: `semver:patch`
+- AC comment: https://github.com/tsuji-tomonori/rag-assist/pull/397#issuecomment-4998052851
+- self-review comment: https://github.com/tsuji-tomonori/rag-assist/pull/397#issuecomment-4998078418
+- implementation-head CI: https://github.com/tsuji-tomonori/rag-assist/actions/runs/29547092334（success）
+- GitHub Apps connector は利用できず、認証済み `gh` fallback を使用した。
+- task done lifecycle commit が final head を更新するため、その CI success と Issue #359 進捗は PR top-level comment へ最終記録する。

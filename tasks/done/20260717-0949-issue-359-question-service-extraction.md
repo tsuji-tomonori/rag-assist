@@ -1,6 +1,6 @@
 # Issue #359 Phase 4c: QuestionService の narrow-port 抽出
 
-- 状態: do
+- 状態: done
 - タスク種別: 修正
 - Issue: #359
 - 対象 branch: `codex/issue-359-question-service-extraction`
@@ -95,7 +95,7 @@ current stacked baseline の `MemoRagService` では、human question の 7 publ
 - [x] AC4: route permission、requester/assignee/admin 可視性、response redaction、HTTP schema/status、store schema、alias/RAG/history/favorite/usage に挙動変更がない。
 - [x] AC5: targeted/full API、API typecheck/build、root `npm run ci`、OpenAPI/API code docs freshness、source audit、`git diff --check` が成功する。
 - [x] AC6: `DES_DLD_012.md`、task、作業レポートが実装・検証・generated docs 競合・real AWS 未実施リスクと同期する。
-- [ ] AC7: 日本語 draft stacked PR、`semver:patch`、AC/self-review/final-head CI/Issue progress、task done lifecycle、clean/upstream を完了する。
+- [x] AC7: 日本語 draft stacked PR、`semver:patch`、AC/self-review/final-head CI/Issue progress、task done lifecycle、clean/upstream を完了する。
 
 ## 検証計画
 
@@ -136,4 +136,12 @@ current stacked baseline の `MemoRagService` では、human question の 7 publ
 - staged 312 files に対する `pre-commit run` は全 hook が成功した。`--all-files` で検出した scope 外の既存末尾空白は取り込まず復元した。
 - canonical API code docs は 97 API / 582 文書を再生成した。generated path は #387/#393 と conflict し得るため stack 順で再生成する。
 - direct `memorag-service.test.ts` invocation は package test environment を欠いて既存失敗となるが、同じ失敗を変更前 #393 head で再現し、authoritative package suite 817/817 を確認した。
-- real AWS smoke、benchmark、deploy/release は未実施。draft PR lifecycle と final-head CI は次工程で実施する。
+- real AWS smoke、benchmark、deploy/release は未実施。draft PR #397、`semver:patch`、AC/self-review comment、実装 head `c61bf640` の CI run `29547092334` success まで確認した。
+
+## PR lifecycle gate
+
+- draft PR: https://github.com/tsuji-tomonori/rag-assist/pull/397
+- AC comment: https://github.com/tsuji-tomonori/rag-assist/pull/397#issuecomment-4998052851
+- self-review comment: https://github.com/tsuji-tomonori/rag-assist/pull/397#issuecomment-4998078418
+- implementation-head CI: https://github.com/tsuji-tomonori/rag-assist/actions/runs/29547092334（success）
+- 本 task done 移動の commit が final head を更新するため、その final-head CI success、Issue #359 進捗、clean/upstream は repository file を再更新せず PR top-level comment に証跡を残す。
