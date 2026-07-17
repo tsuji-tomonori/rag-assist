@@ -64,7 +64,10 @@ test("FR-086 production consumer rechecks authoritative state and duplicate work
     tenantId: "tenant-1",
     scanned: 0,
     completed: 0,
-    repaired: 0
+    repaired: 0,
+    repairDeferred: 0,
+    retryScheduled: 0,
+    quarantined: 0
   })
 })
 
@@ -103,10 +106,9 @@ test("FR-086 a durable source marker supplies the result and is restored only af
     new SourceGovernanceAuditAuthoritativeResolver(store, outbox, sequenceClock())
   ])
   store.failNextSourceGovernanceWrite()
-  await assert.rejects(
-    () => reconciler.reconcileTenant("tenant-1"),
-    /simulated source governance write outage/
-  )
+  const deferred = await reconciler.reconcileTenant("tenant-1")
+  assert.equal(deferred.completed, 1)
+  assert.equal(deferred.repairDeferred, 1)
   assert.equal((await outbox.get("tenant-1", intent.intentId)).status, "completed")
   assert.equal((await readSourceGovernanceRecordById(store, "tenant-1", before.sourceId))?.record.status, "reconciliation_required")
 
@@ -128,7 +130,15 @@ test("FR-086 worker and resolver reject cross-tenant, unknown, and stale authori
     reconciler: {
       reconcileTenant: async (tenantId) => {
         calls += 1
-        return { tenantId, scanned: 0, completed: 0, repaired: 0 }
+        return {
+          tenantId,
+          scanned: 0,
+          completed: 0,
+          repaired: 0,
+          repairDeferred: 0,
+          retryScheduled: 0,
+          quarantined: 0
+        }
       }
     }
   })
@@ -152,11 +162,13 @@ test("FR-086 worker and resolver reject cross-tenant, unknown, and stale authori
     reason: "policy",
     policyVersion: "v1"
   })
-  await assert.rejects(
-    () => reconciler.reconcileTenant("tenant-1"),
-    /no unique authoritative resolver/
-  )
-  assert.equal((await outbox.get("tenant-1", unknown.intentId)).status, "pending")
+  assert.equal((await reconciler.reconcileTenant("tenant-1")).retryScheduled, 1)
+  assert.deepEqual((await outbox.get("tenant-1", unknown.intentId)).reconciliation, {
+    attempts: 1,
+    maxAttempts: 3,
+    lastFailureCode: "resolver_selection_failed",
+    lastAttemptedAt: "2026-07-11T00:00:02.000Z"
+  })
 
   const missingStore = new VersionedMemoryObjectStore()
   const missingOutbox = new ObjectStoreSecurityMutationAuditOutbox(missingStore, sequenceClock())
@@ -174,11 +186,11 @@ test("FR-086 worker and resolver reject cross-tenant, unknown, and stale authori
   const missingReconciler = new SecurityMutationAuditReconciler(missingOutbox, [
     new SourceGovernanceAuditAuthoritativeResolver(missingStore, missingOutbox, sequenceClock())
   ])
-  await assert.rejects(
-    () => missingReconciler.reconcileTenant("tenant-1"),
-    /authoritative source governance target was not found/i
+  assert.equal((await missingReconciler.reconcileTenant("tenant-1")).retryScheduled, 1)
+  assert.equal(
+    (await missingOutbox.get("tenant-1", missingIntent.intentId)).reconciliation?.lastFailureCode,
+    "authoritative_resolution_failed"
   )
-  assert.equal((await missingOutbox.get("tenant-1", missingIntent.intentId)).status, "pending")
 
   const staleStore = new VersionedMemoryObjectStore()
   const staleOutbox = new ObjectStoreSecurityMutationAuditOutbox(staleStore, sequenceClock())
@@ -213,11 +225,88 @@ test("FR-086 worker and resolver reject cross-tenant, unknown, and stale authori
   const staleReconciler = new SecurityMutationAuditReconciler(staleOutbox, [
     new SourceGovernanceAuditAuthoritativeResolver(staleStore, staleOutbox, sequenceClock())
   ])
-  await assert.rejects(
-    () => staleReconciler.reconcileTenant("tenant-1"),
-    /does not match the requested audit completion/
-  )
-  assert.equal((await staleOutbox.get("tenant-1", staleIntent.intentId)).status, "finalization_pending")
+  assert.equal((await staleReconciler.reconcileTenant("tenant-1")).retryScheduled, 1)
+  const stalePending = await staleOutbox.get("tenant-1", staleIntent.intentId)
+  assert.equal(stalePending.status, "finalization_pending")
+  assert.equal(stalePending.reconciliation?.lastFailureCode, "authoritative_resolution_failed")
+})
+
+test("FR-086 poison intent is quarantined after a bounded retry count without blocking a healthy intent", async () => {
+  const store = new VersionedMemoryObjectStore()
+  const outbox = new ObjectStoreSecurityMutationAuditOutbox(store, sequenceClock())
+  const poison = await outbox.prepare({
+    actorId: "operator-1",
+    tenantId: "tenant-1",
+    targetType: "unsupported",
+    targetId: "poison-1",
+    operation: "unsupported.mutate",
+    before: null,
+    proposedAfter: null,
+    reason: "unsupported",
+    policyVersion: "v1"
+  })
+  const before = sourceRecord("healthy-source", "unreviewed", 1)
+  const healthy = await outbox.prepare({
+    actorId: "reviewer-1",
+    tenantId: "tenant-1",
+    targetType: "source",
+    targetId: before.sourceId,
+    operation: "source_governance.approve_publish",
+    before: sourceGovernanceAuditValue(before),
+    proposedAfter: { status: "published" },
+    reason: "reviewed",
+    policyVersion: "source-governance-approval-v1"
+  })
+  await putSourceRecord(store, sourceRecord(before.sourceId, "published", 2, healthy.intentId))
+  const reconciler = new SecurityMutationAuditReconciler(outbox, [
+    new SourceGovernanceAuditAuthoritativeResolver(store, outbox, sequenceClock())
+  ])
+
+  const first = await reconciler.reconcileTenant("tenant-1")
+  assert.equal(first.completed, 1)
+  assert.equal(first.retryScheduled, 1)
+  assert.equal((await outbox.get("tenant-1", healthy.intentId)).status, "completed")
+  assert.equal((await reconciler.reconcileTenant("tenant-1")).retryScheduled, 1)
+  assert.equal((await reconciler.reconcileTenant("tenant-1")).quarantined, 1)
+
+  const quarantined = await outbox.get("tenant-1", poison.intentId)
+  assert.equal(quarantined.status, "quarantined")
+  assert.equal(quarantined.reconciliation?.attempts, 3)
+  assert.equal(quarantined.reconciliation?.lastFailureCode, "resolver_selection_failed")
+  assert.equal((await outbox.listPending("tenant-1")).length, 0)
+  assert.equal((await reconciler.reconcileTenant("tenant-1")).scanned, 0)
+})
+
+test("FR-086 transient audit completion failure records a safe retry code and later converges", async () => {
+  const store = new VersionedMemoryObjectStore()
+  const outbox = new ObjectStoreSecurityMutationAuditOutbox(store, sequenceClock())
+  const before = sourceRecord("completion-retry", "unreviewed", 1)
+  const intent = await outbox.prepare({
+    actorId: "reviewer-1",
+    tenantId: "tenant-1",
+    targetType: "source",
+    targetId: before.sourceId,
+    operation: "source_governance.approve_publish",
+    before: sourceGovernanceAuditValue(before),
+    proposedAfter: { status: "published" },
+    reason: "reviewed",
+    policyVersion: "source-governance-approval-v1"
+  })
+  await putSourceRecord(store, sourceRecord(before.sourceId, "published", 2, intent.intentId))
+  const reconciler = new SecurityMutationAuditReconciler(outbox, [
+    new SourceGovernanceAuditAuthoritativeResolver(store, outbox, sequenceClock())
+  ])
+  store.failNextCompletedAuditWrite()
+
+  const retry = await reconciler.reconcileTenant("tenant-1")
+  assert.equal(retry.retryScheduled, 1)
+  const staged = await outbox.get("tenant-1", intent.intentId)
+  assert.equal(staged.status, "finalization_pending")
+  assert.equal(staged.reconciliation?.lastFailureCode, "audit_completion_failed")
+
+  const completed = await reconciler.reconcileTenant("tenant-1")
+  assert.equal(completed.completed, 1)
+  assert.equal((await outbox.get("tenant-1", intent.intentId)).status, "completed")
 })
 
 function sourceRecord(

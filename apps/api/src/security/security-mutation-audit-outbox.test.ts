@@ -132,6 +132,60 @@ test("pending enumeration applies its limit after filtering completed records", 
   assert.deepEqual((await outbox.listPending("tenant-a", 1)).map((intent) => intent.intentId), [expectedPending.intentId])
 })
 
+test("reconciliation failures converge on a bounded durable quarantine and leave raw errors unstored", async () => {
+  const dataDir = await mkdtemp(path.join(tmpdir(), "security-audit-outbox-quarantine-test-"))
+  const objectStore = new LocalObjectStore(dataDir)
+  const outbox = new ObjectStoreSecurityMutationAuditOutbox(
+    objectStore,
+    () => new Date("2026-07-11T00:00:20.000Z")
+  )
+  const intent = await outbox.prepare(draft("tenant-a", "source-poison"))
+
+  await Promise.all(Array.from({ length: 8 }, () => outbox.recordReconciliationFailure(
+    "tenant-a",
+    intent.intentId,
+    "authoritative_resolution_failed",
+    3
+  )))
+
+  const quarantined = await outbox.get("tenant-a", intent.intentId)
+  assert.equal(quarantined.status, "quarantined")
+  assert.deepEqual(quarantined.reconciliation, {
+    attempts: 3,
+    maxAttempts: 3,
+    lastFailureCode: "authoritative_resolution_failed",
+    lastAttemptedAt: "2026-07-11T00:00:20.000Z",
+    quarantinedAt: "2026-07-11T00:00:20.000Z"
+  })
+  assert.deepEqual(await outbox.listPending("tenant-a"), [])
+  assert.doesNotMatch(JSON.stringify(quarantined), /stack|simulated|exception/i)
+  await assert.rejects(
+    () => outbox.recordReconciliationFailure("tenant-b", intent.intentId, "authoritative_resolution_failed", 3),
+    /not found/
+  )
+})
+
+test("corrupt and stale reconciliation evidence fails closed", async () => {
+  const dataDir = await mkdtemp(path.join(tmpdir(), "security-audit-outbox-corrupt-quarantine-test-"))
+  const objectStore = new LocalObjectStore(dataDir)
+  const outbox = new ObjectStoreSecurityMutationAuditOutbox(objectStore)
+  const intent = await outbox.prepare(draft("tenant-a", "source-corrupt"))
+  const [key] = await objectStore.listKeys("security-audit/intents/tenant-a/")
+  await objectStore.putText(key!, JSON.stringify({
+    ...intent,
+    status: "quarantined",
+    reconciliation: {
+      attempts: 2,
+      maxAttempts: 3,
+      lastFailureCode: "raw_infrastructure_error",
+      lastAttemptedAt: "not-a-timestamp",
+      quarantinedAt: "2026-07-11T00:00:20.000Z"
+    }
+  }))
+
+  await assert.rejects(() => outbox.get("tenant-a", intent.intentId), /reconciliation evidence is invalid/)
+})
+
 test("completed schema-v1 records from the pre-staging writer remain readable and immutable", async () => {
   const dataDir = await mkdtemp(path.join(tmpdir(), "security-audit-outbox-legacy-test-"))
   const objectStore = new LocalObjectStore(dataDir)

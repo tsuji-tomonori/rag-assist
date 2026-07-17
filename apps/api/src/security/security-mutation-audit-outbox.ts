@@ -3,8 +3,13 @@ import type { ObjectStore } from "../adapters/object-store.js"
 import type { JsonValue } from "../types.js"
 
 export const SECURITY_MUTATION_AUDIT_SCHEMA_VERSION = 1 as const
+export const SECURITY_MUTATION_AUDIT_MAX_RECONCILIATION_ATTEMPTS = 3 as const
 
 export type SecurityMutationResult = "success" | "denied" | "conflict" | "failed"
+export type SecurityMutationAuditReconciliationFailureCode =
+  | "resolver_selection_failed"
+  | "authoritative_resolution_failed"
+  | "audit_completion_failed"
 
 export type SecurityMutationAuditDraft = Readonly<{
   actorId: string
@@ -21,7 +26,7 @@ export type SecurityMutationAuditDraft = Readonly<{
 export type SecurityMutationAuditIntent = Readonly<{
   schemaVersion: typeof SECURITY_MUTATION_AUDIT_SCHEMA_VERSION
   intentId: string
-  status: "pending" | "finalization_pending" | "completed"
+  status: "pending" | "finalization_pending" | "quarantined" | "completed"
   draft: SecurityMutationAuditDraft
   requestedCompletion?: Readonly<{
     result: SecurityMutationResult
@@ -30,6 +35,13 @@ export type SecurityMutationAuditIntent = Readonly<{
   }>
   result?: SecurityMutationResult
   after?: JsonValue
+  reconciliation?: Readonly<{
+    attempts: number
+    maxAttempts: number
+    lastFailureCode: SecurityMutationAuditReconciliationFailureCode
+    lastAttemptedAt: string
+    quarantinedAt?: string
+  }>
   createdAt: string
   completedAt?: string
 }>
@@ -45,6 +57,12 @@ export interface SecurityMutationAuditReconciliationOutboxPort extends SecurityM
   get(tenantId: string, intentId: string): Promise<SecurityMutationAuditIntent>
   listPending(tenantId: string, limit?: number): Promise<SecurityMutationAuditIntent[]>
   listAll(tenantId: string): Promise<SecurityMutationAuditIntent[]>
+  recordReconciliationFailure(
+    tenantId: string,
+    intentId: string,
+    failureCode: SecurityMutationAuditReconciliationFailureCode,
+    maxAttempts: number
+  ): Promise<SecurityMutationAuditIntent>
 }
 
 export class SecurityMutationAuditCompletionPendingError extends Error {
@@ -179,7 +197,60 @@ export class ObjectStoreSecurityMutationAuditOutbox implements SecurityMutationA
       throw new Error("Security mutation audit pending-list limit is invalid")
     }
     const intents = await this.listAll(tenantId)
-    return intents.filter((intent) => intent.status !== "completed").slice(0, limit)
+    return intents.filter((intent) => intent.status !== "completed" && intent.status !== "quarantined").slice(0, limit)
+  }
+
+  async recordReconciliationFailure(
+    tenantId: string,
+    intentId: string,
+    failureCode: SecurityMutationAuditReconciliationFailureCode,
+    maxAttempts: number
+  ): Promise<SecurityMutationAuditIntent> {
+    assertIdentifier(tenantId, "tenantId")
+    assertIdentifier(intentId, "intentId")
+    if (!isReconciliationFailureCode(failureCode)) {
+      throw new Error("Security mutation audit reconciliation failure code is invalid")
+    }
+    if (!Number.isInteger(maxAttempts) || maxAttempts < 1 || maxAttempts > 100) {
+      throw new Error("Security mutation audit reconciliation attempt limit is invalid")
+    }
+    const key = intentKey(tenantId, intentId)
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const current = await this.readVersioned(tenantId, intentId)
+      if (current.intent.status === "completed" || current.intent.status === "quarantined") return current.intent
+      if (current.intent.reconciliation && current.intent.reconciliation.maxAttempts !== maxAttempts) {
+        throw new Error("Security mutation audit reconciliation attempt policy changed while pending")
+      }
+      const attempts = (current.intent.reconciliation?.attempts ?? 0) + 1
+      const attemptedAt = this.now().toISOString()
+      const quarantined = attempts >= maxAttempts
+      const updated: SecurityMutationAuditIntent = {
+        ...current.intent,
+        status: quarantined ? "quarantined" : current.intent.status,
+        reconciliation: {
+          attempts,
+          maxAttempts,
+          lastFailureCode: failureCode,
+          lastAttemptedAt: attemptedAt,
+          ...(quarantined ? { quarantinedAt: attemptedAt } : {})
+        }
+      }
+      try {
+        await this.objectStore.putTextIfVersion(
+          key,
+          JSON.stringify(updated, null, 2),
+          current.version,
+          "application/json"
+        )
+        return updated
+      } catch (error) {
+        if (isConditionalWriteError(error)) continue
+        throw error
+      }
+    }
+    const winner = await this.get(tenantId, intentId)
+    if (winner.status === "completed" || winner.status === "quarantined") return winner
+    throw new Error("Security mutation audit reconciliation failure recording did not converge")
   }
 
   async listAll(tenantId: string): Promise<SecurityMutationAuditIntent[]> {
@@ -246,7 +317,7 @@ function parseAndValidateIntent(
   }
   if (
     intent.schemaVersion !== SECURITY_MUTATION_AUDIT_SCHEMA_VERSION
-    || !["pending", "finalization_pending", "completed"].includes(intent.status)
+    || !["pending", "finalization_pending", "quarantined", "completed"].includes(intent.status)
     || intent.draft?.tenantId !== tenantId
     || (expectedIntentId !== undefined && intent.intentId !== expectedIntentId)
   ) throw new Error("Security mutation audit intent identity mismatch")
@@ -262,6 +333,12 @@ function parseAndValidateIntent(
     validateRequestedCompletion(intent.requestedCompletion)
     if ("result" in intent || "after" in intent || "completedAt" in intent) {
       throw new Error("Finalization-pending audit intent is already finalized")
+    }
+  }
+  if (intent.status === "quarantined") {
+    if (intent.requestedCompletion) validateRequestedCompletion(intent.requestedCompletion)
+    if ("result" in intent || "after" in intent || "completedAt" in intent) {
+      throw new Error("Quarantined security mutation audit intent contains final state")
     }
   }
   if (intent.status === "completed") {
@@ -284,7 +361,31 @@ function parseAndValidateIntent(
     }
   }
   if (!isCanonicalTimestamp(intent.createdAt)) throw new Error("Security mutation audit timestamp is invalid")
+  if (intent.reconciliation) validateReconciliation(intent.reconciliation, intent.status)
   return intent
+}
+
+function validateReconciliation(
+  value: NonNullable<SecurityMutationAuditIntent["reconciliation"]>,
+  status: SecurityMutationAuditIntent["status"]
+): void {
+  if (
+    !Number.isInteger(value.attempts)
+    || value.attempts < 1
+    || !Number.isInteger(value.maxAttempts)
+    || value.maxAttempts < 1
+    || value.maxAttempts > 100
+    || value.attempts > value.maxAttempts
+    || !isReconciliationFailureCode(value.lastFailureCode)
+    || !isCanonicalTimestamp(value.lastAttemptedAt)
+  ) throw new Error("Security mutation audit reconciliation evidence is invalid")
+  if (status === "quarantined") {
+    if (value.attempts !== value.maxAttempts || !isCanonicalTimestamp(value.quarantinedAt)) {
+      throw new Error("Security mutation audit quarantine evidence is invalid")
+    }
+  } else if (value.quarantinedAt !== undefined) {
+    throw new Error("Security mutation audit non-quarantined intent contains quarantine evidence")
+  }
 }
 
 function validateRequestedCompletion(
@@ -321,6 +422,12 @@ function sameJson(left: JsonValue | undefined, right: JsonValue | undefined): bo
 
 function isSecurityMutationResult(value: unknown): value is SecurityMutationResult {
   return value === "success" || value === "denied" || value === "conflict" || value === "failed"
+}
+
+function isReconciliationFailureCode(value: unknown): value is SecurityMutationAuditReconciliationFailureCode {
+  return value === "resolver_selection_failed"
+    || value === "authoritative_resolution_failed"
+    || value === "audit_completion_failed"
 }
 
 function isJsonValue(value: unknown): value is JsonValue {

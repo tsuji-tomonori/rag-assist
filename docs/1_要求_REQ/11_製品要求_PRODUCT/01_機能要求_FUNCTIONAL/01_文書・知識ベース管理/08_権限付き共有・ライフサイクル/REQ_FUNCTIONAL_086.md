@@ -59,7 +59,7 @@
 | 安定性 | High |
 | Confidence | inferred |
 | 所有者 | Security / Audit / Identity Platform / Document Platform |
-| 変更履歴 | 2026-07-11 初版、2026-07-17 production reconciliation coverage の段階適用状況を明記 |
+| 変更履歴 | 2026-07-11 初版、2026-07-17 production reconciliation coverage と bounded quarantine の段階適用状況を明記 |
 
 ## 受け入れ条件
 
@@ -94,7 +94,7 @@
 | 実現可能性 | OK | transaction、durable publication intent、または mutation result と相関可能な event store で実現可能 |
 | 検証可能性 | OK | 操作×結果の matrix、必須 field schema、audit-write failure injection、state/event correlation で検証できる |
 | ニーズ適合 | OK | 管理者・監査担当が権限変更の主体、対象、理由、結果を横断調査できる |
-| 実装適合 | Partial（confirmed / open） | 共通 outbox と各 producer は存在する。production worker の authoritative resolver は source governance、resource-group membership、resource-group update/create/delete が confirmed。他 target と poison-intent isolation は open |
+| 実装適合 | Partial（confirmed / open） | 共通 outbox と各 producer は存在する。production worker の authoritative resolver は source governance、resource-group membership、resource-group update/create/delete が confirmed。bounded retry、quarantine、poison-intent batch isolationもconfirmed。他 target resolverと手動再投入は open |
 
 ## Production reconciliation coverage
 
@@ -106,9 +106,11 @@
 | `resourceGroup / create` | confirmed | `ResourceGroupCreateAuditAuthoritativeResolver`。tenant-scoped current group、initial owner membership、audit IDに相関するdurable lifecycle intentの`membership_created`以降をすべて照合する |
 | `resourceGroup / delete` | confirmed | `ResourceGroupDeleteAuditAuthoritativeResolver`。delete lifecycle intent、archived group、empty membership state、audit ID由来のmembership/archive cleanup repairとledgerをすべて照合する |
 | folder/document share・move・delete、administrative principal transfer、application role | open | outbox producerとdomain recovery stateは存在するが、production workerへauthoritative resolverが未登録 |
-| 継続失敗のbounded retry / quarantine / batch isolation | open | 現行reconcilerはresolver errorでtenant batchを停止するため、別Phaseで可観測かつfail-closedな隔離境界が必要 |
+| 継続失敗のbounded retry / quarantine / batch isolation | confirmed | intent本体のCASでsafe failure codeと最大3回を永続化する。上限到達時は`quarantined`へ一意に遷移して通常pending列挙から除外し、別intentの処理を同一batchで継続する |
 
 resource-group membership と update のpending intentは、current authoritative stateが`proposedAfter`と一致する場合のみ`success`へ確定する。createはcurrent groupだけでなく、initial owner membershipと対象audit IDに相関するdurable lifecycle intentが`membership_created`以降であることを必須とし、`prepared`/`group_created`の部分状態を確定しない。deleteは`group_archived`以降、empty membership state、対象audit ID由来のmembership/archive cleanup repairとcleanup ledgerがすべて登録済みの場合だけ確定し、archive state単独では確定しない。durable `requestedCompletion`がある場合もcurrent stateと必要なcleanup証跡の一致を再確認し、そのresultを維持する。
+
+resolver selection、authoritative resolution、audit completionの失敗はraw exceptionを保存せず、固定のsafe failure code、attempt count、policy上限、時刻だけをintentへCAS追記する。3回目の失敗で`quarantined`へ遷移し、通常workerは自動再試行しない。quarantineはsuccess/completedではなく未解決の運用対象であり、同一tenant batchの別intentは継続処理する。quarantine解除と手動再投入の操作面は未実装である。
 
 ## トレース
 

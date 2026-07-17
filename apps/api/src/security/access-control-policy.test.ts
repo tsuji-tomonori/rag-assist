@@ -621,6 +621,13 @@ test("security audit reconciliation worker is single-tenant and rechecks authori
   assert.match(groupCreateResolverSource, /status !== "membership_created"/)
   assert.doesNotMatch(groupCreateResolverSource, /\.create\(|replaceGroupState\(/)
   assert.match(outboxSource, /intentPrefix\(tenantId\)/)
+  assert.match(outboxSource, /SECURITY_MUTATION_AUDIT_MAX_RECONCILIATION_ATTEMPTS = 3/)
+  assert.match(outboxSource, /status: quarantined \? "quarantined"/)
+  assert.match(outboxSource, /lastFailureCode: failureCode/)
+  assert.doesNotMatch(outboxSource, /lastFailure(?:Message|Stack)|rawError/)
+  assert.match(reconcilerSource, /recordReconciliationFailure/)
+  assert.match(reconcilerSource, /else if \(recorded\.status !== "completed"\) retryScheduled/)
+  assert.doesNotMatch(reconcilerSource, /throw error/)
 })
 
 async function openApiRoutePolicies(): Promise<Array<RoutePolicy & {

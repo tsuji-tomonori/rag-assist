@@ -123,8 +123,8 @@
       "openApi": true,
       "routeSource": "apps/api/src/routes/admin-routes.ts:179 (GET /admin/audit-log)",
       "handlerSource": "apps/api/src/routes/admin-routes.ts:190 (GET /admin/audit-log handler)",
-      "functionCount": 37,
-      "branchCount": 69,
+      "functionCount": 39,
+      "branchCount": 77,
       "projectedBranchCount": 4,
       "dataAccessCount": 16,
       "relatedTestCount": 6
@@ -136,8 +136,8 @@
       "openApi": true,
       "routeSource": "apps/api/src/routes/admin-routes.ts:203 (POST /admin/audit-log/export)",
       "handlerSource": "apps/api/src/routes/admin-routes.ts:223 (POST /admin/audit-log/export handler)",
-      "functionCount": 55,
-      "branchCount": 110,
+      "functionCount": 57,
+      "branchCount": 118,
       "projectedBranchCount": 17,
       "dataAccessCount": 20,
       "relatedTestCount": 3
@@ -162,8 +162,8 @@
       "openApi": true,
       "routeSource": "apps/api/src/routes/admin-routes.ts:695 (POST /admin/costs/export)",
       "handlerSource": "apps/api/src/routes/admin-routes.ts:713 (POST /admin/costs/export handler)",
-      "functionCount": 55,
-      "branchCount": 111,
+      "functionCount": 57,
+      "branchCount": 119,
       "projectedBranchCount": 18,
       "dataAccessCount": 20,
       "relatedTestCount": 3
@@ -214,8 +214,8 @@
       "openApi": true,
       "routeSource": "apps/api/src/routes/admin-routes.ts:641 (POST /admin/usage/export)",
       "handlerSource": "apps/api/src/routes/admin-routes.ts:659 (POST /admin/usage/export handler)",
-      "functionCount": 55,
-      "branchCount": 111,
+      "functionCount": 57,
+      "branchCount": 119,
       "projectedBranchCount": 18,
       "dataAccessCount": 20,
       "relatedTestCount": 3
