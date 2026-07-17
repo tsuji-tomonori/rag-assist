@@ -635,6 +635,10 @@ export class MemoRagMvpStack extends Stack {
       actions: ["dynamodb:GetItem", "dynamodb:Query"],
       resources: [documentGroupsTable.tableArn, `${documentGroupsTable.tableArn}/index/*`]
     }))
+    securityAuditReconciliationFn.addToRolePolicy(new iam.PolicyStatement({
+      actions: ["cognito-idp:ListUsers", "cognito-idp:AdminGetUser", "cognito-idp:AdminListGroupsForUser"],
+      resources: [userPool.userPoolArn]
+    }))
     const securityAuditReconciliationSchedule = new events.Rule(this, "SecurityAuditReconciliationSchedule", {
       description: "Finalize tenant-scoped security mutation audits after authoritative state reconciliation.",
       schedule: events.Schedule.rate(Duration.minutes(1))

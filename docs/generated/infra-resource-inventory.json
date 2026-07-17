@@ -4038,8 +4038,11 @@
         "roles": [
           "Ref:SecurityAuditReconciliationFunctionServiceRoleF4787D99"
         ],
-        "statementCount": 4,
+        "statementCount": 5,
         "actions": [
+          "cognito-idp:AdminGetUser",
+          "cognito-idp:AdminListGroupsForUser",
+          "cognito-idp:ListUsers",
           "dynamodb:GetItem",
           "dynamodb:Query",
           "s3:GetObject",
@@ -4049,6 +4052,7 @@
         "resources": [
           "GetAtt:DocumentGroupsTableA5108040.Arn",
           "GetAtt:DocumentsBucket9EC9DEB9.Arn",
+          "GetAtt:UserPool6BA7E5F2.Arn",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentGroupsTableA5108040\",\"Arn\"]},\"/index/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/security-audit/intents/\",{\"Ref\":\"AWS::AccountId\"},\"/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/security/resource-group-lifecycle/create/\",{\"Ref\":\"AWS::AccountId\"},\"/*\"]]",

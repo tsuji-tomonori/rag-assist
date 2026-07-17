@@ -9154,6 +9154,20 @@
               ]
             },
             {
+              "Action": [
+                "cognito-idp:ListUsers",
+                "cognito-idp:AdminGetUser",
+                "cognito-idp:AdminListGroupsForUser"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "UserPool6BA7E5F2",
+                  "Arn"
+                ]
+              }
+            },
+            {
               "Action": "s3:ListBucket",
               "Condition": {
                 "StringLike": {

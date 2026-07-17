@@ -822,9 +822,17 @@ test("deploys the tenant-scoped security audit reconciliation worker with bounde
   assert.match(policies, /dynamodb:Query/)
   assert.match(policies, /DocumentGroupsTable/)
   assert.match(policies, /index\/\*/)
+  assert.match(policies, /cognito-idp:ListUsers/)
+  assert.match(policies, /cognito-idp:AdminGetUser/)
+  assert.match(policies, /cognito-idp:AdminListGroupsForUser/)
+  assert.match(policies, /UserPool/)
   assert.doesNotMatch(policies, /s3:DeleteObject/)
   assert.doesNotMatch(policies, /bedrock:InvokeModel/)
   assert.doesNotMatch(policies, /dynamodb:(?:BatchGetItem|Scan|PutItem|UpdateItem|DeleteItem|TransactWriteItems)/)
+  assert.doesNotMatch(
+    policies,
+    /cognito-idp:(?:AdminAddUserToGroup|AdminRemoveUserFromGroup|AdminDisableUser|AdminEnableUser|AdminUpdateUserAttributes|AdminUserGlobalSignOut|AdminDeleteUser)/
+  )
 
   const lifecycleStatements = Object.entries(resources)
     .filter(([logicalId, resource]) => logicalId.startsWith("SecurityAuditReconciliationFunctionServiceRoleDefaultPolicy") && (resource as any).Type === "AWS::IAM::Policy")
