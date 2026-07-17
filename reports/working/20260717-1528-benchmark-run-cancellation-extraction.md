@@ -4,7 +4,7 @@
 - Issue: #359
 - branch: `codex/issue-359-benchmark-run-cancellation-extraction`
 - stacked base: PR #407 final head `1c59125a`
-- 状態: 実装・ローカル検証完了、Draft stacked PR 作成前
+- 状態: draft PR #414 作成・初回 CI 成功・task 完了
 
 ## 受けた指示
 
@@ -59,6 +59,7 @@ PR #407 完遂後の Issue #359 残件と最新 task/PR stack を再確認し、
 - `npm run ci`（API 833、Web 442、Infra 38、Benchmark 102 を含む全 workspace）
 - source audit（facade 6,247 行、`benchmarkRunStore` occurrence 7、direct key 24、facade `StopExecutionCommand` 0）
 - `git diff --check`
+- GitHub Actions run #29560365472（実装 head `2a44c580`）: 成功（8分54秒、promotion gate は skip）
 
 修復履歴:
 
@@ -85,4 +86,11 @@ PR #407 完遂後の Issue #359 残件と最新 task/PR stack を再確認し、
 
 ## PR lifecycle
 
-- Draft stacked PR、`semver:patch`、日本語 AC/self-review、task done commit、final-head CI、Issue #359 進捗コメント、clean/upstream は post-completion check で追記する。
+- draft stacked PR: #414 `♻️ Issue #359: benchmark run cancellation を narrow port へ抽出`
+- base: `codex/issue-359-benchmark-run-query-extraction`（PR #407）
+- label: `semver:patch`
+- 日本語 AC コメント: https://github.com/tsuji-tomonori/rag-assist/pull/414#issuecomment-4999727655
+- 日本語セルフレビュー: https://github.com/tsuji-tomonori/rag-assist/pull/414#issuecomment-4999727875（blocking 指摘なし）
+- GitHub Apps connector は callable でなかったため、repository 規約の fallback として `gh` を使用した。
+- task: PR コメント後に `tasks/done/` へ移動済み。
+- task completion commit 後の final-head CI、Issue #359 進捗コメント、clean/upstream は post-completion check で確認する。

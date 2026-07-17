@@ -1,6 +1,6 @@
 # Issue #359 Phase 4f: BenchmarkRunCancellationService の narrow-port 抽出
 
-- 状態: do
+- 状態: done
 - タスク種別: 修正
 - Issue: #359
 - 対象 branch: `codex/issue-359-benchmark-run-cancellation-extraction`
@@ -85,15 +85,25 @@ current stacked baseline の `MemoRagService` は benchmark run cancellation の
 
 ## 受け入れ条件
 
-- [ ] AC1: `BenchmarkRunCancellationService` が whole `Dependencies` / AWS SDK / global config / authorization service ではなく、`BenchmarkRunStore.get/update`、authoritative tenant resolver、execution stopper、clock だけを受ける。
-- [ ] AC2: AWS adapter が execution ARN と exact cause を `StopExecutionCommand` に写し、service source は AWS/config を import しない。
-- [ ] AC3: `MemoRagService.cancelBenchmarkRun` の name/signature、route/consumer compile contract、PR #390 の101 public method snapshotが不変である。
-- [ ] AC4: authoritative tenant lookup、missing/cross-tenant non-enumeration、ARN有無、stop-before-update、stop失敗時未更新、terminal run、clock/update input を domain/adapter/既存 route test で維持する。
-- [ ] AC5: benchmark create/reauthorize/query/download/artifact cleanup/execution start、route permission/status、auth/RBAC、RAG/chat/history/usage/admin、既抽出 service に挙動変更がない。
-- [ ] AC6: facade `benchmarkRunStore` direct read が9→7、direct dependency keyは24、`memorag-service.ts`が6,251行未満、facade `StopExecutionCommand` importが0になり、contract guardが同期する。
-- [ ] AC7: targeted/full API、API typecheck/build、root `npm run ci`、OpenAPI/API-code docs freshness、source audit、`task docs:check`、`git diff --check`、pre-commit が成功する。
-- [ ] AC8: `DES_DLD_012.md`、task、作業レポートが実装・検証・generated docs競合・real AWS/benchmark/manual未実施・stop後update失敗の残余リスクと同期する。
-- [ ] AC9: 日本語 draft stacked PR、`semver:patch`、AC/self-review、task done lifecycle を完了し、final-head CI/Issue progress/clean upstream を post-completion check する。
+- [x] AC1: `BenchmarkRunCancellationService` が whole `Dependencies` / AWS SDK / global config / authorization service ではなく、`BenchmarkRunStore.get/update`、authoritative tenant resolver、execution stopper、clock だけを受ける。
+- [x] AC2: AWS adapter が execution ARN と exact cause を `StopExecutionCommand` に写し、service source は AWS/config を import しない。
+- [x] AC3: `MemoRagService.cancelBenchmarkRun` の name/signature、route/consumer compile contract、PR #390 の101 public method snapshotが不変である。
+- [x] AC4: authoritative tenant lookup、missing/cross-tenant non-enumeration、ARN有無、stop-before-update、stop失敗時未更新、terminal run、clock/update input を domain/adapter/既存 route test で維持する。
+- [x] AC5: benchmark create/reauthorize/query/download/artifact cleanup/execution start、route permission/status、auth/RBAC、RAG/chat/history/usage/admin、既抽出 service に挙動変更がない。
+- [x] AC6: facade `benchmarkRunStore` direct read が9→7、direct dependency keyは24、`memorag-service.ts`が6,251行未満、facade `StopExecutionCommand` importが0になり、contract guardが同期する。
+- [x] AC7: targeted/full API、API typecheck/build、root `npm run ci`、OpenAPI/API-code docs freshness、source audit、`task docs:check`、`git diff --check`、pre-commit が成功する。
+- [x] AC8: `DES_DLD_012.md`、task、作業レポートが実装・検証・generated docs競合・real AWS/benchmark/manual未実施・stop後update失敗の残余リスクと同期する。
+- [x] AC9: 日本語 draft stacked PR、`semver:patch`、AC/self-review、task done lifecycle を完了する。final-head CI/Issue progress/clean upstream は task completion commit 後の post-completion check として確認する。
+
+## 実施結果
+
+- `BenchmarkRunCancellationService` に store `get/update`、authoritative tenant resolver、execution stopper、clock だけを注入し、`cancelBenchmarkRun` を委譲した。AWS `StopExecutionCommand` mapping は独立 adapter へ移した。
+- public 101 method/signature snapshot は不変。tenant non-enumeration、exact ARN/cause、stop-before-update、ARNなし、stop failure、terminal status、clock/update input を新規7 tests と既存 tenant boundary test で維持した。
+- facade `benchmarkRunStore` occurrence は9から7、direct dependency keyは24、`memorag-service.ts`は6,251行から6,247行、facade `StopExecutionCommand`は0になった。
+- API full 833 tests、API typecheck/build、root CI、97 API / 582 docs freshness、`task docs:check`、source audit、pre-commitが成功した。
+- canonical API-code 298 files は source location/call graph の機械更新。OpenAPI契約の手動変更はない。
+- real Step Functions/AWS、実benchmark、manual UIは未実施。外部状態・credential・費用を伴うか本 command seam に非該当である。
+- Draft stacked PR #414 を作成し、`semver:patch`、日本語AC、セルフレビューを記録した。実装 head `2a44c580` の GitHub Actions run #29560365472 は8分54秒で成功し、promotion gateはskipだった。
 
 ## 検証計画
 
