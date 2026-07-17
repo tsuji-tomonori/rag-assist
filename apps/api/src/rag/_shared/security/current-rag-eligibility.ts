@@ -132,7 +132,10 @@ export function currentEligibilitySnapshotFromManifest(input: {
     documentVersion: input.manifest.securityEnvelope?.documentVersion ?? "",
     tenantId: admission?.tenantId,
     lifecycleActive: input.manifest.lifecycleStatus === "active",
-    admissionApproved: admission?.status === "approved" && admission.inspectionStatus === "passed",
+    admissionApproved: admission?.status === "approved"
+      && admission.inspectionStatus === "passed"
+      && admission.malwareScan?.status === "clean"
+      && Boolean(admission.malwareScan.profileVersion),
     authorizationAllowed: input.authorizationAllowed,
     classificationAllowed: input.classificationAllowed ?? Boolean(admission?.classificationRef),
     usageAllowed: input.usageAllowed ?? Boolean(admission?.usagePolicyRef),
@@ -271,6 +274,8 @@ function isOwnerScopedTemporaryAttachment(manifest: DocumentManifest): boolean {
     && expiresAt > Date.now()
     && manifest.admission?.status === "approved"
     && manifest.admission.inspectionStatus === "passed"
+    && manifest.admission.malwareScan?.status === "clean"
+    && Boolean(manifest.admission.malwareScan.profileVersion)
 }
 
 function denyMutableGovernance(base: CurrentRagEligibilitySnapshot): CurrentRagEligibilitySnapshot {

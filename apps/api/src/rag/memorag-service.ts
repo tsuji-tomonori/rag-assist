@@ -5576,7 +5576,9 @@ function reindexPublicationScope(
 function reindexAdmissionContext(manifest: DocumentManifest, fence: StagedPublicationFence): AuthoritativeAdmissionContext {
   const admission = manifest.admission
   if (
-    admission?.status !== "approved" || admission.inspectionStatus !== "passed" || !admission.tenantId || !admission.ownerUserId
+    admission?.status !== "approved" || admission.inspectionStatus !== "passed"
+    || admission.malwareScan?.status !== "clean" || !admission.malwareScan.profileVersion
+    || !admission.tenantId || !admission.ownerUserId
     || !admission.authorizationRef || !admission.classificationRef || !admission.usagePolicyRef
     || !admission.qualityRef || !admission.lifecycleRef || !admission.provenanceRef || !manifest.qualityProfile
   ) throw new Error("Source manifest does not have a complete authoritative admission record")
@@ -5594,6 +5596,7 @@ function reindexAdmissionContext(manifest: DocumentManifest, fence: StagedPublic
     lifecycleRef: createVersionedReference(`lifecycle:${fence.runId}`, "staged-publication-v1", `${fence.fencingToken}:staging`),
     provenanceRef: createVersionedReference(`provenance:${fence.runId}`, "staged-publication-v1", `${manifest.documentVersion}:${fence.artifactId}`),
     inspectionStatus: "passed",
+    malwareScan: { ...admission.malwareScan },
     qualityProfile: manifest.qualityProfile,
     lifecycleStatus: "staging",
     scope: {
@@ -5615,7 +5618,9 @@ function reindexAdmissionContext(manifest: DocumentManifest, fence: StagedPublic
 function restoredAdmissionContext(manifest: DocumentManifest, migrationId: string): AuthoritativeAdmissionContext {
   const admission = manifest.admission
   if (
-    admission?.status !== "approved" || admission.inspectionStatus !== "passed" || !admission.tenantId || !admission.ownerUserId
+    admission?.status !== "approved" || admission.inspectionStatus !== "passed"
+    || admission.malwareScan?.status !== "clean" || !admission.malwareScan.profileVersion
+    || !admission.tenantId || !admission.ownerUserId
     || !admission.authorizationRef || !admission.classificationRef || !admission.usagePolicyRef
     || !admission.qualityRef || !admission.lifecycleRef || !admission.provenanceRef || !manifest.qualityProfile
   ) throw new Error("Previous manifest does not have a complete authoritative admission record")
@@ -5633,6 +5638,7 @@ function restoredAdmissionContext(manifest: DocumentManifest, migrationId: strin
     lifecycleRef: createVersionedReference(`lifecycle:${migrationId}:rollback`, "rollback-v1", "active"),
     provenanceRef: createVersionedReference(`provenance:${migrationId}:rollback`, "rollback-v1", manifest.documentVersion ?? manifest.documentId),
     inspectionStatus: "passed",
+    malwareScan: { ...admission.malwareScan },
     qualityProfile: manifest.qualityProfile,
     lifecycleStatus: "active",
     scope: {

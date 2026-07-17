@@ -2,7 +2,7 @@
 
 # GET /documents/{documentId}/extracted-text IF仕様
 
-- 実装 route: `apps/api/src/routes/document-routes.ts:1495 (GET /documents/{documentId}/extracted-text)`
+- 実装 route: `apps/api/src/routes/document-routes.ts:1496 (GET /documents/{documentId}/extracted-text)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 文書の抽出テキストを取得する

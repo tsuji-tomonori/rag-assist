@@ -8,8 +8,8 @@
 
 | # | CRUD/実行 | Target | Method | 自然言語での目的 | Caller | コード根拠 |
 | ---: | --- | --- | --- | --- | --- | --- |
-| 1 | 参照 | `deps.documentIngestRunStore` | `get` | `deps.documentIngestRunStore` に対して get を実行する。 | `GET /document-ingest-runs/{runId}/events handler` | `apps/api/src/routes/document-routes.ts:1235 (GET /document-ingest-runs/{runId}/events handler)` |
-| 2 | 参照 | `deps.documentIngestRunEventStore` | `listAfter` | `deps.documentIngestRunEventStore` に対して list after を実行する。 | `GET /document-ingest-runs/{runId}/events handler` | `apps/api/src/routes/document-routes.ts:1245 (GET /document-ingest-runs/{runId}/events handler)` |
+| 1 | 参照 | `deps.documentIngestRunStore` | `get` | `deps.documentIngestRunStore` に対して get を実行する。 | `GET /document-ingest-runs/{runId}/events handler` | `apps/api/src/routes/document-routes.ts:1236 (GET /document-ingest-runs/{runId}/events handler)` |
+| 2 | 参照 | `deps.documentIngestRunEventStore` | `listAfter` | `deps.documentIngestRunEventStore` に対して list after を実行する。 | `GET /document-ingest-runs/{runId}/events handler` | `apps/api/src/routes/document-routes.ts:1246 (GET /document-ingest-runs/{runId}/events handler)` |
 
 ## 外部サービス操作
 

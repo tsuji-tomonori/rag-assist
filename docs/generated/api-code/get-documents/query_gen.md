@@ -10,7 +10,7 @@
 | ---: | --- | --- | --- | --- | --- | --- |
 | 1 | 参照 | `this.deps.objectStore` | `listKeys` | `this.deps.objectStore` に対して list keys を実行する。 | `MemoRagService.listDocuments` | `apps/api/src/rag/memorag-service.ts:903 (MemoRagService.listDocuments)` |
 | 2 | 参照 | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `readTenantManifestByKey` | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:93 (readTenantManifestByKey)` |
-| 3 | 参照 | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `loadPublicationPointer` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1809 (loadPublicationPointer)` |
+| 3 | 参照 | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `loadPublicationPointer` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1811 (loadPublicationPointer)` |
 | 4 | 参照 | `this.deps.documentGroupStore` | `list` | `this.deps.documentGroupStore` に対して list を実行する。 | `FolderPermissionService.resolveEffectiveFolderPermissionDetail` | `apps/api/src/folders/folder-permission-service.ts:145 (FolderPermissionService.resolveEffectiveFolderPermissionDetail)` |
 | 5 | 参照 | `this.deps.userGroupStore` | `get` | `this.deps.userGroupStore` に対して get を実行する。 | `FolderPermissionService.resolveUserMembershipPermission` | `apps/api/src/folders/folder-permission-service.ts:780 (FolderPermissionService.resolveUserMembershipPermission)` |
 | 6 | 参照 | `this.deps.groupMembershipStore` | `listByGroupId` | `this.deps.groupMembershipStore` に対して list by group id を実行する。 | `FolderPermissionService.resolveUserMembershipPermission` | `apps/api/src/folders/folder-permission-service.ts:781 (FolderPermissionService.resolveUserMembershipPermission)` |

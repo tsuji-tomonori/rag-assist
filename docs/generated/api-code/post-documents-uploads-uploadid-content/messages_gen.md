@@ -25,8 +25,8 @@
 | M010 | 例外 | `403` | Forbidden | `purpose` が `"chatAttachment"` と等しい | `apps/api/src/routes/document-routes.ts:125 (authorizeDocumentUploadSession)` |
 | M011 | 例外 | `403` | Forbidden | `purpose` が `"benchmarkSeed"` と等しい | `apps/api/src/routes/document-routes.ts:129 (authorizeDocumentUploadSession)` |
 | M012 | 例外 | `403` | Forbidden | 当該処理へ到達した場合 | `apps/api/src/routes/document-routes.ts:132 (authorizeDocumentUploadSession)` |
-| M013 | HTTP 実装応答 | `400` | Local upload content endpoint is disabled when S3 upload URLs are available | `deps.objectStore.createUploadUrl` が存在し、真である | `apps/api/src/routes/document-routes.ts:1079 (POST /documents/uploads/{uploadId}/content handler)` |
-| M014 | HTTP 実装応答 | `400` | `Uploaded object exceeds ${config.documentUploadMaxBytes} bytes` | `uploaded.length` が `config.documentUploadMaxBytes` より大きい | `apps/api/src/routes/document-routes.ts:1083 (POST /documents/uploads/{uploadId}/content handler)` |
+| M013 | HTTP 実装応答 | `400` | Local upload content endpoint is disabled when S3 upload URLs are available | `deps.objectStore.createUploadUrl` が存在し、真である | `apps/api/src/routes/document-routes.ts:1080 (POST /documents/uploads/{uploadId}/content handler)` |
+| M014 | HTTP 実装応答 | `400` | `Uploaded object exceeds ${config.documentUploadMaxBytes} bytes` | `uploaded.length` が `config.documentUploadMaxBytes` より大きい | `apps/api/src/routes/document-routes.ts:1084 (POST /documents/uploads/{uploadId}/content handler)` |
 
 ## 読み方
 

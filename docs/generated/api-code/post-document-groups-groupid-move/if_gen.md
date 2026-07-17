@@ -2,7 +2,7 @@
 
 # POST /document-groups/{groupId}/move IF仕様
 
-- 実装 route: `apps/api/src/routes/document-routes.ts:728 (POST /document-groups/{groupId}/move)`
+- 実装 route: `apps/api/src/routes/document-routes.ts:729 (POST /document-groups/{groupId}/move)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: フォルダ subtree を整合状態で移動する

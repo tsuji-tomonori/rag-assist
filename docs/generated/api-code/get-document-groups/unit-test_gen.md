@@ -36,7 +36,7 @@
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | 文書グループ一覧を取得する が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:520 (GET /document-groups handler)` |
+| TC001 | 正常系 | 文書グループ一覧を取得する が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:521 (GET /document-groups handler)` |
 | TC002 | F001: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | TC004 | F002: 条件成立 | `detail.permission` が `"none"` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1023 (MemoRagService.listDocumentGroups)` |

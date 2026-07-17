@@ -60,8 +60,8 @@
 | M045 | 例外 | `-` | Revocation cleanup idempotency key was reused with different targets | some の判定結果が真である | `apps/api/src/rag/_shared/security/revocation-cleanup-coordinator.ts:552 (assertSameRegistration)` |
 | M046 | 例外 | `-` | Folder archive cleanup registration failed | 例外を捕捉した場合 | `apps/api/src/folders/folder-archive-service.ts:166 (FolderArchiveService.archive)` |
 | M047 | 例外 | `-` | Folder archive audit completion failed | 例外を捕捉した場合 | `apps/api/src/folders/folder-archive-service.ts:173 (FolderArchiveService.archive)` |
-| M048 | HTTP 実装応答 | `409` | Folder archive conflict | `error.result` が `"conflict"` と等しい | `apps/api/src/routes/document-routes.ts:813 (DELETE /document-groups/{groupId} handler)` |
-| M049 | HTTP 実装応答 | `503` | Folder archive unavailable | 例外を捕捉した場合 | `apps/api/src/routes/document-routes.ts:815 (DELETE /document-groups/{groupId} handler)` |
+| M048 | HTTP 実装応答 | `409` | Folder archive conflict | `error.result` が `"conflict"` と等しい | `apps/api/src/routes/document-routes.ts:814 (DELETE /document-groups/{groupId} handler)` |
+| M049 | HTTP 実装応答 | `503` | Folder archive unavailable | 例外を捕捉した場合 | `apps/api/src/routes/document-routes.ts:816 (DELETE /document-groups/{groupId} handler)` |
 
 ## 読み方
 

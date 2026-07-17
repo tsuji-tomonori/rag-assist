@@ -12,10 +12,10 @@ _静的に直接対応を確認できた test case はありません。`unit-te
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `DELETE /document-groups/{groupId} handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:810 (DELETE /document-groups/{groupId} handler)` |
-| F002 | `DELETE /document-groups/{groupId} handler` | if | `error` が `FolderArchiveError` の instance である | `apps/api/src/routes/document-routes.ts:811 (DELETE /document-groups/{groupId} handler)` |
-| F003 | `DELETE /document-groups/{groupId} handler` | if | `error.result` が `"denied"` と等しい | `apps/api/src/routes/document-routes.ts:812 (DELETE /document-groups/{groupId} handler)` |
-| F004 | `DELETE /document-groups/{groupId} handler` | if | `error.result` が `"conflict"` と等しい | `apps/api/src/routes/document-routes.ts:813 (DELETE /document-groups/{groupId} handler)` |
+| F001 | `DELETE /document-groups/{groupId} handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:811 (DELETE /document-groups/{groupId} handler)` |
+| F002 | `DELETE /document-groups/{groupId} handler` | if | `error` が `FolderArchiveError` の instance である | `apps/api/src/routes/document-routes.ts:812 (DELETE /document-groups/{groupId} handler)` |
+| F003 | `DELETE /document-groups/{groupId} handler` | if | `error.result` が `"denied"` と等しい | `apps/api/src/routes/document-routes.ts:813 (DELETE /document-groups/{groupId} handler)` |
+| F004 | `DELETE /document-groups/{groupId} handler` | if | `error.result` が `"conflict"` と等しい | `apps/api/src/routes/document-routes.ts:814 (DELETE /document-groups/{groupId} handler)` |
 | F005 | `FolderArchiveService.archive` | if | canonical の判定結果が真ではない | `apps/api/src/folders/folder-archive-service.ts:83 (FolderArchiveService.archive)` |
 | F006 | `FolderArchiveService.archive` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/folders/folder-archive-service.ts:89 (FolderArchiveService.archive)` |
 | F007 | `FolderArchiveService.archive` | if | `current` が存在しない、または偽である、または `current.status` が `"archived"` と等しい、または canonical の判定結果が真ではない | `apps/api/src/folders/folder-archive-service.ts:93 (FolderArchiveService.archive)` |
@@ -34,14 +34,14 @@ _静的に直接対応を確認できた test case はありません。`unit-te
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | 空のフォルダをアーカイブする が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:802 (DELETE /document-groups/{groupId} handler)` |
-| TC002 | F001: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/document-routes.ts:810 (DELETE /document-groups/{groupId} handler)` |
-| TC003 | F002: 条件成立 | `error` が `FolderArchiveError` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:811 (DELETE /document-groups/{groupId} handler)` |
-| TC004 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:811 (DELETE /document-groups/{groupId} handler)` |
-| TC005 | F003: 条件成立 | `error.result` が `"denied"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:812 (DELETE /document-groups/{groupId} handler)` |
-| TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:812 (DELETE /document-groups/{groupId} handler)` |
-| TC007 | F004: 条件成立 | `error.result` が `"conflict"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:813 (DELETE /document-groups/{groupId} handler)` |
-| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:813 (DELETE /document-groups/{groupId} handler)` |
+| TC001 | 正常系 | 空のフォルダをアーカイブする が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:803 (DELETE /document-groups/{groupId} handler)` |
+| TC002 | F001: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/document-routes.ts:811 (DELETE /document-groups/{groupId} handler)` |
+| TC003 | F002: 条件成立 | `error` が `FolderArchiveError` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:812 (DELETE /document-groups/{groupId} handler)` |
+| TC004 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:812 (DELETE /document-groups/{groupId} handler)` |
+| TC005 | F003: 条件成立 | `error.result` が `"denied"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:813 (DELETE /document-groups/{groupId} handler)` |
+| TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:813 (DELETE /document-groups/{groupId} handler)` |
+| TC007 | F004: 条件成立 | `error.result` が `"conflict"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:814 (DELETE /document-groups/{groupId} handler)` |
+| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:814 (DELETE /document-groups/{groupId} handler)` |
 | TC009 | F005: 条件成立 | canonical の判定結果が真ではない 場合の response / side effect が実装どおりである。 | `apps/api/src/folders/folder-archive-service.ts:83 (FolderArchiveService.archive)` |
 | TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/folders/folder-archive-service.ts:83 (FolderArchiveService.archive)` |
 | TC011 | F006: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/folders/folder-archive-service.ts:89 (FolderArchiveService.archive)` |

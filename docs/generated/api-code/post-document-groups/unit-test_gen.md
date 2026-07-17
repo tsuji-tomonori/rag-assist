@@ -30,9 +30,9 @@
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `POST /document-groups handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:604 (POST /document-groups handler)` |
-| F002 | `POST /document-groups handler` | if | is document group input error の判定結果が真である | `apps/api/src/routes/document-routes.ts:605 (POST /document-groups handler)` |
-| F003 | `POST /document-groups handler` | if | `err` が `Error` の instance である、かつ starts with の判定結果が真である | `apps/api/src/routes/document-routes.ts:606 (POST /document-groups handler)` |
+| F001 | `POST /document-groups handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:605 (POST /document-groups handler)` |
+| F002 | `POST /document-groups handler` | if | is document group input error の判定結果が真である | `apps/api/src/routes/document-routes.ts:606 (POST /document-groups handler)` |
+| F003 | `POST /document-groups handler` | if | `err` が `Error` の instance である、かつ starts with の判定結果が真である | `apps/api/src/routes/document-routes.ts:607 (POST /document-groups handler)` |
 | F004 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | F005 | `MemoRagService.createDocumentGroup` | if | `tenantId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1054 (MemoRagService.createDocumentGroup)` |
 | F006 | `MemoRagService.createDocumentGroup` | if | `actorUserId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1055 (MemoRagService.createDocumentGroup)` |
@@ -49,12 +49,12 @@
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | 文書グループを作成する が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:598 (POST /document-groups handler)` |
-| TC002 | F001: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/document-routes.ts:604 (POST /document-groups handler)` |
-| TC003 | F002: 条件成立 | is document group input error の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:605 (POST /document-groups handler)` |
-| TC004 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:605 (POST /document-groups handler)` |
-| TC005 | F003: 条件成立 | `err` が `Error` の instance である、かつ starts with の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:606 (POST /document-groups handler)` |
-| TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:606 (POST /document-groups handler)` |
+| TC001 | 正常系 | 文書グループを作成する が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:599 (POST /document-groups handler)` |
+| TC002 | F001: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/document-routes.ts:605 (POST /document-groups handler)` |
+| TC003 | F002: 条件成立 | is document group input error の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:606 (POST /document-groups handler)` |
+| TC004 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:606 (POST /document-groups handler)` |
+| TC005 | F003: 条件成立 | `err` が `Error` の instance である、かつ starts with の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:607 (POST /document-groups handler)` |
+| TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:607 (POST /document-groups handler)` |
 | TC007 | F004: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | TC009 | F005: 条件成立 | `tenantId` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1054 (MemoRagService.createDocumentGroup)` |

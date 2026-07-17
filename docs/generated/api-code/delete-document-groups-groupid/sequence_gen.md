@@ -66,9 +66,9 @@ sequenceDiagram
 
 | # | Caller | 境界 | 処理 | コード | 実装位置 |
 | ---: | --- | --- | --- | --- | --- |
-| 1 | `DELETE /document-groups/{groupId} handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/document-routes.ts:804 (DELETE /document-groups/{groupId} handler)` |
-| 2 | `DELETE /document-groups/{groupId} handler` | Validation | schema 検証済みの path parameter を取得する。 | `validParam<{ groupId: string }>(c)` | `apps/api/src/routes/document-routes.ts:805 (DELETE /document-groups/{groupId} handler)` |
-| 3 | `DELETE /document-groups/{groupId} handler` | Validation | schema 検証済みの JSON request body を取得する。 | `validJson<z.infer<typeof ArchiveFolderRequestSchema>>(c)` | `apps/api/src/routes/document-routes.ts:806 (DELETE /document-groups/{groupId} handler)` |
+| 1 | `DELETE /document-groups/{groupId} handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/document-routes.ts:805 (DELETE /document-groups/{groupId} handler)` |
+| 2 | `DELETE /document-groups/{groupId} handler` | Validation | schema 検証済みの path parameter を取得する。 | `validParam<{ groupId: string }>(c)` | `apps/api/src/routes/document-routes.ts:806 (DELETE /document-groups/{groupId} handler)` |
+| 3 | `DELETE /document-groups/{groupId} handler` | Validation | schema 検証済みの JSON request body を取得する。 | `validJson<z.infer<typeof ArchiveFolderRequestSchema>>(c)` | `apps/api/src/routes/document-routes.ts:807 (DELETE /document-groups/{groupId} handler)` |
 | 4 | `FolderArchiveService.archive` | Store | `this.deps.documentGroupStore` に対して get を実行する。 | `this.deps.documentGroupStore.get(actorTenantId, folderId)` | `apps/api/src/folders/folder-archive-service.ts:88 (FolderArchiveService.archive)` |
 | 5 | `FolderArchiveService.archive` | Service | service の record early failure 処理を呼び出す。 | `this.recordEarlyFailure(actor, folderId, input, "failed")` | `apps/api/src/folders/folder-archive-service.ts:90 (FolderArchiveService.archive)` |
 | 6 | `FolderArchiveService.archive` | Service | service の record early failure 処理を呼び出す。 | `this.recordEarlyFailure(actor, folderId, input, "denied")` | `apps/api/src/folders/folder-archive-service.ts:94 (FolderArchiveService.archive)` |
@@ -105,18 +105,18 @@ sequenceDiagram
 | 37 | `ObjectStoreRevocationCleanupCoordinator.register` | Store | `this.objectStore` に対して put text if version を実行する。 | `this.objectStore.putTextIfVersion(key, JSON.stringify(manifest, null, 2), undefined, "application/json")` | `apps/api/src/rag/_shared/security/revocation-cleanup-coordinator.ts:169 (ObjectStoreRevocationCleanupCoordinator.register)` |
 | 38 | `FolderArchiveService.archive` | Service | service の mark cleanup registered 処理を呼び出す。 | `this.cleanupRepairOutbox.markCleanupRegistered(committedRepair, archived.updatedAt)` | `apps/api/src/folders/folder-archive-service.ts:161 (FolderArchiveService.archive)` |
 | 39 | `FolderArchiveService.archive` | Service | service の complete 処理を呼び出す。 | `this.auditOutbox.complete(audit.intentId, current.tenantId, "success", auditFolder(archived))` | `apps/api/src/folders/folder-archive-service.ts:169 (FolderArchiveService.archive)` |
-| 40 | `DELETE /document-groups/{groupId} handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json({ folder }, 200)` | `apps/api/src/routes/document-routes.ts:809 (DELETE /document-groups/{groupId} handler)` |
-| 41 | `DELETE /document-groups/{groupId} handler` | HTTP/SSE | HTTP 409 で JSON response を返す。 | `c.json({ error: "Folder archive conflict" }, 409)` | `apps/api/src/routes/document-routes.ts:813 (DELETE /document-groups/{groupId} handler)` |
-| 42 | `DELETE /document-groups/{groupId} handler` | HTTP/SSE | HTTP 503 で JSON response を返す。 | `c.json({ error: "Folder archive unavailable" }, 503)` | `apps/api/src/routes/document-routes.ts:815 (DELETE /document-groups/{groupId} handler)` |
+| 40 | `DELETE /document-groups/{groupId} handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json({ folder }, 200)` | `apps/api/src/routes/document-routes.ts:810 (DELETE /document-groups/{groupId} handler)` |
+| 41 | `DELETE /document-groups/{groupId} handler` | HTTP/SSE | HTTP 409 で JSON response を返す。 | `c.json({ error: "Folder archive conflict" }, 409)` | `apps/api/src/routes/document-routes.ts:814 (DELETE /document-groups/{groupId} handler)` |
+| 42 | `DELETE /document-groups/{groupId} handler` | HTTP/SSE | HTTP 503 で JSON response を返す。 | `c.json({ error: "Folder archive unavailable" }, 503)` | `apps/api/src/routes/document-routes.ts:816 (DELETE /document-groups/{groupId} handler)` |
 
 ## 分岐
 
 | ID | Function | 条件 | 実装位置 |
 | --- | --- | --- | --- |
-| B001 | `DELETE /document-groups/{groupId} handler` | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:810 (DELETE /document-groups/{groupId} handler)` |
-| B002 | `DELETE /document-groups/{groupId} handler` | `error` が `FolderArchiveError` の instance である | `apps/api/src/routes/document-routes.ts:811 (DELETE /document-groups/{groupId} handler)` |
-| B003 | `DELETE /document-groups/{groupId} handler` | `error.result` が `"denied"` と等しい | `apps/api/src/routes/document-routes.ts:812 (DELETE /document-groups/{groupId} handler)` |
-| B004 | `DELETE /document-groups/{groupId} handler` | `error.result` が `"conflict"` と等しい | `apps/api/src/routes/document-routes.ts:813 (DELETE /document-groups/{groupId} handler)` |
+| B001 | `DELETE /document-groups/{groupId} handler` | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:811 (DELETE /document-groups/{groupId} handler)` |
+| B002 | `DELETE /document-groups/{groupId} handler` | `error` が `FolderArchiveError` の instance である | `apps/api/src/routes/document-routes.ts:812 (DELETE /document-groups/{groupId} handler)` |
+| B003 | `DELETE /document-groups/{groupId} handler` | `error.result` が `"denied"` と等しい | `apps/api/src/routes/document-routes.ts:813 (DELETE /document-groups/{groupId} handler)` |
+| B004 | `DELETE /document-groups/{groupId} handler` | `error.result` が `"conflict"` と等しい | `apps/api/src/routes/document-routes.ts:814 (DELETE /document-groups/{groupId} handler)` |
 | B005 | `FolderArchiveService.archive` | canonical の判定結果が真ではない | `apps/api/src/folders/folder-archive-service.ts:83 (FolderArchiveService.archive)` |
 | B006 | `FolderArchiveService.archive` | 例外が発生した場合に catch 処理へ移る | `apps/api/src/folders/folder-archive-service.ts:89 (FolderArchiveService.archive)` |
 | B007 | `FolderArchiveService.archive` | `current` が存在しない、または偽である、または `current.status` が `"archived"` と等しい、または canonical の判定結果が真ではない | `apps/api/src/folders/folder-archive-service.ts:93 (FolderArchiveService.archive)` |

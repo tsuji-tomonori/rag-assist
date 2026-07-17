@@ -12,10 +12,10 @@ _静的に直接対応を確認できた test case はありません。`unit-te
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `GET /documents/{documentId}/source-governance handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:1305 (GET /documents/{documentId}/source-governance handler)` |
-| F002 | `GET /documents/{documentId}/source-governance handler` | if | `error` が `SourceGovernanceDeniedError` の instance である | `apps/api/src/routes/document-routes.ts:1306 (GET /documents/{documentId}/source-governance handler)` |
-| F003 | `GET /documents/{documentId}/source-governance handler` | if | `error` が `SourceGovernanceUnavailableError` の instance である | `apps/api/src/routes/document-routes.ts:1307 (GET /documents/{documentId}/source-governance handler)` |
-| F004 | `GET /documents/{documentId}/source-governance handler` | if | `error` が `Error` の instance である、かつ `error.message` が "ENOENT" を含む、または `error.message` が "NoSuchKey" を含む | `apps/api/src/routes/document-routes.ts:1308 (GET /documents/{documentId}/source-governance handler)` |
+| F001 | `GET /documents/{documentId}/source-governance handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:1306 (GET /documents/{documentId}/source-governance handler)` |
+| F002 | `GET /documents/{documentId}/source-governance handler` | if | `error` が `SourceGovernanceDeniedError` の instance である | `apps/api/src/routes/document-routes.ts:1307 (GET /documents/{documentId}/source-governance handler)` |
+| F003 | `GET /documents/{documentId}/source-governance handler` | if | `error` が `SourceGovernanceUnavailableError` の instance である | `apps/api/src/routes/document-routes.ts:1308 (GET /documents/{documentId}/source-governance handler)` |
+| F004 | `GET /documents/{documentId}/source-governance handler` | if | `error` が `Error` の instance である、かつ `error.message` が "ENOENT" を含む、または `error.message` が "NoSuchKey" を含む | `apps/api/src/routes/document-routes.ts:1309 (GET /documents/{documentId}/source-governance handler)` |
 | F005 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | F006 | `publicSourceGovernanceRecord` | 三項条件 | `stagedPublication` が存在し、真である | `apps/api/src/routes/document-routes.ts:114 (publicSourceGovernanceRecord)` |
 
@@ -23,14 +23,14 @@ _静的に直接対応を確認できた test case はありません。`unit-te
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | 情報源の審査状態を取得する が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:1298 (GET /documents/{documentId}/source-governance handler)` |
-| TC002 | F001: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/document-routes.ts:1305 (GET /documents/{documentId}/source-governance handler)` |
-| TC003 | F002: 条件成立 | `error` が `SourceGovernanceDeniedError` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1306 (GET /documents/{documentId}/source-governance handler)` |
-| TC004 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1306 (GET /documents/{documentId}/source-governance handler)` |
-| TC005 | F003: 条件成立 | `error` が `SourceGovernanceUnavailableError` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1307 (GET /documents/{documentId}/source-governance handler)` |
-| TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1307 (GET /documents/{documentId}/source-governance handler)` |
-| TC007 | F004: 条件成立 | `error` が `Error` の instance である、かつ `error.message` が "ENOENT" を含む、または `error.message` が "NoSuchKey" を含む 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1308 (GET /documents/{documentId}/source-governance handler)` |
-| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1308 (GET /documents/{documentId}/source-governance handler)` |
+| TC001 | 正常系 | 情報源の審査状態を取得する が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:1299 (GET /documents/{documentId}/source-governance handler)` |
+| TC002 | F001: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/document-routes.ts:1306 (GET /documents/{documentId}/source-governance handler)` |
+| TC003 | F002: 条件成立 | `error` が `SourceGovernanceDeniedError` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1307 (GET /documents/{documentId}/source-governance handler)` |
+| TC004 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1307 (GET /documents/{documentId}/source-governance handler)` |
+| TC005 | F003: 条件成立 | `error` が `SourceGovernanceUnavailableError` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1308 (GET /documents/{documentId}/source-governance handler)` |
+| TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1308 (GET /documents/{documentId}/source-governance handler)` |
+| TC007 | F004: 条件成立 | `error` が `Error` の instance である、かつ `error.message` が "ENOENT" を含む、または `error.message` が "NoSuchKey" を含む 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1309 (GET /documents/{documentId}/source-governance handler)` |
+| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1309 (GET /documents/{documentId}/source-governance handler)` |
 | TC009 | F005: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | TC011 | F006: 条件成立 | `stagedPublication` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:114 (publicSourceGovernanceRecord)` |

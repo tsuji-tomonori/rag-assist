@@ -1108,7 +1108,7 @@ test("benchmark search does not allow dataset user overrides", async () => {
   }
 })
 
-test("benchmark runner can list and upload only isolated benchmark seed documents", async () => {
+test("benchmark runner can stage only isolated seed documents while unscanned seeds remain unavailable", async () => {
   const port = 25000 + Math.floor(Math.random() * 1000)
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-contract-benchmark-seed-rbac-"))
   const tsxBin = path.resolve(process.cwd(), "../../node_modules/.bin/tsx")
@@ -1230,29 +1230,20 @@ test("benchmark runner can list and upload only isolated benchmark seed document
       }>
     }
     const listedSeed = seedList.documents?.find((document) => document.documentId === manifest.documentId)
-    assert.ok(listedSeed)
-    assert.equal(listedSeed.vectorKeys, undefined)
-    assert.equal(listedSeed.chunks, undefined)
-    assert.equal(listedSeed.sourceObjectKey, undefined)
-    assert.equal(listedSeed.metadata?.aclGroups, undefined)
-    assert.equal(listedSeed.metadata?.docType, "benchmark-corpus")
-    assert.equal(listedSeed.metadata?.source, "benchmark-runner")
-    assert.equal(listedSeed.metadata?.searchAliases, undefined)
-    assert.equal(listedSeed.metadata?.drawingSourceType, "project_drawing")
-    assert.equal(listedSeed.metadata?.drawingSheetMetadata, undefined)
-    assert.equal(listedSeed.metadata?.drawingRegionIndex, undefined)
-    assert.equal(listedSeed.metadata?.drawingReferenceGraph, undefined)
-    assert.equal(listedSeed.metadata?.drawingExtractionArtifacts, undefined)
+    assert.equal(listedSeed, undefined)
 
     const seedDelete = await fetch(`http://127.0.0.1:${port}/documents/${encodeURIComponent(manifest.documentId)}`, {
       method: "DELETE",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ expectedUpdatedAt: manifest.createdAt, reason: "benchmark seed cleanup" })
     })
-    const deleteBody = (await seedDelete.json()) as { documentId?: string; deletedVectorCount?: number; error?: string }
-    assert.equal(seedDelete.status, 200, JSON.stringify(deleteBody))
-    assert.equal(deleteBody.documentId, manifest.documentId)
-    assert.equal(typeof deleteBody.deletedVectorCount, "number")
+    const deleteBody = (await seedDelete.json()) as { error?: string; code?: string; responseProfileVersion?: string }
+    assert.equal(seedDelete.status, 404, JSON.stringify(deleteBody))
+    assert.deepEqual(deleteBody, {
+      error: "Resource unavailable",
+      code: "RESOURCE_UNAVAILABLE",
+      responseProfileVersion: "resource-non-enumeration-v1"
+    })
 
     const missingDelete = await fetch(`http://127.0.0.1:${port}/documents/missing-benchmark-seed`, {
       method: "DELETE",

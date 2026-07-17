@@ -201,7 +201,12 @@ function sourceApproval(expectedVersion: string) {
       flags: []
     },
     qualityPolicyVersion: "quality-test-v1",
-    inspection: { status: "passed", profileVersion: "inspection-test-v1" }
+    inspection: {
+      status: "passed",
+      profileVersion: "inspection-test-v1",
+      malwareStatus: "clean",
+      malwareProfileVersion: "malware-scan-test-v1"
+    }
   }
 }
 

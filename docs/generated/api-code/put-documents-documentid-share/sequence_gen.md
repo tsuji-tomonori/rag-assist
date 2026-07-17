@@ -60,10 +60,10 @@ sequenceDiagram
 
 | # | Caller | 境界 | 処理 | コード | 実装位置 |
 | ---: | --- | --- | --- | --- | --- |
-| 1 | `PUT /documents/{documentId}/share handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/document-routes.ts:916 (PUT /documents/{documentId}/share handler)` |
-| 2 | `PUT /documents/{documentId}/share handler` | Validation | schema 検証済みの path parameter を取得する。 | `validParam<{ documentId: string }>(c)` | `apps/api/src/routes/document-routes.ts:917 (PUT /documents/{documentId}/share handler)` |
-| 3 | `PUT /documents/{documentId}/share handler` | Validation | schema 検証済みの JSON request body を取得する。 | `validJson<z.infer<typeof DocumentShareRequestSchema>>(c)` | `apps/api/src/routes/document-routes.ts:918 (PUT /documents/{documentId}/share handler)` |
-| 4 | `PUT /documents/{documentId}/share handler` | Service | service の update document share 処理を呼び出す。 | `service.updateDocumentShare(user, documentId, body)` | `apps/api/src/routes/document-routes.ts:920 (PUT /documents/{documentId}/share handler)` |
+| 1 | `PUT /documents/{documentId}/share handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/document-routes.ts:917 (PUT /documents/{documentId}/share handler)` |
+| 2 | `PUT /documents/{documentId}/share handler` | Validation | schema 検証済みの path parameter を取得する。 | `validParam<{ documentId: string }>(c)` | `apps/api/src/routes/document-routes.ts:918 (PUT /documents/{documentId}/share handler)` |
+| 3 | `PUT /documents/{documentId}/share handler` | Validation | schema 検証済みの JSON request body を取得する。 | `validJson<z.infer<typeof DocumentShareRequestSchema>>(c)` | `apps/api/src/routes/document-routes.ts:919 (PUT /documents/{documentId}/share handler)` |
+| 4 | `PUT /documents/{documentId}/share handler` | Service | service の update document share 処理を呼び出す。 | `service.updateDocumentShare(user, documentId, body)` | `apps/api/src/routes/document-routes.ts:921 (PUT /documents/{documentId}/share handler)` |
 | 5 | `MemoRagService.updateDocumentShare` | Service | service の get manifest 処理を呼び出す。 | `this.getManifest(documentId, authoritativeActorTenantId(actor))` | `apps/api/src/rag/memorag-service.ts:1197 (MemoRagService.updateDocumentShare)` |
 | 6 | `readTenantManifest` | Store | `deps.objectStore` に対して get text を実行する。 | `deps.objectStore.getText(key)` | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:83 (readTenantManifest)` |
 | 7 | `FolderPermissionService.resolveEffectiveFolderPermissionDetail` | Store | `this.deps.documentGroupStore` に対して list を実行する。 | `this.deps.documentGroupStore.list(actorTenantId)` | `apps/api/src/folders/folder-permission-service.ts:145 (FolderPermissionService.resolveEffectiveFolderPermissionDetail)` |
@@ -92,17 +92,17 @@ sequenceDiagram
 | 30 | `ObjectStoreRevocationCleanupCoordinator.register` | Store | `new ObjectStoreRevocationCleanupTenantRegistry(this.objectStore, this.now)` に対して register を実行する。 | `new ObjectStoreRevocationCleanupTenantRegistry(this.objectStore, this.now).register(normalized.tenantId)` | `apps/api/src/rag/_shared/security/revocation-cleanup-coordinator.ts:137 (ObjectStoreRevocationCleanupCoordinator.register)` |
 | 31 | `readManifest` | Store | `objectStore` に対して get text with version を実行する。 | `objectStore.getTextWithVersion(key)` | `apps/api/src/rag/_shared/security/revocation-cleanup-coordinator.ts:636 (readManifest)` |
 | 32 | `ObjectStoreRevocationCleanupCoordinator.register` | Store | `this.objectStore` に対して put text if version を実行する。 | `this.objectStore.putTextIfVersion(key, JSON.stringify(manifest, null, 2), undefined, "application/json")` | `apps/api/src/rag/_shared/security/revocation-cleanup-coordinator.ts:169 (ObjectStoreRevocationCleanupCoordinator.register)` |
-| 33 | `PUT /documents/{documentId}/share handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json(await service.updateDocumentShare(user, documentId, body), 200)` | `apps/api/src/routes/document-routes.ts:920 (PUT /documents/{documentId}/share handler)` |
-| 34 | `PUT /documents/{documentId}/share handler` | HTTP/SSE | HTTP 400 で JSON response を返す。 | `c.json({ error: err.message }, 400)` | `apps/api/src/routes/document-routes.ts:922 (PUT /documents/{documentId}/share handler)` |
-| 35 | `PUT /documents/{documentId}/share handler` | HTTP/SSE | HTTP 409 で JSON response を返す。 | `c.json({ error: err.message }, 409)` | `apps/api/src/routes/document-routes.ts:923 (PUT /documents/{documentId}/share handler)` |
+| 33 | `PUT /documents/{documentId}/share handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json(await service.updateDocumentShare(user, documentId, body), 200)` | `apps/api/src/routes/document-routes.ts:921 (PUT /documents/{documentId}/share handler)` |
+| 34 | `PUT /documents/{documentId}/share handler` | HTTP/SSE | HTTP 400 で JSON response を返す。 | `c.json({ error: err.message }, 400)` | `apps/api/src/routes/document-routes.ts:923 (PUT /documents/{documentId}/share handler)` |
+| 35 | `PUT /documents/{documentId}/share handler` | HTTP/SSE | HTTP 409 で JSON response を返す。 | `c.json({ error: err.message }, 409)` | `apps/api/src/routes/document-routes.ts:924 (PUT /documents/{documentId}/share handler)` |
 
 ## 分岐
 
 | ID | Function | 条件 | 実装位置 |
 | --- | --- | --- | --- |
-| B001 | `PUT /documents/{documentId}/share handler` | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:921 (PUT /documents/{documentId}/share handler)` |
-| B002 | `PUT /documents/{documentId}/share handler` | `err` が `DocumentShareValidationError` の instance である | `apps/api/src/routes/document-routes.ts:922 (PUT /documents/{documentId}/share handler)` |
-| B003 | `PUT /documents/{documentId}/share handler` | `err` が `DocumentShareConflictError` の instance である | `apps/api/src/routes/document-routes.ts:923 (PUT /documents/{documentId}/share handler)` |
-| B004 | `PUT /documents/{documentId}/share handler` | is forbidden error の判定結果が真である | `apps/api/src/routes/document-routes.ts:924 (PUT /documents/{documentId}/share handler)` |
-| B005 | `PUT /documents/{documentId}/share handler` | `err` が `Error` の instance である、かつ `err.message` が "ENOENT" を含む、または `err.message` が "NoSuchKey" を含む | `apps/api/src/routes/document-routes.ts:925 (PUT /documents/{documentId}/share handler)` |
+| B001 | `PUT /documents/{documentId}/share handler` | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:922 (PUT /documents/{documentId}/share handler)` |
+| B002 | `PUT /documents/{documentId}/share handler` | `err` が `DocumentShareValidationError` の instance である | `apps/api/src/routes/document-routes.ts:923 (PUT /documents/{documentId}/share handler)` |
+| B003 | `PUT /documents/{documentId}/share handler` | `err` が `DocumentShareConflictError` の instance である | `apps/api/src/routes/document-routes.ts:924 (PUT /documents/{documentId}/share handler)` |
+| B004 | `PUT /documents/{documentId}/share handler` | is forbidden error の判定結果が真である | `apps/api/src/routes/document-routes.ts:925 (PUT /documents/{documentId}/share handler)` |
+| B005 | `PUT /documents/{documentId}/share handler` | `err` が `Error` の instance である、かつ `err.message` が "ENOENT" を含む、または `err.message` が "NoSuchKey" を含む | `apps/api/src/routes/document-routes.ts:926 (PUT /documents/{documentId}/share handler)` |
 | B006 | `MemoRagService.updateDocumentShare` | can share document の判定結果が真ではない | `apps/api/src/rag/memorag-service.ts:1200 (MemoRagService.updateDocumentShare)` |

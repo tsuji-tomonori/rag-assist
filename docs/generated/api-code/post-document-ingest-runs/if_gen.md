@@ -2,7 +2,7 @@
 
 # POST /document-ingest-runs IF仕様
 
-- 実装 route: `apps/api/src/routes/document-routes.ts:1160 (POST /document-ingest-runs)`
+- 実装 route: `apps/api/src/routes/document-routes.ts:1161 (POST /document-ingest-runs)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 非同期文書取り込みを開始する

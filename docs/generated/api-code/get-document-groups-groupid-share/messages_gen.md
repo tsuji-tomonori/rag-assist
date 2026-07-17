@@ -22,7 +22,7 @@
 | M007 | 例外 | `403` | Forbidden | folder permission satisfies の判定結果が真ではない | `apps/api/src/folders/folder-permission-service.ts:258 (FolderPermissionService.assertFolderPermission)` |
 | M008 | 例外 | `503` | Benchmark evaluation is unavailable | `config.benchmarkEvaluationEnabled` が存在しない、または偽である、または trim の判定結果が真ではない | `apps/api/src/routes/document-routes.ts:158 (uploadTenantId)` |
 | M009 | 例外 | `403` | Forbidden | `tenantId` が存在しない、または偽である | `apps/api/src/routes/document-routes.ts:163 (uploadTenantId)` |
-| M010 | HTTP 実装応答 | `503` | Folder sharing is unavailable | 例外を捕捉した場合 | `apps/api/src/routes/document-routes.ts:643 (GET /document-groups/{groupId}/share handler)` |
+| M010 | HTTP 実装応答 | `503` | Folder sharing is unavailable | 例外を捕捉した場合 | `apps/api/src/routes/document-routes.ts:644 (GET /document-groups/{groupId}/share handler)` |
 
 ## 読み方
 
