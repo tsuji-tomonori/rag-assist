@@ -24,13 +24,13 @@
 | F002 | `POST /documents/{documentId}/reindex/stage handler` | if | is forbidden error の判定結果が真である | `apps/api/src/routes/document-routes.ts:1436 (POST /documents/{documentId}/reindex/stage handler)` |
 | F003 | `POST /documents/{documentId}/reindex/stage handler` | if | `err` が `Error` の instance である、かつ `err.message` が "ENOENT" を含む、または `err.message` が "NoSuchKey" を含む | `apps/api/src/routes/document-routes.ts:1437 (POST /documents/{documentId}/reindex/stage handler)` |
 | F004 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| F005 | `MemoRagService.stageReindexMigration` | if | `(manifest.lifecycleStatus ?? stringValue(manifest.metadata?.lifecycleStatus) ?? "active")` が `"active"` と異なる | `apps/api/src/rag/memorag-service.ts:642 (MemoRagService.stageReindexMigration)` |
-| F006 | `MemoRagService.stageReindexMigration` | if | `manifest.publicationEligible` が `false` と等しい、または `manifest.derivedIntegrity?.verified` が `false` と等しい | `apps/api/src/rag/memorag-service.ts:645 (MemoRagService.stageReindexMigration)` |
-| F007 | `MemoRagService.stageReindexMigration` | if | `begun.alreadyStaged` が存在し、真である | `apps/api/src/rag/memorag-service.ts:659 (MemoRagService.stageReindexMigration)` |
-| F008 | `MemoRagService.stageReindexMigration` | if | `existingMigration` が存在し、真である | `apps/api/src/rag/memorag-service.ts:660 (MemoRagService.stageReindexMigration)` |
-| F009 | `MemoRagService.stageReindexMigration` | if | `begun.run.stagedArtifact` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:661 (MemoRagService.stageReindexMigration)` |
-| F010 | `MemoRagService.stageReindexMigration` | if | `begun.lease` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:667 (MemoRagService.stageReindexMigration)` |
-| F011 | `MemoRagService.stageReindexMigration` | 三項条件 | `this.deps.localTestIngestAdmissionContext` が存在し、真である | `apps/api/src/rag/memorag-service.ts:669 (MemoRagService.stageReindexMigration)` |
+| F005 | `MemoRagService.stageReindexMigration` | if | `(manifest.lifecycleStatus ?? stringValue(manifest.metadata?.lifecycleStatus) ?? "active")` が `"active"` と異なる | `apps/api/src/rag/memorag-service.ts:650 (MemoRagService.stageReindexMigration)` |
+| F006 | `MemoRagService.stageReindexMigration` | if | `manifest.publicationEligible` が `false` と等しい、または `manifest.derivedIntegrity?.verified` が `false` と等しい | `apps/api/src/rag/memorag-service.ts:653 (MemoRagService.stageReindexMigration)` |
+| F007 | `MemoRagService.stageReindexMigration` | if | `begun.alreadyStaged` が存在し、真である | `apps/api/src/rag/memorag-service.ts:667 (MemoRagService.stageReindexMigration)` |
+| F008 | `MemoRagService.stageReindexMigration` | if | `existingMigration` が存在し、真である | `apps/api/src/rag/memorag-service.ts:668 (MemoRagService.stageReindexMigration)` |
+| F009 | `MemoRagService.stageReindexMigration` | if | `begun.run.stagedArtifact` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:669 (MemoRagService.stageReindexMigration)` |
+| F010 | `MemoRagService.stageReindexMigration` | if | `begun.lease` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:675 (MemoRagService.stageReindexMigration)` |
+| F011 | `MemoRagService.stageReindexMigration` | 三項条件 | `this.deps.localTestIngestAdmissionContext` が存在し、真である | `apps/api/src/rag/memorag-service.ts:677 (MemoRagService.stageReindexMigration)` |
 
 ## 3. コード由来テストケース
 
@@ -44,20 +44,20 @@
 | TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1437 (POST /documents/{documentId}/reindex/stage handler)` |
 | TC007 | F004: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
 | TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC009 | F005: 条件成立 | `(manifest.lifecycleStatus ?? stringValue(manifest.metadata?.lifecycleStatus) ?? "active")` が `"active"` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:642 (MemoRagService.stageReindexMigration)` |
-| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:642 (MemoRagService.stageReindexMigration)` |
-| TC011 | F006: 条件成立 | `manifest.publicationEligible` が `false` と等しい、または `manifest.derivedIntegrity?.verified` が `false` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:645 (MemoRagService.stageReindexMigration)` |
-| TC012 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:645 (MemoRagService.stageReindexMigration)` |
-| TC013 | F007: 条件成立 | `begun.alreadyStaged` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:659 (MemoRagService.stageReindexMigration)` |
-| TC014 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:659 (MemoRagService.stageReindexMigration)` |
-| TC015 | F008: 条件成立 | `existingMigration` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:660 (MemoRagService.stageReindexMigration)` |
-| TC016 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:660 (MemoRagService.stageReindexMigration)` |
-| TC017 | F009: 条件成立 | `begun.run.stagedArtifact` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:661 (MemoRagService.stageReindexMigration)` |
-| TC018 | F009: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:661 (MemoRagService.stageReindexMigration)` |
-| TC019 | F010: 条件成立 | `begun.lease` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:667 (MemoRagService.stageReindexMigration)` |
-| TC020 | F010: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:667 (MemoRagService.stageReindexMigration)` |
-| TC021 | F011: 条件成立 | `this.deps.localTestIngestAdmissionContext` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:669 (MemoRagService.stageReindexMigration)` |
-| TC022 | F011: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:669 (MemoRagService.stageReindexMigration)` |
+| TC009 | F005: 条件成立 | `(manifest.lifecycleStatus ?? stringValue(manifest.metadata?.lifecycleStatus) ?? "active")` が `"active"` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:650 (MemoRagService.stageReindexMigration)` |
+| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:650 (MemoRagService.stageReindexMigration)` |
+| TC011 | F006: 条件成立 | `manifest.publicationEligible` が `false` と等しい、または `manifest.derivedIntegrity?.verified` が `false` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:653 (MemoRagService.stageReindexMigration)` |
+| TC012 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:653 (MemoRagService.stageReindexMigration)` |
+| TC013 | F007: 条件成立 | `begun.alreadyStaged` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:667 (MemoRagService.stageReindexMigration)` |
+| TC014 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:667 (MemoRagService.stageReindexMigration)` |
+| TC015 | F008: 条件成立 | `existingMigration` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:668 (MemoRagService.stageReindexMigration)` |
+| TC016 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:668 (MemoRagService.stageReindexMigration)` |
+| TC017 | F009: 条件成立 | `begun.run.stagedArtifact` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:669 (MemoRagService.stageReindexMigration)` |
+| TC018 | F009: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:669 (MemoRagService.stageReindexMigration)` |
+| TC019 | F010: 条件成立 | `begun.lease` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:675 (MemoRagService.stageReindexMigration)` |
+| TC020 | F010: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:675 (MemoRagService.stageReindexMigration)` |
+| TC021 | F011: 条件成立 | `this.deps.localTestIngestAdmissionContext` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:677 (MemoRagService.stageReindexMigration)` |
+| TC022 | F011: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:677 (MemoRagService.stageReindexMigration)` |
 | TC023 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC024 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC025 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

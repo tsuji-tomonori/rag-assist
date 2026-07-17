@@ -12,6 +12,7 @@ import { sanitizeProviderText, type AsyncAgentProviderArtifact, type AsyncAgentP
 import { AgentProviderCatalogService } from "../async-agent/provider-catalog-service.js"
 import { BenchmarkRunQueryService } from "../benchmark/benchmark-run-query-service.js"
 import { BenchmarkRunCancellationService } from "../benchmark/benchmark-run-cancellation-service.js"
+import { BenchmarkRunReauthorizationService } from "../benchmark/benchmark-run-reauthorization-service.js"
 import { stopBenchmarkExecution } from "../benchmark/benchmark-execution-stopper.js"
 import {
   AwsBenchmarkExecutionStarter,
@@ -461,6 +462,7 @@ export class MemoRagService {
   private readonly benchmarkExecutionStarter: BenchmarkExecutionStarter
   private readonly benchmarkRunCancellationService: BenchmarkRunCancellationService
   private readonly benchmarkRunQueryService: BenchmarkRunQueryService
+  private readonly benchmarkRunReauthorizationService: BenchmarkRunReauthorizationService
   private readonly favoriteService: FavoriteService
   private readonly questionService: QuestionService
 
@@ -477,6 +479,12 @@ export class MemoRagService {
       benchmarkRunStore: deps.benchmarkRunStore,
       tenantIdForActor: authoritativeActorTenantId,
       stopExecution: stopBenchmarkExecution,
+      now: () => new Date().toISOString()
+    })
+    this.benchmarkRunReauthorizationService = new BenchmarkRunReauthorizationService({
+      benchmarkRunStore: deps.benchmarkRunStore,
+      authorizeBoundary: (run, boundary) => this.authorizeBenchmarkRunBoundary(run, boundary),
+      reconcileRevokedArtifacts: (run, boundary, revoked) => this.reconcileRevokedBenchmarkArtifacts(run, boundary, revoked),
       now: () => new Date().toISOString()
     })
     this.benchmarkArtifactDownloadService = new BenchmarkArtifactDownloadService({
@@ -4628,30 +4636,7 @@ export class MemoRagService {
     runId: string,
     boundary: WorkerAuthorizationBoundary
   ): Promise<BenchmarkRun> {
-    const run = await this.deps.benchmarkRunStore.get(tenantId, runId)
-    if (!run) throw new PermissionRevokedError("benchmark_run_unavailable")
-    if (run.status === "failed" && run.errorCode === "permission_revoked") {
-      throw new PermissionRevokedError("benchmark_run_authorization_already_revoked")
-    }
-    if (boundary === "start" ? run.status !== "queued" : run.status !== "running") {
-      throw new Error("benchmark_run_not_active")
-    }
-    try {
-      await this.authorizeBenchmarkRunBoundary(run, boundary)
-      return run
-    } catch (error) {
-      if (!isPermissionRevokedError(error)) throw error
-      const completedAt = new Date().toISOString()
-      const failed = await this.deps.benchmarkRunStore.update(tenantId, runId, {
-        status: "failed",
-        error: "permission_revoked",
-        errorCode: "permission_revoked",
-        completedAt,
-        updatedAt: completedAt
-      })
-      await this.reconcileRevokedBenchmarkArtifacts(failed, boundary, error)
-      throw error
-    }
+    return this.benchmarkRunReauthorizationService.reauthorize(tenantId, runId, boundary)
   }
 
   private async reconcileRevokedBenchmarkArtifacts(

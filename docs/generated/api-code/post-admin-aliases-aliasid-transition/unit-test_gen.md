@@ -18,9 +18,9 @@
 | F002 | `POST /admin/aliases/{aliasId}/transition handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/admin-routes.ts:506 (POST /admin/aliases/{aliasId}/transition handler)` |
 | F003 | `POST /admin/aliases/{aliasId}/transition handler` | if | `error` が `AliasGovernanceError` の instance である | `apps/api/src/routes/admin-routes.ts:507 (POST /admin/aliases/{aliasId}/transition handler)` |
 | F004 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| F005 | `MemoRagService.transitionAliasToDraft` | if | `alias` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1591 (MemoRagService.transitionAliasToDraft)` |
-| F006 | `MemoRagService.transitionAliasToDraft` | 三項条件 | `alias.status` が `"approved"` と異なる | `apps/api/src/rag/memorag-service.ts:1593 (MemoRagService.transitionAliasToDraft)` |
-| F007 | `MemoRagService.transitionAliasToDraft` | if | `invalid` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1594 (MemoRagService.transitionAliasToDraft)` |
+| F005 | `MemoRagService.transitionAliasToDraft` | if | `alias` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1599 (MemoRagService.transitionAliasToDraft)` |
+| F006 | `MemoRagService.transitionAliasToDraft` | 三項条件 | `alias.status` が `"approved"` と異なる | `apps/api/src/rag/memorag-service.ts:1601 (MemoRagService.transitionAliasToDraft)` |
+| F007 | `MemoRagService.transitionAliasToDraft` | if | `invalid` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1602 (MemoRagService.transitionAliasToDraft)` |
 | F008 | `aliasGovernanceStatus` | if | `error.result` が `"conflict"` と等しい | `apps/api/src/routes/admin-routes.ts:733 (aliasGovernanceStatus)` |
 | F009 | `aliasGovernanceStatus` | if | `error.result` が `"denied"` と等しい | `apps/api/src/routes/admin-routes.ts:734 (aliasGovernanceStatus)` |
 
@@ -36,12 +36,12 @@
 | TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:507 (POST /admin/aliases/{aliasId}/transition handler)` |
 | TC007 | F004: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
 | TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC009 | F005: 条件成立 | `alias` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1591 (MemoRagService.transitionAliasToDraft)` |
-| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1591 (MemoRagService.transitionAliasToDraft)` |
-| TC011 | F006: 条件成立 | `alias.status` が `"approved"` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1593 (MemoRagService.transitionAliasToDraft)` |
-| TC012 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1593 (MemoRagService.transitionAliasToDraft)` |
-| TC013 | F007: 条件成立 | `invalid` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1594 (MemoRagService.transitionAliasToDraft)` |
-| TC014 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1594 (MemoRagService.transitionAliasToDraft)` |
+| TC009 | F005: 条件成立 | `alias` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1599 (MemoRagService.transitionAliasToDraft)` |
+| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1599 (MemoRagService.transitionAliasToDraft)` |
+| TC011 | F006: 条件成立 | `alias.status` が `"approved"` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1601 (MemoRagService.transitionAliasToDraft)` |
+| TC012 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1601 (MemoRagService.transitionAliasToDraft)` |
+| TC013 | F007: 条件成立 | `invalid` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1602 (MemoRagService.transitionAliasToDraft)` |
+| TC014 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1602 (MemoRagService.transitionAliasToDraft)` |
 | TC015 | F008: 条件成立 | `error.result` が `"conflict"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:733 (aliasGovernanceStatus)` |
 | TC016 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:733 (aliasGovernanceStatus)` |
 | TC017 | F009: 条件成立 | `error.result` が `"denied"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:734 (aliasGovernanceStatus)` |

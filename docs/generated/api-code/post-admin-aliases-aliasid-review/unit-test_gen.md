@@ -22,11 +22,11 @@
 | F002 | `POST /admin/aliases/{aliasId}/review handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/admin-routes.ts:473 (POST /admin/aliases/{aliasId}/review handler)` |
 | F003 | `POST /admin/aliases/{aliasId}/review handler` | if | `error` が `AliasGovernanceError` の instance である | `apps/api/src/routes/admin-routes.ts:474 (POST /admin/aliases/{aliasId}/review handler)` |
 | F004 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| F005 | `MemoRagService.reviewAlias` | if | `alias` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1559 (MemoRagService.reviewAlias)` |
-| F006 | `MemoRagService.reviewAlias` | 三項条件 | `alias.status` が `"draft"` と異なる | `apps/api/src/rag/memorag-service.ts:1561 (MemoRagService.reviewAlias)` |
-| F007 | `MemoRagService.reviewAlias` | if | `invalid` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1562 (MemoRagService.reviewAlias)` |
-| F008 | `MemoRagService.reviewAlias` | 三項条件 | `input.decision` が `"approve"` と等しい | `apps/api/src/rag/memorag-service.ts:1564 (MemoRagService.reviewAlias)` |
-| F009 | `MemoRagService.reviewAlias` | if | `alias.searchImprovement` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1568 (MemoRagService.reviewAlias)` |
+| F005 | `MemoRagService.reviewAlias` | if | `alias` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1567 (MemoRagService.reviewAlias)` |
+| F006 | `MemoRagService.reviewAlias` | 三項条件 | `alias.status` が `"draft"` と異なる | `apps/api/src/rag/memorag-service.ts:1569 (MemoRagService.reviewAlias)` |
+| F007 | `MemoRagService.reviewAlias` | if | `invalid` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1570 (MemoRagService.reviewAlias)` |
+| F008 | `MemoRagService.reviewAlias` | 三項条件 | `input.decision` が `"approve"` と等しい | `apps/api/src/rag/memorag-service.ts:1572 (MemoRagService.reviewAlias)` |
+| F009 | `MemoRagService.reviewAlias` | if | `alias.searchImprovement` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1576 (MemoRagService.reviewAlias)` |
 | F010 | `aliasGovernanceStatus` | if | `error.result` が `"conflict"` と等しい | `apps/api/src/routes/admin-routes.ts:733 (aliasGovernanceStatus)` |
 | F011 | `aliasGovernanceStatus` | if | `error.result` が `"denied"` と等しい | `apps/api/src/routes/admin-routes.ts:734 (aliasGovernanceStatus)` |
 
@@ -42,16 +42,16 @@
 | TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:474 (POST /admin/aliases/{aliasId}/review handler)` |
 | TC007 | F004: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
 | TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC009 | F005: 条件成立 | `alias` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1559 (MemoRagService.reviewAlias)` |
-| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1559 (MemoRagService.reviewAlias)` |
-| TC011 | F006: 条件成立 | `alias.status` が `"draft"` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1561 (MemoRagService.reviewAlias)` |
-| TC012 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1561 (MemoRagService.reviewAlias)` |
-| TC013 | F007: 条件成立 | `invalid` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1562 (MemoRagService.reviewAlias)` |
-| TC014 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1562 (MemoRagService.reviewAlias)` |
-| TC015 | F008: 条件成立 | `input.decision` が `"approve"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1564 (MemoRagService.reviewAlias)` |
-| TC016 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1564 (MemoRagService.reviewAlias)` |
-| TC017 | F009: 条件成立 | `alias.searchImprovement` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1568 (MemoRagService.reviewAlias)` |
-| TC018 | F009: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1568 (MemoRagService.reviewAlias)` |
+| TC009 | F005: 条件成立 | `alias` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1567 (MemoRagService.reviewAlias)` |
+| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1567 (MemoRagService.reviewAlias)` |
+| TC011 | F006: 条件成立 | `alias.status` が `"draft"` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1569 (MemoRagService.reviewAlias)` |
+| TC012 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1569 (MemoRagService.reviewAlias)` |
+| TC013 | F007: 条件成立 | `invalid` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1570 (MemoRagService.reviewAlias)` |
+| TC014 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1570 (MemoRagService.reviewAlias)` |
+| TC015 | F008: 条件成立 | `input.decision` が `"approve"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1572 (MemoRagService.reviewAlias)` |
+| TC016 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1572 (MemoRagService.reviewAlias)` |
+| TC017 | F009: 条件成立 | `alias.searchImprovement` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1576 (MemoRagService.reviewAlias)` |
+| TC018 | F009: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1576 (MemoRagService.reviewAlias)` |
 | TC019 | F010: 条件成立 | `error.result` が `"conflict"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:733 (aliasGovernanceStatus)` |
 | TC020 | F010: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:733 (aliasGovernanceStatus)` |
 | TC021 | F011: 条件成立 | `error.result` が `"denied"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:734 (aliasGovernanceStatus)` |
