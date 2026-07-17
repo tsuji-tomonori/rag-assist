@@ -486,6 +486,22 @@ repositoryは`ObjectStore.putText/deleteObject`、artifact ID factory、text san
 
 `async-agent-artifact-repository.test.ts`はnarrow source guard、artifact/log mapping、filename fallback、tenant分離、persist failureの非補償、cleanup target/error propagationを固定する。actual S3/AWS、manual UI、partial-write recovery toolingは未実施とする。
 
+## Phase 4n: async-agent run query service の抽出境界
+
+Issue #359 Phase 4n では、tenant-partitioned run repository上のread-only queryだけを`AsyncAgentRunQueryService`へ抽出する。list/get/artifact list/artifact getを対象とし、create/cancel/execute、selection/current worker authorization、provider、artifact persistence/cleanup、writebackのstate mutationは同じunitへ含めない。
+
+serviceは`AsyncAgentRunRepository.list/get`と、authoritative actor tenant、list可視性、get可視性を判定するnarrow auth portsだけを受ける。listとgetで既存認可式が異なるため、単一callbackへ統合しない。
+
+保持するcontractは次のとおり。
+
+- listはactorのauthoritative tenantだけをrepositoryへ渡し、`agent:read:managed`またはrequester一致のrunを残し、`updatedAt`降順、最大100件を返す。
+- getは最初にactor tenant partitionを解決してrepositoryを読む。missing/cross-tenant runは`undefined`、same-tenantでself/managed read不可ならstatus 403の`Forbidden`とする。この順序により他tenant IDの存在を開示しない。
+- repository list/getのoperational/parse/integrity errorはfallbackや他tenant retryをせず伝播する。
+- artifact list/getはauthorized getの結果だけをprojectionし、run missing、artifact missingの`undefined` semanticsを維持する。artifact bytes自体のread/downloadやwritebackは扱わない。
+- facade public signature、route permission、RBAC policy、repository tenant key、create/cancel/execute/provider/writeback、RAG/schemaは変更しない。
+
+`async-agent-run-query-service.test.ts`はnarrow source/delegate guard、authoritative tenant、filter/sort/100件limit、missing-before-authorization、same-tenant forbidden、error propagation、authorized artifact projectionを固定する。既存repository/facade contractとAPI full suiteを二重実行する。actual S3/AWS、manual UIは非変更領域のため未実施とし、local/GitHub CIをactual AWS成功の代替とは扱わない。
+
 ## Error / compatibility 方針
 
 - facade の同名 method と TypeScript signature を維持する。

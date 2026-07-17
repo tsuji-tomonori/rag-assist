@@ -12,6 +12,7 @@ import { sanitizeProviderText, type AsyncAgentProviderInput, type AsyncAgentProv
 import { AgentProviderCatalogService } from "../async-agent/provider-catalog-service.js"
 import { AsyncAgentRunRepository } from "../async-agent/async-agent-run-repository.js"
 import { AsyncAgentArtifactRepository } from "../async-agent/async-agent-artifact-repository.js"
+import { AsyncAgentRunQueryService } from "../async-agent/async-agent-run-query-service.js"
 import { BenchmarkRunQueryService } from "../benchmark/benchmark-run-query-service.js"
 import { BenchmarkRunCancellationService } from "../benchmark/benchmark-run-cancellation-service.js"
 import { BenchmarkRunReauthorizationService } from "../benchmark/benchmark-run-reauthorization-service.js"
@@ -448,6 +449,7 @@ const benchmarkSuites: BenchmarkSuite[] = [
 export class MemoRagService {
   private readonly agentProviderCatalogService: AgentProviderCatalogService
   private readonly asyncAgentArtifactRepository: AsyncAgentArtifactRepository
+  private readonly asyncAgentRunQueryService: AsyncAgentRunQueryService
   private readonly asyncAgentRunRepository: AsyncAgentRunRepository
   private readonly benchmarkArtifactDownloadService: BenchmarkArtifactDownloadService
   private readonly benchmarkArtifactRevocationCleanupDriverFactory: BenchmarkArtifactRevocationCleanupDriverFactory
@@ -469,6 +471,12 @@ export class MemoRagService {
       sanitizeText: sanitizeProviderText
     })
     this.asyncAgentRunRepository = new AsyncAgentRunRepository(deps.objectStore)
+    this.asyncAgentRunQueryService = new AsyncAgentRunQueryService({
+      runRepository: this.asyncAgentRunRepository,
+      tenantIdForActor: authoritativeActorTenantId,
+      canListRun: (actor, run) => hasPermission(actor, "agent:read:managed") || run.requesterUserId === actor.userId,
+      canGetRun: (actor, run) => this.canReadAsyncAgentRun(actor, run)
+    })
     this.benchmarkRunQueryService = new BenchmarkRunQueryService({
       benchmarkRunStore: deps.benchmarkRunStore,
       codeBuildLogReader: deps.codeBuildLogReader,
@@ -4327,19 +4335,11 @@ export class MemoRagService {
   }
 
   async listAsyncAgentRuns(user: AppUser): Promise<AsyncAgentRun[]> {
-    const runs = await this.asyncAgentRunRepository.list(authoritativeActorTenantId(user))
-    const canReadManaged = hasPermission(user, "agent:read:managed")
-    return runs
-      .filter((run) => canReadManaged || run.requesterUserId === user.userId)
-      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
-      .slice(0, 100)
+    return this.asyncAgentRunQueryService.list(user)
   }
 
   async getAsyncAgentRun(user: AppUser, agentRunId: string): Promise<AsyncAgentRun | undefined> {
-    const run = await this.asyncAgentRunRepository.get(authoritativeActorTenantId(user), agentRunId)
-    if (!run) return undefined
-    if (!this.canReadAsyncAgentRun(user, run)) throw forbiddenError("Forbidden")
-    return run
+    return this.asyncAgentRunQueryService.get(user, agentRunId)
   }
 
   async cancelAsyncAgentRun(user: AppUser, agentRunId: string): Promise<AsyncAgentRun | undefined> {
@@ -4361,13 +4361,11 @@ export class MemoRagService {
   }
 
   async listAsyncAgentArtifacts(user: AppUser, agentRunId: string): Promise<AsyncAgentRun["artifacts"] | undefined> {
-    const run = await this.getAsyncAgentRun(user, agentRunId)
-    return run?.artifacts
+    return this.asyncAgentRunQueryService.listArtifacts(user, agentRunId)
   }
 
   async getAsyncAgentArtifact(user: AppUser, agentRunId: string, artifactId: string): Promise<AsyncAgentRun["artifacts"][number] | undefined> {
-    const artifacts = await this.listAsyncAgentArtifacts(user, agentRunId)
-    return artifacts?.find((artifact) => artifact.artifactId === artifactId)
+    return this.asyncAgentRunQueryService.getArtifact(user, agentRunId, artifactId)
   }
 
   async updateAsyncAgentArtifactWriteback(

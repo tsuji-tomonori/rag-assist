@@ -8,22 +8,22 @@
 
 | # | CRUD/実行 | Target | Method | 自然言語での目的 | Caller | コード根拠 |
 | ---: | --- | --- | --- | --- | --- | --- |
-| 1 | 参照 | `this` | `loadAdminLedger` | `this` に対して load admin ledger を実行する。 | `MemoRagService.listManagedUsersPage` | `apps/api/src/rag/memorag-service.ts:1782 (MemoRagService.listManagedUsersPage)` |
-| 2 | 実行 | `adminLedgerKeyForTenant` | `adminLedgerKeyForTenant` | `adminLedgerKeyForTenant` に対して admin ledger key for tenant を実行する。 | `MemoRagService.loadAdminLedger` | `apps/api/src/rag/memorag-service.ts:3491 (MemoRagService.loadAdminLedger)` |
-| 3 | 参照 | `this.deps.objectStore` | `getTextWithVersion` | `this.deps.objectStore` に対して get text with version を実行する。 | `MemoRagService.loadAdminLedger` | `apps/api/src/rag/memorag-service.ts:3493 (MemoRagService.loadAdminLedger)` |
-| 4 | 参照 | `this` | `loadOrMigrateLegacyAdminLedger` | `this` に対して load or migrate legacy admin ledger を実行する。 | `MemoRagService.loadAdminLedger` | `apps/api/src/rag/memorag-service.ts:3498 (MemoRagService.loadAdminLedger)` |
-| 5 | 参照 | `this.deps.objectStore` | `getTextWithVersion` | `this.deps.objectStore` に対して get text with version を実行する。 | `MemoRagService.loadOrMigrateLegacyAdminLedger` | `apps/api/src/rag/memorag-service.ts:3560 (MemoRagService.loadOrMigrateLegacyAdminLedger)` |
-| 6 | 作成・追記 | `this.deps.objectStore` | `putTextIfVersion` | `this.deps.objectStore` に対して put text if version を実行する。 | `MemoRagService.loadOrMigrateLegacyAdminLedger` | `apps/api/src/rag/memorag-service.ts:3574 (MemoRagService.loadOrMigrateLegacyAdminLedger)` |
-| 7 | 参照 | `this.deps.objectStore` | `getTextWithVersion` | `this.deps.objectStore` に対して get text with version を実行する。 | `MemoRagService.loadOrMigrateLegacyAdminLedger` | `apps/api/src/rag/memorag-service.ts:3578 (MemoRagService.loadOrMigrateLegacyAdminLedger)` |
+| 1 | 参照 | `this` | `loadAdminLedger` | `this` に対して load admin ledger を実行する。 | `MemoRagService.listManagedUsersPage` | `apps/api/src/rag/memorag-service.ts:1790 (MemoRagService.listManagedUsersPage)` |
+| 2 | 実行 | `adminLedgerKeyForTenant` | `adminLedgerKeyForTenant` | `adminLedgerKeyForTenant` に対して admin ledger key for tenant を実行する。 | `MemoRagService.loadAdminLedger` | `apps/api/src/rag/memorag-service.ts:3499 (MemoRagService.loadAdminLedger)` |
+| 3 | 参照 | `this.deps.objectStore` | `getTextWithVersion` | `this.deps.objectStore` に対して get text with version を実行する。 | `MemoRagService.loadAdminLedger` | `apps/api/src/rag/memorag-service.ts:3501 (MemoRagService.loadAdminLedger)` |
+| 4 | 参照 | `this` | `loadOrMigrateLegacyAdminLedger` | `this` に対して load or migrate legacy admin ledger を実行する。 | `MemoRagService.loadAdminLedger` | `apps/api/src/rag/memorag-service.ts:3506 (MemoRagService.loadAdminLedger)` |
+| 5 | 参照 | `this.deps.objectStore` | `getTextWithVersion` | `this.deps.objectStore` に対して get text with version を実行する。 | `MemoRagService.loadOrMigrateLegacyAdminLedger` | `apps/api/src/rag/memorag-service.ts:3568 (MemoRagService.loadOrMigrateLegacyAdminLedger)` |
+| 6 | 作成・追記 | `this.deps.objectStore` | `putTextIfVersion` | `this.deps.objectStore` に対して put text if version を実行する。 | `MemoRagService.loadOrMigrateLegacyAdminLedger` | `apps/api/src/rag/memorag-service.ts:3582 (MemoRagService.loadOrMigrateLegacyAdminLedger)` |
+| 7 | 参照 | `this.deps.objectStore` | `getTextWithVersion` | `this.deps.objectStore` に対して get text with version を実行する。 | `MemoRagService.loadOrMigrateLegacyAdminLedger` | `apps/api/src/rag/memorag-service.ts:3586 (MemoRagService.loadOrMigrateLegacyAdminLedger)` |
 
 ## 外部サービス操作
 
 | # | CRUD/実行 | Target | Method | 自然言語での目的 | Caller | コード根拠 |
 | ---: | --- | --- | --- | --- | --- | --- |
-| 1 | 参照 | `this.deps.verifiedIdentityProvider` | `getCurrentIdentityBySubject` | `this.deps.verifiedIdentityProvider` へ get current identity by subject を実行する。 | `MemoRagService.loadAdminLedger` | `apps/api/src/rag/memorag-service.ts:3505 (MemoRagService.loadAdminLedger)` |
-| 2 | 実行 | `this` | `syncUserDirectory` | `this` へ sync user directory を実行する。 | `MemoRagService.loadAdminLedger` | `apps/api/src/rag/memorag-service.ts:3547 (MemoRagService.loadAdminLedger)` |
-| 3 | 参照 | `this.deps.userDirectory` | `listUsers` | `this.deps.userDirectory` へ list users を実行する。 | `MemoRagService.syncUserDirectory` | `apps/api/src/rag/memorag-service.ts:3585 (MemoRagService.syncUserDirectory)` |
-| 4 | 参照 | `this.deps.verifiedIdentityProvider` | `getCurrentIdentityBySubject` | `this.deps.verifiedIdentityProvider` へ get current identity by subject を実行する。 | `MemoRagService.syncUserDirectory` | `apps/api/src/rag/memorag-service.ts:3590 (MemoRagService.syncUserDirectory)` |
+| 1 | 参照 | `this.deps.verifiedIdentityProvider` | `getCurrentIdentityBySubject` | `this.deps.verifiedIdentityProvider` へ get current identity by subject を実行する。 | `MemoRagService.loadAdminLedger` | `apps/api/src/rag/memorag-service.ts:3513 (MemoRagService.loadAdminLedger)` |
+| 2 | 実行 | `this` | `syncUserDirectory` | `this` へ sync user directory を実行する。 | `MemoRagService.loadAdminLedger` | `apps/api/src/rag/memorag-service.ts:3555 (MemoRagService.loadAdminLedger)` |
+| 3 | 参照 | `this.deps.userDirectory` | `listUsers` | `this.deps.userDirectory` へ list users を実行する。 | `MemoRagService.syncUserDirectory` | `apps/api/src/rag/memorag-service.ts:3593 (MemoRagService.syncUserDirectory)` |
+| 4 | 参照 | `this.deps.verifiedIdentityProvider` | `getCurrentIdentityBySubject` | `this.deps.verifiedIdentityProvider` へ get current identity by subject を実行する。 | `MemoRagService.syncUserDirectory` | `apps/api/src/rag/memorag-service.ts:3598 (MemoRagService.syncUserDirectory)` |
 
 ## 解析境界
 

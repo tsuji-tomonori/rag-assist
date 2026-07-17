@@ -31,7 +31,7 @@ sequenceDiagram
 | 1 | `GET /favorites handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/favorite-routes.ts:19 (GET /favorites handler)` |
 | 2 | `GET /favorites handler` | Auth | "chat:read:own" permission を必須条件として確認する。 | `requirePermission(user, "chat:read:own")` | `apps/api/src/routes/favorite-routes.ts:20 (GET /favorites handler)` |
 | 3 | `GET /favorites handler` | Service | service の list favorites 処理を呼び出す。 | `service.listFavorites(user)` | `apps/api/src/routes/favorite-routes.ts:21 (GET /favorites handler)` |
-| 4 | `MemoRagService.listFavorites` | Service | service の list 処理を呼び出す。 | `this.favoriteService.list(user)` | `apps/api/src/rag/memorag-service.ts:4241 (MemoRagService.listFavorites)` |
+| 4 | `MemoRagService.listFavorites` | Service | service の list 処理を呼び出す。 | `this.favoriteService.list(user)` | `apps/api/src/rag/memorag-service.ts:4249 (MemoRagService.listFavorites)` |
 | 5 | `FavoriteService.list` | Store | `this.ports.favoriteStore` に対して list を実行する。 | `this.ports.favoriteStore.list(ownerKey)` | `apps/api/src/favorites/favorite-service.ts:43 (FavoriteService.list)` |
 | 6 | `FavoriteService.list` | Store | `this.ports.conversationHistoryStore` に対して list を実行する。 | `this.ports.conversationHistoryStore.list(ownerKey)` | `apps/api/src/favorites/favorite-service.ts:44 (FavoriteService.list)` |
 | 7 | `GET /favorites handler` | Validation | parse により入力を検証する。 | `FavoriteSchema.parse(favorite)` | `apps/api/src/routes/favorite-routes.ts:21 (GET /favorites handler)` |
