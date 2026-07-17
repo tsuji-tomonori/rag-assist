@@ -12,7 +12,7 @@ import { sanitizeProviderText, type AsyncAgentProviderArtifact, type AsyncAgentP
 import { debugTraceObjectKey, runChatOrchestration } from "./orchestration/chat-rag-orchestrator.js"
 import { llmOptions, normalizeMaxIterations, normalizeMemoryTopK, normalizeMinScore, normalizeSearchTopK, normalizeTopK, ragRuntimePolicy } from "../chat-orchestration/runtime-policy.js"
 import type { ChatInput, ChatOrchestrationResult } from "../chat-orchestration/types.js"
-import { DEBUG_TRACE_SANITIZE_POLICY_VERSION, DEBUG_TRACE_SCHEMA_VERSION, type AdminExportArtifact, type AgentProviderAvailability, type AgentProviderSetting, type AgentRuntimeProvider, type AsyncAgentRun, type AccessRoleDefinition, type AliasAuditLogItem, type AliasAuditLogPage, type AliasDefinition, type AliasListPage, type AuthoritativeAdmissionContext, type BenchmarkMode, type BenchmarkRun, type BenchmarkRunner, type BenchmarkRunThresholds, type BenchmarkSuite, type ChatRun, type ChatToolInvocation, type Chunk, type ConversationHistoryItem, type CostAuditSummary, type DebugReplayPlan, type DebugTrace, type DocumentGroup, type DocumentIngestRun, type DocumentManifest, type DocumentManifestSummary, type ExtractionWarning, type FavoriteItem, type FavoriteListItem, type FavoriteTargetType, type HumanQuestion, type IngestAdmissionContext, type JsonValue, type ManagedUser, type ManagedUserAdminView, type ManagedUserAuditAction, type ManagedUserAuditLogEntry, type ManagedUserAuditLogPage, type ManagedUserDeletionPreflight, type ManagedUserListPage, type MemoryCard, type ParsedDocumentPreview, type PublishedAliasArtifact, type QualityActionCard, type ReindexMigration, type StagedPublicationFence, type StructuredBlock, type UserUsageSummary, type VectorRecord } from "../types.js"
+import { DEBUG_TRACE_SANITIZE_POLICY_VERSION, DEBUG_TRACE_SCHEMA_VERSION, type AdminExportArtifact, type AgentProviderAvailability, type AgentProviderSetting, type AgentRuntimeProvider, type AsyncAgentRun, type AccessRoleDefinition, type AliasAuditLogItem, type AliasAuditLogPage, type AliasDefinition, type AliasListPage, type AuthoritativeAdmissionContext, type BenchmarkMode, type BenchmarkRun, type BenchmarkRunner, type BenchmarkRunThresholds, type BenchmarkSuite, type ChatRun, type ChatToolInvocation, type Chunk, type ConversationHistoryItem, type CostAuditSummary, type DebugReplayPlan, type DebugTrace, type DocumentGroup, type DocumentIngestRun, type DocumentManifest, type DocumentManifestSummary, type ExtractionWarning, type FavoriteListItem, type FavoriteTargetType, type HumanQuestion, type IngestAdmissionContext, type JsonValue, type ManagedUser, type ManagedUserAdminView, type ManagedUserAuditAction, type ManagedUserAuditLogEntry, type ManagedUserAuditLogPage, type ManagedUserDeletionPreflight, type ManagedUserListPage, type MemoryCard, type ParsedDocumentPreview, type PublishedAliasArtifact, type QualityActionCard, type ReindexMigration, type StagedPublicationFence, type StructuredBlock, type UserUsageSummary, type VectorRecord } from "../types.js"
 import type { ReplayDecisionReasonCode } from "../types.js"
 import type { AppUser } from "../auth.js"
 import type { CreatedDirectoryUser } from "../adapters/user-directory.js"
@@ -103,6 +103,7 @@ import type { UsageBreakdown, UsageEvent, UsageListQuery, UsageSummaryPage } fro
 import { normalizeUsageQuery, type UsageEventPage } from "../adapters/usage-event-store.js"
 import { priceUsageEvents, usageCompleteness } from "./_shared/usage/usage-pricing-catalog.js"
 import { UsageTrackingTextModel } from "./_shared/usage/usage-tracking-text-model.js"
+import { FavoriteService } from "../favorites/favorite-service.js"
 import {
   enforceResolvedResourceOperation,
   resolvedResourceScope,
@@ -440,7 +441,17 @@ const benchmarkSuites: BenchmarkSuite[] = [
 ]
 
 export class MemoRagService {
-  constructor(private readonly deps: Dependencies) {}
+  private readonly favoriteService: FavoriteService
+
+  constructor(private readonly deps: Dependencies) {
+    this.favoriteService = new FavoriteService({
+      favoriteStore: deps.favoriteStore,
+      conversationHistoryStore: deps.conversationHistoryStore,
+      ownerKey: tenantPartitionedOwnerKey,
+      listAccessibleDocuments: async (user) => this.listDocuments(user),
+      listAccessibleFolders: async (user) => this.listDocumentGroups(user)
+    })
+  }
 
   async getResourceGroupMembershipState(actor: AppUser, groupId: string) {
     return this.resourceGroupMembershipService().getState(actor, groupId)
@@ -4149,55 +4160,15 @@ export class MemoRagService {
   }
 
   async saveFavorite(user: AppUser, input: { targetType: FavoriteTargetType; targetId: string; label?: string; note?: string }): Promise<FavoriteListItem> {
-    if (!favoriteTargetResolverImplemented(input.targetType)) {
-      throw new Error(`Unsupported favorite target type: ${input.targetType}`)
-    }
-    const favorite = await this.deps.favoriteStore.save(tenantPartitionedOwnerKey(user), input)
-    return this.resolveFavoriteVisibility(user, favorite)
+    return this.favoriteService.save(user, input)
   }
 
   async deleteFavorite(subject: AppUser | string, targetType: FavoriteTargetType, targetId: string, tenantId?: string): Promise<void> {
-    await this.deps.favoriteStore.delete(tenantPartitionedOwnerKey(subject, tenantId), targetType, targetId)
+    await this.favoriteService.delete(subject, targetType, targetId, tenantId)
   }
 
   async listFavorites(user: AppUser): Promise<FavoriteListItem[]> {
-    const [favorites, history] = await Promise.all([
-      this.deps.favoriteStore.list(tenantPartitionedOwnerKey(user)),
-      this.deps.conversationHistoryStore.list(tenantPartitionedOwnerKey(user))
-    ])
-    const historyIds = new Set(history.map((item) => item.id))
-    const documents = new Map((await this.listDocuments(user)).map((document) => [document.documentId, document]))
-    const folders = new Map((await this.listDocumentGroups(user)).map((folder) => [folder.groupId, folder]))
-    return favorites.map((favorite) => {
-      if (favorite.targetType === "chatSession") {
-        return favoriteListItem(favorite, historyIds.has(favorite.targetId))
-      }
-      if (favorite.targetType === "document") {
-        const document = documents.get(favorite.targetId)
-        return favoriteListItem(favorite, Boolean(document), document?.fileName)
-      }
-      if (favorite.targetType === "folder") {
-        const folder = folders.get(favorite.targetId)
-        return favoriteListItem(favorite, Boolean(folder), folder?.canonicalPath ?? folder?.name)
-      }
-      return favoriteListItem(favorite, false)
-    })
-  }
-
-  private async resolveFavoriteVisibility(user: AppUser, favorite: FavoriteItem): Promise<FavoriteListItem> {
-    if (favorite.targetType === "chatSession") {
-      const history = await this.deps.conversationHistoryStore.list(tenantPartitionedOwnerKey(user))
-      return favoriteListItem(favorite, history.some((item) => item.id === favorite.targetId))
-    }
-    if (favorite.targetType === "document") {
-      const document = (await this.listDocuments(user)).find((item) => item.documentId === favorite.targetId)
-      return favoriteListItem(favorite, Boolean(document), document?.fileName)
-    }
-    if (favorite.targetType === "folder") {
-      const folder = (await this.listDocumentGroups(user)).find((item) => item.groupId === favorite.targetId)
-      return favoriteListItem(favorite, Boolean(folder), folder?.canonicalPath ?? folder?.name)
-    }
-    return favoriteListItem(favorite, false)
+    return this.favoriteService.list(user)
   }
 
   listBenchmarkSuites(): BenchmarkSuite[] {
@@ -6266,35 +6237,6 @@ function userDisplayName(user?: AppUser): string {
 function compareConversationHistoryForDisplay(a: ConversationHistoryItem, b: ConversationHistoryItem): number {
   if (Boolean(a.isFavorite) !== Boolean(b.isFavorite)) return a.isFavorite ? -1 : 1
   return b.updatedAt.localeCompare(a.updatedAt)
-}
-
-function stripFavoriteStorageKeys(favorite: FavoriteItem): Omit<FavoriteItem, "ownerUserId" | "targetKey"> {
-  const { ownerUserId: _ownerUserId, targetKey: _targetKey, ...visible } = favorite
-  return visible
-}
-
-function favoriteListItem(favorite: FavoriteItem, accessible: boolean, resolvedLabel?: string): FavoriteListItem {
-  const visible = stripFavoriteStorageKeys(favorite)
-  if (!accessible) {
-    return {
-      favoriteId: visible.favoriteId,
-      targetType: visible.targetType,
-      targetId: visible.targetId,
-      accessible: false,
-      label: "この項目には現在アクセスできません",
-      createdAt: visible.createdAt,
-      updatedAt: visible.updatedAt
-    }
-  }
-  return {
-    ...visible,
-    label: resolvedLabel ?? visible.label,
-    accessible: true
-  }
-}
-
-function favoriteTargetResolverImplemented(targetType: FavoriteTargetType): boolean {
-  return targetType === "chatSession" || targetType === "document" || targetType === "folder"
 }
 
 function forbiddenError(message: string): Error & { status: number } {

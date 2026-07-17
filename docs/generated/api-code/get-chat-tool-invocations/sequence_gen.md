@@ -32,9 +32,9 @@ sequenceDiagram
 | 2 | `GET /chat-tool-invocations handler` | Auth | "chat:admin:read_all" permission を必須条件として確認する。 | `requirePermission(c.get("user"), "chat:admin:read_all")` | `apps/api/src/routes/chat-routes.ts:190 (GET /chat-tool-invocations handler)` |
 | 3 | `GET /chat-tool-invocations handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/chat-routes.ts:191 (GET /chat-tool-invocations handler)` |
 | 4 | `GET /chat-tool-invocations handler` | Service | service の list chat tool invocations 処理を呼び出す。 | `service.listChatToolInvocations(c.get("user"))` | `apps/api/src/routes/chat-routes.ts:191 (GET /chat-tool-invocations handler)` |
-| 5 | `MemoRagService.listChatToolInvocations` | Service | service の list debug runs 処理を呼び出す。 | `this.listDebugRuns(actor)` | `apps/api/src/rag/memorag-service.ts:2353 (MemoRagService.listChatToolInvocations)` |
-| 6 | `MemoRagService.listDebugRuns` | Store | `this.deps.objectStore` に対して list keys を実行する。 | `this.deps.objectStore.listKeys(prefix)` | `apps/api/src/rag/memorag-service.ts:2335 (MemoRagService.listDebugRuns)` |
-| 7 | `MemoRagService.listDebugRuns` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(key)` | `apps/api/src/rag/memorag-service.ts:2339 (MemoRagService.listDebugRuns)` |
+| 5 | `MemoRagService.listChatToolInvocations` | Service | service の list debug runs 処理を呼び出す。 | `this.listDebugRuns(actor)` | `apps/api/src/rag/memorag-service.ts:2364 (MemoRagService.listChatToolInvocations)` |
+| 6 | `MemoRagService.listDebugRuns` | Store | `this.deps.objectStore` に対して list keys を実行する。 | `this.deps.objectStore.listKeys(prefix)` | `apps/api/src/rag/memorag-service.ts:2346 (MemoRagService.listDebugRuns)` |
+| 7 | `MemoRagService.listDebugRuns` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(key)` | `apps/api/src/rag/memorag-service.ts:2350 (MemoRagService.listDebugRuns)` |
 | 8 | `GET /chat-tool-invocations handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json({ invocations: await service.listChatToolInvocations(c.get("user")) }, 200)` | `apps/api/src/routes/chat-routes.ts:191 (GET /chat-tool-invocations handler)` |
 
 ## 分岐

@@ -56,9 +56,9 @@
 | F040 | `enforceDocumentCreateOperation` | 三項条件 | `scope?.scopeType` が `"group"` と等しい | `apps/api/src/routes/document-routes.ts:480 (enforceDocumentCreateOperation)` |
 | F041 | `enforceDocumentCreateOperation` | if | `groupIds.length` が `0` より大きい | `apps/api/src/routes/document-routes.ts:481 (enforceDocumentCreateOperation)` |
 | F042 | `enforceDocumentCreateOperation` | loop | `groupIds` が存在し、真である | `apps/api/src/routes/document-routes.ts:483 (enforceDocumentCreateOperation)` |
-| F043 | `MemoRagService.startDocumentIngestRun` | if | `config.documentIngestRunStateMachineArn` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2747 (MemoRagService.startDocumentIngestRun)` |
-| F044 | `MemoRagService.startDocumentIngestRun` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/rag/memorag-service.ts:2750 (MemoRagService.startDocumentIngestRun)` |
-| F045 | `MemoRagService.startDocumentIngestRun` | 三項条件 | `err` が `Error` の instance である | `apps/api/src/rag/memorag-service.ts:2751 (MemoRagService.startDocumentIngestRun)` |
+| F043 | `MemoRagService.startDocumentIngestRun` | if | `config.documentIngestRunStateMachineArn` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2758 (MemoRagService.startDocumentIngestRun)` |
+| F044 | `MemoRagService.startDocumentIngestRun` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/rag/memorag-service.ts:2761 (MemoRagService.startDocumentIngestRun)` |
+| F045 | `MemoRagService.startDocumentIngestRun` | 三項条件 | `err` が `Error` の instance である | `apps/api/src/rag/memorag-service.ts:2762 (MemoRagService.startDocumentIngestRun)` |
 
 ## 3. コード由来テストケース
 
@@ -147,11 +147,11 @@
 | TC081 | F041: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:481 (enforceDocumentCreateOperation)` |
 | TC082 | F042: 0件 | 反復対象が空でも不正な副作用や例外を生じない。 | `apps/api/src/routes/document-routes.ts:483 (enforceDocumentCreateOperation)` |
 | TC083 | F042: 複数件 | 各要素を順に処理し、順序・終了条件を守る。 | `apps/api/src/routes/document-routes.ts:483 (enforceDocumentCreateOperation)` |
-| TC084 | F043: 条件成立 | `config.documentIngestRunStateMachineArn` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2747 (MemoRagService.startDocumentIngestRun)` |
-| TC085 | F043: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2747 (MemoRagService.startDocumentIngestRun)` |
-| TC086 | F044: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/rag/memorag-service.ts:2750 (MemoRagService.startDocumentIngestRun)` |
-| TC087 | F045: 条件成立 | `err` が `Error` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2751 (MemoRagService.startDocumentIngestRun)` |
-| TC088 | F045: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2751 (MemoRagService.startDocumentIngestRun)` |
+| TC084 | F043: 条件成立 | `config.documentIngestRunStateMachineArn` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2758 (MemoRagService.startDocumentIngestRun)` |
+| TC085 | F043: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2758 (MemoRagService.startDocumentIngestRun)` |
+| TC086 | F044: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/rag/memorag-service.ts:2761 (MemoRagService.startDocumentIngestRun)` |
+| TC087 | F045: 条件成立 | `err` が `Error` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2762 (MemoRagService.startDocumentIngestRun)` |
+| TC088 | F045: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2762 (MemoRagService.startDocumentIngestRun)` |
 | TC089 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC090 | HTTP 400 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC091 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

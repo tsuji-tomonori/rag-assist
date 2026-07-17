@@ -8,7 +8,7 @@
 
 | # | CRUD/実行 | Target | Method | 自然言語での目的 | Caller | コード根拠 |
 | ---: | --- | --- | --- | --- | --- | --- |
-| 1 | 参照 | `this.deps.benchmarkRunStore` | `get` | `this.deps.benchmarkRunStore` に対して get を実行する。 | `MemoRagService.getBenchmarkRun` | `apps/api/src/rag/memorag-service.ts:4722 (MemoRagService.getBenchmarkRun)` |
+| 1 | 参照 | `this.deps.benchmarkRunStore` | `get` | `this.deps.benchmarkRunStore` に対して get を実行する。 | `MemoRagService.getBenchmarkRun` | `apps/api/src/rag/memorag-service.ts:4693 (MemoRagService.getBenchmarkRun)` |
 
 ## 外部サービス操作
 

@@ -981,10 +981,10 @@
       "openApi": true,
       "routeSource": "apps/api/src/routes/favorite-routes.ts:8 (GET /favorites)",
       "handlerSource": "apps/api/src/routes/favorite-routes.ts:18 (GET /favorites handler)",
-      "functionCount": 114,
-      "branchCount": 227,
-      "projectedBranchCount": 4,
-      "dataAccessCount": 17,
+      "functionCount": 9,
+      "branchCount": 7,
+      "projectedBranchCount": 1,
+      "dataAccessCount": 2,
       "relatedTestCount": 1
     },
     {
@@ -994,10 +994,10 @@
       "openApi": true,
       "routeSource": "apps/api/src/routes/favorite-routes.ts:25 (POST /favorites)",
       "handlerSource": "apps/api/src/routes/favorite-routes.ts:41 (POST /favorites handler)",
-      "functionCount": 118,
-      "branchCount": 228,
-      "projectedBranchCount": 2,
-      "dataAccessCount": 17,
+      "functionCount": 13,
+      "branchCount": 8,
+      "projectedBranchCount": 1,
+      "dataAccessCount": 2,
       "relatedTestCount": 2
     },
     {
@@ -1008,7 +1008,7 @@
       "routeSource": "apps/api/src/routes/favorite-routes.ts:49 (DELETE /favorites/{targetType}/{targetId})",
       "handlerSource": "apps/api/src/routes/favorite-routes.ts:62 (DELETE /favorites/{targetType}/{targetId} handler)",
       "functionCount": 9,
-      "branchCount": 8,
+      "branchCount": 3,
       "projectedBranchCount": 1,
       "dataAccessCount": 1,
       "relatedTestCount": 0

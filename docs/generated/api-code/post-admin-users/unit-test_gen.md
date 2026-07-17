@@ -23,22 +23,22 @@
 | F001 | `POST /admin/users handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/admin-routes.ts:68 (POST /admin/users handler)` |
 | F002 | `POST /admin/users handler` | if | `err` が `Error` の instance である、かつ `err.message` が `"Managed user already exists"` と等しい | `apps/api/src/routes/admin-routes.ts:69 (POST /admin/users handler)` |
 | F003 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| F004 | `MemoRagService.createManagedUser` | if | `groups.length` が `0` と等しい | `apps/api/src/rag/memorag-service.ts:1908 (MemoRagService.createManagedUser)` |
-| F005 | `MemoRagService.createManagedUser` | if | `this.deps.verifiedIdentityProvider` が存在し、真である、かつ `this.deps.userDirectory` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1910 (MemoRagService.createManagedUser)` |
-| F006 | `MemoRagService.createManagedUser` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/rag/memorag-service.ts:1915 (MemoRagService.createManagedUser)` |
-| F007 | `MemoRagService.createManagedUser` | if | `tenantId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1917 (MemoRagService.createManagedUser)` |
-| F008 | `MemoRagService.createManagedUser` | if | `tenantId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1933 (MemoRagService.createManagedUser)` |
-| F009 | `MemoRagService.createManagedUser` | if | `currentActorUser` が存在しない、または偽である、または `currentActorUser.accountStatus` が `"active"` と異なる、または `currentActorUser.tenantId` が `actor.tenantId` と異なる、または 利用者が "user:create" permission を持たない | `apps/api/src/rag/memorag-service.ts:1958 (MemoRagService.createManagedUser)` |
-| F010 | `MemoRagService.createManagedUser` | if | `this.deps.userDirectory.createUser` が存在しない、または偽である、または `this.deps.userDirectory.setUserGroups` が存在しない、または偽である、または `this.deps.userDirectory.deleteUser` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1963 (MemoRagService.createManagedUser)` |
-| F011 | `MemoRagService.createManagedUser` | if | some の判定結果が真である | `apps/api/src/rag/memorag-service.ts:1967 (MemoRagService.createManagedUser)` |
-| F012 | `MemoRagService.createManagedUser` | if | `created.status` が `"active"` と異なる | `apps/api/src/rag/memorag-service.ts:1971 (MemoRagService.createManagedUser)` |
-| F013 | `MemoRagService.createManagedUser` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/rag/memorag-service.ts:1999 (MemoRagService.createManagedUser)` |
-| F014 | `MemoRagService.createManagedUser` | if | `created` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2000 (MemoRagService.createManagedUser)` |
-| F015 | `MemoRagService.createManagedUser` | if | `ledgerCommitted` が存在し、真である、かつ `db` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2002 (MemoRagService.createManagedUser)` |
-| F016 | `MemoRagService.createManagedUser` | 三項条件 | `(error as Error & { status?: number }).status` が `403` と等しい | `apps/api/src/rag/memorag-service.ts:2008 (MemoRagService.createManagedUser)` |
-| F017 | `MemoRagService.createManagedUser` | 三項条件 | `error` が `Error` の instance である、かつ `error.message` が "already exists" を含む、または `error.name` が `"UsernameExistsException"` と等しい | `apps/api/src/rag/memorag-service.ts:2010 (MemoRagService.createManagedUser)` |
-| F018 | `MemoRagService.createManagedUser` | if | `config.authEnabled` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2021 (MemoRagService.createManagedUser)` |
-| F019 | `MemoRagService.createManagedUser` | if | `existing` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2024 (MemoRagService.createManagedUser)` |
+| F004 | `MemoRagService.createManagedUser` | if | `groups.length` が `0` と等しい | `apps/api/src/rag/memorag-service.ts:1919 (MemoRagService.createManagedUser)` |
+| F005 | `MemoRagService.createManagedUser` | if | `this.deps.verifiedIdentityProvider` が存在し、真である、かつ `this.deps.userDirectory` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1921 (MemoRagService.createManagedUser)` |
+| F006 | `MemoRagService.createManagedUser` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/rag/memorag-service.ts:1926 (MemoRagService.createManagedUser)` |
+| F007 | `MemoRagService.createManagedUser` | if | `tenantId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1928 (MemoRagService.createManagedUser)` |
+| F008 | `MemoRagService.createManagedUser` | if | `tenantId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1944 (MemoRagService.createManagedUser)` |
+| F009 | `MemoRagService.createManagedUser` | if | `currentActorUser` が存在しない、または偽である、または `currentActorUser.accountStatus` が `"active"` と異なる、または `currentActorUser.tenantId` が `actor.tenantId` と異なる、または 利用者が "user:create" permission を持たない | `apps/api/src/rag/memorag-service.ts:1969 (MemoRagService.createManagedUser)` |
+| F010 | `MemoRagService.createManagedUser` | if | `this.deps.userDirectory.createUser` が存在しない、または偽である、または `this.deps.userDirectory.setUserGroups` が存在しない、または偽である、または `this.deps.userDirectory.deleteUser` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1974 (MemoRagService.createManagedUser)` |
+| F011 | `MemoRagService.createManagedUser` | if | some の判定結果が真である | `apps/api/src/rag/memorag-service.ts:1978 (MemoRagService.createManagedUser)` |
+| F012 | `MemoRagService.createManagedUser` | if | `created.status` が `"active"` と異なる | `apps/api/src/rag/memorag-service.ts:1982 (MemoRagService.createManagedUser)` |
+| F013 | `MemoRagService.createManagedUser` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/rag/memorag-service.ts:2010 (MemoRagService.createManagedUser)` |
+| F014 | `MemoRagService.createManagedUser` | if | `created` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2011 (MemoRagService.createManagedUser)` |
+| F015 | `MemoRagService.createManagedUser` | if | `ledgerCommitted` が存在し、真である、かつ `db` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2013 (MemoRagService.createManagedUser)` |
+| F016 | `MemoRagService.createManagedUser` | 三項条件 | `(error as Error & { status?: number }).status` が `403` と等しい | `apps/api/src/rag/memorag-service.ts:2019 (MemoRagService.createManagedUser)` |
+| F017 | `MemoRagService.createManagedUser` | 三項条件 | `error` が `Error` の instance である、かつ `error.message` が "already exists" を含む、または `error.name` が `"UsernameExistsException"` と等しい | `apps/api/src/rag/memorag-service.ts:2021 (MemoRagService.createManagedUser)` |
+| F018 | `MemoRagService.createManagedUser` | if | `config.authEnabled` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2032 (MemoRagService.createManagedUser)` |
+| F019 | `MemoRagService.createManagedUser` | if | `existing` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2035 (MemoRagService.createManagedUser)` |
 
 ## 3. コード由来テストケース
 
@@ -50,36 +50,36 @@
 | TC004 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:69 (POST /admin/users handler)` |
 | TC005 | F003: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
 | TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC007 | F004: 条件成立 | `groups.length` が `0` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1908 (MemoRagService.createManagedUser)` |
-| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1908 (MemoRagService.createManagedUser)` |
-| TC009 | F005: 条件成立 | `this.deps.verifiedIdentityProvider` が存在し、真である、かつ `this.deps.userDirectory` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1910 (MemoRagService.createManagedUser)` |
-| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1910 (MemoRagService.createManagedUser)` |
-| TC011 | F006: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/rag/memorag-service.ts:1915 (MemoRagService.createManagedUser)` |
-| TC012 | F007: 条件成立 | `tenantId` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1917 (MemoRagService.createManagedUser)` |
-| TC013 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1917 (MemoRagService.createManagedUser)` |
-| TC014 | F008: 条件成立 | `tenantId` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1933 (MemoRagService.createManagedUser)` |
-| TC015 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1933 (MemoRagService.createManagedUser)` |
-| TC016 | F009: 条件成立 | `currentActorUser` が存在しない、または偽である、または `currentActorUser.accountStatus` が `"active"` と異なる、または `currentActorUser.tenantId` が `actor.tenantId` と異なる、または 利用者が "user:create" permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1958 (MemoRagService.createManagedUser)` |
-| TC017 | F009: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1958 (MemoRagService.createManagedUser)` |
-| TC018 | F010: 条件成立 | `this.deps.userDirectory.createUser` が存在しない、または偽である、または `this.deps.userDirectory.setUserGroups` が存在しない、または偽である、または `this.deps.userDirectory.deleteUser` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1963 (MemoRagService.createManagedUser)` |
-| TC019 | F010: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1963 (MemoRagService.createManagedUser)` |
-| TC020 | F011: 条件成立 | some の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1967 (MemoRagService.createManagedUser)` |
-| TC021 | F011: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1967 (MemoRagService.createManagedUser)` |
-| TC022 | F012: 条件成立 | `created.status` が `"active"` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1971 (MemoRagService.createManagedUser)` |
-| TC023 | F012: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1971 (MemoRagService.createManagedUser)` |
-| TC024 | F013: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/rag/memorag-service.ts:1999 (MemoRagService.createManagedUser)` |
-| TC025 | F014: 条件成立 | `created` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2000 (MemoRagService.createManagedUser)` |
-| TC026 | F014: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2000 (MemoRagService.createManagedUser)` |
-| TC027 | F015: 条件成立 | `ledgerCommitted` が存在し、真である、かつ `db` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2002 (MemoRagService.createManagedUser)` |
-| TC028 | F015: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2002 (MemoRagService.createManagedUser)` |
-| TC029 | F016: 条件成立 | `(error as Error & { status?: number }).status` が `403` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2008 (MemoRagService.createManagedUser)` |
-| TC030 | F016: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2008 (MemoRagService.createManagedUser)` |
-| TC031 | F017: 条件成立 | `error` が `Error` の instance である、かつ `error.message` が "already exists" を含む、または `error.name` が `"UsernameExistsException"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2010 (MemoRagService.createManagedUser)` |
-| TC032 | F017: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2010 (MemoRagService.createManagedUser)` |
-| TC033 | F018: 条件成立 | `config.authEnabled` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2021 (MemoRagService.createManagedUser)` |
-| TC034 | F018: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2021 (MemoRagService.createManagedUser)` |
-| TC035 | F019: 条件成立 | `existing` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2024 (MemoRagService.createManagedUser)` |
-| TC036 | F019: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2024 (MemoRagService.createManagedUser)` |
+| TC007 | F004: 条件成立 | `groups.length` が `0` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1919 (MemoRagService.createManagedUser)` |
+| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1919 (MemoRagService.createManagedUser)` |
+| TC009 | F005: 条件成立 | `this.deps.verifiedIdentityProvider` が存在し、真である、かつ `this.deps.userDirectory` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1921 (MemoRagService.createManagedUser)` |
+| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1921 (MemoRagService.createManagedUser)` |
+| TC011 | F006: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/rag/memorag-service.ts:1926 (MemoRagService.createManagedUser)` |
+| TC012 | F007: 条件成立 | `tenantId` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1928 (MemoRagService.createManagedUser)` |
+| TC013 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1928 (MemoRagService.createManagedUser)` |
+| TC014 | F008: 条件成立 | `tenantId` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1944 (MemoRagService.createManagedUser)` |
+| TC015 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1944 (MemoRagService.createManagedUser)` |
+| TC016 | F009: 条件成立 | `currentActorUser` が存在しない、または偽である、または `currentActorUser.accountStatus` が `"active"` と異なる、または `currentActorUser.tenantId` が `actor.tenantId` と異なる、または 利用者が "user:create" permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1969 (MemoRagService.createManagedUser)` |
+| TC017 | F009: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1969 (MemoRagService.createManagedUser)` |
+| TC018 | F010: 条件成立 | `this.deps.userDirectory.createUser` が存在しない、または偽である、または `this.deps.userDirectory.setUserGroups` が存在しない、または偽である、または `this.deps.userDirectory.deleteUser` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1974 (MemoRagService.createManagedUser)` |
+| TC019 | F010: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1974 (MemoRagService.createManagedUser)` |
+| TC020 | F011: 条件成立 | some の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1978 (MemoRagService.createManagedUser)` |
+| TC021 | F011: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1978 (MemoRagService.createManagedUser)` |
+| TC022 | F012: 条件成立 | `created.status` が `"active"` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1982 (MemoRagService.createManagedUser)` |
+| TC023 | F012: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1982 (MemoRagService.createManagedUser)` |
+| TC024 | F013: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/rag/memorag-service.ts:2010 (MemoRagService.createManagedUser)` |
+| TC025 | F014: 条件成立 | `created` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2011 (MemoRagService.createManagedUser)` |
+| TC026 | F014: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2011 (MemoRagService.createManagedUser)` |
+| TC027 | F015: 条件成立 | `ledgerCommitted` が存在し、真である、かつ `db` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2013 (MemoRagService.createManagedUser)` |
+| TC028 | F015: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2013 (MemoRagService.createManagedUser)` |
+| TC029 | F016: 条件成立 | `(error as Error & { status?: number }).status` が `403` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2019 (MemoRagService.createManagedUser)` |
+| TC030 | F016: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2019 (MemoRagService.createManagedUser)` |
+| TC031 | F017: 条件成立 | `error` が `Error` の instance である、かつ `error.message` が "already exists" を含む、または `error.name` が `"UsernameExistsException"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2021 (MemoRagService.createManagedUser)` |
+| TC032 | F017: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2021 (MemoRagService.createManagedUser)` |
+| TC033 | F018: 条件成立 | `config.authEnabled` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2032 (MemoRagService.createManagedUser)` |
+| TC034 | F018: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2032 (MemoRagService.createManagedUser)` |
+| TC035 | F019: 条件成立 | `existing` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2035 (MemoRagService.createManagedUser)` |
+| TC036 | F019: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2035 (MemoRagService.createManagedUser)` |
 | TC037 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC038 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC039 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

@@ -8,8 +8,8 @@
 
 | # | CRUD/実行 | Target | Method | 自然言語での目的 | Caller | コード根拠 |
 | ---: | --- | --- | --- | --- | --- | --- |
-| 1 | 参照 | `this.deps.objectStore` | `listKeys` | `this.deps.objectStore` に対して list keys を実行する。 | `MemoRagService.listDebugRuns` | `apps/api/src/rag/memorag-service.ts:2335 (MemoRagService.listDebugRuns)` |
-| 2 | 参照 | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `MemoRagService.listDebugRuns` | `apps/api/src/rag/memorag-service.ts:2339 (MemoRagService.listDebugRuns)` |
+| 1 | 参照 | `this.deps.objectStore` | `listKeys` | `this.deps.objectStore` に対して list keys を実行する。 | `MemoRagService.listDebugRuns` | `apps/api/src/rag/memorag-service.ts:2346 (MemoRagService.listDebugRuns)` |
+| 2 | 参照 | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `MemoRagService.listDebugRuns` | `apps/api/src/rag/memorag-service.ts:2350 (MemoRagService.listDebugRuns)` |
 
 ## 外部サービス操作
 

@@ -21,14 +21,14 @@
 | F003 | `POST /admin/users/{userId}/roles handler` | 三項条件 | `error.result` が `"denied"` と等しい | `apps/api/src/routes/admin-routes.ts:265 (POST /admin/users/{userId}/roles handler)` |
 | F004 | `POST /admin/users/{userId}/roles handler` | if | `user` が存在しない、または偽である | `apps/api/src/routes/admin-routes.ts:269 (POST /admin/users/{userId}/roles handler)` |
 | F005 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| F006 | `MemoRagService.assignUserRoles` | if | `user` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:2099 (MemoRagService.assignUserRoles)` |
-| F007 | `MemoRagService.assignUserRoles` | if | `this.deps.verifiedIdentityProvider` が存在し、真である、かつ `this.deps.userDirectory` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2102 (MemoRagService.assignUserRoles)` |
-| F008 | `MemoRagService.assignUserRoles` | 三項条件 | `committed` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2125 (MemoRagService.assignUserRoles)` |
-| F009 | `MemoRagService.assignUserRoles` | if | `config.authEnabled` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2136 (MemoRagService.assignUserRoles)` |
-| F010 | `MemoRagService.assignUserRoles` | if | `actor.userId` が `userId` と等しい | `apps/api/src/rag/memorag-service.ts:2137 (MemoRagService.assignUserRoles)` |
-| F011 | `MemoRagService.assignUserRoles` | if | `normalizedGroups` が "SYSTEM_ADMIN" を含む、かつ `actor.cognitoGroups` が "SYSTEM_ADMIN" を含まない | `apps/api/src/rag/memorag-service.ts:2138 (MemoRagService.assignUserRoles)` |
-| F012 | `MemoRagService.assignUserRoles` | if | `beforeGroups` が "SYSTEM_ADMIN" を含む、かつ `normalizedGroups` が "SYSTEM_ADMIN" を含まない、かつ some の判定結果が真ではない | `apps/api/src/rag/memorag-service.ts:2140 (MemoRagService.assignUserRoles)` |
-| F013 | `MemoRagService.assignUserRoles` | if | `user.groups.length` が `0` と等しい | `apps/api/src/rag/memorag-service.ts:2145 (MemoRagService.assignUserRoles)` |
+| F006 | `MemoRagService.assignUserRoles` | if | `user` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:2110 (MemoRagService.assignUserRoles)` |
+| F007 | `MemoRagService.assignUserRoles` | if | `this.deps.verifiedIdentityProvider` が存在し、真である、かつ `this.deps.userDirectory` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2113 (MemoRagService.assignUserRoles)` |
+| F008 | `MemoRagService.assignUserRoles` | 三項条件 | `committed` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2136 (MemoRagService.assignUserRoles)` |
+| F009 | `MemoRagService.assignUserRoles` | if | `config.authEnabled` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2147 (MemoRagService.assignUserRoles)` |
+| F010 | `MemoRagService.assignUserRoles` | if | `actor.userId` が `userId` と等しい | `apps/api/src/rag/memorag-service.ts:2148 (MemoRagService.assignUserRoles)` |
+| F011 | `MemoRagService.assignUserRoles` | if | `normalizedGroups` が "SYSTEM_ADMIN" を含む、かつ `actor.cognitoGroups` が "SYSTEM_ADMIN" を含まない | `apps/api/src/rag/memorag-service.ts:2149 (MemoRagService.assignUserRoles)` |
+| F012 | `MemoRagService.assignUserRoles` | if | `beforeGroups` が "SYSTEM_ADMIN" を含む、かつ `normalizedGroups` が "SYSTEM_ADMIN" を含まない、かつ some の判定結果が真ではない | `apps/api/src/rag/memorag-service.ts:2151 (MemoRagService.assignUserRoles)` |
+| F013 | `MemoRagService.assignUserRoles` | if | `user.groups.length` が `0` と等しい | `apps/api/src/rag/memorag-service.ts:2156 (MemoRagService.assignUserRoles)` |
 
 ## 3. コード由来テストケース
 
@@ -44,22 +44,22 @@
 | TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:269 (POST /admin/users/{userId}/roles handler)` |
 | TC009 | F005: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
 | TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC011 | F006: 条件成立 | `user` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2099 (MemoRagService.assignUserRoles)` |
-| TC012 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2099 (MemoRagService.assignUserRoles)` |
-| TC013 | F007: 条件成立 | `this.deps.verifiedIdentityProvider` が存在し、真である、かつ `this.deps.userDirectory` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2102 (MemoRagService.assignUserRoles)` |
-| TC014 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2102 (MemoRagService.assignUserRoles)` |
-| TC015 | F008: 条件成立 | `committed` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2125 (MemoRagService.assignUserRoles)` |
-| TC016 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2125 (MemoRagService.assignUserRoles)` |
-| TC017 | F009: 条件成立 | `config.authEnabled` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2136 (MemoRagService.assignUserRoles)` |
-| TC018 | F009: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2136 (MemoRagService.assignUserRoles)` |
-| TC019 | F010: 条件成立 | `actor.userId` が `userId` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2137 (MemoRagService.assignUserRoles)` |
-| TC020 | F010: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2137 (MemoRagService.assignUserRoles)` |
-| TC021 | F011: 条件成立 | `normalizedGroups` が "SYSTEM_ADMIN" を含む、かつ `actor.cognitoGroups` が "SYSTEM_ADMIN" を含まない 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2138 (MemoRagService.assignUserRoles)` |
-| TC022 | F011: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2138 (MemoRagService.assignUserRoles)` |
-| TC023 | F012: 条件成立 | `beforeGroups` が "SYSTEM_ADMIN" を含む、かつ `normalizedGroups` が "SYSTEM_ADMIN" を含まない、かつ some の判定結果が真ではない 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2140 (MemoRagService.assignUserRoles)` |
-| TC024 | F012: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2140 (MemoRagService.assignUserRoles)` |
-| TC025 | F013: 条件成立 | `user.groups.length` が `0` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2145 (MemoRagService.assignUserRoles)` |
-| TC026 | F013: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2145 (MemoRagService.assignUserRoles)` |
+| TC011 | F006: 条件成立 | `user` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2110 (MemoRagService.assignUserRoles)` |
+| TC012 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2110 (MemoRagService.assignUserRoles)` |
+| TC013 | F007: 条件成立 | `this.deps.verifiedIdentityProvider` が存在し、真である、かつ `this.deps.userDirectory` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2113 (MemoRagService.assignUserRoles)` |
+| TC014 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2113 (MemoRagService.assignUserRoles)` |
+| TC015 | F008: 条件成立 | `committed` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2136 (MemoRagService.assignUserRoles)` |
+| TC016 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2136 (MemoRagService.assignUserRoles)` |
+| TC017 | F009: 条件成立 | `config.authEnabled` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2147 (MemoRagService.assignUserRoles)` |
+| TC018 | F009: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2147 (MemoRagService.assignUserRoles)` |
+| TC019 | F010: 条件成立 | `actor.userId` が `userId` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2148 (MemoRagService.assignUserRoles)` |
+| TC020 | F010: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2148 (MemoRagService.assignUserRoles)` |
+| TC021 | F011: 条件成立 | `normalizedGroups` が "SYSTEM_ADMIN" を含む、かつ `actor.cognitoGroups` が "SYSTEM_ADMIN" を含まない 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2149 (MemoRagService.assignUserRoles)` |
+| TC022 | F011: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2149 (MemoRagService.assignUserRoles)` |
+| TC023 | F012: 条件成立 | `beforeGroups` が "SYSTEM_ADMIN" を含む、かつ `normalizedGroups` が "SYSTEM_ADMIN" を含まない、かつ some の判定結果が真ではない 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2151 (MemoRagService.assignUserRoles)` |
+| TC024 | F012: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2151 (MemoRagService.assignUserRoles)` |
+| TC025 | F013: 条件成立 | `user.groups.length` が `0` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2156 (MemoRagService.assignUserRoles)` |
+| TC026 | F013: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2156 (MemoRagService.assignUserRoles)` |
 | TC027 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC028 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC029 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

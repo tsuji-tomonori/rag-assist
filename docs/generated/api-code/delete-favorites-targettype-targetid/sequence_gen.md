@@ -18,7 +18,8 @@ sequenceDiagram
   API->>Auth: "chat：delete：own" permission を必須条件として確認する。
   API->>Auth: schema 検証済みの path parameter を取得する。
   API->>Service: service の delete favorite 処理を呼び出す。
-  Service->>Store: this.deps.favoriteStore に対して delete を実行する。
+  API->>Service: service の delete 処理を呼び出す。
+  Service->>Store: this.ports.favoriteStore に対して delete を実行する。
   API-->>Client: HTTP 200 で JSON response を返す。
 ```
 
@@ -30,8 +31,9 @@ sequenceDiagram
 | 2 | `DELETE /favorites/{targetType}/{targetId} handler` | Auth | "chat:delete:own" permission を必須条件として確認する。 | `requirePermission(user, "chat:delete:own")` | `apps/api/src/routes/favorite-routes.ts:64 (DELETE /favorites/{targetType}/{targetId} handler)` |
 | 3 | `DELETE /favorites/{targetType}/{targetId} handler` | Validation | schema 検証済みの path parameter を取得する。 | `validParam<z.infer<typeof FavoriteTargetTypeParamSchema>>(c)` | `apps/api/src/routes/favorite-routes.ts:65 (DELETE /favorites/{targetType}/{targetId} handler)` |
 | 4 | `DELETE /favorites/{targetType}/{targetId} handler` | Service | service の delete favorite 処理を呼び出す。 | `service.deleteFavorite(user, targetType, targetId)` | `apps/api/src/routes/favorite-routes.ts:66 (DELETE /favorites/{targetType}/{targetId} handler)` |
-| 5 | `MemoRagService.deleteFavorite` | Store | `this.deps.favoriteStore` に対して delete を実行する。 | `this.deps.favoriteStore.delete(tenantPartitionedOwnerKey(subject, tenantId), targetType, targetId)` | `apps/api/src/rag/memorag-service.ts:4160 (MemoRagService.deleteFavorite)` |
-| 6 | `DELETE /favorites/{targetType}/{targetId} handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json({ targetType, targetId }, 200)` | `apps/api/src/routes/favorite-routes.ts:67 (DELETE /favorites/{targetType}/{targetId} handler)` |
+| 5 | `MemoRagService.deleteFavorite` | Service | service の delete 処理を呼び出す。 | `this.favoriteService.delete(subject, targetType, targetId, tenantId)` | `apps/api/src/rag/memorag-service.ts:4167 (MemoRagService.deleteFavorite)` |
+| 6 | `FavoriteService.delete` | Store | `this.ports.favoriteStore` に対して delete を実行する。 | `this.ports.favoriteStore.delete(this.ports.ownerKey(subject, tenantId), targetType, targetId)` | `apps/api/src/favorites/favorite-service.ts:37 (FavoriteService.delete)` |
+| 7 | `DELETE /favorites/{targetType}/{targetId} handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json({ targetType, targetId }, 200)` | `apps/api/src/routes/favorite-routes.ts:67 (DELETE /favorites/{targetType}/{targetId} handler)` |
 
 ## 分岐
 

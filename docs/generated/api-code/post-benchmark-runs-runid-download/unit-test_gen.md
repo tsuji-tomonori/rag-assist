@@ -17,13 +17,13 @@
 | --- | --- | --- | --- | --- |
 | F001 | `POST /benchmark-runs/{runId}/download handler` | if | `download` が存在しない、または偽である | `apps/api/src/routes/benchmark-routes.ts:221 (POST /benchmark-runs/{runId}/download handler)` |
 | F002 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| F003 | `MemoRagService.createBenchmarkArtifactDownloadUrl` | if | `run` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4744 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
-| F004 | `MemoRagService.createBenchmarkArtifactDownloadUrl` | if | `artifact` が `"logs"` と等しい | `apps/api/src/rag/memorag-service.ts:4745 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
-| F005 | `MemoRagService.createBenchmarkArtifactDownloadUrl` | if | `run.codeBuildLogUrl` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4746 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
-| F006 | `MemoRagService.createBenchmarkArtifactDownloadUrl` | if | `config.benchmarkBucketName` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4753 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
-| F007 | `MemoRagService.createBenchmarkArtifactDownloadUrl` | 三項条件 | `artifact` が `"summary"` と等しい | `apps/api/src/rag/memorag-service.ts:4754 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
-| F008 | `MemoRagService.createBenchmarkArtifactDownloadUrl` | 三項条件 | `artifact` が `"results"` と等しい | `apps/api/src/rag/memorag-service.ts:4754 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
-| F009 | `MemoRagService.createBenchmarkArtifactDownloadUrl` | if | `objectKey` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4755 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
+| F003 | `MemoRagService.createBenchmarkArtifactDownloadUrl` | if | `run` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4715 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
+| F004 | `MemoRagService.createBenchmarkArtifactDownloadUrl` | if | `artifact` が `"logs"` と等しい | `apps/api/src/rag/memorag-service.ts:4716 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
+| F005 | `MemoRagService.createBenchmarkArtifactDownloadUrl` | if | `run.codeBuildLogUrl` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4717 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
+| F006 | `MemoRagService.createBenchmarkArtifactDownloadUrl` | if | `config.benchmarkBucketName` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4724 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
+| F007 | `MemoRagService.createBenchmarkArtifactDownloadUrl` | 三項条件 | `artifact` が `"summary"` と等しい | `apps/api/src/rag/memorag-service.ts:4725 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
+| F008 | `MemoRagService.createBenchmarkArtifactDownloadUrl` | 三項条件 | `artifact` が `"results"` と等しい | `apps/api/src/rag/memorag-service.ts:4725 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
+| F009 | `MemoRagService.createBenchmarkArtifactDownloadUrl` | if | `objectKey` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4726 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
 
 ## 3. コード由来テストケース
 
@@ -34,20 +34,20 @@
 | TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/benchmark-routes.ts:221 (POST /benchmark-runs/{runId}/download handler)` |
 | TC004 | F002: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
 | TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC006 | F003: 条件成立 | `run` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:4744 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
-| TC007 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:4744 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
-| TC008 | F004: 条件成立 | `artifact` が `"logs"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:4745 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
-| TC009 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:4745 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
-| TC010 | F005: 条件成立 | `run.codeBuildLogUrl` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:4746 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
-| TC011 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:4746 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
-| TC012 | F006: 条件成立 | `config.benchmarkBucketName` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:4753 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
-| TC013 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:4753 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
-| TC014 | F007: 条件成立 | `artifact` が `"summary"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:4754 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
-| TC015 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:4754 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
-| TC016 | F008: 条件成立 | `artifact` が `"results"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:4754 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
-| TC017 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:4754 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
-| TC018 | F009: 条件成立 | `objectKey` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:4755 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
-| TC019 | F009: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:4755 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
+| TC006 | F003: 条件成立 | `run` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:4715 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
+| TC007 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:4715 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
+| TC008 | F004: 条件成立 | `artifact` が `"logs"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:4716 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
+| TC009 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:4716 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
+| TC010 | F005: 条件成立 | `run.codeBuildLogUrl` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:4717 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
+| TC011 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:4717 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
+| TC012 | F006: 条件成立 | `config.benchmarkBucketName` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:4724 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
+| TC013 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:4724 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
+| TC014 | F007: 条件成立 | `artifact` が `"summary"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:4725 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
+| TC015 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:4725 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
+| TC016 | F008: 条件成立 | `artifact` が `"results"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:4725 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
+| TC017 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:4725 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
+| TC018 | F009: 条件成立 | `objectKey` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:4726 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
+| TC019 | F009: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:4726 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
 | TC020 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC021 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC022 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

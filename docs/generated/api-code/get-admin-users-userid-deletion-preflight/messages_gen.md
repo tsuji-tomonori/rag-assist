@@ -18,7 +18,7 @@
 | M003 | OpenAPI contract | `403` | 対象操作を実行する権限がありません。 | OpenAPI で宣言された HTTP 403 response | runtime OpenAPI |
 | M004 | OpenAPI contract | `404` | 指定したリソースが見つかりません。 | OpenAPI で宣言された HTTP 404 response | runtime OpenAPI |
 | M005 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| M006 | 例外 | `-` | Authoritative directory identity is unavailable during reconciliation | `this.deps.verifiedIdentityProvider` が存在し、真である、かつ `currentIdentity` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:3512 (MemoRagService.syncUserDirectory)` |
+| M006 | 例外 | `-` | Authoritative directory identity is unavailable during reconciliation | `this.deps.verifiedIdentityProvider` が存在し、真である、かつ `currentIdentity` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:3523 (MemoRagService.syncUserDirectory)` |
 | M007 | 例外 | `-` | Actor cannot transfer administrative principals | is active account の判定結果が真ではない、または is canonical の判定結果が真ではない、または `actor.tenantId` が `tenantId` と異なる、または 利用者が "user:delete" permission を持たない | `apps/api/src/security/administrative-principal-transfer-service.ts:521 (AdministrativePrincipalTransferService.validateActor)` |
 | M008 | 例外 | `-` | Source administrative principal is invalid | is canonical の判定結果が真ではない | `apps/api/src/security/administrative-principal-transfer-service.ts:106 (AdministrativePrincipalTransferService.inspectBeforePermanentDelete)` |
 | M009 | 例外 | `-` | Ownership inventory is not configured | `this.deps.documentGroupStore` が存在しない、または偽である、または `this.deps.userGroupStore` が存在しない、または偽である、または `this.deps.objectStore` が存在しない、または偽である | `apps/api/src/security/administrative-principal-transfer-service.ts:526 (AdministrativePrincipalTransferService.inventory)` |
@@ -26,7 +26,7 @@
 | M011 | 例外 | `-` | Authoritative tenant is required | `normalized` が存在しない、または偽である | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:121 (requiredTenantId)` |
 | M012 | 例外 | `-` | Authoritative tenant is required | `normalized` が存在しない、または偽である | `apps/api/src/security/tenant-partition.ts:5 (tenantPartitionId)` |
 | M013 | 例外 | `-` | `Document manifest tenant mismatch${key ? `: ${key}` : ""}` | `manifestTenantId` が存在しない、または偽である、かつ `options.allowMissingTenant` が存在しない、または偽である、または `manifestTenantId` が存在し、真である、かつ `manifestTenantId` が `normalizedTenantId` と異なる | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:111 (assertManifestTenant)` |
-| M014 | 例外 | `-` | Authoritative account deletion preflight is not configured | `config.authEnabled` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1806 (MemoRagService.getManagedUserDeletionPreflight)` |
+| M014 | 例外 | `-` | Authoritative account deletion preflight is not configured | `config.authEnabled` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1817 (MemoRagService.getManagedUserDeletionPreflight)` |
 | M015 | HTTP 実装応答 | `404` | User not found | `preflight` が存在しない、または偽である | `apps/api/src/routes/admin-routes.ts:174 (GET /admin/users/{userId}/deletion-preflight handler)` |
 
 ## 読み方

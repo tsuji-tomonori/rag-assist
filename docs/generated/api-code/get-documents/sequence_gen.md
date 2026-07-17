@@ -52,11 +52,11 @@ sequenceDiagram
 | 3 | `GET /documents handler` | Auth | "benchmark:seed_corpus" permission の保有有無を判定する。 | `hasPermission(user, "benchmark:seed_corpus")` | `apps/api/src/routes/document-routes.ts:837 (GET /documents handler)` |
 | 4 | `GET /documents handler` | Auth | "rag:doc:read" permission の保有有無を判定する。 | `hasPermission(user, "rag:doc:read")` | `apps/api/src/routes/document-routes.ts:841 (GET /documents handler)` |
 | 5 | `GET /documents handler` | Service | service の list documents 処理を呼び出す。 | `service.listDocuments(user)` | `apps/api/src/routes/document-routes.ts:842 (GET /documents handler)` |
-| 6 | `MemoRagService.listDocuments` | Service | service の document access tenant id 処理を呼び出す。 | `this.documentAccessTenantId(user)` | `apps/api/src/rag/memorag-service.ts:902 (MemoRagService.listDocuments)` |
-| 7 | `MemoRagService.listDocuments` | Store | `this.deps.objectStore` に対して list keys を実行する。 | `this.deps.objectStore.listKeys(tenantManifestPrefix(this.deps, tenantId))` | `apps/api/src/rag/memorag-service.ts:903 (MemoRagService.listDocuments)` |
+| 6 | `MemoRagService.listDocuments` | Service | service の document access tenant id 処理を呼び出す。 | `this.documentAccessTenantId(user)` | `apps/api/src/rag/memorag-service.ts:913 (MemoRagService.listDocuments)` |
+| 7 | `MemoRagService.listDocuments` | Store | `this.deps.objectStore` に対して list keys を実行する。 | `this.deps.objectStore.listKeys(tenantManifestPrefix(this.deps, tenantId))` | `apps/api/src/rag/memorag-service.ts:914 (MemoRagService.listDocuments)` |
 | 8 | `readTenantManifestByKey` | Store | `deps.objectStore` に対して get text を実行する。 | `deps.objectStore.getText(key)` | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:93 (readTenantManifestByKey)` |
 | 9 | `loadPublicationPointer` | Store | `deps.objectStore` に対して get text を実行する。 | `deps.objectStore.getText(key)` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1809 (loadPublicationPointer)` |
-| 10 | `MemoRagService.listDocuments` | Service | service の can access document manifest 処理を呼び出す。 | `this.canAccessDocumentManifest(user, manifest)` | `apps/api/src/rag/memorag-service.ts:923 (MemoRagService.listDocuments)` |
+| 10 | `MemoRagService.listDocuments` | Service | service の can access document manifest 処理を呼び出す。 | `this.canAccessDocumentManifest(user, manifest)` | `apps/api/src/rag/memorag-service.ts:934 (MemoRagService.listDocuments)` |
 | 11 | `FolderPermissionService.resolveEffectiveFolderPermissionDetail` | Store | `this.deps.documentGroupStore` に対して list を実行する。 | `this.deps.documentGroupStore.list(actorTenantId)` | `apps/api/src/folders/folder-permission-service.ts:145 (FolderPermissionService.resolveEffectiveFolderPermissionDetail)` |
 | 12 | `FolderPermissionService.resolveUserMembershipPermission` | Store | `this.deps.userGroupStore` に対して get を実行する。 | `this.deps.userGroupStore.get(tenantId, groupId)` | `apps/api/src/folders/folder-permission-service.ts:780 (FolderPermissionService.resolveUserMembershipPermission)` |
 | 13 | `FolderPermissionService.resolveUserMembershipPermission` | Store | `this.deps.groupMembershipStore` に対して list by group id を実行する。 | `this.deps.groupMembershipStore.listByGroupId(tenantId, groupId)` | `apps/api/src/folders/folder-permission-service.ts:781 (FolderPermissionService.resolveUserMembershipPermission)` |
@@ -67,9 +67,9 @@ sequenceDiagram
 | 18 | `DocumentPermissionService.loadLegacyDocumentGrants` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(documentShareLegacyLedgerKey)` | `apps/api/src/documents/document-permission-service.ts:537 (DocumentPermissionService.loadLegacyDocumentGrants)` |
 | 19 | `DocumentPermissionService.resolveUserMembershipPermission` | Store | `this.deps.userGroupStore` に対して get を実行する。 | `this.deps.userGroupStore.get(tenantId, groupId)` | `apps/api/src/documents/document-permission-service.ts:683 (DocumentPermissionService.resolveUserMembershipPermission)` |
 | 20 | `DocumentPermissionService.resolveUserMembershipPermission` | Store | `this.deps.groupMembershipStore` に対して list by group id を実行する。 | `this.deps.groupMembershipStore.listByGroupId(tenantId, groupId)` | `apps/api/src/documents/document-permission-service.ts:684 (DocumentPermissionService.resolveUserMembershipPermission)` |
-| 21 | `MemoRagService.listDocuments` | Service | service の sanitize direct shared manifest for list 処理を呼び出す。 | `this.sanitizeDirectSharedManifestForList(user, manifest)` | `apps/api/src/rag/memorag-service.ts:932 (MemoRagService.listDocuments)` |
+| 21 | `MemoRagService.listDocuments` | Service | service の sanitize direct shared manifest for list 処理を呼び出す。 | `this.sanitizeDirectSharedManifestForList(user, manifest)` | `apps/api/src/rag/memorag-service.ts:943 (MemoRagService.listDocuments)` |
 | 22 | `GET /documents handler` | Service | service の list benchmark document manifests 処理を呼び出す。 | `service.listBenchmarkDocumentManifests()` | `apps/api/src/routes/document-routes.ts:843 (GET /documents handler)` |
-| 23 | `MemoRagService.listBenchmarkDocumentManifests` | Store | `this.deps.objectStore` に対して list keys を実行する。 | `this.deps.objectStore.listKeys(tenantManifestPrefix(this.deps, tenantId))` | `apps/api/src/rag/memorag-service.ts:958 (MemoRagService.listBenchmarkDocumentManifests)` |
+| 23 | `MemoRagService.listBenchmarkDocumentManifests` | Store | `this.deps.objectStore` に対して list keys を実行する。 | `this.deps.objectStore.listKeys(tenantManifestPrefix(this.deps, tenantId))` | `apps/api/src/rag/memorag-service.ts:969 (MemoRagService.listBenchmarkDocumentManifests)` |
 | 24 | `GET /documents handler` | Auth | authorized only page により認証・認可条件を確認する。 | `authorizedOnlyPage({ candidates, authorized: () => true, project: documentListItemSummary, offset: decodeCollectionCursor(query.cursor), limit: query.limit })` | `apps/api/src/routes/document-routes.ts:856 (GET /documents handler)` |
 | 25 | `GET /documents handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json({ documents: page.items, count: page.count, nextCursor: page.nextCursor, responseProfileVersion: page.responseProfileVersion }, 200)` | `apps/api/src/routes/document-routes.ts:863 (GET /documents handler)` |
 
@@ -79,12 +79,12 @@ sequenceDiagram
 | --- | --- | --- | --- |
 | B001 | `GET /documents handler` | 利用者が "rag:doc:read" permission を持たない、かつ 利用者が "benchmark:seed_corpus" permission を持たない | `apps/api/src/routes/document-routes.ts:837 (GET /documents handler)` |
 | B002 | `GET /documents handler` | 利用者が "rag:doc:read" permission を持つ | `apps/api/src/routes/document-routes.ts:841 (GET /documents handler)` |
-| B003 | `MemoRagService.listDocuments` | is missing object error の判定結果が真である | `apps/api/src/rag/memorag-service.ts:908 (MemoRagService.listDocuments)` |
-| B004 | `MemoRagService.listDocuments` | `user` が存在し、真である | `apps/api/src/rag/memorag-service.ts:922 (MemoRagService.listDocuments)` |
-| B005 | `MemoRagService.listDocuments` | `user` が存在し、真である | `apps/api/src/rag/memorag-service.ts:925 (MemoRagService.listDocuments)` |
-| B006 | `MemoRagService.listDocuments` | `user` が存在しない、または偽である、または `permissionService` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:930 (MemoRagService.listDocuments)` |
-| B007 | `MemoRagService.listBenchmarkDocumentManifests` | `config.benchmarkEvaluationEnabled` が存在しない、または偽である、または `tenantId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:955 (MemoRagService.listBenchmarkDocumentManifests)` |
-| B008 | `MemoRagService.listBenchmarkDocumentManifests` | is missing object error の判定結果が真である | `apps/api/src/rag/memorag-service.ts:962 (MemoRagService.listBenchmarkDocumentManifests)` |
+| B003 | `MemoRagService.listDocuments` | is missing object error の判定結果が真である | `apps/api/src/rag/memorag-service.ts:919 (MemoRagService.listDocuments)` |
+| B004 | `MemoRagService.listDocuments` | `user` が存在し、真である | `apps/api/src/rag/memorag-service.ts:933 (MemoRagService.listDocuments)` |
+| B005 | `MemoRagService.listDocuments` | `user` が存在し、真である | `apps/api/src/rag/memorag-service.ts:936 (MemoRagService.listDocuments)` |
+| B006 | `MemoRagService.listDocuments` | `user` が存在しない、または偽である、または `permissionService` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:941 (MemoRagService.listDocuments)` |
+| B007 | `MemoRagService.listBenchmarkDocumentManifests` | `config.benchmarkEvaluationEnabled` が存在しない、または偽である、または `tenantId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:966 (MemoRagService.listBenchmarkDocumentManifests)` |
+| B008 | `MemoRagService.listBenchmarkDocumentManifests` | is missing object error の判定結果が真である | `apps/api/src/rag/memorag-service.ts:973 (MemoRagService.listBenchmarkDocumentManifests)` |
 | B009 | `decodeCollectionCursor` | `cursor` が存在しない、または偽である | `apps/api/src/routes/document-routes.ts:279 (decodeCollectionCursor)` |
 | B010 | `decodeCollectionCursor` | test の判定結果が真ではない | `apps/api/src/routes/document-routes.ts:283 (decodeCollectionCursor)` |
 | B011 | `decodeCollectionCursor` | `Buffer.from(decoded, "utf-8").toString("base64url")` が `normalized` と異なる | `apps/api/src/routes/document-routes.ts:284 (decodeCollectionCursor)` |
