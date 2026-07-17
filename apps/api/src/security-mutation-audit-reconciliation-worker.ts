@@ -15,6 +15,7 @@ import { DocumentShareAuditAuthoritativeResolver } from "./security/document-sha
 import { FolderMoveAuditAuthoritativeResolver } from "./security/folder-move-audit-reconciler.js"
 import { FolderDeleteAuditAuthoritativeResolver } from "./security/folder-delete-audit-reconciler.js"
 import { DocumentMoveAuditAuthoritativeResolver } from "./security/document-move-audit-reconciler.js"
+import { DocumentDeleteAuditAuthoritativeResolver } from "./security/document-delete-audit-reconciler.js"
 
 export type SecurityMutationAuditReconciliationEvent = Readonly<{
   tenantId?: unknown
@@ -77,6 +78,11 @@ export async function handler(
       userGroups: deps.userGroupStore,
       memberships: deps.groupMembershipStore,
       identities: identityProvider
+    }),
+    new DocumentDeleteAuditAuthoritativeResolver({
+      objects: deps.objectStore,
+      localTestIngestAdmissionContext: deps.localTestIngestAdmissionContext,
+      legacyGlobalDocumentArtifacts: deps.legacyGlobalDocumentArtifacts
     })
   ])
   return createSecurityMutationAuditReconciliationHandler({

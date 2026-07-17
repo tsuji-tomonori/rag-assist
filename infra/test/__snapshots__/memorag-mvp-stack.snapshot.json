@@ -9394,6 +9394,24 @@
                           "Arn"
                         ]
                       },
+                      "/document-mutations/delete/",
+                      {
+                        "Ref": "AWS::AccountId"
+                      },
+                      "/*"
+                    ]
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentsBucket9EC9DEB9",
+                          "Arn"
+                        ]
+                      },
                       "/tenant-artifacts/*/manifests/*"
                     ]
                   ]

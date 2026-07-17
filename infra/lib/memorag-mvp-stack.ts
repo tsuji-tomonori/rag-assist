@@ -814,6 +814,7 @@ export class MemoRagMvpStack extends Stack {
         docsBucket.arnForObjects("documents/share-grants.json"),
         docsBucket.arnForObjects("tenant-artifacts/*/folder-mutations/move/*"),
         docsBucket.arnForObjects(`document-mutations/move/${cdk.Aws.ACCOUNT_ID}/*`),
+        docsBucket.arnForObjects(`document-mutations/delete/${cdk.Aws.ACCOUNT_ID}/*`),
         docsBucket.arnForObjects("tenant-artifacts/*/manifests/*")
       ]
     }))
