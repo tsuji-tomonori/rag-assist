@@ -79,7 +79,7 @@
 | M064 | 例外 | `-` | Forbidden | `requestedTenantId` が存在し、真である、かつ `requestedTenantId` が `tenantId` と異なる | `apps/api/src/chat-orchestration/nodes/retrieve-memory.ts:176 (resolveCurrentMemoryTenant)` |
 | M065 | 例外 | `-` | Forbidden | `config.authEnabled` が存在し、真である | `apps/api/src/chat-orchestration/nodes/retrieve-memory.ts:179 (resolveCurrentMemoryTenant)` |
 | M066 | 例外 | `-` | Local/test tenant is not configured | `localTenantId` が存在しない、または偽である | `apps/api/src/chat-orchestration/nodes/retrieve-memory.ts:181 (resolveCurrentMemoryTenant)` |
-| M067 | 例外 | `-` | Debug trace tenant partition is required | `trace.tenantPartitionId` が存在しない、または偽である | `apps/api/src/rag/orchestration/chat-rag-orchestrator.ts:1280 (debugTraceObjectKey)` |
+| M067 | 例外 | `-` | Debug trace tenant partition is required | `trace.tenantPartitionId` が存在しない、または偽である | `apps/api/src/rag/orchestration/chat-rag-orchestrator.ts:1281 (debugTraceObjectKey)` |
 | M068 | 例外 | `-` | Quality sample deletion tenant is invalid | trim の判定結果が真ではない、または `tenantId.trim()` が `tenantId` と異なる | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:319 (ProductionRagObservationProducer.deleteArtifactSamples)` |
 
 ## 読み方

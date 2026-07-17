@@ -43,7 +43,7 @@
 | M028 | 例外 | `-` | Authoritative tenant is required | `normalized` が存在しない、または偽である | `apps/api/src/security/tenant-partition.ts:5 (tenantPartitionId)` |
 | M029 | 例外 | `-` | Step Functions executionArn was not returned | `response.executionArn` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:5107 (MemoRagService.startDocumentIngestRunExecution)` |
 | M030 | 例外 | `-` | `Document ingest run not found: ${runId}` | `run` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:2917 (MemoRagService.markDocumentIngestRunFailed)` |
-| M031 | 例外 | `-` | Debug trace tenant partition is required | `trace.tenantPartitionId` が存在しない、または偽である | `apps/api/src/rag/orchestration/chat-rag-orchestrator.ts:1280 (debugTraceObjectKey)` |
+| M031 | 例外 | `-` | Debug trace tenant partition is required | `trace.tenantPartitionId` が存在しない、または偽である | `apps/api/src/rag/orchestration/chat-rag-orchestrator.ts:1281 (debugTraceObjectKey)` |
 | M032 | 例外 | `-` | `Document ingest run not found: ${runId}` | `run` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:2764 (MemoRagService.executeDocumentIngestRun)` |
 | M033 | 例外 | `-` | worker_tenant_missing | `tenantId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4802 (MemoRagService.assertCurrentWorkerAuthorization)` |
 | M034 | 例外 | `-` | worker_identity_not_canonical | canonical の判定結果が真ではない、または canonical の判定結果が真ではない、または canonical の判定結果が真ではない | `apps/api/src/security/current-worker-authorization.ts:46 (CurrentWorkerAuthorization.assertAuthorized)` |
