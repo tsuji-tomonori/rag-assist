@@ -27,6 +27,8 @@
 - AC-FR025-005: 上位権限が必要な場合、管理ユーザーは GitHub Actions の Cognito ユーザー作成 workflow または AWS 管理手順で後から付与できること。
 - AC-FR025-006: アカウント作成または確認コード検証に失敗した場合、Web UI は認証済み session を作成しないこと。
 - AC-FR025-007: Web UI はアカウント作成時に Cognito パスワード条件を送信前から表示し、入力中に各条件の達成状態を利用者へ示すこと。
+- AC-FR025-008: post-confirmation trigger は一時的な `CHAT_USER` 付与失敗を有限回 retry し、最終失敗時は成功を返さず上位 role も付与しないこと。
+- AC-FR025-009: sign-up、確認コード検証、sign-in、`CHAT_USER` を含む ID token による認証付き API 呼び出しが一連の integration test で検証できること。
 
 ## 要件の源泉・背景
 
@@ -52,22 +54,22 @@
 | 種類 | 機能要求 |
 | 依存関係 | Cognito User Pool、post-confirmation trigger、`CHAT_USER` group、GitHub Actions Cognito user creation workflow |
 | 衝突 | self sign-up の利便性と権限付与の最小化 |
-| 受け入れ基準 | `AC-FR025-001` から `AC-FR025-007` |
+| 受け入れ基準 | `AC-FR025-001` から `AC-FR025-009` |
 | 優先度 | S |
 | 安定性 | High |
-| 変更履歴 | 2026-05-02 初版。2026-05-06 パスワード条件の事前表示と達成状態表示を追加。 |
+| 変更履歴 | 2026-05-02 初版。2026-05-06 パスワード条件の事前表示と達成状態表示を追加。2026-07-17 post-confirmation の有限 retry/fail-closed と sign-up から API までの integration verification を追加。 |
 
 ## 妥当性確認
 
 | 観点 | 確認結果 | メモ |
 |---|---|---|
 | 必要性 | OK | 管理ユーザー作業なしの通常利用者アカウント作成に必要 |
-| 十分性 | OK | sign-up、確認コード、最小権限、自動 session 非作成、パスワード条件の事前提示を含む |
+| 十分性 | OK | sign-up、確認コード、最小権限、自動 session 非作成、パスワード条件の事前提示、trigger retry/fail-closed を含む |
 | 理解容易性 | OK | self sign-up と上位権限付与を別経路として記述し、パスワード条件の表示責務も明示している |
 | 一貫性 | OK | `NFR-011` の最小権限と Cognito group 方針に沿う |
 | 標準・契約適合 | OK | Cognito の確認コードと post-confirmation trigger を使う |
 | 実現可能性 | OK | Amplify Auth と CDK の Cognito trigger で実装可能 |
-| 検証可能性 | OK | Web UI test、auth client test、CDK assertion で確認可能 |
+| 検証可能性 | OK | Web UI/integration test、post-confirmation unit test、CDK assertion で確認可能 |
 | ニーズ適合 | OK | 通常利用者はログイン画面から作成し、上位権限は管理ユーザーが付与する想定に対応する |
 
 ## 関連文書

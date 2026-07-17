@@ -10,7 +10,7 @@
 
 用途概要: CloudWatch Logs log group
 
-リソース数: 18
+リソース数: 19
 
 ## Logical ID 一覧
 
@@ -28,6 +28,7 @@
 | [Document Ingest Run State Machine Log Group](#document-ingest-run-state-machine-log-group) | `DocumentIngestRunStateMachineLogGroup94B2F1DE` | Document Ingest Run State Machine Log Group (CloudWatch Logs log group) |
 | [Document Ingest Run Worker Log Group](#document-ingest-run-worker-log-group) | `DocumentIngestRunWorkerLogGroup2B1C84D3` | Document Ingest Run Worker Log Group (CloudWatch Logs log group) |
 | [Heavy Api Function Log Group](#heavy-api-function-log-group) | `HeavyApiFunctionLogGroupF418C95A` | Heavy Api Function Log Group (CloudWatch Logs log group) |
+| [Post Confirmation Log Group](#post-confirmation-log-group) | `PostConfirmationLogGroup8E68D5A2` | Post Confirmation Log Group (CloudWatch Logs log group) |
 | [Rag Quality Monitor Log Group](#rag-quality-monitor-log-group) | `RagQualityMonitorLogGroup58870B2B` | Rag Quality Monitor Log Group (CloudWatch Logs log group) |
 | [Rest Api Access Log Group](#rest-api-access-log-group) | `RestApiAccessLogGroup246D1CE0` | Rest Api Access Log Group (CloudWatch Logs log group) |
 | [Revocation Cleanup Log Group](#revocation-cleanup-log-group) | `RevocationCleanupLogGroup2104FB3A` | Revocation Cleanup Log Group (CloudWatch Logs log group) |
@@ -156,6 +157,16 @@ Logical ID: `HeavyApiFunctionLogGroupF418C95A`
 | 設定項目 | 値 |
 | --- | --- |
 | `retentionInDays` | 7 |
+
+### Post Confirmation Log Group
+
+Logical ID: `PostConfirmationLogGroup8E68D5A2`
+
+用途推定: Post Confirmation Log Group (CloudWatch Logs log group)
+
+| 設定項目 | 値 |
+| --- | --- |
+| `retentionInDays` | 30 |
 
 ### Rag Quality Monitor Log Group
 

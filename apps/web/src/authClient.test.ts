@@ -208,6 +208,49 @@ describe("auth client", () => {
     )
   })
 
+  it("completes sign-up, confirmation, sign-in, and an authenticated API request", async () => {
+    resetRuntimeConfigForTests()
+    const idToken = jwtWithGroups(["CHAT_USER"])
+    const fetchMock = vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
+      const requestUrl = String(url)
+      if (requestUrl === "/config.json") {
+        return Promise.resolve(response({
+          apiBaseUrl: "http://api.test",
+          authMode: "cognito",
+          cognitoRegion: "ap-northeast-1",
+          cognitoUserPoolClientId: "client-1"
+        }))
+      }
+      if (requestUrl === "https://cognito-idp.ap-northeast-1.amazonaws.com/") {
+        const target = (init?.headers as Record<string, string> | undefined)?.["X-Amz-Target"]
+        if (target === "AWSCognitoIdentityProviderService.SignUp") return Promise.resolve(response({ CodeDeliveryDetails: { Destination: "t***@example.com" } }))
+        if (target === "AWSCognitoIdentityProviderService.ConfirmSignUp") return Promise.resolve(response({}))
+        if (target === "AWSCognitoIdentityProviderService.InitiateAuth") {
+          return Promise.resolve(response({ AuthenticationResult: { IdToken: idToken, ExpiresIn: 3600 } }))
+        }
+      }
+      if (requestUrl === "http://api.test/documents") return Promise.resolve(response({ documents: [] }))
+      return Promise.resolve(response({}))
+    })
+    vi.stubGlobal("fetch", fetchMock)
+
+    await expect(signUp({ email: "new-user@example.com", password: "Password123!" })).resolves.toMatchObject({
+      email: "new-user@example.com"
+    })
+    expect(getStoredAuthSession()).toBeNull()
+    await expect(confirmSignUp({ email: "new-user@example.com", code: "123456" })).resolves.toBeUndefined()
+    expect(getStoredAuthSession()).toBeNull()
+    await expect(signIn({ email: "new-user@example.com", password: "Password123!", remember: false })).resolves.toMatchObject({
+      idToken,
+      cognitoGroups: ["CHAT_USER"]
+    })
+    await expect(listDocuments()).resolves.toEqual([])
+
+    expect(fetchMock).toHaveBeenCalledWith("http://api.test/documents", {
+      headers: { Authorization: `Bearer ${idToken}` }
+    })
+  })
+
   it("maps Cognito sign-up errors to user-facing messages", async () => {
     resetRuntimeConfigForTests()
     vi.stubGlobal(
@@ -221,6 +264,7 @@ describe("auth client", () => {
     await expect(signUp({ email: "tester@example.com", password: "Password123!" })).rejects.toThrow(
       "このメールアドレスはすでに登録されています。"
     )
+    expect(getStoredAuthSession()).toBeNull()
   })
 
   it("clears expired or broken stored sessions", () => {
@@ -332,6 +376,7 @@ describe("auth client", () => {
         .mockResolvedValueOnce(response({ __type: "CodeMismatchException" }, false))
     )
     await expect(confirmSignUp({ email: "tester@example.com", code: "999999" })).rejects.toThrow("確認コードが正しくありません。")
+    expect(getStoredAuthSession()).toBeNull()
   })
 
   it("supports runtime local mode and generic Cognito error messages", async () => {

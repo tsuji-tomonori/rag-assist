@@ -227,7 +227,7 @@ SWEBOK v4.0a Chapter 1 に従い、要求は次を満たす粒度にする。
 | GAP-RD-017 | cutover/rollback が exactly-one-active と current deny を保証せず、`FR-072`, `SQ-006` に未達。 | confirmed | `20260507-2000-ingestion-bluegreen-benchmark-gate.md` |
 | GAP-RD-018 | trace raw data と redaction 宣言が一致せず、`FR-074`, `FR-088` と衝突する。 | conflict | `20260713-2256-trace-evaluation-isolation.md` |
 | GAP-RD-019 | product runtime に domain/dataset 固有 rule があり、`FR-075`, `SQ-007` に部分適合または衝突する。 | conflict | `20260713-2256-trace-evaluation-isolation.md`, `20260506-1203-requirements-classification-policy.md` |
-| GAP-RD-020 | CDK self-signup disabled と `FR-025`/Web が衝突し、post-confirmation handler が未接続。 | conflict | `20260713-2258-self-signup-policy-implementation.md` |
+| GAP-RD-020 | 解消済み: CDK self-signup と Web/`FR-025` を有効状態へ統一し、`CHAT_USER` 固定の post-confirmation handler を接続した。実 AWS E2E は未検証。 | confirmed | `20260713-2258-self-signup-policy-implementation.md` |
 | GAP-RD-021 | CloudFront/PKCE/CORS の accepted target と deploy/runtime が一致せず、`FR-054`, `TC-003` に未達。 | conflict | `20260522-2120-cloudfront-single-entry-implementation.md` |
 | GAP-RD-022 | role catalog が backend/infra/Web でずれ、mutation guard/audit が不足し、`FR-079`, `FR-080`, `FR-086` に未達。 | conflict | `20260713-2251-canonical-resource-authorization.md` |
 | GAP-RD-023 | move が manifest、vector metadata、subtree/index/policy を一公開単位で更新せず、`FR-061`, `FR-065`, `FR-087`, `SQ-009` に未達。 | confirmed | `20260517-1241-document-move-between-folders.md` |
@@ -266,7 +266,7 @@ admin 固有の source/as-of、選択 context、responsive、server-authoritativ
 | `OQ-RD-005` | 業務スライス別の検索、忠実性、引用、回答可能性、業務達成の合格値。 |
 | `OQ-RD-006` | chat/search/ingest の workload、p95/p99、可用性、費用上限。 |
 | `OQ-RD-007` | break-glass の有無、承認者、期限、理由、監査、事後 review。 |
-| `OQ-RD-008` | self-signup、invite、SSO、tenant-configurable の正式方針。 |
+| `OQ-RD-008` | Phase 1 の通常利用者経路は `FR-025` の self-signup を正とする。invite、SSO、tenant-configurable mode の追加要否と切替契約は未確定。 |
 | `OQ-RD-009` | source/chunk/cache/trace/audit の retention、hard delete、legal hold。 |
 | `OQ-RD-010` | 情報源 authority、施行期間、矛盾 escalation の責任者と規則。 |
 | `OQ-RD-011` | 共有 audience として許可する principal 種別。 |

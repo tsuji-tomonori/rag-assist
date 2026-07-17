@@ -343,7 +343,7 @@ export class MemoRagMvpStack extends Stack {
 
 
     const userPool = new cognito.UserPool(this, "UserPool", {
-      selfSignUpEnabled: false,
+      selfSignUpEnabled: true,
       signInAliases: { email: true },
       autoVerify: { email: true },
       mfa: cognito.Mfa.OPTIONAL,
@@ -378,6 +378,27 @@ export class MemoRagMvpStack extends Stack {
         description: `MemoRAG role: ${role}`
       })
     }
+
+    const postConfirmationLogGroup = new logs.LogGroup(this, "PostConfirmationLogGroup", {
+      retention: logs.RetentionDays.ONE_MONTH,
+      removalPolicy: RemovalPolicy.RETAIN
+    })
+    const postConfirmationFn = new lambda.Function(this, "PostConfirmationFunction", {
+      code: lambda.Code.fromAsset(path.join(__dirname, "../lambda-dist/cognito-post-confirmation")),
+      handler: "index.handler",
+      runtime: lambda.Runtime.NODEJS_22_X,
+      architecture: lambda.Architecture.ARM_64,
+      timeout: Duration.seconds(10),
+      memorySize: 256,
+      logGroup: postConfirmationLogGroup
+    })
+    postConfirmationFn.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ["cognito-idp:AdminAddUserToGroup"],
+        resources: [Stack.of(this).formatArn({ service: "cognito-idp", resource: "userpool", resourceName: "*" })]
+      })
+    )
+    userPool.addTrigger(cognito.UserPoolOperation.POST_CONFIRMATION, postConfirmationFn)
 
     const benchmarkRunnerAuthSecret = benchmarkRunnerAuthSecretIdOverride
       ? (benchmarkRunnerAuthSecretIdOverride.startsWith("arn:")
