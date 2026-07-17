@@ -53,7 +53,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 163 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 167 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 
@@ -172,6 +172,10 @@ Media type: `application/json`
 | `benchmarkRuns[].metrics.p95LatencyMs` | `number` | no | `response.benchmarkRuns[].metrics.p95LatencyMs` の値。項目名は p95 latency ms を表します。 | nullable |
 | `benchmarkRuns[].metrics.p99LatencyMs` | `number` | no | `response.benchmarkRuns[].metrics.p99LatencyMs` の値。項目名は p99 latency ms を表します。 | nullable |
 | `benchmarkRuns[].metrics.averageLatencyMs` | `number` | no | `response.benchmarkRuns[].metrics.averageLatencyMs` の値。項目名は average latency ms を表します。 | nullable |
+| `benchmarkRuns[].metrics.firstTokenP50Ms` | `number` | no | `response.benchmarkRuns[].metrics.firstTokenP50Ms` の値。項目名は first token p50 ms を表します。 | nullable<br>minimum=0 |
+| `benchmarkRuns[].metrics.firstTokenP95Ms` | `number` | no | `response.benchmarkRuns[].metrics.firstTokenP95Ms` の値。項目名は first token p95 ms を表します。 | nullable<br>minimum=0 |
+| `benchmarkRuns[].metrics.firstTokenP99Ms` | `number` | no | `response.benchmarkRuns[].metrics.firstTokenP99Ms` の値。項目名は first token p99 ms を表します。 | nullable<br>minimum=0 |
+| `benchmarkRuns[].metrics.firstTokenSampleCount` | `integer` | no | `response.benchmarkRuns[].metrics.firstTokenSampleCount` の値。項目名は first token sample count を表します。 | nullable<br>minimum=0 |
 | `benchmarkRuns[].metrics.errorRate` | `number` | no | `response.benchmarkRuns[].metrics.errorRate` の値。項目名は error rate を表します。 | nullable |
 | `benchmarkRuns[].metrics.datasetVersion` | `string` | no | `response.benchmarkRuns[].metrics.datasetVersion` の値。項目名は dataset version を表します。 | minLength=1 |
 | `benchmarkRuns[].metrics.workloadProfileVersion` | `string` | no | `response.benchmarkRuns[].metrics.workloadProfileVersion` の値。項目名は workload profile version を表します。 | minLength=1 |

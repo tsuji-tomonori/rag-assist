@@ -824,6 +824,19 @@ export type DebugStep = {
 
 export const DEBUG_TRACE_SCHEMA_VERSION = 1
 
+export type FirstTokenTimingEvidence = {
+  schemaVersion: 1
+  unit: "ms"
+  clock: "node_performance"
+  origin: "chat_orchestration_ingress"
+  boundary: "answer_model_first_content_delta"
+  clientVisible: false
+  status: "measured" | "not_applicable" | "unavailable"
+  latencyMs?: number
+  attemptOrdinal?: number
+  reason?: "non_answer_response" | "first_content_delta_not_observed"
+}
+
 export type DebugTrace = {
   schemaVersion: typeof DEBUG_TRACE_SCHEMA_VERSION
   runId: string
@@ -862,6 +875,7 @@ export type DebugTrace = {
   startedAt: string
   completedAt: string
   totalLatencyMs: number
+  firstTokenTiming?: FirstTokenTimingEvidence
   status: DebugStepStatus
   answerPreview: string
   isAnswerable: boolean
@@ -1172,6 +1186,7 @@ export type ChatResponsePayload = {
   citations: Citation[]
   retrieved: Citation[]
   finalEvidence?: Citation[]
+  firstTokenTiming?: FirstTokenTimingEvidence
   debug?: DebugTrace
 }
 
@@ -1366,6 +1381,10 @@ export type BenchmarkRunMetrics = {
   p95LatencyMs?: number
   p99LatencyMs?: number
   averageLatencyMs?: number
+  firstTokenP50Ms?: number
+  firstTokenP95Ms?: number
+  firstTokenP99Ms?: number
+  firstTokenSampleCount?: number
   errorRate?: number
   datasetVersion?: string
   workloadProfileVersion?: string

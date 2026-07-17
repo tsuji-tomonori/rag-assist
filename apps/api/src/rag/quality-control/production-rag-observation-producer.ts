@@ -19,6 +19,7 @@ import type {
   DebugTrace,
   DocumentIngestRun,
   DocumentManifest,
+  FirstTokenTimingEvidence,
   PipelineVersions,
   SearchScope,
   WorkerResult
@@ -53,6 +54,9 @@ export type RagDiagnosticMeasurementId =
   | "retrieval.context_relevance"
   | "evaluation.artifact_failure_count"
   | "evaluation.run_timed_out"
+  | "performance.chat_first_token_p50_ms"
+  | "performance.chat_first_token_p95_ms"
+  | "performance.chat_first_token_p99_ms"
 
 export type RagQualitySourceSample = {
   schemaVersion: 1
@@ -208,6 +212,7 @@ export class ProductionRagObservationProducer {
       "reliability.success_rate": measurement(trace.status === "error" ? 0 : 1, 1),
       "reliability.error_rate": measurement(trace.status === "error" ? 1 : 0, 1)
     }
+    const firstToken = firstTokenMeasurement(trace.firstTokenTiming)
     return this.capture({
       sourceType: "debug_trace",
       artifactId: trace.runId,
@@ -215,6 +220,11 @@ export class ProductionRagObservationProducer {
       traceIds: [trace.runId],
       versionDimensions: versionsFromTrace(trace),
       measurements,
+      diagnosticMeasurements: {
+        "performance.chat_first_token_p50_ms": firstToken,
+        "performance.chat_first_token_p95_ms": firstToken,
+        "performance.chat_first_token_p99_ms": firstToken
+      },
       context: {
         tenantId: context.tenantId,
         roles: context.roles,
@@ -229,6 +239,7 @@ export class ProductionRagObservationProducer {
     runId: string
     observedAt: string
     latencyMs: number
+    firstTokenTiming?: FirstTokenTimingEvidence
     tenantId: string
     roles: string[]
     resourceIds: string[]
@@ -277,6 +288,11 @@ export class ProductionRagObservationProducer {
         "performance.chat_p99_ms": measurement(input.latencyMs, 1),
         "reliability.success_rate": measurement(1, 1),
         "reliability.error_rate": measurement(0, 1)
+      },
+      diagnosticMeasurements: {
+        "performance.chat_first_token_p50_ms": firstTokenMeasurement(input.firstTokenTiming),
+        "performance.chat_first_token_p95_ms": firstTokenMeasurement(input.firstTokenTiming),
+        "performance.chat_first_token_p99_ms": firstTokenMeasurement(input.firstTokenTiming)
       },
       proxyMeasurements: {
         answerSupportRate: { value: supportedRate, label: "runtime_proxy_not_reviewed_ground_truth" },
@@ -527,7 +543,10 @@ export class ProductionRagObservationProducer {
         1,
         "benchmark_terminal_status_missing",
         0.95
-      )
+      ),
+      "performance.chat_first_token_p50_ms": benchmarkMeasurement(metrics?.firstTokenP50Ms, metrics?.firstTokenSampleCount ?? 0, "benchmark_first_token_evidence_missing", 0.9),
+      "performance.chat_first_token_p95_ms": benchmarkMeasurement(metrics?.firstTokenP95Ms, metrics?.firstTokenSampleCount ?? 0, "benchmark_first_token_evidence_missing", 0.9),
+      "performance.chat_first_token_p99_ms": benchmarkMeasurement(metrics?.firstTokenP99Ms, metrics?.firstTokenSampleCount ?? 0, "benchmark_first_token_evidence_missing", 0.9)
     }
     const versionDimensions = compactVersions({
       policy: `${policy.profileId}@${policy.version}`,
@@ -959,6 +978,23 @@ function measurement(
   return { available: true, value, sampleCount, confidence }
 }
 
+function firstTokenMeasurement(evidence: FirstTokenTimingEvidence | undefined): RagSignalMeasurement {
+  if (!evidence) return unavailable("first_token_evidence_missing")
+  if (evidence.status !== "measured") return unavailable(`first_token_${evidence.status}:${evidence.reason ?? "reason_missing"}`)
+  if (
+    evidence.schemaVersion !== 1
+    || evidence.unit !== "ms"
+    || evidence.clock !== "node_performance"
+    || evidence.origin !== "chat_orchestration_ingress"
+    || evidence.boundary !== "answer_model_first_content_delta"
+    || evidence.clientVisible !== false
+    || evidence.reason !== undefined
+    || !Number.isInteger(evidence.attemptOrdinal)
+    || evidence.attemptOrdinal! < 1
+  ) return unavailable("first_token_evidence_invalid")
+  return measurement(evidence.latencyMs, 1, "first_token_latency_invalid", 0.9)
+}
+
 function unavailable(reason: string): RagSignalMeasurement {
   return { available: false, value: null, sampleCount: 0, confidence: null, unavailableReason: reason }
 }
@@ -1092,7 +1128,7 @@ function assertSourceSample(sample: RagQualitySourceSample): void {
     assertMeasurement(signalId, item)
   }
   for (const [signalId, item] of Object.entries(sample.diagnosticMeasurements ?? {})) {
-    if (!["retrieval.context_relevance", "evaluation.artifact_failure_count", "evaluation.run_timed_out"].includes(signalId)) {
+    if (!["retrieval.context_relevance", "evaluation.artifact_failure_count", "evaluation.run_timed_out", "performance.chat_first_token_p50_ms", "performance.chat_first_token_p95_ms", "performance.chat_first_token_p99_ms"].includes(signalId)) {
       throw new Error(`Unknown RAG diagnostic measurement: ${signalId}`)
     }
     assertMeasurement(signalId, item)

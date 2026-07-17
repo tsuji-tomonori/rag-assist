@@ -69,7 +69,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 162 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 166 field(s) |
 | `400` | リクエスト形式または入力値が不正です。 | `application/json` | 2 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
@@ -188,6 +188,10 @@ Media type: `application/json`
 | `metrics.p95LatencyMs` | `number` | no | `response.metrics.p95LatencyMs` の値。項目名は p95 latency ms を表します。 | nullable |
 | `metrics.p99LatencyMs` | `number` | no | `response.metrics.p99LatencyMs` の値。項目名は p99 latency ms を表します。 | nullable |
 | `metrics.averageLatencyMs` | `number` | no | `response.metrics.averageLatencyMs` の値。項目名は average latency ms を表します。 | nullable |
+| `metrics.firstTokenP50Ms` | `number` | no | `response.metrics.firstTokenP50Ms` の値。項目名は first token p50 ms を表します。 | nullable<br>minimum=0 |
+| `metrics.firstTokenP95Ms` | `number` | no | `response.metrics.firstTokenP95Ms` の値。項目名は first token p95 ms を表します。 | nullable<br>minimum=0 |
+| `metrics.firstTokenP99Ms` | `number` | no | `response.metrics.firstTokenP99Ms` の値。項目名は first token p99 ms を表します。 | nullable<br>minimum=0 |
+| `metrics.firstTokenSampleCount` | `integer` | no | `response.metrics.firstTokenSampleCount` の値。項目名は first token sample count を表します。 | nullable<br>minimum=0 |
 | `metrics.errorRate` | `number` | no | `response.metrics.errorRate` の値。項目名は error rate を表します。 | nullable |
 | `metrics.datasetVersion` | `string` | no | `response.metrics.datasetVersion` の値。項目名は dataset version を表します。 | minLength=1 |
 | `metrics.workloadProfileVersion` | `string` | no | `response.metrics.workloadProfileVersion` の値。項目名は workload profile version を表します。 | minLength=1 |

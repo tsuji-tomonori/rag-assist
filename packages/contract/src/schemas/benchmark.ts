@@ -1,6 +1,6 @@
 import { z } from "zod"
 import { JsonValueSchema } from "../json.js"
-import { ChatRequestSchema, ChatResponseSchema } from "./chat.js"
+import { ChatRequestSchema, ChatResponseSchema, FirstTokenTimingEvidenceSchema } from "./chat.js"
 import { SearchRequestSchema, SearchResponseSchema } from "./search.js"
 
 export const BenchmarkQueryRequestSchema = ChatRequestSchema.omit({ searchScope: true }).extend({
@@ -203,6 +203,7 @@ export const BenchmarkCaseResultSchema = z.object({
   latency: z.object({
     latencyMs: z.number().int().nonnegative().optional(),
     taskLatencyMs: z.number().int().nonnegative().optional(),
+    firstToken: FirstTokenTimingEvidenceSchema.optional(),
     stages: z.array(z.object({
       endpoint: z.enum(["chat", "search", "ingest"]),
       stage: z.string().min(1),

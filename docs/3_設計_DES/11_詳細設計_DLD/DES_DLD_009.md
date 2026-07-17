@@ -27,6 +27,7 @@ RAG workflow の debug trace、UI 非依存 benchmark 実行、評価 summary / 
 - `FR-019`
 - `FR-048`
 - `SQ-001`
+- `SQ-008`
 - `NFR-005`
 - `NFR-006`
 
@@ -79,6 +80,17 @@ RAG workflow の debug trace、UI 非依存 benchmark 実行、評価 summary / 
 4. dataset 固有の期待語句、row id、corpus 固有分岐を runtime 実装へ渡さない。
 5. benchmark 専用の asOfDate は trace に `source: benchmark` として記録する。
 
+### Model first-token timing
+
+1. chat orchestration entry で `node:perf_hooks.performance.now()` の origin を一度だけ取得する。
+2. `finalAnswer` / `answerRepair` の provider 呼び出しだけ `ConverseStream` を使い、最初の非空 `contentBlockDelta.delta.text` で callback を一度だけ発火する。他 task と callback のない呼び出しは既存 `Converse` を維持する。
+3. callback と origin の差を同一 process/clock の `latencyMs` とし、成功した answer attempt のうち最終のものだけを採用する。失敗 attempt の delta、別 turn、wall clock、provider aggregate、API completion latency は混在させない。
+4. evidence は `schemaVersion=1`、`unit=ms`、`clock=node_performance`、`origin=chat_orchestration_ingress`、`boundary=answer_model_first_content_delta`、`clientVisible=false` を固定する。
+5. refusal / clarification は `not_applicable`、回答なのに delta 未観測は `unavailable` とし、値と attempt ordinal を持たせない。
+6. sanitized debug trace、chat response、benchmark case artifact へ同じ evidence を伝播し、case evidence から summary/run metrics の p50/p95/p99/sample count を再導出する。
+7. production source sample では first-token を diagnostic measurement とする。stakeholder 承認済み threshold がないため required signal catalog / promotion gate へ追加しない。
+8. 現行 chat API は生成結果を buffer して JSON または SSE final event として返すため、この evidence は client-visible first-token ではない。client streaming が導入されるまで client-visible TTFT は未測定とする。
+
 ### 評価 summary / report
 
 1. Benchmark Report Exporter は case results から summary metrics を計算する。
@@ -90,6 +102,7 @@ RAG workflow の debug trace、UI 非依存 benchmark 実行、評価 summary / 
    - `contextRelevance` は expected file/document が指定された行の raw retrieved item のうち期待識別子に一致した item の micro-rate とし、期待識別子なしまたは retrieved 0件なら `null` とする。
    - versioned case artifact は supported/unsupported/evaluated claim count と relevant/evaluated retrieved count を保持し、run metrics は case evidence から再導出する。aggregate 自己申告値だけでは production observation を作らない。
    - context relevance は owner 承認済み policy signal ではないため producer の diagnostic measurement に保持し、未承認の required gate として追加しない。
+   - first-token percentile は `measured` かつ schema/clock/origin/boundary/attempt が整合する case evidence だけから計算し、missing/invalid/non-answer を total latency で補完しない。sample count は採用 case 数と一致させる。
 3. failure classification は検索不足、回答可否誤判定、引用不一致、支持不足、計算不可などに分ける。
 4. Markdown report は人間の調査用、JSON summary は CI や回帰検知用とする。
 
@@ -132,5 +145,6 @@ RAG workflow の debug trace、UI 非依存 benchmark 実行、評価 summary / 
 | benchmark path | UI 非依存で `/chat` と同等の RAG path を使う。 |
 | 固有分岐防止 | dataset expected phrase や row id が runtime branch に入らない。 |
 | metrics | `NaN` / `undefined` を出さず、失敗分類が残る。 |
+| first-token | 空 delta を数えず callback は1回、成功した最終 answer attempt の同一 monotonic clock evidence だけを採用し、missing/invalid/non-answer を unavailable/not-applicable にする。 |
 | report | JSON summary と Markdown report が再現可能な profile 情報を含む。 |
 | timeout / artifact | timeout が terminal state となり、部分失敗を成功や metric zero に変換せず、利用可能 artifact だけ download できる。 |

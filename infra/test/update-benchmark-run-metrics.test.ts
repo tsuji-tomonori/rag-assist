@@ -101,6 +101,33 @@ test("maps conversation benchmark summary metrics into run metrics", async () =>
   })
 })
 
+test("derives first-token percentiles only from valid measured case evidence", async () => {
+  const script = await importModule(pathToFileURL(scriptPath).href) as {
+    buildBenchmarkRunMetrics(summary: unknown): MetricRecord
+  }
+  const evidence = (latencyMs: number) => ({
+    schemaVersion: 1,
+    unit: "ms",
+    clock: "node_performance",
+    origin: "chat_orchestration_ingress",
+    boundary: "answer_model_first_content_delta",
+    clientVisible: false,
+    status: "measured",
+    latencyMs,
+    attemptOrdinal: 1
+  })
+  const metrics = script.buildBenchmarkRunMetrics(versionedSummary([
+    { status: 200, passed: true, failureReasons: [], latency: { firstToken: evidence(10) } },
+    { status: 200, passed: true, failureReasons: [], latency: { firstToken: evidence(30) } },
+    { status: 200, passed: true, failureReasons: [], latency: { firstToken: { ...evidence(5), clock: "Date.now" } } },
+    { status: 200, passed: true, failureReasons: [], latency: { firstToken: { ...evidence(0), status: "unavailable", latencyMs: undefined, attemptOrdinal: undefined, reason: "first_content_delta_not_observed" } } }
+  ]))
+  assert.equal(metrics.firstTokenP50Ms, 10)
+  assert.equal(metrics.firstTokenP95Ms, 30)
+  assert.equal(metrics.firstTokenP99Ms, 30)
+  assert.equal(metrics.firstTokenSampleCount, 2)
+})
+
 test("uses expression attribute names for DynamoDB reserved attributes", async () => {
   const script = await importModule(pathToFileURL(scriptPath).href) as {
     buildUpdateBenchmarkRunMetricsCommandInput(input: {

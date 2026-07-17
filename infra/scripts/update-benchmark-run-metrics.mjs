@@ -117,6 +117,10 @@ export function buildBenchmarkRunMetrics(summary, evidence = {}) {
     p95LatencyMs: derived.p95LatencyMs ?? finiteNumber(metrics.p95LatencyMs),
     p99LatencyMs: derived.p99LatencyMs ?? finiteNumber(metrics.p99LatencyMs),
     averageLatencyMs: derived.averageLatencyMs ?? finiteNumber(metrics.averageLatencyMs),
+    firstTokenP50Ms: derived.firstTokenP50Ms,
+    firstTokenP95Ms: derived.firstTokenP95Ms,
+    firstTokenP99Ms: derived.firstTokenP99Ms,
+    firstTokenSampleCount: derived.firstTokenSampleCount,
     errorRate: finiteNumber(metrics.errorRate) ?? (total > 0 ? failedHttp / total : undefined),
     workloadProfileVersion: workload.workloadProfileVersion,
     runtimeProfileVersion: workload.runtimeProfileVersion,
@@ -214,6 +218,7 @@ function deriveCaseMetrics(summary, caseResults) {
   const evaluatedClaimCount = generation.reduce((sum, item) => sum + item.evaluatedClaimCount, 0)
   const unsupportedClaimCount = generation.reduce((sum, item) => sum + item.unsupportedClaimCount, 0)
   const latencies = caseResults.map((item) => finiteNumber(item?.latency?.latencyMs)).filter(isNumber)
+  const firstTokenLatencies = caseResults.map(firstTokenLatency).filter(isNumber)
   const leakCounts = caseResults.map((item) => finiteNumber(item?.retrieval?.noAccessLeakCount)).filter(isNumber)
   const meanRecallAtK = average(recallAtK)
   const structured = deriveStructuredCaseQuality(caseResults, summary)
@@ -248,6 +253,10 @@ function deriveCaseMetrics(summary, caseResults) {
     p95LatencyMs: percentile(latencies, 0.95),
     p99LatencyMs: percentile(latencies, 0.99),
     averageLatencyMs: average(latencies),
+    firstTokenP50Ms: percentile(firstTokenLatencies, 0.5),
+    firstTokenP95Ms: percentile(firstTokenLatencies, 0.95),
+    firstTokenP99Ms: percentile(firstTokenLatencies, 0.99),
+    firstTokenSampleCount: firstTokenLatencies.length,
     qualitySliceMeasurements: structured.qualitySliceMeasurements
   })
 }
@@ -639,6 +648,23 @@ function mergeSliceMeasurements(...collections) {
 
 function safeSliceValue(value) {
   return String(value ?? "").trim().toLowerCase().replace(/[^a-z0-9._-]+/g, "-").replace(/^-+|-+$/g, "") || "unknown"
+}
+
+function firstTokenLatency(caseResult) {
+  const evidence = caseResult?.latency?.firstToken
+  return evidence?.schemaVersion === 1
+    && evidence.unit === "ms"
+    && evidence.clock === "node_performance"
+    && evidence.origin === "chat_orchestration_ingress"
+    && evidence.boundary === "answer_model_first_content_delta"
+    && evidence.clientVisible === false
+    && evidence.status === "measured"
+    && evidence.reason === undefined
+    && Number.isInteger(evidence.attemptOrdinal)
+    && evidence.attemptOrdinal > 0
+    && isNonnegativeNumber(evidence.latencyMs)
+    ? evidence.latencyMs
+    : undefined
 }
 
 function percentile(values, quantile) {

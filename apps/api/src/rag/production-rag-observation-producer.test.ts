@@ -216,6 +216,17 @@ function traceFixture(): DebugTrace {
     startedAt: "2026-07-11T00:29:59.850Z",
     completedAt: observedAt,
     totalLatencyMs: 150,
+    firstTokenTiming: {
+      schemaVersion: 1,
+      unit: "ms",
+      clock: "node_performance",
+      origin: "chat_orchestration_ingress",
+      boundary: "answer_model_first_content_delta",
+      clientVisible: false,
+      status: "measured",
+      latencyMs: 45,
+      attemptOrdinal: 1
+    },
     status: "success",
     answerPreview: "It is measured.",
     isAnswerable: true,
@@ -237,6 +248,7 @@ test("FR-075/SQ-005..015 production artifacts yield profile/version/slice observ
     runId: "normal-chat-1",
     observedAt,
     latencyMs: 125,
+    firstTokenTiming: traceFixture().firstTokenTiming,
     tenantId: "tenant-sensitive-1",
     roles: ["CHAT_USER"],
     resourceIds: ["document-1"],
@@ -338,6 +350,10 @@ test("FR-075/SQ-005..015 production artifacts yield profile/version/slice observ
       secretExposureCount: 0,
       eligibilityPropagationP99Ms: 500,
       p95LatencyMs: 250,
+      firstTokenP50Ms: 45,
+      firstTokenP95Ms: 75,
+      firstTokenP99Ms: 90,
+      firstTokenSampleCount: 80,
       errorRate: 0.01
     }
   })
@@ -380,6 +396,7 @@ test("FR-075/SQ-005..015 production artifacts yield profile/version/slice observ
   assert.ok(normalChatKey)
   const normalChatSample = JSON.parse(await store.getText(normalChatKey)) as {
     measurements: Record<string, { available: boolean; value: number | null }>
+    diagnosticMeasurements: Record<string, { available: boolean; value: number | null; sampleCount: number }>
     guardOutcomes: Array<{ evidence: string }>
     proxyMeasurements: Record<string, { value: number; label: string }>
   }
@@ -390,6 +407,12 @@ test("FR-075/SQ-005..015 production artifacts yield profile/version/slice observ
   assert.equal(normalChatSample.proxyMeasurements.answerSupportRate?.value, 1)
   assert.match(normalChatSample.proxyMeasurements.answerSupportRate?.label ?? "", /proxy_not_reviewed/)
   assert.equal(normalChatSample.guardOutcomes.length, MANDATORY_RAG_GUARDS.length)
+  assert.deepEqual(normalChatSample.diagnosticMeasurements["performance.chat_first_token_p95_ms"], {
+    available: true,
+    value: 45,
+    sampleCount: 1,
+    confidence: 0.9
+  })
   assert.doesNotMatch(JSON.stringify(normalChatSample), /measured text|What is measured/)
 
   const benchmarkKey = (await store.listKeys("quality-control/source-samples/")).find((key) => key.includes("/benchmark_summary/benchmark-1/"))
@@ -400,6 +423,12 @@ test("FR-075/SQ-005..015 production artifacts yield profile/version/slice observ
   assert.deepEqual(benchmarkSample.diagnosticMeasurements["retrieval.context_relevance"], {
     available: true,
     value: 0.75,
+    sampleCount: 80,
+    confidence: 0.9
+  })
+  assert.deepEqual(benchmarkSample.diagnosticMeasurements["performance.chat_first_token_p99_ms"], {
+    available: true,
+    value: 90,
     sampleCount: 80,
     confidence: 0.9
   })

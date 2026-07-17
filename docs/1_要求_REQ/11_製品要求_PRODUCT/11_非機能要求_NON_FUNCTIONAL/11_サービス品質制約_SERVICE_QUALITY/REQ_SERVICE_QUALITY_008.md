@@ -12,6 +12,8 @@
 ## 品質尺度
 
 - measure: first token、final response、search stage、ingest stage の p50/p95/p99。
+- first token boundary: chat orchestration ingress から、最終回答生成 attempt の最初の非空 Bedrock content delta までを同一 `node:perf_hooks.performance` clock で測る。この値は model first-token であり、buffered JSON / SSE final response を使う現行 API の client-visible first-token ではない。
+- evidence: `schemaVersion=1`、`unit=ms`、clock、origin、boundary、`clientVisible=false`、status、attempt ordinal を保持する。refusal / clarification は `not_applicable`、回答で delta 未観測は `unavailable` とし、total/final response latency を代用しない。
 - workload: corpus size、ACL distribution、concurrency、document size、dependency latency を version 固定する。
 - fail point/target: workload profile ごとに `OQ-RD-006` と既存 `Q-005` で決定する。
 
@@ -48,6 +50,13 @@
 - When: latency 結果を公開判定へ使う
 - Then: profile 不一致を明示し、承認済み SLO を満たした結果として扱わない
 
+### AC-SQ008-003 first-token clock lineage
+
+- Given: chat が最終回答を生成する
+- When: model first-token latency を記録・集計する
+- Then: orchestration ingress と最終回答 attempt の最初の非空 content delta を同一 monotonic clock で測り、case evidence、summary、run metrics、diagnostic observation の sample count を一致させる
+- And: 欠損、invalid、clock/boundary 不一致、非回答、分母0を total latency、0、または pass へ変換しない
+
 ## 妥当性確認
 
 | 観点 | 結果 | メモ |
@@ -60,7 +69,7 @@
 | 実現可能性 | OK | load/soak suite と stage trace で測定可能 |
 | 検証可能性 | OK | approved/mismatched workload の比較試験 |
 | ニーズ適合 | OK | 利用者の対話待ち時間と運用者の取り込み計画に対応する |
-| 実装適合 | OK（measurement contract、閾値未承認） | corpus/ACL/concurrency/document-size/dependency-latency dimensions と chat/search/ingest stage 別 p50/p95/p99/sample gate を実装し、dimension/stage 欠損を unavailable にする |
+| 実装適合 | Partial（model first-token measurement contract、閾値未承認） | model first-token は versioned monotonic evidence として case/summary/run metrics/diagnostic source sample へ伝播する。現行 API は回答を buffer するため client-visible first-token は未測定であり、承認済み threshold / required promotion gate も未設定 |
 
 ## トレース
 

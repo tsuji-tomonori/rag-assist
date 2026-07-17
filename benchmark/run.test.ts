@@ -58,6 +58,10 @@ type SummaryArtifact = {
     asyncFailureReasonCodeAccuracy?: number | null
     asyncNoMockArtifactRate?: number | null
     asyncArtifactMetadataRedactionPassRate?: number | null
+    firstTokenP50Ms?: number | null
+    firstTokenP95Ms?: number | null
+    firstTokenP99Ms?: number | null
+    firstTokenSampleCount?: number
   }
   turnDependencyMetrics?: Record<string, {
     total: number
@@ -73,6 +77,7 @@ type SummaryArtifact = {
   caseResults?: Array<{
     retrieval?: { relevantRetrievedCount?: number; evaluatedRetrievedCount?: number }
     generation?: { supportedClaimCount?: number; unsupportedClaimCount?: number; evaluatedClaimCount?: number }
+    latency?: { firstToken?: { status?: string; latencyMs?: number; attemptOrdinal?: number } }
   }>
   corpusSeed: Array<{ fileName: string; status: string; skipReason?: string }>
   skippedRows: Array<{ id?: string; fileNames: string[]; reason: string }>
@@ -139,6 +144,11 @@ test("benchmark runner skips rows that require unextractable corpus", async () =
     assert.equal(summary.total, 1)
     assert.equal(summary.skipped, 1)
     assert.equal(summary.failures.length, 0)
+    assert.equal(summary.metrics?.firstTokenP50Ms, 25)
+    assert.equal(summary.metrics?.firstTokenP95Ms, 25)
+    assert.equal(summary.metrics?.firstTokenP99Ms, 25)
+    assert.equal(summary.metrics?.firstTokenSampleCount, 1)
+    assert.equal(summary.caseResults?.[0]?.latency?.firstToken?.latencyMs, 25)
     assert.deepEqual(summary.skippedRows, [{
       id: "skip-001",
       question: "画像だけの PDF について",
@@ -149,6 +159,7 @@ test("benchmark runner skips rows that require unextractable corpus", async () =
     assert.equal(summary.corpusSeed.find((seed) => seed.fileName === "image-only.pdf")?.skipReason, "no_extractable_text")
     assert.match(readFileSync(paths.report, "utf-8"), /## Skipped Rows/)
     assert.match(readFileSync(paths.report, "utf-8"), /image-only\.pdf/)
+    assert.match(readFileSync(paths.report, "utf-8"), /\| first_token_p95_ms \| 25 \| evaluated \| 1 measured cases \|/)
   } finally {
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()))
   }
@@ -253,6 +264,17 @@ test("benchmark runner reports faithfulness and context relevance from evaluated
       responseType: "answer",
       answer: "経費精算は30日以内です。承認者は部門長です。",
       isAnswerable: true,
+      firstTokenTiming: {
+        schemaVersion: 1,
+        unit: "ms",
+        clock: "node_performance",
+        origin: "chat_orchestration_ingress",
+        boundary: "answer_model_first_content_delta",
+        clientVisible: false,
+        status: "measured",
+        latencyMs: 25,
+        attemptOrdinal: 1
+      },
       citations: [{ documentId: "doc-handbook", fileName: "handbook.md", chunkId: "relevant-1", score: 0.9 }],
       retrieved: [
         { documentId: "doc-handbook", fileName: "handbook.md", chunkId: "relevant-1", score: 0.9 },
@@ -1177,6 +1199,17 @@ async function handleRunnerRequest(req: IncomingMessage, res: ServerResponse, ca
       responseType: "answer",
       answer: "経費精算の期限は30日以内です。",
       isAnswerable: true,
+      firstTokenTiming: {
+        schemaVersion: 1,
+        unit: "ms",
+        clock: "node_performance",
+        origin: "chat_orchestration_ingress",
+        boundary: "answer_model_first_content_delta",
+        clientVisible: false,
+        status: "measured",
+        latencyMs: 25,
+        attemptOrdinal: 1
+      },
       citations: [{ documentId: "doc-handbook", fileName: "handbook.md", chunkId: "chunk-0000", score: 0.9 }],
       retrieved: [{ documentId: "doc-handbook", fileName: "handbook.md", chunkId: "chunk-0000", score: 0.9 }],
       debug: { ragProfile: defaultRagProfile(), totalLatencyMs: 10, steps: [] }

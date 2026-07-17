@@ -300,6 +300,32 @@ export const DebugStepSchema = z.object({
   completedAt: z.string()
 })
 
+export const FirstTokenTimingEvidenceSchema = z.object({
+  schemaVersion: z.literal(1),
+  unit: z.literal("ms"),
+  clock: z.literal("node_performance"),
+  origin: z.literal("chat_orchestration_ingress"),
+  boundary: z.literal("answer_model_first_content_delta"),
+  clientVisible: z.literal(false),
+  status: z.enum(["measured", "not_applicable", "unavailable"]),
+  latencyMs: z.number().finite().nonnegative().optional(),
+  attemptOrdinal: z.number().int().positive().optional(),
+  reason: z.enum(["non_answer_response", "first_content_delta_not_observed"]).optional()
+}).superRefine((value, ctx) => {
+  if (value.status === "measured" && (value.latencyMs === undefined || value.attemptOrdinal === undefined || value.reason !== undefined)) {
+    ctx.addIssue({ code: "custom", message: "measured first-token evidence requires latencyMs/attemptOrdinal and no reason" })
+  }
+  if (value.status !== "measured" && (value.latencyMs !== undefined || value.attemptOrdinal !== undefined || value.reason === undefined)) {
+    ctx.addIssue({ code: "custom", message: "unmeasured first-token evidence requires a reason and no measurement" })
+  }
+  if (value.status === "not_applicable" && value.reason !== "non_answer_response") {
+    ctx.addIssue({ code: "custom", message: "not_applicable first-token evidence requires non_answer_response" })
+  }
+  if (value.status === "unavailable" && value.reason !== "first_content_delta_not_observed") {
+    ctx.addIssue({ code: "custom", message: "unavailable first-token evidence requires first_content_delta_not_observed" })
+  }
+})
+
 export const DebugTraceSchema = z.object({
   schemaVersion: z.literal(1).default(1),
   runId: z.string(),
@@ -345,6 +371,7 @@ export const DebugTraceSchema = z.object({
   startedAt: z.string(),
   completedAt: z.string(),
   totalLatencyMs: z.number(),
+  firstTokenTiming: FirstTokenTimingEvidenceSchema.optional(),
   status: z.enum(["success", "warning", "error"]),
   answerPreview: z.string(),
   isAnswerable: z.boolean(),
@@ -364,6 +391,7 @@ export const ChatResponseSchema = z.object({
   citations: z.array(CitationSchema),
   retrieved: z.array(CitationSchema),
   finalEvidence: z.array(CitationSchema).optional(),
+  firstTokenTiming: FirstTokenTimingEvidenceSchema.optional(),
   debug: DebugTraceSchema.optional()
 })
 
@@ -415,6 +443,7 @@ export type ClarificationOption = z.output<typeof ClarificationOptionSchema>
 export type Clarification = z.output<typeof ClarificationSchema>
 export type DebugTrace = z.output<typeof DebugTraceSchema>
 export type ChatResponse = z.output<typeof ChatResponseSchema>
+export type FirstTokenTimingEvidence = z.output<typeof FirstTokenTimingEvidenceSchema>
 export type ChatRunStartResponse = z.output<typeof ChatRunStartResponseSchema>
 export type ConversationMessage = z.output<typeof ConversationMessageSchema>
 export type ConversationHistoryItem = z.output<typeof ConversationHistoryItemSchema>

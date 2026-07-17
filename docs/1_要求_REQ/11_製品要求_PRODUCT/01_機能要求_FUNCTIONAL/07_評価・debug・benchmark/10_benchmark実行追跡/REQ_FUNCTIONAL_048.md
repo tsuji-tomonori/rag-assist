@@ -28,6 +28,7 @@
 - AC-FR048-006: required artifact の欠損を空または擬似 artifact で補完せず、全 required artifact が `available` の場合だけ run を `succeeded` へ遷移させること。
 - AC-FR048-007: artifact が部分失敗した場合は利用可能な artifact の download を維持し、失敗 artifact を download 不可として明示すること。
 - AC-FR048-008: timeout または required artifact failure を含む run の metric は unavailable とし、0、成功、または品質 gate pass へ変換しないこと。
+- AC-FR048-009: first-token run metrics は versioned case evidence の `measured` 行だけから導出し、p50/p95/p99 と sample count を保持すること。evidence 0件は値なし/sample 0とし、total latency を first-token として保存しないこと。
 
 ## 要件の源泉・背景
 
@@ -53,10 +54,10 @@
 | 種類 | 機能要求 |
 | 依存関係 | `FR-010`, `FR-011`, `FR-012`, `SQ-002` |
 | 衝突 | 詳細な進捗記録により runner と artifact schema の保守負荷が増える |
-| 受け入れ基準 | `AC-FR048-001` から `AC-FR048-008` |
+| 受け入れ基準 | `AC-FR048-001` から `AC-FR048-009` |
 | 優先度 | A |
 | 安定性 | Medium |
-| 変更履歴 | 2026-05-08 初版 / 2026-07-17 timeout と versioned artifact integrity の fail-closed 境界を追加 |
+| 変更履歴 | 2026-05-08 初版 / 2026-07-17 timeout、versioned artifact integrity、first-token case evidence の fail-closed 境界を追加 |
 
 ## 関連文書
 

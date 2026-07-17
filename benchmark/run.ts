@@ -433,6 +433,10 @@ type Summary = {
     p50LatencyMs: number | null
     p95LatencyMs: number | null
     averageLatencyMs: number | null
+    firstTokenP50Ms: number | null
+    firstTokenP95Ms: number | null
+    firstTokenP99Ms: number | null
+    firstTokenSampleCount: number
     asyncProviderAvailabilityAccuracy: number | null
     asyncStatusAccuracy: number | null
     asyncFailureReasonCodeAccuracy: number | null
@@ -1357,6 +1361,10 @@ function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[], 
     .filter((row) => row.followUp)
     .map((row) => row.taskLatencyMs)
   const latencies = results.map((row) => row.latencyMs).sort((a, b) => a - b)
+  const firstTokenLatencies = results
+    .map((row) => row.result.firstTokenTiming)
+    .flatMap((evidence) => evidence?.status === "measured" && evidence.latencyMs !== undefined ? [evidence.latencyMs] : [])
+    .sort((a, b) => a - b)
   const citationEvaluated = results.filter((row) => row.evaluation.citationHit !== null)
   const fileEvaluated = results.filter((row) => row.evaluation.expectedFileHit !== null)
   const answerContentEvaluated = results.filter((row) => row.evaluation.expectedAnswerable)
@@ -1458,7 +1466,8 @@ function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[], 
     },
     latency: {
       latencyMs: row.latencyMs,
-      taskLatencyMs: row.taskLatencyMs
+      taskLatencyMs: row.taskLatencyMs,
+      firstToken: row.result.firstTokenTiming
     }
   }))
   const datasetPrepareRuns = [
@@ -1698,6 +1707,10 @@ function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[], 
       p50LatencyMs: percentile(latencies, 0.5),
       p95LatencyMs: percentile(latencies, 0.95),
       averageLatencyMs: results.length === 0 ? null : Math.round(results.reduce((sum, row) => sum + row.latencyMs, 0) / results.length),
+      firstTokenP50Ms: percentile(firstTokenLatencies, 0.5),
+      firstTokenP95Ms: percentile(firstTokenLatencies, 0.95),
+      firstTokenP99Ms: percentile(firstTokenLatencies, 0.99),
+      firstTokenSampleCount: firstTokenLatencies.length,
       asyncProviderAvailabilityAccuracy: rate(
         asyncProviderAvailabilityEvaluated.filter((row) => row.evaluation.asyncProviderAvailabilityCorrect === true).length,
         asyncProviderAvailabilityEvaluated.length
@@ -1887,6 +1900,10 @@ type BenchmarkReportMetricName =
   | "p50_latency_ms"
   | "p95_latency_ms"
   | "average_latency_ms"
+  | "first_token_p50_ms"
+  | "first_token_p95_ms"
+  | "first_token_p99_ms"
+  | "first_token_sample_count"
   | "async_provider_availability_accuracy"
   | "async_status_accuracy"
   | "async_failure_reason_code_accuracy"
@@ -2155,6 +2172,14 @@ function metricDescription(metric: BenchmarkReportMetricName): string {
       return "初回 API call latency の 95 パーセンタイル。遅い tail latency を見る。"
     case "average_latency_ms":
       return "初回 API call latency の平均。"
+    case "first_token_p50_ms":
+      return "orchestration ingress から最終回答生成 model の最初の非空 content delta までの中央値。client-visible latency ではない。"
+    case "first_token_p95_ms":
+      return "authoritative model first-token evidence の 95 パーセンタイル。missing/invalid/non-answer は分母に含めない。"
+    case "first_token_p99_ms":
+      return "authoritative model first-token evidence の 99 パーセンタイル。missing/invalid/non-answer は分母に含めない。"
+    case "first_token_sample_count":
+      return "schema/clock/origin/boundary が整合する measured first-token case evidence の件数。"
     case "async_provider_availability_accuracy":
       return "async agent run metadata の providerAvailability が dataset の期待値と一致した割合。"
     case "async_status_accuracy":
@@ -2428,6 +2453,10 @@ function buildMetricReportRows(summary: Summary, results: BenchmarkResultRow[]):
     metricNullableRow("p50_latency_ms", formatNumber(summary.metrics.p50LatencyMs), summary.metrics.p50LatencyMs, `${results.length} rows`, "初回 API call latency の p50。"),
     metricNullableRow("p95_latency_ms", formatNumber(summary.metrics.p95LatencyMs), summary.metrics.p95LatencyMs, `${results.length} rows`, "初回 API call latency の p95。"),
     metricNullableRow("average_latency_ms", formatNumber(summary.metrics.averageLatencyMs), summary.metrics.averageLatencyMs, `${results.length} rows`, "初回 API call latency の平均。"),
+    metricNullableRow("first_token_p50_ms", formatNumber(summary.metrics.firstTokenP50Ms), summary.metrics.firstTokenP50Ms, `${summary.metrics.firstTokenSampleCount} measured cases`, "model first-token evidence の p50。client-visible latency ではない。"),
+    metricNullableRow("first_token_p95_ms", formatNumber(summary.metrics.firstTokenP95Ms), summary.metrics.firstTokenP95Ms, `${summary.metrics.firstTokenSampleCount} measured cases`, "model first-token evidence の p95。"),
+    metricNullableRow("first_token_p99_ms", formatNumber(summary.metrics.firstTokenP99Ms), summary.metrics.firstTokenP99Ms, `${summary.metrics.firstTokenSampleCount} measured cases`, "model first-token evidence の p99。"),
+    { metric: "first_token_sample_count", value: String(summary.metrics.firstTokenSampleCount), status: "evaluated", basis: `${results.length} total cases`, note: "valid measured evidence だけを数え、欠損・非回答・invalid は 0ms に変換しない。" },
     metricRateRow("async_provider_availability_accuracy", summary.metrics.asyncProviderAvailabilityAccuracy, asyncProviderAvailabilityRows.filter((row) => row.evaluation.asyncProviderAvailabilityCorrect === true).length, asyncProviderAvailabilityRows.length, "`expectedProviderAvailability` がある async_agent 行だけを評価。"),
     metricRateRow("async_status_accuracy", summary.metrics.asyncStatusAccuracy, asyncStatusRows.filter((row) => row.evaluation.asyncStatusCorrect === true).length, asyncStatusRows.length, "`expectedAsyncAgentStatus` がある async_agent 行だけを評価。"),
     metricRateRow("async_failure_reason_code_accuracy", summary.metrics.asyncFailureReasonCodeAccuracy, asyncFailureReasonRows.filter((row) => row.evaluation.asyncFailureReasonCodeCorrect === true).length, asyncFailureReasonRows.length, "`expectedFailureReasonCode` がある async_agent 行だけを評価。"),
