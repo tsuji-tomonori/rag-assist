@@ -11,6 +11,7 @@ import { ResourceGroupCreateAuditAuthoritativeResolver } from "./security/resour
 import { ResourceGroupDeleteAuditAuthoritativeResolver } from "./security/resource-group-delete-audit-reconciler.js"
 import { ApplicationRoleAuditAuthoritativeResolver } from "./security/application-role-audit-reconciler.js"
 import { FolderShareAuditAuthoritativeResolver } from "./security/folder-share-audit-reconciler.js"
+import { DocumentShareAuditAuthoritativeResolver } from "./security/document-share-audit-reconciler.js"
 
 export type SecurityMutationAuditReconciliationEvent = Readonly<{
   tenantId?: unknown
@@ -55,7 +56,8 @@ export async function handler(
     new ResourceGroupCreateAuditAuthoritativeResolver(deps.objectStore, deps.userGroupStore, deps.groupMembershipStore),
     new ResourceGroupDeleteAuditAuthoritativeResolver(deps.objectStore, deps.userGroupStore, deps.groupMembershipStore),
     new ApplicationRoleAuditAuthoritativeResolver(identityProvider),
-    new FolderShareAuditAuthoritativeResolver(deps.folderPolicyStore, deps.objectStore)
+    new FolderShareAuditAuthoritativeResolver(deps.folderPolicyStore, deps.objectStore),
+    new DocumentShareAuditAuthoritativeResolver(deps.objectStore)
   ])
   return createSecurityMutationAuditReconciliationHandler({
     authorizedTenantId: config.authTenantId,

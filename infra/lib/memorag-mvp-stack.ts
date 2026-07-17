@@ -809,7 +809,9 @@ export class MemoRagMvpStack extends Stack {
         docsBucket.arnForObjects(`security/resource-group-lifecycle/create/${cdk.Aws.ACCOUNT_ID}/*`),
         docsBucket.arnForObjects(`security/resource-group-lifecycle/delete/${cdk.Aws.ACCOUNT_ID}/*`),
         docsBucket.arnForObjects("security/revocation-cleanup-repairs/*"),
-        docsBucket.arnForObjects("security/revocation-cleanup/*")
+        docsBucket.arnForObjects("security/revocation-cleanup/*"),
+        docsBucket.arnForObjects(`documents/share-grants/${cdk.Aws.ACCOUNT_ID}/*`),
+        docsBucket.arnForObjects("documents/share-grants.json")
       ]
     }))
     revocationCleanupFn.addToRolePolicy(new iam.PolicyStatement({

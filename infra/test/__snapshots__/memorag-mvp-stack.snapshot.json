@@ -9319,6 +9319,38 @@
                       "/security/revocation-cleanup/*"
                     ]
                   ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentsBucket9EC9DEB9",
+                          "Arn"
+                        ]
+                      },
+                      "/documents/share-grants/",
+                      {
+                        "Ref": "AWS::AccountId"
+                      },
+                      "/*"
+                    ]
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentsBucket9EC9DEB9",
+                          "Arn"
+                        ]
+                      },
+                      "/documents/share-grants.json"
+                    ]
+                  ]
                 }
               ]
             }
