@@ -864,7 +864,7 @@
       "openApi": true,
       "routeSource": "apps/api/src/routes/document-routes.ts:895 (PUT /documents/{documentId}/share)",
       "handlerSource": "apps/api/src/routes/document-routes.ts:914 (PUT /documents/{documentId}/share handler)",
-      "functionCount": 152,
+      "functionCount": 153,
       "branchCount": 296,
       "projectedBranchCount": 6,
       "dataAccessCount": 27,

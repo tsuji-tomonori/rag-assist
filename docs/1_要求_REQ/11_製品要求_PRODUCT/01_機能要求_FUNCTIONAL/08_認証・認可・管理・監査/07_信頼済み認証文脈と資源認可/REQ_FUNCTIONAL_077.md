@@ -38,7 +38,7 @@
 | 安定性 | High |
 | Confidence | inferred |
 | 所有者 | Product / Security / Document Governance |
-| 変更履歴 | 2026-07-11 初版 |
+| 変更履歴 | 2026-07-11 初版。2026-07-17 document owner downgrade entryの保存拒否を実装証跡へ追記 |
 
 ## 受け入れ条件
 
@@ -67,7 +67,7 @@
 | 検証可能性 | OK | owner/adminPrincipal × policy entry × explicit deny の matrix test へ変換できる |
 | ニーズ適合 | OK | 文書所有者・共有管理者が自資源を継続管理できる |
 | 原子性 | OK | 管理主体の `full` を policy で剥奪できないという一つの invariant を規定する |
-| 実装適合 | OK（confirmed） | folder/document permission services が active same-tenant administrative principal の full と mandatory deny 優先を同一 decision で強制し、invariant tests を持つ |
+| 実装適合 | OK（confirmed） | folder/document permission services が active same-tenant administrative principal の full と mandatory deny 優先を同一 decision で強制する。policy mutationはadministrative principalを対象とする`readOnly`/`deny` entryを拒否して`full`だけを許可し、versioned/legacy direct testsで保存前invariantを検証する |
 | 合意 | pending | owner/adminPrincipal の正規 ID と global deny の詳細を承認する必要がある |
 
 ## トレース

@@ -159,7 +159,7 @@ test("unreadable ordinary document policy fails closed with a versioned unavaila
   assert.equal(decision.contributions[0]?.policyVersion, "document-share-policy-v1")
 })
 
-test("personal document administrative principal remains full but cannot be targeted by an ordinary deny mutation", async () => {
+test("personal document administrative principal remains full and legacy mutation rejects every downgrade", async () => {
   const fixture = await createDocumentPermissionFixture()
   const document = {
     ...manifest("doc-owner-deny", "tenant-a"),
@@ -176,9 +176,17 @@ test("personal document administrative principal remains full but cannot be targ
   const decision = await fixture.service.resolveEffectiveDocumentPermissionDecision(owner, document)
   assert.equal(decision.permission, "full")
   assert.equal(decision.reasonCode, "administrative_principal")
-  await assert.rejects(() => fixture.service.replaceDocumentShareGrants(owner, document, [
-    { principalType: "user", principalId: "owner-1", permissionLevel: "deny" }
-  ], "invalid owner deny"), DocumentShareValidationError)
+  const before = await fixture.objectStore.getText("documents/share-grants.json")
+  for (const permissionLevel of ["readOnly", "deny"] as const) {
+    await assert.rejects(() => fixture.service.replaceDocumentShareGrants(owner, document, [
+      { principalType: "user", principalId: "owner-1", permissionLevel }
+    ], `invalid owner ${permissionLevel}`), (error: unknown) => (
+      error instanceof DocumentShareValidationError
+      && error.message === "document policy cannot downgrade the administrative principal"
+    ))
+    assert.equal(await fixture.objectStore.getText("documents/share-grants.json"), before)
+    assert.deepEqual(await fixture.objectStore.listKeys("documents/share-audit/"), [])
+  }
 })
 
 test("ownership-transfer successor keeps full authority for a folder document despite an ordinary folder deny", async () => {
@@ -305,6 +313,41 @@ test("versioned document share policy validates principals and persists common a
     accountStatus: "active",
     tenantId: "tenant-a"
   }, document), "readOnly")
+})
+
+test("versioned document share policy rejects owner readOnly and deny but accepts explicit full", async () => {
+  for (const permissionLevel of ["readOnly", "deny"] as const) {
+    const fixture = await createSecureDocumentPermissionFixture()
+    fixture.directory.set({ userId: "owner-1", tenantId: "tenant-a", status: "active" })
+    const document = ownedManifest(`doc-owner-${permissionLevel}`, "tenant-a", "owner-1")
+    const initial = await fixture.service.getVersionedDocumentSharePolicy(document)
+
+    await assert.rejects(() => fixture.service.replaceVersionedDocumentSharePolicy(secureOwner(), document, {
+      expectedVersion: initial.version,
+      grants: [{ principalType: "user", principalId: "owner-1", permissionLevel }],
+      reason: `invalid owner ${permissionLevel}`
+    }), (error: unknown) => (
+      error instanceof DocumentShareValidationError
+      && error.message === "document policy cannot downgrade the administrative principal"
+    ))
+
+    assert.deepEqual(await fixture.service.getVersionedDocumentSharePolicy(document), initial)
+    assert.deepEqual(await fixture.objectStore.listKeys("documents/share-grants/"), [])
+    assert.deepEqual(await fixture.objectStore.listKeys("security/revocation-cleanup/"), [])
+    assert.equal((await fixture.objectStore.listKeys("security-audit/intents/")).length, 1)
+  }
+
+  const fixture = await createSecureDocumentPermissionFixture()
+  fixture.directory.set({ userId: "owner-1", tenantId: "tenant-a", status: "active" })
+  const document = ownedManifest("doc-owner-full", "tenant-a", "owner-1")
+  const initial = await fixture.service.getVersionedDocumentSharePolicy(document)
+  const updated = await fixture.service.replaceVersionedDocumentSharePolicy(secureOwner(), document, {
+    expectedVersion: initial.version,
+    grants: [{ principalType: "user", principalId: "owner-1", permissionLevel: "full" }],
+    reason: "preserve owner authority"
+  })
+
+  assert.deepEqual(updated.grants.map((grant) => [grant.principalId, grant.permissionLevel]), [["owner-1", "full"]])
 })
 
 test("versioned document share revocation registers tenant-scoped reconciliation targets", async () => {

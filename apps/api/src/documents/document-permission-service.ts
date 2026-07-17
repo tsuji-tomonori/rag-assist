@@ -408,10 +408,7 @@ export class DocumentPermissionService {
     const before = current?.grants ?? (await this.loadLegacyDocumentGrants(tenantId, manifest.documentId))
     const now = new Date().toISOString()
     const normalized = normalizeGrantInputs(grants)
-    const ownerUserId = documentOwnerUserId(manifest)
-    if (ownerUserId && normalized.some((grant) => (
-      grant.principalType === "user" && grant.principalId === ownerUserId && grant.permissionLevel === "deny"
-    ))) throw new DocumentShareValidationError("document policy cannot deny the administrative principal")
+    assertDocumentAdministrativePrincipalPreserved(manifest, normalized)
     const nextGrants: DocumentShareGrant[] = normalized.map((grant) => ({
       documentShareGrantId: `docshare_${randomUUID().slice(0, 12)}`,
       itemType: "documentShareGrant",
@@ -465,11 +462,9 @@ export class DocumentPermissionService {
     if (!owner || owner.status !== "active" || owner.tenantId !== tenantId) {
       throw new DocumentShareValidationError("document administrative principal is inactive or cross-tenant")
     }
+    assertDocumentAdministrativePrincipalPreserved(manifest, grants)
     for (const grant of grants) {
       if (!isCanonicalIdentifier(grant.principalId)) throw new DocumentShareValidationError("principalId is invalid")
-      if (grant.principalType === "user" && grant.principalId === ownerUserId && grant.permissionLevel === "deny") {
-        throw new DocumentShareValidationError("document policy cannot deny the administrative principal")
-      }
       if (grant.principalType === "user") {
         const user = await principalDirectory.getUser(grant.principalId)
         if (!user || user.status !== "active" || user.tenantId !== tenantId) {
@@ -728,6 +723,18 @@ function documentOwnerUserId(manifest: DocumentManifest): string | undefined {
   const metadataOwner = manifest.metadata?.ownerUserId
   if (typeof metadataOwner === "string" && isCanonicalIdentifier(metadataOwner)) return metadataOwner
   return isCanonicalIdentifier(manifest.admission?.ownerUserId) ? manifest.admission.ownerUserId : undefined
+}
+
+function assertDocumentAdministrativePrincipalPreserved(
+  manifest: DocumentManifest,
+  grants: readonly DocumentShareGrantInput[]
+): void {
+  const ownerUserId = documentOwnerUserId(manifest)
+  if (ownerUserId && grants.some((grant) => (
+    grant.principalType === "user" && grant.principalId === ownerUserId && grant.permissionLevel !== "full"
+  ))) {
+    throw new DocumentShareValidationError("document policy cannot downgrade the administrative principal")
+  }
 }
 
 function authoritativeManifestTenantId(manifest: DocumentManifest): string | undefined {
