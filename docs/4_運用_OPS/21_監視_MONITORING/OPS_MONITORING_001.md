@@ -19,7 +19,7 @@
 | chat / ingestion | request、error、処理段階の application log | CloudWatch Logs、対象 Lambda log group |
 | RAG 品質 control loop | source sample、observation、alert、safe action、runtime safety state | docs bucket の `quality-control/` prefix、`MemoRAG/QualityControl` metrics |
 | debug trace | 認可・redaction 済み trace API と保存 artifact | `DES_API_001`、`DES_DATA_001` |
-| benchmark | run status、report、release audit、runner log | benchmark API、Step Functions、CodeBuild logs |
+| benchmark | run status、versioned artifact integrity、report、release audit、runner log | benchmark API、Step Functions、CodeBuild logs |
 | deploy | promotion 判定、workflow run、CloudFormation event、smoke result | GitHub Actions、CloudFormation、health endpoint |
 | API/docs drift | 自動生成物の freshness check | `npm run docs:openapi:check` |
 | Web/infra docs drift | inventory の freshness check | `npm run docs:web-inventory:check`、`npm run docs:infra-inventory:check` |
@@ -53,6 +53,8 @@ source sample と observation は signal catalog、active profile/version、work
 ground truth、price、probe、復旧相関などが測定できない signal は推定値や 0 で補わず、`available=false`、`value=null`、`confidence=null` と unavailable reason を記録する。source が1件も無い必須 signal も aggregate 時に observation 自体を生成し、`no_measured_source_in_window` とする。
 
 benchmark metric 更新は、versioned summary の case artifact から claim-level faithfulness/unsupported severity、citation precision/completeness/locator、false answer/refusal、business task outcome/handoff、endpoint/stage p50/p95/p99 を再計算する。case は question type、tenant-role、OCR、language、multi-evidence、answerability、severity の slice を全て持つ。summary の任意 aggregate field だけでこれらを合格値にしない。eligibility は10 trigger×7 path の70プローブと unreflected resource、recovery は vector/LLM/OCR/queue、endpoint-stage は chat/search/ingest の完全な evidence を要求する。eligibility p50/p95/p99/max、timeout/error/backlog/retry exhaustion、MTTR/no-loss を算出する。必要な組、workload dimension、versioned workload/price artifact が無い、version が一致しない、usage が不完全、または価格 rate が欠ける場合は値を生成しない。
+
+benchmark run が `timed_out`、または `artifactIntegrity.status` が `complete` でない場合は、summary に値が残っていても品質 gate の測定 source として合格に使わない。`evaluation.run_timed_out` と `evaluation.artifact_failure_count` を diagnostic として確認し、利用可能 artifact は原因調査に使えるが、欠損 artifact を空 file や metric 0 で補完しない。`generation_failed` は生成処理、`upload_failed` は durable commit の失敗として切り分ける。実行再開は行わず、原因修正後に新しい run を起動する。
 
 CodeBuild へ workload/price evidence を渡す場合は、benchmark bucket 内の object key を CDK context `ragWorkloadEvidenceS3Key` と `ragPriceCatalogS3Key` へ明示する。あわせて `ragRuntimeProfileVersion`、`ragWorkloadProfileVersion`、`ragPriceCatalogVersion`、`ragIndexVersion`、`ragPromptVersion`、`ragPipelineVersion`、`ragParserVersion`、`ragChunkerVersion` を承認済み artifact の値へ固定する。これらに未承認の既定値は設けない。
 

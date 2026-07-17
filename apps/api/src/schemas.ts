@@ -1975,7 +1975,44 @@ export const BenchmarkQueryResponseSchema = ChatResponseSchema.extend({
 
 export const BenchmarkModeSchema = z.enum(["agent", "search", "load"])
 export const BenchmarkRunnerSchema = z.enum(["codebuild", "lambda"])
-export const BenchmarkRunStatusSchema = z.enum(["queued", "running", "succeeded", "failed", "cancelled"])
+export const BenchmarkRunStatusSchema = z.enum(["queued", "running", "succeeded", "failed", "timed_out", "cancelled"])
+
+export const BenchmarkArtifactIntegritySchema = z.object({
+  schemaVersion: z.literal(1),
+  status: z.enum(["pending", "complete", "partial_failure", "failed"]),
+  availableCount: z.number().int().nonnegative(),
+  failureCount: z.number().int().nonnegative(),
+  artifacts: z.array(z.object({
+    kind: z.enum(["results", "summary", "report", "release_audit"]),
+    status: z.enum(["pending", "available", "generation_failed", "upload_failed"]),
+    failureReason: z.string().min(1).optional()
+  }).strict()).length(4)
+}).strict().superRefine((value, context) => {
+  const kinds = new Set(value.artifacts.map((artifact) => artifact.kind))
+  if (kinds.size !== 4) context.addIssue({ code: "custom", message: "benchmark artifact kinds must be unique and complete" })
+  const availableCount = value.artifacts.filter((artifact) => artifact.status === "available").length
+  const failureCount = value.artifacts.filter((artifact) => artifact.status === "generation_failed" || artifact.status === "upload_failed").length
+  const pendingCount = value.artifacts.filter((artifact) => artifact.status === "pending").length
+  if (value.availableCount !== availableCount || value.failureCount !== failureCount) {
+    context.addIssue({ code: "custom", message: "benchmark artifact integrity counts do not match artifact states" })
+  }
+  const expectedStatus = pendingCount > 0
+    ? "pending"
+    : failureCount === 0
+      ? "complete"
+      : availableCount > 0
+        ? "partial_failure"
+        : "failed"
+  if (value.status !== expectedStatus) {
+    context.addIssue({ code: "custom", message: "benchmark artifact integrity status does not match artifact states" })
+  }
+  for (const artifact of value.artifacts) {
+    const failed = artifact.status === "generation_failed" || artifact.status === "upload_failed"
+    if (failed !== Boolean(artifact.failureReason)) {
+      context.addIssue({ code: "custom", message: `benchmark artifact ${artifact.kind} failure reason is inconsistent` })
+    }
+  }
+})
 
 export const BenchmarkRunThresholdsSchema = z.object({
   answerableAccuracy: z.number().min(0).max(1).optional().openapi({ example: 0.8 }),
@@ -2136,6 +2173,8 @@ export const BenchmarkRunSchema = z.object({
   summaryS3Key: z.string().optional(),
   reportS3Key: z.string().optional(),
   resultsS3Key: z.string().optional(),
+  releaseAuditS3Key: z.string().optional(),
+  artifactIntegrity: BenchmarkArtifactIntegritySchema.optional(),
   metrics: BenchmarkRunMetricsSchema.optional(),
   error: z.string().optional(),
   errorCode: z.enum(["validation_error", "not_found", "permission_revoked", "execution_error"]).optional()

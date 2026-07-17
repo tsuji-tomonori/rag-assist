@@ -25,6 +25,7 @@ RAG workflow の debug trace、UI 非依存 benchmark 実行、評価 summary / 
 - `FR-012`
 - `FR-013`
 - `FR-019`
+- `FR-048`
 - `SQ-001`
 - `NFR-005`
 - `NFR-006`
@@ -92,6 +93,16 @@ RAG workflow の debug trace、UI 非依存 benchmark 実行、評価 summary / 
 3. failure classification は検索不足、回答可否誤判定、引用不一致、支持不足、計算不可などに分ける。
 4. Markdown report は人間の調査用、JSON summary は CI や回帰検知用とする。
 
+### Benchmark run と artifact integrity
+
+1. run status は `queued | running | succeeded | failed | timed_out | cancelled` を正とし、`timed_out` は terminal state とする。
+2. CodeBuild 同期 task は CodeBuild project timeout より長く state machine 全体 timeout より短い task timeout を持ち、`States.Timeout` または CodeBuild の `TIMED_OUT` 結果を `timed_out` へ分類する。
+3. results、summary、report、release audit は schema version 付き `artifactIntegrity` に、artifact ごとの `pending | available | generation_failed | upload_failed`、安全な failure reason、available/failure count を保存する。
+4. post-build は欠損 file を空または擬似値で作らず、存在する artifact を独立して upload した後に integrity record を running run へ条件付き保存する。
+5. required artifact がすべて `available` の場合だけ `succeeded` へ条件付き遷移し、部分失敗または全失敗は `failed` のまま利用可能 artifact を保持する。
+6. metrics update は integrity が `complete` の後だけ実行する。producer は `succeeded + complete` の組だけを品質 evidence とし、integrity のない legacy run、timeout、artifact failure は unavailable/diagnostic measurement に分離する。
+7. artifact download は integrity が `available` の対象だけ署名し、UI は利用可能 artifact と生成/保存失敗 artifact を同じ run 内で区別する。CodeBuild log は S3 required artifact とは独立した log metadata として扱う。
+
 ## セキュリティ・非漏えい
 
 - debug trace は raw prompt、ACL metadata、alias 本文、内部 project code、secret を通常権限へ返さない。
@@ -108,6 +119,8 @@ RAG workflow の debug trace、UI 非依存 benchmark 実行、評価 summary / 
 | benchmark case 実行失敗 | case result に failure を記録し、summary で失敗分類する。 |
 | report export 失敗 | raw case results を成功扱いにせず、export failure を返す。 |
 | metric が `NaN` になる | summary 生成を失敗扱いにし、対象 metric と入力欠落を記録する。 |
+| CodeBuild task timeout | run を `timed_out` とし、未記録の required artifact を generation failure として明示する。 |
+| artifact 部分失敗 | 利用可能 artifact を保持し、run を成功へ遷移させず、metric を unavailable とする。 |
 
 ## テスト観点
 
@@ -120,3 +133,4 @@ RAG workflow の debug trace、UI 非依存 benchmark 実行、評価 summary / 
 | 固有分岐防止 | dataset expected phrase や row id が runtime branch に入らない。 |
 | metrics | `NaN` / `undefined` を出さず、失敗分類が残る。 |
 | report | JSON summary と Markdown report が再現可能な profile 情報を含む。 |
+| timeout / artifact | timeout が terminal state となり、部分失敗を成功や metric zero に変換せず、利用可能 artifact だけ download できる。 |

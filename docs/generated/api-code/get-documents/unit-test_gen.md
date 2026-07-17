@@ -24,8 +24,8 @@
 | 到達 symbol | service restores staging state when cutover vector activation fails after partial write | `apps/api/src/rag/memorag-service.test.ts:1245 (service restores staging state when cutover vector activation fails after partial write)` |
 | 到達 symbol | FR-090 reindex cutover compensates publication when current authorization is revoked before ledger commit | `apps/api/src/rag/memorag-service.test.ts:1277 (FR-090 reindex cutover compensates publication when current authorization is revoked before ledger commit)` |
 | 到達 symbol | FR-090 failed cutover compensation persists a durable intent and an authorized retry converges it | `apps/api/src/rag/memorag-service.test.ts:1311 (FR-090 failed cutover compensation persists a durable intent and an authorized retry converges it)` |
-| 到達 symbol | FR-090 ingest reauthorizes after the final event and compensates before persisting success | `apps/api/src/rag/memorag-service.test.ts:2784 (FR-090 ingest reauthorizes after the final event and compensates before persisting success)` |
-| 到達 symbol | FR-090 revoke after governance creation compensates all ingest artifacts and never publishes success | `apps/api/src/rag/memorag-service.test.ts:2844 (FR-090 revoke after governance creation compensates all ingest artifacts and never publishes success)` |
+| 到達 symbol | FR-090 ingest reauthorizes after the final event and compensates before persisting success | `apps/api/src/rag/memorag-service.test.ts:2786 (FR-090 ingest reauthorizes after the final event and compensates before persisting success)` |
+| 到達 symbol | FR-090 revoke after governance creation compensates all ingest artifacts and never publishes success | `apps/api/src/rag/memorag-service.test.ts:2846 (FR-090 revoke after governance creation compensates all ingest artifacts and never publishes success)` |
 | 到達 symbol | FR-060 same documentId is physically partitioned and never reveals the other tenant body or candidates | `apps/api/src/rag/tenant-artifact-partition.test.ts:27 (FR-060 same documentId is physically partitioned and never reveals the other tenant body or candidates)` |
 
 ## 2. 実装分岐から導くテスト要因

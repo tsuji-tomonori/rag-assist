@@ -69,7 +69,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 152 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 162 field(s) |
 | `400` | リクエスト形式または入力値が不正です。 | `application/json` | 2 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
@@ -81,7 +81,7 @@ Media type: `application/json`
 | 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
 | `runId` | `string` | yes | 非同期 run または debug trace を識別する ID。 | - |
-| `status` | `enum(queued \| running \| succeeded \| failed \| cancelled)` | yes | 現在の処理状態または管理状態。 | enum=queued, running, succeeded, failed, cancelled |
+| `status` | `enum(queued \| running \| succeeded \| failed \| timed_out \| cancelled)` | yes | 現在の処理状態または管理状態。 | enum=queued, running, succeeded, failed, timed_out, cancelled |
 | `mode` | `enum(agent \| search \| load)` | yes | benchmark 実行モード。 | enum=agent, search, load |
 | `runner` | `enum(codebuild \| lambda)` | yes | benchmark を実行する runner 種別。 | enum=codebuild, lambda |
 | `suiteId` | `string` | yes | benchmark suite を識別する ID。 | - |
@@ -110,6 +110,16 @@ Media type: `application/json`
 | `summaryS3Key` | `string` | no | `response.summaryS3Key` の値。項目名は summary s3 key を表します。 | - |
 | `reportS3Key` | `string` | no | `response.reportS3Key` の値。項目名は report s3 key を表します。 | - |
 | `resultsS3Key` | `string` | no | `response.resultsS3Key` の値。項目名は results s3 key を表します。 | - |
+| `releaseAuditS3Key` | `string` | no | `response.releaseAuditS3Key` の値。項目名は release audit s3 key を表します。 | - |
+| `artifactIntegrity` | `object` | no | `response.artifactIntegrity` の値。項目名は artifact integrity を表します。 | - |
+| `artifactIntegrity.schemaVersion` | `enum(1)` | yes | `response.artifactIntegrity.schemaVersion` の値。項目名は schema version を表します。 | enum=1 |
+| `artifactIntegrity.status` | `enum(pending \| complete \| partial_failure \| failed)` | yes | 現在の処理状態または管理状態。 | enum=pending, complete, partial_failure, failed |
+| `artifactIntegrity.availableCount` | `integer` | yes | `response.artifactIntegrity.availableCount` の値。項目名は available count を表します。 | minimum=0 |
+| `artifactIntegrity.failureCount` | `integer` | yes | `response.artifactIntegrity.failureCount` の値。項目名は failure count を表します。 | minimum=0 |
+| `artifactIntegrity.artifacts` | `array<object>` | yes | `response.artifactIntegrity.artifacts` の値。項目名は artifacts を表します。 | - |
+| `artifactIntegrity.artifacts[].kind` | `enum(results \| summary \| report \| release_audit)` | yes | `response.artifactIntegrity.artifacts[].kind` の値。項目名は kind を表します。 | enum=results, summary, report, release_audit |
+| `artifactIntegrity.artifacts[].status` | `enum(pending \| available \| generation_failed \| upload_failed)` | yes | 現在の処理状態または管理状態。 | enum=pending, available, generation_failed, upload_failed |
+| `artifactIntegrity.artifacts[].failureReason` | `string` | no | `response.artifactIntegrity.artifacts[].failureReason` の値。項目名は failure reason を表します。 | minLength=1 |
 | `metrics` | `object` | no | 評価や benchmark の指標値。 | - |
 | `metrics.total` | `integer` | yes | `response.metrics.total` の値。項目名は total を表します。 | minimum=0 |
 | `metrics.succeeded` | `integer` | yes | `response.metrics.succeeded` の値。項目名は succeeded を表します。 | minimum=0 |

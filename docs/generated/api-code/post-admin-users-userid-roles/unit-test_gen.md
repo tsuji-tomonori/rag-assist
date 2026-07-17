@@ -8,9 +8,9 @@
 
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
-| 到達 symbol | service lists all Cognito directory users in the managed user ledger | `apps/api/src/rag/memorag-service.test.ts:2910 (service lists all Cognito directory users in the managed user ledger)` |
-| 到達 symbol | concurrent managed-user projection writes fail closed instead of overwriting a sibling mutation | `apps/api/src/rag/memorag-service.test.ts:3121 (concurrent managed-user projection writes fail closed instead of overwriting a sibling mutation)` |
-| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:3469 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
+| 到達 symbol | service lists all Cognito directory users in the managed user ledger | `apps/api/src/rag/memorag-service.test.ts:2912 (service lists all Cognito directory users in the managed user ledger)` |
+| 到達 symbol | concurrent managed-user projection writes fail closed instead of overwriting a sibling mutation | `apps/api/src/rag/memorag-service.test.ts:3123 (concurrent managed-user projection writes fail closed instead of overwriting a sibling mutation)` |
+| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:3471 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
 
 ## 2. 実装分岐から導くテスト要因
 

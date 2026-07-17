@@ -1,6 +1,39 @@
 import assert from "node:assert/strict"
 import test from "node:test"
-import { BenchmarkRunMetricsSchema, ChatResponseSchema, ConversationHistoryItemSchema, DebugTraceSchema, DocumentIngestRunSchema, DocumentUploadRequestSchema, SearchResponseSchema, WorkerEventSchema, WorkerResultSchema } from "../schemas.js"
+import { BenchmarkArtifactIntegritySchema, BenchmarkRunMetricsSchema, BenchmarkRunSchema, ChatResponseSchema, ConversationHistoryItemSchema, DebugTraceSchema, DocumentIngestRunSchema, DocumentUploadRequestSchema, SearchResponseSchema, WorkerEventSchema, WorkerResultSchema } from "../schemas.js"
+
+test("FR-048 benchmark run schema exposes timeout and exact artifact integrity", () => {
+  const integrity = {
+    schemaVersion: 1,
+    status: "partial_failure",
+    availableCount: 2,
+    failureCount: 2,
+    artifacts: [
+      { kind: "results", status: "available" },
+      { kind: "summary", status: "available" },
+      { kind: "report", status: "generation_failed", failureReason: "report_not_generated" },
+      { kind: "release_audit", status: "upload_failed", failureReason: "release_audit_upload_failed" }
+    ]
+  }
+  assert.equal(BenchmarkArtifactIntegritySchema.safeParse(integrity).success, true)
+  assert.equal(BenchmarkArtifactIntegritySchema.safeParse({ ...integrity, failureCount: 1 }).success, false)
+  assert.equal(BenchmarkArtifactIntegritySchema.safeParse({
+    ...integrity,
+    artifacts: integrity.artifacts.map((artifact) => ({ ...artifact, kind: "results" }))
+  }).success, false)
+  assert.equal(BenchmarkRunSchema.safeParse({
+    runId: "benchmark-timeout-1",
+    status: "timed_out",
+    mode: "agent",
+    runner: "codebuild",
+    suiteId: "standard-agent-v1",
+    datasetS3Key: "datasets/standard.jsonl",
+    createdBy: "quality-owner",
+    createdAt: "2026-07-17T00:00:00.000Z",
+    updatedAt: "2026-07-17T04:00:00.000Z",
+    artifactIntegrity: integrity
+  }).success, true)
+})
 
 test("FR-019 benchmark run metrics bound context relevance and its evidence count", () => {
   const base = { total: 1, succeeded: 1, failedHttp: 0 }

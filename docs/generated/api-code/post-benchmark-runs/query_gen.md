@@ -11,9 +11,9 @@
 | 1 | 参照 | `this.deps.groupMembershipStore` | `listByMember` | `this.deps.groupMembershipStore` に対して list by member を実行する。 | `MemoRagService.securityResourceRefsForActor` | `apps/api/src/rag/memorag-service.ts:1277 (MemoRagService.securityResourceRefsForActor)` |
 | 2 | 実行 | `(await this.deps.groupMembershipStore.listByMember(tenantId, "user", actor.userId))<br>      ` | `map` | `(await this.deps.groupMembershipStore.listByMember(tenantId, "user", actor.userId))<br>      ` に対して map を実行する。 | `MemoRagService.securityResourceRefsForActor` | `apps/api/src/rag/memorag-service.ts:1277 (MemoRagService.securityResourceRefsForActor)` |
 | 3 | 参照 | `this.deps.groupMembershipStore` | `listByMember` | `this.deps.groupMembershipStore` に対して list by member を実行する。 | `MemoRagService.securityResourceRefsForActor` | `apps/api/src/rag/memorag-service.ts:1285 (MemoRagService.securityResourceRefsForActor)` |
-| 4 | 作成・追記 | `this.deps.benchmarkRunStore` | `create` | `this.deps.benchmarkRunStore` に対して create を実行する。 | `MemoRagService.createBenchmarkRun` | `apps/api/src/rag/memorag-service.ts:4604 (MemoRagService.createBenchmarkRun)` |
-| 5 | 更新 | `this.deps.benchmarkRunStore` | `update` | `this.deps.benchmarkRunStore` に対して update を実行する。 | `MemoRagService.createBenchmarkRun` | `apps/api/src/rag/memorag-service.ts:4613 (MemoRagService.createBenchmarkRun)` |
-| 6 | 更新 | `this.deps.benchmarkRunStore` | `update` | `this.deps.benchmarkRunStore` に対して update を実行する。 | `MemoRagService.createBenchmarkRun` | `apps/api/src/rag/memorag-service.ts:4616 (MemoRagService.createBenchmarkRun)` |
+| 4 | 作成・追記 | `this.deps.benchmarkRunStore` | `create` | `this.deps.benchmarkRunStore` に対して create を実行する。 | `MemoRagService.createBenchmarkRun` | `apps/api/src/rag/memorag-service.ts:4605 (MemoRagService.createBenchmarkRun)` |
+| 5 | 更新 | `this.deps.benchmarkRunStore` | `update` | `this.deps.benchmarkRunStore` に対して update を実行する。 | `MemoRagService.createBenchmarkRun` | `apps/api/src/rag/memorag-service.ts:4614 (MemoRagService.createBenchmarkRun)` |
+| 6 | 更新 | `this.deps.benchmarkRunStore` | `update` | `this.deps.benchmarkRunStore` に対して update を実行する。 | `MemoRagService.createBenchmarkRun` | `apps/api/src/rag/memorag-service.ts:4617 (MemoRagService.createBenchmarkRun)` |
 
 ## 外部サービス操作
 

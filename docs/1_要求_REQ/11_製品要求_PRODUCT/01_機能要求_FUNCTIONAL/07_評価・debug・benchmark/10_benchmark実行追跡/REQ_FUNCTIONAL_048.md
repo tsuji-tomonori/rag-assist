@@ -20,11 +20,14 @@
 
 ## 受け入れ条件（この要件専用）
 
-- AC-FR048-001: benchmark run の状態は queued、running、completed、failed、timed_out などの運用判断に使える値で確認できること。
+- AC-FR048-001: benchmark run の状態は `queued`、`running`、`succeeded`、`failed`、`timed_out`、`cancelled` の共通語彙で確認でき、`timed_out` は取消不能な terminal state として扱うこと。
 - AC-FR048-002: benchmark run の進捗は、少なくとも処理済み件数、skip 件数、失敗件数のいずれかを確認できること。
-- AC-FR048-003: results、summary、report、log などの artifact は、生成済み、未生成、生成失敗を区別できること。
+- AC-FR048-003: required artifact の results、summary、report、release audit は versioned integrity record により `pending`、`available`、`generation_failed`、`upload_failed` を区別し、failure reason を安全な分類値で確認できること。log は CodeBuild log metadata の有無から独立して確認できること。
 - AC-FR048-004: raw results download が利用可能な場合、対象 run と artifact 種別が取り違えられないこと。
 - AC-FR048-005: CodeBuild log stream が記録された run では、管理画面からログ本文を `.txt` として download できること。
+- AC-FR048-006: required artifact の欠損を空または擬似 artifact で補完せず、全 required artifact が `available` の場合だけ run を `succeeded` へ遷移させること。
+- AC-FR048-007: artifact が部分失敗した場合は利用可能な artifact の download を維持し、失敗 artifact を download 不可として明示すること。
+- AC-FR048-008: timeout または required artifact failure を含む run の metric は unavailable とし、0、成功、または品質 gate pass へ変換しないこと。
 
 ## 要件の源泉・背景
 
@@ -50,10 +53,10 @@
 | 種類 | 機能要求 |
 | 依存関係 | `FR-010`, `FR-011`, `FR-012`, `SQ-002` |
 | 衝突 | 詳細な進捗記録により runner と artifact schema の保守負荷が増える |
-| 受け入れ基準 | `AC-FR048-001` から `AC-FR048-004` |
+| 受け入れ基準 | `AC-FR048-001` から `AC-FR048-008` |
 | 優先度 | A |
 | 安定性 | Medium |
-| 変更履歴 | 2026-05-08 初版 |
+| 変更履歴 | 2026-05-08 初版 / 2026-07-17 timeout と versioned artifact integrity の fail-closed 境界を追加 |
 
 ## 関連文書
 

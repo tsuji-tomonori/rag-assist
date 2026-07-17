@@ -8,11 +8,11 @@
 
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
-| 到達 symbol | audit export failure is tenant-scoped and recorded in the common audit read model | `apps/api/src/rag/memorag-service.test.ts:3006 (audit export failure is tenant-scoped and recorded in the common audit read model)` |
-| 到達 symbol | admin audit export traversal follows every stable cursor page without silent truncation | `apps/api/src/rag/memorag-service.test.ts:3026 (admin audit export traversal follows every stable cursor page without silent truncation)` |
-| 到達 symbol | usage and cost export failures are tenant-scoped and audited through separate operations | `apps/api/src/rag/memorag-service.test.ts:3058 (usage and cost export failures are tenant-scoped and audited through separate operations)` |
-| 到達 symbol | managed-user ledgers and audit queries are tenant partitioned | `apps/api/src/rag/memorag-service.test.ts:3179 (managed-user ledgers and audit queries are tenant partitioned)` |
-| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:3469 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
+| 到達 symbol | audit export failure is tenant-scoped and recorded in the common audit read model | `apps/api/src/rag/memorag-service.test.ts:3008 (audit export failure is tenant-scoped and recorded in the common audit read model)` |
+| 到達 symbol | admin audit export traversal follows every stable cursor page without silent truncation | `apps/api/src/rag/memorag-service.test.ts:3028 (admin audit export traversal follows every stable cursor page without silent truncation)` |
+| 到達 symbol | usage and cost export failures are tenant-scoped and audited through separate operations | `apps/api/src/rag/memorag-service.test.ts:3060 (usage and cost export failures are tenant-scoped and audited through separate operations)` |
+| 到達 symbol | managed-user ledgers and audit queries are tenant partitioned | `apps/api/src/rag/memorag-service.test.ts:3181 (managed-user ledgers and audit queries are tenant partitioned)` |
+| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:3471 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
 | 到達 symbol | denied account lifecycle mutation is audited before returning without changing account state | `apps/api/src/security/account-lifecycle-current-identity.test.ts:32 (denied account lifecycle mutation is audited before returning without changing account state)` |
 
 ## 2. 実装分岐から導くテスト要因

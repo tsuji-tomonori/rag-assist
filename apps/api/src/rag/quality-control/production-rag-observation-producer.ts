@@ -49,7 +49,10 @@ export type RagSignalMeasurement = {
   unavailableReason?: string
 }
 
-export type RagDiagnosticMeasurementId = "retrieval.context_relevance"
+export type RagDiagnosticMeasurementId =
+  | "retrieval.context_relevance"
+  | "evaluation.artifact_failure_count"
+  | "evaluation.run_timed_out"
 
 export type RagQualitySourceSample = {
   schemaVersion: 1
@@ -413,6 +416,8 @@ export class ProductionRagObservationProducer {
     if (!policy) return { recorded: 0, skippedReason: "active_policy_unavailable" }
     const metrics = run.metrics
     const sampleCount = Math.max(0, metrics?.total ?? 0)
+    const artifactEvidenceComplete = run.status === "succeeded"
+      && run.artifactIntegrity?.status === "complete"
     const caseSliceEvidenceComplete = sampleCount > 0 && requiredCaseSliceNames(policy.requiredCaseSlices).every((slice) => (
       metrics?.qualitySliceMeasurements?.some((item) => (
         item.slice === slice
@@ -421,7 +426,8 @@ export class ProductionRagObservationProducer {
       ))
     ))
     const profileEvidenceMatches = Boolean(
-      metrics?.datasetVersion === policy.evidenceVersions.dataset
+      artifactEvidenceComplete
+      && metrics?.datasetVersion === policy.evidenceVersions.dataset
       && run.modelId === policy.evidenceVersions.model
       && metrics.workloadProfileVersion === policy.workloadProfileVersion
       && metrics.runtimeProfileVersion === policy.runtimeProfileVersion
@@ -436,6 +442,9 @@ export class ProductionRagObservationProducer {
       && metrics.documentSizeProfileVersion === policy.workloadDimensions.documentSizeProfileVersion
       && metrics.dependencyLatencyProfileVersion === policy.workloadDimensions.dependencyLatencyProfileVersion
     )
+    const evidenceMismatchReason = artifactEvidenceComplete
+      ? "benchmark_profile_evidence_mismatch"
+      : "benchmark_run_or_artifacts_incomplete"
     const priceEvidenceMatches = profileEvidenceMatches && metrics?.priceCatalogVersion === policy.priceCatalogVersion
     const benchmarkMeasurement = (
       value: number | undefined,
@@ -446,7 +455,7 @@ export class ProductionRagObservationProducer {
     ) => measurement(
       (requirePrice ? priceEvidenceMatches : profileEvidenceMatches) ? value : undefined,
       count,
-      (requirePrice ? priceEvidenceMatches : profileEvidenceMatches) ? unavailableReason : "benchmark_profile_evidence_mismatch",
+      (requirePrice ? priceEvidenceMatches : profileEvidenceMatches) ? unavailableReason : evidenceMismatchReason,
       confidence
     )
     const measurements: RagQualitySourceSample["measurements"] = {
@@ -506,6 +515,18 @@ export class ProductionRagObservationProducer {
         metrics?.contextRelevanceSampleCount ?? 0,
         "benchmark_context_relevance_missing",
         0.9
+      ),
+      "evaluation.artifact_failure_count": measurement(
+        run.artifactIntegrity?.failureCount,
+        run.artifactIntegrity?.artifacts.length ?? 0,
+        "benchmark_artifact_integrity_missing",
+        0.95
+      ),
+      "evaluation.run_timed_out": measurement(
+        run.status === "timed_out" ? 1 : run.status === "succeeded" || run.status === "failed" ? 0 : undefined,
+        1,
+        "benchmark_terminal_status_missing",
+        0.95
       )
     }
     const versionDimensions = compactVersions({
@@ -682,7 +703,7 @@ export class ProductionRagObservationProducer {
     let recorded = 0
     for (const run of runs) {
       const observedAt = run.completedAt ?? run.updatedAt
-      if (run.status !== "succeeded" && run.status !== "failed") continue
+      if (run.status !== "succeeded" && run.status !== "failed" && run.status !== "timed_out") continue
       if (observedAt < window.windowStart || observedAt > window.windowEnd) continue
       recorded += (await this.captureBenchmarkRun(run)).recorded
     }
@@ -1071,7 +1092,9 @@ function assertSourceSample(sample: RagQualitySourceSample): void {
     assertMeasurement(signalId, item)
   }
   for (const [signalId, item] of Object.entries(sample.diagnosticMeasurements ?? {})) {
-    if (signalId !== "retrieval.context_relevance") throw new Error(`Unknown RAG diagnostic measurement: ${signalId}`)
+    if (!["retrieval.context_relevance", "evaluation.artifact_failure_count", "evaluation.run_timed_out"].includes(signalId)) {
+      throw new Error(`Unknown RAG diagnostic measurement: ${signalId}`)
+    }
     assertMeasurement(signalId, item)
   }
 }

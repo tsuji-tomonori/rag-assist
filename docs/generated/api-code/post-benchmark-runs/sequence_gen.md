@@ -42,11 +42,11 @@ sequenceDiagram
 | 6 | `MemoRagService.securityResourceRefsForActor` | Store | `this.deps.groupMembershipStore` に対して list by member を実行する。 | `this.deps.groupMembershipStore.listByMember(tenantId, "user", actor.userId)` | `apps/api/src/rag/memorag-service.ts:1277 (MemoRagService.securityResourceRefsForActor)` |
 | 7 | `MemoRagService.securityResourceRefsForActor` | Store | `(await this.deps.groupMembershipStore.listByMember(tenantId, "user", actor.userId))<br>      ` に対して map を実行する。 | `(await this.deps.groupMembershipStore.listByMember(tenantId, "user", actor.userId)) .map((membership) => membership.groupId)` | `apps/api/src/rag/memorag-service.ts:1277 (MemoRagService.securityResourceRefsForActor)` |
 | 8 | `MemoRagService.securityResourceRefsForActor` | Store | `this.deps.groupMembershipStore` に対して list by member を実行する。 | `this.deps.groupMembershipStore.listByMember(tenantId, "group", groupId)` | `apps/api/src/rag/memorag-service.ts:1285 (MemoRagService.securityResourceRefsForActor)` |
-| 9 | `MemoRagService.createBenchmarkRun` | Store | `this.deps.benchmarkRunStore` に対して create を実行する。 | `this.deps.benchmarkRunStore.create(run)` | `apps/api/src/rag/memorag-service.ts:4604 (MemoRagService.createBenchmarkRun)` |
+| 9 | `MemoRagService.createBenchmarkRun` | Store | `this.deps.benchmarkRunStore` に対して create を実行する。 | `this.deps.benchmarkRunStore.create(run)` | `apps/api/src/rag/memorag-service.ts:4605 (MemoRagService.createBenchmarkRun)` |
 | 10 | `CurrentWorkerAuthorization.assertAuthorized` | External | `this.identityProvider` へ get current identity by subject を実行する。 | `this.identityProvider.getCurrentIdentityBySubject(request.subject)` | `apps/api/src/security/current-worker-authorization.ts:51 (CurrentWorkerAuthorization.assertAuthorized)` |
-| 11 | `MemoRagService.createBenchmarkRun` | Service | service の start benchmark execution 処理を呼び出す。 | `this.startBenchmarkExecution(run, outputPrefix)` | `apps/api/src/rag/memorag-service.ts:4611 (MemoRagService.createBenchmarkRun)` |
-| 12 | `MemoRagService.createBenchmarkRun` | Store | `this.deps.benchmarkRunStore` に対して update を実行する。 | `this.deps.benchmarkRunStore.update(run.tenantId, run.runId, { executionArn })` | `apps/api/src/rag/memorag-service.ts:4613 (MemoRagService.createBenchmarkRun)` |
-| 13 | `MemoRagService.createBenchmarkRun` | Store | `this.deps.benchmarkRunStore` に対して update を実行する。 | `this.deps.benchmarkRunStore.update(run.tenantId, run.runId, { status: "failed", completedAt: new Date().toISOString(), error: permissionRevoked ? "permission_revoked" : err instanceof Error ? err.message : String(err), …` | `apps/api/src/rag/memorag-service.ts:4616 (MemoRagService.createBenchmarkRun)` |
+| 11 | `MemoRagService.createBenchmarkRun` | Service | service の start benchmark execution 処理を呼び出す。 | `this.startBenchmarkExecution(run, outputPrefix)` | `apps/api/src/rag/memorag-service.ts:4612 (MemoRagService.createBenchmarkRun)` |
+| 12 | `MemoRagService.createBenchmarkRun` | Store | `this.deps.benchmarkRunStore` に対して update を実行する。 | `this.deps.benchmarkRunStore.update(run.tenantId, run.runId, { executionArn })` | `apps/api/src/rag/memorag-service.ts:4614 (MemoRagService.createBenchmarkRun)` |
+| 13 | `MemoRagService.createBenchmarkRun` | Store | `this.deps.benchmarkRunStore` に対して update を実行する。 | `this.deps.benchmarkRunStore.update(run.tenantId, run.runId, { status: "failed", completedAt: new Date().toISOString(), error: permissionRevoked ? "permission_revoked" : err instanceof Error ? err.message : String(err), …` | `apps/api/src/rag/memorag-service.ts:4617 (MemoRagService.createBenchmarkRun)` |
 | 14 | `POST /benchmark-runs handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json(await service.createBenchmarkRun(user, body), 200)` | `apps/api/src/routes/benchmark-routes.ts:129 (POST /benchmark-runs handler)` |
 
 ## 分岐
@@ -60,9 +60,10 @@ sequenceDiagram
 | B005 | `MemoRagService.createBenchmarkRun` | `input.topK` が `undefined` と等しい | `apps/api/src/rag/memorag-service.ts:4588 (MemoRagService.createBenchmarkRun)` |
 | B006 | `MemoRagService.createBenchmarkRun` | `suite.mode` が `"search"` と等しい | `apps/api/src/rag/memorag-service.ts:4589 (MemoRagService.createBenchmarkRun)` |
 | B007 | `MemoRagService.createBenchmarkRun` | `suite.mode` が `"search"` と等しい | `apps/api/src/rag/memorag-service.ts:4592 (MemoRagService.createBenchmarkRun)` |
-| B008 | `MemoRagService.createBenchmarkRun` | `config.benchmarkStateMachineArn` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4605 (MemoRagService.createBenchmarkRun)` |
-| B009 | `MemoRagService.createBenchmarkRun` | 例外が発生した場合に catch 処理へ移る | `apps/api/src/rag/memorag-service.ts:4614 (MemoRagService.createBenchmarkRun)` |
-| B010 | `MemoRagService.createBenchmarkRun` | `permissionRevoked` が存在し、真である | `apps/api/src/rag/memorag-service.ts:4619 (MemoRagService.createBenchmarkRun)` |
-| B011 | `MemoRagService.createBenchmarkRun` | `err` が `Error` の instance である | `apps/api/src/rag/memorag-service.ts:4619 (MemoRagService.createBenchmarkRun)` |
-| B012 | `MemoRagService.createBenchmarkRun` | `permissionRevoked` が存在し、真である | `apps/api/src/rag/memorag-service.ts:4620 (MemoRagService.createBenchmarkRun)` |
+| B008 | `MemoRagService.createBenchmarkRun` | `config.benchmarkStateMachineArn` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4606 (MemoRagService.createBenchmarkRun)` |
+| B009 | `MemoRagService.createBenchmarkRun` | 例外が発生した場合に catch 処理へ移る | `apps/api/src/rag/memorag-service.ts:4615 (MemoRagService.createBenchmarkRun)` |
+| B010 | `MemoRagService.createBenchmarkRun` | `permissionRevoked` が存在し、真である | `apps/api/src/rag/memorag-service.ts:4620 (MemoRagService.createBenchmarkRun)` |
+| B011 | `MemoRagService.createBenchmarkRun` | `err` が `Error` の instance である | `apps/api/src/rag/memorag-service.ts:4620 (MemoRagService.createBenchmarkRun)` |
+| B012 | `MemoRagService.createBenchmarkRun` | `permissionRevoked` が存在し、真である | `apps/api/src/rag/memorag-service.ts:4621 (MemoRagService.createBenchmarkRun)` |
 | B013 | `MemoRagService.createBenchmarkRun` | `permissionRevoked` が存在し、真である | `apps/api/src/rag/memorag-service.ts:4622 (MemoRagService.createBenchmarkRun)` |
+| B014 | `MemoRagService.createBenchmarkRun` | `permissionRevoked` が存在し、真である | `apps/api/src/rag/memorag-service.ts:4624 (MemoRagService.createBenchmarkRun)` |

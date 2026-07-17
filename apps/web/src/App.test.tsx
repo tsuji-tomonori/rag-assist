@@ -990,10 +990,10 @@ describe("App chat and upload flow", () => {
     expect(await screen.findByRole("status", { name: "性能テスト起動: MLIT PDF figure/table RAG seed" })).toHaveTextContent("bench-1")
     expect(screen.getAllByText("bench-1").length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText("完了後に集計").length).toBeGreaterThanOrEqual(1)
-    expect(screen.getByRole("button", { name: "レポートMarkdownをダウンロード" })).toBeDisabled()
-    expect(screen.getByRole("button", { name: "サマリJSONをダウンロード" })).toBeDisabled()
-    expect(screen.getByRole("button", { name: "未加工の結果 JSONLをダウンロード" })).toBeDisabled()
-    expect(screen.getByRole("button", { name: "実行ログをダウンロード" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "レポートMarkdown: 生成中" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "サマリJSON: 生成中" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "未加工の結果 JSONL: 生成中" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "実行ログ: 生成中" })).toBeDisabled()
     const startCall = fetchMock.mock.calls.find(([url, init]) => String(url).endsWith("/benchmark-runs") && (init as RequestInit | undefined)?.method === "POST")
     expect(requestBody(startCall)).toMatchObject({
       suiteId: "mlit-pdf-figure-table-rag-seed-v1",
@@ -1059,12 +1059,12 @@ describe("App chat and upload flow", () => {
     const maybeFailedRow = screen.getByText("bench-failed").closest("tr")
     assertElement(maybeFailedRow ?? undefined)
     const failedRow = maybeFailedRow as HTMLElement
-    expect(within(failedRow).getByRole("button", { name: "レポートMarkdownをダウンロード" })).toBeDisabled()
-    expect(within(failedRow).getByRole("button", { name: "サマリJSONをダウンロード" })).toBeDisabled()
-    expect(within(failedRow).getByRole("button", { name: "未加工の結果 JSONLをダウンロード" })).toBeDisabled()
-    expect(within(failedRow).getByRole("button", { name: "実行ログをダウンロード" })).toBeEnabled()
+    expect(within(failedRow).getByRole("button", { name: "レポートMarkdown: 未生成" })).toBeDisabled()
+    expect(within(failedRow).getByRole("button", { name: "サマリJSON: 未生成" })).toBeDisabled()
+    expect(within(failedRow).getByRole("button", { name: "未加工の結果 JSONL: 未生成" })).toBeDisabled()
+    expect(within(failedRow).getByRole("button", { name: "実行ログ: 生成済み" })).toBeEnabled()
 
-    await userEvent.click(within(failedRow).getByRole("button", { name: "実行ログをダウンロード" }))
+    await userEvent.click(within(failedRow).getByRole("button", { name: "実行ログ: 生成済み" }))
     expect(click).toHaveBeenCalled()
     expect(fetchMock).toHaveBeenCalledWith(expect.stringMatching(/\/benchmark-runs\/bench-failed\/logs$/), expect.objectContaining({ headers: expect.any(Object) }))
   })
