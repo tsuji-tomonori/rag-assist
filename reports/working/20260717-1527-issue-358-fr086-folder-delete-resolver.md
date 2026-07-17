@@ -46,7 +46,9 @@ producer を再監査した結果、folder delete は move と異なり専用 li
 - `npm run rag:release:source-audit`: pass。audit ID `sha256:3c83f691c53c24b0d9717b2ea63dee18820176f87d42ffeb5a964d18d2d7e016`、dataset-specific branch 0、artifact manifest mismatch 0。
 - `task verify`: lint、全workspace typecheck/build pass。既存のWeb chunk/Lambda bundle size warningのみ。
 - `git diff --check`: pass。
-- `pre-commit run`: 7 hooks pass、2 hooks skip（対象ファイルなし）。implementation/final-head CI は PR lifecycle で実施する。
+- `pre-commit run`: 7 hooks pass、2 hooks skip（対象ファイルなし）。
+- implementation head `507c7d41d73fb3faf27da39210d0e88f65b8346d`: [MemoRAG CI #1173](https://github.com/tsuji-tomonori/rag-assist/actions/runs/29560394958) success。
+- `npm ci`: success。lockfile差分なし。npm auditは既存の8件（low 2、moderate 1、high 5）を報告したが、本単位でdependencyは変更していない。
 
 ## 6. セキュリティ・認可レビュー
 
@@ -60,15 +62,15 @@ producer を再監査した結果、folder delete は move と異なり専用 li
 
 | 評価軸 | 評価 | 理由 |
 | --- | ---: | --- |
-| 指示網羅性 | 4.5/5 | exact unit、RCA、実装、local検証、docs/reportまで対応。PR/CI lifecycleはこれから |
+| 指示網羅性 | 4.9/5 | exact unit、RCA、実装、local検証、Draft PR、implementation CI、PRコメントまで対応。final-head外部証跡のみlifecycle commit後に実施 |
 | 制約遵守 | 5/5 | 対象外のdocument/admin操作やmerge/deploy/releaseを実施せず、cleanup欠落も過大主張しない |
 | 成果物品質 | 4.5/5 | exact/canonical/fail-closed/read-onlyを自動testで固定。actual AWSは未検証 |
 | 説明責任 | 5/5 | confirmed/inferred/open、失敗と修正、residual riskを区別 |
-| 検収容易性 | 4.5/5 | task AC、test数、差分、reportを相互参照可能に整理 |
+| 検収容易性 | 4.9/5 | task AC、test数、差分、PR/コメント/CI、reportを相互参照可能に整理 |
 
-**総合fit: 4.7/5（約94%）**
+**総合fit: 4.9/5（約98%）**
 
-Draft PR、GitHub CI、AC/self-review/final-head evidence が完了した後に lifecycle を更新する。actual AWSおよびarchive cleanup registrationは本単位の未解決リスクのため満点としない。
+Draft PR、implementation head CI、AC/self-review evidence は完了した。task done/report lifecycle commit後のfinal-head CIと最終コメントはheadを変えない外部証跡としてPRへ記録してから完了判定する。actual AWSおよびarchive cleanup registrationは本単位の未解決リスクのため満点としない。
 
 ## 8. 未対応・制約・リスク
 
@@ -80,4 +82,8 @@ Draft PR、GitHub CI、AC/self-review/final-head evidence が完了した後に 
 
 ## 9. PR lifecycle
 
-- Draft stacked PR、semver label、日本語AC/self-review、implementation/final-head CI、Issue #358 進捗はPR作成後に追記する。
+- Draft stacked PR: [#415](https://github.com/tsuji-tomonori/rag-assist/pull/415)。baseはPR #412 branch、headは本task branch、`semver:patch`を付与した。
+- 受け入れ条件確認: [issuecomment-4999746612](https://github.com/tsuji-tomonori/rag-assist/pull/415#issuecomment-4999746612)。implementation CI前のpendingを過大主張せず記録した。
+- PR作成時セルフレビュー: [issuecomment-4999749511](https://github.com/tsuji-tomonori/rag-assist/pull/415#issuecomment-4999749511)。blocking/should-fixなし、CI pending、actual AWS/cleanup gapを記録した。
+- implementation CI evidence: [issuecomment-4999792719](https://github.com/tsuji-tomonori/rag-assist/pull/415#issuecomment-4999792719)。MemoRAG CI run `29560394958` success。
+- task done/report lifecycle commit後のfinal-head CI、最終セルフレビュー、AC最終判定、Issue #358進捗は、headを変えないPR/Issueコメントと最終回答に記録する。

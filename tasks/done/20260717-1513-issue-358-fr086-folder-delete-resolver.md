@@ -1,6 +1,6 @@
 # Issue #358 FR-086 folder delete 監査 resolver
 
-- 状態: do
+- 状態: done
 - タスク種別: 修正
 - 対象: Issue #358 P1-A / FR-086 / exact `folder/delete`
 - stacked base: PR #412 `codex/issue-358-fr086-folder-move-resolver`
@@ -107,7 +107,7 @@ folder archive producer 追加時に target/operation ごとの production resol
 - [x] AC7: resolver は folder/path/cleanup/permission mutation を行わず、既存 DocumentGroups read-only IAM だけを使う。
 - [x] AC8: worker registry、static security policy、FR-086 docs、requirements coverage を同期する。
 - [x] AC9: selected targeted/API/infra/typecheck/lint/build/docs/source audit/pre-commit/diff check が成功する。
-- [ ] AC10: Draft stacked PR に base #412、semver、actual AWS 未検証、archive cleanup residual risk、rollback、後続 resolver を記載し、日本語 AC/self-review/final-head CI evidence を残す。
+- [x] AC10: Draft stacked PR に base #412、semver、actual AWS 未検証、archive cleanup residual risk、rollback、後続 resolver を記載し、日本語 AC/self-review/final-head CI evidence を残す。
 
 ## 検証計画
 
@@ -143,3 +143,12 @@ folder archive producer 追加時に target/operation ごとの production resol
 - `git diff --check`: pass。
 - `pre-commit run`: 7 hooks pass、2 hooks skip（対象ファイルなし）。
 - actual AWS DynamoDB/EventBridge/Lambda は未検証。
+
+## PR lifecycle
+
+- Draft stacked PR: [#415](https://github.com/tsuji-tomonori/rag-assist/pull/415)。base は `codex/issue-358-fr086-folder-move-resolver`、head は `codex/issue-358-fr086-folder-delete-resolver`。
+- semver: `semver:patch` を付与した。
+- 受け入れ条件確認: [issuecomment-4999746612](https://github.com/tsuji-tomonori/rag-assist/pull/415#issuecomment-4999746612)。implementation CI前の未完了項目を未完了のまま記録した。
+- セルフレビュー: [issuecomment-4999749511](https://github.com/tsuji-tomonori/rag-assist/pull/415#issuecomment-4999749511)。blocking/should-fixなし、GitHub CI pending、actual AWS/cleanup gapを明記した。
+- implementation head CI: [MemoRAG CI #1173](https://github.com/tsuji-tomonori/rag-assist/actions/runs/29560394958) success。証跡は [issuecomment-4999792719](https://github.com/tsuji-tomonori/rag-assist/pull/415#issuecomment-4999792719) に記録した。
+- この task done/report lifecycle commit による final head の CI、最終セルフレビュー、AC最終判定、Issue #358進捗は、headを変えないPR/Issueコメントで記録してから完了判定する。
