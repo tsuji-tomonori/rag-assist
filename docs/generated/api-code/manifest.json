@@ -370,9 +370,9 @@
       "openApi": true,
       "routeSource": "apps/api/src/routes/benchmark-routes.ts:173 (POST /benchmark-runs/{runId}/cancel)",
       "handlerSource": "apps/api/src/routes/benchmark-routes.ts:186 (POST /benchmark-runs/{runId}/cancel handler)",
-      "functionCount": 12,
-      "branchCount": 8,
-      "projectedBranchCount": 4,
+      "functionCount": 11,
+      "branchCount": 7,
+      "projectedBranchCount": 2,
       "dataAccessCount": 2,
       "relatedTestCount": 1
     },

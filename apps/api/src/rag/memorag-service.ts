@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto"
 import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3"
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
-import { SFNClient, StartExecutionCommand, StopExecutionCommand } from "@aws-sdk/client-sfn"
+import { SFNClient, StartExecutionCommand } from "@aws-sdk/client-sfn"
 import { config } from "../config.js"
 import { getPermissionsForGroups, hasPermission, rolePermissions, type Role } from "../authorization.js"
 import {
@@ -11,6 +11,8 @@ import type { Dependencies } from "../dependencies.js"
 import { sanitizeProviderText, type AsyncAgentProviderArtifact, type AsyncAgentProviderInput, type AsyncAgentProviderResult } from "../async-agent/provider.js"
 import { AgentProviderCatalogService } from "../async-agent/provider-catalog-service.js"
 import { BenchmarkRunQueryService } from "../benchmark/benchmark-run-query-service.js"
+import { BenchmarkRunCancellationService } from "../benchmark/benchmark-run-cancellation-service.js"
+import { stopBenchmarkExecution } from "../benchmark/benchmark-execution-stopper.js"
 import { debugTraceObjectKey, runChatOrchestration } from "./orchestration/chat-rag-orchestrator.js"
 import { llmOptions, normalizeMaxIterations, normalizeMemoryTopK, normalizeMinScore, normalizeSearchTopK, normalizeTopK, ragRuntimePolicy } from "../chat-orchestration/runtime-policy.js"
 import type { ChatInput, ChatOrchestrationResult } from "../chat-orchestration/types.js"
@@ -448,6 +450,7 @@ const benchmarkSuites: BenchmarkSuite[] = [
 
 export class MemoRagService {
   private readonly agentProviderCatalogService: AgentProviderCatalogService
+  private readonly benchmarkRunCancellationService: BenchmarkRunCancellationService
   private readonly benchmarkRunQueryService: BenchmarkRunQueryService
   private readonly favoriteService: FavoriteService
   private readonly questionService: QuestionService
@@ -460,6 +463,12 @@ export class MemoRagService {
       benchmarkRunStore: deps.benchmarkRunStore,
       codeBuildLogReader: deps.codeBuildLogReader,
       tenantIdForActor: authoritativeActorTenantId
+    })
+    this.benchmarkRunCancellationService = new BenchmarkRunCancellationService({
+      benchmarkRunStore: deps.benchmarkRunStore,
+      tenantIdForActor: authoritativeActorTenantId,
+      stopExecution: stopBenchmarkExecution,
+      now: () => new Date().toISOString()
     })
     this.favoriteService = new FavoriteService({
       favoriteStore: deps.favoriteStore,
@@ -4691,20 +4700,7 @@ export class MemoRagService {
   }
 
   async cancelBenchmarkRun(actor: AppUser, runId: string): Promise<BenchmarkRun | undefined> {
-    const tenantId = authoritativeActorTenantId(actor)
-    const run = await this.deps.benchmarkRunStore.get(tenantId, runId)
-    if (!run) return undefined
-    if (run.executionArn) {
-      const states = new SFNClient({ region: config.region })
-      await states.send(new StopExecutionCommand({
-        executionArn: run.executionArn,
-        cause: "Cancelled from MemoRAG admin benchmark view"
-      }))
-    }
-    return this.deps.benchmarkRunStore.update(tenantId, runId, {
-      status: "cancelled",
-      completedAt: new Date().toISOString()
-    })
+    return this.benchmarkRunCancellationService.cancel(actor, runId)
   }
 
   async createBenchmarkArtifactDownloadUrl(actor: AppUser, runId: string, artifact: BenchmarkDownloadArtifact): Promise<{ url: string; expiresInSeconds: number; objectKey: string } | undefined> {

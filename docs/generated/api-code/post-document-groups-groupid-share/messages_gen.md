@@ -19,10 +19,10 @@
 | M004 | OpenAPI contract | `403` | 対象操作を実行する権限がありません。 | OpenAPI で宣言された HTTP 403 response | runtime OpenAPI |
 | M005 | OpenAPI contract | `404` | 指定したリソースが見つかりません。 | OpenAPI で宣言された HTTP 404 response | runtime OpenAPI |
 | M006 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| M007 | 例外 | `-` | Document group name is required | `trimmed` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:6029 (validateDocumentGroupName)` |
-| M008 | 例外 | `-` | Document group name contains unsupported characters | `trimmed` が "/" を含む、または contains control character の判定結果が真である | `apps/api/src/rag/memorag-service.ts:6030 (validateDocumentGroupName)` |
-| M009 | 例外 | `-` | Document group subtree is too large for synchronous path update | `pathUpdates.length` が `maxDocumentGroupPathTransactionItems` より大きい | `apps/api/src/rag/memorag-service.ts:1166 (MemoRagService.updateDocumentGroupSharing)` |
-| M010 | 例外 | `-` | Document group canonical path already exists | `conflict` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1174 (MemoRagService.updateDocumentGroupSharing)` |
+| M007 | 例外 | `-` | Document group name is required | `trimmed` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:6025 (validateDocumentGroupName)` |
+| M008 | 例外 | `-` | Document group name contains unsupported characters | `trimmed` が "/" を含む、または contains control character の判定結果が真である | `apps/api/src/rag/memorag-service.ts:6026 (validateDocumentGroupName)` |
+| M009 | 例外 | `-` | Document group subtree is too large for synchronous path update | `pathUpdates.length` が `maxDocumentGroupPathTransactionItems` より大きい | `apps/api/src/rag/memorag-service.ts:1175 (MemoRagService.updateDocumentGroupSharing)` |
+| M010 | 例外 | `-` | Document group canonical path already exists | `conflict` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1183 (MemoRagService.updateDocumentGroupSharing)` |
 
 ## 読み方
 
