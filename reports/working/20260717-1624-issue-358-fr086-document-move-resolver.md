@@ -17,7 +17,7 @@
 | R3 | current identity / tenant / role / source / destination permission を再評価 | 高 | 対応 |
 | R4 | domain mutation を再実行せず read-only IAM に限定 | 高 | 対応 |
 | R5 | worker / security static policy / infra / FR-086 / coverage を同期 | 高 | 対応 |
-| R6 | local 検証、Draft PR、CI、証跡コメント | 高 | PR/CI 証跡は PR 作成後に追記 |
+| R6 | local 検証、Draft PR、CI、証跡コメント | 高 | implementation CI まで対応。final-head 外部証跡は lifecycle commit 後 |
 
 ## 3. 検討・判断の要約
 
@@ -63,7 +63,7 @@
 
 | 評価軸 | 評価 | 理由 |
 |---|---:|---|
-| 指示網羅性 | 4.8/5 | local deliverable と検証は充足。PR/final CI 証跡はこれから追記 |
+| 指示網羅性 | 4.9/5 | local deliverable、Draft PR、implementation CI、AC/self-review まで充足。final-head 外部証跡は lifecycle commit 後 |
 | 制約遵守 | 5.0/5 | dedicated worktree、stacked base、no merge/deploy/release、read-only resolver を遵守 |
 | 成果物品質 | 4.8/5 | producer crash window と current authorization を contract test で固定。actual AWS は未検証 |
 | 説明責任 | 5.0/5 | RCA、受理状態、制約、残リスクを記録 |
@@ -71,7 +71,7 @@
 
 **総合fit: 4.9 / 5.0（約98%）**
 
-PR lifecycle と final-head CI の証跡追記後に最終確定する。
+Draft PR、implementation head CI、AC/self-review evidence は完了した。task done/report lifecycle commit後のfinal-head CIと最終コメントはheadを変えない外部証跡として記録する。
 
 ## 8. 未対応・制約・リスク
 
@@ -80,3 +80,11 @@ PR lifecycle と final-head CI の証跡追記後に最終確定する。
 - valid move 後の後続 mutation が current manifest を変更した場合、過去結果を推測せず retry/quarantine する可能性がある。
 - document delete resolver と administrative principal transfer resolver は Issue #358 の後続 rollback unit。
 - merge、deploy、release は対象外のため未実施。
+
+## 9. PR lifecycle
+
+- Draft stacked PR: [#419](https://github.com/tsuji-tomonori/rag-assist/pull/419)。base は PR #415 branch、head は本 task branch、`semver:patch`。
+- 受け入れ条件確認: [issuecomment-5000168708](https://github.com/tsuji-tomonori/rag-assist/pull/419#issuecomment-5000168708)。implementation CI 前の pending を過大主張せず記録した。
+- PR 作成時セルフレビュー: [issuecomment-5000169661](https://github.com/tsuji-tomonori/rag-assist/pull/419#issuecomment-5000169661)。blocking なし、actual AWS/projection readback 制約を記録した。
+- implementation CI evidence: [issuecomment-5000241342](https://github.com/tsuji-tomonori/rag-assist/pull/419#issuecomment-5000241342)。MemoRAG CI run `29563201176` success（8分15秒）。
+- task done/report lifecycle commit後のfinal-head CI、最終セルフレビュー、AC最終判定、Issue #358進捗は、headを変えないPR/Issueコメントと最終回答に記録する。

@@ -1,6 +1,6 @@
 # Issue #358 FR-086 document move 監査 resolver
 
-- 状態: in_progress
+- 状態: done
 - タスク種別: 修正
 - 対象: Issue #358 P1-A / FR-086 / exact `document/move`
 - stacked base: PR #415 `codex/issue-358-fr086-folder-delete-resolver`
@@ -101,17 +101,17 @@ document move producer追加時に target/operation ごとの production resolve
 
 ## 受け入れ条件
 
-- [ ] AC1: exact `document/move` と `document-move-policy-v1` だけを support する。
-- [ ] AC2: lifecycle markerのauditIntentId、operationId、tenant/document/actor、source/target、before/proposedAfterをcanonicalに検証する。
-- [ ] AC3: pendingはlifecycle `completed`、current=target、current actor/permission有効の場合だけ successを確定する。
-- [ ] AC4: durable success/non-successはproducerの許可status、requested result/current state、failureResult、current actor/permissionをresult classに応じてexact照合する。
-- [ ] AC5: marker-free durable preflight non-successはcurrent=beforeの場合だけ確定する。
-- [ ] AC6: partial status、marker/audit mismatch、current before/third/missing/corrupt/cross-tenant、actor/permission失効をfail closedにする。
-- [ ] AC7: duplicate workersが一つのimmutable completed eventへ収束する。
-- [ ] AC8: resolverはmanifest/projection/permission/cleanup mutationを行わず、document move state / tenant manifestに限定したread-only IAMだけを追加する。
-- [ ] AC9: worker registry、static security policy、FR-086 docs、requirements coverageを同期する。
-- [ ] AC10: selected targeted/API/infra/typecheck/lint/build/docs/source audit/pre-commit/diff checkが成功する。
-- [ ] AC11: Draft stacked PRにbase #415、semver、actual AWS未検証、projection readback制約、rollback、後続resolverを記載し、日本語AC/self-review/final-head CI evidenceを残す。
+- [x] AC1: exact `document/move` と `document-move-policy-v1` だけを support する。
+- [x] AC2: lifecycle markerのauditIntentId、operationId、tenant/document/actor、source/target、before/proposedAfterをcanonicalに検証する。
+- [x] AC3: pendingはlifecycle `completed`、current=target、current actor/permission有効の場合だけ successを確定する。
+- [x] AC4: durable success/non-successはproducerの許可status、requested result/current state、failureResult、current actor/permissionをresult classに応じてexact照合する。
+- [x] AC5: marker-free durable preflight non-successはcurrent=beforeの場合だけ確定する。
+- [x] AC6: partial status、marker/audit mismatch、current before/third/missing/corrupt/cross-tenant、actor/permission失効をfail closedにする。
+- [x] AC7: duplicate workersが一つのimmutable completed eventへ収束する。
+- [x] AC8: resolverはmanifest/projection/permission/cleanup mutationを行わず、document move state / tenant manifestに限定したread-only IAMだけを追加する。
+- [x] AC9: worker registry、static security policy、FR-086 docs、requirements coverageを同期する。
+- [x] AC10: selected targeted/API/infra/typecheck/lint/build/docs/source audit/pre-commit/diff checkが成功する。
+- [x] AC11: Draft stacked PRにbase #415、semver、actual AWS未検証、projection readback制約、rollback、後続resolverを記載し、日本語AC/self-review/final-head CI evidenceを残す。
 
 ## 検証計画
 
@@ -136,6 +136,15 @@ document move producer追加時に target/operation ごとの production resolve
 - pre-commit: 成功（変更対象ファイル）
 - `git diff --check`: 成功
 - 既存の Web 500 kB 超 chunk と Lambda bundle size 警告は出力されたが、検証は exit 0
+
+## PR lifecycle
+
+- Draft stacked PR: [#419](https://github.com/tsuji-tomonori/rag-assist/pull/419)。base は `codex/issue-358-fr086-folder-delete-resolver`、head は `codex/issue-358-fr086-document-move-resolver`。
+- semver: `semver:patch`。
+- 受け入れ条件確認: [issuecomment-5000168708](https://github.com/tsuji-tomonori/rag-assist/pull/419#issuecomment-5000168708)。implementation CI 前の pending を未完了のまま記録した。
+- セルフレビュー: [issuecomment-5000169661](https://github.com/tsuji-tomonori/rag-assist/pull/419#issuecomment-5000169661)。blocking 指摘なし、actual AWS/projection readback 制約を明記した。
+- implementation head CI: [MemoRAG CI run 29563201176](https://github.com/tsuji-tomonori/rag-assist/actions/runs/29563201176) success（8分15秒）。証跡は [issuecomment-5000241342](https://github.com/tsuji-tomonori/rag-assist/pull/419#issuecomment-5000241342) に記録した。
+- この task done/report lifecycle commit による final head の CI、最終セルフレビュー、AC最終判定、Issue #358進捗は、headを変えないPR/Issueコメントで記録してから完了判定する。
 
 ## PRレビュー観点
 
