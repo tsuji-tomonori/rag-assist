@@ -1,6 +1,6 @@
 # Issue #359 Phase 4l: async-agent run repository 抽出
 
-- 状態: do
+- 状態: done
 - タスク種別: リファクタリング
 - Issue: #359
 - stacked base: PR #431 / `codex/issue-359-benchmark-run-creation-extraction`
@@ -81,16 +81,27 @@ async-agent run persistence に明示的な repository/port 境界がなく、st
 
 ## 受け入れ条件
 
-- [ ] repository は `listKeys`、`getText`、`putText` の narrow port だけに依存し、broad `Dependencies`、facade、auth/provider、AWS client、global config を import しない。
-- [ ] list は requested tenant の exact hashed prefix だけを使用し、strict key allowlist 外、nested path、他 tenant key を読まない。
-- [ ] same raw run ID を異なる tenant に保存・取得しても衝突・漏えいせず、decoded tenant mismatch は fail closed で reject する。
-- [ ] get/list は legacy-compatible defaultsとして missing `runId`、`workspaceMounts`、`artifactIds`、`artifacts` だけを現行どおり正規化する。
-- [ ] scoped/legacy の双方 missing は `undefined`、scoped missingかつ legacy present は cause 付き migration-required error、非 missing read/parse error は伝播する。
-- [ ] save は exact tenant-scoped encoded key、pretty JSON、`application/json; charset=utf-8` を用いる。
-- [ ] facade public signatures、route/RBAC/non-enumeration、create/cancel/execute authorization order、provider/artifact writeback、RAG trust、schemasを変更しない。
-- [ ] facade から async-agent key/normalize/integrity/private object-store persistence implementation が除去され、repository delegate だけになる。
-- [ ] targeted tests/lint、API typecheck/full、root `npm run ci`、docs generation/check、source audit、`git diff --check`、pre-commit が成功する。
-- [ ] Draft stacked PR に `semver:patch`、日本語 AC/self-review、report/task done、implementation/final-head CI、Issue #359 progress を記録する。
+- [x] repository は `listKeys`、`getText`、`putText` の narrow port だけに依存し、broad `Dependencies`、facade、auth/provider、AWS client、global config を import しない。
+- [x] list は requested tenant の exact hashed prefix だけを使用し、strict key allowlist 外、nested path、他 tenant key を読まない。
+- [x] same raw run ID を異なる tenant に保存・取得しても衝突・漏えいせず、decoded tenant mismatch は fail closed で reject する。
+- [x] get/list は legacy-compatible defaultsとして missing `runId`、`workspaceMounts`、`artifactIds`、`artifacts` だけを現行どおり正規化する。
+- [x] scoped/legacy の双方 missing は `undefined`、scoped missingかつ legacy present は cause 付き migration-required error、非 missing read/parse error は伝播する。
+- [x] save は exact tenant-scoped encoded key、pretty JSON、`application/json; charset=utf-8` を用いる。
+- [x] facade public signatures、route/RBAC/non-enumeration、create/cancel/execute authorization order、provider/artifact writeback、RAG trust、schemasを変更しない。
+- [x] facade から async-agent key/normalize/integrity/private object-store persistence implementation が除去され、repository delegate だけになる。
+- [x] targeted tests/lint、API typecheck/full、root `npm run ci`、docs generation/check、source audit、`git diff --check`、pre-commit が成功する。
+- [x] Draft stacked PR #433 に `semver:patch`、日本語 AC/self-review、report/task done、implementation-head CI を記録した。final-head CI と Issue #359 progress は lifecycle commit push 後に外部証跡として記録する。
+
+## 完了証跡
+
+- implementation commit: `893456885f19a56ecd16dd1fc0802f5e7073db9e`
+- Draft stacked PR: #433
+- stacked base: PR #431 branch / `65d10e588618e60fb2e45230879c94e2b5b87b63`
+- semver: `semver:patch`
+- AC comment: `issuecomment-5003909093`
+- self-review comment: `issuecomment-5003910438`
+- implementation-head GitHub Actions: success（8m48s、run `29585023213`）
+- final-head GitHub Actions と Issue #359 progress: lifecycle commit push 後に外部証跡として記録する。
 
 ## Done 条件
 

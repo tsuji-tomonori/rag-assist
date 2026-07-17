@@ -50,7 +50,9 @@
 - `task docs:check`: 成功。
 - `npm run rag:release:source-audit`: 成功（dataset-specific branch 0、artifact manifest mismatch 0）。
 - `git diff --check`: 成功。
-- staged pre-commit、implementation/final-head GitHub Actionsはcommit/PR lifecycleで記録する。
+- staged pre-commit: 成功。
+- implementation-head GitHub Actions: 成功（8m48s、run `29585023213`）。promotion gateは設計どおりskipped。
+- final-head GitHub Actionsはtask done lifecycle commit後に記録する。
 
 ## 指示への fit 評価
 
@@ -67,3 +69,14 @@
 - facadeにはasync-agent create/execute/cancel、current authorization、provider invocation、artifact persistence/writeback/cleanupが残る。次の抽出はside-effect/compensation単位の再監査が必要である。
 - canonical generated docsはfacade line/call graph変更により多数の機械差分を含む。
 - stacked PRはIssue #359既存chainとPR #431を先に必要とする。
+
+## PR lifecycle
+
+- implementation commit: `893456885f19a56ecd16dd1fc0802f5e7073db9e`
+- Draft stacked PR: #433
+- base/head: `codex/issue-359-benchmark-run-creation-extraction` → `codex/issue-359-async-agent-run-repository-extraction`
+- `semver:patch`: 付与済み
+- 日本語AC comment: `issuecomment-5003909093`
+- 日本語self-review comment: `issuecomment-5003910438`（blocking指摘なし）
+- implementation-head CI: success
+- final-head CI、final AC/self-review/verification、Issue #359 progressはlifecycle commit push後に外部証跡として記録する。
