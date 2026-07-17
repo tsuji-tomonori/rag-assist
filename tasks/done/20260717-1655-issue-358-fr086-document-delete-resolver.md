@@ -1,6 +1,6 @@
 # Issue #358 FR-086 document delete 監査 resolver
 
-- 状態: do
+- 状態: done
 - タスク種別: 修正
 - 対象: Issue #358 P1-A / FR-086 / exact `document/revoke.delete`
 - stacked base: PR #419 `codex/issue-358-fr086-document-move-resolver`
@@ -101,17 +101,17 @@ document delete producer追加時に target/operation ごとの production resol
 
 ## 受け入れ条件
 
-- [ ] AC1: exact `document/revoke.delete` と `document-revocation-policy-v1` だけを support する。
-- [ ] AC2: lifecycleのauditIntentId、operationId、tenant/document/actor、source/tombstone、before/proposedAfterをcanonicalに検証する。
-- [ ] AC3: pending/durable successはproducer許可status、requested state、exact repair/ledger、current tombstoneまたはsource checkpoint付きmissingだけで確定する。
-- [ ] AC4: marker-free preflight non-successはcurrent=beforeの場合だけ確定する。
-- [ ] AC5: markerありCAS conflictはprepared lifecycle、current=requested、abandoned repair、ledger不存在の場合だけ確定する。
-- [ ] AC6: partial status、marker/audit/cleanup mismatch、checkpointなしmissing、corrupt/cross-tenant/第三状態をfail closedにする。
-- [ ] AC7: duplicate workersが一つのimmutable completed eventへ収束する。
-- [ ] AC8: resolverはtombstone/cleanup/permission/repair/ledger mutationを行わず、delete lifecycleに限定した追加read-only IAMだけを付与する。
-- [ ] AC9: worker registry、static security policy、FR-086 docs、requirements coverageを同期する。
-- [ ] AC10: selected targeted/API/infra/typecheck/lint/build/docs/source audit/pre-commit/diff checkが成功する。
-- [ ] AC11: Draft stacked PRにbase #419、semver、actual AWS未検証、物理cleanup readback制約、rollback、後続resolverを記載し、日本語AC/self-review/final-head CI evidenceを残す。
+- [x] AC1: exact `document/revoke.delete` と `document-revocation-policy-v1` だけを support する。
+- [x] AC2: lifecycleのauditIntentId、operationId、tenant/document/actor、source/tombstone、before/proposedAfterをcanonicalに検証する。
+- [x] AC3: pending/durable successはproducer許可status、requested state、exact repair/ledger、current tombstoneまたはsource checkpoint付きmissingだけで確定する。
+- [x] AC4: marker-free preflight non-successはcurrent=beforeの場合だけ確定する。
+- [x] AC5: markerありCAS conflictはprepared lifecycle、current=requested、abandoned repair、ledger不存在の場合だけ確定する。
+- [x] AC6: partial status、marker/audit/cleanup mismatch、checkpointなしmissing、corrupt/cross-tenant/第三状態をfail closedにする。
+- [x] AC7: duplicate workersが一つのimmutable completed eventへ収束する。
+- [x] AC8: resolverはtombstone/cleanup/permission/repair/ledger mutationを行わず、delete lifecycleに限定した追加read-only IAMだけを付与する。
+- [x] AC9: worker registry、static security policy、FR-086 docs、requirements coverageを同期する。
+- [x] AC10: selected targeted/API/infra/typecheck/lint/build/docs/source audit/pre-commit/diff checkが成功する。
+- [x] AC11: Draft stacked PRにbase #419、semver、actual AWS未検証、物理cleanup readback制約、rollback、後続resolverを記載し、日本語AC/self-review/implementation head CI evidenceを残した。final-head CI evidenceはtask done lifecycle commit後にheadを変えないPR commentで記録する。
 
 ## 検証計画
 
@@ -126,3 +126,25 @@ document delete producer追加時に target/operation ごとの production resol
 - actual AWS S3/EventBridge/Lambdaは未検証。
 - 物理cleanup実体はresolverからreadbackせず、producer requested completionとdurable cleanup evidenceを収束証跡とする。
 - valid delete後のdocument ID再利用時はexact resolverが過去結果を推測せずquarantineし得る。
+
+## 実施済み検証（PR作成前）
+
+- API full test: 成功（885 tests）。sandbox内のlocalhost `listen EPERM` はsandbox外の固定script再実行で解消。
+- Web full test: 成功（442 tests）。
+- infra typecheck/full test: 成功（38 tests）。IAM変更のsnapshotを同期後に再実行。
+- benchmark full test: 成功（102 tests）。
+- `task docs:check`: 成功。sandbox内のtsx IPC `listen EPERM` はsandbox外の同一Taskfile command再実行で解消。
+- `npm run rag:release:source-audit`: 成功（audit ID `sha256:eb7701f8c651f35673cac2e6de9f2ffef641e2982b88d3fef503e72c8645e4e6`、dataset-specific branch 0、artifact mismatch 0）。
+- `task verify`: 初回lintで未使用type importを検出・修正し、再実行成功。
+- `npm run ci`: 成功（全workspace lint/typecheck/test/build）。
+- pre-commit、`git diff --check`: 成功。
+- 既存のWeb 500 kB超chunkとLambda bundle size警告は出たが、検証はexit 0。
+
+## PR lifecycle
+
+- Draft stacked PR: [#424](https://github.com/tsuji-tomonori/rag-assist/pull/424)。baseは`codex/issue-358-fr086-document-move-resolver`、headは`codex/issue-358-fr086-document-delete-resolver`。
+- semver: `semver:patch`。
+- 受け入れ条件確認: [issuecomment-5001152588](https://github.com/tsuji-tomonori/rag-assist/pull/424#issuecomment-5001152588)。implementation CI前のpendingを未完了のまま記録した。
+- セルフレビュー: [issuecomment-5001152551](https://github.com/tsuji-tomonori/rag-assist/pull/424#issuecomment-5001152551)。blocking指摘なし、actual AWS/物理cleanup readback制約を明記した。
+- implementation head CI: [MemoRAG CI run 29568813194](https://github.com/tsuji-tomonori/rag-assist/actions/runs/29568813194) success（8分8秒）。証跡は[issuecomment-5001268264](https://github.com/tsuji-tomonori/rag-assist/pull/424#issuecomment-5001268264)に記録した。
+- このtask done/report lifecycle commitによるfinal headのCI、最終セルフレビュー、AC最終判定、Issue #358進捗は、headを変えないPR/Issue commentで記録してから完了判定する。

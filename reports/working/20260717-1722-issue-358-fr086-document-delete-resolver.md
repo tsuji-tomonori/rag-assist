@@ -64,4 +64,15 @@ PR #419 の後続となる最小 bounded unit として document delete resolver
 - 物理cleanup実体の個別readbackは行わず、producer requested completionとdurable cleanup evidenceを収束証跡とする。
 - valid delete後の同一document ID再利用では、exact current-state照合が過去resultを推測せずquarantineする可能性がある。
 - FR-086の残存production resolver gapはadministrative principal transfer。
-- Draft PR、CI evidence、最終AC/self-review、Issue進捗、task done移動はこのレポート作成後のPR lifecycleで追記する。
+- Draft stacked PR #424を作成し、`semver:patch`、初回AC/self-review、implementation head CI success（run 29568813194、8分8秒）を記録した。
+- taskをdoneへ更新する本lifecycle commit後のfinal-head CI、最終AC/self-review、Issue #358進捗は、headを変えないPR/Issue commentで記録する。
+
+## PR lifecycle
+
+- Draft PR: [#424](https://github.com/tsuji-tomonori/rag-assist/pull/424)
+- stacked base: PR #419 branch `codex/issue-358-fr086-document-move-resolver`
+- implementation head: `b17bd944684f104507f779ddb5708c0cbb5dad00`
+- implementation CI: [run 29568813194](https://github.com/tsuji-tomonori/rag-assist/actions/runs/29568813194) success
+- 初回AC: [issuecomment-5001152588](https://github.com/tsuji-tomonori/rag-assist/pull/424#issuecomment-5001152588)
+- 初回セルフレビュー: [issuecomment-5001152551](https://github.com/tsuji-tomonori/rag-assist/pull/424#issuecomment-5001152551)
+- implementation CI証跡: [issuecomment-5001268264](https://github.com/tsuji-tomonori/rag-assist/pull/424#issuecomment-5001268264)
