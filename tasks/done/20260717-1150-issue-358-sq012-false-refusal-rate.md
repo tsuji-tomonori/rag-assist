@@ -1,6 +1,6 @@
 # Issue #358 SQ-012 false refusal rate 契約
 
-- 状態: do
+- 状態: done
 - タスク種別: benchmark 品質指標
 - 作成日: 2026-07-17
 - 起点: `origin/main` at `8a427a24`
@@ -22,7 +22,8 @@ SQ-006〜015 の閾値は owner 未承認であるため、本タスクでは既
 - [x] explicit threshold 指定時だけ lower-is-better regression gate に入力し、未承認 default threshold は追加しない。
 - [x] normal / zero / null / invalid / explicit-gate の contract tests を揃える。
 - [x] SQ-012 / FR-019 / benchmark DLD / coverage を source と同期する。
-- [ ] selected/full validation、Draft PR、AC/self-review、report/task lifecycle、final-head CI、Issue #358 進捗まで完遂する。
+- [x] selected/full local validation、Draft PR、AC/self-review、report/task lifecycle を完遂する。
+- [ ] lifecycle commit 後の final-head CI、Issue #358 進捗、clean/upstream を確認する（この task done commit 後に実施）。
 
 ## 受け入れ条件
 
@@ -35,8 +36,19 @@ SQ-006〜015 の閾値は owner 未承認であるため、本タスクでは既
 - [x] refusal precision/recall、unsupported answer、answerable accuracy、RAG 根拠性・認可境界を後退させない。
 - [x] benchmark期待語句、QA sample、dataset 固有分岐を production runtime へ追加しない。
 - [x] canonical docs、coverage、generated docs が source と同期する。
-- [ ] selected local validation、implementation/lifecycle final-head CI、semver、comments、clean/upstream が揃う。
-- [ ] 実 benchmark / owner threshold approval を未実施なら pass とせず残存 gate に記録する。
+- [x] selected local validation、implementation-head CI、semver、comments が揃う。
+- [ ] lifecycle final-head CI、Issue #358 進捗、clean/upstream が揃う（この task done commit 後に実施）。
+- [x] 実 benchmark / owner threshold approval を未実施として残存 gate に記録する。
+
+## 実施結果
+
+- Draft PR: https://github.com/tsuji-tomonori/rag-assist/pull/406
+- implementation commit: `f6c2672a`
+- implementation-head CI: `Lint, type-check, test, build, and synth` 成功（8分8秒）、`validate-semver-label` 成功、明示 RAG promotion gate は通常 PR のため skip
+- 受け入れ条件コメント: https://github.com/tsuji-tomonori/rag-assist/pull/406#issuecomment-4998965145
+- セルフレビュー: https://github.com/tsuji-tomonori/rag-assist/pull/406#issuecomment-4998965136
+- local: benchmark 104/104、API targeted 2/2、lint、benchmark/API build、docs check、source audit、pre-commit、diff check 成功
+- 未実施: 実環境 benchmark、owner threshold 承認。完了扱いにしていない。
 
 ## 検証計画
 
