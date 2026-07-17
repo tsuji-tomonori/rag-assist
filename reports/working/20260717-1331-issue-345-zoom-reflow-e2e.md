@@ -56,4 +56,5 @@
 - 実 browser zoom control、文字のみ拡大、browser chrome、OS scaling、DPR は未検証であり、手動確認を置き換えない。
 - representative screen reader、real-device、scheduled Firefox / WebKit は未検証のまま残る。
 - `npm ci` は既知の audit 8 件を報告した。本 task は test-only のため dependency 更新はスコープ外とした。
-- draft PR、initial/final CI、受け入れ条件コメント、セルフレビュー、Issue #345 の進捗コメントは後続 lifecycle で記録する。
+- Draft PR #408 を作成し、implementation head `be624b53` の required CI（run 29555161594）と semver validation（run 29555167718）が success した。
+- 受け入れ条件コメントとセルフレビューコメントを日本語で記録した。task lifecycle final head の CI と Issue #345 の進捗コメントは、完了報告前に off-repo 証跡として記録する。
