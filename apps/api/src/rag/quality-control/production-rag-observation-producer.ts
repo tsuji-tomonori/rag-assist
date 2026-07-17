@@ -49,6 +49,8 @@ export type RagSignalMeasurement = {
   unavailableReason?: string
 }
 
+export type RagDiagnosticMeasurementId = "retrieval.context_relevance"
+
 export type RagQualitySourceSample = {
   schemaVersion: 1
   signalCatalogVersion: typeof RAG_QUALITY_SIGNAL_CATALOG_VERSION
@@ -68,6 +70,7 @@ export type RagQualitySourceSample = {
   versionDimensions: Record<string, string[]>
   missingVersionDimensions: string[]
   measurements: Partial<Record<RagQualitySignalId, RagSignalMeasurement>>
+  diagnosticMeasurements?: Partial<Record<RagDiagnosticMeasurementId, RagSignalMeasurement>>
   proxyMeasurements?: Record<string, { value: number; label: string }>
   guardOutcomes?: RagGuardOutcome[]
   degradationDecisions?: SafeDegradationDecision[]
@@ -497,6 +500,14 @@ export class ProductionRagObservationProducer {
       "release.dataset_specific_branch_count": benchmarkMeasurement(metrics?.datasetSpecificBranchCount, 1, "release_taint_scan_missing", 0.95),
       "release.artifact_manifest_mismatch_count": benchmarkMeasurement(metrics?.artifactManifestMismatchCount, 1, "release_artifact_validation_missing", 0.95)
     }
+    const diagnosticMeasurements: RagQualitySourceSample["diagnosticMeasurements"] = {
+      "retrieval.context_relevance": benchmarkMeasurement(
+        metrics?.contextRelevance,
+        metrics?.contextRelevanceSampleCount ?? 0,
+        "benchmark_context_relevance_missing",
+        0.9
+      )
+    }
     const versionDimensions = compactVersions({
       policy: `${policy.profileId}@${policy.version}`,
       index: metrics?.indexVersion,
@@ -518,6 +529,7 @@ export class ProductionRagObservationProducer {
       traceIds: [`benchmark:${run.runId}`],
       versionDimensions,
       measurements,
+      diagnosticMeasurements,
       context: {
         tenantId: run.tenantId,
         securityResourceRefs: run.securityResourceRefs,
@@ -717,6 +729,7 @@ export class ProductionRagObservationProducer {
     traceIds: string[]
     versionDimensions: Record<string, string[]>
     measurements: RagQualitySourceSample["measurements"]
+    diagnosticMeasurements?: RagQualitySourceSample["diagnosticMeasurements"]
     proxyMeasurements?: RagQualitySourceSample["proxyMeasurements"]
     guardOutcomes?: RagGuardOutcome[]
     degradationDecisions?: SafeDegradationDecision[]
@@ -746,6 +759,7 @@ export class ProductionRagObservationProducer {
         versionDimensions: input.versionDimensions,
         missingVersionDimensions,
         measurements: input.measurements,
+        diagnosticMeasurements: input.diagnosticMeasurements,
         proxyMeasurements: input.proxyMeasurements,
         guardOutcomes: input.guardOutcomes,
         degradationDecisions: input.degradationDecisions
@@ -1054,23 +1068,31 @@ function assertSourceSample(sample: RagQualitySourceSample): void {
   ) throw new Error("Invalid RAG quality source sample identity")
   for (const [signalId, item] of Object.entries(sample.measurements)) {
     if (!RAG_REQUIRED_SIGNAL_IDS.includes(signalId as RagQualitySignalId)) throw new Error(`Unknown RAG quality signal: ${signalId}`)
-    if (
-      !Number.isInteger(item.sampleCount)
-      || item.sampleCount < 0
-      || item.available && (
-        item.value === null
-        || !Number.isFinite(item.value)
-        || item.sampleCount < 1
-        || item.confidence === null
-        || item.confidence < 0
-        || item.confidence > 1
-      )
-    ) {
-      throw new Error(`Available RAG quality measurement is incomplete: ${signalId}`)
-    }
-    if (!item.available && (item.value !== null || item.confidence !== null)) {
-      throw new Error(`Unavailable RAG quality measurement must not contain a value: ${signalId}`)
-    }
+    assertMeasurement(signalId, item)
+  }
+  for (const [signalId, item] of Object.entries(sample.diagnosticMeasurements ?? {})) {
+    if (signalId !== "retrieval.context_relevance") throw new Error(`Unknown RAG diagnostic measurement: ${signalId}`)
+    assertMeasurement(signalId, item)
+  }
+}
+
+function assertMeasurement(signalId: string, item: RagSignalMeasurement): void {
+  if (
+    !Number.isInteger(item.sampleCount)
+    || item.sampleCount < 0
+    || item.available && (
+      item.value === null
+      || !Number.isFinite(item.value)
+      || item.sampleCount < 1
+      || item.confidence === null
+      || item.confidence < 0
+      || item.confidence > 1
+    )
+  ) {
+    throw new Error(`Available RAG quality measurement is incomplete: ${signalId}`)
+  }
+  if (!item.available && (item.value !== null || item.confidence !== null)) {
+    throw new Error(`Unavailable RAG quality measurement must not contain a value: ${signalId}`)
   }
 }
 

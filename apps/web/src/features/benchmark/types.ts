@@ -32,6 +32,9 @@ export type BenchmarkRunMetrics = {
   averageLatencyMs?: number | null
   errorRate?: number | null
   falseDenialRate?: number | null
+  faithfulness?: number | null
+  contextRelevance?: number | null
+  contextRelevanceSampleCount?: number | null
   citationCompleteness?: number | null
   falseAnswerRate?: number | null
   falseRefusalRate?: number | null

@@ -275,6 +275,9 @@ type RowEvaluation = {
   retrievalRecallAtK: boolean | null
   retrievalRecallAt20: boolean | null
   retrievalMrrAtK: number | null
+  contextRelevance: number | null
+  relevantRetrievedCount: number | null
+  evaluatedRetrievedCount: number | null
   factSlotCoverage: number | null
   normalizedAnswerMatch: boolean | null
   extractionAccuracy: boolean | null
@@ -286,6 +289,7 @@ type RowEvaluation = {
   supportedFactSlots: number | null
   totalFactSlots: number
   citationSupportPass: boolean | null
+  faithfulness: number | null
   unsupportedSentenceRate: number | null
   unsupportedSentenceCount: number | null
   totalSentenceCount: number | null
@@ -408,9 +412,11 @@ type Summary = {
     retrievalRecallAtK: number | null
     retrievalMrrAtK: number | null
     retrievalRecallAt20: number | null
+    contextRelevance: number | null
     expectedPageHitRate: number | null
     factSlotCoverage: number | null
     citationSupportPassRate: number | null
+    faithfulness: number | null
     refusalPrecision: number | null
     refusalRecall: number | null
     noAccessLeakCount: number
@@ -440,8 +446,10 @@ type Summary = {
     groundedFileAccuracy: number | null
     groundedPageAccuracy: number | null
     retrievalRecallAtK: number | null
+    contextRelevance: number | null
     expectedPageHitRate: number | null
     citationSupportPassRate: number | null
+    faithfulness: number | null
     refusalPrecision: number | null
     refusalRecall: number | null
     falseRefusalRate: number | null
@@ -958,6 +966,7 @@ function evaluateRow(
     expectedFiles.length > 0 || expectedDocumentIds.length > 0
       ? reciprocalRankAtK(retrieved, expectedFiles, expectedDocumentIds, evaluatorProfile.retrieval.recallK)
       : null
+  const contextRelevance = evaluateContextRelevance(retrieved, expectedFiles, expectedDocumentIds)
 
   const factSlotResult = evaluateFactSlots(row.expectedFactSlots ?? [], answer, [...citations, ...finalEvidence], expectedAnswerable)
   if (factSlotResult.coverage !== null && factSlotResult.coverage < 1) failureReasons.push("fact_slot_not_covered")
@@ -1076,6 +1085,9 @@ function evaluateRow(
     retrievalRecallAtK,
     retrievalRecallAt20,
     retrievalMrrAtK,
+    contextRelevance: contextRelevance.rate,
+    relevantRetrievedCount: contextRelevance.relevant,
+    evaluatedRetrievedCount: contextRelevance.total,
     factSlotCoverage: factSlotResult.coverage,
     normalizedAnswerMatch,
     extractionAccuracy,
@@ -1087,6 +1099,7 @@ function evaluateRow(
     supportedFactSlots: factSlotResult.supported,
     totalFactSlots: factSlotResult.total,
     citationSupportPass,
+    faithfulness: supportResult.rate === null ? null : Number((1 - supportResult.rate).toFixed(4)),
     unsupportedSentenceRate: supportResult.rate,
     unsupportedSentenceCount: supportResult.unsupported,
     totalSentenceCount: supportResult.total,
@@ -1365,6 +1378,14 @@ function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[], 
   const graphResolutionEvaluated = results.filter((row) => row.evaluation.graphResolutionAccuracy !== null)
   const evidenceSufficiencyEvaluated = results.filter((row) => row.evaluation.evidenceSufficiencyPass !== null)
   const supportEvaluated = results.filter((row) => row.evaluation.unsupportedSentenceRate !== null)
+  const evaluatedSentenceCount = supportEvaluated.reduce((sum, row) => sum + (row.evaluation.totalSentenceCount ?? 0), 0)
+  const supportedSentenceCount = supportEvaluated.reduce(
+    (sum, row) => sum + Math.max(0, (row.evaluation.totalSentenceCount ?? 0) - (row.evaluation.unsupportedSentenceCount ?? 0)),
+    0
+  )
+  const contextRelevanceEvaluated = results.filter((row) => row.evaluation.contextRelevance !== null)
+  const evaluatedRetrievedCount = contextRelevanceEvaluated.reduce((sum, row) => sum + (row.evaluation.evaluatedRetrievedCount ?? 0), 0)
+  const relevantRetrievedCount = contextRelevanceEvaluated.reduce((sum, row) => sum + (row.evaluation.relevantRetrievedCount ?? 0), 0)
   const citationSupportEvaluated = results.filter((row) => row.evaluation.citationSupportPass !== null)
   const noAccessLeakEvaluated = results.filter((row) => row.evaluation.noAccessLeak !== null)
   const refusedRows = results.filter((row) => row.evaluation.refused)
@@ -1407,6 +1428,8 @@ function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[], 
       recallAtK: row.evaluation.retrievalRecallAtK === null ? null : Number(row.evaluation.retrievalRecallAtK),
       recallAt20: row.evaluation.retrievalRecallAt20 === null ? null : Number(row.evaluation.retrievalRecallAt20),
       mrrAtK: row.evaluation.retrievalMrrAtK,
+      relevantRetrievedCount: row.evaluation.relevantRetrievedCount ?? undefined,
+      evaluatedRetrievedCount: row.evaluation.evaluatedRetrievedCount ?? undefined,
       noAccessLeakCount: row.evaluation.noAccessLeakCount
     },
     citation: {
@@ -1611,6 +1634,7 @@ function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[], 
         retrievalRecallAt20Evaluated.filter((row) => row.evaluation.retrievalRecallAt20 === true).length,
         retrievalRecallAt20Evaluated.length
       ),
+      contextRelevance: rate(relevantRetrievedCount, evaluatedRetrievedCount),
       expectedPageHitRate: rate(
         pageEvaluated.filter((row) => row.evaluation.expectedPageHit === true).length,
         pageEvaluated.length
@@ -1628,6 +1652,7 @@ function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[], 
         citationSupportEvaluated.filter((row) => row.evaluation.citationSupportPass === true).length,
         citationSupportEvaluated.length
       ),
+      faithfulness: rate(supportedSentenceCount, evaluatedSentenceCount),
       refusalPrecision: rate(
         refusedRows.filter((row) => !row.evaluation.expectedAnswerable).length,
         refusedRows.length
@@ -1766,11 +1791,19 @@ function summarizeTurnDependencyMetrics(results: BenchmarkResultRow[]): Summary[
     const groundedFileRows = rows.filter((row) => row.evaluation.groundedFileCorrect !== null)
     const groundedPageRows = rows.filter((row) => row.evaluation.groundedPageCorrect !== null)
     const retrievalRows = rows.filter((row) => row.evaluation.retrievalRecallAtK !== null)
+    const contextRows = rows.filter((row) => row.evaluation.contextRelevance !== null)
     const pageRows = rows.filter((row) => row.evaluation.expectedPageHit !== null)
     const supportRows = rows.filter((row) => row.evaluation.citationSupportPass !== null)
     const refusedRows = rows.filter((row) => row.evaluation.refused)
     const unanswerableRows = rows.filter((row) => !row.evaluation.expectedAnswerable)
     const unsupportedRows = rows.filter((row) => row.evaluation.unsupportedSentenceRate !== null)
+    const evaluatedSentenceCount = unsupportedRows.reduce((sum, row) => sum + (row.evaluation.totalSentenceCount ?? 0), 0)
+    const supportedSentenceCount = unsupportedRows.reduce(
+      (sum, row) => sum + Math.max(0, (row.evaluation.totalSentenceCount ?? 0) - (row.evaluation.unsupportedSentenceCount ?? 0)),
+      0
+    )
+    const evaluatedRetrievedCount = contextRows.reduce((sum, row) => sum + (row.evaluation.evaluatedRetrievedCount ?? 0), 0)
+    const relevantRetrievedCount = contextRows.reduce((sum, row) => sum + (row.evaluation.relevantRetrievedCount ?? 0), 0)
     return [dependency, {
       total: rows.length,
       answerableAccuracy: rate(answerableRows.filter((row) => row.evaluation.answerCorrect).length, answerableRows.length),
@@ -1778,8 +1811,10 @@ function summarizeTurnDependencyMetrics(results: BenchmarkResultRow[]): Summary[
       groundedFileAccuracy: rate(groundedFileRows.filter((row) => row.evaluation.groundedFileCorrect === true).length, groundedFileRows.length),
       groundedPageAccuracy: rate(groundedPageRows.filter((row) => row.evaluation.groundedPageCorrect === true).length, groundedPageRows.length),
       retrievalRecallAtK: rate(retrievalRows.filter((row) => row.evaluation.retrievalRecallAtK === true).length, retrievalRows.length),
+      contextRelevance: rate(relevantRetrievedCount, evaluatedRetrievedCount),
       expectedPageHitRate: rate(pageRows.filter((row) => row.evaluation.expectedPageHit === true).length, pageRows.length),
       citationSupportPassRate: rate(supportRows.filter((row) => row.evaluation.citationSupportPass === true).length, supportRows.length),
+      faithfulness: rate(supportedSentenceCount, evaluatedSentenceCount),
       refusalPrecision: rate(refusedRows.filter((row) => !row.evaluation.expectedAnswerable).length, refusedRows.length),
       refusalRecall: rate(unanswerableRows.filter((row) => row.evaluation.refused).length, unanswerableRows.length),
       falseRefusalRate: rate(answerableRows.filter((row) => row.evaluation.refused).length, answerableRows.length),
@@ -1831,9 +1866,11 @@ type BenchmarkReportMetricName =
   | "retrieval_recall_at_k"
   | "retrieval_mrr_at_k"
   | "retrieval_recall_at_20"
+  | "context_relevance"
   | "expected_page_hit_rate"
   | "fact_slot_coverage"
   | "citation_support_pass_rate"
+  | "faithfulness"
   | "refusal_precision"
   | "refusal_recall"
   | "no_access_leak_count"
@@ -1919,10 +1956,10 @@ function renderMarkdownReport(summary: Summary, results: BenchmarkResultRow[]): 
   const turnDependencyRows = Object.keys(summary.turnDependencyMetrics).length === 0
     ? "\nNo turn dependency metrics.\n"
     : [
-        "| dependency | total | answerable_accuracy | answer_content_accuracy | grounded_file_accuracy | grounded_page_accuracy | retrieval_recall_at_k | expected_page_hit_rate | citation_support_pass_rate | refusal_precision | refusal_recall | false_refusal_rate | unsupported_sentence_rate |",
-        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+        "| dependency | total | answerable_accuracy | answer_content_accuracy | grounded_file_accuracy | grounded_page_accuracy | retrieval_recall_at_k | context_relevance | expected_page_hit_rate | citation_support_pass_rate | faithfulness | refusal_precision | refusal_recall | false_refusal_rate | unsupported_sentence_rate |",
+        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
         ...Object.entries(summary.turnDependencyMetrics).map(([dependency, metrics]) =>
-          `| ${escapeMarkdown(dependency)} | ${metrics.total} | ${formatRate(metrics.answerableAccuracy)} | ${formatRate(metrics.answerContentAccuracy)} | ${formatRate(metrics.groundedFileAccuracy)} | ${formatRate(metrics.groundedPageAccuracy)} | ${formatRate(metrics.retrievalRecallAtK)} | ${formatRate(metrics.expectedPageHitRate)} | ${formatRate(metrics.citationSupportPassRate)} | ${formatRate(metrics.refusalPrecision)} | ${formatRate(metrics.refusalRecall)} | ${formatRate(metrics.falseRefusalRate)} | ${formatRate(metrics.unsupportedSentenceRate)} |`
+          `| ${escapeMarkdown(dependency)} | ${metrics.total} | ${formatRate(metrics.answerableAccuracy)} | ${formatRate(metrics.answerContentAccuracy)} | ${formatRate(metrics.groundedFileAccuracy)} | ${formatRate(metrics.groundedPageAccuracy)} | ${formatRate(metrics.retrievalRecallAtK)} | ${formatRate(metrics.contextRelevance)} | ${formatRate(metrics.expectedPageHitRate)} | ${formatRate(metrics.citationSupportPassRate)} | ${formatRate(metrics.faithfulness)} | ${formatRate(metrics.refusalPrecision)} | ${formatRate(metrics.refusalRecall)} | ${formatRate(metrics.falseRefusalRate)} | ${formatRate(metrics.unsupportedSentenceRate)} |`
         )
       ].join("\n")
 
@@ -2076,12 +2113,16 @@ function metricDescription(metric: BenchmarkReportMetricName): string {
       return "evaluator profile の retrieval.recallK 内で、最初に期待ファイルまたは期待 document が現れた順位の逆数平均。"
     case "retrieval_recall_at_20":
       return "上位 20 件の raw retrieved に期待ファイルまたは期待 document が含まれた割合。"
+    case "context_relevance":
+      return "期待ファイルまたは期待 document が指定された行で、raw retrieved context のうち期待識別子に一致した割合。retrieval recall とは別に取得結果のノイズを測る。"
     case "expected_page_hit_rate":
       return "期待 page が citation/finalEvidence に含まれた割合。citation / finalEvidence / retrieved に page metadata が観測できる行だけを評価する。"
     case "fact_slot_coverage":
       return "dataset の expectedFactSlots のうち、回答文または取得根拠で支持できた fact slot の平均割合。"
     case "citation_support_pass_rate":
       return "answerSupport が評価した行のうち、非支持文が 0 件だった割合。"
+    case "faithfulness":
+      return "answerSupport が評価した全回答文のうち、根拠で支持された文の割合。support evidence がない場合は未評価。"
     case "refusal_precision":
       return "拒否した行のうち、dataset 上も回答不能だった割合。高いほど誤拒否が少ない。"
     case "refusal_recall":
@@ -2312,6 +2353,14 @@ function buildMetricReportRows(summary: Summary, results: BenchmarkResultRow[]):
   const noAccessLeakEvaluated = results.filter((row) => row.evaluation.noAccessLeak !== null)
   const refusedRows = results.filter((row) => row.evaluation.refused)
   const iterationRows = results.filter((row) => row.evaluation.iterationCount !== null)
+  const evaluatedSentenceCount = supportEvaluated.reduce((sum, row) => sum + (row.evaluation.totalSentenceCount ?? 0), 0)
+  const supportedSentenceCount = supportEvaluated.reduce(
+    (sum, row) => sum + Math.max(0, (row.evaluation.totalSentenceCount ?? 0) - (row.evaluation.unsupportedSentenceCount ?? 0)),
+    0
+  )
+  const contextRelevanceEvaluated = results.filter((row) => row.evaluation.contextRelevance !== null)
+  const evaluatedRetrievedCount = contextRelevanceEvaluated.reduce((sum, row) => sum + (row.evaluation.evaluatedRetrievedCount ?? 0), 0)
+  const relevantRetrievedCount = contextRelevanceEvaluated.reduce((sum, row) => sum + (row.evaluation.relevantRetrievedCount ?? 0), 0)
   const retrievalCallRows = results.filter((row) => row.evaluation.retrievalCallCount !== null)
   const riskSignalRows = results.filter((row) => row.evaluation.riskSignalCount !== null)
   const llmJudgeEvaluated = results.filter((row) => (row.evaluation.llmJudgeCount ?? 0) > 0)
@@ -2358,9 +2407,11 @@ function buildMetricReportRows(summary: Summary, results: BenchmarkResultRow[]):
     metricRateRow("retrieval_recall_at_k", summary.metrics.retrievalRecallAtK, retrievalRecallAtKEvaluated.filter((row) => row.evaluation.retrievalRecallAtK === true).length, retrievalRecallAtKEvaluated.length, "`expectedFiles` または `expectedDocumentIds` を raw retrieved の evaluator profile retrieval.recallK で評価。"),
     metricNullableRow("retrieval_mrr_at_k", formatNumber(summary.metrics.retrievalMrrAtK), summary.metrics.retrievalMrrAtK, `${retrievalMrrAtKEvaluated.length} rows with expectedFiles or expectedDocumentIds`, "`expectedFiles` または `expectedDocumentIds` を raw retrieved の evaluator profile retrieval.recallK 内の reciprocal rank で評価。"),
     metricRateRow("retrieval_recall_at_20", summary.metrics.retrievalRecallAt20, retrievalRecallAt20Evaluated.filter((row) => row.evaluation.retrievalRecallAt20 === true).length, retrievalRecallAt20Evaluated.length, "`expectedFiles` または `expectedDocumentIds` を raw retrieved の top 20 で評価する後方互換指標。"),
+    metricRateRow("context_relevance", summary.metrics.contextRelevance, relevantRetrievedCount, evaluatedRetrievedCount, "expected file/document がある行の raw retrieved item を micro 集約。retrieved 0 または期待識別子なしは評価対象外。"),
     metricRateRow("expected_page_hit_rate", summary.metrics.expectedPageHitRate, pageEvaluated.filter((row) => row.evaluation.expectedPageHit === true).length, pageEvaluated.length, "`expectedPages` があり、page metadata が観測できる行だけを citation/finalEvidence で評価。"),
     metricNullableRow("fact_slot_coverage", formatRate(summary.metrics.factSlotCoverage), summary.metrics.factSlotCoverage, `${factSlotEvaluated.length} rows with expectedFactSlots`, "`expectedFactSlots` がある行の平均 coverage。"),
     metricRateRow("citation_support_pass_rate", summary.metrics.citationSupportPassRate, citationSupportEvaluated.filter((row) => row.evaluation.citationSupportPass === true).length, citationSupportEvaluated.length, "answerSupport 出力がある行だけを評価。"),
+    metricRateRow("faithfulness", summary.metrics.faithfulness, supportedSentenceCount, evaluatedSentenceCount, "answerSupport が評価した文を micro 集約。support evidence がない場合は評価対象外。"),
     metricRateRow("refusal_precision", summary.metrics.refusalPrecision, refusedRows.filter((row) => !row.evaluation.expectedAnswerable).length, refusedRows.length, "実際に refusal した行のうち、期待値も unanswerable/refusal だった割合。0.0% は answer-only dataset での false positive を示す。"),
     metricRateRow("refusal_recall", summary.metrics.refusalRecall, unanswerableRows.filter((row) => row.evaluation.refused).length, unanswerableRows.length, "unanswerable 行がない場合は評価対象外。"),
     metricNullableRow("no_access_leak_count", formatNumber(summary.metrics.noAccessLeakCount), summary.metrics.noAccessLeakCount, `${noAccessLeakEvaluated.length} rows with forbiddenFiles or forbiddenDocumentIds`, "forbidden evidence が citation/retrieved に出た件数。0 が gate。"),
@@ -2509,6 +2560,22 @@ function reciprocalRankAtK(citations: Citation[], expectedFiles: string[], expec
       (expectedDocumentIds.length > 0 && hasExpectedDocumentHit([citation], expectedDocumentIds))
   )
   return index === -1 ? 0 : Number((1 / (index + 1)).toFixed(4))
+}
+
+function evaluateContextRelevance(
+  retrieved: Citation[],
+  expectedFiles: string[],
+  expectedDocumentIds: string[]
+): { rate: number | null; relevant: number | null; total: number | null } {
+  if (expectedFiles.length === 0 && expectedDocumentIds.length === 0) {
+    return { rate: null, relevant: null, total: null }
+  }
+  if (retrieved.length === 0) return { rate: null, relevant: 0, total: 0 }
+  const relevant = retrieved.filter((citation) => (
+    (expectedFiles.length > 0 && hasExpectedFileHit([citation], expectedFiles))
+    || (expectedDocumentIds.length > 0 && hasExpectedDocumentHit([citation], expectedDocumentIds))
+  )).length
+  return { rate: rate(relevant, retrieved.length), relevant, total: retrieved.length }
 }
 
 function citationCoversPage(citation: Citation, expectedPage: string): boolean {

@@ -69,7 +69,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 150 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 152 field(s) |
 | `400` | リクエスト形式または入力値が不正です。 | `application/json` | 2 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
@@ -137,7 +137,9 @@ Media type: `application/json`
 | `metrics.retrievalRecallAt20` | `number` | no | `response.metrics.retrievalRecallAt20` の値。項目名は retrieval recall at20 を表します。 | nullable |
 | `metrics.retrievalRecallAtK` | `number` | no | `response.metrics.retrievalRecallAtK` の値。項目名は retrieval recall at k を表します。 | nullable |
 | `metrics.falseDenialRate` | `number` | no | `response.metrics.falseDenialRate` の値。項目名は false denial rate を表します。 | nullable |
-| `metrics.faithfulness` | `number` | no | `response.metrics.faithfulness` の値。項目名は faithfulness を表します。 | nullable |
+| `metrics.faithfulness` | `number` | no | `response.metrics.faithfulness` の値。項目名は faithfulness を表します。 | nullable<br>minimum=0<br>maximum=1 |
+| `metrics.contextRelevance` | `number` | no | `response.metrics.contextRelevance` の値。項目名は context relevance を表します。 | nullable<br>minimum=0<br>maximum=1 |
+| `metrics.contextRelevanceSampleCount` | `integer` | no | `response.metrics.contextRelevanceSampleCount` の値。項目名は context relevance sample count を表します。 | nullable<br>minimum=0 |
 | `metrics.unsupportedClaimRate` | `number` | no | `response.metrics.unsupportedClaimRate` の値。項目名は unsupported claim rate を表します。 | nullable |
 | `metrics.unsupportedSentenceRate` | `number` | no | `response.metrics.unsupportedSentenceRate` の値。項目名は unsupported sentence rate を表します。 | nullable |
 | `metrics.unsupportedAnswerRate` | `number` | no | `response.metrics.unsupportedAnswerRate` の値。項目名は unsupported answer rate を表します。 | nullable |

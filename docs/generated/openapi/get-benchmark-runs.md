@@ -52,7 +52,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 151 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 153 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 
@@ -120,7 +120,9 @@ Media type: `application/json`
 | `benchmarkRuns[].metrics.retrievalRecallAt20` | `number` | no | `response.benchmarkRuns[].metrics.retrievalRecallAt20` の値。項目名は retrieval recall at20 を表します。 | nullable |
 | `benchmarkRuns[].metrics.retrievalRecallAtK` | `number` | no | `response.benchmarkRuns[].metrics.retrievalRecallAtK` の値。項目名は retrieval recall at k を表します。 | nullable |
 | `benchmarkRuns[].metrics.falseDenialRate` | `number` | no | `response.benchmarkRuns[].metrics.falseDenialRate` の値。項目名は false denial rate を表します。 | nullable |
-| `benchmarkRuns[].metrics.faithfulness` | `number` | no | `response.benchmarkRuns[].metrics.faithfulness` の値。項目名は faithfulness を表します。 | nullable |
+| `benchmarkRuns[].metrics.faithfulness` | `number` | no | `response.benchmarkRuns[].metrics.faithfulness` の値。項目名は faithfulness を表します。 | nullable<br>minimum=0<br>maximum=1 |
+| `benchmarkRuns[].metrics.contextRelevance` | `number` | no | `response.benchmarkRuns[].metrics.contextRelevance` の値。項目名は context relevance を表します。 | nullable<br>minimum=0<br>maximum=1 |
+| `benchmarkRuns[].metrics.contextRelevanceSampleCount` | `integer` | no | `response.benchmarkRuns[].metrics.contextRelevanceSampleCount` の値。項目名は context relevance sample count を表します。 | nullable<br>minimum=0 |
 | `benchmarkRuns[].metrics.unsupportedClaimRate` | `number` | no | `response.benchmarkRuns[].metrics.unsupportedClaimRate` の値。項目名は unsupported claim rate を表します。 | nullable |
 | `benchmarkRuns[].metrics.unsupportedSentenceRate` | `number` | no | `response.benchmarkRuns[].metrics.unsupportedSentenceRate` の値。項目名は unsupported sentence rate を表します。 | nullable |
 | `benchmarkRuns[].metrics.unsupportedAnswerRate` | `number` | no | `response.benchmarkRuns[].metrics.unsupportedAnswerRate` の値。項目名は unsupported answer rate を表します。 | nullable |

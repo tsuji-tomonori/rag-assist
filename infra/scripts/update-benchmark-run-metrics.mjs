@@ -76,7 +76,9 @@ export function buildBenchmarkRunMetrics(summary, evidence = {}) {
     retrievalRecallAt20: derived.retrievalRecallAt20 ?? finiteNumber(metrics.retrievalRecallAt20) ?? finiteNumber(metrics.recallAt20),
     retrievalRecallAtK: derived.retrievalRecallAtK ?? finiteNumber(metrics.retrievalRecallAtK),
     falseDenialRate: derived.falseDenialRate,
-    faithfulness: derived.faithfulness ?? finiteNumber(metrics.faithfulness) ?? complement(metrics.unsupportedSentenceRate),
+    faithfulness: derived.faithfulness,
+    contextRelevance: derived.contextRelevance,
+    contextRelevanceSampleCount: derived.contextRelevanceSampleCount,
     unsupportedClaimRate: derived.unsupportedClaimRate ?? finiteNumber(metrics.unsupportedClaimRate),
     unsupportedSentenceRate: finiteNumber(metrics.unsupportedSentenceRate),
     unsupportedAnswerRate: finiteNumber(metrics.unsupportedAnswerRate),
@@ -191,6 +193,14 @@ function compactObject(input) {
 function deriveCaseMetrics(summary, caseResults) {
   const recallAtK = caseResults.map((item) => finiteNumber(item?.retrieval?.recallAtK)).filter(isNumber)
   const recallAt20 = caseResults.map((item) => finiteNumber(item?.retrieval?.recallAt20)).filter(isNumber)
+  const contextRows = caseResults
+    .map((item) => ({
+      relevant: finiteNumber(item?.retrieval?.relevantRetrievedCount),
+      total: finiteNumber(item?.retrieval?.evaluatedRetrievedCount)
+    }))
+    .filter((item) => Number.isInteger(item.relevant) && Number.isInteger(item.total) && item.total > 0 && item.relevant >= 0 && item.relevant <= item.total)
+  const relevantRetrievedCount = contextRows.reduce((sum, item) => sum + item.relevant, 0)
+  const evaluatedRetrievedCount = contextRows.reduce((sum, item) => sum + item.total, 0)
   const citationCoverage = caseResults.map((item) => item?.citation?.expectedFileHit).filter(isBoolean)
   const citationSupport = caseResults.map((item) => item?.citation?.citationSupportPass).filter(isBoolean)
   const answerable = caseResults.filter((item) => item?.answerability?.expectedAnswerable === true)
@@ -216,6 +226,8 @@ function deriveCaseMetrics(summary, caseResults) {
     citationLocatorValidity: structured.citationLocatorValidity,
     requiredClaimMissCount: structured.requiredClaimMissCount,
     faithfulness: structured.faithfulness ?? (evaluatedClaimCount === 0 ? undefined : rounded(1 - unsupportedClaimCount / evaluatedClaimCount)),
+    contextRelevance: evaluatedRetrievedCount === 0 ? undefined : rounded(relevantRetrievedCount / evaluatedRetrievedCount),
+    contextRelevanceSampleCount: evaluatedRetrievedCount === 0 ? undefined : evaluatedRetrievedCount,
     unsupportedClaimRate: structured.unsupportedClaimRate ?? (evaluatedClaimCount === 0 ? undefined : rounded(unsupportedClaimCount / evaluatedClaimCount)),
     criticalUnsupportedClaimCount: structured.criticalUnsupportedClaimCount,
     falseAnswerRate: unanswerable.length === 0
@@ -689,11 +701,6 @@ function versionString(value) {
 
 function finiteNumber(value) {
   return typeof value === "number" && Number.isFinite(value) ? value : undefined
-}
-
-function complement(value) {
-  const numeric = finiteNumber(value)
-  return numeric === undefined ? undefined : 1 - numeric
 }
 
 function required(value, label) {

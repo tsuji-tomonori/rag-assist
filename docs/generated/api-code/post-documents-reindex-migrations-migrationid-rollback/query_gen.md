@@ -108,8 +108,8 @@
 | 98 | 参照 | `objectStore` | `getTextWithVersion` | `objectStore` に対して get text with version を実行する。 | `readManifest` | `apps/api/src/rag/_shared/security/revocation-cleanup-coordinator.ts:636 (readManifest)` |
 | 99 | 作成・追記 | `this.objectStore` | `putTextIfVersion` | `this.objectStore` に対して put text if version を実行する。 | `ObjectStoreRevocationCleanupCoordinator.register` | `apps/api/src/rag/_shared/security/revocation-cleanup-coordinator.ts:169 (ObjectStoreRevocationCleanupCoordinator.register)` |
 | 100 | 実行 | `new ProductionRagObservationProducer(deps.objectStore)` | `captureIngestManifest` | `new ProductionRagObservationProducer(deps.objectStore)` に対して capture ingest manifest を実行する。 | `runIngestPipeline` | `apps/api/src/rag/offline/pre-retrieval/ingestion/ingest-run.service.ts:504 (runIngestPipeline)` |
-| 101 | 参照 | `this.objectStore` | `getText` | `this.objectStore` に対して get text を実行する。 | `ProductionRagObservationProducer.loadActivePolicy` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:783 (ProductionRagObservationProducer.loadActivePolicy)` |
-| 102 | 作成・追記 | `this.objectStore` | `putText` | `this.objectStore` に対して put text を実行する。 | `ProductionRagObservationProducer.persistSample` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:762 (ProductionRagObservationProducer.persistSample)` |
+| 101 | 参照 | `this.objectStore` | `getText` | `this.objectStore` に対して get text を実行する。 | `ProductionRagObservationProducer.loadActivePolicy` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:797 (ProductionRagObservationProducer.loadActivePolicy)` |
+| 102 | 作成・追記 | `this.objectStore` | `putText` | `this.objectStore` に対して put text を実行する。 | `ProductionRagObservationProducer.persistSample` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:776 (ProductionRagObservationProducer.persistSample)` |
 | 103 | 作成・追記 | `this` | `saveReindexMigrationLedger` | `this` に対して save reindex migration ledger を実行する。 | `MemoRagService.rollbackReindexMigration` | `apps/api/src/rag/memorag-service.ts:893 (MemoRagService.rollbackReindexMigration)` |
 
 ## 外部サービス操作

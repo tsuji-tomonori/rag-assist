@@ -41,7 +41,9 @@ type SummaryArtifact = {
     retrievalRecallAtK?: number | null
     retrievalRecallAt20?: number | null
     retrievalMrrAtK?: number | null
+    contextRelevance?: number | null
     citationSupportPassRate?: number | null
+    faithfulness?: number | null
     noAccessLeakCount?: number
     noAccessLeakRate?: number | null
     abstainAccuracy?: number | null
@@ -61,10 +63,16 @@ type SummaryArtifact = {
     total: number
     queryRewriteAccuracy?: number | null
     retrievalRecallAtK?: number | null
+    contextRelevance?: number | null
     refusalPrecision?: number | null
     refusalRecall?: number | null
     falseRefusalRate?: number | null
+    faithfulness?: number | null
     unsupportedSentenceRate?: number | null
+  }>
+  caseResults?: Array<{
+    retrieval?: { relevantRetrievedCount?: number; evaluatedRetrievedCount?: number }
+    generation?: { supportedClaimCount?: number; unsupportedClaimCount?: number; evaluatedClaimCount?: number }
   }>
   corpusSeed: Array<{ fileName: string; status: string; skipReason?: string }>
   skippedRows: Array<{ id?: string; fileNames: string[]; reason: string }>
@@ -221,6 +229,119 @@ test("benchmark runner reports baseline categories, support, MRR, and ACL leak m
     assert.match(report, /citation_support_pass_rate/)
     assert.match(report, /no_access_leak_count/)
     assert.match(report, /RAG profile: default@1 retrieval=default@1 answer=default-answer-policy@1/)
+  } finally {
+    await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()))
+  }
+})
+
+test("benchmark runner reports faithfulness and context relevance from evaluated evidence", async () => {
+  const paths = artifactPaths("context-quality")
+  const datasetPath = path.join(paths.dir, "dataset.jsonl")
+  writeFileSync(datasetPath, `${JSON.stringify({
+    id: "context-quality-001",
+    question: "経費精算の期限と承認者は？",
+    answerable: true,
+    expectedResponseType: "answer",
+    expectedContains: ["30日以内"],
+    expectedFiles: ["handbook.md"]
+  })}\n`, "utf-8")
+
+  const server = createServer((_req, res) => {
+    res.setHeader("content-type", "application/json")
+    res.end(JSON.stringify({ json: {
+      id: "context-quality-001",
+      responseType: "answer",
+      answer: "経費精算は30日以内です。承認者は部門長です。",
+      isAnswerable: true,
+      citations: [{ documentId: "doc-handbook", fileName: "handbook.md", chunkId: "relevant-1", score: 0.9 }],
+      retrieved: [
+        { documentId: "doc-handbook", fileName: "handbook.md", chunkId: "relevant-1", score: 0.9 },
+        { documentId: "doc-policy", fileName: "handbook.md", chunkId: "relevant-2", score: 0.8 },
+        { documentId: "doc-travel", fileName: "travel.md", chunkId: "noise-1", score: 0.7 },
+        { documentId: "doc-security", fileName: "security.md", chunkId: "noise-2", score: 0.6 }
+      ],
+      answerSupport: {
+        unsupportedSentences: [{ sentence: "承認者は部門長です。", reason: "根拠不足" }],
+        totalSentences: 4
+      },
+      debug: { ragProfile: defaultRagProfile(), totalLatencyMs: 10, steps: [] }
+    } }))
+  })
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve))
+  const address = server.address() as AddressInfo | null
+  assert.ok(address)
+
+  try {
+    const result = await runBenchmarkRunner({
+      API_BASE_URL: `http://127.0.0.1:${address.port}`,
+      DATASET: datasetPath,
+      OUTPUT: paths.output,
+      SUMMARY: paths.summary,
+      REPORT: paths.report
+    })
+
+    assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`)
+    const summary = readSummary(paths.summary)
+    assert.equal(summary.metrics?.faithfulness, 0.75)
+    assert.equal(summary.metrics?.contextRelevance, 0.5)
+    assert.deepEqual(summary.caseResults?.[0]?.generation, {
+      supportedClaimCount: 3,
+      unsupportedClaimCount: 1,
+      evaluatedClaimCount: 4
+    })
+    assert.equal(summary.caseResults?.[0]?.retrieval?.relevantRetrievedCount, 2)
+    assert.equal(summary.caseResults?.[0]?.retrieval?.evaluatedRetrievedCount, 4)
+    const report = readFileSync(paths.report, "utf-8")
+    assert.match(report, /\| faithfulness \| 75\.0% \| evaluated \| 3\/4 \|/)
+    assert.match(report, /\| context_relevance \| 50\.0% \| evaluated \| 2\/4 \|/)
+  } finally {
+    await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()))
+  }
+})
+
+test("benchmark runner keeps context quality unavailable without evaluated evidence", async () => {
+  const paths = artifactPaths("context-quality-unavailable")
+  const datasetPath = path.join(paths.dir, "dataset.jsonl")
+  writeFileSync(datasetPath, `${JSON.stringify({
+    id: "context-quality-unavailable-001",
+    question: "根拠が取得できない場合は？",
+    answerable: true,
+    expectedResponseType: "answer",
+    expectedFiles: ["missing.md"]
+  })}\n`, "utf-8")
+
+  const server = createServer((_req, res) => {
+    res.setHeader("content-type", "application/json")
+    res.end(JSON.stringify({ json: {
+      id: "context-quality-unavailable-001",
+      responseType: "answer",
+      answer: "回答です。",
+      isAnswerable: true,
+      citations: [],
+      retrieved: [],
+      debug: { ragProfile: defaultRagProfile(), totalLatencyMs: 10, steps: [] }
+    } }))
+  })
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve))
+  const address = server.address() as AddressInfo | null
+  assert.ok(address)
+
+  try {
+    const result = await runBenchmarkRunner({
+      API_BASE_URL: `http://127.0.0.1:${address.port}`,
+      DATASET: datasetPath,
+      OUTPUT: paths.output,
+      SUMMARY: paths.summary,
+      REPORT: paths.report
+    })
+
+    assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`)
+    const summary = readSummary(paths.summary)
+    assert.equal(summary.metrics?.faithfulness, null)
+    assert.equal(summary.metrics?.contextRelevance, null)
+    const report = readFileSync(paths.report, "utf-8")
+    assert.match(report, /\| faithfulness \| not_applicable \| not_applicable \| 0 denominator \|/)
+    assert.match(report, /\| context_relevance \| not_applicable \| not_applicable \| 0 denominator \|/)
   } finally {
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()))
   }

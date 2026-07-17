@@ -1312,6 +1312,8 @@ export type BenchmarkRunMetrics = {
   retrievalRecallAtK?: number
   falseDenialRate?: number
   faithfulness?: number
+  contextRelevance?: number
+  contextRelevanceSampleCount?: number
   unsupportedClaimRate?: number
   unsupportedSentenceRate?: number
   unsupportedAnswerRate?: number

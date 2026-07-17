@@ -326,6 +326,8 @@ test("FR-075/SQ-005..015 production artifacts yield profile/version/slice observ
       retrievalRecallAtK: 0.91,
       falseDenialRate: 0.01,
       faithfulness: 0.96,
+      contextRelevance: 0.75,
+      contextRelevanceSampleCount: 80,
       unsupportedClaimRate: 0.02,
       citationPrecision: 0.98,
       citationCompleteness: 0.95,
@@ -371,6 +373,7 @@ test("FR-075/SQ-005..015 production artifacts yield profile/version/slice observ
   assert.equal(findObservation(observations, "performance.search_p95_ms").value, 30)
   assert.equal(findObservation(observations, "release.dataset_specific_branch_count").value, 0)
   assert.equal(findObservation(observations, "evaluation.slice_case_count").value, 100)
+  assert.equal(findObservation(observations, "generation.faithfulness").value, 0.96)
   assert.equal(findObservation(observations, "reliability.success_rate", "use_case=chat").available, true)
 
   const normalChatKey = (await store.listKeys("quality-control/source-samples/")).find((key) => key.includes("/normal_chat/normal-chat-1/"))
@@ -388,6 +391,18 @@ test("FR-075/SQ-005..015 production artifacts yield profile/version/slice observ
   assert.match(normalChatSample.proxyMeasurements.answerSupportRate?.label ?? "", /proxy_not_reviewed/)
   assert.equal(normalChatSample.guardOutcomes.length, MANDATORY_RAG_GUARDS.length)
   assert.doesNotMatch(JSON.stringify(normalChatSample), /measured text|What is measured/)
+
+  const benchmarkKey = (await store.listKeys("quality-control/source-samples/")).find((key) => key.includes("/benchmark_summary/benchmark-1/"))
+  assert.ok(benchmarkKey)
+  const benchmarkSample = JSON.parse(await store.getText(benchmarkKey)) as {
+    diagnosticMeasurements: Record<string, { available: boolean; value: number | null; sampleCount: number }>
+  }
+  assert.deepEqual(benchmarkSample.diagnosticMeasurements["retrieval.context_relevance"], {
+    available: true,
+    value: 0.75,
+    sampleCount: 80,
+    confidence: 0.9
+  })
 
   const injection = findObservation(observations, "security.injection_success_count")
   assert.equal(injection.available, false)

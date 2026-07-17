@@ -1,6 +1,14 @@
 import assert from "node:assert/strict"
 import test from "node:test"
-import { ChatResponseSchema, ConversationHistoryItemSchema, DebugTraceSchema, DocumentIngestRunSchema, DocumentUploadRequestSchema, SearchResponseSchema, WorkerEventSchema, WorkerResultSchema } from "../schemas.js"
+import { BenchmarkRunMetricsSchema, ChatResponseSchema, ConversationHistoryItemSchema, DebugTraceSchema, DocumentIngestRunSchema, DocumentUploadRequestSchema, SearchResponseSchema, WorkerEventSchema, WorkerResultSchema } from "../schemas.js"
+
+test("FR-019 benchmark run metrics bound context relevance and its evidence count", () => {
+  const base = { total: 1, succeeded: 1, failedHttp: 0 }
+  assert.equal(BenchmarkRunMetricsSchema.safeParse({ ...base, faithfulness: 0.75, contextRelevance: 0.5, contextRelevanceSampleCount: 4 }).success, true)
+  assert.equal(BenchmarkRunMetricsSchema.safeParse({ ...base, faithfulness: -0.1 }).success, false)
+  assert.equal(BenchmarkRunMetricsSchema.safeParse({ ...base, contextRelevance: 1.1, contextRelevanceSampleCount: 4 }).success, false)
+  assert.equal(BenchmarkRunMetricsSchema.safeParse({ ...base, contextRelevance: 0.5, contextRelevanceSampleCount: -1 }).success, false)
+})
 
 test("document metadata schema accepts recursive JSON alias metadata", () => {
   const result = DocumentUploadRequestSchema.safeParse({

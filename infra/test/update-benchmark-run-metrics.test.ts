@@ -165,6 +165,8 @@ test("derives denial, citation, refusal, task, security, and latency evidence fr
   assert.equal(metrics.citationCompleteness, 0.75)
   assert.equal(metrics.citationPrecision, 0.75)
   assert.equal(metrics.faithfulness, 0.875)
+  assert.equal(metrics.contextRelevance, 0.5)
+  assert.equal(metrics.contextRelevanceSampleCount, 8)
   assert.equal(metrics.unsupportedClaimRate, 0.125)
   assert.equal(metrics.falseRefusalRate, 0.25)
   assert.equal(metrics.taskCompletionRate, 0.75)
@@ -189,12 +191,15 @@ test("does not trust optional aggregate quality values when versioned case evide
       falseDenialRate: 0,
       citationCompleteness: 1,
       falseRefusalRate: 0,
+      faithfulness: 1,
+      contextRelevance: 1,
+      contextRelevanceSampleCount: 99,
       taskCompletionRate: 1,
       noAccessLeakCount: 0
     }
   })
 
-  for (const name of ["falseDenialRate", "citationCompleteness", "falseRefusalRate", "taskCompletionRate", "noAccessLeakCount"]) {
+  for (const name of ["falseDenialRate", "citationCompleteness", "falseRefusalRate", "faithfulness", "contextRelevance", "contextRelevanceSampleCount", "taskCompletionRate", "noAccessLeakCount"]) {
     assert.equal(name in metrics, false, `${name} must remain unavailable`)
   }
 })
@@ -211,6 +216,22 @@ test("derives false-answer rate from case-level expected and actual answerabilit
   const metrics = script.buildBenchmarkRunMetrics(versionedSummary([falseAnswer, correctRefusal]))
   assert.equal(metrics.falseAnswerRate, 0.5)
   assert.equal("falseRefusalRate" in metrics, false)
+})
+
+test("keeps context relevance unavailable for invalid or empty case evidence", async () => {
+  const script = await importModule(pathToFileURL(scriptPath).href) as {
+    buildBenchmarkRunMetrics(summary: unknown): MetricRecord
+  }
+  const invalid = caseResult({ recallAtK: 1, recallAt20: 1, citationHit: true, support: true, actualResponseType: "answer", taskOutcome: "complete", latencyMs: 11, leaks: 0 })
+  invalid.retrieval.relevantRetrievedCount = 3
+  invalid.retrieval.evaluatedRetrievedCount = 2
+  const empty = caseResult({ recallAtK: 1, recallAt20: 1, citationHit: true, support: true, actualResponseType: "answer", taskOutcome: "complete", latencyMs: 12, leaks: 0 })
+  empty.retrieval.relevantRetrievedCount = 0
+  empty.retrieval.evaluatedRetrievedCount = 0
+
+  const metrics = script.buildBenchmarkRunMetrics(versionedSummary([invalid, empty]))
+  assert.equal("contextRelevance" in metrics, false)
+  assert.equal("contextRelevanceSampleCount" in metrics, false)
 })
 
 test("derives eligibility propagation and MTTR only from an approved matching workload evidence profile", async () => {
@@ -479,7 +500,13 @@ function caseResult(input: {
     status: 200,
     passed: input.taskOutcome === "complete",
     failureReasons: [],
-    retrieval: { recallAtK: input.recallAtK, recallAt20: input.recallAt20, noAccessLeakCount: input.leaks },
+    retrieval: {
+      recallAtK: input.recallAtK,
+      recallAt20: input.recallAt20,
+      relevantRetrievedCount: 1,
+      evaluatedRetrievedCount: 2,
+      noAccessLeakCount: input.leaks
+    },
     slice: { questionType: "fact", tenantRole: "tenant-a:chat-user", ocrMode: "native", language: "ja", multiEvidence: true, answerability: "answerable", severity: "high" },
     citation: { expectedFileHit: input.citationHit, citationSupportPass: input.support },
     claims: [
