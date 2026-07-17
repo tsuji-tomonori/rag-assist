@@ -1,6 +1,6 @@
 # Issue #359 Phase 4g: benchmark artifact download 抽出
 
-- 状態: do
+- 状態: done
 - タスク種別: 修正
 - Issue: #359
 - stacked base: PR #414 / `codex/issue-359-benchmark-run-cancellation-extraction`
@@ -79,13 +79,22 @@ artifact download の orchestration と AWS SDK mapping を分離する明示的
 
 ## 受け入れ条件
 
-- [ ] authoritative tenant lookup を使い、missing / cross-tenant run を列挙しない。
-- [ ] logs URL、summary/results/report S3 artifact、object key 不在、bucket 未設定、TTL 下限、signer failure の既存 behavior を維持する。
-- [ ] service source が narrow ports のみに依存し、AWS SDK command mapping が adapter に分離される。
-- [ ] `MemoRagService.createBenchmarkArtifactDownloadUrl` の method 名・引数・返却型と `createBenchmarkArtifactDownloadMetadata` export を維持する。
-- [ ] create / reauthorize / cleanup / execution start、route/RBAC、RAG trust、Web UI を変更しない。
-- [ ] targeted API test、API full test、`npm run ci`、docs freshness、source audit、`git diff --check`、pre-commit が成功する。
-- [ ] Draft stacked PR に `semver:patch` を設定し、日本語 AC / self-review、report/task done、final-head CI、Issue #359 進捗まで記録する。
+- [x] authoritative tenant lookup を使い、missing / cross-tenant run を列挙しない。
+- [x] logs URL、summary/results/report S3 artifact、object key 不在、bucket 未設定、TTL 下限、signer failure の既存 behavior を維持する。
+- [x] service source が narrow ports のみに依存し、AWS SDK command mapping が adapter に分離される。
+- [x] `MemoRagService.createBenchmarkArtifactDownloadUrl` の method 名・引数・返却型と `createBenchmarkArtifactDownloadMetadata` export を維持する。
+- [x] create / reauthorize / cleanup / execution start、route/RBAC、RAG trust、Web UI を変更しない。
+- [x] targeted API test、API full test、`npm run ci`、docs freshness、source audit、`git diff --check`、pre-commit が成功する。
+- [x] Draft stacked PR に `semver:patch` を設定し、日本語 AC / self-review、report/task done、final-head CI、Issue #359 進捗まで記録する。
+
+## 完了結果
+
+- 実装 commit: `41d2ebc153ca8e4325ce604630210bc5e8ba30f8`
+- Draft stacked PR: #418（base: `codex/issue-359-benchmark-run-cancellation-extraction`）
+- 受け入れ条件コメント: `https://github.com/tsuji-tomonori/rag-assist/pull/418#issuecomment-5000112471`
+- セルフレビューコメント: `https://github.com/tsuji-tomonori/rag-assist/pull/418#issuecomment-5000113698`
+- implementation-head CI: run `29562856229` success
+- lifecycle commit 後の final-head CI と Issue #359 進捗は、head を変えない外部コメントへ記録する。
 
 ## 検証計画
 

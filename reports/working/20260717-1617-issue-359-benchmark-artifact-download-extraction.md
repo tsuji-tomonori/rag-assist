@@ -17,7 +17,7 @@
 | R2 | narrow-port service / AWS adapter 抽出 | 対応 |
 | R3 | public signature / export / tenant / download semantics 不変 | characterization と full CI で対応 |
 | R4 | docs / generated source evidence 同期 | 対応 |
-| R5 | PR lifecycle / final-head CI / Issue 進捗 | 実装 commit 前時点では継続中。後続更新で記録 |
+| R5 | PR lifecycle / final-head CI / Issue 進捗 | PR #418、AC/self-review、implementation-head CI まで対応。final-head/Issue は lifecycle commit 後に外部記録 |
 | R6 | merge / deploy / release 禁止 | 遵守 |
 
 ## 3. 検討・判断
@@ -68,32 +68,39 @@
 - 初回 `npm ci` は sandbox が `esbuild` binary 起動を `EPERM` で拒否した。resolved command を確認し、権限委譲した同じ `npm ci` で成功した。既存 vulnerability 8件（low 2 / moderate 1 / high 5）は lockfile 変更を伴わず、本 unit では変更していない。
 - 初回 root CI は source test の unused import / regex lint 2件を検出したため修正した。
 - 修正後の通常 sandbox root CI は `tsx` IPC / route listen が `EPERM` となった。権限委譲した同じ `npm run ci` で全 workspace success を確認した。
-- `pre-commit run --all-files` は対象外の既存履歴レポート1件の末尾空白を修正して停止した。hook 変更を base へ戻し、今回の staged files に限定して再検証する。
+- `pre-commit run --all-files` は対象外の既存履歴レポート1件の末尾空白を修正して停止した。hook 変更を base へ戻し、今回の staged files に限定した `pre-commit run` で全 hook success を確認した。
+- GitHub Actions implementation-head MemoRAG CI: run `29562856229` success（head `41d2ebc153ca8e4325ce604630210bc5e8ba30f8`）。
 
 ## 7. 指示への fit 評価
 
 | 評価軸 | 評価 | 理由 |
 |---|---:|---|
-| 指示網羅性 | 4.5/5 | 実装・local validation 完了、GitHub lifecycle は後続更新中 |
+| 指示網羅性 | 4.9/5 | 実装・local validation・PR/AC/self-review・implementation-head CI 完了。final-head/Issue は lifecycle commit 後に外部記録 |
 | 制約遵守 | 5/5 | non-overlap、専用 worktree、no merge/deploy/release を維持 |
 | 成果物品質 | 4.8/5 | narrow ports、behavior test、source guard、docs を同期 |
 | 説明責任 | 5/5 | sandbox failure、未検証 AWS、generated churn を明記 |
 | 検収容易性 | 4.8/5 | task/設計/test/report と検証コマンドを対応付けた |
 
-**総合fit: 4.8 / 5.0（約96%）**
+**総合fit: 4.9 / 5.0（約98%）**
 
-PR lifecycle と final-head CI を完了した後に最終 fit を確定する。
+final-head CI と Issue progress の外部記録を完了した後に最終 fit を確定する。
 
 ## 8. 未対応・制約・リスク
 
 - real AWS S3 presigned URL、実 benchmark、manual UI は credential・費用・外部状態を伴うか Web 非変更のため未実施。AWS command/presigner port と local/GitHub CI を検証根拠とする。
 - generated API docs は source line/call graph により多数ファイルが機械更新され、stacked base 順の merge/rebase 後に再生成が必要になり得る。
 - benchmark create / reauthorize / revocation cleanup / execution start は意図的に facade に残し、次の独立 unit とする。
-- PR URL、semver、comments、final-head CI、Issue comment、clean/upstream は lifecycle 完了後に本レポートへ追記する。
+- final-head CI、Issue comment、clean/upstream は lifecycle commit 後に PR / Issue の外部証跡として記録する。これらの結果を本レポートへ後追い commit すると head が再度変わるため、最終 head を固定したまま証跡 URL を残す。
 
 ## 9. PR lifecycle 記録
 
-- Draft PR: 作成前
+- Draft PR: #418 `https://github.com/tsuji-tomonori/rag-assist/pull/418`
 - stacked base: PR #414 / `codex/issue-359-benchmark-run-cancellation-extraction`
-- GitHub Apps: callable capability 未確認。利用不可なら `gh` fallback 理由を記録する。
+- head: `codex/issue-359-benchmark-artifact-download-extraction`
+- semver: `semver:patch`
+- 受け入れ条件コメント: `https://github.com/tsuji-tomonori/rag-assist/pull/418#issuecomment-5000112471`
+- セルフレビューコメント: `https://github.com/tsuji-tomonori/rag-assist/pull/418#issuecomment-5000113698`
+- implementation-head CI: `https://github.com/tsuji-tomonori/rag-assist/actions/runs/29562856229` success
+- GitHub Apps: callable capability が session に提供されていないため、`gh` fallback を使用した。
+- final-head CI / Issue #359 progress: lifecycle commit/push 後に外部記録する。
 - merge / deploy / release: 未実施
