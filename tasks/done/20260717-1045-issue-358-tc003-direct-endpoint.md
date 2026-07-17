@@ -1,6 +1,6 @@
 # Issue #358 TC-003 execute-api direct endpoint 無効化
 
-- 状態: do
+- 状態: done（lifecycle final-head CI は post-commit 外部 gate として監視）
 - タスク種別: セキュリティ設定変更
 - 作成日: 2026-07-17
 - 起点: `codex/issue-358-tc003-websocket-ticket` final head `f3b66346`
@@ -19,29 +19,37 @@ TC-003 段階6として、REST API と WebSocket API の AWS 既定 `execute-api
 
 ## 実装チェックリスト
 
-- [ ] AWS 公式仕様と current IaC を確認し、REST / WebSocket の default endpoint disable と custom domain mapping の成立条件を確定する。
-- [ ] production 相当構成の必須入力、certificate region、domain ownership、CloudFront origin protocol / path を fail closed に定義する。
-- [ ] REST API と WebSocket API の既定 endpoint を production 相当構成で無効化する。
-- [ ] CloudFront の REST / WebSocket origin を API Gateway custom origin へ切り替え、既存 path rewrite と same-origin behavior を維持する。
-- [ ] non-production の明示的な例外を設ける場合は既定値を安全側にし、production での欠落・不正値・fallback を synth 前に拒否する。
-- [ ] CDK assertion、negative config、snapshot / generated inventory、SPA artifact のテストを追加・更新する。
-- [ ] ADR / HLD / 要件 coverage を実装と同期する。
-- [ ] selected / full validation、Draft PR、AC/self-review、task/report lifecycle、final-head CI、Issue #358 進捗まで完了する。
+- [x] AWS 公式仕様と current IaC を確認し、REST / WebSocket の default endpoint disable と custom domain mapping の成立条件を確定する。
+- [x] production 相当構成の必須入力、certificate region、domain ownership、CloudFront origin protocol / path を fail closed に定義する。
+- [x] REST API と WebSocket API の既定 endpoint を production 相当構成で無効化する。
+- [x] CloudFront の REST / WebSocket origin を API Gateway custom origin へ切り替え、既存 path rewrite と same-origin behavior を維持する。
+- [x] non-production の明示的な例外を設け、production での欠落・不正値・fallback を synth 前に拒否する。
+- [x] CDK assertion、negative config、snapshot / generated inventory、SPA artifact のテストを追加・更新する。
+- [x] ADR / HLD / 要件 coverage を実装と同期する。
+- [x] selected / full validation、Draft PR、AC/self-review、task/report lifecycle 更新を実施する。final-head CI と Issue 進捗は post-commit 外部 gate として PR に記録する。
 
 ## 受け入れ条件
 
-- [ ] production 相当 synth で REST API と WebSocket API の `DisableExecuteApiEndpoint` が有効である。
-- [ ] CloudFront の `/api` / `/api/*` / `/ws/v1` は disable 済み default endpoint ではなく、明示された API Gateway custom origin と API mapping を利用する。
-- [ ] REST と WebSocket の custom domain、certificate、API mapping / stage の対応が曖昧または欠落した production 構成は synth 前または synth 時に fail closed となる。
-- [ ] SPA runtime config / built artifact / CloudFormation output に browser 用 direct `execute-api` URL を追加しない。
-- [ ] CloudFront の REST error と SPA rewrite の分離、WebSocket exact path / upgrade header / stage rewrite、Hosted UI / PKCE、CORS allowlist を後退させない。
-- [ ] direct endpoint disable は source と synthesized template の双方で自動検証され、意図的に false / 欠落へ戻すと test が失敗する。
-- [ ] REST / WebSocket の既存 auth、tenant/session binding、single-use ticket、logging redaction、authorization policy を弱めない。
-- [ ] RAG の根拠性、benchmark / QA sample / dataset 固有分岐を production runtime へ追加しない。
-- [ ] canonical docs、coverage、snapshot、generated infra inventory が source と同期する。
-- [ ] selected local validation と implementation-head / lifecycle final-head CI が成功し、未解決 failure がない。
-- [ ] 実 AWS/browser での default endpoint 到達不能、CloudFront REST / WebSocket 疎通を未実施なら pass とせず、preview gate と残存リスクに記録する。
-- [ ] 日本語 Draft PR、`semver:patch`、受け入れ条件コメント、セルフレビュー、Issue #358 進捗、clean/upstream 一致まで完了する。
+- [x] production 相当 synth で REST API と WebSocket API の `DisableExecuteApiEndpoint` が有効である。
+- [x] CloudFront の `/api` / `/api/*` / `/ws/v1` は disable 済み default endpoint ではなく、明示された API Gateway custom origin と API mapping を利用する。
+- [x] REST と WebSocket の custom domain、certificate、API mapping / stage の対応が曖昧または欠落した production 構成は synth 前または synth 時に fail closed となる。
+- [x] SPA runtime config / built artifact / CloudFormation output に browser 用 direct `execute-api` URL を追加しない。
+- [x] CloudFront の REST error と SPA rewrite の分離、WebSocket exact path / upgrade header / stage rewrite、Hosted UI / PKCE、CORS allowlist を後退させない。
+- [x] direct endpoint disable は source と synthesized template の双方で自動検証され、意図的に false / 欠落へ戻すと test が失敗する。
+- [x] REST / WebSocket の既存 auth、tenant/session binding、single-use ticket、logging redaction、authorization policy を弱めない。
+- [x] RAG の根拠性、benchmark / QA sample / dataset 固有分岐を production runtime へ追加しない。
+- [x] canonical docs、coverage、snapshot、generated infra inventory が source と同期する。
+- [x] selected local validation と implementation-head CI run `29549225579` が成功し、未解決 failure がない。
+- [x] 実 AWS/browser での default endpoint 到達不能、CloudFront REST / WebSocket 疎通を pass とせず、preview gate と残存リスクに記録する。
+- [x] 日本語 Draft PR #402、`semver:patch`、受け入れ条件コメント、セルフレビューを記録する。Issue #358 進捗、final-head CI、clean/upstream は lifecycle commit 後の外部 gate とする。
+
+## 検証結果
+
+- local: infra test 5/5（stack 25 tests）、全 workspace typecheck、contract/API/infra build、lint、`task docs:infra-inventory`、`task docs:check`、production synth、source audit、pre-commit、`git diff --check` が成功。
+- production synth: 最初は実行 region、次に production CORS / alert context の不足を fail closed で拒否。CLI が選択した `us-east-1` と ACM ARN を一致させた再実行は成功。CDK-Nag は既存の Cognito MFA / REST WAF warning のみ。
+- GitHub: implementation head `3b1d82bd` の run `29549225579` は主要 job success（8m18s）、promotion gate は対象外で skip。
+- 未実施: 実 AWS/browser の certificate/DNS、default endpoint 403、CloudFront REST、WebSocket 101/subprotocol、custom domain origin cloaking。
+- post-commit: lifecycle final-head CI、Issue #358 進捗コメント、clean/upstream 一致を PR external evidence として記録する。
 
 ## 検証計画
 
