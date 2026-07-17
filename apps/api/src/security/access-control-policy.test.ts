@@ -611,6 +611,12 @@ test("security audit reconciliation worker is single-tenant and rechecks authori
   assert.match(groupUpdateResolverSource, /no durable non-success result/)
   assert.match(workerSource, /ResourceGroupCreateAuditAuthoritativeResolver\(deps\.objectStore, deps\.userGroupStore, deps\.groupMembershipStore\)/)
   assert.match(groupCreateResolverSource, /security\/resource-group-lifecycle\/create/)
+
+  const groupDeleteResolverSource = await readFile(new URL("./resource-group-delete-audit-reconciler.ts", import.meta.url), "utf8")
+  assert.match(workerSource, /ResourceGroupDeleteAuditAuthoritativeResolver\(deps\.objectStore, deps\.userGroupStore, deps\.groupMembershipStore\)/)
+  assert.match(groupDeleteResolverSource, /security\/resource-group-lifecycle\/delete/)
+  assert.match(groupDeleteResolverSource, /ObjectStoreRevocationCleanupRepairOutbox/)
+  assert.match(groupDeleteResolverSource, /ObjectStoreRevocationCleanupCoordinator/)
   assert.match(groupCreateResolverSource, /auditIntentId !== auditIntentId/)
   assert.match(groupCreateResolverSource, /status !== "membership_created"/)
   assert.doesNotMatch(groupCreateResolverSource, /\.create\(|replaceGroupState\(/)

@@ -801,7 +801,12 @@ export class MemoRagMvpStack extends Stack {
     }))
     securityAuditReconciliationFn.addToRolePolicy(new iam.PolicyStatement({
       actions: ["s3:GetObject"],
-      resources: [docsBucket.arnForObjects(`security/resource-group-lifecycle/create/${cdk.Aws.ACCOUNT_ID}/*`)]
+      resources: [
+        docsBucket.arnForObjects(`security/resource-group-lifecycle/create/${cdk.Aws.ACCOUNT_ID}/*`),
+        docsBucket.arnForObjects(`security/resource-group-lifecycle/delete/${cdk.Aws.ACCOUNT_ID}/*`),
+        docsBucket.arnForObjects("security/revocation-cleanup-repairs/*"),
+        docsBucket.arnForObjects("security/revocation-cleanup/*")
+      ]
     }))
     revocationCleanupFn.addToRolePolicy(new iam.PolicyStatement({
       actions: ["s3:ListBucket"],

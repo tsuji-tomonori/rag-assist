@@ -815,6 +815,9 @@ test("deploys the tenant-scoped security audit reconciliation worker with bounde
   assert.match(policies, /security-audit\/intents/)
   assert.match(policies, /source-governance/)
   assert.match(policies, /security\/resource-group-lifecycle\/create/)
+  assert.match(policies, /security\/resource-group-lifecycle\/delete/)
+  assert.match(policies, /security\/revocation-cleanup-repairs/)
+  assert.match(policies, /security\/revocation-cleanup\//)
   assert.match(policies, /dynamodb:GetItem/)
   assert.match(policies, /dynamodb:Query/)
   assert.match(policies, /DocumentGroupsTable/)
@@ -830,6 +833,19 @@ test("deploys the tenant-scoped security audit reconciliation worker with bounde
   assert.equal(lifecycleStatements.length, 1)
   assert.equal(lifecycleStatements[0].Action, "s3:GetObject")
   assert.doesNotMatch(JSON.stringify(lifecycleStatements[0]), /s3:(?:ListBucket|PutObject|DeleteObject)/)
+
+  const deleteEvidenceStatements = Object.entries(resources)
+    .filter(([logicalId, resource]) => logicalId.startsWith("SecurityAuditReconciliationFunctionServiceRoleDefaultPolicy") && (resource as any).Type === "AWS::IAM::Policy")
+    .flatMap(([, resource]) => (resource as any).Properties.PolicyDocument.Statement as any[])
+    .filter((statement) => {
+      const serialized = JSON.stringify(statement.Resource)
+      return serialized.includes("security/resource-group-lifecycle/delete")
+        || serialized.includes("security/revocation-cleanup-repairs")
+        || serialized.includes("security/revocation-cleanup/")
+    })
+  assert.equal(deleteEvidenceStatements.length, 1)
+  assert.equal(deleteEvidenceStatements[0].Action, "s3:GetObject")
+  assert.doesNotMatch(JSON.stringify(deleteEvidenceStatements[0]), /s3:(?:ListBucket|PutObject|DeleteObject)/)
 })
 
 test("passes only explicitly configured versioned workload and price evidence into benchmark CodeBuild", () => {
