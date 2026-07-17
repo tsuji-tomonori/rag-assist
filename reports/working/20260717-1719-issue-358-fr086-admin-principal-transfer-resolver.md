@@ -15,7 +15,8 @@
 | missing/corrupt/partial/cross-tenant の fail closed | 対応 |
 | mutation replay を行わない read-only worker | 対応 |
 | 最小 IAM、tests、FR-086、infra inventory 同期 | 対応 |
-| Draft PR、semver、AC/self-review、final-head CI、Issue 進捗 | 進行中 |
+| Draft PR、semver、AC/self-review、implementation-head CI | 対応 |
+| final-head CI、Issue 進捗、clean/upstream | lifecycle commit 後の外部 postcondition |
 
 ## 3. 検討・判断
 
@@ -60,17 +61,25 @@
 
 | 評価軸 | 評価 | 理由 |
 |---|---:|---|
-| 指示網羅性 | 4/5 | local deliverables/validation は完了、PR lifecycle は進行中 |
+| 指示網羅性 | 4.9/5 | local deliverables、Draft PR、implementation CI、AC/self-review は完了。final-head 外部証跡は lifecycle commit 後 |
 | 制約遵守 | 5/5 | dedicated worktree、read-only resolver、no merge/deploy/release を維持 |
-| 成果物品質 | 4/5 | targeted/full checks は成功、actual AWS は未検証 |
+| 成果物品質 | 4.8/5 | targeted/full/implementation CI は成功、actual AWS は未検証 |
 | 説明責任 | 5/5 | zero-inventory と actual AWS gate を明記 |
-| 検収容易性 | 4/5 | tests/docs/report は揃い、PR/CI URL は後続更新予定 |
+| 検収容易性 | 4.9/5 | tests/docs/report と PR/CI/comment URL を記録 |
 
-**暫定総合 fit: 4.4 / 5.0（約88%）**
+**総合 fit: 4.9 / 5.0（約98%）**
 
 ## 8. 未対応・制約・リスク
 
 - actual AWS の S3/DynamoDB/EventBridge/Lambda 経路は未検証。
 - state を作らない zero-inventory success は durable requested completion がある場合だけ復元する。completion staging 前の失敗は authoritative marker がないため fail closed のまま残る。
-- Draft PR、semver、AC/self-review、final-head CI、Issue #358 進捗、task done/clean-upstream は後続 lifecycle で更新する。
+- lifecycle commit 後の final-head CI、Issue #358 進捗、clean/upstream は head を変えない外部証跡として後続確認する。
 - merge、deploy、release は実施しない。
+
+## 9. PR lifecycle
+
+- Draft stacked PR: [#422](https://github.com/tsuji-tomonori/rag-assist/pull/422)。base は PR #419 branch、head は本 task branch、`semver:patch`。
+- 受け入れ条件確認: [issuecomment-5000889658](https://github.com/tsuji-tomonori/rag-assist/pull/422#issuecomment-5000889658)。final-head CI と actual AWS を未完了のまま記録した。
+- セルフレビュー: [issuecomment-5000894003](https://github.com/tsuji-tomonori/rag-assist/pull/422#issuecomment-5000894003)。独立 review の修正反映後に blocking なし、actual AWS 未検証を記録した。
+- implementation-head CI: [run 29567464397](https://github.com/tsuji-tomonori/rag-assist/actions/runs/29567464397) success（8分19秒）。証跡は [issuecomment-5000987711](https://github.com/tsuji-tomonori/rag-assist/pull/422#issuecomment-5000987711) に記録した。
+- task done/report lifecycle commit 後の final-head CI、最終 AC/self-review、Issue #358 進捗は、head を変えない PR/Issue コメントと最終報告に記録する。

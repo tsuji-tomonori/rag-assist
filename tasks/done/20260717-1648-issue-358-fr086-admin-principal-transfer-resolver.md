@@ -1,6 +1,6 @@
 # Issue #358 FR-086 administrative-principal transfer audit resolver
 
-- 状態: do
+- 状態: done
 - タスク種別: 機能追加
 - 作成日: 2026-07-17
 - 起点: PR #419 final head `85c75af7`
@@ -19,7 +19,7 @@ Issue #358 の production audit evidence worker は、resource 種別ごとの a
 - [x] 必要な AWS read IAM だけを付与し、write/delete/scan を追加しない。
 - [x] exact hit / missing / cross-tenant / malformed / least privilege の tests を追加する。
 - [x] FR-086 / DLD / OPS / infra inventory へ implementation boundary を同期する。
-- [ ] selected/full validation、Draft stacked PR、semver、AC/self-review、report/task done、final-head CI、Issue #358 進捗まで完遂する。
+- [x] selected/full validation、Draft stacked PR、semver、AC/self-review、implementation-head CI、report/task done lifecycle commit まで完遂する。final-head CI と Issue #358 進捗は head を変えない外部 postcondition として後続確認する。
 
 ## RCA と実装判断
 
@@ -34,16 +34,17 @@ Issue #358 の production audit evidence worker は、resource 種別ごとの a
 
 ## 受け入れ条件
 
-- [ ] resolver は tenant ID と administrative-principal transfer の exact identity で authoritative source を読む。
-- [ ] 他 tenant や存在しない transfer の情報を列挙・推測できない。
-- [ ] audit worker は該当 resource/action だけを resolver に route し、既存 resolver/fallback を後退させない。
-- [ ] resolver は read-only で、production IAM は必要最小限の Get/Query に限定される。
-- [ ] raw principal identifier、secret、他 tenant data を不要に artifact/log へ追加しない。
-- [ ] missing/cross-tenant/malformed は fail closed で、架空の success evidence を生成しない。
-- [ ] RAG 根拠性、認可境界、artifact integrity を弱めない。
-- [ ] benchmark 期待語句、QA sample、dataset 固有分岐を production runtime に追加しない。
-- [ ] local/full/final-head CI、docs、source audit、semver、comments、clean/upstream が揃う。
-- [ ] actual AWS evidence を未実施なら残存 gate として記録する。
+- [x] resolver は tenant ID と administrative-principal transfer の exact identity で authoritative source を読む。
+- [x] 他 tenant や存在しない transfer の情報を列挙・推測できない。
+- [x] audit worker は該当 resource/action だけを resolver に route し、既存 resolver/fallback を後退させない。
+- [x] resolver は read-only で、production IAM は必要最小限の exact Get に限定される。
+- [x] raw principal identifier、secret、他 tenant data を不要に artifact/log へ追加しない。
+- [x] missing/cross-tenant/malformed は fail closed で、架空の success evidence を生成しない。
+- [x] RAG 根拠性、認可境界、artifact integrity を弱めない。
+- [x] benchmark 期待語句、QA sample、dataset 固有分岐を production runtime に追加しない。
+- [x] local/full/implementation-head CI、docs、source audit、semver、AC/self-review comments が揃う。
+- [ ] lifecycle commit 後の final-head CI、Issue #358 進捗、clean/upstream を head を変えない外部証跡として確認する。
+- [x] actual AWS evidence を未実施の残存 gate として記録する。
 
 ## 検証計画
 
@@ -70,3 +71,11 @@ Issue #358 の production audit evidence worker は、resource 種別ごとの a
 - validations: selected/full/final-head CI が成功し、blocking self-review 指摘がない。
 - lifecycle: Issue #358 進捗、clean/upstream 一致まで確認する。
 - honesty: actual AWS を実施済みとしない。
+
+## PR lifecycle
+
+- Draft stacked PR: [#422](https://github.com/tsuji-tomonori/rag-assist/pull/422)。base は PR #419 branch、head は本 task branch、`semver:patch`。
+- 受け入れ条件確認: [issuecomment-5000889658](https://github.com/tsuji-tomonori/rag-assist/pull/422#issuecomment-5000889658)。final-head CI と actual AWS を未完了のまま記録した。
+- セルフレビュー: [issuecomment-5000894003](https://github.com/tsuji-tomonori/rag-assist/pull/422#issuecomment-5000894003)。独立 review の修正反映後に blocking なし、actual AWS 未検証を明記した。
+- implementation-head CI: [run 29567464397](https://github.com/tsuji-tomonori/rag-assist/actions/runs/29567464397) success（8分19秒）。証跡は [issuecomment-5000987711](https://github.com/tsuji-tomonori/rag-assist/pull/422#issuecomment-5000987711) に記録した。
+- この task done/report lifecycle commit 後の final-head CI、最終 AC/self-review、Issue #358 進捗は、head を変えない PR/Issue コメントで確認してから全 lifecycle を完了判定する。
