@@ -1,6 +1,6 @@
 # self-signup 方針と実装の整合
 
-- 状態: do
+- 状態: done
 - タスク種別: 機能追加
 - 作成日: 2026-07-13
 - 関連要件・gap: `FR-025`, `GAP-RD-020`, `OQ-RD-008`
@@ -36,14 +36,25 @@ Issue #358 P0-B の独立フェーズとして、`FR-025` が正本とする sel
 
 ## 受け入れ条件
 
-- [ ] Cognito User Pool の self-signup が有効で、post-confirmation trigger が配線される。
-- [ ] self-signup 確認時の自動付与は `CHAT_USER` のみに固定され、設定・入力から上位 role を選べない。
-- [ ] self-signup 以外の trigger source、入力不備、継続する Lambda 失敗は role 未付与のまま fail closed になる。
-- [ ] duplicate invocation と一時失敗 retry が同じ `CHAT_USER` 付与へ収束する。
-- [ ] duplicate sign-up と invalid confirmation code は session を作らない。
-- [ ] sign-up → confirmation → sign-in → 認証付き API の integration test が pass する。
-- [ ] CDK assertion、infra/Web test、typecheck/build/lint、docs/generated inventory check が pass する。
-- [ ] 実 AWS sign-up E2E の未実施を PR・レポートで未検証として明示する。
+- [x] Cognito User Pool の self-signup が有効で、post-confirmation trigger が配線される。
+- [x] self-signup 確認時の自動付与は `CHAT_USER` のみに固定され、設定・入力から上位 role を選べない。
+- [x] self-signup 以外の trigger source、入力不備、継続する Lambda 失敗は role 未付与のまま fail closed になる。
+- [x] duplicate invocation と一時失敗 retry が同じ `CHAT_USER` 付与へ収束する。
+- [x] duplicate sign-up と invalid confirmation code は session を作らない。
+- [x] sign-up → confirmation → sign-in → 認証付き API の integration test が pass する。
+- [x] CDK assertion、infra/Web test、typecheck/build/lint、docs/generated inventory check が pass する。
+- [x] 実 AWS sign-up E2E の未実施を PR・レポートで未検証として明示する。
+
+## 完了記録
+
+- Draft PR: https://github.com/tsuji-tomonori/rag-assist/pull/395
+- 実装 commit: `bc656ffb`
+- 受け入れ条件コメント: https://github.com/tsuji-tomonori/rag-assist/pull/395#issuecomment-4997865195
+- セルフレビューコメント: https://github.com/tsuji-tomonori/rag-assist/pull/395#issuecomment-4997865183
+- initial head CI: https://github.com/tsuji-tomonori/rag-assist/actions/runs/29545475554 （pass、8m9s）
+- semver check: https://github.com/tsuji-tomonori/rag-assist/actions/runs/29545481605 （pass）
+- GitHub Apps: callable connector が実行環境に公開されていないため、`gh` fallback を使用。
+- 実 AWS E2E: 未実施。PR 本文、受け入れ条件コメント、セルフレビュー、作業レポートへ明記。
 
 ## 検証計画
 
