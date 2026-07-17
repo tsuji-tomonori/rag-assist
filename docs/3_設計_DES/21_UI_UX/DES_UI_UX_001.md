@@ -216,6 +216,13 @@ Automated accessibility, DOM snapshots, and accessibility tree inspection do not
 - DOM の最初の focusable control は「メインコンテンツへ移動」native anchor とし、通常は viewport 外、keyboard focus 時は viewport 内へ表示する。
 - `E2E-UI-SKIP-001` は 1280×720 / 320×720 Chromium で最初の `Tab`、focus-visible indicator、`Enter` activation、main focus、landmark 一意性、horizontal containment を検証する。screen-reader/real-device/Firefox/WebKit の実測を代替しない。
 
+### Pre-authentication keyboard contract
+
+- sign-in form は native `form` / `required` constraint を使い、DOM 順の email、password、remember checkbox、submit、secondary action を正の `tabindex` なしで操作できる。
+- login controls の `:focus-visible` は primary color token の 3px outline と 2px offset で表す。empty submit は最初の invalid input へ戻し、JavaScript 由来の架空 error や authentication request を生成しない。
+- rejected authentication は `role="alert"` を form の `aria-describedby` に関連付け、submit focus と enabled controls を維持して再試行可能にする。
+- `E2E-UI-LOGIN-KEYBOARD-001` は 1280×720 / 320×720 Chromium で Tab/Space/Enter journey、focus indicator、native invalid focus、認証後 chat 到達、horizontal containment を検証する。representative screen reader、実 browser 200%/400% zoom、real device、Firefox、WebKit の実測を代替しない。
+
 ## Trace manifest schema
 
 `tools/web-inventory/ui-traceability.json` uses this conceptual shape:

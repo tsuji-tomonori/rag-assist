@@ -17309,6 +17309,14 @@
         ]
       },
       {
+        "id": "E2E-UI-LOGIN-KEYBOARD-001",
+        "status": "implemented",
+        "evidence": [
+          "apps/web/e2e/login-keyboard.spec.ts",
+          "apps/web/src/LoginPage.test.tsx"
+        ]
+      },
+      {
         "id": "E2E-UI-MANUAL-001",
         "status": "manual",
         "task": "tasks/todo/20260714-issue-345-manual-a11y-evidence.md"

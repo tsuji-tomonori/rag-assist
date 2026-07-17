@@ -57,7 +57,7 @@
 | 受け入れ基準 | `AC-SQ016-001`〜`AC-SQ016-008` |
 | 優先度 | S |
 | 安定性 | High |
-| 変更履歴 | 2026-07-14 Issue #345 から追加。2026-07-17 `AC-SQ016-002` の shell skip link 自動証跡を追加 |
+| 変更履歴 | 2026-07-14 Issue #345 から追加。2026-07-17 `AC-SQ016-002` の shell skip link と login 前 keyboard-only journey の自動証跡を追加 |
 
 ## 妥当性確認
 
@@ -71,7 +71,8 @@
 ## 現在の自動証跡（2026-07-17）
 
 - `E2E-UI-SKIP-001`: 認証後 shell の最初の keyboard focus で skip link を表示し、desktop 1280×720 / mobile 320×720 の双方で反復 navigation を越えて一意な `main` landmark へ focus を移す。
-- 上記は Chromium keyboard automation であり、representative screen reader、real device、Firefox、WebKit の手動・browser evidence を代替しない。
+- `E2E-UI-LOGIN-KEYBOARD-001`: login 前の email から secondary action までの DOM 順 Tab order、3px outline、native required validation、Space による remember 切替、password 上の Enter submit、認証後 chat 到達、horizontal containment を 1280×720 / 320×720 で検証する。rejected authentication の alert/form description/focus/retry は component test で検証する。
+- 上記は Chromium keyboard automation であり、representative screen reader、実 browser の 200%/400% zoom、real device、Firefox、WebKit の手動・browser evidence を代替しない。
 
 ## 関連文書・task
 
