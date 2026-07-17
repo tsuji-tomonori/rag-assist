@@ -1,6 +1,6 @@
 # Issue #358 FR-086 quarantine 解除・手動再投入操作面
 
-- 状態: do
+- 状態: done
 - タスク種別: 機能追加
 - 対象: Issue #358 P1-A / FR-086 / production audit reconciliation quarantine operation
 - stacked base: PR #424 final head `cba627f18a442a4b68efd51459ef3579d7e61f42`
@@ -104,16 +104,30 @@ PR #424 final head 時点で、production reconciliation worker は解決不能 
 
 ## 受け入れ条件
 
-- [ ] AC1: quarantine/manual redrive の既存事実、推定、矛盾、未確定点、根本原因、全影響範囲を RCA として記録する。
-- [ ] AC2: permission、tenant boundary、audit event、idempotency key/state transition、fail-closed cases を根拠から確定するか、owner 判断が必要な項目を明示して decision/design unit に切り替える。
-- [ ] AC3: 実装する場合、exact single-intent 操作だけを追加し、bulk/purge/domain mutation/admin-transfer を含めない。
-- [ ] AC4: unauthenticated、permission denied、cross-tenant、malformed/stale/quarantine missing、duplicate/concurrent request を production-quality test で固定する。
-- [ ] AC5: protected route を変更する場合、`access-control-policy.test.ts`、OpenAPI/source docs、response の機微情報最小化を同期する。
-- [ ] AC6: manual operation 自体を durable security audit に残し、audit failure 時は redrive を開始しない fail-closed contract を固定する。
-- [ ] AC7: redrive は既存 reconciliation 経路を再利用し、resolver/domain mutation を直接実行しない。
-- [ ] AC8: selected targeted/API/infra/docs/source audit/lint/typecheck/build/pre-commit/diff check と full CI が成功する。
-- [ ] AC9: Draft stacked PR の base が #424 branch で、semver、rollback、actual AWS/manual operation 未検証、残存リスクを日本語で記録する。
+- [x] AC1: quarantine/manual redrive の既存事実、推定、矛盾、未確定点、根本原因、全影響範囲を RCA として記録する。
+- [x] AC2: permission、tenant boundary、audit event、idempotency key/state transition、fail-closed cases を根拠から確定するか、owner 判断が必要な項目を明示して decision/design unit に切り替える。
+- [x] AC3: 実装する場合、exact single-intent 操作だけを追加し、bulk/purge/domain mutation/admin-transfer を含めない。
+- [x] AC4: unauthenticated、permission denied、cross-tenant、malformed/stale/quarantine missing、duplicate/concurrent request を production-quality test で固定する。
+- [x] AC5: protected route を変更する場合、`access-control-policy.test.ts`、OpenAPI/source docs、response の機微情報最小化を同期する。
+- [x] AC6: manual operation 自体を durable security audit に残し、audit failure 時は redrive を開始しない fail-closed contract を固定する。
+- [x] AC7: redrive は既存 reconciliation 経路を再利用し、resolver/domain mutation を直接実行しない。
+- [x] AC8: selected targeted/API/infra/docs/source audit/lint/typecheck/build/pre-commit/diff check と full CI が成功する。
+- [x] AC9: Draft stacked PR の base が #424 branch で、semver、rollback、actual AWS/manual operation 未検証、残存リスクを日本語で記録する。
 - [ ] AC10: PR の日本語 AC/self-review、task done/report、final-head CI、Issue #358 進捗、clean/upstream 一致まで完遂する。
+
+AC10 のうち PR AC/self-review、task done/report、実装head remote CI success は確認済み。task done commit後にしか存在しない final head のCI、Issue進捗、clean/upstream一致は、PR #426 の最終top-level commentを完了証跡とする。
+
+## 実装・検証証跡
+
+- 実装commit: `d2fce0c4a726ffefdd72d184487637bedc7cf271`
+- Draft stacked PR: https://github.com/tsuji-tomonori/rag-assist/pull/426
+- base: `codex/issue-358-fr086-document-delete-resolver`（PR #424 final head）
+- label: `semver:minor`
+- 受け入れ条件comment: https://github.com/tsuji-tomonori/rag-assist/pull/426#issuecomment-5002392415
+- self-review comment: https://github.com/tsuji-tomonori/rag-assist/pull/426#issuecomment-5002392418
+- 実装head CI: https://github.com/tsuji-tomonori/rag-assist/actions/runs/29574802075 (`success`)
+- local/API coverage/docs/source audit/full CI/pre-commit/diff check: 成功
+- actual AWS/manual operation: 未検証
 
 ## 検証計画
 
