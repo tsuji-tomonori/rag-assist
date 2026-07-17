@@ -18,7 +18,7 @@
 | R3 | archive CAS、audit、repair、ledger、workerをexact identityで相関する | 対応済み |
 | R4 | 部分失敗、race、tenant/resource越境をfail closedにする | 対応済み |
 | R5 | 正本文書・generated docs・testを同期し、repository-wide validationを行う | 対応済み |
-| R6 | Draft PRとremote CIを含む外部lifecycle evidenceを残す | PR作成前。後続commitでtaskへ結果を記録する |
+| R6 | Draft PRとremote CIを含む外部lifecycle evidenceを残す | Draft PR #430とimplementation-head CI成功を確認。final-head evidenceはPR commentへ記録する |
 | R7 | AWS/manual/merge/deploy/releaseを実施済みとしない | 遵守 |
 
 ## 3. RCAと判断
@@ -100,11 +100,11 @@ blocking指摘はない。
 
 **総合fit: 4.9/5（約98%）**
 
-Draft PR、remote implementation/final-head CI、Issue進捗、clean/upstream/remote一致を後続lifecycleで完遂する。actual AWS/manual evidenceは未検証のため、production behaviorを実証済みとはしない。
+Draft PR #430、`semver:patch`、日本語AC/self-review、implementation-head `248b65600bbdb05dea0044bd6d99e17b27939b9c` のCI run 29578627587 successを確認した。task done commit後のfinal-head CI、Issue進捗、clean/upstream/remote一致はPR最終commentへ記録する。actual AWS/manual evidenceは未検証のため、production behaviorを実証済みとはしない。
 
 ## 10. 未対応・制約・リスク
 
 - 未対応: actual AWS S3/DynamoDB/EventBridge/Lambda/manual operation evidence。
-- 制約: GitHub AppsのPR操作toolはこの実行環境に公開されていないため、repository skillに従い`gh` fallbackを使用する予定である。
+- 制約: GitHub AppsのPR操作toolはこの実行環境に公開されていないため、repository skillに従い`gh` fallbackを使用した。
 - リスク: stacked base PR #426がDraftのため、本PRはそのfinal headを前提とする。
 - 禁止事項: merge、deploy、release、production/external state変更は実施しない。
