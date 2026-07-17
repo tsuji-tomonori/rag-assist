@@ -135,7 +135,7 @@ const traceByRequirement: Record<string, string[]> = {
   "SQ-013": ["packages/contract/src/rag-quality-control.ts", "packages/contract/src/schemas/benchmark.ts", "infra/scripts/update-benchmark-run-metrics.mjs", "apps/api/src/rag/quality-control/production-rag-observation-producer.ts", "packages/contract/src/rag-quality-control.test.ts", "infra/test/update-benchmark-run-metrics.test.ts", "apps/api/src/rag/production-rag-observation-producer.test.ts"],
   "SQ-014": ["packages/contract/src/rag-quality-control.ts", "packages/contract/src/schemas/benchmark.ts", "infra/scripts/update-benchmark-run-metrics.mjs", "apps/api/src/rag/quality-control/production-rag-monitor.ts", "packages/contract/src/rag-quality-control.test.ts", "infra/test/update-benchmark-run-metrics.test.ts", "apps/api/src/rag/production-rag-monitor.test.ts"],
   "SQ-015": ["packages/contract/src/rag-quality-control.ts", "apps/api/src/rag/quality-control/production-rag-observation-producer.ts", "packages/contract/src/rag-quality-control.test.ts", "apps/api/src/rag/production-rag-observation-producer.test.ts"],
-  "SQ-016": ["apps/web/e2e/visual-regression.spec.ts", "tools/web-inventory/ui-traceability.json", "tasks/todo/20260714-issue-345-cross-screen-a11y-responsive.md", "tasks/todo/20260714-issue-345-manual-a11y-evidence.md"]
+  "SQ-016": ["apps/web/e2e/visual-regression.spec.ts", "tools/web-inventory/ui-traceability.json", "tasks/do/20260714-issue-345-cross-screen-a11y-responsive.md", "tasks/todo/20260714-issue-345-manual-a11y-evidence.md"]
 }
 
 const redefinedRequirementIds = new Set([

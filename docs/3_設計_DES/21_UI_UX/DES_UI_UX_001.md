@@ -3,7 +3,7 @@
 - ファイル: `docs/3_設計_DES/21_UI_UX/DES_UI_UX_001.md`
 - 種別: `DES_UI_UX`
 - 状態: Draft
-- 最終更新: 2026-07-14
+- 最終更新: 2026-07-17
 - Source: GitHub Issue #345、current production source、PR #341〜#344
 - Confidence: confirmed current-state sections; inferred target-design sections are labeled
 
@@ -337,3 +337,14 @@ No proposed default is recorded as executed evidence until its task produces the
 - `E2E-UI-CROSS-SCREEN-AUDIT-001` は最大権限personaで8 AppViews × 320 / 375 / 768 / 1280pxを走査し、1280pxではaxe serious / criticalもbaselineへ含め、Playwright artifactへJSONを添付する。
 - target-size、focus-obscuration、motionの静的・computed候補はWCAG例外や実操作の確認が必要なため、candidateだけで適合を断定しない。
 - Phase BはAppShell / RailNav、Phase C以降はfeature batchのremediationをownerとし、auth production filesとmanual evidence scopeはPhase Aで変更しない。
+
+## Cross-screen Phase B remediation（2026-07-17）
+
+- AppShellはRailNavを`main`の外へ置き、AppViewを含む`.main-area`だけをsingle primary `main` landmarkとする。既存のmobile menu focus move、Escape close、trigger recoveryは維持する。
+- RailNavのhome、destination、account、mobile menu triggerは`data-audit-target="primary"`で44px class監査対象を明示し、24px minimumだけでprimary targetを合格扱いしない。
+- assigneeはavailable widthに応じて4 / 2 / 1 columnへreflowし、column minimumが768px rootを押し広げないよう各trackを`minmax(0, 1fr)`とする。checkboxは24×24 minimum、back controlは44px classとする。
+- muted foreground tokenはsurface / muted / subtle surface上のsmall text 4.5:1以上をsemantic contract testで固定し、history、favorites、benchmark、adminのhard-coded muted colorを同じcontractへ集約する。
+- benchmark run tableとdocuments file tableはaccessible nameを持つfocusable scroll regionとし、keyboard利用者がTabで到達して矢印キー等で内容を確認できるようにする。focus-visible outlineを表示する。
+- mobile documents manager rowはdesktop用minimum column contractより高いspecificityで1 columnへreflowし、chat file nameはellipsisで情報を隠さず折り返す。
+- computed audit artifactの`exceptions`は`element`、`classification`、`reason`、`owner`、`alternativeOperation`を必須とする。`.sr-only`とdecorative orbitは`not_applicable`、native input text viewportとfocus可能なscroll ancestor内の内容は`supported_scroll`として記録し、それ以外のoverflow / target candidateはtest failureにする。
+- 本設計のautomated evidenceはmanual screen reader、実browser zoom、touch / real-deviceを代替しない。matrixのmanual / overall statusはmanual evidence taskが完了するまで`blocked`を維持する。

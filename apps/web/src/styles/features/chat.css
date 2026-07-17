@@ -860,9 +860,8 @@
   background: #f7faff;
   font-size: 12px;
   font-weight: 800;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .scoped-document-chip {
@@ -874,8 +873,7 @@
 
 .scoped-document-chip > span {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
 }
 
 .scoped-document-chip button {

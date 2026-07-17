@@ -120,7 +120,7 @@
 
 .benchmark-run-panel label span,
 .benchmark-mode-grid span {
-  color: #68758f;
+  color: var(--color-text-muted);
   font-size: 12px;
   font-weight: 800;
 }
@@ -201,6 +201,12 @@
   min-width: 0;
   min-height: 0;
   overflow: auto;
+  scroll-padding: 4px;
+}
+
+.benchmark-table-wrap:focus-visible {
+  outline: 3px solid #143f8f;
+  outline-offset: 2px;
 }
 
 .benchmark-table {

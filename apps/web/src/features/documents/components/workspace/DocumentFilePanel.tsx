@@ -228,7 +228,12 @@ export function DocumentFilePanel({
         </label>
       </div>}
 
-      <div className={`document-file-table ${showManagementControls ? "is-manager" : "is-reader"}`} role={folderDocumentsCount > 0 ? "table" : undefined} aria-label={folderDocumentsCount > 0 ? "登録文書" : undefined}>
+      <div
+        className={`document-file-table ${showManagementControls ? "is-manager" : "is-reader"}`}
+        role={folderDocumentsCount > 0 ? "table" : undefined}
+        aria-label={folderDocumentsCount > 0 ? "登録文書" : undefined}
+        tabIndex={folderDocumentsCount > 0 ? 0 : undefined}
+      >
         {folderDocumentsCount > 0 && <div className="document-file-row document-file-head" role="row">
           <span role="columnheader">ファイル名</span>
           <span role="columnheader">種別</span>
