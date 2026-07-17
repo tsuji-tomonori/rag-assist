@@ -8,9 +8,10 @@ import {
   APPLICATION_ROLE_DISPLAY_CATALOG
 } from "@memorag-mvp/contract/access-control"
 import type { Dependencies } from "../dependencies.js"
-import { sanitizeProviderText, type AsyncAgentProviderArtifact, type AsyncAgentProviderInput, type AsyncAgentProviderResult } from "../async-agent/provider.js"
+import { sanitizeProviderText, type AsyncAgentProviderInput, type AsyncAgentProviderResult } from "../async-agent/provider.js"
 import { AgentProviderCatalogService } from "../async-agent/provider-catalog-service.js"
 import { AsyncAgentRunRepository } from "../async-agent/async-agent-run-repository.js"
+import { AsyncAgentArtifactRepository } from "../async-agent/async-agent-artifact-repository.js"
 import { BenchmarkRunQueryService } from "../benchmark/benchmark-run-query-service.js"
 import { BenchmarkRunCancellationService } from "../benchmark/benchmark-run-cancellation-service.js"
 import { BenchmarkRunReauthorizationService } from "../benchmark/benchmark-run-reauthorization-service.js"
@@ -446,6 +447,7 @@ const benchmarkSuites: BenchmarkSuite[] = [
 
 export class MemoRagService {
   private readonly agentProviderCatalogService: AgentProviderCatalogService
+  private readonly asyncAgentArtifactRepository: AsyncAgentArtifactRepository
   private readonly asyncAgentRunRepository: AsyncAgentRunRepository
   private readonly benchmarkArtifactDownloadService: BenchmarkArtifactDownloadService
   private readonly benchmarkArtifactRevocationCleanupDriverFactory: BenchmarkArtifactRevocationCleanupDriverFactory
@@ -460,6 +462,11 @@ export class MemoRagService {
   constructor(private readonly deps: Dependencies) {
     this.agentProviderCatalogService = new AgentProviderCatalogService({
       registry: deps.asyncAgentProviders
+    })
+    this.asyncAgentArtifactRepository = new AsyncAgentArtifactRepository({
+      objectStore: deps.objectStore,
+      createArtifactId: () => `artifact_${randomUUID().slice(0, 12)}`,
+      sanitizeText: sanitizeProviderText
     })
     this.asyncAgentRunRepository = new AsyncAgentRunRepository(deps.objectStore)
     this.benchmarkRunQueryService = new BenchmarkRunQueryService({
@@ -4488,9 +4495,9 @@ export class MemoRagService {
       throw error
     }
     const artifacts = result.status === "completed"
-      ? await this.persistAsyncAgentArtifacts(running, result.artifacts, completedAt, result.logText)
+      ? await this.asyncAgentArtifactRepository.persist(running, result.artifacts, completedAt, result.logText)
       : result.logText
-        ? await this.persistAsyncAgentArtifacts(running, [{
+        ? await this.asyncAgentArtifactRepository.persist(running, [{
             artifactType: "log",
             fileName: "provider-log.txt",
             mimeType: "text/plain",
@@ -4530,7 +4537,7 @@ export class MemoRagService {
     run: AsyncAgentRun,
     newlyWrittenArtifacts: AsyncAgentRun["artifacts"] = []
   ): Promise<AsyncAgentRun> {
-    await Promise.all(newlyWrittenArtifacts.map((artifact) => this.deps.objectStore.deleteObject(artifact.storageRef)))
+    await this.asyncAgentArtifactRepository.cleanup(newlyWrittenArtifacts)
     const completedAt = new Date().toISOString()
     const failed: AsyncAgentRun = {
       ...run,
@@ -4544,44 +4551,6 @@ export class MemoRagService {
     }
     await this.asyncAgentRunRepository.save(failed)
     return failed
-  }
-
-  private async persistAsyncAgentArtifacts(
-    run: AsyncAgentRun,
-    artifacts: AsyncAgentProviderArtifact[],
-    createdAt: string,
-    logText?: string
-  ): Promise<AsyncAgentRun["artifacts"]> {
-    const normalizedArtifacts = [...artifacts]
-    if (logText?.trim()) {
-      normalizedArtifacts.push({
-        artifactType: "log",
-        fileName: "provider-log.txt",
-        mimeType: "text/plain",
-        text: logText,
-        writebackStatus: "not_requested"
-      })
-    }
-
-    const persisted = await Promise.all(normalizedArtifacts.map(async (artifact) => {
-      const artifactId = `artifact_${randomUUID().slice(0, 12)}`
-      const fileName = sanitizeArtifactFileName(artifact.fileName)
-      const storageRef = `${asyncAgentArtifactPrefix(run.tenantId)}${encodeURIComponent(run.agentRunId)}/artifacts/${artifactId}/${fileName}`
-      const text = sanitizeProviderText(artifact.text)
-      await this.deps.objectStore.putText(storageRef, text)
-      return {
-        artifactId,
-        agentRunId: run.agentRunId,
-        artifactType: artifact.artifactType,
-        fileName,
-        mimeType: artifact.mimeType,
-        size: Buffer.byteLength(text, "utf-8"),
-        storageRef,
-        createdAt,
-        writebackStatus: artifact.writebackStatus ?? "not_requested"
-      }
-    }))
-    return persisted
   }
 
   async createBenchmarkRun(user: AppUser, input: CreateBenchmarkRunInput): Promise<BenchmarkRun> {
@@ -5064,11 +5033,6 @@ function createAsyncAgentRunId(now: string): string {
   return `agent_${compact}_${randomUUID().slice(0, 8)}`
 }
 
-function sanitizeArtifactFileName(fileName: string): string {
-  const sanitized = fileName.replace(/[^a-zA-Z0-9._-]/g, "_").replace(/^_+/, "")
-  return sanitized || "artifact.txt"
-}
-
 function createChatRunId(now: string): string {
   const compact = now.replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z")
   return `chat_${compact}_${randomUUID().slice(0, 8)}`
@@ -5119,10 +5083,6 @@ function minimizedFailedChatRun(
 function createDocumentIngestRunId(now: string): string {
   const compact = now.replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z")
   return `ingest_${compact}_${randomUUID().slice(0, 8)}`
-}
-
-function asyncAgentArtifactPrefix(tenantId: string): string {
-  return `agent-runs/${tenantPartitionId(tenantId)}/runs/`
 }
 
 function workerExecutionName(tenantId: string, runId: string): string {

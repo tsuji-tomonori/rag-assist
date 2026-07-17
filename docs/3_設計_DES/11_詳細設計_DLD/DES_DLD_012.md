@@ -118,7 +118,7 @@ Phase 4l 後の service source から `this.deps.<key>` として直接読まれ
 
 facade は port 経由だけではなく、次の AWS module を直接 import する。
 
-- `@aws-sdk/client-s3`: async agent artifact object の取得・保存（run metadata は Phase 4l で repository port 化）
+- `@aws-sdk/client-s3`: debug / benchmark / admin artifact の取得・保存・署名（async-agent run metadata は Phase 4l、artifact text persistence/cleanup は Phase 4m でobject-store repository port化）
 - `@aws-sdk/s3-request-presigner`: debug / benchmark / admin artifact download URL
 - `@aws-sdk/client-sfn`: chat / ingest execution start（benchmark cancellation の stop mapping は `benchmark-execution-stopper.ts`、benchmark start mapping は `benchmark-execution-starter.ts` へ移管）
 
@@ -469,6 +469,22 @@ repository が受け取る port は `ObjectStore` の `listKeys`、`getText`、`
 - save は canonical scoped keyへ pretty JSONを `application/json; charset=utf-8` で書く。公開 method、route/RBAC/non-enumeration、execute authorization order、provider/artifact writeback、schema、RAG trust は変更しない。
 
 `async-agent-run-repository.test.ts` は narrow source guard、exact tenant prefix/list allowlist、same-ID tenant isolation、legacy default normalization、tenant mismatch、missing variants、legacy migration detection、non-missing/parse error propagation、save key/content type を固定する。既存 async-agent facade test と public contract/API full suite を二重実行する。actual S3/AWS と legacy migration tooling、manual UI は未実施とし、local/GitHub CI を actual AWS 成功の代替とは扱わない。
+
+## Phase 4m: async-agent artifact repository の抽出境界
+
+Issue #359 Phase 4m では、provider resultからartifact textを保存しmetadataを投影する処理と、permission-revoked後にnewly-written artifactを削除する処理だけを`AsyncAgentArtifactRepository`へ抽出する。execute/status/current authorization/provider invocation/run save/writeback approvalはfacadeに維持し、外部副作用state machine全体を同じunitで変更しない。
+
+repositoryは`ObjectStore.putText/deleteObject`、artifact ID factory、text sanitizerのnarrow portsだけを受ける。保持するcontractは次のとおり。
+
+- provider artifactsの後ろへnonblank provider logを追加し、blank logは保存しない。
+- storage keyは`agent-runs/${tenantPartitionId(tenantId)}/runs/${encodeURIComponent(agentRunId)}/artifacts/${artifactId}/${sanitizedFileName}`とし、raw tenantを露出しない。
+- filenameはASCII allowlist外をunderscoreへ置換し、先頭underscoreを除去し、空なら`artifact.txt`を用いる。
+- textはshared provider sanitizerを通し、metadata sizeはsanitized UTF-8 bytes、writeback statusはinput値または`not_requested`とする。
+- persistは現行どおり`Promise.all`で、write failureを伝播する。既成功partial writeの新規compensation/reconciliationはowner policy判断を要するため追加しない。
+- permission cleanupは渡された`storageRef`だけを`Promise.all(deleteObject)`し、delete failureを伝播する。failed run saveより前のcleanup順を維持する。
+- public API、route/RBAC/non-enumeration、4 authorization boundary、provider/run/writeback/RAG/schemaは変更しない。
+
+`async-agent-artifact-repository.test.ts`はnarrow source guard、artifact/log mapping、filename fallback、tenant分離、persist failureの非補償、cleanup target/error propagationを固定する。actual S3/AWS、manual UI、partial-write recovery toolingは未実施とする。
 
 ## Error / compatibility 方針
 

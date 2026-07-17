@@ -20,11 +20,11 @@
 | M005 | OpenAPI contract | `409` | 現在のリソース状態と要求された操作が競合しています。 | OpenAPI で宣言された HTTP 409 response | runtime OpenAPI |
 | M006 | OpenAPI contract | `503` | alias 公開の永続化を完了できません | OpenAPI で宣言された HTTP 503 response | runtime OpenAPI |
 | M007 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| M008 | 例外 | `-` | Alias mutation reason is required and must be canonical | `value` が存在しない、または偽である、または `value.trim()` が `value` と異なる | `apps/api/src/rag/memorag-service.ts:5466 (canonicalAliasReason)` |
-| M009 | 例外 | `-` | Alias ledger version conflict | 当該処理へ到達した場合 | `apps/api/src/rag/memorag-service.ts:3706 (MemoRagService.mutateAliasLedger)` |
-| M010 | 例外 | `-` | Alias ledger version conflict | `(state.storeVersion ?? "absent")` が `input.expectedVersion` と異なる | `apps/api/src/rag/memorag-service.ts:1676 (MemoRagService.publishAliases)` |
+| M008 | 例外 | `-` | Alias mutation reason is required and must be canonical | `value` が存在しない、または偽である、または `value.trim()` が `value` と異なる | `apps/api/src/rag/memorag-service.ts:5426 (canonicalAliasReason)` |
+| M009 | 例外 | `-` | Alias ledger version conflict | 当該処理へ到達した場合 | `apps/api/src/rag/memorag-service.ts:3713 (MemoRagService.mutateAliasLedger)` |
+| M010 | 例外 | `-` | Alias ledger version conflict | `(state.storeVersion ?? "absent")` が `input.expectedVersion` と異なる | `apps/api/src/rag/memorag-service.ts:1683 (MemoRagService.publishAliases)` |
 | M011 | 例外 | `-` | Authoritative tenant is required | `normalized` が存在しない、または偽である | `apps/api/src/security/tenant-partition.ts:5 (tenantPartitionId)` |
-| M012 | 例外 | `-` | Alias ledger version conflict | is conditional object write error の判定結果が真である | `apps/api/src/rag/memorag-service.ts:1724 (MemoRagService.publishAliases)` |
+| M012 | 例外 | `-` | Alias ledger version conflict | is conditional object write error の判定結果が真である | `apps/api/src/rag/memorag-service.ts:1731 (MemoRagService.publishAliases)` |
 
 ## 読み方
 

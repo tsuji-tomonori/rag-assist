@@ -44,7 +44,7 @@ sequenceDiagram
 | 2 | `GET /documents/{documentId}/share handler` | Auth | "rag:doc:share" permission を必須条件として確認する。 | `requirePermission(user, "rag:doc:share")` | `apps/api/src/routes/document-routes.ts:883 (GET /documents/{documentId}/share handler)` |
 | 3 | `GET /documents/{documentId}/share handler` | Validation | schema 検証済みの path parameter を取得する。 | `validParam<{ documentId: string }>(c)` | `apps/api/src/routes/document-routes.ts:884 (GET /documents/{documentId}/share handler)` |
 | 4 | `GET /documents/{documentId}/share handler` | Service | service の get document share info 処理を呼び出す。 | `service.getDocumentShareInfo(user, documentId)` | `apps/api/src/routes/document-routes.ts:886 (GET /documents/{documentId}/share handler)` |
-| 5 | `MemoRagService.getDocumentShareInfo` | Service | service の get manifest 処理を呼び出す。 | `this.getManifest(documentId, authoritativeActorTenantId(actor))` | `apps/api/src/rag/memorag-service.ts:1265 (MemoRagService.getDocumentShareInfo)` |
+| 5 | `MemoRagService.getDocumentShareInfo` | Service | service の get manifest 処理を呼び出す。 | `this.getManifest(documentId, authoritativeActorTenantId(actor))` | `apps/api/src/rag/memorag-service.ts:1272 (MemoRagService.getDocumentShareInfo)` |
 | 6 | `readTenantManifest` | Store | `deps.objectStore` に対して get text を実行する。 | `deps.objectStore.getText(key)` | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:83 (readTenantManifest)` |
 | 7 | `FolderPermissionService.resolveEffectiveFolderPermissionDetail` | Store | `this.deps.documentGroupStore` に対して list を実行する。 | `this.deps.documentGroupStore.list(actorTenantId)` | `apps/api/src/folders/folder-permission-service.ts:145 (FolderPermissionService.resolveEffectiveFolderPermissionDetail)` |
 | 8 | `FolderPermissionService.resolveUserMembershipPermission` | Store | `this.deps.userGroupStore` に対して get を実行する。 | `this.deps.userGroupStore.get(tenantId, groupId)` | `apps/api/src/folders/folder-permission-service.ts:780 (FolderPermissionService.resolveUserMembershipPermission)` |
@@ -66,4 +66,4 @@ sequenceDiagram
 | B002 | `GET /documents/{documentId}/share handler` | is forbidden error の判定結果が真である | `apps/api/src/routes/document-routes.ts:888 (GET /documents/{documentId}/share handler)` |
 | B003 | `GET /documents/{documentId}/share handler` | `err` が `Error` の instance である、かつ `err.message` が "ENOENT" を含む、または `err.message` が "NoSuchKey" を含む | `apps/api/src/routes/document-routes.ts:889 (GET /documents/{documentId}/share handler)` |
 | B004 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| B005 | `MemoRagService.getDocumentShareInfo` | can share document の判定結果が真ではない | `apps/api/src/rag/memorag-service.ts:1268 (MemoRagService.getDocumentShareInfo)` |
+| B005 | `MemoRagService.getDocumentShareInfo` | can share document の判定結果が真ではない | `apps/api/src/rag/memorag-service.ts:1275 (MemoRagService.getDocumentShareInfo)` |

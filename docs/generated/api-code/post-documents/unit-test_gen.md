@@ -128,10 +128,10 @@
 | F045 | `enforceDocumentCreateOperation` | 三項条件 | `scope?.scopeType` が `"group"` と等しい | `apps/api/src/routes/document-routes.ts:480 (enforceDocumentCreateOperation)` |
 | F046 | `enforceDocumentCreateOperation` | if | `groupIds.length` が `0` より大きい | `apps/api/src/routes/document-routes.ts:481 (enforceDocumentCreateOperation)` |
 | F047 | `enforceDocumentCreateOperation` | loop | `groupIds` が存在し、真である | `apps/api/src/routes/document-routes.ts:483 (enforceDocumentCreateOperation)` |
-| F048 | `MemoRagService.createCurrentDocumentIngestAuthorization` | 三項条件 | `input.purpose` が `"benchmarkSeed"` と等しい | `apps/api/src/rag/memorag-service.ts:576 (MemoRagService.createCurrentDocumentIngestAuthorization)` |
-| F049 | `MemoRagService.createCurrentDocumentIngestAuthorization` | 三項条件 | `input.purpose` が `"chatAttachment"` と等しい | `apps/api/src/rag/memorag-service.ts:578 (MemoRagService.createCurrentDocumentIngestAuthorization)` |
-| F050 | `MemoRagService.ingest` | 三項条件 | `tenantId` が存在し、真である、かつ `this.deps.usageEventStore` が存在し、真である、かつ `this.usageRolloutMode()` が `"disabled"` と異なる | `apps/api/src/rag/memorag-service.ts:556 (MemoRagService.ingest)` |
-| F051 | `MemoRagService.discardUncommittedIngest` | if | some の判定結果が真である | `apps/api/src/rag/memorag-service.ts:610 (MemoRagService.discardUncommittedIngest)` |
+| F048 | `MemoRagService.createCurrentDocumentIngestAuthorization` | 三項条件 | `input.purpose` が `"benchmarkSeed"` と等しい | `apps/api/src/rag/memorag-service.ts:583 (MemoRagService.createCurrentDocumentIngestAuthorization)` |
+| F049 | `MemoRagService.createCurrentDocumentIngestAuthorization` | 三項条件 | `input.purpose` が `"chatAttachment"` と等しい | `apps/api/src/rag/memorag-service.ts:585 (MemoRagService.createCurrentDocumentIngestAuthorization)` |
+| F050 | `MemoRagService.ingest` | 三項条件 | `tenantId` が存在し、真である、かつ `this.deps.usageEventStore` が存在し、真である、かつ `this.usageRolloutMode()` が `"disabled"` と異なる | `apps/api/src/rag/memorag-service.ts:563 (MemoRagService.ingest)` |
+| F051 | `MemoRagService.discardUncommittedIngest` | if | some の判定結果が真である | `apps/api/src/rag/memorag-service.ts:617 (MemoRagService.discardUncommittedIngest)` |
 
 ## 3. コード由来テストケース
 
@@ -230,14 +230,14 @@
 | TC091 | F046: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:481 (enforceDocumentCreateOperation)` |
 | TC092 | F047: 0件 | 反復対象が空でも不正な副作用や例外を生じない。 | `apps/api/src/routes/document-routes.ts:483 (enforceDocumentCreateOperation)` |
 | TC093 | F047: 複数件 | 各要素を順に処理し、順序・終了条件を守る。 | `apps/api/src/routes/document-routes.ts:483 (enforceDocumentCreateOperation)` |
-| TC094 | F048: 条件成立 | `input.purpose` が `"benchmarkSeed"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:576 (MemoRagService.createCurrentDocumentIngestAuthorization)` |
-| TC095 | F048: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:576 (MemoRagService.createCurrentDocumentIngestAuthorization)` |
-| TC096 | F049: 条件成立 | `input.purpose` が `"chatAttachment"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:578 (MemoRagService.createCurrentDocumentIngestAuthorization)` |
-| TC097 | F049: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:578 (MemoRagService.createCurrentDocumentIngestAuthorization)` |
-| TC098 | F050: 条件成立 | `tenantId` が存在し、真である、かつ `this.deps.usageEventStore` が存在し、真である、かつ `this.usageRolloutMode()` が `"disabled"` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:556 (MemoRagService.ingest)` |
-| TC099 | F050: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:556 (MemoRagService.ingest)` |
-| TC100 | F051: 条件成立 | some の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:610 (MemoRagService.discardUncommittedIngest)` |
-| TC101 | F051: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:610 (MemoRagService.discardUncommittedIngest)` |
+| TC094 | F048: 条件成立 | `input.purpose` が `"benchmarkSeed"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:583 (MemoRagService.createCurrentDocumentIngestAuthorization)` |
+| TC095 | F048: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:583 (MemoRagService.createCurrentDocumentIngestAuthorization)` |
+| TC096 | F049: 条件成立 | `input.purpose` が `"chatAttachment"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:585 (MemoRagService.createCurrentDocumentIngestAuthorization)` |
+| TC097 | F049: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:585 (MemoRagService.createCurrentDocumentIngestAuthorization)` |
+| TC098 | F050: 条件成立 | `tenantId` が存在し、真である、かつ `this.deps.usageEventStore` が存在し、真である、かつ `this.usageRolloutMode()` が `"disabled"` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:563 (MemoRagService.ingest)` |
+| TC099 | F050: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:563 (MemoRagService.ingest)` |
+| TC100 | F051: 条件成立 | some の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:617 (MemoRagService.discardUncommittedIngest)` |
+| TC101 | F051: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:617 (MemoRagService.discardUncommittedIngest)` |
 | TC102 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC103 | HTTP 400 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC104 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
