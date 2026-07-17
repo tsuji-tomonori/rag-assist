@@ -112,7 +112,7 @@ facade が broad dependency を保持する private field は `constructor(priva
 | security/audit | `accountRevocationRegistry`, `administrativePrincipalTransferFence`, `resourceUserPrincipalDirectory`, `securityAuditOutbox`, `securityAuditReconciliationOutbox` |
 | local/migration seam | `localTestIngestAdmissionContext`, `legacyGlobalDocumentArtifacts` |
 
-Phase 4i 後の service source から `this.deps.<key>` として直接読まれる key は 24。`questionStore` は `QuestionService`、`asyncAgentProviders` は `AgentProviderCatalogService`、`codeBuildLogReader` は `BenchmarkRunQueryService` の narrow port として constructor で渡され、facade 内では直接読まない。`benchmarkRunStore` は query / cancellation / artifact download / reauthorization service へ渡す一方、create と revocation cleanup driver では facade が直接読むため direct read key に残る。facade 内の `this.deps.benchmarkRunStore` occurrence は Phase 4h の6から4へ減る。残る `folderPolicyStore`、`administrativePrincipalTransferFence`、`securityAuditReconciliationOutbox`、`legacyGlobalDocumentArtifacts` は `Dependencies` 全体を受け取る helper/service 側で間接利用される。この区別は「直接参照がないので削除可能」という誤判定を避けるために必要である。
+Phase 4j 後の service source から `this.deps.<key>` として直接読まれる key は 23。`questionStore` は `QuestionService`、`asyncAgentProviders` は `AgentProviderCatalogService`、`codeBuildLogReader` は `BenchmarkRunQueryService`、`benchmarkArtifactStore` は `BenchmarkArtifactRevocationCleanupDriverFactory` の narrow port として constructor で渡され、facade 内では直接読まない。`benchmarkRunStore` は query / cancellation / artifact download / reauthorization / cleanup driver factory へ渡す一方、create orchestration では facade が直接読むため direct read key に残る。facade 内の `this.deps.benchmarkRunStore` occurrence は Phase 4i の4から3へ減る。残る `folderPolicyStore`、`administrativePrincipalTransferFence`、`securityAuditReconciliationOutbox`、`legacyGlobalDocumentArtifacts` は `Dependencies` 全体を受け取る helper/service 側で間接利用される。この区別は「直接参照がないので削除可能」という誤判定を避けるために必要である。
 
 ### 直接 AWS 依存
 
@@ -397,6 +397,30 @@ service が受け取る port は次に限定する。
 
 `benchmark-run-reauthorization-service.test.ts` は narrow source guard、tenant/run exact lookup、non-enumeration、boundary/status matrix、success no-write、single-clock revoked update、cleanup order、original error identity、non-permission failure、update failure を固定する。既存 `benchmark-run-authorization-worker.test.ts` は current identity の4境界、cross-tenant non-disclosure、tenant-partitioned artifact cleanup、durable reconciliation intent を production composition で継続検証する。actual Step Functions worker / IAM / DynamoDB / S3 cleanup は credential と external state を伴うため未実施とし、port characterization、integration test、local/GitHub CI を検証根拠にする。
 
+## Phase 4j: benchmark artifact revocation cleanup driver の抽出境界
+
+Issue #359 Phase 4j では、permission-revoked benchmark run の authoritative deny probe、canonical evaluation target、partition-fenced delete、residual verification を `BenchmarkArtifactRevocationCleanupDriverFactory` へ抽出する。durable cleanup manifest の registration / persistence / reconciliation algorithm は `ObjectStoreRevocationCleanupCoordinator`、`register` 後に `reconcile` する orchestration は facade の `reconcileRevokedBenchmarkArtifacts` に維持し、driver と coordinator を同じ rollback unit へ含めない。
+
+factory が受け取る port は次に限定する。
+
+| port | 用途 |
+|---|---|
+| `benchmarkRunStore.get` | exact tenant/run row による authoritative deny current probe |
+| optional `artifactStore.deleteObject/listKeys` | allowlist 済み artifact delete と exact prefix residual verification |
+
+保持する contract:
+
+- canonical target は authoritative `run.tenantId` を `tenantPartitionId` へ変換した `runs/<tenant-partition>/<runId>/` 配下の `results.jsonl`、`summary.json`、`report.md`、`release-audit.json` の4件だけとする。caller supplied target list は受け取らず、factory 内で生成する。
+- authoritative deny は current row が `failed`、`errorCode=permission_revoked`、`updatedAt=manifest.authoritativeDeny.version` の論理積を満たす場合だけ current とする。missing / mismatch は false、run store failure は reject とし、coordinator が destructive cleanup を進めず retryable reconciliation intent を残せるようにする。
+- discover は `evaluation_artifact` scope にのみ canonical targets を返し、他 scope を空にする。
+- cleanup は artifact store 不在、scope mismatch、canonical allowlist 外 reference を reject し、tenant/run partition 外を delete しない。allowed target の adapter failure は変換せず coordinator へ伝播する。
+- residual verification は `evaluation_artifact` 以外で store を読まず空を返す。対象 scope では exact run prefix を list し、存在する canonical targets だけを返す。unexpected key と別 tenant key を destructive target に昇格させない。
+- facade は coordinator `register` を成功させてから `reconcile` を開始する。registration failure は伝播して untracked cleanup を開始せず、reconcile failure は登録済み durable intent を残して worker revoke state の成立を妨げない既存 compensation を維持する。
+- worker reauthorization、current identity / permission / suite policy、tenant/non-enumeration、route/RBAC、RAG trust、worker event/output、manifest schema、repair worker は変更しない。
+- benchmark create orchestration は残存 Phase 4 responsibility として facade に維持する。
+
+`benchmark-artifact-revocation-cleanup-driver.test.ts` は narrow source guard、canonical targets、exact tenant/run deny probe、full predicate、store failure、scope discovery、missing adapter、partition escape、exact delete、adapter failure、exact residual prefix、unexpected / other-tenant exclusion、facade register→reconcile orderを固定する。既存 `benchmark-run-authorization-worker.test.ts` は failed state 永続化後の tenant-partitioned deletion、他 tenant 非削除、delete failure 時の `reconciliation_required` manifest を production composition で継続検証する。actual Step Functions worker / IAM / DynamoDB / S3 cleanup は credential と external state を伴うため未実施とし、port characterization、integration test、local/GitHub CI を検証根拠にする。
+
 ## Error / compatibility 方針
 
 - facade の同名 method と TypeScript signature を維持する。
@@ -413,7 +437,7 @@ service が受け取る port は次に限定する。
 | consumer | route / worker / oRPC の呼出 method が source inventory と一致する |
 | Pick | production の明示 `Pick` が inventory と一致し、method が facade public contract に存在する |
 | constructor | production/test の constructor file と expression 数が一致する |
-| Dependencies | 31 key、broad private readonly field、Phase 4i 後の 24 direct read key と `benchmarkRunStore` の facade occurrence 4 が一致する |
+| Dependencies | 31 key、broad private readonly field、Phase 4j 後の 23 direct read key と `benchmarkRunStore` の facade occurrence 3 が一致する |
 | narrow dependency | `Dependencies` 全体を渡す既存 receiver/call の集合が増えない |
 | AWS / policy | direct import の追加・削除が明示差分になる |
 | behavior | API full suite、typecheck、build、root CI が成功する |

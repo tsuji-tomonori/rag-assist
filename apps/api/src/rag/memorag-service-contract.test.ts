@@ -270,7 +270,6 @@ const expectedConstructorSites = {
 
 const expectedDirectDependencyReads = [
   "accountRevocationRegistry",
-  "benchmarkArtifactStore",
   "benchmarkRunStore",
   "chatRunEventStore",
   "chatRunStore",
@@ -295,8 +294,8 @@ const expectedDirectDependencyReads = [
   "verifiedIdentityProvider"
 ]
 
-const expectedPhase4iDirectDependencyReadCounts = {
-  benchmarkRunStore: 4
+const expectedPhase4jDirectDependencyReadCounts = {
+  benchmarkRunStore: 3
 }
 
 const expectedBroadDependencyPasses = {
@@ -387,7 +386,7 @@ test("the remaining broad private Dependencies field and its direct reads stay s
   assert.equal(dependencyTypeContract, true)
   assert.deepEqual(scanDependencyKeys(), [...expectedDependencyKeys])
   assert.deepEqual(scanDirectDependencyReads(), expectedDirectDependencyReads)
-  assert.deepEqual(scanPhase4iDirectDependencyReadCounts(), expectedPhase4iDirectDependencyReadCounts)
+  assert.deepEqual(scanPhase4jDirectDependencyReadCounts(), expectedPhase4jDirectDependencyReadCounts)
   assert.deepEqual(scanBroadDependencyPasses(), expectedBroadDependencyPasses)
   assert.deepEqual(scanImports((moduleName) => moduleName.startsWith("@aws-sdk/")), expectedAwsImports)
   assert.deepEqual(
@@ -496,7 +495,7 @@ function scanDirectDependencyReads(): string[] {
   )].sort()
 }
 
-function scanPhase4iDirectDependencyReadCounts(): typeof expectedPhase4iDirectDependencyReadCounts {
+function scanPhase4jDirectDependencyReadCounts(): typeof expectedPhase4jDirectDependencyReadCounts {
   const source = readFileSync(servicePath, "utf8")
   return {
     benchmarkRunStore: [...source.matchAll(/this\.deps\.benchmarkRunStore/g)].length

@@ -13,6 +13,7 @@ import { AgentProviderCatalogService } from "../async-agent/provider-catalog-ser
 import { BenchmarkRunQueryService } from "../benchmark/benchmark-run-query-service.js"
 import { BenchmarkRunCancellationService } from "../benchmark/benchmark-run-cancellation-service.js"
 import { BenchmarkRunReauthorizationService } from "../benchmark/benchmark-run-reauthorization-service.js"
+import { BenchmarkArtifactRevocationCleanupDriverFactory } from "../benchmark/benchmark-artifact-revocation-cleanup-driver.js"
 import { stopBenchmarkExecution } from "../benchmark/benchmark-execution-stopper.js"
 import {
   AwsBenchmarkExecutionStarter,
@@ -90,12 +91,7 @@ import {
   ObjectStoreAccountRevocationRegistry
 } from "../security/account-revocation-registry.js"
 import {
-  ObjectStoreRevocationCleanupCoordinator,
-  type RevocationCleanupDriver,
-  type RevocationCleanupManifest,
-  type RevocationCleanupScope,
-  type RevocationCleanupTarget,
-  type RevocationCleanupTargetReference
+  ObjectStoreRevocationCleanupCoordinator
 } from "./_shared/security/revocation-cleanup-coordinator.js"
 import { ObjectStoreRevocationCleanupRepairOutbox } from "./_shared/security/revocation-cleanup-repair-outbox.js"
 import { ProductionRagObservationProducer } from "./quality-control/production-rag-observation-producer.js"
@@ -459,6 +455,7 @@ const benchmarkSuites: BenchmarkSuite[] = [
 export class MemoRagService {
   private readonly agentProviderCatalogService: AgentProviderCatalogService
   private readonly benchmarkArtifactDownloadService: BenchmarkArtifactDownloadService
+  private readonly benchmarkArtifactRevocationCleanupDriverFactory: BenchmarkArtifactRevocationCleanupDriverFactory
   private readonly benchmarkExecutionStarter: BenchmarkExecutionStarter
   private readonly benchmarkRunCancellationService: BenchmarkRunCancellationService
   private readonly benchmarkRunQueryService: BenchmarkRunQueryService
@@ -486,6 +483,10 @@ export class MemoRagService {
       authorizeBoundary: (run, boundary) => this.authorizeBenchmarkRunBoundary(run, boundary),
       reconcileRevokedArtifacts: (run, boundary, revoked) => this.reconcileRevokedBenchmarkArtifacts(run, boundary, revoked),
       now: () => new Date().toISOString()
+    })
+    this.benchmarkArtifactRevocationCleanupDriverFactory = new BenchmarkArtifactRevocationCleanupDriverFactory({
+      benchmarkRunStore: deps.benchmarkRunStore,
+      artifactStore: deps.benchmarkArtifactStore
     })
     this.benchmarkArtifactDownloadService = new BenchmarkArtifactDownloadService({
       benchmarkRunStore: deps.benchmarkRunStore,
@@ -4644,7 +4645,7 @@ export class MemoRagService {
     boundary: WorkerAuthorizationBoundary,
     revoked: PermissionRevokedError
   ): Promise<void> {
-    const targets = benchmarkEvaluationArtifactTargets(run)
+    const targets = this.benchmarkArtifactRevocationCleanupDriverFactory.knownTargets(run)
     const coordinator = new ObjectStoreRevocationCleanupCoordinator(this.deps.objectStore)
     const operationId = `benchmark-artifact-revoke:${run.runId}`
     await coordinator.register({
@@ -4661,41 +4662,8 @@ export class MemoRagService {
     await coordinator.reconcile(
       run.tenantId,
       operationId,
-      this.benchmarkArtifactCleanupDriver(run, targets)
+      this.benchmarkArtifactRevocationCleanupDriverFactory.create(run)
     ).catch(() => undefined)
-  }
-
-  private benchmarkArtifactCleanupDriver(
-    run: BenchmarkRun,
-    targets: readonly RevocationCleanupTargetReference[]
-  ): RevocationCleanupDriver {
-    const artifactStore = this.deps.benchmarkArtifactStore
-    const allowedReferences = new Set(targets.map((target) => target.reference))
-    const prefix = benchmarkRunArtifactPrefix(run)
-    return {
-      isAuthoritativeDenyCurrent: async (manifest: RevocationCleanupManifest) => {
-        const current = await this.deps.benchmarkRunStore.get(run.tenantId, run.runId)
-        return current?.status === "failed"
-          && current.errorCode === "permission_revoked"
-          && current.updatedAt === manifest.authoritativeDeny.version
-      },
-      discover: async (_manifest: RevocationCleanupManifest, scope: RevocationCleanupScope) => (
-        scope === "evaluation_artifact" ? targets : []
-      ),
-      cleanup: async (_manifest: RevocationCleanupManifest, target: RevocationCleanupTarget) => {
-        if (!artifactStore) throw new Error("Benchmark artifact cleanup store is unavailable")
-        if (target.scope !== "evaluation_artifact" || !allowedReferences.has(target.reference)) {
-          throw new Error("Benchmark artifact cleanup target escaped its run partition")
-        }
-        await artifactStore.deleteObject(target.reference)
-      },
-      findResiduals: async (_manifest: RevocationCleanupManifest, scope: RevocationCleanupScope) => {
-        if (scope !== "evaluation_artifact") return []
-        if (!artifactStore) throw new Error("Benchmark artifact cleanup store is unavailable")
-        const existing = new Set(await artifactStore.listKeys(prefix))
-        return targets.filter((target) => existing.has(target.reference))
-      }
-    }
   }
 
   async listBenchmarkRuns(actor: AppUser): Promise<BenchmarkRun[]> {
@@ -5155,18 +5123,6 @@ function chunkPageRange(chunks: Chunk[]): Pick<MemoryCard, "pageStart" | "pageEn
     ...(starts.length > 0 ? { pageStart: Math.min(...starts) } : {}),
     ...(ends.length > 0 ? { pageEnd: Math.max(...ends) } : {})
   }
-}
-
-function benchmarkRunArtifactPrefix(run: Pick<BenchmarkRun, "tenantId" | "runId">): string {
-  return `runs/${tenantPartitionId(run.tenantId)}/${run.runId}/`
-}
-
-function benchmarkEvaluationArtifactTargets(run: BenchmarkRun): RevocationCleanupTargetReference[] {
-  const prefix = benchmarkRunArtifactPrefix(run)
-  return ["results.jsonl", "summary.json", "report.md", "release-audit.json"].map((fileName) => ({
-    scope: "evaluation_artifact",
-    reference: `${prefix}${fileName}`
-  }))
 }
 
 function benchmarkRevocationTrigger(error: PermissionRevokedError): "account_revoked" | "role_revoked" {

@@ -16,13 +16,13 @@
 | --- | --- | --- | --- | --- |
 | F001 | `GET /documents/{documentId}/extracted-text handler` | if | `download` が存在しない、または偽である | `apps/api/src/routes/document-routes.ts:1521 (GET /documents/{documentId}/extracted-text handler)` |
 | F002 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| F003 | `MemoRagService.getDocumentExtractedText` | if | is missing object error の判定結果が真である | `apps/api/src/rag/memorag-service.ts:1068 (MemoRagService.getDocumentExtractedText)` |
-| F004 | `MemoRagService.getDocumentExtractedText` | if | `manifest` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1071 (MemoRagService.getDocumentExtractedText)` |
-| F005 | `MemoRagService.getDocumentExtractedText` | if | 条件式 `await isManifestCurrentPublication(this.deps, manifest, publicationSnapshot)` が成立しない | `apps/api/src/rag/memorag-service.ts:1073 (MemoRagService.getDocumentExtractedText)` |
-| F006 | `MemoRagService.getDocumentExtractedText` | if | `(manifest.lifecycleStatus ?? stringValue(manifest.metadata?.lifecycleStatus) ?? "active")` が `"active"` と異なる | `apps/api/src/rag/memorag-service.ts:1074 (MemoRagService.getDocumentExtractedText)` |
-| F007 | `MemoRagService.getDocumentExtractedText` | if | `permission` が `"readOnly"` と異なる、かつ `permission` が `"full"` と異なる | `apps/api/src/rag/memorag-service.ts:1077 (MemoRagService.getDocumentExtractedText)` |
-| F008 | `MemoRagService.getDocumentExtractedText` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/rag/memorag-service.ts:1080 (MemoRagService.getDocumentExtractedText)` |
-| F009 | `MemoRagService.getDocumentExtractedText` | if | `error` が `ResourceOperationAuthorizationError` の instance である | `apps/api/src/rag/memorag-service.ts:1081 (MemoRagService.getDocumentExtractedText)` |
+| F003 | `MemoRagService.getDocumentExtractedText` | if | is missing object error の判定結果が真である | `apps/api/src/rag/memorag-service.ts:1069 (MemoRagService.getDocumentExtractedText)` |
+| F004 | `MemoRagService.getDocumentExtractedText` | if | `manifest` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1072 (MemoRagService.getDocumentExtractedText)` |
+| F005 | `MemoRagService.getDocumentExtractedText` | if | 条件式 `await isManifestCurrentPublication(this.deps, manifest, publicationSnapshot)` が成立しない | `apps/api/src/rag/memorag-service.ts:1074 (MemoRagService.getDocumentExtractedText)` |
+| F006 | `MemoRagService.getDocumentExtractedText` | if | `(manifest.lifecycleStatus ?? stringValue(manifest.metadata?.lifecycleStatus) ?? "active")` が `"active"` と異なる | `apps/api/src/rag/memorag-service.ts:1075 (MemoRagService.getDocumentExtractedText)` |
+| F007 | `MemoRagService.getDocumentExtractedText` | if | `permission` が `"readOnly"` と異なる、かつ `permission` が `"full"` と異なる | `apps/api/src/rag/memorag-service.ts:1078 (MemoRagService.getDocumentExtractedText)` |
+| F008 | `MemoRagService.getDocumentExtractedText` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/rag/memorag-service.ts:1081 (MemoRagService.getDocumentExtractedText)` |
+| F009 | `MemoRagService.getDocumentExtractedText` | if | `error` が `ResourceOperationAuthorizationError` の instance である | `apps/api/src/rag/memorag-service.ts:1082 (MemoRagService.getDocumentExtractedText)` |
 
 ## 3. コード由来テストケース
 
@@ -33,19 +33,19 @@
 | TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1521 (GET /documents/{documentId}/extracted-text handler)` |
 | TC004 | F002: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
 | TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC006 | F003: 条件成立 | is missing object error の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1068 (MemoRagService.getDocumentExtractedText)` |
-| TC007 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1068 (MemoRagService.getDocumentExtractedText)` |
-| TC008 | F004: 条件成立 | `manifest` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1071 (MemoRagService.getDocumentExtractedText)` |
-| TC009 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1071 (MemoRagService.getDocumentExtractedText)` |
-| TC010 | F005: 条件成立 | 条件式 `await isManifestCurrentPublication(this.deps, manifest, publicationSnapshot)` が成立しない 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1073 (MemoRagService.getDocumentExtractedText)` |
-| TC011 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1073 (MemoRagService.getDocumentExtractedText)` |
-| TC012 | F006: 条件成立 | `(manifest.lifecycleStatus ?? stringValue(manifest.metadata?.lifecycleStatus) ?? "active")` が `"active"` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1074 (MemoRagService.getDocumentExtractedText)` |
-| TC013 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1074 (MemoRagService.getDocumentExtractedText)` |
-| TC014 | F007: 条件成立 | `permission` が `"readOnly"` と異なる、かつ `permission` が `"full"` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1077 (MemoRagService.getDocumentExtractedText)` |
-| TC015 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1077 (MemoRagService.getDocumentExtractedText)` |
-| TC016 | F008: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/rag/memorag-service.ts:1080 (MemoRagService.getDocumentExtractedText)` |
-| TC017 | F009: 条件成立 | `error` が `ResourceOperationAuthorizationError` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1081 (MemoRagService.getDocumentExtractedText)` |
-| TC018 | F009: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1081 (MemoRagService.getDocumentExtractedText)` |
+| TC006 | F003: 条件成立 | is missing object error の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1069 (MemoRagService.getDocumentExtractedText)` |
+| TC007 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1069 (MemoRagService.getDocumentExtractedText)` |
+| TC008 | F004: 条件成立 | `manifest` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1072 (MemoRagService.getDocumentExtractedText)` |
+| TC009 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1072 (MemoRagService.getDocumentExtractedText)` |
+| TC010 | F005: 条件成立 | 条件式 `await isManifestCurrentPublication(this.deps, manifest, publicationSnapshot)` が成立しない 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1074 (MemoRagService.getDocumentExtractedText)` |
+| TC011 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1074 (MemoRagService.getDocumentExtractedText)` |
+| TC012 | F006: 条件成立 | `(manifest.lifecycleStatus ?? stringValue(manifest.metadata?.lifecycleStatus) ?? "active")` が `"active"` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1075 (MemoRagService.getDocumentExtractedText)` |
+| TC013 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1075 (MemoRagService.getDocumentExtractedText)` |
+| TC014 | F007: 条件成立 | `permission` が `"readOnly"` と異なる、かつ `permission` が `"full"` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1078 (MemoRagService.getDocumentExtractedText)` |
+| TC015 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1078 (MemoRagService.getDocumentExtractedText)` |
+| TC016 | F008: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/rag/memorag-service.ts:1081 (MemoRagService.getDocumentExtractedText)` |
+| TC017 | F009: 条件成立 | `error` が `ResourceOperationAuthorizationError` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1082 (MemoRagService.getDocumentExtractedText)` |
+| TC018 | F009: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1082 (MemoRagService.getDocumentExtractedText)` |
 | TC019 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC020 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC021 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
