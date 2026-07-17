@@ -1,6 +1,6 @@
 # Issue #358 FR-086 folder move 監査 resolver
 
-- 状態: do
+- 状態: done
 - タスク種別: 修正
 - 対象: Issue #358 P1-A / FR-086 / exact `folder/move`
 - stacked base: PR #409 `codex/issue-358-fr086-document-share-resolver`
@@ -109,7 +109,7 @@ folder move producer追加時に、target/operationごとのproduction resolver 
 - [x] AC9: resolverはfolder/path/projection/auth mutationを行わず、marker IAMは`GetObject` onlyかつmove prefixだけに限定する。
 - [x] AC10: worker registry、static/infra security policy、FR-086 docs、requirements coverage、generated infra inventoryを同期する。
 - [x] AC11: selected targeted/API/infra/typecheck/lint/build/docs/source audit/pre-commit/diff checkが成功する。
-- [ ] AC12: Draft stacked PRにbase #409、semver、IAM/redeploy、actual AWS未検証、rollback、後続resolverを記載し、日本語AC/self-review/final-head CI evidenceを残す。
+- [x] AC12: Draft stacked PRにbase #409、semver、IAM/redeploy、actual AWS未検証、rollback、後続resolverを記載し、日本語AC/self-review/final-head CI evidenceを残す。
 
 ## 検証計画
 
@@ -134,6 +134,13 @@ folder move producer追加時に、target/operationごとのproduction resolver 
 ## リスク
 
 - actual AWS S3/DynamoDB/Cognito/EventBridge/Lambdaは未検証。
+
+## PR lifecycle 結果
+
+- Draft stacked PR #412 を base `codex/issue-358-fr086-document-share-resolver`（#409）で作成した。
+- `semver:patch` label、日本語AC comment #4999357581、日本語self-review comment #4999476960 を記録した。
+- implementation commit `832554f93d5a67bdb211239cfb77f7d5a5126cea` の MemoRAG CI run #29557792817 はsuccess。CI comment #4999395769を確認した。
+- task done lifecycle commit push後のfinal-head CIはPR top-level commentへ外部証跡として追記する。
 - current state/policyがaudit completion前に別の正当なmutationで変化するとresolverは推測せずquarantineし得る。
 - markerをprojection convergenceのdurable evidenceとし、manifest/vectorの再列挙は行わない。
 - hashed tenant pathをCDK tokenから導出できないためIAMはmove-only prefix内でtenant segment wildcardを使い、runtime authorized tenant keyで境界を補強する。

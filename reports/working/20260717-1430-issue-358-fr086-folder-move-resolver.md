@@ -46,7 +46,7 @@ Issue #358 の次の独立した rollback unit として exact `folder/move` sec
 - exact folder moveだけを扱い、folder delete、document move/delete、admin transferを混在させていない。
 - crash/retry/duplicate/partial/corrupt/unauthorizedをfail closedに固定し、domain mutationやcleanupを再実行しない。
 - docs/coverage/generated/IAMを同じ変更単位で同期した。
-- Draft PR、semver、AC/self-review、final-head CI、Issue進捗、task doneはPR lifecycleで追記する。
+- Draft PR #412、`semver:patch`、日本語AC/self-review、implementation CI successを記録した。task done lifecycle後のfinal-head CIとIssue進捗を外部証跡として追記する。
 
 ## 未対応・制約・リスク
 
@@ -56,3 +56,13 @@ Issue #358 の次の独立した rollback unit として exact `folder/move` sec
 - folder move markerをprojection convergenceのdurable証拠とし、resolverはmanifest/vectorを再列挙しない。
 - folder delete、document move/delete、administrative principal transfer resolverはIssue #358の後続unitとしてopen。
 - merge、deploy、releaseは実施しない。
+
+## PR lifecycle
+
+- Draft PR: #412（base #409）。
+- semver: `semver:patch`。
+- AC comment: #4999357581。
+- self-review comment: #4999476960。blocking指摘なし。
+- implementation commit: `832554f93d5a67bdb211239cfb77f7d5a5126cea`。
+- MemoRAG CI run #29557792817: success。CI comment #4999395769。
+- task done commit後のfinal-head CIとIssue #358進捗commentは外部GitHub evidenceとして完了させる。
