@@ -21,7 +21,7 @@
 | F003 | `PUT /documents/{documentId}/share handler` | if | `err` が `DocumentShareConflictError` の instance である | `apps/api/src/routes/document-routes.ts:923 (PUT /documents/{documentId}/share handler)` |
 | F004 | `PUT /documents/{documentId}/share handler` | if | is forbidden error の判定結果が真である | `apps/api/src/routes/document-routes.ts:924 (PUT /documents/{documentId}/share handler)` |
 | F005 | `PUT /documents/{documentId}/share handler` | if | `err` が `Error` の instance である、かつ `err.message` が "ENOENT" を含む、または `err.message` が "NoSuchKey" を含む | `apps/api/src/routes/document-routes.ts:925 (PUT /documents/{documentId}/share handler)` |
-| F006 | `MemoRagService.updateDocumentShare` | if | can share document の判定結果が真ではない | `apps/api/src/rag/memorag-service.ts:1226 (MemoRagService.updateDocumentShare)` |
+| F006 | `MemoRagService.updateDocumentShare` | if | can share document の判定結果が真ではない | `apps/api/src/rag/memorag-service.ts:1233 (MemoRagService.updateDocumentShare)` |
 
 ## 3. コード由来テストケース
 
@@ -37,8 +37,8 @@
 | TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:924 (PUT /documents/{documentId}/share handler)` |
 | TC009 | F005: 条件成立 | `err` が `Error` の instance である、かつ `err.message` が "ENOENT" を含む、または `err.message` が "NoSuchKey" を含む 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:925 (PUT /documents/{documentId}/share handler)` |
 | TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:925 (PUT /documents/{documentId}/share handler)` |
-| TC011 | F006: 条件成立 | can share document の判定結果が真ではない 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1226 (MemoRagService.updateDocumentShare)` |
-| TC012 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1226 (MemoRagService.updateDocumentShare)` |
+| TC011 | F006: 条件成立 | can share document の判定結果が真ではない 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1233 (MemoRagService.updateDocumentShare)` |
+| TC012 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1233 (MemoRagService.updateDocumentShare)` |
 | TC013 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC014 | HTTP 400 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC015 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

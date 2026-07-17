@@ -331,8 +331,8 @@
       "openApi": true,
       "routeSource": "apps/api/src/routes/benchmark-routes.ts:133 (GET /benchmark-runs)",
       "handlerSource": "apps/api/src/routes/benchmark-routes.ts:142 (GET /benchmark-runs handler)",
-      "functionCount": 8,
-      "branchCount": 4,
+      "functionCount": 7,
+      "branchCount": 3,
       "projectedBranchCount": 1,
       "dataAccessCount": 1,
       "relatedTestCount": 1
@@ -357,8 +357,8 @@
       "openApi": true,
       "routeSource": "apps/api/src/routes/benchmark-routes.ts:149 (GET /benchmark-runs/{runId})",
       "handlerSource": "apps/api/src/routes/benchmark-routes.ts:162 (GET /benchmark-runs/{runId} handler)",
-      "functionCount": 12,
-      "branchCount": 6,
+      "functionCount": 11,
+      "branchCount": 5,
       "projectedBranchCount": 2,
       "dataAccessCount": 1,
       "relatedTestCount": 2
@@ -397,9 +397,9 @@
       "routeSource": "apps/api/src/routes/benchmark-routes.ts:226 (GET /benchmark-runs/{runId}/logs)",
       "handlerSource": "apps/api/src/routes/benchmark-routes.ts:239 (GET /benchmark-runs/{runId}/logs handler)",
       "functionCount": 12,
-      "branchCount": 8,
-      "projectedBranchCount": 4,
-      "dataAccessCount": 3,
+      "branchCount": 7,
+      "projectedBranchCount": 2,
+      "dataAccessCount": 4,
       "relatedTestCount": 2
     },
     {

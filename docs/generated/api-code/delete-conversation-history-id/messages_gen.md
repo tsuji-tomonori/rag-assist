@@ -18,8 +18,8 @@
 | M003 | OpenAPI contract | `403` | 対象操作を実行する権限がありません。 | OpenAPI で宣言された HTTP 403 response | runtime OpenAPI |
 | M004 | OpenAPI contract | `404` | 指定したリソースが見つかりません。 | OpenAPI で宣言された HTTP 404 response | runtime OpenAPI |
 | M005 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| M006 | 例外 | `-` | User identity is required for tenant-partitioned storage | `userId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:5851 (tenantPartitionedOwnerKey)` |
-| M007 | 例外 | `-` | Authoritative tenant is required for user storage | `config.authEnabled` が存在し、真である、または `config.nodeEnv` が `"production"` と等しい | `apps/api/src/rag/memorag-service.ts:5853 (tenantPartitionedOwnerKey)` |
+| M006 | 例外 | `-` | User identity is required for tenant-partitioned storage | `userId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:5843 (tenantPartitionedOwnerKey)` |
+| M007 | 例外 | `-` | Authoritative tenant is required for user storage | `config.authEnabled` が存在し、真である、または `config.nodeEnv` が `"production"` と等しい | `apps/api/src/rag/memorag-service.ts:5845 (tenantPartitionedOwnerKey)` |
 
 ## 読み方
 

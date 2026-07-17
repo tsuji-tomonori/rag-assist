@@ -40,13 +40,13 @@ sequenceDiagram
 | 2 | `POST /document-groups handler` | Auth | "rag:group:create" permission を必須条件として確認する。 | `requirePermission(user, "rag:group:create")` | `apps/api/src/routes/document-routes.ts:600 (POST /document-groups handler)` |
 | 3 | `POST /document-groups handler` | Validation | schema 検証済みの JSON request body を取得する。 | `validJson<z.infer<typeof CreateDocumentGroupRequestSchema>>(c)` | `apps/api/src/routes/document-routes.ts:601 (POST /document-groups handler)` |
 | 4 | `POST /document-groups handler` | Service | service の create document group 処理を呼び出す。 | `service.createDocumentGroup(user, body)` | `apps/api/src/routes/document-routes.ts:603 (POST /document-groups handler)` |
-| 5 | `MemoRagService.createDocumentGroup` | Store | `this.deps.documentGroupStore` に対して list を実行する。 | `this.deps.documentGroupStore.list(tenantId)` | `apps/api/src/rag/memorag-service.ts:1082 (MemoRagService.createDocumentGroup)` |
+| 5 | `MemoRagService.createDocumentGroup` | Store | `this.deps.documentGroupStore` に対して list を実行する。 | `this.deps.documentGroupStore.list(tenantId)` | `apps/api/src/rag/memorag-service.ts:1089 (MemoRagService.createDocumentGroup)` |
 | 6 | `FolderPermissionService.resolveEffectiveFolderPermissionDetail` | Store | `this.deps.documentGroupStore` に対して list を実行する。 | `this.deps.documentGroupStore.list(actorTenantId)` | `apps/api/src/folders/folder-permission-service.ts:145 (FolderPermissionService.resolveEffectiveFolderPermissionDetail)` |
 | 7 | `FolderPermissionService.resolveUserMembershipPermission` | Store | `this.deps.userGroupStore` に対して get を実行する。 | `this.deps.userGroupStore.get(tenantId, groupId)` | `apps/api/src/folders/folder-permission-service.ts:780 (FolderPermissionService.resolveUserMembershipPermission)` |
 | 8 | `FolderPermissionService.resolveUserMembershipPermission` | Store | `this.deps.groupMembershipStore` に対して list by group id を実行する。 | `this.deps.groupMembershipStore.listByGroupId(tenantId, groupId)` | `apps/api/src/folders/folder-permission-service.ts:781 (FolderPermissionService.resolveUserMembershipPermission)` |
 | 9 | `FolderPermissionService.resolvePolicyContext` | Store | `this.deps.folderPolicyStore` に対して find by folder id を実行する。 | `this.deps.folderPolicyStore.findByFolderId(folder.tenantId, current.groupId)` | `apps/api/src/folders/folder-permission-service.ts:695 (FolderPermissionService.resolvePolicyContext)` |
 | 10 | `FolderPermissionService.resolvePolicyContext` | Store | `this.deps.folderPolicyStore` に対して get を実行する。 | `this.deps.folderPolicyStore.get(folder.tenantId, current.policyId)` | `apps/api/src/folders/folder-permission-service.ts:711 (FolderPermissionService.resolvePolicyContext)` |
-| 11 | `MemoRagService.createDocumentGroup` | Store | `this.deps.documentGroupStore` に対して create with path lock を実行する。 | `this.deps.documentGroupStore.createWithPathLock(group)` | `apps/api/src/rag/memorag-service.ts:1132 (MemoRagService.createDocumentGroup)` |
+| 11 | `MemoRagService.createDocumentGroup` | Store | `this.deps.documentGroupStore` に対して create with path lock を実行する。 | `this.deps.documentGroupStore.createWithPathLock(group)` | `apps/api/src/rag/memorag-service.ts:1139 (MemoRagService.createDocumentGroup)` |
 | 12 | `POST /document-groups handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json(await service.createDocumentGroup(user, body), 200)` | `apps/api/src/routes/document-routes.ts:603 (POST /document-groups handler)` |
 | 13 | `POST /document-groups handler` | HTTP/SSE | HTTP 400 で JSON response を返す。 | `c.json({ error: (err as Error).message }, 400)` | `apps/api/src/routes/document-routes.ts:605 (POST /document-groups handler)` |
 
@@ -58,13 +58,13 @@ sequenceDiagram
 | B002 | `POST /document-groups handler` | is document group input error の判定結果が真である | `apps/api/src/routes/document-routes.ts:605 (POST /document-groups handler)` |
 | B003 | `POST /document-groups handler` | `err` が `Error` の instance である、かつ starts with の判定結果が真である | `apps/api/src/routes/document-routes.ts:606 (POST /document-groups handler)` |
 | B004 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| B005 | `MemoRagService.createDocumentGroup` | `tenantId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1080 (MemoRagService.createDocumentGroup)` |
-| B006 | `MemoRagService.createDocumentGroup` | `actorUserId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1081 (MemoRagService.createDocumentGroup)` |
-| B007 | `MemoRagService.createDocumentGroup` | `input.parentGroupId` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1083 (MemoRagService.createDocumentGroup)` |
-| B008 | `MemoRagService.createDocumentGroup` | `input.parentGroupId` が存在し、真である、かつ `parent` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1084 (MemoRagService.createDocumentGroup)` |
-| B009 | `MemoRagService.createDocumentGroup` | `parent` が存在し、真である、かつ `parent.tenantId` が `tenantId` と異なる | `apps/api/src/rag/memorag-service.ts:1085 (MemoRagService.createDocumentGroup)` |
-| B010 | `MemoRagService.createDocumentGroup` | `parent` が存在し、真である、かつ `(await new FolderPermissionService(this.deps).resolveEffectiveFolderPermission(actor, parent.groupId))` が `"full"` と異なる | `apps/api/src/rag/memorag-service.ts:1088 (MemoRagService.createDocumentGroup)` |
-| B011 | `MemoRagService.createDocumentGroup` | `parent` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1094 (MemoRagService.createDocumentGroup)` |
-| B012 | `MemoRagService.createDocumentGroup` | `parent` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1095 (MemoRagService.createDocumentGroup)` |
-| B013 | `MemoRagService.createDocumentGroup` | some の判定結果が真である | `apps/api/src/rag/memorag-service.ts:1107 (MemoRagService.createDocumentGroup)` |
-| B014 | `MemoRagService.createDocumentGroup` | `parent` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1121 (MemoRagService.createDocumentGroup)` |
+| B005 | `MemoRagService.createDocumentGroup` | `tenantId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1087 (MemoRagService.createDocumentGroup)` |
+| B006 | `MemoRagService.createDocumentGroup` | `actorUserId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1088 (MemoRagService.createDocumentGroup)` |
+| B007 | `MemoRagService.createDocumentGroup` | `input.parentGroupId` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1090 (MemoRagService.createDocumentGroup)` |
+| B008 | `MemoRagService.createDocumentGroup` | `input.parentGroupId` が存在し、真である、かつ `parent` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1091 (MemoRagService.createDocumentGroup)` |
+| B009 | `MemoRagService.createDocumentGroup` | `parent` が存在し、真である、かつ `parent.tenantId` が `tenantId` と異なる | `apps/api/src/rag/memorag-service.ts:1092 (MemoRagService.createDocumentGroup)` |
+| B010 | `MemoRagService.createDocumentGroup` | `parent` が存在し、真である、かつ `(await new FolderPermissionService(this.deps).resolveEffectiveFolderPermission(actor, parent.groupId))` が `"full"` と異なる | `apps/api/src/rag/memorag-service.ts:1095 (MemoRagService.createDocumentGroup)` |
+| B011 | `MemoRagService.createDocumentGroup` | `parent` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1101 (MemoRagService.createDocumentGroup)` |
+| B012 | `MemoRagService.createDocumentGroup` | `parent` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1102 (MemoRagService.createDocumentGroup)` |
+| B013 | `MemoRagService.createDocumentGroup` | some の判定結果が真である | `apps/api/src/rag/memorag-service.ts:1114 (MemoRagService.createDocumentGroup)` |
+| B014 | `MemoRagService.createDocumentGroup` | `parent` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1128 (MemoRagService.createDocumentGroup)` |

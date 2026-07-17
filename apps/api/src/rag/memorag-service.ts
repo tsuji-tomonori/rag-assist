@@ -10,6 +10,7 @@ import {
 import type { Dependencies } from "../dependencies.js"
 import { sanitizeProviderText, type AsyncAgentProviderArtifact, type AsyncAgentProviderInput, type AsyncAgentProviderResult } from "../async-agent/provider.js"
 import { AgentProviderCatalogService } from "../async-agent/provider-catalog-service.js"
+import { BenchmarkRunQueryService } from "../benchmark/benchmark-run-query-service.js"
 import { debugTraceObjectKey, runChatOrchestration } from "./orchestration/chat-rag-orchestrator.js"
 import { llmOptions, normalizeMaxIterations, normalizeMemoryTopK, normalizeMinScore, normalizeSearchTopK, normalizeTopK, ragRuntimePolicy } from "../chat-orchestration/runtime-policy.js"
 import type { ChatInput, ChatOrchestrationResult } from "../chat-orchestration/types.js"
@@ -447,12 +448,18 @@ const benchmarkSuites: BenchmarkSuite[] = [
 
 export class MemoRagService {
   private readonly agentProviderCatalogService: AgentProviderCatalogService
+  private readonly benchmarkRunQueryService: BenchmarkRunQueryService
   private readonly favoriteService: FavoriteService
   private readonly questionService: QuestionService
 
   constructor(private readonly deps: Dependencies) {
     this.agentProviderCatalogService = new AgentProviderCatalogService({
       registry: deps.asyncAgentProviders
+    })
+    this.benchmarkRunQueryService = new BenchmarkRunQueryService({
+      benchmarkRunStore: deps.benchmarkRunStore,
+      codeBuildLogReader: deps.codeBuildLogReader,
+      tenantIdForActor: authoritativeActorTenantId
     })
     this.favoriteService = new FavoriteService({
       favoriteStore: deps.favoriteStore,
@@ -4676,11 +4683,11 @@ export class MemoRagService {
   }
 
   async listBenchmarkRuns(actor: AppUser): Promise<BenchmarkRun[]> {
-    return this.deps.benchmarkRunStore.list(authoritativeActorTenantId(actor))
+    return this.benchmarkRunQueryService.list(actor)
   }
 
   async getBenchmarkRun(actor: AppUser, runId: string): Promise<BenchmarkRun | undefined> {
-    return this.deps.benchmarkRunStore.get(authoritativeActorTenantId(actor), runId)
+    return this.benchmarkRunQueryService.get(actor, runId)
   }
 
   async cancelBenchmarkRun(actor: AppUser, runId: string): Promise<BenchmarkRun | undefined> {
@@ -4727,22 +4734,7 @@ export class MemoRagService {
   }
 
   async getBenchmarkCodeBuildLogText(actor: AppUser, runId: string): Promise<{ text: string; fileName: string; contentDisposition: string } | undefined> {
-    const run = await this.deps.benchmarkRunStore.get(authoritativeActorTenantId(actor), runId)
-    if (!run) return undefined
-
-    const text = await this.deps.codeBuildLogReader?.getText({
-      buildId: run.codeBuildBuildId,
-      logGroupName: run.codeBuildLogGroupName,
-      logStreamName: run.codeBuildLogStreamName
-    })
-    if (text === undefined) return undefined
-
-    const fileName = `benchmark-logs-${runId.replace(/[^a-zA-Z0-9._-]/g, "_")}.txt`
-    return {
-      text,
-      fileName,
-      contentDisposition: `attachment; filename="${fileName}"`
-    }
+    return this.benchmarkRunQueryService.getCodeBuildLogText(actor, runId)
   }
 
   private async assertCurrentWorkerAuthorization(

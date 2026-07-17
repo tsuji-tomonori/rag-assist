@@ -274,7 +274,6 @@ const expectedDirectDependencyReads = [
   "benchmarkRunStore",
   "chatRunEventStore",
   "chatRunStore",
-  "codeBuildLogReader",
   "conversationHistoryStore",
   "documentGroupStore",
   "documentIngestRunEventStore",

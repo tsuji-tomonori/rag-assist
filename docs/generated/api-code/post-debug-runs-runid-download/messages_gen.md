@@ -18,9 +18,9 @@
 | M003 | OpenAPI contract | `403` | 対象操作を実行する権限がありません。 | OpenAPI で宣言された HTTP 403 response | runtime OpenAPI |
 | M004 | OpenAPI contract | `404` | 指定したリソースが見つかりません。 | OpenAPI で宣言された HTTP 404 response | runtime OpenAPI |
 | M005 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| M006 | 例外 | `-` | DEBUG_DOWNLOAD_BUCKET_NAME is not configured | `config.debugDownloadBucketName` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:5070 (MemoRagService.createDebugTraceDownloadUrl)` |
-| M007 | 例外 | `-` | Current actor is required for debug trace access | `config.authEnabled` が存在し、真である、または `config.nodeEnv` が `"production"` と等しい | `apps/api/src/rag/memorag-service.ts:5875 (debugTraceTenantPrefix)` |
-| M008 | 例外 | `-` | Authoritative tenant is required for debug trace access | `authoritativeTenantId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:5879 (debugTraceTenantPrefix)` |
+| M006 | 例外 | `-` | DEBUG_DOWNLOAD_BUCKET_NAME is not configured | `config.debugDownloadBucketName` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:5062 (MemoRagService.createDebugTraceDownloadUrl)` |
+| M007 | 例外 | `-` | Current actor is required for debug trace access | `config.authEnabled` が存在し、真である、または `config.nodeEnv` が `"production"` と等しい | `apps/api/src/rag/memorag-service.ts:5867 (debugTraceTenantPrefix)` |
+| M008 | 例外 | `-` | Authoritative tenant is required for debug trace access | `authoritativeTenantId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:5871 (debugTraceTenantPrefix)` |
 | M009 | 例外 | `-` | Authoritative tenant is required | `normalized` が存在しない、または偽である | `apps/api/src/security/tenant-partition.ts:5 (tenantPartitionId)` |
 
 ## 読み方

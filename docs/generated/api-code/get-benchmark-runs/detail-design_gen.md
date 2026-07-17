@@ -32,21 +32,21 @@ benchmark run 一覧を取得する
 
 ## 4. 到達する主要実装
 
-handler を起点に TypeScript symbol を解決し、深さ 2 までの主要関数・method を列挙しています。深い helper を含む全到達関数は 8 件で、永続化・外部接続は深さにかかわらず次節へ集約しています。
+handler を起点に TypeScript symbol を解決し、深さ 2 までの主要関数・method を列挙しています。深い helper を含む全到達関数は 7 件で、永続化・外部接続は深さにかかわらず次節へ集約しています。
 
 | 深さ | Symbol | 責務 | 実装位置 |
 | ---: | --- | --- | --- |
 | 0 | `GET /benchmark-runs handler` | GET /benchmark-runs の request を受け、検証・認可・service 呼び出し・HTTP 応答を調整する。 | `apps/api/src/routes/benchmark-routes.ts:142 (GET /benchmark-runs handler)` |
 | 1 | `requirePermission` | require permission の実装処理を担当する。 | `apps/api/src/authorization.ts:183 (requirePermission)` |
 | 2 | `hasPermission` | has permission の実装処理を担当する。 | `apps/api/src/authorization.ts:187 (hasPermission)` |
-| 1 | `MemoRagService.listBenchmarkRuns` | list benchmark runs の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4678 (MemoRagService.listBenchmarkRuns)` |
-| 2 | `authoritativeActorTenantId` | authoritative actor tenant id の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5840 (authoritativeActorTenantId)` |
+| 1 | `MemoRagService.listBenchmarkRuns` | list benchmark runs の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4685 (MemoRagService.listBenchmarkRuns)` |
+| 2 | `BenchmarkRunQueryService.list` | list の実装処理を担当する。 | `apps/api/src/benchmark/benchmark-run-query-service.ts:15 (BenchmarkRunQueryService.list)` |
 
 ## 5. データ・外部境界
 
 | 種別 | 境界 | Target | Operation | 目的 | Caller | 実装位置 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 参照 | Store | `this.deps.benchmarkRunStore` | `list` | `this.deps.benchmarkRunStore` に対して list を実行する。 | `MemoRagService.listBenchmarkRuns` | `apps/api/src/rag/memorag-service.ts:4679 (MemoRagService.listBenchmarkRuns)` |
+| 参照 | Store | `this.ports.benchmarkRunStore` | `list` | `this.ports.benchmarkRunStore` に対して list を実行する。 | `BenchmarkRunQueryService.list` | `apps/api/src/benchmark/benchmark-run-query-service.ts:16 (BenchmarkRunQueryService.list)` |
 
 ## 6. 応答・メッセージ
 

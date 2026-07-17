@@ -19,8 +19,9 @@ sequenceDiagram
   API->>Auth: "benchmark：download" permission を必須条件として確認する。
   API->>Auth: schema 検証済みの path parameter を取得する。
   Service->>External: service へ get benchmark code build log text を実行する。
-  Service->>Store: this.deps.benchmarkRunStore に対して get を実行する。
-  Service->>External: this.deps.codeBuildLogReader? へ get text を実行する。
+  Service->>External: this.benchmarkRunQueryService へ get code build log text を実行する。
+  Service->>Store: this.ports.benchmarkRunStore に対して get を実行する。
+  Service->>External: this.ports.codeBuildLogReader? へ get text を実行する。
   API-->>Client: text を実行する。
 ```
 
@@ -32,9 +33,10 @@ sequenceDiagram
 | 2 | `GET /benchmark-runs/{runId}/logs handler` | Auth | "benchmark:download" permission を必須条件として確認する。 | `requirePermission(actor, "benchmark:download")` | `apps/api/src/routes/benchmark-routes.ts:242 (GET /benchmark-runs/{runId}/logs handler)` |
 | 3 | `GET /benchmark-runs/{runId}/logs handler` | Validation | schema 検証済みの path parameter を取得する。 | `validParam<{ runId: string }>(c)` | `apps/api/src/routes/benchmark-routes.ts:243 (GET /benchmark-runs/{runId}/logs handler)` |
 | 4 | `GET /benchmark-runs/{runId}/logs handler` | External | `service` へ get benchmark code build log text を実行する。 | `service.getBenchmarkCodeBuildLogText(actor, runId)` | `apps/api/src/routes/benchmark-routes.ts:244 (GET /benchmark-runs/{runId}/logs handler)` |
-| 5 | `MemoRagService.getBenchmarkCodeBuildLogText` | Store | `this.deps.benchmarkRunStore` に対して get を実行する。 | `this.deps.benchmarkRunStore.get(authoritativeActorTenantId(actor), runId)` | `apps/api/src/rag/memorag-service.ts:4730 (MemoRagService.getBenchmarkCodeBuildLogText)` |
-| 6 | `MemoRagService.getBenchmarkCodeBuildLogText` | External | `this.deps.codeBuildLogReader?` へ get text を実行する。 | `this.deps.codeBuildLogReader?.getText({ buildId: run.codeBuildBuildId, logGroupName: run.codeBuildLogGroupName, logStreamName: run.codeBuildLogStreamName })` | `apps/api/src/rag/memorag-service.ts:4733 (MemoRagService.getBenchmarkCodeBuildLogText)` |
-| 7 | `GET /benchmark-runs/{runId}/logs handler` | HTTP/SSE | text を実行する。 | `c.text(download.text, 200, { "Content-Type": "text/plain; charset=utf-8", "Content-Disposition": download.contentDisposition })` | `apps/api/src/routes/benchmark-routes.ts:246 (GET /benchmark-runs/{runId}/logs handler)` |
+| 5 | `MemoRagService.getBenchmarkCodeBuildLogText` | External | `this.benchmarkRunQueryService` へ get code build log text を実行する。 | `this.benchmarkRunQueryService.getCodeBuildLogText(actor, runId)` | `apps/api/src/rag/memorag-service.ts:4737 (MemoRagService.getBenchmarkCodeBuildLogText)` |
+| 6 | `BenchmarkRunQueryService.get` | Store | `this.ports.benchmarkRunStore` に対して get を実行する。 | `this.ports.benchmarkRunStore.get(this.ports.tenantIdForActor(actor), runId)` | `apps/api/src/benchmark/benchmark-run-query-service.ts:20 (BenchmarkRunQueryService.get)` |
+| 7 | `BenchmarkRunQueryService.getCodeBuildLogText` | External | `this.ports.codeBuildLogReader?` へ get text を実行する。 | `this.ports.codeBuildLogReader?.getText({ buildId: run.codeBuildBuildId, logGroupName: run.codeBuildLogGroupName, logStreamName: run.codeBuildLogStreamName })` | `apps/api/src/benchmark/benchmark-run-query-service.ts:27 (BenchmarkRunQueryService.getCodeBuildLogText)` |
+| 8 | `GET /benchmark-runs/{runId}/logs handler` | HTTP/SSE | text を実行する。 | `c.text(download.text, 200, { "Content-Type": "text/plain; charset=utf-8", "Content-Disposition": download.contentDisposition })` | `apps/api/src/routes/benchmark-routes.ts:246 (GET /benchmark-runs/{runId}/logs handler)` |
 
 ## 分岐
 
@@ -42,5 +44,3 @@ sequenceDiagram
 | --- | --- | --- | --- |
 | B001 | `GET /benchmark-runs/{runId}/logs handler` | `download` が存在しない、または偽である | `apps/api/src/routes/benchmark-routes.ts:245 (GET /benchmark-runs/{runId}/logs handler)` |
 | B002 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| B003 | `MemoRagService.getBenchmarkCodeBuildLogText` | `run` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4731 (MemoRagService.getBenchmarkCodeBuildLogText)` |
-| B004 | `MemoRagService.getBenchmarkCodeBuildLogText` | `text` が `undefined` と等しい | `apps/api/src/rag/memorag-service.ts:4738 (MemoRagService.getBenchmarkCodeBuildLogText)` |

@@ -30,7 +30,7 @@ sequenceDiagram
 | 2 | `DELETE /conversation-history/{id} handler` | Auth | "chat:delete:own" permission を必須条件として確認する。 | `requirePermission(user, "chat:delete:own")` | `apps/api/src/routes/conversation-history-routes.ts:69 (DELETE /conversation-history/{id} handler)` |
 | 3 | `DELETE /conversation-history/{id} handler` | Validation | schema 検証済みの path parameter を取得する。 | `validParam<{ id: string }>(c)` | `apps/api/src/routes/conversation-history-routes.ts:70 (DELETE /conversation-history/{id} handler)` |
 | 4 | `DELETE /conversation-history/{id} handler` | Service | service の delete conversation history 処理を呼び出す。 | `service.deleteConversationHistory(user, id)` | `apps/api/src/routes/conversation-history-routes.ts:71 (DELETE /conversation-history/{id} handler)` |
-| 5 | `MemoRagService.deleteConversationHistory` | Store | `this.deps.conversationHistoryStore` に対して delete を実行する。 | `this.deps.conversationHistoryStore.delete(tenantPartitionedOwnerKey(subject, tenantId), id)` | `apps/api/src/rag/memorag-service.ts:4160 (MemoRagService.deleteConversationHistory)` |
+| 5 | `MemoRagService.deleteConversationHistory` | Store | `this.deps.conversationHistoryStore` に対して delete を実行する。 | `this.deps.conversationHistoryStore.delete(tenantPartitionedOwnerKey(subject, tenantId), id)` | `apps/api/src/rag/memorag-service.ts:4167 (MemoRagService.deleteConversationHistory)` |
 | 6 | `DELETE /conversation-history/{id} handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json({ id }, 200)` | `apps/api/src/routes/conversation-history-routes.ts:72 (DELETE /conversation-history/{id} handler)` |
 
 ## 分岐
