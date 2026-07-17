@@ -19,10 +19,10 @@
 | M004 | OpenAPI contract | `404` | 指定したリソースが見つかりません。 | OpenAPI で宣言された HTTP 404 response | runtime OpenAPI |
 | M005 | OpenAPI contract | `503` | 正本 role の更新または session 失効に失敗しました | OpenAPI で宣言された HTTP 503 response | runtime OpenAPI |
 | M006 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| M007 | 例外 | `-` | Authoritative directory identity is unavailable during reconciliation | `this.deps.verifiedIdentityProvider` が存在し、真である、かつ `currentIdentity` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:3551 (MemoRagService.syncUserDirectory)` |
-| M008 | 例外 | `-` | Admin ledger storage identity is missing | `db._storageKey` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:3592 (MemoRagService.saveAdminLedger)` |
-| M009 | 例外 | `-` | Admin ledger concurrent write conflict | `(error as { code?: string }).code` が `"PRECONDITION_FAILED"` と等しい | `apps/api/src/rag/memorag-service.ts:3604 (MemoRagService.saveAdminLedger)` |
-| M010 | 例外 | `-` | Admin ledger concurrent write conflict | `committed.text` が `serialized` と異なる | `apps/api/src/rag/memorag-service.ts:3609 (MemoRagService.saveAdminLedger)` |
+| M007 | 例外 | `-` | Authoritative directory identity is unavailable during reconciliation | `this.deps.verifiedIdentityProvider` が存在し、真である、かつ `currentIdentity` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:3562 (MemoRagService.syncUserDirectory)` |
+| M008 | 例外 | `-` | Admin ledger storage identity is missing | `db._storageKey` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:3603 (MemoRagService.saveAdminLedger)` |
+| M009 | 例外 | `-` | Admin ledger concurrent write conflict | `(error as { code?: string }).code` が `"PRECONDITION_FAILED"` と等しい | `apps/api/src/rag/memorag-service.ts:3615 (MemoRagService.saveAdminLedger)` |
+| M010 | 例外 | `-` | Admin ledger concurrent write conflict | `committed.text` が `serialized` と異なる | `apps/api/src/rag/memorag-service.ts:3620 (MemoRagService.saveAdminLedger)` |
 | M011 | 例外 | `-` | Authoritative identity lookup failed | 例外を捕捉した場合 | `apps/api/src/security/application-role-mutation-service.ts:337 (ApplicationRoleMutationService.resolveIdentity)` |
 | M012 | 例外 | `-` | Authoritative actor tenant is missing | `tenantId` が存在しない、または偽である | `apps/api/src/security/application-role-mutation-service.ts:506 (ApplicationRoleMutationService.recordEarlyFailure)` |
 | M013 | 例外 | `-` | Actor or target principal is not authoritative | `actorIdentity` が存在しない、または偽である、または `target` が存在しない、または偽である | `apps/api/src/security/application-role-mutation-service.ts:97 (ApplicationRoleMutationService.replaceRoles)` |
@@ -81,7 +81,7 @@
 | M066 | 例外 | `-` | Revocation cleanup target timestamp is invalid | `timestamp` が `undefined` と異なる、かつ `canonicalTimestamp(timestamp, "targetTimestamp")` が `timestamp` と異なる | `apps/api/src/rag/_shared/security/revocation-cleanup-coordinator.ts:531 (validateManifest)` |
 | M067 | 例外 | `-` | Revocation cleanup idempotency key was reused with different input | `manifest.resourceType` が `input.resourceType` と異なる、または `manifest.resourceId` が `input.resourceId` と異なる、または `manifest.trigger` が `input.trigger` と異なる、または `manifest.authoritativeDeny.version` が `input.authoritativeDenyVersion` と異なる、または `manifest.authoritativeDeny.confirmedAt` が `input.authoritativeDenyConfirmedAt` と異なる、または `JSON.stringify(manifest.deniedPurposes)` が `JSON.stringify(input.deniedPurposes)` と異なる | `apps/api/src/rag/_shared/security/revocation-cleanup-coordinator.ts:549 (assertSameRegistration)` |
 | M068 | 例外 | `-` | Revocation cleanup idempotency key was reused with different targets | some の判定結果が真である | `apps/api/src/rag/_shared/security/revocation-cleanup-coordinator.ts:552 (assertSameRegistration)` |
-| M069 | 例外 | `-` | Authoritative role mutation is not configured | `config.authEnabled` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2189 (MemoRagService.assignUserRoles)` |
+| M069 | 例外 | `-` | Authoritative role mutation is not configured | `config.authEnabled` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2200 (MemoRagService.assignUserRoles)` |
 | M070 | HTTP 実装応答 | `404` | User not found | `user` が存在しない、または偽である | `apps/api/src/routes/admin-routes.ts:269 (POST /admin/users/{userId}/roles handler)` |
 
 ## 読み方

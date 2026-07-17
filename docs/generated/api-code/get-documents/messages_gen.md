@@ -24,8 +24,8 @@
 | M009 | 例外 | `-` | Authoritative tenant is required | `normalized` が存在しない、または偽である | `apps/api/src/security/tenant-partition.ts:5 (tenantPartitionId)` |
 | M010 | 例外 | `-` | `Document manifest tenant mismatch${key ? `: ${key}` : ""}` | `manifestTenantId` が存在しない、または偽である、かつ `options.allowMissingTenant` が存在しない、または偽である、または `manifestTenantId` が存在し、真である、かつ `manifestTenantId` が `normalizedTenantId` と異なる | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:111 (assertManifestTenant)` |
 | M011 | 例外 | `-` | Document manifest escaped its authoritative tenant partition | uses legacy global document artifacts の判定結果が真ではない、かつ starts with の判定結果が真ではない | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:96 (readTenantManifestByKey)` |
-| M012 | ログ | `-` | Skipping missing document manifest listed by object store | is missing object error の判定結果が真である | `apps/api/src/rag/memorag-service.ts:962 (MemoRagService.listDocuments)` |
-| M013 | 例外 | `-` | Benchmark evaluation tenant is not configured | `config.benchmarkEvaluationEnabled` が存在しない、または偽である、または `tenantId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1009 (MemoRagService.listBenchmarkDocumentManifests)` |
+| M012 | ログ | `-` | Skipping missing document manifest listed by object store | is missing object error の判定結果が真である | `apps/api/src/rag/memorag-service.ts:973 (MemoRagService.listDocuments)` |
+| M013 | 例外 | `-` | Benchmark evaluation tenant is not configured | `config.benchmarkEvaluationEnabled` が存在しない、または偽である、または `tenantId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1020 (MemoRagService.listBenchmarkDocumentManifests)` |
 | M014 | 例外 | `-` | invalid cursor payload | test の判定結果が真ではない | `apps/api/src/routes/document-routes.ts:283 (decodeCollectionCursor)` |
 | M015 | 例外 | `-` | non-canonical cursor | `Buffer.from(decoded, "utf-8").toString("base64url")` が `normalized` と異なる | `apps/api/src/routes/document-routes.ts:284 (decodeCollectionCursor)` |
 | M016 | 例外 | `-` | cursor offset overflow | is safe integer の判定結果が真ではない | `apps/api/src/routes/document-routes.ts:286 (decodeCollectionCursor)` |

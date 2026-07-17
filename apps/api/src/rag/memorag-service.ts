@@ -14,6 +14,10 @@ import { BenchmarkRunQueryService } from "../benchmark/benchmark-run-query-servi
 import { BenchmarkRunCancellationService } from "../benchmark/benchmark-run-cancellation-service.js"
 import { stopBenchmarkExecution } from "../benchmark/benchmark-execution-stopper.js"
 import {
+  AwsBenchmarkExecutionStarter,
+  type BenchmarkExecutionStarter
+} from "../benchmark/benchmark-execution-starter.js"
+import {
   BenchmarkArtifactDownloadService,
   type BenchmarkDownloadArtifact
 } from "../benchmark/benchmark-artifact-download-service.js"
@@ -106,7 +110,7 @@ import {
   type ResourceGroupMembershipMutationResult
 } from "../security/resource-group-membership-service.js"
 import { ObjectStoreResourceGroupMembershipCleanupRepairStore } from "../security/resource-group-membership-cleanup-repair-store.js"
-import { tenantPartitionId, tenantStorageKey } from "../security/tenant-partition.js"
+import { tenantPartitionId } from "../security/tenant-partition.js"
 import { securityResourceReference } from "../security/security-resource-reference.js"
 import type { UsageBreakdown, UsageEvent, UsageListQuery, UsageSummaryPage } from "../types.js"
 import { normalizeUsageQuery, type UsageEventPage } from "../adapters/usage-event-store.js"
@@ -454,6 +458,7 @@ const benchmarkSuites: BenchmarkSuite[] = [
 export class MemoRagService {
   private readonly agentProviderCatalogService: AgentProviderCatalogService
   private readonly benchmarkArtifactDownloadService: BenchmarkArtifactDownloadService
+  private readonly benchmarkExecutionStarter: BenchmarkExecutionStarter
   private readonly benchmarkRunCancellationService: BenchmarkRunCancellationService
   private readonly benchmarkRunQueryService: BenchmarkRunQueryService
   private readonly favoriteService: FavoriteService
@@ -480,6 +485,12 @@ export class MemoRagService {
       signArtifact: signBenchmarkArtifact,
       bucketName: config.benchmarkBucketName,
       downloadExpiresInSeconds: config.benchmarkDownloadExpiresInSeconds
+    })
+    this.benchmarkExecutionStarter = new AwsBenchmarkExecutionStarter({
+      region: config.region,
+      stateMachineArn: config.benchmarkStateMachineArn,
+      bucketName: config.benchmarkBucketName,
+      targetApiBaseUrl: config.benchmarkTargetApiBaseUrl
     })
     this.favoriteService = new FavoriteService({
       favoriteStore: deps.favoriteStore,
@@ -4596,7 +4607,7 @@ export class MemoRagService {
       await this.authorizeBenchmarkRunBoundary(run, "start")
       await this.authorizeBenchmarkRunBoundary(run, "protected_read")
       await this.authorizeBenchmarkRunBoundary(run, "external_side_effect")
-      const executionArn = await this.startBenchmarkExecution(run, outputPrefix)
+      const executionArn = await this.benchmarkExecutionStarter.start(run, outputPrefix)
       await this.authorizeBenchmarkRunBoundary(run, "durable_commit")
       return this.deps.benchmarkRunStore.update(run.tenantId, run.runId, { executionArn })
     } catch (err) {
@@ -4979,40 +4990,6 @@ export class MemoRagService {
 
   private async saveAsyncAgentRun(run: AsyncAgentRun): Promise<void> {
     await this.deps.objectStore.putText(asyncAgentRunObjectKey(run.tenantId, run.agentRunId), JSON.stringify(run, null, 2), "application/json; charset=utf-8")
-  }
-
-  private async startBenchmarkExecution(run: BenchmarkRun, outputPrefix: string): Promise<string> {
-    const states = new SFNClient({ region: config.region })
-    const response = await states.send(
-      new StartExecutionCommand({
-        stateMachineArn: config.benchmarkStateMachineArn,
-        name: workerExecutionName(run.tenantId, run.runId),
-        input: JSON.stringify({
-          runId: run.runId,
-          storageRunId: tenantStorageKey(run.tenantId, run.runId),
-          createdBy: run.createdBy,
-          tenantId: run.tenantId,
-          mode: run.mode,
-          runner: run.runner,
-          suiteId: run.suiteId,
-          datasetS3Key: run.datasetS3Key,
-          datasetS3Uri: `s3://${config.benchmarkBucketName}/${run.datasetS3Key}`,
-          outputS3Prefix: `s3://${config.benchmarkBucketName}/${outputPrefix}`,
-          apiBaseUrl: config.benchmarkTargetApiBaseUrl,
-          modelId: run.modelId,
-          embeddingModelId: run.embeddingModelId,
-          topK: run.topK,
-          memoryTopK: run.memoryTopK,
-          minScore: run.minScore,
-          concurrency: run.concurrency,
-          summaryS3Key: run.summaryS3Key,
-          reportS3Key: run.reportS3Key,
-          resultsS3Key: run.resultsS3Key
-        })
-      })
-    )
-    if (!response.executionArn) throw new Error("Step Functions executionArn was not returned")
-    return response.executionArn
   }
 
   private async startChatRunExecution(tenantId: string, runId: string): Promise<string> {

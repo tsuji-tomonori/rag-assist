@@ -14,18 +14,18 @@ _静的に直接対応を確認できた test case はありません。`unit-te
 | --- | --- | --- | --- | --- |
 | F001 | `POST /chat handler` | if | `(body.includeDebug ?? body.debug ?? false)` が `true` と等しい | `apps/api/src/routes/chat-routes.ts:42 (POST /chat handler)` |
 | F002 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| F003 | `MemoRagService.chat` | if | `actor` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2450 (MemoRagService.chat)` |
-| F004 | `MemoRagService.chat` | 三項条件 | `actor` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2452 (MemoRagService.chat)` |
-| F005 | `MemoRagService.chat` | 三項条件 | `authorize` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2465 (MemoRagService.chat)` |
-| F006 | `MemoRagService.chat` | if | `authorize` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2466 (MemoRagService.chat)` |
-| F007 | `MemoRagService.chat` | 三項条件 | `authorize` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2474 (MemoRagService.chat)` |
-| F008 | `MemoRagService.chat` | 三項条件 | `currentActor` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2482 (MemoRagService.chat)` |
-| F009 | `MemoRagService.chat` | if | `authorize` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2484 (MemoRagService.chat)` |
-| F010 | `MemoRagService.chat` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/rag/memorag-service.ts:2486 (MemoRagService.chat)` |
-| F011 | `MemoRagService.chat` | if | `persistedTrace` が存在し、真である、または `observationArtifactId` が存在し、真である、かつ `currentActor?.tenantId` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2487 (MemoRagService.chat)` |
-| F012 | `MemoRagService.chat` | 三項条件 | `persistedTrace` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2490 (MemoRagService.chat)` |
-| F013 | `MemoRagService.chat` | 三項条件 | `persistedTrace` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2491 (MemoRagService.chat)` |
-| F014 | `MemoRagService.chat` | 三項条件 | `observationArtifactId` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2492 (MemoRagService.chat)` |
+| F003 | `MemoRagService.chat` | if | `actor` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2461 (MemoRagService.chat)` |
+| F004 | `MemoRagService.chat` | 三項条件 | `actor` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2463 (MemoRagService.chat)` |
+| F005 | `MemoRagService.chat` | 三項条件 | `authorize` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2476 (MemoRagService.chat)` |
+| F006 | `MemoRagService.chat` | if | `authorize` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2477 (MemoRagService.chat)` |
+| F007 | `MemoRagService.chat` | 三項条件 | `authorize` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2485 (MemoRagService.chat)` |
+| F008 | `MemoRagService.chat` | 三項条件 | `currentActor` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2493 (MemoRagService.chat)` |
+| F009 | `MemoRagService.chat` | if | `authorize` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2495 (MemoRagService.chat)` |
+| F010 | `MemoRagService.chat` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/rag/memorag-service.ts:2497 (MemoRagService.chat)` |
+| F011 | `MemoRagService.chat` | if | `persistedTrace` が存在し、真である、または `observationArtifactId` が存在し、真である、かつ `currentActor?.tenantId` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2498 (MemoRagService.chat)` |
+| F012 | `MemoRagService.chat` | 三項条件 | `persistedTrace` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2501 (MemoRagService.chat)` |
+| F013 | `MemoRagService.chat` | 三項条件 | `persistedTrace` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2502 (MemoRagService.chat)` |
+| F014 | `MemoRagService.chat` | 三項条件 | `observationArtifactId` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2503 (MemoRagService.chat)` |
 
 ## 3. コード由来テストケース
 
@@ -36,29 +36,29 @@ _静的に直接対応を確認できた test case はありません。`unit-te
 | TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/chat-routes.ts:42 (POST /chat handler)` |
 | TC004 | F002: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
 | TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC006 | F003: 条件成立 | `actor` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2450 (MemoRagService.chat)` |
-| TC007 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2450 (MemoRagService.chat)` |
-| TC008 | F004: 条件成立 | `actor` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2452 (MemoRagService.chat)` |
-| TC009 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2452 (MemoRagService.chat)` |
-| TC010 | F005: 条件成立 | `authorize` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2465 (MemoRagService.chat)` |
-| TC011 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2465 (MemoRagService.chat)` |
-| TC012 | F006: 条件成立 | `authorize` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2466 (MemoRagService.chat)` |
-| TC013 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2466 (MemoRagService.chat)` |
-| TC014 | F007: 条件成立 | `authorize` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2474 (MemoRagService.chat)` |
-| TC015 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2474 (MemoRagService.chat)` |
-| TC016 | F008: 条件成立 | `currentActor` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2482 (MemoRagService.chat)` |
-| TC017 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2482 (MemoRagService.chat)` |
-| TC018 | F009: 条件成立 | `authorize` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2484 (MemoRagService.chat)` |
-| TC019 | F009: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2484 (MemoRagService.chat)` |
-| TC020 | F010: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/rag/memorag-service.ts:2486 (MemoRagService.chat)` |
-| TC021 | F011: 条件成立 | `persistedTrace` が存在し、真である、または `observationArtifactId` が存在し、真である、かつ `currentActor?.tenantId` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2487 (MemoRagService.chat)` |
-| TC022 | F011: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2487 (MemoRagService.chat)` |
-| TC023 | F012: 条件成立 | `persistedTrace` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2490 (MemoRagService.chat)` |
-| TC024 | F012: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2490 (MemoRagService.chat)` |
-| TC025 | F013: 条件成立 | `persistedTrace` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2491 (MemoRagService.chat)` |
-| TC026 | F013: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2491 (MemoRagService.chat)` |
-| TC027 | F014: 条件成立 | `observationArtifactId` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2492 (MemoRagService.chat)` |
-| TC028 | F014: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2492 (MemoRagService.chat)` |
+| TC006 | F003: 条件成立 | `actor` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2461 (MemoRagService.chat)` |
+| TC007 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2461 (MemoRagService.chat)` |
+| TC008 | F004: 条件成立 | `actor` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2463 (MemoRagService.chat)` |
+| TC009 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2463 (MemoRagService.chat)` |
+| TC010 | F005: 条件成立 | `authorize` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2476 (MemoRagService.chat)` |
+| TC011 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2476 (MemoRagService.chat)` |
+| TC012 | F006: 条件成立 | `authorize` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2477 (MemoRagService.chat)` |
+| TC013 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2477 (MemoRagService.chat)` |
+| TC014 | F007: 条件成立 | `authorize` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2485 (MemoRagService.chat)` |
+| TC015 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2485 (MemoRagService.chat)` |
+| TC016 | F008: 条件成立 | `currentActor` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2493 (MemoRagService.chat)` |
+| TC017 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2493 (MemoRagService.chat)` |
+| TC018 | F009: 条件成立 | `authorize` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2495 (MemoRagService.chat)` |
+| TC019 | F009: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2495 (MemoRagService.chat)` |
+| TC020 | F010: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/rag/memorag-service.ts:2497 (MemoRagService.chat)` |
+| TC021 | F011: 条件成立 | `persistedTrace` が存在し、真である、または `observationArtifactId` が存在し、真である、かつ `currentActor?.tenantId` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2498 (MemoRagService.chat)` |
+| TC022 | F011: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2498 (MemoRagService.chat)` |
+| TC023 | F012: 条件成立 | `persistedTrace` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2501 (MemoRagService.chat)` |
+| TC024 | F012: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2501 (MemoRagService.chat)` |
+| TC025 | F013: 条件成立 | `persistedTrace` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2502 (MemoRagService.chat)` |
+| TC026 | F013: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2502 (MemoRagService.chat)` |
+| TC027 | F014: 条件成立 | `observationArtifactId` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2503 (MemoRagService.chat)` |
+| TC028 | F014: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2503 (MemoRagService.chat)` |
 | TC029 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC030 | HTTP 400 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC031 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

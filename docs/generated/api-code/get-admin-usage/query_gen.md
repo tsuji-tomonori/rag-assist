@@ -8,7 +8,7 @@
 
 | # | CRUD/実行 | Target | Method | 自然言語での目的 | Caller | コード根拠 |
 | ---: | --- | --- | --- | --- | --- | --- |
-| 1 | 参照 | `this.deps.usageEventStore` | `query` | `this.deps.usageEventStore` に対して query を実行する。 | `MemoRagService.listUsageSummaries` | `apps/api/src/rag/memorag-service.ts:2223 (MemoRagService.listUsageSummaries)` |
+| 1 | 参照 | `this.deps.usageEventStore` | `query` | `this.deps.usageEventStore` に対して query を実行する。 | `MemoRagService.listUsageSummaries` | `apps/api/src/rag/memorag-service.ts:2234 (MemoRagService.listUsageSummaries)` |
 
 ## 外部サービス操作
 

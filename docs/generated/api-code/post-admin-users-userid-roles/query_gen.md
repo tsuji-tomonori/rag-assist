@@ -8,16 +8,16 @@
 
 | # | CRUD/実行 | Target | Method | 自然言語での目的 | Caller | コード根拠 |
 | ---: | --- | --- | --- | --- | --- | --- |
-| 1 | 参照 | `this` | `loadAdminLedger` | `this` に対して load admin ledger を実行する。 | `MemoRagService.assignUserRoles` | `apps/api/src/rag/memorag-service.ts:2150 (MemoRagService.assignUserRoles)` |
-| 2 | 実行 | `adminLedgerKeyForTenant` | `adminLedgerKeyForTenant` | `adminLedgerKeyForTenant` に対して admin ledger key for tenant を実行する。 | `MemoRagService.loadAdminLedger` | `apps/api/src/rag/memorag-service.ts:3449 (MemoRagService.loadAdminLedger)` |
-| 3 | 参照 | `this.deps.objectStore` | `getTextWithVersion` | `this.deps.objectStore` に対して get text with version を実行する。 | `MemoRagService.loadAdminLedger` | `apps/api/src/rag/memorag-service.ts:3451 (MemoRagService.loadAdminLedger)` |
-| 4 | 参照 | `this` | `loadOrMigrateLegacyAdminLedger` | `this` に対して load or migrate legacy admin ledger を実行する。 | `MemoRagService.loadAdminLedger` | `apps/api/src/rag/memorag-service.ts:3456 (MemoRagService.loadAdminLedger)` |
-| 5 | 参照 | `this.deps.objectStore` | `getTextWithVersion` | `this.deps.objectStore` に対して get text with version を実行する。 | `MemoRagService.loadOrMigrateLegacyAdminLedger` | `apps/api/src/rag/memorag-service.ts:3518 (MemoRagService.loadOrMigrateLegacyAdminLedger)` |
-| 6 | 作成・追記 | `this.deps.objectStore` | `putTextIfVersion` | `this.deps.objectStore` に対して put text if version を実行する。 | `MemoRagService.loadOrMigrateLegacyAdminLedger` | `apps/api/src/rag/memorag-service.ts:3532 (MemoRagService.loadOrMigrateLegacyAdminLedger)` |
-| 7 | 参照 | `this.deps.objectStore` | `getTextWithVersion` | `this.deps.objectStore` に対して get text with version を実行する。 | `MemoRagService.loadOrMigrateLegacyAdminLedger` | `apps/api/src/rag/memorag-service.ts:3536 (MemoRagService.loadOrMigrateLegacyAdminLedger)` |
-| 8 | 作成・追記 | `this` | `saveAdminLedger` | `this` に対して save admin ledger を実行する。 | `MemoRagService.assignUserRoles` | `apps/api/src/rag/memorag-service.ts:2174 (MemoRagService.assignUserRoles)` |
-| 9 | 作成・追記 | `this.deps.objectStore` | `putTextIfVersion` | `this.deps.objectStore` に対して put text if version を実行する。 | `MemoRagService.saveAdminLedger` | `apps/api/src/rag/memorag-service.ts:3596 (MemoRagService.saveAdminLedger)` |
-| 10 | 参照 | `this.deps.objectStore` | `getTextWithVersion` | `this.deps.objectStore` に対して get text with version を実行する。 | `MemoRagService.saveAdminLedger` | `apps/api/src/rag/memorag-service.ts:3608 (MemoRagService.saveAdminLedger)` |
+| 1 | 参照 | `this` | `loadAdminLedger` | `this` に対して load admin ledger を実行する。 | `MemoRagService.assignUserRoles` | `apps/api/src/rag/memorag-service.ts:2161 (MemoRagService.assignUserRoles)` |
+| 2 | 実行 | `adminLedgerKeyForTenant` | `adminLedgerKeyForTenant` | `adminLedgerKeyForTenant` に対して admin ledger key for tenant を実行する。 | `MemoRagService.loadAdminLedger` | `apps/api/src/rag/memorag-service.ts:3460 (MemoRagService.loadAdminLedger)` |
+| 3 | 参照 | `this.deps.objectStore` | `getTextWithVersion` | `this.deps.objectStore` に対して get text with version を実行する。 | `MemoRagService.loadAdminLedger` | `apps/api/src/rag/memorag-service.ts:3462 (MemoRagService.loadAdminLedger)` |
+| 4 | 参照 | `this` | `loadOrMigrateLegacyAdminLedger` | `this` に対して load or migrate legacy admin ledger を実行する。 | `MemoRagService.loadAdminLedger` | `apps/api/src/rag/memorag-service.ts:3467 (MemoRagService.loadAdminLedger)` |
+| 5 | 参照 | `this.deps.objectStore` | `getTextWithVersion` | `this.deps.objectStore` に対して get text with version を実行する。 | `MemoRagService.loadOrMigrateLegacyAdminLedger` | `apps/api/src/rag/memorag-service.ts:3529 (MemoRagService.loadOrMigrateLegacyAdminLedger)` |
+| 6 | 作成・追記 | `this.deps.objectStore` | `putTextIfVersion` | `this.deps.objectStore` に対して put text if version を実行する。 | `MemoRagService.loadOrMigrateLegacyAdminLedger` | `apps/api/src/rag/memorag-service.ts:3543 (MemoRagService.loadOrMigrateLegacyAdminLedger)` |
+| 7 | 参照 | `this.deps.objectStore` | `getTextWithVersion` | `this.deps.objectStore` に対して get text with version を実行する。 | `MemoRagService.loadOrMigrateLegacyAdminLedger` | `apps/api/src/rag/memorag-service.ts:3547 (MemoRagService.loadOrMigrateLegacyAdminLedger)` |
+| 8 | 作成・追記 | `this` | `saveAdminLedger` | `this` に対して save admin ledger を実行する。 | `MemoRagService.assignUserRoles` | `apps/api/src/rag/memorag-service.ts:2185 (MemoRagService.assignUserRoles)` |
+| 9 | 作成・追記 | `this.deps.objectStore` | `putTextIfVersion` | `this.deps.objectStore` に対して put text if version を実行する。 | `MemoRagService.saveAdminLedger` | `apps/api/src/rag/memorag-service.ts:3607 (MemoRagService.saveAdminLedger)` |
+| 10 | 参照 | `this.deps.objectStore` | `getTextWithVersion` | `this.deps.objectStore` に対して get text with version を実行する。 | `MemoRagService.saveAdminLedger` | `apps/api/src/rag/memorag-service.ts:3619 (MemoRagService.saveAdminLedger)` |
 | 11 | 参照 | `this.objectStore` | `getTextWithVersion` | `this.objectStore` に対して get text with version を実行する。 | `ObjectStoreApplicationRoleMutationLock.read` | `apps/api/src/security/application-role-mutation-lock.ts:248 (ObjectStoreApplicationRoleMutationLock.read)` |
 | 12 | 作成・追記 | `this.objectStore` | `putTextIfVersion` | `this.objectStore` に対して put text if version を実行する。 | `ObjectStoreApplicationRoleMutationLock.write` | `apps/api/src/security/application-role-mutation-lock.ts:264 (ObjectStoreApplicationRoleMutationLock.write)` |
 | 13 | 参照 | `this.objectStore` | `getTextWithVersion` | `this.objectStore` に対して get text with version を実行する。 | `ObjectStoreApplicationRoleMutationLock.write` | `apps/api/src/security/application-role-mutation-lock.ts:265 (ObjectStoreApplicationRoleMutationLock.write)` |
@@ -32,16 +32,16 @@
 | 22 | 実行 | `new ObjectStoreRevocationCleanupTenantRegistry(this.objectStore, this.now)` | `register` | `new ObjectStoreRevocationCleanupTenantRegistry(this.objectStore, this.now)` に対して register を実行する。 | `ObjectStoreRevocationCleanupCoordinator.register` | `apps/api/src/rag/_shared/security/revocation-cleanup-coordinator.ts:137 (ObjectStoreRevocationCleanupCoordinator.register)` |
 | 23 | 参照 | `objectStore` | `getTextWithVersion` | `objectStore` に対して get text with version を実行する。 | `readManifest` | `apps/api/src/rag/_shared/security/revocation-cleanup-coordinator.ts:636 (readManifest)` |
 | 24 | 作成・追記 | `this.objectStore` | `putTextIfVersion` | `this.objectStore` に対して put text if version を実行する。 | `ObjectStoreRevocationCleanupCoordinator.register` | `apps/api/src/rag/_shared/security/revocation-cleanup-coordinator.ts:169 (ObjectStoreRevocationCleanupCoordinator.register)` |
-| 25 | 作成・追記 | `this` | `saveAdminLedger` | `this` に対して save admin ledger を実行する。 | `MemoRagService.assignUserRoles` | `apps/api/src/rag/memorag-service.ts:2202 (MemoRagService.assignUserRoles)` |
+| 25 | 作成・追記 | `this` | `saveAdminLedger` | `this` に対して save admin ledger を実行する。 | `MemoRagService.assignUserRoles` | `apps/api/src/rag/memorag-service.ts:2213 (MemoRagService.assignUserRoles)` |
 
 ## 外部サービス操作
 
 | # | CRUD/実行 | Target | Method | 自然言語での目的 | Caller | コード根拠 |
 | ---: | --- | --- | --- | --- | --- | --- |
-| 1 | 参照 | `this.deps.verifiedIdentityProvider` | `getCurrentIdentityBySubject` | `this.deps.verifiedIdentityProvider` へ get current identity by subject を実行する。 | `MemoRagService.loadAdminLedger` | `apps/api/src/rag/memorag-service.ts:3463 (MemoRagService.loadAdminLedger)` |
-| 2 | 実行 | `this` | `syncUserDirectory` | `this` へ sync user directory を実行する。 | `MemoRagService.loadAdminLedger` | `apps/api/src/rag/memorag-service.ts:3505 (MemoRagService.loadAdminLedger)` |
-| 3 | 参照 | `this.deps.userDirectory` | `listUsers` | `this.deps.userDirectory` へ list users を実行する。 | `MemoRagService.syncUserDirectory` | `apps/api/src/rag/memorag-service.ts:3543 (MemoRagService.syncUserDirectory)` |
-| 4 | 参照 | `this.deps.verifiedIdentityProvider` | `getCurrentIdentityBySubject` | `this.deps.verifiedIdentityProvider` へ get current identity by subject を実行する。 | `MemoRagService.syncUserDirectory` | `apps/api/src/rag/memorag-service.ts:3548 (MemoRagService.syncUserDirectory)` |
+| 1 | 参照 | `this.deps.verifiedIdentityProvider` | `getCurrentIdentityBySubject` | `this.deps.verifiedIdentityProvider` へ get current identity by subject を実行する。 | `MemoRagService.loadAdminLedger` | `apps/api/src/rag/memorag-service.ts:3474 (MemoRagService.loadAdminLedger)` |
+| 2 | 実行 | `this` | `syncUserDirectory` | `this` へ sync user directory を実行する。 | `MemoRagService.loadAdminLedger` | `apps/api/src/rag/memorag-service.ts:3516 (MemoRagService.loadAdminLedger)` |
+| 3 | 参照 | `this.deps.userDirectory` | `listUsers` | `this.deps.userDirectory` へ list users を実行する。 | `MemoRagService.syncUserDirectory` | `apps/api/src/rag/memorag-service.ts:3554 (MemoRagService.syncUserDirectory)` |
+| 4 | 参照 | `this.deps.verifiedIdentityProvider` | `getCurrentIdentityBySubject` | `this.deps.verifiedIdentityProvider` へ get current identity by subject を実行する。 | `MemoRagService.syncUserDirectory` | `apps/api/src/rag/memorag-service.ts:3559 (MemoRagService.syncUserDirectory)` |
 | 5 | 参照 | `this.deps.identityProvider` | `getCurrentIdentityBySubject` | `this.deps.identityProvider` へ get current identity by subject を実行する。 | `ApplicationRoleMutationService.resolveIdentity` | `apps/api/src/security/application-role-mutation-service.ts:335 (ApplicationRoleMutationService.resolveIdentity)` |
 | 6 | 参照 | `this.deps.userDirectory` | `listUsers` | `this.deps.userDirectory` へ list users を実行する。 | `ApplicationRoleMutationService.validate` | `apps/api/src/security/application-role-mutation-service.ts:310 (ApplicationRoleMutationService.validate)` |
 | 7 | 実行 | `(await this.deps.userDirectory.listUsers())` | `filter` | `(await this.deps.userDirectory.listUsers())` へ filter を実行する。 | `ApplicationRoleMutationService.validate` | `apps/api/src/security/application-role-mutation-service.ts:310 (ApplicationRoleMutationService.validate)` |
@@ -54,7 +54,7 @@
 | 14 | 実行 | `this.deps.userDirectory` | `revokeSessions` | `this.deps.userDirectory` へ revoke sessions を実行する。 | `ApplicationRoleMutationService.rollbackUnderFence` | `apps/api/src/security/application-role-mutation-service.ts:478 (ApplicationRoleMutationService.rollbackUnderFence)` |
 | 15 | 実行 | `this.deps.userDirectory.revokeSessions(target.username)` | `catch` | `this.deps.userDirectory.revokeSessions(target.username)` へ catch を実行する。 | `ApplicationRoleMutationService.rollbackUnderFence` | `apps/api/src/security/application-role-mutation-service.ts:478 (ApplicationRoleMutationService.rollbackUnderFence)` |
 | 16 | 参照 | `this.deps.identityProvider` | `getCurrentIdentityBySubject` | `this.deps.identityProvider` へ get current identity by subject を実行する。 | `ApplicationRoleMutationService.resolveIdentityBestEffort` | `apps/api/src/security/application-role-mutation-service.ts:343 (ApplicationRoleMutationService.resolveIdentityBestEffort)` |
-| 17 | 更新 | `this.deps.userDirectory?` | `setUserGroups` | `this.deps.userDirectory?` へ set user groups を実行する。 | `MemoRagService.assignUserRoles` | `apps/api/src/rag/memorag-service.ts:2200 (MemoRagService.assignUserRoles)` |
+| 17 | 更新 | `this.deps.userDirectory?` | `setUserGroups` | `this.deps.userDirectory?` へ set user groups を実行する。 | `MemoRagService.assignUserRoles` | `apps/api/src/rag/memorag-service.ts:2211 (MemoRagService.assignUserRoles)` |
 
 ## 解析境界
 

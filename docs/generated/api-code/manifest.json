@@ -344,8 +344,8 @@
       "openApi": true,
       "routeSource": "apps/api/src/routes/benchmark-routes.ts:109 (POST /benchmark-runs)",
       "handlerSource": "apps/api/src/routes/benchmark-routes.ts:125 (POST /benchmark-runs handler)",
-      "functionCount": 28,
-      "branchCount": 41,
+      "functionCount": 25,
+      "branchCount": 39,
       "projectedBranchCount": 13,
       "dataAccessCount": 7,
       "relatedTestCount": 4

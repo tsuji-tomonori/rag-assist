@@ -20,14 +20,14 @@
 | M005 | OpenAPI contract | `500` | サーバー内部で処理エラーが発生しました。 | OpenAPI で宣言された HTTP 500 response | runtime OpenAPI |
 | M006 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
 | M007 | 例外 | `-` | `Security resource ${name} is invalid` | `value` が存在しない、または偽である、または `value.trim()` が `value` と異なる | `apps/api/src/security/security-resource-reference.ts:12 (securityResourceReference)` |
-| M008 | 例外 | `-` | Run admission resource-group identity crossed its tenant boundary | `membership.tenantId` が `tenantId` と異なる、または `membership.memberId` が `groupId` と異なる | `apps/api/src/rag/memorag-service.ts:1341 (MemoRagService.securityResourceRefsForActor)` |
+| M008 | 例外 | `-` | Run admission resource-group identity crossed its tenant boundary | `membership.tenantId` が `tenantId` と異なる、または `membership.memberId` が `groupId` と異なる | `apps/api/src/rag/memorag-service.ts:1352 (MemoRagService.securityResourceRefsForActor)` |
 | M009 | 例外 | `-` | Authoritative tenant is required | `normalized` が存在しない、または偽である | `apps/api/src/security/tenant-partition.ts:5 (tenantPartitionId)` |
-| M010 | 例外 | `-` | Step Functions executionArn was not returned | `response.executionArn` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:5027 (MemoRagService.startChatRunExecution)` |
-| M011 | 例外 | `-` | `Chat run not found: ${runId}` | `run` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:2708 (MemoRagService.markChatRunFailed)` |
-| M012 | 例外 | `-` | chat_run_conditional_transition_unavailable | `config.authEnabled` が存在し、真である | `apps/api/src/rag/memorag-service.ts:4784 (MemoRagService.updateChatRunIfStatus)` |
-| M013 | 例外 | `-` | chat_run_execution_projection_unavailable | `config.authEnabled` が存在し、真である | `apps/api/src/rag/memorag-service.ts:4770 (MemoRagService.getChatRunExecutionEnvelope)` |
-| M014 | 例外 | `-` | `Chat run not found: ${runId}` | `current` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4797 (MemoRagService.resolveConcurrentChatRun)` |
-| M015 | 例外 | `-` | worker_tenant_missing | `tenantId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4735 (MemoRagService.assertCurrentWorkerAuthorization)` |
+| M010 | 例外 | `-` | Step Functions executionArn was not returned | `response.executionArn` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:5004 (MemoRagService.startChatRunExecution)` |
+| M011 | 例外 | `-` | `Chat run not found: ${runId}` | `run` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:2719 (MemoRagService.markChatRunFailed)` |
+| M012 | 例外 | `-` | chat_run_conditional_transition_unavailable | `config.authEnabled` が存在し、真である | `apps/api/src/rag/memorag-service.ts:4795 (MemoRagService.updateChatRunIfStatus)` |
+| M013 | 例外 | `-` | chat_run_execution_projection_unavailable | `config.authEnabled` が存在し、真である | `apps/api/src/rag/memorag-service.ts:4781 (MemoRagService.getChatRunExecutionEnvelope)` |
+| M014 | 例外 | `-` | `Chat run not found: ${runId}` | `current` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4808 (MemoRagService.resolveConcurrentChatRun)` |
+| M015 | 例外 | `-` | worker_tenant_missing | `tenantId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4746 (MemoRagService.assertCurrentWorkerAuthorization)` |
 | M016 | 例外 | `-` | worker_identity_not_canonical | canonical の判定結果が真ではない、または canonical の判定結果が真ではない、または canonical の判定結果が真ではない | `apps/api/src/security/current-worker-authorization.ts:46 (CurrentWorkerAuthorization.assertAuthorized)` |
 | M017 | 例外 | `-` | authoritative_identity_unavailable | 例外を捕捉した場合 | `apps/api/src/security/current-worker-authorization.ts:53 (CurrentWorkerAuthorization.assertAuthorized)` |
 | M018 | 例外 | `-` | account_deleted | `identity` が存在しない、または偽である | `apps/api/src/security/current-worker-authorization.ts:55 (CurrentWorkerAuthorization.assertAuthorized)` |
@@ -36,10 +36,10 @@
 | M021 | 例外 | `-` | tenant_membership_revoked | `identity.tenantId` が `request.tenantId` と異なる | `apps/api/src/security/current-worker-authorization.ts:58 (CurrentWorkerAuthorization.assertAuthorized)` |
 | M022 | 例外 | `-` | role_permission_revoked | every の判定結果が真ではない | `apps/api/src/security/current-worker-authorization.ts:69 (CurrentWorkerAuthorization.assertAuthorized)` |
 | M023 | 例外 | `-` | resource_policy_revoked | `resourceAllowed` が存在しない、または偽である | `apps/api/src/security/current-worker-authorization.ts:78 (CurrentWorkerAuthorization.assertAuthorized)` |
-| M024 | 例外 | `-` | authoritative_identity_provider_missing | `config.authEnabled` が存在し、真である | `apps/api/src/rag/memorag-service.ts:4744 (MemoRagService.assertCurrentWorkerAuthorization)` |
-| M025 | 例外 | `-` | local_fixture_permission_missing | `config.nodeEnv` が `"test"` と異なる、かつ every の判定結果が真ではない | `apps/api/src/rag/memorag-service.ts:4754 (MemoRagService.assertCurrentWorkerAuthorization)` |
-| M026 | 例外 | `-` | local_fixture_resource_policy_denied | `resourceAllowed` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4762 (MemoRagService.assertCurrentWorkerAuthorization)` |
-| M027 | 例外 | `-` | `Chat run not found: ${runId}` | `envelope` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:2559 (MemoRagService.executeChatRun)` |
+| M024 | 例外 | `-` | authoritative_identity_provider_missing | `config.authEnabled` が存在し、真である | `apps/api/src/rag/memorag-service.ts:4755 (MemoRagService.assertCurrentWorkerAuthorization)` |
+| M025 | 例外 | `-` | local_fixture_permission_missing | `config.nodeEnv` が `"test"` と異なる、かつ every の判定結果が真ではない | `apps/api/src/rag/memorag-service.ts:4765 (MemoRagService.assertCurrentWorkerAuthorization)` |
+| M026 | 例外 | `-` | local_fixture_resource_policy_denied | `resourceAllowed` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4773 (MemoRagService.assertCurrentWorkerAuthorization)` |
+| M027 | 例外 | `-` | `Chat run not found: ${runId}` | `envelope` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:2570 (MemoRagService.executeChatRun)` |
 | M028 | 例外 | `-` | RAG safety state is unavailable. | `required` が存在し、真である | `apps/api/src/rag/quality-control/production-rag-monitor.ts:313 (assertRagSafetyInterlock)` |
 | M029 | 例外 | `-` | RAG safety state is invalid or unsupported. | `state.schemaVersion` が `1` と異なる、または is integer の判定結果が真ではない、または `state.stateVersion` が `1` より小さい、または trim の判定結果が真ではない、または trim の判定結果が真ではない、または trim の判定結果が真ではない、または is array の判定結果が真ではない、または some の判定結果が真である、または `typeof state.promotionFrozen` が `"boolean"` と異なる、または `typeof state.documentQuarantineRequired` が `"boolean"` と異なる、または `["normal", "limited", "refuse"]` が state.responseMode を含まない、または is finite の判定結果が真ではない、または is finite の判定結果が真ではない、または `Date.parse(state.validUntil)` が `Date.parse(state.updatedAt)` 以下である | `apps/api/src/rag/quality-control/production-rag-monitor.ts:362 (assertRagSafetyState)` |
 | M030 | 例外 | `-` | RAG safety state is expired. | is finite の判定結果が真ではない、または `Date.parse(state.validUntil)` が `Date.parse(now)` 以下である | `apps/api/src/rag/quality-control/production-rag-monitor.ts:319 (assertRagSafetyInterlock)` |
