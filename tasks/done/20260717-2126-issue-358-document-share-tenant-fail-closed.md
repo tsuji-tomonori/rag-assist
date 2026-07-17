@@ -1,7 +1,7 @@
 # Issue #358 document share tenant fallback fail-closed
 
-- 保存先: `tasks/do/20260717-2126-issue-358-document-share-tenant-fail-closed.md`
-- 状態: do
+- 保存先: `tasks/done/20260717-2126-issue-358-document-share-tenant-fail-closed.md`
+- 状態: done
 - タスク種別: バグ修正
 - stacked base: PR #430 final head `f85902b6e607bab4ef50a03762f30a8b77562cbb`
 
@@ -89,7 +89,7 @@ document share grant管理の全補助経路でtenant partitionの源泉を`meta
 - [x] AC5: admission-only manifest、same tenant normal flow、cross-tenant isolation、legacy exact filterを維持する。
 - [x] AC6: FR-060/FR-062、coverage、必要なgenerated docsを同期し、README/OpenAPI/UI/infra非該当理由を記録する。
 - [x] AC7: selected targeted/API coverage/docs/source audit/verify/full CI/pre-commit/diff checkを成功させる。
-- [ ] AC8: work report、目的別commit、Draft stacked PR、semver:patch、日本語body/AC/self-reviewを完遂する。
+- [x] AC8: work report、目的別commit、Draft stacked PR、semver:patch、日本語body/AC/self-reviewを完遂する。
 - [ ] AC9: implementation/final-head CI、Issue #358進捗、clean/upstream/remote一致を最終external evidenceへ記録する。
 - [x] AC10: actual AWS/manual evidence、merge、deploy、releaseを未実施として記録する。
 
@@ -113,3 +113,14 @@ document share grant管理の全補助経路でtenant partitionの源泉を`meta
 
 - tenant-less legacy manifestはshare helperで拒否されるため、実dataが存在する場合は別migrationが必要。
 - stacked Draft chainが未mergeのため、本unitはPR #430 final headを前提とする。
+
+## 完了証跡
+
+- implementation commit: `f3396a9223116b609ec76dfe4a5707f53d35f597`
+- Draft stacked PR: #432 `https://github.com/tsuji-tomonori/rag-assist/pull/432`
+- base: `codex/issue-358-fr086-folder-archive-cleanup` / PR #430 final head `f85902b6e607bab4ef50a03762f30a8b77562cbb`
+- semver label: `semver:patch`
+- implementation-head CI: run `29581813956` success（6m39s）
+- 受け入れ条件コメント: `https://github.com/tsuji-tomonori/rag-assist/pull/432#issuecomment-5003479077`
+- セルフレビューコメント: `https://github.com/tsuji-tomonori/rag-assist/pull/432#issuecomment-5003479074`
+- AC9はfinal evidence commit自身のremote CI、Issue progress、clean/upstream/remote一致を必要とする循環的external evidenceのため、このtask fileをdoneへ移す時点では未達のまま記録する。完了後はPR/Issue top-level commentと最終報告をauthoritative evidenceとする。

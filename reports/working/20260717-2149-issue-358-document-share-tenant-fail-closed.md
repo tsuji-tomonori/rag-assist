@@ -48,7 +48,7 @@
 - implementation/test: `apps/api/src/documents/document-permission-service.ts`、同test。
 - requirement trace: `apps/api/src/rag/requirements-coverage.test.ts`、FR-060、FR-062。
 - generated source-backed API docs: `docs/generated/api-code/`の依存ファイル。
-- task: `tasks/do/20260717-2126-issue-358-document-share-tenant-fail-closed.md`。
+- task: `tasks/done/20260717-2126-issue-358-document-share-tenant-fail-closed.md`。
 - report: `reports/working/20260717-2149-issue-358-document-share-tenant-fail-closed.md`。
 
 ## 指示へのfit評価
@@ -64,3 +64,13 @@
 - GitHub AppsのPR操作toolは利用できないため、規定のfallbackとして`gh`を使用する。
 - stacked base PR #430が未mergeのため、本unitはそのfinal headを前提とする。
 - merge、deploy、release、production/external state変更は実施していない。
+
+## PR・remote evidence
+
+- implementation commit: `f3396a9223116b609ec76dfe4a5707f53d35f597`
+- Draft stacked PR: #432（base: `codex/issue-358-fr086-folder-archive-cleanup`）
+- label: `semver:patch`
+- implementation-head GitHub Actions: run `29581813956` success（6m39s）
+- 日本語受け入れ条件コメント: `issuecomment-5003479077`
+- 日本語セルフレビューコメント: `issuecomment-5003479074`
+- final-head GitHub Actions、Issue #358進捗、clean/upstream/remote一致はfinal evidence commit後に確認し、PR/Issue commentと最終報告へ記録する。
