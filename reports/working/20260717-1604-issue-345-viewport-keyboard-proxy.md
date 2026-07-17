@@ -40,6 +40,8 @@
 - visual baseline 対象更新: 4/4 passed。
 - Web typecheck、repository lint、Web build、`task docs:check`、`git diff --check`: passed。
 - production / E2E / snapshot / task / report files の pre-commit: passed。
+- Draft stacked PR #416 implementation head `23fecb76` の required CI run `29562123768`: success（5m13s）。promotion gate は条件どおり skipped。
+- `semver:patch` label 1 件、セルフレビュー blocking なし、受け入れ条件確認 comment を記録した。
 
 ## 指示への fit 評価
 
@@ -52,5 +54,9 @@
 
 - Playwright viewport resize は OS virtual keyboard / IME / safe area / browser chrome / VisualViewport event sequence の完全再現ではない。
 - representative screen reader、実 browser zoom、real-device、実 mobile keyboard、scheduled Firefox/WebKit の手動・外部実行証跡は未実施であり、Issue #345 の manual evidence task に残る。
-- Draft PR / CI / semver label / PR comments / Issue comment は本レポート作成時点では未実施で、完了後に本レポートへ追記する。
+- Draft stacked PR: https://github.com/tsuji-tomonori/rag-assist/pull/416
+- セルフレビュー: https://github.com/tsuji-tomonori/rag-assist/pull/416#issuecomment-5000048393
+- 受け入れ条件確認: https://github.com/tsuji-tomonori/rag-assist/pull/416#issuecomment-5000049942
+- GitHub Apps の callable tool が公開されていないため、PR 操作は `gh` fallback を使用した。
+- task/report 完了 commit 後の final head required CI と Issue #345 証跡は PR / Issue comment に記録する。
 - merge / deploy / release は行わない。
