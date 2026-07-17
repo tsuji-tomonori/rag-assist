@@ -88,7 +88,7 @@ test("analysis IR links route, handler, calls, branches, messages, data boundari
   assert.ok(operation.calls.some((item) => item.callee === "service.answerQuestion" && item.category === "service"))
   assert.ok(operation.branches.some((item) => item.condition.includes("Question not found")))
   assert.ok(operation.messages.some((item) => item.text === "Question not found" && item.status === "404"))
-  assert.ok(operation.dataAccess.some((item) => item.target === "this.deps.questionStore" && item.operation === "answer"))
+  assert.ok(operation.dataAccess.some((item) => item.target === "this.ports.questionStore" && item.operation === "answer"))
   assert.ok(operation.tests.some((item) => item.name === "questionRoute_answerAllowsAssignedUser" && item.relation === "route"))
 })
 
@@ -123,12 +123,12 @@ test("six projections preserve representative contract, code, data, message, seq
   const slug = "post-questions-questionid-answer"
 
   assert.match(document(rendered, slug, "detail-design_gen.md"), /service\.getQuestion\(questionId\)/)
-  assert.match(document(rendered, slug, "detail-design_gen.md"), /this\.deps\.questionStore.*answer/)
+  assert.match(document(rendered, slug, "detail-design_gen.md"), /this\.ports\.questionStore.*answer/)
   assert.match(document(rendered, slug, "if_gen.md"), /必須 permission \| `answer:publish`/)
   assert.match(document(rendered, slug, "if_gen.md"), /`answerBody` \| `string` \| yes/)
   assert.match(document(rendered, slug, "messages_gen.md"), /Question not found/)
-  assert.match(document(rendered, slug, "query_gen.md"), /`this\.deps\.questionStore` \| `get`/)
-  assert.match(document(rendered, slug, "query_gen.md"), /`this\.deps\.questionStore` \| `answer`/)
+  assert.match(document(rendered, slug, "query_gen.md"), /`this\.ports\.questionStore` \| `get`/)
+  assert.match(document(rendered, slug, "query_gen.md"), /`this\.ports\.questionStore` \| `answer`/)
   const sequence = document(rendered, slug, "sequence_gen.md")
   assert.match(sequence, /service の answer question 処理を呼び出す/)
   assert.ok(sequence.indexOf("service の answer question 処理を呼び出す") < sequence.indexOf("HTTP 200 で JSON response を返す"))

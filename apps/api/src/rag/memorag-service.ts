@@ -105,6 +105,10 @@ import { priceUsageEvents, usageCompleteness } from "./_shared/usage/usage-prici
 import { UsageTrackingTextModel } from "./_shared/usage/usage-tracking-text-model.js"
 import { FavoriteService } from "../favorites/favorite-service.js"
 import {
+  QuestionService,
+  questionUserDisplayName
+} from "../questions/question-service.js"
+import {
   enforceResolvedResourceOperation,
   resolvedResourceScope,
   ResourceOperationAuthorizationError
@@ -442,6 +446,7 @@ const benchmarkSuites: BenchmarkSuite[] = [
 
 export class MemoRagService {
   private readonly favoriteService: FavoriteService
+  private readonly questionService: QuestionService
 
   constructor(private readonly deps: Dependencies) {
     this.favoriteService = new FavoriteService({
@@ -450,6 +455,11 @@ export class MemoRagService {
       ownerKey: tenantPartitionedOwnerKey,
       listAccessibleDocuments: async (user) => this.listDocuments(user),
       listAccessibleFolders: async (user) => this.listDocumentGroups(user)
+    })
+    this.questionService = new QuestionService({
+      questionStore: deps.questionStore,
+      defaultAssigneeGroupId: config.defaultSupportAssigneeGroupId,
+      resolveUserDisplayName: questionUserDisplayName
     })
   }
 
@@ -3121,45 +3131,31 @@ export class MemoRagService {
   }
 
   async createQuestion(input: CreateQuestionInput, user?: AppUser): Promise<HumanQuestion> {
-    const defaultAssigneeGroupId = config.defaultSupportAssigneeGroupId || undefined
-    const assigneeGroupId = input.assigneeUserId || input.assigneeGroupId
-      ? input.assigneeGroupId
-      : defaultAssigneeGroupId
-    return this.deps.questionStore.create({
-      ...input,
-      requesterUserId: user?.userId,
-      requesterName: input.requesterName?.trim() || userDisplayName(user),
-      requesterDepartment: input.requesterDepartment?.trim() || "未設定",
-      assigneeGroupId,
-      sanitizedDiagnostics: sanitizeSupportDiagnostics(input.sanitizedDiagnostics, input.answerUnavailableReason)
-    })
+    return this.questionService.create(input, user)
   }
 
   async listAssignedQuestions(userId: string, groupIds: string[]): Promise<HumanQuestion[]> {
-    return this.deps.questionStore.listAssignedToUser(userId, groupIds)
+    return this.questionService.listAssigned(userId, groupIds)
   }
 
   async listRequestedQuestions(userId: string): Promise<HumanQuestion[]> {
-    return this.deps.questionStore.listRequestedByUser(userId)
+    return this.questionService.listRequested(userId)
   }
 
   async listAllQuestionsForAdmin(): Promise<HumanQuestion[]> {
-    return this.deps.questionStore.listAllForAdmin()
+    return this.questionService.listAllForAdmin()
   }
 
   async getQuestion(questionId: string): Promise<HumanQuestion | undefined> {
-    return this.deps.questionStore.get(questionId)
+    return this.questionService.get(questionId)
   }
 
   async answerQuestion(questionId: string, input: AnswerQuestionInput, user?: AppUser): Promise<HumanQuestion> {
-    return this.deps.questionStore.answer(questionId, {
-      ...input,
-      responderName: input.responderName?.trim() || userDisplayName(user)
-    })
+    return this.questionService.answer(questionId, input, user)
   }
 
   async resolveQuestion(questionId: string): Promise<HumanQuestion> {
-    return this.deps.questionStore.resolve(questionId)
+    return this.questionService.resolve(questionId)
   }
 
   private async updateManagedUserStatus(
@@ -5758,33 +5754,6 @@ function normalizeAliasLedger(raw: Partial<AliasLedger>): AliasLedger {
   return { schemaVersion: 2, aliases, auditLog }
 }
 
-function sanitizeSupportDiagnostics(
-  diagnostics: HumanQuestion["sanitizedDiagnostics"] | undefined,
-  fallbackAnswerUnavailableReason?: string
-): HumanQuestion["sanitizedDiagnostics"] | undefined {
-  if (!diagnostics && !fallbackAnswerUnavailableReason) return undefined
-  const sanitized: NonNullable<HumanQuestion["sanitizedDiagnostics"]> = {
-    tier: "support_sanitized",
-    answerUnavailableReason: trimOptional(diagnostics?.answerUnavailableReason) ?? trimOptional(fallbackAnswerUnavailableReason),
-    retrievalQuality: diagnostics?.retrievalQuality,
-    qualityCauses: diagnostics?.qualityCauses?.filter(isSupportQualityCause),
-    visibleCitationIds: normalizeStringList(diagnostics?.visibleCitationIds, 20),
-    visibleDocumentIds: normalizeStringList(diagnostics?.visibleDocumentIds, 20),
-    visibleChunkIds: normalizeStringList(diagnostics?.visibleChunkIds, 50),
-    qualityWarnings: normalizeStringList(diagnostics?.qualityWarnings, 20),
-    suggestedNextActions: diagnostics?.suggestedNextActions?.filter(isSupportNextAction)
-  }
-  return Object.fromEntries(Object.entries(sanitized).filter(([, value]) => value !== undefined)) as HumanQuestion["sanitizedDiagnostics"]
-}
-
-function isSupportQualityCause(value: unknown): value is NonNullable<HumanQuestion["qualityCause"]> {
-  return ["retrieval_gap", "low_quality_evidence", "stale_document", "extraction_warning", "unsupported_answer", "other"].includes(String(value))
-}
-
-function isSupportNextAction(value: unknown): value is NonNullable<NonNullable<HumanQuestion["sanitizedDiagnostics"]>["suggestedNextActions"]>[number] {
-  return ["search_improvement_review", "document_owner_review", "document_reparse", "rag_exclusion_review", "benchmark_case_review"].includes(String(value))
-}
-
 function appendAliasAudit(
   ledger: AliasLedger,
   input: {
@@ -6228,10 +6197,6 @@ function normalizeDocumentGroup(group: DocumentGroup, parent?: DocumentGroup): D
 
 function uniqueStrings(values: string[]): string[] {
   return [...new Set(values.map((value) => value.trim()).filter(Boolean))].sort()
-}
-
-function userDisplayName(user?: AppUser): string {
-  return user?.email?.trim() || user?.userId?.trim() || "未設定"
 }
 
 function compareConversationHistoryForDisplay(a: ConversationHistoryItem, b: ConversationHistoryItem): number {

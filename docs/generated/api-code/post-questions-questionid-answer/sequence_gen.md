@@ -25,12 +25,14 @@ sequenceDiagram
   API->>Auth: "answer：publish" permission を必須条件として確認する。
   API->>Auth: schema 検証済みの path parameter を取得する。
   API->>Service: service の get question 処理を呼び出す。
-  Service->>Store: this.deps.questionStore に対して get を実行する。
+  API->>Service: service の get 処理を呼び出す。
+  Service->>Store: this.ports.questionStore に対して get を実行する。
   API-->>Client: HTTP 404 で JSON response を返す。
   API-->>Client: HTTP 404 で JSON response を返す。
   API->>Auth: schema 検証済みの JSON request body を取得する。
   API->>Service: service の answer question 処理を呼び出す。
-  Service->>Store: this.deps.questionStore に対して answer を実行する。
+  API->>Service: service の answer 処理を呼び出す。
+  Service->>Store: this.ports.questionStore に対して answer を実行する。
   API-->>Client: HTTP 200 で JSON response を返す。
   API-->>Client: HTTP 404 で JSON response を返す。
 ```
@@ -45,14 +47,16 @@ sequenceDiagram
 | 4 | `POST /questions/{questionId}/answer handler` | Auth | "answer:publish" permission を必須条件として確認する。 | `requirePermission(user, "answer:publish")` | `apps/api/src/routes/question-routes.ts:113 (POST /questions/{questionId}/answer handler)` |
 | 5 | `POST /questions/{questionId}/answer handler` | Validation | schema 検証済みの path parameter を取得する。 | `validParam<{ questionId: string }>(c)` | `apps/api/src/routes/question-routes.ts:115 (POST /questions/{questionId}/answer handler)` |
 | 6 | `POST /questions/{questionId}/answer handler` | Service | service の get question 処理を呼び出す。 | `service.getQuestion(questionId)` | `apps/api/src/routes/question-routes.ts:116 (POST /questions/{questionId}/answer handler)` |
-| 7 | `MemoRagService.getQuestion` | Store | `this.deps.questionStore` に対して get を実行する。 | `this.deps.questionStore.get(questionId)` | `apps/api/src/rag/memorag-service.ts:3151 (MemoRagService.getQuestion)` |
-| 8 | `POST /questions/{questionId}/answer handler` | HTTP/SSE | HTTP 404 で JSON response を返す。 | `c.json({ error: "Question not found" }, 404)` | `apps/api/src/routes/question-routes.ts:117 (POST /questions/{questionId}/answer handler)` |
-| 9 | `POST /questions/{questionId}/answer handler` | HTTP/SSE | HTTP 404 で JSON response を返す。 | `c.json({ error: "Question not found" }, 404)` | `apps/api/src/routes/question-routes.ts:119 (POST /questions/{questionId}/answer handler)` |
-| 10 | `POST /questions/{questionId}/answer handler` | Validation | schema 検証済みの JSON request body を取得する。 | `validJson<z.infer<typeof AnswerQuestionRequestSchema>>(c)` | `apps/api/src/routes/question-routes.ts:121 (POST /questions/{questionId}/answer handler)` |
-| 11 | `POST /questions/{questionId}/answer handler` | Service | service の answer question 処理を呼び出す。 | `service.answerQuestion(questionId, body, user)` | `apps/api/src/routes/question-routes.ts:122 (POST /questions/{questionId}/answer handler)` |
-| 12 | `MemoRagService.answerQuestion` | Store | `this.deps.questionStore` に対して answer を実行する。 | `this.deps.questionStore.answer(questionId, { ...input, responderName: input.responderName?.trim() \|\| userDisplayName(user) })` | `apps/api/src/rag/memorag-service.ts:3155 (MemoRagService.answerQuestion)` |
-| 13 | `POST /questions/{questionId}/answer handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json(await service.answerQuestion(questionId, body, user), 200)` | `apps/api/src/routes/question-routes.ts:122 (POST /questions/{questionId}/answer handler)` |
-| 14 | `POST /questions/{questionId}/answer handler` | HTTP/SSE | HTTP 404 で JSON response を返す。 | `c.json({ error: "Question not found" }, 404)` | `apps/api/src/routes/question-routes.ts:124 (POST /questions/{questionId}/answer handler)` |
+| 7 | `MemoRagService.getQuestion` | Service | service の get 処理を呼び出す。 | `this.questionService.get(questionId)` | `apps/api/src/rag/memorag-service.ts:3150 (MemoRagService.getQuestion)` |
+| 8 | `QuestionService.get` | Store | `this.ports.questionStore` に対して get を実行する。 | `this.ports.questionStore.get(questionId)` | `apps/api/src/questions/question-service.ts:58 (QuestionService.get)` |
+| 9 | `POST /questions/{questionId}/answer handler` | HTTP/SSE | HTTP 404 で JSON response を返す。 | `c.json({ error: "Question not found" }, 404)` | `apps/api/src/routes/question-routes.ts:117 (POST /questions/{questionId}/answer handler)` |
+| 10 | `POST /questions/{questionId}/answer handler` | HTTP/SSE | HTTP 404 で JSON response を返す。 | `c.json({ error: "Question not found" }, 404)` | `apps/api/src/routes/question-routes.ts:119 (POST /questions/{questionId}/answer handler)` |
+| 11 | `POST /questions/{questionId}/answer handler` | Validation | schema 検証済みの JSON request body を取得する。 | `validJson<z.infer<typeof AnswerQuestionRequestSchema>>(c)` | `apps/api/src/routes/question-routes.ts:121 (POST /questions/{questionId}/answer handler)` |
+| 12 | `POST /questions/{questionId}/answer handler` | Service | service の answer question 処理を呼び出す。 | `service.answerQuestion(questionId, body, user)` | `apps/api/src/routes/question-routes.ts:122 (POST /questions/{questionId}/answer handler)` |
+| 13 | `MemoRagService.answerQuestion` | Service | service の answer 処理を呼び出す。 | `this.questionService.answer(questionId, input, user)` | `apps/api/src/rag/memorag-service.ts:3154 (MemoRagService.answerQuestion)` |
+| 14 | `QuestionService.answer` | Store | `this.ports.questionStore` に対して answer を実行する。 | `this.ports.questionStore.answer(questionId, { ...input, responderName: input.responderName?.trim() \|\| this.ports.resolveUserDisplayName(user) })` | `apps/api/src/questions/question-service.ts:62 (QuestionService.answer)` |
+| 15 | `POST /questions/{questionId}/answer handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json(await service.answerQuestion(questionId, body, user), 200)` | `apps/api/src/routes/question-routes.ts:122 (POST /questions/{questionId}/answer handler)` |
+| 16 | `POST /questions/{questionId}/answer handler` | HTTP/SSE | HTTP 404 で JSON response を返す。 | `c.json({ error: "Question not found" }, 404)` | `apps/api/src/routes/question-routes.ts:124 (POST /questions/{questionId}/answer handler)` |
 
 ## 分岐
 

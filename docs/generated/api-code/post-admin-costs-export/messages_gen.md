@@ -18,10 +18,10 @@
 | M003 | OpenAPI contract | `403` | 対象操作を実行する権限がありません。 | OpenAPI で宣言された HTTP 403 response | runtime OpenAPI |
 | M004 | OpenAPI contract | `503` | export 保存先が設定されていません | OpenAPI で宣言された HTTP 503 response | runtime OpenAPI |
 | M005 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| M006 | 例外 | `-` | Admin export reason is required and must be canonical | `exportInput` が存在しない、または偽である、または `exportInput.reason` が存在しない、または偽である、または `exportInput.reason.trim()` が `exportInput.reason` と異なる | `apps/api/src/rag/memorag-service.ts:2223 (MemoRagService.createAdminExportDownloadUrl)` |
-| M007 | 例外 | `-` | Usage accounting read path is not active | `exportType` が `"audit_log"` と異なる、かつ `this.usageRolloutMode()` が `"active"` と異なる | `apps/api/src/rag/memorag-service.ts:2226 (MemoRagService.createAdminExportDownloadUrl)` |
-| M008 | 例外 | `-` | DEBUG_DOWNLOAD_BUCKET_NAME is not configured | `config.debugDownloadBucketName` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:2253 (MemoRagService.createAdminExportDownloadUrl)` |
-| M009 | 例外 | `-` | Authoritative directory identity is unavailable during reconciliation | `this.deps.verifiedIdentityProvider` が存在し、真である、かつ `currentIdentity` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:3523 (MemoRagService.syncUserDirectory)` |
+| M006 | 例外 | `-` | Admin export reason is required and must be canonical | `exportInput` が存在しない、または偽である、または `exportInput.reason` が存在しない、または偽である、または `exportInput.reason.trim()` が `exportInput.reason` と異なる | `apps/api/src/rag/memorag-service.ts:2233 (MemoRagService.createAdminExportDownloadUrl)` |
+| M007 | 例外 | `-` | Usage accounting read path is not active | `exportType` が `"audit_log"` と異なる、かつ `this.usageRolloutMode()` が `"active"` と異なる | `apps/api/src/rag/memorag-service.ts:2236 (MemoRagService.createAdminExportDownloadUrl)` |
+| M008 | 例外 | `-` | DEBUG_DOWNLOAD_BUCKET_NAME is not configured | `config.debugDownloadBucketName` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:2263 (MemoRagService.createAdminExportDownloadUrl)` |
+| M009 | 例外 | `-` | Authoritative directory identity is unavailable during reconciliation | `this.deps.verifiedIdentityProvider` が存在し、真である、かつ `currentIdentity` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:3519 (MemoRagService.syncUserDirectory)` |
 | M010 | 例外 | `-` | `Security mutation audit ${field} is invalid` | `value` が存在しない、または偽である、または `value.trim()` が `value` と異なる | `apps/api/src/security/security-mutation-audit-outbox.ts:311 (assertIdentifier)` |
 | M011 | 例外 | `-` | Security mutation audit intent is not valid JSON | 例外を捕捉した場合 | `apps/api/src/security/security-mutation-audit-outbox.ts:245 (parseAndValidateIntent)` |
 | M012 | 例外 | `-` | Security mutation audit intent identity mismatch | `intent.schemaVersion` が `SECURITY_MUTATION_AUDIT_SCHEMA_VERSION` と異なる、または `["pending", "finalization_pending", "completed"]` が intent.status を含まない、または `intent.draft?.tenantId` が `tenantId` と異なる、または `expectedIntentId` が `undefined` と異なる、かつ `intent.intentId` が `expectedIntentId` と異なる | `apps/api/src/security/security-mutation-audit-outbox.ts:252 (parseAndValidateIntent)` |
@@ -35,7 +35,7 @@
 | M020 | 例外 | `-` | Security mutation audit timestamp is invalid | is canonical timestamp の判定結果が真ではない | `apps/api/src/security/security-mutation-audit-outbox.ts:286 (parseAndValidateIntent)` |
 | M021 | 例外 | `-` | Security mutation audit intent storage key mismatch | `key` が `intentKey(tenantId, intent.intentId)` と異なる | `apps/api/src/security/security-mutation-audit-outbox.ts:195 (ObjectStoreSecurityMutationAuditOutbox.listAll)` |
 | M022 | 例外 | `-` | invalid | `payload.schemaVersion` が `1` と異なる、または `payload.sort` が `expectedSort` と異なる、または is array の判定結果が真ではない、または `payload.values.length` が `0` と等しい、または some の判定結果が真である | `apps/api/src/admin/keyset-pagination.ts:58 (decodePageCursor)` |
-| M023 | 例外 | `-` | Usage cursor did not advance | `cursor` が存在し、真である、かつ has の判定結果が真である | `apps/api/src/rag/memorag-service.ts:2335 (MemoRagService.listAllUsageEvents)` |
+| M023 | 例外 | `-` | Usage cursor did not advance | `cursor` が存在し、真である、かつ has の判定結果が真である | `apps/api/src/rag/memorag-service.ts:2345 (MemoRagService.listAllUsageEvents)` |
 | M024 | 例外 | `-` | Invalid half-open usage period | is finite の判定結果が真ではない、または is finite の判定結果が真ではない、または `periodStart` が `periodEnd` 以上である | `apps/api/src/adapters/usage-event-store.ts:81 (normalizeUsageQuery)` |
 | M025 | 例外 | `-` | Invalid non-negative decimal price | test の判定結果が真ではない | `apps/api/src/rag/_shared/usage/usage-pricing-catalog.ts:96 (parsePrice)` |
 | M026 | 例外 | `-` | Invalid price | is finite の判定結果が真ではない | `apps/api/src/rag/_shared/usage/usage-pricing-catalog.ts:98 (parsePrice)` |

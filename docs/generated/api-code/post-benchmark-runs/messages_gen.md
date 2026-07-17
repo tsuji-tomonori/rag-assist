@@ -18,13 +18,13 @@
 | M003 | OpenAPI contract | `401` | 認証が必要です。 | OpenAPI で宣言された HTTP 401 response | runtime OpenAPI |
 | M004 | OpenAPI contract | `403` | 対象操作を実行する権限がありません。 | OpenAPI で宣言された HTTP 403 response | runtime OpenAPI |
 | M005 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| M006 | 例外 | `-` | `Unknown benchmark suite: ${input.suiteId}` | `suite` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4537 (MemoRagService.createBenchmarkRun)` |
-| M007 | 例外 | `-` | `Suite ${suite.suiteId} does not support mode ${input.mode}` | `(input.mode ?? suite.mode)` が `suite.mode` と異なる | `apps/api/src/rag/memorag-service.ts:4538 (MemoRagService.createBenchmarkRun)` |
-| M008 | 例外 | `-` | Only codebuild runner is supported in this version | `(input.runner ?? "codebuild")` が `"codebuild"` と異なる | `apps/api/src/rag/memorag-service.ts:4539 (MemoRagService.createBenchmarkRun)` |
+| M006 | 例外 | `-` | `Unknown benchmark suite: ${input.suiteId}` | `suite` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4533 (MemoRagService.createBenchmarkRun)` |
+| M007 | 例外 | `-` | `Suite ${suite.suiteId} does not support mode ${input.mode}` | `(input.mode ?? suite.mode)` が `suite.mode` と異なる | `apps/api/src/rag/memorag-service.ts:4534 (MemoRagService.createBenchmarkRun)` |
+| M008 | 例外 | `-` | Only codebuild runner is supported in this version | `(input.runner ?? "codebuild")` が `"codebuild"` と異なる | `apps/api/src/rag/memorag-service.ts:4535 (MemoRagService.createBenchmarkRun)` |
 | M009 | 例外 | `-` | Authoritative tenant is required | `normalized` が存在しない、または偽である | `apps/api/src/security/tenant-partition.ts:5 (tenantPartitionId)` |
 | M010 | 例外 | `-` | `Security resource ${name} is invalid` | `value` が存在しない、または偽である、または `value.trim()` が `value` と異なる | `apps/api/src/security/security-resource-reference.ts:12 (securityResourceReference)` |
-| M011 | 例外 | `-` | Run admission resource-group identity crossed its tenant boundary | `membership.tenantId` が `tenantId` と異なる、または `membership.memberId` が `groupId` と異なる | `apps/api/src/rag/memorag-service.ts:1299 (MemoRagService.securityResourceRefsForActor)` |
-| M012 | 例外 | `-` | worker_tenant_missing | `tenantId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4768 (MemoRagService.assertCurrentWorkerAuthorization)` |
+| M011 | 例外 | `-` | Run admission resource-group identity crossed its tenant boundary | `membership.tenantId` が `tenantId` と異なる、または `membership.memberId` が `groupId` と異なる | `apps/api/src/rag/memorag-service.ts:1309 (MemoRagService.securityResourceRefsForActor)` |
+| M012 | 例外 | `-` | worker_tenant_missing | `tenantId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4764 (MemoRagService.assertCurrentWorkerAuthorization)` |
 | M013 | 例外 | `-` | worker_identity_not_canonical | canonical の判定結果が真ではない、または canonical の判定結果が真ではない、または canonical の判定結果が真ではない | `apps/api/src/security/current-worker-authorization.ts:46 (CurrentWorkerAuthorization.assertAuthorized)` |
 | M014 | 例外 | `-` | authoritative_identity_unavailable | 例外を捕捉した場合 | `apps/api/src/security/current-worker-authorization.ts:53 (CurrentWorkerAuthorization.assertAuthorized)` |
 | M015 | 例外 | `-` | account_deleted | `identity` が存在しない、または偽である | `apps/api/src/security/current-worker-authorization.ts:55 (CurrentWorkerAuthorization.assertAuthorized)` |
@@ -33,11 +33,11 @@
 | M018 | 例外 | `-` | tenant_membership_revoked | `identity.tenantId` が `request.tenantId` と異なる | `apps/api/src/security/current-worker-authorization.ts:58 (CurrentWorkerAuthorization.assertAuthorized)` |
 | M019 | 例外 | `-` | role_permission_revoked | every の判定結果が真ではない | `apps/api/src/security/current-worker-authorization.ts:69 (CurrentWorkerAuthorization.assertAuthorized)` |
 | M020 | 例外 | `-` | resource_policy_revoked | `resourceAllowed` が存在しない、または偽である | `apps/api/src/security/current-worker-authorization.ts:78 (CurrentWorkerAuthorization.assertAuthorized)` |
-| M021 | 例外 | `-` | authoritative_identity_provider_missing | `config.authEnabled` が存在し、真である | `apps/api/src/rag/memorag-service.ts:4777 (MemoRagService.assertCurrentWorkerAuthorization)` |
-| M022 | 例外 | `-` | local_fixture_permission_missing | `config.nodeEnv` が `"test"` と異なる、かつ every の判定結果が真ではない | `apps/api/src/rag/memorag-service.ts:4787 (MemoRagService.assertCurrentWorkerAuthorization)` |
-| M023 | 例外 | `-` | local_fixture_resource_policy_denied | `resourceAllowed` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4795 (MemoRagService.assertCurrentWorkerAuthorization)` |
+| M021 | 例外 | `-` | authoritative_identity_provider_missing | `config.authEnabled` が存在し、真である | `apps/api/src/rag/memorag-service.ts:4773 (MemoRagService.assertCurrentWorkerAuthorization)` |
+| M022 | 例外 | `-` | local_fixture_permission_missing | `config.nodeEnv` が `"test"` と異なる、かつ every の判定結果が真ではない | `apps/api/src/rag/memorag-service.ts:4783 (MemoRagService.assertCurrentWorkerAuthorization)` |
+| M023 | 例外 | `-` | local_fixture_resource_policy_denied | `resourceAllowed` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4791 (MemoRagService.assertCurrentWorkerAuthorization)` |
 | M024 | 例外 | `-` | Tenant item identifier is missing or non-canonical | `canonicalItemId` が存在しない、または偽である、または `canonicalItemId` が `itemId` と異なる | `apps/api/src/security/tenant-partition.ts:19 (tenantStorageKey)` |
-| M025 | 例外 | `-` | Step Functions executionArn was not returned | `response.executionArn` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:5047 (MemoRagService.startBenchmarkExecution)` |
+| M025 | 例外 | `-` | Step Functions executionArn was not returned | `response.executionArn` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:5043 (MemoRagService.startBenchmarkExecution)` |
 
 ## 読み方
 

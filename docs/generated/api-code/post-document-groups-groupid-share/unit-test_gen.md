@@ -24,15 +24,15 @@
 | F003 | `POST /document-groups/{groupId}/share handler` | if | is document group input error の判定結果が真である | `apps/api/src/routes/document-routes.ts:721 (POST /document-groups/{groupId}/share handler)` |
 | F004 | `POST /document-groups/{groupId}/share handler` | if | `err` が `Error` の instance である、かつ starts with の判定結果が真である | `apps/api/src/routes/document-routes.ts:722 (POST /document-groups/{groupId}/share handler)` |
 | F005 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| F006 | `MemoRagService.updateDocumentGroupSharing` | if | `group` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1126 (MemoRagService.updateDocumentGroupSharing)` |
-| F007 | `MemoRagService.updateDocumentGroupSharing` | if | `(await folderPermissions.resolveEffectiveFolderPermission(actor, group.groupId))` が `"full"` と異なる | `apps/api/src/rag/memorag-service.ts:1128 (MemoRagService.updateDocumentGroupSharing)` |
-| F008 | `MemoRagService.updateDocumentGroupSharing` | if | `input.name` が `undefined` と異なる | `apps/api/src/rag/memorag-service.ts:1134 (MemoRagService.updateDocumentGroupSharing)` |
-| F009 | `MemoRagService.updateDocumentGroupSharing` | if | `input.description` が `undefined` と異なる | `apps/api/src/rag/memorag-service.ts:1139 (MemoRagService.updateDocumentGroupSharing)` |
-| F010 | `MemoRagService.updateDocumentGroupSharing` | 三項条件 | `group.parentGroupId` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1140 (MemoRagService.updateDocumentGroupSharing)` |
-| F011 | `MemoRagService.updateDocumentGroupSharing` | if | `input.name` が `undefined` と異なる | `apps/api/src/rag/memorag-service.ts:1142 (MemoRagService.updateDocumentGroupSharing)` |
-| F012 | `MemoRagService.updateDocumentGroupSharing` | if | `pathUpdates.length` が `maxDocumentGroupPathTransactionItems` より大きい | `apps/api/src/rag/memorag-service.ts:1144 (MemoRagService.updateDocumentGroupSharing)` |
-| F013 | `MemoRagService.updateDocumentGroupSharing` | loop | map の判定結果が真である | `apps/api/src/rag/memorag-service.ts:1145 (MemoRagService.updateDocumentGroupSharing)` |
-| F014 | `MemoRagService.updateDocumentGroupSharing` | if | `conflict` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1152 (MemoRagService.updateDocumentGroupSharing)` |
+| F006 | `MemoRagService.updateDocumentGroupSharing` | if | `group` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1136 (MemoRagService.updateDocumentGroupSharing)` |
+| F007 | `MemoRagService.updateDocumentGroupSharing` | if | `(await folderPermissions.resolveEffectiveFolderPermission(actor, group.groupId))` が `"full"` と異なる | `apps/api/src/rag/memorag-service.ts:1138 (MemoRagService.updateDocumentGroupSharing)` |
+| F008 | `MemoRagService.updateDocumentGroupSharing` | if | `input.name` が `undefined` と異なる | `apps/api/src/rag/memorag-service.ts:1144 (MemoRagService.updateDocumentGroupSharing)` |
+| F009 | `MemoRagService.updateDocumentGroupSharing` | if | `input.description` が `undefined` と異なる | `apps/api/src/rag/memorag-service.ts:1149 (MemoRagService.updateDocumentGroupSharing)` |
+| F010 | `MemoRagService.updateDocumentGroupSharing` | 三項条件 | `group.parentGroupId` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1150 (MemoRagService.updateDocumentGroupSharing)` |
+| F011 | `MemoRagService.updateDocumentGroupSharing` | if | `input.name` が `undefined` と異なる | `apps/api/src/rag/memorag-service.ts:1152 (MemoRagService.updateDocumentGroupSharing)` |
+| F012 | `MemoRagService.updateDocumentGroupSharing` | if | `pathUpdates.length` が `maxDocumentGroupPathTransactionItems` より大きい | `apps/api/src/rag/memorag-service.ts:1154 (MemoRagService.updateDocumentGroupSharing)` |
+| F013 | `MemoRagService.updateDocumentGroupSharing` | loop | map の判定結果が真である | `apps/api/src/rag/memorag-service.ts:1155 (MemoRagService.updateDocumentGroupSharing)` |
+| F014 | `MemoRagService.updateDocumentGroupSharing` | if | `conflict` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1162 (MemoRagService.updateDocumentGroupSharing)` |
 
 ## 3. コード由来テストケース
 
@@ -48,24 +48,24 @@
 | TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:722 (POST /document-groups/{groupId}/share handler)` |
 | TC009 | F005: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
 | TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC011 | F006: 条件成立 | `group` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1126 (MemoRagService.updateDocumentGroupSharing)` |
-| TC012 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1126 (MemoRagService.updateDocumentGroupSharing)` |
-| TC013 | F007: 条件成立 | `(await folderPermissions.resolveEffectiveFolderPermission(actor, group.groupId))` が `"full"` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1128 (MemoRagService.updateDocumentGroupSharing)` |
-| TC014 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1128 (MemoRagService.updateDocumentGroupSharing)` |
-| TC015 | F008: 条件成立 | `input.name` が `undefined` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1134 (MemoRagService.updateDocumentGroupSharing)` |
-| TC016 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1134 (MemoRagService.updateDocumentGroupSharing)` |
-| TC017 | F009: 条件成立 | `input.description` が `undefined` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1139 (MemoRagService.updateDocumentGroupSharing)` |
-| TC018 | F009: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1139 (MemoRagService.updateDocumentGroupSharing)` |
-| TC019 | F010: 条件成立 | `group.parentGroupId` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1140 (MemoRagService.updateDocumentGroupSharing)` |
-| TC020 | F010: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1140 (MemoRagService.updateDocumentGroupSharing)` |
-| TC021 | F011: 条件成立 | `input.name` が `undefined` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1142 (MemoRagService.updateDocumentGroupSharing)` |
-| TC022 | F011: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1142 (MemoRagService.updateDocumentGroupSharing)` |
-| TC023 | F012: 条件成立 | `pathUpdates.length` が `maxDocumentGroupPathTransactionItems` より大きい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1144 (MemoRagService.updateDocumentGroupSharing)` |
-| TC024 | F012: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1144 (MemoRagService.updateDocumentGroupSharing)` |
-| TC025 | F013: 0件 | 反復対象が空でも不正な副作用や例外を生じない。 | `apps/api/src/rag/memorag-service.ts:1145 (MemoRagService.updateDocumentGroupSharing)` |
-| TC026 | F013: 複数件 | 各要素を順に処理し、順序・終了条件を守る。 | `apps/api/src/rag/memorag-service.ts:1145 (MemoRagService.updateDocumentGroupSharing)` |
-| TC027 | F014: 条件成立 | `conflict` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1152 (MemoRagService.updateDocumentGroupSharing)` |
-| TC028 | F014: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1152 (MemoRagService.updateDocumentGroupSharing)` |
+| TC011 | F006: 条件成立 | `group` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1136 (MemoRagService.updateDocumentGroupSharing)` |
+| TC012 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1136 (MemoRagService.updateDocumentGroupSharing)` |
+| TC013 | F007: 条件成立 | `(await folderPermissions.resolveEffectiveFolderPermission(actor, group.groupId))` が `"full"` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1138 (MemoRagService.updateDocumentGroupSharing)` |
+| TC014 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1138 (MemoRagService.updateDocumentGroupSharing)` |
+| TC015 | F008: 条件成立 | `input.name` が `undefined` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1144 (MemoRagService.updateDocumentGroupSharing)` |
+| TC016 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1144 (MemoRagService.updateDocumentGroupSharing)` |
+| TC017 | F009: 条件成立 | `input.description` が `undefined` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1149 (MemoRagService.updateDocumentGroupSharing)` |
+| TC018 | F009: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1149 (MemoRagService.updateDocumentGroupSharing)` |
+| TC019 | F010: 条件成立 | `group.parentGroupId` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1150 (MemoRagService.updateDocumentGroupSharing)` |
+| TC020 | F010: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1150 (MemoRagService.updateDocumentGroupSharing)` |
+| TC021 | F011: 条件成立 | `input.name` が `undefined` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1152 (MemoRagService.updateDocumentGroupSharing)` |
+| TC022 | F011: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1152 (MemoRagService.updateDocumentGroupSharing)` |
+| TC023 | F012: 条件成立 | `pathUpdates.length` が `maxDocumentGroupPathTransactionItems` より大きい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1154 (MemoRagService.updateDocumentGroupSharing)` |
+| TC024 | F012: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1154 (MemoRagService.updateDocumentGroupSharing)` |
+| TC025 | F013: 0件 | 反復対象が空でも不正な副作用や例外を生じない。 | `apps/api/src/rag/memorag-service.ts:1155 (MemoRagService.updateDocumentGroupSharing)` |
+| TC026 | F013: 複数件 | 各要素を順に処理し、順序・終了条件を守る。 | `apps/api/src/rag/memorag-service.ts:1155 (MemoRagService.updateDocumentGroupSharing)` |
+| TC027 | F014: 条件成立 | `conflict` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1162 (MemoRagService.updateDocumentGroupSharing)` |
+| TC028 | F014: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1162 (MemoRagService.updateDocumentGroupSharing)` |
 | TC029 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC030 | HTTP 400 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC031 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

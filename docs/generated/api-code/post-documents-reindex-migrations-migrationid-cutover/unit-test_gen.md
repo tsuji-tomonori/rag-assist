@@ -24,16 +24,16 @@
 | F002 | `POST /documents/reindex-migrations/{migrationId}/cutover handler` | if | is forbidden error の判定結果が真である | `apps/api/src/routes/document-routes.ts:1462 (POST /documents/reindex-migrations/{migrationId}/cutover handler)` |
 | F003 | `POST /documents/reindex-migrations/{migrationId}/cutover handler` | if | `err` が `Error` の instance である、かつ `err.message` が "not found" を含む | `apps/api/src/routes/document-routes.ts:1463 (POST /documents/reindex-migrations/{migrationId}/cutover handler)` |
 | F004 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| F005 | `MemoRagService.cutoverReindexMigration` | if | `migration` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:675 (MemoRagService.cutoverReindexMigration)` |
-| F006 | `MemoRagService.cutoverReindexMigration` | 三項条件 | `migration.publicationRunId` が存在し、真である | `apps/api/src/rag/memorag-service.ts:678 (MemoRagService.cutoverReindexMigration)` |
-| F007 | `MemoRagService.cutoverReindexMigration` | if | `migration.status` が `"staged"` と異なる、かつ 「`compensation` が存在し、真である、かつ `migration.status` が `"rolled_back"` と等しい」ではない | `apps/api/src/rag/memorag-service.ts:681 (MemoRagService.cutoverReindexMigration)` |
-| F008 | `MemoRagService.cutoverReindexMigration` | 三項条件 | `compensation` が存在し、真である | `apps/api/src/rag/memorag-service.ts:685 (MemoRagService.cutoverReindexMigration)` |
-| F009 | `MemoRagService.cutoverReindexMigration` | if | `migration.publicationRunId` が存在し、真である | `apps/api/src/rag/memorag-service.ts:704 (MemoRagService.cutoverReindexMigration)` |
-| F010 | `MemoRagService.cutoverReindexMigration` | if | `compensation` が存在し、真である | `apps/api/src/rag/memorag-service.ts:705 (MemoRagService.cutoverReindexMigration)` |
-| F011 | `MemoRagService.cutoverReindexMigration` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/rag/memorag-service.ts:728 (MemoRagService.cutoverReindexMigration)` |
-| F012 | `MemoRagService.cutoverReindexMigration` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/rag/memorag-service.ts:747 (MemoRagService.cutoverReindexMigration)` |
-| F013 | `MemoRagService.cutoverReindexMigration` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/rag/memorag-service.ts:761 (MemoRagService.cutoverReindexMigration)` |
-| F014 | `MemoRagService.cutoverReindexMigration` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/rag/memorag-service.ts:773 (MemoRagService.cutoverReindexMigration)` |
+| F005 | `MemoRagService.cutoverReindexMigration` | if | `migration` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:685 (MemoRagService.cutoverReindexMigration)` |
+| F006 | `MemoRagService.cutoverReindexMigration` | 三項条件 | `migration.publicationRunId` が存在し、真である | `apps/api/src/rag/memorag-service.ts:688 (MemoRagService.cutoverReindexMigration)` |
+| F007 | `MemoRagService.cutoverReindexMigration` | if | `migration.status` が `"staged"` と異なる、かつ 「`compensation` が存在し、真である、かつ `migration.status` が `"rolled_back"` と等しい」ではない | `apps/api/src/rag/memorag-service.ts:691 (MemoRagService.cutoverReindexMigration)` |
+| F008 | `MemoRagService.cutoverReindexMigration` | 三項条件 | `compensation` が存在し、真である | `apps/api/src/rag/memorag-service.ts:695 (MemoRagService.cutoverReindexMigration)` |
+| F009 | `MemoRagService.cutoverReindexMigration` | if | `migration.publicationRunId` が存在し、真である | `apps/api/src/rag/memorag-service.ts:714 (MemoRagService.cutoverReindexMigration)` |
+| F010 | `MemoRagService.cutoverReindexMigration` | if | `compensation` が存在し、真である | `apps/api/src/rag/memorag-service.ts:715 (MemoRagService.cutoverReindexMigration)` |
+| F011 | `MemoRagService.cutoverReindexMigration` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/rag/memorag-service.ts:738 (MemoRagService.cutoverReindexMigration)` |
+| F012 | `MemoRagService.cutoverReindexMigration` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/rag/memorag-service.ts:757 (MemoRagService.cutoverReindexMigration)` |
+| F013 | `MemoRagService.cutoverReindexMigration` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/rag/memorag-service.ts:771 (MemoRagService.cutoverReindexMigration)` |
+| F014 | `MemoRagService.cutoverReindexMigration` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/rag/memorag-service.ts:783 (MemoRagService.cutoverReindexMigration)` |
 
 ## 3. コード由来テストケース
 
@@ -47,22 +47,22 @@
 | TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1463 (POST /documents/reindex-migrations/{migrationId}/cutover handler)` |
 | TC007 | F004: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
 | TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC009 | F005: 条件成立 | `migration` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:675 (MemoRagService.cutoverReindexMigration)` |
-| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:675 (MemoRagService.cutoverReindexMigration)` |
-| TC011 | F006: 条件成立 | `migration.publicationRunId` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:678 (MemoRagService.cutoverReindexMigration)` |
-| TC012 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:678 (MemoRagService.cutoverReindexMigration)` |
-| TC013 | F007: 条件成立 | `migration.status` が `"staged"` と異なる、かつ 「`compensation` が存在し、真である、かつ `migration.status` が `"rolled_back"` と等しい」ではない 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:681 (MemoRagService.cutoverReindexMigration)` |
-| TC014 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:681 (MemoRagService.cutoverReindexMigration)` |
-| TC015 | F008: 条件成立 | `compensation` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:685 (MemoRagService.cutoverReindexMigration)` |
-| TC016 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:685 (MemoRagService.cutoverReindexMigration)` |
-| TC017 | F009: 条件成立 | `migration.publicationRunId` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:704 (MemoRagService.cutoverReindexMigration)` |
-| TC018 | F009: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:704 (MemoRagService.cutoverReindexMigration)` |
-| TC019 | F010: 条件成立 | `compensation` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:705 (MemoRagService.cutoverReindexMigration)` |
-| TC020 | F010: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:705 (MemoRagService.cutoverReindexMigration)` |
-| TC021 | F011: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/rag/memorag-service.ts:728 (MemoRagService.cutoverReindexMigration)` |
-| TC022 | F012: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/rag/memorag-service.ts:747 (MemoRagService.cutoverReindexMigration)` |
-| TC023 | F013: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/rag/memorag-service.ts:761 (MemoRagService.cutoverReindexMigration)` |
-| TC024 | F014: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/rag/memorag-service.ts:773 (MemoRagService.cutoverReindexMigration)` |
+| TC009 | F005: 条件成立 | `migration` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:685 (MemoRagService.cutoverReindexMigration)` |
+| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:685 (MemoRagService.cutoverReindexMigration)` |
+| TC011 | F006: 条件成立 | `migration.publicationRunId` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:688 (MemoRagService.cutoverReindexMigration)` |
+| TC012 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:688 (MemoRagService.cutoverReindexMigration)` |
+| TC013 | F007: 条件成立 | `migration.status` が `"staged"` と異なる、かつ 「`compensation` が存在し、真である、かつ `migration.status` が `"rolled_back"` と等しい」ではない 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:691 (MemoRagService.cutoverReindexMigration)` |
+| TC014 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:691 (MemoRagService.cutoverReindexMigration)` |
+| TC015 | F008: 条件成立 | `compensation` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:695 (MemoRagService.cutoverReindexMigration)` |
+| TC016 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:695 (MemoRagService.cutoverReindexMigration)` |
+| TC017 | F009: 条件成立 | `migration.publicationRunId` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:714 (MemoRagService.cutoverReindexMigration)` |
+| TC018 | F009: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:714 (MemoRagService.cutoverReindexMigration)` |
+| TC019 | F010: 条件成立 | `compensation` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:715 (MemoRagService.cutoverReindexMigration)` |
+| TC020 | F010: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:715 (MemoRagService.cutoverReindexMigration)` |
+| TC021 | F011: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/rag/memorag-service.ts:738 (MemoRagService.cutoverReindexMigration)` |
+| TC022 | F012: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/rag/memorag-service.ts:757 (MemoRagService.cutoverReindexMigration)` |
+| TC023 | F013: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/rag/memorag-service.ts:771 (MemoRagService.cutoverReindexMigration)` |
+| TC024 | F014: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/rag/memorag-service.ts:783 (MemoRagService.cutoverReindexMigration)` |
 | TC025 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC026 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC027 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

@@ -18,7 +18,7 @@
 | F001 | `GET /admin/usage handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/admin-routes.ts:634 (GET /admin/usage handler)` |
 | F002 | `GET /admin/usage handler` | if | is invalid usage query の判定結果が真である | `apps/api/src/routes/admin-routes.ts:635 (GET /admin/usage handler)` |
 | F003 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| F004 | `MemoRagService.listUsageSummaries` | 三項条件 | `rolloutMode` が `"active"` と等しい、かつ `this.deps.usageEventStore` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2180 (MemoRagService.listUsageSummaries)` |
+| F004 | `MemoRagService.listUsageSummaries` | 三項条件 | `rolloutMode` が `"active"` と等しい、かつ `this.deps.usageEventStore` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2190 (MemoRagService.listUsageSummaries)` |
 
 ## 3. コード由来テストケース
 
@@ -30,8 +30,8 @@
 | TC004 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:635 (GET /admin/usage handler)` |
 | TC005 | F003: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
 | TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC007 | F004: 条件成立 | `rolloutMode` が `"active"` と等しい、かつ `this.deps.usageEventStore` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2180 (MemoRagService.listUsageSummaries)` |
-| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2180 (MemoRagService.listUsageSummaries)` |
+| TC007 | F004: 条件成立 | `rolloutMode` が `"active"` と等しい、かつ `this.deps.usageEventStore` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:2190 (MemoRagService.listUsageSummaries)` |
+| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:2190 (MemoRagService.listUsageSummaries)` |
 | TC009 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC010 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC011 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

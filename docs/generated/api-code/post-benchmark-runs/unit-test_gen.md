@@ -18,18 +18,18 @@
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
 | F001 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| F002 | `MemoRagService.createBenchmarkRun` | if | `suite` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4537 (MemoRagService.createBenchmarkRun)` |
-| F003 | `MemoRagService.createBenchmarkRun` | if | `(input.mode ?? suite.mode)` が `suite.mode` と異なる | `apps/api/src/rag/memorag-service.ts:4538 (MemoRagService.createBenchmarkRun)` |
-| F004 | `MemoRagService.createBenchmarkRun` | if | `(input.runner ?? "codebuild")` が `"codebuild"` と異なる | `apps/api/src/rag/memorag-service.ts:4539 (MemoRagService.createBenchmarkRun)` |
-| F005 | `MemoRagService.createBenchmarkRun` | 三項条件 | `input.topK` が `undefined` と等しい | `apps/api/src/rag/memorag-service.ts:4559 (MemoRagService.createBenchmarkRun)` |
-| F006 | `MemoRagService.createBenchmarkRun` | 三項条件 | `suite.mode` が `"search"` と等しい | `apps/api/src/rag/memorag-service.ts:4560 (MemoRagService.createBenchmarkRun)` |
-| F007 | `MemoRagService.createBenchmarkRun` | 三項条件 | `suite.mode` が `"search"` と等しい | `apps/api/src/rag/memorag-service.ts:4563 (MemoRagService.createBenchmarkRun)` |
-| F008 | `MemoRagService.createBenchmarkRun` | if | `config.benchmarkStateMachineArn` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4576 (MemoRagService.createBenchmarkRun)` |
-| F009 | `MemoRagService.createBenchmarkRun` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/rag/memorag-service.ts:4585 (MemoRagService.createBenchmarkRun)` |
-| F010 | `MemoRagService.createBenchmarkRun` | 三項条件 | `permissionRevoked` が存在し、真である | `apps/api/src/rag/memorag-service.ts:4590 (MemoRagService.createBenchmarkRun)` |
-| F011 | `MemoRagService.createBenchmarkRun` | 三項条件 | `err` が `Error` の instance である | `apps/api/src/rag/memorag-service.ts:4590 (MemoRagService.createBenchmarkRun)` |
-| F012 | `MemoRagService.createBenchmarkRun` | 三項条件 | `permissionRevoked` が存在し、真である | `apps/api/src/rag/memorag-service.ts:4591 (MemoRagService.createBenchmarkRun)` |
-| F013 | `MemoRagService.createBenchmarkRun` | if | `permissionRevoked` が存在し、真である | `apps/api/src/rag/memorag-service.ts:4593 (MemoRagService.createBenchmarkRun)` |
+| F002 | `MemoRagService.createBenchmarkRun` | if | `suite` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4533 (MemoRagService.createBenchmarkRun)` |
+| F003 | `MemoRagService.createBenchmarkRun` | if | `(input.mode ?? suite.mode)` が `suite.mode` と異なる | `apps/api/src/rag/memorag-service.ts:4534 (MemoRagService.createBenchmarkRun)` |
+| F004 | `MemoRagService.createBenchmarkRun` | if | `(input.runner ?? "codebuild")` が `"codebuild"` と異なる | `apps/api/src/rag/memorag-service.ts:4535 (MemoRagService.createBenchmarkRun)` |
+| F005 | `MemoRagService.createBenchmarkRun` | 三項条件 | `input.topK` が `undefined` と等しい | `apps/api/src/rag/memorag-service.ts:4555 (MemoRagService.createBenchmarkRun)` |
+| F006 | `MemoRagService.createBenchmarkRun` | 三項条件 | `suite.mode` が `"search"` と等しい | `apps/api/src/rag/memorag-service.ts:4556 (MemoRagService.createBenchmarkRun)` |
+| F007 | `MemoRagService.createBenchmarkRun` | 三項条件 | `suite.mode` が `"search"` と等しい | `apps/api/src/rag/memorag-service.ts:4559 (MemoRagService.createBenchmarkRun)` |
+| F008 | `MemoRagService.createBenchmarkRun` | if | `config.benchmarkStateMachineArn` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4572 (MemoRagService.createBenchmarkRun)` |
+| F009 | `MemoRagService.createBenchmarkRun` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/rag/memorag-service.ts:4581 (MemoRagService.createBenchmarkRun)` |
+| F010 | `MemoRagService.createBenchmarkRun` | 三項条件 | `permissionRevoked` が存在し、真である | `apps/api/src/rag/memorag-service.ts:4586 (MemoRagService.createBenchmarkRun)` |
+| F011 | `MemoRagService.createBenchmarkRun` | 三項条件 | `err` が `Error` の instance である | `apps/api/src/rag/memorag-service.ts:4586 (MemoRagService.createBenchmarkRun)` |
+| F012 | `MemoRagService.createBenchmarkRun` | 三項条件 | `permissionRevoked` が存在し、真である | `apps/api/src/rag/memorag-service.ts:4587 (MemoRagService.createBenchmarkRun)` |
+| F013 | `MemoRagService.createBenchmarkRun` | if | `permissionRevoked` が存在し、真である | `apps/api/src/rag/memorag-service.ts:4589 (MemoRagService.createBenchmarkRun)` |
 
 ## 3. コード由来テストケース
 
@@ -38,29 +38,29 @@
 | TC001 | 正常系 | 非同期 benchmark run を開始する が成功 response を返す。 | `apps/api/src/routes/benchmark-routes.ts:125 (POST /benchmark-runs handler)` |
 | TC002 | F001: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
 | TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC004 | F002: 条件成立 | `suite` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:4537 (MemoRagService.createBenchmarkRun)` |
-| TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:4537 (MemoRagService.createBenchmarkRun)` |
-| TC006 | F003: 条件成立 | `(input.mode ?? suite.mode)` が `suite.mode` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:4538 (MemoRagService.createBenchmarkRun)` |
-| TC007 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:4538 (MemoRagService.createBenchmarkRun)` |
-| TC008 | F004: 条件成立 | `(input.runner ?? "codebuild")` が `"codebuild"` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:4539 (MemoRagService.createBenchmarkRun)` |
-| TC009 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:4539 (MemoRagService.createBenchmarkRun)` |
-| TC010 | F005: 条件成立 | `input.topK` が `undefined` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:4559 (MemoRagService.createBenchmarkRun)` |
-| TC011 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:4559 (MemoRagService.createBenchmarkRun)` |
-| TC012 | F006: 条件成立 | `suite.mode` が `"search"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:4560 (MemoRagService.createBenchmarkRun)` |
-| TC013 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:4560 (MemoRagService.createBenchmarkRun)` |
-| TC014 | F007: 条件成立 | `suite.mode` が `"search"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:4563 (MemoRagService.createBenchmarkRun)` |
-| TC015 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:4563 (MemoRagService.createBenchmarkRun)` |
-| TC016 | F008: 条件成立 | `config.benchmarkStateMachineArn` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:4576 (MemoRagService.createBenchmarkRun)` |
-| TC017 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:4576 (MemoRagService.createBenchmarkRun)` |
-| TC018 | F009: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/rag/memorag-service.ts:4585 (MemoRagService.createBenchmarkRun)` |
-| TC019 | F010: 条件成立 | `permissionRevoked` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:4590 (MemoRagService.createBenchmarkRun)` |
-| TC020 | F010: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:4590 (MemoRagService.createBenchmarkRun)` |
-| TC021 | F011: 条件成立 | `err` が `Error` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:4590 (MemoRagService.createBenchmarkRun)` |
-| TC022 | F011: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:4590 (MemoRagService.createBenchmarkRun)` |
-| TC023 | F012: 条件成立 | `permissionRevoked` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:4591 (MemoRagService.createBenchmarkRun)` |
-| TC024 | F012: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:4591 (MemoRagService.createBenchmarkRun)` |
-| TC025 | F013: 条件成立 | `permissionRevoked` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:4593 (MemoRagService.createBenchmarkRun)` |
-| TC026 | F013: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:4593 (MemoRagService.createBenchmarkRun)` |
+| TC004 | F002: 条件成立 | `suite` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:4533 (MemoRagService.createBenchmarkRun)` |
+| TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:4533 (MemoRagService.createBenchmarkRun)` |
+| TC006 | F003: 条件成立 | `(input.mode ?? suite.mode)` が `suite.mode` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:4534 (MemoRagService.createBenchmarkRun)` |
+| TC007 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:4534 (MemoRagService.createBenchmarkRun)` |
+| TC008 | F004: 条件成立 | `(input.runner ?? "codebuild")` が `"codebuild"` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:4535 (MemoRagService.createBenchmarkRun)` |
+| TC009 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:4535 (MemoRagService.createBenchmarkRun)` |
+| TC010 | F005: 条件成立 | `input.topK` が `undefined` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:4555 (MemoRagService.createBenchmarkRun)` |
+| TC011 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:4555 (MemoRagService.createBenchmarkRun)` |
+| TC012 | F006: 条件成立 | `suite.mode` が `"search"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:4556 (MemoRagService.createBenchmarkRun)` |
+| TC013 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:4556 (MemoRagService.createBenchmarkRun)` |
+| TC014 | F007: 条件成立 | `suite.mode` が `"search"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:4559 (MemoRagService.createBenchmarkRun)` |
+| TC015 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:4559 (MemoRagService.createBenchmarkRun)` |
+| TC016 | F008: 条件成立 | `config.benchmarkStateMachineArn` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:4572 (MemoRagService.createBenchmarkRun)` |
+| TC017 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:4572 (MemoRagService.createBenchmarkRun)` |
+| TC018 | F009: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/rag/memorag-service.ts:4581 (MemoRagService.createBenchmarkRun)` |
+| TC019 | F010: 条件成立 | `permissionRevoked` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:4586 (MemoRagService.createBenchmarkRun)` |
+| TC020 | F010: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:4586 (MemoRagService.createBenchmarkRun)` |
+| TC021 | F011: 条件成立 | `err` が `Error` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:4586 (MemoRagService.createBenchmarkRun)` |
+| TC022 | F011: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:4586 (MemoRagService.createBenchmarkRun)` |
+| TC023 | F012: 条件成立 | `permissionRevoked` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:4587 (MemoRagService.createBenchmarkRun)` |
+| TC024 | F012: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:4587 (MemoRagService.createBenchmarkRun)` |
+| TC025 | F013: 条件成立 | `permissionRevoked` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:4589 (MemoRagService.createBenchmarkRun)` |
+| TC026 | F013: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:4589 (MemoRagService.createBenchmarkRun)` |
 | TC027 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC028 | HTTP 400 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC029 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

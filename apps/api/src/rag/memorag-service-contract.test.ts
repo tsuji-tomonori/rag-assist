@@ -286,7 +286,6 @@ const expectedDirectDependencyReads = [
   "localTestIngestAdmissionContext",
   "memoryVectorStore",
   "objectStore",
-  "questionStore",
   "resourceUserPrincipalDirectory",
   "securityAuditOutbox",
   "textModel",
@@ -381,7 +380,7 @@ test("all MemoRagService constructor sites remain explicit and reviewable", () =
   assert.deepEqual(scanConstructorSites(), expectedConstructorSites)
 })
 
-test("the broad private Dependencies field and its direct reads remain visible before extraction", () => {
+test("the remaining broad private Dependencies field and its direct reads stay source-characterized during extraction", () => {
   assert.equal(dependencyTypeContract, true)
   assert.deepEqual(scanDependencyKeys(), [...expectedDependencyKeys])
   assert.deepEqual(scanDirectDependencyReads(), expectedDirectDependencyReads)

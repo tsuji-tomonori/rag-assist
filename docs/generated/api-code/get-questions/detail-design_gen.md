@@ -35,24 +35,26 @@
 
 ## 4. 到達する主要実装
 
-handler を起点に TypeScript symbol を解決し、深さ 2 までの主要関数・method を列挙しています。深い helper を含む全到達関数は 9 件で、永続化・外部接続は深さにかかわらず次節へ集約しています。
+handler を起点に TypeScript symbol を解決し、深さ 2 までの主要関数・method を列挙しています。深い helper を含む全到達関数は 11 件で、永続化・外部接続は深さにかかわらず次節へ集約しています。
 
 | 深さ | Symbol | 責務 | 実装位置 |
 | ---: | --- | --- | --- |
 | 0 | `GET /questions handler` | GET /questions の request を受け、検証・認可・service 呼び出し・HTTP 応答を調整する。 | `apps/api/src/routes/question-routes.ts:61 (GET /questions handler)` |
 | 1 | `canReadAllTickets` | can read all tickets の実装処理を担当する。 | `apps/api/src/routes/question-routes.ts:193 (canReadAllTickets)` |
 | 2 | `hasPermission` | has permission の実装処理を担当する。 | `apps/api/src/authorization.ts:187 (hasPermission)` |
-| 1 | `MemoRagService.listAllQuestionsForAdmin` | list all questions for admin の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3146 (MemoRagService.listAllQuestionsForAdmin)` |
+| 1 | `MemoRagService.listAllQuestionsForAdmin` | list all questions for admin の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3145 (MemoRagService.listAllQuestionsForAdmin)` |
+| 2 | `QuestionService.listAllForAdmin` | list all for admin の実装処理を担当する。 | `apps/api/src/questions/question-service.ts:53 (QuestionService.listAllForAdmin)` |
 | 1 | `requirePermission` | require permission の実装処理を担当する。 | `apps/api/src/authorization.ts:183 (requirePermission)` |
 | 1 | `supportGroupIds` | support group ids の実装処理を担当する。 | `apps/api/src/routes/question-routes.ts:203 (supportGroupIds)` |
-| 1 | `MemoRagService.listAssignedQuestions` | list assigned questions の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3138 (MemoRagService.listAssignedQuestions)` |
+| 1 | `MemoRagService.listAssignedQuestions` | list assigned questions の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3137 (MemoRagService.listAssignedQuestions)` |
+| 2 | `QuestionService.listAssigned` | list assigned の実装処理を担当する。 | `apps/api/src/questions/question-service.ts:45 (QuestionService.listAssigned)` |
 
 ## 5. データ・外部境界
 
 | 種別 | 境界 | Target | Operation | 目的 | Caller | 実装位置 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 参照 | Store | `this.deps.questionStore` | `listAllForAdmin` | `this.deps.questionStore` に対して list all for admin を実行する。 | `MemoRagService.listAllQuestionsForAdmin` | `apps/api/src/rag/memorag-service.ts:3147 (MemoRagService.listAllQuestionsForAdmin)` |
-| 参照 | Store | `this.deps.questionStore` | `listAssignedToUser` | `this.deps.questionStore` に対して list assigned to user を実行する。 | `MemoRagService.listAssignedQuestions` | `apps/api/src/rag/memorag-service.ts:3139 (MemoRagService.listAssignedQuestions)` |
+| 参照 | Store | `this.ports.questionStore` | `listAllForAdmin` | `this.ports.questionStore` に対して list all for admin を実行する。 | `QuestionService.listAllForAdmin` | `apps/api/src/questions/question-service.ts:54 (QuestionService.listAllForAdmin)` |
+| 参照 | Store | `this.ports.questionStore` | `listAssignedToUser` | `this.ports.questionStore` に対して list assigned to user を実行する。 | `QuestionService.listAssigned` | `apps/api/src/questions/question-service.ts:46 (QuestionService.listAssigned)` |
 
 ## 6. 応答・メッセージ
 
