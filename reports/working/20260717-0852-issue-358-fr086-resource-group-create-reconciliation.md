@@ -44,5 +44,9 @@ resolverはmutationやroute authorizationを再実行せず、設定tenantのaut
 - folder/document share・move・delete、principal transfer、application role resolverは後続Phase。
 - bounded retry、quarantine、poison-intent batch isolationは後続Phase。
 - 実AWS S3/DynamoDB/EventBridge worker実行は未検証。final-head CIとCDK synth/testを証跡にする。
-- stacked baseはPR #389。PR comments、task done lifecycle、final-head CIはPR作成後。
+- stacked baseはPR #389。Draft PR #391を作成した。
+- 初期head `ca9d0bdc` のMemoRAG CI run 29543374851はsuccess。
+- PR受け入れ条件コメント: https://github.com/tsuji-tomonori/rag-assist/pull/391#issuecomment-4997611149
+- PRセルフレビューコメント: https://github.com/tsuji-tomonori/rag-assist/pull/391#issuecomment-4997614360
+- task/report lifecycle commit後のfinal-head CIは継続確認する。
 - merge / deploy / releaseは実施しない。
