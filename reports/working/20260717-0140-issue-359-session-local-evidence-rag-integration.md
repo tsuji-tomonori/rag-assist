@@ -69,3 +69,11 @@
 - GitHub Actions final-head CI、PR受け入れ条件コメント、セルフレビュー、task done移動はdraft PR作成後に実施する。
 - `npm install --ignore-scripts`はlockfileを変更しなかったが、auditは既存依存に8件（low 2、moderate 1、high 5）を報告した。本タスクでは依存更新を行っていない。
 - source-backed docsは`memorag-service.ts`のsource lineとcall graphを正規生成したため広範なgenerated差分を含む。`task docs:check`で588文書のfreshnessを確認済み。
+
+## 2026-07-18 current mainへの収束
+
+- PR #380でmainへ導入済みの`ConversationHistoryItem` schema v3を正本とし、B2単独コミット`9a215ac`をcurrent mainへ再適用した。
+- 競合は5ファイルで、実ソースは`apps/api/src/rag/memorag-service.ts`のimport 1箇所だけだった。mainの`LEGACY_DEBUG_TRACE_TARGET_TYPE_DEFAULT`とB2の`Citation`型を双方保持した。
+- 残る4競合はsource-backed generated docsだったため、旧生成物を選択せずcurrent source解消後に正規generatorで再生成した。
+- 収束処理内でcontract/API typecheck、contract test、scope normalization、current evidence reauthorization、temporary attachment boundary、schema test、正本文書構造・hidden Unicodeを確認した。
+- 収束PRは#444。旧PR #387は#444統合後にsupersededとしてcloseする。
