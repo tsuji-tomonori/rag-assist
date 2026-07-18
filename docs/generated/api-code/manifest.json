@@ -422,10 +422,10 @@
       "openApi": true,
       "routeSource": "apps/api/src/routes/benchmark-routes.ts:26 (POST /benchmark/query)",
       "handlerSource": "apps/api/src/routes/benchmark-routes.ts:50 (POST /benchmark/query handler)",
-      "functionCount": 642,
-      "branchCount": 1387,
-      "projectedBranchCount": 15,
-      "dataAccessCount": 73,
+      "functionCount": 654,
+      "branchCount": 1442,
+      "projectedBranchCount": 16,
+      "dataAccessCount": 76,
       "relatedTestCount": 0
     },
     {
@@ -435,11 +435,11 @@
       "openApi": true,
       "routeSource": "apps/api/src/routes/benchmark-routes.ts:60 (POST /benchmark/search)",
       "handlerSource": "apps/api/src/routes/benchmark-routes.ts:85 (POST /benchmark/search handler)",
-      "functionCount": 333,
-      "branchCount": 682,
-      "projectedBranchCount": 3,
-      "dataAccessCount": 45,
-      "relatedTestCount": 10
+      "functionCount": 343,
+      "branchCount": 722,
+      "projectedBranchCount": 4,
+      "dataAccessCount": 46,
+      "relatedTestCount": 11
     },
     {
       "method": "POST",
@@ -448,10 +448,10 @@
       "openApi": true,
       "routeSource": "apps/api/src/routes/chat-routes.ts:38 (POST /chat)",
       "handlerSource": "apps/api/src/routes/chat-routes.ts:38 (POST /chat handler)",
-      "functionCount": 638,
-      "branchCount": 1381,
-      "projectedBranchCount": 14,
-      "dataAccessCount": 73,
+      "functionCount": 650,
+      "branchCount": 1436,
+      "projectedBranchCount": 15,
+      "dataAccessCount": 76,
       "relatedTestCount": 0
     },
     {
@@ -461,11 +461,11 @@
       "openApi": true,
       "routeSource": "apps/api/src/routes/chat-routes.ts:48 (POST /chat-runs)",
       "handlerSource": "apps/api/src/routes/chat-routes.ts:65 (POST /chat-runs handler)",
-      "functionCount": 651,
-      "branchCount": 1408,
+      "functionCount": 663,
+      "branchCount": 1462,
       "projectedBranchCount": 5,
-      "dataAccessCount": 90,
-      "relatedTestCount": 1
+      "dataAccessCount": 93,
+      "relatedTestCount": 2
     },
     {
       "method": "GET",
@@ -530,7 +530,7 @@
       "branchCount": 26,
       "projectedBranchCount": 1,
       "dataAccessCount": 3,
-      "relatedTestCount": 3
+      "relatedTestCount": 4
     },
     {
       "method": "DELETE",
@@ -1280,11 +1280,11 @@
       "openApi": true,
       "routeSource": "apps/api/src/routes/chat-routes.ts:195 (POST /search)",
       "handlerSource": "apps/api/src/routes/chat-routes.ts:212 (POST /search handler)",
-      "functionCount": 329,
-      "branchCount": 675,
-      "projectedBranchCount": 1,
-      "dataAccessCount": 45,
-      "relatedTestCount": 9
+      "functionCount": 339,
+      "branchCount": 715,
+      "projectedBranchCount": 2,
+      "dataAccessCount": 46,
+      "relatedTestCount": 10
     }
   ]
 }
