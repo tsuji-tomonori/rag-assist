@@ -1,14 +1,12 @@
 import type { ChatOrchestrationState, ChatOrchestrationUpdate } from "../../../../chat-orchestration/state.js"
 import { NO_ANSWER } from "../../../../chat-orchestration/state.js"
 import { hasUnavailableComputedFact, hasUsableComputedFact } from "../../../../chat-orchestration/computation.js"
-import { selectAnswerPolicyForMetadata } from "../../../_shared/policies/answer-policy.js"
-import { hasUsableRequirementsClassificationEvidence, isRequirementsClassificationQuestion } from "../../generation/prompt/grounded-prompt-builder.js"
 import { ragRuntimePolicy } from "../../../../chat-orchestration/runtime-policy.js"
 import { asksForMoney } from "../../../../chat-orchestration/question-requirements.js"
 
 type SelectedChunk = ChatOrchestrationState["selectedChunks"][number]
 type SentenceAssessment = NonNullable<ChatOrchestrationState["answerability"]["sentenceAssessments"]>[number]
-type FactCheck = "amount" | "date" | "procedure" | "requirements_classification" | "retrieval_relevance"
+type FactCheck = "amount" | "date" | "procedure" | "retrieval_relevance"
 
 export async function answerabilityGate(state: ChatOrchestrationState): Promise<ChatOrchestrationUpdate> {
   const chunks = state.selectedChunks
@@ -94,15 +92,6 @@ function estimateRequiredFactCoverage(state: ChatOrchestrationState, chunks: Sel
   const joined = chunks.map((chunk) => chunk.metadata.text ?? "").join("\n")
   const requiredChecks = requiredFactChecks(question, state.searchPlan.requiredFacts)
   const sentenceAssessments = buildSentenceAssessments(chunks, requiredChecks)
-  const answerPolicy = selectAnswerPolicyForMetadata(
-    chunks.map((chunk) => chunk.metadata as unknown as Record<string, unknown>),
-    ragRuntimePolicy.profile.answerPolicy
-  )
-
-  if (isRequirementsClassificationQuestion(question) && answerPolicy.id === "swebok-requirements-policy" && !hasUsableRequirementsClassificationEvidence(joined)) {
-    return { ok: false, confidence: ragRuntimePolicy.confidence.missingClassificationFact, sentenceAssessments }
-  }
-
   const asksAmount = asksForMoney(question)
   const asksDate = /いつ|期限|日数|何日|何営業日|開始日|終了日/.test(question)
   const asksHow = /方法|手順|申請|やり方|フロー/.test(question)
@@ -116,7 +105,6 @@ function estimateRequiredFactCoverage(state: ChatOrchestrationState, chunks: Sel
 
 function requiredFactChecks(question: string, requiredFacts: ChatOrchestrationState["searchPlan"]["requiredFacts"] = []): FactCheck[] {
   const checks: FactCheck[] = []
-  if (isRequirementsClassificationQuestion(question) && ragRuntimePolicy.profile.answerPolicy.id === "swebok-requirements-policy") checks.push("requirements_classification")
   if (asksForMoney(question)) checks.push("amount")
   if (/いつ|期限|日数|何日|何営業日|開始日|終了日/.test(question)) checks.push("date")
   if (/方法|手順|申請|やり方|フロー/.test(question)) checks.push("procedure")
@@ -193,8 +181,6 @@ function matchesFactCheck(check: FactCheck, text: string): boolean {
       return /[0-9０-９]+(日|営業日|ヶ月|か月|月|年)/.test(text)
     case "procedure":
       return /(申請|手順|システム|フォーム|提出|承認)/.test(text)
-    case "requirements_classification":
-      return hasUsableRequirementsClassificationEvidence(text)
     case "retrieval_relevance":
       return text.length > 0
   }
@@ -208,8 +194,6 @@ function labelFactCheck(check: FactCheck): string {
       return "期限・日付"
     case "procedure":
       return "方法・手順"
-    case "requirements_classification":
-      return "要求分類"
     case "retrieval_relevance":
       return "検索選定"
   }

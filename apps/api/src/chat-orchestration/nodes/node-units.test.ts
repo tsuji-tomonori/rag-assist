@@ -374,13 +374,13 @@ test("conversation state decontextualizes follow-up questions without using expe
   assert.ok((rewriteUpdate.decontextualizedQuery?.retrievalQueries.length ?? 0) <= 3)
 })
 
-test("classification answers require actual requirements classification terms", async () => {
+test("list evidence ranking is corpus-neutral and ignores domain policy metadata", async () => {
   const outlineChunk = {
     ...chunk,
     metadata: {
       ...chunk.metadata,
-      domainPolicy: "swebok-requirements",
-      text: "2 Requirements Elicitation\n4.3 ATDD\nBDD\n4.4 UMLSysML\n5 Requirements Validation\n6.1 Requirements Scrubbing\n7.2 Kano"
+      domainPolicy: "legacy-corpus-policy",
+      text: "カフェテリアは18時に閉店します。"
     }
   }
   const classificationChunk = {
@@ -389,28 +389,35 @@ test("classification answers require actual requirements classification terms", 
     score: 0.3,
     metadata: {
       ...chunk.metadata,
-      domainPolicy: "swebok-requirements",
+      domainPolicy: "legacy-corpus-policy",
       chunkId: "chunk-0009",
-      text: "ソフトウェア要求の分類: ソフトウェア製品要求、ソフトウェアプロジェクト要求、機能要求、非機能要求、技術制約、サービス品質制約。"
+      text: "インシデントの重大度は Critical、High、Medium、Low に分類します。"
     }
   }
 
   assert.equal(
-    (await answerabilityGate(state({ question: "ソフトウェア要求の分類を洗い出して", selectedChunks: [outlineChunk] }))).answerability?.reason,
-    "missing_required_fact"
-  )
-
-  assert.equal(
-    (await answerabilityGate(state({ question: "ソフトウェア要求の分類を洗い出して", selectedChunks: [classificationChunk] }))).answerability?.reason,
+    (await answerabilityGate(state({ question: "インシデントの重大度分類を洗い出して", selectedChunks: [classificationChunk] }))).answerability?.reason,
     "sufficient_evidence"
   )
 
   assert.deepEqual(
-    (await rerankChunks(state({ question: "ソフトウェア要求の分類を洗い出して", topK: 1, retrievedChunks: [outlineChunk, classificationChunk] }))).selectedChunks?.map(
+    (await rerankChunks(state({ question: "インシデントの重大度分類を洗い出して", topK: 2, retrievedChunks: [outlineChunk, classificationChunk] }))).selectedChunks?.map(
       (selected) => selected.key
     ),
     ["doc-1-chunk-0009"]
   )
+
+  const unrelatedOnly = await rerankChunks(state({
+    question: "インシデントの重大度分類を洗い出して",
+    topK: 2,
+    retrievedChunks: [outlineChunk]
+  }))
+  assert.deepEqual(unrelatedOnly.selectedChunks, [])
+
+  const refused = await answerabilityGate(state({ selectedChunks: unrelatedOnly.selectedChunks ?? [] }))
+  assert.equal(refused.answerability?.reason, "no_relevant_chunks")
+  assert.equal(refused.answer, NO_ANSWER)
+  assert.deepEqual(refused.citations, [])
 })
 
 test("rerank chunks uses page layout metadata and previous citation prior as soft boosts", async () => {
@@ -495,7 +502,7 @@ test("rerank chunks excludes final answer context below minScore", async () => {
       documentId: "doc-high",
       fileName: "high.txt",
       chunkId: "chunk-0001",
-      text: "General IT access policy index."
+      text: "Contractors are governed by the general IT access policy."
     }
   }
 
@@ -510,19 +517,23 @@ test("rerank chunks excludes final answer context below minScore", async () => {
   assert.equal(reranked.selectedChunks?.some((selected) => selected.score < 0.2), false)
 })
 
-test("default policy keeps requirements classification special cases opt-in", async () => {
-  const outlineChunk = {
+test("answerability does not change when corpus metadata carries a legacy policy id", async () => {
+  const genericChunk = {
     ...chunk,
     metadata: {
       ...chunk.metadata,
-      text: "2 Requirements Elicitation\n5 Requirements Validation\n7.2 Kano"
+      text: "Incident severity is classified as Critical, High, Medium, or Low."
     }
   }
+  const legacyMetadataChunk = {
+    ...genericChunk,
+    metadata: { ...genericChunk.metadata, domainPolicy: "legacy-corpus-policy" }
+  }
 
-  assert.equal(
-    (await answerabilityGate(state({ question: "ソフトウェア要求の分類を洗い出して", selectedChunks: [outlineChunk] }))).answerability?.reason,
-    "sufficient_evidence"
-  )
+  const withoutMetadata = await answerabilityGate(state({ question: "List incident severity categories.", selectedChunks: [genericChunk] }))
+  const withMetadata = await answerabilityGate(state({ question: "List incident severity categories.", selectedChunks: [legacyMetadataChunk] }))
+
+  assert.deepEqual(withMetadata.answerability, withoutMetadata.answerability)
 })
 
 test("sufficient context gate accepts supported evidence and refuses partial evidence", async () => {
@@ -999,19 +1010,6 @@ test("citation validation accepts used ids and rejects invalid or ungrounded ans
       ?.reason,
     "citation_validation_failed"
   )
-  assert.equal(
-    (
-      await validateCitations(
-        state({
-          question: "ソフトウェア要求の分類を洗い出して",
-          selectedChunks: [{ ...chunk, metadata: { ...chunk.metadata, domainPolicy: "swebok-requirements" } }],
-          rawAnswer: JSON.stringify({ isAnswerable: true, answer: "1. Requirements Elicitation\n2. BDD", usedChunkIds: ["chunk-0001"] })
-        })
-      )
-    ).answerability?.reason,
-    "citation_validation_failed"
-  )
-
   assert.equal(
     (
       await validateCitations(

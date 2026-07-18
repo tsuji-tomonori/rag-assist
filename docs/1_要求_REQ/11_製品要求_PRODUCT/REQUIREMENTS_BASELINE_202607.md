@@ -226,7 +226,7 @@ SWEBOK v4.0a Chapter 1 に従い、要求は次を満たす粒度にする。
 | GAP-RD-016 | delete が物理削除中心で deny-first/reconciliation 契約がなく、`FR-066`, `SQ-006` に未達。 | confirmed | `20260517-1241-folder-delete-archive.md` |
 | GAP-RD-017 | cutover/rollback が exactly-one-active と current deny を保証せず、`FR-072`, `SQ-006` に未達。 | confirmed | `20260507-2000-ingestion-bluegreen-benchmark-gate.md` |
 | GAP-RD-018 | trace raw data と redaction 宣言が一致せず、`FR-074`, `FR-088` と衝突する。 | conflict | `20260713-2256-trace-evaluation-isolation.md` |
-| GAP-RD-019 | product runtime に domain/dataset 固有 rule があり、`FR-075`, `SQ-007` に部分適合または衝突する。 | conflict | `20260713-2256-trace-evaluation-isolation.md`, `20260506-1203-requirements-classification-policy.md` |
+| GAP-RD-019 | production evidence 採用経路の既知 domain/dataset 固有 rule を除去し、複数 corpus test と release source audit `datasetSpecificBranchCount=0` で再導入防止を確認した。 | confirmed | `20260713-2256-trace-evaluation-isolation.md`, `20260506-1203-requirements-classification-policy.md`, `20260716-1916-issue-358-dataset-overfit-removal.md` |
 | GAP-RD-020 | CDK self-signup disabled と `FR-025`/Web が衝突し、post-confirmation handler が未接続。 | conflict | `20260713-2258-self-signup-policy-implementation.md` |
 | GAP-RD-021 | CloudFront/PKCE/CORS の accepted target と deploy/runtime が一致せず、`FR-054`, `TC-003` に未達。 | conflict | `20260522-2120-cloudfront-single-entry-implementation.md` |
 | GAP-RD-022 | role catalog が backend/infra/Web でずれ、mutation guard/audit が不足し、`FR-079`, `FR-080`, `FR-086` に未達。 | conflict | `20260713-2251-canonical-resource-authorization.md` |

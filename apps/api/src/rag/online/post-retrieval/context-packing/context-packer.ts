@@ -101,11 +101,10 @@ export function buildRelevantSnippet(question: string, text: string, maxChars = 
   if (shouldPreserveStructuredSnippet(question) && text.length <= maxChars) return text
   const focused = buildFocusedSentenceSnippet(question, text, maxChars)
   if (focused) return focused
-  if (text.length <= maxChars && !(isRequirementsClassificationQuestion(question) && index >= 0)) return text
+  if (text.length <= maxChars) return text
   if (index < 0) return text.slice(0, maxChars)
 
-  const prefix = isRequirementsClassificationQuestion(question) ? 0 : 160
-  const start = Math.max(0, index - prefix)
+  const start = Math.max(0, index - 160)
   const end = Math.min(text.length, start + maxChars)
   return text.slice(start, end)
 }
@@ -117,7 +116,6 @@ function shouldPreserveStructuredSnippet(question: string): boolean {
 }
 
 function buildFocusedSentenceSnippet(question: string, text: string, maxChars: number): string | undefined {
-  if (isRequirementsClassificationQuestion(question)) return undefined
   const units = splitEvidenceUnits(text)
   if (units.length <= 1 && text.length <= maxChars) return undefined
   const scored = units
@@ -185,8 +183,18 @@ function evidenceUnitScore(question: string, unit: EvidenceUnit): number {
 
 function sentenceAnswerScore(question: string, sentence: string): number {
   const lexicalScore = lexicalOverlapScore(question, sentence)
-  if (lexicalScore <= 0) return 0
+  const requirementSignalScore = evidenceRequirementSignalScore(question, sentence)
+  if (lexicalScore <= 0) return requirementSignalScore
   return lexicalScore + answerValueSignalScore(question, sentence) + compactnessScore(sentence) - conditionalClausePenalty(question, sentence)
+}
+
+function evidenceRequirementSignalScore(question: string, sentence: string): number {
+  const requirements = detectQuestionRequirements(question)
+  if (requirements.some((requirement) => requirement.type === "slot" && requirement.slot === "date")
+    && /(?:明治|大正|昭和|平成|令和)?\s*\d+\s*年|\d{4}[-/]\d{1,2}|\d+\s*(?:営業日|日|か月|ヶ月|月)|翌月|当月|月末|月初/u.test(sentence.normalize("NFKC"))) {
+    return 10
+  }
+  return 0
 }
 
 function splitSentences(text: string): string[] {
@@ -287,10 +295,6 @@ function significantTerms(text: string): string[] {
   const ascii = normalized.match(/[A-Za-z0-9][A-Za-z0-9_-]{2,}/g) ?? []
   const japanese = normalized.match(/[\p{Script=Han}\p{Script=Katakana}ー]{2,}/gu) ?? []
   return unique([...ascii, ...japanese])
-}
-
-function isRequirementsClassificationQuestion(question: string): boolean {
-  return /要求.*分類|分類.*要求|classification/i.test(question)
 }
 
 function normalize(text: string): string {

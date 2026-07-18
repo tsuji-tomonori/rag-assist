@@ -51,9 +51,6 @@ export type RetrievalProfile = {
 export type AnswerPolicy = {
   id: string
   version: string
-  classificationAnchors: string[]
-  invalidAnswerPatterns: RegExp[]
-  searchClueAnchors: string[]
   policyComputation: PolicyComputationPolicy
 }
 
@@ -103,33 +100,6 @@ export const defaultPolicyComputationPolicy: PolicyComputationPolicy = {
 export const neutralAnswerPolicy: AnswerPolicy = {
   id: "default-answer-policy",
   version: "1",
-  classificationAnchors: ["分類", "種類", "区分"],
-  invalidAnswerPatterns: [],
-  searchClueAnchors: [],
-  policyComputation: defaultPolicyComputationPolicy
-}
-
-export const swebokRequirementsAnswerPolicy: AnswerPolicy = {
-  id: "swebok-requirements-policy",
-  version: "1",
-  classificationAnchors: [
-    "ソフトウェア要求の分類",
-    "要求分類",
-    "分類の目的",
-    "ソフトウェア製品要求",
-    "ソフトウェアプロジェクト要求",
-    "機能要求",
-    "非機能要求",
-    "技術制約",
-    "サービス品質制約"
-  ],
-  invalidAnswerPatterns: [
-    /Requirements Elicitation|Requirements Validation|Requirements Scrubbing|ATDD|BDD|UML\s*SysML|UML\/SysML|Kano|要求獲得|要求妥当性確認|要求管理|要求スクラビング|要求の優先順位付け|要求の追跡可能性/
-  ],
-  searchClueAnchors: [
-    "ソフトウェア要求の分類",
-    "ソフトウェア製品要求 ソフトウェアプロジェクト要求 機能要求 非機能要求 技術制約 サービス品質制約"
-  ],
   policyComputation: defaultPolicyComputationPolicy
 }
 
@@ -141,15 +111,7 @@ export function resolveRetrievalProfileId(id: string | undefined, adaptiveRetrie
 }
 
 export function answerPolicyById(id: string | undefined): AnswerPolicy {
-  if (id === swebokRequirementsAnswerPolicy.id || id === "swebok") return swebokRequirementsAnswerPolicy
-  return neutralAnswerPolicy
-}
-
-export function isSwebokPolicyMetadata(metadata: Record<string, unknown> | undefined): boolean {
-  const value = String(metadata?.domainPolicy ?? metadata?.ragPolicy ?? metadata?.answerPolicy ?? metadata?.docType ?? "")
-  return /swebok|requirements-classification|software-requirements/i.test(value)
-}
-
-export function selectAnswerPolicyForMetadata(metadataItems: Array<Record<string, unknown> | undefined>, fallback: AnswerPolicy): AnswerPolicy {
-  return metadataItems.some(isSwebokPolicyMetadata) ? swebokRequirementsAnswerPolicy : fallback
+  const requested = id?.trim() || neutralAnswerPolicy.id
+  if (requested === neutralAnswerPolicy.id || requested === "default") return neutralAnswerPolicy
+  throw new Error(`Unknown RAG_DOMAIN_POLICY_ID: ${requested}`)
 }

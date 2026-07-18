@@ -63,8 +63,7 @@ export function unique(items: string[]): string[] {
 }
 
 export function buildSearchClues(question: string, generatedClues: string[]): string[] {
-  const anchors = question.includes("分類") ? ragRuntimePolicy.profile.answerPolicy.searchClueAnchors : []
-  return unique([question, ...anchors, ...generatedClues]).slice(0, ragRuntimePolicy.limits.searchClueLimit)
+  return unique([question, ...generatedClues]).slice(0, ragRuntimePolicy.limits.searchClueLimit)
 }
 
 export function clamp(value: number, min: number, max: number): number {

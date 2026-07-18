@@ -1,10 +1,14 @@
 # 要求分類 Special Case の Policy 隔離
 
-保存先: `tasks/todo/20260506-1203-requirements-classification-policy.md`
+保存先: `tasks/done/20260506-1203-requirements-classification-policy.md`
 
 ## 状態
 
-- todo
+- done
+
+2026-07-16 更新: Issue #358 の `FR-045` / `SQ-003` 是正として `tasks/do/20260716-1916-issue-358-dataset-overfit-removal.md` に統合した。domain policy として固有 rule を production に残す旧方針は、metadata による dataset 固有分岐を許すため採用しない。production evidence 採用経路を domain-neutral に統一し、source audit と複数 corpus test で完了確認後に本 task も `done` へ移す。
+
+完了日: 2026-07-16。PR https://github.com/tsuji-tomonori/rag-assist/pull/366 で production の固有 rule／metadata 自動選択を除去し、source audit と複数 corpus test により代替方針を検証した。
 
 関連要件・gap: `FR-075`, `SQ-003`, `SQ-007`, `GAP-RD-019`
 
@@ -99,3 +103,7 @@
 - 決定事項: policy 選択条件は document / collection metadata と benchmark suite config を優先し、通常 `/chat` の利用者 input では切り替えない。
 - 決定事項: 既存の SWEBOK 固有テストは default behavior ではなく、SWEBOK policy 有効時の regression test として改名・整理する。
 - リスク: metadata が欠落した既存文書では SWEBOK policy が自動選択されない可能性があるため、default neutral behavior と明示 policy behavior の差分を PR 本文に書く。
+
+## 完了判定
+
+本 task の当初方針である「SWEBOK 固有 rule を明示 domain policy として production に残す」は、Issue #358 の `FR-045`／`SQ-003` と衝突するため superseded とした。固有 policy の有効／無効を維持するのではなく、production から固有語彙と分岐を完全に除去し、domain-neutral な evidence 採用、根拠不足 refusal、citation／support verification、production source audit へ置換したことで目的を満たす。詳細な検証証跡は統合 task と作業レポートを参照する。
