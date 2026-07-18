@@ -909,7 +909,7 @@ test('全 AppView の permission-aware 到達性 @smoke', async ({ page }) => {
   }
 })
 
-test('E2E-UI-NAV-002: 最大権限 persona は 320px mobile menu から全許可 view と個人設定へ到達する @smoke', async ({ page }) => {
+test('E2E-UI-NAV-002: 最大権限 persona は 320px mobile menu から全許可 view と個人設定へ到達する @smoke @mobile-required', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 720 })
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await signIn(page)
@@ -957,7 +957,7 @@ test('E2E-UI-NAV-002: 最大権限 persona は 320px mobile menu から全許可
   await expect(page.locator('.mobile-navigation-panel').getByRole('button', { name: '個人設定' })).toBeVisible()
 })
 
-test('E2E-UI-NAV-001: standard user は権限外 destination を表示せず許可済み view へ到達する @smoke', async ({ page }) => {
+test('E2E-UI-NAV-001: standard user は権限外 destination を表示せず許可済み view へ到達する @smoke @mobile-required', async ({ page }) => {
   await installCurrentUserPermissions(page, ['chat:create', 'chat:read:own'])
   await page.setViewportSize({ width: 320, height: 720 })
   await signIn(page)
@@ -1217,4 +1217,35 @@ test('モバイル幅チャットの visual regression @visual', async ({ page }
   await page.setViewportSize({ width: 390, height: 844 })
   await signIn(page)
   await expect(page).toHaveScreenshot('chat-empty-mobile.png', { fullPage: true, animations: 'disabled' })
+})
+
+async function expectNoSeriousOrCriticalAxeViolations(page: Page, label: string) {
+  const result = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
+    .analyze()
+  const blockers = result.violations.filter((violation) =>
+    violation.impact === 'serious' || violation.impact === 'critical'
+  )
+  expect(blockers, `${label}: serious/critical axe violations\n${JSON.stringify(blockers, null, 2)}`).toEqual([])
+}
+
+test('E2E-UI-A11Y-GATE-001: representative view は serious/critical axe 違反を持たない @ui-quality', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.getByRole('button', { name: 'サインイン' })).toBeVisible()
+  await expectNoSeriousOrCriticalAxeViolations(page, 'login')
+
+  await signIn(page)
+  await expectNoSeriousOrCriticalAxeViolations(page, 'chat')
+
+  const destinations = [
+    { title: 'ドキュメント', region: 'ドキュメント管理' },
+    { title: '担当者対応', region: '担当者対応' },
+    { title: '管理者設定', region: '管理者設定' }
+  ] as const
+
+  for (const destination of destinations) {
+    await page.getByTitle(destination.title).click()
+    await expect(page.getByRole('region', { name: destination.region, exact: true })).toBeVisible()
+    await expectNoSeriousOrCriticalAxeViolations(page, destination.region)
+  }
 })
