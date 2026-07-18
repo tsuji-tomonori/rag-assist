@@ -1,4 +1,4 @@
-import { DeleteItemCommand, PutItemCommand, QueryCommand, type DynamoDBClient } from "@aws-sdk/client-dynamodb"
+import { DeleteItemCommand, GetItemCommand, PutItemCommand, QueryCommand, type DynamoDBClient } from "@aws-sdk/client-dynamodb"
 import { marshall, unmarshall } from "@aws-sdk/util-dynamodb"
 import { CONVERSATION_HISTORY_SCHEMA_VERSION, type ConversationHistoryItem, type ConversationHistorySchemaVersion } from "../types.js"
 import { normalizeConversationHistoryInput, type ConversationHistoryStore, type SaveConversationHistoryInput } from "./conversation-history-store.js"
@@ -45,6 +45,15 @@ export class DynamoDbConversationHistoryStore implements ConversationHistoryStor
     } while (ExclusiveStartKey)
     return items
       .sort(compareHistoryItems)
+  }
+
+  async get(userId: string, id: string): Promise<ConversationHistoryItem | undefined> {
+    const result = await this.client.send(new GetItemCommand({
+      TableName: this.tableName,
+      Key: marshall({ userId, id }),
+      ConsistentRead: true
+    }))
+    return result.Item ? stripUserId(unmarshall(result.Item) as StoredConversationHistoryItem) : undefined
   }
 
   async delete(userId: string, id: string): Promise<void> {

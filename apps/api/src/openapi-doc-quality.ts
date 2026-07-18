@@ -468,6 +468,10 @@ const operationDocs: Record<string, { summary: string; description: string }> = 
     summary: "会話履歴一覧を取得する",
     description: "ログインユーザー自身の保存済み会話履歴を取得します。"
   },
+  "GET /conversation-history/{id}": {
+    summary: "会話履歴詳細を取得する",
+    description: "ログインユーザー自身のtenant/user partitionから、保存済み会話とauthoritative session document contextを取得します。権限外IDは列挙しません。"
+  },
   "POST /conversation-history": {
     summary: "会話履歴を保存する",
     description: "会話履歴 item をログインユーザー自身の履歴として保存します。お気に入り状態は /favorites で管理します。"

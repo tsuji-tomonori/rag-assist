@@ -10,7 +10,7 @@
     "benchmark"
   ],
   "scripts": {
-    "ci": "npm run lint && npm run typecheck --workspaces --if-present && npm test --workspaces --if-present && npm run build --workspaces --if-present",
+    "ci": "npm run check:taskfile-aliases && npm run lint && npm run typecheck --workspaces --if-present && npm test --workspaces --if-present && npm run build --workspaces --if-present",
     "build": "npm run build --workspaces --if-present",
     "lint": "eslint . --cache --cache-location .eslintcache --max-warnings=0",
     "lint:fix": "eslint . --fix --cache --cache-location .eslintcache",
@@ -30,6 +30,7 @@
     "docs:infra-inventory": "node tools/infra-inventory/generate-infra-inventory.mjs",
     "docs:infra-inventory:check": "node tools/infra-inventory/generate-infra-inventory.mjs --check",
     "docs:hidden-unicode:check": "node scripts/check-hidden-unicode.mjs docs reports tasks",
+    "check:taskfile-aliases": "node scripts/check-taskfile-legacy-aliases.mjs",
     "document-groups:canonical-path:dry-run": "node scripts/document-group-canonical-path-backfill.mjs --dry-run",
     "dev:api": "npm run dev -w @memorag-mvp/api",
     "dev:web": "VITE_AUTH_MODE=local npm run dev -w @memorag-mvp/web",

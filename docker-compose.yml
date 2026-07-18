@@ -6,6 +6,7 @@ services:
     environment:
       PORT: 8787
       MOCK_BEDROCK: "true"
+      RAG_GUARD_PROFILE_JSON: '{"id":"standard-safe-rag","version":"standard-safe-rag-v1","guards":{"authentication":true,"authorization":true,"classification_usage":true,"prompt_injection":true,"tool_policy":true,"grounding":true,"citation":true,"output_secret":true,"trace_redaction":true}}'
       USE_LOCAL_VECTOR_STORE: "true"
       LOCAL_DATA_DIR: /data
       DEFAULT_MODEL_ID: amazon.nova-lite-v1:0

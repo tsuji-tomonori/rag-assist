@@ -327,6 +327,43 @@ test("FR-093 enforces promotion freeze and document quarantine at the affected b
   )
 })
 
+test("FR-093 permits quarantined-runtime ingest only as document quarantine while other RAG operations fail closed", async () => {
+  const store = new LocalObjectStore(await mkdtemp(path.join(os.tmpdir(), "rag-monitor-runtime-quarantine-ingest-")))
+  await store.putText(RAG_SAFETY_STATE_KEY, JSON.stringify({
+    schemaVersion: 1,
+    stateVersion: 1,
+    policyId: "production-rag",
+    policyVersion: "approved-1",
+    activeRuntimeProfileVersion: "runtime-v2",
+    quarantinedRuntimeProfileVersions: ["runtime-v2"],
+    promotionFrozen: true,
+    documentQuarantineRequired: false,
+    responseMode: "limited",
+    updatedAt: observedAt,
+    validUntil: "2099-01-01T00:00:00.000Z"
+  } satisfies RagSafetyState))
+
+  const ingest = await assertRagSafetyInterlock({
+    objectStore: store,
+    runtimeProfileVersion: "runtime-v2",
+    operation: "ingest",
+    required: true
+  })
+  assert.equal(ingest?.documentQuarantineRequired, true)
+
+  for (const operation of ["chat", "search", "publication", "promotion"] as const) {
+    await assert.rejects(
+      () => assertRagSafetyInterlock({
+        objectStore: store,
+        runtimeProfileVersion: "runtime-v2",
+        operation,
+        required: true
+      }),
+      /temporarily unavailable/
+    )
+  }
+})
+
 test("FR-093 rejects malformed state and applies limited/refuse mode to direct chat and search", async () => {
   const store = new LocalObjectStore(await mkdtemp(path.join(os.tmpdir(), "rag-monitor-response-mode-")))
   const base: RagSafetyState = {

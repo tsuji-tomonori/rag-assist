@@ -270,6 +270,7 @@ export type SearchScope = {
   documentIds?: string[]
   includeTemporary?: boolean
   temporaryScopeId?: string
+  temporaryScopeIds?: string[]
 }
 
 export type DocumentGroup = {
@@ -794,7 +795,11 @@ export type ConversationHistoryTurn = {
 }
 
 export type DebugStepStatus = "success" | "warning" | "error"
-export type DebugTraceTargetType = "rag_run" | "ingest_run" | "chat_orchestration_run" | "async_agent_run" | "tool_invocation"
+export const DEBUG_TRACE_TARGET_TYPES = ["rag_run", "ingest_run", "chat_orchestration_run", "async_agent_run", "tool_invocation"] as const
+export const CHAT_ORCHESTRATION_TRACE_TARGET_TYPE = "chat_orchestration_run" as const
+export const RAG_TRACE_TARGET_TYPE = "rag_run" as const
+export const LEGACY_DEBUG_TRACE_TARGET_TYPE_DEFAULT = RAG_TRACE_TARGET_TYPE
+export type DebugTraceTargetType = typeof DEBUG_TRACE_TARGET_TYPES[number]
 export type DebugTraceVisibility = "user_safe" | "support_sanitized" | "operator_sanitized" | "internal_restricted"
 
 export const DEBUG_TRACE_SANITIZE_POLICY_VERSION = "debug-trace-sanitize-v1"
@@ -1175,6 +1180,23 @@ export type ChatResponsePayload = {
   debug?: DebugTrace
 }
 
+export type ChatConversationInput = {
+  conversationId: string
+  turnId?: string
+  turnIndex?: number
+  turns: Array<ConversationHistoryTurn & {
+    citations?: Array<Partial<Citation>>
+    createdAt?: string
+  }>
+  turnDependency?: string
+  state?: {
+    activeEntities?: string[]
+    activeDocuments?: string[]
+    activeTopics?: string[]
+    constraints?: string[]
+  }
+}
+
 export type ChatRunStatus = "queued" | "running" | "succeeded" | "failed" | "cancelled"
 
 export type ChatRun = {
@@ -1187,6 +1209,7 @@ export type ChatRun = {
   securityResourceRefs?: string[]
   question: string
   conversationHistory?: ConversationHistoryTurn[]
+  conversation?: ChatConversationInput
   clarificationContext?: ClarificationContext
   modelId: string
   embeddingModelId?: string
@@ -1961,9 +1984,26 @@ export type ConversationMessage = {
   questionTicket?: HumanQuestion
 }
 
-export const CONVERSATION_HISTORY_SCHEMA_VERSION = 2
+export const CONVERSATION_HISTORY_SCHEMA_VERSION = 3
 
-export type ConversationHistorySchemaVersion = 1 | typeof CONVERSATION_HISTORY_SCHEMA_VERSION
+export type ConversationHistorySchemaVersion = 1 | 2 | typeof CONVERSATION_HISTORY_SCHEMA_VERSION
+
+export type SessionTemporaryEvidenceStatus = "active" | "expired" | "removed" | "revoked"
+
+export type SessionTemporaryEvidenceReference = {
+  temporaryScopeId: string
+  documentId: string
+  status: SessionTemporaryEvidenceStatus
+  expiresAt: string
+  updatedAt: string
+}
+
+export type SessionDocumentContext = {
+  schemaVersion: 1
+  sessionId: string
+  temporaryEvidence: SessionTemporaryEvidenceReference[]
+  updatedAt: string
+}
 
 export type ConversationDecontextualizedQuery = {
   originalQuestion: string
@@ -2000,4 +2040,5 @@ export type ConversationHistoryItem = {
   citationMemory?: ConversationCitationMemoryItem[]
   taskState?: ConversationTaskState
   toolInvocations?: ChatToolInvocation[]
+  sessionDocumentContext?: SessionDocumentContext
 }

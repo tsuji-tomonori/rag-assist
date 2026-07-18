@@ -41,6 +41,12 @@ export class LocalConversationHistoryStore implements ConversationHistoryStore {
       .map(stripUserId)
   }
 
+  async get(userId: string, id: string): Promise<ConversationHistoryItem | undefined> {
+    const db = await this.load()
+    const item = db.conversations.find((conversation) => conversation.userId === userId && conversation.id === id)
+    return item ? stripUserId(item) : undefined
+  }
+
   async delete(userId: string, id: string): Promise<void> {
     const db = await this.load()
     db.conversations = db.conversations.filter((conversation) => conversation.userId !== userId || conversation.id !== id)

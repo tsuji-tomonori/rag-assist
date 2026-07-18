@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "generator": "npm run docs:api-code",
   "sourceRoot": "apps/api/src",
-  "operationCount": 97,
+  "operationCount": 98,
   "documentsPerOperation": [
     "detail-design_gen.md",
     "if_gen.md",
@@ -422,10 +422,10 @@
       "openApi": true,
       "routeSource": "apps/api/src/routes/benchmark-routes.ts:26 (POST /benchmark/query)",
       "handlerSource": "apps/api/src/routes/benchmark-routes.ts:50 (POST /benchmark/query handler)",
-      "functionCount": 644,
-      "branchCount": 1391,
-      "projectedBranchCount": 15,
-      "dataAccessCount": 73,
+      "functionCount": 654,
+      "branchCount": 1442,
+      "projectedBranchCount": 16,
+      "dataAccessCount": 76,
       "relatedTestCount": 0
     },
     {
@@ -435,11 +435,11 @@
       "openApi": true,
       "routeSource": "apps/api/src/routes/benchmark-routes.ts:60 (POST /benchmark/search)",
       "handlerSource": "apps/api/src/routes/benchmark-routes.ts:85 (POST /benchmark/search handler)",
-      "functionCount": 333,
-      "branchCount": 682,
-      "projectedBranchCount": 3,
-      "dataAccessCount": 45,
-      "relatedTestCount": 10
+      "functionCount": 343,
+      "branchCount": 722,
+      "projectedBranchCount": 4,
+      "dataAccessCount": 46,
+      "relatedTestCount": 11
     },
     {
       "method": "POST",
@@ -448,10 +448,10 @@
       "openApi": true,
       "routeSource": "apps/api/src/routes/chat-routes.ts:38 (POST /chat)",
       "handlerSource": "apps/api/src/routes/chat-routes.ts:38 (POST /chat handler)",
-      "functionCount": 640,
-      "branchCount": 1385,
-      "projectedBranchCount": 14,
-      "dataAccessCount": 73,
+      "functionCount": 650,
+      "branchCount": 1436,
+      "projectedBranchCount": 15,
+      "dataAccessCount": 76,
       "relatedTestCount": 0
     },
     {
@@ -461,11 +461,11 @@
       "openApi": true,
       "routeSource": "apps/api/src/routes/chat-routes.ts:48 (POST /chat-runs)",
       "handlerSource": "apps/api/src/routes/chat-routes.ts:65 (POST /chat-runs handler)",
-      "functionCount": 653,
-      "branchCount": 1412,
+      "functionCount": 663,
+      "branchCount": 1462,
       "projectedBranchCount": 5,
-      "dataAccessCount": 90,
-      "relatedTestCount": 1
+      "dataAccessCount": 93,
+      "relatedTestCount": 2
     },
     {
       "method": "GET",
@@ -513,8 +513,8 @@
       "openApi": true,
       "routeSource": "apps/api/src/routes/conversation-history-routes.ts:8 (GET /conversation-history)",
       "handlerSource": "apps/api/src/routes/conversation-history-routes.ts:21 (GET /conversation-history handler)",
-      "functionCount": 7,
-      "branchCount": 8,
+      "functionCount": 11,
+      "branchCount": 13,
       "projectedBranchCount": 1,
       "dataAccessCount": 2,
       "relatedTestCount": 1
@@ -524,26 +524,39 @@
       "path": "/conversation-history",
       "slug": "post-conversation-history",
       "openApi": true,
-      "routeSource": "apps/api/src/routes/conversation-history-routes.ts:29 (POST /conversation-history)",
-      "handlerSource": "apps/api/src/routes/conversation-history-routes.ts:46 (POST /conversation-history handler)",
-      "functionCount": 9,
-      "branchCount": 8,
+      "routeSource": "apps/api/src/routes/conversation-history-routes.ts:50 (POST /conversation-history)",
+      "handlerSource": "apps/api/src/routes/conversation-history-routes.ts:67 (POST /conversation-history handler)",
+      "functionCount": 28,
+      "branchCount": 26,
       "projectedBranchCount": 1,
-      "dataAccessCount": 1,
-      "relatedTestCount": 2
+      "dataAccessCount": 3,
+      "relatedTestCount": 4
     },
     {
       "method": "DELETE",
       "path": "/conversation-history/{id}",
       "slug": "delete-conversation-history-id",
       "openApi": true,
-      "routeSource": "apps/api/src/routes/conversation-history-routes.ts:54 (DELETE /conversation-history/{id})",
-      "handlerSource": "apps/api/src/routes/conversation-history-routes.ts:67 (DELETE /conversation-history/{id} handler)",
-      "functionCount": 9,
-      "branchCount": 8,
-      "projectedBranchCount": 1,
-      "dataAccessCount": 1,
+      "routeSource": "apps/api/src/routes/conversation-history-routes.ts:75 (DELETE /conversation-history/{id})",
+      "handlerSource": "apps/api/src/routes/conversation-history-routes.ts:88 (DELETE /conversation-history/{id} handler)",
+      "functionCount": 10,
+      "branchCount": 10,
+      "projectedBranchCount": 2,
+      "dataAccessCount": 2,
       "relatedTestCount": 0
+    },
+    {
+      "method": "GET",
+      "path": "/conversation-history/{id}",
+      "slug": "get-conversation-history-id",
+      "openApi": true,
+      "routeSource": "apps/api/src/routes/conversation-history-routes.ts:29 (GET /conversation-history/{id})",
+      "handlerSource": "apps/api/src/routes/conversation-history-routes.ts:40 (GET /conversation-history/{id} handler)",
+      "functionCount": 13,
+      "branchCount": 15,
+      "projectedBranchCount": 3,
+      "dataAccessCount": 1,
+      "relatedTestCount": 1
     },
     {
       "method": "GET",
@@ -569,7 +582,7 @@
       "branchCount": 29,
       "projectedBranchCount": 4,
       "dataAccessCount": 2,
-      "relatedTestCount": 9
+      "relatedTestCount": 10
     },
     {
       "method": "POST",
@@ -738,7 +751,7 @@
       "branchCount": 209,
       "projectedBranchCount": 14,
       "dataAccessCount": 14,
-      "relatedTestCount": 19
+      "relatedTestCount": 20
     },
     {
       "method": "POST",
@@ -760,8 +773,8 @@
       "openApi": true,
       "routeSource": "apps/api/src/routes/document-routes.ts:1567 (DELETE /documents/{documentId})",
       "handlerSource": "apps/api/src/routes/document-routes.ts:1589 (DELETE /documents/{documentId} handler)",
-      "functionCount": 181,
-      "branchCount": 343,
+      "functionCount": 183,
+      "branchCount": 345,
       "projectedBranchCount": 17,
       "dataAccessCount": 38,
       "relatedTestCount": 7
@@ -1267,11 +1280,11 @@
       "openApi": true,
       "routeSource": "apps/api/src/routes/chat-routes.ts:195 (POST /search)",
       "handlerSource": "apps/api/src/routes/chat-routes.ts:212 (POST /search handler)",
-      "functionCount": 329,
-      "branchCount": 675,
-      "projectedBranchCount": 1,
-      "dataAccessCount": 45,
-      "relatedTestCount": 9
+      "functionCount": 339,
+      "branchCount": 715,
+      "projectedBranchCount": 2,
+      "dataAccessCount": 46,
+      "relatedTestCount": 10
     }
   ]
 }

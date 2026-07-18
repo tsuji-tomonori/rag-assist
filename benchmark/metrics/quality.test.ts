@@ -8,7 +8,7 @@ import {
   resolveEvaluatorProfile,
   strictJaEvaluatorProfile
 } from "../evaluator-profile.js"
-import { cjkBigramTokenizer, compareTokenizers, createQualityReview, detectRegressions, whitespaceTokenizer } from "./quality.js"
+import { cjkBigramTokenizer, compareTokenizers, createQualityReview, defaultThresholds, detectRegressions, whitespaceTokenizer } from "./quality.js"
 
 test("detectRegressions flags metric drops and latency increases", () => {
   const regressions = detectRegressions(
@@ -18,6 +18,28 @@ test("detectRegressions flags metric drops and latency increases", () => {
   )
 
   assert.deepEqual(regressions.map((item) => item.metric).sort(), ["answerableAccuracy", "p95LatencyMs", "retrievalRecallAt20"])
+})
+
+test("false refusal enters regression review only with an explicit approved threshold", () => {
+  assert.equal(Object.hasOwn(defaultThresholds, "falseRefusalRate"), false)
+
+  assert.deepEqual(detectRegressions(
+    { falseRefusalRate: 0.2 },
+    { falseRefusalRate: 0.05 },
+    { falseRefusalRate: 0.1 }
+  ), [{
+    metric: "falseRefusalRate",
+    baseline: 0.05,
+    current: 0.2,
+    delta: 0.15,
+    threshold: 0.1
+  }])
+
+  assert.deepEqual(detectRegressions(
+    { falseRefusalRate: null },
+    { falseRefusalRate: 0.05 },
+    { falseRefusalRate: 0.1 }
+  ), [])
 })
 
 test("createQualityReview proposes alias candidates from benchmark failures", () => {

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict"
 import test from "node:test"
-import type { QueryCommand } from "@aws-sdk/client-dynamodb"
+import type { GetItemCommand, QueryCommand } from "@aws-sdk/client-dynamodb"
 import { marshall } from "@aws-sdk/util-dynamodb"
 import { DynamoDbConversationHistoryStore } from "./dynamodb-conversation-history-store.js"
 
@@ -37,6 +37,17 @@ test("conversationHistoryStore_doesNotSliceBeforeFavoriteEnrichment", async () =
   assert.equal(histories.length, 21)
   assert.equal(histories[0]?.id, "conv-21")
   assert.equal(histories.at(-1)?.id, "conv-1")
+})
+
+test("dynamoConversationHistoryStore_getUsesTenantUserPartitionAndSessionKey", async () => {
+  let sent: GetItemCommand | undefined
+  const store = new DynamoDbConversationHistoryStore("ConversationHistoryTable", { send: async (command: GetItemCommand) => {
+    sent = command
+    return { Item: marshall(history("conv-1", "2026-05-01T00:00:00.000Z")) }
+  } } as never)
+  assert.equal((await store.get("tenant:tenant-a:user:user-a", "conv-1"))?.id, "conv-1")
+  assert.deepEqual(sent?.input.Key, marshall({ userId: "tenant:tenant-a:user:user-a", id: "conv-1" }))
+  assert.equal(sent?.input.ConsistentRead, true)
 })
 
 function history(id: string, updatedAt: string) {

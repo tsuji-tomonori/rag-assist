@@ -58,6 +58,7 @@
 | `POST /questions/{questionId}/search-improvement-candidates` | 問い合わせ由来の検索改善候補作成 | `FR-023`, `FR-037`, `NFR-012` |
 | `POST /questions/{questionId}/resolve` | 問い合わせ解決済み化 | `FR-021`, `NFR-011` |
 | `GET /conversation-history` | 自分の会話履歴一覧 | `FR-022`, `NFR-005` |
+| `GET /conversation-history/{id}` | 自分の会話履歴詳細と authoritative session context | `FR-022`, `FR-067`, `FR-091`, `NFR-005` |
 | `POST /conversation-history` | 会話履歴 item 保存 | `FR-022`, `NFR-005` |
 | `DELETE /conversation-history/{id}` | 自分の会話履歴削除 | `FR-022`, `NFR-005` |
 | `GET /favorites` | 自分のお気に入り shortcut 一覧 | `FR-028`, `NFR-005`, `NFR-011` |
@@ -177,14 +178,16 @@ npm run docs:api-code:check
 
 `conversationHistory` は現在の質問の照応、省略、条件引き継ぎを解決するための入力であり、回答根拠としては扱わない。回答根拠は `retrieved` から選ばれた `finalEvidence` と `computedFacts` に限定する。
 
-`searchScope` は質問ごとの検索境界である。`mode=groups` は利用者が参照できる指定資料グループだけを検索し、`includeTemporary=true` の場合は同一 `temporaryScopeId` の一時添付も追加で検索する。`temporaryScopeId` は UI の会話 ID と対応し、別チャットからは参照できない。
+`searchScope` は質問ごとの検索境界である。`mode=groups` / `mode=documents` の通常 scope は維持し、一時 evidence は `conversation.conversationId` で読み出した B1 `sessionDocumentContext` の active referenceだけを追加する。旧 `temporaryScopeId` と複数件の `temporaryScopeIds` は入力互換を持つが、client 値を authority とせず、current manifest の tenant、owner、chat scope、expiry、document permission を満たす最大20件へ正規化する。保存済み citation memory は current authorization と source document/chunk の存在を確認したものだけを follow-up anchor とし、assistant 本文や client-only citation は根拠にしない。
 
 ## `POST /chat-runs`
 
 ### Request
 
 `POST /chat` と同じ request body を受け付ける。`strictGrounded`、`useMemory`、`maxIterations` も同期 API と同じ意味で保存し、worker 実行時に `runChatOrchestration()` へ渡す。`includeDebug=true` の場合は `chat:admin:read_all` も必要。
-`searchScope` は run record に保存し、非同期 worker が lexical retrieval、semantic retrieval、memory retrieval の各段で同じ境界を使う。
+`searchScope` と `conversation` は run record に保存する。非同期 worker は protected-read 後に authoritative context を再読し、lexical retrieval、semantic retrieval、memory retrieval の各段で同じ正規化境界を使う。retrieval 後、answer 生成後、citation 検証後にも current authorization を再評価し、途中失効した evidence が残る場合は citation を空にして回答不能へ遷移する。
+
+`POST /search` で一時 evidence を使う場合は `conversationId` を指定する。conversation ID がない request、別 user/tenant の conversation、または client-only scope ID は一時 evidence を検索対象へ追加しない。
 
 ### Response
 
@@ -394,8 +397,12 @@ local 開発では Hono の `GET /chat-runs/{runId}/events` が同じ `ChatRunEv
 
 - `schemaVersion` は会話履歴 item の構造を識別する。
 - `isFavorite` は未指定時 `false` として補完される。
-- 現行の `schemaVersion` は `1` とする。
-- API は `schemaVersion` 未指定の保存要求を v1 として補完する。
+- 現行の `schemaVersion` は `3` とする。v1/v2 item は読み取り互換を維持する。
+- API は `schemaVersion` 未指定の保存要求を v3 として補完する。
+- `sessionDocumentContext` は `id` と同じ `sessionId` に束縛し、temporary evidence を最大20件まで保持する。active reference の tenant、owner、chat scope、temporary scope、expiry はサーバーが manifest から再検証・補完する。
+- `GET /conversation-history/{id}` と `DELETE /conversation-history/{id}` は認証 actor の tenant+user partitionだけを対象にし、unknown/cross-tenant/cross-user ID は同じ404応答にする。
+- `removed`、`revoked`、`expired` は terminal state として保存し、client入力だけで `active` へ復活させない。
+- `scopeType=chat` の一時 evidence は通常文書一覧から除外し、通常文書の共有・移動・保存 mutationへ流用できない。
 - 将来スキーマを変更する場合は、既存 item の読み取り互換性を維持するか、version ごとの変換を追加する。
 
 ## `/questions`

@@ -1,6 +1,6 @@
 import { z } from "@hono/zod-openapi"
 import { ragRuntimePolicy } from "./chat-orchestration/runtime-policy.js"
-import type { JsonValue, ReplayVersionManifest } from "./types.js"
+import { DEBUG_TRACE_TARGET_TYPES, LEGACY_DEBUG_TRACE_TARGET_TYPE_DEFAULT, type JsonValue, type ReplayVersionManifest } from "./types.js"
 import {
   MANDATORY_RAG_GUARDS,
   SAFE_DEGRADATION_POLICY_VERSION,
@@ -51,7 +51,7 @@ const SafeDegradationDecisionSchema: z.ZodType<SafeDegradationDecision> = z.obje
   guardOutcomes: z.array(RagGuardOutcomeSchema)
 })
 const DebugStepOutputSchema = z.record(z.string(), MetadataValueSchema)
-export const DebugTraceTargetTypeSchema = z.enum(["rag_run", "ingest_run", "chat_orchestration_run", "async_agent_run", "tool_invocation"])
+export const DebugTraceTargetTypeSchema = z.enum(DEBUG_TRACE_TARGET_TYPES)
 export const DebugTraceVisibilitySchema = z.enum(["user_safe", "support_sanitized", "operator_sanitized", "internal_restricted"])
 export const DebugTraceSanitizePolicyVersionSchema = z.literal("debug-trace-sanitize-v1")
 
@@ -1504,7 +1504,8 @@ export const SearchScopeSchema = z.object({
   groupIds: z.array(z.string().min(1)).max(20).optional(),
   documentIds: z.array(z.string().min(1)).max(100).optional(),
   includeTemporary: z.boolean().optional(),
-  temporaryScopeId: z.string().min(1).optional()
+  temporaryScopeId: z.string().min(1).optional(),
+  temporaryScopeIds: z.array(z.string().min(1)).max(20).optional()
 })
 
 export const ChatRequestSchema = z.object({
@@ -1533,6 +1534,7 @@ export const ChatRequestSchema = z.object({
 
 export const SearchRequestSchema = z.object({
   query: z.string().min(1).openapi({ example: "経費精算 承認条件" }),
+  conversationId: z.string().min(1).optional(),
   topK: z.number().int().min(1).max(ragRuntimePolicy.retrieval.searchRagMaxTopK).optional().openapi({ example: 10 }),
   lexicalTopK: z.number().int().min(0).max(ragRuntimePolicy.retrieval.searchRagMaxSourceTopK).optional().openapi({ example: 80 }),
   semanticTopK: z.number().int().min(0).max(ragRuntimePolicy.retrieval.searchRagMaxSourceTopK).optional().openapi({ example: 80 }),
@@ -1548,7 +1550,7 @@ export const SearchRequestSchema = z.object({
   scope: SearchScopeSchema.optional()
 })
 
-export const BenchmarkSearchRequestSchema = SearchRequestSchema.omit({ filters: true, scope: true }).extend({
+export const BenchmarkSearchRequestSchema = SearchRequestSchema.omit({ filters: true, scope: true, conversationId: true }).extend({
   suiteId: z.string().min(1).openapi({ example: "search-standard-v1" })
 }).strict()
 
@@ -1646,7 +1648,7 @@ export const DebugTraceSchema = z.object({
   parentTraceIds: z.array(z.string()).optional(),
   tenantPartitionId: z.string().optional(),
   actorPartitionId: z.string().optional(),
-  targetType: DebugTraceTargetTypeSchema.optional().default("rag_run"),
+  targetType: DebugTraceTargetTypeSchema.optional().default(LEGACY_DEBUG_TRACE_TARGET_TYPE_DEFAULT),
   visibility: DebugTraceVisibilitySchema.optional().default("operator_sanitized"),
   sanitizePolicyVersion: DebugTraceSanitizePolicyVersionSchema.optional().default("debug-trace-sanitize-v1"),
   exportRedaction: z.object({
@@ -1705,6 +1707,7 @@ export const ChatRunSchema = z.object({
   userGroups: z.array(z.string()).optional(),
   question: z.string(),
   conversationHistory: z.array(ConversationHistoryTurnSchema).optional(),
+  conversation: ConversationInputSchema.optional(),
   clarificationContext: ClarificationContextSchema.optional(),
   modelId: z.string(),
   embeddingModelId: z.string().optional(),
@@ -1849,8 +1852,23 @@ export const ConversationMessageSchema = z.object({
   questionTicket: QuestionSchema.optional()
 })
 
+export const SessionTemporaryEvidenceReferenceSchema = z.object({
+  temporaryScopeId: z.string().min(1).max(200),
+  documentId: z.string().min(1).max(200),
+  status: z.enum(["active", "expired", "removed", "revoked"]),
+  expiresAt: z.string().datetime(),
+  updatedAt: z.string().datetime()
+})
+
+export const SessionDocumentContextSchema = z.object({
+  schemaVersion: z.literal(1).default(1),
+  sessionId: z.string().min(1).max(200),
+  temporaryEvidence: z.array(SessionTemporaryEvidenceReferenceSchema).max(20),
+  updatedAt: z.string().datetime()
+})
+
 export const ConversationHistoryItemSchema = z.object({
-  schemaVersion: z.union([z.literal(1), z.literal(2)]).default(2),
+  schemaVersion: z.union([z.literal(1), z.literal(2), z.literal(3)]).default(3),
   id: z.string().min(1),
   title: z.string().min(1).max(120),
   updatedAt: z.string(),
@@ -1861,7 +1879,8 @@ export const ConversationHistoryItemSchema = z.object({
   queryFocusedSummary: z.string().max(4000).optional(),
   citationMemory: z.array(ConversationCitationMemoryItemSchema).max(50).optional(),
   taskState: ConversationTaskStateSchema.optional(),
-  toolInvocations: z.array(ChatToolInvocationSchema).max(100).optional()
+  toolInvocations: z.array(ChatToolInvocationSchema).max(100).optional(),
+  sessionDocumentContext: SessionDocumentContextSchema.optional()
 })
 
 export const ConversationHistoryListResponseSchema = z.object({

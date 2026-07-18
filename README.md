@@ -59,7 +59,7 @@ Taskfile を使う場合:
 
 ```bash
 task docs:check
-task memorag:verify
+task verify
 ```
 
 ## デプロイ

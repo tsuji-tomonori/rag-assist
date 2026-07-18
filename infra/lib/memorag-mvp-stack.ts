@@ -48,6 +48,21 @@ const defaultBenchmarkSource = {
 
 const benchmarkCodeBuildTimeout = Duration.hours(3)
 const benchmarkStateMachineTimeout = Duration.hours(9)
+const standardRagGuardProfileJson = JSON.stringify({
+  id: "standard-safe-rag",
+  version: "standard-safe-rag-v1",
+  guards: {
+    authentication: true,
+    authorization: true,
+    classification_usage: true,
+    prompt_injection: true,
+    tool_policy: true,
+    grounding: true,
+    citation: true,
+    output_secret: true,
+    trace_redaction: true
+  }
+})
 
 export class MemoRagMvpStack extends Stack {
   constructor(scope: Construct, id: string, props?: MemoRagMvpStackProps) {
@@ -454,7 +469,8 @@ export class MemoRagMvpStack extends Stack {
       DEBUG_DOWNLOAD_BUCKET_NAME: debugDownloadBucket.bucketName,
       DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS: "900",
       RAG_MONITORING_REQUIRED: "1",
-      RAG_SAFETY_STATE_TTL_SECONDS: "600"
+      RAG_SAFETY_STATE_TTL_SECONDS: "600",
+      RAG_GUARD_PROFILE_JSON: standardRagGuardProfileJson
     } satisfies ApiRuntimeEnv
     const apiFunctionEnvironment = {
       ...apiEnvironment,

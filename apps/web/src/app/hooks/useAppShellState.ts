@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ComponentProps } from "react"
-import type { AuthSession } from "../../authClient.js"
+import type { AuthSession } from "../../features/auth/api/authClient.js"
 import type { AppRoutesProps } from "../AppRoutes.js"
 import type { RailNav } from "../components/RailNav.js"
 import type { TopBar } from "../components/TopBar.js"

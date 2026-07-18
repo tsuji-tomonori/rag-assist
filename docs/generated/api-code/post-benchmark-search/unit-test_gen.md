@@ -18,6 +18,7 @@
 | 到達 symbol | service search publishes and reuses immutable lexical index artifacts | `apps/api/src/search/hybrid-search.test.ts:873 (service search publishes and reuses immutable lexical index artifacts)` |
 | 到達 symbol | service search scopes benchmark corpus by suite metadata | `apps/api/src/search/hybrid-search.test.ts:970 (service search scopes benchmark corpus by suite metadata)` |
 | 到達 symbol | service search expands published reviewed aliases without returning alias details | `apps/api/src/search/hybrid-search.test.ts:1030 (service search expands published reviewed aliases without returning alias details)` |
+| 到達 symbol | MT-TEMP-001-006 chat run normalizes B1 context, preserves legacy scope, and rejects client-only or cross-owner carry | `apps/api/src/search/temporary-attachment-boundary.test.ts:135 (MT-TEMP-001-006 chat run normalizes B1 context, preserves legacy scope, and rejects client-only or cross-owner carry)` |
 
 ## 2. 実装分岐から導くテスト要因
 
@@ -26,6 +27,7 @@
 | F001 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
 | F002 | `benchmarkHttp` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/benchmark-routes.ts:262 (benchmarkHttp)` |
 | F003 | `benchmarkHttp` | if | `error` が `BenchmarkEvaluationContextError` の instance である | `apps/api/src/routes/benchmark-routes.ts:263 (benchmarkHttp)` |
+| F004 | `MemoRagService.search` | 三項条件 | `input.conversationId` が存在し、真である | `apps/api/src/rag/memorag-service.ts:3116 (MemoRagService.search)` |
 
 ## 3. コード由来テストケース
 
@@ -37,12 +39,14 @@
 | TC004 | F002: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/benchmark-routes.ts:262 (benchmarkHttp)` |
 | TC005 | F003: 条件成立 | `error` が `BenchmarkEvaluationContextError` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/benchmark-routes.ts:263 (benchmarkHttp)` |
 | TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/benchmark-routes.ts:263 (benchmarkHttp)` |
-| TC007 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
-| TC008 | HTTP 400 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
-| TC009 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
-| TC010 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
-| TC011 | HTTP 500 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
-| TC012 | HTTP 503 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC007 | F004: 条件成立 | `input.conversationId` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:3116 (MemoRagService.search)` |
+| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:3116 (MemoRagService.search)` |
+| TC009 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC010 | HTTP 400 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC011 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC012 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC013 | HTTP 500 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC014 | HTTP 503 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 
 ## 4. 検証方針
 

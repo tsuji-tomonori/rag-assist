@@ -27,19 +27,19 @@ sequenceDiagram
 
 | ID | Function | 条件 | 実装位置 |
 | --- | --- | --- | --- |
-| B001 | `enrichOpenApiDocument` | entries の判定結果が真である | `apps/api/src/openapi-doc-quality.ts:677 (enrichOpenApiDocument)` |
-| B002 | `enrichOpenApiDocument` | entries の判定結果が真である | `apps/api/src/openapi-doc-quality.ts:681 (enrichOpenApiDocument)` |
-| B003 | `enrichOpenApiDocument` | entries の判定結果が真である | `apps/api/src/openapi-doc-quality.ts:682 (enrichOpenApiDocument)` |
-| B004 | `enrichOpenApiDocument` | is http method の判定結果が真ではない | `apps/api/src/openapi-doc-quality.ts:683 (enrichOpenApiDocument)` |
-| B005 | `enrichOpenApiDocument` | `docs` が存在し、真である | `apps/api/src/openapi-doc-quality.ts:685 (enrichOpenApiDocument)` |
-| B006 | `enrichOpenApiDocument` | `lifecycle` が存在し、真である | `apps/api/src/openapi-doc-quality.ts:690 (enrichOpenApiDocument)` |
-| B007 | `enrichOpenApiDocument` | requires authorization の判定結果が真である | `apps/api/src/openapi-doc-quality.ts:691 (enrichOpenApiDocument)` |
-| B008 | `enrichOpenApiDocument` | `operation.parameters` が `[]` の条件を満たす | `apps/api/src/openapi-doc-quality.ts:697 (enrichOpenApiDocument)` |
-| B009 | `enrichOpenApiDocument` | `parameter.description` が存在し、真である、かつ has japanese の判定結果が真である | `apps/api/src/openapi-doc-quality.ts:698 (enrichOpenApiDocument)` |
-| B010 | `enrichOpenApiDocument` | `parameter.schema` が存在し、真である | `apps/api/src/openapi-doc-quality.ts:701 (enrichOpenApiDocument)` |
-| B011 | `enrichOpenApiDocument` | `operation.requestBody` が存在し、真である | `apps/api/src/openapi-doc-quality.ts:703 (enrichOpenApiDocument)` |
-| B012 | `enrichOpenApiDocument` | values の判定結果が真である | `apps/api/src/openapi-doc-quality.ts:705 (enrichOpenApiDocument)` |
-| B013 | `enrichOpenApiDocument` | `media.schema` が存在し、真である | `apps/api/src/openapi-doc-quality.ts:706 (enrichOpenApiDocument)` |
-| B014 | `enrichOpenApiDocument` | entries の判定結果が真である | `apps/api/src/openapi-doc-quality.ts:709 (enrichOpenApiDocument)` |
-| B015 | `enrichOpenApiDocument` | values の判定結果が真である | `apps/api/src/openapi-doc-quality.ts:711 (enrichOpenApiDocument)` |
-| B016 | `enrichOpenApiDocument` | `media.schema` が存在し、真である | `apps/api/src/openapi-doc-quality.ts:712 (enrichOpenApiDocument)` |
+| B001 | `enrichOpenApiDocument` | entries の判定結果が真である | `apps/api/src/openapi-doc-quality.ts:681 (enrichOpenApiDocument)` |
+| B002 | `enrichOpenApiDocument` | entries の判定結果が真である | `apps/api/src/openapi-doc-quality.ts:685 (enrichOpenApiDocument)` |
+| B003 | `enrichOpenApiDocument` | entries の判定結果が真である | `apps/api/src/openapi-doc-quality.ts:686 (enrichOpenApiDocument)` |
+| B004 | `enrichOpenApiDocument` | is http method の判定結果が真ではない | `apps/api/src/openapi-doc-quality.ts:687 (enrichOpenApiDocument)` |
+| B005 | `enrichOpenApiDocument` | `docs` が存在し、真である | `apps/api/src/openapi-doc-quality.ts:689 (enrichOpenApiDocument)` |
+| B006 | `enrichOpenApiDocument` | `lifecycle` が存在し、真である | `apps/api/src/openapi-doc-quality.ts:694 (enrichOpenApiDocument)` |
+| B007 | `enrichOpenApiDocument` | requires authorization の判定結果が真である | `apps/api/src/openapi-doc-quality.ts:695 (enrichOpenApiDocument)` |
+| B008 | `enrichOpenApiDocument` | `operation.parameters` が `[]` の条件を満たす | `apps/api/src/openapi-doc-quality.ts:701 (enrichOpenApiDocument)` |
+| B009 | `enrichOpenApiDocument` | `parameter.description` が存在し、真である、かつ has japanese の判定結果が真である | `apps/api/src/openapi-doc-quality.ts:702 (enrichOpenApiDocument)` |
+| B010 | `enrichOpenApiDocument` | `parameter.schema` が存在し、真である | `apps/api/src/openapi-doc-quality.ts:705 (enrichOpenApiDocument)` |
+| B011 | `enrichOpenApiDocument` | `operation.requestBody` が存在し、真である | `apps/api/src/openapi-doc-quality.ts:707 (enrichOpenApiDocument)` |
+| B012 | `enrichOpenApiDocument` | values の判定結果が真である | `apps/api/src/openapi-doc-quality.ts:709 (enrichOpenApiDocument)` |
+| B013 | `enrichOpenApiDocument` | `media.schema` が存在し、真である | `apps/api/src/openapi-doc-quality.ts:710 (enrichOpenApiDocument)` |
+| B014 | `enrichOpenApiDocument` | entries の判定結果が真である | `apps/api/src/openapi-doc-quality.ts:713 (enrichOpenApiDocument)` |
+| B015 | `enrichOpenApiDocument` | values の判定結果が真である | `apps/api/src/openapi-doc-quality.ts:715 (enrichOpenApiDocument)` |
+| B016 | `enrichOpenApiDocument` | `media.schema` が存在し、真である | `apps/api/src/openapi-doc-quality.ts:716 (enrichOpenApiDocument)` |

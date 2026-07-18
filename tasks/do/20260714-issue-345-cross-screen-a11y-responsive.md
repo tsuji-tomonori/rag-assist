@@ -75,6 +75,41 @@
 - PR #381へ受け入れ条件comment `4993651815` とセルフレビューcomment `4993652363` をGitHub Appsで記録した。
 - MemoRAG CI run `29510297527` はAPI branch coverage 80.42%（目標85%）のみfailure。Phase AでAPI fileは変更しておらず、既存改善task `tasks/todo/20260712-coverage-api-c1-recovery.md` の未解決事項として記録し、PR全体をgreenとは扱わない。
 
+## 2026-07-19 current main 収束
+
+### 問題文と確認済み事実
+
+- PR #361 は2026-07-18に merge commit `b7cc067c` として main へ統合済みだが、PR #381 は #361 の旧 head `44464bdf` に Phase A を積んだ状態で残っている。
+- current `origin/main@fbd7e7c3` に対して PR #381 head `b6acb24f` は behind 20 / ahead 32 で、GitHub 上は merge 不可である。
+- current main との差分には、mainへ統合済みの `.github/workflows/web-ui-quality.yml`、NFR-018、contrast remediation、UI quality task/reportが再表示されている。
+- #381 は後続 PR #385 の base であるため、未収束のままでは #385 の差分・競合判定も古い基準を引き継ぐ。
+
+### 根本原因と対策
+
+根本原因は、Phase Aを未統合の #361 branchへstackした後、#361のmain統合とmain側の継続変更を #381 へ取り込んでいないことである。published historyは書き換えずcurrent mainをmergeし、競合時はcurrent mainの実装・一意な正本文書を基準にPhase A固有のmatrix / audit / traceだけを再適用する。生成文書は手編集で解消せず、generatorから再生成する。
+
+### 受け入れ条件
+
+- [x] `origin/main@fbd7e7c3` を published history の書き換えなしで PR #381 branchへ統合し、内容競合を解消する。
+- [x] current mainとの差分から#361の既統合差分を除き、Phase Aのmatrix / audit harness / trace / task / reportに限定する。
+- [x] `SQ-016`、`DES_UI_UX_001`、machine-readable matrixを一意な正本として維持し、生成文書をgeneratorと同期する。
+- [ ] `git diff --check`、Web lint / typecheck / unit、matrix / UI trace、representative Chromium cross-screen E2E、docs checkが成功する。
+- [ ] draft PR #381本文・受け入れ条件・セルフレビューとIssue #345を更新し、#385の再統合、既知defect、manual screen reader / real-browser 200%・400% zoom / touch・real-device、`OQ-UI-002`を未完了として残す。
+
+### 検証結果
+
+- merge commit `5e92f22c` で `origin/main@fbd7e7c3` を非破壊に統合した。競合は `visual-regression.spec.ts`、`DES_UI_UX_001.md`、UI automated quality taskの3件で、mainの#361確定内容を維持しつつPhase A固有のaudit / matrixだけを残した。
+- current mainとの差分は18 files / 1,185 additions / 81 deletions。#361のworkflow、contrast remediation、NFR-018、automation task/reportは差分から除外された。
+- `npm run docs:web-inventory`: generatorを再実行し、生成結果は追加差分なし。
+- `npm run lint`: pass。
+- `npm run typecheck -w @memorag-mvp/web`: pass。
+- `TZ=UTC npm test -w @memorag-mvp/web`: 61 files / 441 tests pass。
+- `npm run docs:web-trace:test`: matrix / trace 12 tests pass。
+- `npm run test:web-semantic-ui`: 4 tests pass。
+- canonical docs、OpenAPI、API code 98 APIs / 588 documents、Web / infra inventory、hidden Unicode、`git diff --check`: pass。
+- `E2E-UI-CROSS-SCREEN-AUDIT-001`: `--list`でChromium 1 testへの解決を確認。ローカルChromium取得は配布元の0 byte応答で失敗したため、実行はlatest headのGitHub Actions判定待ちであり、本受け入れ条件は未完了のままとする。
+- Phase A baselineに残るcomputed serious 1件、axe serious 5件、未分類candidate 64件、manual evidence、`OQ-UI-002`があるため、task全体の状態は`do`を維持する。
+
 ## 実行計画
 
 1. Phase A: view/persona/journey × WCAG/viewport/input/content-state matrix とautomated audit harnessをbaseline化する。

@@ -8,8 +8,7 @@ import { extractDocumentFromUpload } from "../offline/pre-retrieval/extraction/t
 import { createChatOrchestrationGraph } from "../orchestration/chat-rag-orchestrator.js"
 import {
   answerPolicyById,
-  resolveRetrievalProfileId,
-  selectAnswerPolicyForMetadata
+  resolveRetrievalProfileId
 } from "../_shared/policies/answer-policy.js"
 import {
   assembleContext,
@@ -101,9 +100,8 @@ test("RAG runtime policies are resolved from the new shared policy layout", () =
 
   const neutral = answerPolicyById(undefined)
   assert.equal(neutral.id, "default-answer-policy")
-  assert.equal(answerPolicyById("swebok").id, "swebok-requirements-policy")
-  assert.equal(selectAnswerPolicyForMetadata([{ domainPolicy: "software-requirements" }], neutral).id, "swebok-requirements-policy")
-  assert.equal(selectAnswerPolicyForMetadata([{ domainPolicy: "general" }], neutral).id, "default-answer-policy")
+  assert.equal(answerPolicyById("default").id, "default-answer-policy")
+  assert.throws(() => answerPolicyById("domain-specific-policy"), /Unknown RAG_DOMAIN_POLICY_ID/)
 })
 
 test("RAG context packing keeps focused snippets and drop accounting in the new layout", () => {
