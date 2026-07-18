@@ -1,6 +1,6 @@
 # Issue #358 FR-049 enabled tool pre-node permission gate
 
-- 状態: do
+- 状態: done
 - 対象: Issue #358 / FR-049
 - ブランチ: `codex/issue-358-fr049-pre-node-permission-gate`
 - 起点: PR #441 final head `c3f94999c9c9b12b9767f1727c793343d95fcd92`
@@ -27,17 +27,28 @@ PR #441 で enabled graph-backed RAG tool の feature permission 語彙を正規
 
 ## 受け入れ条件
 
-- [ ] AC1: 実行される graph node に mapping された enabled tool definition を、node body より前に全件検証する。
-- [ ] AC2: definition が missing、disabled、node mapping 不整合、または現在 runtime が扱えない resource permission contract の場合は fail closed とし、node body を実行しない。
-- [ ] AC3: 同じ node に複数 tool が mapping される場合も各 definition を検証し、同一 `requiredFeaturePermission` / `requiredResourcePermission` の current authorization は 1 回へ重複排除する。
-- [ ] AC4: sync / async chat は definition の `requiredFeaturePermission` と現在の search scope read authorization を再検証し、feature または resource revoke 後は node body / output を生成しない。
-- [ ] AC5: async の既存 `permission_revoked` minimized failure と sync の例外伝播を維持する。
-- [ ] AC6: disabled tool、unmapped node、trace/status/store/UI/approval/API/schema/role catalog/AWS/migration を変更しない。
-- [ ] AC7: FR-049 に本 unit の成立と denial trace / future executor の残差を区別して記録する。
-- [ ] AC8: security review で route、owner、resource scope、sensitive response、role grant を弱めていないことを確認する。
-- [ ] AC9: targeted tests、API lint/typecheck/full test/build、docs checks、repository CI、diff/pre-commit を成功させる。
-- [ ] AC10: 日本語 commit / Draft PR / AC comment / self-review / Issue #358 progress / two-head CI / task-report lifecycle を完遂する。
-- [ ] AC11: local HEAD / upstream / remote 一致と clean worktree を確認し、未実施・残リスクを正直に記録する。
+- [x] AC1: 実行される graph node に mapping された enabled tool definition を、node body より前に全件検証する。
+- [x] AC2: definition が missing、disabled、node mapping 不整合、または現在 runtime が扱えない resource permission contract の場合は fail closed とし、node body を実行しない。
+- [x] AC3: 同じ node に複数 tool が mapping される場合も各 definition を検証し、同一 `requiredFeaturePermission` / `requiredResourcePermission` の current authorization は 1 回へ重複排除する。
+- [x] AC4: sync / async chat は definition の `requiredFeaturePermission` と現在の search scope read authorization を再検証し、feature または resource revoke 後は node body / output を生成しない。
+- [x] AC5: async の既存 `permission_revoked` minimized failure と sync の例外伝播を維持する。
+- [x] AC6: disabled tool、unmapped node、trace/status/store/UI/approval/API/schema/role catalog/AWS/migration を変更しない。
+- [x] AC7: FR-049 に本 unit の成立と denial trace / future executor の残差を区別して記録する。
+- [x] AC8: security review で route、owner、resource scope、sensitive response、role grant を弱めていないことを確認する。
+- [x] AC9: targeted tests、API lint/typecheck/full test/build、docs checks、repository CI、diff/pre-commit を成功させる。
+- [x] AC10: 日本語 commit / Draft PR / AC comment / self-review / Issue #358 progress / two-head CI / task-report lifecycle を完遂する。
+- [x] AC11: local HEAD / upstream / remote 一致と clean worktree を確認し、未実施・残リスクを正直に記録する。
+
+## 完了証跡
+
+- 実装 commit: `1406a3fe`
+- Draft PR: #443
+- 実装 head CI: https://github.com/tsuji-tomonori/rag-assist/actions/runs/29637032367（green）
+- 受け入れ条件コメント: https://github.com/tsuji-tomonori/rag-assist/pull/443#issuecomment-5010541099
+- セルフレビュー: https://github.com/tsuji-tomonori/rag-assist/pull/443#issuecomment-5010541100
+- Issue #358 progress: https://github.com/tsuji-tomonori/rag-assist/issues/358#issuecomment-5010563425
+- local validation: targeted 2/2、API coverage 919/919 / Statements/Lines 90.69%、`task docs:check`、`task verify`、source audit、`npm run ci`、pre-commit、diff check はすべて成功。
+- final lifecycle head CI と local/upstream/remote clean readback は、本 done 更新 commit の push 後に PR top-level comment と最終回答へ記録する。
 
 ## Done 条件
 
