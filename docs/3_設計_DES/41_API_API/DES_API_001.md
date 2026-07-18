@@ -58,6 +58,7 @@
 | `POST /questions/{questionId}/search-improvement-candidates` | 問い合わせ由来の検索改善候補作成 | `FR-023`, `FR-037`, `NFR-012` |
 | `POST /questions/{questionId}/resolve` | 問い合わせ解決済み化 | `FR-021`, `NFR-011` |
 | `GET /conversation-history` | 自分の会話履歴一覧 | `FR-022`, `NFR-005` |
+| `GET /conversation-history/{id}` | 自分の会話履歴詳細と authoritative session context | `FR-022`, `FR-067`, `FR-091`, `NFR-005` |
 | `POST /conversation-history` | 会話履歴 item 保存 | `FR-022`, `NFR-005` |
 | `DELETE /conversation-history/{id}` | 自分の会話履歴削除 | `FR-022`, `NFR-005` |
 | `GET /favorites` | 自分のお気に入り shortcut 一覧 | `FR-028`, `NFR-005`, `NFR-011` |
@@ -394,8 +395,12 @@ local 開発では Hono の `GET /chat-runs/{runId}/events` が同じ `ChatRunEv
 
 - `schemaVersion` は会話履歴 item の構造を識別する。
 - `isFavorite` は未指定時 `false` として補完される。
-- 現行の `schemaVersion` は `1` とする。
-- API は `schemaVersion` 未指定の保存要求を v1 として補完する。
+- 現行の `schemaVersion` は `3` とする。v1/v2 item は読み取り互換を維持する。
+- API は `schemaVersion` 未指定の保存要求を v3 として補完する。
+- `sessionDocumentContext` は `id` と同じ `sessionId` に束縛し、temporary evidence を最大20件まで保持する。active reference の tenant、owner、chat scope、temporary scope、expiry はサーバーが manifest から再検証・補完する。
+- `GET /conversation-history/{id}` と `DELETE /conversation-history/{id}` は認証 actor の tenant+user partitionだけを対象にし、unknown/cross-tenant/cross-user ID は同じ404応答にする。
+- `removed`、`revoked`、`expired` は terminal state として保存し、client入力だけで `active` へ復活させない。
+- `scopeType=chat` の一時 evidence は通常文書一覧から除外し、通常文書の共有・移動・保存 mutationへ流用できない。
 - 将来スキーマを変更する場合は、既存 item の読み取り互換性を維持するか、version ごとの変換を追加する。
 
 ## `/questions`

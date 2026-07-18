@@ -8,7 +8,9 @@
 
 | # | CRUD/実行 | Target | Method | 自然言語での目的 | Caller | コード根拠 |
 | ---: | --- | --- | --- | --- | --- | --- |
-| 1 | 作成・追記 | `this.deps.conversationHistoryStore` | `save` | `this.deps.conversationHistoryStore` に対して save を実行する。 | `MemoRagService.saveConversationHistory` | `apps/api/src/rag/memorag-service.ts:4129 (MemoRagService.saveConversationHistory)` |
+| 1 | 参照 | `this.deps.conversationHistoryStore` | `get` | `this.deps.conversationHistoryStore` に対して get を実行する。 | `MemoRagService.resolveSessionDocumentContext` | `apps/api/src/rag/memorag-service.ts:5193 (MemoRagService.resolveSessionDocumentContext)` |
+| 2 | 参照 | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `readTenantManifest` | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:83 (readTenantManifest)` |
+| 3 | 作成・追記 | `this.deps.conversationHistoryStore` | `save` | `this.deps.conversationHistoryStore` に対して save を実行する。 | `MemoRagService.saveConversationHistory` | `apps/api/src/rag/memorag-service.ts:4129 (MemoRagService.saveConversationHistory)` |
 
 ## 外部サービス操作
 

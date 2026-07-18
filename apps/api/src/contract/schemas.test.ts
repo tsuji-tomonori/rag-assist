@@ -300,11 +300,17 @@ test("conversation history schema accepts optional multi-turn state fields", () 
       status: "in_progress",
       goal: "経費精算期限を確認する",
       pendingActions: ["前回 citation を再確認"]
+    },
+    sessionDocumentContext: {
+      sessionId: "conversation-1",
+      temporaryEvidence: [{ temporaryScopeId: "conversation-1", documentId: "tmp-doc-1", status: "active", expiresAt: "2026-05-15T00:00:00.000Z", updatedAt: "2026-05-14T00:00:00.000Z" }],
+      updatedAt: "2026-05-14T00:00:00.000Z"
     }
   })
 
   assert.equal(result.success, true)
   if (!result.success) return
-  assert.equal(result.data.schemaVersion, 2)
+  assert.equal(result.data.schemaVersion, 3)
   assert.equal(result.data.decontextualizedQuery?.turnDependency, "follow_up")
+  assert.equal(result.data.sessionDocumentContext?.schemaVersion, 1)
 })

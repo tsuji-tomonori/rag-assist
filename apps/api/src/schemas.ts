@@ -1849,8 +1849,23 @@ export const ConversationMessageSchema = z.object({
   questionTicket: QuestionSchema.optional()
 })
 
+export const SessionTemporaryEvidenceReferenceSchema = z.object({
+  temporaryScopeId: z.string().min(1).max(200),
+  documentId: z.string().min(1).max(200),
+  status: z.enum(["active", "expired", "removed", "revoked"]),
+  expiresAt: z.string().datetime(),
+  updatedAt: z.string().datetime()
+})
+
+export const SessionDocumentContextSchema = z.object({
+  schemaVersion: z.literal(1).default(1),
+  sessionId: z.string().min(1).max(200),
+  temporaryEvidence: z.array(SessionTemporaryEvidenceReferenceSchema).max(20),
+  updatedAt: z.string().datetime()
+})
+
 export const ConversationHistoryItemSchema = z.object({
-  schemaVersion: z.union([z.literal(1), z.literal(2)]).default(2),
+  schemaVersion: z.union([z.literal(1), z.literal(2), z.literal(3)]).default(3),
   id: z.string().min(1),
   title: z.string().min(1).max(120),
   updatedAt: z.string(),
@@ -1861,7 +1876,8 @@ export const ConversationHistoryItemSchema = z.object({
   queryFocusedSummary: z.string().max(4000).optional(),
   citationMemory: z.array(ConversationCitationMemoryItemSchema).max(50).optional(),
   taskState: ConversationTaskStateSchema.optional(),
-  toolInvocations: z.array(ChatToolInvocationSchema).max(100).optional()
+  toolInvocations: z.array(ChatToolInvocationSchema).max(100).optional(),
+  sessionDocumentContext: SessionDocumentContextSchema.optional()
 })
 
 export const ConversationHistoryListResponseSchema = z.object({

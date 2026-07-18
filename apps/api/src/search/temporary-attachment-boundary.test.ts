@@ -20,6 +20,7 @@ import { LocalVectorStore } from "../adapters/local-vector-store.js"
 import { MockBedrockTextModel } from "../adapters/mock-bedrock.js"
 import type { Dependencies } from "../dependencies.js"
 import type { DocumentManifest } from "../types.js"
+import { MemoRagService } from "../rag/memorag-service.js"
 import { getLexicalIndex } from "./hybrid-search.js"
 
 test("FR-067 temporary attachments require current tenant, owner, conversation scope, and expiry", async () => {
@@ -73,6 +74,62 @@ test("FR-067 temporary attachments require current tenant, owner, conversation s
     temporaryScopeId: "conversation-1",
     includeTemporary: true
   }), /Forbidden/)
+})
+
+test("MT-TEMP-001/003/004 session context persists only authoritative owner-bound temporary evidence", async () => {
+  const dataDir = await mkdtemp(path.join(tmpdir(), "session-document-context-"))
+  const deps = localDependencies(dataDir)
+  const service = new MemoRagService(deps)
+  await deps.objectStore.putText("documents/active/source.txt", "会話専用の添付資料です。")
+  await deps.objectStore.putText("manifests/active.json", JSON.stringify(temporaryManifest({
+    documentId: "active",
+    temporaryScopeId: "conversation-1",
+    expiresAt: "2999-01-01T00:00:00.000Z"
+  })))
+  const owner = { userId: "owner-1", email: "owner@example.com", tenantId: "tenant-a", accountStatus: "active" as const, cognitoGroups: ["CHAT_USER"] }
+  const saved = await service.saveConversationHistory(owner, {
+    id: "conversation-1",
+    title: "temporary context",
+    updatedAt: "2026-07-16T00:00:00.000Z",
+    messages: [],
+    sessionDocumentContext: {
+      schemaVersion: 1,
+      sessionId: "conversation-1",
+      temporaryEvidence: [{
+        temporaryScopeId: "conversation-1",
+        documentId: "active",
+        status: "active",
+        expiresAt: "2099-01-01T00:00:00.000Z",
+        updatedAt: "2026-07-16T00:00:00.000Z"
+      }],
+      updatedAt: "2026-07-16T00:00:00.000Z"
+    }
+  })
+  assert.equal(saved.sessionDocumentContext?.temporaryEvidence[0]?.expiresAt, "2999-01-01T00:00:00.000Z", "manifest expiry is authoritative")
+  assert.deepEqual(await service.listDocuments(owner), [], "MT-TEMP-007 chat evidence is absent from the ordinary document list")
+  await assert.rejects(() => service.assertDocumentWritable(owner, "active"), /Forbidden/, "MT-TEMP-008 chat evidence cannot enter ordinary document mutations")
+  assert.equal((await service.getConversationHistory(owner, "conversation-1"))?.id, "conversation-1")
+  assert.equal(await service.getConversationHistory({ ...owner, userId: "owner-2" }, "conversation-1"), undefined, "another owner receives the same not-found result as an unknown id")
+  await assert.rejects(() => service.saveConversationHistory({ ...owner, userId: "owner-2" }, {
+    ...saved,
+    sessionDocumentContext: saved.sessionDocumentContext
+  }), /Forbidden/)
+
+  const removed = await service.saveConversationHistory(owner, {
+    ...saved,
+    sessionDocumentContext: {
+      ...saved.sessionDocumentContext!,
+      temporaryEvidence: saved.sessionDocumentContext!.temporaryEvidence.map((reference) => ({ ...reference, status: "removed" as const }))
+    }
+  })
+  const attemptedRestore = await service.saveConversationHistory(owner, {
+    ...removed,
+    sessionDocumentContext: {
+      ...removed.sessionDocumentContext!,
+      temporaryEvidence: removed.sessionDocumentContext!.temporaryEvidence.map((reference) => ({ ...reference, status: "active" as const }))
+    }
+  })
+  assert.equal(attemptedRestore.sessionDocumentContext?.temporaryEvidence[0]?.status, "removed", "terminal context state cannot be revived by client input")
 })
 
 function temporaryManifest(input: { documentId: string; temporaryScopeId: string; expiresAt: string }): DocumentManifest {

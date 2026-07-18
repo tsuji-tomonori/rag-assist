@@ -1961,9 +1961,26 @@ export type ConversationMessage = {
   questionTicket?: HumanQuestion
 }
 
-export const CONVERSATION_HISTORY_SCHEMA_VERSION = 2
+export const CONVERSATION_HISTORY_SCHEMA_VERSION = 3
 
-export type ConversationHistorySchemaVersion = 1 | typeof CONVERSATION_HISTORY_SCHEMA_VERSION
+export type ConversationHistorySchemaVersion = 1 | 2 | typeof CONVERSATION_HISTORY_SCHEMA_VERSION
+
+export type SessionTemporaryEvidenceStatus = "active" | "expired" | "removed" | "revoked"
+
+export type SessionTemporaryEvidenceReference = {
+  temporaryScopeId: string
+  documentId: string
+  status: SessionTemporaryEvidenceStatus
+  expiresAt: string
+  updatedAt: string
+}
+
+export type SessionDocumentContext = {
+  schemaVersion: 1
+  sessionId: string
+  temporaryEvidence: SessionTemporaryEvidenceReference[]
+  updatedAt: string
+}
 
 export type ConversationDecontextualizedQuery = {
   originalQuestion: string
@@ -2000,4 +2017,5 @@ export type ConversationHistoryItem = {
   citationMemory?: ConversationCitationMemoryItem[]
   taskState?: ConversationTaskState
   toolInvocations?: ChatToolInvocation[]
+  sessionDocumentContext?: SessionDocumentContext
 }

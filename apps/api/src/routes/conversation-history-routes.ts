@@ -28,6 +28,27 @@ export function registerConversationHistoryRoutes({ app, service }: ApiRouteCont
 
   app.openapi(
     looseRoute({
+      method: "get",
+      path: "/conversation-history/{id}",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "chat:read:own", operationKey: "history.read.self", resourceCondition: "self", errorDisclosure: "resource-hidden", notes: ["tenant/user partition内の自身の会話だけ返します。"] }),
+      request: { params: z.object({ id: z.string().min(1) }) },
+      responses: {
+        200: { description: "Persisted conversation history", content: { "application/json": { schema: ConversationHistoryItemSchema } } },
+        404: { description: "Conversation history not found", content: { "application/json": { schema: ErrorResponseSchema } } }
+      }
+    }),
+    async (c) => {
+      const user = c.get("user")
+      requirePermission(user, "chat:read:own")
+      const { id } = validParam<{ id: string }>(c)
+      const item = await service.getConversationHistory(user, id)
+      if (!item) return c.json({ error: "Conversation history not found" }, 404)
+      return c.json(ConversationHistoryItemSchema.parse(item), 200)
+    }
+  )
+
+  app.openapi(
+    looseRoute({
       method: "post",
       path: "/conversation-history",
       "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "chat:create", operationKey: "history.update.self", resourceCondition: "self", notes: ["実行者自身の会話履歴として保存します。"] }),
@@ -68,7 +89,7 @@ export function registerConversationHistoryRoutes({ app, service }: ApiRouteCont
       const user = c.get("user")
       requirePermission(user, "chat:delete:own")
       const { id } = validParam<{ id: string }>(c)
-      await service.deleteConversationHistory(user, id)
+      if (!(await service.deleteConversationHistory(user, id))) return c.json({ error: "Conversation history not found" }, 404)
       return c.json({ id }, 200)
     }
   )

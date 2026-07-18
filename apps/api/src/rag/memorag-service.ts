@@ -17,7 +17,7 @@ import type { ReplayDecisionReasonCode } from "../types.js"
 import type { AppUser } from "../auth.js"
 import type { CreatedDirectoryUser } from "../adapters/user-directory.js"
 import type { AnswerQuestionInput, CreateQuestionInput } from "../adapters/question-store.js"
-import type { SaveConversationHistoryInput } from "../adapters/conversation-history-store.js"
+import { normalizeConversationHistoryInput, type SaveConversationHistoryInput } from "../adapters/conversation-history-store.js"
 import type { DocumentGroupPathUpdate } from "../adapters/document-group-store.js"
 import type { ChatRunExecutionEnvelope } from "../adapters/chat-run-store.js"
 import { searchRag, type SearchInput, type SearchResponse } from "./online/retrieval/hybrid/hybrid-retriever.js"
@@ -974,7 +974,7 @@ export class MemoRagService {
 
   async assertDocumentWritable(actor: AppUser, documentId: string): Promise<DocumentManifest> {
     const manifest = await this.getManifest(documentId, authoritativeActorTenantId(actor))
-    await this.assertDocumentManifestWritable(actor, manifest)
+    await this.assertOrdinaryDocumentWritable(actor, manifest)
     return manifest
   }
 
@@ -4126,7 +4126,7 @@ export class MemoRagService {
 
   async saveConversationHistory(subject: AppUser | string, input: SaveConversationHistoryInput, tenantId?: string): Promise<ConversationHistoryItem> {
     const ownerKey = tenantPartitionedOwnerKey(subject, tenantId)
-    return this.deps.conversationHistoryStore.save(ownerKey, { ...input, isFavorite: false })
+    return this.deps.conversationHistoryStore.save(ownerKey, { ...input, sessionDocumentContext: await this.resolveSessionDocumentContext(subject, input, ownerKey), isFavorite: false })
   }
 
   async listConversationHistory(subject: AppUser | string, tenantId?: string): Promise<ConversationHistoryItem[]> {
@@ -4139,13 +4139,13 @@ export class MemoRagService {
       .filter((favorite) => favorite.targetType === "chatSession")
       .map((favorite) => favorite.targetId))
     return history
-      .map((item) => ({ ...item, isFavorite: favoriteChatSessionIds.has(item.id) }))
+      .map((item) => ({ ...normalizeConversationHistoryInput(item), isFavorite: favoriteChatSessionIds.has(item.id) }))
       .sort(compareConversationHistoryForDisplay)
       .slice(0, 20)
   }
 
-  async deleteConversationHistory(subject: AppUser | string, id: string, tenantId?: string): Promise<void> {
-    return this.deps.conversationHistoryStore.delete(tenantPartitionedOwnerKey(subject, tenantId), id)
+  async deleteConversationHistory(subject: AppUser | string, id: string, tenantId?: string): Promise<boolean> {
+    return this.deleteOwnedConversationHistory(subject, id, tenantId)
   }
 
   async saveFavorite(user: AppUser, input: { targetType: FavoriteTargetType; targetId: string; label?: string; note?: string }): Promise<FavoriteListItem> {
@@ -5175,6 +5175,63 @@ export class MemoRagService {
 
   private usageRolloutMode(): "disabled" | "shadow" | "active" {
     return this.deps.usageAccountingMode ?? "active"
+  }
+
+  async getConversationHistory(subject: AppUser | string, id: string, tenantId?: string): Promise<ConversationHistoryItem | undefined> {
+    const item = await this.deps.conversationHistoryStore.get(tenantPartitionedOwnerKey(subject, tenantId), id)
+    return item ? normalizeConversationHistoryInput(item) : undefined
+  }
+
+  private async deleteOwnedConversationHistory(subject: AppUser | string, id: string, tenantId?: string): Promise<boolean> {
+    const ownerKey = tenantPartitionedOwnerKey(subject, tenantId)
+    if (!(await this.deps.conversationHistoryStore.get(ownerKey, id))) return false
+    await this.deps.conversationHistoryStore.delete(ownerKey, id)
+    return true
+  }
+
+  private async resolveSessionDocumentContext(subject: AppUser | string, input: SaveConversationHistoryInput, ownerKey: string): Promise<ConversationHistoryItem["sessionDocumentContext"]> {
+    const previous = await this.deps.conversationHistoryStore.get(ownerKey, input.id)
+    return typeof subject === "string"
+      ? input.sessionDocumentContext ?? previous?.sessionDocumentContext
+      : this.authorizeSessionDocumentContext(subject, input, previous)
+  }
+
+  private async authorizeSessionDocumentContext(actor: AppUser, input: SaveConversationHistoryInput, previous: ConversationHistoryItem | undefined): Promise<ConversationHistoryItem["sessionDocumentContext"]> {
+    const context = input.sessionDocumentContext
+    if (!context) return previous?.sessionDocumentContext
+    if (context.sessionId !== input.id) throw forbiddenError("Forbidden")
+    const now = new Date().toISOString()
+    const terminalByScope = new Map(previous?.sessionDocumentContext?.temporaryEvidence
+      .filter((reference) => reference.status !== "active")
+      .map((reference) => [reference.temporaryScopeId, reference]))
+    const temporaryEvidence = await Promise.all(context.temporaryEvidence.map(async (reference) => {
+      const terminal = terminalByScope.get(reference.temporaryScopeId)
+      if (terminal && reference.status === "active") return terminal
+      if (reference.status !== "active") return { ...reference, updatedAt: now }
+      const manifest = await this.getManifest(reference.documentId, authoritativeActorTenantId(actor)).catch((error: unknown) => {
+        if (isMissingObjectError(error)) throw forbiddenError("Forbidden")
+        throw error
+      })
+      const metadata = manifest.metadata
+      const manifestTenantId = manifest.admission?.tenantId ?? stringValue(metadata?.tenantId)
+      const ownerUserId = manifest.admission?.ownerUserId ?? stringValue(metadata?.ownerUserId)
+      const temporaryScopeId = stringValue(metadata?.temporaryScopeId)
+      const expiresAt = stringValue(metadata?.expiresAt)
+      if (
+        manifestTenantId !== authoritativeActorTenantId(actor)
+        || ownerUserId !== actor.userId
+        || stringValue(metadata?.scopeType) !== "chat"
+        || temporaryScopeId !== reference.temporaryScopeId
+        || !expiresAt
+      ) throw forbiddenError("Forbidden")
+      return { ...reference, expiresAt, updatedAt: now, status: Date.parse(expiresAt) <= Date.now() ? "expired" as const : "active" as const }
+    }))
+    return { schemaVersion: 1, sessionId: input.id, temporaryEvidence, updatedAt: now }
+  }
+
+  private async assertOrdinaryDocumentWritable(actor: AppUser, manifest: DocumentManifest): Promise<void> {
+    if (stringValue(manifest.metadata?.scopeType) === "chat") throw forbiddenError("Forbidden")
+    await this.assertDocumentManifestWritable(actor, manifest)
   }
 }
 
