@@ -2,7 +2,7 @@ import assert from "node:assert/strict"
 import test from "node:test"
 import { ROLE_PERMISSION_CATALOG, UNASSIGNED_APPLICATION_PERMISSIONS } from "@memorag-mvp/contract/access-control"
 import { ChatToolDefinitionSchema, ChatToolInvocationSchema } from "../schemas.js"
-import { CHAT_TOOL_DEFINITIONS, RAG_CHAT_TOOL_NODE_MAPPINGS, RAG_IMPLEMENTED_TOOL_IDS, buildChatToolInvocationsFromTrace, listEnabledChatToolDefinitions } from "./tool-registry.js"
+import { CHAT_TOOL_DEFINITIONS, RAG_CHAT_TOOL_NODE_MAPPINGS, RAG_IMPLEMENTED_TOOL_IDS, buildChatToolInvocationsFromTrace, getChatToolAuthorizationContractsForGraphNode, listEnabledChatToolDefinitions, resolveChatToolAuthorizationContracts } from "./tool-registry.js"
 
 test("chat tool registry exposes implemented RAG tools with permission, approval, audit, and trace metadata", () => {
   const enabled = listEnabledChatToolDefinitions()
@@ -102,4 +102,32 @@ test("debug trace steps can be projected into audit-oriented ChatToolInvocation 
     assert.equal(invocation.status, "succeeded")
     assert.equal(invocation.requesterUserId, "user-1")
   }
+})
+
+test("FR-049 graph-node authorization validates every mapped enabled tool and deduplicates equivalent contracts", () => {
+  assert.deepEqual(getChatToolAuthorizationContractsForGraphNode("rerank_chunks"), [{
+    toolIds: ["rag.rerank", "rag.select_final_context"],
+    requiredFeaturePermission: "chat:create",
+    requiredResourcePermission: "readOnly"
+  }])
+  assert.deepEqual(getChatToolAuthorizationContractsForGraphNode("analyze_input"), [])
+
+  for (const mapping of RAG_CHAT_TOOL_NODE_MAPPINGS) {
+    for (const graphNodeLabel of mapping.traceLabels) {
+      assert.ok(
+        getChatToolAuthorizationContractsForGraphNode(graphNodeLabel)
+          .some((contract) => contract.toolIds.includes(mapping.toolId)),
+        `${mapping.toolId}:${graphNodeLabel} must be validated before node execution`
+      )
+    }
+  }
+
+  assert.throws(
+    () => resolveChatToolAuthorizationContracts(["support.ticket.create"]),
+    /enabled implemented RAG tool/
+  )
+  assert.throws(
+    () => resolveChatToolAuthorizationContracts(["missing.tool"]),
+    /enabled implemented RAG tool/
+  )
 })

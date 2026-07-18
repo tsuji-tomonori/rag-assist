@@ -78,8 +78,12 @@
 | M063 | 例外 | `-` | Forbidden | `requestedTenantId` が存在し、真である、かつ `requestedTenantId` が `tenantId` と異なる | `apps/api/src/chat-orchestration/nodes/retrieve-memory.ts:176 (resolveCurrentMemoryTenant)` |
 | M064 | 例外 | `-` | Forbidden | `config.authEnabled` が存在し、真である | `apps/api/src/chat-orchestration/nodes/retrieve-memory.ts:179 (resolveCurrentMemoryTenant)` |
 | M065 | 例外 | `-` | Local/test tenant is not configured | `localTenantId` が存在しない、または偽である | `apps/api/src/chat-orchestration/nodes/retrieve-memory.ts:181 (resolveCurrentMemoryTenant)` |
-| M066 | 例外 | `-` | Debug trace tenant partition is required | `trace.tenantPartitionId` が存在しない、または偽である | `apps/api/src/rag/orchestration/chat-rag-orchestrator.ts:1225 (debugTraceObjectKey)` |
-| M067 | 例外 | `-` | Quality sample deletion tenant is invalid | trim の判定結果が真ではない、または `tenantId.trim()` が `tenantId` と異なる | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:297 (ProductionRagObservationProducer.deleteArtifactSamples)` |
+| M066 | 例外 | `-` | `Chat tool graph mapping is inconsistent: ${mapping.toolId}:${graphNodeLabel}` | `definition?.graphNodeLabels` が graphNodeLabel を含まない、または `definition.traceLabels` が graphNodeLabel を含まない | `apps/api/src/chat-orchestration/tool-registry.ts:217 (getChatToolAuthorizationContractsForGraphNode)` |
+| M067 | 例外 | `-` | `Chat tool authorization requires an enabled implemented RAG tool: ${toolId}` | `definition` が存在しない、または偽である、または `definition.enabled` が存在しない、または偽である、または `definition.implementationStatus` が `"implemented"` と異なる、または `definition.category` が `"rag"` と異なる、または `definition.approvalRequired` が存在し、真である、または `definition.requiredFeaturePermission` が `"chat:create"` と異なる、または `definition.requiredResourcePermission` が `"readOnly"` と異なる | `apps/api/src/chat-orchestration/tool-registry.ts:243 (resolveChatToolAuthorizationContracts)` |
+| M068 | 例外 | `-` | chat_tool_authorization_contract_invalid | 例外を捕捉した場合 | `apps/api/src/rag/orchestration/chat-rag-orchestrator.ts:458 (authorizeNodeBoundary)` |
+| M069 | 例外 | `-` | chat_tool_authorization_boundary_unavailable | `progress?.authorizeProtectedRead` が存在しない、または偽である、かつ `config.authEnabled` が存在し、真である | `apps/api/src/rag/orchestration/chat-rag-orchestrator.ts:462 (authorizeNodeBoundary)` |
+| M070 | 例外 | `-` | Debug trace tenant partition is required | `trace.tenantPartitionId` が存在しない、または偽である | `apps/api/src/rag/orchestration/chat-rag-orchestrator.ts:1242 (debugTraceObjectKey)` |
+| M071 | 例外 | `-` | Quality sample deletion tenant is invalid | trim の判定結果が真ではない、または `tenantId.trim()` が `tenantId` と異なる | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:297 (ProductionRagObservationProducer.deleteArtifactSamples)` |
 
 ## 読み方
 

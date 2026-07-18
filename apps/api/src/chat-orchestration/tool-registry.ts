@@ -183,6 +183,12 @@ export type ChatToolTraceMapping = {
   traceLabels: string[]
 }
 
+export type ChatToolAuthorizationContract = Readonly<{
+  toolIds: readonly string[]
+  requiredFeaturePermission: "chat:create"
+  requiredResourcePermission: "readOnly"
+}>
+
 export const RAG_CHAT_TOOL_NODE_MAPPINGS: readonly ChatToolTraceMapping[] = Object.freeze(
   implementedRagTools.map((definition) => ({
     toolId: definition.toolId,
@@ -196,6 +202,61 @@ export function getChatToolDefinition(toolId: string): ChatToolDefinition | unde
 
 export function listEnabledChatToolDefinitions(): ChatToolDefinition[] {
   return CHAT_TOOL_DEFINITIONS.filter((definition) => definition.enabled)
+}
+
+export function getChatToolAuthorizationContractsForGraphNode(
+  graphNodeLabel: string
+): ChatToolAuthorizationContract[] {
+  const mappings = RAG_CHAT_TOOL_NODE_MAPPINGS.filter((mapping) => mapping.traceLabels.includes(graphNodeLabel))
+  for (const mapping of mappings) {
+    const definition = CHAT_TOOL_DEFINITION_BY_ID.get(mapping.toolId)
+    if (
+      !definition?.graphNodeLabels.includes(graphNodeLabel)
+      || !definition.traceLabels.includes(graphNodeLabel)
+    ) {
+      throw new Error(`Chat tool graph mapping is inconsistent: ${mapping.toolId}:${graphNodeLabel}`)
+    }
+  }
+  return resolveChatToolAuthorizationContracts(mappings.map((mapping) => mapping.toolId))
+}
+
+export function resolveChatToolAuthorizationContracts(
+  toolIds: readonly string[]
+): ChatToolAuthorizationContract[] {
+  const contracts = new Map<string, {
+    toolIds: string[]
+    requiredFeaturePermission: "chat:create"
+    requiredResourcePermission: "readOnly"
+  }>()
+
+  for (const toolId of toolIds) {
+    const definition = CHAT_TOOL_DEFINITION_BY_ID.get(toolId)
+    if (
+      !definition
+      || !definition.enabled
+      || definition.implementationStatus !== "implemented"
+      || definition.category !== "rag"
+      || definition.approvalRequired
+      || definition.requiredFeaturePermission !== "chat:create"
+      || definition.requiredResourcePermission !== "readOnly"
+    ) {
+      throw new Error(`Chat tool authorization requires an enabled implemented RAG tool: ${toolId}`)
+    }
+
+    const key = `${definition.requiredFeaturePermission}:${definition.requiredResourcePermission}`
+    const existing = contracts.get(key)
+    if (existing) {
+      if (!existing.toolIds.includes(toolId)) existing.toolIds.push(toolId)
+      continue
+    }
+    contracts.set(key, {
+      toolIds: [toolId],
+      requiredFeaturePermission: definition.requiredFeaturePermission,
+      requiredResourcePermission: definition.requiredResourcePermission
+    })
+  }
+
+  return [...contracts.values()]
 }
 
 export function buildChatToolInvocationsFromTrace(input: {

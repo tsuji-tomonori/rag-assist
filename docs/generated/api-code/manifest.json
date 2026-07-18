@@ -435,8 +435,8 @@
       "openApi": true,
       "routeSource": "apps/api/src/routes/benchmark-routes.ts:26 (POST /benchmark/query)",
       "handlerSource": "apps/api/src/routes/benchmark-routes.ts:50 (POST /benchmark/query handler)",
-      "functionCount": 644,
-      "branchCount": 1395,
+      "functionCount": 646,
+      "branchCount": 1405,
       "projectedBranchCount": 15,
       "dataAccessCount": 73,
       "relatedTestCount": 0
@@ -461,8 +461,8 @@
       "openApi": true,
       "routeSource": "apps/api/src/routes/chat-routes.ts:38 (POST /chat)",
       "handlerSource": "apps/api/src/routes/chat-routes.ts:38 (POST /chat handler)",
-      "functionCount": 640,
-      "branchCount": 1389,
+      "functionCount": 642,
+      "branchCount": 1399,
       "projectedBranchCount": 14,
       "dataAccessCount": 73,
       "relatedTestCount": 0
@@ -474,8 +474,8 @@
       "openApi": true,
       "routeSource": "apps/api/src/routes/chat-routes.ts:48 (POST /chat-runs)",
       "handlerSource": "apps/api/src/routes/chat-routes.ts:65 (POST /chat-runs handler)",
-      "functionCount": 653,
-      "branchCount": 1416,
+      "functionCount": 655,
+      "branchCount": 1426,
       "projectedBranchCount": 5,
       "dataAccessCount": 90,
       "relatedTestCount": 1
