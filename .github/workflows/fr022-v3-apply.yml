@@ -1,0 +1,435 @@
+name: FR022 v3 apply
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/fr022-v3-apply.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fr022-v3-apply
+  cancel-in-progress: true
+
+jobs:
+  apply:
+    if: github.event.pull_request.head.repo.fork == false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply legacy migration contract to v3 main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch --quiet origin main codex/fr022-v3-migration
+          expected_head="$(git rev-parse origin/codex/fr022-v3-migration)"
+          git checkout -B fr022-v3-resolved origin/main
+          git cherry-pick 629da86fee793eb9c40c90a0cb500a78b67690c4
+
+          set +e
+          git cherry-pick b11f14cbec312463fa6fe7f83b0ae9bcc58e6ab7
+          cherry_pick_status=$?
+          set -e
+          if [ "$cherry_pick_status" -ne 0 ]; then
+            git checkout --ours -- \
+              'docs/3_設計_DES/31_データ_DATA/DES_DATA_001.md' \
+              'docs/3_設計_DES/41_API_API/DES_API_001.md' \
+              apps/api/src/adapters/conversation-history-store.ts \
+              apps/api/src/adapters/dynamodb-conversation-history-store.test.ts \
+              apps/api/src/types.ts
+
+            cat > apps/api/src/adapters/conversation-history-store.ts <<'TS'
+          import {
+            CONVERSATION_HISTORY_LEGACY_SCHEMA_VERSION,
+            CONVERSATION_HISTORY_SCHEMA_VERSION,
+            type ConversationHistoryItem,
+            type ConversationHistorySchemaVersion,
+            type ConversationMessage
+          } from "../types.js"
+
+          export type SaveConversationHistoryInput =
+            Omit<ConversationHistoryItem, "schemaVersion"> & Partial<Pick<ConversationHistoryItem, "schemaVersion">>
+
+          const CONVERSATION_HISTORY_MESSAGE_LIMIT = 100
+          const CONVERSATION_HISTORY_CITATION_MEMORY_LIMIT = 50
+          const CONVERSATION_HISTORY_TOOL_INVOCATION_LIMIT = 100
+          const CONVERSATION_HISTORY_SUMMARY_MAX_CHARS = 4000
+          const SESSION_TEMPORARY_EVIDENCE_LIMIT = 20
+
+          export interface ConversationHistoryStore {
+            save(userId: string, input: SaveConversationHistoryInput): Promise<ConversationHistoryItem>
+            list(userId: string): Promise<ConversationHistoryItem[]>
+            get(userId: string, id: string): Promise<ConversationHistoryItem | undefined>
+            delete(userId: string, id: string): Promise<void>
+          }
+
+          export function normalizeConversationHistoryInput(input: SaveConversationHistoryInput): ConversationHistoryItem {
+            assertSupportedConversationHistorySchemaVersion(input.schemaVersion)
+            return {
+              ...input,
+              schemaVersion: CONVERSATION_HISTORY_SCHEMA_VERSION,
+              updatedAt: input.updatedAt || new Date().toISOString(),
+              isFavorite: input.isFavorite ?? false,
+              messages: trimMessages(input.messages),
+              rollingSummary: trimOptional(input.rollingSummary, CONVERSATION_HISTORY_SUMMARY_MAX_CHARS),
+              queryFocusedSummary: trimOptional(input.queryFocusedSummary, CONVERSATION_HISTORY_SUMMARY_MAX_CHARS),
+              decontextualizedQuery: input.decontextualizedQuery,
+              citationMemory: input.citationMemory?.slice(0, CONVERSATION_HISTORY_CITATION_MEMORY_LIMIT),
+              taskState: input.taskState,
+              toolInvocations: input.toolInvocations?.slice(0, CONVERSATION_HISTORY_TOOL_INVOCATION_LIMIT),
+              sessionDocumentContext: normalizeSessionDocumentContext(input.sessionDocumentContext, input.id)
+            }
+          }
+
+          export function normalizeStoredConversationHistoryItem(
+            input: Omit<ConversationHistoryItem, "schemaVersion"> & { schemaVersion?: unknown }
+          ): ConversationHistoryItem {
+            const schemaVersion = input.schemaVersion ?? CONVERSATION_HISTORY_LEGACY_SCHEMA_VERSION
+            assertSupportedConversationHistorySchemaVersion(schemaVersion)
+            return { ...input, schemaVersion }
+          }
+
+          function assertSupportedConversationHistorySchemaVersion(
+            schemaVersion: unknown
+          ): asserts schemaVersion is ConversationHistorySchemaVersion | undefined {
+            if (
+              schemaVersion !== undefined &&
+              schemaVersion !== CONVERSATION_HISTORY_LEGACY_SCHEMA_VERSION &&
+              schemaVersion !== 2 &&
+              schemaVersion !== CONVERSATION_HISTORY_SCHEMA_VERSION
+            ) {
+              throw new Error(`Unsupported conversation history schema version: ${String(schemaVersion)}`)
+            }
+          }
+
+          function normalizeSessionDocumentContext(context: ConversationHistoryItem["sessionDocumentContext"], sessionId: string): ConversationHistoryItem["sessionDocumentContext"] {
+            if (!context) return undefined
+            if (context.sessionId !== sessionId) throw new Error("Session document context must match conversation id")
+            const now = Date.now()
+            const seen = new Set<string>()
+            const temporaryEvidence = context.temporaryEvidence
+              .filter((reference) => {
+                if (seen.has(reference.temporaryScopeId)) return false
+                seen.add(reference.temporaryScopeId)
+                return true
+              })
+              .slice(0, SESSION_TEMPORARY_EVIDENCE_LIMIT)
+              .map((reference) => ({
+                ...reference,
+                status: reference.status === "active" && Date.parse(reference.expiresAt) <= now ? "expired" as const : reference.status
+              }))
+            return { ...context, schemaVersion: 1, temporaryEvidence }
+          }
+
+          function trimMessages(messages: ConversationMessage[]): ConversationMessage[] {
+            return messages.slice(0, CONVERSATION_HISTORY_MESSAGE_LIMIT)
+          }
+
+          function trimOptional(value: string | undefined, maxChars: number): string | undefined {
+            if (value === undefined) return undefined
+            return value.slice(0, maxChars)
+          }
+          TS
+
+            python3 - <<'PY'
+          from pathlib import Path
+          path = Path("apps/api/src/types.ts")
+          text = path.read_text()
+          old = '''export const CONVERSATION_HISTORY_SCHEMA_VERSION = 3
+
+          export type ConversationHistorySchemaVersion = 1 | 2 | typeof CONVERSATION_HISTORY_SCHEMA_VERSION
+          '''
+          new = '''export const CONVERSATION_HISTORY_LEGACY_SCHEMA_VERSION = 1
+          export const CONVERSATION_HISTORY_SCHEMA_VERSION = 3
+
+          export type ConversationHistorySchemaVersion =
+            | typeof CONVERSATION_HISTORY_LEGACY_SCHEMA_VERSION
+            | 2
+            | typeof CONVERSATION_HISTORY_SCHEMA_VERSION
+          '''
+          if old not in text:
+              raise SystemExit("conversation history version block not found")
+          path.write_text(text.replace(old, new, 1))
+          PY
+
+            cat > apps/api/src/adapters/dynamodb-conversation-history-store.test.ts <<'TS'
+          import assert from "node:assert/strict"
+          import test from "node:test"
+          import type { GetItemCommand, QueryCommand } from "@aws-sdk/client-dynamodb"
+          import { marshall } from "@aws-sdk/util-dynamodb"
+          import { DynamoDbConversationHistoryStore } from "./dynamodb-conversation-history-store.js"
+
+          test("dynamoConversationHistoryStore_listPaginatesUserPartition", async () => {
+            const sent: QueryCommand[] = []
+            const store = new DynamoDbConversationHistoryStore("ConversationHistoryTable", { send: async (command: QueryCommand) => {
+              sent.push(command)
+              if (sent.length === 1) {
+                return {
+                  Items: [marshall(history("conv-1", "2026-05-01T00:00:00.000Z"))],
+                  LastEvaluatedKey: marshall({ userId: "user-a", id: "conv-1" })
+                }
+              }
+              return { Items: [marshall(history("conv-2", "2026-05-02T00:00:00.000Z"))] }
+            } } as never)
+
+            const histories = await store.list("user-a")
+            assert.deepEqual(histories.map((item) => item.id), ["conv-2", "conv-1"])
+            assert.equal(sent.length, 2)
+            assert.deepEqual(sent[1]?.input.ExclusiveStartKey, marshall({ userId: "user-a", id: "conv-1" }))
+          })
+
+          test("conversationHistoryStore_doesNotSliceBeforeFavoriteEnrichment", async () => {
+            const store = new DynamoDbConversationHistoryStore("ConversationHistoryTable", { send: async () => ({
+              Items: Array.from({ length: 21 }, (_, index) => marshall(history(
+                `conv-${index + 1}`,
+                `2026-05-${String(index + 1).padStart(2, "0")}T00:00:00.000Z`
+              )))
+            }) } as never)
+            const histories = await store.list("user-a")
+            assert.equal(histories.length, 21)
+            assert.equal(histories[0]?.id, "conv-21")
+            assert.equal(histories.at(-1)?.id, "conv-1")
+          })
+
+          test("dynamoConversationHistoryStore_getUsesTenantUserPartitionAndSessionKey", async () => {
+            let sent: GetItemCommand | undefined
+            const store = new DynamoDbConversationHistoryStore("ConversationHistoryTable", { send: async (command: GetItemCommand) => {
+              sent = command
+              return { Item: marshall(history("conv-1", "2026-05-01T00:00:00.000Z")) }
+            } } as never)
+            assert.equal((await store.get("tenant:tenant-a:user:user-a", "conv-1"))?.id, "conv-1")
+            assert.deepEqual(sent?.input.Key, marshall({ userId: "tenant:tenant-a:user:user-a", id: "conv-1" }))
+            assert.equal(sent?.input.ConsistentRead, true)
+          })
+
+          test("FR-022 dynamo store reads missing, v1, v2, and v3 together and rejects unknown versions", async () => {
+            const store = new DynamoDbConversationHistoryStore("ConversationHistoryTable", { send: async () => ({
+              Items: [
+                marshall(history("legacy-missing", "2026-05-01T00:00:00.000Z", undefined)),
+                marshall(history("legacy-v1", "2026-05-02T00:00:00.000Z", 1)),
+                marshall(history("legacy-v2", "2026-05-03T00:00:00.000Z", 2)),
+                marshall(history("current-v3", "2026-05-04T00:00:00.000Z", 3))
+              ]
+            }) } as never)
+            const histories = await store.list("user-a")
+            assert.deepEqual(Object.fromEntries(histories.map((item) => [item.id, item.schemaVersion])), {
+              "current-v3": 3,
+              "legacy-v2": 2,
+              "legacy-v1": 1,
+              "legacy-missing": 1
+            })
+            const invalidStore = new DynamoDbConversationHistoryStore("ConversationHistoryTable", { send: async () => ({
+              Items: [marshall(history("unknown", "2026-05-05T00:00:00.000Z", 4))]
+            }) } as never)
+            await assert.rejects(() => invalidStore.list("user-a"), /Unsupported conversation history schema version: 4/)
+          })
+
+          function history(id: string, updatedAt: string, schemaVersion: number | undefined = 1) {
+            return {
+              ...(schemaVersion === undefined ? {} : { schemaVersion }),
+              userId: "user-a",
+              id,
+              title: id,
+              messages: [],
+              isFavorite: false,
+              createdAt: updatedAt,
+              updatedAt
+            }
+          }
+          TS
+
+            git add \
+              'docs/3_設計_DES/31_データ_DATA/DES_DATA_001.md' \
+              'docs/3_設計_DES/41_API_API/DES_API_001.md' \
+              apps/api/src/adapters/conversation-history-store.ts \
+              apps/api/src/adapters/dynamodb-conversation-history-store.test.ts \
+              apps/api/src/types.ts
+            GIT_EDITOR=true git cherry-pick --continue
+          fi
+
+          rm -f \
+            reports/working/20260717-1005-issue-358-fr022-schema-version-spec-analysis.md \
+            reports/working/20260717-1018-issue-358-fr022-schema-version.md \
+            tasks/done/20260717-1005-issue-358-fr022-schema-version.md
+
+          git checkout origin/main -- \
+            'docs/1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/05_会話履歴・お気に入り/01_会話履歴管理/REQ_FUNCTIONAL_022.md' \
+            'docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md' \
+            'docs/1_要求_REQ/21_受入基準_ACCEPTANCE/REQ_ACCEPTANCE_001.md' \
+            'docs/1_要求_REQ/31_変更管理_CHANGE/REQ_CHANGE_001.md' \
+            'docs/3_設計_DES/31_データ_DATA/DES_DATA_001.md' \
+            'docs/3_設計_DES/41_API_API/DES_API_001.md'
+
+          cat > apps/api/src/contract/conversation-history-version-contract.test.ts <<'TS'
+          import assert from "node:assert/strict"
+          import test from "node:test"
+          import {
+            normalizeConversationHistoryInput,
+            normalizeStoredConversationHistoryItem
+          } from "../adapters/conversation-history-store.js"
+          import { ConversationHistoryItemSchema } from "../schemas.js"
+          import {
+            CONVERSATION_HISTORY_LEGACY_SCHEMA_VERSION,
+            CONVERSATION_HISTORY_SCHEMA_VERSION
+          } from "../types.js"
+
+          const context = {
+            schemaVersion: 1 as const,
+            sessionId: "conversation-1",
+            temporaryEvidence: [{
+              temporaryScopeId: "temp-1",
+              documentId: "doc-1",
+              status: "active" as const,
+              expiresAt: "2099-01-01T00:00:00.000Z",
+              updatedAt: "2026-07-18T00:00:00.000Z"
+            }],
+            updatedAt: "2026-07-18T00:00:00.000Z"
+          }
+          const baseItem = {
+            id: "conversation-1",
+            title: "会話",
+            updatedAt: "2026-07-18T00:00:00.000Z",
+            isFavorite: false,
+            messages: [{ role: "user" as const, text: "質問", createdAt: "2026-07-18T00:00:00.000Z" }],
+            sessionDocumentContext: context
+          }
+
+          test("FR-022 API wire contract defaults new items to current v3 and accepts v1/v2/v3", () => {
+            assert.equal(ConversationHistoryItemSchema.parse(baseItem).schemaVersion, 3)
+            for (const version of [1, 2, 3]) {
+              assert.equal(ConversationHistoryItemSchema.parse({ ...baseItem, schemaVersion: version }).schemaVersion, version)
+            }
+            assert.equal(ConversationHistoryItemSchema.safeParse({ ...baseItem, schemaVersion: 4 }).success, false)
+          })
+
+          test("FR-022 persisted read treats missing as v1 and preserves explicit supported versions", () => {
+            assert.equal(normalizeStoredConversationHistoryItem(baseItem).schemaVersion, CONVERSATION_HISTORY_LEGACY_SCHEMA_VERSION)
+            for (const version of [1, 2, 3] as const) {
+              assert.equal(normalizeStoredConversationHistoryItem({ ...baseItem, schemaVersion: version }).schemaVersion, version)
+            }
+            assert.throws(() => normalizeStoredConversationHistoryItem({ ...baseItem, schemaVersion: 4 }), /Unsupported conversation history schema version: 4/)
+          })
+
+          test("FR-022 write-time migration promotes missing/v1/v2/v3 to v3 without losing session context", () => {
+            for (const schemaVersion of [undefined, 1, 2, 3] as const) {
+              const normalized = normalizeConversationHistoryInput({ ...baseItem, schemaVersion, rollingSummary: "既存要約" })
+              assert.equal(normalized.schemaVersion, CONVERSATION_HISTORY_SCHEMA_VERSION)
+              assert.equal(normalized.messages[0]?.text, "質問")
+              assert.equal(normalized.rollingSummary, "既存要約")
+              assert.equal(normalized.sessionDocumentContext?.temporaryEvidence[0]?.temporaryScopeId, "temp-1")
+            }
+            assert.throws(() => normalizeConversationHistoryInput({ ...baseItem, schemaVersion: 4 as never }), /Unsupported conversation history schema version: 4/)
+          })
+          TS
+
+          cat > packages/contract/src/schemas/conversation-history-version.test.ts <<'TS'
+          import assert from "node:assert/strict"
+          import test from "node:test"
+          import { ConversationHistoryItemSchema } from "./chat.js"
+
+          const item = {
+            id: "conversation-1",
+            title: "会話",
+            updatedAt: "2026-07-18T00:00:00.000Z",
+            messages: [{ role: "user", text: "質問", createdAt: "2026-07-18T00:00:00.000Z" }]
+          }
+
+          test("FR-022 shared wire contract uses v3 for new items and accepts v1/v2/v3", () => {
+            assert.equal(ConversationHistoryItemSchema.parse(item).schemaVersion, 3)
+            assert.equal(ConversationHistoryItemSchema.parse({ ...item, schemaVersion: 1 }).schemaVersion, 1)
+            assert.equal(ConversationHistoryItemSchema.parse({ ...item, schemaVersion: 2 }).schemaVersion, 2)
+            assert.equal(ConversationHistoryItemSchema.parse({ ...item, schemaVersion: 3 }).schemaVersion, 3)
+            assert.equal(ConversationHistoryItemSchema.safeParse({ ...item, schemaVersion: 4 }).success, false)
+          })
+          TS
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("apps/api/src/adapters/local-stores.test.ts")
+          text = path.read_text()
+          text = text.replace("assert.equal(history[0]?.schemaVersion, 2)", "assert.equal(history[0]?.schemaVersion, 3)")
+          text = text.replace('storedHistory("current-v2", 2)', 'storedHistory("legacy-v2", 2),\n      storedHistory("current-v3", 3)')
+          text = text.replace('{ "legacy-missing": 1, "legacy-v1": 1, "current-v2": 2 }', '{ "legacy-missing": 1, "legacy-v1": 1, "legacy-v2": 2, "current-v3": 3 }')
+          text = text.replace('storedHistory("unknown", 3)', 'storedHistory("unknown", 4)')
+          text = text.replace('Unsupported conversation history schema version: 3', 'Unsupported conversation history schema version: 4')
+          path.write_text(text)
+
+          path = Path("apps/web/src/App.test.tsx")
+          path.write_text(path.read_text().replace("schemaVersion: 2", "schemaVersion: 3"))
+
+          path = Path("apps/web/src/features/history/hooks/useConversationHistory.test.ts")
+          path.write_text(path.read_text().replace("schemaVersion: 2", "schemaVersion: 3"))
+
+          path = Path("apps/web/src/features/history/types.ts")
+          text = path.read_text().replace("export const CONVERSATION_HISTORY_SCHEMA_VERSION = 2", "export const CONVERSATION_HISTORY_SCHEMA_VERSION = 3")
+          text = text.replace("export type ConversationHistorySchemaVersion = 1 | typeof CONVERSATION_HISTORY_SCHEMA_VERSION", "export type ConversationHistorySchemaVersion = 1 | 2 | typeof CONVERSATION_HISTORY_SCHEMA_VERSION")
+          path.write_text(text)
+          PY
+
+          cat >> 'docs/1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/05_会話履歴・お気に入り/01_会話履歴管理/REQ_FUNCTIONAL_022.md' <<'MD'
+
+          ## schemaVersion migration契約（v3正本）
+
+          - current write schemaはv3とする。
+          - persisted version欠落はlegacy v1として副作用なく読み取る。
+          - explicit v1、v2、v3を読み取り対象とし、未知versionはfail closedで拒否する。
+          - version欠落、v1、v2、v3の更新保存はv3へ正規化し、messages、summary、citation、task state、tool invocation、`sessionDocumentContext`を保持する。
+          - readだけでは保存済みitemをrewriteしない。production一括migrationは別の運用承認対象とする。
+          MD
+
+          cat >> 'docs/3_設計_DES/31_データ_DATA/DES_DATA_001.md' <<'MD'
+
+          ## ConversationHistory schema v3 migration
+
+          `ConversationHistoryItem`のcurrent versionは3である。read pathはversion欠落をv1として扱い、v1／v2／v3をそのまま読み取る。write pathはsupported versionを受け入れた後にv3へ正規化する。v3固有の`sessionDocumentContext`は更新保存時にも保持し、read時rewriteは行わない。未知versionはデータ損失を避けるためfail closedとする。
+          MD
+
+          cat >> 'docs/3_設計_DES/41_API_API/DES_API_001.md' <<'MD'
+
+          ## Conversation history version boundary
+
+          会話履歴APIの新規・更新responseはschema v3を返す。request／persisted readはv1／v2／v3を受け入れるが、unknown versionは422相当の契約違反またはstore errorとして拒否する。legacy readとcurrent writeを分離し、GET／一覧取得による暗黙migrationは行わない。
+          MD
+
+          cat >> 'docs/1_要求_REQ/21_受入基準_ACCEPTANCE/REQ_ACCEPTANCE_001.md' <<'MD'
+
+          ### FR-022 schema v3 migration
+
+          - version欠落、v1、v2、v3の混在itemを読み取れること。
+          - unknown versionをfail closedで拒否すること。
+          - 新規・更新writeがv3となり、`sessionDocumentContext`を含む既存情報を失わないこと。
+          - read前後で永続データが同一であること。
+          MD
+
+          cat >> 'docs/1_要求_REQ/11_製品要求_PRODUCT/REQUIREMENTS_BASELINE_202607.md' <<'MD'
+
+          - FR-022の会話履歴current schemaはv3。legacy v1／v2 read、unknown fail-closed、write-time v3 promotion、no-write-on-readを正本契約とする。
+          MD
+
+          npm ci
+          npm run docs:openapi
+          npm run docs:api-code
+          npm run typecheck -w @memorag-mvp/contract
+          npm run typecheck -w @memorag-mvp/api
+          npm run typecheck -w @memorag-mvp/web
+          npm test -w @memorag-mvp/contract
+          node --import tsx --test \
+            apps/api/src/contract/conversation-history-version-contract.test.ts \
+            apps/api/src/adapters/dynamodb-conversation-history-store.test.ts \
+            apps/api/src/adapters/local-stores.test.ts \
+            apps/api/src/contract/schemas.test.ts
+          npm exec -w @memorag-mvp/web -- vitest run src/features/history/hooks/useConversationHistory.test.ts src/App.test.tsx
+          python3 scripts/validate_docs.py
+          npm run docs:hidden-unicode:check
+
+          git add -A
+          git commit -m "🐛 fix(history): schemaVersion migration契約をv3へ統一"
+          git push --force-with-lease=refs/heads/codex/fr022-v3-migration:$expected_head origin HEAD:codex/fr022-v3-migration
