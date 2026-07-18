@@ -45,6 +45,7 @@ export type ApiRuntimeEnv = {
   DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS: string
   RAG_MONITORING_REQUIRED: "1"
   RAG_SAFETY_STATE_TTL_SECONDS: string
+  RAG_GUARD_PROFILE_JSON: string
 }
 
 export type ApiFunctionRuntimeEnv = ApiRuntimeEnv & {
