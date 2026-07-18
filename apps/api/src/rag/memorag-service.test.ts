@@ -75,7 +75,7 @@ test("service ingests text, lists manifests, persists debug traces, and deletes 
   })
   assert.equal(answer.isAnswerable, true, JSON.stringify(answer))
   assert.ok(answer.debug?.runId)
-  assert.equal(answer.debug?.schemaVersion, 1)
+  assert.deepEqual([answer.debug?.schemaVersion, answer.debug?.targetType], [1, "chat_orchestration_run"])
   assert.equal(answer.debug?.pipelineVersions, undefined)
   assert.equal(answer.debug?.replayVersionManifest?.promptVersion, manifest.pipelineVersions?.promptVersion)
   assert.equal(answer.debug?.replayVersionManifest?.parserVersion, manifest.sourceExtractorVersion)
@@ -91,7 +91,7 @@ test("service ingests text, lists manifests, persists debug traces, and deletes 
 
   const debugRuns = await service.listDebugRuns()
   const chatDebugRuns = debugRuns.filter((trace) => trace.runId === answer.debug?.runId)
-  assert.equal(chatDebugRuns.length, 1)
+  assert.deepEqual([chatDebugRuns.length, chatDebugRuns[0]?.targetType], [1, "chat_orchestration_run"])
   assert.deepEqual(await service.getDebugRun(answer.debug?.runId ?? ""), chatDebugRuns[0])
 
   const ordinaryAnswer = await service.chat({
@@ -106,7 +106,7 @@ test("service ingests text, lists manifests, persists debug traces, and deletes 
     && !trace.runId.startsWith("search_")
     && trace.requestTraceId === trace.runId
   ))
-  assert.ok(persistedOrdinary, "ordinary answer must persist a tenant-partitioned redacted trace")
+  assert.equal(persistedOrdinary?.targetType, "chat_orchestration_run", "ordinary answer must persist a canonical tenant-partitioned redacted trace")
   assert.match(persistedOrdinary?.tenantPartitionId ?? "", /^tenant:[a-f0-9]{24}$/)
   assert.match(persistedOrdinary?.question ?? "", /^sha256:[a-f0-9]{64}$/)
   assert.ok((persistedOrdinary?.parentTraceIds?.length ?? 0) > 0)
@@ -2403,7 +2403,7 @@ test("FR-090 chat run treats an authorized final append as the last success boun
   const final = events.find((event) => event.type === "final")
   const debugRunId = (final?.data as Record<string, unknown> | undefined)?.debugRunId
   assert.equal(typeof debugRunId, "string")
-  assert.ok(await service.getDebugRun(String(debugRunId)))
+  assert.equal((await service.getDebugRun(String(debugRunId)))?.targetType, "chat_orchestration_run")
   assert.equal(events.some((event) => event.type === "final"), true)
   assert.equal(events.at(-1)?.type, "final")
 })
@@ -2485,7 +2485,7 @@ test("FR-090 chat trace precommit denial writes no debug artifact, observation, 
 
   assert.equal(result.status, "failed")
   assert.equal(result.errorCode, "permission_revoked")
-  assert.deepEqual((await service.listDebugRuns()).filter((trace) => trace.targetType === "chat_orchestration_run"), [])
+  assert.deepEqual((await service.listDebugRuns()).filter((trace) => !trace.runId.startsWith("search_")), [])
   assert.deepEqual(await deps.objectStore.listKeys("quality-control/source-samples/"), [])
   const events = await deps.chatRunEventStore.listAfter("default", result.runId, 0)
   assert.equal(events.some((event) => event.type === "final"), false)
@@ -2535,7 +2535,7 @@ test("FR-090 ordinary chat final-event denial compensates its always-persisted r
   assert.equal(result.errorCode, "permission_revoked")
   assert.equal(result.answer, undefined)
   assert.equal(result.debugRunId, undefined)
-  assert.deepEqual((await service.listDebugRuns()).filter((trace) => trace.targetType === "chat_orchestration_run"), [])
+  assert.deepEqual((await service.listDebugRuns()).filter((trace) => !trace.runId.startsWith("search_")), [])
   assert.deepEqual(await deps.objectStore.listKeys("quality-control/source-samples/"), [])
   const events = await deps.chatRunEventStore.listAfter("default", result.runId, 0)
   assert.equal(events.some((event) => event.type === "final"), false)
@@ -2631,7 +2631,7 @@ test("asynchronous chat run stores debug trace by reference", async () => {
   assert.ok(final)
   assert.equal(typeof (final.data as Record<string, unknown>).debugRunId, "string")
   assert.equal((final.data as Record<string, unknown>).debug, undefined)
-  assert.ok(await service.getDebugRun(completed.debugRunId ?? ""))
+  assert.equal((await service.getDebugRun(completed.debugRunId ?? ""))?.targetType, "chat_orchestration_run")
 })
 
 test("FR-074 asynchronous document ingest success persists tenant-scoped replay evidence", async () => {
@@ -3838,3 +3838,38 @@ async function waitForDocumentIngestRun(deps: Dependencies, runId: string) {
   }
   throw new Error(`Timed out waiting for document ingest run: ${runId}`)
 }
+
+test("FR-049 legacy debug trace reads use the bounded rag_run default without inferred reclassification", async () => {
+  const { service, deps } = await createService()
+  const legacyTrace = {
+    schemaVersion: 1,
+    runId: "legacy-trace-without-target",
+    question: "legacy question",
+    modelId: "legacy-model",
+    embeddingModelId: "legacy-embedding",
+    clueModelId: "legacy-clue",
+    topK: 6,
+    memoryTopK: 4,
+    minScore: 0.2,
+    startedAt: "2026-07-17T00:00:00.000Z",
+    completedAt: "2026-07-17T00:00:01.000Z",
+    totalLatencyMs: 1000,
+    status: "success",
+    answerPreview: "legacy answer",
+    isAnswerable: true,
+    citations: [],
+    retrieved: [],
+    steps: []
+  }
+  await deps.objectStore.putText(
+    `debug-runs/${tenantPartitionId("default")}/2026-07-17/${legacyTrace.runId}.json`,
+    JSON.stringify(legacyTrace),
+    "application/json"
+  )
+
+  const read = await service.getDebugRun(legacyTrace.runId)
+
+  assert.equal(read?.targetType, "rag_run")
+  assert.equal(read?.runId, legacyTrace.runId)
+  assert.match(read?.question ?? "", /^sha256:[a-f0-9]{64}$/)
+})

@@ -24,6 +24,8 @@
 - debug trace producer は top-level の最初の property として `schemaVersion` を出力する。
 - JSON object の property order は仕様上 semantic ではないが、人間の確認と差分確認を容易にするため、保存・ダウンロード時の serialized JSON では `schemaVersion` を冒頭に置く。
 - `schemaVersion` がない既存 persisted trace を読む場合、API は v1 として `schemaVersion: 1` を補完する。
+- 新規の同期チャット親 trace は `targetType: chat_orchestration_run` を必須値として保存する。standalone search 子 trace は `targetType: rag_run` とする。
+- `targetType` がない既存 persisted trace は `rag_run` を bounded default として補完し、明示済みの値は保持する。runId や step 内容による推測再分類は行わない。
 - 将来 schema を変更する場合は `schemaVersion` を増やし、読み取り側で version ごとの変換または分岐を追加する。
 
 ## DebugTraceV1 Schema
@@ -38,6 +40,7 @@
   "required": [
     "schemaVersion",
     "runId",
+    "targetType",
     "question",
     "modelId",
     "embeddingModelId",
@@ -58,6 +61,10 @@
   "properties": {
     "schemaVersion": { "const": 1 },
     "runId": { "type": "string", "minLength": 1 },
+    "targetType": {
+      "type": "string",
+      "enum": ["rag_run", "ingest_run", "chat_orchestration_run", "async_agent_run", "tool_invocation"]
+    },
     "question": { "type": "string" },
     "modelId": { "type": "string" },
     "embeddingModelId": { "type": "string" },
@@ -158,6 +165,7 @@
 {
   "schemaVersion": 1,
   "runId": "run_answerable",
+  "targetType": "chat_orchestration_run",
   "question": "期限はいつですか？",
   "modelId": "amazon.nova-lite-v1:0",
   "embeddingModelId": "amazon.titan-embed-text-v2:0",
@@ -241,6 +249,7 @@
 {
   "schemaVersion": 1,
   "runId": "run_refusal",
+  "targetType": "chat_orchestration_run",
   "question": "資料にない制度は？",
   "modelId": "amazon.nova-lite-v1:0",
   "embeddingModelId": "amazon.titan-embed-text-v2:0",
@@ -291,17 +300,22 @@
 | DBG-JSON-005 | 回答可能 JSON 例が schema v1 と一致する | 未充足 | 回答可能ケースの固定 JSON 文字列一致を追加 |
 | DBG-JSON-006 | 回答不能 JSON 例が schema v1 と一致する | 未充足 | 回答不能ケースの固定 JSON object 一致を追加 |
 | DBG-JSON-007 | Web UI は JSON download として扱う | `JSONでダウンロード` の UI テストで確認済み | 既存テストを維持 |
+| DBG-JSON-008 | 同期チャット親 trace は `chat_orchestration_run`、検索子 trace は `rag_run` として分類する | FR-049 contract / graph / service test | 既存テストを維持 |
+| DBG-JSON-009 | targetType 欠落 legacy v1 は bounded default `rag_run` として読み、推測再分類しない | schema / service legacy read test | 既存テストを維持 |
 
 ## 関連実装
 
 - `apps/api/src/types.ts`
 - `apps/api/src/schemas.ts`
-- `apps/api/src/agent/trace.ts`
+- `apps/api/src/rag/orchestration/chat-rag-orchestrator.ts`
+- `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts`
 - `apps/api/src/rag/memorag-service.ts`
 - `apps/web/src/App.tsx`
 
 ## 関連テスト
 
-- `apps/api/src/agent/graph.test.ts`
+- `apps/api/src/contract/debug-trace-target-contract.test.ts`
+- `apps/api/src/chat-orchestration/graph.test.ts`
 - `apps/api/src/rag/memorag-service.test.ts`
+- `packages/contract/src/schemas/chat.test.ts`
 - `apps/web/src/App.test.tsx`

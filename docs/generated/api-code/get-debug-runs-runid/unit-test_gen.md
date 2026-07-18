@@ -17,6 +17,7 @@
 | 到達 symbol | FR-074 rejected document ingest persists observed replay evidence without publishing success | `apps/api/src/rag/memorag-service.test.ts:2674 (FR-074 rejected document ingest persists observed replay evidence without publishing success)` |
 | 到達 symbol | FR-074 worker failure persists an unknown-null replay manifest and a redacted trace | `apps/api/src/rag/memorag-service.test.ts:2715 (FR-074 worker failure persists an unknown-null replay manifest and a redacted trace)` |
 | 到達 symbol | FR-074 cancelled document ingest persists replay evidence without accepting caller trace correlation | `apps/api/src/rag/memorag-service.test.ts:2750 (FR-074 cancelled document ingest persists replay evidence without accepting caller trace correlation)` |
+| 到達 symbol | FR-049 legacy debug trace reads use the bounded rag_run default without inferred reclassification | `apps/api/src/rag/memorag-service.test.ts:3842 (FR-049 legacy debug trace reads use the bounded rag_run default without inferred reclassification)` |
 
 ## 2. 実装分岐から導くテスト要因
 

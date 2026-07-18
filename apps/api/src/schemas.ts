@@ -1,6 +1,6 @@
 import { z } from "@hono/zod-openapi"
 import { ragRuntimePolicy } from "./chat-orchestration/runtime-policy.js"
-import type { JsonValue, ReplayVersionManifest } from "./types.js"
+import { DEBUG_TRACE_TARGET_TYPES, LEGACY_DEBUG_TRACE_TARGET_TYPE_DEFAULT, type JsonValue, type ReplayVersionManifest } from "./types.js"
 import {
   MANDATORY_RAG_GUARDS,
   SAFE_DEGRADATION_POLICY_VERSION,
@@ -51,7 +51,7 @@ const SafeDegradationDecisionSchema: z.ZodType<SafeDegradationDecision> = z.obje
   guardOutcomes: z.array(RagGuardOutcomeSchema)
 })
 const DebugStepOutputSchema = z.record(z.string(), MetadataValueSchema)
-export const DebugTraceTargetTypeSchema = z.enum(["rag_run", "ingest_run", "chat_orchestration_run", "async_agent_run", "tool_invocation"])
+export const DebugTraceTargetTypeSchema = z.enum(DEBUG_TRACE_TARGET_TYPES)
 export const DebugTraceVisibilitySchema = z.enum(["user_safe", "support_sanitized", "operator_sanitized", "internal_restricted"])
 export const DebugTraceSanitizePolicyVersionSchema = z.literal("debug-trace-sanitize-v1")
 
@@ -1646,7 +1646,7 @@ export const DebugTraceSchema = z.object({
   parentTraceIds: z.array(z.string()).optional(),
   tenantPartitionId: z.string().optional(),
   actorPartitionId: z.string().optional(),
-  targetType: DebugTraceTargetTypeSchema.optional().default("rag_run"),
+  targetType: DebugTraceTargetTypeSchema.optional().default(LEGACY_DEBUG_TRACE_TARGET_TYPE_DEFAULT),
   visibility: DebugTraceVisibilitySchema.optional().default("operator_sanitized"),
   sanitizePolicyVersion: DebugTraceSanitizePolicyVersionSchema.optional().default("debug-trace-sanitize-v1"),
   exportRedaction: z.object({

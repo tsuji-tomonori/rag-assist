@@ -25,7 +25,7 @@ import {
   type MandatoryRagGuard,
   type SafeDegradationDecision
 } from "../_shared/security/safe-degradation-policy.js"
-import { DEBUG_TRACE_SANITIZE_POLICY_VERSION, DEBUG_TRACE_SCHEMA_VERSION, type DebugTrace } from "../../types.js"
+import { CHAT_ORCHESTRATION_TRACE_TARGET_TYPE, DEBUG_TRACE_SANITIZE_POLICY_VERSION, DEBUG_TRACE_SCHEMA_VERSION, type DebugTrace } from "../../types.js"
 import type { Citation, DocumentManifest, ReplaySourceSnapshot, ReplayVersionManifest, RetrievedVector } from "../../types.js"
 import { analyzeInput } from "../../chat-orchestration/nodes/analyze-input.js"
 import { answerabilityGate } from "../online/post-retrieval/answerability/answerability-gate.js"
@@ -1071,7 +1071,7 @@ async function persistDebugTrace(
     tenantPartitionId: tenantPartitionId(input.requesterTenantId),
     actorPartitionId: tenantPartitionId(`${input.requesterTenantId}:actor:${input.requesterUserId}`),
     securityResourceRefs: [...new Set(input.securityResourceRefs)].sort(),
-    targetType: "rag_run",
+    targetType: CHAT_ORCHESTRATION_TRACE_TARGET_TYPE,
     visibility: "operator_sanitized",
     sanitizePolicyVersion: DEBUG_TRACE_SANITIZE_POLICY_VERSION,
     exportRedaction: {

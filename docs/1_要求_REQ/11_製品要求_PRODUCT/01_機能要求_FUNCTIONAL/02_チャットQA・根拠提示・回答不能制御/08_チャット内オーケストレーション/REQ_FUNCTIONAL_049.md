@@ -21,7 +21,9 @@ Phase F では、上記に加えて仕様 4A/4B の `ChatToolDefinition` registr
 
 ## 受け入れ条件
 
-- [ ] 旧 `AgentRun` 相当の同期チャット処理が `ChatOrchestrationRun` として trace / store / contract 上で参照できる。
+- [x] 旧 `AgentRun` 相当の同期チャット処理が `ChatOrchestrationRun` として trace / store / contract 上で参照できる。
+- [x] 新規の同期チャット親 trace は `targetType: chat_orchestration_run`、standalone search 子 trace は `targetType: rag_run` として区別できる。
+- [x] targetType 欠落の legacy v1 trace は bounded default `rag_run` として読み、明示済み値を推測再分類しない。
 - [ ] チャット内 tool 実行は実行ユーザーの feature permission と resource permission を超えない。
 - [x] `ChatToolDefinition` は `toolId`、入出力 schema、必要 feature permission、必要 resource permission、承認要否、監査要否、有効状態を持つ。
 - [x] `ChatToolInvocation` は実行者、toolId、入出力概要、状態、承認、時刻、結果を監査可能にする。
@@ -31,3 +33,5 @@ Phase F では、上記に加えて仕様 4A/4B の `ChatToolDefinition` registr
 ## 備考
 
 Phase D / F で同期チャット処理の名称移行、tool registry、multi-turn optional state の基盤を追加した。後続 phase では disabled tool の本実装、承認 UI、専用 invocation store、resource permission 実行時 check を詳細化する。
+
+同期チャット trace の canonical target と legacy read 方針は `ARC_ADR_007.md` を正とする。targetType は分類 metadata であり、認可判断には使わない。debug API の permission、tenant partition、redaction boundary は維持する。
