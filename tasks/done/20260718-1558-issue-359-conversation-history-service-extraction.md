@@ -1,6 +1,6 @@
 # Issue #359 Phase 4p: conversation history service 抽出
 
-- 状態: do
+- 状態: done
 - Issue: #359
 - stacked base: PR #387 / `codex/issue-359-rag-integration`
 - exact base: `9a215ac08e5788c9dbb74b48e94b2243c85f609d`
@@ -28,8 +28,8 @@ PR #387 が確立した conversation history の save/list/get/delete orchestrat
 - [x] get は同一 owner partition だけを参照し、存在時のみ normalization する。
 - [x] delete は同一 owner partition の get-before-delete を維持し、missing=false、existing=true、store failure propagation を維持する。
 - [x] facade public signatures、routes/schema/permissions、session context authorization、RAG current reauthorization は非変更で delegate になる。
-- [ ] targeted/API full/root CI、docs generation/check、source audit、diff/pre-commit、GitHub CI が成功する。
-- [ ] Draft stacked PR、`semver:patch`、日本語 AC/self-review、task done/report、Issue progressを記録する。
+- [x] targeted/API full/root CI、docs generation/check、source audit、diff/pre-commit、implementation-head GitHub CI が成功した。final-head CI はPR最終コメントへ記録する。
+- [x] Draft stacked PR #442、`semver:patch`、日本語 AC/self-review、task done/reportを記録した。Issue progressはfinal-head監査後に記録する。
 
 ## Done 条件・計画
 
@@ -52,3 +52,11 @@ actual AWS/DynamoDB/manual UIは対象外かつ未実施として記録する。
 - docs generation/check: 98 APIs / 588 documents success
 - source audit: dataset-specific branch 0 / artifact manifest mismatch 0
 - 既存Vite chunk warningのみ。actual AWS/DynamoDB/manual UIは未実施。
+
+## PR・CI 証跡
+
+- implementation commit: `478d9d2a4eefc06313869572642a2a4951c6374c`
+- Draft PR: #442 / base PR #387 exact `9a215ac08e5788c9dbb74b48e94b2243c85f609d`
+- initial AC: `issuecomment-5010386762`
+- initial self-review: `issuecomment-5010386835`
+- implementation-head CI: success（7分40秒、run `29635554109`、promotion gate skipped）
