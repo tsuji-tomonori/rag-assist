@@ -27,7 +27,7 @@
 | F001 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
 | F002 | `benchmarkHttp` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/benchmark-routes.ts:262 (benchmarkHttp)` |
 | F003 | `benchmarkHttp` | if | `error` が `BenchmarkEvaluationContextError` の instance である | `apps/api/src/routes/benchmark-routes.ts:263 (benchmarkHttp)` |
-| F004 | `MemoRagService.search` | 三項条件 | `input.conversationId` が存在し、真である | `apps/api/src/rag/memorag-service.ts:3116 (MemoRagService.search)` |
+| F004 | `MemoRagService.search` | 三項条件 | `input.conversationId` が存在し、真である | `apps/api/src/rag/memorag-service.ts:3128 (MemoRagService.search)` |
 
 ## 3. コード由来テストケース
 
@@ -39,8 +39,8 @@
 | TC004 | F002: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/benchmark-routes.ts:262 (benchmarkHttp)` |
 | TC005 | F003: 条件成立 | `error` が `BenchmarkEvaluationContextError` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/benchmark-routes.ts:263 (benchmarkHttp)` |
 | TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/benchmark-routes.ts:263 (benchmarkHttp)` |
-| TC007 | F004: 条件成立 | `input.conversationId` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:3116 (MemoRagService.search)` |
-| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:3116 (MemoRagService.search)` |
+| TC007 | F004: 条件成立 | `input.conversationId` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:3128 (MemoRagService.search)` |
+| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:3128 (MemoRagService.search)` |
 | TC009 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC010 | HTTP 400 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC011 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

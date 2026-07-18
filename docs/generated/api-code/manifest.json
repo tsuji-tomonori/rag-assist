@@ -513,8 +513,8 @@
       "openApi": true,
       "routeSource": "apps/api/src/routes/conversation-history-routes.ts:8 (GET /conversation-history)",
       "handlerSource": "apps/api/src/routes/conversation-history-routes.ts:21 (GET /conversation-history handler)",
-      "functionCount": 11,
-      "branchCount": 13,
+      "functionCount": 7,
+      "branchCount": 3,
       "projectedBranchCount": 1,
       "dataAccessCount": 2,
       "relatedTestCount": 1
@@ -526,10 +526,10 @@
       "openApi": true,
       "routeSource": "apps/api/src/routes/conversation-history-routes.ts:50 (POST /conversation-history)",
       "handlerSource": "apps/api/src/routes/conversation-history-routes.ts:67 (POST /conversation-history handler)",
-      "functionCount": 28,
-      "branchCount": 26,
+      "functionCount": 9,
+      "branchCount": 3,
       "projectedBranchCount": 1,
-      "dataAccessCount": 3,
+      "dataAccessCount": 1,
       "relatedTestCount": 4
     },
     {
@@ -539,8 +539,8 @@
       "openApi": true,
       "routeSource": "apps/api/src/routes/conversation-history-routes.ts:75 (DELETE /conversation-history/{id})",
       "handlerSource": "apps/api/src/routes/conversation-history-routes.ts:88 (DELETE /conversation-history/{id} handler)",
-      "functionCount": 10,
-      "branchCount": 10,
+      "functionCount": 9,
+      "branchCount": 5,
       "projectedBranchCount": 2,
       "dataAccessCount": 2,
       "relatedTestCount": 0
@@ -552,9 +552,9 @@
       "openApi": true,
       "routeSource": "apps/api/src/routes/conversation-history-routes.ts:29 (GET /conversation-history/{id})",
       "handlerSource": "apps/api/src/routes/conversation-history-routes.ts:40 (GET /conversation-history/{id} handler)",
-      "functionCount": 13,
-      "branchCount": 15,
-      "projectedBranchCount": 3,
+      "functionCount": 9,
+      "branchCount": 5,
+      "projectedBranchCount": 2,
       "dataAccessCount": 1,
       "relatedTestCount": 1
     },

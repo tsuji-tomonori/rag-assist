@@ -19,7 +19,7 @@ sequenceDiagram
   API->>Auth: "chat：delete：own" permission を必須条件として確認する。
   API->>Auth: schema 検証済みの path parameter を取得する。
   API->>Service: service の delete conversation history 処理を呼び出す。
-  API->>Service: service の delete owned conversation history 処理を呼び出す。
+  API->>Service: service の delete 処理を呼び出す。
   Service->>Store: this.deps.conversationHistoryStore に対して get を実行する。
   Service->>Store: this.deps.conversationHistoryStore に対して delete を実行する。
   API-->>Client: HTTP 404 で JSON response を返す。
@@ -34,9 +34,9 @@ sequenceDiagram
 | 2 | `DELETE /conversation-history/{id} handler` | Auth | "chat:delete:own" permission を必須条件として確認する。 | `requirePermission(user, "chat:delete:own")` | `apps/api/src/routes/conversation-history-routes.ts:90 (DELETE /conversation-history/{id} handler)` |
 | 3 | `DELETE /conversation-history/{id} handler` | Validation | schema 検証済みの path parameter を取得する。 | `validParam<{ id: string }>(c)` | `apps/api/src/routes/conversation-history-routes.ts:91 (DELETE /conversation-history/{id} handler)` |
 | 4 | `DELETE /conversation-history/{id} handler` | Service | service の delete conversation history 処理を呼び出す。 | `service.deleteConversationHistory(user, id)` | `apps/api/src/routes/conversation-history-routes.ts:92 (DELETE /conversation-history/{id} handler)` |
-| 5 | `MemoRagService.deleteConversationHistory` | Service | service の delete owned conversation history 処理を呼び出す。 | `this.deleteOwnedConversationHistory(subject, id, tenantId)` | `apps/api/src/rag/memorag-service.ts:4159 (MemoRagService.deleteConversationHistory)` |
-| 6 | `MemoRagService.deleteOwnedConversationHistory` | Store | `this.deps.conversationHistoryStore` に対して get を実行する。 | `this.deps.conversationHistoryStore.get(ownerKey, id)` | `apps/api/src/rag/memorag-service.ts:5198 (MemoRagService.deleteOwnedConversationHistory)` |
-| 7 | `MemoRagService.deleteOwnedConversationHistory` | Store | `this.deps.conversationHistoryStore` に対して delete を実行する。 | `this.deps.conversationHistoryStore.delete(ownerKey, id)` | `apps/api/src/rag/memorag-service.ts:5199 (MemoRagService.deleteOwnedConversationHistory)` |
+| 5 | `MemoRagService.deleteConversationHistory` | Service | service の delete 処理を呼び出す。 | `this.conversationHistoryService.delete(subject, id, tenantId)` | `apps/api/src/rag/memorag-service.ts:4159 (MemoRagService.deleteConversationHistory)` |
+| 6 | `ConversationHistoryService.delete` | Store | `this.deps.conversationHistoryStore` に対して get を実行する。 | `this.deps.conversationHistoryStore.get(ownerKey, id)` | `apps/api/src/conversations/conversation-history-service.ts:67 (ConversationHistoryService.delete)` |
+| 7 | `ConversationHistoryService.delete` | Store | `this.deps.conversationHistoryStore` に対して delete を実行する。 | `this.deps.conversationHistoryStore.delete(ownerKey, id)` | `apps/api/src/conversations/conversation-history-service.ts:68 (ConversationHistoryService.delete)` |
 | 8 | `DELETE /conversation-history/{id} handler` | HTTP/SSE | HTTP 404 で JSON response を返す。 | `c.json({ error: "Conversation history not found" }, 404)` | `apps/api/src/routes/conversation-history-routes.ts:92 (DELETE /conversation-history/{id} handler)` |
 | 9 | `DELETE /conversation-history/{id} handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json({ id }, 200)` | `apps/api/src/routes/conversation-history-routes.ts:93 (DELETE /conversation-history/{id} handler)` |
 

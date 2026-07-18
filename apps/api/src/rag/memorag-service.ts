@@ -52,6 +52,7 @@ import { embedWithCache, mapWithConcurrency } from "./offline/pre-retrieval/embe
 import { aliasArtifactLatestKeyForTenant } from "../search/alias-artifacts.js"
 import { pageByStableCursor } from "../admin/keyset-pagination.js"
 import { FolderPermissionService } from "../folders/folder-permission-service.js"
+import { ConversationHistoryService } from "../conversations/conversation-history-service.js"
 import {
   FolderLifecycleMutationCoordinator,
   type MoveFolderInput,
@@ -441,7 +442,18 @@ const benchmarkSuites: BenchmarkSuite[] = [
 ]
 
 export class MemoRagService {
-  constructor(private readonly deps: Dependencies) {}
+  private readonly conversationHistoryService: ConversationHistoryService
+
+  constructor(private readonly deps: Dependencies) {
+    this.conversationHistoryService = new ConversationHistoryService({
+      conversationHistoryStore: deps.conversationHistoryStore,
+      favoriteStore: deps.favoriteStore,
+      ownerKey: tenantPartitionedOwnerKey,
+      resolveSessionDocumentContext: (subject, input, ownerKey) => this.resolveSessionDocumentContext(subject, input, ownerKey),
+      normalize: normalizeConversationHistoryInput,
+      compareForDisplay: compareConversationHistoryForDisplay
+    })
+  }
 
   async getResourceGroupMembershipState(actor: AppUser, groupId: string) {
     return this.resourceGroupMembershipService().getState(actor, groupId)
@@ -4136,27 +4148,15 @@ export class MemoRagService {
   }
 
   async saveConversationHistory(subject: AppUser | string, input: SaveConversationHistoryInput, tenantId?: string): Promise<ConversationHistoryItem> {
-    const ownerKey = tenantPartitionedOwnerKey(subject, tenantId)
-    return this.deps.conversationHistoryStore.save(ownerKey, { ...input, sessionDocumentContext: await this.resolveSessionDocumentContext(subject, input, ownerKey), isFavorite: false })
+    return this.conversationHistoryService.save(subject, input, tenantId)
   }
 
   async listConversationHistory(subject: AppUser | string, tenantId?: string): Promise<ConversationHistoryItem[]> {
-    const ownerKey = tenantPartitionedOwnerKey(subject, tenantId)
-    const [history, favorites] = await Promise.all([
-      this.deps.conversationHistoryStore.list(ownerKey),
-      this.deps.favoriteStore.list(ownerKey)
-    ])
-    const favoriteChatSessionIds = new Set(favorites
-      .filter((favorite) => favorite.targetType === "chatSession")
-      .map((favorite) => favorite.targetId))
-    return history
-      .map((item) => ({ ...normalizeConversationHistoryInput(item), isFavorite: favoriteChatSessionIds.has(item.id) }))
-      .sort(compareConversationHistoryForDisplay)
-      .slice(0, 20)
+    return this.conversationHistoryService.list(subject, tenantId)
   }
 
   async deleteConversationHistory(subject: AppUser | string, id: string, tenantId?: string): Promise<boolean> {
-    return this.deleteOwnedConversationHistory(subject, id, tenantId)
+    return this.conversationHistoryService.delete(subject, id, tenantId)
   }
 
   async saveFavorite(user: AppUser, input: { targetType: FavoriteTargetType; targetId: string; label?: string; note?: string }): Promise<FavoriteListItem> {
@@ -5189,15 +5189,7 @@ export class MemoRagService {
   }
 
   async getConversationHistory(subject: AppUser | string, id: string, tenantId?: string): Promise<ConversationHistoryItem | undefined> {
-    const item = await this.deps.conversationHistoryStore.get(tenantPartitionedOwnerKey(subject, tenantId), id)
-    return item ? normalizeConversationHistoryInput(item) : undefined
-  }
-
-  private async deleteOwnedConversationHistory(subject: AppUser | string, id: string, tenantId?: string): Promise<boolean> {
-    const ownerKey = tenantPartitionedOwnerKey(subject, tenantId)
-    if (!(await this.deps.conversationHistoryStore.get(ownerKey, id))) return false
-    await this.deps.conversationHistoryStore.delete(ownerKey, id)
-    return true
+    return this.conversationHistoryService.get(subject, id, tenantId)
   }
 
   private async normalizeChatInputSessionEvidence(actor: AppUser, input: ChatInput): Promise<ChatInput> {

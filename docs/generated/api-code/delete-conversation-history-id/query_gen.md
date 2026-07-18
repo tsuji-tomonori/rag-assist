@@ -8,8 +8,8 @@
 
 | # | CRUD/実行 | Target | Method | 自然言語での目的 | Caller | コード根拠 |
 | ---: | --- | --- | --- | --- | --- | --- |
-| 1 | 参照 | `this.deps.conversationHistoryStore` | `get` | `this.deps.conversationHistoryStore` に対して get を実行する。 | `MemoRagService.deleteOwnedConversationHistory` | `apps/api/src/rag/memorag-service.ts:5198 (MemoRagService.deleteOwnedConversationHistory)` |
-| 2 | 削除 | `this.deps.conversationHistoryStore` | `delete` | `this.deps.conversationHistoryStore` に対して delete を実行する。 | `MemoRagService.deleteOwnedConversationHistory` | `apps/api/src/rag/memorag-service.ts:5199 (MemoRagService.deleteOwnedConversationHistory)` |
+| 1 | 参照 | `this.deps.conversationHistoryStore` | `get` | `this.deps.conversationHistoryStore` に対して get を実行する。 | `ConversationHistoryService.delete` | `apps/api/src/conversations/conversation-history-service.ts:67 (ConversationHistoryService.delete)` |
+| 2 | 削除 | `this.deps.conversationHistoryStore` | `delete` | `this.deps.conversationHistoryStore` に対して delete を実行する。 | `ConversationHistoryService.delete` | `apps/api/src/conversations/conversation-history-service.ts:68 (ConversationHistoryService.delete)` |
 
 ## 外部サービス操作
 

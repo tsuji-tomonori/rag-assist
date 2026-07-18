@@ -8,13 +8,13 @@
 
 | # | CRUD/実行 | Target | Method | 自然言語での目的 | Caller | コード根拠 |
 | ---: | --- | --- | --- | --- | --- | --- |
-| 1 | 参照 | `this.deps.documentGroupStore` | `list` | `this.deps.documentGroupStore` に対して list を実行する。 | `MemoRagService.createDocumentGroup` | `apps/api/src/rag/memorag-service.ts:1057 (MemoRagService.createDocumentGroup)` |
+| 1 | 参照 | `this.deps.documentGroupStore` | `list` | `this.deps.documentGroupStore` に対して list を実行する。 | `MemoRagService.createDocumentGroup` | `apps/api/src/rag/memorag-service.ts:1069 (MemoRagService.createDocumentGroup)` |
 | 2 | 参照 | `this.deps.documentGroupStore` | `list` | `this.deps.documentGroupStore` に対して list を実行する。 | `FolderPermissionService.resolveEffectiveFolderPermissionDetail` | `apps/api/src/folders/folder-permission-service.ts:145 (FolderPermissionService.resolveEffectiveFolderPermissionDetail)` |
 | 3 | 参照 | `this.deps.userGroupStore` | `get` | `this.deps.userGroupStore` に対して get を実行する。 | `FolderPermissionService.resolveUserMembershipPermission` | `apps/api/src/folders/folder-permission-service.ts:780 (FolderPermissionService.resolveUserMembershipPermission)` |
 | 4 | 参照 | `this.deps.groupMembershipStore` | `listByGroupId` | `this.deps.groupMembershipStore` に対して list by group id を実行する。 | `FolderPermissionService.resolveUserMembershipPermission` | `apps/api/src/folders/folder-permission-service.ts:781 (FolderPermissionService.resolveUserMembershipPermission)` |
 | 5 | 参照 | `this.deps.folderPolicyStore` | `findByFolderId` | `this.deps.folderPolicyStore` に対して find by folder id を実行する。 | `FolderPermissionService.resolvePolicyContext` | `apps/api/src/folders/folder-permission-service.ts:695 (FolderPermissionService.resolvePolicyContext)` |
 | 6 | 参照 | `this.deps.folderPolicyStore` | `get` | `this.deps.folderPolicyStore` に対して get を実行する。 | `FolderPermissionService.resolvePolicyContext` | `apps/api/src/folders/folder-permission-service.ts:711 (FolderPermissionService.resolvePolicyContext)` |
-| 7 | 作成・追記 | `this.deps.documentGroupStore` | `createWithPathLock` | `this.deps.documentGroupStore` に対して create with path lock を実行する。 | `MemoRagService.createDocumentGroup` | `apps/api/src/rag/memorag-service.ts:1107 (MemoRagService.createDocumentGroup)` |
+| 7 | 作成・追記 | `this.deps.documentGroupStore` | `createWithPathLock` | `this.deps.documentGroupStore` に対して create with path lock を実行する。 | `MemoRagService.createDocumentGroup` | `apps/api/src/rag/memorag-service.ts:1119 (MemoRagService.createDocumentGroup)` |
 
 ## 外部サービス操作
 

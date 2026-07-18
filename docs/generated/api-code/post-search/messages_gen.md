@@ -19,8 +19,8 @@
 | M004 | OpenAPI contract | `403` | 対象操作を実行する権限がありません。 | OpenAPI で宣言された HTTP 403 response | runtime OpenAPI |
 | M005 | OpenAPI contract | `500` | サーバー内部で処理エラーが発生しました。 | OpenAPI で宣言された HTTP 500 response | runtime OpenAPI |
 | M006 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| M007 | 例外 | `-` | User identity is required for tenant-partitioned storage | `userId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:6101 (tenantPartitionedOwnerKey)` |
-| M008 | 例外 | `-` | Authoritative tenant is required for user storage | `config.authEnabled` が存在し、真である、または `config.nodeEnv` が `"production"` と等しい | `apps/api/src/rag/memorag-service.ts:6103 (tenantPartitionedOwnerKey)` |
+| M007 | 例外 | `-` | User identity is required for tenant-partitioned storage | `userId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:6093 (tenantPartitionedOwnerKey)` |
+| M008 | 例外 | `-` | Authoritative tenant is required for user storage | `config.authEnabled` が存在し、真である、または `config.nodeEnv` が `"production"` と等しい | `apps/api/src/rag/memorag-service.ts:6095 (tenantPartitionedOwnerKey)` |
 | M009 | 例外 | `-` | Document identifier is required | `normalized` が存在しない、または偽である | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:133 (encodeIdentifier)` |
 | M010 | 例外 | `-` | Artifact key is invalid | `normalized` が存在しない、または偽である、または `normalized` が ".." を含む | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:127 (normalizeRelativeKey)` |
 | M011 | 例外 | `-` | Authoritative tenant is required | `normalized` が存在しない、または偽である | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:121 (requiredTenantId)` |

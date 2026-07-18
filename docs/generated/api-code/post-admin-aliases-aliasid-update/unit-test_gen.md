@@ -21,12 +21,12 @@
 | F002 | `POST /admin/aliases/{aliasId}/update handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/admin-routes.ts:437 (POST /admin/aliases/{aliasId}/update handler)` |
 | F003 | `POST /admin/aliases/{aliasId}/update handler` | if | `error` が `AliasGovernanceError` の instance である | `apps/api/src/routes/admin-routes.ts:438 (POST /admin/aliases/{aliasId}/update handler)` |
 | F004 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| F005 | `MemoRagService.updateAlias` | if | `alias` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1461 (MemoRagService.updateAlias)` |
-| F006 | `MemoRagService.updateAlias` | 三項条件 | `alias.status` が `"disabled"` と等しい | `apps/api/src/rag/memorag-service.ts:1463 (MemoRagService.updateAlias)` |
-| F007 | `MemoRagService.updateAlias` | if | `invalid` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1464 (MemoRagService.updateAlias)` |
-| F008 | `MemoRagService.updateAlias` | if | `input.term` が `undefined` と異なる | `apps/api/src/rag/memorag-service.ts:1466 (MemoRagService.updateAlias)` |
-| F009 | `MemoRagService.updateAlias` | if | `input.expansions` が `undefined` と異なる | `apps/api/src/rag/memorag-service.ts:1467 (MemoRagService.updateAlias)` |
-| F010 | `MemoRagService.updateAlias` | if | `input.scope` が `undefined` と異なる | `apps/api/src/rag/memorag-service.ts:1468 (MemoRagService.updateAlias)` |
+| F005 | `MemoRagService.updateAlias` | if | `alias` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1473 (MemoRagService.updateAlias)` |
+| F006 | `MemoRagService.updateAlias` | 三項条件 | `alias.status` が `"disabled"` と等しい | `apps/api/src/rag/memorag-service.ts:1475 (MemoRagService.updateAlias)` |
+| F007 | `MemoRagService.updateAlias` | if | `invalid` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1476 (MemoRagService.updateAlias)` |
+| F008 | `MemoRagService.updateAlias` | if | `input.term` が `undefined` と異なる | `apps/api/src/rag/memorag-service.ts:1478 (MemoRagService.updateAlias)` |
+| F009 | `MemoRagService.updateAlias` | if | `input.expansions` が `undefined` と異なる | `apps/api/src/rag/memorag-service.ts:1479 (MemoRagService.updateAlias)` |
+| F010 | `MemoRagService.updateAlias` | if | `input.scope` が `undefined` と異なる | `apps/api/src/rag/memorag-service.ts:1480 (MemoRagService.updateAlias)` |
 | F011 | `aliasGovernanceStatus` | if | `error.result` が `"conflict"` と等しい | `apps/api/src/routes/admin-routes.ts:733 (aliasGovernanceStatus)` |
 | F012 | `aliasGovernanceStatus` | if | `error.result` が `"denied"` と等しい | `apps/api/src/routes/admin-routes.ts:734 (aliasGovernanceStatus)` |
 
@@ -42,18 +42,18 @@
 | TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:438 (POST /admin/aliases/{aliasId}/update handler)` |
 | TC007 | F004: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
 | TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC009 | F005: 条件成立 | `alias` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1461 (MemoRagService.updateAlias)` |
-| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1461 (MemoRagService.updateAlias)` |
-| TC011 | F006: 条件成立 | `alias.status` が `"disabled"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1463 (MemoRagService.updateAlias)` |
-| TC012 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1463 (MemoRagService.updateAlias)` |
-| TC013 | F007: 条件成立 | `invalid` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1464 (MemoRagService.updateAlias)` |
-| TC014 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1464 (MemoRagService.updateAlias)` |
-| TC015 | F008: 条件成立 | `input.term` が `undefined` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1466 (MemoRagService.updateAlias)` |
-| TC016 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1466 (MemoRagService.updateAlias)` |
-| TC017 | F009: 条件成立 | `input.expansions` が `undefined` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1467 (MemoRagService.updateAlias)` |
-| TC018 | F009: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1467 (MemoRagService.updateAlias)` |
-| TC019 | F010: 条件成立 | `input.scope` が `undefined` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1468 (MemoRagService.updateAlias)` |
-| TC020 | F010: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1468 (MemoRagService.updateAlias)` |
+| TC009 | F005: 条件成立 | `alias` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1473 (MemoRagService.updateAlias)` |
+| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1473 (MemoRagService.updateAlias)` |
+| TC011 | F006: 条件成立 | `alias.status` が `"disabled"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1475 (MemoRagService.updateAlias)` |
+| TC012 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1475 (MemoRagService.updateAlias)` |
+| TC013 | F007: 条件成立 | `invalid` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1476 (MemoRagService.updateAlias)` |
+| TC014 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1476 (MemoRagService.updateAlias)` |
+| TC015 | F008: 条件成立 | `input.term` が `undefined` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1478 (MemoRagService.updateAlias)` |
+| TC016 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1478 (MemoRagService.updateAlias)` |
+| TC017 | F009: 条件成立 | `input.expansions` が `undefined` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1479 (MemoRagService.updateAlias)` |
+| TC018 | F009: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1479 (MemoRagService.updateAlias)` |
+| TC019 | F010: 条件成立 | `input.scope` が `undefined` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1480 (MemoRagService.updateAlias)` |
+| TC020 | F010: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1480 (MemoRagService.updateAlias)` |
 | TC021 | F011: 条件成立 | `error.result` が `"conflict"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:733 (aliasGovernanceStatus)` |
 | TC022 | F011: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:733 (aliasGovernanceStatus)` |
 | TC023 | F012: 条件成立 | `error.result` が `"denied"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:734 (aliasGovernanceStatus)` |

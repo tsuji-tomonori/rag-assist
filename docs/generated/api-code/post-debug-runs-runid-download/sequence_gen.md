@@ -34,8 +34,8 @@ sequenceDiagram
 | 3 | `POST /debug-runs/{runId}/download handler` | Validation | schema 検証済みの path parameter を取得する。 | `validParam<{ runId: string }>(c)` | `apps/api/src/routes/debug-routes.ts:129 (POST /debug-runs/{runId}/download handler)` |
 | 4 | `POST /debug-runs/{runId}/download handler` | Service | service の create debug trace download url 処理を呼び出す。 | `service.createDebugTraceDownloadUrl(runId, user)` | `apps/api/src/routes/debug-routes.ts:131 (POST /debug-runs/{runId}/download handler)` |
 | 5 | `MemoRagService.createDebugTraceDownloadUrl` | Service | service の get debug run 処理を呼び出す。 | `this.getDebugRun(runId, actor)` | `apps/api/src/rag/memorag-service.ts:5121 (MemoRagService.createDebugTraceDownloadUrl)` |
-| 6 | `MemoRagService.getDebugRun` | Store | `this.deps.objectStore` に対して list keys を実行する。 | `this.deps.objectStore.listKeys(prefix)` | `apps/api/src/rag/memorag-service.ts:2347 (MemoRagService.getDebugRun)` |
-| 7 | `MemoRagService.getDebugRun` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(key)` | `apps/api/src/rag/memorag-service.ts:2350 (MemoRagService.getDebugRun)` |
+| 6 | `MemoRagService.getDebugRun` | Store | `this.deps.objectStore` に対して list keys を実行する。 | `this.deps.objectStore.listKeys(prefix)` | `apps/api/src/rag/memorag-service.ts:2359 (MemoRagService.getDebugRun)` |
+| 7 | `MemoRagService.getDebugRun` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(key)` | `apps/api/src/rag/memorag-service.ts:2362 (MemoRagService.getDebugRun)` |
 | 8 | `POST /debug-runs/{runId}/download handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json(download, 200)` | `apps/api/src/routes/debug-routes.ts:136 (POST /debug-runs/{runId}/download handler)` |
 
 ## 分岐

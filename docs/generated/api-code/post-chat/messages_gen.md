@@ -19,8 +19,8 @@
 | M004 | OpenAPI contract | `403` | 対象操作を実行する権限がありません。 | OpenAPI で宣言された HTTP 403 response | runtime OpenAPI |
 | M005 | OpenAPI contract | `500` | サーバー内部で処理エラーが発生しました。 | OpenAPI で宣言された HTTP 500 response | runtime OpenAPI |
 | M006 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| M007 | 例外 | `-` | User identity is required for tenant-partitioned storage | `userId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:6101 (tenantPartitionedOwnerKey)` |
-| M008 | 例外 | `-` | Authoritative tenant is required for user storage | `config.authEnabled` が存在し、真である、または `config.nodeEnv` が `"production"` と等しい | `apps/api/src/rag/memorag-service.ts:6103 (tenantPartitionedOwnerKey)` |
+| M007 | 例外 | `-` | User identity is required for tenant-partitioned storage | `userId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:6093 (tenantPartitionedOwnerKey)` |
+| M008 | 例外 | `-` | Authoritative tenant is required for user storage | `config.authEnabled` が存在し、真である、または `config.nodeEnv` が `"production"` と等しい | `apps/api/src/rag/memorag-service.ts:6095 (tenantPartitionedOwnerKey)` |
 | M009 | 例外 | `-` | Document identifier is required | `normalized` が存在しない、または偽である | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:133 (encodeIdentifier)` |
 | M010 | 例外 | `-` | Artifact key is invalid | `normalized` が存在しない、または偽である、または `normalized` が ".." を含む | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:127 (normalizeRelativeKey)` |
 | M011 | 例外 | `-` | Authoritative tenant is required | `normalized` が存在しない、または偽である | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:121 (requiredTenantId)` |
@@ -41,7 +41,7 @@
 | M026 | 例外 | `-` | local_fixture_permission_missing | `config.nodeEnv` が `"test"` と異なる、かつ every の判定結果が真ではない | `apps/api/src/rag/memorag-service.ts:4827 (MemoRagService.assertCurrentWorkerAuthorization)` |
 | M027 | 例外 | `-` | local_fixture_resource_policy_denied | `resourceAllowed` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4835 (MemoRagService.assertCurrentWorkerAuthorization)` |
 | M028 | 例外 | `-` | `Security resource ${name} is invalid` | `value` が存在しない、または偽である、または `value.trim()` が `value` と異なる | `apps/api/src/security/security-resource-reference.ts:12 (securityResourceReference)` |
-| M029 | 例外 | `-` | Run admission resource-group identity crossed its tenant boundary | `membership.tenantId` が `tenantId` と異なる、または `membership.memberId` が `groupId` と異なる | `apps/api/src/rag/memorag-service.ts:1289 (MemoRagService.securityResourceRefsForActor)` |
+| M029 | 例外 | `-` | Run admission resource-group identity crossed its tenant boundary | `membership.tenantId` が `tenantId` と異なる、または `membership.memberId` が `groupId` と異なる | `apps/api/src/rag/memorag-service.ts:1301 (MemoRagService.securityResourceRefsForActor)` |
 | M030 | 例外 | `-` | RAG safety state is unavailable. | `required` が存在し、真である | `apps/api/src/rag/quality-control/production-rag-monitor.ts:313 (assertRagSafetyInterlock)` |
 | M031 | 例外 | `-` | RAG safety state is invalid or unsupported. | `state.schemaVersion` が `1` と異なる、または is integer の判定結果が真ではない、または `state.stateVersion` が `1` より小さい、または trim の判定結果が真ではない、または trim の判定結果が真ではない、または trim の判定結果が真ではない、または is array の判定結果が真ではない、または some の判定結果が真である、または `typeof state.promotionFrozen` が `"boolean"` と異なる、または `typeof state.documentQuarantineRequired` が `"boolean"` と異なる、または `["normal", "limited", "refuse"]` が state.responseMode を含まない、または is finite の判定結果が真ではない、または is finite の判定結果が真ではない、または `Date.parse(state.validUntil)` が `Date.parse(state.updatedAt)` 以下である | `apps/api/src/rag/quality-control/production-rag-monitor.ts:362 (assertRagSafetyState)` |
 | M032 | 例外 | `-` | RAG safety state is expired. | is finite の判定結果が真ではない、または `Date.parse(state.validUntil)` が `Date.parse(now)` 以下である | `apps/api/src/rag/quality-control/production-rag-monitor.ts:319 (assertRagSafetyInterlock)` |

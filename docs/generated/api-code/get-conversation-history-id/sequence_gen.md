@@ -19,6 +19,7 @@ sequenceDiagram
   API->>Auth: "chat：read：own" permission を必須条件として確認する。
   API->>Auth: schema 検証済みの path parameter を取得する。
   API->>Service: service の get conversation history 処理を呼び出す。
+  API->>Service: service の get 処理を呼び出す。
   Service->>Store: this.deps.conversationHistoryStore に対して get を実行する。
   API-->>Client: HTTP 404 で JSON response を返す。
   API->>Auth: parse により入力を検証する。
@@ -33,10 +34,11 @@ sequenceDiagram
 | 2 | `GET /conversation-history/{id} handler` | Auth | "chat:read:own" permission を必須条件として確認する。 | `requirePermission(user, "chat:read:own")` | `apps/api/src/routes/conversation-history-routes.ts:42 (GET /conversation-history/{id} handler)` |
 | 3 | `GET /conversation-history/{id} handler` | Validation | schema 検証済みの path parameter を取得する。 | `validParam<{ id: string }>(c)` | `apps/api/src/routes/conversation-history-routes.ts:43 (GET /conversation-history/{id} handler)` |
 | 4 | `GET /conversation-history/{id} handler` | Service | service の get conversation history 処理を呼び出す。 | `service.getConversationHistory(user, id)` | `apps/api/src/routes/conversation-history-routes.ts:44 (GET /conversation-history/{id} handler)` |
-| 5 | `MemoRagService.getConversationHistory` | Store | `this.deps.conversationHistoryStore` に対して get を実行する。 | `this.deps.conversationHistoryStore.get(tenantPartitionedOwnerKey(subject, tenantId), id)` | `apps/api/src/rag/memorag-service.ts:5192 (MemoRagService.getConversationHistory)` |
-| 6 | `GET /conversation-history/{id} handler` | HTTP/SSE | HTTP 404 で JSON response を返す。 | `c.json({ error: "Conversation history not found" }, 404)` | `apps/api/src/routes/conversation-history-routes.ts:45 (GET /conversation-history/{id} handler)` |
-| 7 | `GET /conversation-history/{id} handler` | Validation | parse により入力を検証する。 | `ConversationHistoryItemSchema.parse(item)` | `apps/api/src/routes/conversation-history-routes.ts:46 (GET /conversation-history/{id} handler)` |
-| 8 | `GET /conversation-history/{id} handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json(ConversationHistoryItemSchema.parse(item), 200)` | `apps/api/src/routes/conversation-history-routes.ts:46 (GET /conversation-history/{id} handler)` |
+| 5 | `MemoRagService.getConversationHistory` | Service | service の get 処理を呼び出す。 | `this.conversationHistoryService.get(subject, id, tenantId)` | `apps/api/src/rag/memorag-service.ts:5192 (MemoRagService.getConversationHistory)` |
+| 6 | `ConversationHistoryService.get` | Store | `this.deps.conversationHistoryStore` に対して get を実行する。 | `this.deps.conversationHistoryStore.get(this.deps.ownerKey(subject, tenantId), id)` | `apps/api/src/conversations/conversation-history-service.ts:61 (ConversationHistoryService.get)` |
+| 7 | `GET /conversation-history/{id} handler` | HTTP/SSE | HTTP 404 で JSON response を返す。 | `c.json({ error: "Conversation history not found" }, 404)` | `apps/api/src/routes/conversation-history-routes.ts:45 (GET /conversation-history/{id} handler)` |
+| 8 | `GET /conversation-history/{id} handler` | Validation | parse により入力を検証する。 | `ConversationHistoryItemSchema.parse(item)` | `apps/api/src/routes/conversation-history-routes.ts:46 (GET /conversation-history/{id} handler)` |
+| 9 | `GET /conversation-history/{id} handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json(ConversationHistoryItemSchema.parse(item), 200)` | `apps/api/src/routes/conversation-history-routes.ts:46 (GET /conversation-history/{id} handler)` |
 
 ## 分岐
 
@@ -44,4 +46,3 @@ sequenceDiagram
 | --- | --- | --- | --- |
 | B001 | `GET /conversation-history/{id} handler` | `item` が存在しない、または偽である | `apps/api/src/routes/conversation-history-routes.ts:45 (GET /conversation-history/{id} handler)` |
 | B002 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| B003 | `MemoRagService.getConversationHistory` | `item` が存在し、真である | `apps/api/src/rag/memorag-service.ts:5193 (MemoRagService.getConversationHistory)` |

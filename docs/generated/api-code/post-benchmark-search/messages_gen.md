@@ -24,8 +24,8 @@
 | M009 | 例外 | `-` | Benchmark evaluation is unavailable | `settings.enabled` が存在しない、または偽である | `apps/api/src/benchmark/evaluation-context.ts:80 (resolveBenchmarkEvaluationContext)` |
 | M010 | 例外 | `-` | Benchmark evaluation is unavailable | `tenantId` が存在しない、または偽である、または `tenantId` が `runner.tenantId` と等しい | `apps/api/src/benchmark/evaluation-context.ts:85 (resolveBenchmarkEvaluationContext)` |
 | M011 | 例外 | `-` | Unknown benchmark suite | `registration` が存在しない、または偽である、または `suiteId` が `requestedSuiteId` と異なる | `apps/api/src/benchmark/evaluation-context.ts:91 (resolveBenchmarkEvaluationContext)` |
-| M012 | 例外 | `-` | User identity is required for tenant-partitioned storage | `userId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:6101 (tenantPartitionedOwnerKey)` |
-| M013 | 例外 | `-` | Authoritative tenant is required for user storage | `config.authEnabled` が存在し、真である、または `config.nodeEnv` が `"production"` と等しい | `apps/api/src/rag/memorag-service.ts:6103 (tenantPartitionedOwnerKey)` |
+| M012 | 例外 | `-` | User identity is required for tenant-partitioned storage | `userId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:6093 (tenantPartitionedOwnerKey)` |
+| M013 | 例外 | `-` | Authoritative tenant is required for user storage | `config.authEnabled` が存在し、真である、または `config.nodeEnv` が `"production"` と等しい | `apps/api/src/rag/memorag-service.ts:6095 (tenantPartitionedOwnerKey)` |
 | M014 | 例外 | `-` | Document identifier is required | `normalized` が存在しない、または偽である | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:133 (encodeIdentifier)` |
 | M015 | 例外 | `-` | Artifact key is invalid | `normalized` が存在しない、または偽である、または `normalized` が ".." を含む | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:127 (normalizeRelativeKey)` |
 | M016 | 例外 | `-` | Authoritative tenant is required | `normalized` が存在しない、または偽である | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:121 (requiredTenantId)` |

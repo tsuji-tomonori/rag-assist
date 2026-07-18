@@ -23,7 +23,7 @@
 | M008 | 例外 | `-` | Only codebuild runner is supported in this version | `(input.runner ?? "codebuild")` が `"codebuild"` と異なる | `apps/api/src/rag/memorag-service.ts:4579 (MemoRagService.createBenchmarkRun)` |
 | M009 | 例外 | `-` | Authoritative tenant is required | `normalized` が存在しない、または偽である | `apps/api/src/security/tenant-partition.ts:5 (tenantPartitionId)` |
 | M010 | 例外 | `-` | `Security resource ${name} is invalid` | `value` が存在しない、または偽である、または `value.trim()` が `value` と異なる | `apps/api/src/security/security-resource-reference.ts:12 (securityResourceReference)` |
-| M011 | 例外 | `-` | Run admission resource-group identity crossed its tenant boundary | `membership.tenantId` が `tenantId` と異なる、または `membership.memberId` が `groupId` と異なる | `apps/api/src/rag/memorag-service.ts:1289 (MemoRagService.securityResourceRefsForActor)` |
+| M011 | 例外 | `-` | Run admission resource-group identity crossed its tenant boundary | `membership.tenantId` が `tenantId` と異なる、または `membership.memberId` が `groupId` と異なる | `apps/api/src/rag/memorag-service.ts:1301 (MemoRagService.securityResourceRefsForActor)` |
 | M012 | 例外 | `-` | worker_tenant_missing | `tenantId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4808 (MemoRagService.assertCurrentWorkerAuthorization)` |
 | M013 | 例外 | `-` | worker_identity_not_canonical | canonical の判定結果が真ではない、または canonical の判定結果が真ではない、または canonical の判定結果が真ではない | `apps/api/src/security/current-worker-authorization.ts:46 (CurrentWorkerAuthorization.assertAuthorized)` |
 | M014 | 例外 | `-` | authoritative_identity_unavailable | 例外を捕捉した場合 | `apps/api/src/security/current-worker-authorization.ts:53 (CurrentWorkerAuthorization.assertAuthorized)` |

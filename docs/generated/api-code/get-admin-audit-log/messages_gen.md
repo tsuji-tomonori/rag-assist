@@ -18,7 +18,7 @@
 | M003 | OpenAPI contract | `401` | 認証が必要です。 | OpenAPI で宣言された HTTP 401 response | runtime OpenAPI |
 | M004 | OpenAPI contract | `403` | 対象操作を実行する権限がありません。 | OpenAPI で宣言された HTTP 403 response | runtime OpenAPI |
 | M005 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| M006 | 例外 | `-` | Authoritative directory identity is unavailable during reconciliation | `this.deps.verifiedIdentityProvider` が存在し、真である、かつ `currentIdentity` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:3523 (MemoRagService.syncUserDirectory)` |
+| M006 | 例外 | `-` | Authoritative directory identity is unavailable during reconciliation | `this.deps.verifiedIdentityProvider` が存在し、真である、かつ `currentIdentity` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:3535 (MemoRagService.syncUserDirectory)` |
 | M007 | 例外 | `-` | `Security mutation audit ${field} is invalid` | `value` が存在しない、または偽である、または `value.trim()` が `value` と異なる | `apps/api/src/security/security-mutation-audit-outbox.ts:311 (assertIdentifier)` |
 | M008 | 例外 | `-` | Security mutation audit intent is not valid JSON | 例外を捕捉した場合 | `apps/api/src/security/security-mutation-audit-outbox.ts:245 (parseAndValidateIntent)` |
 | M009 | 例外 | `-` | Security mutation audit intent identity mismatch | `intent.schemaVersion` が `SECURITY_MUTATION_AUDIT_SCHEMA_VERSION` と異なる、または `["pending", "finalization_pending", "completed"]` が intent.status を含まない、または `intent.draft?.tenantId` が `tenantId` と異なる、または `expectedIntentId` が `undefined` と異なる、かつ `intent.intentId` が `expectedIntentId` と異なる | `apps/api/src/security/security-mutation-audit-outbox.ts:252 (parseAndValidateIntent)` |
