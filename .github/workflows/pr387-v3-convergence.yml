@@ -1,0 +1,39 @@
+name: PR387 v3 convergence
+
+on:
+  push:
+    branches:
+      - codex/issue-359-rag-integration
+    paths:
+      - .github/workflows/pr387-v3-convergence.yml
+
+permissions:
+  contents: write
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Diagnose B2 cherry-pick conflicts
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main codex/issue-359-context-store-api-security codex/issue-359-rag-integration
+          git checkout -B pr387-v3-convergence origin/main
+          if git cherry-pick 9a215ac08e5788c9dbb74b48e94b2243c85f609d; then
+            echo "CHERRY_PICK_CLEAN=true"
+            exit 0
+          fi
+          echo "CHERRY_PICK_CLEAN=false"
+          echo "CONFLICT_FILES_BEGIN"
+          git diff --name-only --diff-filter=U | sort
+          echo "CONFLICT_FILES_END"
+          echo "STATUS_BEGIN"
+          git status --short
+          echo "STATUS_END"
+          exit 1
