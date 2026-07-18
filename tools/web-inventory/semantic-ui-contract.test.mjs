@@ -1,11 +1,22 @@
 import assert from 'node:assert/strict'
-import { readFile } from 'node:fs/promises'
+import { readdir, readFile } from 'node:fs/promises'
 import test from 'node:test'
 
 const root = new URL('../../', import.meta.url)
 
 async function read(path) {
   return readFile(new URL(path, root), 'utf8')
+}
+
+async function sourceFiles(path) {
+  const directory = new URL(path, root)
+  const entries = await readdir(directory, { withFileTypes: true })
+  const files = await Promise.all(entries.map(async (entry) => {
+    const entryPath = `${path}/${entry.name}`
+    if (entry.isDirectory()) return sourceFiles(entryPath)
+    return /\.[cm]?[jt]sx?$/.test(entry.name) ? [entryPath] : []
+  }))
+  return files.flat()
 }
 
 function cssVariable(css, name) {
@@ -69,4 +80,27 @@ test('confirmation dialogs share native focus semantics and semantic Button inte
   }
   assert.match(button, /"warning"/)
   assert.match(button, /"danger"/)
+})
+
+test('retired unused UI primitives remain absent while Badge stays in use', async () => {
+  for (const retiredPath of [
+    'apps/web/src/shared/ui/IconButton.tsx',
+    'apps/web/src/shared/ui/Panel.tsx'
+  ]) {
+    await assert.rejects(read(retiredPath), { code: 'ENOENT' })
+  }
+
+  const paths = await sourceFiles('apps/web/src')
+  const sources = await Promise.all(paths.map(async (path) => `${path}\n${await read(path)}`))
+  const webSource = sources.join('\n')
+  const uiIndex = await read('apps/web/src/shared/ui/index.ts')
+  const statusBadge = await read('apps/web/src/shared/ui/StatusBadge.tsx')
+
+  assert.doesNotMatch(uiIndex, /\b(?:IconButton|Panel)\b/)
+  assert.doesNotMatch(webSource, /\b(?:IconButton|Panel)\b/)
+  assert.doesNotMatch(webSource, /shared\/ui\/(?:IconButton|Panel)(?:\.[cm]?[jt]sx?)?/)
+  assert.doesNotMatch(webSource, /["']\.\/(?:IconButton|Panel)\.js["']/)
+  assert.match(uiIndex, /export\s*\{\s*Badge\s*\}\s*from\s*"\.\/Badge\.js"/)
+  assert.match(statusBadge, /import\s*\{\s*Badge\s*\}\s*from\s*"\.\/Badge\.js"/)
+  assert.match(statusBadge, /<Badge\b/)
 })

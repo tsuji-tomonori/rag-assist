@@ -853,8 +853,8 @@
       "feature": "shared",
       "label": "共通",
       "screens": [],
-      "componentCount": 12,
-      "interactionCount": 11
+      "componentCount": 10,
+      "interactionCount": 10
     }
   ],
   "components": [
@@ -2125,17 +2125,6 @@
       "certainty": "confirmed"
     },
     {
-      "file": "apps/web/src/shared/ui/IconButton.tsx",
-      "feature": "shared",
-      "exports": [
-        "IconButton"
-      ],
-      "jsxUsages": [
-        "button"
-      ],
-      "certainty": "confirmed"
-    },
-    {
       "file": "apps/web/src/shared/ui/OperationFeedback.tsx",
       "feature": "shared",
       "exports": [
@@ -2153,17 +2142,6 @@
         "section",
         "span",
         "strong"
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "file": "apps/web/src/shared/ui/Panel.tsx",
-      "feature": "shared",
-      "exports": [
-        "Panel"
-      ],
-      "jsxUsages": [
-        "Element"
       ],
       "certainty": "confirmed"
     },
@@ -16924,37 +16902,6 @@
         }
       ],
       "certainty": "unknown"
-    },
-    {
-      "id": "apps/web/src/shared/ui/IconButton.tsx:14:button",
-      "file": "apps/web/src/shared/ui/IconButton.tsx",
-      "line": 14,
-      "feature": "shared",
-      "component": "IconButton",
-      "element": "button",
-      "isIntrinsic": true,
-      "label": "label",
-      "a11y": {
-        "accessibleName": "label",
-        "accessibleNameSource": "aria-label",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [
-        {
-          "name": "aria-label",
-          "value": "label"
-        },
-        {
-          "name": "title",
-          "value": "props.title ?? label"
-        }
-      ],
-      "certainty": "confirmed"
     },
     {
       "id": "apps/web/src/shared/ui/ResourceState.tsx:179:button",
