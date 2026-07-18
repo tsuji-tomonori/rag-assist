@@ -7,8 +7,8 @@
 ```bash
 ./init.sh --env dev --reset-corpus --out ../../../../artifacts/benchmarks/leave_policy_v1/init/2026-05-21.001
 
-../../../../benchmarks/_shared/scripts/validate-suite.sh \
+../../../../benchmark/_shared/scripts/validate-suite.sh \
   --suite-dir .
 ```
 
-`init.sh` は suite 固有処理を持たず、共通 `benchmarks/_shared/scripts/init-suite.sh` に委譲します。
+`init.sh` は suite 固有処理を持たず、共通 `benchmark/_shared/scripts/init-suite.sh` に委譲します。

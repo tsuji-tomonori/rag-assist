@@ -169,7 +169,7 @@ function validateRunSpec(suiteDir, runSpec, corpus) {
 function validateInitDelegation(suiteDir) {
   const initPath = resolve(suiteDir, "init.sh");
   const initBody = readFileSync(initPath, "utf8");
-  assert(initBody.includes("benchmarks/_shared/scripts/init-suite.sh"), "init.sh must delegate to benchmarks/_shared/scripts/init-suite.sh");
+  assert(initBody.includes("benchmark/_shared/scripts/init-suite.sh"), "init.sh must delegate to benchmark/_shared/scripts/init-suite.sh");
   assert(initBody.includes("--suite-dir"), "init.sh must pass --suite-dir to the shared init script");
 }
 
