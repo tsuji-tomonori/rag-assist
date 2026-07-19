@@ -76,7 +76,9 @@ export function buildBenchmarkRunMetrics(summary, evidence = {}) {
     retrievalRecallAt20: derived.retrievalRecallAt20 ?? finiteNumber(metrics.retrievalRecallAt20) ?? finiteNumber(metrics.recallAt20),
     retrievalRecallAtK: derived.retrievalRecallAtK ?? finiteNumber(metrics.retrievalRecallAtK),
     falseDenialRate: derived.falseDenialRate,
-    faithfulness: derived.faithfulness ?? finiteNumber(metrics.faithfulness) ?? complement(metrics.unsupportedSentenceRate),
+    faithfulness: derived.faithfulness,
+    contextRelevance: derived.contextRelevance,
+    contextRelevanceSampleCount: derived.contextRelevanceSampleCount,
     unsupportedClaimRate: derived.unsupportedClaimRate ?? finiteNumber(metrics.unsupportedClaimRate),
     unsupportedSentenceRate: finiteNumber(metrics.unsupportedSentenceRate),
     unsupportedAnswerRate: finiteNumber(metrics.unsupportedAnswerRate),
@@ -115,6 +117,10 @@ export function buildBenchmarkRunMetrics(summary, evidence = {}) {
     p95LatencyMs: derived.p95LatencyMs ?? finiteNumber(metrics.p95LatencyMs),
     p99LatencyMs: derived.p99LatencyMs ?? finiteNumber(metrics.p99LatencyMs),
     averageLatencyMs: derived.averageLatencyMs ?? finiteNumber(metrics.averageLatencyMs),
+    firstTokenP50Ms: derived.firstTokenP50Ms,
+    firstTokenP95Ms: derived.firstTokenP95Ms,
+    firstTokenP99Ms: derived.firstTokenP99Ms,
+    firstTokenSampleCount: derived.firstTokenSampleCount,
     errorRate: finiteNumber(metrics.errorRate) ?? (total > 0 ? failedHttp / total : undefined),
     workloadProfileVersion: workload.workloadProfileVersion,
     runtimeProfileVersion: workload.runtimeProfileVersion,
@@ -191,6 +197,14 @@ function compactObject(input) {
 function deriveCaseMetrics(summary, caseResults) {
   const recallAtK = caseResults.map((item) => finiteNumber(item?.retrieval?.recallAtK)).filter(isNumber)
   const recallAt20 = caseResults.map((item) => finiteNumber(item?.retrieval?.recallAt20)).filter(isNumber)
+  const contextRows = caseResults
+    .map((item) => ({
+      relevant: finiteNumber(item?.retrieval?.relevantRetrievedCount),
+      total: finiteNumber(item?.retrieval?.evaluatedRetrievedCount)
+    }))
+    .filter((item) => Number.isInteger(item.relevant) && Number.isInteger(item.total) && item.total > 0 && item.relevant >= 0 && item.relevant <= item.total)
+  const relevantRetrievedCount = contextRows.reduce((sum, item) => sum + item.relevant, 0)
+  const evaluatedRetrievedCount = contextRows.reduce((sum, item) => sum + item.total, 0)
   const citationCoverage = caseResults.map((item) => item?.citation?.expectedFileHit).filter(isBoolean)
   const citationSupport = caseResults.map((item) => item?.citation?.citationSupportPass).filter(isBoolean)
   const answerable = caseResults.filter((item) => item?.answerability?.expectedAnswerable === true)
@@ -204,6 +218,7 @@ function deriveCaseMetrics(summary, caseResults) {
   const evaluatedClaimCount = generation.reduce((sum, item) => sum + item.evaluatedClaimCount, 0)
   const unsupportedClaimCount = generation.reduce((sum, item) => sum + item.unsupportedClaimCount, 0)
   const latencies = caseResults.map((item) => finiteNumber(item?.latency?.latencyMs)).filter(isNumber)
+  const firstTokenLatencies = caseResults.map(firstTokenLatency).filter(isNumber)
   const leakCounts = caseResults.map((item) => finiteNumber(item?.retrieval?.noAccessLeakCount)).filter(isNumber)
   const meanRecallAtK = average(recallAtK)
   const structured = deriveStructuredCaseQuality(caseResults, summary)
@@ -216,6 +231,8 @@ function deriveCaseMetrics(summary, caseResults) {
     citationLocatorValidity: structured.citationLocatorValidity,
     requiredClaimMissCount: structured.requiredClaimMissCount,
     faithfulness: structured.faithfulness ?? (evaluatedClaimCount === 0 ? undefined : rounded(1 - unsupportedClaimCount / evaluatedClaimCount)),
+    contextRelevance: evaluatedRetrievedCount === 0 ? undefined : rounded(relevantRetrievedCount / evaluatedRetrievedCount),
+    contextRelevanceSampleCount: evaluatedRetrievedCount === 0 ? undefined : evaluatedRetrievedCount,
     unsupportedClaimRate: structured.unsupportedClaimRate ?? (evaluatedClaimCount === 0 ? undefined : rounded(unsupportedClaimCount / evaluatedClaimCount)),
     criticalUnsupportedClaimCount: structured.criticalUnsupportedClaimCount,
     falseAnswerRate: unanswerable.length === 0
@@ -236,6 +253,10 @@ function deriveCaseMetrics(summary, caseResults) {
     p95LatencyMs: percentile(latencies, 0.95),
     p99LatencyMs: percentile(latencies, 0.99),
     averageLatencyMs: average(latencies),
+    firstTokenP50Ms: percentile(firstTokenLatencies, 0.5),
+    firstTokenP95Ms: percentile(firstTokenLatencies, 0.95),
+    firstTokenP99Ms: percentile(firstTokenLatencies, 0.99),
+    firstTokenSampleCount: firstTokenLatencies.length,
     qualitySliceMeasurements: structured.qualitySliceMeasurements
   })
 }
@@ -629,6 +650,23 @@ function safeSliceValue(value) {
   return String(value ?? "").trim().toLowerCase().replace(/[^a-z0-9._-]+/g, "-").replace(/^-+|-+$/g, "") || "unknown"
 }
 
+function firstTokenLatency(caseResult) {
+  const evidence = caseResult?.latency?.firstToken
+  return evidence?.schemaVersion === 1
+    && evidence.unit === "ms"
+    && evidence.clock === "node_performance"
+    && evidence.origin === "chat_orchestration_ingress"
+    && evidence.boundary === "answer_model_first_content_delta"
+    && evidence.clientVisible === false
+    && evidence.status === "measured"
+    && evidence.reason === undefined
+    && Number.isInteger(evidence.attemptOrdinal)
+    && evidence.attemptOrdinal > 0
+    && isNonnegativeNumber(evidence.latencyMs)
+    ? evidence.latencyMs
+    : undefined
+}
+
 function percentile(values, quantile) {
   if (values.length === 0) return undefined
   const sorted = [...values].sort((left, right) => left - right)
@@ -689,11 +727,6 @@ function versionString(value) {
 
 function finiteNumber(value) {
   return typeof value === "number" && Number.isFinite(value) ? value : undefined
-}
-
-function complement(value) {
-  const numeric = finiteNumber(value)
-  return numeric === undefined ? undefined : 1 - numeric
 }
 
 function required(value, label) {

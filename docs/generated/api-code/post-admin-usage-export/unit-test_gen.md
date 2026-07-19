@@ -8,9 +8,9 @@
 
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
-| 到達 symbol | audit export failure is tenant-scoped and recorded in the common audit read model | `apps/api/src/rag/memorag-service.test.ts:3006 (audit export failure is tenant-scoped and recorded in the common audit read model)` |
-| 到達 symbol | usage and cost export failures are tenant-scoped and audited through separate operations | `apps/api/src/rag/memorag-service.test.ts:3058 (usage and cost export failures are tenant-scoped and audited through separate operations)` |
-| 到達 symbol | shadow usage rollout records events without exposing read or export as the active path | `apps/api/src/rag/memorag-service.test.ts:3101 (shadow usage rollout records events without exposing read or export as the active path)` |
+| 到達 symbol | audit export failure is tenant-scoped and recorded in the common audit read model | `apps/api/src/rag/memorag-service.test.ts:3008 (audit export failure is tenant-scoped and recorded in the common audit read model)` |
+| 到達 symbol | usage and cost export failures are tenant-scoped and audited through separate operations | `apps/api/src/rag/memorag-service.test.ts:3060 (usage and cost export failures are tenant-scoped and audited through separate operations)` |
+| 到達 symbol | shadow usage rollout records events without exposing read or export as the active path | `apps/api/src/rag/memorag-service.test.ts:3103 (shadow usage rollout records events without exposing read or export as the active path)` |
 
 ## 2. 実装分岐から導くテスト要因
 

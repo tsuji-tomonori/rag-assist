@@ -1,4 +1,4 @@
-export type BenchmarkRunStatus = "queued" | "running" | "succeeded" | "failed" | "cancelled"
+export type BenchmarkRunStatus = "queued" | "running" | "succeeded" | "failed" | "timed_out" | "cancelled"
 export type BenchmarkMode = "agent" | "search" | "load"
 export type BenchmarkRunner = "codebuild" | "lambda"
 
@@ -32,6 +32,9 @@ export type BenchmarkRunMetrics = {
   averageLatencyMs?: number | null
   errorRate?: number | null
   falseDenialRate?: number | null
+  faithfulness?: number | null
+  contextRelevance?: number | null
+  contextRelevanceSampleCount?: number | null
   citationCompleteness?: number | null
   falseAnswerRate?: number | null
   falseRefusalRate?: number | null
@@ -83,6 +86,18 @@ export type BenchmarkRun = {
   summaryS3Key?: string
   reportS3Key?: string
   resultsS3Key?: string
+  releaseAuditS3Key?: string
+  artifactIntegrity?: {
+    schemaVersion: 1
+    status: "pending" | "complete" | "partial_failure" | "failed"
+    availableCount: number
+    failureCount: number
+    artifacts: Array<{
+      kind: "results" | "summary" | "report" | "release_audit"
+      status: "pending" | "available" | "generation_failed" | "upload_failed"
+      failureReason?: string
+    }>
+  }
   metrics?: BenchmarkRunMetrics
   error?: string
 }

@@ -114,4 +114,36 @@ describe("BenchmarkWorkspace", () => {
     expect(dialog).toBeVisible()
     expect(screen.getByRole("alert", { name: "性能テスト取消: Agent standard" })).toHaveTextContent("結果未確認")
   })
+
+  it("タイムアウトと部分的な成果物失敗を成功扱いせず利用可能な成果物だけ許可する", () => {
+    renderBenchmarkWorkspace({
+      runs: [{
+        ...run,
+        status: "timed_out",
+        summaryS3Key: "runs/run-1/summary.json",
+        reportS3Key: "runs/run-1/report.md",
+        resultsS3Key: "runs/run-1/results.jsonl",
+        artifactIntegrity: {
+          schemaVersion: 1,
+          status: "partial_failure",
+          availableCount: 1,
+          failureCount: 3,
+          artifacts: [
+            { kind: "results", status: "available" },
+            { kind: "summary", status: "upload_failed", failureReason: "summary_upload_failed" },
+            { kind: "report", status: "generation_failed", failureReason: "report_not_generated" },
+            { kind: "release_audit", status: "generation_failed", failureReason: "release_audit_not_generated" }
+          ]
+        }
+      }]
+    })
+
+    expect(screen.getAllByText("タイムアウト")).toHaveLength(2)
+    expect(screen.getByRole("button", { name: "未加工の結果 JSONL: 生成済み" })).toBeEnabled()
+    expect(screen.getByRole("button", { name: "サマリJSON: 保存失敗" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "レポートMarkdown: 生成失敗" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "run-1のジョブをキャンセル" })).toBeDisabled()
+    expect(screen.getByText("成功した実行").closest("article")).toHaveTextContent("0")
+    expect(screen.getByText("失敗した実行").closest("article")).toHaveTextContent("1")
+  })
 })

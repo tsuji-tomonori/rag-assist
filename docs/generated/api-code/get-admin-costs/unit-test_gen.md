@@ -8,8 +8,8 @@
 
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
-| 到達 symbol | shadow usage rollout records events without exposing read or export as the active path | `apps/api/src/rag/memorag-service.test.ts:3101 (shadow usage rollout records events without exposing read or export as the active path)` |
-| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:3469 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
+| 到達 symbol | shadow usage rollout records events without exposing read or export as the active path | `apps/api/src/rag/memorag-service.test.ts:3103 (shadow usage rollout records events without exposing read or export as the active path)` |
+| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:3471 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
 
 ## 2. 実装分岐から導くテスト要因
 

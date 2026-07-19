@@ -1,6 +1,6 @@
 import { z } from "zod"
 import { JsonValueSchema } from "../json.js"
-import { ChatRequestSchema, ChatResponseSchema } from "./chat.js"
+import { ChatRequestSchema, ChatResponseSchema, FirstTokenTimingEvidenceSchema } from "./chat.js"
 import { SearchRequestSchema, SearchResponseSchema } from "./search.js"
 
 export const BenchmarkQueryRequestSchema = ChatRequestSchema.omit({ searchScope: true }).extend({
@@ -139,7 +139,17 @@ export const BenchmarkCaseResultSchema = z.object({
     recallAtK: z.number().nullable().optional(),
     recallAt20: z.number().nullable().optional(),
     mrrAtK: z.number().nullable().optional(),
+    relevantRetrievedCount: z.number().int().nonnegative().optional(),
+    evaluatedRetrievedCount: z.number().int().nonnegative().optional(),
     noAccessLeakCount: z.number().int().nonnegative().optional()
+  }).superRefine((value, context) => {
+    const relevant = value.relevantRetrievedCount
+    const evaluated = value.evaluatedRetrievedCount
+    if ((relevant === undefined) !== (evaluated === undefined)) {
+      context.addIssue({ code: "custom", message: "retrieval relevance counts must be provided together" })
+    } else if (relevant !== undefined && evaluated !== undefined && relevant > evaluated) {
+      context.addIssue({ code: "custom", message: "relevantRetrievedCount must not exceed evaluatedRetrievedCount" })
+    }
   }).default(() => ({})),
   citation: z.object({
     citationCount: z.number().int().nonnegative().optional(),
@@ -193,6 +203,7 @@ export const BenchmarkCaseResultSchema = z.object({
   latency: z.object({
     latencyMs: z.number().int().nonnegative().optional(),
     taskLatencyMs: z.number().int().nonnegative().optional(),
+    firstToken: FirstTokenTimingEvidenceSchema.optional(),
     stages: z.array(z.object({
       endpoint: z.enum(["chat", "search", "ingest"]),
       stage: z.string().min(1),

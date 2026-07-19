@@ -19,6 +19,7 @@ import type {
   DebugTrace,
   DocumentIngestRun,
   DocumentManifest,
+  FirstTokenTimingEvidence,
   PipelineVersions,
   SearchScope,
   WorkerResult
@@ -49,6 +50,14 @@ export type RagSignalMeasurement = {
   unavailableReason?: string
 }
 
+export type RagDiagnosticMeasurementId =
+  | "retrieval.context_relevance"
+  | "evaluation.artifact_failure_count"
+  | "evaluation.run_timed_out"
+  | "performance.chat_first_token_p50_ms"
+  | "performance.chat_first_token_p95_ms"
+  | "performance.chat_first_token_p99_ms"
+
 export type RagQualitySourceSample = {
   schemaVersion: 1
   signalCatalogVersion: typeof RAG_QUALITY_SIGNAL_CATALOG_VERSION
@@ -68,6 +77,7 @@ export type RagQualitySourceSample = {
   versionDimensions: Record<string, string[]>
   missingVersionDimensions: string[]
   measurements: Partial<Record<RagQualitySignalId, RagSignalMeasurement>>
+  diagnosticMeasurements?: Partial<Record<RagDiagnosticMeasurementId, RagSignalMeasurement>>
   proxyMeasurements?: Record<string, { value: number; label: string }>
   guardOutcomes?: RagGuardOutcome[]
   degradationDecisions?: SafeDegradationDecision[]
@@ -202,6 +212,7 @@ export class ProductionRagObservationProducer {
       "reliability.success_rate": measurement(trace.status === "error" ? 0 : 1, 1),
       "reliability.error_rate": measurement(trace.status === "error" ? 1 : 0, 1)
     }
+    const firstToken = firstTokenMeasurement(trace.firstTokenTiming)
     return this.capture({
       sourceType: "debug_trace",
       artifactId: trace.runId,
@@ -209,6 +220,11 @@ export class ProductionRagObservationProducer {
       traceIds: [trace.runId],
       versionDimensions: versionsFromTrace(trace),
       measurements,
+      diagnosticMeasurements: {
+        "performance.chat_first_token_p50_ms": firstToken,
+        "performance.chat_first_token_p95_ms": firstToken,
+        "performance.chat_first_token_p99_ms": firstToken
+      },
       context: {
         tenantId: context.tenantId,
         roles: context.roles,
@@ -223,6 +239,7 @@ export class ProductionRagObservationProducer {
     runId: string
     observedAt: string
     latencyMs: number
+    firstTokenTiming?: FirstTokenTimingEvidence
     tenantId: string
     roles: string[]
     resourceIds: string[]
@@ -271,6 +288,11 @@ export class ProductionRagObservationProducer {
         "performance.chat_p99_ms": measurement(input.latencyMs, 1),
         "reliability.success_rate": measurement(1, 1),
         "reliability.error_rate": measurement(0, 1)
+      },
+      diagnosticMeasurements: {
+        "performance.chat_first_token_p50_ms": firstTokenMeasurement(input.firstTokenTiming),
+        "performance.chat_first_token_p95_ms": firstTokenMeasurement(input.firstTokenTiming),
+        "performance.chat_first_token_p99_ms": firstTokenMeasurement(input.firstTokenTiming)
       },
       proxyMeasurements: {
         answerSupportRate: { value: supportedRate, label: "runtime_proxy_not_reviewed_ground_truth" },
@@ -410,6 +432,8 @@ export class ProductionRagObservationProducer {
     if (!policy) return { recorded: 0, skippedReason: "active_policy_unavailable" }
     const metrics = run.metrics
     const sampleCount = Math.max(0, metrics?.total ?? 0)
+    const artifactEvidenceComplete = run.status === "succeeded"
+      && run.artifactIntegrity?.status === "complete"
     const caseSliceEvidenceComplete = sampleCount > 0 && requiredCaseSliceNames(policy.requiredCaseSlices).every((slice) => (
       metrics?.qualitySliceMeasurements?.some((item) => (
         item.slice === slice
@@ -418,7 +442,8 @@ export class ProductionRagObservationProducer {
       ))
     ))
     const profileEvidenceMatches = Boolean(
-      metrics?.datasetVersion === policy.evidenceVersions.dataset
+      artifactEvidenceComplete
+      && metrics?.datasetVersion === policy.evidenceVersions.dataset
       && run.modelId === policy.evidenceVersions.model
       && metrics.workloadProfileVersion === policy.workloadProfileVersion
       && metrics.runtimeProfileVersion === policy.runtimeProfileVersion
@@ -433,6 +458,9 @@ export class ProductionRagObservationProducer {
       && metrics.documentSizeProfileVersion === policy.workloadDimensions.documentSizeProfileVersion
       && metrics.dependencyLatencyProfileVersion === policy.workloadDimensions.dependencyLatencyProfileVersion
     )
+    const evidenceMismatchReason = artifactEvidenceComplete
+      ? "benchmark_profile_evidence_mismatch"
+      : "benchmark_run_or_artifacts_incomplete"
     const priceEvidenceMatches = profileEvidenceMatches && metrics?.priceCatalogVersion === policy.priceCatalogVersion
     const benchmarkMeasurement = (
       value: number | undefined,
@@ -443,7 +471,7 @@ export class ProductionRagObservationProducer {
     ) => measurement(
       (requirePrice ? priceEvidenceMatches : profileEvidenceMatches) ? value : undefined,
       count,
-      (requirePrice ? priceEvidenceMatches : profileEvidenceMatches) ? unavailableReason : "benchmark_profile_evidence_mismatch",
+      (requirePrice ? priceEvidenceMatches : profileEvidenceMatches) ? unavailableReason : evidenceMismatchReason,
       confidence
     )
     const measurements: RagQualitySourceSample["measurements"] = {
@@ -497,6 +525,29 @@ export class ProductionRagObservationProducer {
       "release.dataset_specific_branch_count": benchmarkMeasurement(metrics?.datasetSpecificBranchCount, 1, "release_taint_scan_missing", 0.95),
       "release.artifact_manifest_mismatch_count": benchmarkMeasurement(metrics?.artifactManifestMismatchCount, 1, "release_artifact_validation_missing", 0.95)
     }
+    const diagnosticMeasurements: RagQualitySourceSample["diagnosticMeasurements"] = {
+      "retrieval.context_relevance": benchmarkMeasurement(
+        metrics?.contextRelevance,
+        metrics?.contextRelevanceSampleCount ?? 0,
+        "benchmark_context_relevance_missing",
+        0.9
+      ),
+      "evaluation.artifact_failure_count": measurement(
+        run.artifactIntegrity?.failureCount,
+        run.artifactIntegrity?.artifacts.length ?? 0,
+        "benchmark_artifact_integrity_missing",
+        0.95
+      ),
+      "evaluation.run_timed_out": measurement(
+        run.status === "timed_out" ? 1 : run.status === "succeeded" || run.status === "failed" ? 0 : undefined,
+        1,
+        "benchmark_terminal_status_missing",
+        0.95
+      ),
+      "performance.chat_first_token_p50_ms": benchmarkMeasurement(metrics?.firstTokenP50Ms, metrics?.firstTokenSampleCount ?? 0, "benchmark_first_token_evidence_missing", 0.9),
+      "performance.chat_first_token_p95_ms": benchmarkMeasurement(metrics?.firstTokenP95Ms, metrics?.firstTokenSampleCount ?? 0, "benchmark_first_token_evidence_missing", 0.9),
+      "performance.chat_first_token_p99_ms": benchmarkMeasurement(metrics?.firstTokenP99Ms, metrics?.firstTokenSampleCount ?? 0, "benchmark_first_token_evidence_missing", 0.9)
+    }
     const versionDimensions = compactVersions({
       policy: `${policy.profileId}@${policy.version}`,
       index: metrics?.indexVersion,
@@ -518,6 +569,7 @@ export class ProductionRagObservationProducer {
       traceIds: [`benchmark:${run.runId}`],
       versionDimensions,
       measurements,
+      diagnosticMeasurements,
       context: {
         tenantId: run.tenantId,
         securityResourceRefs: run.securityResourceRefs,
@@ -670,7 +722,7 @@ export class ProductionRagObservationProducer {
     let recorded = 0
     for (const run of runs) {
       const observedAt = run.completedAt ?? run.updatedAt
-      if (run.status !== "succeeded" && run.status !== "failed") continue
+      if (run.status !== "succeeded" && run.status !== "failed" && run.status !== "timed_out") continue
       if (observedAt < window.windowStart || observedAt > window.windowEnd) continue
       recorded += (await this.captureBenchmarkRun(run)).recorded
     }
@@ -717,6 +769,7 @@ export class ProductionRagObservationProducer {
     traceIds: string[]
     versionDimensions: Record<string, string[]>
     measurements: RagQualitySourceSample["measurements"]
+    diagnosticMeasurements?: RagQualitySourceSample["diagnosticMeasurements"]
     proxyMeasurements?: RagQualitySourceSample["proxyMeasurements"]
     guardOutcomes?: RagGuardOutcome[]
     degradationDecisions?: SafeDegradationDecision[]
@@ -746,6 +799,7 @@ export class ProductionRagObservationProducer {
         versionDimensions: input.versionDimensions,
         missingVersionDimensions,
         measurements: input.measurements,
+        diagnosticMeasurements: input.diagnosticMeasurements,
         proxyMeasurements: input.proxyMeasurements,
         guardOutcomes: input.guardOutcomes,
         degradationDecisions: input.degradationDecisions
@@ -924,6 +978,23 @@ function measurement(
   return { available: true, value, sampleCount, confidence }
 }
 
+function firstTokenMeasurement(evidence: FirstTokenTimingEvidence | undefined): RagSignalMeasurement {
+  if (!evidence) return unavailable("first_token_evidence_missing")
+  if (evidence.status !== "measured") return unavailable(`first_token_${evidence.status}:${evidence.reason ?? "reason_missing"}`)
+  if (
+    evidence.schemaVersion !== 1
+    || evidence.unit !== "ms"
+    || evidence.clock !== "node_performance"
+    || evidence.origin !== "chat_orchestration_ingress"
+    || evidence.boundary !== "answer_model_first_content_delta"
+    || evidence.clientVisible !== false
+    || evidence.reason !== undefined
+    || !Number.isInteger(evidence.attemptOrdinal)
+    || evidence.attemptOrdinal! < 1
+  ) return unavailable("first_token_evidence_invalid")
+  return measurement(evidence.latencyMs, 1, "first_token_latency_invalid", 0.9)
+}
+
 function unavailable(reason: string): RagSignalMeasurement {
   return { available: false, value: null, sampleCount: 0, confidence: null, unavailableReason: reason }
 }
@@ -1054,23 +1125,33 @@ function assertSourceSample(sample: RagQualitySourceSample): void {
   ) throw new Error("Invalid RAG quality source sample identity")
   for (const [signalId, item] of Object.entries(sample.measurements)) {
     if (!RAG_REQUIRED_SIGNAL_IDS.includes(signalId as RagQualitySignalId)) throw new Error(`Unknown RAG quality signal: ${signalId}`)
-    if (
-      !Number.isInteger(item.sampleCount)
-      || item.sampleCount < 0
-      || item.available && (
-        item.value === null
-        || !Number.isFinite(item.value)
-        || item.sampleCount < 1
-        || item.confidence === null
-        || item.confidence < 0
-        || item.confidence > 1
-      )
-    ) {
-      throw new Error(`Available RAG quality measurement is incomplete: ${signalId}`)
+    assertMeasurement(signalId, item)
+  }
+  for (const [signalId, item] of Object.entries(sample.diagnosticMeasurements ?? {})) {
+    if (!["retrieval.context_relevance", "evaluation.artifact_failure_count", "evaluation.run_timed_out", "performance.chat_first_token_p50_ms", "performance.chat_first_token_p95_ms", "performance.chat_first_token_p99_ms"].includes(signalId)) {
+      throw new Error(`Unknown RAG diagnostic measurement: ${signalId}`)
     }
-    if (!item.available && (item.value !== null || item.confidence !== null)) {
-      throw new Error(`Unavailable RAG quality measurement must not contain a value: ${signalId}`)
-    }
+    assertMeasurement(signalId, item)
+  }
+}
+
+function assertMeasurement(signalId: string, item: RagSignalMeasurement): void {
+  if (
+    !Number.isInteger(item.sampleCount)
+    || item.sampleCount < 0
+    || item.available && (
+      item.value === null
+      || !Number.isFinite(item.value)
+      || item.sampleCount < 1
+      || item.confidence === null
+      || item.confidence < 0
+      || item.confidence > 1
+    )
+  ) {
+    throw new Error(`Available RAG quality measurement is incomplete: ${signalId}`)
+  }
+  if (!item.available && (item.value !== null || item.confidence !== null)) {
+    throw new Error(`Unavailable RAG quality measurement must not contain a value: ${signalId}`)
   }
 }
 

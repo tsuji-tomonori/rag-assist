@@ -216,6 +216,17 @@ function traceFixture(): DebugTrace {
     startedAt: "2026-07-11T00:29:59.850Z",
     completedAt: observedAt,
     totalLatencyMs: 150,
+    firstTokenTiming: {
+      schemaVersion: 1,
+      unit: "ms",
+      clock: "node_performance",
+      origin: "chat_orchestration_ingress",
+      boundary: "answer_model_first_content_delta",
+      clientVisible: false,
+      status: "measured",
+      latencyMs: 45,
+      attemptOrdinal: 1
+    },
     status: "success",
     answerPreview: "It is measured.",
     isAnswerable: true,
@@ -231,13 +242,13 @@ test("FR-075/SQ-005..015 production artifacts yield profile/version/slice observ
   const policy = approvedPolicy()
   await store.putText(ACTIVE_RAG_QUALITY_POLICY_KEY, JSON.stringify(policy))
   const producer = new ProductionRagObservationProducer(store)
-
   await producer.captureIngestManifest({ manifest: manifestFixture(), latencyMs: 80 })
   await producer.captureDebugTrace(traceFixture(), { tenantId: "tenant-sensitive-1", roles: ["CHAT_USER"] })
   await producer.captureChatOutcome({
     runId: "normal-chat-1",
     observedAt,
     latencyMs: 125,
+    firstTokenTiming: traceFixture().firstTokenTiming,
     tenantId: "tenant-sensitive-1",
     roles: ["CHAT_USER"],
     resourceIds: ["document-1"],
@@ -300,6 +311,7 @@ test("FR-075/SQ-005..015 production artifacts yield profile/version/slice observ
     createdAt: observedAt,
     updatedAt: observedAt,
     completedAt: observedAt,
+    artifactIntegrity: completeBenchmarkArtifactIntegrity(),
     modelId: "answer-model-v2",
     embeddingModelId: pipelineVersions.embeddingModelId,
     metrics: {
@@ -326,6 +338,8 @@ test("FR-075/SQ-005..015 production artifacts yield profile/version/slice observ
       retrievalRecallAtK: 0.91,
       falseDenialRate: 0.01,
       faithfulness: 0.96,
+      contextRelevance: 0.75,
+      contextRelevanceSampleCount: 80,
       unsupportedClaimRate: 0.02,
       citationPrecision: 0.98,
       citationCompleteness: 0.95,
@@ -336,6 +350,10 @@ test("FR-075/SQ-005..015 production artifacts yield profile/version/slice observ
       secretExposureCount: 0,
       eligibilityPropagationP99Ms: 500,
       p95LatencyMs: 250,
+      firstTokenP50Ms: 45,
+      firstTokenP95Ms: 75,
+      firstTokenP99Ms: 90,
+      firstTokenSampleCount: 80,
       errorRate: 0.01
     }
   })
@@ -371,12 +389,14 @@ test("FR-075/SQ-005..015 production artifacts yield profile/version/slice observ
   assert.equal(findObservation(observations, "performance.search_p95_ms").value, 30)
   assert.equal(findObservation(observations, "release.dataset_specific_branch_count").value, 0)
   assert.equal(findObservation(observations, "evaluation.slice_case_count").value, 100)
+  assert.equal(findObservation(observations, "generation.faithfulness").value, 0.96)
   assert.equal(findObservation(observations, "reliability.success_rate", "use_case=chat").available, true)
 
   const normalChatKey = (await store.listKeys("quality-control/source-samples/")).find((key) => key.includes("/normal_chat/normal-chat-1/"))
   assert.ok(normalChatKey)
   const normalChatSample = JSON.parse(await store.getText(normalChatKey)) as {
     measurements: Record<string, { available: boolean; value: number | null }>
+    diagnosticMeasurements: Record<string, { available: boolean; value: number | null; sampleCount: number }>
     guardOutcomes: Array<{ evidence: string }>
     proxyMeasurements: Record<string, { value: number; label: string }>
   }
@@ -387,7 +407,31 @@ test("FR-075/SQ-005..015 production artifacts yield profile/version/slice observ
   assert.equal(normalChatSample.proxyMeasurements.answerSupportRate?.value, 1)
   assert.match(normalChatSample.proxyMeasurements.answerSupportRate?.label ?? "", /proxy_not_reviewed/)
   assert.equal(normalChatSample.guardOutcomes.length, MANDATORY_RAG_GUARDS.length)
+  assert.deepEqual(normalChatSample.diagnosticMeasurements["performance.chat_first_token_p95_ms"], {
+    available: true,
+    value: 45,
+    sampleCount: 1,
+    confidence: 0.9
+  })
   assert.doesNotMatch(JSON.stringify(normalChatSample), /measured text|What is measured/)
+
+  const benchmarkKey = (await store.listKeys("quality-control/source-samples/")).find((key) => key.includes("/benchmark_summary/benchmark-1/"))
+  assert.ok(benchmarkKey)
+  const benchmarkSample = JSON.parse(await store.getText(benchmarkKey)) as {
+    diagnosticMeasurements: Record<string, { available: boolean; value: number | null; sampleCount: number }>
+  }
+  assert.deepEqual(benchmarkSample.diagnosticMeasurements["retrieval.context_relevance"], {
+    available: true,
+    value: 0.75,
+    sampleCount: 80,
+    confidence: 0.9
+  })
+  assert.deepEqual(benchmarkSample.diagnosticMeasurements["performance.chat_first_token_p99_ms"], {
+    available: true,
+    value: 90,
+    sampleCount: 80,
+    confidence: 0.9
+  })
 
   const injection = findObservation(observations, "security.injection_success_count")
   assert.equal(injection.available, false)
@@ -479,6 +523,7 @@ test("FR-075 benchmark quality evidence connects workload, price, recovery, and 
     createdAt: observedAt,
     updatedAt: observedAt,
     completedAt: observedAt,
+    artifactIntegrity: completeBenchmarkArtifactIntegrity(),
     modelId: "answer-model-v2",
     embeddingModelId: pipelineVersions.embeddingModelId,
     metrics: {
@@ -527,6 +572,107 @@ test("FR-075 benchmark quality evidence connects workload, price, recovery, and 
   assert.ok(release.source.artifactTypes.includes("benchmark_summary"))
   assert.deepEqual(release.source.versionDimensions.releaseAudit, ["sha256:release-evidence"])
   assert.deepEqual(release.source.missingVersionDimensions, [])
+})
+
+test("FR-048 timed out or incomplete artifacts remain diagnostic evidence and cannot satisfy quality gates", async () => {
+  const store = new LocalObjectStore(await mkdtemp(path.join(os.tmpdir(), "rag-benchmark-timeout-evidence-")))
+  const policy = approvedPolicy()
+  await store.putText(ACTIVE_RAG_QUALITY_POLICY_KEY, JSON.stringify(policy))
+  const producer = new ProductionRagObservationProducer(store)
+  const apparentlyPassingMetrics = {
+    total: 10,
+    succeeded: 10,
+    failedHttp: 0,
+    faithfulness: 1,
+    datasetVersion: policy.evidenceVersions.dataset,
+    workloadProfileVersion: policy.workloadProfileVersion,
+    runtimeProfileVersion: policy.runtimeProfileVersion,
+    priceCatalogVersion: policy.priceCatalogVersion,
+    indexVersion: policy.evidenceVersions.index,
+    promptVersion: policy.evidenceVersions.prompt,
+    pipelineVersion: policy.evidenceVersions.pipeline,
+    parserVersion: policy.evidenceVersions.parser,
+    chunkerVersion: policy.evidenceVersions.chunker,
+    corpusProfileVersion: policy.workloadDimensions.corpusProfileVersion,
+    aclDistributionVersion: policy.workloadDimensions.aclDistributionVersion,
+    workloadConcurrency: policy.workloadDimensions.concurrency,
+    documentSizeProfileVersion: policy.workloadDimensions.documentSizeProfileVersion,
+    dependencyLatencyProfileVersion: policy.workloadDimensions.dependencyLatencyProfileVersion
+  }
+
+  const capture = await producer.captureBenchmarkRun({
+    runId: "benchmark-timeout-1",
+    status: "timed_out",
+    mode: "agent",
+    runner: "codebuild",
+    suiteId: "approved-suite-v4",
+    datasetS3Key: "benchmarks/approved-suite.jsonl",
+    createdBy: "quality-owner",
+    tenantId: "tenant-sensitive-1",
+    createdAt: observedAt,
+    updatedAt: observedAt,
+    completedAt: observedAt,
+    modelId: "answer-model-v2",
+    artifactIntegrity: {
+      schemaVersion: 1,
+      status: "partial_failure",
+      availableCount: 1,
+      failureCount: 3,
+      artifacts: [
+        { kind: "results", status: "available" },
+        { kind: "summary", status: "upload_failed", failureReason: "summary_upload_failed" },
+        { kind: "report", status: "generation_failed", failureReason: "report_not_generated" },
+        { kind: "release_audit", status: "generation_failed", failureReason: "release_audit_not_generated" }
+      ]
+    },
+    metrics: apparentlyPassingMetrics
+  })
+
+  await producer.captureBenchmarkRun({
+    runId: "benchmark-legacy-incomplete-1",
+    status: "succeeded",
+    mode: "agent",
+    runner: "codebuild",
+    suiteId: "approved-suite-v4",
+    datasetS3Key: "benchmarks/approved-suite.jsonl",
+    createdBy: "quality-owner",
+    tenantId: "tenant-sensitive-1",
+    createdAt: observedAt,
+    updatedAt: observedAt,
+    completedAt: observedAt,
+    modelId: "answer-model-v2",
+    metrics: apparentlyPassingMetrics
+  })
+
+  assert.ok(capture.recorded > 0)
+  const sampleKeys = await store.listKeys("quality-control/source-samples/")
+  const sampleKey = sampleKeys.find((key) => key.includes("benchmark-timeout-1"))
+  assert.ok(sampleKey)
+  const sample = JSON.parse(await store.getText(sampleKey)) as {
+    measurements: Record<string, { available: boolean; unavailableReason?: string }>
+    diagnosticMeasurements: Record<string, { available: boolean; value: number | null }>
+  }
+  assert.equal(sample.measurements["generation.faithfulness"]?.available, false)
+  assert.equal(sample.measurements["generation.faithfulness"]?.unavailableReason, "benchmark_run_or_artifacts_incomplete")
+  assert.deepEqual(sample.diagnosticMeasurements["evaluation.artifact_failure_count"], {
+    available: true,
+    value: 3,
+    sampleCount: 4,
+    confidence: 0.95
+  })
+  assert.deepEqual(sample.diagnosticMeasurements["evaluation.run_timed_out"], {
+    available: true,
+    value: 1,
+    sampleCount: 1,
+    confidence: 0.95
+  })
+  const legacyKey = sampleKeys.find((key) => key.includes("benchmark-legacy-incomplete-1"))
+  assert.ok(legacyKey)
+  const legacy = JSON.parse(await store.getText(legacyKey)) as {
+    measurements: Record<string, { available: boolean; unavailableReason?: string }>
+  }
+  assert.equal(legacy.measurements["generation.faithfulness"]?.available, false)
+  assert.equal(legacy.measurements["generation.faithfulness"]?.unavailableReason, "benchmark_run_or_artifacts_incomplete")
 })
 
 test("FR-093 eligibility propagation records the first current-state detection exactly once", async () => {
@@ -719,4 +865,17 @@ function findObservation(
   const observation = matching.find((item) => item.available) ?? matching[0]
   assert.ok(observation, `${signalId}[${slice}] observation must exist`)
   return observation
+}
+
+function completeBenchmarkArtifactIntegrity() {
+  return {
+    schemaVersion: 1 as const,
+    status: "complete" as const,
+    availableCount: 4,
+    failureCount: 0,
+    artifacts: (["results", "summary", "report", "release_audit"] as const).map((kind) => ({
+      kind,
+      status: "available" as const
+    }))
+  }
 }

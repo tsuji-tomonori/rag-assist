@@ -33,8 +33,8 @@
 | 23 | 参照 | `objectStore` | `getTextWithVersion` | `objectStore` に対して get text with version を実行する。 | `readManifest` | `apps/api/src/rag/_shared/security/revocation-cleanup-coordinator.ts:636 (readManifest)` |
 | 24 | 作成・追記 | `this.objectStore` | `putTextIfVersion` | `this.objectStore` に対して put text if version を実行する。 | `ObjectStoreRevocationCleanupCoordinator.register` | `apps/api/src/rag/_shared/security/revocation-cleanup-coordinator.ts:169 (ObjectStoreRevocationCleanupCoordinator.register)` |
 | 25 | 実行 | `new ProductionRagObservationProducer(deps.objectStore)` | `captureIngestManifest` | `new ProductionRagObservationProducer(deps.objectStore)` に対して capture ingest manifest を実行する。 | `runIngestPipeline` | `apps/api/src/rag/offline/pre-retrieval/ingestion/ingest-run.service.ts:504 (runIngestPipeline)` |
-| 26 | 参照 | `this.objectStore` | `getText` | `this.objectStore` に対して get text を実行する。 | `ProductionRagObservationProducer.loadActivePolicy` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:783 (ProductionRagObservationProducer.loadActivePolicy)` |
-| 27 | 作成・追記 | `this.objectStore` | `putText` | `this.objectStore` に対して put text を実行する。 | `ProductionRagObservationProducer.persistSample` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:762 (ProductionRagObservationProducer.persistSample)` |
+| 26 | 参照 | `this.objectStore` | `getText` | `this.objectStore` に対して get text を実行する。 | `ProductionRagObservationProducer.loadActivePolicy` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:837 (ProductionRagObservationProducer.loadActivePolicy)` |
+| 27 | 作成・追記 | `this.objectStore` | `putText` | `this.objectStore` に対して put text を実行する。 | `ProductionRagObservationProducer.persistSample` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:816 (ProductionRagObservationProducer.persistSample)` |
 | 28 | 参照 | `deps.objectStore` | `getTextWithVersion` | `deps.objectStore` に対して get text with version を実行する。 | `readVersionedJson` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1796 (readVersionedJson)` |
 | 29 | 作成・追記 | `this.deps.objectStore` | `putTextIfVersion` | `this.deps.objectStore` に対して put text if version を実行する。 | `StagedPublicationCoordinator.ensureBootstrapPointer` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:930 (StagedPublicationCoordinator.ensureBootstrapPointer)` |
 | 30 | 作成・追記 | `this.deps.objectStore` | `putTextIfVersion` | `this.deps.objectStore` に対して put text if version を実行する。 | `StagedPublicationCoordinator.annotateManifestWithPublicationControl` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:964 (StagedPublicationCoordinator.annotateManifestWithPublicationControl)` |
@@ -99,7 +99,7 @@
 | # | CRUD/実行 | Target | Method | 自然言語での目的 | Caller | コード根拠 |
 | ---: | --- | --- | --- | --- | --- | --- |
 | 1 | 参照 | `this.identityProvider` | `getCurrentIdentityBySubject` | `this.identityProvider` へ get current identity by subject を実行する。 | `CurrentWorkerAuthorization.assertAuthorized` | `apps/api/src/security/current-worker-authorization.ts:51 (CurrentWorkerAuthorization.assertAuthorized)` |
-| 2 | 実行 | `textModel` | `generate` | `textModel` へ generate を実行する。 | `MemoRagService.createMemoryCards` | `apps/api/src/rag/memorag-service.ts:5135 (MemoRagService.createMemoryCards)` |
+| 2 | 実行 | `textModel` | `generate` | `textModel` へ generate を実行する。 | `MemoRagService.createMemoryCards` | `apps/api/src/rag/memorag-service.ts:5140 (MemoRagService.createMemoryCards)` |
 | 3 | 実行 | `deps.textModel` | `embed` | `deps.textModel` へ embed を実行する。 | `embedWithCache` | `apps/api/src/rag/offline/pre-retrieval/embedding/embedding-cache.ts:29 (embedWithCache)` |
 
 ## 解析境界

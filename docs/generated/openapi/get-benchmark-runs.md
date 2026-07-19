@@ -52,7 +52,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 151 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 167 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 
@@ -64,7 +64,7 @@ Media type: `application/json`
 | --- | --- | --- | --- | --- |
 | `benchmarkRuns` | `array<object>` | yes | `response.benchmarkRuns` の値。項目名は benchmark runs を表します。 | - |
 | `benchmarkRuns[].runId` | `string` | yes | 非同期 run または debug trace を識別する ID。 | - |
-| `benchmarkRuns[].status` | `enum(queued \| running \| succeeded \| failed \| cancelled)` | yes | 現在の処理状態または管理状態。 | enum=queued, running, succeeded, failed, cancelled |
+| `benchmarkRuns[].status` | `enum(queued \| running \| succeeded \| failed \| timed_out \| cancelled)` | yes | 現在の処理状態または管理状態。 | enum=queued, running, succeeded, failed, timed_out, cancelled |
 | `benchmarkRuns[].mode` | `enum(agent \| search \| load)` | yes | benchmark 実行モード。 | enum=agent, search, load |
 | `benchmarkRuns[].runner` | `enum(codebuild \| lambda)` | yes | benchmark を実行する runner 種別。 | enum=codebuild, lambda |
 | `benchmarkRuns[].suiteId` | `string` | yes | benchmark suite を識別する ID。 | - |
@@ -93,6 +93,16 @@ Media type: `application/json`
 | `benchmarkRuns[].summaryS3Key` | `string` | no | `response.benchmarkRuns[].summaryS3Key` の値。項目名は summary s3 key を表します。 | - |
 | `benchmarkRuns[].reportS3Key` | `string` | no | `response.benchmarkRuns[].reportS3Key` の値。項目名は report s3 key を表します。 | - |
 | `benchmarkRuns[].resultsS3Key` | `string` | no | `response.benchmarkRuns[].resultsS3Key` の値。項目名は results s3 key を表します。 | - |
+| `benchmarkRuns[].releaseAuditS3Key` | `string` | no | `response.benchmarkRuns[].releaseAuditS3Key` の値。項目名は release audit s3 key を表します。 | - |
+| `benchmarkRuns[].artifactIntegrity` | `object` | no | `response.benchmarkRuns[].artifactIntegrity` の値。項目名は artifact integrity を表します。 | - |
+| `benchmarkRuns[].artifactIntegrity.schemaVersion` | `enum(1)` | yes | `response.benchmarkRuns[].artifactIntegrity.schemaVersion` の値。項目名は schema version を表します。 | enum=1 |
+| `benchmarkRuns[].artifactIntegrity.status` | `enum(pending \| complete \| partial_failure \| failed)` | yes | 現在の処理状態または管理状態。 | enum=pending, complete, partial_failure, failed |
+| `benchmarkRuns[].artifactIntegrity.availableCount` | `integer` | yes | `response.benchmarkRuns[].artifactIntegrity.availableCount` の値。項目名は available count を表します。 | minimum=0 |
+| `benchmarkRuns[].artifactIntegrity.failureCount` | `integer` | yes | `response.benchmarkRuns[].artifactIntegrity.failureCount` の値。項目名は failure count を表します。 | minimum=0 |
+| `benchmarkRuns[].artifactIntegrity.artifacts` | `array<object>` | yes | `response.benchmarkRuns[].artifactIntegrity.artifacts` の値。項目名は artifacts を表します。 | - |
+| `benchmarkRuns[].artifactIntegrity.artifacts[].kind` | `enum(results \| summary \| report \| release_audit)` | yes | `response.benchmarkRuns[].artifactIntegrity.artifacts[].kind` の値。項目名は kind を表します。 | enum=results, summary, report, release_audit |
+| `benchmarkRuns[].artifactIntegrity.artifacts[].status` | `enum(pending \| available \| generation_failed \| upload_failed)` | yes | 現在の処理状態または管理状態。 | enum=pending, available, generation_failed, upload_failed |
+| `benchmarkRuns[].artifactIntegrity.artifacts[].failureReason` | `string` | no | `response.benchmarkRuns[].artifactIntegrity.artifacts[].failureReason` の値。項目名は failure reason を表します。 | minLength=1 |
 | `benchmarkRuns[].metrics` | `object` | no | 評価や benchmark の指標値。 | - |
 | `benchmarkRuns[].metrics.total` | `integer` | yes | `response.benchmarkRuns[].metrics.total` の値。項目名は total を表します。 | minimum=0 |
 | `benchmarkRuns[].metrics.succeeded` | `integer` | yes | `response.benchmarkRuns[].metrics.succeeded` の値。項目名は succeeded を表します。 | minimum=0 |
@@ -120,7 +130,9 @@ Media type: `application/json`
 | `benchmarkRuns[].metrics.retrievalRecallAt20` | `number` | no | `response.benchmarkRuns[].metrics.retrievalRecallAt20` の値。項目名は retrieval recall at20 を表します。 | nullable |
 | `benchmarkRuns[].metrics.retrievalRecallAtK` | `number` | no | `response.benchmarkRuns[].metrics.retrievalRecallAtK` の値。項目名は retrieval recall at k を表します。 | nullable |
 | `benchmarkRuns[].metrics.falseDenialRate` | `number` | no | `response.benchmarkRuns[].metrics.falseDenialRate` の値。項目名は false denial rate を表します。 | nullable |
-| `benchmarkRuns[].metrics.faithfulness` | `number` | no | `response.benchmarkRuns[].metrics.faithfulness` の値。項目名は faithfulness を表します。 | nullable |
+| `benchmarkRuns[].metrics.faithfulness` | `number` | no | `response.benchmarkRuns[].metrics.faithfulness` の値。項目名は faithfulness を表します。 | nullable<br>minimum=0<br>maximum=1 |
+| `benchmarkRuns[].metrics.contextRelevance` | `number` | no | `response.benchmarkRuns[].metrics.contextRelevance` の値。項目名は context relevance を表します。 | nullable<br>minimum=0<br>maximum=1 |
+| `benchmarkRuns[].metrics.contextRelevanceSampleCount` | `integer` | no | `response.benchmarkRuns[].metrics.contextRelevanceSampleCount` の値。項目名は context relevance sample count を表します。 | nullable<br>minimum=0 |
 | `benchmarkRuns[].metrics.unsupportedClaimRate` | `number` | no | `response.benchmarkRuns[].metrics.unsupportedClaimRate` の値。項目名は unsupported claim rate を表します。 | nullable |
 | `benchmarkRuns[].metrics.unsupportedSentenceRate` | `number` | no | `response.benchmarkRuns[].metrics.unsupportedSentenceRate` の値。項目名は unsupported sentence rate を表します。 | nullable |
 | `benchmarkRuns[].metrics.unsupportedAnswerRate` | `number` | no | `response.benchmarkRuns[].metrics.unsupportedAnswerRate` の値。項目名は unsupported answer rate を表します。 | nullable |
@@ -159,6 +171,10 @@ Media type: `application/json`
 | `benchmarkRuns[].metrics.p95LatencyMs` | `number` | no | `response.benchmarkRuns[].metrics.p95LatencyMs` の値。項目名は p95 latency ms を表します。 | nullable |
 | `benchmarkRuns[].metrics.p99LatencyMs` | `number` | no | `response.benchmarkRuns[].metrics.p99LatencyMs` の値。項目名は p99 latency ms を表します。 | nullable |
 | `benchmarkRuns[].metrics.averageLatencyMs` | `number` | no | `response.benchmarkRuns[].metrics.averageLatencyMs` の値。項目名は average latency ms を表します。 | nullable |
+| `benchmarkRuns[].metrics.firstTokenP50Ms` | `number` | no | `response.benchmarkRuns[].metrics.firstTokenP50Ms` の値。項目名は first token p50 ms を表します。 | nullable<br>minimum=0 |
+| `benchmarkRuns[].metrics.firstTokenP95Ms` | `number` | no | `response.benchmarkRuns[].metrics.firstTokenP95Ms` の値。項目名は first token p95 ms を表します。 | nullable<br>minimum=0 |
+| `benchmarkRuns[].metrics.firstTokenP99Ms` | `number` | no | `response.benchmarkRuns[].metrics.firstTokenP99Ms` の値。項目名は first token p99 ms を表します。 | nullable<br>minimum=0 |
+| `benchmarkRuns[].metrics.firstTokenSampleCount` | `integer` | no | `response.benchmarkRuns[].metrics.firstTokenSampleCount` の値。項目名は first token sample count を表します。 | nullable<br>minimum=0 |
 | `benchmarkRuns[].metrics.errorRate` | `number` | no | `response.benchmarkRuns[].metrics.errorRate` の値。項目名は error rate を表します。 | nullable |
 | `benchmarkRuns[].metrics.datasetVersion` | `string` | no | `response.benchmarkRuns[].metrics.datasetVersion` の値。項目名は dataset version を表します。 | minLength=1 |
 | `benchmarkRuns[].metrics.workloadProfileVersion` | `string` | no | `response.benchmarkRuns[].metrics.workloadProfileVersion` の値。項目名は workload profile version を表します。 | minLength=1 |

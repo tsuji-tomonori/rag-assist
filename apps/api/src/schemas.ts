@@ -1639,6 +1639,32 @@ export const DebugStepSchema = z.object({
   completedAt: z.string()
 })
 
+export const FirstTokenTimingEvidenceSchema = z.object({
+  schemaVersion: z.literal(1),
+  unit: z.literal("ms"),
+  clock: z.literal("node_performance"),
+  origin: z.literal("chat_orchestration_ingress"),
+  boundary: z.literal("answer_model_first_content_delta"),
+  clientVisible: z.literal(false),
+  status: z.enum(["measured", "not_applicable", "unavailable"]),
+  latencyMs: z.number().finite().nonnegative().optional(),
+  attemptOrdinal: z.number().int().positive().optional(),
+  reason: z.enum(["non_answer_response", "first_content_delta_not_observed"]).optional()
+}).superRefine((value, ctx) => {
+  if (value.status === "measured" && (value.latencyMs === undefined || value.attemptOrdinal === undefined || value.reason !== undefined)) {
+    ctx.addIssue({ code: "custom", message: "measured first-token evidence requires latencyMs/attemptOrdinal and no reason" })
+  }
+  if (value.status !== "measured" && (value.latencyMs !== undefined || value.attemptOrdinal !== undefined || value.reason === undefined)) {
+    ctx.addIssue({ code: "custom", message: "unmeasured first-token evidence requires a reason and no measurement" })
+  }
+  if (value.status === "not_applicable" && value.reason !== "non_answer_response") {
+    ctx.addIssue({ code: "custom", message: "not_applicable first-token evidence requires non_answer_response" })
+  }
+  if (value.status === "unavailable" && value.reason !== "first_content_delta_not_observed") {
+    ctx.addIssue({ code: "custom", message: "unavailable first-token evidence requires first_content_delta_not_observed" })
+  }
+})
+
 export const DebugTraceSchema = z.object({
   schemaVersion: z.literal(1).default(1),
   runId: z.string(),
@@ -1674,6 +1700,7 @@ export const DebugTraceSchema = z.object({
   startedAt: z.string(),
   completedAt: z.string(),
   totalLatencyMs: z.number(),
+  firstTokenTiming: FirstTokenTimingEvidenceSchema.optional(),
   status: z.enum(["success", "warning", "error"]),
   answerPreview: z.string(),
   isAnswerable: z.boolean(),
@@ -1693,6 +1720,7 @@ export const ChatResponseSchema = z.object({
   citations: z.array(CitationSchema),
   retrieved: z.array(CitationSchema),
   finalEvidence: z.array(CitationSchema).optional(),
+  firstTokenTiming: FirstTokenTimingEvidenceSchema.optional(),
   debug: DebugTraceSchema.optional()
 })
 
@@ -1975,7 +2003,44 @@ export const BenchmarkQueryResponseSchema = ChatResponseSchema.extend({
 
 export const BenchmarkModeSchema = z.enum(["agent", "search", "load"])
 export const BenchmarkRunnerSchema = z.enum(["codebuild", "lambda"])
-export const BenchmarkRunStatusSchema = z.enum(["queued", "running", "succeeded", "failed", "cancelled"])
+export const BenchmarkRunStatusSchema = z.enum(["queued", "running", "succeeded", "failed", "timed_out", "cancelled"])
+
+export const BenchmarkArtifactIntegritySchema = z.object({
+  schemaVersion: z.literal(1),
+  status: z.enum(["pending", "complete", "partial_failure", "failed"]),
+  availableCount: z.number().int().nonnegative(),
+  failureCount: z.number().int().nonnegative(),
+  artifacts: z.array(z.object({
+    kind: z.enum(["results", "summary", "report", "release_audit"]),
+    status: z.enum(["pending", "available", "generation_failed", "upload_failed"]),
+    failureReason: z.string().min(1).optional()
+  }).strict()).length(4)
+}).strict().superRefine((value, context) => {
+  const kinds = new Set(value.artifacts.map((artifact) => artifact.kind))
+  if (kinds.size !== 4) context.addIssue({ code: "custom", message: "benchmark artifact kinds must be unique and complete" })
+  const availableCount = value.artifacts.filter((artifact) => artifact.status === "available").length
+  const failureCount = value.artifacts.filter((artifact) => artifact.status === "generation_failed" || artifact.status === "upload_failed").length
+  const pendingCount = value.artifacts.filter((artifact) => artifact.status === "pending").length
+  if (value.availableCount !== availableCount || value.failureCount !== failureCount) {
+    context.addIssue({ code: "custom", message: "benchmark artifact integrity counts do not match artifact states" })
+  }
+  const expectedStatus = pendingCount > 0
+    ? "pending"
+    : failureCount === 0
+      ? "complete"
+      : availableCount > 0
+        ? "partial_failure"
+        : "failed"
+  if (value.status !== expectedStatus) {
+    context.addIssue({ code: "custom", message: "benchmark artifact integrity status does not match artifact states" })
+  }
+  for (const artifact of value.artifacts) {
+    const failed = artifact.status === "generation_failed" || artifact.status === "upload_failed"
+    if (failed !== Boolean(artifact.failureReason)) {
+      context.addIssue({ code: "custom", message: `benchmark artifact ${artifact.kind} failure reason is inconsistent` })
+    }
+  }
+})
 
 export const BenchmarkRunThresholdsSchema = z.object({
   answerableAccuracy: z.number().min(0).max(1).optional().openapi({ example: 0.8 }),
@@ -2010,7 +2075,9 @@ export const BenchmarkRunMetricsSchema = z.object({
   retrievalRecallAt20: z.number().nullable().optional(),
   retrievalRecallAtK: z.number().nullable().optional(),
   falseDenialRate: z.number().nullable().optional(),
-  faithfulness: z.number().nullable().optional(),
+  faithfulness: z.number().min(0).max(1).nullable().optional(),
+  contextRelevance: z.number().min(0).max(1).nullable().optional(),
+  contextRelevanceSampleCount: z.number().int().nonnegative().nullable().optional(),
   unsupportedClaimRate: z.number().nullable().optional(),
   unsupportedSentenceRate: z.number().nullable().optional(),
   unsupportedAnswerRate: z.number().nullable().optional(),
@@ -2049,6 +2116,10 @@ export const BenchmarkRunMetricsSchema = z.object({
   p95LatencyMs: z.number().nullable().optional(),
   p99LatencyMs: z.number().nullable().optional(),
   averageLatencyMs: z.number().nullable().optional(),
+  firstTokenP50Ms: z.number().nonnegative().nullable().optional(),
+  firstTokenP95Ms: z.number().nonnegative().nullable().optional(),
+  firstTokenP99Ms: z.number().nonnegative().nullable().optional(),
+  firstTokenSampleCount: z.number().int().nonnegative().nullable().optional(),
   errorRate: z.number().nullable().optional(),
   datasetVersion: z.string().min(1).optional(),
   workloadProfileVersion: z.string().min(1).optional(),
@@ -2134,6 +2205,8 @@ export const BenchmarkRunSchema = z.object({
   summaryS3Key: z.string().optional(),
   reportS3Key: z.string().optional(),
   resultsS3Key: z.string().optional(),
+  releaseAuditS3Key: z.string().optional(),
+  artifactIntegrity: BenchmarkArtifactIntegritySchema.optional(),
   metrics: BenchmarkRunMetricsSchema.optional(),
   error: z.string().optional(),
   errorCode: z.enum(["validation_error", "not_found", "permission_revoked", "execution_error"]).optional()
