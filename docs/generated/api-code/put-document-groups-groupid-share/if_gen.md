@@ -2,7 +2,7 @@
 
 # PUT /document-groups/{groupId}/share IF仕様
 
-- 実装 route: `apps/api/src/routes/document-routes.ts:648 (PUT /document-groups/{groupId}/share)`
+- 実装 route: `apps/api/src/routes/document-routes.ts:649 (PUT /document-groups/{groupId}/share)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: フォルダ共有 policy を置き換える

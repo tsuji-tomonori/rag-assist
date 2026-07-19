@@ -18,6 +18,7 @@ import type { DocumentGroup, DocumentManifest, DocumentShareGrant, GroupMembersh
 import { tenantPartitionId } from "../../../security/tenant-partition.js"
 import { securityResourceReference } from "../../../security/security-resource-reference.js"
 import { documentShareGrantKey, documentSharePolicyStateVersion } from "../../../documents/document-permission-service.js"
+import { folderArchiveCleanupRegistration } from "../../../folders/folder-archive-service.js"
 import { tenantArtifactRoot, tenantManifestKey, tenantVectorKey } from "../storage/tenant-artifacts.js"
 import {
   ProductionRevocationCleanupService
@@ -77,6 +78,91 @@ test("FR-066 worker retains a prepared repair when it races the deny CAS and con
     .reconcilePending("tenant-a")
   assert.equal(converged.completed, 1)
   assert.equal((await repairOutbox.get("tenant-a", "folder", "folder-race", registration.operationId))?.status, "cleanup_completed")
+})
+
+test("FR-066 worker regenerates archived-folder cleanup and isolates folder-scoped derived state", async () => {
+  const fixture = await createFixture()
+  const before = documentGroup("tenant-a", "folder-archive")
+  const archived: DocumentGroup = {
+    ...before,
+    status: "archived",
+    updatedAt: "2026-07-11T00:02:00.000Z"
+  }
+  await fixture.documentGroups.create(archived)
+  await fixture.chatRuns.create({
+    runId: "chat-folder-archive",
+    status: "queued",
+    createdBy: "user-a",
+    tenantId: "tenant-a",
+    question: "archived scope",
+    modelId: "model",
+    searchScope: { mode: "groups", groupIds: [archived.groupId] },
+    createdAt: before.createdAt,
+    updatedAt: before.updatedAt
+  })
+  await fixture.chatRuns.create({
+    runId: "chat-other-folder",
+    status: "queued",
+    createdBy: "user-a",
+    tenantId: "tenant-a",
+    question: "other scope",
+    modelId: "model",
+    searchScope: { mode: "groups", groupIds: ["folder-other"] },
+    createdAt: before.createdAt,
+    updatedAt: before.updatedAt
+  })
+  const tenantCache = `embedding-cache/${hash24("tenant-a")}/model/archive.json`
+  const otherTenantCache = `embedding-cache/${hash24("tenant-b")}/model/archive.json`
+  await fixture.objectStore.putText(tenantCache, "tenant-a-cache")
+  await fixture.objectStore.putText(otherTenantCache, "tenant-b-cache")
+
+  const registration = folderArchiveCleanupRegistration("audit-folder-archive", archived)
+  const repairOutbox = new ObjectStoreRevocationCleanupRepairOutbox(fixture.objectStore)
+  await repairOutbox.prepare({
+    expectedBeforeDenyVersion: before.updatedAt,
+    cleanupRegistration: registration,
+    preparedAt: archived.updatedAt
+  })
+
+  const service = new ProductionRevocationCleanupService(fixture.deps)
+  const firstPass = await service.reconcilePending("tenant-a")
+  const result = await service.reconcilePending("tenant-a")
+
+  assert.equal(firstPass.reconciliationRequired, 1)
+  assert.equal(result.completed, 1)
+  assert.equal((await repairOutbox.get("tenant-a", "folder", archived.groupId, registration.operationId))?.status, "cleanup_completed")
+  assert.equal((await fixture.chatRuns.get("tenant-a", "chat-folder-archive"))?.status, "failed")
+  assert.equal((await fixture.chatRuns.get("tenant-a", "chat-folder-archive"))?.errorCode, "permission_revoked")
+  assert.equal((await fixture.chatRuns.get("tenant-a", "chat-other-folder"))?.status, "queued")
+  await assert.rejects(() => fixture.objectStore.getText(tenantCache), /ENOENT/)
+  assert.equal(await fixture.objectStore.getText(otherTenantCache), "tenant-b-cache")
+})
+
+test("FR-066 archived-folder repair stays pending for missing or reactivated authoritative state", async () => {
+  for (const current of [
+    undefined,
+    { ...documentGroup("tenant-a", "folder-race"), updatedAt: "2026-07-11T00:03:00.000Z" }
+  ]) {
+    const fixture = await createFixture()
+    const archived: DocumentGroup = {
+      ...documentGroup("tenant-a", "folder-race"),
+      status: "archived",
+      updatedAt: "2026-07-11T00:02:00.000Z"
+    }
+    if (current) await fixture.documentGroups.create(current)
+    const registration = folderArchiveCleanupRegistration("audit-folder-race", archived)
+    const repairs = new ObjectStoreRevocationCleanupRepairOutbox(fixture.objectStore)
+    await repairs.prepare({
+      expectedBeforeDenyVersion: "2026-07-11T00:00:00.000Z",
+      cleanupRegistration: registration,
+      preparedAt: archived.updatedAt
+    })
+
+    await new ProductionRevocationCleanupService(fixture.deps).reconcilePending("tenant-a")
+
+    assert.equal((await repairs.get("tenant-a", "folder", archived.groupId, registration.operationId))?.status, "prepared")
+    assert.equal(await new ObjectStoreRevocationCleanupCoordinator(fixture.objectStore).get("tenant-a", registration.operationId), undefined)
+  }
 })
 
 test("FR-066 account evaluation artifacts carry exact resource identity and are enumerated for deletion", async () => {

@@ -29,7 +29,7 @@
 | M014 | 例外 | `-` | Benchmark evaluation tenant is not configured | `tenantId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:949 (MemoRagService.getBenchmarkDocumentManifest)` |
 | M015 | 例外 | `403` | Forbidden | 例外を捕捉した場合 | `apps/api/src/routes/benchmark-seed.ts:417 (authorizeDocumentDelete)` |
 | M016 | 例外 | `403` | Forbidden | is benchmark seed document manifest の判定結果が真ではない、かつ 「`deletionRetry` が存在し、真である、かつ is benchmark seed document identity の判定結果が真である」ではない | `apps/api/src/routes/benchmark-seed.ts:421 (authorizeDocumentDelete)` |
-| M017 | 例外 | `403` | Forbidden | `tenantId` が存在しない、または偽である、または `ownerUserId` が存在しない、または偽である | `apps/api/src/routes/document-routes.ts:1602 (DELETE /documents/{documentId} handler)` |
+| M017 | 例外 | `403` | Forbidden | `tenantId` が存在しない、または偽である、または `ownerUserId` が存在しない、または偽である | `apps/api/src/routes/document-routes.ts:1603 (DELETE /documents/{documentId} handler)` |
 | M018 | 例外 | `-` | documentId is required | is canonical identifier の判定結果が真ではない | `apps/api/src/documents/document-lifecycle-mutation-coordinator.ts:315 (DocumentLifecycleMutationCoordinator.deleteDocument)` |
 | M019 | 例外 | `-` | reason is required and must be canonical | `reason` が存在しない、または偽である、または `input.reason` が `reason` と異なる | `apps/api/src/documents/document-lifecycle-mutation-coordinator.ts:317 (DocumentLifecycleMutationCoordinator.deleteDocument)` |
 | M020 | 例外 | `-` | expectedUpdatedAt is required and must be canonical | `input.expectedUpdatedAt` が存在しない、または偽である、または `input.expectedUpdatedAt.trim()` が `input.expectedUpdatedAt` と異なる | `apps/api/src/documents/document-lifecycle-mutation-coordinator.ts:319 (DocumentLifecycleMutationCoordinator.deleteDocument)` |

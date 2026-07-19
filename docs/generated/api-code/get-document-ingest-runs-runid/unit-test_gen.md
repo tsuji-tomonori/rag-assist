@@ -12,7 +12,7 @@ _静的に直接対応を確認できた test case はありません。`unit-te
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `GET /document-ingest-runs/{runId} handler` | if | `run` が存在しない、または偽である、または can read document ingest run の判定結果が真ではない | `apps/api/src/routes/document-routes.ts:1211 (GET /document-ingest-runs/{runId} handler)` |
+| F001 | `GET /document-ingest-runs/{runId} handler` | if | `run` が存在しない、または偽である、または can read document ingest run の判定結果が真ではない | `apps/api/src/routes/document-routes.ts:1212 (GET /document-ingest-runs/{runId} handler)` |
 | F002 | `uploadTenantId` | if | `purpose` が `"benchmarkSeed"` と等しい | `apps/api/src/routes/document-routes.ts:156 (uploadTenantId)` |
 | F003 | `uploadTenantId` | if | `config.benchmarkEvaluationEnabled` が存在しない、または偽である、または trim の判定結果が真ではない | `apps/api/src/routes/document-routes.ts:157 (uploadTenantId)` |
 | F004 | `uploadTenantId` | 三項条件 | `config.authEnabled` が存在しない、または偽である | `apps/api/src/routes/document-routes.ts:162 (uploadTenantId)` |
@@ -23,9 +23,9 @@ _静的に直接対応を確認できた test case はありません。`unit-te
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | 文書取り込み run を取得する が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:1205 (GET /document-ingest-runs/{runId} handler)` |
-| TC002 | F001: 条件成立 | `run` が存在しない、または偽である、または can read document ingest run の判定結果が真ではない 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1211 (GET /document-ingest-runs/{runId} handler)` |
-| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1211 (GET /document-ingest-runs/{runId} handler)` |
+| TC001 | 正常系 | 文書取り込み run を取得する が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:1206 (GET /document-ingest-runs/{runId} handler)` |
+| TC002 | F001: 条件成立 | `run` が存在しない、または偽である、または can read document ingest run の判定結果が真ではない 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1212 (GET /document-ingest-runs/{runId} handler)` |
+| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1212 (GET /document-ingest-runs/{runId} handler)` |
 | TC004 | F002: 条件成立 | `purpose` が `"benchmarkSeed"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:156 (uploadTenantId)` |
 | TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:156 (uploadTenantId)` |
 | TC006 | F003: 条件成立 | `config.benchmarkEvaluationEnabled` が存在しない、または偽である、または trim の判定結果が真ではない 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:157 (uploadTenantId)` |

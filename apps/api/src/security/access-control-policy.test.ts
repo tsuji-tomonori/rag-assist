@@ -65,6 +65,7 @@ const operationMatrixSubset = new Map<string, { operationKey: string; resourceCo
   ["POST /documents/reindex-migrations/{migrationId}/cutover", { operationKey: "document.reindex.cutover", resourceCondition: "documentGroupFull" }],
   ["POST /documents/reindex-migrations/{migrationId}/rollback", { operationKey: "document.reindex.rollback", resourceCondition: "documentGroupFull" }],
   ["POST /admin/audit-log/export", { operationKey: "audit.export", resourceCondition: "none" }],
+  ["POST /admin/security-audit/quarantines/{intentId}/redrive", { operationKey: "security_audit.quarantine.redrive", resourceCondition: "tenantAuditIntent" }],
   ["POST /admin/usage/export", { operationKey: "usage.export", resourceCondition: "none" }],
   ["GET /admin/aliases", { operationKey: "alias.read", resourceCondition: "tenantCollection" }],
   ["POST /admin/aliases", { operationKey: "alias.create", resourceCondition: "tenantCollection" }],
@@ -383,6 +384,7 @@ test("protected API routes document three-layer authorization metadata", async (
     "POST /documents/reindex-migrations/{migrationId}/cutover",
     "POST /documents/reindex-migrations/{migrationId}/rollback",
     "DELETE /documents/{documentId}",
+    "POST /admin/security-audit/quarantines/{intentId}/redrive",
     "GET /benchmark-runs/{runId}",
     "POST /benchmark-runs/{runId}/cancel",
     "POST /benchmark-runs/{runId}/download",
@@ -518,6 +520,29 @@ test("admin audit export uses a permission distinct from audit read", async () =
   assert.equal(ROLE_PERMISSION_CATALOG.SYSTEM_ADMIN.includes("access:audit:export"), true)
 })
 
+test("security audit quarantine redrive is tenant-scoped and restricted to SYSTEM_ADMIN recovery", async () => {
+  const policies = await openApiRoutePolicies()
+  const redrive = policies.find((item) => routeKey(item) === "POST /admin/security-audit/quarantines/{intentId}/redrive")
+  assert.equal(redrive?.permission, "access:audit:redrive")
+  assert.equal(redrive?.resourceCondition, "tenantAuditIntent")
+  assert.deepEqual(redrive?.operation["x-memorag-authorization"]?.allowedRoles, ["SYSTEM_ADMIN"])
+  assert.equal((ROLE_PERMISSION_CATALOG.ACCESS_ADMIN as readonly string[]).includes("access:audit:redrive"), false)
+  assert.equal(ROLE_PERMISSION_CATALOG.SYSTEM_ADMIN.includes("access:audit:redrive"), true)
+
+  const [routeSource, serviceSource, outboxSource] = await Promise.all([
+    readFile(path.resolve(process.cwd(), "src/routes/admin-routes.ts"), "utf8"),
+    readFile(path.resolve(process.cwd(), "src/security/security-mutation-audit-quarantine-service.ts"), "utf8"),
+    readFile(path.resolve(process.cwd(), "src/security/security-mutation-audit-outbox.ts"), "utf8")
+  ])
+  assert.match(routeSource, /requirePermission\(actor, ["']access:audit:redrive["']\)/)
+  assert.match(serviceSource, /hasPermission\(actor, ["']access:audit:redrive["']\)/)
+  assert.match(serviceSource, /const tenantId = actor\.tenantId/)
+  assert.match(serviceSource, /redriveQuarantined\(tenantId, intentId/)
+  assert.match(outboxSource, /status:\s*restoredStatus[\s\S]*?redriveHistory:\s*history/)
+  assert.match(outboxSource, /putTextIfVersion\(/)
+  assert.doesNotMatch(serviceSource, /\.resolve\(|reconcileTenant|Document.*Resolver|ResourceGroup.*Resolver/)
+})
+
 test("async agent permissions remain typed but are removed from role seeds and active routes", async () => {
   const authorizationSource = await readFile(accessControlCatalogPath, "utf8")
   for (const permission of [
@@ -584,11 +609,13 @@ test("authorization metadata uses generic forbidden error bodies by default", as
 })
 
 test("security audit reconciliation worker is single-tenant and rechecks authoritative domain state", async () => {
-  const [workerSource, reconcilerSource, sourceResolverSource, membershipResolverSource, outboxSource] = await Promise.all([
+  const [workerSource, reconcilerSource, sourceResolverSource, membershipResolverSource, groupUpdateResolverSource, groupCreateResolverSource, outboxSource] = await Promise.all([
     readFile(path.resolve(process.cwd(), "src/security-mutation-audit-reconciliation-worker.ts"), "utf8"),
     readFile(path.resolve(process.cwd(), "src/security/security-mutation-audit-reconciler.ts"), "utf8"),
     readFile(path.resolve(process.cwd(), "src/rag/offline/pre-retrieval/admission/source-governance-audit-reconciler.ts"), "utf8"),
     readFile(path.resolve(process.cwd(), "src/security/resource-group-membership-audit-reconciler.ts"), "utf8"),
+    readFile(path.resolve(process.cwd(), "src/security/resource-group-update-audit-reconciler.ts"), "utf8"),
+    readFile(path.resolve(process.cwd(), "src/security/resource-group-create-audit-reconciler.ts"), "utf8"),
     readFile(path.resolve(process.cwd(), "src/security/security-mutation-audit-outbox.ts"), "utf8")
   ])
 
@@ -603,7 +630,97 @@ test("security audit reconciliation worker is single-tenant and rechecks authori
   assert.match(membershipResolverSource, /getVersionedGroupState\(tenantId, targetId\)/)
   assert.match(membershipResolverSource, /crossed its identity boundary/)
   assert.match(membershipResolverSource, /no durable non-success result/)
+  assert.match(workerSource, /ResourceGroupUpdateAuditAuthoritativeResolver\(deps\.userGroupStore\)/)
+  assert.match(groupUpdateResolverSource, /groups\.get\(tenantId, targetId\)/)
+  assert.match(groupUpdateResolverSource, /crossed its identity boundary/)
+  assert.match(groupUpdateResolverSource, /no durable non-success result/)
+  assert.match(workerSource, /ResourceGroupCreateAuditAuthoritativeResolver\(deps\.objectStore, deps\.userGroupStore, deps\.groupMembershipStore\)/)
+  assert.match(groupCreateResolverSource, /security\/resource-group-lifecycle\/create/)
+
+  const groupDeleteResolverSource = await readFile(new URL("./resource-group-delete-audit-reconciler.ts", import.meta.url), "utf8")
+  assert.match(workerSource, /ResourceGroupDeleteAuditAuthoritativeResolver\(deps\.objectStore, deps\.userGroupStore, deps\.groupMembershipStore\)/)
+  assert.match(groupDeleteResolverSource, /security\/resource-group-lifecycle\/delete/)
+  assert.match(groupDeleteResolverSource, /ObjectStoreRevocationCleanupRepairOutbox/)
+  assert.match(groupDeleteResolverSource, /ObjectStoreRevocationCleanupCoordinator/)
+  const applicationRoleResolverSource = await readFile(new URL("./application-role-audit-reconciler.ts", import.meta.url), "utf8")
+  assert.match(workerSource, /if \(!identityProvider\) throw new Error/)
+  assert.match(workerSource, /ApplicationRoleAuditAuthoritativeResolver\(identityProvider\)/)
+  assert.match(applicationRoleResolverSource, /getCurrentIdentityBySubject\(targetId\)/)
+  assert.match(applicationRoleResolverSource, /applicationRolePrincipal/)
+  assert.match(applicationRoleResolverSource, /applicationRole\.replace/)
+  assert.match(applicationRoleResolverSource, /crossed its identity boundary/)
+  assert.doesNotMatch(applicationRoleResolverSource, /replaceApplicationRoles|revokeSessions|AdminAddUserToGroup|AdminRemoveUserFromGroup/)
+  const folderShareResolverSource = await readFile(new URL("./folder-share-audit-reconciler.ts", import.meta.url), "utf8")
+  assert.match(workerSource, /FolderShareAuditAuthoritativeResolver\(deps\.folderPolicyStore, deps\.objectStore\)/)
+  assert.match(folderShareResolverSource, /getVersionedByFolderId\(tenantId, targetId\)/)
+  assert.match(folderShareResolverSource, /ObjectStoreRevocationCleanupRepairOutbox/)
+  assert.match(folderShareResolverSource, /folder-share:\$\{intent\.intentId\}/)
+  assert.match(folderShareResolverSource, /draft\.targetType === "folder"/)
+  assert.match(folderShareResolverSource, /draft\.operation === "share\.replace"/)
+  assert.match(folderShareResolverSource, /crossed its identity boundary/)
+  assert.doesNotMatch(folderShareResolverSource, /replaceForFolder|\.save\(|\.delete\(|cleanupCoordinator|\.register\(|markCleanup|markDeny/)
+  const documentShareResolverSource = await readFile(new URL("./document-share-audit-reconciler.ts", import.meta.url), "utf8")
+  assert.match(workerSource, /DocumentShareAuditAuthoritativeResolver\(deps\.objectStore\)/)
+  assert.match(documentShareResolverSource, /documentShareGrantKey\(tenantId, documentId\)/)
+  assert.match(documentShareResolverSource, /objects\.getText\(key\)/)
+  assert.match(documentShareResolverSource, /ObjectStoreRevocationCleanupRepairOutbox/)
+  assert.match(documentShareResolverSource, /document-share:\$\{intent\.intentId\}/)
+  assert.match(documentShareResolverSource, /draft\.targetType === "document"/)
+  assert.match(documentShareResolverSource, /draft\.operation === "share\.replace"/)
+  assert.match(documentShareResolverSource, /crossed its identity boundary/)
+  assert.doesNotMatch(documentShareResolverSource, /putText|saveDocumentGrants|cleanupCoordinator|\.register\(|markCleanup|markDeny|listKeys/)
+  const folderMoveResolverSource = await readFile(new URL("./folder-move-audit-reconciler.ts", import.meta.url), "utf8")
+  assert.match(workerSource, /FolderMoveAuditAuthoritativeResolver\(\{/)
+  assert.match(folderMoveResolverSource, /draft\.targetType === "folder"/)
+  assert.match(folderMoveResolverSource, /draft\.operation === "move"/)
+  assert.match(folderMoveResolverSource, /folder-mutations\/move\/\$\{encodeURIComponent\(folderId\)\}\.json/)
+  assert.match(folderMoveResolverSource, /getCurrentIdentityBySubject\(lifecycle\.actorId\)/)
+  assert.match(folderMoveResolverSource, /resolveEffectiveFolderPermissionDecision/)
+  assert.match(folderMoveResolverSource, /projections_converged/)
+  assert.match(folderMoveResolverSource, /rolled_back/)
+  assert.doesNotMatch(folderMoveResolverSource, /putText|createWithPathLock|\.update\(|\.delete\(|replaceForFolder|replaceGroupState/)
+  const folderDeleteResolverSource = await readFile(new URL("./folder-delete-audit-reconciler.ts", import.meta.url), "utf8")
+  assert.match(workerSource, /FolderDeleteAuditAuthoritativeResolver\(deps\.objectStore, deps\.documentGroupStore\)/)
+  assert.match(folderDeleteResolverSource, /draft\.targetType === "folder"/)
+  assert.match(folderDeleteResolverSource, /draft\.operation === "delete"/)
+  assert.match(folderDeleteResolverSource, /groups\.get\(tenantId, targetId\)/)
+  assert.match(folderDeleteResolverSource, /ObjectStoreRevocationCleanupRepairOutbox/)
+  assert.match(folderDeleteResolverSource, /ObjectStoreRevocationCleanupCoordinator/)
+  assert.match(folderDeleteResolverSource, /folderArchiveCleanupRegistration\(intent\.intentId, archived\)/)
+  assert.match(folderDeleteResolverSource, /no durable non-success result/)
+  assert.doesNotMatch(folderDeleteResolverSource, /createWithPathLock|updateWithPathLocks|groups\.update|objects\.put|objects\.delete|list\(|putText|\.register\(|markCleanup|markDeny/)
+  const documentMoveResolverSource = await readFile(new URL("./document-move-audit-reconciler.ts", import.meta.url), "utf8")
+  assert.match(workerSource, /DocumentMoveAuditAuthoritativeResolver\(\{/)
+  assert.match(documentMoveResolverSource, /draft\.targetType === "document"/)
+  assert.match(documentMoveResolverSource, /draft\.operation === "move"/)
+  assert.match(documentMoveResolverSource, /document-mutations\/move\/\$\{encodeURIComponent\(tenantId\)\}/)
+  assert.match(documentMoveResolverSource, /tenantManifestKey\(this\.deps, tenantId, documentId\)/)
+  assert.match(documentMoveResolverSource, /getCurrentIdentityBySubject\(lifecycle\.actorId\)/)
+  assert.match(documentMoveResolverSource, /resolveEffectiveDocumentPermissionDecision/)
+  assert.match(documentMoveResolverSource, /resolveEffectiveFolderPermissionDecision/)
+  assert.match(documentMoveResolverSource, /manifest_committed/)
+  assert.match(documentMoveResolverSource, /rollback_pending/)
+  assert.doesNotMatch(documentMoveResolverSource, /putText|putTextIfVersion|\.update\(|\.delete\(|rewriteProjection|cleanupDeletedDocument|register\(/)
+  const documentDeleteResolverSource = await readFile(new URL("./document-delete-audit-reconciler.ts", import.meta.url), "utf8")
+  assert.match(workerSource, /DocumentDeleteAuditAuthoritativeResolver\(\{/)
+  assert.match(documentDeleteResolverSource, /draft\.targetType === "document"/)
+  assert.match(documentDeleteResolverSource, /draft\.operation === "revoke\.delete"/)
+  assert.match(documentDeleteResolverSource, /document-mutations\/delete\/\$\{encodeURIComponent\(tenantId\)\}/)
+  assert.match(documentDeleteResolverSource, /ObjectStoreRevocationCleanupRepairOutbox/)
+  assert.match(documentDeleteResolverSource, /ObjectStoreRevocationCleanupCoordinator/)
+  assert.match(documentDeleteResolverSource, /sourceCleanupWasCheckpointed/)
+  assert.doesNotMatch(documentDeleteResolverSource, /putText|putTextIfVersion|deleteObject|\.delete\(|cleanupDeletedDocument|\.register\(|markCleanup|markDeny|markAbandoned/)
+  assert.match(groupCreateResolverSource, /auditIntentId !== auditIntentId/)
+  assert.match(groupCreateResolverSource, /status !== "membership_created"/)
+  assert.doesNotMatch(groupCreateResolverSource, /\.create\(|replaceGroupState\(/)
   assert.match(outboxSource, /intentPrefix\(tenantId\)/)
+  assert.match(outboxSource, /SECURITY_MUTATION_AUDIT_MAX_RECONCILIATION_ATTEMPTS = 3/)
+  assert.match(outboxSource, /status: quarantined \? "quarantined"/)
+  assert.match(outboxSource, /lastFailureCode: failureCode/)
+  assert.doesNotMatch(outboxSource, /lastFailure(?:Message|Stack)|rawError/)
+  assert.match(reconcilerSource, /recordReconciliationFailure/)
+  assert.match(reconcilerSource, /else if \(recorded\.status !== "completed"\) retryScheduled/)
+  assert.doesNotMatch(reconcilerSource, /throw error/)
 })
 
 async function openApiRoutePolicies(): Promise<Array<RoutePolicy & {

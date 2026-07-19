@@ -3557,7 +3557,7 @@ describe("DocumentWorkspace", () => {
         uploadState={{
           fileName: "policy.pdf",
           groupId: "group-1",
-          phase: "embedding",
+          phase: "unknown",
           runId: "run-123"
         }}
         loading={false}
@@ -3580,7 +3580,13 @@ describe("DocumentWorkspace", () => {
     )
 
     await openFolderSettings()
-    expect(screen.getByText("ベクトル化中")).toBeInTheDocument()
+    expect(screen.getByText("詳細な取り込み段階を確認できません")).toBeInTheDocument()
+    expect(screen.getByText("取り込み run は進行中ですが、API から詳細ステージを取得できません。")).toBeInTheDocument()
+    expect(screen.queryByText("取り込み待機中")).not.toBeInTheDocument()
+    expect(screen.queryByText("取り込み処理中")).not.toBeInTheDocument()
+    expect(screen.queryByText("アップロード済み文書を読込中")).not.toBeInTheDocument()
+    expect(screen.queryByText("ベクトル化中")).not.toBeInTheDocument()
+    expect(screen.queryByText("検索インデックス反映中")).not.toBeInTheDocument()
     expect(screen.getAllByText("run ID: run-123").length).toBeGreaterThanOrEqual(1)
     await userEvent.click(screen.getByRole("button", { name: "フォルダ設定を閉じる" }))
     const policyDelete = await getDocumentManagementAction("policy.pdf", "削除")

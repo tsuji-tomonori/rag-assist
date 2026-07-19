@@ -14,23 +14,23 @@
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `POST /documents/{documentId}/reindex handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:1387 (POST /documents/{documentId}/reindex handler)` |
-| F002 | `POST /documents/{documentId}/reindex handler` | if | is forbidden error の判定結果が真である | `apps/api/src/routes/document-routes.ts:1388 (POST /documents/{documentId}/reindex handler)` |
-| F003 | `POST /documents/{documentId}/reindex handler` | if | `err` が `Error` の instance である、かつ `err.message` が "ENOENT" を含む、または `err.message` が "NoSuchKey" を含む | `apps/api/src/routes/document-routes.ts:1389 (POST /documents/{documentId}/reindex handler)` |
-| F004 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| F001 | `POST /documents/{documentId}/reindex handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:1388 (POST /documents/{documentId}/reindex handler)` |
+| F002 | `POST /documents/{documentId}/reindex handler` | if | is forbidden error の判定結果が真である | `apps/api/src/routes/document-routes.ts:1389 (POST /documents/{documentId}/reindex handler)` |
+| F003 | `POST /documents/{documentId}/reindex handler` | if | `err` が `Error` の instance である、かつ `err.message` が "ENOENT" を含む、または `err.message` が "NoSuchKey" を含む | `apps/api/src/routes/document-routes.ts:1390 (POST /documents/{documentId}/reindex handler)` |
+| F004 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |
 
 ## 3. コード由来テストケース
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | 文書を再インデックスする が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:1379 (POST /documents/{documentId}/reindex handler)` |
-| TC002 | F001: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/document-routes.ts:1387 (POST /documents/{documentId}/reindex handler)` |
-| TC003 | F002: 条件成立 | is forbidden error の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1388 (POST /documents/{documentId}/reindex handler)` |
-| TC004 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1388 (POST /documents/{documentId}/reindex handler)` |
-| TC005 | F003: 条件成立 | `err` が `Error` の instance である、かつ `err.message` が "ENOENT" を含む、または `err.message` が "NoSuchKey" を含む 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1389 (POST /documents/{documentId}/reindex handler)` |
-| TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1389 (POST /documents/{documentId}/reindex handler)` |
-| TC007 | F004: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| TC001 | 正常系 | 文書を再インデックスする が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:1380 (POST /documents/{documentId}/reindex handler)` |
+| TC002 | F001: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/document-routes.ts:1388 (POST /documents/{documentId}/reindex handler)` |
+| TC003 | F002: 条件成立 | is forbidden error の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1389 (POST /documents/{documentId}/reindex handler)` |
+| TC004 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1389 (POST /documents/{documentId}/reindex handler)` |
+| TC005 | F003: 条件成立 | `err` が `Error` の instance である、かつ `err.message` が "ENOENT" を含む、または `err.message` が "NoSuchKey" を含む 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1390 (POST /documents/{documentId}/reindex handler)` |
+| TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1390 (POST /documents/{documentId}/reindex handler)` |
+| TC007 | F004: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
+| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | TC009 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC010 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC011 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

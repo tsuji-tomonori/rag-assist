@@ -10,6 +10,7 @@ import {
   cutoverReindexMigration,
   deleteConversationHistory,
   deleteDocument,
+  documentIngestProgressPhase,
   disableAlias,
   fileToBase64,
   getDebugRun,
@@ -54,6 +55,16 @@ function mockFetch(response: unknown, ok = true) {
 }
 
 describe("API client", () => {
+  it("maps only known document ingest API stages and treats missing or unknown stages as unknown", () => {
+    expect(documentIngestProgressPhase("queued")).toBe("queued")
+    expect(documentIngestProgressPhase("running")).toBe("running")
+    expect(documentIngestProgressPhase("preprocessing")).toBe("preprocessing")
+    expect(documentIngestProgressPhase("extracting")).toBe("extracting")
+    expect(documentIngestProgressPhase(undefined)).toBe("unknown")
+    expect(documentIngestProgressPhase("future-stage")).toBe("unknown")
+    expect(documentIngestProgressPhase("done")).toBe("unknown")
+  })
+
   it("keeps legacy api.ts value exports available", () => {
     const expectedFunctions = [
       api.getRuntimeConfig,
@@ -224,12 +235,61 @@ describe("API client", () => {
 
     vi.stubGlobal("fetch", fetchMock)
 
+    const progress: string[] = []
     try {
-      const uploadPromise = uploadDocumentFile({ file })
+      const uploadPromise = uploadDocumentFile({ file, onProgress: (event) => progress.push(event.phase) })
       await vi.advanceTimersByTimeAsync(1000)
 
       await expect(uploadPromise).resolves.toMatchObject({ documentId: "doc-queued" })
       expect(fetchMock).toHaveBeenNthCalledWith(5, "http://api.example.test/document-ingest-runs/ingest-queued", { headers: {} })
+      expect(progress).toEqual(["preparing", "transferring", "creatingRun", "unknown", "complete"])
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it("keeps repeated document ingest API stages stable instead of advancing by poll count", async () => {
+    const file = new File(["body"], "stable-stage.txt", { type: "text/plain" })
+    const progress: string[] = []
+    resetRuntimeConfigForTests()
+    vi.useFakeTimers()
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: vi.fn().mockResolvedValue({ apiBaseUrl: "http://api.example.test" }) })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          uploadId: "upload-stable",
+          objectKey: "uploads/documents/user/upload-stable-stage.txt",
+          uploadUrl: "http://s3.example.test/upload-stable",
+          method: "PUT",
+          headers: { "Content-Type": "text/plain" },
+          expiresInSeconds: 900,
+          requiresAuth: false
+        })
+      })
+      .mockResolvedValueOnce({ ok: true, text: vi.fn().mockResolvedValue("") })
+      .mockResolvedValueOnce({ ok: true, json: vi.fn().mockResolvedValue({ runId: "ingest-stable", status: "queued" }) })
+      .mockResolvedValueOnce({ ok: true, json: vi.fn().mockResolvedValue({ runId: "ingest-stable", status: "running", stage: "extracting" }) })
+      .mockResolvedValueOnce({ ok: true, json: vi.fn().mockResolvedValue({ runId: "ingest-stable", status: "running", stage: "extracting" }) })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          runId: "ingest-stable",
+          status: "succeeded",
+          stage: "done",
+          manifest: { documentId: "doc-stable", fileName: "stable-stage.txt", chunkCount: 1, memoryCardCount: 1, createdAt: "now" }
+        })
+      })
+
+    vi.stubGlobal("fetch", fetchMock)
+
+    try {
+      const uploadPromise = uploadDocumentFile({ file, onProgress: (event) => progress.push(event.phase) })
+      await vi.advanceTimersByTimeAsync(3000)
+
+      await expect(uploadPromise).resolves.toMatchObject({ documentId: "doc-stable" })
+      expect(progress).toEqual(["preparing", "transferring", "creatingRun", "unknown", "extracting", "extracting", "complete"])
     } finally {
       vi.useRealTimers()
     }

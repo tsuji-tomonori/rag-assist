@@ -17,6 +17,7 @@ import { emptyReplaySourceSnapshot, replaySourceSnapshotFromManifest } from "../
 import { assertRagSafetyInterlock } from "../quality-control/production-rag-monitor.js"
 import { ProductionRagObservationProducer, bestEffortCapture } from "../quality-control/production-rag-observation-producer.js"
 import { RESOURCE_OPERATION_AUTHORIZATION_POLICY_VERSION } from "../../security/resource-operation-authorization.js"
+import { PermissionRevokedError } from "../../security/current-worker-authorization.js"
 import { tenantPartitionId } from "../../security/tenant-partition.js"
 import {
   // The active guard profile is supplied by Dependencies, never by a module constant.
@@ -55,7 +56,10 @@ import { NO_ANSWER, isPrimaryRequiredFact, type Clarification, type ChatOrchestr
 import { buildSignalPhrase } from "../../chat-orchestration/text-signals.js"
 import { tracedNode } from "../../chat-orchestration/trace.js"
 import type { ChatInput, ChatOrchestrationResult } from "../../chat-orchestration/types.js"
-import { buildChatToolInvocationsFromTrace } from "../../chat-orchestration/tool-registry.js"
+import {
+  buildChatToolInvocationsFromTrace,
+  getChatToolAuthorizationContractsForGraphNode
+} from "../../chat-orchestration/tool-registry.js"
 
 const systemAdminUser: AppUser = {
   userId: config.localAuthUserId,
@@ -447,6 +451,19 @@ async function applyNode(state: ChatOrchestrationState, nodeName: string, node: 
 }
 
 async function authorizeNodeBoundary(nodeName: string, progress: ProgressSink | undefined): Promise<void> {
+  let toolContracts: ReturnType<typeof getChatToolAuthorizationContractsForGraphNode>
+  try {
+    toolContracts = getChatToolAuthorizationContractsForGraphNode(nodeName)
+  } catch {
+    throw new PermissionRevokedError("chat_tool_authorization_contract_invalid")
+  }
+  if (toolContracts.length > 0) {
+    if (!progress?.authorizeProtectedRead && config.authEnabled) {
+      throw new PermissionRevokedError("chat_tool_authorization_boundary_unavailable")
+    }
+    for (const _contract of toolContracts) await progress?.authorizeProtectedRead?.()
+  }
+
   if (["retrieve_memory", "reauthorize_evidence"].includes(nodeName)) {
     await progress?.authorizeProtectedRead?.()
     return

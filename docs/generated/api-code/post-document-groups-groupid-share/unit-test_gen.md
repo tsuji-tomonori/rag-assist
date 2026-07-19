@@ -13,17 +13,17 @@
 | 到達 symbol | service recalculates descendant canonical paths and local lock items on rename | `apps/api/src/rag/memorag-service.test.ts:705 (service recalculates descendant canonical paths and local lock items on rename)` |
 | 到達 symbol | service legacy metadata update ignores runtime parent mutation fields | `apps/api/src/rag/memorag-service.test.ts:732 (service legacy metadata update ignores runtime parent mutation fields)` |
 | 到達 symbol | service enforces document group management and search scope boundaries | `apps/api/src/rag/memorag-service.test.ts:805 (service enforces document group management and search scope boundaries)` |
-| 到達 symbol | document group create and legacy settings routes reject embedded ACL authority | `apps/api/src/security/access-control-policy.test.ts:279 (document group create and legacy settings routes reject embedded ACL authority)` |
+| 到達 symbol | document group create and legacy settings routes reject embedded ACL authority | `apps/api/src/security/access-control-policy.test.ts:280 (document group create and legacy settings routes reject embedded ACL authority)` |
 
 ## 2. 実装分岐から導くテスト要因
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `POST /document-groups/{groupId}/share handler` | if | `group` が存在しない、または偽である | `apps/api/src/routes/document-routes.ts:718 (POST /document-groups/{groupId}/share handler)` |
-| F002 | `POST /document-groups/{groupId}/share handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:720 (POST /document-groups/{groupId}/share handler)` |
-| F003 | `POST /document-groups/{groupId}/share handler` | if | is document group input error の判定結果が真である | `apps/api/src/routes/document-routes.ts:721 (POST /document-groups/{groupId}/share handler)` |
-| F004 | `POST /document-groups/{groupId}/share handler` | if | `err` が `Error` の instance である、かつ starts with の判定結果が真である | `apps/api/src/routes/document-routes.ts:722 (POST /document-groups/{groupId}/share handler)` |
-| F005 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| F001 | `POST /document-groups/{groupId}/share handler` | if | `group` が存在しない、または偽である | `apps/api/src/routes/document-routes.ts:719 (POST /document-groups/{groupId}/share handler)` |
+| F002 | `POST /document-groups/{groupId}/share handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:721 (POST /document-groups/{groupId}/share handler)` |
+| F003 | `POST /document-groups/{groupId}/share handler` | if | is document group input error の判定結果が真である | `apps/api/src/routes/document-routes.ts:722 (POST /document-groups/{groupId}/share handler)` |
+| F004 | `POST /document-groups/{groupId}/share handler` | if | `err` が `Error` の instance である、かつ starts with の判定結果が真である | `apps/api/src/routes/document-routes.ts:723 (POST /document-groups/{groupId}/share handler)` |
+| F005 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | F006 | `MemoRagService.updateDocumentGroupSharing` | if | `group` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1115 (MemoRagService.updateDocumentGroupSharing)` |
 | F007 | `MemoRagService.updateDocumentGroupSharing` | if | `(await folderPermissions.resolveEffectiveFolderPermission(actor, group.groupId))` が `"full"` と異なる | `apps/api/src/rag/memorag-service.ts:1117 (MemoRagService.updateDocumentGroupSharing)` |
 | F008 | `MemoRagService.updateDocumentGroupSharing` | if | `input.name` が `undefined` と異なる | `apps/api/src/rag/memorag-service.ts:1123 (MemoRagService.updateDocumentGroupSharing)` |
@@ -38,16 +38,16 @@
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | 文書グループ設定を更新する が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:710 (POST /document-groups/{groupId}/share handler)` |
-| TC002 | F001: 条件成立 | `group` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:718 (POST /document-groups/{groupId}/share handler)` |
-| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:718 (POST /document-groups/{groupId}/share handler)` |
-| TC004 | F002: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/document-routes.ts:720 (POST /document-groups/{groupId}/share handler)` |
-| TC005 | F003: 条件成立 | is document group input error の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:721 (POST /document-groups/{groupId}/share handler)` |
-| TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:721 (POST /document-groups/{groupId}/share handler)` |
-| TC007 | F004: 条件成立 | `err` が `Error` の instance である、かつ starts with の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:722 (POST /document-groups/{groupId}/share handler)` |
-| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:722 (POST /document-groups/{groupId}/share handler)` |
-| TC009 | F005: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| TC001 | 正常系 | 文書グループ設定を更新する が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:711 (POST /document-groups/{groupId}/share handler)` |
+| TC002 | F001: 条件成立 | `group` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:719 (POST /document-groups/{groupId}/share handler)` |
+| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:719 (POST /document-groups/{groupId}/share handler)` |
+| TC004 | F002: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/document-routes.ts:721 (POST /document-groups/{groupId}/share handler)` |
+| TC005 | F003: 条件成立 | is document group input error の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:722 (POST /document-groups/{groupId}/share handler)` |
+| TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:722 (POST /document-groups/{groupId}/share handler)` |
+| TC007 | F004: 条件成立 | `err` が `Error` の instance である、かつ starts with の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:723 (POST /document-groups/{groupId}/share handler)` |
+| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:723 (POST /document-groups/{groupId}/share handler)` |
+| TC009 | F005: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
+| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | TC011 | F006: 条件成立 | `group` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1115 (MemoRagService.updateDocumentGroupSharing)` |
 | TC012 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1115 (MemoRagService.updateDocumentGroupSharing)` |
 | TC013 | F007: 条件成立 | `(await folderPermissions.resolveEffectiveFolderPermission(actor, group.groupId))` が `"full"` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1117 (MemoRagService.updateDocumentGroupSharing)` |

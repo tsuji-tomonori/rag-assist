@@ -2,7 +2,7 @@
 
 # GET /documents IF仕様
 
-- 実装 route: `apps/api/src/routes/document-routes.ts:820 (GET /documents)`
+- 実装 route: `apps/api/src/routes/document-routes.ts:821 (GET /documents)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 登録文書一覧を取得する

@@ -635,6 +635,10 @@ export class MemoRagMvpStack extends Stack {
       actions: ["dynamodb:GetItem", "dynamodb:Query"],
       resources: [documentGroupsTable.tableArn, `${documentGroupsTable.tableArn}/index/*`]
     }))
+    securityAuditReconciliationFn.addToRolePolicy(new iam.PolicyStatement({
+      actions: ["cognito-idp:ListUsers", "cognito-idp:AdminGetUser", "cognito-idp:AdminListGroupsForUser"],
+      resources: [userPool.userPoolArn]
+    }))
     const securityAuditReconciliationSchedule = new events.Rule(this, "SecurityAuditReconciliationSchedule", {
       description: "Finalize tenant-scoped security mutation audits after authoritative state reconciliation.",
       schedule: events.Schedule.rate(Duration.minutes(1))
@@ -798,6 +802,21 @@ export class MemoRagMvpStack extends Stack {
     securityAuditReconciliationFn.addToRolePolicy(new iam.PolicyStatement({
       actions: ["s3:GetObject", "s3:PutObject"],
       resources: securityAuditObjectPatterns.map((pattern) => docsBucket.arnForObjects(pattern))
+    }))
+    securityAuditReconciliationFn.addToRolePolicy(new iam.PolicyStatement({
+      actions: ["s3:GetObject"],
+      resources: [
+        docsBucket.arnForObjects(`security/resource-group-lifecycle/create/${cdk.Aws.ACCOUNT_ID}/*`),
+        docsBucket.arnForObjects(`security/resource-group-lifecycle/delete/${cdk.Aws.ACCOUNT_ID}/*`),
+        docsBucket.arnForObjects("security/revocation-cleanup-repairs/*"),
+        docsBucket.arnForObjects("security/revocation-cleanup/*"),
+        docsBucket.arnForObjects(`documents/share-grants/${cdk.Aws.ACCOUNT_ID}/*`),
+        docsBucket.arnForObjects("documents/share-grants.json"),
+        docsBucket.arnForObjects("tenant-artifacts/*/folder-mutations/move/*"),
+        docsBucket.arnForObjects(`document-mutations/move/${cdk.Aws.ACCOUNT_ID}/*`),
+        docsBucket.arnForObjects(`document-mutations/delete/${cdk.Aws.ACCOUNT_ID}/*`),
+        docsBucket.arnForObjects("tenant-artifacts/*/manifests/*")
+      ]
     }))
     revocationCleanupFn.addToRolePolicy(new iam.PolicyStatement({
       actions: ["s3:ListBucket"],

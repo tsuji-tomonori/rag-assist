@@ -2,7 +2,7 @@
 
 # GET /documents/{documentId}/share IF仕様
 
-- 実装 route: `apps/api/src/routes/document-routes.ts:867 (GET /documents/{documentId}/share)`
+- 実装 route: `apps/api/src/routes/document-routes.ts:868 (GET /documents/{documentId}/share)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 文書共有設定を取得する

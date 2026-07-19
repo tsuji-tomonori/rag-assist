@@ -18,7 +18,7 @@
 | F001 | `GET /resource-groups/{groupId}/memberships handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/resource-group-routes.ts:304 (GET /resource-groups/{groupId}/memberships handler)` |
 | F002 | `GET /resource-groups/{groupId}/memberships handler` | if | `error` が `ResourceGroupMembershipMutationError` の instance である、かつ `error.result` が `"denied"` と等しい | `apps/api/src/routes/resource-group-routes.ts:305 (GET /resource-groups/{groupId}/memberships handler)` |
 | F003 | `GET /resource-groups/{groupId}/memberships handler` | if | `error` が `ResourceGroupMembershipUnavailableError` の instance である | `apps/api/src/routes/resource-group-routes.ts:308 (GET /resource-groups/{groupId}/memberships handler)` |
-| F004 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| F004 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |
 
 ## 3. コード由来テストケース
 
@@ -30,8 +30,8 @@
 | TC004 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/resource-group-routes.ts:305 (GET /resource-groups/{groupId}/memberships handler)` |
 | TC005 | F003: 条件成立 | `error` が `ResourceGroupMembershipUnavailableError` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/resource-group-routes.ts:308 (GET /resource-groups/{groupId}/memberships handler)` |
 | TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/resource-group-routes.ts:308 (GET /resource-groups/{groupId}/memberships handler)` |
-| TC007 | F004: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| TC007 | F004: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
+| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | TC009 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC010 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC011 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

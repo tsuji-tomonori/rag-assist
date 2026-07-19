@@ -3,10 +3,11 @@ import test from "node:test"
 
 import {
   CURRENT_RAG_ELIGIBILITY_POLICY_VERSION,
+  currentEligibilitySnapshotFromManifest,
   evaluateCurrentRagEligibility,
   type CurrentRagEligibilitySnapshot
 } from "./_shared/security/current-rag-eligibility.js"
-import type { DerivedRecordSecurityEnvelope, VersionedRecordReference } from "../types.js"
+import type { DerivedRecordSecurityEnvelope, DocumentManifest, VersionedRecordReference } from "../types.js"
 
 function reference(kind: string, version = "v1"): VersionedRecordReference {
   return { id: kind, version, hash: "a".repeat(64) }
@@ -102,4 +103,50 @@ test("FR-070 fails closed for missing or mismatched derived record identity", ()
   assert.equal(decide({ envelope: undefined }).reason, "security_envelope_missing")
   assert.equal(decide({ envelope: { ...envelope(), documentId: "doc-other" } }).reason, "document_mismatch")
   assert.equal(decide({ envelope: { ...envelope(), documentVersion: "document-old" } }).reason, "document_version_mismatch")
+})
+
+test("FR-068 legacy approved admission without clean versioned malware evidence is not RAG eligible", () => {
+  const value = envelope()
+  const legacyManifest = {
+    documentId: value.documentId,
+    lifecycleStatus: "active",
+    metadata: {},
+    securityEnvelope: value,
+    admission: {
+      schemaVersion: 1,
+      status: "approved",
+      tenantId: value.tenantId,
+      ownerUserId: "owner-1",
+      authorizationRef: value.authorizationRef,
+      classificationRef: value.classificationRef,
+      usagePolicyRef: value.usagePolicyRef,
+      qualityRef: value.qualityRef,
+      lifecycleRef: value.lifecycleRef,
+      provenanceRef: value.provenanceRef,
+      inspectionStatus: "passed",
+      reasons: [],
+      rejectedProtectedMetadataKeys: [],
+      admittedAt: "2026-07-17T00:00:00.000Z"
+    }
+  } as unknown as DocumentManifest
+
+  const legacy = currentEligibilitySnapshotFromManifest({
+    manifest: legacyManifest,
+    authorizationAllowed: true,
+    qualityAllowed: true
+  })
+  assert.equal(legacy.admissionApproved, false)
+
+  const versionless = currentEligibilitySnapshotFromManifest({
+    manifest: {
+      ...legacyManifest,
+      admission: {
+        ...(legacyManifest.admission as NonNullable<DocumentManifest["admission"]>),
+        malwareScan: { status: "clean" }
+      }
+    },
+    authorizationAllowed: true,
+    qualityAllowed: true
+  })
+  assert.equal(versionless.admissionApproved, false)
 })

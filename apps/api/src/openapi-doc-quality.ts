@@ -189,6 +189,10 @@ const operationDocs: Record<string, { summary: string; description: string }> = 
     summary: "管理操作履歴 export URL を作成する",
     description: "監査ログを sanitize 済み JSON として保存し、短期限の署名付き URL を返します。"
   },
+  "POST /admin/security-audit/quarantines/{intentId}/redrive": {
+    summary: "隔離された監査 intent を手動再投入する",
+    description: "SYSTEM_ADMIN が verified tenant 配下の exact quarantined intent を、理由と idempotency key を伴う durable operator audit と同じ CAS で scheduled reconciliation へ戻します。domain mutation や resolver は直接実行しません。"
+  },
   "POST /admin/users/{userId}/roles": {
     summary: "ユーザーのロールを更新する",
     description: "指定した管理対象ユーザーに付与するアプリケーションロールを更新します。"

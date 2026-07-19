@@ -152,6 +152,11 @@ export class FolderPermissionService {
     if (folder.status !== "active") return noneDetail(folderId, user, "resource_not_active")
     if (hasFolderCycle(groups, folder.groupId)) return noneDetail(folderId, user, "resource_integrity_unverified")
 
+    const parent = folder.parentGroupId ? groups.find((group) => group.groupId === folder.parentGroupId) : undefined
+    if (folder.parentGroupId && (!parent || parent.tenantId !== user.tenantId || parent.status !== "active")) {
+      return noneDetail(folderId, user, "resource_integrity_unverified")
+    }
+
     const administrativePrincipal = await this.resolveAdminPrincipalGrant(user, folder)
     if (administrativePrincipal.integrity === "invalid") return noneDetail(folderId, user, "resource_integrity_unverified")
     if (administrativePrincipal.permission === "full") {
@@ -170,11 +175,6 @@ export class FolderPermissionService {
         policyId: folder.policyId,
         decision: permissionDecision("folder", folderId, user, "full", "administrative_principal", [contribution])
       }
-    }
-
-    const parent = folder.parentGroupId ? groups.find((group) => group.groupId === folder.parentGroupId) : undefined
-    if (folder.parentGroupId && (!parent || parent.tenantId !== user.tenantId || parent.status !== "active")) {
-      return noneDetail(folderId, user, "resource_integrity_unverified")
     }
 
     let policyContext: Awaited<ReturnType<FolderPermissionService["resolvePolicyContext"]>>

@@ -9,6 +9,7 @@ import type {
   ChunkingPolicySnapshot,
   DocumentQualityProfile,
   SourceAdmissionRecord,
+  SourceMalwareScanStatus,
   VersionedRecordReference,
   VectorRecord
 } from "../types.js"
@@ -74,6 +75,59 @@ test("FR-068 source admission rejects caller-controlled protected attributes and
     admittedAt: "2026-07-11T00:00:00.000Z"
   })
   assert.equal(failed.record.status, "rejected")
+})
+
+test("FR-068 malware promotion gate admits only clean evidence and never emits non-clean vectors", async () => {
+  const cases: Array<{
+    label: string
+    malwareScan?: { status: SourceMalwareScanStatus; profileVersion?: string }
+    expectedStatus: "quarantined" | "rejected"
+    reason: string
+  }> = [
+    { label: "missing", expectedStatus: "quarantined", reason: "source_malware_scan_unknown" },
+    { label: "unknown", malwareScan: { status: "unknown" }, expectedStatus: "quarantined", reason: "source_malware_scan_unknown" },
+    { label: "pending", malwareScan: { status: "pending", profileVersion: "scanner-v1" }, expectedStatus: "quarantined", reason: "source_malware_scan_pending" },
+    { label: "infected", malwareScan: { status: "infected", profileVersion: "scanner-v1" }, expectedStatus: "rejected", reason: "source_malware_scan_infected" },
+    { label: "failed", malwareScan: { status: "failed", profileVersion: "scanner-v1" }, expectedStatus: "quarantined", reason: "source_malware_scan_failed" },
+    { label: "timeout", malwareScan: { status: "timeout", profileVersion: "scanner-v1" }, expectedStatus: "quarantined", reason: "source_malware_scan_timeout" },
+    { label: "clean-without-profile", malwareScan: { status: "clean" }, expectedStatus: "quarantined", reason: "source_malware_scan_profile_version_missing" }
+  ]
+
+  for (const item of cases) {
+    const context = { ...fullAdmissionContext(), malwareScan: item.malwareScan }
+    const admission = resolveSourceAdmission({
+      context,
+      runtimeEnvironment: "production",
+      admittedAt: "2026-07-17T00:00:00.000Z"
+    })
+    assert.equal(admission.record.status, item.expectedStatus, item.label)
+    assert.ok(admission.record.reasons.includes(item.reason), item.label)
+
+    const harness = createPipelineHarness()
+    let memoryGenerationCount = 0
+    const manifest = await runIngestPipeline(harness.deps, {
+      fileName: `${item.label}.md`,
+      text: `Non-clean malware state ${item.label} must remain unavailable to normal RAG.`,
+      admissionContext: context
+    }, async () => {
+      memoryGenerationCount += 1
+      return []
+    })
+    assert.equal(manifest.admission?.status, item.expectedStatus, item.label)
+    assert.equal(manifest.publicationEligible, false, item.label)
+    assert.deepEqual(manifest.vectorKeys, [], item.label)
+    assert.equal(memoryGenerationCount, 0, item.label)
+    assert.equal(harness.evidenceRecords.length, 0, item.label)
+    assert.equal(harness.memoryRecords.length, 0, item.label)
+  }
+
+  const clean = resolveSourceAdmission({
+    context: fullAdmissionContext(),
+    runtimeEnvironment: "production",
+    admittedAt: "2026-07-17T00:00:00.000Z"
+  })
+  assert.equal(clean.record.status, "approved")
+  assert.deepEqual(clean.record.malwareScan, { status: "clean", profileVersion: "malware-scan-v1" })
 })
 
 test("FR-069 approved ingest propagates the security envelope and reconciles manifest/vector artifacts", async () => {
@@ -377,6 +431,7 @@ function fullAdmissionContext(): AuthoritativeAdmissionContext {
     lifecycleRef: reference("lifecycle"),
     provenanceRef: reference("provenance"),
     inspectionStatus: "passed",
+    malwareScan: { status: "clean", profileVersion: "malware-scan-v1" },
     qualityProfile: approvedQualityProfile(),
     lifecycleStatus: "active",
     scope: { scopeType: "personal", allowedUsers: ["owner-server"] }

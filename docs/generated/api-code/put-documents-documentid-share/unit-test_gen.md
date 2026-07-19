@@ -16,27 +16,27 @@
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `PUT /documents/{documentId}/share handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:921 (PUT /documents/{documentId}/share handler)` |
-| F002 | `PUT /documents/{documentId}/share handler` | if | `err` が `DocumentShareValidationError` の instance である | `apps/api/src/routes/document-routes.ts:922 (PUT /documents/{documentId}/share handler)` |
-| F003 | `PUT /documents/{documentId}/share handler` | if | `err` が `DocumentShareConflictError` の instance である | `apps/api/src/routes/document-routes.ts:923 (PUT /documents/{documentId}/share handler)` |
-| F004 | `PUT /documents/{documentId}/share handler` | if | is forbidden error の判定結果が真である | `apps/api/src/routes/document-routes.ts:924 (PUT /documents/{documentId}/share handler)` |
-| F005 | `PUT /documents/{documentId}/share handler` | if | `err` が `Error` の instance である、かつ `err.message` が "ENOENT" を含む、または `err.message` が "NoSuchKey" を含む | `apps/api/src/routes/document-routes.ts:925 (PUT /documents/{documentId}/share handler)` |
+| F001 | `PUT /documents/{documentId}/share handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:922 (PUT /documents/{documentId}/share handler)` |
+| F002 | `PUT /documents/{documentId}/share handler` | if | `err` が `DocumentShareValidationError` の instance である | `apps/api/src/routes/document-routes.ts:923 (PUT /documents/{documentId}/share handler)` |
+| F003 | `PUT /documents/{documentId}/share handler` | if | `err` が `DocumentShareConflictError` の instance である | `apps/api/src/routes/document-routes.ts:924 (PUT /documents/{documentId}/share handler)` |
+| F004 | `PUT /documents/{documentId}/share handler` | if | is forbidden error の判定結果が真である | `apps/api/src/routes/document-routes.ts:925 (PUT /documents/{documentId}/share handler)` |
+| F005 | `PUT /documents/{documentId}/share handler` | if | `err` が `Error` の instance である、かつ `err.message` が "ENOENT" を含む、または `err.message` が "NoSuchKey" を含む | `apps/api/src/routes/document-routes.ts:926 (PUT /documents/{documentId}/share handler)` |
 | F006 | `MemoRagService.updateDocumentShare` | if | can share document の判定結果が真ではない | `apps/api/src/rag/memorag-service.ts:1200 (MemoRagService.updateDocumentShare)` |
 
 ## 3. コード由来テストケース
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | 文書共有設定を更新する が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:914 (PUT /documents/{documentId}/share handler)` |
-| TC002 | F001: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/document-routes.ts:921 (PUT /documents/{documentId}/share handler)` |
-| TC003 | F002: 条件成立 | `err` が `DocumentShareValidationError` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:922 (PUT /documents/{documentId}/share handler)` |
-| TC004 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:922 (PUT /documents/{documentId}/share handler)` |
-| TC005 | F003: 条件成立 | `err` が `DocumentShareConflictError` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:923 (PUT /documents/{documentId}/share handler)` |
-| TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:923 (PUT /documents/{documentId}/share handler)` |
-| TC007 | F004: 条件成立 | is forbidden error の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:924 (PUT /documents/{documentId}/share handler)` |
-| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:924 (PUT /documents/{documentId}/share handler)` |
-| TC009 | F005: 条件成立 | `err` が `Error` の instance である、かつ `err.message` が "ENOENT" を含む、または `err.message` が "NoSuchKey" を含む 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:925 (PUT /documents/{documentId}/share handler)` |
-| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:925 (PUT /documents/{documentId}/share handler)` |
+| TC001 | 正常系 | 文書共有設定を更新する が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:915 (PUT /documents/{documentId}/share handler)` |
+| TC002 | F001: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/document-routes.ts:922 (PUT /documents/{documentId}/share handler)` |
+| TC003 | F002: 条件成立 | `err` が `DocumentShareValidationError` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:923 (PUT /documents/{documentId}/share handler)` |
+| TC004 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:923 (PUT /documents/{documentId}/share handler)` |
+| TC005 | F003: 条件成立 | `err` が `DocumentShareConflictError` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:924 (PUT /documents/{documentId}/share handler)` |
+| TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:924 (PUT /documents/{documentId}/share handler)` |
+| TC007 | F004: 条件成立 | is forbidden error の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:925 (PUT /documents/{documentId}/share handler)` |
+| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:925 (PUT /documents/{documentId}/share handler)` |
+| TC009 | F005: 条件成立 | `err` が `Error` の instance である、かつ `err.message` が "ENOENT" を含む、または `err.message` が "NoSuchKey" を含む 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:926 (PUT /documents/{documentId}/share handler)` |
+| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:926 (PUT /documents/{documentId}/share handler)` |
 | TC011 | F006: 条件成立 | can share document の判定結果が真ではない 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1200 (MemoRagService.updateDocumentShare)` |
 | TC012 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1200 (MemoRagService.updateDocumentShare)` |
 | TC013 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

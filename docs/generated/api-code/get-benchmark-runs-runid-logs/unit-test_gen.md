@@ -16,9 +16,9 @@
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
 | F001 | `GET /benchmark-runs/{runId}/logs handler` | if | `download` が存在しない、または偽である | `apps/api/src/routes/benchmark-routes.ts:245 (GET /benchmark-runs/{runId}/logs handler)` |
-| F002 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| F003 | `MemoRagService.getBenchmarkCodeBuildLogText` | if | `run` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4770 (MemoRagService.getBenchmarkCodeBuildLogText)` |
-| F004 | `MemoRagService.getBenchmarkCodeBuildLogText` | if | `text` が `undefined` と等しい | `apps/api/src/rag/memorag-service.ts:4777 (MemoRagService.getBenchmarkCodeBuildLogText)` |
+| F002 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |
+| F003 | `MemoRagService.getBenchmarkCodeBuildLogText` | if | `run` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4788 (MemoRagService.getBenchmarkCodeBuildLogText)` |
+| F004 | `MemoRagService.getBenchmarkCodeBuildLogText` | if | `text` が `undefined` と等しい | `apps/api/src/rag/memorag-service.ts:4795 (MemoRagService.getBenchmarkCodeBuildLogText)` |
 
 ## 3. コード由来テストケース
 
@@ -27,12 +27,12 @@
 | TC001 | 正常系 | CodeBuild ログをテキストで取得する が成功 response を返す。 | `apps/api/src/routes/benchmark-routes.ts:239 (GET /benchmark-runs/{runId}/logs handler)` |
 | TC002 | F001: 条件成立 | `download` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/benchmark-routes.ts:245 (GET /benchmark-runs/{runId}/logs handler)` |
 | TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/benchmark-routes.ts:245 (GET /benchmark-runs/{runId}/logs handler)` |
-| TC004 | F002: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC006 | F003: 条件成立 | `run` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:4770 (MemoRagService.getBenchmarkCodeBuildLogText)` |
-| TC007 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:4770 (MemoRagService.getBenchmarkCodeBuildLogText)` |
-| TC008 | F004: 条件成立 | `text` が `undefined` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:4777 (MemoRagService.getBenchmarkCodeBuildLogText)` |
-| TC009 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:4777 (MemoRagService.getBenchmarkCodeBuildLogText)` |
+| TC004 | F002: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
+| TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
+| TC006 | F003: 条件成立 | `run` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:4788 (MemoRagService.getBenchmarkCodeBuildLogText)` |
+| TC007 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:4788 (MemoRagService.getBenchmarkCodeBuildLogText)` |
+| TC008 | F004: 条件成立 | `text` が `undefined` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:4795 (MemoRagService.getBenchmarkCodeBuildLogText)` |
+| TC009 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:4795 (MemoRagService.getBenchmarkCodeBuildLogText)` |
 | TC010 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC011 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC012 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

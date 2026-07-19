@@ -20,18 +20,18 @@
 | 到達 symbol | FR-074 worker failure persists an unknown-null replay manifest and a redacted trace | `apps/api/src/rag/memorag-service.test.ts:2715 (FR-074 worker failure persists an unknown-null replay manifest and a redacted trace)` |
 | 到達 symbol | FR-090 ingest reauthorizes after the final event and compensates before persisting success | `apps/api/src/rag/memorag-service.test.ts:2784 (FR-090 ingest reauthorizes after the final event and compensates before persisting success)` |
 | 到達 symbol | FR-090 revoke after governance creation compensates all ingest artifacts and never publishes success | `apps/api/src/rag/memorag-service.test.ts:2844 (FR-090 revoke after governance creation compensates all ingest artifacts and never publishes success)` |
-| 到達 symbol | chat and document ingest SSE routes keep Last-Event-ID reconnect and event format | `apps/api/src/security/access-control-policy.test.ts:558 (chat and document ingest SSE routes keep Last-Event-ID reconnect and event format)` |
+| 到達 symbol | chat and document ingest SSE routes keep Last-Event-ID reconnect and event format | `apps/api/src/security/access-control-policy.test.ts:583 (chat and document ingest SSE routes keep Last-Event-ID reconnect and event format)` |
 
 ## 2. 実装分岐から導くテスト要因
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `GET /document-ingest-runs/{runId}/events handler` | if | `run` が存在しない、または偽である、または can read document ingest run の判定結果が真ではない | `apps/api/src/routes/document-routes.ts:1236 (GET /document-ingest-runs/{runId}/events handler)` |
-| F002 | `GET /document-ingest-runs/{runId}/events handler` | 三項条件 | is finite の判定結果が真である | `apps/api/src/routes/document-routes.ts:1240 (GET /document-ingest-runs/{runId}/events handler)` |
-| F003 | `GET /document-ingest-runs/{runId}/events handler` | loop | `Date.now()` が `deadline` より小さい | `apps/api/src/routes/document-routes.ts:1244 (GET /document-ingest-runs/{runId}/events handler)` |
-| F004 | `GET /document-ingest-runs/{runId}/events handler` | loop | `events` が存在し、真である | `apps/api/src/routes/document-routes.ts:1246 (GET /document-ingest-runs/{runId}/events handler)` |
-| F005 | `GET /document-ingest-runs/{runId}/events handler` | if | `item.type` が `"final"` と等しい、または `item.type` が `"error"` と等しい | `apps/api/src/routes/document-routes.ts:1253 (GET /document-ingest-runs/{runId}/events handler)` |
-| F006 | `GET /document-ingest-runs/{runId}/events handler` | if | `Date.now() - lastHeartbeat` が `15_000` より大きい | `apps/api/src/routes/document-routes.ts:1256 (GET /document-ingest-runs/{runId}/events handler)` |
+| F001 | `GET /document-ingest-runs/{runId}/events handler` | if | `run` が存在しない、または偽である、または can read document ingest run の判定結果が真ではない | `apps/api/src/routes/document-routes.ts:1237 (GET /document-ingest-runs/{runId}/events handler)` |
+| F002 | `GET /document-ingest-runs/{runId}/events handler` | 三項条件 | is finite の判定結果が真である | `apps/api/src/routes/document-routes.ts:1241 (GET /document-ingest-runs/{runId}/events handler)` |
+| F003 | `GET /document-ingest-runs/{runId}/events handler` | loop | `Date.now()` が `deadline` より小さい | `apps/api/src/routes/document-routes.ts:1245 (GET /document-ingest-runs/{runId}/events handler)` |
+| F004 | `GET /document-ingest-runs/{runId}/events handler` | loop | `events` が存在し、真である | `apps/api/src/routes/document-routes.ts:1247 (GET /document-ingest-runs/{runId}/events handler)` |
+| F005 | `GET /document-ingest-runs/{runId}/events handler` | if | `item.type` が `"final"` と等しい、または `item.type` が `"error"` と等しい | `apps/api/src/routes/document-routes.ts:1254 (GET /document-ingest-runs/{runId}/events handler)` |
+| F006 | `GET /document-ingest-runs/{runId}/events handler` | if | `Date.now() - lastHeartbeat` が `15_000` より大きい | `apps/api/src/routes/document-routes.ts:1257 (GET /document-ingest-runs/{runId}/events handler)` |
 | F007 | `uploadTenantId` | if | `purpose` が `"benchmarkSeed"` と等しい | `apps/api/src/routes/document-routes.ts:156 (uploadTenantId)` |
 | F008 | `uploadTenantId` | if | `config.benchmarkEvaluationEnabled` が存在しない、または偽である、または trim の判定結果が真ではない | `apps/api/src/routes/document-routes.ts:157 (uploadTenantId)` |
 | F009 | `uploadTenantId` | 三項条件 | `config.authEnabled` が存在しない、または偽である | `apps/api/src/routes/document-routes.ts:162 (uploadTenantId)` |
@@ -46,19 +46,19 @@
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | 文書取り込みイベントを購読する が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:1230 (GET /document-ingest-runs/{runId}/events handler)` |
-| TC002 | F001: 条件成立 | `run` が存在しない、または偽である、または can read document ingest run の判定結果が真ではない 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1236 (GET /document-ingest-runs/{runId}/events handler)` |
-| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1236 (GET /document-ingest-runs/{runId}/events handler)` |
-| TC004 | F002: 条件成立 | is finite の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1240 (GET /document-ingest-runs/{runId}/events handler)` |
-| TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1240 (GET /document-ingest-runs/{runId}/events handler)` |
-| TC006 | F003: 0件 | 反復対象が空でも不正な副作用や例外を生じない。 | `apps/api/src/routes/document-routes.ts:1244 (GET /document-ingest-runs/{runId}/events handler)` |
-| TC007 | F003: 複数件 | 各要素を順に処理し、順序・終了条件を守る。 | `apps/api/src/routes/document-routes.ts:1244 (GET /document-ingest-runs/{runId}/events handler)` |
-| TC008 | F004: 0件 | 反復対象が空でも不正な副作用や例外を生じない。 | `apps/api/src/routes/document-routes.ts:1246 (GET /document-ingest-runs/{runId}/events handler)` |
-| TC009 | F004: 複数件 | 各要素を順に処理し、順序・終了条件を守る。 | `apps/api/src/routes/document-routes.ts:1246 (GET /document-ingest-runs/{runId}/events handler)` |
-| TC010 | F005: 条件成立 | `item.type` が `"final"` と等しい、または `item.type` が `"error"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1253 (GET /document-ingest-runs/{runId}/events handler)` |
-| TC011 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1253 (GET /document-ingest-runs/{runId}/events handler)` |
-| TC012 | F006: 条件成立 | `Date.now() - lastHeartbeat` が `15_000` より大きい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1256 (GET /document-ingest-runs/{runId}/events handler)` |
-| TC013 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1256 (GET /document-ingest-runs/{runId}/events handler)` |
+| TC001 | 正常系 | 文書取り込みイベントを購読する が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:1231 (GET /document-ingest-runs/{runId}/events handler)` |
+| TC002 | F001: 条件成立 | `run` が存在しない、または偽である、または can read document ingest run の判定結果が真ではない 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1237 (GET /document-ingest-runs/{runId}/events handler)` |
+| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1237 (GET /document-ingest-runs/{runId}/events handler)` |
+| TC004 | F002: 条件成立 | is finite の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1241 (GET /document-ingest-runs/{runId}/events handler)` |
+| TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1241 (GET /document-ingest-runs/{runId}/events handler)` |
+| TC006 | F003: 0件 | 反復対象が空でも不正な副作用や例外を生じない。 | `apps/api/src/routes/document-routes.ts:1245 (GET /document-ingest-runs/{runId}/events handler)` |
+| TC007 | F003: 複数件 | 各要素を順に処理し、順序・終了条件を守る。 | `apps/api/src/routes/document-routes.ts:1245 (GET /document-ingest-runs/{runId}/events handler)` |
+| TC008 | F004: 0件 | 反復対象が空でも不正な副作用や例外を生じない。 | `apps/api/src/routes/document-routes.ts:1247 (GET /document-ingest-runs/{runId}/events handler)` |
+| TC009 | F004: 複数件 | 各要素を順に処理し、順序・終了条件を守る。 | `apps/api/src/routes/document-routes.ts:1247 (GET /document-ingest-runs/{runId}/events handler)` |
+| TC010 | F005: 条件成立 | `item.type` が `"final"` と等しい、または `item.type` が `"error"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1254 (GET /document-ingest-runs/{runId}/events handler)` |
+| TC011 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1254 (GET /document-ingest-runs/{runId}/events handler)` |
+| TC012 | F006: 条件成立 | `Date.now() - lastHeartbeat` が `15_000` より大きい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1257 (GET /document-ingest-runs/{runId}/events handler)` |
+| TC013 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1257 (GET /document-ingest-runs/{runId}/events handler)` |
 | TC014 | F007: 条件成立 | `purpose` が `"benchmarkSeed"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:156 (uploadTenantId)` |
 | TC015 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:156 (uploadTenantId)` |
 | TC016 | F008: 条件成立 | `config.benchmarkEvaluationEnabled` が存在しない、または偽である、または trim の判定結果が真ではない 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:157 (uploadTenantId)` |

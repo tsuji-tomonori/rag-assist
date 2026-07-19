@@ -2,7 +2,7 @@
 
 # POST /document-groups/{groupId}/share IF仕様
 
-- 実装 route: `apps/api/src/routes/document-routes.ts:692 (POST /document-groups/{groupId}/share)`
+- 実装 route: `apps/api/src/routes/document-routes.ts:693 (POST /document-groups/{groupId}/share)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 文書グループ設定を更新する

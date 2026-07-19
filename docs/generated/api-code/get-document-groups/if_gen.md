@@ -2,7 +2,7 @@
 
 # GET /document-groups IF仕様
 
-- 実装 route: `apps/api/src/routes/document-routes.ts:508 (GET /document-groups)`
+- 実装 route: `apps/api/src/routes/document-routes.ts:509 (GET /document-groups)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 文書グループ一覧を取得する

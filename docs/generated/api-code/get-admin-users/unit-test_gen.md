@@ -15,9 +15,9 @@
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `GET /admin/users handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/admin-routes.ts:145 (GET /admin/users handler)` |
-| F002 | `GET /admin/users handler` | if | `error` が `InvalidPageCursorError` の instance である | `apps/api/src/routes/admin-routes.ts:146 (GET /admin/users handler)` |
-| F003 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| F001 | `GET /admin/users handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/admin-routes.ts:212 (GET /admin/users handler)` |
+| F002 | `GET /admin/users handler` | if | `error` が `InvalidPageCursorError` の instance である | `apps/api/src/routes/admin-routes.ts:213 (GET /admin/users handler)` |
+| F003 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | F004 | `MemoRagService.listManagedUsersPage` | 三項条件 | `this.deps.verifiedIdentityProvider` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1694 (MemoRagService.listManagedUsersPage)` |
 | F005 | `MemoRagService.listManagedUsersPage` | if | `actor.userId` が `user.userId` と等しい | `apps/api/src/rag/memorag-service.ts:1701 (MemoRagService.listManagedUsersPage)` |
 | F006 | `MemoRagService.listManagedUsersPage` | if | `user.status` が `"active"` と異なる | `apps/api/src/rag/memorag-service.ts:1702 (MemoRagService.listManagedUsersPage)` |
@@ -30,12 +30,12 @@
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | 管理対象ユーザー一覧を取得する が成功 response を返す。 | `apps/api/src/routes/admin-routes.ts:139 (GET /admin/users handler)` |
-| TC002 | F001: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/admin-routes.ts:145 (GET /admin/users handler)` |
-| TC003 | F002: 条件成立 | `error` が `InvalidPageCursorError` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:146 (GET /admin/users handler)` |
-| TC004 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:146 (GET /admin/users handler)` |
-| TC005 | F003: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| TC001 | 正常系 | 管理対象ユーザー一覧を取得する が成功 response を返す。 | `apps/api/src/routes/admin-routes.ts:206 (GET /admin/users handler)` |
+| TC002 | F001: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/admin-routes.ts:212 (GET /admin/users handler)` |
+| TC003 | F002: 条件成立 | `error` が `InvalidPageCursorError` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:213 (GET /admin/users handler)` |
+| TC004 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:213 (GET /admin/users handler)` |
+| TC005 | F003: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
+| TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | TC007 | F004: 条件成立 | `this.deps.verifiedIdentityProvider` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1694 (MemoRagService.listManagedUsersPage)` |
 | TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1694 (MemoRagService.listManagedUsersPage)` |
 | TC009 | F005: 条件成立 | `actor.userId` が `user.userId` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1701 (MemoRagService.listManagedUsersPage)` |

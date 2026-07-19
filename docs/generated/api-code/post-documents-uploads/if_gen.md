@@ -2,7 +2,7 @@
 
 # POST /documents/uploads IF仕様
 
-- 実装 route: `apps/api/src/routes/document-routes.ts:1018 (POST /documents/uploads)`
+- 実装 route: `apps/api/src/routes/document-routes.ts:1019 (POST /documents/uploads)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 文書アップロード URL を作成する

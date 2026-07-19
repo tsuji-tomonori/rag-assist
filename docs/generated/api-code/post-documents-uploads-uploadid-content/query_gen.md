@@ -8,7 +8,7 @@
 
 | # | CRUD/実行 | Target | Method | 自然言語での目的 | Caller | コード根拠 |
 | ---: | --- | --- | --- | --- | --- | --- |
-| 1 | 作成・追記 | `deps.objectStore` | `putBytes` | `deps.objectStore` に対して put bytes を実行する。 | `POST /documents/uploads/{uploadId}/content handler` | `apps/api/src/routes/document-routes.ts:1084 (POST /documents/uploads/{uploadId}/content handler)` |
+| 1 | 作成・追記 | `deps.objectStore` | `putBytes` | `deps.objectStore` に対して put bytes を実行する。 | `POST /documents/uploads/{uploadId}/content handler` | `apps/api/src/routes/document-routes.ts:1085 (POST /documents/uploads/{uploadId}/content handler)` |
 
 ## 外部サービス操作
 

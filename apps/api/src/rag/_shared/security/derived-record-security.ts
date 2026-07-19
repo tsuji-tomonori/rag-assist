@@ -20,6 +20,9 @@ type CompleteAdmission = SourceAdmissionRecord & {
 
 export function isCompleteApprovedAdmission(admission: SourceAdmissionRecord): admission is CompleteAdmission {
   return admission.status === "approved"
+    && admission.inspectionStatus === "passed"
+    && admission.malwareScan?.status === "clean"
+    && Boolean(admission.malwareScan.profileVersion)
     && Boolean(admission.tenantId)
     && hasReference(admission.authorizationRef)
     && hasReference(admission.classificationRef)

@@ -18,7 +18,7 @@
 | M003 | OpenAPI contract | `403` | 対象操作を実行する権限がありません。 | OpenAPI で宣言された HTTP 403 response | runtime OpenAPI |
 | M004 | OpenAPI contract | `404` | 指定したリソースが見つかりません。 | OpenAPI で宣言された HTTP 404 response | runtime OpenAPI |
 | M005 | OpenAPI contract | `503` | resource group の認可依存を利用できません | OpenAPI で宣言された HTTP 503 response | runtime OpenAPI |
-| M006 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| M006 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | M007 | 例外 | `-` | Resource group lifecycle audit outbox is unavailable | `deps.securityAuditOutbox` が存在しない、または偽である | `apps/api/src/routes/resource-group-routes.ts:364 (lifecycleService)` |
 | M008 | 例外 | `-` | Forbidden | canonical の判定結果が真ではない、または canonical の判定結果が真ではない、または `actor.accountStatus` が `"active"` と異なる | `apps/api/src/security/resource-group-lifecycle-service.ts:849 (authoritativeActorTenant)` |
 | M009 | 例外 | `-` | Forbidden | canonical の判定結果が真ではない、または is application role の判定結果が真である | `apps/api/src/security/resource-group-lifecycle-service.ts:559 (ResourceGroupLifecycleService.loadActiveTarget)` |

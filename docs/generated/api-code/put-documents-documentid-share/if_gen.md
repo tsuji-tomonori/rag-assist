@@ -2,7 +2,7 @@
 
 # PUT /documents/{documentId}/share IF仕様
 
-- 実装 route: `apps/api/src/routes/document-routes.ts:895 (PUT /documents/{documentId}/share)`
+- 実装 route: `apps/api/src/routes/document-routes.ts:896 (PUT /documents/{documentId}/share)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 文書共有設定を更新する

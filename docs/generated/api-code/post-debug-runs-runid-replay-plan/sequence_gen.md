@@ -33,9 +33,9 @@ sequenceDiagram
 | 2 | `POST /debug-runs/{runId}/replay-plan handler` | Auth | "chat:admin:read_all" permission を必須条件として確認する。 | `requirePermission(user, "chat:admin:read_all")` | `apps/api/src/routes/debug-routes.ts:103 (POST /debug-runs/{runId}/replay-plan handler)` |
 | 3 | `POST /debug-runs/{runId}/replay-plan handler` | Validation | schema 検証済みの path parameter を取得する。 | `validParam<{ runId: string }>(c)` | `apps/api/src/routes/debug-routes.ts:104 (POST /debug-runs/{runId}/replay-plan handler)` |
 | 4 | `POST /debug-runs/{runId}/replay-plan handler` | Service | service の create debug replay plan 処理を呼び出す。 | `service.createDebugReplayPlan(runId, user)` | `apps/api/src/routes/debug-routes.ts:106 (POST /debug-runs/{runId}/replay-plan handler)` |
-| 5 | `MemoRagService.createDebugReplayPlan` | Service | service の get debug run 処理を呼び出す。 | `this.getDebugRun(runId, actor)` | `apps/api/src/rag/memorag-service.ts:2361 (MemoRagService.createDebugReplayPlan)` |
-| 6 | `MemoRagService.getDebugRun` | Store | `this.deps.objectStore` に対して list keys を実行する。 | `this.deps.objectStore.listKeys(prefix)` | `apps/api/src/rag/memorag-service.ts:2346 (MemoRagService.getDebugRun)` |
-| 7 | `MemoRagService.getDebugRun` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(key)` | `apps/api/src/rag/memorag-service.ts:2349 (MemoRagService.getDebugRun)` |
+| 5 | `MemoRagService.createDebugReplayPlan` | Service | service の get debug run 処理を呼び出す。 | `this.getDebugRun(runId, actor)` | `apps/api/src/rag/memorag-service.ts:2379 (MemoRagService.createDebugReplayPlan)` |
+| 6 | `MemoRagService.getDebugRun` | Store | `this.deps.objectStore` に対して list keys を実行する。 | `this.deps.objectStore.listKeys(prefix)` | `apps/api/src/rag/memorag-service.ts:2364 (MemoRagService.getDebugRun)` |
+| 7 | `MemoRagService.getDebugRun` | Store | `this.deps.objectStore` に対して get text を実行する。 | `this.deps.objectStore.getText(key)` | `apps/api/src/rag/memorag-service.ts:2367 (MemoRagService.getDebugRun)` |
 | 8 | `POST /debug-runs/{runId}/replay-plan handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json(plan, 200)` | `apps/api/src/routes/debug-routes.ts:111 (POST /debug-runs/{runId}/replay-plan handler)` |
 
 ## 分岐
@@ -43,8 +43,8 @@ sequenceDiagram
 | ID | Function | 条件 | 実装位置 |
 | --- | --- | --- | --- |
 | B001 | `POST /debug-runs/{runId}/replay-plan handler` | `plan` が存在しない、または偽である | `apps/api/src/routes/debug-routes.ts:107 (POST /debug-runs/{runId}/replay-plan handler)` |
-| B002 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| B003 | `MemoRagService.createDebugReplayPlan` | `trace` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:2362 (MemoRagService.createDebugReplayPlan)` |
-| B004 | `MemoRagService.createDebugReplayPlan` | `trace.replayVersionManifest` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2377 (MemoRagService.createDebugReplayPlan)` |
-| B005 | `MemoRagService.createDebugReplayPlan` | `trace.replayVersionManifest.missingVersions.length` が `0` と等しい | `apps/api/src/rag/memorag-service.ts:2378 (MemoRagService.createDebugReplayPlan)` |
+| B002 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |
+| B003 | `MemoRagService.createDebugReplayPlan` | `trace` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:2380 (MemoRagService.createDebugReplayPlan)` |
+| B004 | `MemoRagService.createDebugReplayPlan` | `trace.replayVersionManifest` が存在し、真である | `apps/api/src/rag/memorag-service.ts:2395 (MemoRagService.createDebugReplayPlan)` |
+| B005 | `MemoRagService.createDebugReplayPlan` | `trace.replayVersionManifest.missingVersions.length` が `0` と等しい | `apps/api/src/rag/memorag-service.ts:2396 (MemoRagService.createDebugReplayPlan)` |
 | B006 | `settleNonEnumerationTiming` | `remaining` が `0` より大きい | `apps/api/src/security/public-resource-response.ts:42 (settleNonEnumerationTiming)` |

@@ -38,7 +38,7 @@
 | 安定性 | Medium |
 | Confidence | inferred |
 | 所有者 | Document steward / RAG Ops / Security |
-| 変更履歴 | 2026-07-11 初版 |
+| 変更履歴 | 2026-07-11 初版。2026-07-17 malware clean-only promotion guardと非clean状態分類を追記 |
 
 ## 受け入れ条件
 
@@ -54,6 +54,8 @@
 - When: document ingest が処理を終える
 - Then: `quarantined` または `rejected` とし、normal RAG index、memory、cache、answer evidence へ公開しない
 
+malware scan verdictはgeneric format/content inspectionと独立して保持し、canonical profile versionを伴う`clean`だけをpromotion可能とする。missing、`unknown`、`pending`、`failed`、`timeout`は再評価可能な`quarantined`、`infected`は`rejected`とし、旧recordのverdict欠損もcleanへ補完しない。
+
 ## 妥当性確認
 
 | 観点 | 結果 | メモ |
@@ -67,10 +69,10 @@
 | 検証可能性 | OK | missing/self-asserted metadata、malware、unsupported format、review transition test で確認できる |
 | ニーズ適合 | OK | 利用者が信頼・利用条件を確認された文書だけから回答を得られる |
 | 原子性 | OK | normal RAG への admission decision を規定する |
-| 実装適合 | OK（confirmed） | source admission/governance approval が protected metadata、versioned reference、inspection/quality、current reviewer、staged publication を fail closed に強制し、admission lifecycle tests を持つ |
+| 実装適合 | Partial（confirmed / open） | source admission/governance approval、current eligibility、staged publication/reindex/rollbackがmalware`clean`+profile evidenceだけをpromotion可能とし、missing/unknown/pending/failed/timeoutをquarantine、infectedをrejectする。initial routeはpurposeからcleanを自己生成せずunknownとし、admission lifecycle/governance/staged publication testsで副作用前fail-closedを確認する。scanner製品adapter、実AWS隔離、timeout producer、再検査scheduler、legacy migrationはopen |
 | 合意 | pending | 対応 MIME、reviewer、data classification、公開状態遷移が未確定 |
 
 ## トレース
 
 - 後方: `FR-001`, `FR-002`, `FR-038`, `GAP-RD-012`, `GAP-RD-013`。
-- 前方: source registry、ingest state machine、`FR-069`, `FR-075`。
+- 前方: source registry、ingest state machine、malware scanner adapter、quarantine/reinspection operation、`FR-069`, `FR-075`。

@@ -51,6 +51,7 @@ test("citation reauthorization applies an ordinary document deny before a folder
       ownerUserId: "folder-admin",
       ...references,
       inspectionStatus: "passed",
+      malwareScan: { status: "clean", profileVersion: "malware-scan-v1" },
       reasons: [],
       rejectedProtectedMetadataKeys: [],
       admittedAt: timestamp

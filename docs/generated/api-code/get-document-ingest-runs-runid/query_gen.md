@@ -8,7 +8,7 @@
 
 | # | CRUD/実行 | Target | Method | 自然言語での目的 | Caller | コード根拠 |
 | ---: | --- | --- | --- | --- | --- | --- |
-| 1 | 参照 | `deps.documentIngestRunStore` | `get` | `deps.documentIngestRunStore` に対して get を実行する。 | `GET /document-ingest-runs/{runId} handler` | `apps/api/src/routes/document-routes.ts:1210 (GET /document-ingest-runs/{runId} handler)` |
+| 1 | 参照 | `deps.documentIngestRunStore` | `get` | `deps.documentIngestRunStore` に対して get を実行する。 | `GET /document-ingest-runs/{runId} handler` | `apps/api/src/routes/document-routes.ts:1211 (GET /document-ingest-runs/{runId} handler)` |
 
 ## 外部サービス操作
 

@@ -70,9 +70,9 @@
 | M055 | 例外 | `-` | Document manifest identity is invalid | `manifest.manifestObjectKey` が `key` と異なる、または canonical の判定結果が真ではない | `apps/api/src/folders/folder-lifecycle-mutation-coordinator.ts:344 (FolderLifecycleMutationCoordinator.loadAffectedDocuments)` |
 | M056 | 例外 | `-` | Document folder scope is invalid | `values.length` が `result.length` と異なる、または `result.length` が `0` と等しい | `apps/api/src/folders/folder-lifecycle-mutation-coordinator.ts:1190 (manifestFolderIds)` |
 | M057 | 例外 | `-` | Another folder move won the mutation race | `winner` が存在しない、または偽である、または same move request の判定結果が真ではない | `apps/api/src/folders/folder-lifecycle-mutation-coordinator.ts:240 (FolderLifecycleMutationCoordinator.moveFolder)` |
-| M058 | HTTP 実装応答 | `409` | Folder move conflict | `error` が `FolderMoveConflictError` の instance である | `apps/api/src/routes/document-routes.ts:770 (POST /document-groups/{groupId}/move handler)` |
-| M059 | HTTP 実装応答 | `400` | Invalid folder move request | `error` が `Error` の instance である、かつ test の判定結果が真である | `apps/api/src/routes/document-routes.ts:772 (POST /document-groups/{groupId}/move handler)` |
-| M060 | HTTP 実装応答 | `503` | Folder move reconciliation pending | 例外を捕捉した場合 | `apps/api/src/routes/document-routes.ts:774 (POST /document-groups/{groupId}/move handler)` |
+| M058 | HTTP 実装応答 | `409` | Folder move conflict | `error` が `FolderMoveConflictError` の instance である | `apps/api/src/routes/document-routes.ts:771 (POST /document-groups/{groupId}/move handler)` |
+| M059 | HTTP 実装応答 | `400` | Invalid folder move request | `error` が `Error` の instance である、かつ test の判定結果が真である | `apps/api/src/routes/document-routes.ts:773 (POST /document-groups/{groupId}/move handler)` |
+| M060 | HTTP 実装応答 | `503` | Folder move reconciliation pending | 例外を捕捉した場合 | `apps/api/src/routes/document-routes.ts:775 (POST /document-groups/{groupId}/move handler)` |
 
 ## 読み方
 

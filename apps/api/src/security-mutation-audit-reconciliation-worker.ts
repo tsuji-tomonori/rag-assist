@@ -6,6 +6,16 @@ import {
   type SecurityMutationAuditReconciliationResult
 } from "./security/security-mutation-audit-reconciler.js"
 import { ResourceGroupMembershipAuditAuthoritativeResolver } from "./security/resource-group-membership-audit-reconciler.js"
+import { ResourceGroupUpdateAuditAuthoritativeResolver } from "./security/resource-group-update-audit-reconciler.js"
+import { ResourceGroupCreateAuditAuthoritativeResolver } from "./security/resource-group-create-audit-reconciler.js"
+import { ResourceGroupDeleteAuditAuthoritativeResolver } from "./security/resource-group-delete-audit-reconciler.js"
+import { ApplicationRoleAuditAuthoritativeResolver } from "./security/application-role-audit-reconciler.js"
+import { FolderShareAuditAuthoritativeResolver } from "./security/folder-share-audit-reconciler.js"
+import { DocumentShareAuditAuthoritativeResolver } from "./security/document-share-audit-reconciler.js"
+import { FolderMoveAuditAuthoritativeResolver } from "./security/folder-move-audit-reconciler.js"
+import { FolderDeleteAuditAuthoritativeResolver } from "./security/folder-delete-audit-reconciler.js"
+import { DocumentMoveAuditAuthoritativeResolver } from "./security/document-move-audit-reconciler.js"
+import { DocumentDeleteAuditAuthoritativeResolver } from "./security/document-delete-audit-reconciler.js"
 
 export type SecurityMutationAuditReconciliationEvent = Readonly<{
   tenantId?: unknown
@@ -41,9 +51,39 @@ export async function handler(
   const deps = createDependencies()
   const outbox = deps.securityAuditReconciliationOutbox
   if (!outbox) throw new Error("Security mutation audit reconciliation outbox is not configured")
+  const identityProvider = deps.verifiedIdentityProvider
+  if (!identityProvider) throw new Error("Security mutation audit reconciliation identity provider is not configured")
   const reconciler = new SecurityMutationAuditReconciler(outbox, [
     new SourceGovernanceAuditAuthoritativeResolver(deps.objectStore, outbox),
-    new ResourceGroupMembershipAuditAuthoritativeResolver(deps.groupMembershipStore)
+    new ResourceGroupMembershipAuditAuthoritativeResolver(deps.groupMembershipStore),
+    new ResourceGroupUpdateAuditAuthoritativeResolver(deps.userGroupStore),
+    new ResourceGroupCreateAuditAuthoritativeResolver(deps.objectStore, deps.userGroupStore, deps.groupMembershipStore),
+    new ResourceGroupDeleteAuditAuthoritativeResolver(deps.objectStore, deps.userGroupStore, deps.groupMembershipStore),
+    new ApplicationRoleAuditAuthoritativeResolver(identityProvider),
+    new FolderShareAuditAuthoritativeResolver(deps.folderPolicyStore, deps.objectStore),
+    new DocumentShareAuditAuthoritativeResolver(deps.objectStore),
+    new FolderMoveAuditAuthoritativeResolver({
+      objects: deps.objectStore,
+      groups: deps.documentGroupStore,
+      policies: deps.folderPolicyStore,
+      userGroups: deps.userGroupStore,
+      memberships: deps.groupMembershipStore,
+      identities: identityProvider
+    }),
+    new FolderDeleteAuditAuthoritativeResolver(deps.objectStore, deps.documentGroupStore),
+    new DocumentMoveAuditAuthoritativeResolver({
+      objects: deps.objectStore,
+      groups: deps.documentGroupStore,
+      policies: deps.folderPolicyStore,
+      userGroups: deps.userGroupStore,
+      memberships: deps.groupMembershipStore,
+      identities: identityProvider
+    }),
+    new DocumentDeleteAuditAuthoritativeResolver({
+      objects: deps.objectStore,
+      localTestIngestAdmissionContext: deps.localTestIngestAdmissionContext,
+      legacyGlobalDocumentArtifacts: deps.legacyGlobalDocumentArtifacts
+    })
   ])
   return createSecurityMutationAuditReconciliationHandler({
     authorizedTenantId: config.authTenantId,

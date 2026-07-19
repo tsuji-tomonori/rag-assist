@@ -2,7 +2,7 @@
 
 # POST /documents/{documentId}/reindex IF仕様
 
-- 実装 route: `apps/api/src/routes/document-routes.ts:1362 (POST /documents/{documentId}/reindex)`
+- 実装 route: `apps/api/src/routes/document-routes.ts:1363 (POST /documents/{documentId}/reindex)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 文書を再インデックスする
@@ -60,7 +60,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 339 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 342 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 | `404` | 指定したリソースが見つかりません。 | `application/json` | 3 field(s) |
@@ -119,6 +119,9 @@ Media type: `application/json`
 | `admission.provenanceRef.version` | `string` | yes | `response.admission.provenanceRef.version` の値。項目名は version を表します。 | minLength=1 |
 | `admission.provenanceRef.hash` | `string` | yes | `response.admission.provenanceRef.hash` の値。項目名は hash を表します。 | - |
 | `admission.inspectionStatus` | `enum(passed \| failed \| unknown)` | yes | `response.admission.inspectionStatus` の値。項目名は inspection status を表します。 | enum=passed, failed, unknown |
+| `admission.malwareScan` | `object` | no | `response.admission.malwareScan` の値。項目名は malware scan を表します。 | - |
+| `admission.malwareScan.status` | `enum(clean \| unknown \| pending \| infected \| failed \| timeout)` | yes | 現在の処理状態または管理状態。 | enum=clean, unknown, pending, infected, failed, timeout |
+| `admission.malwareScan.profileVersion` | `string` | no | `response.admission.malwareScan.profileVersion` の値。項目名は profile version を表します。 | - |
 | `admission.reasons` | `array<string>` | yes | `response.admission.reasons` の値。項目名は reasons を表します。 | - |
 | `admission.rejectedProtectedMetadataKeys` | `array<string>` | yes | `response.admission.rejectedProtectedMetadataKeys` の値。項目名は rejected protected metadata keys を表します。 | - |
 | `admission.admittedAt` | `string` | yes | `response.admission.admittedAt` の値。項目名は admitted at を表します。 | - |

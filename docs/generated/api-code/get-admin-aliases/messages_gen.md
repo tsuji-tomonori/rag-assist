@@ -17,7 +17,7 @@
 | M002 | OpenAPI contract | `400` | リクエスト形式または入力値が不正です。 | OpenAPI で宣言された HTTP 400 response | runtime OpenAPI |
 | M003 | OpenAPI contract | `401` | 認証が必要です。 | OpenAPI で宣言された HTTP 401 response | runtime OpenAPI |
 | M004 | OpenAPI contract | `403` | 対象操作を実行する権限がありません。 | OpenAPI で宣言された HTTP 403 response | runtime OpenAPI |
-| M005 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| M005 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | M006 | 例外 | `-` | invalid | `payload.schemaVersion` が `1` と異なる、または `payload.sort` が `expectedSort` と異なる、または is array の判定結果が真ではない、または `payload.values.length` が `0` と等しい、または some の判定結果が真である | `apps/api/src/admin/keyset-pagination.ts:58 (decodePageCursor)` |
 
 ## 読み方

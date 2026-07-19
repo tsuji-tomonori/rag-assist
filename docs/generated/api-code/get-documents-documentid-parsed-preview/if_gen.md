@@ -2,7 +2,7 @@
 
 # GET /documents/{documentId}/parsed-preview IF仕様
 
-- 実装 route: `apps/api/src/routes/document-routes.ts:1531 (GET /documents/{documentId}/parsed-preview)`
+- 実装 route: `apps/api/src/routes/document-routes.ts:1532 (GET /documents/{documentId}/parsed-preview)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: ParsedDocument preview を取得する

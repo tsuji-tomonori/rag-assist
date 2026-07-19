@@ -54,6 +54,8 @@ Media type: `application/json`
 | `inspection` | `object` | yes | `data.inspection` の値。項目名は inspection を表します。 | - |
 | `inspection.status` | `enum(passed)` | yes | 現在の処理状態または管理状態。 | enum=passed |
 | `inspection.profileVersion` | `string` | yes | `data.inspection.profileVersion` の値。項目名は profile version を表します。 | minLength=1<br>maxLength=200 |
+| `inspection.malwareStatus` | `enum(clean)` | yes | `data.inspection.malwareStatus` の値。項目名は malware status を表します。 | enum=clean |
+| `inspection.malwareProfileVersion` | `string` | yes | `data.inspection.malwareProfileVersion` の値。項目名は malware profile version を表します。 | minLength=1<br>maxLength=200 |
 
 ## Authorization
 
@@ -84,7 +86,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 63 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 65 field(s) |
 | `400` | リクエスト形式または入力値が不正です。 | `application/json` | 2 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
@@ -130,6 +132,8 @@ Media type: `application/json`
 | `record.approval.inspection` | `object` | yes | `response.record.approval.inspection` の値。項目名は inspection を表します。 | - |
 | `record.approval.inspection.status` | `enum(passed)` | yes | 現在の処理状態または管理状態。 | enum=passed |
 | `record.approval.inspection.profileVersion` | `string` | yes | `response.record.approval.inspection.profileVersion` の値。項目名は profile version を表します。 | - |
+| `record.approval.inspection.malwareStatus` | `enum(clean)` | yes | `response.record.approval.inspection.malwareStatus` の値。項目名は malware status を表します。 | enum=clean |
+| `record.approval.inspection.malwareProfileVersion` | `string` | yes | `response.record.approval.inspection.malwareProfileVersion` の値。項目名は malware profile version を表します。 | - |
 | `record.approval.classificationRef` | `object` | yes | `response.record.approval.classificationRef` の値。項目名は classification ref を表します。 | - |
 | `record.approval.classificationRef.id` | `string` | yes | リソースを一意に識別する ID。 | minLength=1 |
 | `record.approval.classificationRef.version` | `string` | yes | `response.record.approval.classificationRef.version` の値。項目名は version を表します。 | minLength=1 |

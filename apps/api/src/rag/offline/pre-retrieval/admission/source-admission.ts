@@ -60,6 +60,9 @@ const PROTECTED_METADATA_KEYS = new Set([
   "reindexMigrationId",
   "sourceAdmissionStatus",
   "inspectionStatus",
+  "malwareScan",
+  "malwareScanStatus",
+  "malwareScanProfileVersion",
   "sourceGovernancePolicyVersion",
   "sourceGovernanceStatus"
 ])
@@ -119,6 +122,7 @@ export function resolveSourceAdmission(input: {
         lifecycleRef: reference("lifecycle"),
         provenanceRef: reference("provenance"),
         inspectionStatus: "passed",
+        malwareScan: { status: "clean", profileVersion: "local-test-fixture-v1" },
         reasons: [],
         rejectedProtectedMetadataKeys: [],
         admittedAt: input.admittedAt
@@ -137,6 +141,8 @@ export function resolveSourceAdmission(input: {
   const tenantId = context.tenantId.trim()
   const ownerUserId = context.ownerUserId.trim()
   const inspectionStatus = context.inspectionStatus ?? "unknown"
+  const malwareScanStatus = context.malwareScan?.status ?? "unknown"
+  const malwareScanProfileVersion = context.malwareScan?.profileVersion?.trim()
   const references = {
     authorizationRef: validReference(context.authorizationRef),
     classificationRef: validReference(context.classificationRef),
@@ -156,8 +162,12 @@ export function resolveSourceAdmission(input: {
   if (!context.scope) reasons.push("authorization_scope_missing")
   if (inspectionStatus === "unknown") reasons.push("source_inspection_unknown")
   if (inspectionStatus === "failed") reasons.push("source_inspection_failed")
+  if (malwareScanStatus !== "clean") reasons.push(`source_malware_scan_${malwareScanStatus}`)
+  if (malwareScanStatus === "clean" && !malwareScanProfileVersion) reasons.push("source_malware_scan_profile_version_missing")
 
-  const status = inspectionStatus === "failed" ? "rejected" : reasons.length > 0 ? "quarantined" : "approved"
+  const status = inspectionStatus === "failed" || malwareScanStatus === "infected"
+    ? "rejected"
+    : reasons.length > 0 ? "quarantined" : "approved"
   const lifecycleStatus: DocumentLifecycleStatus = status === "approved"
     ? context.lifecycleStatus ?? "staging"
     : "staging"
@@ -200,6 +210,10 @@ export function resolveSourceAdmission(input: {
       ownerUserId: ownerUserId || undefined,
       ...references,
       inspectionStatus,
+      malwareScan: {
+        status: malwareScanStatus,
+        ...(malwareScanProfileVersion ? { profileVersion: malwareScanProfileVersion } : {})
+      },
       reasons,
       rejectedProtectedMetadataKeys,
       admittedAt: input.admittedAt,
@@ -228,6 +242,7 @@ function unresolvedAdmission(
       schemaVersion: 1,
       status: "quarantined",
       inspectionStatus: "unknown",
+      malwareScan: { status: "unknown" },
       reasons: [reason],
       rejectedProtectedMetadataKeys,
       admittedAt,
@@ -241,7 +256,7 @@ function admissionDegradationDecision(reasons: string[]) {
   if (reasons.some((reason) => /tenant|owner|context_missing|fixture_forbidden/.test(reason))) missing.add("authentication")
   if (reasons.some((reason) => /authorization|scope/.test(reason))) missing.add("authorization")
   if (reasons.some((reason) => /classification|usage/.test(reason))) missing.add("classification_usage")
-  if (reasons.some((reason) => /quality|inspection|lifecycle/.test(reason))) {
+  if (reasons.some((reason) => /quality|inspection|malware|lifecycle/.test(reason))) {
     missing.add("grounding")
     missing.add("citation")
   }

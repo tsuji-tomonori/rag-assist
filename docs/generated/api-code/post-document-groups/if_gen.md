@@ -2,7 +2,7 @@
 
 # POST /document-groups IF仕様
 
-- 実装 route: `apps/api/src/routes/document-routes.ts:581 (POST /document-groups)`
+- 実装 route: `apps/api/src/routes/document-routes.ts:582 (POST /document-groups)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 文書グループを作成する

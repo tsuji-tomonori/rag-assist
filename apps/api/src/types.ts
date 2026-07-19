@@ -23,6 +23,12 @@ export type QualityFlag =
 
 export type SourceAdmissionStatus = "approved" | "quarantined" | "rejected"
 export type SourceInspectionStatus = "passed" | "failed" | "unknown"
+export type SourceMalwareScanStatus = "clean" | "unknown" | "pending" | "infected" | "failed" | "timeout"
+
+export type SourceMalwareScanEvidence = {
+  status: SourceMalwareScanStatus
+  profileVersion?: string
+}
 
 export type VersionedRecordReference = {
   id: string
@@ -41,6 +47,7 @@ export type AuthoritativeAdmissionContext = {
   lifecycleRef?: VersionedRecordReference
   provenanceRef?: VersionedRecordReference
   inspectionStatus?: SourceInspectionStatus
+  malwareScan?: SourceMalwareScanEvidence
   qualityProfile?: DocumentQualityProfile
   lifecycleStatus?: Extract<DocumentLifecycleStatus, "active" | "staging" | "superseded">
   scope?: {
@@ -79,6 +86,7 @@ export type SourceAdmissionRecord = {
   lifecycleRef?: VersionedRecordReference
   provenanceRef?: VersionedRecordReference
   inspectionStatus: SourceInspectionStatus
+  malwareScan?: SourceMalwareScanEvidence
   reasons: string[]
   rejectedProtectedMetadataKeys: string[]
   admittedAt: string

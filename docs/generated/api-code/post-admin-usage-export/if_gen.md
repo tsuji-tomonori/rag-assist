@@ -2,7 +2,7 @@
 
 # POST /admin/usage/export IF仕様
 
-- 実装 route: `apps/api/src/routes/admin-routes.ts:641 (POST /admin/usage/export)`
+- 実装 route: `apps/api/src/routes/admin-routes.ts:708 (POST /admin/usage/export)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 利用状況 export URL を作成する

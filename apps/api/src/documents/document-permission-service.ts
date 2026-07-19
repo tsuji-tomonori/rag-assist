@@ -74,10 +74,6 @@ export type ReplaceVersionedDocumentSharePolicyInput = Readonly<{
 
 export const DOCUMENT_SHARE_POLICY_VERSION = "document-share-policy-v1" as const
 
-function tenantIdForManifest(manifest: DocumentManifest): string {
-  return typeof manifest.metadata?.tenantId === "string" ? manifest.metadata.tenantId : "default"
-}
-
 const documentShareLegacyLedgerKey = "documents/share-grants.json"
 const documentShareGrantPrefix = "documents/share-grants"
 const documentShareAuditPrefix = "documents/share-audit"
@@ -105,7 +101,7 @@ export class DocumentPermissionService {
   }
 
   async getShareInfo(user: AppUser, manifest: DocumentManifest): Promise<DocumentShareInfo> {
-    const tenantId = tenantIdForManifest(manifest)
+    const tenantId = requireManifestTenantId(manifest)
     const folderIds = this.folderIds(manifest)
     const [directDocumentGrants, folderDetails, decision] = await Promise.all([
       this.loadDocumentGrants(tenantId, manifest.documentId),
@@ -245,7 +241,7 @@ export class DocumentPermissionService {
   }
 
   async getVersionedDocumentSharePolicy(manifest: DocumentManifest): Promise<VersionedDocumentSharePolicyState> {
-    const tenantId = tenantIdForManifest(manifest)
+    const tenantId = requireManifestTenantId(manifest)
     const current = await this.loadDocumentGrantFile(tenantId, manifest.documentId)
     const grants = current?.grants ?? (await this.loadLegacyDocumentGrants(tenantId, manifest.documentId))
     return { grants, version: documentSharePolicyStateVersion(grants) }
@@ -259,7 +255,7 @@ export class DocumentPermissionService {
     const auditOutbox = this.deps.securityAuditOutbox
     const principalDirectory = this.deps.resourceUserPrincipalDirectory
     if (!auditOutbox || !principalDirectory) throw new Error("Versioned document share policy security dependencies are not configured")
-    const tenantId = tenantIdForManifest(manifest)
+    const tenantId = requireManifestTenantId(manifest)
     const currentFile = await this.loadDocumentGrantFile(tenantId, manifest.documentId)
     const before = currentFile?.grants ?? (await this.loadLegacyDocumentGrants(tenantId, manifest.documentId))
     const currentVersion = documentSharePolicyStateVersion(before)
@@ -407,15 +403,12 @@ export class DocumentPermissionService {
     reason: string
   ): Promise<DocumentShareInfo> {
     validateDocumentShareRequest(grants, reason)
-    const tenantId = tenantIdForManifest(manifest)
+    const tenantId = requireManifestTenantId(manifest)
     const current = await this.loadDocumentGrantFile(tenantId, manifest.documentId)
     const before = current?.grants ?? (await this.loadLegacyDocumentGrants(tenantId, manifest.documentId))
     const now = new Date().toISOString()
     const normalized = normalizeGrantInputs(grants)
-    const ownerUserId = documentOwnerUserId(manifest)
-    if (ownerUserId && normalized.some((grant) => (
-      grant.principalType === "user" && grant.principalId === ownerUserId && grant.permissionLevel === "deny"
-    ))) throw new DocumentShareValidationError("document policy cannot deny the administrative principal")
+    assertDocumentAdministrativePrincipalPreserved(manifest, normalized)
     const nextGrants: DocumentShareGrant[] = normalized.map((grant) => ({
       documentShareGrantId: `docshare_${randomUUID().slice(0, 12)}`,
       itemType: "documentShareGrant",
@@ -462,18 +455,16 @@ export class DocumentPermissionService {
     grants: readonly DocumentShareGrantInput[],
     principalDirectory: ResourceUserPrincipalDirectory
   ): Promise<void> {
-    const tenantId = tenantIdForManifest(manifest)
+    const tenantId = requireManifestTenantId(manifest)
     const ownerUserId = documentOwnerUserId(manifest)
     if (!ownerUserId) throw new DocumentShareValidationError("document administrative principal is missing")
     const owner = await principalDirectory.getUser(ownerUserId)
     if (!owner || owner.status !== "active" || owner.tenantId !== tenantId) {
       throw new DocumentShareValidationError("document administrative principal is inactive or cross-tenant")
     }
+    assertDocumentAdministrativePrincipalPreserved(manifest, grants)
     for (const grant of grants) {
       if (!isCanonicalIdentifier(grant.principalId)) throw new DocumentShareValidationError("principalId is invalid")
-      if (grant.principalType === "user" && grant.principalId === ownerUserId && grant.permissionLevel === "deny") {
-        throw new DocumentShareValidationError("document policy cannot deny the administrative principal")
-      }
       if (grant.principalType === "user") {
         const user = await principalDirectory.getUser(grant.principalId)
         if (!user || user.status !== "active" || user.tenantId !== tenantId) {
@@ -734,10 +725,35 @@ function documentOwnerUserId(manifest: DocumentManifest): string | undefined {
   return isCanonicalIdentifier(manifest.admission?.ownerUserId) ? manifest.admission.ownerUserId : undefined
 }
 
+function assertDocumentAdministrativePrincipalPreserved(
+  manifest: DocumentManifest,
+  grants: readonly DocumentShareGrantInput[]
+): void {
+  const ownerUserId = documentOwnerUserId(manifest)
+  if (ownerUserId && grants.some((grant) => (
+    grant.principalType === "user" && grant.principalId === ownerUserId && grant.permissionLevel !== "full"
+  ))) {
+    throw new DocumentShareValidationError("document policy cannot downgrade the administrative principal")
+  }
+}
+
 function authoritativeManifestTenantId(manifest: DocumentManifest): string | undefined {
-  const metadataTenant = manifest.metadata?.tenantId
-  if (typeof metadataTenant === "string") return metadataTenant
-  return manifest.admission?.tenantId
+  const metadataTenantValue = manifest.metadata?.tenantId
+  const admissionTenantValue: unknown = manifest.admission?.tenantId
+  if (metadataTenantValue !== undefined && typeof metadataTenantValue !== "string") return undefined
+  if (admissionTenantValue !== undefined && typeof admissionTenantValue !== "string") return undefined
+  const metadataTenant = metadataTenantValue
+  const admissionTenant = admissionTenantValue
+  if (metadataTenant !== undefined && !isCanonicalIdentifier(metadataTenant)) return undefined
+  if (admissionTenant !== undefined && !isCanonicalIdentifier(admissionTenant)) return undefined
+  if (metadataTenant !== undefined && admissionTenant !== undefined && metadataTenant !== admissionTenant) return undefined
+  return metadataTenant ?? admissionTenant
+}
+
+function requireManifestTenantId(manifest: DocumentManifest): string {
+  const tenantId = authoritativeManifestTenantId(manifest)
+  if (!tenantId) throw new DocumentShareValidationError("document tenant is missing, invalid, or conflicting")
+  return tenantId
 }
 
 function documentDecision(

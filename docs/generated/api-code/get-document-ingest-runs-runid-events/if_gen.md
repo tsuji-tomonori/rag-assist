@@ -2,7 +2,7 @@
 
 # GET /document-ingest-runs/{runId}/events IF仕様
 
-- 実装 route: `apps/api/src/routes/document-routes.ts:1216 (GET /document-ingest-runs/{runId}/events)`
+- 実装 route: `apps/api/src/routes/document-routes.ts:1217 (GET /document-ingest-runs/{runId}/events)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 文書取り込みイベントを購読する
