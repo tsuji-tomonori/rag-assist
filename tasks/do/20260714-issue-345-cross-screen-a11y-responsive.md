@@ -118,6 +118,7 @@
 - PR #381 head `187cba7c` は current main に対して behind 3 / ahead 34 であり、後続 PR #385 は更新前の #381 head `b6acb24f` を base にしているため merge 不可である。
 - main に追加された `E2E-UI-KEYBOARD-NAV-001`、`E2E-UI-SR-SEMANTICS-001`、`E2E-UI-TOUCH-NAV-001` と、既存 `E2E-UI-A11Y-GATE-001` は `tools/web-inventory/ui-traceability.json` の cross-view verification に登録されておらず、生成された `docs/generated/web-traceability.md` から要件・受け入れ条件・E2Eへの参照が切れている。
 - Chromium AX tree の自動検証は representative screen reader の手動検証を、touch-enabled Chromium は実機検証を代替しない。
+- current main のE2E追加により `allowDefaultProject` 対象が9 filesとなり、typescript-eslintの既定上限8 filesを超えたため、latest headのWeb lintが設定解析段階でfailureとなった。
 
 ### 根本原因と対策
 
@@ -129,6 +130,7 @@
 - [x] 4 E2Eをcanonical cross-view verificationへ一意に登録し、存在しないpath・重複ID・実行可能E2Eの未登録をtrace validatorが検出する。
 - [x] `docs/generated/web-traceability.md` と `docs/generated/web-ui-inventory.json` をgeneratorから同期し、手編集しない。
 - [x] current mainとの差分をPhase Aのmatrix / audit / trace / task / reportに限定し、#396 / #400 / #404の既統合差分を重複させない。
+- [x] `allowDefaultProject` の対象globを広げず、E2E増加を明示的な上限内でlintできるようにする。
 - [ ] `git diff --check`、Web lint / typecheck / unit、trace / semantic test、対象Playwright E2E、docs checkが成功する。
 - [ ] draft PR #381本文・受け入れ条件・セルフレビューとIssue #345を更新し、#385再統合、representative screen reader、実browser 200%・400% zoom、touch / real-device、`OQ-UI-002`を未完了として残す。
 
@@ -140,6 +142,7 @@
 - `npm run docs:web-inventory` で生成し、`docs:web-inventory:check`、semantic UI 4 tests、lint、Web typecheck、Web unit 61 files / 441 tests、canonical docs、OpenAPI、API code 98 APIs / 588 documents、infra inventory、hidden Unicode、`git diff --check`がpassした。
 - OpenAPI checkの通常scriptは `tsx` IPC socket作成がsandboxで `EPERM` となったため、同じentryを `node --import tsx src/validate-openapi-docs.ts` で実行してpassした。権限拡張は行っていない。
 - 対象Playwright 4 testsはChromium projectへ解決できることを `--list` で確認した。Chromium取得元が0 MiBの破損応答を返し、local実browser実行は未完了。latest headのGitHub Actions判定待ちのため検証受け入れ条件は未完了のままとする。
+- latest headのWeb lint failureをローカルでも再現し、9件の `allowDefaultProject` 対象がtypescript-eslintの既定上限8件を超えたことを確認した。対象globは変更せず明示上限を16件に設定し、CIと同一のWeb lint commandで再検証する。
 
 ## 実行計画
 
