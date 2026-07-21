@@ -146,6 +146,13 @@ test("NONUI-UI-TRACE-002 broken semantic references fail with classified diagnos
     assert.ok(resultCodes.has("completed-task-mismatch"))
   })
 
+  await t.test("executable E2E ID without canonical trace is rejected", () => {
+    const repoRoot = createFixture()
+    writeFile(repoRoot, "apps/web/e2e/orphan.spec.ts", "test('E2E-UI-ORPHAN-001', () => {})\n")
+    const resultCodes = codes(validateUiTraceability({ repoRoot, manifest: baseManifest(), screens: [screen()] }))
+    assert.ok(resultCodes.has("missing-verification-trace"))
+  })
+
   await t.test("generated stale output is detected", () => {
     const outputs = new Map([
       ["fresh.md", "fresh\n"],

@@ -33,6 +33,20 @@ function walkMarkdownFiles(directory) {
   })
 }
 
+function collectExecutableE2eIds(repoRoot) {
+  const e2eRoot = path.join(repoRoot, "apps/web/e2e")
+  if (!fs.existsSync(e2eRoot)) return []
+
+  const sourceFiles = fs.readdirSync(e2eRoot, { withFileTypes: true }).flatMap((entry) => {
+    const entryPath = path.join(e2eRoot, entry.name)
+    return entry.isFile() && entry.name.endsWith(".spec.ts") ? [entryPath] : []
+  })
+
+  return sortedUnique(sourceFiles.flatMap((filePath) => (
+    [...fs.readFileSync(filePath, "utf8").matchAll(/\bE2E-[A-Z0-9-]+-\d+\b/g)].map((match) => match[0])
+  )))
+}
+
 function buildRequirementIndex(repoRoot) {
   const index = new Map()
   for (const filePath of walkMarkdownFiles(path.join(repoRoot, requirementRoot))) {
@@ -292,6 +306,12 @@ export function validateUiTraceability({ repoRoot, manifest, screens }) {
   const verificationIds = allVerifications.map((verification) => verification?.id)
   for (const duplicate of duplicateValues(verificationIds)) {
     issues.push(issue("duplicate-verification", String(duplicate), "verification ID が重複しています。"))
+  }
+  const registeredVerificationIds = new Set(verificationIds)
+  for (const executableE2eId of collectExecutableE2eIds(repoRoot)) {
+    if (!registeredVerificationIds.has(executableE2eId)) {
+      issues.push(issue("missing-verification-trace", executableE2eId, "実行可能E2E IDがcanonical UI traceに登録されていません。"))
+    }
   }
 
   return issues

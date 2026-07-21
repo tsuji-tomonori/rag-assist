@@ -110,6 +110,37 @@
 - `E2E-UI-CROSS-SCREEN-AUDIT-001`: `--list`でChromium 1 testへの解決を確認。ローカルChromium取得は配布元の0 byte応答で失敗したため、実行はlatest headのGitHub Actions判定待ちであり、本受け入れ条件は未完了のままとする。
 - Phase A baselineに残るcomputed serious 1件、axe serious 5件、未分類candidate 64件、manual evidence、`OQ-UI-002`があるため、task全体の状態は`do`を維持する。
 
+## 2026-07-22 current main・E2E trace 収束
+
+### 問題文と確認済み事実
+
+- current `origin/main@3afaa923` には PR #396、#400、#404 が統合され、keyboard-only navigation、Chromium accessibility tree semantics、320px touch navigation の3 E2Eが追加された。
+- PR #381 head `187cba7c` は current main に対して behind 3 / ahead 34 であり、後続 PR #385 は更新前の #381 head `b6acb24f` を base にしているため merge 不可である。
+- main に追加された `E2E-UI-KEYBOARD-NAV-001`、`E2E-UI-SR-SEMANTICS-001`、`E2E-UI-TOUCH-NAV-001` と、既存 `E2E-UI-A11Y-GATE-001` は `tools/web-inventory/ui-traceability.json` の cross-view verification に登録されておらず、生成された `docs/generated/web-traceability.md` から要件・受け入れ条件・E2Eへの参照が切れている。
+- Chromium AX tree の自動検証は representative screen reader の手動検証を、touch-enabled Chromium は実機検証を代替しない。
+
+### 根本原因と対策
+
+根本原因は、E2E追加PRがtest・task・reportだけを更新し、cross-view E2Eを正本traceへ登録する変更を所有せず、validatorもE2E source側の未登録IDを検出しなかったことである。加えて、#381を更新した後に3 PRがmainへ統合されたため、root PRと後続stackのbaseが再び分岐した。published historyを書き換えずcurrent mainを#381へmergeし、4 E2E IDとevidence pathをcanonical traceへ登録してgeneratorから生成文書を同期する。validatorは実行可能E2E IDの未登録を拒否し、自動proxy evidenceはmanual evidenceへ昇格しない。
+
+### 受け入れ条件
+
+- [x] `origin/main@3afaa923` を published history の書き換えなしで PR #381 branchへ統合し、behind 0にする。
+- [x] 4 E2Eをcanonical cross-view verificationへ一意に登録し、存在しないpath・重複ID・実行可能E2Eの未登録をtrace validatorが検出する。
+- [x] `docs/generated/web-traceability.md` と `docs/generated/web-ui-inventory.json` をgeneratorから同期し、手編集しない。
+- [x] current mainとの差分をPhase Aのmatrix / audit / trace / task / reportに限定し、#396 / #400 / #404の既統合差分を重複させない。
+- [ ] `git diff --check`、Web lint / typecheck / unit、trace / semantic test、対象Playwright E2E、docs checkが成功する。
+- [ ] draft PR #381本文・受け入れ条件・セルフレビューとIssue #345を更新し、#385再統合、representative screen reader、実browser 200%・400% zoom、touch / real-device、`OQ-UI-002`を未完了として残す。
+
+### 検証結果
+
+- merge commitで `origin/main@3afaa923` を非破壊に統合し、local比較はbehind 0 / ahead 36となった。#396 / #400 / #404のtest・task・reportはmain側の履歴として取り込み、PR差分へ重複表示していない。
+- `E2E-UI-A11Y-GATE-001`、`E2E-UI-KEYBOARD-NAV-001`、`E2E-UI-SR-SEMANTICS-001`、`E2E-UI-TOUCH-NAV-001` をcanonical cross-view verificationへ登録した。
+- validatorへ `apps/web/e2e/*.spec.ts` の実行可能E2E ID未登録検出を追加し、回帰testを含むtrace / matrix 13 testsがpassした。
+- `npm run docs:web-inventory` で生成し、`docs:web-inventory:check`、semantic UI 4 tests、lint、Web typecheck、Web unit 61 files / 441 tests、canonical docs、OpenAPI、API code 98 APIs / 588 documents、infra inventory、hidden Unicode、`git diff --check`がpassした。
+- OpenAPI checkの通常scriptは `tsx` IPC socket作成がsandboxで `EPERM` となったため、同じentryを `node --import tsx src/validate-openapi-docs.ts` で実行してpassした。権限拡張は行っていない。
+- 対象Playwright 4 testsはChromium projectへ解決できることを `--list` で確認した。Chromium取得元が0 MiBの破損応答を返し、local実browser実行は未完了。latest headのGitHub Actions判定待ちのため検証受け入れ条件は未完了のままとする。
+
 ## 実行計画
 
 1. Phase A: view/persona/journey × WCAG/viewport/input/content-state matrix とautomated audit harnessをbaseline化する。

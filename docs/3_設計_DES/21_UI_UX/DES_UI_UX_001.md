@@ -252,11 +252,12 @@ Automated accessibility, DOM snapshots, and accessibility tree inspection do not
 3. Persona/job references exist and every view has at least one of each.
 4. REQ and AC IDs exist in canonical requirement Markdown; an AC must occur in a requirement file, not only the analysis report.
 5. Each view has at least one `implemented` executable verification whose ID occurs in the referenced test source.
-6. `planned`/`manual` verification has a linked task/evidence path and is not presented as pass.
-7. Implementation/test/task paths exist; `done` is rejected when the manifest status or required verification remains incomplete.
-8. IDs are unique within their namespace and arrays do not silently duplicate references.
-9. Generated Web files are exact projections of source + manifest; orphan generated files fail.
-10. Error output includes classification, offending ID, and expected source so the change is actionable.
+6. `apps/web/e2e/*.spec.ts` に存在する executable `E2E-*` ID は、view または cross-view verification としてmanifestに登録されていなければ失敗する。
+7. `planned`/`manual` verification has a linked task/evidence path and is not presented as pass.
+8. Implementation/test/task paths exist; `done` is rejected when the manifest status or required verification remains incomplete.
+9. IDs are unique within their namespace and arrays do not silently duplicate references.
+10. Generated Web files are exact projections of source + manifest; orphan generated files fail.
+11. Error output includes classification, offending ID, and expected source so the change is actionable.
 
 ## PR 間の一時的不整合 policy
 
