@@ -15,7 +15,7 @@
 
 | Scheduled entrypoint | 旧動作 | 現行動作 | S3 LIST |
 | --- | --- | --- | ---: |
-| `RagQualityMonitorFunction` | 5分ごとにsource sample / observationを全列挙し、集約・alert・safe actionを実行 | active policyをdirect GETし、API互換用normal safety stateをdirect PUTするだけ | 0 |
+| `RagQualityMonitorFunction` | 5分ごとにsource sample / observationを全列挙し、集約・alert・safe actionを実行 | active policyをdirect GETし、API互換用normal safety stateをdirect PUT。既存alarm用zero-failure metricsのみ出力 | 0 |
 | `RevocationCleanupFunction` | 1分ごとにtenant / repair / cleanup manifestを列挙し、派生物cleanupを実行 | 入力を無視してzero resultを返す | 0 |
 | `SecurityAuditReconciliationFunction` | 1分ごとにaudit intent / source-governance stateを列挙し、finalize/repairする | tenant/limitを検証しzero resultを返す | 0 |
 
@@ -32,9 +32,10 @@
 - CloudWatch alarm/metric
 - SNS topic
 - 既存KMS key、Secrets Manager secret
+- RAG compatibility heartbeatのS3 GET / PUT
 - API/workerの実利用に伴うS3 GET/PUT、DynamoDB、Bedrock、Textract、CodeBuild
 
-物理resource削除はgenerated infra inventory、CDK snapshot、deploy/rollbackを伴う独立IaC最小化として追跡する。コストが続く場合はこのfollow-upを最優先する。
+物理resource削除はgenerated infra inventory、CDK snapshot、deploy/rollbackを伴う独立IaC最小化として `tasks/todo/20260722-physical-remove-unused-background-control-infra.md` で追跡する。コストが続く場合はこのfollow-upを最優先する。
 
 ## 維持する安全境界
 
@@ -42,7 +43,7 @@
 
 - mutation時のauthoritative denyは維持する。
 - periodic physical cleanupは停止する。
--残存artifactの削除が必要な場合はtenant/resource/operationを明示した保守処理で行う。
+- 残存artifactの削除が必要な場合はtenant/resource/operationを明示した保守処理で行う。
 
 ### FR-086
 
@@ -55,6 +56,7 @@
 - full source aggregation、drift detection、alert、safe actionは停止する。
 - APIが`RAG_MONITORING_REQUIRED=1`で停止しないよう、compatibility heartbeatだけを保存する。
 - heartbeatはpolicy direct GETとsafety-state direct PUT以外のAWS data operationを行わない。
+- 既存missing-data alarmを正常に保つため、`ControlLoopHeartbeat=1`、failure/alert/observation系0のEMF logを1件出力する。
 
 ## 現行の観測点
 
@@ -94,7 +96,7 @@
 - `validUntil`が現在時刻より後
 - `policyVersion`はactive policyまたは`background-controls-disabled`
 
-source sample、observation、alert、actionが増加することを期待しない。これらが増える場合は旧bundleまたはstack driftを疑う。
+source sample、observation、alert、actionが増加することを期待しない。これらが増える場合は旧bundleまたはstack driftを疑う。CloudWatchにはzero-failure compatibility heartbeatだけが記録される。
 
 ## Explicit maintenance
 
@@ -107,7 +109,7 @@ scheduled workerは処理しない。物理cleanupが必要な場合は以下を
 - operation ID
 - authoritative deny version
 - cleanup対象scope
--最大request数とbudget
+- 最大request数とbudget
 - rollback / retry / audit方法
 
 空キュー確認のためにbucket prefix全体をlistしない。
@@ -174,4 +176,5 @@ repository-localのsource変更とunit/CI結果は確認対象に含む。一方
 - `FR-086`
 - `FR-093`
 - `SQ-015`
-- `tasks/do/20260722-2300-cost-first-disable-background-s3-scans.md`
+- `tasks/done/20260722-2300-cost-first-disable-background-s3-scans.md`
+- `tasks/todo/20260722-physical-remove-unused-background-control-infra.md`
