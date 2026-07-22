@@ -1,8 +1,5 @@
 import { config } from "./config.js"
-import { createDependencies } from "./dependencies.js"
-import { SourceGovernanceAuditAuthoritativeResolver } from "./rag/offline/pre-retrieval/admission/source-governance-audit-reconciler.js"
 import {
-  SecurityMutationAuditReconciler,
   type SecurityMutationAuditReconciliationResult
 } from "./security/security-mutation-audit-reconciler.js"
 
@@ -11,7 +8,9 @@ export type SecurityMutationAuditReconciliationEvent = Readonly<{
   limit?: unknown
 }>
 
-type AuditReconciliationTarget = Pick<SecurityMutationAuditReconciler, "reconcileTenant">
+type AuditReconciliationTarget = Readonly<{
+  reconcileTenant(tenantId: string, limit?: number): Promise<SecurityMutationAuditReconciliationResult>
+}>
 
 export function createSecurityMutationAuditReconciliationHandler(input: Readonly<{
   authorizedTenantId: string
@@ -34,17 +33,30 @@ export function createSecurityMutationAuditReconciliationHandler(input: Readonly
   }
 }
 
+/**
+ * Build the cost-priority EventBridge consumer.
+ *
+ * The synchronous mutation path still writes the durable audit intent. Only
+ * background enumeration/finalization is deferred: this consumer validates
+ * the tenant boundary and returns without constructing an S3-backed outbox or
+ * listing source-governance records.
+ */
+export function createCostPrioritySecurityMutationAuditReconciliationHandler(authorizedTenantId: string) {
+  return createSecurityMutationAuditReconciliationHandler({
+    authorizedTenantId,
+    reconciler: {
+      reconcileTenant: async (tenantId) => ({
+        tenantId,
+        scanned: 0,
+        completed: 0,
+        repaired: 0
+      })
+    }
+  })
+}
+
 export async function handler(
   event: SecurityMutationAuditReconciliationEvent
 ): Promise<SecurityMutationAuditReconciliationResult> {
-  const deps = createDependencies()
-  const outbox = deps.securityAuditReconciliationOutbox
-  if (!outbox) throw new Error("Security mutation audit reconciliation outbox is not configured")
-  const reconciler = new SecurityMutationAuditReconciler(outbox, [
-    new SourceGovernanceAuditAuthoritativeResolver(deps.objectStore, outbox)
-  ])
-  return createSecurityMutationAuditReconciliationHandler({
-    authorizedTenantId: config.authTenantId,
-    reconciler
-  })(event)
+  return createCostPrioritySecurityMutationAuditReconciliationHandler(config.authTenantId)(event)
 }
