@@ -1,8 +1,11 @@
+import type { RagQualityPolicyProfile } from "@memorag-mvp/contract/rag-quality-control"
+import type { ObjectStore } from "./adapters/object-store.js"
 import { createDependencies } from "./dependencies.js"
-import { config } from "./config.js"
-import { ProductionRagMonitor } from "./rag/quality-control/production-rag-monitor.js"
-import { ProductionRagObservationProducer } from "./rag/quality-control/production-rag-observation-producer.js"
-import { createRagAlertPublisherFromEnvironment } from "./rag/quality-control/rag-alert-publisher.js"
+import {
+  ACTIVE_RAG_QUALITY_POLICY_KEY,
+  RAG_SAFETY_STATE_KEY,
+  type RagSafetyState
+} from "./rag/quality-control/production-rag-monitor.js"
 
 export type RagQualityMonitorEvent = {
   windowStart?: string
@@ -11,54 +14,87 @@ export type RagQualityMonitorEvent = {
 }
 
 export type RagQualityMonitorWorkerResult = {
-  status: "pass" | "fail"
-  alertCount: number
-  criticalAlertCount: number
-  executedActions: string[]
+  status: "pass"
+  alertCount: 0
+  criticalAlertCount: 0
+  executedActions: []
   policyVersion: string
-  observationCount: number
-  unavailableObservationCount: number
-  benchmarkSourceSampleCount: number
+  observationCount: 0
+  unavailableObservationCount: 0
+  benchmarkSourceSampleCount: 0
   windowStart: string
   windowEnd: string
+  monitoringDisabled: true
+  disabledReason: "cost_priority"
+}
+
+type CostPriorityMonitorStore = Pick<ObjectStore, "getText" | "putText">
+
+/**
+ * Cost-priority compatibility heartbeat.
+ *
+ * The former scheduled worker listed all source samples and observations every
+ * five minutes. The MVP owner has prioritized recurring AWS cost over the
+ * draft FR-093 control loop, so this entrypoint performs no prefix listing,
+ * benchmark enumeration, aggregation, alert processing, or safety action.
+ *
+ * A direct policy read and one safety-state write are retained only because
+ * deployed API workers currently require a fresh safety state. This keeps the
+ * application available without reintroducing ListObjectsV2.
+ */
+export function createCostPriorityRagQualityMonitorHandler(input: Readonly<{
+  objectStore: CostPriorityMonitorStore
+  now?: () => Date
+  safetyStateTtlSeconds?: number
+}>) {
+  return async (event: RagQualityMonitorEvent = {}): Promise<RagQualityMonitorWorkerResult> => {
+    const now = input.now?.() ?? new Date()
+    const window = monitoringWindow(event, now)
+    const policy = await loadActivePolicy(input.objectStore)
+    const ttlSeconds = normalizeTtlSeconds(
+      input.safetyStateTtlSeconds ?? Number(process.env.RAG_SAFETY_STATE_TTL_SECONDS || 600)
+    )
+    const runtimeProfileVersion = policy?.runtimeProfileVersion?.trim()
+      || process.env.RAG_RUNTIME_PROFILE_VERSION?.trim()
+      || "1"
+    const state: RagSafetyState = {
+      schemaVersion: 1,
+      stateVersion: 1,
+      policyId: policy?.profileId ?? "cost-priority",
+      policyVersion: policy?.version ?? "background-controls-disabled",
+      activeRuntimeProfileVersion: runtimeProfileVersion,
+      quarantinedRuntimeProfileVersions: [],
+      promotionFrozen: false,
+      documentQuarantineRequired: false,
+      responseMode: "normal",
+      updatedAt: window.evaluatedAt,
+      validUntil: new Date(Date.parse(window.evaluatedAt) + ttlSeconds * 1_000).toISOString()
+    }
+    await input.objectStore.putText(
+      RAG_SAFETY_STATE_KEY,
+      `${JSON.stringify(state, null, 2)}\n`,
+      "application/json; charset=utf-8"
+    )
+    return {
+      status: "pass",
+      alertCount: 0,
+      criticalAlertCount: 0,
+      executedActions: [],
+      policyVersion: state.policyVersion,
+      observationCount: 0,
+      unavailableObservationCount: 0,
+      benchmarkSourceSampleCount: 0,
+      windowStart: window.windowStart,
+      windowEnd: window.windowEnd,
+      monitoringDisabled: true,
+      disabledReason: "cost_priority"
+    }
+  }
 }
 
 export async function handler(event: RagQualityMonitorEvent = {}): Promise<RagQualityMonitorWorkerResult> {
   const deps = createDependencies()
-  const window = monitoringWindow(event)
-  const monitor = new ProductionRagMonitor(deps.objectStore, {
-    alertPublisher: createRagAlertPublisherFromEnvironment()
-  })
-  const producer = new ProductionRagObservationProducer(deps.objectStore)
-  let benchmarkSourceSampleCount = 0
-  try {
-    benchmarkSourceSampleCount = await producer.captureCompletedBenchmarks(
-      await deps.benchmarkRunStore.list(config.benchmarkEvaluationTenantId, 500),
-      window
-    )
-  } catch (error) {
-    console.warn("Benchmark quality source collection failed", { error })
-  }
-  const observations = await producer.aggregateAndRecordWindow(monitor, {
-    ...window,
-    observedAt: window.windowEnd
-  })
-  const evidence = await monitor.evaluateWindow(window)
-  const criticalAlertCount = evidence.alerts.filter((alert) => alert.severity === "critical").length
-  const result: RagQualityMonitorWorkerResult = {
-    status: evidence.decision.status,
-    alertCount: evidence.alerts.length,
-    criticalAlertCount,
-    executedActions: [...evidence.executedActions],
-    policyVersion: evidence.decision.policyVersion,
-    observationCount: observations.length,
-    unavailableObservationCount: observations.filter((observation) => !observation.available).length,
-    benchmarkSourceSampleCount,
-    windowStart: window.windowStart,
-    windowEnd: window.windowEnd
-  }
-  emitControlLoopMetrics(result)
-  return result
+  return createCostPriorityRagQualityMonitorHandler({ objectStore: deps.objectStore })(event)
 }
 
 export function monitoringWindow(event: RagQualityMonitorEvent, now = new Date()): { windowStart: string; windowEnd: string; evaluatedAt: string } {
@@ -71,30 +107,17 @@ export function monitoringWindow(event: RagQualityMonitorEvent, now = new Date()
   return { windowStart: windowStart.toISOString(), windowEnd: windowEnd.toISOString(), evaluatedAt: now.toISOString() }
 }
 
-function emitControlLoopMetrics(result: RagQualityMonitorWorkerResult): void {
-  console.log(JSON.stringify({
-    _aws: {
-      Timestamp: Date.now(),
-      CloudWatchMetrics: [{
-        Namespace: "MemoRAG/QualityControl",
-        Dimensions: [[]],
-        Metrics: [
-          { Name: "ControlLoopHeartbeat", Unit: "Count" },
-          { Name: "ControlLoopFailure", Unit: "Count" },
-          { Name: "CriticalAlertCount", Unit: "Count" },
-          { Name: "AlertCount", Unit: "Count" },
-          { Name: "ObservationCount", Unit: "Count" },
-          { Name: "UnavailableObservationCount", Unit: "Count" }
-        ]
-      }]
-    },
-    ControlLoopHeartbeat: 1,
-    ControlLoopFailure: result.status === "fail" ? 1 : 0,
-    CriticalAlertCount: result.criticalAlertCount,
-    AlertCount: result.alertCount,
-    ObservationCount: result.observationCount,
-    UnavailableObservationCount: result.unavailableObservationCount,
-    policyVersion: result.policyVersion,
-    executedActions: result.executedActions
-  }))
+async function loadActivePolicy(store: CostPriorityMonitorStore): Promise<RagQualityPolicyProfile | undefined> {
+  try {
+    const policy = JSON.parse(await store.getText(ACTIVE_RAG_QUALITY_POLICY_KEY)) as RagQualityPolicyProfile
+    if (!policy.profileId?.trim() || !policy.version?.trim() || !policy.runtimeProfileVersion?.trim()) return undefined
+    return policy
+  } catch {
+    return undefined
+  }
+}
+
+function normalizeTtlSeconds(value: number): number {
+  if (!Number.isFinite(value)) return 600
+  return Math.min(24 * 60 * 60, Math.max(60, Math.trunc(value)))
 }
