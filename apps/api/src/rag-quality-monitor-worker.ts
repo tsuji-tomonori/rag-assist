@@ -75,7 +75,7 @@ export function createCostPriorityRagQualityMonitorHandler(input: Readonly<{
       `${JSON.stringify(state, null, 2)}\n`,
       "application/json; charset=utf-8"
     )
-    return {
+    const result: RagQualityMonitorWorkerResult = {
       status: "pass",
       alertCount: 0,
       criticalAlertCount: 0,
@@ -89,6 +89,8 @@ export function createCostPriorityRagQualityMonitorHandler(input: Readonly<{
       monitoringDisabled: true,
       disabledReason: "cost_priority"
     }
+    emitCostPriorityMetrics(result)
+    return result
   }
 }
 
@@ -120,4 +122,32 @@ async function loadActivePolicy(store: CostPriorityMonitorStore): Promise<RagQua
 function normalizeTtlSeconds(value: number): number {
   if (!Number.isFinite(value)) return 600
   return Math.min(24 * 60 * 60, Math.max(60, Math.trunc(value)))
+}
+
+function emitCostPriorityMetrics(result: RagQualityMonitorWorkerResult): void {
+  console.log(JSON.stringify({
+    _aws: {
+      Timestamp: Date.now(),
+      CloudWatchMetrics: [{
+        Namespace: "MemoRAG/QualityControl",
+        Dimensions: [[]],
+        Metrics: [
+          { Name: "ControlLoopHeartbeat", Unit: "Count" },
+          { Name: "ControlLoopFailure", Unit: "Count" },
+          { Name: "CriticalAlertCount", Unit: "Count" },
+          { Name: "AlertCount", Unit: "Count" },
+          { Name: "ObservationCount", Unit: "Count" },
+          { Name: "UnavailableObservationCount", Unit: "Count" }
+        ]
+      }]
+    },
+    ControlLoopHeartbeat: 1,
+    ControlLoopFailure: 0,
+    CriticalAlertCount: 0,
+    AlertCount: 0,
+    ObservationCount: 0,
+    UnavailableObservationCount: 0,
+    costPriorityMode: true,
+    policyVersion: result.policyVersion
+  }))
 }
