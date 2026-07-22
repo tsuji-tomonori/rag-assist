@@ -468,7 +468,7 @@ export class MemoRagMvpStack extends Stack {
       COGNITO_APP_CLIENT_ID: userPoolClient.userPoolClientId,
       DEBUG_DOWNLOAD_BUCKET_NAME: debugDownloadBucket.bucketName,
       DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS: "900",
-      RAG_MONITORING_REQUIRED: "1",
+      RAG_MONITORING_REQUIRED: "0",
       RAG_SAFETY_STATE_TTL_SECONDS: "600",
       RAG_GUARD_PROFILE_JSON: standardRagGuardProfileJson
     } satisfies ApiRuntimeEnv
@@ -610,8 +610,9 @@ export class MemoRagMvpStack extends Stack {
       environment: apiEnvironment
     })
     const revocationCleanupSchedule = new events.Rule(this, "RevocationCleanupSchedule", {
-      description: "Reconcile tenant-scoped deny-first revocation cleanup manifests.",
-      schedule: events.Schedule.rate(Duration.minutes(1))
+      description: "Disabled by the cost-first MVP decision; explicit cleanup remains available.",
+      schedule: events.Schedule.rate(Duration.minutes(1)),
+      enabled: false
     })
     revocationCleanupSchedule.addTarget(new eventTargets.LambdaFunction(revocationCleanupFn, {
       event: events.RuleTargetInput.fromObject({ limitPerTenant: 100 })
@@ -632,8 +633,9 @@ export class MemoRagMvpStack extends Stack {
       environment: apiEnvironment
     })
     const securityAuditReconciliationSchedule = new events.Rule(this, "SecurityAuditReconciliationSchedule", {
-      description: "Finalize tenant-scoped security mutation audits after authoritative state reconciliation.",
-      schedule: events.Schedule.rate(Duration.minutes(1))
+      description: "Disabled by the cost-first MVP decision; explicit audit repair remains available.",
+      schedule: events.Schedule.rate(Duration.minutes(1)),
+      enabled: false
     })
     securityAuditReconciliationSchedule.addTarget(new eventTargets.LambdaFunction(securityAuditReconciliationFn, {
       event: events.RuleTargetInput.fromObject({ tenantId: cdk.Aws.ACCOUNT_ID, limit: 100 })
@@ -654,8 +656,9 @@ export class MemoRagMvpStack extends Stack {
       environment: apiEnvironment
     })
     const ragQualityMonitorSchedule = new events.Rule(this, "RagQualityMonitorSchedule", {
-      description: "Evaluate production RAG quality/security signals and apply the approved safety runbook.",
-      schedule: events.Schedule.rate(Duration.minutes(5))
+      description: "Disabled by the cost-first MVP decision; continuous RAG monitoring is deferred.",
+      schedule: events.Schedule.rate(Duration.minutes(5)),
+      enabled: false
     })
     ragQualityMonitorSchedule.addTarget(new eventTargets.LambdaFunction(ragQualityMonitorFn, {
       event: events.RuleTargetInput.fromObject({ windowMinutes: 5 })

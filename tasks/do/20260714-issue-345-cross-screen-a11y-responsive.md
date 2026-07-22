@@ -144,6 +144,36 @@
 - 対象Playwright 4 testsはChromium projectへ解決できることを `--list` で確認した。Chromium取得元が0 MiBの破損応答を返し、local実browser実行は未完了。latest headのGitHub Actions判定待ちのため検証受け入れ条件は未完了のままとする。
 - latest headのWeb lint failureをローカルでも再現し、9件の `allowDefaultProject` 対象がtypescript-eslintの既定上限8件を超えたことを確認した。対象globは変更せず明示上限を16件に設定し、CIと同一のWeb lint commandで再検証する。
 
+## 2026-07-23 current main 再収束
+
+### 問題文と確認済み事実
+
+- current `origin/main@56bf81e1` は、前回収束した `main@3afaa923` から39 commits進んでいる。PR #381 head `254e078d` はmainに対してbehind 39 / ahead 36となった。
+- 39 commitsはcost-first monitoring / deploy、API / infra test、正本文書・API生成文書を変更したが、`apps/web/`、`SQ-016`、`DES_UI_UX_001`、Web生成文書、UI trace / matrixは変更していない。
+- 後続PR #385は旧 #381 head `b6acb24f` をbaseにしたままで、最新 #381 headに対してbehind 27 / ahead 7、merge不可である。
+- MemoRAG CIのAPI branch coverage C1不足は `tasks/todo/20260712-coverage-api-c1-recovery.md` の既存未完了事項であり、UI Phase AへAPI変更を混ぜて解消しない。
+
+### 根本原因と対策
+
+根本原因は、root PR #381の前回収束後もmain側の独立したcost / API / infra変更が継続し、open root PRと後続stackのbaseが再び分岐したことである。UI正本や実装の意味的競合は確認されていないため、新規UI改善を積み増さず、published historyを書き換えずcurrent mainを#381へmergeする。merge後はmain固有の非UI差分がPR差分へ再表示されないこと、UI正本・生成物がstaleでないこと、Web / trace / docs検証が成立することを確認する。
+
+### 受け入れ条件
+
+- [x] `origin/main@56bf81e1` をpublished historyの書き換えなしでPR #381 branchへ統合し、behind 0にする。
+- [x] current mainとの差分をPhase A matrix / audit / trace / task / reportと必要なlint設定に限定し、mainのcost / API / infra / API生成文書を重複表示しない。
+- [x] `SQ-016`、`DES_UI_UX_001`、UI trace / matrixを一意な正本として維持し、Web生成物をgenerator checkで検証する。
+- [ ] `git diff --check`、Web lint / typecheck / unit、trace / semantic test、対象Playwright、docs checkを最小十分に実行し、未実行・失敗を明記する。
+- [ ] draft PR #381本文・受け入れ条件・セルフレビューとIssue #345を更新し、API C1、#385再統合、既知UI defect、representative screen reader、実browser 200% / 400% zoom、touch / real-device、状態証跡、`OQ-UI-002`を未完了として残す。
+
+### 検証結果
+
+- merge commit `8b11af86` で `origin/main@56bf81e1` を非破壊に統合した。競合はなく、local比較はbehind 0 / ahead 38となった。
+- current mainとの差分は23 files / 1,444 additions / 87 deletionsで、mainのcost / API / infra / API生成文書はPR差分へ重複表示していない。
+- `npm run docs:web-inventory` を再実行し、追加差分なし。`docs:web-inventory:check`、trace / matrix 13 tests、semantic UI 4 testsがpassした。
+- CI同一Web lint、Web typecheck、Web unit 61 files / 441 tests、canonical docs、API code 98 APIs / 588 documents、infra inventory、hidden Unicode、`git diff --check`がpassした。
+- OpenAPI通常scriptは `tsx` IPC socket作成がsandboxで `EPERM` となった。同じentryを `node --import tsx src/validate-openapi-docs.ts` で実行してpassし、権限拡張は行っていない。
+- Playwright対象4 files / 26 testsは `--list` でChromium projectへ解決した。browser downloadは書込先を `/tmp` へ変更しても配布元が0 MiBの破損ZIPを返し、local実browser実行は未完了。latest headのWeb UI Quality判定待ちのため検証受け入れ条件は未完了とする。
+
 ## 実行計画
 
 1. Phase A: view/persona/journey × WCAG/viewport/input/content-state matrix とautomated audit harnessをbaseline化する。

@@ -94,7 +94,7 @@ Logical ID: `ApiFunctionCE271BD4`
 | `PDF_OCR_FALLBACK_TIMEOUT_MS` | 45000 |
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
 | `RAG_GUARD_PROFILE_JSON` | {"id":"standard-safe-rag","version":"standard-safe-rag-v1","guards":{"authentication":true,"authorization":true,"classification_usage":true,"prompt_injection":true,"tool_policy":true,"grounding":true,"citation":true,"output_secret":true,"trace_redaction":true}} |
-| `RAG_MONITORING_REQUIRED` | 1 |
+| `RAG_MONITORING_REQUIRED` | 0 |
 | `RAG_SAFETY_STATE_TTL_SECONDS` | 600 |
 | `USAGE_ACCOUNTING_MODE` | shadow |
 | `USAGE_EVENTS_TABLE_NAME` | Ref:UsageEventsTable215FE3DD |
@@ -159,7 +159,7 @@ Logical ID: `BenchmarkRunAuthorizationFunction16D4CD86`
 | `NODE_ENV` | production |
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
 | `RAG_GUARD_PROFILE_JSON` | {"id":"standard-safe-rag","version":"standard-safe-rag-v1","guards":{"authentication":true,"authorization":true,"classification_usage":true,"prompt_injection":true,"tool_policy":true,"grounding":true,"citation":true,"output_secret":true,"trace_redaction":true}} |
-| `RAG_MONITORING_REQUIRED` | 1 |
+| `RAG_MONITORING_REQUIRED` | 0 |
 | `RAG_SAFETY_STATE_TTL_SECONDS` | 600 |
 | `USAGE_ACCOUNTING_MODE` | shadow |
 | `USAGE_EVENTS_TABLE_NAME` | Ref:UsageEventsTable215FE3DD |
@@ -224,7 +224,7 @@ Logical ID: `ChatRunEventsStreamFunctionA12E11AC`
 | `NODE_ENV` | production |
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
 | `RAG_GUARD_PROFILE_JSON` | {"id":"standard-safe-rag","version":"standard-safe-rag-v1","guards":{"authentication":true,"authorization":true,"classification_usage":true,"prompt_injection":true,"tool_policy":true,"grounding":true,"citation":true,"output_secret":true,"trace_redaction":true}} |
-| `RAG_MONITORING_REQUIRED` | 1 |
+| `RAG_MONITORING_REQUIRED` | 0 |
 | `RAG_SAFETY_STATE_TTL_SECONDS` | 600 |
 | `USAGE_ACCOUNTING_MODE` | shadow |
 | `USAGE_EVENTS_TABLE_NAME` | Ref:UsageEventsTable215FE3DD |
@@ -289,7 +289,7 @@ Logical ID: `ChatRunMarkFailedFunction23223E28`
 | `NODE_ENV` | production |
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
 | `RAG_GUARD_PROFILE_JSON` | {"id":"standard-safe-rag","version":"standard-safe-rag-v1","guards":{"authentication":true,"authorization":true,"classification_usage":true,"prompt_injection":true,"tool_policy":true,"grounding":true,"citation":true,"output_secret":true,"trace_redaction":true}} |
-| `RAG_MONITORING_REQUIRED` | 1 |
+| `RAG_MONITORING_REQUIRED` | 0 |
 | `RAG_SAFETY_STATE_TTL_SECONDS` | 600 |
 | `USAGE_ACCOUNTING_MODE` | shadow |
 | `USAGE_EVENTS_TABLE_NAME` | Ref:UsageEventsTable215FE3DD |
@@ -354,7 +354,7 @@ Logical ID: `ChatRunWorkerFunction3C85A553`
 | `NODE_ENV` | production |
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
 | `RAG_GUARD_PROFILE_JSON` | {"id":"standard-safe-rag","version":"standard-safe-rag-v1","guards":{"authentication":true,"authorization":true,"classification_usage":true,"prompt_injection":true,"tool_policy":true,"grounding":true,"citation":true,"output_secret":true,"trace_redaction":true}} |
-| `RAG_MONITORING_REQUIRED` | 1 |
+| `RAG_MONITORING_REQUIRED` | 0 |
 | `RAG_SAFETY_STATE_TTL_SECONDS` | 600 |
 | `USAGE_ACCOUNTING_MODE` | shadow |
 | `USAGE_EVENTS_TABLE_NAME` | Ref:UsageEventsTable215FE3DD |
@@ -453,7 +453,7 @@ Logical ID: `DocumentIngestRunMarkFailedFunction41F16DD3`
 | `NODE_ENV` | production |
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
 | `RAG_GUARD_PROFILE_JSON` | {"id":"standard-safe-rag","version":"standard-safe-rag-v1","guards":{"authentication":true,"authorization":true,"classification_usage":true,"prompt_injection":true,"tool_policy":true,"grounding":true,"citation":true,"output_secret":true,"trace_redaction":true}} |
-| `RAG_MONITORING_REQUIRED` | 1 |
+| `RAG_MONITORING_REQUIRED` | 0 |
 | `RAG_SAFETY_STATE_TTL_SECONDS` | 600 |
 | `USAGE_ACCOUNTING_MODE` | shadow |
 | `USAGE_EVENTS_TABLE_NAME` | Ref:UsageEventsTable215FE3DD |
@@ -521,7 +521,7 @@ Logical ID: `DocumentIngestRunWorkerFunctionBBDBF694`
 | `PDF_OCR_FALLBACK_TIMEOUT_MS` | 45000 |
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
 | `RAG_GUARD_PROFILE_JSON` | {"id":"standard-safe-rag","version":"standard-safe-rag-v1","guards":{"authentication":true,"authorization":true,"classification_usage":true,"prompt_injection":true,"tool_policy":true,"grounding":true,"citation":true,"output_secret":true,"trace_redaction":true}} |
-| `RAG_MONITORING_REQUIRED` | 1 |
+| `RAG_MONITORING_REQUIRED` | 0 |
 | `RAG_SAFETY_STATE_TTL_SECONDS` | 600 |
 | `USAGE_ACCOUNTING_MODE` | shadow |
 | `USAGE_EVENTS_TABLE_NAME` | Ref:UsageEventsTable215FE3DD |
@@ -592,7 +592,7 @@ Logical ID: `HeavyApiFunction4BC152A5`
 | `PDF_OCR_FALLBACK_TIMEOUT_MS` | 45000 |
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
 | `RAG_GUARD_PROFILE_JSON` | {"id":"standard-safe-rag","version":"standard-safe-rag-v1","guards":{"authentication":true,"authorization":true,"classification_usage":true,"prompt_injection":true,"tool_policy":true,"grounding":true,"citation":true,"output_secret":true,"trace_redaction":true}} |
-| `RAG_MONITORING_REQUIRED` | 1 |
+| `RAG_MONITORING_REQUIRED` | 0 |
 | `RAG_SAFETY_STATE_TTL_SECONDS` | 600 |
 | `USAGE_ACCOUNTING_MODE` | shadow |
 | `USAGE_EVENTS_TABLE_NAME` | Ref:UsageEventsTable215FE3DD |
@@ -658,7 +658,7 @@ Logical ID: `RagQualityMonitorFunction9BE8E903`
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
 | `RAG_ALERT_TOPIC_ARN` | Ref:RagQualityAlertTopic3AFB5A32 |
 | `RAG_GUARD_PROFILE_JSON` | {"id":"standard-safe-rag","version":"standard-safe-rag-v1","guards":{"authentication":true,"authorization":true,"classification_usage":true,"prompt_injection":true,"tool_policy":true,"grounding":true,"citation":true,"output_secret":true,"trace_redaction":true}} |
-| `RAG_MONITORING_REQUIRED` | 1 |
+| `RAG_MONITORING_REQUIRED` | 0 |
 | `RAG_SAFETY_STATE_TTL_SECONDS` | 600 |
 | `USAGE_ACCOUNTING_MODE` | shadow |
 | `USAGE_EVENTS_TABLE_NAME` | Ref:UsageEventsTable215FE3DD |
@@ -723,7 +723,7 @@ Logical ID: `RevocationCleanupFunctionE7C00D6D`
 | `NODE_ENV` | production |
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
 | `RAG_GUARD_PROFILE_JSON` | {"id":"standard-safe-rag","version":"standard-safe-rag-v1","guards":{"authentication":true,"authorization":true,"classification_usage":true,"prompt_injection":true,"tool_policy":true,"grounding":true,"citation":true,"output_secret":true,"trace_redaction":true}} |
-| `RAG_MONITORING_REQUIRED` | 1 |
+| `RAG_MONITORING_REQUIRED` | 0 |
 | `RAG_SAFETY_STATE_TTL_SECONDS` | 600 |
 | `USAGE_ACCOUNTING_MODE` | shadow |
 | `USAGE_EVENTS_TABLE_NAME` | Ref:UsageEventsTable215FE3DD |
@@ -821,7 +821,7 @@ Logical ID: `SecurityAuditReconciliationFunction9A53A79D`
 | `NODE_ENV` | production |
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
 | `RAG_GUARD_PROFILE_JSON` | {"id":"standard-safe-rag","version":"standard-safe-rag-v1","guards":{"authentication":true,"authorization":true,"classification_usage":true,"prompt_injection":true,"tool_policy":true,"grounding":true,"citation":true,"output_secret":true,"trace_redaction":true}} |
-| `RAG_MONITORING_REQUIRED` | 1 |
+| `RAG_MONITORING_REQUIRED` | 0 |
 | `RAG_SAFETY_STATE_TTL_SECONDS` | 600 |
 | `USAGE_ACCOUNTING_MODE` | shadow |
 | `USAGE_EVENTS_TABLE_NAME` | Ref:UsageEventsTable215FE3DD |
