@@ -35,8 +35,9 @@ CloudFormation 上で次の3 ruleを `DISABLED` にした。
 ### RAG runtime dependency
 
 - API / worker environment を `RAG_MONITORING_REQUIRED=0` に変更した。
-- monitoring が optional の場合、`assertRagSafetyInterlock()` は safety-state object を読む前に return する。
-- 旧または期限切れの `quality-control/runtime/safety-state.json` が残っていても cost-first runtime を停止させない。
+- monitoring が明示的に disabled の場合、`assertRagSafetyInterlock()` は safety-state object を読む前に return する。
+- test / explicit caller が monitoring stateを検証する場合の既存contractは維持した。
+- 旧または期限切れの `quality-control/runtime/safety-state.json` が残っていても cost-first production runtime を停止させない。
 
 ### Scheduled worker source
 
@@ -61,19 +62,25 @@ CloudFormation 上で次の3 ruleを `DISABLED` にした。
 - [x] scheduled sourceから S3 prefix listing / reconciliation を除去した。
 - [x] explicit domain primitive、authoritative deny、durable audit intent を維持した。
 - [x] infra snapshot と generated infra inventory を更新した。
-- [x] infra tests、API / infra typecheck、lint、generated inventory check、diff check が one-off application workflow で pass した。
+- [x] source-backed API docsをruntime変更へ再生成した。
+- [x] infra tests、API / infra typecheck、API coverage tests、lint、generated docs / inventory checks、diff checkがpassした。
 - [x] main 向け PR #446 と `semver:major` labelを作成した。
 
 ## 検証記録
 
 - EventBridge stop application workflow run `29933343161`: success
-  - patch application: pass
   - infra tests / snapshot regeneration: pass
   - infra inventory regeneration: pass
   - API / infra typecheck: pass
   - repository lint: pass
   - generated inventory check / diff check: pass
-  - generated commit: `e6ef1b9f9cc3b0b42e2d7790d1d298d281e5b25d`
+  - generated EventBridge commit: `e6ef1b9f9cc3b0b42e2d7790d1d298d281e5b25d`
+- API docs / test finalization workflow run `29934912541`: success
+  - optional monitoring compatibility patch: pass
+  - source-backed API docs regeneration / check: pass
+  - API coverage tests: 825 tests、fail 0
+  - API typecheck / diff check: pass
+  - generated docs commit: `32d8c2d5153236368af7881b3f14f96dd1cc149f`
 - required final-head CI は PR の check / final comment を正本とする。
 
 ## 未実施・残余リスク
