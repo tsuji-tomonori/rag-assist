@@ -1,6 +1,6 @@
 import { config } from "./config.js"
-import {
-  type SecurityMutationAuditReconciliationResult
+import type {
+  SecurityMutationAuditReconciliationResult
 } from "./security/security-mutation-audit-reconciler.js"
 
 export type SecurityMutationAuditReconciliationEvent = Readonly<{
