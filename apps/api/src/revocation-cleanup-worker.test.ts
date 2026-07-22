@@ -1,6 +1,9 @@
 import assert from "node:assert/strict"
 import test from "node:test"
-import { createRevocationCleanupHandler } from "./revocation-cleanup-worker.js"
+import {
+  createRevocationCleanupHandler,
+  handler as scheduledRevocationCleanupHandler
+} from "./revocation-cleanup-worker.js"
 
 test("FR-066 cleanup worker processes only canonical explicit tenant partitions", async () => {
   const seen: Array<{ tenantId: string; limit: number | undefined }> = []
@@ -58,4 +61,18 @@ test("FR-066 cleanup worker accepts an empty registry but rejects unavailable, b
   await assert.rejects(() => handler({ tenantIds: [" tenant-a"] }), /invalid tenant/)
   await assert.rejects(() => handler({ tenantIds: ["tenant-a"], limitPerTenant: 0 }), /between 1 and 1000/)
   await assert.rejects(() => handler({ tenantIds: "tenant-a" }), /non-empty array/)
+})
+
+test("cost-priority scheduled revocation cleanup does not discover tenants or reconcile manifests", async () => {
+  assert.deepEqual(
+    await scheduledRevocationCleanupHandler({ tenantIds: ["tenant-a"], limitPerTenant: 100 }),
+    {
+      tenantCount: 0,
+      examined: 0,
+      completed: 0,
+      superseded: 0,
+      reconciliationRequired: 0,
+      tenants: []
+    }
+  )
 })
