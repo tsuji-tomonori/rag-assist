@@ -3,13 +3,13 @@
 - ファイル: `docs/4_運用_OPS/21_監視_MONITORING/OPS_MONITORING_001.md`
 - 種別: `OPS_MONITORING`
 - 状態: Active（cost-first mode）
-- 最終更新: 2026-07-22
+- 最終更新: 2026-07-23
 
 ## 目的
 
-現行 MVP の最優先事項は AWS recurring cost の最小化である。API、ログ、benchmark、deploy、docs freshness の必要最小限の観測点を維持しながら、利用者操作がない状態で S3 prefix を定期全走査する background control を停止する。
+現行MVPの最優先事項はAWS recurring costの最小化である。API、ログ、benchmark、deploy、docs freshnessの必要最小限の観測点を維持しながら、background処理とdeploy前処理によるS3 prefix全走査を停止する。
 
-2026-07-22 の owner decision により、Draft/inferred の `FR-066`、`FR-086`、`FR-093` が要求していた常時 cleanup / audit reconciliation / RAG quality control loop より `SQ-015` を優先する。
+owner decisionにより、Draft/inferredの`FR-066`、`FR-075`、`FR-086`、`FR-093`が要求していた常時cleanup、automatic promotion、audit reconciliation、RAG quality control loopより`SQ-015`を優先する。
 
 ## 現行 cost-first mode
 
@@ -18,14 +18,15 @@
 | RAG quality monitor | `RagQualityMonitorSchedule.State=DISABLED`、`RAG_MONITORING_REQUIRED=0` | 0 | 0 |
 | Revocation cleanup | `RevocationCleanupSchedule.State=DISABLED` | 0 | 0 |
 | Security audit reconciliation | `SecurityAuditReconciliationSchedule.State=DISABLED` | 0 | 0 |
+| Automatic deploy preparation | `DEPLOYMENT_MODE=cost_priority`、repository policy validation | observation LIST 0 | main/manual deploy時のみ |
 
-3つのdomain primitiveとLambda sourceは、明示保守や将来のevent-driven再設計に備えて保持する。停止対象はEventBridge scheduleとproduction runtime dependencyである。
+3つのdomain primitiveとLambda source、明示RAG promotion evaluatorは、明示保守や将来のbounded/event-driven再設計に備えて保持する。
 
 ## 残る費用
 
-EventBridge rule、Lambda、IAM、log group、alarm、SNS topicはCloudFormation上に残るが、ruleがdisabledのため定期Lambda invocationと定期log ingestionは発生しない。残余候補はresource自体の固定費、API実利用、deploy、benchmark、手動実行である。
+EventBridge rule、Lambda、IAM、log group、alarm、SNS topicはCloudFormation上に残るが、ruleがdisabledのため定期Lambda invocationと定期log ingestionは発生しない。残余候補はresource自体の固定費、API実利用、CDK deployのasset upload、bucket deployment、benchmark、明示workflowである。
 
-物理resource削除はgenerated infra inventory、CDK snapshot、change set、deploy/rollbackを伴う独立IaC最小化として `tasks/todo/20260722-physical-remove-unused-background-control-infra.md` で追跡する。
+物理resource削除はgenerated infra inventory、CDK snapshot、change set、deploy/rollbackを伴う独立IaC最小化として`tasks/todo/20260722-physical-remove-unused-background-control-infra.md`で追跡する。
 
 ## 維持する安全境界
 
@@ -41,11 +42,11 @@ EventBridge rule、Lambda、IAM、log group、alarm、SNS topicはCloudFormation
 - pending intentを探すperiodic S3 scan/finalizationは停止する。
 - `reconciliation_required`が発生した場合は対象intent IDを明示してrepairする。
 
-### FR-093
+### FR-075 / FR-093
 
-- full source aggregation、drift detection、alert、safe actionは停止する。
+- full production observation aggregation、automatic promotion、drift detection、alert、safe actionはautomatic deployから外す。
 - API/workerは`RAG_MONITORING_REQUIRED=0`で、既存または期限切れのsafety-state objectを参照しない。
-- monitoring Lambdaのcompatibility heartbeatも実行しない。
+- explicit RAG promotionは`MemoRAG CI`の明示workflowまたは将来のowner承認済みrelease profileで実行する。
 
 ## 現行の観測点
 
@@ -53,13 +54,52 @@ EventBridge rule、Lambda、IAM、log group、alarm、SNS topicはCloudFormation
 | --- | --- | --- |
 | API生存性 | health endpointのHTTP status | `GET /health`、API Gateway/Lambda logs |
 | chat / ingestion | request、error、処理段階 | 対象Lambda log group |
-| S3 recurring cost | operation / region / bucket / request count | Cost Explorer、CUR、S3 usage report、CloudTrail data event（有効化済みの場合） |
+| S3 recurring/deploy cost | operation / region / bucket / request count | Cost Explorer、CUR、S3 usage report、CloudTrail data event（有効化済みの場合） |
 | benchmark | run status、report、runner log | benchmark API、Step Functions、CodeBuild logs |
-| deploy | workflow、CloudFormation event、outputs | GitHub Actions、CloudFormation |
+| deploy | workflow steps、context artifact、CloudFormation event、outputs | GitHub Actions、CloudFormation |
 | API/docs drift | generated document freshness | `npm run docs:openapi:check`、`npm run docs:api-code:check` |
 | Web/infra docs drift | inventory freshness | `npm run docs:web-inventory:check`、`npm run docs:infra-inventory:check` |
 
 認証情報、source本文、chunk本文、prompt、raw model responseを一般ログへ出力しない。debug traceとartifactは認可、tenant partition、sanitizationを維持する。
+
+## Deploy run `29936120192` の障害
+
+PR #446 merge後のmain deployはAWS上のEventBridge停止を反映できなかった。
+
+| Step | Result |
+| --- | --- |
+| AWS credential / stack bucket解決 | success |
+| `Download RAG quality observations` | cancelled |
+| promotion candidate preparation | skipped |
+| promotion artifact upload | failure（directory不在） |
+| build / synth / CDK deploy / outputs | skipped |
+
+旧workflowは45分上限内で`quality-control/observations/`全体を`aws s3 sync`していた。monitoring停止後は新規observationが生成されず、過去履歴の全件scanは現行deploy判断に不要である。artifact upload failureはdownload cancellation後の二次障害であり、CDK deploy未実施が本質である。
+
+## Cost-first automatic deploy
+
+`Deploy MemoRAG MVP`は次の順序で実行する。
+
+1. repositoryの`config/rag-quality/dev-policy.json`をapproved policyとしてvalidationする。
+2. empty local observation directoryを入力し、`policy.json`、空の`observations.json`、`preparation.json`を必ず生成する。
+3. policyからmodel/runtime/workload/price/index/prompt/pipeline/parser/chunkerのCDK contextを設定する。
+4. `preparation.json`へ次を記録する。
+   - `deploymentMode=cost_priority`
+   - `promotionGateApplied=false`
+   - `deployAllowed=true`
+   - `sourceObservationScan=false`
+5. GitHub artifactとしてdeployment contextを保存する。
+6. AWS credentialを設定し、build、synth、CDK deploy、outputs uploadを実行する。
+
+禁止事項:
+
+- `aws s3 sync quality-control/observations/`
+- documents bucketの解決をpromotion前提にすること
+- promotion candidateをS3へ再uploadすること
+- observation completenessをcost-first deployのblock条件にすること
+- upstream step失敗後に存在しないartifact pathを`if-no-files-found:error`で二次failureさせること
+
+必要なS3 requestはCDK asset uploadやBucketDeployment等、実deployに不可欠なものへ限定する。
 
 ## Cost Explorer / CUR 初動確認
 
@@ -67,12 +107,9 @@ EventBridge rule、Lambda、IAM、log group、alarm、SNS topicはCloudFormation
 2. S3の請求operation `ListBucket`はCloudTrail event名`ListBuckets`と同一ではないことを確認する。
 3. S3 usage reportまたはCURのresource/bucket列で対象bucketを特定する。
 4. data eventを有効化済みなら`ListObjects` / `ListObjectsV2`の`userIdentity.sessionContext.sessionIssuer.arn`を確認する。
-5. 次のroleが残っていないか確認する。
-   - `RagQualityMonitorFunctionServiceRole`
-   - `RevocationCleanupFunctionServiceRole`
-   - `SecurityAuditReconciliationFunctionServiceRole`
-6. deploy後24時間でapplication-originated S3 LISTが0件になったか確認する。
-7. LISTが残る場合はAPIの`GET /debug-runs`、GitHub Actionsの`aws s3 sync`、CDK BucketDeployment、CodeBuild、別stack/applicationを切り分ける。
+5. deploy後24時間でapplication-originated background S3 LISTが0件になったか確認する。
+6. deploy runでobservation履歴LIST/GETが0件であることを確認する。
+7. LISTが残る場合はAPIの`GET /debug-runs`、CDK BucketDeployment、CodeBuild、別stack/applicationを切り分ける。
 
 ## EventBridge停止確認
 
@@ -89,37 +126,31 @@ CloudFormation templateまたはdeployed ruleで次を確認する。
 
 ### Revocation cleanup
 
-scheduled workerは処理しない。物理cleanupが必要な場合は以下を事前に決める。
-
-- tenant ID
-- resource type / resource ID
-- operation ID
-- authoritative deny version
-- cleanup対象scope
-- 最大request数とbudget
-- rollback / retry / audit方法
-
-空キュー確認のためにbucket prefix全体をlistしない。
+scheduled workerは処理しない。物理cleanupが必要な場合はtenant ID、resource type/ID、operation ID、authoritative deny version、scope、request上限、budget、rollback/retry/audit方法を事前に決める。空キュー確認のためにbucket prefix全体をlistしない。
 
 ### Security audit reconciliation
 
 pending/finalization-pendingを修復する場合はtenantとintent IDを明示する。全intentのpolling enumerationを行わない。repair後はauthoritative stateとcompleted eventの相関を確認する。
 
+### Explicit RAG promotion
+
+RAG candidateを評価する場合はrepository-relativeなpolicy/observation artifactを明示してCI promotion gateを実行する。automatic deployのためにproduction S3履歴を全件downloadしない。
+
 ## Full control再有効化条件
 
-次を全て満たすまでcontinuous cleanup / reconciliation / monitoringを再有効化しない。
+次を全て満たすまでcontinuous cleanup、reconciliation、monitoring、automatic promotionを再有効化しない。
 
 - Product/FinOps ownerの明示承認
-- 月額・日額・単位request cost ceiling
+- 月額・日額・単位request/deploy cost ceiling
 - idle時有料operationゼロの設計
-- queue、DynamoDB index、time-partitioned key等による対象限定
+- queue、DynamoDB index、time-partitioned key、manifest等による対象限定
 - bounded batch / retry / dead-letter
 - retention / lifecycle
 - cost alarmとkill switch
 - load testと24時間cost evidence
 - rollback手順
 
-S3 prefix全件を固定間隔でpollingする設計は不合格とする。
+S3 prefix全件を固定間隔またはdeploy前にscanする設計は不合格とする。
 
 ## その他の固定費候補
 
@@ -134,34 +165,37 @@ S3 prefix全件を固定間隔でpollingする設計は不合格とする。
 
 | 目的 | コマンド |
 | --- | --- |
-| API worker contract | targeted Node tests |
-| API type | `npm run typecheck -w @memorag-mvp/api` |
+| deployment workflow contract | `node --import tsx --test benchmark/promotion-workflow.test.ts` |
 | repository lint | `npm run lint` |
 | docs構成/freshness | `task docs:check` |
 | product runtime source audit | `npm run rag:release:source-audit` |
 | whitespace/conflict | `git diff --check` |
 
-未実施の確認を実施済みとしない。actual AWSのLIST停止はdeploy後のCost Explorer/CUR/data eventで確認する。
+未実施の確認を実施済みとしない。actual AWSのEventBridge停止とLIST低下はdeploy後のCloudFormation、Cost Explorer/CUR/data eventで確認する。
 
 ## 運用検証状況
 
-repository-localのsource変更とunit/CI結果は確認対象に含む。一方、live AWSのS3 request count、CloudFormation update、24時間cost evidence、pending cleanup/audit件数はdeploy後まで未検証である。
+repository-localのsource変更とCI結果は確認対象に含む。一方、live AWSのCloudFormation update、rule state、S3 request count、24時間cost evidenceはsuccess deploy後まで未検証である。
 
 ## 受け入れ条件
 
 - AC-OPS-MON-001: 3つのEventBridge scheduleがDISABLEDで、scheduled Lambda invocationを行わないこと。
 - AC-OPS-MON-002: RAG monitoringをoptional化し、stale safety-stateに依存せずAPI availabilityを維持すること。
-- AC-OPS-MON-003: FR-066 authoritative denyとFR-086 durable intentが停止対象ではないこと。
-- AC-OPS-MON-004: deferred guaranteeと残余riskを要件・PR・runbookで説明できること。
-- AC-OPS-MON-005: deploy後にregion/bucket/role別のLIST停止を検証できること。
-- AC-OPS-MON-006: full control再有効化にowner承認とcost evidenceが必要であること。
-- AC-OPS-MON-007: unused EventBridge/Lambda/Alarm/SNSの物理削除を次のIaC最小化候補として追跡できること。
+- AC-OPS-MON-003: automatic deployがS3 observation履歴をlist/downloadせず、repository policyからbounded contextを生成すること。
+- AC-OPS-MON-004: deployment context artifactが常に存在し、promotion gate未適用を明示すること。
+- AC-OPS-MON-005: FR-066 authoritative denyとFR-086 durable intentが停止対象ではないこと。
+- AC-OPS-MON-006: deploy後にregion/bucket/role別のLIST停止とEventBridge rule stateを検証できること。
+- AC-OPS-MON-007: full control再有効化にowner承認とcost evidenceが必要であること。
+- AC-OPS-MON-008: unused EventBridge/Lambda/Alarm/SNSの物理削除を次のIaC最小化候補として追跡できること。
 
 ## 参照
 
 - `FR-066`
+- `FR-075`
 - `FR-086`
 - `FR-093`
 - `SQ-015`
+- deploy run `29936120192`
 - `tasks/done/20260722-2300-cost-first-disable-background-s3-scans.md`
+- `tasks/do/20260723-0130-cost-first-deploy-without-rag-s3-scan.md`
 - `tasks/todo/20260722-physical-remove-unused-background-control-infra.md`
