@@ -2,8 +2,8 @@
 
 - 要件ID: `FR-075`
 - 種別: `REQ_FUNCTIONAL`
-- 状態: Draft
-- 優先度: S
+- 状態: Deferred for automatic deploy（cost-first mode）
+- 優先度: C
 
 ## 分類（L0-L3）
 
@@ -11,66 +11,84 @@
 - L1主分類: `3. RAG検索品質制御`
 - L2主機能群: `3.7 安全なRAGライフサイクル`
 - L3要件: `FR-075`
-- 関連カテゴリ: `4. 回答検証・ガードレール`, `7. 評価・debug・benchmark`, `8. 認証・認可・管理・監査`
+- 関連カテゴリ: `4. 回答検証・ガードレール`, `7. 評価・debug・benchmark`, `8. 認証・認可・管理・監査`, `FinOps`
 
-## 要件
+## 現行 product decision
 
-- FR-075: システムは、取り込み、検索、根拠選別、生成、引用、認可・攻撃耐性、end-to-end を別々に評価し、versioned な合格条件の論理積で RAG 変更の公開可否を判定すること。
+2026-07-23時点のMVP automatic deployは`cost_priority` profileとする。
+
+- main push deployはproduction observation completenessを確認するためのS3 full-prefix scanを実行しない。
+- repository内のapproved policyをvalidationし、model/runtime/workload/price/index/prompt/pipeline/parser/chunkerのCDK contextだけを確定する。
+- automatic deployではRAG promotion gateを適用せず、deployment artifactに`promotionGateApplied=false`、`sourceObservationScan=false`、`deployAllowed=true`を記録する。
+- full promotion gateは`MemoRAG CI`の明示`workflow_dispatch`または将来のowner承認済みrelease profileに限定する。
+- model/prompt/index/pipeline等のRAG変更を自動公開するprofileを再導入する場合は、bounded/indexed evidence retrieval、retention、cost ceiling、owner approvalを必須とする。
+
+## 延期された要件
+
+- FR-075: システムは、取り込み、検索、根拠選別、生成、引用、認可・攻撃耐性、end-to-endを別々に評価し、versionedな合格条件の論理積でRAG変更の公開可否を判定すること。
+
+この要件のpolicy evaluator、benchmark、明示CI gateは保持するが、現行cost-first automatic deployの必須前提にはしない。
 
 ## 根拠と意図
 
-最終回答の平均点だけでは、検索漏れ、根拠喪失、権限漏えい、誤拒否を区別できない。dataset 固有の期待語句や case 分岐を product code へ入れず、実本番経路を評価する。
+最終回答の平均点だけでは検索漏れ、根拠喪失、権限漏えい、誤拒否を区別できないため、full promotion gate自体には価値がある。一方、旧deploy workflowは5分monitorが生成した全observation履歴を`aws s3 sync`し、45分job内で完了できず、コスト削減のEventBridge変更自体をdeployできなかった。monitoringを停止した現行profileではobservation生成も止まるため、automatic deployとfull promotion gateを分離する。
 
 ## 要求属性
 
 | 属性 | 記入内容 |
 | --- | --- |
 | 識別子 | `FR-075` |
-| 説明 | stage-level RAG evaluation と promotion gate |
-| 根拠 | 品質・安全・性能の退行を原因別に検出する |
-| 源泉 | RAG ガイド §7（PDF pp.156–185）、§3.8（PDF pp.93–97） |
-| Actor / trigger | RAG policy/model/prompt/index/pipeline を変更・公開するとき |
-| 種類 | 機能要求 / evaluation / release |
+| 説明 | stage-level RAG evaluation とopt-in promotion gate |
+| 根拠 | RAG変更の品質評価能力を保持しつつ、cost-first infrastructure deployをblockしない |
+| 源泉 | RAGガイド §7（PDF pp.156–185）、§3.8（PDF pp.93–97）、owner cost-first decision 2026-07-22/23 |
+| Actor / trigger | explicit RAG release evaluation、将来のRAG promotion profile |
+| 種類 | 機能要求 / evaluation / optional release control |
 | 依存関係 | `FR-068`–`FR-074`, `FR-084`, `FR-088`, `FR-089`, benchmark datasets, `SQ-005`–`SQ-015` |
-| 衝突 | executable promotion runner は未配線で、product code に固定語句/profile 分岐がある |
-| 受け入れ基準 | `AC-FR075-001`, `AC-FR075-002` |
-| 優先度 | S |
-| 安定性 | High |
-| Confidence | inferred |
-| 所有者 | QA / RAG Quality / Security |
-| 変更履歴 | 2026-07-11 初版 |
+| 衝突 | full evidence gateと、monitoring停止中のautomatic infrastructure deploy |
+| 受け入れ基準 | `AC-FR075-001`, `AC-FR075-002`, `AC-FR075-003` |
+| 優先度 | C |
+| 安定性 | Medium |
+| Confidence | owner_decision |
+| 所有者 | Product / FinOps / QA / RAG Quality |
+| 変更履歴 | 2026-07-11 初版、2026-07-23 automatic deployからdefer |
 
 ## 受け入れ条件
 
-### AC-FR075-001 工程別・slice 別評価
+### AC-FR075-001 明示的な工程別評価
 
-- Given: versioned dataset に source snapshot と期待 extraction/span、admission/quarantine 結果、正解 document/span、answerability、tenant/role/ACL、基準日時、質問類型、重大度がある
-- When: candidate change を評価する
-- Then: extraction coverage、parser/OCR accuracy、silent truncation、locator validity、chunk boundary/overlap/structure、manifest integrity、admission/quarantine correctness に加え、retrieval recall/precision、evidence retention、faithfulness、claim-citation support、refusal/false-answer、ACL leak、injection、latency/cost を工程・重要 slice 別に記録する
+- Given: versioned dataset、approved policy、candidate artifactがある
+- When: operatorが明示promotion workflowを実行する
+- Then: ingest、retrieval、evidence、generation、citation、security、performance、costを工程・slice別に評価し、欠損・未承認値・critical failureをpassへ変換しない
 
-### AC-FR075-002 promotion gate
+### AC-FR075-002 cost-first automatic deploy
 
-- Given: approved threshold profile、current baseline、candidate の変更目的があり、改善を主張する目的には対象 metric/slice/direction/minimum delta の approved improvement criterion があり、評価 dataset の expected field が product runtime input から隔離されている
-- When: candidate を promotion 判定する
-- Then: production と同じ runtime path/profile で ingest 完全性、approved threshold、non-regression、重要 slice、安全性、性能、費用をすべて満たし、改善を主張する場合だけ対応 criterion も満たしたとき合格とし、中立な security/reliability fix に無関係な改善を必須化せず、silent truncation、published artifact/manifest 不整合、dataset 固有分岐、閾値未承認、critical leak 1 件以上のいずれかがあれば合格扱いにしない
+- Given: `DEPLOYMENT_MODE=cost_priority`でmainまたはmanual deployを実行する
+- When: deployment contextを準備する
+- Then: S3 observation prefixをlist/downloadせず、repository policyをvalidationしてCDK version contextを設定し、promotion gate未適用をartifactへ明記してbuild/synth/deployへ進む
+
+### AC-FR075-003 full gate再有効化
+
+- Given: RAG変更をautomatic promotionする必要がある
+- When: Product/FinOps/QA ownerがrelease profileを承認する
+- Then: full-prefix pollingではなくindex/time partition/manifestでbounded evidenceを取得し、retention、request上限、月額見積、kill switch、rollbackを備えたgateを有効化する
 
 ## 妥当性確認
 
 | 観点 | 結果 | メモ |
 | --- | --- | --- |
-| 必要性 | OK | 最終平均だけで検索漏れ、根拠喪失、権限漏えい、誤拒否、性能退行を隠すことを防ぐために必要 |
-| 十分性 | OK | extraction/chunk/admission/manifest を含む ingest、retrieval、evidence、generation、citation、security、E2E の工程別・slice 別評価、threshold/non-regression、目的固有 improvement 判定を扱う |
-| 理解容易性 | OK | 評価単位、必要 dataset 属性、合格条件の論理積、未承認値の扱いを明示した |
-| 一貫性 | OK | 既存 `FR-019` / `FR-045` と `SQ-005`–`SQ-015` を統合し、安全縮退は `FR-089` に分離した |
-| 標準・契約適合 | OK | RAG ガイドの stage-level evaluation と SWEBOK の versioned trace/validation に適合する |
-| 実現可能性 | OK | versioned dataset/profile、既存 benchmark runner、CI/release report を拡張して実現できる |
-| 検証可能性 | OK | executable suite summary、critical slice result、gate decision、production-equivalence check で確認できる |
-| ニーズ適合 | OK | 利用者・業務責任者が品質と安全性を満たす RAG 版だけを利用できる |
-| 原子性 | OK | RAG change の promotion decision を規定する |
-| 実装適合 | OK（confirmed、閾値入力は未承認） | versioned case/slice/workload/price/provenance、claim/citation/task/recovery metrics、release audit、promotion/deploy fail-closed gate を実装し、contract/benchmark/infra/producer focused tests が pass |
-| 合意 | pending | slice、閾値、モデル judge、費用上限が未確定 |
+| 必要性 | Deferred | explicit evaluationは保持。現行automatic deployでは必須でない |
+| 十分性 | Partial | evaluator/CI gateは維持。automatic deploy gateは停止 |
+| 理解容易性 | OK | explicit promotionとcost-first deployを分離 |
+| 一貫性 | Owner override | `SQ-015`をautomatic deployment availabilityより優先 |
+| 標準・契約適合 | Trade-off accepted | full continuous validationよりMVP cost/operabilityを優先 |
+| 実現可能性 | OK | local policy validationとCDK context設定でdeploy可能 |
+| 検証可能性 | OK | workflow contract、artifact、GitHub Actions、CDK outputsで確認可能 |
+| ニーズ適合 | OK | AWSコスト停止変更を実環境へ反映できる |
+| 原子性 | OK | deploy profileのgate適用有無を規定 |
+| 実装適合 | Partial（confirmed） | explicit CI gateは残る。automatic deployはcost-priority preparationへ変更 |
+| 合意 | confirmed | ownerがコスト最優先とdeploy復旧を指示 |
 
 ## トレース
 
-- 後方: `FR-019`, `FR-039`, `FR-045`, `FR-047`, `FR-048`, RAG ガイド §7。
-- 前方: executable promotion runner、product-source/expected-field taint scan、`SQ-005`–`SQ-015`, CI/release policy。
+- 後方: `FR-019`, `FR-039`, `FR-045`, `FR-047`, `FR-048`, `SQ-015`, deploy run `29936120192`。
+- 前方: explicit promotion workflow、bounded evidence index、cost-approved release profile、deployment context artifact。
