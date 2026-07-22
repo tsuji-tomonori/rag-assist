@@ -27,9 +27,7 @@ full monitoring / automatic cleanup / automatic audit reconciliationを使用し
 
 RAG API compatibilityに必要なsafety state更新方式は、resource削除前に次のいずれかへ置換する。
 
-1. deploy時に十分長いvalidityのnormal stateを作成する
-2. `RAG_MONITORING_REQUIRED`をcost-first production profileでは無効化する
-3. request pathで有料pollingを伴わずにstateを導出する
+`RAG_MONITORING_REQUIRED=0`とoptional interlock bypassを維持する
 
 ## 受け入れ条件
 

@@ -13,29 +13,19 @@
 
 ## 現行 cost-first mode
 
-| Scheduled entrypoint | 旧動作 | 現行動作 | S3 LIST |
-| --- | --- | --- | ---: |
-| `RagQualityMonitorFunction` | 5分ごとにsource sample / observationを全列挙し、集約・alert・safe actionを実行 | active policyをdirect GETし、API互換用normal safety stateをdirect PUT。既存alarm用zero-failure metricsのみ出力 | 0 |
-| `RevocationCleanupFunction` | 1分ごとにtenant / repair / cleanup manifestを列挙し、派生物cleanupを実行 | 入力を無視してzero resultを返す | 0 |
-| `SecurityAuditReconciliationFunction` | 1分ごとにaudit intent / source-governance stateを列挙し、finalize/repairする | tenant/limitを検証しzero resultを返す | 0 |
+| Control | CloudFormation / runtime state | S3 LIST | Scheduled invocation |
+| --- | --- | ---: | ---: |
+| RAG quality monitor | `RagQualityMonitorSchedule.State=DISABLED`、`RAG_MONITORING_REQUIRED=0` | 0 | 0 |
+| Revocation cleanup | `RevocationCleanupSchedule.State=DISABLED` | 0 | 0 |
+| Security audit reconciliation | `SecurityAuditReconciliationSchedule.State=DISABLED` | 0 | 0 |
 
-この変更はdomain primitiveを削除しない。explicit test、明示repair、将来のevent-driven再設計に利用できるsourceは保持する。停止対象はEventBridgeから到達する無条件polling pathである。
+3つのdomain primitiveとLambda sourceは、明示保守や将来のevent-driven再設計に備えて保持する。停止対象はEventBridge scheduleとproduction runtime dependencyである。
 
 ## 残る費用
 
-現行PRはS3 `ListObjectsV2`の直接原因を先に止めるため、EventBridge rule、Lambda function、log group、alarm、SNS topicをCloudFormationから物理削除しない。
+EventBridge rule、Lambda、IAM、log group、alarm、SNS topicはCloudFormation上に残るが、ruleがdisabledのため定期Lambda invocationと定期log ingestionは発生しない。残余候補はresource自体の固定費、API実利用、deploy、benchmark、手動実行である。
 
-残余候補:
-
-- EventBridgeによるLambda invocation
-- LambdaのSTART/END/REPORTと最小log ingestion
-- CloudWatch alarm/metric
-- SNS topic
-- 既存KMS key、Secrets Manager secret
-- RAG compatibility heartbeatのS3 GET / PUT
-- API/workerの実利用に伴うS3 GET/PUT、DynamoDB、Bedrock、Textract、CodeBuild
-
-物理resource削除はgenerated infra inventory、CDK snapshot、deploy/rollbackを伴う独立IaC最小化として `tasks/todo/20260722-physical-remove-unused-background-control-infra.md` で追跡する。コストが続く場合はこのfollow-upを最優先する。
+物理resource削除はgenerated infra inventory、CDK snapshot、change set、deploy/rollbackを伴う独立IaC最小化として `tasks/todo/20260722-physical-remove-unused-background-control-infra.md` で追跡する。
 
 ## 維持する安全境界
 
@@ -54,9 +44,8 @@
 ### FR-093
 
 - full source aggregation、drift detection、alert、safe actionは停止する。
-- APIが`RAG_MONITORING_REQUIRED=1`で停止しないよう、compatibility heartbeatだけを保存する。
-- heartbeatはpolicy direct GETとsafety-state direct PUT以外のAWS data operationを行わない。
-- 既存missing-data alarmを正常に保つため、`ControlLoopHeartbeat=1`、failure/alert/observation系0のEMF logを1件出力する。
+- API/workerは`RAG_MONITORING_REQUIRED=0`で、既存または期限切れのsafety-state objectを参照しない。
+- monitoring Lambdaのcompatibility heartbeatも実行しない。
 
 ## 現行の観測点
 
@@ -85,18 +74,16 @@
 6. deploy後24時間でapplication-originated S3 LISTが0件になったか確認する。
 7. LISTが残る場合はAPIの`GET /debug-runs`、GitHub Actionsの`aws s3 sync`、CDK BucketDeployment、CodeBuild、別stack/applicationを切り分ける。
 
-## Compatibility heartbeat確認
+## EventBridge停止確認
 
-`RagQualityMonitorFunction`実行後、`quality-control/runtime/safety-state.json`が次を満たすことを確認する。
+CloudFormation templateまたはdeployed ruleで次を確認する。
 
-- `responseMode=normal`
-- `promotionFrozen=false`
-- `documentQuarantineRequired=false`
-- `quarantinedRuntimeProfileVersions=[]`
-- `validUntil`が現在時刻より後
-- `policyVersion`はactive policyまたは`background-controls-disabled`
+- `RagQualityMonitorSchedule`: `DISABLED`
+- `RevocationCleanupSchedule`: `DISABLED`
+- `SecurityAuditReconciliationSchedule`: `DISABLED`
+- API / Heavy API / worker環境変数: `RAG_MONITORING_REQUIRED=0`
 
-source sample、observation、alert、actionが増加することを期待しない。これらが増える場合は旧bundleまたはstack driftを疑う。CloudWatchにはzero-failure compatibility heartbeatだけが記録される。
+旧`quality-control/runtime/safety-state.json`が残っていても、cost-first runtimeは読み込まない。
 
 ## Explicit maintenance
 
@@ -162,8 +149,8 @@ repository-localのsource変更とunit/CI結果は確認対象に含む。一方
 
 ## 受け入れ条件
 
-- AC-OPS-MON-001: 3 scheduled entrypointがS3 prefix listingを行わないこと。
-- AC-OPS-MON-002: RAG compatibility heartbeatがdirect GET/PUTだけでAPI availabilityを維持すること。
+- AC-OPS-MON-001: 3つのEventBridge scheduleがDISABLEDで、scheduled Lambda invocationを行わないこと。
+- AC-OPS-MON-002: RAG monitoringをoptional化し、stale safety-stateに依存せずAPI availabilityを維持すること。
 - AC-OPS-MON-003: FR-066 authoritative denyとFR-086 durable intentが停止対象ではないこと。
 - AC-OPS-MON-004: deferred guaranteeと残余riskを要件・PR・runbookで説明できること。
 - AC-OPS-MON-005: deploy後にregion/bucket/role別のLIST停止を検証できること。

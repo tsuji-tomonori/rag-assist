@@ -305,6 +305,7 @@ export async function assertRagSafetyInterlock(input: {
   now?: string
 }): Promise<RagSafetyInterlockDecision | undefined> {
   const required = input.required ?? process.env.RAG_MONITORING_REQUIRED === "1"
+  if (!required) return
   const operation = input.operation ?? "chat"
   let state: RagSafetyState
   try {

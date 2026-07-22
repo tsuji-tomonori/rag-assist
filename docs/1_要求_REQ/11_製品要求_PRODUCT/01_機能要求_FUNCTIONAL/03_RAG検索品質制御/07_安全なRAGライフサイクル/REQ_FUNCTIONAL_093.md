@@ -17,9 +17,9 @@
 
 2026-07-22 の owner 判断により、現行 MVP は production RAG の常時 quality/safety control loop より AWS コスト最小化を優先する。
 
-- 5分ごとの source sample / observation prefix 全列挙、集約、alert処理、safe action実行を停止する。
-- scheduled entrypoint は API の既存 safety-state contractを失効させないため、active policyを1件直接取得し、normal heartbeatを1件直接保存するだけとする。
-- heartbeat は `ListObjectsV2`、benchmark run enumeration、observation生成、SNS publish、action生成を行わない。
+- `RagQualityMonitorSchedule` は CloudFormation 上で `DISABLED` とする。
+- API / worker は `RAG_MONITORING_REQUIRED=0` とし、既存または期限切れの safety-state objectを読まずに通常処理を継続する。
+- source sample / observation prefix 全列挙、benchmark run enumeration、集約、alert、SNS通知、safe action、compatibility heartbeatを実行しない。
 - full monitoringを再導入する場合は、time-partitioned key、queue/index、retention、bounded reads、`SQ-015` cost ceiling、owner承認を先に満たす。
 
 ## 延期された要件
@@ -30,7 +30,7 @@
 
 ## 根拠と意図
 
-公開前 benchmark 後の drift 検出は有用だが、現行実装は5分ごとに増加し続ける S3 prefix 全体を列挙し、対象windowを読み込み後にfilterする。利用者操作がなくても LIST/GET/PUT/Lambda/Logs/SNS周辺コストが発生するため、MVPの現行価値に対して過剰と判断した。
+公開前 benchmark 後の drift 検出は有用だが、旧実装は5分ごとに増加し続ける S3 prefix 全体を列挙し、対象windowを読み込み後にfilterしていた。利用者操作がなくても LIST/GET/PUT/Lambda/Logs/SNS周辺コストが発生するため、MVPの現行価値に対して過剰と判断した。
 
 ## 要求属性
 
@@ -49,15 +49,15 @@
 | 安定性 | Low |
 | Confidence | owner_decision |
 | 所有者 | Product / FinOps / RAG Ops |
-| 変更履歴 | 2026-07-11 初版、2026-07-22 cost-first modeで延期 |
+| 変更履歴 | 2026-07-11 初版、2026-07-22 cost-first modeで延期、2026-07-23 EventBridge ruleを無効化 |
 
 ## 受け入れ条件
 
-### AC-FR093-001 cost-priority scheduled entrypoint
+### AC-FR093-001 cost-priority deployment
 
-- Given: EventBridge が既存 `RagQualityMonitorFunction` を起動する
-- When: cost-first modeのscheduled handlerが実行される
-- Then: S3 prefix listing、source sample/observation全件読込、benchmark列挙、alert/action処理を行わず、active policyのdirect GETとsafety-stateのdirect PUTだけで終了する
+- Given: cost-first MVP stackをsynthesize/deployする
+- When: EventBridge rulesとAPI runtime environmentを確認する
+- Then: `RagQualityMonitorSchedule`は`DISABLED`、`RAG_MONITORING_REQUIRED=0`であり、scheduled monitoring Lambdaは起動されない
 
 ### AC-FR093-002 full monitoring（deferred）
 
@@ -68,23 +68,23 @@
 ### AC-FR093-003 recurring cost guard
 
 - Given: pending dataまたは新規sampleが0件である
-- When: background controlがidle状態を確認する
-- Then: 空を確認するためのS3 LISTや全件GET、observation/alert/action PUT、SNS publishを実行しない。暫定compatibility heartbeatは1回あたりactive policy GET 1件、safety-state PUT 1件、zero-failure metrics log 1件を上限とし、物理resource削除taskでさらに縮退する
+- When: 24時間stackを維持する
+- Then: RAG monitoring由来のEventBridge invocation、Lambda execution、S3 LIST/GET/PUT、observation/alert/action生成、SNS publishを0件とする
 
 ## 妥当性確認
 
 | 観点 | 結果 | メモ |
 | --- | --- | --- |
 | 必要性 | Deferred | full control loopは現行MVPの必須価値ではない |
-| 十分性 | Not active | domain implementationは保持するがscheduled pathはheartbeatのみ |
+| 十分性 | Not active | domain implementationは保持するがscheduled pathは停止 |
 | 理解容易性 | OK | active behaviorと将来要件を分離した |
 | 一貫性 | OK | release gateやper-run traceは別要件として維持可能 |
 | 標準・契約適合 | Trade-off accepted | continuous validationよりcost-first product decisionを優先 |
 | 実現可能性 | Future | queue/index/time partitionへの再設計が必要 |
-| 検証可能性 | OK | scheduled handlerのcall surfaceでListObjectsV2不在を検証できる |
+| 検証可能性 | OK | CloudFormation rule stateとruntime envを確認できる |
 | ニーズ適合 | OK | 利用者が少ないMVPで予算を優先する |
-| 原子性 | OK | compatibility heartbeatのみを独立させた |
-| 実装適合 | Deferred（confirmed） | producer/monitor/domain testsは残る。scheduled workerはaggregation/evaluationを呼ばずheartbeatのみを保存する |
+| 原子性 | OK | full monitoring停止を単独で検証できる |
+| 実装適合 | Deferred（confirmed） | domain source/testsは残る。EventBridge scheduleはdisabled、runtime interlockはoptional modeでbypassする |
 | 合意 | confirmed | 2026-07-22 ownerが常時monitoring不要を決定 |
 
 ## トレース

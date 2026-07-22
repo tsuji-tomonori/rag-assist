@@ -274,7 +274,7 @@ test("implements the designed serverless resources", () => {
         COGNITO_APP_CLIENT_ID: Match.anyValue(),
         DEBUG_DOWNLOAD_BUCKET_NAME: Match.anyValue(),
         DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS: "900",
-        RAG_MONITORING_REQUIRED: "1",
+        RAG_MONITORING_REQUIRED: "0",
         RAG_SAFETY_STATE_TTL_SECONDS: "600",
         RAG_GUARD_PROFILE_JSON: JSON.stringify({
           id: "standard-safe-rag",
@@ -297,15 +297,21 @@ test("implements the designed serverless resources", () => {
     })
   })
   template.resourceCountIs("AWS::CloudFront::OriginAccessControl", 1)
-  template.hasResourceProperties("AWS::Events::Rule", {
-    ScheduleExpression: "rate(5 minutes)",
-    State: "ENABLED"
-  })
+  const backgroundSchedules = Object.entries(template.toJSON().Resources ?? {})
+    .filter(([logicalId, resource]) => (
+      ["RagQualityMonitorSchedule", "RevocationCleanupSchedule", "SecurityAuditReconciliationSchedule"]
+        .some((prefix) => logicalId.startsWith(prefix))
+      && (resource as any).Type === "AWS::Events::Rule"
+    ))
+  assert.equal(backgroundSchedules.length, 3)
+  for (const [, schedule] of backgroundSchedules) {
+    assert.equal((schedule as any).Properties.State, "DISABLED")
+  }
   template.hasResourceProperties("AWS::Lambda::Function", {
     Timeout: 300,
     MemorySize: 512,
     Environment: Match.objectLike({ Variables: Match.objectLike({
-      RAG_MONITORING_REQUIRED: "1",
+      RAG_MONITORING_REQUIRED: "0",
       RAG_ALERT_TOPIC_ARN: Match.anyValue()
     }) })
   })
@@ -463,7 +469,7 @@ test("deploys a scheduled least-privilege revocation reconciliation worker", () 
 
   template.hasResourceProperties("AWS::Events::Rule", {
     ScheduleExpression: "rate(1 minute)",
-    State: "ENABLED",
+    State: "DISABLED",
     Targets: Match.arrayWith([Match.objectLike({ Input: "{\"limitPerTenant\":100}" })])
   })
   const resources = template.toJSON().Resources ?? {}
@@ -802,7 +808,7 @@ test("deploys the tenant-scoped security audit reconciliation worker with bounde
   ))?.[1] as any
   assert.ok(schedule)
   assert.equal(schedule.Properties.ScheduleExpression, "rate(1 minute)")
-  assert.equal(schedule.Properties.State, "ENABLED")
+  assert.equal(schedule.Properties.State, "DISABLED")
   assert.match(JSON.stringify(schedule.Properties.Targets), /tenantId.*AWS::AccountId.*limit.*100/)
 
   const policies = Object.entries(resources)

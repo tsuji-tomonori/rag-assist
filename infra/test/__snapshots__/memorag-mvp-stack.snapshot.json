@@ -3942,7 +3942,7 @@
               "Ref": "DebugDownloadBucketAB6A16BE"
             },
             "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
-            "RAG_MONITORING_REQUIRED": "1",
+            "RAG_MONITORING_REQUIRED": "0",
             "RAG_SAFETY_STATE_TTL_SECONDS": "600",
             "RAG_GUARD_PROFILE_JSON": "{\"id\":\"standard-safe-rag\",\"version\":\"standard-safe-rag-v1\",\"guards\":{\"authentication\":true,\"authorization\":true,\"classification_usage\":true,\"prompt_injection\":true,\"tool_policy\":true,\"grounding\":true,\"citation\":true,\"output_secret\":true,\"trace_redaction\":true}}",
             "PDF_OCR_FALLBACK_ENABLED": "true",
@@ -5065,7 +5065,7 @@
               "Ref": "DebugDownloadBucketAB6A16BE"
             },
             "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
-            "RAG_MONITORING_REQUIRED": "1",
+            "RAG_MONITORING_REQUIRED": "0",
             "RAG_SAFETY_STATE_TTL_SECONDS": "600",
             "RAG_GUARD_PROFILE_JSON": "{\"id\":\"standard-safe-rag\",\"version\":\"standard-safe-rag-v1\",\"guards\":{\"authentication\":true,\"authorization\":true,\"classification_usage\":true,\"prompt_injection\":true,\"tool_policy\":true,\"grounding\":true,\"citation\":true,\"output_secret\":true,\"trace_redaction\":true}}",
             "PDF_OCR_FALLBACK_ENABLED": "true",
@@ -5748,7 +5748,7 @@
               "Ref": "DebugDownloadBucketAB6A16BE"
             },
             "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
-            "RAG_MONITORING_REQUIRED": "1",
+            "RAG_MONITORING_REQUIRED": "0",
             "RAG_SAFETY_STATE_TTL_SECONDS": "600",
             "RAG_GUARD_PROFILE_JSON": "{\"id\":\"standard-safe-rag\",\"version\":\"standard-safe-rag-v1\",\"guards\":{\"authentication\":true,\"authorization\":true,\"classification_usage\":true,\"prompt_injection\":true,\"tool_policy\":true,\"grounding\":true,\"citation\":true,\"output_secret\":true,\"trace_redaction\":true}}"
           }
@@ -6164,7 +6164,7 @@
               "Ref": "DebugDownloadBucketAB6A16BE"
             },
             "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
-            "RAG_MONITORING_REQUIRED": "1",
+            "RAG_MONITORING_REQUIRED": "0",
             "RAG_SAFETY_STATE_TTL_SECONDS": "600",
             "RAG_GUARD_PROFILE_JSON": "{\"id\":\"standard-safe-rag\",\"version\":\"standard-safe-rag-v1\",\"guards\":{\"authentication\":true,\"authorization\":true,\"classification_usage\":true,\"prompt_injection\":true,\"tool_policy\":true,\"grounding\":true,\"citation\":true,\"output_secret\":true,\"trace_redaction\":true}}"
           }
@@ -6534,7 +6534,7 @@
               "Ref": "DebugDownloadBucketAB6A16BE"
             },
             "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
-            "RAG_MONITORING_REQUIRED": "1",
+            "RAG_MONITORING_REQUIRED": "0",
             "RAG_SAFETY_STATE_TTL_SECONDS": "600",
             "RAG_GUARD_PROFILE_JSON": "{\"id\":\"standard-safe-rag\",\"version\":\"standard-safe-rag-v1\",\"guards\":{\"authentication\":true,\"authorization\":true,\"classification_usage\":true,\"prompt_injection\":true,\"tool_policy\":true,\"grounding\":true,\"citation\":true,\"output_secret\":true,\"trace_redaction\":true}}"
           }
@@ -7091,7 +7091,7 @@
               "Ref": "DebugDownloadBucketAB6A16BE"
             },
             "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
-            "RAG_MONITORING_REQUIRED": "1",
+            "RAG_MONITORING_REQUIRED": "0",
             "RAG_SAFETY_STATE_TTL_SECONDS": "600",
             "RAG_GUARD_PROFILE_JSON": "{\"id\":\"standard-safe-rag\",\"version\":\"standard-safe-rag-v1\",\"guards\":{\"authentication\":true,\"authorization\":true,\"classification_usage\":true,\"prompt_injection\":true,\"tool_policy\":true,\"grounding\":true,\"citation\":true,\"output_secret\":true,\"trace_redaction\":true}}",
             "PDF_OCR_FALLBACK_ENABLED": "true",
@@ -7512,7 +7512,7 @@
               "Ref": "DebugDownloadBucketAB6A16BE"
             },
             "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
-            "RAG_MONITORING_REQUIRED": "1",
+            "RAG_MONITORING_REQUIRED": "0",
             "RAG_SAFETY_STATE_TTL_SECONDS": "600",
             "RAG_GUARD_PROFILE_JSON": "{\"id\":\"standard-safe-rag\",\"version\":\"standard-safe-rag-v1\",\"guards\":{\"authentication\":true,\"authorization\":true,\"classification_usage\":true,\"prompt_injection\":true,\"tool_policy\":true,\"grounding\":true,\"citation\":true,\"output_secret\":true,\"trace_redaction\":true}}"
           }
@@ -8007,7 +8007,7 @@
               "Ref": "DebugDownloadBucketAB6A16BE"
             },
             "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
-            "RAG_MONITORING_REQUIRED": "1",
+            "RAG_MONITORING_REQUIRED": "0",
             "RAG_SAFETY_STATE_TTL_SECONDS": "600",
             "RAG_GUARD_PROFILE_JSON": "{\"id\":\"standard-safe-rag\",\"version\":\"standard-safe-rag-v1\",\"guards\":{\"authentication\":true,\"authorization\":true,\"classification_usage\":true,\"prompt_injection\":true,\"tool_policy\":true,\"grounding\":true,\"citation\":true,\"output_secret\":true,\"trace_redaction\":true}}"
           }
@@ -8911,7 +8911,7 @@
               "Ref": "DebugDownloadBucketAB6A16BE"
             },
             "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
-            "RAG_MONITORING_REQUIRED": "1",
+            "RAG_MONITORING_REQUIRED": "0",
             "RAG_SAFETY_STATE_TTL_SECONDS": "600",
             "RAG_GUARD_PROFILE_JSON": "{\"id\":\"standard-safe-rag\",\"version\":\"standard-safe-rag-v1\",\"guards\":{\"authentication\":true,\"authorization\":true,\"classification_usage\":true,\"prompt_injection\":true,\"tool_policy\":true,\"grounding\":true,\"citation\":true,\"output_secret\":true,\"trace_redaction\":true}}"
           }
@@ -8966,9 +8966,9 @@
     "RevocationCleanupScheduleF357B692": {
       "Type": "AWS::Events::Rule",
       "Properties": {
-        "Description": "Reconcile tenant-scoped deny-first revocation cleanup manifests.",
+        "Description": "Disabled by the cost-first MVP decision; explicit cleanup remains available.",
         "ScheduleExpression": "rate(1 minute)",
-        "State": "ENABLED",
+        "State": "DISABLED",
         "Tags": [
           {
             "Key": "Application",
@@ -9335,7 +9335,7 @@
               "Ref": "DebugDownloadBucketAB6A16BE"
             },
             "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
-            "RAG_MONITORING_REQUIRED": "1",
+            "RAG_MONITORING_REQUIRED": "0",
             "RAG_SAFETY_STATE_TTL_SECONDS": "600",
             "RAG_GUARD_PROFILE_JSON": "{\"id\":\"standard-safe-rag\",\"version\":\"standard-safe-rag-v1\",\"guards\":{\"authentication\":true,\"authorization\":true,\"classification_usage\":true,\"prompt_injection\":true,\"tool_policy\":true,\"grounding\":true,\"citation\":true,\"output_secret\":true,\"trace_redaction\":true}}"
           }
@@ -9390,9 +9390,9 @@
     "SecurityAuditReconciliationSchedule6C1B6D38": {
       "Type": "AWS::Events::Rule",
       "Properties": {
-        "Description": "Finalize tenant-scoped security mutation audits after authoritative state reconciliation.",
+        "Description": "Disabled by the cost-first MVP decision; explicit audit repair remains available.",
         "ScheduleExpression": "rate(1 minute)",
-        "State": "ENABLED",
+        "State": "DISABLED",
         "Tags": [
           {
             "Key": "Application",
@@ -9729,7 +9729,7 @@
               "Ref": "DebugDownloadBucketAB6A16BE"
             },
             "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
-            "RAG_MONITORING_REQUIRED": "1",
+            "RAG_MONITORING_REQUIRED": "0",
             "RAG_SAFETY_STATE_TTL_SECONDS": "600",
             "RAG_GUARD_PROFILE_JSON": "{\"id\":\"standard-safe-rag\",\"version\":\"standard-safe-rag-v1\",\"guards\":{\"authentication\":true,\"authorization\":true,\"classification_usage\":true,\"prompt_injection\":true,\"tool_policy\":true,\"grounding\":true,\"citation\":true,\"output_secret\":true,\"trace_redaction\":true}}",
             "RAG_ALERT_TOPIC_ARN": {
@@ -9787,9 +9787,9 @@
     "RagQualityMonitorScheduleCFE9DF24": {
       "Type": "AWS::Events::Rule",
       "Properties": {
-        "Description": "Evaluate production RAG quality/security signals and apply the approved safety runbook.",
+        "Description": "Disabled by the cost-first MVP decision; continuous RAG monitoring is deferred.",
         "ScheduleExpression": "rate(5 minutes)",
-        "State": "ENABLED",
+        "State": "DISABLED",
         "Tags": [
           {
             "Key": "Application",
