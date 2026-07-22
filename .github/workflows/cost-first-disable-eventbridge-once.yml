@@ -37,7 +37,9 @@ jobs:
           echo "npm ci completed"
 
       - name: Apply EventBridge and runtime stop
-        run: python3 scripts/apply-cost-first-eventbridge-stop.py
+        run: |
+          python3 scripts/apply-cost-first-eventbridge-stop.py
+          python3 scripts/apply-cost-first-eventbridge-stop-followup.py
 
       - name: Update infra snapshot
         env:
@@ -78,6 +80,7 @@ jobs:
         run: |
           rm .github/workflows/cost-first-disable-eventbridge-once.yml
           rm scripts/apply-cost-first-eventbridge-stop.py
+          rm scripts/apply-cost-first-eventbridge-stop-followup.py
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
