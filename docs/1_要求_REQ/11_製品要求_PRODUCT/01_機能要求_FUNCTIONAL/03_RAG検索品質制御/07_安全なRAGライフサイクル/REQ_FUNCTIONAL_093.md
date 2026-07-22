@@ -69,7 +69,7 @@
 
 - Given: pending dataまたは新規sampleが0件である
 - When: background controlがidle状態を確認する
-- Then: S3 LIST/GET/PUT、Lambda、Logs、notificationの有料operationを原則0件とし、pollingで空を確認しない
+- Then: 空を確認するためのS3 LISTや全件GET、observation/alert/action PUT、SNS publishを実行しない。暫定compatibility heartbeatは1回あたりactive policy GET 1件、safety-state PUT 1件、zero-failure metrics log 1件を上限とし、物理resource削除taskでさらに縮退する
 
 ## 妥当性確認
 
