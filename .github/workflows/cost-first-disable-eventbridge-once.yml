@@ -33,15 +33,24 @@ jobs:
       - name: Apply EventBridge and runtime stop
         run: python3 scripts/apply-cost-first-eventbridge-stop.py
 
-      - name: Update snapshots and generated infra inventory
+      - name: Update infra snapshot
         env:
           UPDATE_SNAPSHOTS: "1"
+        run: npm test -w @memorag-mvp/infra
+
+      - name: Regenerate infra inventory
+        run: npm run docs:infra-inventory
+
+      - name: Type-check API and infra
         run: |
-          npm test -w @memorag-mvp/infra
-          npm run docs:infra-inventory
           npm run typecheck -w @memorag-mvp/api
           npm run typecheck -w @memorag-mvp/infra
-          npm run lint
+
+      - name: Lint repository
+        run: npm run lint
+
+      - name: Check generated inventory and diff
+        run: |
           npm run docs:infra-inventory:check
           git diff --check
 
