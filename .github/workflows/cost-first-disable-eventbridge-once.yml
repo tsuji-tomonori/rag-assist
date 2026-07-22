@@ -18,7 +18,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.ref }}
-          fetch-depth: 0
+          fetch-depth: 1
+          show-progress: false
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -28,7 +29,12 @@ jobs:
           cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          if ! npm ci > /tmp/npm-ci.log 2>&1; then
+            tail -n 120 /tmp/npm-ci.log
+            exit 1
+          fi
+          echo "npm ci completed"
 
       - name: Apply EventBridge and runtime stop
         run: python3 scripts/apply-cost-first-eventbridge-stop.py
@@ -42,6 +48,15 @@ jobs:
             exit 1
           fi
           tail -n 20 /tmp/infra-test.log
+
+      - name: Upload infra test log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eventbridge-stop-infra-test-${{ github.run_id }}
+          path: /tmp/infra-test.log
+          if-no-files-found: warn
+          retention-days: 1
 
       - name: Regenerate infra inventory
         run: npm run docs:infra-inventory
