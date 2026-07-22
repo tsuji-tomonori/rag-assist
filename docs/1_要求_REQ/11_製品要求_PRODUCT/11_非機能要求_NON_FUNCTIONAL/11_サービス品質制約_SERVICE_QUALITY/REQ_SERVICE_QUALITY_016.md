@@ -68,8 +68,16 @@
 | 実現可能性 | pass with manual dependency | code/test fixes are feasible; screen-reader/real-device evidence requires the named environments. |
 | 検証可能性 | pass | numeric thresholds and journey evidence are explicit. |
 
+## Phase別 evidence contract（2026-07-16）
+
+- Phase Aは8 AppViewsと `AC-SQ016-001`〜`008` を結ぶmachine-readable matrix、canonical screen drift検出、computed DOM baselineを提供する。
+- automated evidenceとmanual evidenceを別statusとして保持し、overallはrequired methodに `fail` があれば `fail`、未実施があれば `blocked` とする。
+- target sizeはWCAG例外の適用判断が必要なため、computed 24×24未満をcandidateとして収集し、例外確認前にpass / failを断定しない。
+- Phase B以降はAppShell / RailNavとfeature batchのremediationをownerとし、Phase AのbaselineだけからSQ-016適合を宣言しない。
+- representative screen reader、実browser 200% / 400% zoom、touch / real-deviceはmanual evidence taskのrequired scopeに残す。
+
 ## 関連文書・task
 
 - `docs/3_設計_DES/21_UI_UX/DES_UI_UX_001.md`
-- `tasks/todo/20260714-issue-345-cross-screen-a11y-responsive.md`
+- `tasks/do/20260714-issue-345-cross-screen-a11y-responsive.md`
 - `tasks/todo/20260714-issue-345-manual-a11y-evidence.md`
