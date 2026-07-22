@@ -27,3 +27,11 @@ for old, new in replacements:
     text = text.replace(old, new)
 
 path.write_text(text)
+
+contract_path = Path("packages/contract/src/infra.ts")
+contract = contract_path.read_text()
+old_contract = '  RAG_MONITORING_REQUIRED: "1"'
+new_contract = '  RAG_MONITORING_REQUIRED: "0" | "1"'
+if contract.count(old_contract) != 1:
+    raise SystemExit("RAG monitoring environment contract did not match exactly once")
+contract_path.write_text(contract.replace(old_contract, new_contract))
