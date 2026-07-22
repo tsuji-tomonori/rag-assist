@@ -1,0 +1,64 @@
+name: FR022 v3 conflicts
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/fr022-v3-conflicts.yml
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Diagnose legacy FR-022 cherry-pick
+        id: diagnose
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch --quiet origin main codex/fr022-v3-migration
+          git checkout -B fr022-v3 origin/codex/fr022-v3-migration
+          set +e
+          git cherry-pick b11f14cbec312463fa6fe7f83b0ae9bcc58e6ab7
+          result=$?
+          set -e
+          python3 - <<'PY'
+          import json, subprocess
+          def git(*args):
+              return subprocess.run(["git", *args], text=True, capture_output=True)
+          conflicts = sorted(filter(None, git("diff", "--name-only", "--diff-filter=U").stdout.splitlines()))
+          files = {}
+          for path in conflicts:
+              stages = {}
+              for stage, label in (("1", "base"), ("2", "current"), ("3", "legacy")):
+                  result = git("show", f":{stage}:{path}")
+                  if result.returncode == 0:
+                      stages[label] = result.stdout
+              files[path] = stages
+          with open("/tmp/fr022-v3-conflicts.json", "w") as f:
+              json.dump({"conflicts": conflicts, "files": files}, f, ensure_ascii=False)
+          PY
+          echo "$result" > /tmp/fr022-v3-cherry-pick-exit.txt
+          exit "$result"
+      - name: Upload conflict diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fr022-v3-conflicts
+          path: |
+            /tmp/fr022-v3-conflicts.json
+            /tmp/fr022-v3-cherry-pick-exit.txt
+          if-no-files-found: error
+          retention-days: 3
+      - name: Fail when conflicts remain
+        if: steps.diagnose.outcome == 'failure'
+        run: exit 1
