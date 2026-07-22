@@ -1,9 +1,6 @@
-import { createDependencies } from "./dependencies.js"
-import {
-  ProductionRevocationCleanupService,
-  type ProductionRevocationCleanupBatchResult
+import type {
+  ProductionRevocationCleanupBatchResult
 } from "./rag/_shared/security/production-revocation-cleanup.js"
-import { ObjectStoreRevocationCleanupTenantRegistry } from "./rag/_shared/security/revocation-cleanup-tenant-registry.js"
 
 export type RevocationCleanupWorkerEvent = Readonly<{
   tenantIds?: unknown
@@ -19,7 +16,9 @@ export type RevocationCleanupWorkerResult = Readonly<{
   tenants: readonly ProductionRevocationCleanupBatchResult[]
 }>
 
-type CleanupService = Pick<ProductionRevocationCleanupService, "reconcilePending">
+type CleanupService = Readonly<{
+  reconcilePending(tenantId: string, limit?: number): Promise<ProductionRevocationCleanupBatchResult>
+}>
 
 export function createRevocationCleanupHandler(
   service: CleanupService,
@@ -50,12 +49,28 @@ export function createRevocationCleanupHandler(
   }
 }
 
+/**
+ * The EventBridge entrypoint is intentionally inert in cost-priority mode.
+ *
+ * FR-066 domain primitives remain available to explicit callers and tests, but
+ * the scheduled Lambda no longer discovers tenants or lists cleanup manifests.
+ * This removes its recurring S3 ListObjectsV2 traffic while preserving the
+ * authoritative deny that is committed synchronously by mutation paths.
+ */
 export async function handler(event: RevocationCleanupWorkerEvent = {}): Promise<RevocationCleanupWorkerResult> {
-  const deps = createDependencies()
-  return createRevocationCleanupHandler(
-    new ProductionRevocationCleanupService(deps),
-    () => new ObjectStoreRevocationCleanupTenantRegistry(deps.objectStore).listAllTenantIds()
-  )(event)
+  void event
+  return emptyCleanupResult()
+}
+
+function emptyCleanupResult(): RevocationCleanupWorkerResult {
+  return {
+    tenantCount: 0,
+    examined: 0,
+    completed: 0,
+    superseded: 0,
+    reconciliationRequired: 0,
+    tenants: []
+  }
 }
 
 function canonicalTenantIds(value: unknown, maximum: number | undefined, allowEmpty: boolean): string[] {
