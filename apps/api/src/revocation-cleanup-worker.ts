@@ -1,5 +1,5 @@
-import {
-  type ProductionRevocationCleanupBatchResult
+import type {
+  ProductionRevocationCleanupBatchResult
 } from "./rag/_shared/security/production-revocation-cleanup.js"
 
 export type RevocationCleanupWorkerEvent = Readonly<{
