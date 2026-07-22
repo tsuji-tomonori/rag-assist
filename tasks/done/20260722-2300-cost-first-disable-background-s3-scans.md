@@ -3,111 +3,91 @@
 - 状態: done
 - タスク種別: 修正
 - 着手: 2026-07-22 23:00 JST
-- 完了: 2026-07-22 23:38 JST
 - PR: #446
 - リリース種別: `semver:major`
 
 ## 背景
 
-AWS Cost Explorer で `ListBucket` が継続課金され、repository調査から次のscheduled workerがS3 `ListObjectsV2`を高頻度で実行することを確認した。
+AWS Cost Explorer で `ListBucket` が継続課金され、repository調査から次の scheduled worker が S3 `ListObjectsV2` を高頻度で実行することを確認した。
 
-- `RagQualityMonitorFunction`: 5分ごとにsource sample / observation prefixを全列挙
-- `RevocationCleanupFunction`: 1分ごとにcleanup tenant / repair / manifestを列挙
-- `SecurityAuditReconciliationFunction`: 1分ごとにaudit intent / source-governance stateを列挙
+- `RagQualityMonitorFunction`: 5分ごとに source sample / observation prefix を全列挙
+- `RevocationCleanupFunction`: 1分ごとに cleanup tenant / repair / manifest を列挙
+- `SecurityAuditReconciliationFunction`: 1分ごとに audit intent / source-governance state を列挙
 
-`FR-066`、`FR-086`、`FR-093`はRAG guide等から2026-07-11に作成されたDraft/inferred requirementである。2026-07-22のowner判断により、現行MVPではこれらの常時controlより`SQ-015`のidle recurring cost最小化を優先した。
+`FR-066`、`FR-086`、`FR-093` は RAG guide 等から作成された Draft / inferred requirement である。2026-07-22 の owner 判断により、現行 MVP ではこれらの常時 control より `SQ-015` の idle recurring cost 最小化を優先した。
 
-## なぜなぜ分析
+## 根本原因
 
-### 問題
-
-利用者操作がなくてもS3 LIST系コストが継続・増加した。
-
-### 直接原因
-
-- `S3ObjectStore.listKeys()`がpagination付き`ListObjectsV2`を実行する。
-- 3 workerはpending件数や時間windowを判定する前にprefixを列挙する。
-- pollingは空キューでも1分/5分間隔で起動する。
-
-### 根本原因
-
-continuous safety/quality/reconciliationをopt-inにせず、空キュー時にも有料prefix scanを行うarchitectureとしてMVP stackへ組み込み、cost ceilingをarchitecture/release gateの先行条件にしていなかった。
-
-### 対策
-
-- scheduled entrypointからS3 prefix listingを除去した。
-- synchronous authoritative deny、durable audit intent、domain primitiveは維持した。
-- `SQ-015`を最優先owner decisionへ更新し、idle application-originated S3 LIST 0件/日をtargetにした。
-- EventBridge/Lambda/Alarm/SNS等の物理削除は `tasks/todo/20260722-physical-remove-unused-background-control-infra.md` へ分離した。
+continuous safety / quality / reconciliation を opt-in にせず、空キューでも有料 prefix scan を行う polling architecture として MVP stack へ組み込み、cost ceiling を architecture / release gate の先行条件にしていなかった。
 
 ## 実施内容
 
-### RAG quality monitor
+### EventBridge
 
-- source sample / observation listing、benchmark list、aggregation、evaluation、alert、safe actionをscheduled handlerから除去。
-- active policy direct GET 1件とnormal safety-state direct PUT 1件だけのcompatibility heartbeatへ縮退。
-- handler factoryのstore interfaceを`getText` / `putText`だけに限定し、`listKeys`を受け取れない構造にした。
-- 既存missing-data alarmを不必要に発火させないため、zero-failure heartbeat metricsは維持した。
+CloudFormation 上で次の3 ruleを `DISABLED` にした。
 
-### Revocation cleanup
+- `RagQualityMonitorSchedule`
+- `RevocationCleanupSchedule`
+- `SecurityAuditReconciliationSchedule`
 
-- production scheduled handlerからdependency生成、tenant registry discovery、`reconcilePending()`を除去。
-- scheduled invocationはzero resultを返す。
-- explicit handlerとdeny-first cleanup domain primitiveは保持した。
+これにより、定期 Lambda invocation、定期 S3 LIST、monitor compatibility heartbeat、定期 metrics log は実行されない。
 
-### Security audit reconciliation
+### RAG runtime dependency
 
-- production scheduled handlerからS3 outbox / authoritative resolver構築を除去。
-- tenant / limit検証後にzero resultを返すcost-priority consumerを追加。
-- synchronous mutation pathのdurable audit intentは保持した。
+- API / worker environment を `RAG_MONITORING_REQUIRED=0` に変更した。
+- monitoring が optional の場合、`assertRagSafetyInterlock()` は safety-state object を読む前に return する。
+- 旧または期限切れの `quality-control/runtime/safety-state.json` が残っていても cost-first runtime を停止させない。
+
+### Scheduled worker source
+
+- RAG monitor entrypoint から source sample / observation listing、benchmark list、aggregation、evaluation、alert、safe action を除去した。
+- revocation cleanup entrypoint から dependency 生成、tenant registry discovery、`reconcilePending()` を除去した。
+- security audit reconciliation entrypoint から S3 outbox / resolver 構築を除去した。
+- explicit domain handler、authoritative deny、durable audit intent は保持した。
 
 ### Requirements / operations
 
-- `FR-066`: deny-firstを維持し、physical cleanupを明示実行または将来の低コスト方式に限定。
-- `FR-086`: durable intentを維持し、background finalizationを明示repairへ変更。
-- `FR-093`: full production monitoring control loopをDeferredへ変更。
-- `SQ-015`: priority S、idle recurring cost最優先、S3 LIST 0件/日を規定。
-- `OPS_MONITORING_001`: current cost-first behavior、残余risk、再有効化gate、deploy後検証を更新。
+- `FR-066`: deny-first を維持し、physical cleanup を明示実行または将来の低コスト方式に限定。
+- `FR-086`: durable intent を維持し、background finalization を明示 repair へ変更。
+- `FR-093`: full production monitoring control loop を Deferred へ変更。
+- `SQ-015`: priority S、idle recurring cost 最優先、application-originated S3 LIST 0件/日を規定。
+- `OPS_MONITORING_001`: EventBridge停止、runtime optional化、残余 risk、再有効化 gate、deploy 後検証を更新。
 
 ## 受け入れ条件結果
 
-- [x] scheduled RAG monitorは`listKeys()`、benchmark list、observation aggregationを呼ばず、direct GET/PUT heartbeatだけを実行する。
-- [x] scheduled revocation cleanupはtenant discovery / `reconcilePending()`を呼ばずzero resultを返す。
-- [x] scheduled security audit reconciliationはproduction outbox / resolverを構築せずzero resultを返す。
-- [x] explicit domain handler / coordinatorは維持した。
-- [x] `FR-066` / `FR-086` / `FR-093` / `SQ-015` / runbookへowner decisionと未充足保証を反映した。
-- [x] main向けDraft PR #446を作成し、`semver:major`を設定した。
-- [x] 日本語の受け入れ条件コメントとセルフレビューコメントを投稿した。
-- [x] GitHub Actions final implementation headで全required checkが成功した。
+- [x] 3つの EventBridge schedule が synthesized template で `DISABLED` になる。
+- [x] API / worker が `RAG_MONITORING_REQUIRED=0` で deploy される。
+- [x] monitoring disabled 時は stale safety-state object を読まない。
+- [x] scheduled sourceから S3 prefix listing / reconciliation を除去した。
+- [x] explicit domain primitive、authoritative deny、durable audit intent を維持した。
+- [x] infra snapshot と generated infra inventory を更新した。
+- [x] infra tests、API / infra typecheck、lint、generated inventory check、diff check が one-off application workflow で pass した。
+- [x] main 向け PR #446 と `semver:major` labelを作成した。
 
-## 検証結果
+## 検証記録
 
-- MemoRAG CI run `29928662172`: success
-  - web/api/infra lint: pass
-  - infra/API/Web/benchmark typecheck: pass
-  - OpenAPI/API code/docs structure/Web/infra inventory checks: pass
-  - product runtime release audit: pass
-  - infra/benchmark/API/Web tests: pass
-  - API coverage: C0 90.65%、C1 80.47%（既存改善taskで追跡）
-  - Web coverage: C0 90.87%、C1 85.77%
-  - all builds、CDK synth、DynamoDB GSI guard: pass
-- Validate Semver Label run `29928659998`: success
-- 受け入れ条件コメント: `https://github.com/tsuji-tomonori/rag-assist/pull/446#issuecomment-5047538277`
-- セルフレビューコメント: `https://github.com/tsuji-tomonori/rag-assist/pull/446#issuecomment-5047543694`
+- EventBridge stop application workflow run `29933343161`: success
+  - patch application: pass
+  - infra tests / snapshot regeneration: pass
+  - infra inventory regeneration: pass
+  - API / infra typecheck: pass
+  - repository lint: pass
+  - generated inventory check / diff check: pass
+  - generated commit: `e6ef1b9f9cc3b0b42e2d7790d1d298d281e5b25d`
+- required final-head CI は PR の check / final comment を正本とする。
 
 ## 未実施・残余リスク
 
-- live AWS deploy、CloudFormation update、deploy後24時間のCost Explorer/CUR/S3 data event確認は未実施。
-- revocation派生artifactは自動物理削除されない。
-- audit finalization failureは自動収束しない。
-- production RAG drift/quality/security alertとsafe actionは実行されない。
-- EventBridge/Lambda/Logs/Alarm/SNS resourceは残るが、disabled rule由来の定期invocation/log costは停止する。
-- compatibility heartbeatは5分ごとにS3 GET 1件、PUT 1件とzero-failure metrics logを実行する。
-- Cost Explorerの全`ListBucket`がこの3worker由来だったかは過去data event不足により確定していない。
+- live AWS deploy、CloudFormation update、deploy 後24時間の Cost Explorer / CUR / S3 data event 確認は未実施。
+- revocation 派生 artifact は自動物理削除されない。
+- audit finalization failure は自動収束しない。
+- production RAG drift / quality / security alert と safe action は実行されない。
+- disabled rule、Lambda、IAM、Logs、Alarm、SNS resource 自体は残る。物理削除は `tasks/todo/20260722-physical-remove-unused-background-control-infra.md` で追跡する。
+- Cost Explorer の全 `ListBucket` がこの3 worker 由来だったかは、過去 data event 不足により確定していない。
 
 ## 成果物
 
 - PR #446
 - `reports/working/20260722-2330-cost-first-disable-background-s3-scans.md`
 - `tasks/todo/20260722-physical-remove-unused-background-control-infra.md`
-- cost-firstへ更新した`FR-066`、`FR-086`、`FR-093`、`SQ-015`、`OPS_MONITORING_001`
+- cost-firstへ更新した `FR-066`、`FR-086`、`FR-093`、`SQ-015`、`OPS_MONITORING_001`
