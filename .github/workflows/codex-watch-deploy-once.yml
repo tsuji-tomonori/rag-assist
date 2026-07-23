@@ -1,0 +1,100 @@
+name: Watch merged cost-first deploy once
+
+on:
+  push:
+    branches:
+      - codex/cost-first-deploy-without-rag-s3-scan
+
+permissions:
+  actions: read
+  contents: read
+  issues: write
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TARGET_SHA: bfaf8f20d86058ef6ef7e89aa5c368004aa9bba7
+      TARGET_PR: "447"
+    steps:
+      - name: Locate and watch Deploy MemoRAG MVP
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          run_id=""
+          run_url=""
+          for attempt in $(seq 1 80); do
+            runs_json="$(gh api "/repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$TARGET_SHA&event=push&per_page=100")"
+            run_id="$(jq -r '.workflow_runs[] | select(.name == "Deploy MemoRAG MVP") | .id' <<<"$runs_json" | head -n1)"
+            run_url="$(jq -r '.workflow_runs[] | select(.name == "Deploy MemoRAG MVP") | .html_url' <<<"$runs_json" | head -n1)"
+            if [[ -n "$run_id" && "$run_id" != "null" ]]; then
+              break
+            fi
+            sleep 15
+          done
+
+          if [[ -z "$run_id" || "$run_id" == "null" ]]; then
+            body=$(cat <<EOF
+          ## Deploy監視結果
+
+          merge commit \`$TARGET_SHA\` に対応する \`Deploy MemoRAG MVP\` runを20分以内に発見できませんでした。
+          EOF
+          )
+            gh api --method POST "/repos/$GITHUB_REPOSITORY/issues/$TARGET_PR/comments" -f body="$body"
+            exit 0
+          fi
+
+          status=""
+          conclusion=""
+          for attempt in $(seq 1 200); do
+            run_json="$(gh api "/repos/$GITHUB_REPOSITORY/actions/runs/$run_id")"
+            status="$(jq -r '.status' <<<"$run_json")"
+            conclusion="$(jq -r '.conclusion // ""' <<<"$run_json")"
+            if [[ "$status" == "completed" ]]; then
+              break
+            fi
+            sleep 15
+          done
+
+          jobs_json="$(gh api "/repos/$GITHUB_REPOSITORY/actions/runs/$run_id/jobs?per_page=100")"
+          artifacts_json="$(gh api "/repos/$GITHUB_REPOSITORY/actions/runs/$run_id/artifacts?per_page=100")"
+
+          deploy_job_conclusion="$(jq -r '[.jobs[] | select(.name == "CDK deploy")][0].conclusion // "not_found"' <<<"$jobs_json")"
+          step_rows="$(jq -r '
+            [.jobs[] | select(.name == "CDK deploy")][0].steps[]?
+            | "| `" + .name + "` | " + (.conclusion // .status // "unknown") + " |"
+          ' <<<"$jobs_json")"
+          artifact_rows="$(jq -r '
+            if (.artifacts | length) == 0 then "| _none_ | - |"
+            else .artifacts[] | "| `" + .name + "` | " + (if .expired then "expired" else "available" end) + " |"
+            end
+          ' <<<"$artifacts_json")"
+
+          body_file="$(mktemp)"
+          cat >"$body_file" <<EOF
+          ## Deploy監視結果
+
+          - merge commit: \`$TARGET_SHA\`
+          - workflow run: $run_url
+          - run id: \`$run_id\`
+          - status: \`$status\`
+          - conclusion: \`${conclusion:-unknown}\`
+          - CDK deploy job: \`$deploy_job_conclusion\`
+
+          ### CDK deploy steps
+
+          | Step | Conclusion |
+          | --- | --- |
+          $step_rows
+
+          ### Artifacts
+
+          | Artifact | State |
+          | --- | --- |
+          $artifact_rows
+          EOF
+
+          gh api --method POST "/repos/$GITHUB_REPOSITORY/issues/$TARGET_PR/comments" -f body="$(cat "$body_file")"
