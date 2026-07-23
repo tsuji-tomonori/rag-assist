@@ -9,6 +9,7 @@ permissions:
   actions: read
   contents: read
   issues: write
+  pull-requests: write
 
 jobs:
   watch:
@@ -36,65 +37,64 @@ jobs:
             sleep 15
           done
 
-          if [[ -z "$run_id" || "$run_id" == "null" ]]; then
-            body=$(cat <<EOF
-          ## Deploy監視結果
+          status="not_found"
+          conclusion="not_found"
+          deploy_job_conclusion="not_found"
+          cdk_step_conclusion="not_found"
+          outputs_step_conclusion="not_found"
+          artifact_names="none"
 
-          merge commit \`$TARGET_SHA\` に対応する \`Deploy MemoRAG MVP\` runを20分以内に発見できませんでした。
-          EOF
-          )
-            gh api --method POST "/repos/$GITHUB_REPOSITORY/issues/$TARGET_PR/comments" -f body="$body"
-            exit 0
+          if [[ -n "$run_id" && "$run_id" != "null" ]]; then
+            for attempt in $(seq 1 200); do
+              run_json="$(gh api "/repos/$GITHUB_REPOSITORY/actions/runs/$run_id")"
+              status="$(jq -r '.status' <<<"$run_json")"
+              conclusion="$(jq -r '.conclusion // ""' <<<"$run_json")"
+              if [[ "$status" == "completed" ]]; then
+                break
+              fi
+              sleep 15
+            done
+
+            jobs_json="$(gh api "/repos/$GITHUB_REPOSITORY/actions/runs/$run_id/jobs?per_page=100")"
+            artifacts_json="$(gh api "/repos/$GITHUB_REPOSITORY/actions/runs/$run_id/artifacts?per_page=100")"
+            deploy_job_conclusion="$(jq -r '[.jobs[] | select(.name == "CDK deploy")][0].conclusion // "not_found"' <<<"$jobs_json")"
+            cdk_step_conclusion="$(jq -r '[.jobs[] | select(.name == "CDK deploy")][0].steps[]? | select(.name == "CDK deploy") | .conclusion' <<<"$jobs_json" | head -n1)"
+            outputs_step_conclusion="$(jq -r '[.jobs[] | select(.name == "CDK deploy")][0].steps[]? | select(.name == "Upload deployment outputs") | .conclusion' <<<"$jobs_json" | head -n1)"
+            artifact_names="$(jq -r '[.artifacts[].name] | if length == 0 then "none" else join(", ") end' <<<"$artifacts_json")"
           fi
 
-          status=""
-          conclusion=""
-          for attempt in $(seq 1 200); do
-            run_json="$(gh api "/repos/$GITHUB_REPOSITORY/actions/runs/$run_id")"
-            status="$(jq -r '.status' <<<"$run_json")"
-            conclusion="$(jq -r '.conclusion // ""' <<<"$run_json")"
-            if [[ "$status" == "completed" ]]; then
-              break
-            fi
-            sleep 15
-          done
-
-          jobs_json="$(gh api "/repos/$GITHUB_REPOSITORY/actions/runs/$run_id/jobs?per_page=100")"
-          artifacts_json="$(gh api "/repos/$GITHUB_REPOSITORY/actions/runs/$run_id/artifacts?per_page=100")"
-
-          deploy_job_conclusion="$(jq -r '[.jobs[] | select(.name == "CDK deploy")][0].conclusion // "not_found"' <<<"$jobs_json")"
-          step_rows="$(jq -r '
-            [.jobs[] | select(.name == "CDK deploy")][0].steps[]?
-            | "| `" + .name + "` | " + (.conclusion // .status // "unknown") + " |"
-          ' <<<"$jobs_json")"
-          artifact_rows="$(jq -r '
-            if (.artifacts | length) == 0 then "| _none_ | - |"
-            else .artifacts[] | "| `" + .name + "` | " + (if .expired then "expired" else "available" end) + " |"
-            end
-          ' <<<"$artifacts_json")"
-
-          body_file="$(mktemp)"
-          cat >"$body_file" <<EOF
-          ## Deploy監視結果
+          result_file="$(mktemp)"
+          cat >"$result_file" <<EOF
+          <!-- codex-deploy-watch-start -->
+          ## Automated deploy verification
 
           - merge commit: \`$TARGET_SHA\`
-          - workflow run: $run_url
-          - run id: \`$run_id\`
-          - status: \`$status\`
-          - conclusion: \`${conclusion:-unknown}\`
+          - workflow run: ${run_url:-not found}
+          - run id: \`${run_id:-not_found}\`
+          - workflow status: \`$status\`
+          - workflow conclusion: \`${conclusion:-unknown}\`
           - CDK deploy job: \`$deploy_job_conclusion\`
-
-          ### CDK deploy steps
-
-          | Step | Conclusion |
-          | --- | --- |
-          $step_rows
-
-          ### Artifacts
-
-          | Artifact | State |
-          | --- | --- |
-          $artifact_rows
+          - \`CDK deploy\` step: \`${cdk_step_conclusion:-not_found}\`
+          - \`Upload deployment outputs\` step: \`${outputs_step_conclusion:-not_found}\`
+          - artifacts: \`$artifact_names\`
+          <!-- codex-deploy-watch-end -->
           EOF
 
-          gh api --method POST "/repos/$GITHUB_REPOSITORY/issues/$TARGET_PR/comments" -f body="$(cat "$body_file")"
+          current_body="$(gh api "/repos/$GITHUB_REPOSITORY/pulls/$TARGET_PR" --jq '.body // ""')"
+          CURRENT_BODY="$current_body" RESULT_FILE="$result_file" python3 - <<'PY' > /tmp/new-pr-body.md
+          import os
+          import re
+          from pathlib import Path
+
+          body = os.environ["CURRENT_BODY"]
+          body = re.sub(
+              r"\n*<!-- codex-deploy-watch-start -->.*?<!-- codex-deploy-watch-end -->\n*",
+              "\n",
+              body,
+              flags=re.S,
+          ).rstrip()
+          result = Path(os.environ["RESULT_FILE"]).read_text().strip()
+          print(f"{body}\n\n{result}\n")
+          PY
+
+          gh api --method PATCH "/repos/$GITHUB_REPOSITORY/pulls/$TARGET_PR" -f body="$(cat /tmp/new-pr-body.md)"
