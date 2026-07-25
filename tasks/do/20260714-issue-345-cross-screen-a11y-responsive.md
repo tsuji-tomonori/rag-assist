@@ -174,6 +174,36 @@
 - OpenAPI通常scriptは `tsx` IPC socket作成がsandboxで `EPERM` となった。同じentryを `node --import tsx src/validate-openapi-docs.ts` で実行してpassし、権限拡張は行っていない。
 - Playwright対象4 files / 26 testsは `--list` でChromium projectへ解決した。browser downloadは書込先を `/tmp` へ変更しても配布元が0 MiBの破損ZIPを返し、local実browser実行は未完了。latest headのWeb UI Quality判定待ちのため検証受け入れ条件は未完了とする。
 
+## 2026-07-26 current main 再収束
+
+### 問題文と確認済み事実
+
+- current `origin/main@bfaf8f20` は前回収束した `main@56bf81e1` から16 commits進み、PR #381 head `b0f16b8c` はmainに対してbehind 16 / ahead 37となった。
+- main側の差分はcost-first deploy / monitoring、security mutation audit、API / infra、関連する正本文書・API / infra生成文書で、`apps/web/`、`SQ-016`、`DES_UI_UX_001`、Web生成文書、UI trace / matrixを変更していない。
+- 後続PR #385は旧 #381 head `b6acb24f` をbaseにしたままで、現行 #381 headに対してbehind 67 / ahead 7、merge不可である。
+- #381を先に収束せず#385へ変更を積むと、rootのstale履歴とmain側の非UI変更を後続stackへ重ね、差分・正本の競合判定を悪化させる。
+
+### 根本原因と対策
+
+根本原因は、open root PR #381の前回収束後もmain側の独立変更が継続し、後続stackが参照するroot branchとcurrent mainが再び分岐したことである。UI正本・Web実装・Web生成物には意味的競合がないため、新規UI変更を追加せず、published historyを書き換えない2-parent mergeでcurrent mainを#381へ統合する。生成物は手編集せずgenerator / freshness checkで検証し、#385再統合はroot収束後の次単位として残す。
+
+### 受け入れ条件
+
+- [x] `origin/main@bfaf8f20` をpublished historyの書き換えなしでPR #381 branchへ統合し、behind 0にする。
+- [x] current mainとの差分をPhase A matrix / audit / trace / task / reportと必要なlint設定に限定し、mainのcost / API / infra / API・infra生成文書を重複表示しない。
+- [x] `SQ-016`、`DES_UI_UX_001`、UI trace / matrixを一意な正本として維持し、Web生成物をgenerator / freshness checkで検証する。
+- [x] `git diff --check`、Web lint / typecheck / unit、trace / semantic test、対象Playwright解決、canonical / generated docs checkを最小十分に実行し、未実行・失敗を明記する。
+- [ ] draft PR #381本文・受け入れ条件・セルフレビューとIssue #345を更新し、#385再統合、既知UI defect、representative screen reader、実browser 200% / 400% zoom、touch / real-device、状態証跡、`OQ-UI-002`を未完了として残す。
+
+### 検証結果
+
+- local merge commit `fe468cd0` で `origin/main@bfaf8f20` を非破壊統合した。競合はなく、local比較はbehind 0 / ahead 38。
+- current mainとの差分は24 files / 1,503 additions / 87 deletions。main側のcost / API / infra / API・infra生成文書はPR差分へ重複表示していない。
+- `npm run docs:web-inventory` を再実行し、追加差分なし。`docs:web-inventory:check`、trace / matrix 13 tests、semantic UI 4 testsがpass。
+- `npm run lint`、Web typecheck、Web unit 61 files / 441 tests、canonical docs、API code 98 APIs / 588 documents、infra inventory、hidden Unicode、`git diff --check`がpass。
+- repositoryの `task docs:check` は実行環境に `task` がなく未実行。展開先7コマンドは個別実行し、OpenAPI通常scriptだけ `tsx` IPC socket作成をsandboxが `EPERM` で拒否した。同じentryを `node --import tsx src/validate-openapi-docs.ts` で実行してpassし、権限拡張は行っていない。
+- 対象Playwright 4 files / 26 testsは `--list` でChromium projectへ解決した。local実browserは未実行で、公開headのWeb UI Quality判定待ち。
+
 ## 実行計画
 
 1. Phase A: view/persona/journey × WCAG/viewport/input/content-state matrix とautomated audit harnessをbaseline化する。
