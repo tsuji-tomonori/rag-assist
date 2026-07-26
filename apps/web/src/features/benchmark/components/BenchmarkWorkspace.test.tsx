@@ -54,6 +54,12 @@ function renderBenchmarkWorkspace(overrides: Partial<Parameters<typeof Benchmark
 }
 
 describe("BenchmarkWorkspace", () => {
+  it("実行履歴の横scroll領域をkeyboard focus可能なregionとして公開する", () => {
+    renderBenchmarkWorkspace()
+
+    expect(screen.getByRole("region", { name: "性能テスト実行履歴。左右にスクロールできます" })).toHaveAttribute("tabindex", "0")
+  })
+
   it("does not display fixed benchmark suite or dataset fallbacks when suites are unavailable", () => {
     renderBenchmarkWorkspace({
       runs: [],
