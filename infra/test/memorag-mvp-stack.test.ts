@@ -68,7 +68,10 @@ test("implements the designed serverless resources", () => {
   template.resourceCountIs("AWS::Cognito::UserPoolClient", 1)
   template.resourceCountIs("AWS::Cognito::UserPoolGroup", APPLICATION_ROLES.length)
   template.hasResourceProperties("AWS::Cognito::UserPool", {
-    AdminCreateUserConfig: { AllowAdminCreateUserOnly: true }
+    AdminCreateUserConfig: { AllowAdminCreateUserOnly: false },
+    LambdaConfig: {
+      PostConfirmation: Match.objectLike({ "Fn::GetAtt": Match.anyValue() })
+    }
   })
   template.resourceCountIs("AWS::SecretsManager::Secret", 1)
   template.resourceCountIs("AWS::KMS::Key", 1)
@@ -249,6 +252,21 @@ test("implements the designed serverless resources", () => {
       UserPoolId: Match.anyValue()
     })
   }
+  const postConfirmationFunction = getResourceByLogicalIdPrefix(template, "PostConfirmationFunction")
+  assert.equal(postConfirmationFunction.Properties.Handler, "index.handler")
+  assert.equal(postConfirmationFunction.Properties.Runtime, "nodejs22.x")
+  assert.equal(postConfirmationFunction.Properties.Timeout, 10)
+  assert.equal(postConfirmationFunction.Properties.MemorySize, 256)
+  template.hasResourceProperties("AWS::IAM::Policy", {
+    PolicyDocument: {
+      Statement: Match.arrayWith([
+        Match.objectLike({
+          Action: "cognito-idp:AdminAddUserToGroup",
+          Effect: "Allow"
+        })
+      ])
+    }
+  })
   template.hasResourceProperties("AWS::Lambda::Function", {
     Environment: Match.objectLike({
       Variables: Match.objectLike({

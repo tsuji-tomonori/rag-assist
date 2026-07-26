@@ -10,7 +10,7 @@
 
 用途概要: IAM role
 
-リソース数: 20
+リソース数: 21
 
 ## Logical ID 一覧
 
@@ -30,6 +30,7 @@
 | [Document Ingest Run State Machine Role](#document-ingest-run-state-machine-role) | `DocumentIngestRunStateMachineRole10EA8277` | Document Ingest Run State Machine Role (IAM role) |
 | [Document Ingest Run Worker Function Service Role](#document-ingest-run-worker-function-service-role) | `DocumentIngestRunWorkerFunctionServiceRole7BEAC0ED` | Document Ingest Run Worker Function Service Role (IAM role) |
 | [Heavy Api Function Service Role](#heavy-api-function-service-role) | `HeavyApiFunctionServiceRole25A7AE5E` | Heavy Api Function Service Role (IAM role) |
+| [Post Confirmation Function Service Role](#post-confirmation-function-service-role) | `PostConfirmationFunctionServiceRoleE856FC83` | Post Confirmation Function Service Role (IAM role) |
 | [Rag Quality Monitor Function Service Role](#rag-quality-monitor-function-service-role) | `RagQualityMonitorFunctionServiceRole1754DFBD` | Rag Quality Monitor Function Service Role (IAM role) |
 | [Rest Api Cloud Watch Role](#rest-api-cloud-watch-role) | `RestApiCloudWatchRoleE3ED6605` | Rest Api Cloud Watch Role (IAM role) |
 | [Revocation Cleanup Function Service Role](#revocation-cleanup-function-service-role) | `RevocationCleanupFunctionServiceRole15557E81` | Revocation Cleanup Function Service Role (IAM role) |
@@ -196,6 +197,18 @@ Logical ID: `DocumentIngestRunWorkerFunctionServiceRole7BEAC0ED`
 Logical ID: `HeavyApiFunctionServiceRole25A7AE5E`
 
 用途推定: Heavy Api Function Service Role (IAM role)
+
+| 設定項目 | 値 |
+| --- | --- |
+| `assumedBy` | [Service:lambda.amazonaws.com] |
+| `managedPolicyArns` | [Join:["",["arn:",{"Ref":"AWS::Partition"},":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]]] |
+| `inlinePolicyCount` | 0 |
+
+### Post Confirmation Function Service Role
+
+Logical ID: `PostConfirmationFunctionServiceRoleE856FC83`
+
+用途推定: Post Confirmation Function Service Role (IAM role)
 
 | 設定項目 | 値 |
 | --- | --- |
