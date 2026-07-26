@@ -11,19 +11,19 @@
 ## 全体サマリ
 
 - 対象スタック: `MemoRagMvpStack`
-- CloudFormation resources: 251
+- CloudFormation resources: 256
 
 | 領域 | 件数 |
 | --- | ---: |
 | Storage | 15 |
 | Data | 11 |
-| Compute | 19 |
+| Compute | 20 |
 | API | 70 |
 | Identity | 15 |
 | Delivery | 2 |
 | Workflow | 4 |
-| Security/IAM | 42 |
-| Observability | 18 |
+| Security/IAM | 44 |
+| Observability | 19 |
 | Custom | 5 |
 
 ## CloudFormation Type 別リソース数
@@ -32,7 +32,7 @@
 | --- | ---: | --- | --- |
 | `AWS::S3::Bucket` | 5 | S3 bucket | [詳細](infra-inventory/aws-s3-bucket.md) |
 | `AWS::DynamoDB::Table` | 11 | DynamoDB table | [詳細](infra-inventory/aws-dynamodb-table.md) |
-| `AWS::Lambda::Function` | 15 | Lambda function | [詳細](infra-inventory/aws-lambda-function.md) |
+| `AWS::Lambda::Function` | 16 | Lambda function | [詳細](infra-inventory/aws-lambda-function.md) |
 | `AWS::ApiGateway::RestApi` | 1 | API Gateway REST API | [詳細](infra-inventory/aws-apigateway-restapi.md) |
 | `AWS::ApiGateway::Stage` | 1 | API Gateway stage | [詳細](infra-inventory/aws-apigateway-stage.md) |
 | `AWS::ApiGateway::Resource` | 21 | API Gateway resource path | [詳細](infra-inventory/aws-apigateway-resource.md) |
@@ -47,16 +47,16 @@
 | `AWS::StepFunctions::StateMachine` | 3 | Step Functions state machine | [詳細](infra-inventory/aws-stepfunctions-statemachine.md) |
 | `AWS::KMS::Key` | 1 | KMS key | [詳細](infra-inventory/aws-kms-key.md) |
 | `AWS::SecretsManager::Secret` | 1 | Secrets Manager secret | [詳細](infra-inventory/aws-secretsmanager-secret.md) |
-| `AWS::Logs::LogGroup` | 18 | CloudWatch Logs log group | [詳細](infra-inventory/aws-logs-loggroup.md) |
-| `AWS::IAM::Role` | 20 | IAM role | [詳細](infra-inventory/aws-iam-role.md) |
-| `AWS::IAM::Policy` | 18 | IAM inline policy | [詳細](infra-inventory/aws-iam-policy.md) |
+| `AWS::Logs::LogGroup` | 19 | CloudWatch Logs log group | [詳細](infra-inventory/aws-logs-loggroup.md) |
+| `AWS::IAM::Role` | 21 | IAM role | [詳細](infra-inventory/aws-iam-role.md) |
+| `AWS::IAM::Policy` | 19 | IAM inline policy | [詳細](infra-inventory/aws-iam-policy.md) |
 | `AWS::IAM::ManagedPolicy` | 2 | IAM managed policy | [詳細](infra-inventory/aws-iam-managedpolicy.md) |
 | `AWS::CloudFormation::CustomResource` | 1 | CloudFormation custom resource | [詳細](infra-inventory/aws-cloudformation-customresource.md) |
 | `Custom::CDKBucketDeployment` | 4 | CDK bucket deployment | [詳細](infra-inventory/custom-cdkbucketdeployment.md) |
 | `Custom::S3AutoDeleteObjects` | 5 | S3 auto delete custom resource | [詳細](infra-inventory/custom-s3autodeleteobjects.md) |
 | `AWS::S3::BucketPolicy` | 5 | S3 bucket policy | [詳細](infra-inventory/aws-s3-bucketpolicy.md) |
 | `AWS::Lambda::LayerVersion` | 4 | Lambda layer | [詳細](infra-inventory/aws-lambda-layerversion.md) |
-| `AWS::Lambda::Permission` | 41 | Lambda invoke permission | [詳細](infra-inventory/aws-lambda-permission.md) |
+| `AWS::Lambda::Permission` | 42 | Lambda invoke permission | [詳細](infra-inventory/aws-lambda-permission.md) |
 | `AWS::ApiGateway::Account` | 1 | API Gateway account settings | [詳細](infra-inventory/aws-apigateway-account.md) |
 | `AWS::ApiGateway::Deployment` | 1 | API Gateway deployment | [詳細](infra-inventory/aws-apigateway-deployment.md) |
 | `AWS::ApiGateway::GatewayResponse` | 2 | API Gateway error response | [詳細](infra-inventory/aws-apigateway-gatewayresponse.md) |

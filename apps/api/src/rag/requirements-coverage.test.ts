@@ -28,7 +28,7 @@ const traceByRequirement: Record<string, string[]> = {
   "FR-022": ["useConversationHistory.test.ts", "conversationHistorySearch.test.ts"],
   "FR-023": ["hybrid-search.test.ts", "useAdminData.test.ts"],
   "FR-024": ["authorization.test.ts", "access-control-policy.test.ts"],
-  "FR-025": ["LoginPage.test.tsx", "authClient.test.ts"],
+  "FR-025": ["LoginPage.test.tsx", "authClient.test.ts", "cognito-post-confirmation.test.ts", "memorag-mvp-stack.test.ts"],
   "FR-026": ["hybrid-search.test.ts", "profiles.test.ts"],
   "FR-027": ["authorization.test.ts", "useAdminData.test.ts"],
   "FR-028": ["useConversationHistory.test.ts", "conversationHistorySearch.test.ts"],

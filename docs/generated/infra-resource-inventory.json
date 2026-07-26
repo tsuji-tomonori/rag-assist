@@ -2,7 +2,7 @@
   "generatedBy": "tools/infra-inventory/generate-infra-inventory.mjs",
   "source": "infra/test/__snapshots__/memorag-mvp-stack.snapshot.json",
   "stackName": "MemoRagMvpStack",
-  "totalResources": 251,
+  "totalResources": 256,
   "totalsByDomain": [
     {
       "domain": "Storage",
@@ -14,7 +14,7 @@
     },
     {
       "domain": "Compute",
-      "count": 19
+      "count": 20
     },
     {
       "domain": "API",
@@ -34,11 +34,11 @@
     },
     {
       "domain": "Security/IAM",
-      "count": 42
+      "count": 44
     },
     {
       "domain": "Observability",
-      "count": 18
+      "count": 19
     },
     {
       "domain": "Custom",
@@ -58,7 +58,7 @@
     },
     {
       "type": "AWS::Lambda::Function",
-      "count": 15,
+      "count": 16,
       "purpose": "Lambda function"
     },
     {
@@ -133,17 +133,17 @@
     },
     {
       "type": "AWS::Logs::LogGroup",
-      "count": 18,
+      "count": 19,
       "purpose": "CloudWatch Logs log group"
     },
     {
       "type": "AWS::IAM::Role",
-      "count": 20,
+      "count": 21,
       "purpose": "IAM role"
     },
     {
       "type": "AWS::IAM::Policy",
-      "count": 18,
+      "count": 19,
       "purpose": "IAM inline policy"
     },
     {
@@ -178,7 +178,7 @@
     },
     {
       "type": "AWS::Lambda::Permission",
-      "count": 41,
+      "count": 42,
       "purpose": "Lambda invoke permission"
     },
     {
@@ -1312,6 +1312,23 @@
       "detailFilePath": "infra-inventory/aws-lambda-function.md"
     },
     {
+      "logicalId": "PostConfirmationFunction3DFFAE63",
+      "logicalName": "Post Confirmation Function",
+      "type": "AWS::Lambda::Function",
+      "purpose": "Post Confirmation Function (Lambda function)",
+      "settings": {
+        "handler": "index.handler",
+        "runtime": "nodejs22.x",
+        "architectures": [
+          "arm64"
+        ],
+        "memorySize": 256,
+        "timeoutSeconds": 10,
+        "role": "GetAtt:PostConfirmationFunctionServiceRoleE856FC83.Arn"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-function.md"
+    },
+    {
       "logicalId": "RagQualityMonitorFunction9BE8E903",
       "logicalName": "Rag Quality Monitor Function",
       "type": "AWS::Lambda::Function",
@@ -2407,7 +2424,7 @@
       "type": "AWS::Cognito::UserPool",
       "purpose": "User Pool (Cognito user pool)",
       "settings": {
-        "adminCreateUserOnly": true,
+        "adminCreateUserOnly": false,
         "usernameAttributes": [
           "email"
         ],
@@ -2907,6 +2924,16 @@
       "detailFilePath": "infra-inventory/aws-logs-loggroup.md"
     },
     {
+      "logicalId": "PostConfirmationLogGroup8E68D5A2",
+      "logicalName": "Post Confirmation Log Group",
+      "type": "AWS::Logs::LogGroup",
+      "purpose": "Post Confirmation Log Group (CloudWatch Logs log group)",
+      "settings": {
+        "retentionInDays": 30
+      },
+      "detailFilePath": "infra-inventory/aws-logs-loggroup.md"
+    },
+    {
       "logicalId": "RagQualityMonitorLogGroup58870B2B",
       "logicalName": "Rag Quality Monitor Log Group",
       "type": "AWS::Logs::LogGroup",
@@ -3167,6 +3194,22 @@
       "logicalName": "Heavy Api Function Service Role",
       "type": "AWS::IAM::Role",
       "purpose": "Heavy Api Function Service Role (IAM role)",
+      "settings": {
+        "assumedBy": [
+          "Service:lambda.amazonaws.com"
+        ],
+        "managedPolicyArns": [
+          "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole\"]]"
+        ],
+        "inlinePolicyCount": 0
+      },
+      "detailFilePath": "infra-inventory/aws-iam-role.md"
+    },
+    {
+      "logicalId": "PostConfirmationFunctionServiceRoleE856FC83",
+      "logicalName": "Post Confirmation Function Service Role",
+      "type": "AWS::IAM::Role",
+      "purpose": "Post Confirmation Function Service Role (IAM role)",
       "settings": {
         "assumedBy": [
           "Service:lambda.amazonaws.com"
@@ -3873,6 +3916,26 @@
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"HumanQuestionsTable5DA9688B\",\"Arn\"]},\"/index/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"UsageEventsTable215FE3DD\",\"Arn\"]},\"/index/*\"]]"
+        ]
+      },
+      "detailFilePath": "infra-inventory/aws-iam-policy.md"
+    },
+    {
+      "logicalId": "PostConfirmationFunctionServiceRoleDefaultPolicy49917DA4",
+      "logicalName": "Post Confirmation Function Service Role Default Policy",
+      "type": "AWS::IAM::Policy",
+      "purpose": "Post Confirmation Function Service Role Default Policy (IAM inline policy)",
+      "settings": {
+        "policyName": "PostConfirmationFunctionServiceRoleDefaultPolicy49917DA4",
+        "roles": [
+          "Ref:PostConfirmationFunctionServiceRoleE856FC83"
+        ],
+        "statementCount": 1,
+        "actions": [
+          "cognito-idp:AdminAddUserToGroup"
+        ],
+        "resources": [
+          "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":cognito-idp:ap-northeast-1:111111111111:userpool/*\"]]"
         ]
       },
       "detailFilePath": "infra-inventory/aws-iam-policy.md"
@@ -4980,6 +5043,19 @@
         "principal": "events.amazonaws.com",
         "functionName": "GetAtt:SecurityAuditReconciliationFunction9A53A79D.Arn",
         "sourceArn": "GetAtt:SecurityAuditReconciliationSchedule6C1B6D38.Arn"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
+    },
+    {
+      "logicalId": "UserPoolPostConfirmationCognito0E6001F8",
+      "logicalName": "User Pool Post Confirmation Cognito",
+      "type": "AWS::Lambda::Permission",
+      "purpose": "User Pool Post Confirmation Cognito (Lambda invoke permission)",
+      "settings": {
+        "action": "lambda:InvokeFunction",
+        "principal": "cognito-idp.amazonaws.com",
+        "functionName": "GetAtt:PostConfirmationFunction3DFFAE63.Arn",
+        "sourceArn": "GetAtt:UserPool6BA7E5F2.Arn"
       },
       "detailFilePath": "infra-inventory/aws-lambda-permission.md"
     },
