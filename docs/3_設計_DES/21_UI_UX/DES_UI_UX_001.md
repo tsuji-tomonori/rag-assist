@@ -210,6 +210,28 @@ The UI does not infer success from a dismissed dialog or timeout and does not re
 
 Automated accessibility, DOM snapshots, and accessibility tree inspection do not replace keyboard, representative screen-reader, zoom, or real-device evidence.
 
+### Manual evidence data contract
+
+- `tools/web-inventory/manual-a11y-evidence-contract.json` は record schema version、required evidence class、status、manual evidence kind、defect/retest enum の canonical contract である。
+- `tools/web-inventory/manual-a11y-evidence.mjs` は pass/fail に manual execution、role-only executor、実 OS/browser/device/assistive technology environment、manual evidence を要求する。Playwright、axe、AX tree、viewport proxy だけで manual pass にできない。
+- fail は severity、assigned owner role、defect task、retest status を必須とする。blocked/not_run は reason、risk、owner assignment status、next action、open question、task を必須とし、pass 集計から除外する。
+- `reports/working/issue-345-manual-a11y-evidence-baseline.json` は manual keyboard を not_run、screen reader / browser zoom / real-device を blocked、matrix を `open_question` とした current baseline であり、架空の environment/result を持たない。
+- structural check は honest blocked record の形式を検証し、`require-pass` は approved matrix の required manual checks がすべて pass の場合だけ release/Issue completion ready とする。通常 Draft PR の docs check と full completion gate を同一視しない。
+- `OQ-UI-002` の matrix、cadence、owner は未承認であり、contract 自体はその意思決定や実測を代替しない。
+
+### Application shell bypass navigation
+
+- 認証後 shell は layout root を landmark にせず、rail navigation と一意な `main#main-content` landmark を sibling として分離する。
+- DOM の最初の focusable control は「メインコンテンツへ移動」native anchor とし、通常は viewport 外、keyboard focus 時は viewport 内へ表示する。
+- `E2E-UI-SKIP-001` は 1280×720 / 320×720 Chromium で最初の `Tab`、focus-visible indicator、`Enter` activation、main focus、landmark 一意性、horizontal containment を検証する。screen-reader/real-device/Firefox/WebKit の実測を代替しない。
+
+### Pre-authentication keyboard contract
+
+- sign-in form は native `form` / `required` constraint を使い、DOM 順の email、password、remember checkbox、submit、secondary action を正の `tabindex` なしで操作できる。
+- login controls の `:focus-visible` は primary color token の 3px outline と 2px offset で表す。empty submit は最初の invalid input へ戻し、JavaScript 由来の架空 error や authentication request を生成しない。
+- rejected authentication は `role="alert"` を form の `aria-describedby` に関連付け、submit focus と enabled controls を維持して再試行可能にする。
+- `E2E-UI-LOGIN-KEYBOARD-001` は 1280×720 / 320×720 Chromium で Tab/Space/Enter journey、focus indicator、native invalid focus、認証後 chat 到達、horizontal containment を検証する。representative screen reader、実 browser 200%/400% zoom、real device、Firefox、WebKit の実測を代替しない。
+
 ## Trace manifest schema
 
 `tools/web-inventory/ui-traceability.json` uses this conceptual shape:

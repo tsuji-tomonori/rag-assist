@@ -272,9 +272,9 @@ export default function LoginPage({ onLogin, onSignUp, onConfirmSignUp, onComple
           ) : (
             <>
               <label>メールアドレス</label>
-              <input type="email" aria-label="メールアドレス" placeholder="メールアドレスを入力" value={email} disabled={isSubmitting} onChange={(e) => setEmail(e.target.value)} />
+              <input type="email" aria-label="メールアドレス" placeholder="メールアドレスを入力" value={email} disabled={isSubmitting} required onChange={(e) => setEmail(e.target.value)} />
               <label>パスワード</label>
-              <input type="password" aria-label="パスワード" placeholder="パスワードを入力" value={password} disabled={isSubmitting} onChange={(e) => setPassword(e.target.value)} />
+              <input type="password" aria-label="パスワード" placeholder="パスワードを入力" value={password} disabled={isSubmitting} required onChange={(e) => setPassword(e.target.value)} />
             </>
           )}
           {!isChangingPassword && mode === "signIn" ? (
