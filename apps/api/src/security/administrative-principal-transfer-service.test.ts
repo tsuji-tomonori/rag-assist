@@ -17,7 +17,9 @@ import {
   AdministrativePrincipalTransferError,
   AdministrativePrincipalTransferService
 } from "./administrative-principal-transfer-service.js"
+import { AdministrativePrincipalTransferAuditAuthoritativeResolver } from "./administrative-principal-transfer-audit-reconciler.js"
 import { ObjectStoreAdministrativePrincipalTransferFence } from "./administrative-principal-transfer-fence.js"
+import type { SecurityMutationAuditIntent } from "./security-mutation-audit-outbox.js"
 
 test("generic administrative-principal change transfers every folder, document, and resource-group reference before the change", async () => {
   const fixture = await transferFixture()
@@ -49,6 +51,58 @@ test("generic administrative-principal change transfers every folder, document, 
   assert.equal(transferredDocument.admission?.ownerUserId, successor.userId)
   for (const record of await fixture.allVectors(transferredDocument)) assert.equal(record.metadata.ownerUserId, successor.userId)
   assert.equal((await fixture.objectStore.listKeys("security-audit/intents/")).length, 1)
+})
+
+test("FR-086 producer state and current records satisfy the administrative-principal audit resolver contract", async () => {
+  const fixture = await transferFixture()
+  await fixture.documentGroups.create(folder("folder-1", source.userId))
+  await fixture.userGroups.save(resourceGroup("resource-1", source.userId))
+  await fixture.persistDocument(document("doc-1", source.userId))
+
+  await fixture.service.transferBeforeAdministrativePrincipalChange({
+    actor: admin,
+    sourceUserId: source.userId,
+    tenantId: "default",
+    successor,
+    reason: "producer resolver contract"
+  })
+
+  const [auditKey] = await fixture.objectStore.listKeys("security-audit/intents/")
+  assert.ok(auditKey)
+  const completed = JSON.parse(await fixture.objectStore.getText(auditKey)) as SecurityMutationAuditIntent
+  assert.equal(completed.status, "completed")
+  assert.equal(completed.result, "success")
+  assert.ok(completed.after)
+  const state = JSON.parse(await fixture.objectStore.getText(
+    `security/ownership-transfer/default/${source.userId}.json`
+  )) as { operationId: string; documents: Array<{ target: DocumentManifest }> }
+  assert.equal(
+    state.documents[0]?.target.metadata?.administrativeTransferOperationId,
+    state.operationId
+  )
+
+  const resolver = new AdministrativePrincipalTransferAuditAuthoritativeResolver({
+    objects: fixture.objectStore,
+    folders: fixture.documentGroups,
+    resourceGroups: fixture.userGroups,
+    localTestIngestAdmissionContext: {
+      mode: "local_test_fixture",
+      fixtureId: "administrative-transfer-test",
+      tenantId: "default",
+      ownerUserId: source.userId
+    },
+    legacyGlobalDocumentArtifacts: true
+  })
+  const replay: SecurityMutationAuditIntent = {
+    ...completed,
+    status: "finalization_pending",
+    requestedCompletion: {
+      result: completed.result as "success",
+      after: completed.after as NonNullable<SecurityMutationAuditIntent["after"]>,
+      requestedAt: completed.completedAt as string
+    }
+  }
+  assert.deepEqual(await resolver.resolve(replay), { result: "success", after: completed.after })
 })
 
 test("empty administrative-principal transfer still completes a correlated success audit event", async () => {
