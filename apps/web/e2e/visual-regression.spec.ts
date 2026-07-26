@@ -1,5 +1,6 @@
 import { expect, type Page, type Route, test } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
+import { collectCrossScreenComputedAudit } from './cross-screen-audit'
 
 const permissions = [
   'chat:create',
@@ -654,19 +655,19 @@ test('管理系画面の visual regression @visual', async ({ page }) => {
 
   await page.getByTitle('ドキュメント').click()
   await expect(page.getByRole('region', { name: 'ドキュメント管理', exact: true })).toBeVisible()
-  await expect(page).toHaveScreenshot('documents-workspace.png', { fullPage: true, animations: 'disabled' })
+  await expect.soft(page).toHaveScreenshot('documents-workspace.png', { fullPage: true, animations: 'disabled' })
 
   await page.getByTitle('担当者対応').click()
   await expect(page.getByRole('region', { name: '担当者対応', exact: true })).toBeVisible()
-  await expect(page).toHaveScreenshot('assignee-workspace.png', { fullPage: true, animations: 'disabled' })
+  await expect.soft(page).toHaveScreenshot('assignee-workspace.png', { fullPage: true, animations: 'disabled' })
 
   await page.getByTitle('性能テスト').click()
   await expect(page.getByRole('region', { name: '性能テスト', exact: true })).toBeVisible()
-  await expect(page).toHaveScreenshot('benchmark-workspace.png', { fullPage: true, animations: 'disabled' })
+  await expect.soft(page).toHaveScreenshot('benchmark-workspace.png', { fullPage: true, animations: 'disabled' })
 
   await page.getByTitle('管理者設定').click()
   await expect(page.getByRole('region', { name: '管理者設定', exact: true })).toBeVisible()
-  await expect(page).toHaveScreenshot('admin-workspace.png', { fullPage: true, animations: 'disabled' })
+  await expect.soft(page).toHaveScreenshot('admin-workspace.png', { fullPage: true, animations: 'disabled' })
 })
 
 test('E2E-UI-SEMANTIC-001: 状態表示と確認ダイアログは axe 違反を生じない @semantic-ui', async ({ page }) => {
@@ -907,6 +908,79 @@ test('全 AppView の permission-aware 到達性 @smoke', async ({ page }) => {
       await expect(page.getByRole('region', { name: viewStep.region, exact: true })).toBeVisible()
     })
   }
+})
+
+test('E2E-UI-CROSS-SCREEN-AUDIT-001: 8 AppViewsのcomputed quality baselineを収集する @ui-quality @cross-screen-audit', async ({ page }, testInfo) => {
+  test.setTimeout(120_000)
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await signIn(page)
+
+  const viewSteps = [
+    { view: 'chat', url: '/', region: 'チャット' },
+    { view: 'assignee', url: '/?view=assignee', region: '担当者対応' },
+    { view: 'history', url: '/?view=history', region: '履歴' },
+    { view: 'favorites', url: '/?view=favorites', region: 'お気に入り' },
+    { view: 'benchmark', url: '/?view=benchmark', region: '性能テスト' },
+    { view: 'admin', url: '/?view=admin', region: '管理者設定' },
+    { view: 'documents', url: '/documents', region: 'ドキュメント管理' },
+    { view: 'profile', url: '/?view=profile', region: '個人設定' }
+  ] as const
+  const viewports = [320, 375, 768, 1280] as const
+  const baseline = []
+
+  for (const viewStep of viewSteps) {
+    for (const width of viewports) {
+      await page.setViewportSize({ width, height: width < 768 ? 720 : 900 })
+      await page.goto(viewStep.url)
+      const root = page.getByRole('region', { name: viewStep.region, exact: true })
+      await expect(root).toBeVisible()
+      const computed = await collectCrossScreenComputedAudit(root)
+      const axeBlockers = width === 1280
+        ? (await new AxeBuilder({ page })
+            .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
+            .analyze())
+            .violations
+            .filter((violation) => violation.impact === 'serious' || violation.impact === 'critical')
+            .map((violation) => ({
+              id: violation.id,
+              impact: violation.impact,
+              help: violation.help,
+              targets: violation.nodes.map((node) => node.target.join(' '))
+            }))
+        : []
+      const criterionStatuses = { ...computed.criterionStatuses }
+      if (axeBlockers.some((violation) => violation.id === 'scrollable-region-focusable')) criterionStatuses['AC-SQ016-002'] = 'fail'
+      if (axeBlockers.some((violation) => !['color-contrast', 'scrollable-region-focusable'].includes(violation.id))) {
+        criterionStatuses['AC-SQ016-003'] = 'fail'
+      }
+      if (axeBlockers.some((violation) => violation.id === 'color-contrast')) criterionStatuses['AC-SQ016-004'] = 'fail'
+      baseline.push({ view: viewStep.view, route: viewStep.url, region: viewStep.region, computed, axeBlockers, criterionStatuses })
+    }
+  }
+
+  expect(new Set(baseline.map((entry) => entry.view))).toEqual(new Set(viewSteps.map((entry) => entry.view)))
+  expect(baseline).toHaveLength(viewSteps.length * viewports.length)
+  expect(baseline.every((entry) => entry.computed.root.clientWidth > 0)).toBe(true)
+  const seriousFindings = baseline.flatMap((entry) => entry.computed.findings.filter((finding) => finding.severity === 'serious'))
+  const unresolvedLayoutAndTargetFindings = baseline.flatMap((entry) => entry.computed.findings.filter((finding) =>
+    finding.code === 'overflow' || finding.code === 'target-size'
+  ))
+  const axeBlockers = baseline.flatMap((entry) => entry.axeBlockers)
+  expect(seriousFindings).toEqual([])
+  expect(unresolvedLayoutAndTargetFindings).toEqual([])
+  expect(axeBlockers).toEqual([])
+  expect(baseline.flatMap((entry) => entry.computed.exceptions).every((entry) =>
+    Boolean(entry.reason && entry.owner && entry.alternativeOperation)
+  )).toBe(true)
+  await testInfo.attach('cross-screen-quality-baseline.json', {
+    body: Buffer.from(`${JSON.stringify({
+      schemaVersion: 2,
+      requirement: 'SQ-016',
+      candidatePolicy: '例外は要素、理由、owner、代替操作を必須とし、unresolved overflow/target candidateはtest failureにします',
+      baseline
+    }, null, 2)}\n`),
+    contentType: 'application/json'
+  })
 })
 
 test('E2E-UI-NAV-002: 最大権限 persona は 320px mobile menu から全許可 view と個人設定へ到達する @smoke @mobile-required', async ({ page }) => {

@@ -79,7 +79,7 @@ export function RailNav({
 
   return (
     <aside className="rail" aria-label="主要ナビゲーション">
-      <a className="rail-logo" href="/" aria-label="ホーム">
+      <a className="rail-logo" href="/" aria-label="ホーム" data-audit-target="primary">
         <Icon name="logo" />
       </a>
 
@@ -101,6 +101,7 @@ export function RailNav({
         aria-controls={mobileMenuId}
         aria-expanded={mobileMenuOpen}
         aria-label={mobileMenuOpen ? "メニューを閉じる" : "メニューを開く"}
+        data-audit-target="primary"
         onClick={() => setMobileMenuOpen((current) => !current)}
       >
         <Icon name={mobileMenuOpen ? "close" : "menu"} />
@@ -140,6 +141,7 @@ function DestinationButtons({
       type="button"
       title={destination.label}
       aria-current={activeView === destination.view ? "page" : undefined}
+      data-audit-target="primary"
       onClick={() => onSelect(destination.view)}
     >
       <Icon name={destination.icon} />
@@ -166,6 +168,7 @@ function AccountButton({
       title="個人設定"
       aria-label="個人設定"
       aria-current={active ? "page" : undefined}
+      data-audit-target="primary"
       onClick={onSelect}
     >
       <span className="account-avatar">{authSession.email.slice(0, 1).toUpperCase()}</span>

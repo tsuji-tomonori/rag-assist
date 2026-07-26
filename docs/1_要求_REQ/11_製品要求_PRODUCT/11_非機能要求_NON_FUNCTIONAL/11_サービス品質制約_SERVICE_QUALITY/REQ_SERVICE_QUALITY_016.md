@@ -68,8 +68,24 @@
 | 実現可能性 | pass with manual dependency | code/test fixes are feasible; screen-reader/real-device evidence requires the named environments. |
 | 検証可能性 | pass | numeric thresholds and journey evidence are explicit. |
 
+## Phase別 evidence contract（2026-07-16）
+
+- Phase Aは8 AppViewsと `AC-SQ016-001`〜`008` を結ぶmachine-readable matrix、canonical screen drift検出、computed DOM baselineを提供する。
+- automated evidenceとmanual evidenceを別statusとして保持し、overallはrequired methodに `fail` があれば `fail`、未実施があれば `blocked` とする。
+- target sizeはWCAG例外の適用判断が必要なため、computed 24×24未満をcandidateとして収集し、例外確認前にpass / failを断定しない。
+- Phase B以降はAppShell / RailNavとfeature batchのremediationをownerとし、Phase AのbaselineだけからSQ-016適合を宣言しない。
+- representative screen reader、実browser 200% / 400% zoom、touch / real-deviceはmanual evidence taskのrequired scopeに残す。
+
+## Phase B remediation contract（2026-07-17）
+
+- Phase Aで確定したroot overflow、serious color contrast、keyboardから到達できないhorizontal scroll regionは、Phase Bでproduction sourceとregression assertionを同時に修正する。
+- 24×24 minimumに加え、RailNavのprimary navigationは44px class targetとして明示的に監査する。target-size candidateは例外へ自動変換せず、未解決ならPlaywrightをfailureにする。
+- nested overflowは、要素、分類、意図、owner、代替操作をartifactへ記録できる場合に限り、装飾・visually hidden label・keyboard操作可能なscroll regionとして分類する。根拠を記録できないcandidateはfailureのまま残す。
+- automated reflow / axe / computed target evidenceがpassしても、representative screen reader、実browser 200% / 400% zoom、touch / real-deviceが未実施である間は該当manual statusとoverall statusを`blocked`に保つ。
+- Login / auth、API permission、RAG retrieval / grounding、benchmark dataset behaviorはPhase Bの変更対象外とする。
+
 ## 関連文書・task
 
 - `docs/3_設計_DES/21_UI_UX/DES_UI_UX_001.md`
-- `tasks/todo/20260714-issue-345-cross-screen-a11y-responsive.md`
+- `tasks/do/20260714-issue-345-cross-screen-a11y-responsive.md`
 - `tasks/todo/20260714-issue-345-manual-a11y-evidence.md`
