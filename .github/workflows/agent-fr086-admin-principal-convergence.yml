@@ -1,0 +1,230 @@
+name: FR-086 administrative-principal convergence
+
+on:
+  pull_request:
+    branches:
+      - integration/issue-358-fr086
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fr086-admin-principal-convergence
+  cancel-in-progress: true
+
+jobs:
+  converge:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - name: Checkout convergence branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: integration/issue-358-fr086-combined
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Configure git and reset to FR-086 integration root
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config core.quotePath false
+          git fetch origin integration/issue-358-fr086 codex/issue-358-fr086-admin-principal-transfer-resolver
+          git reset --hard origin/integration/issue-358-fr086
+
+      - name: Cherry-pick and additively resolve administrative-principal unit
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t commits < <(git rev-list --reverse 85c75af704a73a6d51aa8cda2ca98eb7d71e3e24..c2f2556244496f288f0818f7234eb5cbd375fff9)
+          if [ "${#commits[@]}" -ne 2 ]; then
+            printf 'Expected 2 administrative-principal commits, found %s\n' "${#commits[@]}" >&2
+            exit 1
+          fi
+
+          for commit in "${commits[@]}"; do
+            if git cherry-pick "$commit"; then
+              continue
+            fi
+
+            while IFS= read -r -d '' path; do
+              case "$path" in
+                docs/generated/*|infra/test/__snapshots__/memorag-mvp-stack.snapshot.json)
+                  git checkout --ours -- "$path"
+                  git add -- "$path"
+                  ;;
+              esac
+            done < <(git diff --name-only --diff-filter=U -z)
+
+            source_conflicts=(
+              "apps/api/src/rag/requirements-coverage.test.ts"
+              "apps/api/src/security-mutation-audit-reconciliation-worker.ts"
+              "apps/api/src/security/access-control-policy.test.ts"
+              "docs/1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/01_文書・知識ベース管理/08_権限付き共有・ライフサイクル/REQ_FUNCTIONAL_086.md"
+              "infra/lib/memorag-mvp-stack.ts"
+              "infra/test/memorag-mvp-stack.test.ts"
+            )
+            for path in "${source_conflicts[@]}"; do
+              if git ls-files -u -- "$path" | grep -q .; then
+                git checkout --ours -- "$path"
+              fi
+            done
+
+            python <<'PY'
+from pathlib import Path
+
+
+def replace_once(path: str, old: str, new: str) -> None:
+    file = Path(path)
+    text = file.read_text()
+    if new in text:
+        return
+    if old not in text:
+        raise SystemExit(f"anchor not found in {path}: {old[:120]!r}")
+    file.write_text(text.replace(old, new, 1))
+
+coverage = "apps/api/src/rag/requirements-coverage.test.ts"
+replace_once(
+    coverage,
+    '"apps/api/src/security/document-delete-audit-reconciler.test.ts",',
+    '"apps/api/src/security/document-delete-audit-reconciler.test.ts", "apps/api/src/security/administrative-principal-transfer-audit-reconciler.ts", "apps/api/src/security/administrative-principal-transfer-audit-reconciler.test.ts",'
+)
+
+worker = "apps/api/src/security-mutation-audit-reconciliation-worker.ts"
+replace_once(
+    worker,
+    'import { DocumentDeleteAuditAuthoritativeResolver } from "./security/document-delete-audit-reconciler.js"\n',
+    'import { DocumentDeleteAuditAuthoritativeResolver } from "./security/document-delete-audit-reconciler.js"\nimport { AdministrativePrincipalTransferAuditAuthoritativeResolver } from "./security/administrative-principal-transfer-audit-reconciler.js"\n'
+)
+replace_once(
+    worker,
+    '''    new DocumentDeleteAuditAuthoritativeResolver({
+      objects: deps.objectStore,
+      localTestIngestAdmissionContext: deps.localTestIngestAdmissionContext,
+      legacyGlobalDocumentArtifacts: deps.legacyGlobalDocumentArtifacts
+    })
+  ])''',
+    '''    new DocumentDeleteAuditAuthoritativeResolver({
+      objects: deps.objectStore,
+      localTestIngestAdmissionContext: deps.localTestIngestAdmissionContext,
+      legacyGlobalDocumentArtifacts: deps.legacyGlobalDocumentArtifacts
+    }),
+    new AdministrativePrincipalTransferAuditAuthoritativeResolver({
+      objects: deps.objectStore,
+      folders: deps.documentGroupStore,
+      resourceGroups: deps.userGroupStore,
+      localTestIngestAdmissionContext: deps.localTestIngestAdmissionContext,
+      legacyGlobalDocumentArtifacts: deps.legacyGlobalDocumentArtifacts
+    })
+  ])'''
+)
+
+access = "apps/api/src/security/access-control-policy.test.ts"
+anchor = '  assert.doesNotMatch(documentDeleteResolverSource, /putText|putTextIfVersion|deleteObject|\\.delete\\(|cleanupDeletedDocument|\\.register\\(|markCleanup|markDeny|markAbandoned/)\n'
+block = anchor + '''  const transferResolverSource = await readFile(new URL("./administrative-principal-transfer-audit-reconciler.ts", import.meta.url), "utf8")
+  assert.match(workerSource, /AdministrativePrincipalTransferAuditAuthoritativeResolver\\(\\{/)
+  assert.match(transferResolverSource, /draft\\.targetType === "administrativePrincipal"/)
+  assert.match(transferResolverSource, /draft\\.operation === "ownership\\.transfer"/)
+  assert.match(transferResolverSource, /security\\/ownership-transfer\\/\\$\\{encodeURIComponent\\(tenantId\\)\\}/)
+  assert.match(transferResolverSource, /folders\\.get\\(state\\.tenantId, id\\)/)
+  assert.match(transferResolverSource, /resourceGroups\\.get\\(state\\.tenantId, id\\)/)
+  assert.match(transferResolverSource, /tenantManifestKey\\(this\\.deps, state\\.tenantId, documentId\\)/)
+  assert.doesNotMatch(transferResolverSource, /list\\(|listKeys|putText|putTextIfVersion|\\.update\\(|\\.delete\\(|replace\\(|transferBefore/)
+'''
+replace_once(access, anchor, block)
+
+requirement = "docs/1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/01_文書・知識ベース管理/08_権限付き共有・ライフサイクル/REQ_FUNCTIONAL_086.md"
+replace_once(
+    requirement,
+    '共通 outbox、各 producer、現stackのproduction resolver、bounded retry/quarantine/batch isolation、SYSTEM_ADMIN限定のtenant-scoped single-intent manual redriveはconfirmed。administrative principal transfer resolverはsibling Draft PR #422でconfirmedだが本stackへ未統合。actual AWS/manual operation evidenceはopen',
+    '共通 outbox、各 producer、production resolver、bounded retry/quarantine/batch isolation、SYSTEM_ADMIN限定のtenant-scoped single-intent manual redrive、administrative principal transfer resolverはconfirmed。actual AWS/manual operation evidenceはopen'
+)
+replace_once(
+    requirement,
+    '| administrative principal transfer | confirmed（sibling Draft PR #422） | `AdministrativePrincipalTransferAuditAuthoritativeResolver` は sibling final head `c2f2556244496f288f0818f7234eb5cbd375fff9` で完遂済み。本stackでは重複実装しない |',
+    '| `administrativePrincipal / ownership.transfer` | confirmed | `AdministrativePrincipalTransferAuditAuthoritativeResolver`。authorized tenant/source principalのexact durable transfer stateと、stateが持つfolder/resource-group/documentのcurrent exact recordをread-onlyで照合し、全target一致のsuccessまたは全source一致のrollback failureだけを確定する |'
+)
+resolver_anchor = '\nresolver selection、authoritative resolution、audit completionの失敗はraw exceptionを保存せず、固定のsafe failure code、attempt count、policy上限、時刻だけをintentへCAS追記する。'
+resolver_paragraph = '''
+administrative principal transferはexact `security/ownership-transfer/{tenant}/{source}.json` stateのtenant/source/successor/inventory identityと、各current folder/resource-group/tenant manifestを照合する。origin stateはaudit/actor/reasonも一致させ、producerが既存stateを再利用する新auditはdurable requested completionで相関する。pending successは`committed`と全current target snapshot、`transferring` successはdurable requested completionと全current target snapshot、failed rollbackはrollback stateと全current source snapshotが揃う場合だけ確定する。別auditのpreserved non-successと`reconciliationRequired` failureはdurable requested completionのexact before shapeだけを確定し、partial stateをsuccessにしない。stateを作らないzero-inventory successはdurable requested zero completionだけを確定する。pre-fence beforeとfenced inventoryの増減は件数比較で拒否せず、各entryのsource principal参照、metadata/admission owner transition、document operation marker、current snapshotのexact一致を要求する。prepared/transferringだけのpending success、partial/mixed/third/missing/corrupt/cross-tenant stateは推測しない。resolverはownership mutationを再実行せず、transfer state/manifestのS3 GetObjectと既存DynamoDB GetItemだけを使う。actual AWS S3/DynamoDB/EventBridge/Lambdaは未検証である。
+'''
+replace_once(requirement, resolver_anchor, resolver_paragraph + resolver_anchor)
+
+stack = "infra/lib/memorag-mvp-stack.ts"
+replace_once(
+    stack,
+    '        docsBucket.arnForObjects(`document-mutations/delete/${cdk.Aws.ACCOUNT_ID}/*`),\n',
+    '        docsBucket.arnForObjects(`document-mutations/delete/${cdk.Aws.ACCOUNT_ID}/*`),\n        docsBucket.arnForObjects(`security/ownership-transfer/${cdk.Aws.ACCOUNT_ID}/*`),\n'
+)
+
+infra_test = "infra/test/memorag-mvp-stack.test.ts"
+replace_once(
+    infra_test,
+    '  assert.match(policies, /document-mutations\\/delete/)\n',
+    '  assert.match(policies, /document-mutations\\/delete/)\n  assert.match(policies, /security\\/ownership-transfer/)\n'
+)
+infra_anchor = '  assert.doesNotMatch(JSON.stringify(documentDeleteStatements[0]), /s3:(?:ListBucket|PutObject|DeleteObject)/)\n\n  const listStatements = Object.entries(resources)'
+infra_block = '''  assert.doesNotMatch(JSON.stringify(documentDeleteStatements[0]), /s3:(?:ListBucket|PutObject|DeleteObject)/)
+
+  const ownershipTransferStatements = Object.entries(resources)
+    .filter(([logicalId, resource]) => logicalId.startsWith("SecurityAuditReconciliationFunctionServiceRoleDefaultPolicy") && (resource as any).Type === "AWS::IAM::Policy")
+    .flatMap(([, resource]) => (resource as any).Properties.PolicyDocument.Statement as any[])
+    .filter((statement) => JSON.stringify(statement.Resource).includes("security/ownership-transfer"))
+  assert.equal(ownershipTransferStatements.length, 1)
+  assert.equal(ownershipTransferStatements[0].Action, "s3:GetObject")
+  assert.match(JSON.stringify(ownershipTransferStatements[0]), /AWS::AccountId/)
+  assert.doesNotMatch(JSON.stringify(ownershipTransferStatements[0]), /s3:(?:ListBucket|PutObject|DeleteObject)/)
+
+  const listStatements = Object.entries(resources)'''
+replace_once(infra_test, infra_anchor, infra_block)
+replace_once(
+    infra_test,
+    '/documents\\/share-grants|folder-mutations\\/move|document-mutations\\/(?:move|delete)|tenant-artifacts.*manifests/',
+    '/documents\\/share-grants|folder-mutations\\/move|document-mutations\\/(?:move|delete)|security\\/ownership-transfer|tenant-artifacts.*manifests/'
+)
+PY
+
+            git add "${source_conflicts[@]}"
+            remaining="$(git diff --name-only --diff-filter=U)"
+            if [ -n "$remaining" ]; then
+              printf 'Unexpected unresolved conflicts remain:\n%s\n' "$remaining" >&2
+              exit 1
+            fi
+            GIT_EDITOR=true git cherry-pick --continue
+          done
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Regenerate infra snapshot and inventory
+        run: |
+          UPDATE_SNAPSHOTS=1 npm test -w @memorag-mvp/infra
+          npm run docs:infra-inventory
+          npm run docs:api-code
+
+      - name: Validate converged tree
+        run: |
+          npm run ci
+          npm run docs:openapi:check
+          npm run docs:api-code:check
+          npm run docs:web-inventory:check
+          npm run docs:infra-inventory:check
+          npm run docs:hidden-unicode:check
+          npm run rag:release:source-audit
+          git diff --check
+
+      - name: Commit generated convergence result and replace control history
+        run: |
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m "🔄 管理プリンシパル監査resolverをFR-086へ再収束"
+          fi
+          git push --force-with-lease origin HEAD:integration/issue-358-fr086-combined
