@@ -14,11 +14,12 @@
     "Preserved pull requests #448 and #466 while adding zoom-reflow proxy, layout stress, virtual-keyboard proxy, text-spacing, skip-link, login-keyboard, and manual-evidence contracts",
     "Repaired the canonical trace for four executable E2E IDs and the relocated login unit evidence",
     "Regenerated Web inventory, traceability, accessibility, component, feature, screen, and quality-matrix documents",
-    "Passed repository lint, Web typecheck/build, 443 Web unit tests, 13 trace tests, 5 semantic tests, 7 manual-evidence schema tests, canonical docs, generated docs, OpenAPI, and diff checks"
+    "Passed repository lint, Web typecheck/build, 443 Web unit tests, 13 trace tests, 5 semantic tests, 7 manual-evidence schema tests, canonical docs, generated docs, OpenAPI, and diff checks",
+    "Reviewed the first final-head Web UI Quality artifact and synchronized only four deterministic visual baselines affected by the intended viewport-height reflow"
   ],
   "remaining_items": [
     "Publish the non-rewriting merge commit to the existing draft pull request #462 branch",
-    "Confirm GitHub compare is behind 0 and final-head Web UI Quality, MemoRAG CI, and semver workflows",
+    "Confirm final-head Web UI Quality, MemoRAG CI, and semver workflows after the four-baseline synchronization",
     "Update pull request #462 body, acceptance evidence, self-review, and Issue #345 progress",
     "Run approved manual keyboard, representative screen-reader, real-browser 200/400-percent zoom, and real-device verification",
     "Resolve OQ-UI-002 owner, cadence, and approved matrix decisions"
@@ -68,6 +69,11 @@
       "command": "Playwright target E2E execution",
       "result": "blocked",
       "note": "API and Web servers started; browser launch was blocked by missing Chromium and the browser download endpoint returned a zero-byte payload"
+    },
+    {
+      "command": "GitHub Actions Web UI Quality run 30226064611",
+      "result": "fail",
+      "note": "Six tests passed and four deterministic visual mismatches were reviewed from artifact 8638599781; only the four intended viewport-reflow baselines were synchronized"
     },
     {
       "command": "git diff --check and unresolved-conflict check",

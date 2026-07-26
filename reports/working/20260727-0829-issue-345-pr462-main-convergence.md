@@ -64,9 +64,18 @@ branch ancestryを検査するgateがなく、本文上の依存関係だけで�
 | 対象E2E実走 | blocked | server起動後、Chromium executable未導入を確認。download endpointは0 MiB応答で導入不能 |
 | `git diff --check` | pass | whitespace / conflict markerなし |
 
+## final-head CI 1回目
+
+- Web UI Quality run `30226064611` は6 tests pass、4 visual mismatchでfailした。
+- axe / mobile behavior failureではなく、chat empty、answer/citations、debug、mobile chatのcurrent main baselineとviewport-height / skip-link統合後の描画差だった。
+- artifact `8638599781`（digest `sha256:06fc3a1566a1257b0bb38433f63c5d5208dd9202fb161360d79cbdf307decea2`）からexpected / actual / diffを取得した。
+- 4枚ともinitial / retryのactual SHA-256が一致し、描画はdeterministicだった。
+- 目視では、composer / run ID / noteの到達可能性をviewport内で改善し、mobileのoptional suggestionをscroll領域へ収める意図したreflowだった。欠落、permission漏えい、読めない重なりは確認しなかった。
+- 他のvisual baselineは変更せず、この4枚だけをCI actualへ同期した。
+
 ## 未完了・blocker
 
-- 6 files / 9 Chromium E2Eのfinal-head実走とvisual baseline確認はWeb UI Quality CI待ち。
+- 4 visual baseline同期後のfinal-head Web UI Quality再実行は待ち。
 - manual evidence baselineは、keyboard `not_run`、screen reader / browser zoom / real device `blocked`、matrix `open_question`、`ready:false`のまま。
 - 200% / 400%はviewport proxyであり、実browser zoom passとは主張しない。
 - representative screen reader、Firefox / WebKit、touch / real deviceは未検証。
@@ -81,7 +90,7 @@ branch ancestryを検査するgateがなく、本文上の依存関係だけで�
 
 ## 次の作業
 
-1. 既存Draft PR #462 branchへfast-forward pushする。
-2. compareのbehind 0、mergeability、final-head CIを確認する。
-3. PR本文、受け入れ確認、セルフレビュー、Issue #345へ結果と未完了を記録する。
+1. 4 visual baselineだけを追加commitして既存Draft PR #462 branchへfast-forwardする。
+2. final-head Web UI Quality、MemoRAG CI、semverを確認する。
+3. PR / Issueコメントへ最終CIと未完了を追記する。
 4. manual evidenceとowner判断は後続taskとして継続する。
