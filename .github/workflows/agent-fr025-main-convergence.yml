@@ -1,9 +1,9 @@
 name: FR-025 current main convergence
 
 on:
-  push:
+  pull_request:
     branches:
-      - integration/issue-358-self-signup-main-convergence
+      - main
 
 permissions:
   contents: write
