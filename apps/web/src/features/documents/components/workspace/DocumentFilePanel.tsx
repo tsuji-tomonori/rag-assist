@@ -1,6 +1,6 @@
 import { EmptyState, StatusBadge } from "../../../../shared/ui/index.js"
-import { Icon } from "../../../../shared/components/Icon.js"
-import { LoadingSpinner } from "../../../../shared/components/LoadingSpinner.js"
+import { Icon } from "../../../../shared/ui/Icon.js"
+import { LoadingSpinner } from "../../../../shared/ui/LoadingSpinner.js"
 import { formatDateTime } from "../../../../shared/utils/format.js"
 import { reindexMigrationStatusPresentation } from "../../../../shared/ui/displayMetadata.js"
 import type { DocumentGroup, DocumentManifest, ReindexMigration } from "../../types.js"
