@@ -123,9 +123,20 @@ Phase A CI baselineで、assigneeは768px viewportに対してroot scrollWidth 8
 
 ### 受け入れ条件
 
-- [ ] 最新PR #381 head `e23c731c` をpublished historyの書き換えなしでPR #385へ統合し、#381に対してbehind 0にする。
-- [ ] Phase B固有のproduction UI / CSS、audit assertion、visual snapshot、正本文書、生成物だけを維持し、Phase A / mainの変更をPR差分へ重複表示しない。
-- [ ] `SQ-016`、`DES_UI_UX_001`、UI trace / quality matrixを一意な正本として維持し、Web生成物をgenerator / freshness checkで同期する。
-- [ ] Web lint / typecheck / unit / build、trace / semantic、Playwright解決、canonical / generated docs、`git diff --check`を実行し、未実行・失敗を明記する。
+- [x] 最新PR #381 head `e23c731c` をpublished historyの書き換えなしでPR #385へ統合し、#381に対してbehind 0にする。
+- [x] Phase B固有のproduction UI / CSS、audit assertion、visual snapshot、正本文書、生成物だけを維持し、Phase A / mainの変更をPR差分へ重複表示しない。
+- [x] `SQ-016`、`DES_UI_UX_001`、UI trace / quality matrixを一意な正本として維持し、Web生成物をgenerator / freshness checkで同期する。
+- [x] Web lint / typecheck / unit / build、trace / semantic、Playwright解決、canonical / generated docs、`git diff --check`を実行し、未実行・失敗を明記する。
 - [ ] draft PR #385本文、受け入れ確認、セルフレビュー、Issue #345を更新し、final-head CIを確認する。
 - [ ] representative screen reader、実browser 200% / 400% zoom、touch / real-device、全画面状態証跡、`OQ-UI-002`を自動passへ読み替えず未完了として残す。
+
+### 統合・検証結果
+
+- merge commit `10c55223` で最新#381を2-parent merge。競合は`tools/web-inventory/semantic-ui-contract.test.mjs`の1件だけで、Phase Bのmuted contrast / AppShell landmark回帰とPhase Aのretired primitive回帰を両方維持した。
+- #381との差分はbehind 0 / ahead 8、39 files / +567 / -172。main / Phase A固有の差分を重複表示していない。
+- `npm run docs:web-inventory` を再実行し、追加差分なし。Web生成物とsource inventory / matrixは一致。
+- `npm run lint`、Web typecheck、Web unit 61 files / 442 tests、Web buildがpass。buildは既存の500kB超chunk warningのみ。
+- trace / matrix 13 tests、semantic UI 5 tests、requirements coverage node:test 1件、canonical docs、API code 98 APIs / 588 documents、Web / infra inventory、hidden Unicode、`git diff --check`がpass。
+- Playwright対象4 files / 26 testsはChromium projectへ解決した。local実browser実行は未実施で、公開headのWeb UI Qualityを待つ。
+- 初回のrequirements coverage検証はVitestでnode:test fileを指定したため「No test suite found」で失敗。正しいrunner `node --import tsx --test`で再実行してpassし、実装修正は不要だった。
+- `npm run docs:openapi:check`は既知の`tsx` IPC socket `EPERM`。同じentryを`node --import tsx src/validate-openapi-docs.ts`で実行してpass。権限拡張なし。

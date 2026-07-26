@@ -20,7 +20,7 @@
     "Resolved the four traced Playwright sources to 26 Chromium tests; latest published-head browser execution remains pending"
   ],
   "remaining_items": [
-    "Reintegrate dependent draft pull request #385 onto the current pull request #381 head and remove cumulative stale differences",
+    "Publish the locally reintegrated draft pull request #385 head and confirm final-head CI without rewriting published history",
     "Remediate or classify the computed serious finding, five axe serious findings, and unresolved target/overflow candidates",
     "Complete loading, empty, error, permission, partial-success, stale, and retry evidence across every primary screen",
     "Run manual keyboard, representative screen-reader, 320px/400-percent-zoom, and real-device verification or record an unresolved blocker",
@@ -30,7 +30,7 @@
     "Representative screen-reader and real-device evidence has no completed manual execution record",
     "Real-browser 200-percent and 400-percent zoom evidence is incomplete",
     "MemoRAG CI remains failed because existing API branch coverage is 80.48 percent against the 85 percent gate",
-    "Draft pull request #385 is based on an obsolete pull request #381 head and remains non-mergeable"
+    "Draft pull request #385 is locally converged but its public branch and final-head CI still require synchronization"
   ],
   "validation": [
     {
@@ -92,6 +92,6 @@
       "result": "pass"
     }
   ],
-  "next_action": "Publish the non-rewriting convergence commit to pull request #381, update Japanese acceptance and self-review evidence, wait for latest-head CI, then reintegrate pull request #385",
+  "next_action": "Publish the non-rewriting pull request #385 convergence, update Japanese acceptance and self-review evidence, and confirm final-head CI before selecting the next Issue #345 unit",
   "safe_to_continue_without_user": true
 }
