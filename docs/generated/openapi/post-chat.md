@@ -85,6 +85,7 @@ Media type: `application/json`
 | `searchScope.documentIds` | `array<string>` | no | `data.searchScope.documentIds` の値。項目名は document ids を表します。 | maxItems=100 |
 | `searchScope.includeTemporary` | `boolean` | no | `data.searchScope.includeTemporary` の値。項目名は include temporary を表します。 | - |
 | `searchScope.temporaryScopeId` | `string` | no | `data.searchScope.temporaryScopeId` の値。項目名は temporary scope id を表します。 | minLength=1 |
+| `searchScope.temporaryScopeIds` | `array<string>` | no | `data.searchScope.temporaryScopeIds` の値。項目名は temporary scope ids を表します。 | maxItems=20 |
 
 ## Authorization
 

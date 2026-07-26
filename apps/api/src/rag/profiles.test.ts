@@ -29,4 +29,6 @@ test("answer policy owns policy computation text mappings", () => {
     "eligible",
     "not_eligible"
   ])
+  assert.deepEqual(Object.keys(policy).sort(), ["id", "policyComputation", "version"])
+  assert.throws(() => answerPolicyById("dataset-specific"), /Unknown RAG_DOMAIN_POLICY_ID: dataset-specific/)
 })

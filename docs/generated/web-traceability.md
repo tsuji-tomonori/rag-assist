@@ -56,6 +56,10 @@
 | E2E-UI-STATE-001 | implemented | apps/web/e2e/visual-regression.spec.ts | - |
 | E2E-UI-SEMANTIC-001 | implemented | apps/web/e2e/visual-regression.spec.ts | - |
 | E2E-UI-CROSS-SCREEN-AUDIT-001 | implemented | apps/web/e2e/visual-regression.spec.ts<br>apps/web/e2e/cross-screen-audit.ts | - |
+| E2E-UI-A11Y-GATE-001 | implemented | apps/web/e2e/visual-regression.spec.ts | - |
+| E2E-UI-KEYBOARD-NAV-001 | implemented | apps/web/e2e/keyboard-navigation.spec.ts | - |
+| E2E-UI-SR-SEMANTICS-001 | implemented | apps/web/e2e/screen-reader-semantics.spec.ts | - |
+| E2E-UI-TOUCH-NAV-001 | implemented | apps/web/e2e/touch-navigation.spec.ts | - |
 | E2E-UI-RISK-001 | implemented | apps/web/e2e/visual-regression.spec.ts | - |
 | E2E-UI-DOCUMENTS-001 | implemented | apps/web/e2e/visual-regression.spec.ts | - |
 | E2E-UI-QUESTION-001 | implemented | apps/web/e2e/question-journey.spec.ts | - |

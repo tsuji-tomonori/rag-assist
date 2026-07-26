@@ -42,13 +42,13 @@
 | B002 | `POST /documents/{documentId}/reindex/stage handler` | if | is forbidden error の判定結果が真である | `isForbiddenError(err)` | `apps/api/src/routes/document-routes.ts:1436 (POST /documents/{documentId}/reindex/stage handler)` |
 | B003 | `POST /documents/{documentId}/reindex/stage handler` | if | `err` が `Error` の instance である、かつ `err.message` が "ENOENT" を含む、または `err.message` が "NoSuchKey" を含む | `err instanceof Error && (err.message.includes("ENOENT") \|\| err.message.includes("NoSuchKey"))` | `apps/api/src/routes/document-routes.ts:1437 (POST /documents/{documentId}/reindex/stage handler)` |
 | B004 | `requirePermission` | if | 利用者が 指定された permission を持たない | `!hasPermission(user, permission)` | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| B005 | `MemoRagService.stageReindexMigration` | if | `(manifest.lifecycleStatus ?? stringValue(manifest.metadata?.lifecycleStatus) ?? "active")` が `"active"` と異なる | `(manifest.lifecycleStatus ?? stringValue(manifest.metadata?.lifecycleStatus) ?? "active") !== "active"` | `apps/api/src/rag/memorag-service.ts:578 (MemoRagService.stageReindexMigration)` |
-| B006 | `MemoRagService.stageReindexMigration` | if | `manifest.publicationEligible` が `false` と等しい、または `manifest.derivedIntegrity?.verified` が `false` と等しい | `manifest.publicationEligible === false \|\| manifest.derivedIntegrity?.verified === false` | `apps/api/src/rag/memorag-service.ts:581 (MemoRagService.stageReindexMigration)` |
-| B007 | `MemoRagService.stageReindexMigration` | if | `begun.alreadyStaged` が存在し、真である | `begun.alreadyStaged` | `apps/api/src/rag/memorag-service.ts:595 (MemoRagService.stageReindexMigration)` |
-| B008 | `MemoRagService.stageReindexMigration` | if | `existingMigration` が存在し、真である | `existingMigration` | `apps/api/src/rag/memorag-service.ts:596 (MemoRagService.stageReindexMigration)` |
-| B009 | `MemoRagService.stageReindexMigration` | if | `begun.run.stagedArtifact` が存在しない、または偽である | `!begun.run.stagedArtifact` | `apps/api/src/rag/memorag-service.ts:597 (MemoRagService.stageReindexMigration)` |
-| B010 | `MemoRagService.stageReindexMigration` | if | `begun.lease` が存在しない、または偽である | `!begun.lease` | `apps/api/src/rag/memorag-service.ts:603 (MemoRagService.stageReindexMigration)` |
-| B011 | `MemoRagService.stageReindexMigration` | 三項条件 | `this.deps.localTestIngestAdmissionContext` が存在し、真である | `this.deps.localTestIngestAdmissionContext` | `apps/api/src/rag/memorag-service.ts:605 (MemoRagService.stageReindexMigration)` |
+| B005 | `MemoRagService.stageReindexMigration` | if | `(manifest.lifecycleStatus ?? stringValue(manifest.metadata?.lifecycleStatus) ?? "active")` が `"active"` と異なる | `(manifest.lifecycleStatus ?? stringValue(manifest.metadata?.lifecycleStatus) ?? "active") !== "active"` | `apps/api/src/rag/memorag-service.ts:579 (MemoRagService.stageReindexMigration)` |
+| B006 | `MemoRagService.stageReindexMigration` | if | `manifest.publicationEligible` が `false` と等しい、または `manifest.derivedIntegrity?.verified` が `false` と等しい | `manifest.publicationEligible === false \|\| manifest.derivedIntegrity?.verified === false` | `apps/api/src/rag/memorag-service.ts:582 (MemoRagService.stageReindexMigration)` |
+| B007 | `MemoRagService.stageReindexMigration` | if | `begun.alreadyStaged` が存在し、真である | `begun.alreadyStaged` | `apps/api/src/rag/memorag-service.ts:596 (MemoRagService.stageReindexMigration)` |
+| B008 | `MemoRagService.stageReindexMigration` | if | `existingMigration` が存在し、真である | `existingMigration` | `apps/api/src/rag/memorag-service.ts:597 (MemoRagService.stageReindexMigration)` |
+| B009 | `MemoRagService.stageReindexMigration` | if | `begun.run.stagedArtifact` が存在しない、または偽である | `!begun.run.stagedArtifact` | `apps/api/src/rag/memorag-service.ts:598 (MemoRagService.stageReindexMigration)` |
+| B010 | `MemoRagService.stageReindexMigration` | if | `begun.lease` が存在しない、または偽である | `!begun.lease` | `apps/api/src/rag/memorag-service.ts:604 (MemoRagService.stageReindexMigration)` |
+| B011 | `MemoRagService.stageReindexMigration` | 三項条件 | `this.deps.localTestIngestAdmissionContext` が存在し、真である | `this.deps.localTestIngestAdmissionContext` | `apps/api/src/rag/memorag-service.ts:606 (MemoRagService.stageReindexMigration)` |
 
 ## 4. 到達する主要実装
 
@@ -62,22 +62,22 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 1 | `validParam` | valid param の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:24 (validParam)` |
 | 2 | `validRequest` | valid request の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:36 (validRequest)` |
 | 1 | `validJson` | valid json の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:20 (validJson)` |
-| 1 | `MemoRagService.stageReindexMigration` | stage reindex migration の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:560 (MemoRagService.stageReindexMigration)` |
-| 2 | `authoritativeActorTenantId` | authoritative actor tenant id の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5906 (authoritativeActorTenantId)` |
-| 2 | `MemoRagService.getManifest` | get manifest の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3926 (MemoRagService.getManifest)` |
-| 2 | `MemoRagService.assertDocumentManifestWritable` | assert document manifest writable の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1163 (MemoRagService.assertDocumentManifestWritable)` |
-| 2 | `MemoRagService.assertCurrentWorkerAuthorization` | assert current worker authorization の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4787 (MemoRagService.assertCurrentWorkerAuthorization)` |
-| 2 | `authorizeReindex` | authorize reindex の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:564 (authorizeReindex)` |
-| 2 | `stringValue` | string value の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6347 (stringValue)` |
-| 2 | `reindexPublicationScope` | reindex publication scope の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5539 (reindexPublicationScope)` |
+| 1 | `MemoRagService.stageReindexMigration` | stage reindex migration の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:561 (MemoRagService.stageReindexMigration)` |
+| 2 | `authoritativeActorTenantId` | authoritative actor tenant id の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6090 (authoritativeActorTenantId)` |
+| 2 | `MemoRagService.getManifest` | get manifest の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3937 (MemoRagService.getManifest)` |
+| 2 | `MemoRagService.assertDocumentManifestWritable` | assert document manifest writable の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1164 (MemoRagService.assertDocumentManifestWritable)` |
+| 2 | `MemoRagService.assertCurrentWorkerAuthorization` | assert current worker authorization の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4798 (MemoRagService.assertCurrentWorkerAuthorization)` |
+| 2 | `authorizeReindex` | authorize reindex の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:565 (authorizeReindex)` |
+| 2 | `stringValue` | string value の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6531 (stringValue)` |
+| 2 | `reindexPublicationScope` | reindex publication scope の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5723 (reindexPublicationScope)` |
 | 2 | `StagedPublicationCoordinator.begin` | begin の実装処理を担当する。 | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:192 (StagedPublicationCoordinator.begin)` |
 | 2 | `publicationIdentity` | publication identity の実装処理を担当する。 | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1525 (publicationIdentity)` |
-| 2 | `MemoRagService.loadReindexMigrationLedger` | load reindex migration ledger の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3741 (MemoRagService.loadReindexMigrationLedger)` |
-| 2 | `reindexMigrationFromPublicationRun` | reindex migration from publication run の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5653 (reindexMigrationFromPublicationRun)` |
-| 2 | `MemoRagService.saveReindexMigrationLedger` | save reindex migration ledger の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3751 (MemoRagService.saveReindexMigrationLedger)` |
-| 2 | `reindexAdmissionContext` | reindex admission context の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5558 (reindexAdmissionContext)` |
-| 2 | `MemoRagService.loadStructuredBlocks` | load structured blocks の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3944 (MemoRagService.loadStructuredBlocks)` |
-| 2 | `MemoRagService.ingest` | ingest の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:461 (MemoRagService.ingest)` |
+| 2 | `MemoRagService.loadReindexMigrationLedger` | load reindex migration ledger の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3752 (MemoRagService.loadReindexMigrationLedger)` |
+| 2 | `reindexMigrationFromPublicationRun` | reindex migration from publication run の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5837 (reindexMigrationFromPublicationRun)` |
+| 2 | `MemoRagService.saveReindexMigrationLedger` | save reindex migration ledger の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3762 (MemoRagService.saveReindexMigrationLedger)` |
+| 2 | `reindexAdmissionContext` | reindex admission context の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5742 (reindexAdmissionContext)` |
+| 2 | `MemoRagService.loadStructuredBlocks` | load structured blocks の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3955 (MemoRagService.loadStructuredBlocks)` |
+| 2 | `MemoRagService.ingest` | ingest の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:462 (MemoRagService.ingest)` |
 | 2 | `StagedPublicationCoordinator.recordStaged` | record staged の実装処理を担当する。 | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:238 (StagedPublicationCoordinator.recordStaged)` |
 | 1 | `isForbiddenError` | is forbidden error の実装処理を担当する。 | `apps/api/src/routes/document-routes.ts:310 (isForbiddenError)` |
 | 1 | `resourceUnavailable` | resource unavailable の実装処理を担当する。 | `apps/api/src/routes/document-routes.ts:293 (resourceUnavailable)` |
@@ -104,17 +104,17 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 作成・追記 | Store | `this.deps.objectStore` | `putTextIfVersion` | `this.deps.objectStore` に対して put text if version を実行する。 | `StagedPublicationCoordinator.annotateManifestWithPublicationControl` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:964 (StagedPublicationCoordinator.annotateManifestWithPublicationControl)` |
 | 作成・追記 | Store | `this.deps.objectStore` | `putTextIfVersion` | `this.deps.objectStore` に対して put text if version を実行する。 | `StagedPublicationCoordinator.begin` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:222 (StagedPublicationCoordinator.begin)` |
 | 作成・追記 | Store | `this.deps.objectStore` | `putTextIfVersion` | `this.deps.objectStore` に対して put text if version を実行する。 | `StagedPublicationCoordinator.acquireLease` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:617 (StagedPublicationCoordinator.acquireLease)` |
-| 参照 | Store | `this` | `loadReindexMigrationLedger` | `this` に対して load reindex migration ledger を実行する。 | `MemoRagService.stageReindexMigration` | `apps/api/src/rag/memorag-service.ts:593 (MemoRagService.stageReindexMigration)` |
-| 参照 | Store | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `MemoRagService.loadReindexMigrationLedger` | `apps/api/src/rag/memorag-service.ts:3743 (MemoRagService.loadReindexMigrationLedger)` |
-| 参照 | Store | `existingLedger` | `find` | `existingLedger` に対して find を実行する。 | `MemoRagService.stageReindexMigration` | `apps/api/src/rag/memorag-service.ts:594 (MemoRagService.stageReindexMigration)` |
-| 実行 | Store | `existingLedger` | `push` | `existingLedger` に対して push を実行する。 | `MemoRagService.stageReindexMigration` | `apps/api/src/rag/memorag-service.ts:599 (MemoRagService.stageReindexMigration)` |
-| 作成・追記 | Store | `this` | `saveReindexMigrationLedger` | `this` に対して save reindex migration ledger を実行する。 | `MemoRagService.stageReindexMigration` | `apps/api/src/rag/memorag-service.ts:600 (MemoRagService.stageReindexMigration)` |
-| 参照 | Store | `this.deps.objectStore` | `getTextWithVersion` | `this.deps.objectStore` に対して get text with version を実行する。 | `MemoRagService.saveReindexMigrationLedger` | `apps/api/src/rag/memorag-service.ts:3755 (MemoRagService.saveReindexMigrationLedger)` |
-| 作成・追記 | Store | `this.deps.objectStore` | `putTextIfVersion` | `this.deps.objectStore` に対して put text if version を実行する。 | `MemoRagService.saveReindexMigrationLedger` | `apps/api/src/rag/memorag-service.ts:3766 (MemoRagService.saveReindexMigrationLedger)` |
-| 参照 | Store | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `MemoRagService.stageReindexMigration` | `apps/api/src/rag/memorag-service.ts:613 (MemoRagService.stageReindexMigration)` |
+| 参照 | Store | `this` | `loadReindexMigrationLedger` | `this` に対して load reindex migration ledger を実行する。 | `MemoRagService.stageReindexMigration` | `apps/api/src/rag/memorag-service.ts:594 (MemoRagService.stageReindexMigration)` |
+| 参照 | Store | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `MemoRagService.loadReindexMigrationLedger` | `apps/api/src/rag/memorag-service.ts:3754 (MemoRagService.loadReindexMigrationLedger)` |
+| 参照 | Store | `existingLedger` | `find` | `existingLedger` に対して find を実行する。 | `MemoRagService.stageReindexMigration` | `apps/api/src/rag/memorag-service.ts:595 (MemoRagService.stageReindexMigration)` |
+| 実行 | Store | `existingLedger` | `push` | `existingLedger` に対して push を実行する。 | `MemoRagService.stageReindexMigration` | `apps/api/src/rag/memorag-service.ts:600 (MemoRagService.stageReindexMigration)` |
+| 作成・追記 | Store | `this` | `saveReindexMigrationLedger` | `this` に対して save reindex migration ledger を実行する。 | `MemoRagService.stageReindexMigration` | `apps/api/src/rag/memorag-service.ts:601 (MemoRagService.stageReindexMigration)` |
+| 参照 | Store | `this.deps.objectStore` | `getTextWithVersion` | `this.deps.objectStore` に対して get text with version を実行する。 | `MemoRagService.saveReindexMigrationLedger` | `apps/api/src/rag/memorag-service.ts:3766 (MemoRagService.saveReindexMigrationLedger)` |
+| 作成・追記 | Store | `this.deps.objectStore` | `putTextIfVersion` | `this.deps.objectStore` に対して put text if version を実行する。 | `MemoRagService.saveReindexMigrationLedger` | `apps/api/src/rag/memorag-service.ts:3777 (MemoRagService.saveReindexMigrationLedger)` |
+| 参照 | Store | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `MemoRagService.stageReindexMigration` | `apps/api/src/rag/memorag-service.ts:614 (MemoRagService.stageReindexMigration)` |
 | 参照 | Store | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `loadStructuredBlocksForManifest` | `apps/api/src/rag/_shared/storage/manifest-chunks.ts:35 (loadStructuredBlocksForManifest)` |
-| 実行 | External | `textModel` | `generate` | `textModel` へ generate を実行する。 | `MemoRagService.createMemoryCards` | `apps/api/src/rag/memorag-service.ts:5135 (MemoRagService.createMemoryCards)` |
-| 参照 | Store | `input.objectStore` | `getText` | `input.objectStore` に対して get text を実行する。 | `assertRagSafetyInterlock` | `apps/api/src/rag/quality-control/production-rag-monitor.ts:311 (assertRagSafetyInterlock)` |
+| 実行 | External | `textModel` | `generate` | `textModel` へ generate を実行する。 | `MemoRagService.createMemoryCards` | `apps/api/src/rag/memorag-service.ts:5146 (MemoRagService.createMemoryCards)` |
+| 参照 | Store | `input.objectStore` | `getText` | `input.objectStore` に対して get text を実行する。 | `assertRagSafetyInterlock` | `apps/api/src/rag/quality-control/production-rag-monitor.ts:315 (assertRagSafetyInterlock)` |
 | 実行 | Store | `(() => {<br>        const structuredText = input.text ?? input.structuredBlocks.map((block) => block.text).join("\n\n")<br>        return limitDocument({<br>          text: structuredText,<br>          blocks: input.structuredBlocks,<br>          sourceExtractorVersion: input` | `sourceExtractorVersion ?? "structured-blocks-ledger-v1"<br>        })<br>      })` | `(() => {<br>        const structuredText = input.text ?? input.structuredBlocks.map((block) => block.text).join("\n\n")<br>        return limitDocument({<br>          text: structuredText,<br>          blocks: input.structuredBlocks,<br>          sourceExtractorVersion: input` に対して source extractor version ?? "structured blocks ledger v1"<br>        })<br>      }) を実行する。 | `runIngestPipeline` | `apps/api/src/rag/offline/pre-retrieval/ingestion/ingest-run.service.ts:93 (runIngestPipeline)` |
 | 参照 | Store | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `embedWithCache` | `apps/api/src/rag/offline/pre-retrieval/embedding/embedding-cache.ts:21 (embedWithCache)` |
 | 実行 | External | `deps.textModel` | `embed` | `deps.textModel` へ embed を実行する。 | `embedWithCache` | `apps/api/src/rag/offline/pre-retrieval/embedding/embedding-cache.ts:29 (embedWithCache)` |
@@ -142,8 +142,8 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 参照 | Store | `this.deps.evidenceVectorStore` | `getByKeys` | `this.deps.evidenceVectorStore` に対して get by keys を実行する。 | `StagedPublicationCoordinator.loadVectorRecords` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1475 (StagedPublicationCoordinator.loadVectorRecords)` |
 | 参照 | Store | `this.deps.memoryVectorStore` | `getByKeys` | `this.deps.memoryVectorStore` に対して get by keys を実行する。 | `StagedPublicationCoordinator.loadVectorRecords` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1476 (StagedPublicationCoordinator.loadVectorRecords)` |
 | 作成・追記 | Store | `this.deps.objectStore` | `putTextIfVersion` | `this.deps.objectStore` に対して put text if version を実行する。 | `StagedPublicationCoordinator.updateWithFence` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:690 (StagedPublicationCoordinator.updateWithFence)` |
-| 実行 | Store | `existingLedger` | `push` | `existingLedger` に対して push を実行する。 | `MemoRagService.stageReindexMigration` | `apps/api/src/rag/memorag-service.ts:656 (MemoRagService.stageReindexMigration)` |
-| 作成・追記 | Store | `this` | `saveReindexMigrationLedger` | `this` に対して save reindex migration ledger を実行する。 | `MemoRagService.stageReindexMigration` | `apps/api/src/rag/memorag-service.ts:657 (MemoRagService.stageReindexMigration)` |
+| 実行 | Store | `existingLedger` | `push` | `existingLedger` に対して push を実行する。 | `MemoRagService.stageReindexMigration` | `apps/api/src/rag/memorag-service.ts:657 (MemoRagService.stageReindexMigration)` |
+| 作成・追記 | Store | `this` | `saveReindexMigrationLedger` | `this` に対して save reindex migration ledger を実行する。 | `MemoRagService.stageReindexMigration` | `apps/api/src/rag/memorag-service.ts:658 (MemoRagService.stageReindexMigration)` |
 
 ## 6. 応答・メッセージ
 

@@ -10,7 +10,7 @@ import {
   type AuthSession,
   type NewPasswordRequiredChallenge,
   type SignUpResult
-} from "../../../authClient.js"
+} from "../api/authClient.js"
 
 type LoginPayload = { email: string; password: string; remember: boolean }
 type NewPasswordPayload = { challenge: NewPasswordRequiredChallenge; newPassword: string; remember: boolean }

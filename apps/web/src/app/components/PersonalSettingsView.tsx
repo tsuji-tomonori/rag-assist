@@ -1,4 +1,4 @@
-import type { AuthSession } from "../../authClient.js"
+import type { AuthSession } from "../../features/auth/api/authClient.js"
 import type { SubmitShortcut } from "../types.js"
 
 export function PersonalSettingsView({

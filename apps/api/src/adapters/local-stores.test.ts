@@ -194,6 +194,18 @@ test("local conversation history store persists per-user conversations and delet
       goal: "分類を確認する",
       pendingActions: ["根拠文書を確認"]
     },
+    sessionDocumentContext: {
+      schemaVersion: 1,
+      sessionId: "conversation-1",
+      temporaryEvidence: [{
+        temporaryScopeId: "conversation-1",
+        documentId: "temporary-1",
+        status: "active",
+        expiresAt: "2999-05-02T00:00:00.000Z",
+        updatedAt: "2026-05-02T00:00:02.000Z"
+      }],
+      updatedAt: "2026-05-02T00:00:02.000Z"
+    },
     messages: [
       { role: "user", text: "分類は？", createdAt: "2026-05-02T00:00:00.000Z" },
       { role: "assistant", text: "製品要求とプロジェクト要求です。", createdAt: "2026-05-02T00:00:02.000Z" }
@@ -209,7 +221,7 @@ test("local conversation history store persists per-user conversations and delet
 
   const history = await store.list("user-1")
   assert.equal(history.length, 2)
-  assert.equal(history[0]?.schemaVersion, 2)
+  assert.equal(history[0]?.schemaVersion, 3)
   assert.equal(history[0]?.title, "お気に入り")
   assert.equal(history[0]?.isFavorite, true)
   assert.equal(history[1]?.title, "分類について更新")
@@ -219,6 +231,9 @@ test("local conversation history store persists per-user conversations and delet
   assert.equal(history[1]?.queryFocusedSummary, "分類の違いを確認している。")
   assert.equal(history[1]?.citationMemory?.[0]?.citation.documentId, "doc-1")
   assert.equal(history[1]?.taskState?.status, "in_progress")
+  assert.equal(history[1]?.sessionDocumentContext?.temporaryEvidence[0]?.documentId, "temporary-1")
+  assert.equal((await store.get("user-1", "conversation-1"))?.id, "conversation-1")
+  assert.equal(await store.get("user-2", "conversation-1"), undefined)
 
   await store.delete("user-1", "conversation-1")
   assert.deepEqual((await store.list("user-1")).map((item) => item.id), ["conversation-favorite"])

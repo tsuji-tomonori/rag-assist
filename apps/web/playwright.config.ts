@@ -16,6 +16,21 @@ const grep =
 const crossBrowser = process.env.E2E_CROSS_BROWSER === '1'
 const systemChrome = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ?? (existsSync('/usr/bin/google-chrome') ? '/usr/bin/google-chrome' : undefined)
 const localDataDir = process.env.E2E_LOCAL_DATA_DIR ?? join(tmpdir(), `memorag-web-e2e-${process.pid}`)
+const ragGuardProfileJson = JSON.stringify({
+  id: 'e2e-safe-rag',
+  version: 'e2e-safe-rag-v1',
+  guards: {
+    authentication: true,
+    authorization: true,
+    classification_usage: true,
+    prompt_injection: true,
+    tool_policy: true,
+    grounding: true,
+    citation: true,
+    output_secret: true,
+    trace_redaction: true
+  }
+})
 
 export default defineConfig({
   testDir: './e2e',
@@ -37,7 +52,7 @@ export default defineConfig({
   },
   webServer: [
     {
-      command: `NODE_ENV=test MEMORAG_ALLOW_LEGACY_LOCAL_STORE_FOR_TESTS=true LOCAL_DATA_DIR=${localDataDir} MOCK_BEDROCK=1 USE_LOCAL_VECTOR_STORE=1 USE_LOCAL_QUESTION_STORE=1 USE_LOCAL_CONVERSATION_HISTORY_STORE=1 USE_LOCAL_BENCHMARK_RUN_STORE=1 USE_LOCAL_CHAT_RUN_STORE=1 USE_LOCAL_DOCUMENT_INGEST_RUN_STORE=1 USE_LOCAL_DOCUMENT_GROUP_STORE=1 LOCAL_AUTH_USER_ID=local-dev LOCAL_AUTH_EMAIL=local@example.com LOCAL_AUTH_GROUPS=SYSTEM_ADMIN LOCAL_AUTH_ACCOUNT_STATUS=active LOCAL_AUTH_TENANT_ID=local-e2e BENCHMARK_EVALUATION_ENABLED=true BENCHMARK_EVALUATION_TENANT_ID=benchmark-e2e npm run start -w @memorag-mvp/api`,
+      command: `NODE_ENV=test RAG_GUARD_PROFILE_JSON='${ragGuardProfileJson}' MEMORAG_ALLOW_LEGACY_LOCAL_STORE_FOR_TESTS=true LOCAL_DATA_DIR=${localDataDir} MOCK_BEDROCK=1 USE_LOCAL_VECTOR_STORE=1 USE_LOCAL_QUESTION_STORE=1 USE_LOCAL_CONVERSATION_HISTORY_STORE=1 USE_LOCAL_BENCHMARK_RUN_STORE=1 USE_LOCAL_CHAT_RUN_STORE=1 USE_LOCAL_DOCUMENT_INGEST_RUN_STORE=1 USE_LOCAL_DOCUMENT_GROUP_STORE=1 LOCAL_AUTH_USER_ID=local-dev LOCAL_AUTH_EMAIL=local@example.com LOCAL_AUTH_GROUPS=SYSTEM_ADMIN LOCAL_AUTH_ACCOUNT_STATUS=active LOCAL_AUTH_TENANT_ID=local-e2e BENCHMARK_EVALUATION_ENABLED=true BENCHMARK_EVALUATION_TENANT_ID=benchmark-e2e npm run start -w @memorag-mvp/api`,
       url: 'http://127.0.0.1:8787/health',
       reuseExistingServer: !isCI,
       timeout: 120_000

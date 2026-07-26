@@ -29,6 +29,7 @@ Media type: `application/json`
 | 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
 | `query` | `string` | yes | 検索や benchmark に利用する query。 | minLength=1 |
+| `conversationId` | `string` | no | `data.conversationId` の値。項目名は conversation id を表します。 | minLength=1 |
 | `topK` | `integer` | no | 検索で取得する上位件数。 | minimum=1<br>maximum=50 |
 | `lexicalTopK` | `integer` | no | `data.lexicalTopK` の値。項目名は lexical top k を表します。 | minimum=0<br>maximum=100 |
 | `semanticTopK` | `integer` | no | `data.semanticTopK` の値。項目名は semantic top k を表します。 | minimum=0<br>maximum=100 |
@@ -46,6 +47,7 @@ Media type: `application/json`
 | `scope.documentIds` | `array<string>` | no | `data.scope.documentIds` の値。項目名は document ids を表します。 | maxItems=100 |
 | `scope.includeTemporary` | `boolean` | no | `data.scope.includeTemporary` の値。項目名は include temporary を表します。 | - |
 | `scope.temporaryScopeId` | `string` | no | `data.scope.temporaryScopeId` の値。項目名は temporary scope id を表します。 | minLength=1 |
+| `scope.temporaryScopeIds` | `array<string>` | no | `data.scope.temporaryScopeIds` の値。項目名は temporary scope ids を表します。 | maxItems=20 |
 
 ## Authorization
 

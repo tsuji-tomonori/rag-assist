@@ -1,4 +1,4 @@
-import type { AuthSession } from "../authClient.js"
+import type { AuthSession } from "../features/auth/api/authClient.js"
 import { AppRoutes } from "./AppRoutes.js"
 import { RailNav } from "./components/RailNav.js"
 import { TopBar } from "./components/TopBar.js"

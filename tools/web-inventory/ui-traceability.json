@@ -111,6 +111,26 @@
       "evidence": ["apps/web/e2e/visual-regression.spec.ts", "apps/web/e2e/cross-screen-audit.ts"]
     },
     {
+      "id": "E2E-UI-A11Y-GATE-001",
+      "status": "implemented",
+      "evidence": ["apps/web/e2e/visual-regression.spec.ts"]
+    },
+    {
+      "id": "E2E-UI-KEYBOARD-NAV-001",
+      "status": "implemented",
+      "evidence": ["apps/web/e2e/keyboard-navigation.spec.ts"]
+    },
+    {
+      "id": "E2E-UI-SR-SEMANTICS-001",
+      "status": "implemented",
+      "evidence": ["apps/web/e2e/screen-reader-semantics.spec.ts"]
+    },
+    {
+      "id": "E2E-UI-TOUCH-NAV-001",
+      "status": "implemented",
+      "evidence": ["apps/web/e2e/touch-navigation.spec.ts"]
+    },
+    {
       "id": "E2E-UI-RISK-001",
       "status": "implemented",
       "evidence": ["apps/web/e2e/visual-regression.spec.ts"]

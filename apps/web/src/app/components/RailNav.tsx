@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
-import type { AuthSession } from "../../authClient.js"
+import type { AuthSession } from "../../features/auth/api/authClient.js"
 import { Icon, type IconName } from "../../shared/components/Icon.js"
 import type { AppView } from "../types.js"
 

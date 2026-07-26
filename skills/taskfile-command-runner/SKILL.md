@@ -34,7 +34,7 @@ Include a reusable `prefix_rule` when the command shape is stable and safe to re
 
 ```text
 ["task", "docs:check"]
-["task", "memorag:verify"]
+["task", "verify"]
 ["task", "benchmark:sample"]
 ["task", "dev:api"]
 ```

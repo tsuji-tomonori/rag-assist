@@ -46,6 +46,7 @@ type SummaryArtifact = {
     noAccessLeakRate?: number | null
     abstainAccuracy?: number | null
     unsupportedAnswerRate?: number | null
+    falseRefusalRate?: number | null
     answerContentAccuracy?: number | null
     groundedFileAccuracy?: number | null
     groundedPageAccuracy?: number | null
@@ -62,6 +63,7 @@ type SummaryArtifact = {
     retrievalRecallAtK?: number | null
     refusalPrecision?: number | null
     refusalRecall?: number | null
+    falseRefusalRate?: number | null
     unsupportedSentenceRate?: number | null
   }>
   corpusSeed: Array<{ fileName: string; status: string; skipReason?: string }>
@@ -208,6 +210,7 @@ test("benchmark runner reports baseline categories, support, MRR, and ACL leak m
     assert.equal(summary.metrics?.citationSupportPassRate, 1)
     assert.equal(summary.metrics?.noAccessLeakCount, 1)
     assert.equal(summary.metrics?.noAccessLeakRate, 0.5)
+    assert.equal(summary.metrics?.falseRefusalRate, 0)
     assert.deepEqual(summary.failures.find((failure) => failure.id === "baseline-leak-001")?.categories, ["refusal_failure"])
 
     const report = readFileSync(paths.report, "utf-8")
@@ -376,6 +379,7 @@ test("benchmark report includes diagnostic signals for answerable refusals", asy
 
     assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`)
     const summary = readSummary(paths.summary)
+    assert.equal(summary.metrics?.falseRefusalRate, 1)
     const failure = summary.failures.find((item) => item.id === "answerable-refused-001")
     assert.deepEqual(new Set(failure?.debugSignals), new Set([
       "response_type:refusal",
@@ -388,6 +392,55 @@ test("benchmark report includes diagnostic signals for answerable refusals", asy
     assert.match(report, /debug signals/)
     assert.match(report, /citation_validation_failed/)
     assert.match(report, /sufficient_context_missing_fact/)
+    assert.match(report, /false_refusal_rate/)
+    assert.match(report, /\| false_refusal_rate \| 100\.0% \| evaluated \| 1\/1 \|/)
+  } finally {
+    await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()))
+  }
+})
+
+test("false refusal remains not applicable when the suite has no answerable rows", async () => {
+  const paths = artifactPaths("false-refusal-not-applicable")
+  const datasetPath = path.join(paths.dir, "dataset.jsonl")
+  writeFileSync(datasetPath, `${JSON.stringify({
+    id: "unanswerable-refused-001",
+    question: "What is not present in the corpus?",
+    answerable: false,
+    expectedResponseType: "refusal"
+  })}\n`, "utf-8")
+
+  const server = createServer((_req, res) => {
+    res.setHeader("content-type", "application/json")
+    res.end(JSON.stringify({ json: {
+      id: "unanswerable-refused-001",
+      responseType: "refusal",
+      answer: "資料からは回答できません。",
+      isAnswerable: false,
+      citations: [],
+      retrieved: [],
+      debug: { ragProfile: defaultRagProfile(), totalLatencyMs: 10, steps: [] }
+    } }))
+  })
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve))
+  const address = server.address() as AddressInfo | null
+  assert.ok(address)
+
+  try {
+    const result = await runBenchmarkRunner({
+      API_BASE_URL: `http://127.0.0.1:${address.port}`,
+      DATASET: datasetPath,
+      OUTPUT: paths.output,
+      SUMMARY: paths.summary,
+      REPORT: paths.report
+    })
+
+    assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`)
+    const summary = readSummary(paths.summary)
+    assert.equal(summary.metrics?.falseRefusalRate, null)
+    assert.match(
+      readFileSync(paths.report, "utf-8"),
+      /\| false_refusal_rate \| not_applicable \| not_applicable \| 0 denominator \|/
+    )
   } finally {
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()))
   }
@@ -747,9 +800,15 @@ test("benchmark runner executes conversation rows in turn order and passes histo
     assert.equal(summary.turnDependencyMetrics?.coreference?.total, 2)
     assert.equal(summary.turnDependencyMetrics?.coreference?.refusalPrecision, 1)
     assert.equal(summary.turnDependencyMetrics?.coreference?.refusalRecall, 1)
+    assert.equal(summary.turnDependencyMetrics?.coreference?.falseRefusalRate, 0)
     const report = readFileSync(paths.report, "utf-8")
     assert.match(report, /Turn Dependency Metrics/)
     assert.match(report, /refusal_precision/)
+    assert.match(report, /false_refusal_rate/)
+    const turnDependencyTable = report.split("## Turn Dependency Metrics")[1]?.split("## ")[0] ?? ""
+    const turnDependencyLines = turnDependencyTable.split("\n").filter((line) => line.startsWith("|"))
+    assert.ok(turnDependencyLines.length >= 3)
+    assert.ok(turnDependencyLines.every((line) => line.split("|").length === turnDependencyLines[0]?.split("|").length))
   } finally {
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()))
   }

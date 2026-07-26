@@ -2,7 +2,8 @@ import type { AppUser } from "../../../auth.js"
 import type { Dependencies } from "../../../dependencies.js"
 import { DocumentPermissionService } from "../../../documents/document-permission-service.js"
 import type { ResourcePermissionDecisionReasonCode } from "../../../security/resource-permission-decision.js"
-import type { DocumentManifest, RetrievedVector } from "../../../types.js"
+import type { DocumentManifest, RetrievedVector, SearchScope, SessionDocumentContext } from "../../../types.js"
+import { temporaryScopeIds } from "./session-local-evidence-scope.js"
 import { isQualityApprovedForNormalRag } from "../policies/quality-policy.js"
 import { createPublicationPointerSnapshot, isManifestCurrentPublication } from "../publication/staged-publication-coordinator.js"
 import { loadChunksForManifest } from "../storage/manifest-chunks.js"
@@ -29,6 +30,8 @@ export async function reauthorizeCurrentEvidence(input: {
   user: AppUser
   chunks: RetrievedVector[]
   purpose: RagUsePurpose
+  scope?: SearchScope
+  conversationId?: string
   now?: Date
 }): Promise<CurrentEvidenceReauthorizationResult> {
   const manifestCache = new Map<string, DocumentManifest | undefined>()
@@ -39,6 +42,11 @@ export async function reauthorizeCurrentEvidence(input: {
   }>()
   const documentPermissions = new DocumentPermissionService(input.deps)
   const publicationSnapshot = createPublicationPointerSnapshot()
+  const sessionContext = input.conversationId && input.user.tenantId
+    ? input.deps.conversationHistoryStore
+      .get(sessionOwnerKey(input.user.tenantId, input.user.userId), input.conversationId)
+      .then((history) => history?.sessionDocumentContext)
+    : Promise.resolve(undefined)
   const eligible: RetrievedVector[] = []
   const denied: CurrentEvidenceReauthorizationResult["denied"] = []
 
@@ -50,6 +58,19 @@ export async function reauthorizeCurrentEvidence(input: {
       manifestCache.set(documentId, manifest)
     }
     if (!manifest) {
+      denied.push({ key: chunk.key, documentId, reason: "lifecycle_inactive" })
+      continue
+    }
+    if (!manifestMatchesCurrentSessionScope(manifest, input.user, input.scope, input.now ?? new Date())) {
+      denied.push({ key: chunk.key, documentId, reason: "lifecycle_inactive" })
+      continue
+    }
+    if (!sessionContextAuthorizesTemporaryManifest(
+      await sessionContext,
+      input.conversationId,
+      manifest,
+      input.now ?? new Date()
+    )) {
       denied.push({ key: chunk.key, documentId, reason: "lifecycle_inactive" })
       continue
     }
@@ -100,6 +121,47 @@ export async function reauthorizeCurrentEvidence(input: {
     })
   }
   return { eligible, denied }
+}
+
+export function manifestMatchesCurrentSessionScope(manifest: DocumentManifest, user: AppUser, scope: SearchScope | undefined, now: Date): boolean {
+  const metadata = manifest.metadata ?? {}
+  if (typeof metadata.scopeType !== "string" || metadata.scopeType !== "chat") return true
+  const tenantId = manifest.admission?.tenantId ?? (typeof metadata.tenantId === "string" ? metadata.tenantId : undefined)
+  const ownerUserId = manifest.admission?.ownerUserId ?? (typeof metadata.ownerUserId === "string" ? metadata.ownerUserId : undefined)
+  const temporaryScopeId = typeof metadata.temporaryScopeId === "string" ? metadata.temporaryScopeId : undefined
+  const expiresAt = typeof metadata.expiresAt === "string" ? metadata.expiresAt : undefined
+  return Boolean(
+    tenantId
+    && tenantId === user.tenantId
+    && ownerUserId === user.userId
+    && temporaryScopeId
+    && temporaryScopeIds(scope).includes(temporaryScopeId)
+    && expiresAt
+    && Date.parse(expiresAt) > now.getTime()
+  )
+}
+
+export function sessionContextAuthorizesTemporaryManifest(
+  context: SessionDocumentContext | undefined,
+  conversationId: string | undefined,
+  manifest: DocumentManifest,
+  now: Date
+): boolean {
+  const metadata = manifest.metadata ?? {}
+  if (metadata.scopeType !== "chat") return true
+  if (!context || !conversationId || context.sessionId !== conversationId) return false
+  const temporaryScopeId = typeof metadata.temporaryScopeId === "string" ? metadata.temporaryScopeId : undefined
+  if (!temporaryScopeId) return false
+  return context.temporaryEvidence.some((reference) =>
+    reference.status === "active"
+    && reference.documentId === manifest.documentId
+    && reference.temporaryScopeId === temporaryScopeId
+    && Date.parse(reference.expiresAt) > now.getTime()
+  )
+}
+
+function sessionOwnerKey(tenantId: string, userId: string): string {
+  return `tenant:${encodeURIComponent(tenantId)}:user:${encodeURIComponent(userId)}`
 }
 
 async function loadAuthoritativeChunkEnvelope(

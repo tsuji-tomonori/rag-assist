@@ -56,7 +56,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 453 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 463 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 | `500` | サーバー内部で処理エラーが発生しました。 | `application/json` | 2 field(s) |
@@ -520,6 +520,16 @@ Media type: `application/json`
 | `history[].toolInvocations[].approvedAt` | `string` | no | `response.history[].toolInvocations[].approvedAt` の値。項目名は approved at を表します。 | - |
 | `history[].toolInvocations[].startedAt` | `string` | no | 処理を開始した日時。 | - |
 | `history[].toolInvocations[].completedAt` | `string` | no | 処理が完了した日時。 | - |
+| `history[].sessionDocumentContext` | `object` | no | `response.history[].sessionDocumentContext` の値。項目名は session document context を表します。 | - |
+| `history[].sessionDocumentContext.schemaVersion` | `enum(1)` | no | `response.history[].sessionDocumentContext.schemaVersion` の値。項目名は schema version を表します。 | enum=1 |
+| `history[].sessionDocumentContext.sessionId` | `string` | yes | `response.history[].sessionDocumentContext.sessionId` の値。項目名は session id を表します。 | minLength=1<br>maxLength=200 |
+| `history[].sessionDocumentContext.temporaryEvidence` | `array<object>` | yes | `response.history[].sessionDocumentContext.temporaryEvidence` の値。項目名は temporary evidence を表します。 | maxItems=20 |
+| `history[].sessionDocumentContext.temporaryEvidence[].temporaryScopeId` | `string` | yes | `response.history[].sessionDocumentContext.temporaryEvidence[].temporaryScopeId` の値。項目名は temporary scope id を表します。 | minLength=1<br>maxLength=200 |
+| `history[].sessionDocumentContext.temporaryEvidence[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | minLength=1<br>maxLength=200 |
+| `history[].sessionDocumentContext.temporaryEvidence[].status` | `enum(active \| expired \| removed \| revoked)` | yes | 現在の処理状態または管理状態。 | enum=active, expired, removed, revoked |
+| `history[].sessionDocumentContext.temporaryEvidence[].expiresAt` | `string:date-time` | yes | URL または一時リソースの有効期限。 | - |
+| `history[].sessionDocumentContext.temporaryEvidence[].updatedAt` | `string:date-time` | yes | レコードを最後に更新した日時。 | - |
+| `history[].sessionDocumentContext.updatedAt` | `string:date-time` | yes | レコードを最後に更新した日時。 | - |
 
 ##### `401` 認証が必要です。
 

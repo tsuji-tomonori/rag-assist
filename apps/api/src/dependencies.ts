@@ -72,8 +72,14 @@ import {
   type AdministrativePrincipalTransferFencePort
 } from "./security/administrative-principal-transfer-fence.js"
 import { parseUsagePricingCatalog, type UsagePricingCatalog } from "./rag/_shared/usage/usage-pricing-catalog.js"
+import {
+  parseConfiguredRagGuardProfile,
+  type RagGuardProfile
+} from "./rag/_shared/security/safe-degradation-policy.js"
 
 export type Dependencies = {
+  /** Strictly parsed fail-closed guard configuration used by RAG runtime entry points. */
+  ragGuardProfile: RagGuardProfile
   objectStore: ObjectStore
   /** Benchmark evaluation artifacts live in the isolated benchmark bucket. */
   benchmarkArtifactStore?: ObjectStore
@@ -117,6 +123,7 @@ let cached: Dependencies | undefined
 
 export function createDependencies(): Dependencies {
   if (cached) return cached
+  const ragGuardProfile = parseConfiguredRagGuardProfile(config.ragGuardProfileJson)
   if (process.env.MEMORAG_ALLOW_LEGACY_LOCAL_STORE_FOR_TESTS === "true" && config.nodeEnv === "production") {
     throw new Error("MEMORAG_ALLOW_LEGACY_LOCAL_STORE_FOR_TESTS is not allowed in production")
   }
@@ -190,7 +197,7 @@ export function createDependencies(): Dependencies {
     : undefined
   const securityAuditOutbox = new ObjectStoreSecurityMutationAuditOutbox(objectStore)
 
-  cached = { objectStore, benchmarkArtifactStore, memoryVectorStore, evidenceVectorStore, textModel, usageEventStore, usageAccountingMode: config.usageAccountingMode, usagePricingCatalog, questionStore, conversationHistoryStore, favoriteStore, benchmarkRunStore, chatRunStore, chatRunEventStore, documentIngestRunStore, documentIngestRunEventStore, documentGroupStore, folderPolicyStore, userGroupStore, groupMembershipStore, codeBuildLogReader, asyncAgentProviders, userDirectory, verifiedIdentityProvider, accountRevocationRegistry, administrativePrincipalTransferFence, resourceUserPrincipalDirectory, securityAuditOutbox, securityAuditReconciliationOutbox: securityAuditOutbox }
+  cached = { ragGuardProfile, objectStore, benchmarkArtifactStore, memoryVectorStore, evidenceVectorStore, textModel, usageEventStore, usageAccountingMode: config.usageAccountingMode, usagePricingCatalog, questionStore, conversationHistoryStore, favoriteStore, benchmarkRunStore, chatRunStore, chatRunEventStore, documentIngestRunStore, documentIngestRunEventStore, documentGroupStore, folderPolicyStore, userGroupStore, groupMembershipStore, codeBuildLogReader, asyncAgentProviders, userDirectory, verifiedIdentityProvider, accountRevocationRegistry, administrativePrincipalTransferFence, resourceUserPrincipalDirectory, securityAuditOutbox, securityAuditReconciliationOutbox: securityAuditOutbox }
   return cached
 }
 

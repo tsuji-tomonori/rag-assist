@@ -33,12 +33,12 @@
 | 種類 | 機能要求 / security / lifecycle |
 | 依存関係 | `FR-056`, `FR-060`, `FR-066`, `FR-070` |
 | 衝突 | 旧 `FR-041` は永続共有と一時添付を一要求に含む |
-| 受け入れ基準 | `AC-FR067-001`, `AC-FR067-002` |
+| 受け入れ基準 | `AC-FR067-001`〜`AC-FR067-004` |
 | 優先度 | S |
 | 安定性 | High |
 | Confidence | inferred |
 | 所有者 | Product / Security |
-| 変更履歴 | 2026-07-11 初版 |
+| 変更履歴 | 2026-07-11 初版、2026-07-17 authoritative session context と回答前再認可を追加 |
 
 ## 受け入れ条件
 
@@ -54,12 +54,24 @@
 - When: queued run、retry、cache hit を含む検索を行う
 - Then: 現在条件で拒否し、cleanup 対象として追跡する
 
+### AC-FR067-003 authoritative scope normalization
+
+- Given: tenant+user+session に束縛された `sessionDocumentContext` が active/terminal な一時 evidence reference を保持する
+- When: `/chat`、`/chat-runs`、`/search` が通常 scope と一時 scope を正規化する
+- Then: active かつ current authorization を満たす最大20件だけを通常 scope へ合成し、client request だけでは一時 scope を追加または terminal state から復活できない
+
+### AC-FR067-004 answer/citation/trace boundary
+
+- Given: 検索開始後に一時 evidence の owner、tenant、session scope、expiry、document permission のいずれかが無効になる
+- When: 回答生成前または citation 確定前に current evidence を再認可する
+- Then: 対象 source document/chunk を回答と citation から除外し、十分な根拠が残らなければ回答不能とする。user-safe trace は件数と bounded reason code だけを記録し、tenant/user/session ID または権限外資源の存在を列挙しない
+
 ## 妥当性確認
 
 | 観点 | 結果 | メモ |
 | --- | --- | --- |
 | 必要性 | OK | 一時添付が別利用者、別会話、通常文書一覧、期限後の検索へ混入することを防ぐために必要 |
-| 十分性 | OK | owner、tenant、chat scope、expiry、一覧非表示、queued/cache 再確認を扱う |
+| 十分性 | OK | owner、tenant、chat scope、expiry、一覧非表示、authoritative normalization、queued/cache/answer 前再確認を扱う |
 | 理解容易性 | OK | 一時資源を利用できる主体・会話・期間と禁止対象を明示した |
 | 一貫性 | OK | tenant は `FR-060`、deny-first cleanup は `FR-066`、検索再認可は `FR-070` に委譲した |
 | 標準・契約適合 | OK | RAG ガイドの session separation、data minimization、expiry hard filter に適合する |
@@ -67,7 +79,7 @@
 | 検証可能性 | OK | owner×chat×tenant×expiry×queued run/cache の否定 matrix で確認できる |
 | ニーズ適合 | OK | 利用者が会話内だけで資料を安全に使い、永続共有へ意図せず残さない |
 | 原子性 | OK | temporary resource の境界を規定する |
-| 実装適合 | OK（confirmed） | temporary attachment は current tenant/owner/chat/expiry を search 前に強制し、expiry/owner suspension/stale-chat mismatch を source/chunk/memory/cache/queued-run の tenant-scoped cleanup ledger へ登録する direct tests を持つ |
+| 実装適合 | OK（confirmed） | temporary attachment は B1 context から scope を正規化し、current tenant/owner/chat/expiry を search と answer/citation 確定前に強制する。client-only scope、terminal/expired scope、cross-owner/session、multi-scope retrieval、bounded trace summary の direct tests を持つ |
 | 合意 | pending | expiry 値と legal retention は未確定 |
 
 ## トレース

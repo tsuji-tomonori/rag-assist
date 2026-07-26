@@ -304,7 +304,11 @@ export async function assertRagSafetyInterlock(input: {
   required?: boolean
   now?: string
 }): Promise<RagSafetyInterlockDecision | undefined> {
-  const required = input.required ?? process.env.RAG_MONITORING_REQUIRED === "1"
+  const configuredMonitoringRequired = process.env.RAG_MONITORING_REQUIRED
+  const required = input.required ?? configuredMonitoringRequired === "1"
+  const explicitlyDisabled = input.required === false
+    || (input.required === undefined && configuredMonitoringRequired === "0")
+  if (explicitlyDisabled) return
   const operation = input.operation ?? "chat"
   let state: RagSafetyState
   try {
@@ -321,7 +325,8 @@ export async function assertRagSafetyInterlock(input: {
   if (state.activeRuntimeProfileVersion !== input.runtimeProfileVersion) {
     throw new RagSafetyInterlockError("The requested RAG runtime is not the active monitored runtime.")
   }
-  if (state.quarantinedRuntimeProfileVersions.includes(input.runtimeProfileVersion)) {
+  const runtimeQuarantined = state.quarantinedRuntimeProfileVersions.includes(input.runtimeProfileVersion)
+  if (runtimeQuarantined && operation !== "ingest") {
     throw new RagSafetyInterlockError()
   }
   if ((operation === "chat" || operation === "search") && state.responseMode !== "normal") {
@@ -337,7 +342,7 @@ export async function assertRagSafetyInterlock(input: {
     operation,
     activeRuntimeProfileVersion: state.activeRuntimeProfileVersion,
     responseMode: state.responseMode,
-    documentQuarantineRequired: state.documentQuarantineRequired,
+    documentQuarantineRequired: state.documentQuarantineRequired || runtimeQuarantined,
     promotionFrozen: state.promotionFrozen
   }
 }

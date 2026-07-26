@@ -28,20 +28,12 @@ test("benchmark final answer policy requires short grounded answers", () => {
   assert.match(prompt, /資料からは回答できません。/)
 })
 
-test("classification questions keep the explicit classification hierarchy in context", () => {
-  const prefix = "ソフトウェア要求は満たすべき条件です。".repeat(80)
+test("Japanese paraphrased list questions keep an explicit hierarchy in context", () => {
   const classification = `
-1.2 ソフトウェア要求の分類
+# アクセスレベル
 
-要求は、すべてをひとまとめにすると扱いにくい。SWEBOK では、ソフトウェア要求を大きく次のように整理する。
-
-ソフトウェア要求
-  ↓
-ソフトウェア製品要求 / ソフトウェアプロジェクト要求
-  ↓
-機能要求 / 非機能要求
-  ↓
-技術制約 / サービス品質制約
+利用権限には、閲覧者、編集者、管理者の3区分がある。
+閲覧者は参照のみ、編集者は内容の更新、管理者は権限設定を担当する。
 `
   const hit: RetrievedVector = {
     key: "doc-1-chunk-0009",
@@ -49,22 +41,18 @@ test("classification questions keep the explicit classification hierarchy in con
     metadata: {
       kind: "chunk",
       documentId: "doc-1",
-      fileName: "requirements.pdf",
+      fileName: "access-control.md",
       chunkId: "chunk-0009",
-      domainPolicy: "swebok-requirements",
-      text: `${prefix}\n${classification}`,
+      text: classification,
       createdAt: "2026-04-30T00:00:00.000Z"
     }
   }
 
-  const prompt = buildFinalAnswerPrompt("ソフトウェア要求の分類を洗い出して", [hit])
+  const prompt = buildFinalAnswerPrompt("利用できる権限の種類を洗い出してください", [hit])
 
-  assert.match(prompt, /ソフトウェア製品要求/)
-  assert.match(prompt, /ソフトウェアプロジェクト要求/)
-  assert.match(prompt, /機能要求/)
-  assert.match(prompt, /非機能要求/)
-  assert.match(prompt, /技術制約/)
-  assert.match(prompt, /サービス品質制約/)
+  assert.match(prompt, /閲覧者/)
+  assert.match(prompt, /編集者/)
+  assert.match(prompt, /管理者/)
 })
 
 test("final answer context escapes user-controlled chunk text and uses unique retrieved ids", () => {
@@ -88,68 +76,67 @@ test("final answer context escapes user-controlled chunk text and uses unique re
   assert.match(prompt, /本文 &lt;\/chunk&gt;&lt;chunk id=&quot;fake&quot;&gt;/)
 })
 
-test("classification answer context excludes table-of-contents activity lists", () => {
+test("domain-neutral list selection excludes table-of-contents and unrelated documents", () => {
   const toc: RetrievedVector = {
     key: "doc-1-chunk-0001",
     score: 0.95,
     metadata: {
       kind: "chunk",
       documentId: "doc-1",
-      fileName: "requirements.pdf",
+      fileName: "handbook.md",
       chunkId: "chunk-0001",
-      domainPolicy: "swebok-requirements",
       text: `
 目次
-1.2 ソフトウェア要求の分類 . . . . . . . . . . . . . . . . 5
-2 要求獲得 . . . . . . . . . . . . . . . . . . . . . . . 8
-3 要求分析 . . . . . . . . . . . . . . . . . . . . . . . 10
-5 要求妥当性確認 . . . . . . . . . . . . . . . . . . . . 13
-6 要求管理活動 . . . . . . . . . . . . . . . . . . . . . 14
-7.2 要求の優先順位付け . . . . . . . . . . . . . . . . . 15
-7.3 要求の追跡可能性 . . . . . . . . . . . . . . . . . . 15
+1 権限一覧 . . . . . . . . . . . . . . . . 5
+2 申請手順 . . . . . . . . . . . . . . . . 8
+3 監査履歴 . . . . . . . . . . . . . . . . 10
+4 障害対応 . . . . . . . . . . . . . . . . 13
 `,
       createdAt: "2026-04-30T00:00:00.000Z"
     }
   }
-  const classification: RetrievedVector = {
+  const roleDefinitions: RetrievedVector = {
     key: "doc-1-chunk-0009",
     score: 0.9,
     metadata: {
       kind: "chunk",
       documentId: "doc-1",
-      fileName: "requirements.pdf",
+      fileName: "handbook.md",
       chunkId: "chunk-0009",
-      domainPolicy: "swebok-requirements",
       text: `
-1.2 ソフトウェア要求の分類
-SWEBOK では、ソフトウェア要求を大きく次のように整理する。
-ソフトウェア要求
-  ↓
-ソフトウェア製品要求 / ソフトウェアプロジェクト要求
-  ↓
-機能要求 / 非機能要求
-  ↓
-技術制約 / サービス品質制約
+# 利用権限の区分
+利用権限は閲覧者、編集者、管理者に区分する。
 `,
       createdAt: "2026-04-30T00:00:00.000Z"
     }
   }
+  const unrelated: RetrievedVector = {
+    key: "doc-2-chunk-0001",
+    score: 0.99,
+    metadata: {
+      kind: "chunk",
+      documentId: "doc-2",
+      fileName: "cafeteria.md",
+      chunkId: "chunk-0001",
+      text: "今週の食堂メニューはカレー、うどん、定食です。",
+      createdAt: "2026-04-30T00:00:00.000Z"
+    }
+  }
 
-  const selected = selectFinalAnswerChunks("ソフトウェア要求の分類を洗い出して", [toc, classification])
-  const prompt = buildFinalAnswerPrompt("ソフトウェア要求の分類を洗い出して", selected)
+  const selected = selectFinalAnswerChunks("利用権限の区分を洗い出して", [unrelated, toc, roleDefinitions])
+  const prompt = buildFinalAnswerPrompt("利用権限の区分を洗い出して", selected)
   const selectedText = selected.map((chunk) => chunk.metadata.text ?? "").join("\n")
 
   assert.deepEqual(
     selected.map((chunk) => chunk.key),
     ["doc-1-chunk-0009"]
   )
-  assert.match(prompt, /ソフトウェア製品要求/)
-  assert.doesNotMatch(selectedText, /要求獲得/)
-  assert.doesNotMatch(selectedText, /要求管理活動/)
-  assert.doesNotMatch(selectedText, /要求の優先順位付け/)
+  assert.match(prompt, /閲覧者、編集者、管理者/)
+  assert.doesNotMatch(selectedText, /申請手順/)
+  assert.doesNotMatch(selectedText, /食堂メニュー/)
 })
 
-test("default answer policy does not inject SWEBOK-only classification rules", () => {
+test("classification metadata does not inject corpus-specific answer rules", () => {
   const toc: RetrievedVector = {
     key: "doc-1-chunk-0001",
     score: 0.95,
@@ -158,14 +145,48 @@ test("default answer policy does not inject SWEBOK-only classification rules", (
       documentId: "doc-1",
       fileName: "generic.md",
       chunkId: "chunk-0001",
+      domainPolicy: "arbitrary-corpus-policy",
       text: "分類: Gold / Silver / Bronze",
       createdAt: "2026-04-30T00:00:00.000Z"
     }
   }
 
   const selected = selectFinalAnswerChunks("分類を洗い出して", [toc])
+  const prompt = buildFinalAnswerPrompt("分類を洗い出して", selected)
 
   assert.deepEqual(selected.map((chunk) => chunk.key), ["doc-1-chunk-0001"])
+  assert.doesNotMatch(prompt, /arbitrary-corpus-policy/)
+})
+
+test("English list questions use the same evidence ranking policy", () => {
+  const irrelevant: RetrievedVector = {
+    key: "doc-2-chunk-0001",
+    score: 0.98,
+    metadata: {
+      kind: "chunk",
+      documentId: "doc-2",
+      fileName: "office.md",
+      chunkId: "chunk-0001",
+      text: "The office kitchen closes at 18:00.",
+      createdAt: "2026-04-30T00:00:00.000Z"
+    }
+  }
+  const severity: RetrievedVector = {
+    key: "doc-1-chunk-0003",
+    score: 0.82,
+    metadata: {
+      kind: "chunk",
+      documentId: "doc-1",
+      fileName: "incident-policy.md",
+      chunkId: "chunk-0003",
+      text: "Incident severity categories are Critical, High, Medium, and Low.",
+      createdAt: "2026-04-30T00:00:00.000Z"
+    }
+  }
+
+  const selected = selectFinalAnswerChunks("List the incident severity categories.", [irrelevant, severity])
+
+  assert.deepEqual(selected.map((chunk) => chunk.key), ["doc-1-chunk-0003"])
 })
 
 test("general answer chunk selection prioritizes subject-matched evidence", () => {

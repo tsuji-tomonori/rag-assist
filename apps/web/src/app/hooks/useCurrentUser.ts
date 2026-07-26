@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { getMe } from "../../features/admin/api/currentUserApi.js"
 import type { CurrentUser } from "../../shared/types/common.js"
-import type { AuthSession } from "../../authClient.js"
+import type { AuthSession } from "../../features/auth/api/authClient.js"
 
 export function useCurrentUser(authSession: AuthSession | null) {
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null)

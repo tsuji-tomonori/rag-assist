@@ -81,7 +81,10 @@ RAG workflow の debug trace、UI 非依存 benchmark 実行、評価 summary / 
 ### 評価 summary / report
 
 1. Benchmark Report Exporter は case results から summary metrics を計算する。
-2. answerable accuracy、unanswerable precision、retrieval recall、citation hit、faithfulness、latency を出す。
+2. answerable accuracy、unanswerable precision、false refusal rate、retrieval recall、citation hit、faithfulness、latency を出す。
+   - `falseRefusalRate` は answerable case のうち actual response type が refusal の割合とする。
+   - answerable case が0件なら `null` とし、0%またはpassへ変換しない。
+   - regression gate は evaluator profile に承認済み threshold が明示された場合だけ評価し、default profileへ未承認値を補わない。
 3. failure classification は検索不足、回答可否誤判定、引用不一致、支持不足、計算不可などに分ける。
 4. Markdown report は人間の調査用、JSON summary は CI や回帰検知用とする。
 

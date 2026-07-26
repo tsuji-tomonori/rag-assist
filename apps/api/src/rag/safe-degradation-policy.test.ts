@@ -8,6 +8,7 @@ import {
   classifyDegradationTrigger,
   measurePartialRuntimeRagGuards,
   measureRuntimeRagGuards,
+  parseConfiguredRagGuardProfile,
   safeDegradationDecision,
   type RagGuardProfile
 } from "./_shared/security/safe-degradation-policy.js"
@@ -15,6 +16,48 @@ import {
 test("FR-089 approved standard profile keeps every mandatory guard", () => {
   assert.doesNotThrow(() => assertSafeRagGuardProfile(STANDARD_RAG_GUARD_PROFILE))
   assert.equal(MANDATORY_RAG_GUARDS.every((guard) => STANDARD_RAG_GUARD_PROFILE.guards[guard]), true)
+})
+
+test("FR-089 configured profile parser accepts only the complete safe profile", () => {
+  const parsed = parseConfiguredRagGuardProfile(JSON.stringify(STANDARD_RAG_GUARD_PROFILE))
+  assert.deepEqual(parsed, STANDARD_RAG_GUARD_PROFILE)
+  assert.equal(Object.isFrozen(parsed), true)
+  assert.equal(Object.isFrozen(parsed.guards), true)
+})
+
+test("FR-089 configured profile parser fails closed for malformed or incomplete settings", () => {
+  const withoutCitation = structuredClone(STANDARD_RAG_GUARD_PROFILE) as Record<string, unknown> & {
+    guards: Record<string, unknown>
+  }
+  delete withoutCitation.guards.citation
+  const unknownGuard = structuredClone(STANDARD_RAG_GUARD_PROFILE) as Record<string, unknown> & {
+    guards: Record<string, unknown>
+  }
+  unknownGuard.guards.unapproved_guard = true
+  const unknownTopLevel = { ...STANDARD_RAG_GUARD_PROFILE, mode: "permissive" }
+  const unknownValue = structuredClone(STANDARD_RAG_GUARD_PROFILE) as Record<string, unknown> & {
+    guards: Record<string, unknown>
+  }
+  unknownValue.guards.grounding = "enabled"
+  const allOff = {
+    ...STANDARD_RAG_GUARD_PROFILE,
+    guards: Object.fromEntries(MANDATORY_RAG_GUARDS.map((guard) => [guard, false]))
+  }
+
+  const invalidSettings: readonly [string, string | undefined, RegExp][] = [
+    ["unset", undefined, /RAG_GUARD_PROFILE_JSON is required/],
+    ["blank", "  ", /RAG_GUARD_PROFILE_JSON is required/],
+    ["invalid JSON", "{", /must be valid JSON/],
+    ["partial", JSON.stringify(withoutCitation), /missing required keys: citation/],
+    ["unknown guard", JSON.stringify(unknownGuard), /unknown keys: unapproved_guard/],
+    ["unknown top-level key", JSON.stringify(unknownTopLevel), /unknown keys: mode/],
+    ["unknown guard value", JSON.stringify(unknownValue), /grounding must be a boolean/],
+    ["all guards disabled", JSON.stringify(allOff), /mandatory guards disabled/]
+  ]
+
+  for (const [label, raw, expected] of invalidSettings) {
+    assert.throws(() => parseConfiguredRagGuardProfile(raw), expected, label)
+  }
 })
 
 test("FR-089 any profile that disables one mandatory guard is rejected", () => {
