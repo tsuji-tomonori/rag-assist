@@ -23,6 +23,7 @@ type RoutePolicy = {
 }
 
 const operationMatrixSubset = new Map<string, { operationKey: string; resourceCondition: string }>([
+  ["POST /websocket/tickets", { operationKey: "realtime.connect", resourceCondition: "none" }],
   ["POST /chat", { operationKey: "chat.send", resourceCondition: "documentGroupRead" }],
   ["POST /chat-runs", { operationKey: "chat.run.start", resourceCondition: "documentGroupRead" }],
   ["GET /chat-runs/{runId}/events", { operationKey: "chat.run.events.read", resourceCondition: "ownedRun" }],
@@ -137,8 +138,18 @@ test("public allowlist, CORS, and preflight preserve the 14D middleware boundary
   assert.doesNotMatch(middlewareBlock, /["']\/debug-runs["']/, "debug routes must not be added to the public allowlist")
 
   const configSource = await readFile(path.resolve(process.cwd(), "src/config.ts"), "utf8")
-  assert.doesNotMatch(configSource, /CORS_ALLOWED_ORIGINS must not include \* in production/, "production config must temporarily allow wildcard CORS origins")
-  assert.match(configSource, /csvEnv\("CORS_ALLOWED_ORIGINS",\s*isProduction \? \[\] : \["\*"\]\)/, "production must still require explicit CORS origins")
+  assert.match(configSource, /parseCorsAllowedOrigins\(process\.env\.CORS_ALLOWED_ORIGINS/, "runtime CORS must use the shared origin contract")
+  assert.match(
+    configSource,
+    /requireSingleOrigin:\s*isProduction \|\| isProductionDeployment/,
+    "production runtime or deployment must require one exact origin"
+  )
+  assert.match(
+    configSource,
+    /allowWildcard:\s*!isProduction && !isProductionDeployment/,
+    "production runtime or deployment must reject wildcard origins"
+  )
+  assert.doesNotMatch(configSource, /csvEnv\("CORS_ALLOWED_ORIGINS"/, "runtime CORS must not retain an independent CSV contract")
 })
 
 test("protected API routes keep route-level checks or delegate audited mutations to the canonical service boundary", async () => {

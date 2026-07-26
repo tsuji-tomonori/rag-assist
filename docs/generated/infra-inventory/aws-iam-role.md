@@ -10,7 +10,7 @@
 
 用途概要: IAM role
 
-リソース数: 20
+リソース数: 22
 
 ## Logical ID 一覧
 
@@ -36,6 +36,8 @@
 | [S3Vectors Provider Fn Service Role](#s3vectors-provider-fn-service-role) | `S3VectorsProviderFnServiceRoleFEC97124` | S3Vectors Provider Fn Service Role (IAM role) |
 | [S3Vectors Providerframeworkon Event Service Role](#s3vectors-providerframeworkon-event-service-role) | `S3VectorsProviderframeworkonEventServiceRole5255E58B` | S3Vectors Providerframeworkon Event Service Role (IAM role) |
 | [Security Audit Reconciliation Function Service Role](#security-audit-reconciliation-function-service-role) | `SecurityAuditReconciliationFunctionServiceRoleF4787D99` | Security Audit Reconciliation Function Service Role (IAM role) |
+| [Web Socket Authorizer Function Service Role](#web-socket-authorizer-function-service-role) | `WebSocketAuthorizerFunctionServiceRole08D28BB9` | Web Socket Authorizer Function Service Role (IAM role) |
+| [Web Socket Connection Function Service Role](#web-socket-connection-function-service-role) | `WebSocketConnectionFunctionServiceRole9D6CD2B7` | Web Socket Connection Function Service Role (IAM role) |
 
 ## Logical ID 別設定
 
@@ -268,6 +270,30 @@ Logical ID: `S3VectorsProviderframeworkonEventServiceRole5255E58B`
 Logical ID: `SecurityAuditReconciliationFunctionServiceRoleF4787D99`
 
 用途推定: Security Audit Reconciliation Function Service Role (IAM role)
+
+| 設定項目 | 値 |
+| --- | --- |
+| `assumedBy` | [Service:lambda.amazonaws.com] |
+| `managedPolicyArns` | [Join:["",["arn:",{"Ref":"AWS::Partition"},":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]]] |
+| `inlinePolicyCount` | 0 |
+
+### Web Socket Authorizer Function Service Role
+
+Logical ID: `WebSocketAuthorizerFunctionServiceRole08D28BB9`
+
+用途推定: Web Socket Authorizer Function Service Role (IAM role)
+
+| 設定項目 | 値 |
+| --- | --- |
+| `assumedBy` | [Service:lambda.amazonaws.com] |
+| `managedPolicyArns` | [Join:["",["arn:",{"Ref":"AWS::Partition"},":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]]] |
+| `inlinePolicyCount` | 0 |
+
+### Web Socket Connection Function Service Role
+
+Logical ID: `WebSocketConnectionFunctionServiceRole9D6CD2B7`
+
+用途推定: Web Socket Connection Function Service Role (IAM role)
 
 | 設定項目 | 値 |
 | --- | --- |

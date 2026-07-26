@@ -106,3 +106,4 @@ Grounded internal-document QA API. Answers only from uploaded documents; otherwi
 | `POST` | `/resource-groups/{groupId}/move` | resource group の未対応 move を拒否する | [詳細](openapi/post-resource-groups-groupid-move.md) |
 | `POST` | `/resource-groups/{groupId}/share` | resource group の未対応 share を拒否する | [詳細](openapi/post-resource-groups-groupid-share.md) |
 | `POST` | `/search` | ハイブリッド検索を実行する | [詳細](openapi/post-search.md) |
+| `POST` | `/websocket/tickets` | WebSocket 接続 ticket を発行する | [詳細](openapi/post-websocket-tickets.md) |

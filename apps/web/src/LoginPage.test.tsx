@@ -16,6 +16,25 @@ function renderLoginPage(overrides: Partial<ComponentProps<typeof LoginPage>> = 
 }
 
 describe("LoginPage", () => {
+  it("uses Hosted UI as the only production sign-in action", async () => {
+    const onHostedUiLogin = vi.fn().mockResolvedValue(undefined)
+    renderLoginPage({ authUiMode: "hostedUi", onHostedUiLogin })
+
+    expect(screen.queryByPlaceholderText("メールアドレスを入力")).not.toBeInTheDocument()
+    expect(screen.queryByPlaceholderText("パスワードを入力")).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "アカウント作成" })).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole("button", { name: "Cognitoでサインイン" }))
+    expect(onHostedUiLogin).toHaveBeenCalledTimes(1)
+  })
+
+  it("fails closed when Hosted UI production config is unavailable", () => {
+    renderLoginPage({ authUiMode: "unavailable", externalError: "Hosted UI認証設定が未設定または不正です。" })
+
+    expect(screen.getByRole("alert")).toHaveTextContent("Hosted UI認証設定が未設定または不正です。")
+    expect(screen.getByRole("button", { name: "Cognitoでサインイン" })).toBeDisabled()
+    expect(screen.queryByPlaceholderText("パスワードを入力")).not.toBeInTheDocument()
+  })
+
   it("renders the login hero visual", () => {
     const { container } = renderLoginPage()
 

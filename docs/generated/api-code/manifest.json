@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "generator": "npm run docs:api-code",
   "sourceRoot": "apps/api/src",
-  "operationCount": 97,
+  "operationCount": 98,
   "documentsPerOperation": [
     "detail-design_gen.md",
     "if_gen.md",
@@ -1272,6 +1272,19 @@
       "projectedBranchCount": 1,
       "dataAccessCount": 45,
       "relatedTestCount": 9
+    },
+    {
+      "method": "POST",
+      "path": "/websocket/tickets",
+      "slug": "post-websocket-tickets",
+      "openApi": true,
+      "routeSource": "apps/api/src/routes/websocket-ticket-routes.ts:7 (POST /websocket/tickets)",
+      "handlerSource": "apps/api/src/routes/websocket-ticket-routes.ts:27 (POST /websocket/tickets handler)",
+      "functionCount": 5,
+      "branchCount": 10,
+      "projectedBranchCount": 6,
+      "dataAccessCount": 1,
+      "relatedTestCount": 2
     }
   ]
 }

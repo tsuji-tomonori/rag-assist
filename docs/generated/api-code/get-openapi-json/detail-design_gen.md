@@ -26,22 +26,22 @@ GET /openapi.json を処理する
 
 | # | 所属関数 | 種別 | 条件の意味 | 根拠式 | 実装位置 |
 | ---: | --- | --- | --- | --- | --- |
-| B001 | `enrichOpenApiDocument` | loop | entries の判定結果が真である | `Object.entries(api.components?.schemas ?? {})` | `apps/api/src/openapi-doc-quality.ts:677 (enrichOpenApiDocument)` |
-| B002 | `enrichOpenApiDocument` | loop | entries の判定結果が真である | `Object.entries(api.paths ?? {})` | `apps/api/src/openapi-doc-quality.ts:681 (enrichOpenApiDocument)` |
-| B003 | `enrichOpenApiDocument` | loop | entries の判定結果が真である | `Object.entries(pathItem)` | `apps/api/src/openapi-doc-quality.ts:682 (enrichOpenApiDocument)` |
-| B004 | `enrichOpenApiDocument` | if | is http method の判定結果が真ではない | `!isHttpMethod(method)` | `apps/api/src/openapi-doc-quality.ts:683 (enrichOpenApiDocument)` |
-| B005 | `enrichOpenApiDocument` | if | `docs` が存在し、真である | `docs` | `apps/api/src/openapi-doc-quality.ts:685 (enrichOpenApiDocument)` |
-| B006 | `enrichOpenApiDocument` | if | `lifecycle` が存在し、真である | `lifecycle` | `apps/api/src/openapi-doc-quality.ts:690 (enrichOpenApiDocument)` |
-| B007 | `enrichOpenApiDocument` | if | requires authorization の判定結果が真である | `requiresAuthorization(path)` | `apps/api/src/openapi-doc-quality.ts:691 (enrichOpenApiDocument)` |
-| B008 | `enrichOpenApiDocument` | loop | `operation.parameters` が `[]` の条件を満たす | `operation.parameters ?? []` | `apps/api/src/openapi-doc-quality.ts:697 (enrichOpenApiDocument)` |
-| B009 | `enrichOpenApiDocument` | 三項条件 | `parameter.description` が存在し、真である、かつ has japanese の判定結果が真である | `parameter.description && hasJapanese(parameter.description)` | `apps/api/src/openapi-doc-quality.ts:698 (enrichOpenApiDocument)` |
-| B010 | `enrichOpenApiDocument` | if | `parameter.schema` が存在し、真である | `parameter.schema` | `apps/api/src/openapi-doc-quality.ts:701 (enrichOpenApiDocument)` |
-| B011 | `enrichOpenApiDocument` | if | `operation.requestBody` が存在し、真である | `operation.requestBody` | `apps/api/src/openapi-doc-quality.ts:703 (enrichOpenApiDocument)` |
-| B012 | `enrichOpenApiDocument` | loop | values の判定結果が真である | `Object.values(operation.requestBody.content ?? {})` | `apps/api/src/openapi-doc-quality.ts:705 (enrichOpenApiDocument)` |
-| B013 | `enrichOpenApiDocument` | if | `media.schema` が存在し、真である | `media.schema` | `apps/api/src/openapi-doc-quality.ts:706 (enrichOpenApiDocument)` |
-| B014 | `enrichOpenApiDocument` | loop | entries の判定結果が真である | `Object.entries(operation.responses ?? {})` | `apps/api/src/openapi-doc-quality.ts:709 (enrichOpenApiDocument)` |
-| B015 | `enrichOpenApiDocument` | loop | values の判定結果が真である | `Object.values(response.content ?? {})` | `apps/api/src/openapi-doc-quality.ts:711 (enrichOpenApiDocument)` |
-| B016 | `enrichOpenApiDocument` | if | `media.schema` が存在し、真である | `media.schema` | `apps/api/src/openapi-doc-quality.ts:712 (enrichOpenApiDocument)` |
+| B001 | `enrichOpenApiDocument` | loop | entries の判定結果が真である | `Object.entries(api.components?.schemas ?? {})` | `apps/api/src/openapi-doc-quality.ts:681 (enrichOpenApiDocument)` |
+| B002 | `enrichOpenApiDocument` | loop | entries の判定結果が真である | `Object.entries(api.paths ?? {})` | `apps/api/src/openapi-doc-quality.ts:685 (enrichOpenApiDocument)` |
+| B003 | `enrichOpenApiDocument` | loop | entries の判定結果が真である | `Object.entries(pathItem)` | `apps/api/src/openapi-doc-quality.ts:686 (enrichOpenApiDocument)` |
+| B004 | `enrichOpenApiDocument` | if | is http method の判定結果が真ではない | `!isHttpMethod(method)` | `apps/api/src/openapi-doc-quality.ts:687 (enrichOpenApiDocument)` |
+| B005 | `enrichOpenApiDocument` | if | `docs` が存在し、真である | `docs` | `apps/api/src/openapi-doc-quality.ts:689 (enrichOpenApiDocument)` |
+| B006 | `enrichOpenApiDocument` | if | `lifecycle` が存在し、真である | `lifecycle` | `apps/api/src/openapi-doc-quality.ts:694 (enrichOpenApiDocument)` |
+| B007 | `enrichOpenApiDocument` | if | requires authorization の判定結果が真である | `requiresAuthorization(path)` | `apps/api/src/openapi-doc-quality.ts:695 (enrichOpenApiDocument)` |
+| B008 | `enrichOpenApiDocument` | loop | `operation.parameters` が `[]` の条件を満たす | `operation.parameters ?? []` | `apps/api/src/openapi-doc-quality.ts:701 (enrichOpenApiDocument)` |
+| B009 | `enrichOpenApiDocument` | 三項条件 | `parameter.description` が存在し、真である、かつ has japanese の判定結果が真である | `parameter.description && hasJapanese(parameter.description)` | `apps/api/src/openapi-doc-quality.ts:702 (enrichOpenApiDocument)` |
+| B010 | `enrichOpenApiDocument` | if | `parameter.schema` が存在し、真である | `parameter.schema` | `apps/api/src/openapi-doc-quality.ts:705 (enrichOpenApiDocument)` |
+| B011 | `enrichOpenApiDocument` | if | `operation.requestBody` が存在し、真である | `operation.requestBody` | `apps/api/src/openapi-doc-quality.ts:707 (enrichOpenApiDocument)` |
+| B012 | `enrichOpenApiDocument` | loop | values の判定結果が真である | `Object.values(operation.requestBody.content ?? {})` | `apps/api/src/openapi-doc-quality.ts:709 (enrichOpenApiDocument)` |
+| B013 | `enrichOpenApiDocument` | if | `media.schema` が存在し、真である | `media.schema` | `apps/api/src/openapi-doc-quality.ts:710 (enrichOpenApiDocument)` |
+| B014 | `enrichOpenApiDocument` | loop | entries の判定結果が真である | `Object.entries(operation.responses ?? {})` | `apps/api/src/openapi-doc-quality.ts:713 (enrichOpenApiDocument)` |
+| B015 | `enrichOpenApiDocument` | loop | values の判定結果が真である | `Object.values(response.content ?? {})` | `apps/api/src/openapi-doc-quality.ts:715 (enrichOpenApiDocument)` |
+| B016 | `enrichOpenApiDocument` | if | `media.schema` が存在し、真である | `media.schema` | `apps/api/src/openapi-doc-quality.ts:716 (enrichOpenApiDocument)` |
 
 ## 4. 到達する主要実装
 
@@ -50,15 +50,15 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 深さ | Symbol | 責務 | 実装位置 |
 | ---: | --- | --- | --- |
 | 0 | `GET /openapi.json handler` | GET /openapi.json の request を受け、検証・認可・service 呼び出し・HTTP 応答を調整する。 | `apps/api/src/app.ts:75 (GET /openapi.json handler)` |
-| 1 | `enrichOpenApiDocument` | enrich open api document の実装処理を担当する。 | `apps/api/src/openapi-doc-quality.ts:674 (enrichOpenApiDocument)` |
-| 2 | `cloneOpenApiDocument` | clone open api document の実装処理を担当する。 | `apps/api/src/openapi-doc-quality.ts:670 (cloneOpenApiDocument)` |
-| 2 | `applySchemaDescriptions` | apply schema descriptions の実装処理を担当する。 | `apps/api/src/openapi-doc-quality.ts:874 (applySchemaDescriptions)` |
-| 2 | `hasJapanese` | has japanese の実装処理を担当する。 | `apps/api/src/openapi-doc-quality.ts:999 (hasJapanese)` |
-| 2 | `isHttpMethod` | is http method の実装処理を担当する。 | `apps/api/src/openapi-doc-quality.ts:662 (isHttpMethod)` |
-| 2 | `operationKey` | operation key の実装処理を担当する。 | `apps/api/src/openapi-doc-quality.ts:666 (operationKey)` |
-| 2 | `requiresAuthorization` | requires authorization の実装処理を担当する。 | `apps/api/src/openapi-doc-quality.ts:976 (requiresAuthorization)` |
-| 2 | `authorizationHeaderParameter` | authorization header parameter の実装処理を担当する。 | `apps/api/src/openapi-doc-quality.ts:980 (authorizationHeaderParameter)` |
-| 2 | `parameterDescription` | parameter description の実装処理を担当する。 | `apps/api/src/openapi-doc-quality.ts:959 (parameterDescription)` |
+| 1 | `enrichOpenApiDocument` | enrich open api document の実装処理を担当する。 | `apps/api/src/openapi-doc-quality.ts:678 (enrichOpenApiDocument)` |
+| 2 | `cloneOpenApiDocument` | clone open api document の実装処理を担当する。 | `apps/api/src/openapi-doc-quality.ts:674 (cloneOpenApiDocument)` |
+| 2 | `applySchemaDescriptions` | apply schema descriptions の実装処理を担当する。 | `apps/api/src/openapi-doc-quality.ts:878 (applySchemaDescriptions)` |
+| 2 | `hasJapanese` | has japanese の実装処理を担当する。 | `apps/api/src/openapi-doc-quality.ts:1003 (hasJapanese)` |
+| 2 | `isHttpMethod` | is http method の実装処理を担当する。 | `apps/api/src/openapi-doc-quality.ts:666 (isHttpMethod)` |
+| 2 | `operationKey` | operation key の実装処理を担当する。 | `apps/api/src/openapi-doc-quality.ts:670 (operationKey)` |
+| 2 | `requiresAuthorization` | requires authorization の実装処理を担当する。 | `apps/api/src/openapi-doc-quality.ts:980 (requiresAuthorization)` |
+| 2 | `authorizationHeaderParameter` | authorization header parameter の実装処理を担当する。 | `apps/api/src/openapi-doc-quality.ts:984 (authorizationHeaderParameter)` |
+| 2 | `parameterDescription` | parameter description の実装処理を担当する。 | `apps/api/src/openapi-doc-quality.ts:963 (parameterDescription)` |
 
 ## 5. データ・外部境界
 
@@ -75,9 +75,9 @@ _静的に確定できる response / exception / event / log message はあり�
 | route request | GET /openapi.json is the runtime OpenAPI source of truth | `apps/api/src/openapi-runtime-source.test.ts:16 (GET /openapi.json is the runtime OpenAPI source of truth)` |
 | route request | OpenAPI quality gate validates lifecycle metadata and generated Markdown freshness | `apps/api/src/openapi-runtime-source.test.ts:40 (OpenAPI quality gate validates lifecycle metadata and generated Markdown freshness)` |
 | route request | representative oRPC contract routes stay mapped to runtime OpenAPI operations | `apps/api/src/openapi-runtime-source.test.ts:57 (representative oRPC contract routes stay mapped to runtime OpenAPI operations)` |
-| route request | document share update documents conflict response in OpenAPI | `apps/api/src/security/access-control-policy.test.ts:414 (document share update documents conflict response in OpenAPI)` |
-| route request | document deletion owns the required reason/version request body and read routes do not | `apps/api/src/security/access-control-policy.test.ts:423 (document deletion owns the required reason/version request body and read routes do not)` |
-| route request | resource-group membership routes require the mutate feature, target full authority, CAS, and minimal errors | `apps/api/src/security/access-control-policy.test.ts:435 (resource-group membership routes require the mutate feature, target full authority, CAS, and minimal errors)` |
+| route request | document share update documents conflict response in OpenAPI | `apps/api/src/security/access-control-policy.test.ts:425 (document share update documents conflict response in OpenAPI)` |
+| route request | document deletion owns the required reason/version request body and read routes do not | `apps/api/src/security/access-control-policy.test.ts:434 (document deletion owns the required reason/version request body and read routes do not)` |
+| route request | resource-group membership routes require the mutate feature, target full authority, CAS, and minimal errors | `apps/api/src/security/access-control-policy.test.ts:446 (resource-group membership routes require the mutate feature, target full authority, CAS, and minimal errors)` |
 
 ## 8. 解析上の注意
 

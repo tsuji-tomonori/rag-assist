@@ -15,6 +15,9 @@
       ],
       "rag-quality-control": [
         "./src/rag-quality-control.ts"
+      ],
+      "cors": [
+        "./src/cors.ts"
       ]
     }
   },
@@ -36,6 +39,11 @@
       "types": "./src/rag-quality-control.ts",
       "import": "./src/rag-quality-control.ts",
       "require": "./src/rag-quality-control.ts"
+    },
+    "./cors": {
+      "types": "./src/cors.ts",
+      "import": "./src/cors.ts",
+      "require": "./src/cors.ts"
     }
   },
   "scripts": {

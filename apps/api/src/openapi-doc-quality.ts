@@ -120,6 +120,10 @@ const operationDocs: Record<string, { summary: string; description: string }> = 
     summary: "ログインユーザー情報を取得する",
     description: "認証済みユーザーの ID、ロール、有効 permission を返します。"
   },
+  "POST /websocket/tickets": {
+    summary: "WebSocket 接続 ticket を発行する",
+    description: "認証済み user、tenant、session、token に紐付く 60 秒・single-use の接続 ticket を発行します。"
+  },
   "GET /agents/providers": {
     summary: "非同期エージェント provider 状態を取得する",
     description:

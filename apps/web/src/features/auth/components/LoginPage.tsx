@@ -1,10 +1,14 @@
 import { type FormEvent, useState } from "react"
 import type { AuthResult, AuthSession, NewPasswordRequiredChallenge, SignUpResult } from "../../../authClient.js"
 import { LoadingSpinner } from "../../../shared/components/LoadingSpinner.js"
+import type { AuthUiMode } from "../api/hostedUiAuth.js"
 import { LoginHeroGraphic } from "./LoginHeroGraphic.js"
 
 type LoginPageProps = {
+  authUiMode?: Exclude<AuthUiMode, "loading">
+  externalError?: string | null
   onLogin: (payload: { email: string; password: string; remember: boolean }) => Promise<AuthResult>
+  onHostedUiLogin?: () => Promise<void>
   onSignUp: (payload: { email: string; password: string }) => Promise<SignUpResult>
   onConfirmSignUp: (payload: { email: string; code: string }) => Promise<void>
   onCompleteNewPassword: (payload: {
@@ -57,7 +61,15 @@ function PasswordRequirementList({ password }: { password: string }) {
   )
 }
 
-export default function LoginPage({ onLogin, onSignUp, onConfirmSignUp, onCompleteNewPassword }: LoginPageProps) {
+export default function LoginPage({
+  authUiMode = "credentials",
+  externalError,
+  onLogin,
+  onHostedUiLogin,
+  onSignUp,
+  onConfirmSignUp,
+  onCompleteNewPassword
+}: LoginPageProps) {
   const [mode, setMode] = useState<LoginMode>("signIn")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -182,6 +194,19 @@ export default function LoginPage({ onLogin, onSignUp, onConfirmSignUp, onComple
     setNotice(null)
   }
 
+  async function submitHostedUiLogin() {
+    if (!onHostedUiLogin) return
+    setIsSubmitting(true)
+    setError(null)
+    try {
+      await onHostedUiLogin()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   const isChangingPassword = challenge !== null
   const isCurrentPasswordValid = isChangingPassword ? isPasswordPolicySatisfied(newPassword) : mode === "signUp" ? isPasswordPolicySatisfied(password) : true
   const title =
@@ -201,6 +226,32 @@ export default function LoginPage({ onLogin, onSignUp, onConfirmSignUp, onComple
         : mode === "confirmSignUp"
           ? "確認する"
           : "サインイン"
+
+  if (authUiMode !== "credentials") {
+    const hostedUiUnavailable = authUiMode === "unavailable"
+    const hostedUiError = error ?? externalError
+    return (
+      <div className="login-page">
+        <div className="login-hero" data-testid="login-hero" aria-hidden="true">
+          <LoginHeroGraphic />
+        </div>
+        <div className="login-panel">
+          <h1>社内QAチャットボット</h1>
+          <p>{hostedUiUnavailable ? "認証設定を確認してください" : "Cognito Hosted UIで安全にサインイン"}</p>
+          {hostedUiError ? <p id="login-error" className="login-error" role="alert">{hostedUiError}</p> : null}
+          <button
+            type="button"
+            className="hosted-ui-login-button"
+            disabled={hostedUiUnavailable || isSubmitting || !onHostedUiLogin}
+            onClick={() => void submitHostedUiLogin()}
+          >
+            {isSubmitting ? <LoadingSpinner className="button-spinner" /> : null}
+            <span>{isSubmitting ? "移動中" : "Cognitoでサインイン"}</span>
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="login-page">
