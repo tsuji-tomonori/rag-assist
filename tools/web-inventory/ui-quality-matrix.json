@@ -1,0 +1,232 @@
+{
+  "schemaVersion": 1,
+  "requirement": "SQ-016",
+  "axes": [
+    {
+      "id": "AC-SQ016-001",
+      "label": "viewport・zoom・reflow・content/function loss",
+      "automated": {
+        "required": true,
+        "owner": "Phase A audit / Phase B-C remediation",
+        "evidence": ["apps/web/e2e/visual-regression.spec.ts", "apps/web/e2e/cross-screen-audit.ts"]
+      },
+      "manual": {
+        "required": true,
+        "owner": "manual evidence task",
+        "task": "tasks/todo/20260714-issue-345-manual-a11y-evidence.md",
+        "evidence": []
+      }
+    },
+    {
+      "id": "AC-SQ016-002",
+      "label": "keyboard・focus order/visible/obscured・dialog recovery",
+      "automated": {
+        "required": true,
+        "owner": "Phase A audit / Phase B-C remediation",
+        "evidence": ["apps/web/e2e/visual-regression.spec.ts", "apps/web/e2e/cross-screen-audit.ts"]
+      },
+      "manual": {
+        "required": true,
+        "owner": "manual evidence task",
+        "task": "tasks/todo/20260714-issue-345-manual-a11y-evidence.md",
+        "evidence": []
+      }
+    },
+    {
+      "id": "AC-SQ016-003",
+      "label": "accessible name・role・state・value・live/error semantics",
+      "automated": {
+        "required": true,
+        "owner": "Phase A audit / Phase B-C remediation",
+        "evidence": ["apps/web/e2e/visual-regression.spec.ts", "apps/web/e2e/cross-screen-audit.ts"]
+      },
+      "manual": {
+        "required": true,
+        "owner": "manual evidence task",
+        "task": "tasks/todo/20260714-issue-345-manual-a11y-evidence.md",
+        "evidence": []
+      }
+    },
+    {
+      "id": "AC-SQ016-004",
+      "label": "text・non-text UI・focus indicator contrast・color independence",
+      "automated": {
+        "required": true,
+        "owner": "Phase A audit / Phase B-C remediation",
+        "evidence": ["apps/web/e2e/visual-regression.spec.ts"]
+      },
+      "manual": {
+        "required": true,
+        "owner": "manual evidence task",
+        "task": "tasks/todo/20260714-issue-345-manual-a11y-evidence.md",
+        "evidence": []
+      }
+    },
+    {
+      "id": "AC-SQ016-005",
+      "label": "24×24 minimum target・primary 44〜48px class target",
+      "automated": {
+        "required": true,
+        "owner": "Phase A candidate audit / Phase B-C remediation",
+        "evidence": ["apps/web/e2e/visual-regression.spec.ts", "apps/web/e2e/cross-screen-audit.ts"]
+      },
+      "manual": {
+        "required": true,
+        "owner": "manual evidence task",
+        "task": "tasks/todo/20260714-issue-345-manual-a11y-evidence.md",
+        "evidence": []
+      }
+    },
+    {
+      "id": "AC-SQ016-006",
+      "label": "reduced motion・orientation・safe area・virtual keyboard・fixed UI",
+      "automated": {
+        "required": true,
+        "owner": "Phase A candidate audit / Phase B-C remediation",
+        "evidence": ["apps/web/e2e/visual-regression.spec.ts", "apps/web/e2e/cross-screen-audit.ts"]
+      },
+      "manual": {
+        "required": true,
+        "owner": "manual evidence task",
+        "task": "tasks/todo/20260714-issue-345-manual-a11y-evidence.md",
+        "evidence": []
+      }
+    },
+    {
+      "id": "AC-SQ016-007",
+      "label": "long/many/zero/loading/error/permission/partial/stale state",
+      "automated": {
+        "required": true,
+        "owner": "Phase C feature batches",
+        "evidence": ["apps/web/e2e/visual-regression.spec.ts"]
+      },
+      "manual": {
+        "required": true,
+        "owner": "manual evidence task",
+        "task": "tasks/todo/20260714-issue-345-manual-a11y-evidence.md",
+        "evidence": []
+      }
+    },
+    {
+      "id": "AC-SQ016-008",
+      "label": "manual evidence required scope",
+      "automated": {
+        "required": false,
+        "owner": "not applicable",
+        "evidence": []
+      },
+      "manual": {
+        "required": true,
+        "owner": "manual evidence task",
+        "task": "tasks/todo/20260714-issue-345-manual-a11y-evidence.md",
+        "evidence": []
+      }
+    }
+  ],
+  "views": [
+    {
+      "view": "chat",
+      "criteria": {
+        "AC-SQ016-001": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "computed reflow baselineと実browser zoom evidence待ち" },
+        "AC-SQ016-002": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "focus candidate auditとkeyboard journey evidence待ち" },
+        "AC-SQ016-003": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "axe/name-state baselineとscreen reader evidence待ち" },
+        "AC-SQ016-004": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "computed/axe contrast baselineとmanual review待ち" },
+        "AC-SQ016-005": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "target candidateの例外分類とremediation待ち" },
+        "AC-SQ016-006": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "reduced-motion baselineとdevice evidence待ち" },
+        "AC-SQ016-007": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "content-state matrixのfeature evidence待ち" },
+        "AC-SQ016-008": { "automated": "not_applicable", "manual": "blocked", "overall": "blocked", "note": "manual required scopeは未実施" }
+      }
+    },
+    {
+      "view": "assignee",
+      "criteria": {
+        "AC-SQ016-001": { "automated": "fail", "manual": "blocked", "overall": "fail", "note": "CI baselineで768px時にsection.assignee-workspaceのroot overflow（scrollWidth 810 / clientWidth 768）を検出。実browser zoom evidenceは未実施" },
+        "AC-SQ016-002": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "focus candidate auditとkeyboard journey evidence待ち" },
+        "AC-SQ016-003": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "axe/name-state baselineとscreen reader evidence待ち" },
+        "AC-SQ016-004": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "computed/axe contrast baselineとmanual review待ち" },
+        "AC-SQ016-005": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "target candidateの例外分類とremediation待ち" },
+        "AC-SQ016-006": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "reduced-motion baselineとdevice evidence待ち" },
+        "AC-SQ016-007": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "content-state matrixのfeature evidence待ち" },
+        "AC-SQ016-008": { "automated": "not_applicable", "manual": "blocked", "overall": "blocked", "note": "manual required scopeは未実施" }
+      }
+    },
+    {
+      "view": "history",
+      "criteria": {
+        "AC-SQ016-001": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "computed reflow baselineと実browser zoom evidence待ち" },
+        "AC-SQ016-002": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "focus candidate auditとkeyboard journey evidence待ち" },
+        "AC-SQ016-003": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "axe/name-state baselineとscreen reader evidence待ち" },
+        "AC-SQ016-004": { "automated": "fail", "manual": "blocked", "overall": "fail", "note": "CIの1280px axe baselineでp要素のserious color-contrastを検出。manual reviewは未実施" },
+        "AC-SQ016-005": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "target candidateの例外分類とremediation待ち" },
+        "AC-SQ016-006": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "reduced-motion baselineとdevice evidence待ち" },
+        "AC-SQ016-007": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "content-state matrixのfeature evidence待ち" },
+        "AC-SQ016-008": { "automated": "not_applicable", "manual": "blocked", "overall": "blocked", "note": "manual required scopeは未実施" }
+      }
+    },
+    {
+      "view": "favorites",
+      "criteria": {
+        "AC-SQ016-001": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "computed reflow baselineと実browser zoom evidence待ち" },
+        "AC-SQ016-002": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "focus candidate auditとkeyboard journey evidence待ち" },
+        "AC-SQ016-003": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "axe/name-state baselineとscreen reader evidence待ち" },
+        "AC-SQ016-004": { "automated": "fail", "manual": "blocked", "overall": "fail", "note": "CIの1280px axe baselineでp要素のserious color-contrastを検出。manual reviewは未実施" },
+        "AC-SQ016-005": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "target candidateの例外分類とremediation待ち" },
+        "AC-SQ016-006": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "reduced-motion baselineとdevice evidence待ち" },
+        "AC-SQ016-007": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "content-state matrixのfeature evidence待ち" },
+        "AC-SQ016-008": { "automated": "not_applicable", "manual": "blocked", "overall": "blocked", "note": "manual required scopeは未実施" }
+      }
+    },
+    {
+      "view": "benchmark",
+      "criteria": {
+        "AC-SQ016-001": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "computed reflow baselineと実browser zoom evidence待ち" },
+        "AC-SQ016-002": { "automated": "fail", "manual": "blocked", "overall": "fail", "note": "CIの1280px axe baselineで.benchmark-table-wrapのserious scrollable-region-focusableを検出。manual keyboard journeyは未実施" },
+        "AC-SQ016-003": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "axe/name-state baselineとscreen reader evidence待ち" },
+        "AC-SQ016-004": { "automated": "fail", "manual": "blocked", "overall": "fail", "note": "CIの1280px axe baselineでbenchmark mode label 2件のserious color-contrastを検出。manual reviewは未実施" },
+        "AC-SQ016-005": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "target candidateの例外分類とremediation待ち" },
+        "AC-SQ016-006": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "reduced-motion baselineとdevice evidence待ち" },
+        "AC-SQ016-007": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "content-state matrixのfeature evidence待ち" },
+        "AC-SQ016-008": { "automated": "not_applicable", "manual": "blocked", "overall": "blocked", "note": "manual required scopeは未実施" }
+      }
+    },
+    {
+      "view": "admin",
+      "criteria": {
+        "AC-SQ016-001": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "computed reflow baselineと実browser zoom evidence待ち" },
+        "AC-SQ016-002": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "focus candidate auditとkeyboard journey evidence待ち" },
+        "AC-SQ016-003": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "axe/name-state baselineとscreen reader evidence待ち" },
+        "AC-SQ016-004": { "automated": "fail", "manual": "blocked", "overall": "fail", "note": "CIの1280px axe baselineで性能テストbutton内spanのserious color-contrastを検出。manual reviewは未実施" },
+        "AC-SQ016-005": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "target candidateの例外分類とremediation待ち" },
+        "AC-SQ016-006": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "reduced-motion baselineとdevice evidence待ち" },
+        "AC-SQ016-007": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "content-state matrixのfeature evidence待ち" },
+        "AC-SQ016-008": { "automated": "not_applicable", "manual": "blocked", "overall": "blocked", "note": "manual required scopeは未実施" }
+      }
+    },
+    {
+      "view": "documents",
+      "criteria": {
+        "AC-SQ016-001": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "computed reflow baselineと実browser zoom evidence待ち" },
+        "AC-SQ016-002": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "focus candidate auditとkeyboard journey evidence待ち" },
+        "AC-SQ016-003": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "axe/name-state baselineとscreen reader evidence待ち" },
+        "AC-SQ016-004": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "computed/axe contrast baselineとmanual review待ち" },
+        "AC-SQ016-005": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "target candidateの例外分類とremediation待ち" },
+        "AC-SQ016-006": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "reduced-motion baselineとdevice evidence待ち" },
+        "AC-SQ016-007": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "content-state matrixのfeature evidence待ち" },
+        "AC-SQ016-008": { "automated": "not_applicable", "manual": "blocked", "overall": "blocked", "note": "manual required scopeは未実施" }
+      }
+    },
+    {
+      "view": "profile",
+      "criteria": {
+        "AC-SQ016-001": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "computed reflow baselineと実browser zoom evidence待ち" },
+        "AC-SQ016-002": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "focus candidate auditとkeyboard journey evidence待ち" },
+        "AC-SQ016-003": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "axe/name-state baselineとscreen reader evidence待ち" },
+        "AC-SQ016-004": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "computed/axe contrast baselineとmanual review待ち" },
+        "AC-SQ016-005": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "target candidateの例外分類とremediation待ち" },
+        "AC-SQ016-006": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "reduced-motion baselineとdevice evidence待ち" },
+        "AC-SQ016-007": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "content-state matrixのfeature evidence待ち" },
+        "AC-SQ016-008": { "automated": "not_applicable", "manual": "blocked", "overall": "blocked", "note": "manual required scopeは未実施" }
+      }
+    }
+  ]
+}
