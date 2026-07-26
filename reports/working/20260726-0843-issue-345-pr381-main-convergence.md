@@ -59,6 +59,21 @@
 - local Chromium実行: browser実行環境をこのrunでは追加取得せず未実施。公開headのWeb UI Qualityを自動E2E evidenceとして確認する。
 - representative screen reader、実browser 200% / 400% zoom、touch / real-device、全画面のloading / empty / error / permission / retry等のmanual / state evidenceは未完了。
 
+### GitHub Actions
+
+- Web UI Quality run `30180222497`: success
+  - Required Chromium axe, mobile, and visual: success
+  - artifact `8625342163`
+  - digest `sha256:8353a51e6aba9d728f5bdbbc5c51ec56ab902018260add81711615be93e8ed58`
+  - scheduled Firefox / WebKitはPR runではskipped
+- Validate Semver Label run `30180222487`: success
+- MemoRAG CI run `30180222486`: failure
+  - Web lint / typecheck / trace / semantic / inventory / coverage、API / infra / benchmarkのlint / typecheck / docs / tests / build、CDK synthはsuccess
+  - Web coverage: statements 90.87%、branches 85.77%（gate達成）
+  - API coverage: statements 90.65%（gate達成）、branches 80.48%（目標85%を未達）
+  - API C1は既存task `tasks/todo/20260712-coverage-api-c1-recovery.md` の未完了事項で、UI Phase AへAPI変更を混ぜていない
+- PR #381本文、受け入れ条件comment `4993651815`、セルフレビューcomment `4993652363`、Issue #345 comment `5081132290` を更新。
+
 ## 指示へのfit
 
 - 新規UI PRを増やさず、既存root draftを最新mainへ収束する最小単位に限定した。
@@ -67,7 +82,7 @@
 
 ## 未対応・リスク・次の作業
 
-- 公開branch更新後のWeb UI Quality / MemoRAG CI / semver結果は確認前のため未完了。
+- Web UI Quality / semverは成功したが、MemoRAG CIは既存API branch coverage C1未達のためfailure。PR全体をgreen扱いしない。
 - #385は最新#381へ再統合するまでmerge blocker。
 - Phase A baselineのcomputed serious 1件、axe serious 5件、未分類candidate、`OQ-UI-002`は未解決。
 - 次の具体作業は、#381の最新head CIとコメント同期を完了した後、#385を最新#381へ非破壊再統合してPhase Bのremediation差分だけに収束すること。

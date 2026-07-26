@@ -29,7 +29,7 @@
   "blocked_items": [
     "Representative screen-reader and real-device evidence has no completed manual execution record",
     "Real-browser 200-percent and 400-percent zoom evidence is incomplete",
-    "The current pull request #381 head still requires GitHub Actions Web UI Quality and MemoRAG CI evidence",
+    "MemoRAG CI remains failed because existing API branch coverage is 80.48 percent against the 85 percent gate",
     "Draft pull request #385 is based on an obsolete pull request #381 head and remains non-mergeable"
   ],
   "validation": [
@@ -75,7 +75,21 @@
     {
       "command": "npm exec -w @memorag-mvp/web -- playwright test e2e/visual-regression.spec.ts e2e/keyboard-navigation.spec.ts e2e/screen-reader-semantics.spec.ts e2e/touch-navigation.spec.ts --project=chromium --list",
       "result": "pass",
-      "note": "26 tests in four files resolved; browser execution awaits latest-head GitHub Actions"
+      "note": "26 tests in four files resolved"
+    },
+    {
+      "command": "GitHub Actions Web UI Quality run 30180222497",
+      "result": "pass",
+      "note": "Required Chromium axe, mobile, and visual passed; artifact 8625342163 digest sha256:8353a51e6aba9d728f5bdbbc5c51ec56ab902018260add81711615be93e8ed58"
+    },
+    {
+      "command": "GitHub Actions MemoRAG CI run 30180222486",
+      "result": "fail",
+      "note": "Web, docs, tests, builds, and synth passed; existing API branch coverage 80.48 percent missed the 85 percent gate"
+    },
+    {
+      "command": "GitHub Actions Validate Semver Label run 30180222487",
+      "result": "pass"
     }
   ],
   "next_action": "Publish the non-rewriting convergence commit to pull request #381, update Japanese acceptance and self-review evidence, wait for latest-head CI, then reintegrate pull request #385",

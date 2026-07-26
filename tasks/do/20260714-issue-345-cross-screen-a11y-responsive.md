@@ -193,7 +193,7 @@
 - [x] current mainとの差分をPhase A matrix / audit / trace / task / reportと必要なlint設定に限定し、mainのcost / API / infra / API・infra生成文書を重複表示しない。
 - [x] `SQ-016`、`DES_UI_UX_001`、UI trace / matrixを一意な正本として維持し、Web生成物をgenerator / freshness checkで検証する。
 - [x] `git diff --check`、Web lint / typecheck / unit、trace / semantic test、対象Playwright解決、canonical / generated docs checkを最小十分に実行し、未実行・失敗を明記する。
-- [ ] draft PR #381本文・受け入れ条件・セルフレビューとIssue #345を更新し、#385再統合、既知UI defect、representative screen reader、実browser 200% / 400% zoom、touch / real-device、状態証跡、`OQ-UI-002`を未完了として残す。
+- [x] draft PR #381本文・受け入れ条件・セルフレビューとIssue #345を更新し、#385再統合、既知UI defect、representative screen reader、実browser 200% / 400% zoom、touch / real-device、状態証跡、`OQ-UI-002`を未完了として残す。
 
 ### 検証結果
 
@@ -203,6 +203,10 @@
 - `npm run lint`、Web typecheck、Web unit 61 files / 441 tests、canonical docs、API code 98 APIs / 588 documents、infra inventory、hidden Unicode、`git diff --check`がpass。
 - repositoryの `task docs:check` は実行環境に `task` がなく未実行。展開先7コマンドは個別実行し、OpenAPI通常scriptだけ `tsx` IPC socket作成をsandboxが `EPERM` で拒否した。同じentryを `node --import tsx src/validate-openapi-docs.ts` で実行してpassし、権限拡張は行っていない。
 - 対象Playwright 4 files / 26 testsは `--list` でChromium projectへ解決した。local実browserは未実行で、公開headのWeb UI Quality判定待ち。
+- public head `1b21de33` のWeb UI Quality run `30180222497` はrequired Chromium axe / mobile / visualがsuccess。artifact `8625342163`、digest `sha256:8353a51e6aba9d728f5bdbbc5c51ec56ab902018260add81711615be93e8ed58`。
+- MemoRAG CI run `30180222486` はWeb lint / typecheck / semantic trace / semantic UI / generated docs / Web coverage 90.87% / 85.77%、全build / synthがsuccess。既存API coverage C1 80.48%（目標85%）のみfailureのため、総合CIは未達として維持する。
+- Validate Semver Label run `30180222487` はsuccess。
+- PR #381本文、受け入れ条件comment `4993651815`、セルフレビューcomment `4993652363`、Issue #345 progress comment `5081132290` を最新結果へ同期した。
 
 ## 実行計画
 
