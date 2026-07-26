@@ -34,7 +34,7 @@
 | M019 | 例外 | `-` | `Document manifest tenant mismatch${key ? `: ${key}` : ""}` | `manifestTenantId` が存在しない、または偽である、かつ `options.allowMissingTenant` が存在しない、または偽である、または `manifestTenantId` が存在し、真である、かつ `manifestTenantId` が `normalizedTenantId` と異なる | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:111 (assertManifestTenant)` |
 | M020 | 例外 | `-` | Reindex migration active pointer is missing | `migration.activePointerKey` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:3659 (MemoRagService.currentReindexAuthorizationManifest)` |
 | M021 | 例外 | `-` | Reindex migration active pointer identity is invalid | `pointer.tenantId` が `tenantId` と異なる、または `typeof pointer.artifactId` が `"string"` と異なる、または `pointer.artifactId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:3665 (MemoRagService.currentReindexAuthorizationManifest)` |
-| M022 | 例外 | `-` | worker_tenant_missing | `tenantId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4797 (MemoRagService.assertCurrentWorkerAuthorization)` |
+| M022 | 例外 | `-` | worker_tenant_missing | `tenantId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4802 (MemoRagService.assertCurrentWorkerAuthorization)` |
 | M023 | 例外 | `-` | worker_identity_not_canonical | canonical の判定結果が真ではない、または canonical の判定結果が真ではない、または canonical の判定結果が真ではない | `apps/api/src/security/current-worker-authorization.ts:46 (CurrentWorkerAuthorization.assertAuthorized)` |
 | M024 | 例外 | `-` | authoritative_identity_unavailable | 例外を捕捉した場合 | `apps/api/src/security/current-worker-authorization.ts:53 (CurrentWorkerAuthorization.assertAuthorized)` |
 | M025 | 例外 | `-` | account_deleted | `identity` が存在しない、または偽である | `apps/api/src/security/current-worker-authorization.ts:55 (CurrentWorkerAuthorization.assertAuthorized)` |
@@ -43,9 +43,9 @@
 | M028 | 例外 | `-` | tenant_membership_revoked | `identity.tenantId` が `request.tenantId` と異なる | `apps/api/src/security/current-worker-authorization.ts:58 (CurrentWorkerAuthorization.assertAuthorized)` |
 | M029 | 例外 | `-` | role_permission_revoked | every の判定結果が真ではない | `apps/api/src/security/current-worker-authorization.ts:69 (CurrentWorkerAuthorization.assertAuthorized)` |
 | M030 | 例外 | `-` | resource_policy_revoked | `resourceAllowed` が存在しない、または偽である | `apps/api/src/security/current-worker-authorization.ts:78 (CurrentWorkerAuthorization.assertAuthorized)` |
-| M031 | 例外 | `-` | authoritative_identity_provider_missing | `config.authEnabled` が存在し、真である | `apps/api/src/rag/memorag-service.ts:4806 (MemoRagService.assertCurrentWorkerAuthorization)` |
-| M032 | 例外 | `-` | local_fixture_permission_missing | `config.nodeEnv` が `"test"` と異なる、かつ every の判定結果が真ではない | `apps/api/src/rag/memorag-service.ts:4816 (MemoRagService.assertCurrentWorkerAuthorization)` |
-| M033 | 例外 | `-` | local_fixture_resource_policy_denied | `resourceAllowed` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4824 (MemoRagService.assertCurrentWorkerAuthorization)` |
+| M031 | 例外 | `-` | authoritative_identity_provider_missing | `config.authEnabled` が存在し、真である | `apps/api/src/rag/memorag-service.ts:4811 (MemoRagService.assertCurrentWorkerAuthorization)` |
+| M032 | 例外 | `-` | local_fixture_permission_missing | `config.nodeEnv` が `"test"` と異なる、かつ every の判定結果が真ではない | `apps/api/src/rag/memorag-service.ts:4821 (MemoRagService.assertCurrentWorkerAuthorization)` |
+| M033 | 例外 | `-` | local_fixture_resource_policy_denied | `resourceAllowed` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:4829 (MemoRagService.assertCurrentWorkerAuthorization)` |
 | M034 | 例外 | `-` | Publication run not found | `stored` が存在しない、または偽である | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:583 (StagedPublicationCoordinator.getRun)` |
 | M035 | 例外 | `-` | Active publication pointer not found | `pointer` が存在しない、または偽である | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1495 (StagedPublicationCoordinator.getActivePointer)` |
 | M036 | 例外 | `-` | `Publication run is ${initial.status}` | `initial.status` が `"committed"` と異なる、かつ `initial.status` が `"rolling_back"` と異なる | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:486 (StagedPublicationCoordinator.rollback)` |

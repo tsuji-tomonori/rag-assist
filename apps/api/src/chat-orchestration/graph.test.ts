@@ -777,6 +777,16 @@ test("fixed workflow returns corpus-grounded clarification before answer generat
 
   assert.equal(result.responseType, "clarification")
   assert.equal(result.isAnswerable, false)
+  assert.deepEqual(result.firstTokenTiming, {
+    schemaVersion: 1,
+    unit: "ms",
+    clock: "node_performance",
+    origin: "chat_orchestration_ingress",
+    boundary: "answer_model_first_content_delta",
+    clientVisible: false,
+    status: "not_applicable",
+    reason: "non_answer_response"
+  })
   assert.equal(result.needsClarification, true)
   assert.match(result.answer, /どの申請種別の期限/)
   assert.ok((result.clarification?.options.length ?? 0) >= 2)
@@ -808,6 +818,9 @@ test("fixed workflow answers explicit scoped questions instead of clarifying fro
 
   assert.equal(result.responseType, "answer")
   assert.equal(result.isAnswerable, true)
+  assert.equal(result.firstTokenTiming?.status, "measured")
+  assert.equal(result.firstTokenTiming?.attemptOrdinal, 1)
+  assert.equal(result.debug?.firstTokenTiming?.latencyMs, result.firstTokenTiming?.latencyMs)
   assert.equal(result.needsClarification, false)
   assert.match(result.answer, /30日以内/)
   assert.ok(result.retrieved.length > 0)

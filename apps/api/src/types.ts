@@ -824,6 +824,19 @@ export type DebugStep = {
 
 export const DEBUG_TRACE_SCHEMA_VERSION = 1
 
+export type FirstTokenTimingEvidence = {
+  schemaVersion: 1
+  unit: "ms"
+  clock: "node_performance"
+  origin: "chat_orchestration_ingress"
+  boundary: "answer_model_first_content_delta"
+  clientVisible: false
+  status: "measured" | "not_applicable" | "unavailable"
+  latencyMs?: number
+  attemptOrdinal?: number
+  reason?: "non_answer_response" | "first_content_delta_not_observed"
+}
+
 export type DebugTrace = {
   schemaVersion: typeof DEBUG_TRACE_SCHEMA_VERSION
   runId: string
@@ -862,6 +875,7 @@ export type DebugTrace = {
   startedAt: string
   completedAt: string
   totalLatencyMs: number
+  firstTokenTiming?: FirstTokenTimingEvidence
   status: DebugStepStatus
   answerPreview: string
   isAnswerable: boolean
@@ -1172,6 +1186,7 @@ export type ChatResponsePayload = {
   citations: Citation[]
   retrieved: Citation[]
   finalEvidence?: Citation[]
+  firstTokenTiming?: FirstTokenTimingEvidence
   debug?: DebugTrace
 }
 
@@ -1280,9 +1295,23 @@ export type DocumentIngestRunEvent = {
   ttl?: number
 }
 
-export type BenchmarkRunStatus = "queued" | "running" | "succeeded" | "failed" | "cancelled"
+export type BenchmarkRunStatus = "queued" | "running" | "succeeded" | "failed" | "timed_out" | "cancelled"
 export type BenchmarkMode = "agent" | "search" | "load"
 export type BenchmarkRunner = "codebuild" | "lambda"
+export type BenchmarkArtifactKind = "results" | "summary" | "report" | "release_audit"
+export type BenchmarkArtifactStatus = "pending" | "available" | "generation_failed" | "upload_failed"
+
+export type BenchmarkArtifactIntegrity = {
+  schemaVersion: 1
+  status: "pending" | "complete" | "partial_failure" | "failed"
+  availableCount: number
+  failureCount: number
+  artifacts: Array<{
+    kind: BenchmarkArtifactKind
+    status: BenchmarkArtifactStatus
+    failureReason?: string
+  }>
+}
 
 export type BenchmarkRunMetrics = {
   total: number
@@ -1312,6 +1341,8 @@ export type BenchmarkRunMetrics = {
   retrievalRecallAtK?: number
   falseDenialRate?: number
   faithfulness?: number
+  contextRelevance?: number
+  contextRelevanceSampleCount?: number
   unsupportedClaimRate?: number
   unsupportedSentenceRate?: number
   unsupportedAnswerRate?: number
@@ -1350,6 +1381,10 @@ export type BenchmarkRunMetrics = {
   p95LatencyMs?: number
   p99LatencyMs?: number
   averageLatencyMs?: number
+  firstTokenP50Ms?: number
+  firstTokenP95Ms?: number
+  firstTokenP99Ms?: number
+  firstTokenSampleCount?: number
   errorRate?: number
   datasetVersion?: string
   workloadProfileVersion?: string
@@ -1442,6 +1477,8 @@ export type BenchmarkRun = {
   summaryS3Key?: string
   reportS3Key?: string
   resultsS3Key?: string
+  releaseAuditS3Key?: string
+  artifactIntegrity?: BenchmarkArtifactIntegrity
   metrics?: BenchmarkRunMetrics
   error?: string
   errorCode?: WorkerErrorCode

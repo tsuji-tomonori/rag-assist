@@ -12,7 +12,7 @@ import { sanitizeProviderText, type AsyncAgentProviderArtifact, type AsyncAgentP
 import { debugTraceObjectKey, runChatOrchestration } from "./orchestration/chat-rag-orchestrator.js"
 import { llmOptions, normalizeMaxIterations, normalizeMemoryTopK, normalizeMinScore, normalizeSearchTopK, normalizeTopK, ragRuntimePolicy } from "../chat-orchestration/runtime-policy.js"
 import type { ChatInput, ChatOrchestrationResult } from "../chat-orchestration/types.js"
-import { DEBUG_TRACE_SANITIZE_POLICY_VERSION, DEBUG_TRACE_SCHEMA_VERSION, type AdminExportArtifact, type AgentProviderAvailability, type AgentProviderSetting, type AgentRuntimeProvider, type AsyncAgentRun, type AccessRoleDefinition, type AliasAuditLogItem, type AliasAuditLogPage, type AliasDefinition, type AliasListPage, type AuthoritativeAdmissionContext, type BenchmarkMode, type BenchmarkRun, type BenchmarkRunner, type BenchmarkRunThresholds, type BenchmarkSuite, type ChatRun, type ChatToolInvocation, type Chunk, type ConversationHistoryItem, type CostAuditSummary, type DebugReplayPlan, type DebugTrace, type DocumentGroup, type DocumentIngestRun, type DocumentManifest, type DocumentManifestSummary, type ExtractionWarning, type FavoriteItem, type FavoriteListItem, type FavoriteTargetType, type HumanQuestion, type IngestAdmissionContext, type JsonValue, type ManagedUser, type ManagedUserAdminView, type ManagedUserAuditAction, type ManagedUserAuditLogEntry, type ManagedUserAuditLogPage, type ManagedUserDeletionPreflight, type ManagedUserListPage, type MemoryCard, type ParsedDocumentPreview, type PublishedAliasArtifact, type QualityActionCard, type ReindexMigration, type StagedPublicationFence, type StructuredBlock, type UserUsageSummary, type VectorRecord } from "../types.js"
+import { DEBUG_TRACE_SANITIZE_POLICY_VERSION, DEBUG_TRACE_SCHEMA_VERSION, type AdminExportArtifact, type AgentProviderAvailability, type AgentProviderSetting, type AgentRuntimeProvider, type AsyncAgentRun, type AccessRoleDefinition, type AliasAuditLogItem, type AliasAuditLogPage, type AliasDefinition, type AliasListPage, type AuthoritativeAdmissionContext, type BenchmarkArtifactIntegrity, type BenchmarkMode, type BenchmarkRun, type BenchmarkRunner, type BenchmarkRunThresholds, type BenchmarkSuite, type ChatRun, type ChatToolInvocation, type Chunk, type ConversationHistoryItem, type CostAuditSummary, type DebugReplayPlan, type DebugTrace, type DocumentGroup, type DocumentIngestRun, type DocumentManifest, type DocumentManifestSummary, type ExtractionWarning, type FavoriteItem, type FavoriteListItem, type FavoriteTargetType, type HumanQuestion, type IngestAdmissionContext, type JsonValue, type ManagedUser, type ManagedUserAdminView, type ManagedUserAuditAction, type ManagedUserAuditLogEntry, type ManagedUserAuditLogPage, type ManagedUserDeletionPreflight, type ManagedUserListPage, type MemoryCard, type ParsedDocumentPreview, type PublishedAliasArtifact, type QualityActionCard, type ReindexMigration, type StagedPublicationFence, type StructuredBlock, type UserUsageSummary, type VectorRecord } from "../types.js"
 import type { ReplayDecisionReasonCode } from "../types.js"
 import type { AppUser } from "../auth.js"
 import type { CreatedDirectoryUser } from "../adapters/user-directory.js"
@@ -4598,7 +4598,8 @@ export class MemoRagService {
       thresholds: input.thresholds,
       summaryS3Key: `${outputPrefix}/summary.json`,
       reportS3Key: `${outputPrefix}/report.md`,
-      resultsS3Key: `${outputPrefix}/results.jsonl`
+      resultsS3Key: `${outputPrefix}/results.jsonl`,
+      releaseAuditS3Key: `${outputPrefix}/release-audit.json`
     }
 
     await this.deps.benchmarkRunStore.create(run)
@@ -4617,7 +4618,8 @@ export class MemoRagService {
         status: "failed",
         completedAt: new Date().toISOString(),
         error: permissionRevoked ? "permission_revoked" : err instanceof Error ? err.message : String(err),
-        errorCode: permissionRevoked ? "permission_revoked" : "execution_error"
+        errorCode: permissionRevoked ? "permission_revoked" : "execution_error",
+        artifactIntegrity: failedBenchmarkArtifactIntegrity(permissionRevoked ? "permission_revoked" : "execution_start_failed")
       })
       if (permissionRevoked) return failed
       throw err
@@ -4726,6 +4728,7 @@ export class MemoRagService {
     const tenantId = authoritativeActorTenantId(actor)
     const run = await this.deps.benchmarkRunStore.get(tenantId, runId)
     if (!run) return undefined
+    if (run.status !== "queued" && run.status !== "running") return run
     if (run.executionArn) {
       const states = new SFNClient({ region: config.region })
       await states.send(new StopExecutionCommand({
@@ -4750,9 +4753,11 @@ export class MemoRagService {
         objectKey: run.codeBuildBuildId ?? run.runId
       }
     }
-    if (!config.benchmarkBucketName) throw new Error("BENCHMARK_BUCKET_NAME is not configured")
     const objectKey = artifact === "summary" ? run.summaryS3Key : artifact === "results" ? run.resultsS3Key : run.reportS3Key
     if (!objectKey) return undefined
+    const artifactState = run.artifactIntegrity?.artifacts.find((item) => item.kind === artifact)
+    if (artifactState ? artifactState.status !== "available" : run.status !== "succeeded") return undefined
+    if (!config.benchmarkBucketName) throw new Error("BENCHMARK_BUCKET_NAME is not configured")
 
     const expiresInSeconds = Math.max(60, config.benchmarkDownloadExpiresInSeconds)
     const s3 = new S3Client({ region: config.region })
@@ -5259,6 +5264,20 @@ function chunkPageRange(chunks: Chunk[]): Pick<MemoryCard, "pageStart" | "pageEn
 
 function benchmarkRunArtifactPrefix(run: Pick<BenchmarkRun, "tenantId" | "runId">): string {
   return `runs/${tenantPartitionId(run.tenantId)}/${run.runId}/`
+}
+
+function failedBenchmarkArtifactIntegrity(failureReason: string): BenchmarkArtifactIntegrity {
+  return {
+    schemaVersion: 1,
+    status: "failed",
+    availableCount: 0,
+    failureCount: 4,
+    artifacts: (["results", "summary", "report", "release_audit"] as const).map((kind) => ({
+      kind,
+      status: "generation_failed",
+      failureReason
+    }))
+  }
 }
 
 function benchmarkEvaluationArtifactTargets(run: BenchmarkRun): RevocationCleanupTargetReference[] {

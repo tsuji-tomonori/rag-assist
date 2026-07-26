@@ -8,10 +8,10 @@
 
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
-| 到達 symbol | service merges Cognito directory users with existing ledger users by email | `apps/api/src/rag/memorag-service.test.ts:2972 (service merges Cognito directory users with existing ledger users by email)` |
-| 到達 symbol | concurrent managed-user projection writes fail closed instead of overwriting a sibling mutation | `apps/api/src/rag/memorag-service.test.ts:3121 (concurrent managed-user projection writes fail closed instead of overwriting a sibling mutation)` |
-| 到達 symbol | managed-user ledgers and audit queries are tenant partitioned | `apps/api/src/rag/memorag-service.test.ts:3179 (managed-user ledgers and audit queries are tenant partitioned)` |
-| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:3469 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
+| 到達 symbol | service merges Cognito directory users with existing ledger users by email | `apps/api/src/rag/memorag-service.test.ts:2974 (service merges Cognito directory users with existing ledger users by email)` |
+| 到達 symbol | concurrent managed-user projection writes fail closed instead of overwriting a sibling mutation | `apps/api/src/rag/memorag-service.test.ts:3123 (concurrent managed-user projection writes fail closed instead of overwriting a sibling mutation)` |
+| 到達 symbol | managed-user ledgers and audit queries are tenant partitioned | `apps/api/src/rag/memorag-service.test.ts:3181 (managed-user ledgers and audit queries are tenant partitioned)` |
+| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:3471 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
 | 到達 symbol | account create provisions Cognito identity and roles before committing the managed ledger and common audit | `apps/api/src/security/account-lifecycle-current-identity.test.ts:57 (account create provisions Cognito identity and roles before committing the managed ledger and common audit)` |
 | 到達 symbol | account create role failure removes the authoritative identity and records failed without a ledger success | `apps/api/src/security/account-lifecycle-current-identity.test.ts:75 (account create role failure removes the authoritative identity and records failed without a ledger success)` |
 | 到達 symbol | account create persists denied audit before rejecting a currently unauthorized actor | `apps/api/src/security/account-lifecycle-current-identity.test.ts:94 (account create persists denied audit before rejecting a currently unauthorized actor)` |

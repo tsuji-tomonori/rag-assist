@@ -8,7 +8,7 @@
 
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
-| 到達 symbol | FR-074 asynchronous document ingest success persists tenant-scoped replay evidence | `apps/api/src/rag/memorag-service.test.ts:2637 (FR-074 asynchronous document ingest success persists tenant-scoped replay evidence)` |
+| 到達 symbol | FR-074 asynchronous document ingest success persists tenant-scoped replay evidence | `apps/api/src/rag/memorag-service.test.ts:2639 (FR-074 asynchronous document ingest success persists tenant-scoped replay evidence)` |
 
 ## 2. 実装分岐から導くテスト要因
 

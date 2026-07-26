@@ -12,6 +12,7 @@
 ## 品質尺度
 
 - measure: claim-level faithfulness、unsupported claim rate、重大な捏造件数。
+- runner summary の `faithfulness` は answer support が評価した全回答文のうち支持された文の micro-rate とし、support evidence が0件なら `null` とする。
 - fail point/target: question type、severity、answerability 別に `OQ-RD-005` で決定する。
 
 ## 要求属性
@@ -26,12 +27,12 @@
 | 種類 | サービス品質制約 / generation |
 | 依存関係 | `FR-014`–`FR-016`, `FR-073`, `FR-075` |
 | 衝突 | 網羅性を上げる生成が unsupported claim を増やし得る |
-| 受け入れ基準 | `AC-SQ010-001`, `AC-SQ010-002` |
+| 受け入れ基準 | `AC-SQ010-001` から `AC-SQ010-003` |
 | 優先度 | S |
 | 安定性 | Medium |
 | Confidence | inferred |
 | 所有者 | RAG Quality / Business owner |
-| 変更履歴 | 2026-07-11 初版 |
+| 変更履歴 | 2026-07-11 初版 / 2026-07-17 runner summary と versioned case propagation を追加 |
 
 ## 受け入れ条件
 
@@ -47,6 +48,12 @@
 - When: promotion gate を評価する
 - Then: 全体平均で相殺せず、profile の重大度規則に従って不合格にする
 
+### AC-SQ010-003 artifact 伝播
+
+- Given: answer support の evaluated / unsupported claim count を持つ versioned case artifact がある
+- When: benchmark summary、run metrics、production observation を生成する
+- Then: 同じ分子・分母から faithfulness を伝播し、evidence 不足または未承認 threshold を合格へ変換しない
+
 ## 妥当性確認
 
 | 観点 | 結果 | メモ |
@@ -59,7 +66,7 @@
 | 実現可能性 | OK | claim/span annotation と evaluator で測定可能 |
 | 検証可能性 | OK | 支持・非支持 fixture で判定できる |
 | ニーズ適合 | OK | 利用者が根拠に反する回答を受けない |
-| 実装適合 | OK（measurement/gate contract、閾値未承認） | claim severity/support span/locator 由来の faithfulness/unsupported rate と critical/high unsupported claim zero-tolerance count を導出・独立 gate する focused tests が pass |
+| 実装適合 | OK（measurement/gate contract、閾値未承認） | runner の answer support count と versioned claim/span/locator evidence から faithfulness/unsupported rate を導出・伝播し、critical/high unsupported claim を独立 gate する focused tests が pass |
 
 ## トレース
 

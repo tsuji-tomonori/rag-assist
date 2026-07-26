@@ -721,11 +721,12 @@ test("keeps benchmark CodeBuild runner generic and fails when auth token resolut
   assert.ok(runExternalInvoke < runExternalGuard)
   assert.ok(runExternalGuard < runExternalResponseCheck)
   assert.ok(runExternalResponseCheck < runnerCommand)
-  assert.ok(buildSpec.phases.post_build.commands.includes("if [ ! -f \"$OUTPUT\" ]; then printf '' > \"$OUTPUT\"; fi"))
-  assert.ok(buildSpec.phases.post_build.commands.includes("if [ ! -f \"$SUMMARY\" ]; then printf '{\"total\":0,\"succeeded\":0,\"failedHttp\":0,\"metrics\":{\"errorRate\":1}}\\n' > \"$SUMMARY\"; fi"))
+  assert.equal(buildSpec.phases.post_build.commands.some((command: string) => command.includes("printf") && command.includes("$OUTPUT")), false)
+  assert.equal(buildSpec.phases.post_build.commands.some((command: string) => command.includes("printf") && command.includes("$SUMMARY")), false)
   assert.ok(buildSpec.phases.post_build.commands.includes("export RELEASE_AUDIT=./benchmark/.release-audit.json"))
-  assert.ok(buildSpec.phases.post_build.commands.includes("npm run release:audit -w @memorag-mvp/benchmark -- --summary \"$SUMMARY\" --source-root apps/api/src --source-root apps/web/src --output \"$RELEASE_AUDIT\" --report-only"))
-  assert.ok(buildSpec.phases.post_build.commands.includes("aws s3 cp \"$RELEASE_AUDIT\" \"$OUTPUT_S3_PREFIX/release-audit.json\""))
+  assert.ok(buildSpec.phases.post_build.commands.some((command: string) => command.includes("[ -f \"$SUMMARY\" ]") && command.includes("npm run release:audit")))
+  assert.ok(buildSpec.phases.post_build.commands.some((command: string) => command.includes("RELEASE_AUDIT_GENERATED") && command.includes("aws s3 cp") && command.includes("release-audit.json")))
+  assert.ok(buildSpec.phases.post_build.commands.includes("node infra/scripts/update-benchmark-run-artifacts.mjs"))
   assert.ok(buildSpec.phases.post_build.commands.includes("node infra/scripts/update-benchmark-run-metrics.mjs"))
   const durableCommitPayload = buildSpec.phases.post_build.commands.findIndex((command: string) => command.includes('boundary: "durable_commit"') && command.includes("benchmark-authorize-artifact"))
   const durableCommitInvoke = buildSpec.phases.post_build.commands.findIndex((command: string) => command.includes("aws lambda invoke") && command.includes("benchmark-authorize-artifact-durable-commit"))
@@ -740,15 +741,17 @@ test("keeps benchmark CodeBuild runner generic and fails when auth token resolut
   assert.ok(durableCommitGuard < durableCommitResponseCheck)
   assert.ok(artifactUploadIndexes.every((index) => durableCommitResponseCheck < index))
   for (const [label, uploadIndex] of ["results-artifact", "summary-artifact", "report-artifact", "release-audit-artifact"].map((label, index) => [label, artifactUploadIndexes[index]!] as const)) {
-    const authorizationIndex = buildSpec.phases.post_build.commands.indexOf(`node infra/scripts/authorize-benchmark-boundary.mjs durable_commit ${label}`)
-    assert.equal(authorizationIndex + 1, uploadIndex)
+    assert.ok(uploadIndex >= 0)
+    assert.ok(buildSpec.phases.post_build.commands[uploadIndex].includes(`authorize-benchmark-boundary.mjs durable_commit ${label}`))
   }
+  const integrityUpdateIndex = buildSpec.phases.post_build.commands.indexOf("node infra/scripts/update-benchmark-run-artifacts.mjs")
+  assert.equal(buildSpec.phases.post_build.commands.indexOf("node infra/scripts/authorize-benchmark-boundary.mjs durable_commit artifact-integrity-update") + 1, integrityUpdateIndex)
   const metricsUpdateIndex = buildSpec.phases.post_build.commands.indexOf("node infra/scripts/update-benchmark-run-metrics.mjs")
   assert.equal(
     buildSpec.phases.post_build.commands.indexOf("node infra/scripts/authorize-benchmark-boundary.mjs durable_commit metrics-update") + 1,
     metricsUpdateIndex
   )
-  assert.ok(buildSpec.phases.post_build.commands.indexOf("npm run release:audit -w @memorag-mvp/benchmark -- --summary \"$SUMMARY\" --source-root apps/api/src --source-root apps/web/src --output \"$RELEASE_AUDIT\" --report-only") < buildSpec.phases.post_build.commands.indexOf("node infra/scripts/update-benchmark-run-metrics.mjs"))
+  assert.ok(buildSpec.phases.post_build.commands.findIndex((command: string) => command.includes("npm run release:audit")) < buildSpec.phases.post_build.commands.indexOf("node infra/scripts/update-benchmark-run-metrics.mjs"))
   assert.ok(buildSpec.phases.build.commands.includes("npm run codebuild:run -w @memorag-mvp/benchmark"))
   assert.doesNotMatch(JSON.stringify(buildSpec), /standard-agent-v1|allganize-rag-evaluation-ja-v1|mtrag-v1|chatrag-bench-v1|mlit-pdf-figure-table-rag-seed-v1/)
   assert.equal(
@@ -871,10 +874,16 @@ test("provisions tenant query indexes and uses the physical benchmark run key in
   assert.equal(stateMachines.length, 1)
   const definition = collectStringFragments((stateMachines[0]?.[1] as any).Properties.DefinitionString)
   const physicalKey = '"Key":{"runId":{"S.$":"$.storageRunId"}}'
-  assert.equal(definition.split(physicalKey).length - 1, 3)
+  assert.equal(definition.split(physicalKey).length - 1, 4)
   assert.equal(definition.includes('"Key":{"runId":{"S.$":"$.runId"}}'), false)
   assert.match(definition, /"Name":"STORAGE_RUN_ID","Value\.\$":"\$\.storageRunId"/)
   assert.match(definition, /"Name":"TENANT_ID","Value\.\$":"\$\.tenantId"/)
+  assert.match(definition, /"TimeoutSeconds":14400/)
+  assert.match(definition, /"Resource":"arn:aws:states:::codebuild:startBuild\.sync","TimeoutSeconds":14400,"Parameters":/)
+  assert.match(definition, /timed_out/)
+  assert.match(definition, /artifactIntegrity/)
+  assert.match(definition, /#integrityStatus = :complete/)
+  assert.match(definition, /#status IN \(:queued, :running\)/)
 })
 
 test("matches the synthesized CloudFormation snapshot", () => {

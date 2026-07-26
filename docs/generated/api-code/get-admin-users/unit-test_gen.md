@@ -8,8 +8,8 @@
 
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
-| 到達 symbol | service lists all Cognito directory users in the managed user ledger | `apps/api/src/rag/memorag-service.test.ts:2910 (service lists all Cognito directory users in the managed user ledger)` |
-| 到達 symbol | legacy global managed-user ledger is copied once into the configured tenant partition without deleting the source | `apps/api/src/rag/memorag-service.test.ts:3153 (legacy global managed-user ledger is copied once into the configured tenant partition without deleting the source)` |
+| 到達 symbol | service lists all Cognito directory users in the managed user ledger | `apps/api/src/rag/memorag-service.test.ts:2912 (service lists all Cognito directory users in the managed user ledger)` |
+| 到達 symbol | legacy global managed-user ledger is copied once into the configured tenant partition without deleting the source | `apps/api/src/rag/memorag-service.test.ts:3155 (legacy global managed-user ledger is copied once into the configured tenant partition without deleting the source)` |
 
 ## 2. 実装分岐から導くテスト要因
 

@@ -11,12 +11,12 @@
 | 到達 symbol | FR-074 answer replay carries measured pre/post authorization candidate counts | `apps/api/src/chat-orchestration/graph.test.ts:105 (FR-074 answer replay carries measured pre/post authorization candidate counts)` |
 | 到達 symbol | service ingests text, lists manifests, persists debug traces, and deletes all document vectors | `apps/api/src/rag/memorag-service.test.ts:48 (service ingests text, lists manifests, persists debug traces, and deletes all document vectors)` |
 | 到達 symbol | service rejects empty uploads and missing documents | `apps/api/src/rag/memorag-service.test.ts:128 (service rejects empty uploads and missing documents)` |
-| 到達 symbol | FR-090 chat run treats an authorized final append as the last success boundary | `apps/api/src/rag/memorag-service.test.ts:2360 (FR-090 chat run treats an authorized final append as the last success boundary)` |
-| 到達 symbol | asynchronous chat run stores debug trace by reference | `apps/api/src/rag/memorag-service.test.ts:2599 (asynchronous chat run stores debug trace by reference)` |
-| 到達 symbol | FR-074 asynchronous document ingest success persists tenant-scoped replay evidence | `apps/api/src/rag/memorag-service.test.ts:2637 (FR-074 asynchronous document ingest success persists tenant-scoped replay evidence)` |
-| 到達 symbol | FR-074 rejected document ingest persists observed replay evidence without publishing success | `apps/api/src/rag/memorag-service.test.ts:2674 (FR-074 rejected document ingest persists observed replay evidence without publishing success)` |
-| 到達 symbol | FR-074 worker failure persists an unknown-null replay manifest and a redacted trace | `apps/api/src/rag/memorag-service.test.ts:2715 (FR-074 worker failure persists an unknown-null replay manifest and a redacted trace)` |
-| 到達 symbol | FR-074 cancelled document ingest persists replay evidence without accepting caller trace correlation | `apps/api/src/rag/memorag-service.test.ts:2750 (FR-074 cancelled document ingest persists replay evidence without accepting caller trace correlation)` |
+| 到達 symbol | FR-090 chat run treats an authorized final append as the last success boundary | `apps/api/src/rag/memorag-service.test.ts:2362 (FR-090 chat run treats an authorized final append as the last success boundary)` |
+| 到達 symbol | asynchronous chat run stores debug trace by reference | `apps/api/src/rag/memorag-service.test.ts:2601 (asynchronous chat run stores debug trace by reference)` |
+| 到達 symbol | FR-074 asynchronous document ingest success persists tenant-scoped replay evidence | `apps/api/src/rag/memorag-service.test.ts:2639 (FR-074 asynchronous document ingest success persists tenant-scoped replay evidence)` |
+| 到達 symbol | FR-074 rejected document ingest persists observed replay evidence without publishing success | `apps/api/src/rag/memorag-service.test.ts:2676 (FR-074 rejected document ingest persists observed replay evidence without publishing success)` |
+| 到達 symbol | FR-074 worker failure persists an unknown-null replay manifest and a redacted trace | `apps/api/src/rag/memorag-service.test.ts:2717 (FR-074 worker failure persists an unknown-null replay manifest and a redacted trace)` |
+| 到達 symbol | FR-074 cancelled document ingest persists replay evidence without accepting caller trace correlation | `apps/api/src/rag/memorag-service.test.ts:2752 (FR-074 cancelled document ingest persists replay evidence without accepting caller trace correlation)` |
 
 ## 2. 実装分岐から導くテスト要因
 

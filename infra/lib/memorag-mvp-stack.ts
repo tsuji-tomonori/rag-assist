@@ -47,7 +47,28 @@ const defaultBenchmarkSource = {
 } as const
 
 const benchmarkCodeBuildTimeout = Duration.hours(3)
+const benchmarkCodeBuildTaskTimeout = Duration.hours(4)
 const benchmarkStateMachineTimeout = Duration.hours(9)
+
+function failedBenchmarkArtifactIntegrityAttribute(failureReason: string): Record<string, unknown> {
+  return {
+    M: {
+      schemaVersion: { N: "1" },
+      status: { S: "failed" },
+      availableCount: { N: "0" },
+      failureCount: { N: "4" },
+      artifacts: {
+        L: ["results", "summary", "report", "release_audit"].map((kind) => ({
+          M: {
+            kind: { S: kind },
+            status: { S: "generation_failed" },
+            failureReason: { S: failureReason }
+          }
+        }))
+      }
+    }
+  }
+}
 
 export class MemoRagMvpStack extends Stack {
   constructor(scope: Construct, id: string, props?: MemoRagMvpStackProps) {
@@ -1196,23 +1217,19 @@ export class MemoRagMvpStack extends Stack {
             commands: [
               "set -euo pipefail",
               "cd \"$CODEBUILD_SRC_DIR\"",
-              "if [ ! -f \"$OUTPUT\" ]; then printf '' > \"$OUTPUT\"; fi",
-              "if [ ! -f \"$SUMMARY\" ]; then printf '{\"total\":0,\"succeeded\":0,\"failedHttp\":0,\"metrics\":{\"errorRate\":1}}\\n' > \"$SUMMARY\"; fi",
-              "if [ ! -f \"$REPORT\" ]; then printf '# Benchmark runner failed\\n\\nCodeBuild failed before benchmark artifacts were produced. See the CodeBuild log URL recorded on the benchmark run.\\n' > \"$REPORT\"; fi",
               "export RELEASE_AUDIT=./benchmark/.release-audit.json",
-              "npm run release:audit -w @memorag-mvp/benchmark -- --summary \"$SUMMARY\" --source-root apps/api/src --source-root apps/web/src --output \"$RELEASE_AUDIT\" --report-only",
+              "export RESULTS_ARTIFACT_STATUS=generation_failed SUMMARY_ARTIFACT_STATUS=generation_failed REPORT_ARTIFACT_STATUS=generation_failed RELEASE_AUDIT_ARTIFACT_STATUS=generation_failed RELEASE_AUDIT_GENERATED=0",
+              "if [ -f \"$SUMMARY\" ] && npm run release:audit -w @memorag-mvp/benchmark -- --summary \"$SUMMARY\" --source-root apps/api/src --source-root apps/web/src --output \"$RELEASE_AUDIT\" --report-only; then export RELEASE_AUDIT_GENERATED=1; fi",
               "node -e 'process.stdout.write(JSON.stringify({ tenantId: process.env.TENANT_ID, runId: process.env.RUN_ID, boundary: \"durable_commit\" }))' > /tmp/benchmark-authorize-artifact-durable-commit.json",
               "AUTHORIZATION_FUNCTION_ERROR=\"$(aws lambda invoke --function-name \"$BENCHMARK_AUTHORIZATION_FUNCTION_NAME\" --cli-binary-format raw-in-base64-out --payload fileb:///tmp/benchmark-authorize-artifact-durable-commit.json --query FunctionError --output text /tmp/benchmark-authorize-artifact-durable-commit-response.json)\"",
               "if [ \"$AUTHORIZATION_FUNCTION_ERROR\" != \"None\" ]; then exit 1; fi",
               "node -e 'const value = JSON.parse(require(\"node:fs\").readFileSync(\"/tmp/benchmark-authorize-artifact-durable-commit-response.json\", \"utf-8\")); if (value.authorized !== true || value.boundary !== \"durable_commit\" || value.runId !== process.env.RUN_ID || value.tenantId !== process.env.TENANT_ID) process.exit(1)'",
-              "node infra/scripts/authorize-benchmark-boundary.mjs durable_commit results-artifact",
-              "aws s3 cp \"$OUTPUT\" \"$OUTPUT_S3_PREFIX/results.jsonl\"",
-              "node infra/scripts/authorize-benchmark-boundary.mjs durable_commit summary-artifact",
-              "aws s3 cp \"$SUMMARY\" \"$OUTPUT_S3_PREFIX/summary.json\"",
-              "node infra/scripts/authorize-benchmark-boundary.mjs durable_commit report-artifact",
-              "aws s3 cp \"$REPORT\" \"$OUTPUT_S3_PREFIX/report.md\"",
-              "node infra/scripts/authorize-benchmark-boundary.mjs durable_commit release-audit-artifact",
-              "aws s3 cp \"$RELEASE_AUDIT\" \"$OUTPUT_S3_PREFIX/release-audit.json\"",
+              "if [ -f \"$OUTPUT\" ]; then node infra/scripts/authorize-benchmark-boundary.mjs durable_commit results-artifact; if aws s3 cp \"$OUTPUT\" \"$OUTPUT_S3_PREFIX/results.jsonl\"; then export RESULTS_ARTIFACT_STATUS=available; else export RESULTS_ARTIFACT_STATUS=upload_failed; fi; fi",
+              "if [ -f \"$SUMMARY\" ]; then node infra/scripts/authorize-benchmark-boundary.mjs durable_commit summary-artifact; if aws s3 cp \"$SUMMARY\" \"$OUTPUT_S3_PREFIX/summary.json\"; then export SUMMARY_ARTIFACT_STATUS=available; else export SUMMARY_ARTIFACT_STATUS=upload_failed; fi; fi",
+              "if [ -f \"$REPORT\" ]; then node infra/scripts/authorize-benchmark-boundary.mjs durable_commit report-artifact; if aws s3 cp \"$REPORT\" \"$OUTPUT_S3_PREFIX/report.md\"; then export REPORT_ARTIFACT_STATUS=available; else export REPORT_ARTIFACT_STATUS=upload_failed; fi; fi",
+              "if [ \"$RELEASE_AUDIT_GENERATED\" = \"1\" ] && [ -f \"$RELEASE_AUDIT\" ]; then node infra/scripts/authorize-benchmark-boundary.mjs durable_commit release-audit-artifact; if aws s3 cp \"$RELEASE_AUDIT\" \"$OUTPUT_S3_PREFIX/release-audit.json\"; then export RELEASE_AUDIT_ARTIFACT_STATUS=available; else export RELEASE_AUDIT_ARTIFACT_STATUS=upload_failed; fi; fi",
+              "node infra/scripts/authorize-benchmark-boundary.mjs durable_commit artifact-integrity-update",
+              "node infra/scripts/update-benchmark-run-artifacts.mjs",
               "node infra/scripts/authorize-benchmark-boundary.mjs durable_commit metrics-update",
               "node infra/scripts/update-benchmark-run-metrics.mjs"
             ]
@@ -1260,6 +1277,7 @@ export class MemoRagMvpStack extends Stack {
       stateJson: {
         Type: "Task",
         Resource: "arn:aws:states:::codebuild:startBuild.sync",
+        TimeoutSeconds: benchmarkCodeBuildTaskTimeout.toSeconds(),
         Parameters: {
           ProjectName: benchmarkProject.projectName,
           EnvironmentVariablesOverride: [
@@ -1288,12 +1306,13 @@ export class MemoRagMvpStack extends Stack {
         Parameters: {
           TableName: benchmarkRunsTable.tableName,
           Key: { runId: { "S.$": "$.storageRunId" } },
-          ConditionExpression: "#status = :running",
+          ConditionExpression: "#status = :running AND #artifactIntegrity.#integrityStatus = :complete",
           UpdateExpression: "SET #status = :status, completedAt = :completedAt, updatedAt = :completedAt, codeBuildBuildId = :codeBuildBuildId, summaryS3Key = :summaryS3Key, reportS3Key = :reportS3Key, resultsS3Key = :resultsS3Key",
-          ExpressionAttributeNames: { "#status": "status" },
+          ExpressionAttributeNames: { "#status": "status", "#artifactIntegrity": "artifactIntegrity", "#integrityStatus": "status" },
           ExpressionAttributeValues: {
             ":status": { S: "succeeded" },
             ":running": { S: "running" },
+            ":complete": { S: "complete" },
             ":completedAt": { "S.$": "$$.State.EnteredTime" },
             ":codeBuildBuildId": { "S.$": "$.build.Build.Id" },
             ":summaryS3Key": { "S.$": "$.summaryS3Key" },
@@ -1311,17 +1330,51 @@ export class MemoRagMvpStack extends Stack {
         Parameters: {
           TableName: benchmarkRunsTable.tableName,
           Key: { runId: { "S.$": "$.storageRunId" } },
-          UpdateExpression: "SET #status = :status, completedAt = if_not_exists(completedAt, :completedAt), updatedAt = if_not_exists(completedAt, :completedAt), #error = if_not_exists(#error, :error)",
-          ExpressionAttributeNames: { "#status": "status", "#error": "error" },
+          ConditionExpression: "#status IN (:queued, :running)",
+          UpdateExpression: "SET #status = :status, completedAt = if_not_exists(completedAt, :completedAt), updatedAt = :completedAt, #error = if_not_exists(#error, :error), #artifactIntegrity = if_not_exists(#artifactIntegrity, :artifactIntegrity)",
+          ExpressionAttributeNames: { "#status": "status", "#error": "error", "#artifactIntegrity": "artifactIntegrity" },
           ExpressionAttributeValues: {
             ":status": { S: "failed" },
+            ":queued": { S: "queued" },
+            ":running": { S: "running" },
             ":completedAt": { "S.$": "$$.State.EnteredTime" },
-            ":error": { "S.$": "States.JsonToString($.errorInfo)" }
+            ":error": { "S.$": "States.JsonToString($.errorInfo)" },
+            ":artifactIntegrity": failedBenchmarkArtifactIntegrityAttribute("run_failed_before_artifact_state")
           }
         },
         End: true
       }
     })
+    const markTimedOut = new sfn.CustomState(this, "BenchmarkMarkTimedOut", {
+      stateJson: {
+        Type: "Task",
+        Resource: "arn:aws:states:::dynamodb:updateItem",
+        Parameters: {
+          TableName: benchmarkRunsTable.tableName,
+          Key: { runId: { "S.$": "$.storageRunId" } },
+          ConditionExpression: "#status = :running",
+          UpdateExpression: "SET #status = :status, completedAt = :completedAt, updatedAt = :completedAt, #error = :error, #artifactIntegrity = if_not_exists(#artifactIntegrity, :artifactIntegrity)",
+          ExpressionAttributeNames: { "#status": "status", "#error": "error", "#artifactIntegrity": "artifactIntegrity" },
+          ExpressionAttributeValues: {
+            ":status": { S: "timed_out" },
+            ":running": { S: "running" },
+            ":completedAt": { "S.$": "$$.State.EnteredTime" },
+            ":error": { S: "benchmark_run_timed_out" },
+            ":artifactIntegrity": failedBenchmarkArtifactIntegrityAttribute("run_timed_out")
+          }
+        },
+        End: true
+      }
+    })
+    const classifyBenchmarkBuildFailure = new sfn.Choice(this, "ClassifyBenchmarkBuildFailure")
+      .when(sfn.Condition.or(
+        sfn.Condition.stringEquals("$.errorInfo.Error", "States.Timeout"),
+        sfn.Condition.and(
+          sfn.Condition.isPresent("$.errorInfo.Cause"),
+          sfn.Condition.stringMatches("$.errorInfo.Cause", "*TIMED_OUT*")
+        )
+      ), markTimedOut)
+      .otherwise(markFailed)
     const authorizeBenchmarkStart = new tasks.LambdaInvoke(this, "BenchmarkAuthorizeStart", {
       lambdaFunction: benchmarkRunAuthorizationFn,
       payload: sfn.TaskInput.fromObject({
@@ -1343,7 +1396,7 @@ export class MemoRagMvpStack extends Stack {
       resultPath: sfn.JsonPath.DISCARD
     })
     authorizeBenchmarkStart.addCatch(markFailed, { resultPath: "$.errorInfo" })
-    startBenchmarkBuild.addCatch(markFailed, { resultPath: "$.errorInfo" })
+    startBenchmarkBuild.addCatch(classifyBenchmarkBuildFailure, { resultPath: "$.errorInfo" })
     authorizeBenchmarkCommit.addCatch(markFailed, { resultPath: "$.errorInfo" })
 
     const benchmarkStateMachineLogGroup = new logs.LogGroup(this, "BenchmarkStateMachineLogGroup", {

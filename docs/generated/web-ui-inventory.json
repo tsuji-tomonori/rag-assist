@@ -8753,9 +8753,9 @@
       "component": "BenchmarkWorkspace",
       "element": "button",
       "isIntrinsic": true,
-      "label": "`${artifact.description}をダウンロード`",
+      "label": "`${artifact.description}: ${artifactStateLabel(run, artifact.kind)}`",
       "a11y": {
-        "accessibleName": "`${artifact.description}をダウンロード`",
+        "accessibleName": "`${artifact.description}: ${artifactStateLabel(run, artifact.kind)}`",
         "accessibleNameSource": "aria-label",
         "descriptionRefs": "-",
         "role": "-",
@@ -8778,11 +8778,11 @@
         },
         {
           "name": "title",
-          "value": "`${artifact.description}をダウンロード`"
+          "value": "`${artifact.description}: ${artifactStateLabel(run, artifact.kind)}`"
         },
         {
           "name": "aria-label",
-          "value": "`${artifact.description}をダウンロード`"
+          "value": "`${artifact.description}: ${artifactStateLabel(run, artifact.kind)}`"
         },
         {
           "name": "disabled",
@@ -8796,9 +8796,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:242:button",
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:243:button",
       "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
-      "line": 242,
+      "line": 243,
       "feature": "benchmark",
       "component": "BenchmarkWorkspace",
       "element": "button",

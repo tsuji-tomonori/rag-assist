@@ -16,6 +16,8 @@
 - AC-SQ001-003: benchmark dataset は権限外文書を期待しない `must-not-access` 相当の観点を表現できること。
 - AC-SQ001-004: benchmark summary に p95 latency または同等の遅延指標が含まれること。
 - AC-SQ001-005: 閾値を決めていない指標は Draft として扱い、合格済みとは記録しないこと。
+- AC-SQ001-006: faithfulness と context relevance は versioned case evidence から算出し、evidence 不足または分母0を0や合格へ変換しないこと。
+- AC-SQ001-007: `timed_out` または required artifact が不完全な benchmark run は品質 gate の測定 source として合格に使用せず、unavailable reason と diagnostic failure evidence を残すこと。
 
 ## 要件の源泉・背景
 
@@ -39,10 +41,10 @@
 | 種類 | サービス品質制約 |
 | 依存関係 | `FR-019`、benchmark dataset、debug trace |
 | 衝突 | 指標を増やすと benchmark 実行時間が増える |
-| 受け入れ基準 | `AC-SQ001-001` から `AC-SQ001-005` |
+| 受け入れ基準 | `AC-SQ001-001` から `AC-SQ001-007` |
 | 優先度 | S |
 | 安定性 | Medium |
-| 変更履歴 | 2026-05-01 初版 |
+| 変更履歴 | 2026-05-01 初版 / 2026-07-17 versioned metric と run/artifact completeness の evidence 境界を追加 |
 
 ## 妥当性確認
 
