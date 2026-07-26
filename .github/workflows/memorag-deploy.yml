@@ -22,15 +22,6 @@ on:
         required: true
         type: boolean
         default: false
-      policy-bootstrap:
-        description: Allow the approved dev policy's first deploy without complete observations.
-        required: true
-        type: boolean
-        default: false
-      policy-bootstrap-authorization:
-        description: Exact <main SHA>:<policy profile>@<policy version> authorization for policy bootstrap.
-        required: false
-        default: ""
       default-model-id:
         description: Bedrock model ID used for answer generation.
         required: true
@@ -66,9 +57,7 @@ jobs:
       EMBEDDING_MODEL_ID: ${{ inputs.embedding-model-id || 'amazon.titan-embed-text-v2:0' }}
       EMBEDDING_DIMENSIONS: ${{ inputs.embedding-dimensions || '1024' }}
       DEPLOYMENT_ENVIRONMENT: ${{ inputs.environment || 'dev' }}
-      POLICY_BOOTSTRAP: ${{ inputs.policy-bootstrap || false }}
-      POLICY_BOOTSTRAP_AUTHORIZATION: ${{ inputs.policy-bootstrap-authorization || '' }}
-      POLICY_BOOTSTRAP_APPROVED_IDENTITY: memorag-dev-rag-quality@2026-07-16.draft-1
+      DEPLOYMENT_MODE: cost_priority
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -85,7 +74,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-
       - name: Validate deploy inputs
         run: |
           set -euo pipefail
@@ -93,81 +81,24 @@ jobs:
           [[ "$EMBEDDING_MODEL_ID" =~ ^[A-Za-z0-9._:/-]+$ ]] || { echo "Invalid embedding-model-id"; exit 1; }
           [[ "$EMBEDDING_DIMENSIONS" =~ ^[0-9]{1,5}$ ]] || { echo "Invalid embedding-dimensions"; exit 1; }
           [[ "$DEPLOYMENT_ENVIRONMENT" =~ ^(dev)$ ]] || { echo "Invalid environment"; exit 1; }
+          [[ "$DEPLOYMENT_MODE" = "cost_priority" ]] || { echo "Unsupported deployment mode"; exit 1; }
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Resolve the documents bucket
+      - name: Prepare cost-priority deployment context
+        id: deployment-context
         run: |
           set -euo pipefail
-          DOCUMENTS_BUCKET_NAME="$(aws cloudformation describe-stacks --stack-name MemoRagMvpStack --query "Stacks[0].Outputs[?OutputKey=='DocumentsBucketName'].OutputValue | [0]" --output text)"
-          if [ -z "$DOCUMENTS_BUCKET_NAME" ] || [ "$DOCUMENTS_BUCKET_NAME" = "None" ]; then
-            echo "MemoRagMvpStack.DocumentsBucketName is unavailable; an existing dev stack is required."
-            exit 1
-          fi
-          echo "DOCUMENTS_BUCKET_NAME=$DOCUMENTS_BUCKET_NAME" >> "$GITHUB_ENV"
-
-      - name: Download RAG quality observations
-        run: |
-          set -euo pipefail
-          mkdir -p artifacts/rag-observations
-          aws s3 sync "s3://$DOCUMENTS_BUCKET_NAME/quality-control/observations/" artifacts/rag-observations/ --exclude "*" --include "*.json"
-
-      - name: Prepare and upload RAG promotion candidate
-        id: promotion-candidate
-        run: |
-          set -euo pipefail
-          node --import tsx scripts/prepare-rag-promotion-candidate.ts --policy config/rag-quality/dev-policy.json --observations-dir artifacts/rag-observations --output-dir artifacts/rag-promotion
+          mkdir -p artifacts/rag-observations artifacts/rag-promotion
+          node --import tsx scripts/prepare-rag-promotion-candidate.ts \
+            --policy config/rag-quality/dev-policy.json \
+            --observations-dir artifacts/rag-observations \
+            --output-dir artifacts/rag-promotion
 
           POLICY_MODEL_ID="$(jq -r '.evidenceVersions.model' artifacts/rag-promotion/policy.json)"
           if [ "$DEFAULT_MODEL_ID" != "$POLICY_MODEL_ID" ]; then
-            echo "default-model-id must match the approved policy model: $POLICY_MODEL_ID"
+            echo "default-model-id must match the repository policy model: $POLICY_MODEL_ID"
             exit 1
           fi
-          POLICY_ID="$(jq -r '.policyId' artifacts/rag-promotion/preparation.json)"
-          POLICY_VERSION="$(jq -r '.policyVersion' artifacts/rag-promotion/preparation.json)"
-          READY="$(jq -r '.ready' artifacts/rag-promotion/preparation.json)"
-          BOOTSTRAP_AUTHORIZED=false
-          DEPLOY_ALLOWED="$READY"
 
-          if [ "$POLICY_BOOTSTRAP" = "true" ]; then
-            EXPECTED_BOOTSTRAP_AUTHORIZATION="$GITHUB_SHA:$POLICY_ID@$POLICY_VERSION"
-            if [ "$GITHUB_EVENT_NAME" != "workflow_dispatch" ] || [ "$DEPLOYMENT_ENVIRONMENT" != "dev" ]; then
-              echo "policy bootstrap is restricted to a manual dev workflow dispatch"
-              exit 1
-            fi
-            if [ "$POLICY_ID@$POLICY_VERSION" != "$POLICY_BOOTSTRAP_APPROVED_IDENTITY" ]; then
-              echo "policy bootstrap is restricted to $POLICY_BOOTSTRAP_APPROVED_IDENTITY"
-              exit 1
-            fi
-            if [ "$POLICY_BOOTSTRAP_AUTHORIZATION" != "$EXPECTED_BOOTSTRAP_AUTHORIZATION" ]; then
-              echo "policy-bootstrap-authorization must exactly match the checked-out main SHA and approved policy identity"
-              exit 1
-            fi
-            RAG_POLICY_BOOTSTRAP_MARKER_KEY="quality-control/bootstrap-authorizations/$POLICY_ID/$POLICY_VERSION.json"
-            if aws s3api head-object --bucket "$DOCUMENTS_BUCKET_NAME" --key "$RAG_POLICY_BOOTSTRAP_MARKER_KEY" >/dev/null 2>&1; then
-              echo "policy bootstrap has already completed for $POLICY_ID@$POLICY_VERSION"
-              exit 1
-            fi
-            echo "RAG_POLICY_BOOTSTRAP_MARKER_S3_URI=s3://$DOCUMENTS_BUCKET_NAME/$RAG_POLICY_BOOTSTRAP_MARKER_KEY" >> "$GITHUB_ENV"
-            BOOTSTRAP_AUTHORIZED=true
-            DEPLOY_ALLOWED=true
-          fi
-
-          POLICY_PREFIX="quality-control/promotion-candidates/$POLICY_VERSION/$GITHUB_SHA/$GITHUB_RUN_ID"
-          RAG_QUALITY_POLICY_S3_URI="s3://$DOCUMENTS_BUCKET_NAME/$POLICY_PREFIX/policy.json"
-          RAG_QUALITY_OBSERVATIONS_S3_URI="s3://$DOCUMENTS_BUCKET_NAME/$POLICY_PREFIX/observations.json"
-
-          aws s3 cp artifacts/rag-promotion/policy.json "$RAG_QUALITY_POLICY_S3_URI"
-          aws s3 cp artifacts/rag-promotion/policy.json "s3://$DOCUMENTS_BUCKET_NAME/quality-control/policies/active.json"
-          aws s3 cp artifacts/rag-promotion/observations.json "$RAG_QUALITY_OBSERVATIONS_S3_URI"
-          aws s3 cp artifacts/rag-promotion/preparation.json "s3://$DOCUMENTS_BUCKET_NAME/$POLICY_PREFIX/preparation.json"
-
-          echo "RAG_QUALITY_POLICY_S3_URI=$RAG_QUALITY_POLICY_S3_URI" >> "$GITHUB_ENV"
-          echo "RAG_QUALITY_OBSERVATIONS_S3_URI=$RAG_QUALITY_OBSERVATIONS_S3_URI" >> "$GITHUB_ENV"
           echo "RAG_RUNTIME_PROFILE_VERSION=$(jq -r '.runtimeProfileVersion' artifacts/rag-promotion/policy.json)" >> "$GITHUB_ENV"
           echo "RAG_WORKLOAD_PROFILE_VERSION=$(jq -r '.workloadProfileVersion' artifacts/rag-promotion/policy.json)" >> "$GITHUB_ENV"
           echo "RAG_PRICE_CATALOG_VERSION=$(jq -r '.priceCatalogVersion' artifacts/rag-promotion/policy.json)" >> "$GITHUB_ENV"
@@ -177,52 +108,56 @@ jobs:
           echo "RAG_PARSER_VERSION=$(jq -r '.evidenceVersions.parser' artifacts/rag-promotion/policy.json)" >> "$GITHUB_ENV"
           echo "RAG_CHUNKER_VERSION=$(jq -r '.evidenceVersions.chunker' artifacts/rag-promotion/policy.json)" >> "$GITHUB_ENV"
 
-          echo "ready=$READY" >> "$GITHUB_OUTPUT"
-          echo "bootstrap-authorized=$BOOTSTRAP_AUTHORIZED" >> "$GITHUB_OUTPUT"
-          echo "deploy-allowed=$DEPLOY_ALLOWED" >> "$GITHUB_OUTPUT"
+          jq \
+            --arg deploymentMode "$DEPLOYMENT_MODE" \
+            --arg commitSha "$GITHUB_SHA" \
+            --arg runId "$GITHUB_RUN_ID" \
+            '. + {
+              deploymentMode: $deploymentMode,
+              commitSha: $commitSha,
+              runId: $runId,
+              promotionGateApplied: false,
+              deployAllowed: true,
+              sourceObservationScan: false,
+              reason: "SQ-015 cost-first profile; FR-075/FR-093 continuous promotion evidence is deferred"
+            }' \
+            artifacts/rag-promotion/preparation.json \
+            > artifacts/rag-promotion/preparation.tmp.json
+          mv artifacts/rag-promotion/preparation.tmp.json artifacts/rag-promotion/preparation.json
+
+          echo "deploy-allowed=true" >> "$GITHUB_OUTPUT"
           {
-            echo "## RAG promotion candidate"
+            echo "## Cost-priority deployment context"
             echo
-            echo "- policy: $(jq -r '.policyId + "@" + .policyVersion' artifacts/rag-promotion/preparation.json)"
-            echo "- policy URI: $RAG_QUALITY_POLICY_S3_URI"
-            echo "- observations URI: $RAG_QUALITY_OBSERVATIONS_S3_URI"
-            echo "- matched observations: $(jq -r '.matchedObservationCount' artifacts/rag-promotion/preparation.json)"
-            echo "- deploy ready: $READY"
-            echo "- policy bootstrap authorized: $BOOTSTRAP_AUTHORIZED"
-            if [ "$READY" != "true" ]; then
-              if [ "$BOOTSTRAP_AUTHORIZED" = "true" ]; then
-                echo "- result: required evidence is incomplete; the explicitly authorized dev bootstrap deploy will continue without synthesizing evidence."
-              else
-                echo "- result: required evidence is incomplete; deploy is deferred without synthesizing values."
-              fi
-              echo "- missing observations: $(jq -r '.missingObservations | length' artifacts/rag-promotion/preparation.json)"
-            fi
+            echo "- mode: $DEPLOYMENT_MODE"
+            echo "- policy: $(jq -r '.profileId + "@" + .version' artifacts/rag-promotion/policy.json)"
+            echo "- RAG promotion gate applied: false"
+            echo "- S3 observation scan: false"
+            echo "- deploy allowed: true"
+            echo "- reason: monitoring and continuous promotion evidence are deferred by SQ-015"
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Enforce RAG promotion gate before deployment
-        if: ${{ steps.promotion-candidate.outputs.ready == 'true' }}
-        run: >-
-          npm run rag:promotion:check --
-          --policy artifacts/rag-promotion/policy.json
-          --observations artifacts/rag-promotion/observations.json
-          --output artifacts/rag-promotion/decision.json
-
-      - name: Upload RAG promotion evidence and decision
-        if: ${{ always() }}
+      - name: Upload cost-priority deployment context
         uses: actions/upload-artifact@v4
         with:
-          name: memorag-rag-promotion-${{ github.run_id }}
+          name: memorag-cost-priority-deployment-${{ github.run_id }}
           path: artifacts/rag-promotion/
           if-no-files-found: error
 
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
       - name: Build deployment artifacts
-        if: ${{ success() && steps.promotion-candidate.outputs.deploy-allowed == 'true' }}
+        if: ${{ success() && steps.deployment-context.outputs.deploy-allowed == 'true' }}
         run: |
           npm run build -w @memorag-mvp/web
           npm run build -w @memorag-mvp/infra
 
       - name: CDK bootstrap
-        if: ${{ success() && steps.promotion-candidate.outputs.deploy-allowed == 'true' && (inputs.bootstrap || false) }}
+        if: ${{ success() && steps.deployment-context.outputs.deploy-allowed == 'true' && (inputs.bootstrap || false) }}
         run: >-
           npm run cdk -w @memorag-mvp/infra -- bootstrap
           --context "defaultModelId=$DEFAULT_MODEL_ID"
@@ -239,7 +174,7 @@ jobs:
           --context "ragChunkerVersion=$RAG_CHUNKER_VERSION"
 
       - name: Synthesize CloudFormation YAML
-        if: ${{ success() && steps.promotion-candidate.outputs.deploy-allowed == 'true' }}
+        if: ${{ success() && steps.deployment-context.outputs.deploy-allowed == 'true' }}
         run: |
           mkdir -p infra/cdk.out
           cd infra
@@ -259,7 +194,7 @@ jobs:
             > cdk.out/MemoRagMvpStack.template.yaml
 
       - name: Upload synth artifacts
-        if: ${{ success() && steps.promotion-candidate.outputs.deploy-allowed == 'true' }}
+        if: ${{ success() && steps.deployment-context.outputs.deploy-allowed == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: memorag-cdk-synth-${{ inputs.environment || 'dev' }}
@@ -269,7 +204,7 @@ jobs:
           if-no-files-found: warn
 
       - name: CDK deploy
-        if: ${{ success() && steps.promotion-candidate.outputs.deploy-allowed == 'true' }}
+        if: ${{ success() && steps.deployment-context.outputs.deploy-allowed == 'true' }}
         run: >-
           npm run cdk -w @memorag-mvp/infra --
           deploy
@@ -288,27 +223,10 @@ jobs:
           --context "ragParserVersion=$RAG_PARSER_VERSION"
           --context "ragChunkerVersion=$RAG_CHUNKER_VERSION"
 
-      - name: Record completed RAG policy bootstrap
-        if: ${{ success() && steps.promotion-candidate.outputs.bootstrap-authorized == 'true' }}
-        run: |
-          set -euo pipefail
-          mkdir -p artifacts/rag-bootstrap
-          jq -n \
-            --arg completedAt "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-            --arg commitSha "$GITHUB_SHA" \
-            --arg runId "$GITHUB_RUN_ID" \
-            --arg policyUri "$RAG_QUALITY_POLICY_S3_URI" \
-            --arg observationsUri "$RAG_QUALITY_OBSERVATIONS_S3_URI" \
-            '{schemaVersion: 1, completedAt: $completedAt, commitSha: $commitSha, runId: $runId, policyUri: $policyUri, observationsUri: $observationsUri}' \
-            > artifacts/rag-bootstrap/bootstrap-completion.json
-          aws s3 cp artifacts/rag-bootstrap/bootstrap-completion.json "$RAG_POLICY_BOOTSTRAP_MARKER_S3_URI"
-
       - name: Upload deployment outputs
-        if: ${{ success() && steps.promotion-candidate.outputs.deploy-allowed == 'true' }}
+        if: ${{ success() && steps.deployment-context.outputs.deploy-allowed == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: memorag-cdk-outputs-${{ inputs.environment || 'dev' }}
-          path: |
-            infra/cdk-outputs.json
-            artifacts/rag-bootstrap/bootstrap-completion.json
+          path: infra/cdk-outputs.json
           if-no-files-found: error

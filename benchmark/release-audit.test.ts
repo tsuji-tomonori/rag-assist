@@ -12,6 +12,7 @@ test("FR-075 deterministic release audit detects product-runtime dataset expecta
   await writeFile(path.join(repoRoot, "apps/api/src/runtime.ts"), [
     "export function route(input: Record<string, string>) {",
     "  if (input.suiteId === 'dataset-v1') return input.expectedContains",
+    "  const domainShortcut = 'SWEBOK'",
     "  return ''",
     "}"
   ].join("\n"))
@@ -19,10 +20,11 @@ test("FR-075 deterministic release audit detects product-runtime dataset expecta
   const first = await buildRagReleaseAudit({ repoRoot, sourceRoots: ["apps/api/src"], summary: validSummary() })
   const second = await buildRagReleaseAudit({ repoRoot, sourceRoots: ["apps/api/src"], summary: validSummary() })
 
-  assert.equal(first.metrics.datasetSpecificBranchCount, 2)
+  assert.equal(first.metrics.datasetSpecificBranchCount, 3)
   assert.deepEqual(first.datasetSpecificBranchFindings.map((item) => item.ruleId), [
     "dataset_expected_field_in_runtime",
-    "dataset_identity_branch_in_runtime"
+    "dataset_identity_branch_in_runtime",
+    "known_dataset_domain_lexicon_in_runtime"
   ])
   assert.equal(first.metrics.artifactManifestMismatchCount, 0)
   assert.equal(first.auditId, second.auditId)
@@ -33,6 +35,19 @@ test("FR-075 release audit excludes tests and benchmark-only evaluation code fro
   assert.deepEqual(scanRuntimeSource("apps/api/src/runtime.test.ts", "const expectedContains = 'fixture'"), [])
   assert.deepEqual(scanRuntimeSource("benchmark/runner.ts", "const expectedContains = 'fixture'"), [])
   assert.equal(scanRuntimeSource("apps/api/src/runtime.ts", "const answer = 'generic'\n").length, 0)
+})
+
+test("FR-045 and SQ-003 source audit rejects known benchmark corpus vocabulary in product runtime", () => {
+  assert.deepEqual(
+    scanRuntimeSource("apps/api/src/rag/policy.ts", "const anchor = 'ソフトウェア要求の分類'"),
+    [{
+      ruleId: "known_dataset_domain_lexicon_in_runtime",
+      file: "apps/api/src/rag/policy.ts",
+      line: 1,
+      excerpt: "const anchor = 'ソフトウェア要求の分類'"
+    }]
+  )
+  assert.deepEqual(scanRuntimeSource("apps/api/src/rag/policy.test.ts", "const anchor = 'ソフトウェア要求の分類'"), [])
 })
 
 test("FR-075 artifact audit fails closed for unversioned or inconsistent manifests", () => {

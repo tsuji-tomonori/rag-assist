@@ -9,34 +9,34 @@
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
 | 到達 symbol | fixed MemoRAG workflow answers from selected evidence and records fixed trace steps | `apps/api/src/chat-orchestration/graph.test.ts:27 (fixed MemoRAG workflow answers from selected evidence and records fixed trace steps)` |
-| 到達 symbol | fixed MemoRAG workflow clamps minScore before debug trace persistence | `apps/api/src/chat-orchestration/graph.test.ts:87 (fixed MemoRAG workflow clamps minScore before debug trace persistence)` |
-| 到達 symbol | FR-074 answer replay carries measured pre/post authorization candidate counts | `apps/api/src/chat-orchestration/graph.test.ts:105 (FR-074 answer replay carries measured pre/post authorization candidate counts)` |
-| 到達 symbol | FR-074 answer dependency failure persists only canonical failure codes | `apps/api/src/chat-orchestration/graph.test.ts:195 (FR-074 answer dependency failure persists only canonical failure codes)` |
-| 到達 symbol | benchmark search filters keep agent retrieval scoped to isolated benchmark corpus | `apps/api/src/chat-orchestration/graph.test.ts:235 (benchmark search filters keep agent retrieval scoped to isolated benchmark corpus)` |
-| 到達 symbol | fixed workflow executes nodes in the declared order | `apps/api/src/chat-orchestration/graph.test.ts:316 (fixed workflow executes nodes in the declared order)` |
-| 到達 symbol | fixed workflow fails fast for invalid injected asOfDate before retrieval | `apps/api/src/chat-orchestration/graph.test.ts:412 (fixed workflow fails fast for invalid injected asOfDate before retrieval)` |
-| 到達 symbol | fixed workflow sends current-month deadline questions to RAG instead of current-date computation | `apps/api/src/chat-orchestration/graph.test.ts:454 (fixed workflow sends current-month deadline questions to RAG instead of current-date computation)` |
-| 到達 symbol | fixed workflow falls back to RAG when arithmetic intent has no usable computation | `apps/api/src/chat-orchestration/graph.test.ts:478 (fixed workflow falls back to RAG when arithmetic intent has no usable computation)` |
-| 到達 symbol | fixed workflow sends document-source arithmetic verification questions to RAG | `apps/api/src/chat-orchestration/graph.test.ts:499 (fixed workflow sends document-source arithmetic verification questions to RAG)` |
-| 到達 symbol | fixed workflow answers document-grounded threshold comparison questions | `apps/api/src/chat-orchestration/graph.test.ts:520 (fixed workflow answers document-grounded threshold comparison questions)` |
-| 到達 symbol | fixed workflow keeps not-required threshold rules from becoming required answers | `apps/api/src/chat-orchestration/graph.test.ts:545 (fixed workflow keeps not-required threshold rules from becoming required answers)` |
-| 到達 symbol | fixed workflow binds threshold polarity at clause level | `apps/api/src/chat-orchestration/graph.test.ts:568 (fixed workflow binds threshold polarity at clause level)` |
-| 到達 symbol | fixed workflow sends business-day document questions to RAG instead of compute-only unavailable | `apps/api/src/chat-orchestration/graph.test.ts:606 (fixed workflow sends business-day document questions to RAG instead of compute-only unavailable)` |
-| 到達 symbol | fixed workflow sends explicit-date document verification questions to RAG | `apps/api/src/chat-orchestration/graph.test.ts:628 (fixed workflow sends explicit-date document verification questions to RAG)` |
-| 到達 symbol | fixed workflow sends relative-deadline document verification questions to RAG | `apps/api/src/chat-orchestration/graph.test.ts:650 (fixed workflow sends relative-deadline document verification questions to RAG)` |
-| 到達 symbol | fixed workflow sends document date verification questions to RAG instead of current-date computation | `apps/api/src/chat-orchestration/graph.test.ts:672 (fixed workflow sends document date verification questions to RAG instead of current-date computation)` |
-| 到達 symbol | fixed workflow sends document-source deadline status questions to RAG | `apps/api/src/chat-orchestration/graph.test.ts:694 (fixed workflow sends document-source deadline status questions to RAG)` |
-| 到達 symbol | fixed workflow branches on evaluate_search_progress decisions | `apps/api/src/chat-orchestration/graph.test.ts:715 (fixed workflow branches on evaluate_search_progress decisions)` |
-| 到達 symbol | fixed workflow refuses unresolved conflicting evidence when search budget ends | `apps/api/src/chat-orchestration/graph.test.ts:743 (fixed workflow refuses unresolved conflicting evidence when search budget ends)` |
-| 到達 symbol | fixed workflow returns corpus-grounded clarification before answer generation | `apps/api/src/chat-orchestration/graph.test.ts:765 (fixed workflow returns corpus-grounded clarification before answer generation)` |
-| 到達 symbol | fixed workflow answers explicit scoped questions instead of clarifying from memory candidates | `apps/api/src/chat-orchestration/graph.test.ts:796 (fixed workflow answers explicit scoped questions instead of clarifying from memory candidates)` |
-| 到達 symbol | fixed workflow answers parental leave deadline questions with abbreviation and start date | `apps/api/src/chat-orchestration/graph.test.ts:818 (fixed workflow answers parental leave deadline questions with abbreviation and start date)` |
-| 到達 symbol | fixed workflow derives relative policy deadlines for deadline wording variants without unavailable facts | `apps/api/src/chat-orchestration/graph.test.ts:844 (fixed workflow derives relative policy deadlines for deadline wording variants without unavailable facts)` |
-| 到達 symbol | fixed workflow returns the full answer while public debug redacts finalize response content | `apps/api/src/chat-orchestration/graph.test.ts:911 (fixed workflow returns the full answer while public debug redacts finalize response content)` |
-| 到達 symbol | fixed workflow continues when sufficient context judge returns partial with supported primary evidence | `apps/api/src/chat-orchestration/graph.test.ts:963 (fixed workflow continues when sufficient context judge returns partial with supported primary evidence)` |
-| 到達 symbol | fixed workflow answers English ChatRAG VPN follow-up without refusal contamination | `apps/api/src/chat-orchestration/graph.test.ts:1005 (fixed workflow answers English ChatRAG VPN follow-up without refusal contamination)` |
-| 到達 symbol | fixed workflow search cycle loops until maxIterations when retrieval score is too low | `apps/api/src/chat-orchestration/graph.test.ts:1124 (fixed workflow search cycle loops until maxIterations when retrieval score is too low)` |
-| 到達 symbol | fixed workflow search plan trace retains safe status without exposing input or plan bodies | `apps/api/src/chat-orchestration/graph.test.ts:1170 (fixed workflow search plan trace retains safe status without exposing input or plan bodies)` |
+| 到達 symbol | fixed MemoRAG workflow clamps minScore before debug trace persistence | `apps/api/src/chat-orchestration/graph.test.ts:88 (fixed MemoRAG workflow clamps minScore before debug trace persistence)` |
+| 到達 symbol | FR-074 answer replay carries measured pre/post authorization candidate counts | `apps/api/src/chat-orchestration/graph.test.ts:106 (FR-074 answer replay carries measured pre/post authorization candidate counts)` |
+| 到達 symbol | FR-074 answer dependency failure persists only canonical failure codes | `apps/api/src/chat-orchestration/graph.test.ts:196 (FR-074 answer dependency failure persists only canonical failure codes)` |
+| 到達 symbol | benchmark search filters keep agent retrieval scoped to isolated benchmark corpus | `apps/api/src/chat-orchestration/graph.test.ts:236 (benchmark search filters keep agent retrieval scoped to isolated benchmark corpus)` |
+| 到達 symbol | fixed workflow executes nodes in the declared order | `apps/api/src/chat-orchestration/graph.test.ts:317 (fixed workflow executes nodes in the declared order)` |
+| 到達 symbol | fixed workflow fails fast for invalid injected asOfDate before retrieval | `apps/api/src/chat-orchestration/graph.test.ts:415 (fixed workflow fails fast for invalid injected asOfDate before retrieval)` |
+| 到達 symbol | fixed workflow sends current-month deadline questions to RAG instead of current-date computation | `apps/api/src/chat-orchestration/graph.test.ts:457 (fixed workflow sends current-month deadline questions to RAG instead of current-date computation)` |
+| 到達 symbol | fixed workflow falls back to RAG when arithmetic intent has no usable computation | `apps/api/src/chat-orchestration/graph.test.ts:481 (fixed workflow falls back to RAG when arithmetic intent has no usable computation)` |
+| 到達 symbol | fixed workflow sends document-source arithmetic verification questions to RAG | `apps/api/src/chat-orchestration/graph.test.ts:502 (fixed workflow sends document-source arithmetic verification questions to RAG)` |
+| 到達 symbol | fixed workflow answers document-grounded threshold comparison questions | `apps/api/src/chat-orchestration/graph.test.ts:523 (fixed workflow answers document-grounded threshold comparison questions)` |
+| 到達 symbol | fixed workflow keeps not-required threshold rules from becoming required answers | `apps/api/src/chat-orchestration/graph.test.ts:548 (fixed workflow keeps not-required threshold rules from becoming required answers)` |
+| 到達 symbol | fixed workflow binds threshold polarity at clause level | `apps/api/src/chat-orchestration/graph.test.ts:571 (fixed workflow binds threshold polarity at clause level)` |
+| 到達 symbol | fixed workflow sends business-day document questions to RAG instead of compute-only unavailable | `apps/api/src/chat-orchestration/graph.test.ts:609 (fixed workflow sends business-day document questions to RAG instead of compute-only unavailable)` |
+| 到達 symbol | fixed workflow sends explicit-date document verification questions to RAG | `apps/api/src/chat-orchestration/graph.test.ts:631 (fixed workflow sends explicit-date document verification questions to RAG)` |
+| 到達 symbol | fixed workflow sends relative-deadline document verification questions to RAG | `apps/api/src/chat-orchestration/graph.test.ts:653 (fixed workflow sends relative-deadline document verification questions to RAG)` |
+| 到達 symbol | fixed workflow sends document date verification questions to RAG instead of current-date computation | `apps/api/src/chat-orchestration/graph.test.ts:675 (fixed workflow sends document date verification questions to RAG instead of current-date computation)` |
+| 到達 symbol | fixed workflow sends document-source deadline status questions to RAG | `apps/api/src/chat-orchestration/graph.test.ts:697 (fixed workflow sends document-source deadline status questions to RAG)` |
+| 到達 symbol | fixed workflow branches on evaluate_search_progress decisions | `apps/api/src/chat-orchestration/graph.test.ts:718 (fixed workflow branches on evaluate_search_progress decisions)` |
+| 到達 symbol | fixed workflow refuses unresolved conflicting evidence when search budget ends | `apps/api/src/chat-orchestration/graph.test.ts:746 (fixed workflow refuses unresolved conflicting evidence when search budget ends)` |
+| 到達 symbol | fixed workflow returns corpus-grounded clarification before answer generation | `apps/api/src/chat-orchestration/graph.test.ts:768 (fixed workflow returns corpus-grounded clarification before answer generation)` |
+| 到達 symbol | fixed workflow answers explicit scoped questions instead of clarifying from memory candidates | `apps/api/src/chat-orchestration/graph.test.ts:799 (fixed workflow answers explicit scoped questions instead of clarifying from memory candidates)` |
+| 到達 symbol | fixed workflow answers parental leave deadline questions with abbreviation and start date | `apps/api/src/chat-orchestration/graph.test.ts:821 (fixed workflow answers parental leave deadline questions with abbreviation and start date)` |
+| 到達 symbol | fixed workflow derives relative policy deadlines for deadline wording variants without unavailable facts | `apps/api/src/chat-orchestration/graph.test.ts:847 (fixed workflow derives relative policy deadlines for deadline wording variants without unavailable facts)` |
+| 到達 symbol | fixed workflow returns the full answer while public debug redacts finalize response content | `apps/api/src/chat-orchestration/graph.test.ts:914 (fixed workflow returns the full answer while public debug redacts finalize response content)` |
+| 到達 symbol | fixed workflow continues when sufficient context judge returns partial with supported primary evidence | `apps/api/src/chat-orchestration/graph.test.ts:966 (fixed workflow continues when sufficient context judge returns partial with supported primary evidence)` |
+| 到達 symbol | fixed workflow answers English ChatRAG VPN follow-up without refusal contamination | `apps/api/src/chat-orchestration/graph.test.ts:1008 (fixed workflow answers English ChatRAG VPN follow-up without refusal contamination)` |
+| 到達 symbol | fixed workflow search cycle loops until maxIterations when retrieval score is too low | `apps/api/src/chat-orchestration/graph.test.ts:1127 (fixed workflow search cycle loops until maxIterations when retrieval score is too low)` |
+| 到達 symbol | fixed workflow search plan trace retains safe status without exposing input or plan bodies | `apps/api/src/chat-orchestration/graph.test.ts:1173 (fixed workflow search plan trace retains safe status without exposing input or plan bodies)` |
 | 到達 symbol | service ingests text, lists manifests, persists debug traces, and deletes all document vectors | `apps/api/src/rag/memorag-service.test.ts:48 (service ingests text, lists manifests, persists debug traces, and deletes all document vectors)` |
 | 到達 symbol | service rejects empty uploads and missing documents | `apps/api/src/rag/memorag-service.test.ts:128 (service rejects empty uploads and missing documents)` |
 | 到達 symbol | service records tenant-scoped ingest usage once for a replayed stable run | `apps/api/src/rag/memorag-service.test.ts:139 (service records tenant-scoped ingest usage once for a replayed stable run)` |
@@ -128,10 +128,10 @@
 | F045 | `enforceDocumentCreateOperation` | 三項条件 | `scope?.scopeType` が `"group"` と等しい | `apps/api/src/routes/document-routes.ts:480 (enforceDocumentCreateOperation)` |
 | F046 | `enforceDocumentCreateOperation` | if | `groupIds.length` が `0` より大きい | `apps/api/src/routes/document-routes.ts:481 (enforceDocumentCreateOperation)` |
 | F047 | `enforceDocumentCreateOperation` | loop | `groupIds` が存在し、真である | `apps/api/src/routes/document-routes.ts:483 (enforceDocumentCreateOperation)` |
-| F048 | `MemoRagService.createCurrentDocumentIngestAuthorization` | 三項条件 | `input.purpose` が `"benchmarkSeed"` と等しい | `apps/api/src/rag/memorag-service.ts:488 (MemoRagService.createCurrentDocumentIngestAuthorization)` |
-| F049 | `MemoRagService.createCurrentDocumentIngestAuthorization` | 三項条件 | `input.purpose` が `"chatAttachment"` と等しい | `apps/api/src/rag/memorag-service.ts:490 (MemoRagService.createCurrentDocumentIngestAuthorization)` |
-| F050 | `MemoRagService.ingest` | 三項条件 | `tenantId` が存在し、真である、かつ `this.deps.usageEventStore` が存在し、真である、かつ `this.usageRolloutMode()` が `"disabled"` と異なる | `apps/api/src/rag/memorag-service.ts:468 (MemoRagService.ingest)` |
-| F051 | `MemoRagService.discardUncommittedIngest` | if | some の判定結果が真である | `apps/api/src/rag/memorag-service.ts:522 (MemoRagService.discardUncommittedIngest)` |
+| F048 | `MemoRagService.createCurrentDocumentIngestAuthorization` | 三項条件 | `input.purpose` が `"benchmarkSeed"` と等しい | `apps/api/src/rag/memorag-service.ts:489 (MemoRagService.createCurrentDocumentIngestAuthorization)` |
+| F049 | `MemoRagService.createCurrentDocumentIngestAuthorization` | 三項条件 | `input.purpose` が `"chatAttachment"` と等しい | `apps/api/src/rag/memorag-service.ts:491 (MemoRagService.createCurrentDocumentIngestAuthorization)` |
+| F050 | `MemoRagService.ingest` | 三項条件 | `tenantId` が存在し、真である、かつ `this.deps.usageEventStore` が存在し、真である、かつ `this.usageRolloutMode()` が `"disabled"` と異なる | `apps/api/src/rag/memorag-service.ts:469 (MemoRagService.ingest)` |
+| F051 | `MemoRagService.discardUncommittedIngest` | if | some の判定結果が真である | `apps/api/src/rag/memorag-service.ts:523 (MemoRagService.discardUncommittedIngest)` |
 
 ## 3. コード由来テストケース
 
@@ -230,14 +230,14 @@
 | TC091 | F046: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:481 (enforceDocumentCreateOperation)` |
 | TC092 | F047: 0件 | 反復対象が空でも不正な副作用や例外を生じない。 | `apps/api/src/routes/document-routes.ts:483 (enforceDocumentCreateOperation)` |
 | TC093 | F047: 複数件 | 各要素を順に処理し、順序・終了条件を守る。 | `apps/api/src/routes/document-routes.ts:483 (enforceDocumentCreateOperation)` |
-| TC094 | F048: 条件成立 | `input.purpose` が `"benchmarkSeed"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:488 (MemoRagService.createCurrentDocumentIngestAuthorization)` |
-| TC095 | F048: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:488 (MemoRagService.createCurrentDocumentIngestAuthorization)` |
-| TC096 | F049: 条件成立 | `input.purpose` が `"chatAttachment"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:490 (MemoRagService.createCurrentDocumentIngestAuthorization)` |
-| TC097 | F049: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:490 (MemoRagService.createCurrentDocumentIngestAuthorization)` |
-| TC098 | F050: 条件成立 | `tenantId` が存在し、真である、かつ `this.deps.usageEventStore` が存在し、真である、かつ `this.usageRolloutMode()` が `"disabled"` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:468 (MemoRagService.ingest)` |
-| TC099 | F050: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:468 (MemoRagService.ingest)` |
-| TC100 | F051: 条件成立 | some の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:522 (MemoRagService.discardUncommittedIngest)` |
-| TC101 | F051: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:522 (MemoRagService.discardUncommittedIngest)` |
+| TC094 | F048: 条件成立 | `input.purpose` が `"benchmarkSeed"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:489 (MemoRagService.createCurrentDocumentIngestAuthorization)` |
+| TC095 | F048: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:489 (MemoRagService.createCurrentDocumentIngestAuthorization)` |
+| TC096 | F049: 条件成立 | `input.purpose` が `"chatAttachment"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:491 (MemoRagService.createCurrentDocumentIngestAuthorization)` |
+| TC097 | F049: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:491 (MemoRagService.createCurrentDocumentIngestAuthorization)` |
+| TC098 | F050: 条件成立 | `tenantId` が存在し、真である、かつ `this.deps.usageEventStore` が存在し、真である、かつ `this.usageRolloutMode()` が `"disabled"` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:469 (MemoRagService.ingest)` |
+| TC099 | F050: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:469 (MemoRagService.ingest)` |
+| TC100 | F051: 条件成立 | some の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:523 (MemoRagService.discardUncommittedIngest)` |
+| TC101 | F051: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:523 (MemoRagService.discardUncommittedIngest)` |
 | TC102 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC103 | HTTP 400 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC104 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

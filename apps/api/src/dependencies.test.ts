@@ -3,8 +3,13 @@ import path from "node:path"
 import { fileURLToPath, pathToFileURL } from "node:url"
 import test from "node:test"
 import { Worker } from "node:worker_threads"
+import {
+  MANDATORY_RAG_GUARDS,
+  STANDARD_RAG_GUARD_PROFILE
+} from "./rag/_shared/security/safe-degradation-policy.js"
 
 const apiRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..")
+const safeRagGuardProfileJson = JSON.stringify(STANDARD_RAG_GUARD_PROFILE)
 
 test("createDependencies_usesDynamoDbStores_evenWhenLocalFlagsAreSet", async () => {
   const result = await runDependencyProbe({
@@ -19,6 +24,43 @@ test("createDependencies_usesDynamoDbStores_evenWhenLocalFlagsAreSet", async () 
   assert.equal(deps.favoriteStore, "DynamoDbFavoriteStore")
   assert.equal(deps.securityAuditOutbox, "ObjectStoreSecurityMutationAuditOutbox")
   assert.equal(deps.securityAuditReconciliationUsesMutationOutbox, true)
+  assert.deepEqual(deps.ragGuardProfile, STANDARD_RAG_GUARD_PROFILE)
+})
+
+test("FR-089 createDependencies rejects an unset guard profile at startup", async () => {
+  const result = await runDependencyProbe({}, ["RAG_GUARD_PROFILE_JSON"])
+
+  assert.notEqual(result.status, 0)
+  assert.match(result.stderr, /RAG_GUARD_PROFILE_JSON is required/)
+})
+
+test("FR-089 createDependencies rejects unknown, partial, and all-off profiles at startup", async () => {
+  const partial = structuredClone(STANDARD_RAG_GUARD_PROFILE) as {
+    id: string
+    version: string
+    guards: Record<string, boolean>
+  }
+  delete partial.guards.citation
+  const unknown = structuredClone(STANDARD_RAG_GUARD_PROFILE) as {
+    id: string
+    version: string
+    guards: Record<string, boolean>
+  }
+  unknown.guards.unapproved_guard = true
+  const allOff = {
+    ...STANDARD_RAG_GUARD_PROFILE,
+    guards: Object.fromEntries(MANDATORY_RAG_GUARDS.map((guard) => [guard, false]))
+  }
+
+  for (const [label, profile, expected] of [
+    ["unknown", unknown, /unknown keys: unapproved_guard/],
+    ["partial", partial, /missing required keys: citation/],
+    ["all-off", allOff, /mandatory guards disabled/]
+  ] as const) {
+    const result = await runDependencyProbe({ RAG_GUARD_PROFILE_JSON: JSON.stringify(profile) })
+    assert.notEqual(result.status, 0, label)
+    assert.match(result.stderr, expected, label)
+  }
 })
 
 test("createDynamoDbClient_usesEndpointWhenConfigured", async () => {
@@ -50,7 +92,7 @@ test("createDependencies_rejectsLegacyLocalStoreEscapeInProduction", async () =>
   assert.match(result.stderr, /MEMORAG_ALLOW_LEGACY_LOCAL_STORE_FOR_TESTS is not allowed in production/)
 })
 
-function runDependencyProbe(env: NodeJS.ProcessEnv) {
+function runDependencyProbe(env: NodeJS.ProcessEnv, unsetEnv: readonly string[] = []) {
   return runIsolatedProbe({
     mode: "dependencies",
     moduleUrl: pathToFileURL(path.resolve(apiRoot, "src/dependencies.ts")).href,
@@ -59,8 +101,10 @@ function runDependencyProbe(env: NodeJS.ProcessEnv) {
       NODE_ENV: "development",
       MOCK_BEDROCK: "true",
       USE_LOCAL_VECTOR_STORE: "true",
+      RAG_GUARD_PROFILE_JSON: safeRagGuardProfileJson,
       ...env
-    }
+    },
+    unsetEnv
   })
 }
 
@@ -70,10 +114,12 @@ function runIsolatedProbe(input: Readonly<{
   mode: "dependencies" | "dynamodbEndpoint"
   moduleUrl: string
   env: NodeJS.ProcessEnv
+  unsetEnv?: readonly string[]
 }>): Promise<ProbeResult> {
   const source = `
     import { parentPort, workerData } from "node:worker_threads";
     Object.assign(process.env, workerData.env);
+    for (const name of workerData.unsetEnv ?? []) delete process.env[name];
     try {
       const { register } = await import(workerData.tsxApiUrl);
       register();
@@ -86,7 +132,8 @@ function runIsolatedProbe(input: Readonly<{
           favoriteStore: deps.favoriteStore.constructor.name,
           securityAuditOutbox: deps.securityAuditOutbox?.constructor.name,
           securityAuditReconciliationUsesMutationOutbox:
-            deps.securityAuditReconciliationOutbox === deps.securityAuditOutbox
+            deps.securityAuditReconciliationOutbox === deps.securityAuditOutbox,
+          ragGuardProfile: deps.ragGuardProfile
         }), stderr: "" });
       } else {
         const endpoint = await module.createDynamoDbClient().config.endpoint();

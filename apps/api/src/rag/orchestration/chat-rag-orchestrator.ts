@@ -19,13 +19,13 @@ import { ProductionRagObservationProducer, bestEffortCapture } from "../quality-
 import { RESOURCE_OPERATION_AUTHORIZATION_POLICY_VERSION } from "../../security/resource-operation-authorization.js"
 import { tenantPartitionId } from "../../security/tenant-partition.js"
 import {
-  STANDARD_RAG_GUARD_PROFILE,
+  // The active guard profile is supplied by Dependencies, never by a module constant.
   assertSafeRagGuardProfile,
   measurePartialRuntimeRagGuards,
   type MandatoryRagGuard,
   type SafeDegradationDecision
 } from "../_shared/security/safe-degradation-policy.js"
-import { DEBUG_TRACE_SANITIZE_POLICY_VERSION, DEBUG_TRACE_SCHEMA_VERSION, type DebugTrace } from "../../types.js"
+import { CHAT_ORCHESTRATION_TRACE_TARGET_TYPE, DEBUG_TRACE_SANITIZE_POLICY_VERSION, DEBUG_TRACE_SCHEMA_VERSION, type DebugTrace } from "../../types.js"
 import type { Citation, DocumentManifest, ReplaySourceSnapshot, ReplayVersionManifest, RetrievedVector } from "../../types.js"
 import { analyzeInput } from "../../chat-orchestration/nodes/analyze-input.js"
 import { answerabilityGate } from "../online/post-retrieval/answerability/answerability-gate.js"
@@ -281,7 +281,9 @@ export function createChatOrchestrationGraph(deps: Dependencies, user: AppUser =
       deps,
       user,
       chunks: [...unique.values()],
-      purpose: "normal_answer"
+      purpose: "normal_answer",
+      scope: state.searchScope,
+      conversationId: state.conversation?.conversationId
     })
     const eligibleKeys = new Set(result.eligible.map((chunk) => chunk.key))
     const selectedDenied = state.selectedChunks.some((chunk) => !eligibleKeys.has(chunk.key))
@@ -313,6 +315,9 @@ export function createChatOrchestrationGraph(deps: Dependencies, user: AppUser =
   const nodes = {
     analyzeInput: tracedNode("analyze_input", analyzeInput),
     buildTemporalContext: tracedNode("build_temporal_context", buildTemporalContext),
+    recordScopeNormalization: tracedNode("normalize_search_scope", async (state) => state.sessionScopeNormalization
+      ? { sessionScopeNormalization: state.sessionScopeNormalization }
+      : {}),
     detectToolIntent: tracedNode("detect_tool_intent", detectToolIntent),
     buildConversationState: tracedNode("build_conversation_state", buildConversationState),
     decontextualizeQuery: tracedNode("decontextualize_query", decontextualizeQuery),
@@ -347,6 +352,7 @@ export function createChatOrchestrationGraph(deps: Dependencies, user: AppUser =
       if (state.answerability.reason === "invalid_temporal_context") {
         return applyNode(state, "finalize_refusal", nodes.finalizeRefusal, progress)
       }
+      state = await applyNode(state, "normalize_search_scope", nodes.recordScopeNormalization, progress)
       state = await applyNode(state, "detect_tool_intent", nodes.detectToolIntent, progress)
       state = await applyNode(state, "build_conversation_state", nodes.buildConversationState, progress)
       state = await applyNode(state, "decontextualize_query", nodes.decontextualizeQuery, progress)
@@ -713,7 +719,7 @@ export async function runChatOrchestration(
   progress?: ProgressSink,
   securityResourceRefs: readonly string[] = []
 ): Promise<ChatOrchestrationResult> {
-  assertSafeRagGuardProfile(STANDARD_RAG_GUARD_PROFILE)
+  assertSafeRagGuardProfile(deps.ragGuardProfile)
   await assertRagSafetyInterlock({
     objectStore: deps.objectStore,
     runtimeProfileVersion: ragRuntimePolicy.profile.version,
@@ -759,6 +765,7 @@ export async function runChatOrchestration(
     },
     searchFilters: input.searchFilters,
     searchScope: input.searchScope,
+    sessionScopeNormalization: input.sessionScopeNormalization,
     memoryCards: [],
     clues: [],
     expandedQueries: [],
@@ -1071,7 +1078,7 @@ async function persistDebugTrace(
     tenantPartitionId: tenantPartitionId(input.requesterTenantId),
     actorPartitionId: tenantPartitionId(`${input.requesterTenantId}:actor:${input.requesterUserId}`),
     securityResourceRefs: [...new Set(input.securityResourceRefs)].sort(),
-    targetType: "rag_run",
+    targetType: CHAT_ORCHESTRATION_TRACE_TARGET_TYPE,
     visibility: "operator_sanitized",
     sanitizePolicyVersion: DEBUG_TRACE_SANITIZE_POLICY_VERSION,
     exportRedaction: {

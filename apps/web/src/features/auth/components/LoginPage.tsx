@@ -1,5 +1,5 @@
 import { type FormEvent, useState } from "react"
-import type { AuthResult, AuthSession, NewPasswordRequiredChallenge, SignUpResult } from "../../../authClient.js"
+import type { AuthResult, AuthSession, NewPasswordRequiredChallenge, SignUpResult } from "../api/authClient.js"
 import { LoadingSpinner } from "../../../shared/components/LoadingSpinner.js"
 import { LoginHeroGraphic } from "./LoginHeroGraphic.js"
 

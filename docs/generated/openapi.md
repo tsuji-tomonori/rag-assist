@@ -51,6 +51,7 @@ Grounded internal-document QA API. Answers only from uploaded documents; otherwi
 | `GET` | `/chat-tools` | チャット tool registry を取得する | [詳細](openapi/get-chat-tools.md) |
 | `GET` | `/conversation-history` | 会話履歴一覧を取得する | [詳細](openapi/get-conversation-history.md) |
 | `POST` | `/conversation-history` | 会話履歴を保存する | [詳細](openapi/post-conversation-history.md) |
+| `GET` | `/conversation-history/{id}` | 会話履歴詳細を取得する | [詳細](openapi/get-conversation-history-id.md) |
 | `DELETE` | `/conversation-history/{id}` | 会話履歴を削除する | [詳細](openapi/delete-conversation-history-id.md) |
 | `GET` | `/debug-runs` | debug trace 一覧を取得する | [詳細](openapi/get-debug-runs.md) |
 | `GET` | `/debug-runs/{runId}` | debug trace 詳細を取得する | [詳細](openapi/get-debug-runs-runid.md) |

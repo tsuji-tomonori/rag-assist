@@ -12,7 +12,7 @@ export const BenchmarkQueryResponseSchema = ChatResponseSchema.extend({
   id: z.string().optional()
 })
 
-export const BenchmarkSearchRequestSchema = SearchRequestSchema.omit({ filters: true, scope: true }).extend({
+export const BenchmarkSearchRequestSchema = SearchRequestSchema.omit({ filters: true, scope: true, conversationId: true }).extend({
   suiteId: z.string().min(1)
 }).strict()
 

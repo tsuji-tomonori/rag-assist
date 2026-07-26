@@ -18,13 +18,13 @@
 | F001 | `GET /admin/users handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/admin-routes.ts:145 (GET /admin/users handler)` |
 | F002 | `GET /admin/users handler` | if | `error` が `InvalidPageCursorError` の instance である | `apps/api/src/routes/admin-routes.ts:146 (GET /admin/users handler)` |
 | F003 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| F004 | `MemoRagService.listManagedUsersPage` | 三項条件 | `this.deps.verifiedIdentityProvider` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1694 (MemoRagService.listManagedUsersPage)` |
-| F005 | `MemoRagService.listManagedUsersPage` | if | `actor.userId` が `user.userId` と等しい | `apps/api/src/rag/memorag-service.ts:1701 (MemoRagService.listManagedUsersPage)` |
-| F006 | `MemoRagService.listManagedUsersPage` | if | `user.status` が `"active"` と異なる | `apps/api/src/rag/memorag-service.ts:1702 (MemoRagService.listManagedUsersPage)` |
-| F007 | `MemoRagService.listManagedUsersPage` | if | `user.groups` が "SYSTEM_ADMIN" を含む、かつ `activeRecoveryPrincipals.length` が `1` 以下である | `apps/api/src/rag/memorag-service.ts:1703 (MemoRagService.listManagedUsersPage)` |
-| F008 | `MemoRagService.listManagedUsersPage` | 三項条件 | `query.sort` が `"updatedDesc"` と等しい | `apps/api/src/rag/memorag-service.ts:1717 (MemoRagService.listManagedUsersPage)` |
-| F009 | `MemoRagService.listManagedUsersPage` | 三項条件 | `sort` が `"updatedDesc"` と等しい | `apps/api/src/rag/memorag-service.ts:1726 (MemoRagService.listManagedUsersPage)` |
-| F010 | `MemoRagService.listManagedUsersPage` | 三項条件 | `sort` が `"updatedDesc"` と等しい | `apps/api/src/rag/memorag-service.ts:1727 (MemoRagService.listManagedUsersPage)` |
+| F004 | `MemoRagService.listManagedUsersPage` | 三項条件 | `this.deps.verifiedIdentityProvider` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1695 (MemoRagService.listManagedUsersPage)` |
+| F005 | `MemoRagService.listManagedUsersPage` | if | `actor.userId` が `user.userId` と等しい | `apps/api/src/rag/memorag-service.ts:1702 (MemoRagService.listManagedUsersPage)` |
+| F006 | `MemoRagService.listManagedUsersPage` | if | `user.status` が `"active"` と異なる | `apps/api/src/rag/memorag-service.ts:1703 (MemoRagService.listManagedUsersPage)` |
+| F007 | `MemoRagService.listManagedUsersPage` | if | `user.groups` が "SYSTEM_ADMIN" を含む、かつ `activeRecoveryPrincipals.length` が `1` 以下である | `apps/api/src/rag/memorag-service.ts:1704 (MemoRagService.listManagedUsersPage)` |
+| F008 | `MemoRagService.listManagedUsersPage` | 三項条件 | `query.sort` が `"updatedDesc"` と等しい | `apps/api/src/rag/memorag-service.ts:1718 (MemoRagService.listManagedUsersPage)` |
+| F009 | `MemoRagService.listManagedUsersPage` | 三項条件 | `sort` が `"updatedDesc"` と等しい | `apps/api/src/rag/memorag-service.ts:1727 (MemoRagService.listManagedUsersPage)` |
+| F010 | `MemoRagService.listManagedUsersPage` | 三項条件 | `sort` が `"updatedDesc"` と等しい | `apps/api/src/rag/memorag-service.ts:1728 (MemoRagService.listManagedUsersPage)` |
 
 ## 3. コード由来テストケース
 
@@ -36,20 +36,20 @@
 | TC004 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:146 (GET /admin/users handler)` |
 | TC005 | F003: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
 | TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC007 | F004: 条件成立 | `this.deps.verifiedIdentityProvider` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1694 (MemoRagService.listManagedUsersPage)` |
-| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1694 (MemoRagService.listManagedUsersPage)` |
-| TC009 | F005: 条件成立 | `actor.userId` が `user.userId` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1701 (MemoRagService.listManagedUsersPage)` |
-| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1701 (MemoRagService.listManagedUsersPage)` |
-| TC011 | F006: 条件成立 | `user.status` が `"active"` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1702 (MemoRagService.listManagedUsersPage)` |
-| TC012 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1702 (MemoRagService.listManagedUsersPage)` |
-| TC013 | F007: 条件成立 | `user.groups` が "SYSTEM_ADMIN" を含む、かつ `activeRecoveryPrincipals.length` が `1` 以下である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1703 (MemoRagService.listManagedUsersPage)` |
-| TC014 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1703 (MemoRagService.listManagedUsersPage)` |
-| TC015 | F008: 条件成立 | `query.sort` が `"updatedDesc"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1717 (MemoRagService.listManagedUsersPage)` |
-| TC016 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1717 (MemoRagService.listManagedUsersPage)` |
-| TC017 | F009: 条件成立 | `sort` が `"updatedDesc"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1726 (MemoRagService.listManagedUsersPage)` |
-| TC018 | F009: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1726 (MemoRagService.listManagedUsersPage)` |
-| TC019 | F010: 条件成立 | `sort` が `"updatedDesc"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1727 (MemoRagService.listManagedUsersPage)` |
-| TC020 | F010: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1727 (MemoRagService.listManagedUsersPage)` |
+| TC007 | F004: 条件成立 | `this.deps.verifiedIdentityProvider` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1695 (MemoRagService.listManagedUsersPage)` |
+| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1695 (MemoRagService.listManagedUsersPage)` |
+| TC009 | F005: 条件成立 | `actor.userId` が `user.userId` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1702 (MemoRagService.listManagedUsersPage)` |
+| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1702 (MemoRagService.listManagedUsersPage)` |
+| TC011 | F006: 条件成立 | `user.status` が `"active"` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1703 (MemoRagService.listManagedUsersPage)` |
+| TC012 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1703 (MemoRagService.listManagedUsersPage)` |
+| TC013 | F007: 条件成立 | `user.groups` が "SYSTEM_ADMIN" を含む、かつ `activeRecoveryPrincipals.length` が `1` 以下である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1704 (MemoRagService.listManagedUsersPage)` |
+| TC014 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1704 (MemoRagService.listManagedUsersPage)` |
+| TC015 | F008: 条件成立 | `query.sort` が `"updatedDesc"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1718 (MemoRagService.listManagedUsersPage)` |
+| TC016 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1718 (MemoRagService.listManagedUsersPage)` |
+| TC017 | F009: 条件成立 | `sort` が `"updatedDesc"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1727 (MemoRagService.listManagedUsersPage)` |
+| TC018 | F009: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1727 (MemoRagService.listManagedUsersPage)` |
+| TC019 | F010: 条件成立 | `sort` が `"updatedDesc"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1728 (MemoRagService.listManagedUsersPage)` |
+| TC020 | F010: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1728 (MemoRagService.listManagedUsersPage)` |
 | TC021 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC022 | HTTP 400 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC023 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

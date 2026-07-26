@@ -10,6 +10,7 @@ import type { VectorFilter } from "../../adapters/vector-store.js"
 import { ragRuntimePolicy } from "../runtime-policy.js"
 import type { ChatOrchestrationState, ChatOrchestrationUpdate } from "../state.js"
 import { readTenantManifest, readTenantManifestByKey, tenantManifestPrefix } from "../../rag/_shared/storage/tenant-artifacts.js"
+import { temporaryScopeIds } from "../../rag/_shared/security/session-local-evidence-scope.js"
 
 export function createRetrieveMemoryNode(deps: Dependencies, user: AppUser) {
   return async function retrieveMemory(state: ChatOrchestrationState): Promise<ChatOrchestrationUpdate> {
@@ -149,7 +150,7 @@ function manifestMatchesScope(manifest: DocumentManifest, scope: SearchScope | u
   const metadata = manifest.metadata ?? {}
   const scopeType = stringValue(metadata.scopeType)
   const temporaryMatch = Boolean(
-    scope?.includeTemporary && scope.temporaryScopeId && stringValue(metadata.temporaryScopeId) === scope.temporaryScopeId
+    scope?.includeTemporary && temporaryScopeIds(scope).includes(stringValue(metadata.temporaryScopeId) ?? "")
   )
   if (!scope || scope.mode === "all" || !scope.mode) {
     if (scopeType !== "chat") return true
@@ -165,7 +166,7 @@ function manifestMatchesScope(manifest: DocumentManifest, scope: SearchScope | u
     return temporaryMatch || requested.has(manifest.documentId)
   }
   if (scope.mode === "temporary") {
-    return Boolean(scope.temporaryScopeId && stringValue(metadata.temporaryScopeId) === scope.temporaryScopeId)
+    return temporaryScopeIds(scope).includes(stringValue(metadata.temporaryScopeId) ?? "")
   }
   return true
 }

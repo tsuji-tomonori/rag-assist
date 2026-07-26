@@ -30,9 +30,9 @@ Logical ID: `RagQualityMonitorScheduleCFE9DF24`
 
 | 設定項目 | 値 |
 | --- | --- |
-| `Description` | Evaluate production RAG quality/security signals and apply the approved safety runbook. |
+| `Description` | Disabled by the cost-first MVP decision; continuous RAG monitoring is deferred. |
 | `ScheduleExpression` | rate(5 minutes) |
-| `State` | ENABLED |
+| `State` | DISABLED |
 | `Tags` | [{"Key":"Application","Value":"MemoRAG"},{"Key":"CostCenter","Value":"memorag-mvp"},{"Key":"Environment","Value":"dev"},{"Key":"ManagedBy","Value":"aws-cdk"},{"Key":"Project","Value":"memorag-bedrock-mvp"},{"Key":"Repository","Value":"tsuji-tomonori/rag-assist"}] |
 | `Targets` | [{"Arn":{"Fn::GetAtt":["RagQualityMonitorFunction9BE8E903","Arn"]},"Id":"Target0","Input":"{\"windowMinutes\":5}"}] |
 
@@ -44,9 +44,9 @@ Logical ID: `RevocationCleanupScheduleF357B692`
 
 | 設定項目 | 値 |
 | --- | --- |
-| `Description` | Reconcile tenant-scoped deny-first revocation cleanup manifests. |
+| `Description` | Disabled by the cost-first MVP decision; explicit cleanup remains available. |
 | `ScheduleExpression` | rate(1 minute) |
-| `State` | ENABLED |
+| `State` | DISABLED |
 | `Tags` | [{"Key":"Application","Value":"MemoRAG"},{"Key":"CostCenter","Value":"memorag-mvp"},{"Key":"Environment","Value":"dev"},{"Key":"ManagedBy","Value":"aws-cdk"},{"Key":"Project","Value":"memorag-bedrock-mvp"},{"Key":"Repository","Value":"tsuji-tomonori/rag-assist"}] |
 | `Targets` | [{"Arn":{"Fn::GetAtt":["RevocationCleanupFunctionE7C00D6D","Arn"]},"Id":"Target0","Input":"{\"limitPerTenant\":100}"}] |
 
@@ -58,8 +58,8 @@ Logical ID: `SecurityAuditReconciliationSchedule6C1B6D38`
 
 | 設定項目 | 値 |
 | --- | --- |
-| `Description` | Finalize tenant-scoped security mutation audits after authoritative state reconciliation. |
+| `Description` | Disabled by the cost-first MVP decision; explicit audit repair remains available. |
 | `ScheduleExpression` | rate(1 minute) |
-| `State` | ENABLED |
+| `State` | DISABLED |
 | `Tags` | [{"Key":"Application","Value":"MemoRAG"},{"Key":"CostCenter","Value":"memorag-mvp"},{"Key":"Environment","Value":"dev"},{"Key":"ManagedBy","Value":"aws-cdk"},{"Key":"Project","Value":"memorag-bedrock-mvp"},{"Key":"Repository","Value":"tsuji-tomonori/rag-assist"}] |
 | `Targets` | [{"Arn":{"Fn::GetAtt":["SecurityAuditReconciliationFunction9A53A79D","Arn"]},"Id":"Target0","Input":{"Fn::Join":["",["{\"tenantId\":\"",{"Ref":"AWS::AccountId"},"\",\"limit\":100}"]]}}] |

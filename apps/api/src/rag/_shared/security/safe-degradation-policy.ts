@@ -40,6 +40,8 @@ export type RagGuardProfile = {
   guards: Readonly<Record<MandatoryRagGuard, boolean>>
 }
 
+const RAG_GUARD_PROFILE_KEYS = ["id", "version", "guards"] as const
+
 export const STANDARD_RAG_GUARD_PROFILE: RagGuardProfile = {
   id: "standard-safe-rag",
   version: "standard-safe-rag-v1",
@@ -53,8 +55,82 @@ export class UnsafeRagDegradationProfileError extends Error {
   }
 }
 
-export function assertSafeRagGuardProfile(profile: RagGuardProfile): void {
-  const missing = MANDATORY_RAG_GUARDS.filter((guard) => profile.guards[guard] !== true)
+export class RagGuardProfileConfigurationError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = "RagGuardProfileConfigurationError"
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+}
+
+function assertExactKeys(
+  value: Record<string, unknown>,
+  expected: readonly string[],
+  field: string
+): void {
+  const actual = Object.keys(value)
+  const missing = expected.filter((key) => !Object.hasOwn(value, key))
+  const unknown = actual.filter((key) => !expected.includes(key))
+  if (missing.length > 0) {
+    throw new RagGuardProfileConfigurationError(`${field} is missing required keys: ${missing.join(", ")}`)
+  }
+  if (unknown.length > 0) {
+    throw new RagGuardProfileConfigurationError(`${field} contains unknown keys: ${unknown.join(", ")}`)
+  }
+}
+
+/** Parse the complete configured profile without defaults or implicit guard enablement. */
+export function parseConfiguredRagGuardProfile(
+  raw: string | undefined,
+  settingName = "RAG_GUARD_PROFILE_JSON"
+): RagGuardProfile {
+  if (raw === undefined || raw.trim().length === 0) {
+    throw new RagGuardProfileConfigurationError(`${settingName} is required`)
+  }
+
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(raw)
+  } catch {
+    throw new RagGuardProfileConfigurationError(`${settingName} must be valid JSON`)
+  }
+  if (!isRecord(parsed)) {
+    throw new RagGuardProfileConfigurationError(`${settingName} must be a JSON object`)
+  }
+  assertExactKeys(parsed, RAG_GUARD_PROFILE_KEYS, settingName)
+  if (typeof parsed.id !== "string" || parsed.id.trim().length === 0) {
+    throw new RagGuardProfileConfigurationError(`${settingName}.id must be a non-empty string`)
+  }
+  if (typeof parsed.version !== "string" || parsed.version.trim().length === 0) {
+    throw new RagGuardProfileConfigurationError(`${settingName}.version must be a non-empty string`)
+  }
+  if (!isRecord(parsed.guards)) {
+    throw new RagGuardProfileConfigurationError(`${settingName}.guards must be a JSON object`)
+  }
+  const guards = parsed.guards
+  assertExactKeys(guards, MANDATORY_RAG_GUARDS, `${settingName}.guards`)
+  for (const guard of MANDATORY_RAG_GUARDS) {
+    if (typeof guards[guard] !== "boolean") {
+      throw new RagGuardProfileConfigurationError(`${settingName}.guards.${guard} must be a boolean`)
+    }
+  }
+
+  const profile: RagGuardProfile = Object.freeze({
+    id: parsed.id,
+    version: parsed.version,
+    guards: Object.freeze(Object.fromEntries(
+      MANDATORY_RAG_GUARDS.map((guard) => [guard, guards[guard] as boolean])
+    ) as Record<MandatoryRagGuard, boolean>)
+  })
+  assertSafeRagGuardProfile(profile)
+  return profile
+}
+
+export function assertSafeRagGuardProfile(profile: RagGuardProfile | undefined): asserts profile is RagGuardProfile {
+  const missing = MANDATORY_RAG_GUARDS.filter((guard) => profile?.guards?.[guard] !== true)
   if (missing.length > 0) throw new UnsafeRagDegradationProfileError(missing)
 }
 

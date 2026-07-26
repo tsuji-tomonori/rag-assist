@@ -1,5 +1,5 @@
 import type { Dependencies } from "../dependencies.js"
-import type { Citation, DebugTrace, SearchScope } from "../types.js"
+import type { ChatConversationInput, Citation, DebugTrace, SearchScope } from "../types.js"
 import type { Clarification } from "./state.js"
 import type { SearchInput } from "../rag/online/retrieval/hybrid/hybrid-retriever.js"
 
@@ -15,19 +15,7 @@ export type ConversationTurnInput = {
 
 export type ConversationHistoryTurn = ConversationTurnInput
 
-export type ConversationInput = {
-  conversationId: string
-  turnId?: string
-  turnIndex?: number
-  turns: ConversationTurnInput[]
-  turnDependency?: string
-  state?: {
-    activeEntities?: string[]
-    activeDocuments?: string[]
-    activeTopics?: string[]
-    constraints?: string[]
-  }
-}
+export type ConversationInput = ChatConversationInput
 
 export type ChatInput = {
   question: string
@@ -51,8 +39,25 @@ export type ChatInput = {
   maxIterations?: number
   searchFilters?: SearchInput["filters"]
   searchScope?: SearchScope
+  sessionScopeNormalization?: SessionScopeNormalizationSummary
   asOfDate?: string
   asOfDateSource?: "benchmark" | "test"
+}
+
+export type SessionScopeNormalizationReason =
+  | "client_scope_not_authoritative"
+  | "context_not_found"
+  | "session_mismatch"
+  | "terminal"
+  | "expired"
+  | "current_authorization_denied"
+  | "scope_limit_exceeded"
+
+export type SessionScopeNormalizationSummary = {
+  acceptedTemporaryScopeCount: number
+  deniedTemporaryScopeCount: number
+  reasonCodes: SessionScopeNormalizationReason[]
+  previousCitationAnchorCount: number
 }
 
 export type ChatOrchestrationContext = {

@@ -10,7 +10,7 @@ import type {
   RetrievedVector,
   VersionedRecordReference
 } from "../../../types.js"
-import { reauthorizeCurrentEvidence } from "./current-evidence-reauthorizer.js"
+import { manifestMatchesCurrentSessionScope, reauthorizeCurrentEvidence, sessionContextAuthorizesTemporaryManifest } from "./current-evidence-reauthorizer.js"
 
 const timestamp = "2026-07-11T00:00:00.000Z"
 
@@ -163,6 +163,52 @@ test("citation reauthorization applies an ordinary document deny before a folder
     reason: "authorization_denied",
     authorizationReason: "ordinary_policy_denied"
   }])
+})
+
+test("MT-RETRIEVE-003-006/MT-ANSWER-003 answer-time reauthorization enforces current temporary owner, tenant, scope, and TTL", () => {
+  const manifest = {
+    documentId: "temporary-doc",
+    fileName: "temporary.txt",
+    sourceObjectKey: "documents/temporary.txt",
+    manifestObjectKey: "manifests/temporary.json",
+    vectorKeys: [],
+    chunkCount: 1,
+    memoryCardCount: 0,
+    createdAt: timestamp,
+    lifecycleStatus: "active",
+    metadata: {
+      scopeType: "chat",
+      tenantId: "tenant-a",
+      ownerUserId: "owner-1",
+      temporaryScopeId: "tmp-2",
+      expiresAt: "2026-07-12T00:00:00.000Z"
+    }
+  } as DocumentManifest
+  const owner = { userId: "owner-1", tenantId: "tenant-a", cognitoGroups: ["CHAT_USER"], accountStatus: "active" as const }
+  const scope = { mode: "temporary" as const, includeTemporary: true, temporaryScopeId: "tmp-1", temporaryScopeIds: ["tmp-1", "tmp-2"] }
+
+  assert.equal(manifestMatchesCurrentSessionScope(manifest, owner, scope, new Date("2026-07-11T12:00:00.000Z")), true)
+  assert.equal(manifestMatchesCurrentSessionScope(manifest, { ...owner, userId: "other" }, scope, new Date("2026-07-11T12:00:00.000Z")), false)
+  assert.equal(manifestMatchesCurrentSessionScope(manifest, { ...owner, tenantId: "tenant-b" }, scope, new Date("2026-07-11T12:00:00.000Z")), false)
+  assert.equal(manifestMatchesCurrentSessionScope(manifest, owner, { ...scope, temporaryScopeIds: ["tmp-1"] }, new Date("2026-07-11T12:00:00.000Z")), false)
+  assert.equal(manifestMatchesCurrentSessionScope(manifest, owner, scope, new Date("2026-07-12T00:00:00.000Z")), false)
+  const activeContext = {
+    schemaVersion: 1 as const,
+    sessionId: "conversation-1",
+    temporaryEvidence: [{
+      temporaryScopeId: "tmp-2",
+      documentId: "temporary-doc",
+      status: "active" as const,
+      expiresAt: "2026-07-12T00:00:00.000Z",
+      updatedAt: timestamp
+    }],
+    updatedAt: timestamp
+  }
+  assert.equal(sessionContextAuthorizesTemporaryManifest(activeContext, "conversation-1", manifest, new Date("2026-07-11T12:00:00.000Z")), true)
+  assert.equal(sessionContextAuthorizesTemporaryManifest({
+    ...activeContext,
+    temporaryEvidence: activeContext.temporaryEvidence.map((reference) => ({ ...reference, status: "revoked" as const }))
+  }, "conversation-1", manifest, new Date("2026-07-11T12:00:00.000Z")), false, "mid-run terminal context removes the source before answer/citation finalization")
 })
 
 function reference(id: string): VersionedRecordReference {

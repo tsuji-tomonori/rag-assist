@@ -1076,7 +1076,7 @@ function lexicalDoc(id: string, documentId: string, fileName: string, text: stri
 }
 
 function createLocalDeps(dataDir: string): Dependencies {
-  return {
+  return { ragGuardProfile: { id: "test-safe-rag", version: "test-safe-rag-v1", guards: { authentication: true, authorization: true, classification_usage: true, prompt_injection: true, tool_policy: true, grounding: true, citation: true, output_secret: true, trace_redaction: true } },
     objectStore: new LocalObjectStore(dataDir),
     evidenceVectorStore: new LocalVectorStore(dataDir, "evidence-vectors.json"),
     memoryVectorStore: new LocalVectorStore(dataDir, "memory-vectors.json"),

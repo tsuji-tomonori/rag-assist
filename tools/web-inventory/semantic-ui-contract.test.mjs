@@ -1,11 +1,22 @@
 import assert from 'node:assert/strict'
-import { readFile } from 'node:fs/promises'
+import { readdir, readFile } from 'node:fs/promises'
 import test from 'node:test'
 
 const root = new URL('../../', import.meta.url)
 
 async function read(path) {
   return readFile(new URL(path, root), 'utf8')
+}
+
+async function sourceFiles(path) {
+  const directory = new URL(path, root)
+  const entries = await readdir(directory, { withFileTypes: true })
+  const files = await Promise.all(entries.map(async (entry) => {
+    const entryPath = `${path}/${entry.name}`
+    if (entry.isDirectory()) return sourceFiles(entryPath)
+    return /\.[cm]?[jt]sx?$/.test(entry.name) ? [entryPath] : []
+  }))
+  return files.flat()
 }
 
 function cssVariable(css, name) {
@@ -32,6 +43,17 @@ test('NONUI-UI-SEMANTIC-001: semantic status tokens meet WCAG AA text contrast',
     const foreground = cssVariable(css, `status-${tone}-foreground`)
     const background = cssVariable(css, `status-${tone}-background`)
     assert.ok(contrastRatio(foreground, background) >= 4.5, `${tone} status contrast must be at least 4.5:1`)
+  }
+
+  for (const foregroundName of ['color-text-muted', 'color-text-muted-strong']) {
+    const foreground = cssVariable(css, foregroundName)
+    for (const backgroundName of ['color-surface', 'color-surface-muted', 'color-surface-subtle']) {
+      const background = cssVariable(css, backgroundName)
+      assert.ok(
+        contrastRatio(foreground, background) >= 4.5,
+        `${foregroundName} on ${backgroundName} must be at least 4.5:1`
+      )
+    }
   }
 })
 
@@ -69,4 +91,37 @@ test('confirmation dialogs share native focus semantics and semantic Button inte
   }
   assert.match(button, /"warning"/)
   assert.match(button, /"danger"/)
+})
+
+test('AppShell keeps primary navigation outside the single main landmark', async () => {
+  const shell = await read('apps/web/src/app/AppShell.tsx')
+
+  assert.match(shell, /<div className="app-frame">/)
+  assert.match(shell, /<main className="main-area"[^>]*>/)
+  assert.match(shell, /href="#main-content"/)
+  assert.match(shell, /id="main-content"/)
+  assert.doesNotMatch(shell, /<main className="app-frame">/)
+})
+
+test('retired unused UI primitives remain absent while Badge stays in use', async () => {
+  for (const retiredPath of [
+    'apps/web/src/shared/ui/IconButton.tsx',
+    'apps/web/src/shared/ui/Panel.tsx'
+  ]) {
+    await assert.rejects(read(retiredPath), { code: 'ENOENT' })
+  }
+
+  const paths = await sourceFiles('apps/web/src')
+  const sources = await Promise.all(paths.map(async (path) => `${path}\n${await read(path)}`))
+  const webSource = sources.join('\n')
+  const uiIndex = await read('apps/web/src/shared/ui/index.ts')
+  const statusBadge = await read('apps/web/src/shared/ui/StatusBadge.tsx')
+
+  assert.doesNotMatch(uiIndex, /\b(?:IconButton|Panel)\b/)
+  assert.doesNotMatch(webSource, /\b(?:IconButton|Panel)\b/)
+  assert.doesNotMatch(webSource, /shared\/ui\/(?:IconButton|Panel)(?:\.[cm]?[jt]sx?)?/)
+  assert.doesNotMatch(webSource, /["']\.\/(?:IconButton|Panel)\.js["']/)
+  assert.match(uiIndex, /export\s*\{\s*Badge\s*\}\s*from\s*"\.\/Badge\.js"/)
+  assert.match(statusBadge, /import\s*\{\s*Badge\s*\}\s*from\s*"\.\/Badge\.js"/)
+  assert.match(statusBadge, /<Badge\b/)
 })

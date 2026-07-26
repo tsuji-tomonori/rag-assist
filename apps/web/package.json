@@ -15,7 +15,9 @@
     "test:e2e:all": "E2E_SCENARIO=all playwright test",
     "test:e2e:install": "playwright install --with-deps chromium",
     "test:e2e:smoke:local": "npm run test:e2e:install && npm run test:e2e:smoke",
-    "test:e2e:all:local": "npm run test:e2e:install && npm run test:e2e:all"
+    "test:e2e:all:local": "npm run test:e2e:install && npm run test:e2e:all",
+    "test:e2e:ui-quality": "E2E_SCENARIO=ui-quality playwright test e2e/visual-regression.spec.ts --project=chromium",
+    "test:e2e:cross-browser": "E2E_SCENARIO=cross-browser E2E_CROSS_BROWSER=1 playwright test e2e/visual-regression.spec.ts --project=firefox-scheduled --project=webkit-scheduled"
   },
   "dependencies": {
     "@memorag-mvp/contract": "0.1.0",

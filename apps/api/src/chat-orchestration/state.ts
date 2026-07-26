@@ -296,7 +296,23 @@ const SearchScopeSchema = z.object({
   groupIds: z.array(z.string()).optional(),
   documentIds: z.array(z.string()).optional(),
   includeTemporary: z.boolean().optional(),
-  temporaryScopeId: z.string().optional()
+  temporaryScopeId: z.string().optional(),
+  temporaryScopeIds: z.array(z.string()).max(20).optional()
+})
+
+const SessionScopeNormalizationSchema = z.object({
+  acceptedTemporaryScopeCount: z.number().int().nonnegative(),
+  deniedTemporaryScopeCount: z.number().int().nonnegative(),
+  reasonCodes: z.array(z.enum([
+    "client_scope_not_authoritative",
+    "context_not_found",
+    "session_mismatch",
+    "terminal",
+    "expired",
+    "current_authorization_denied",
+    "scope_limit_exceeded"
+  ])).max(7),
+  previousCitationAnchorCount: z.number().int().nonnegative()
 })
 
 const SearchBudgetSchema = z.object({
@@ -577,6 +593,7 @@ export const ChatOrchestrationStateSchema = z.object({
   decontextualizedQuery: DecontextualizedQuerySchema.optional(),
   searchFilters: SearchFiltersSchema.optional(),
   searchScope: SearchScopeSchema.optional(),
+  sessionScopeNormalization: SessionScopeNormalizationSchema.optional(),
 
   iteration: z.number().int().min(0).default(0),
   referenceQueue: z.array(ReferenceTargetSchema).default(() => []),

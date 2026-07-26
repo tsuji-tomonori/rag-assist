@@ -46,7 +46,16 @@
     },
     {
       "id": "SQ-016",
-      "acceptanceCriteria": ["AC-SQ016-001", "AC-SQ016-002", "AC-SQ016-003", "AC-SQ016-007", "AC-SQ016-008"],
+      "acceptanceCriteria": [
+        "AC-SQ016-001",
+        "AC-SQ016-002",
+        "AC-SQ016-003",
+        "AC-SQ016-004",
+        "AC-SQ016-005",
+        "AC-SQ016-006",
+        "AC-SQ016-007",
+        "AC-SQ016-008"
+      ],
       "appliesTo": ["*"]
     }
   ],
@@ -97,6 +106,31 @@
       "evidence": ["apps/web/e2e/visual-regression.spec.ts"]
     },
     {
+      "id": "E2E-UI-CROSS-SCREEN-AUDIT-001",
+      "status": "implemented",
+      "evidence": ["apps/web/e2e/visual-regression.spec.ts", "apps/web/e2e/cross-screen-audit.ts"]
+    },
+    {
+      "id": "E2E-UI-A11Y-GATE-001",
+      "status": "implemented",
+      "evidence": ["apps/web/e2e/visual-regression.spec.ts"]
+    },
+    {
+      "id": "E2E-UI-KEYBOARD-NAV-001",
+      "status": "implemented",
+      "evidence": ["apps/web/e2e/keyboard-navigation.spec.ts"]
+    },
+    {
+      "id": "E2E-UI-SR-SEMANTICS-001",
+      "status": "implemented",
+      "evidence": ["apps/web/e2e/screen-reader-semantics.spec.ts"]
+    },
+    {
+      "id": "E2E-UI-TOUCH-NAV-001",
+      "status": "implemented",
+      "evidence": ["apps/web/e2e/touch-navigation.spec.ts"]
+    },
+    {
       "id": "E2E-UI-RISK-001",
       "status": "implemented",
       "evidence": ["apps/web/e2e/visual-regression.spec.ts"]
@@ -124,7 +158,30 @@
     {
       "id": "E2E-UI-LOGIN-KEYBOARD-001",
       "status": "implemented",
-      "evidence": ["apps/web/e2e/login-keyboard.spec.ts", "apps/web/src/LoginPage.test.tsx"]
+      "evidence": [
+        "apps/web/e2e/login-keyboard.spec.ts",
+        "apps/web/src/features/auth/components/LoginPage.test.tsx"
+      ]
+    },
+    {
+      "id": "E2E-UI-LAYOUT-STRESS-001",
+      "status": "implemented",
+      "evidence": ["apps/web/e2e/layout-stress.spec.ts"]
+    },
+    {
+      "id": "E2E-UI-TEXT-SPACING-001",
+      "status": "implemented",
+      "evidence": ["apps/web/e2e/text-spacing.spec.ts"]
+    },
+    {
+      "id": "E2E-UI-VIRTUAL-KEYBOARD-001",
+      "status": "implemented",
+      "evidence": ["apps/web/e2e/viewport-keyboard.spec.ts"]
+    },
+    {
+      "id": "E2E-UI-ZOOM-REFLOW-001",
+      "status": "implemented",
+      "evidence": ["apps/web/e2e/zoom-reflow.spec.ts"]
     },
     {
       "id": "NONUI-UI-MANUAL-EVIDENCE-001",
@@ -174,7 +231,7 @@
         "apps/web/src/features/questions/hooks/useQuestions.ts"
       ],
       "gapTasks": [
-        "tasks/todo/20260714-issue-345-cross-screen-a11y-responsive.md",
+        "tasks/do/20260714-issue-345-cross-screen-a11y-responsive.md",
         "tasks/todo/20260714-issue-345-manual-a11y-evidence.md"
       ]
     },
@@ -209,7 +266,7 @@
         "apps/web/src/shared/ui/OperationFeedback.tsx"
       ],
       "gapTasks": [
-        "tasks/todo/20260714-issue-345-cross-screen-a11y-responsive.md",
+        "tasks/do/20260714-issue-345-cross-screen-a11y-responsive.md",
         "tasks/todo/20260714-issue-345-manual-a11y-evidence.md"
       ]
     },
@@ -243,7 +300,7 @@
         "apps/web/src/shared/ui/OperationFeedback.tsx"
       ],
       "gapTasks": [
-        "tasks/todo/20260714-issue-345-cross-screen-a11y-responsive.md",
+        "tasks/do/20260714-issue-345-cross-screen-a11y-responsive.md",
         "tasks/todo/20260714-issue-345-manual-a11y-evidence.md"
       ]
     },
@@ -267,7 +324,7 @@
       "implementationStatus": "partial",
       "implementationEvidence": ["apps/web/src/features/favorites/components/FavoritesWorkspace.tsx"],
       "gapTasks": [
-        "tasks/todo/20260714-issue-345-cross-screen-a11y-responsive.md",
+        "tasks/do/20260714-issue-345-cross-screen-a11y-responsive.md",
         "tasks/todo/20260714-issue-345-manual-a11y-evidence.md"
       ]
     },

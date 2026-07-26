@@ -39,7 +39,7 @@ export function detectQuestionRequirements(question: string): QuestionRequiremen
   }
   if (/期限|期日|締切|締め切り|開始日|終了日|何営業日/u.test(normalized)) {
     requirements.push({ type: "slot", slot: "date", label: "期限" })
-  } else if (/いつ|何年|何月|何日|時期|起点|開始|発足|設置/u.test(normalized)) {
+  } else if (/いつ|何年|何月|何日|日付|時期|起点|開始|発足|設置/u.test(normalized)) {
     requirements.push({ type: "slot", slot: "date", label: "日付・時期" })
   }
   if (/どこ|場所|所在地|設置先|置かれた|どこに/u.test(normalized)) {
@@ -51,7 +51,7 @@ export function detectQuestionRequirements(question: string): QuestionRequiremen
   if (/節|章|目次|どの節|どの項目|section/i.test(normalized)) {
     requirements.push({ type: "slot", slot: "section", label: "節番号・節名" })
   }
-  if (/項目|含まれる|挙げ|列挙|一覧|洗い出/u.test(normalized)) {
+  if (/項目|含まれる|挙げ|列挙|一覧|洗い出|分類|種類|区分|\b(?:classif(?:y|ication)|categories|types|kinds|list|enumerate)\b/iu.test(normalized)) {
     requirements.push({ type: "slot", slot: "item", label: "項目名" })
   }
   if (/(?:^|[^A-Za-z0-9])(?:DPC[/／]?PDPS|SDDS|EBPM|AI)(?:$|[^A-Za-z0-9])/i.test(normalized)) {

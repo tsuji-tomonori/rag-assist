@@ -33,13 +33,13 @@
 | ---: | --- | --- | --- | --- | --- |
 | B001 | `POST /chat-runs handler` | if | `(body.includeDebug ?? body.debug ?? false)` が `true` と等しい | `(body.includeDebug ?? body.debug ?? false) === true` | `apps/api/src/routes/chat-routes.ts:69 (POST /chat-runs handler)` |
 | B002 | `requirePermission` | if | 利用者が 指定された permission を持たない | `!hasPermission(user, permission)` | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| B003 | `MemoRagService.startChatRun` | if | `config.chatRunStateMachineArn` が存在し、真である | `config.chatRunStateMachineArn` | `apps/api/src/rag/memorag-service.ts:2489 (MemoRagService.startChatRun)` |
-| B004 | `MemoRagService.startChatRun` | catch | 例外が発生した場合に catch 処理へ移る | `err` | `apps/api/src/rag/memorag-service.ts:2492 (MemoRagService.startChatRun)` |
-| B005 | `MemoRagService.startChatRun` | 三項条件 | `err` が `Error` の instance である | `err instanceof Error` | `apps/api/src/rag/memorag-service.ts:2493 (MemoRagService.startChatRun)` |
+| B003 | `MemoRagService.startChatRun` | if | `config.chatRunStateMachineArn` が存在し、真である | `config.chatRunStateMachineArn` | `apps/api/src/rag/memorag-service.ts:2493 (MemoRagService.startChatRun)` |
+| B004 | `MemoRagService.startChatRun` | catch | 例外が発生した場合に catch 処理へ移る | `err` | `apps/api/src/rag/memorag-service.ts:2496 (MemoRagService.startChatRun)` |
+| B005 | `MemoRagService.startChatRun` | 三項条件 | `err` が `Error` の instance である | `err instanceof Error` | `apps/api/src/rag/memorag-service.ts:2497 (MemoRagService.startChatRun)` |
 
 ## 4. 到達する主要実装
 
-handler を起点に TypeScript symbol を解決し、深さ 2 までの主要関数・method を列挙しています。深い helper を含む全到達関数は 653 件で、永続化・外部接続は深さにかかわらず次節へ集約しています。
+handler を起点に TypeScript symbol を解決し、深さ 2 までの主要関数・method を列挙しています。深い helper を含む全到達関数は 663 件で、永続化・外部接続は深さにかかわらず次節へ集約しています。
 
 | 深さ | Symbol | 責務 | 実装位置 |
 | ---: | --- | --- | --- |
@@ -48,50 +48,60 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 2 | `hasPermission` | has permission の実装処理を担当する。 | `apps/api/src/authorization.ts:187 (hasPermission)` |
 | 1 | `validJson` | valid json の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:20 (validJson)` |
 | 2 | `validRequest` | valid request の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:36 (validRequest)` |
-| 1 | `MemoRagService.startChatRun` | start chat run の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:2446 (MemoRagService.startChatRun)` |
-| 2 | `MemoRagService.assertSearchScopeReadable` | assert search scope readable の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1261 (MemoRagService.assertSearchScopeReadable)` |
-| 2 | `authoritativeActorTenantId` | authoritative actor tenant id の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5906 (authoritativeActorTenantId)` |
-| 2 | `createChatRunId` | create chat run id の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5293 (createChatRunId)` |
-| 2 | `MemoRagService.securityResourceRefsForActor` | security resource refs for actor の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1270 (MemoRagService.securityResourceRefsForActor)` |
+| 1 | `MemoRagService.startChatRun` | start chat run の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:2448 (MemoRagService.startChatRun)` |
+| 2 | `MemoRagService.normalizeChatInputSessionEvidence` | normalize chat input session evidence の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5203 (MemoRagService.normalizeChatInputSessionEvidence)` |
+| 2 | `authoritativeActorTenantId` | authoritative actor tenant id の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6090 (authoritativeActorTenantId)` |
+| 2 | `MemoRagService.assertSearchScopeReadable` | assert search scope readable の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1262 (MemoRagService.assertSearchScopeReadable)` |
+| 2 | `createChatRunId` | create chat run id の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5477 (createChatRunId)` |
+| 2 | `MemoRagService.securityResourceRefsForActor` | security resource refs for actor の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1271 (MemoRagService.securityResourceRefsForActor)` |
 | 2 | `normalizeTopK` | normalize top k の実装処理を担当する。 | `apps/api/src/chat-orchestration/runtime-policy.ts:193 (normalizeTopK)` |
 | 2 | `normalizeMemoryTopK` | normalize memory top k の実装処理を担当する。 | `apps/api/src/chat-orchestration/runtime-policy.ts:197 (normalizeMemoryTopK)` |
 | 2 | `normalizeMinScore` | normalize min score の実装処理を担当する。 | `apps/api/src/chat-orchestration/runtime-policy.ts:205 (normalizeMinScore)` |
 | 2 | `normalizeMaxIterations` | normalize max iterations の実装処理を担当する。 | `apps/api/src/chat-orchestration/runtime-policy.ts:209 (normalizeMaxIterations)` |
-| 2 | `MemoRagService.startChatRunExecution` | start chat run execution の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5080 (MemoRagService.startChatRunExecution)` |
-| 2 | `MemoRagService.markChatRunFailed` | mark chat run failed の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:2653 (MemoRagService.markChatRunFailed)` |
-| 2 | `MemoRagService.executeChatRun` | execute chat run の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:2504 (MemoRagService.executeChatRun)` |
+| 2 | `MemoRagService.startChatRunExecution` | start chat run execution の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5091 (MemoRagService.startChatRunExecution)` |
+| 2 | `MemoRagService.markChatRunFailed` | mark chat run failed の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:2659 (MemoRagService.markChatRunFailed)` |
+| 2 | `MemoRagService.executeChatRun` | execute chat run の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:2508 (MemoRagService.executeChatRun)` |
 
 ## 5. データ・外部境界
 
 | 種別 | 境界 | Target | Operation | 目的 | Caller | 実装位置 |
 | --- | --- | --- | --- | --- | --- | --- |
+| 参照 | Store | `this.deps.conversationHistoryStore` | `get` | `this.deps.conversationHistoryStore` に対して get を実行する。 | `MemoRagService.normalizeChatInputSessionEvidence` | `apps/api/src/rag/memorag-service.ts:5206 (MemoRagService.normalizeChatInputSessionEvidence)` |
+| 参照 | Store | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `readTenantManifest` | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:83 (readTenantManifest)` |
 | 参照 | Store | `this.deps.documentGroupStore` | `list` | `this.deps.documentGroupStore` に対して list を実行する。 | `FolderPermissionService.resolveEffectiveFolderPermissionDetail` | `apps/api/src/folders/folder-permission-service.ts:145 (FolderPermissionService.resolveEffectiveFolderPermissionDetail)` |
 | 参照 | Store | `this.deps.userGroupStore` | `get` | `this.deps.userGroupStore` に対して get を実行する。 | `FolderPermissionService.resolveUserMembershipPermission` | `apps/api/src/folders/folder-permission-service.ts:780 (FolderPermissionService.resolveUserMembershipPermission)` |
 | 参照 | Store | `this.deps.groupMembershipStore` | `listByGroupId` | `this.deps.groupMembershipStore` に対して list by group id を実行する。 | `FolderPermissionService.resolveUserMembershipPermission` | `apps/api/src/folders/folder-permission-service.ts:781 (FolderPermissionService.resolveUserMembershipPermission)` |
 | 参照 | Store | `this.deps.folderPolicyStore` | `findByFolderId` | `this.deps.folderPolicyStore` に対して find by folder id を実行する。 | `FolderPermissionService.resolvePolicyContext` | `apps/api/src/folders/folder-permission-service.ts:695 (FolderPermissionService.resolvePolicyContext)` |
 | 参照 | Store | `this.deps.folderPolicyStore` | `get` | `this.deps.folderPolicyStore` に対して get を実行する。 | `FolderPermissionService.resolvePolicyContext` | `apps/api/src/folders/folder-permission-service.ts:711 (FolderPermissionService.resolvePolicyContext)` |
-| 参照 | Store | `this.deps.groupMembershipStore` | `listByMember` | `this.deps.groupMembershipStore` に対して list by member を実行する。 | `MemoRagService.securityResourceRefsForActor` | `apps/api/src/rag/memorag-service.ts:1277 (MemoRagService.securityResourceRefsForActor)` |
-| 実行 | Store | `(await this.deps.groupMembershipStore.listByMember(tenantId, "user", actor.userId))<br>      ` | `map` | `(await this.deps.groupMembershipStore.listByMember(tenantId, "user", actor.userId))<br>      ` に対して map を実行する。 | `MemoRagService.securityResourceRefsForActor` | `apps/api/src/rag/memorag-service.ts:1277 (MemoRagService.securityResourceRefsForActor)` |
-| 参照 | Store | `this.deps.groupMembershipStore` | `listByMember` | `this.deps.groupMembershipStore` に対して list by member を実行する。 | `MemoRagService.securityResourceRefsForActor` | `apps/api/src/rag/memorag-service.ts:1285 (MemoRagService.securityResourceRefsForActor)` |
-| 作成・追記 | Store | `this.deps.chatRunStore` | `create` | `this.deps.chatRunStore` に対して create を実行する。 | `MemoRagService.startChatRun` | `apps/api/src/rag/memorag-service.ts:2479 (MemoRagService.startChatRun)` |
-| 作成・追記 | Store | `this.deps.chatRunEventStore` | `append` | `this.deps.chatRunEventStore` に対して append を実行する。 | `MemoRagService.startChatRun` | `apps/api/src/rag/memorag-service.ts:2480 (MemoRagService.startChatRun)` |
-| 参照 | Store | `this.deps.chatRunStore` | `get` | `this.deps.chatRunStore` に対して get を実行する。 | `MemoRagService.markChatRunFailed` | `apps/api/src/rag/memorag-service.ts:2654 (MemoRagService.markChatRunFailed)` |
-| 作成・追記 | Store | `this.deps.chatRunEventStore` | `append` | `this.deps.chatRunEventStore` に対して append を実行する。 | `MemoRagService.markChatRunFailed` | `apps/api/src/rag/memorag-service.ts:2659 (MemoRagService.markChatRunFailed)` |
-| 更新 | Store | `this.deps.chatRunStore` | `updateIfStatus` | `this.deps.chatRunStore` に対して update if status を実行する。 | `MemoRagService.updateChatRunIfStatus` | `apps/api/src/rag/memorag-service.ts:4844 (MemoRagService.updateChatRunIfStatus)` |
-| 参照 | Store | `this.deps.chatRunStore` | `get` | `this.deps.chatRunStore` に対して get を実行する。 | `MemoRagService.updateChatRunIfStatus` | `apps/api/src/rag/memorag-service.ts:4847 (MemoRagService.updateChatRunIfStatus)` |
-| 更新 | Store | `this.deps.chatRunStore` | `update` | `this.deps.chatRunStore` に対して update を実行する。 | `MemoRagService.updateChatRunIfStatus` | `apps/api/src/rag/memorag-service.ts:4849 (MemoRagService.updateChatRunIfStatus)` |
-| 参照 | Store | `this.deps.chatRunStore` | `getExecutionEnvelope` | `this.deps.chatRunStore` に対して get execution envelope を実行する。 | `MemoRagService.getChatRunExecutionEnvelope` | `apps/api/src/rag/memorag-service.ts:4830 (MemoRagService.getChatRunExecutionEnvelope)` |
-| 参照 | Store | `this.deps.chatRunStore` | `get` | `this.deps.chatRunStore` に対して get を実行する。 | `MemoRagService.getChatRunExecutionEnvelope` | `apps/api/src/rag/memorag-service.ts:4833 (MemoRagService.getChatRunExecutionEnvelope)` |
+| 参照 | Store | `objectStore` | `getTextWithVersion` | `objectStore` に対して get text with version を実行する。 | `getTextWithVersion` | `apps/api/src/documents/document-permission-service.ts:946 (getTextWithVersion)` |
+| 参照 | Store | `objectStore` | `getText` | `objectStore` に対して get text を実行する。 | `getTextWithVersion` | `apps/api/src/documents/document-permission-service.ts:947 (getTextWithVersion)` |
+| 参照 | Store | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `DocumentPermissionService.loadLegacyDocumentGrants` | `apps/api/src/documents/document-permission-service.ts:537 (DocumentPermissionService.loadLegacyDocumentGrants)` |
+| 参照 | Store | `this.deps.userGroupStore` | `get` | `this.deps.userGroupStore` に対して get を実行する。 | `DocumentPermissionService.resolveUserMembershipPermission` | `apps/api/src/documents/document-permission-service.ts:683 (DocumentPermissionService.resolveUserMembershipPermission)` |
+| 参照 | Store | `this.deps.groupMembershipStore` | `listByGroupId` | `this.deps.groupMembershipStore` に対して list by group id を実行する。 | `DocumentPermissionService.resolveUserMembershipPermission` | `apps/api/src/documents/document-permission-service.ts:684 (DocumentPermissionService.resolveUserMembershipPermission)` |
+| 参照 | Store | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `loadStructuredBlocksForManifest` | `apps/api/src/rag/_shared/storage/manifest-chunks.ts:35 (loadStructuredBlocksForManifest)` |
+| 参照 | Store | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `loadChunksForManifest` | `apps/api/src/rag/_shared/storage/manifest-chunks.ts:10 (loadChunksForManifest)` |
+| 参照 | Store | `this.deps.groupMembershipStore` | `listByMember` | `this.deps.groupMembershipStore` に対して list by member を実行する。 | `MemoRagService.securityResourceRefsForActor` | `apps/api/src/rag/memorag-service.ts:1278 (MemoRagService.securityResourceRefsForActor)` |
+| 実行 | Store | `(await this.deps.groupMembershipStore.listByMember(tenantId, "user", actor.userId))<br>      ` | `map` | `(await this.deps.groupMembershipStore.listByMember(tenantId, "user", actor.userId))<br>      ` に対して map を実行する。 | `MemoRagService.securityResourceRefsForActor` | `apps/api/src/rag/memorag-service.ts:1278 (MemoRagService.securityResourceRefsForActor)` |
+| 参照 | Store | `this.deps.groupMembershipStore` | `listByMember` | `this.deps.groupMembershipStore` に対して list by member を実行する。 | `MemoRagService.securityResourceRefsForActor` | `apps/api/src/rag/memorag-service.ts:1286 (MemoRagService.securityResourceRefsForActor)` |
+| 作成・追記 | Store | `this.deps.chatRunStore` | `create` | `this.deps.chatRunStore` に対して create を実行する。 | `MemoRagService.startChatRun` | `apps/api/src/rag/memorag-service.ts:2483 (MemoRagService.startChatRun)` |
+| 作成・追記 | Store | `this.deps.chatRunEventStore` | `append` | `this.deps.chatRunEventStore` に対して append を実行する。 | `MemoRagService.startChatRun` | `apps/api/src/rag/memorag-service.ts:2484 (MemoRagService.startChatRun)` |
+| 参照 | Store | `this.deps.chatRunStore` | `get` | `this.deps.chatRunStore` に対して get を実行する。 | `MemoRagService.markChatRunFailed` | `apps/api/src/rag/memorag-service.ts:2660 (MemoRagService.markChatRunFailed)` |
+| 作成・追記 | Store | `this.deps.chatRunEventStore` | `append` | `this.deps.chatRunEventStore` に対して append を実行する。 | `MemoRagService.markChatRunFailed` | `apps/api/src/rag/memorag-service.ts:2665 (MemoRagService.markChatRunFailed)` |
+| 更新 | Store | `this.deps.chatRunStore` | `updateIfStatus` | `this.deps.chatRunStore` に対して update if status を実行する。 | `MemoRagService.updateChatRunIfStatus` | `apps/api/src/rag/memorag-service.ts:4855 (MemoRagService.updateChatRunIfStatus)` |
+| 参照 | Store | `this.deps.chatRunStore` | `get` | `this.deps.chatRunStore` に対して get を実行する。 | `MemoRagService.updateChatRunIfStatus` | `apps/api/src/rag/memorag-service.ts:4858 (MemoRagService.updateChatRunIfStatus)` |
+| 更新 | Store | `this.deps.chatRunStore` | `update` | `this.deps.chatRunStore` に対して update を実行する。 | `MemoRagService.updateChatRunIfStatus` | `apps/api/src/rag/memorag-service.ts:4860 (MemoRagService.updateChatRunIfStatus)` |
+| 参照 | Store | `this.deps.chatRunStore` | `getExecutionEnvelope` | `this.deps.chatRunStore` に対して get execution envelope を実行する。 | `MemoRagService.getChatRunExecutionEnvelope` | `apps/api/src/rag/memorag-service.ts:4841 (MemoRagService.getChatRunExecutionEnvelope)` |
+| 参照 | Store | `this.deps.chatRunStore` | `get` | `this.deps.chatRunStore` に対して get を実行する。 | `MemoRagService.getChatRunExecutionEnvelope` | `apps/api/src/rag/memorag-service.ts:4844 (MemoRagService.getChatRunExecutionEnvelope)` |
 | 参照 | External | `this.identityProvider` | `getCurrentIdentityBySubject` | `this.identityProvider` へ get current identity by subject を実行する。 | `CurrentWorkerAuthorization.assertAuthorized` | `apps/api/src/security/current-worker-authorization.ts:51 (CurrentWorkerAuthorization.assertAuthorized)` |
-| 参照 | Store | `this.deps.chatRunStore` | `get` | `this.deps.chatRunStore` に対して get を実行する。 | `MemoRagService.resolveConcurrentChatRun` | `apps/api/src/rag/memorag-service.ts:4862 (MemoRagService.resolveConcurrentChatRun)` |
-| 参照 | Store | `this.deps.chatRunStore` | `get` | `this.deps.chatRunStore` に対して get を実行する。 | `MemoRagService.executeChatRun` | `apps/api/src/rag/memorag-service.ts:2518 (MemoRagService.executeChatRun)` |
-| 作成・追記 | Store | `this.deps.chatRunEventStore` | `append` | `this.deps.chatRunEventStore` に対して append を実行する。 | `MemoRagService.executeChatRun` | `apps/api/src/rag/memorag-service.ts:2522 (MemoRagService.executeChatRun)` |
-| 作成・追記 | Store | `this.deps.chatRunEventStore` | `append` | `this.deps.chatRunEventStore` に対して append を実行する。 | `MemoRagService.executeChatRun` | `apps/api/src/rag/memorag-service.ts:2558 (MemoRagService.executeChatRun)` |
-| 参照 | Store | `input.objectStore` | `getText` | `input.objectStore` に対して get text を実行する。 | `assertRagSafetyInterlock` | `apps/api/src/rag/quality-control/production-rag-monitor.ts:311 (assertRagSafetyInterlock)` |
+| 参照 | Store | `this.deps.chatRunStore` | `get` | `this.deps.chatRunStore` に対して get を実行する。 | `MemoRagService.resolveConcurrentChatRun` | `apps/api/src/rag/memorag-service.ts:4873 (MemoRagService.resolveConcurrentChatRun)` |
+| 参照 | Store | `this.deps.chatRunStore` | `get` | `this.deps.chatRunStore` に対して get を実行する。 | `MemoRagService.executeChatRun` | `apps/api/src/rag/memorag-service.ts:2522 (MemoRagService.executeChatRun)` |
+| 作成・追記 | Store | `this.deps.chatRunEventStore` | `append` | `this.deps.chatRunEventStore` に対して append を実行する。 | `MemoRagService.executeChatRun` | `apps/api/src/rag/memorag-service.ts:2526 (MemoRagService.executeChatRun)` |
+| 作成・追記 | Store | `this.deps.chatRunEventStore` | `append` | `this.deps.chatRunEventStore` に対して append を実行する。 | `MemoRagService.executeChatRun` | `apps/api/src/rag/memorag-service.ts:2564 (MemoRagService.executeChatRun)` |
+| 参照 | Store | `input.objectStore` | `getText` | `input.objectStore` に対して get text を実行する。 | `assertRagSafetyInterlock` | `apps/api/src/rag/quality-control/production-rag-monitor.ts:315 (assertRagSafetyInterlock)` |
 | 実行 | External | `deps.textModel` | `embed` | `deps.textModel` へ embed を実行する。 | `createEmbedQueriesNode` | `apps/api/src/chat-orchestration/nodes/embed-queries.ts:13 (createEmbedQueriesNode)` |
-| 参照 | Store | `deps.objectStore` | `listKeys` | `deps.objectStore` に対して list keys を実行する。 | `getLexicalIndex` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:603 (getLexicalIndex)` |
-| 実行 | Store | `(await deps.objectStore.listKeys(tenantManifestPrefix(deps, tenantId)))` | `filter` | `(await deps.objectStore.listKeys(tenantManifestPrefix(deps, tenantId)))` に対して filter を実行する。 | `getLexicalIndex` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:603 (getLexicalIndex)` |
-| 実行 | Store | `(await deps.objectStore.listKeys(tenantManifestPrefix(deps, tenantId))).filter((key) => key.endsWith(".json"))` | `sort` | `(await deps.objectStore.listKeys(tenantManifestPrefix(deps, tenantId))).filter((key) => key.endsWith(".json"))` に対して sort を実行する。 | `getLexicalIndex` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:603 (getLexicalIndex)` |
+| 参照 | Store | `deps.objectStore` | `listKeys` | `deps.objectStore` に対して list keys を実行する。 | `getLexicalIndex` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:605 (getLexicalIndex)` |
+| 実行 | Store | `(await deps.objectStore.listKeys(tenantManifestPrefix(deps, tenantId)))` | `filter` | `(await deps.objectStore.listKeys(tenantManifestPrefix(deps, tenantId)))` に対して filter を実行する。 | `getLexicalIndex` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:605 (getLexicalIndex)` |
+| 実行 | Store | `(await deps.objectStore.listKeys(tenantManifestPrefix(deps, tenantId))).filter((key) => key.endsWith(".json"))` | `sort` | `(await deps.objectStore.listKeys(tenantManifestPrefix(deps, tenantId))).filter((key) => key.endsWith(".json"))` に対して sort を実行する。 | `getLexicalIndex` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:605 (getLexicalIndex)` |
 | 参照 | Store | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `readTenantManifestByKey` | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:93 (readTenantManifestByKey)` |
 | 実行 | Store | `new ObjectStoreRevocationCleanupTenantRegistry(this.objectStore, this.now)` | `register` | `new ObjectStoreRevocationCleanupTenantRegistry(this.objectStore, this.now)` に対して register を実行する。 | `ObjectStoreRevocationCleanupCoordinator.register` | `apps/api/src/rag/_shared/security/revocation-cleanup-coordinator.ts:137 (ObjectStoreRevocationCleanupCoordinator.register)` |
 | 参照 | Store | `this.objectStore` | `getText` | `this.objectStore` に対して get text を実行する。 | `ObjectStoreRevocationCleanupTenantRegistry.read` | `apps/api/src/rag/_shared/security/revocation-cleanup-tenant-registry.ts:116 (ObjectStoreRevocationCleanupTenantRegistry.read)` |
@@ -99,11 +109,6 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 参照 | Store | `objectStore` | `getTextWithVersion` | `objectStore` に対して get text with version を実行する。 | `readManifest` | `apps/api/src/rag/_shared/security/revocation-cleanup-coordinator.ts:636 (readManifest)` |
 | 作成・追記 | Store | `this.objectStore` | `putTextIfVersion` | `this.objectStore` に対して put text if version を実行する。 | `ObjectStoreRevocationCleanupCoordinator.register` | `apps/api/src/rag/_shared/security/revocation-cleanup-coordinator.ts:169 (ObjectStoreRevocationCleanupCoordinator.register)` |
 | 参照 | Store | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `loadPublicationPointer` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1809 (loadPublicationPointer)` |
-| 参照 | Store | `objectStore` | `getTextWithVersion` | `objectStore` に対して get text with version を実行する。 | `getTextWithVersion` | `apps/api/src/documents/document-permission-service.ts:946 (getTextWithVersion)` |
-| 参照 | Store | `objectStore` | `getText` | `objectStore` に対して get text を実行する。 | `getTextWithVersion` | `apps/api/src/documents/document-permission-service.ts:947 (getTextWithVersion)` |
-| 参照 | Store | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `DocumentPermissionService.loadLegacyDocumentGrants` | `apps/api/src/documents/document-permission-service.ts:537 (DocumentPermissionService.loadLegacyDocumentGrants)` |
-| 参照 | Store | `this.deps.userGroupStore` | `get` | `this.deps.userGroupStore` に対して get を実行する。 | `DocumentPermissionService.resolveUserMembershipPermission` | `apps/api/src/documents/document-permission-service.ts:683 (DocumentPermissionService.resolveUserMembershipPermission)` |
-| 参照 | Store | `this.deps.groupMembershipStore` | `listByGroupId` | `this.deps.groupMembershipStore` に対して list by group id を実行する。 | `DocumentPermissionService.resolveUserMembershipPermission` | `apps/api/src/documents/document-permission-service.ts:684 (DocumentPermissionService.resolveUserMembershipPermission)` |
 | 参照 | Store | `objectStore` | `getTextWithVersion` | `objectStore` に対して get text with version を実行する。 | `readVersionedRecord` | `apps/api/src/rag/offline/pre-retrieval/admission/source-governance-approval-service.ts:1066 (readVersionedRecord)` |
 | 実行 | Store | `new ProductionRagObservationProducer(input.objectStore)<br>        ` | `captureEligibilityProbeOnce` | `new ProductionRagObservationProducer(input.objectStore)<br>        ` に対して capture eligibility probe once を実行する。 | `currentEligibilitySnapshotFromAuthoritativeState` | `apps/api/src/rag/_shared/security/current-rag-eligibility.ts:246 (currentEligibilitySnapshotFromAuthoritativeState)` |
 | 参照 | Store | `this.objectStore` | `getTextWithVersion` | `this.objectStore` に対して get text with version を実行する。 | `ProductionRagObservationProducer.captureEligibilityProbeOnce` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:613 (ProductionRagObservationProducer.captureEligibilityProbeOnce)` |
@@ -114,20 +119,17 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 作成・追記 | Store | `this.objectStore` | `putTextIfVersion` | `this.objectStore` に対して put text if version を実行する。 | `ProductionRagObservationProducer.captureEligibilityProbeOnce` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:656 (ProductionRagObservationProducer.captureEligibilityProbeOnce)` |
 | 参照 | Store | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `loadPublishedAliasArtifact` | `apps/api/src/search/alias-artifacts.ts:19 (loadPublishedAliasArtifact)` |
 | 参照 | Store | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `loadPublishedAliasArtifact` | `apps/api/src/search/alias-artifacts.ts:21 (loadPublishedAliasArtifact)` |
-| 参照 | Store | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `loadLexicalIndexArtifact` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:1552 (loadLexicalIndexArtifact)` |
-| 参照 | Store | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `loadLexicalIndexArtifact` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:1554 (loadLexicalIndexArtifact)` |
-| 参照 | Store | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `loadStructuredBlocksForManifest` | `apps/api/src/rag/_shared/storage/manifest-chunks.ts:35 (loadStructuredBlocksForManifest)` |
-| 参照 | Store | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `loadChunksForManifest` | `apps/api/src/rag/_shared/storage/manifest-chunks.ts:10 (loadChunksForManifest)` |
-| 作成・追記 | Store | `deps.objectStore` | `putText` | `deps.objectStore` に対して put text を実行する。 | `publishLexicalIndexArtifact` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:1594 (publishLexicalIndexArtifact)` |
-| 作成・追記 | Store | `deps.objectStore` | `putText` | `deps.objectStore` に対して put text を実行する。 | `publishLexicalIndexArtifact` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:1595 (publishLexicalIndexArtifact)` |
-| 実行 | External | `deps.textModel` | `embed` | `deps.textModel` へ embed を実行する。 | `searchRag` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:268 (searchRag)` |
-| 参照 | Store | `store` | `query` | `store` に対して query を実行する。 | `queryAuthorizedSemanticHits` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:1351 (queryAuthorizedSemanticHits)` |
-| 実行 | Store | `(await Promise.all(<br>    batches.map((documentIds) => store.query(vector, topK, { ...filter, documentIds }))<br>  ))` | `flat` | `(await Promise.all(<br>    batches.map((documentIds) => store.query(vector, topK, { ...filter, documentIds }))<br>  ))` に対して flat を実行する。 | `queryAuthorizedSemanticHits` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:1350 (queryAuthorizedSemanticHits)` |
-| 参照 | Store | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `readTenantManifest` | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:83 (readTenantManifest)` |
+| 参照 | Store | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `loadLexicalIndexArtifact` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:1555 (loadLexicalIndexArtifact)` |
+| 参照 | Store | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `loadLexicalIndexArtifact` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:1557 (loadLexicalIndexArtifact)` |
+| 作成・追記 | Store | `deps.objectStore` | `putText` | `deps.objectStore` に対して put text を実行する。 | `publishLexicalIndexArtifact` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:1597 (publishLexicalIndexArtifact)` |
+| 作成・追記 | Store | `deps.objectStore` | `putText` | `deps.objectStore` に対して put text を実行する。 | `publishLexicalIndexArtifact` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:1598 (publishLexicalIndexArtifact)` |
+| 実行 | External | `deps.textModel` | `embed` | `deps.textModel` へ embed を実行する。 | `searchRag` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:270 (searchRag)` |
+| 参照 | Store | `store` | `query` | `store` に対して query を実行する。 | `queryAuthorizedSemanticHits` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:1354 (queryAuthorizedSemanticHits)` |
+| 実行 | Store | `(await Promise.all(<br>    batches.map((documentIds) => store.query(vector, topK, { ...filter, documentIds }))<br>  ))` | `flat` | `(await Promise.all(<br>    batches.map((documentIds) => store.query(vector, topK, { ...filter, documentIds }))<br>  ))` に対して flat を実行する。 | `queryAuthorizedSemanticHits` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:1353 (queryAuthorizedSemanticHits)` |
 | 参照 | Store | `this.deps.documentGroupStore` | `get` | `this.deps.documentGroupStore` に対して get を実行する。 | `FolderPermissionService.assertFolderOperation` | `apps/api/src/folders/folder-permission-service.ts:110 (FolderPermissionService.assertFolderOperation)` |
-| 作成・追記 | Store | `deps.objectStore` | `putText` | `deps.objectStore` に対して put text を実行する。 | `persistSearchDebugTrace` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:591 (persistSearchDebugTrace)` |
-| 実行 | Store | `new ProductionRagObservationProducer(deps.objectStore)` | `captureSearchRuntime` | `new ProductionRagObservationProducer(deps.objectStore)` に対して capture search runtime を実行する。 | `searchRag` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:376 (searchRag)` |
-| 実行 | Store | `new ProductionRagObservationProducer(deps.objectStore)` | `captureSearchRuntime` | `new ProductionRagObservationProducer(deps.objectStore)` に対して capture search runtime を実行する。 | `searchRag` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:425 (searchRag)` |
+| 作成・追記 | Store | `deps.objectStore` | `putText` | `deps.objectStore` に対して put text を実行する。 | `persistSearchDebugTrace` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:593 (persistSearchDebugTrace)` |
+| 実行 | Store | `new ProductionRagObservationProducer(deps.objectStore)` | `captureSearchRuntime` | `new ProductionRagObservationProducer(deps.objectStore)` に対して capture search runtime を実行する。 | `searchRag` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:378 (searchRag)` |
+| 実行 | Store | `new ProductionRagObservationProducer(deps.objectStore)` | `captureSearchRuntime` | `new ProductionRagObservationProducer(deps.objectStore)` に対して capture search runtime を実行する。 | `searchRag` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:427 (searchRag)` |
 | 実行 | External | `deps.textModel` | `generate` | `deps.textModel` へ generate を実行する。 | `createRetrievalEvaluatorNode` | `apps/api/src/chat-orchestration/nodes/retrieval-evaluator.ts:18 (createRetrievalEvaluatorNode)` |
 | 実行 | External | `deps.textModel` | `generate` | `deps.textModel` へ generate を実行する。 | `createExtractPolicyComputationsNode` | `apps/api/src/chat-orchestration/nodes/extract-policy-computations.ts:11 (createExtractPolicyComputationsNode)` |
 | 実行 | External | `deps.textModel` | `generate` | `deps.textModel` へ generate を実行する。 | `createSufficientContextGateNode` | `apps/api/src/rag/online/post-retrieval/answerability/sufficient-context-gate.ts:12 (createSufficientContextGateNode)` |
@@ -135,26 +137,28 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 実行 | External | `deps.textModel` | `generate` | `deps.textModel` へ generate を実行する。 | `repairUnsupportedAnswer` | `apps/api/src/rag/online/generation/verification/answer-support-verifier.ts:59 (repairUnsupportedAnswer)` |
 | 実行 | External | `deps.textModel` | `generate` | `deps.textModel` へ generate を実行する。 | `repairUnsupportedAnswer` | `apps/api/src/rag/online/generation/verification/answer-support-verifier.ts:67 (repairUnsupportedAnswer)` |
 | 実行 | External | `deps.textModel` | `embed` | `deps.textModel` へ embed を実行する。 | `anonymous function` | `apps/api/src/chat-orchestration/nodes/embed-queries.ts:13 (anonymous function)` |
-| 実行 | External | `deps.textModel` | `embed` | `deps.textModel` へ embed を実行する。 | `createRetrieveMemoryNode` | `apps/api/src/chat-orchestration/nodes/retrieve-memory.ts:20 (createRetrieveMemoryNode)` |
-| 参照 | Store | `deps.objectStore` | `listKeys` | `deps.objectStore` に対して list keys を実行する。 | `loadAuthorizedMemoryDocumentIds` | `apps/api/src/chat-orchestration/nodes/retrieve-memory.ts:193 (loadAuthorizedMemoryDocumentIds)` |
-| 参照 | Store | `deps.memoryVectorStore` | `query` | `deps.memoryVectorStore` に対して query を実行する。 | `queryAuthorizedMemoryHits` | `apps/api/src/chat-orchestration/nodes/retrieve-memory.ts:256 (queryAuthorizedMemoryHits)` |
-| 実行 | Store | `(await Promise.all(batches.map((batch) => deps.memoryVectorStore.query(vector, topK, { ...filter, documentIds: batch }))))<br>    ` | `flat` | `(await Promise.all(batches.map((batch) => deps.memoryVectorStore.query(vector, topK, { ...filter, documentIds: batch }))))<br>    ` に対して flat を実行する。 | `queryAuthorizedMemoryHits` | `apps/api/src/chat-orchestration/nodes/retrieve-memory.ts:256 (queryAuthorizedMemoryHits)` |
-| 実行 | Store | `(await Promise.all(batches.map((batch) => deps.memoryVectorStore.query(vector, topK, { ...filter, documentIds: batch }))))<br>    .flat()<br>    ` | `sort` | `(await Promise.all(batches.map((batch) => deps.memoryVectorStore.query(vector, topK, { ...filter, documentIds: batch }))))<br>    .flat()<br>    ` に対して sort を実行する。 | `queryAuthorizedMemoryHits` | `apps/api/src/chat-orchestration/nodes/retrieve-memory.ts:256 (queryAuthorizedMemoryHits)` |
-| 実行 | Store | `(await Promise.all(batches.map((batch) => deps.memoryVectorStore.query(vector, topK, { ...filter, documentIds: batch }))))<br>    .flat()<br>    .sort((left, right) => right.score - left.score)<br>    ` | `slice` | `(await Promise.all(batches.map((batch) => deps.memoryVectorStore.query(vector, topK, { ...filter, documentIds: batch }))))<br>    .flat()<br>    .sort((left, right) => right.score - left.score)<br>    ` に対して slice を実行する。 | `queryAuthorizedMemoryHits` | `apps/api/src/chat-orchestration/nodes/retrieve-memory.ts:256 (queryAuthorizedMemoryHits)` |
+| 参照 | Store | `input.deps.conversationHistoryStore<br>      ` | `get` | `input.deps.conversationHistoryStore<br>      ` に対して get を実行する。 | `reauthorizeCurrentEvidence` | `apps/api/src/rag/_shared/security/current-evidence-reauthorizer.ts:46 (reauthorizeCurrentEvidence)` |
+| 実行 | Store | `input.deps.conversationHistoryStore<br>      .get(sessionOwnerKey(input.user.tenantId, input.user.userId), input.conversationId)<br>      ` | `then` | `input.deps.conversationHistoryStore<br>      .get(sessionOwnerKey(input.user.tenantId, input.user.userId), input.conversationId)<br>      ` に対して then を実行する。 | `reauthorizeCurrentEvidence` | `apps/api/src/rag/_shared/security/current-evidence-reauthorizer.ts:46 (reauthorizeCurrentEvidence)` |
+| 実行 | External | `deps.textModel` | `embed` | `deps.textModel` へ embed を実行する。 | `createRetrieveMemoryNode` | `apps/api/src/chat-orchestration/nodes/retrieve-memory.ts:21 (createRetrieveMemoryNode)` |
+| 参照 | Store | `deps.objectStore` | `listKeys` | `deps.objectStore` に対して list keys を実行する。 | `loadAuthorizedMemoryDocumentIds` | `apps/api/src/chat-orchestration/nodes/retrieve-memory.ts:194 (loadAuthorizedMemoryDocumentIds)` |
+| 参照 | Store | `deps.memoryVectorStore` | `query` | `deps.memoryVectorStore` に対して query を実行する。 | `queryAuthorizedMemoryHits` | `apps/api/src/chat-orchestration/nodes/retrieve-memory.ts:257 (queryAuthorizedMemoryHits)` |
+| 実行 | Store | `(await Promise.all(batches.map((batch) => deps.memoryVectorStore.query(vector, topK, { ...filter, documentIds: batch }))))<br>    ` | `flat` | `(await Promise.all(batches.map((batch) => deps.memoryVectorStore.query(vector, topK, { ...filter, documentIds: batch }))))<br>    ` に対して flat を実行する。 | `queryAuthorizedMemoryHits` | `apps/api/src/chat-orchestration/nodes/retrieve-memory.ts:257 (queryAuthorizedMemoryHits)` |
+| 実行 | Store | `(await Promise.all(batches.map((batch) => deps.memoryVectorStore.query(vector, topK, { ...filter, documentIds: batch }))))<br>    .flat()<br>    ` | `sort` | `(await Promise.all(batches.map((batch) => deps.memoryVectorStore.query(vector, topK, { ...filter, documentIds: batch }))))<br>    .flat()<br>    ` に対して sort を実行する。 | `queryAuthorizedMemoryHits` | `apps/api/src/chat-orchestration/nodes/retrieve-memory.ts:257 (queryAuthorizedMemoryHits)` |
+| 実行 | Store | `(await Promise.all(batches.map((batch) => deps.memoryVectorStore.query(vector, topK, { ...filter, documentIds: batch }))))<br>    .flat()<br>    .sort((left, right) => right.score - left.score)<br>    ` | `slice` | `(await Promise.all(batches.map((batch) => deps.memoryVectorStore.query(vector, topK, { ...filter, documentIds: batch }))))<br>    .flat()<br>    .sort((left, right) => right.score - left.score)<br>    ` に対して slice を実行する。 | `queryAuthorizedMemoryHits` | `apps/api/src/chat-orchestration/nodes/retrieve-memory.ts:257 (queryAuthorizedMemoryHits)` |
 | 実行 | External | `deps.textModel` | `generate` | `deps.textModel` へ generate を実行する。 | `createGenerateCluesNode` | `apps/api/src/chat-orchestration/nodes/generate-clues.ts:25 (createGenerateCluesNode)` |
 | 実行 | External | `deps.textModel` | `generate` | `deps.textModel` へ generate を実行する。 | `createGenerateAnswerNode` | `apps/api/src/rag/online/generation/answer/answer-generator.ts:9 (createGenerateAnswerNode)` |
-| 実行 | Store | `new ProductionRagObservationProducer(deps.objectStore)` | `captureChatOutcome` | `new ProductionRagObservationProducer(deps.objectStore)` に対して capture chat outcome を実行する。 | `runChatOrchestration` | `apps/api/src/rag/orchestration/chat-rag-orchestrator.ts:872 (runChatOrchestration)` |
-| 作成・追記 | Store | `deps.objectStore` | `putText` | `deps.objectStore` に対して put text を実行する。 | `persistDebugTrace` | `apps/api/src/rag/orchestration/chat-rag-orchestrator.ts:1118 (persistDebugTrace)` |
-| 実行 | Store | `new ProductionRagObservationProducer(deps.objectStore)` | `captureDebugTrace` | `new ProductionRagObservationProducer(deps.objectStore)` に対して capture debug trace を実行する。 | `persistDebugTrace` | `apps/api/src/rag/orchestration/chat-rag-orchestrator.ts:1119 (persistDebugTrace)` |
-| 作成・追記 | Store | `this.deps.chatRunEventStore` | `append` | `this.deps.chatRunEventStore` に対して append を実行する。 | `MemoRagService.executeChatRun` | `apps/api/src/rag/memorag-service.ts:2606 (MemoRagService.executeChatRun)` |
-| 削除 | Store | `this.deps.objectStore` | `deleteObject` | `this.deps.objectStore` に対して delete object を実行する。 | `MemoRagService.compensateRevokedChatArtifacts` | `apps/api/src/rag/memorag-service.ts:2683 (MemoRagService.compensateRevokedChatArtifacts)` |
-| 削除 | Store | `new ProductionRagObservationProducer(this.deps.objectStore)` | `deleteArtifactSamples` | `new ProductionRagObservationProducer(this.deps.objectStore)` に対して delete artifact samples を実行する。 | `MemoRagService.compensateRevokedChatArtifacts` | `apps/api/src/rag/memorag-service.ts:2684 (MemoRagService.compensateRevokedChatArtifacts)` |
+| 実行 | Store | `new ProductionRagObservationProducer(deps.objectStore)` | `captureChatOutcome` | `new ProductionRagObservationProducer(deps.objectStore)` に対して capture chat outcome を実行する。 | `runChatOrchestration` | `apps/api/src/rag/orchestration/chat-rag-orchestrator.ts:879 (runChatOrchestration)` |
+| 作成・追記 | Store | `deps.objectStore` | `putText` | `deps.objectStore` に対して put text を実行する。 | `persistDebugTrace` | `apps/api/src/rag/orchestration/chat-rag-orchestrator.ts:1125 (persistDebugTrace)` |
+| 実行 | Store | `new ProductionRagObservationProducer(deps.objectStore)` | `captureDebugTrace` | `new ProductionRagObservationProducer(deps.objectStore)` に対して capture debug trace を実行する。 | `persistDebugTrace` | `apps/api/src/rag/orchestration/chat-rag-orchestrator.ts:1126 (persistDebugTrace)` |
+| 作成・追記 | Store | `this.deps.chatRunEventStore` | `append` | `this.deps.chatRunEventStore` に対して append を実行する。 | `MemoRagService.executeChatRun` | `apps/api/src/rag/memorag-service.ts:2612 (MemoRagService.executeChatRun)` |
+| 削除 | Store | `this.deps.objectStore` | `deleteObject` | `this.deps.objectStore` に対して delete object を実行する。 | `MemoRagService.compensateRevokedChatArtifacts` | `apps/api/src/rag/memorag-service.ts:2689 (MemoRagService.compensateRevokedChatArtifacts)` |
+| 削除 | Store | `new ProductionRagObservationProducer(this.deps.objectStore)` | `deleteArtifactSamples` | `new ProductionRagObservationProducer(this.deps.objectStore)` に対して delete artifact samples を実行する。 | `MemoRagService.compensateRevokedChatArtifacts` | `apps/api/src/rag/memorag-service.ts:2690 (MemoRagService.compensateRevokedChatArtifacts)` |
 | 参照 | Store | `this.objectStore` | `listKeys` | `this.objectStore` に対して list keys を実行する。 | `ProductionRagObservationProducer.deleteArtifactSamples` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:299 (ProductionRagObservationProducer.deleteArtifactSamples)` |
 | 参照 | Store | `this.objectStore` | `getText` | `this.objectStore` に対して get text を実行する。 | `ProductionRagObservationProducer.deleteArtifactSamples` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:303 (ProductionRagObservationProducer.deleteArtifactSamples)` |
 | 削除 | Store | `this.objectStore` | `deleteObject` | `this.objectStore` に対して delete object を実行する。 | `ProductionRagObservationProducer.deleteArtifactSamples` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:310 (ProductionRagObservationProducer.deleteArtifactSamples)` |
-| 削除 | Store | `new ProductionRagObservationProducer(this.deps.objectStore)` | `deleteArtifactSamples` | `new ProductionRagObservationProducer(this.deps.objectStore)` に対して delete artifact samples を実行する。 | `MemoRagService.compensateRevokedChatArtifacts` | `apps/api/src/rag/memorag-service.ts:2685 (MemoRagService.compensateRevokedChatArtifacts)` |
-| 実行 | Store | `new ObjectStoreRevocationCleanupCoordinator(this.deps.objectStore)` | `register` | `new ObjectStoreRevocationCleanupCoordinator(this.deps.objectStore)` に対して register を実行する。 | `MemoRagService.compensateRevokedChatArtifacts` | `apps/api/src/rag/memorag-service.ts:2688 (MemoRagService.compensateRevokedChatArtifacts)` |
-| 作成・追記 | Store | `this.deps.chatRunEventStore` | `append` | `this.deps.chatRunEventStore` に対して append を実行する。 | `MemoRagService.executeChatRun` | `apps/api/src/rag/memorag-service.ts:2640 (MemoRagService.executeChatRun)` |
+| 削除 | Store | `new ProductionRagObservationProducer(this.deps.objectStore)` | `deleteArtifactSamples` | `new ProductionRagObservationProducer(this.deps.objectStore)` に対して delete artifact samples を実行する。 | `MemoRagService.compensateRevokedChatArtifacts` | `apps/api/src/rag/memorag-service.ts:2691 (MemoRagService.compensateRevokedChatArtifacts)` |
+| 実行 | Store | `new ObjectStoreRevocationCleanupCoordinator(this.deps.objectStore)` | `register` | `new ObjectStoreRevocationCleanupCoordinator(this.deps.objectStore)` に対して register を実行する。 | `MemoRagService.compensateRevokedChatArtifacts` | `apps/api/src/rag/memorag-service.ts:2694 (MemoRagService.compensateRevokedChatArtifacts)` |
+| 作成・追記 | Store | `this.deps.chatRunEventStore` | `append` | `this.deps.chatRunEventStore` に対して append を実行する。 | `MemoRagService.executeChatRun` | `apps/api/src/rag/memorag-service.ts:2646 (MemoRagService.executeChatRun)` |
 
 ## 6. 応答・メッセージ
 
@@ -166,9 +170,17 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | OpenAPI contract | `403` | 対象操作を実行する権限がありません。 | OpenAPI で宣言された HTTP 403 response |
 | OpenAPI contract | `500` | サーバー内部で処理エラーが発生しました。 | OpenAPI で宣言された HTTP 500 response |
 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない |
+| 例外 | `-` | User identity is required for tenant-partitioned storage | `userId` が存在しない、または偽である |
+| 例外 | `-` | Authoritative tenant is required for user storage | `config.authEnabled` が存在し、真である、または `config.nodeEnv` が `"production"` と等しい |
+| 例外 | `-` | Document identifier is required | `normalized` が存在しない、または偽である |
+| 例外 | `-` | Artifact key is invalid | `normalized` が存在しない、または偽である、または `normalized` が ".." を含む |
+| 例外 | `-` | Authoritative tenant is required | `normalized` が存在しない、または偽である |
+| 例外 | `-` | Authoritative tenant is required | `normalized` が存在しない、または偽である |
+| 例外 | `-` | `Document manifest tenant mismatch${key ? `: ${key}` : ""}` | `manifestTenantId` が存在しない、または偽である、かつ `options.allowMissingTenant` が存在しない、または偽である、または `manifestTenantId` が存在し、真である、かつ `manifestTenantId` が `normalizedTenantId` と異なる |
+| 例外 | `-` | `Stored chunk policy cannot be reproduced: ${result.violations.map((violation) => violation.code).join(",")}` | `result.publicationEligible` が存在しない、または偽である |
+| 例外 | `-` | Stored chunk manifest does not reconcile with its versioned policy | `expectedIds.length` が `0` より大きい、かつ same strings の判定結果が真ではない |
 | 例外 | `-` | `Security resource ${name} is invalid` | `value` が存在しない、または偽である、または `value.trim()` が `value` と異なる |
 | 例外 | `-` | Run admission resource-group identity crossed its tenant boundary | `membership.tenantId` が `tenantId` と異なる、または `membership.memberId` が `groupId` と異なる |
-| 例外 | `-` | Authoritative tenant is required | `normalized` が存在しない、または偽である |
 | 例外 | `-` | Step Functions executionArn was not returned | `response.executionArn` が存在しない、または偽である |
 | 例外 | `-` | `Chat run not found: ${runId}` | `run` が存在しない、または偽である |
 | 例外 | `-` | chat_run_conditional_transition_unavailable | `config.authEnabled` が存在し、真である |
@@ -197,9 +209,6 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 例外 | `-` | Forbidden | `requestedTenantId` が存在し、真である、かつ `requestedTenantId` が `trustedTenantId` と異なる |
 | 例外 | `-` | Forbidden | `config.authEnabled` が存在し、真である |
 | 例外 | `-` | Local/test tenant is not configured | `explicitLocalTenant` が存在しない、または偽である |
-| 例外 | `-` | Artifact key is invalid | `normalized` が存在しない、または偽である、または `normalized` が ".." を含む |
-| 例外 | `-` | Authoritative tenant is required | `normalized` が存在しない、または偽である |
-| 例外 | `-` | `Document manifest tenant mismatch${key ? `: ${key}` : ""}` | `manifestTenantId` が存在しない、または偽である、かつ `options.allowMissingTenant` が存在しない、または偽である、または `manifestTenantId` が存在し、真である、かつ `manifestTenantId` が `normalizedTenantId` と異なる |
 | 例外 | `-` | Document manifest escaped its authoritative tenant partition | uses legacy global document artifacts の判定結果が真ではない、かつ starts with の判定結果が真ではない |
 | 例外 | `-` | `${field} is invalid` | `normalized` が存在しない、または偽である、または `normalized.length` が `512` より大きい、または `hasControlCharacter` が存在し、真である |
 | 例外 | `-` | `${field} is invalid` | is finite の判定結果が真ではない |
@@ -225,9 +234,6 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | ログ | `-` | RAG quality source sample was not recorded | `result.skippedReason` が存在し、真である、かつ `process.env.RAG_MONITORING_REQUIRED` が `"1"` と等しい |
 | ログ | `-` | RAG quality source sample persistence failed | 例外を捕捉した場合 |
 | 例外 | `-` | Lexical cache fallback blocked because mandatory guard outcomes were not observed | `artifactLoad.degradationDecision?.action` が `"fail"` と等しい |
-| 例外 | `-` | `Stored chunk policy cannot be reproduced: ${result.violations.map((violation) => violation.code).join(",")}` | `result.publicationEligible` が存在しない、または偽である |
-| 例外 | `-` | Stored chunk manifest does not reconcile with its versioned policy | `expectedIds.length` が `0` より大きい、かつ same strings の判定結果が真ではない |
-| 例外 | `-` | Document identifier is required | `normalized` が存在しない、または偽である |
 | 例外 | `-` | Forbidden | `requestedTenantId` が存在し、真である、かつ `requestedTenantId` が `tenantId` と異なる |
 | 例外 | `-` | Forbidden | `config.authEnabled` が存在し、真である |
 | 例外 | `-` | Local/test tenant is not configured | `localTenantId` が存在しない、または偽である |
@@ -239,6 +245,7 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
 | 到達 symbol | service preserves asynchronous chat run options and can mark worker failures | `apps/api/src/rag/memorag-service.test.ts:1744 (service preserves asynchronous chat run options and can mark worker failures)` |
+| 到達 symbol | MT-TEMP-001-006 chat run normalizes B1 context, preserves legacy scope, and rejects client-only or cross-owner carry | `apps/api/src/search/temporary-attachment-boundary.test.ts:135 (MT-TEMP-001-006 chat run normalizes B1 context, preserves legacy scope, and rejects client-only or cross-owner carry)` |
 
 ## 8. 解析上の注意
 

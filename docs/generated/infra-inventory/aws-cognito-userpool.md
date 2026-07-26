@@ -28,7 +28,7 @@ Logical ID: `UserPool6BA7E5F2`
 
 | 設定項目 | 値 |
 | --- | --- |
-| `adminCreateUserOnly` | true |
+| `adminCreateUserOnly` | false |
 | `usernameAttributes` | [email] |
 | `autoVerifiedAttributes` | [email] |
 | `mfaConfiguration` | OPTIONAL |

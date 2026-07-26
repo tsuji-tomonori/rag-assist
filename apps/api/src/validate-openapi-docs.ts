@@ -1,8 +1,10 @@
 import { enrichOpenApiDocument, validateOpenApiDocument, type OpenApiDocument } from "./openapi-doc-quality.js"
 import { validateRestOrpcContractDrift } from "./openapi-contract-drift.js"
 import { validateGeneratedMarkdownFreshness } from "./generate-openapi-docs.js"
+import { STANDARD_RAG_GUARD_PROFILE } from "./rag/_shared/security/safe-degradation-policy.js"
 
 process.env.MOCK_BEDROCK ??= "true"
+process.env.RAG_GUARD_PROFILE_JSON ??= JSON.stringify(STANDARD_RAG_GUARD_PROFILE)
 process.env.USE_LOCAL_VECTOR_STORE ??= "true"
 process.env.USE_LOCAL_QUESTION_STORE ??= "true"
 process.env.USE_LOCAL_CONVERSATION_HISTORY_STORE ??= "true"

@@ -1,0 +1,105 @@
+name: Web UI Quality
+
+on:
+  pull_request:
+    paths:
+      - "apps/web/**"
+      - "packages/contract/**"
+      - "tools/web-inventory/**"
+      - "docs/1_要求_REQ/**/09_UI_UX基盤/**"
+      - "docs/1_要求_REQ/**/REQ_NON_FUNCTIONAL_018.md"
+      - "docs/1_要求_REQ/**/REQ_SERVICE_QUALITY_016.md"
+      - "docs/3_設計_DES/21_UI_UX/**"
+      - "package.json"
+      - "package-lock.json"
+      - "Taskfile.yml"
+      - ".github/workflows/web-ui-quality.yml"
+  schedule:
+    - cron: "17 18 * * 0"
+  workflow_dispatch:
+    inputs:
+      run-cross-browser:
+        description: Run the scheduled Firefox and WebKit scope.
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: web-ui-quality-${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  chromium-required:
+    name: Required Chromium axe, mobile, and visual
+    if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chromium
+        run: npm exec -w @memorag-mvp/web -- playwright install --with-deps chromium
+
+      - name: Run required UI quality gate
+        run: npm run test:e2e:ui-quality -w @memorag-mvp/web
+
+      - name: Upload required UI evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-ui-quality-chromium-${{ github.run_attempt }}
+          path: |
+            apps/web/playwright-report/
+            apps/web/test-results/
+          if-no-files-found: warn
+          retention-days: 14
+
+  cross-browser-scheduled:
+    name: Scheduled Firefox and WebKit accessibility
+    if: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.run-cross-browser) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Firefox and WebKit
+        run: npm exec -w @memorag-mvp/web -- playwright install --with-deps firefox webkit
+
+      - name: Run scheduled cross-browser accessibility
+        run: npm run test:e2e:cross-browser -w @memorag-mvp/web
+
+      - name: Upload scheduled browser evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-ui-quality-cross-browser-${{ github.run_attempt }}
+          path: |
+            apps/web/playwright-report/
+            apps/web/test-results/
+          if-no-files-found: warn
+          retention-days: 14

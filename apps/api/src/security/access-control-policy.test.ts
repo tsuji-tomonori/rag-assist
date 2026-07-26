@@ -30,6 +30,7 @@ const operationMatrixSubset = new Map<string, { operationKey: string; resourceCo
   ["GET /chat-tool-invocations", { operationKey: "chat_tool.invocation.read", resourceCondition: "ownedRun" }],
   ["POST /search", { operationKey: "document.search", resourceCondition: "documentGroupRead" }],
   ["GET /conversation-history", { operationKey: "history.read.self", resourceCondition: "self" }],
+  ["GET /conversation-history/{id}", { operationKey: "history.read.self", resourceCondition: "self" }],
   ["POST /questions", { operationKey: "support.ticket.create.self", resourceCondition: "self" }],
   ["GET /questions/{questionId}", { operationKey: "support.ticket.read", resourceCondition: "requester" }],
   ["POST /questions/{questionId}/search-improvement-candidates", { operationKey: "search_improvement.candidate.create", resourceCondition: "none" }],
@@ -360,6 +361,7 @@ test("protected API routes document authorization metadata and auth error respon
 test("protected API routes document three-layer authorization metadata", async () => {
   const policies = await openApiRoutePolicies()
   const resourceHiddenRoutes = new Set([
+    "GET /conversation-history/{id}",
     "GET /document-groups/{groupId}/share",
     "PUT /document-groups/{groupId}/share",
     "POST /document-groups/{groupId}/share",

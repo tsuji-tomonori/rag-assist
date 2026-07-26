@@ -19,9 +19,9 @@
 | F002 | `POST /admin/aliases/{aliasId}/disable handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/admin-routes.ts:539 (POST /admin/aliases/{aliasId}/disable handler)` |
 | F003 | `POST /admin/aliases/{aliasId}/disable handler` | if | `error` が `AliasGovernanceError` の instance である | `apps/api/src/routes/admin-routes.ts:540 (POST /admin/aliases/{aliasId}/disable handler)` |
 | F004 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| F005 | `MemoRagService.disableAlias` | if | `alias` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1559 (MemoRagService.disableAlias)` |
-| F006 | `MemoRagService.disableAlias` | 三項条件 | `alias.status` が `"disabled"` と等しい | `apps/api/src/rag/memorag-service.ts:1561 (MemoRagService.disableAlias)` |
-| F007 | `MemoRagService.disableAlias` | if | `invalid` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1562 (MemoRagService.disableAlias)` |
+| F005 | `MemoRagService.disableAlias` | if | `alias` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1560 (MemoRagService.disableAlias)` |
+| F006 | `MemoRagService.disableAlias` | 三項条件 | `alias.status` が `"disabled"` と等しい | `apps/api/src/rag/memorag-service.ts:1562 (MemoRagService.disableAlias)` |
+| F007 | `MemoRagService.disableAlias` | if | `invalid` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1563 (MemoRagService.disableAlias)` |
 | F008 | `aliasGovernanceStatus` | if | `error.result` が `"conflict"` と等しい | `apps/api/src/routes/admin-routes.ts:733 (aliasGovernanceStatus)` |
 | F009 | `aliasGovernanceStatus` | if | `error.result` が `"denied"` と等しい | `apps/api/src/routes/admin-routes.ts:734 (aliasGovernanceStatus)` |
 
@@ -37,12 +37,12 @@
 | TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:540 (POST /admin/aliases/{aliasId}/disable handler)` |
 | TC007 | F004: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
 | TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC009 | F005: 条件成立 | `alias` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1559 (MemoRagService.disableAlias)` |
-| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1559 (MemoRagService.disableAlias)` |
-| TC011 | F006: 条件成立 | `alias.status` が `"disabled"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1561 (MemoRagService.disableAlias)` |
-| TC012 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1561 (MemoRagService.disableAlias)` |
-| TC013 | F007: 条件成立 | `invalid` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1562 (MemoRagService.disableAlias)` |
-| TC014 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1562 (MemoRagService.disableAlias)` |
+| TC009 | F005: 条件成立 | `alias` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1560 (MemoRagService.disableAlias)` |
+| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1560 (MemoRagService.disableAlias)` |
+| TC011 | F006: 条件成立 | `alias.status` が `"disabled"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1562 (MemoRagService.disableAlias)` |
+| TC012 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1562 (MemoRagService.disableAlias)` |
+| TC013 | F007: 条件成立 | `invalid` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1563 (MemoRagService.disableAlias)` |
+| TC014 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1563 (MemoRagService.disableAlias)` |
 | TC015 | F008: 条件成立 | `error.result` が `"conflict"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:733 (aliasGovernanceStatus)` |
 | TC016 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:733 (aliasGovernanceStatus)` |
 | TC017 | F009: 条件成立 | `error.result` が `"denied"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:734 (aliasGovernanceStatus)` |

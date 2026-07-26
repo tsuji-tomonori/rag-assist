@@ -10,6 +10,8 @@
 | --- | --- | --- |
 | 到達 symbol | conversationHistoryList_includesOldFavoriteBeforeRecentNonFavorites | `apps/api/src/rag/memorag-service.test.ts:1686 (conversationHistoryList_includesOldFavoriteBeforeRecentNonFavorites)` |
 | 到達 symbol | favoriteCreateRechecksChatSessionOwner | `apps/api/src/rag/memorag-service.test.ts:1726 (favoriteCreateRechecksChatSessionOwner)` |
+| 到達 symbol | MT-TEMP-001/003/004 session context persists only authoritative owner-bound temporary evidence | `apps/api/src/search/temporary-attachment-boundary.test.ts:79 (MT-TEMP-001/003/004 session context persists only authoritative owner-bound temporary evidence)` |
+| 到達 symbol | MT-TEMP-001-006 chat run normalizes B1 context, preserves legacy scope, and rejects client-only or cross-owner carry | `apps/api/src/search/temporary-attachment-boundary.test.ts:135 (MT-TEMP-001-006 chat run normalizes B1 context, preserves legacy scope, and rejects client-only or cross-owner carry)` |
 
 ## 2. 実装分岐から導くテスト要因
 
@@ -21,7 +23,7 @@
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | 会話履歴を保存する が成功 response を返す。 | `apps/api/src/routes/conversation-history-routes.ts:46 (POST /conversation-history handler)` |
+| TC001 | 正常系 | 会話履歴を保存する が成功 response を返す。 | `apps/api/src/routes/conversation-history-routes.ts:67 (POST /conversation-history handler)` |
 | TC002 | F001: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
 | TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
 | TC004 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

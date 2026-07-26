@@ -389,6 +389,7 @@ type Summary = {
     abstentionRecall: number | null
     abstainAccuracy: number | null
     unsupportedAnswerRate: number | null
+    falseRefusalRate: number | null
     answerContentAccuracy: number | null
     answerContainsRate: number | null
     groundedFileAccuracy: number | null
@@ -443,6 +444,7 @@ type Summary = {
     citationSupportPassRate: number | null
     refusalPrecision: number | null
     refusalRecall: number | null
+    falseRefusalRate: number | null
     unsupportedSentenceRate: number | null
   }>
   failures: Array<{
@@ -1528,6 +1530,10 @@ function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[], 
         unanswerableRows.filter((row) => row.evaluation.unsupportedAnswer).length,
         unanswerableRows.length
       ),
+      falseRefusalRate: rate(
+        answerableRows.filter((row) => row.evaluation.refused).length,
+        answerableRows.length
+      ),
       answerContentAccuracy: rate(
         answerContentEvaluated.filter((row) => row.evaluation.answerContentCorrect).length,
         answerContentEvaluated.length
@@ -1776,6 +1782,7 @@ function summarizeTurnDependencyMetrics(results: BenchmarkResultRow[]): Summary[
       citationSupportPassRate: rate(supportRows.filter((row) => row.evaluation.citationSupportPass === true).length, supportRows.length),
       refusalPrecision: rate(refusedRows.filter((row) => !row.evaluation.expectedAnswerable).length, refusedRows.length),
       refusalRecall: rate(unanswerableRows.filter((row) => row.evaluation.refused).length, unanswerableRows.length),
+      falseRefusalRate: rate(answerableRows.filter((row) => row.evaluation.refused).length, answerableRows.length),
       unsupportedSentenceRate:
         unsupportedRows.length === 0
           ? null
@@ -1805,6 +1812,7 @@ type BenchmarkReportMetricName =
   | "abstention_recall"
   | "abstain_accuracy"
   | "unsupported_answer_rate"
+  | "false_refusal_rate"
   | "answer_content_accuracy"
   | "answer_contains_rate"
   | "grounded_file_accuracy"
@@ -1911,10 +1919,10 @@ function renderMarkdownReport(summary: Summary, results: BenchmarkResultRow[]): 
   const turnDependencyRows = Object.keys(summary.turnDependencyMetrics).length === 0
     ? "\nNo turn dependency metrics.\n"
     : [
-        "| dependency | total | answerable_accuracy | answer_content_accuracy | grounded_file_accuracy | grounded_page_accuracy | retrieval_recall_at_k | expected_page_hit_rate | citation_support_pass_rate | refusal_precision | refusal_recall | unsupported_sentence_rate |",
-        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+        "| dependency | total | answerable_accuracy | answer_content_accuracy | grounded_file_accuracy | grounded_page_accuracy | retrieval_recall_at_k | expected_page_hit_rate | citation_support_pass_rate | refusal_precision | refusal_recall | false_refusal_rate | unsupported_sentence_rate |",
+        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
         ...Object.entries(summary.turnDependencyMetrics).map(([dependency, metrics]) =>
-          `| ${escapeMarkdown(dependency)} | ${metrics.total} | ${formatRate(metrics.answerableAccuracy)} | ${formatRate(metrics.answerContentAccuracy)} | ${formatRate(metrics.groundedFileAccuracy)} | ${formatRate(metrics.groundedPageAccuracy)} | ${formatRate(metrics.retrievalRecallAtK)} | ${formatRate(metrics.expectedPageHitRate)} | ${formatRate(metrics.citationSupportPassRate)} | ${formatRate(metrics.refusalPrecision)} | ${formatRate(metrics.refusalRecall)} | ${formatRate(metrics.unsupportedSentenceRate)} |`
+          `| ${escapeMarkdown(dependency)} | ${metrics.total} | ${formatRate(metrics.answerableAccuracy)} | ${formatRate(metrics.answerContentAccuracy)} | ${formatRate(metrics.groundedFileAccuracy)} | ${formatRate(metrics.groundedPageAccuracy)} | ${formatRate(metrics.retrievalRecallAtK)} | ${formatRate(metrics.expectedPageHitRate)} | ${formatRate(metrics.citationSupportPassRate)} | ${formatRate(metrics.refusalPrecision)} | ${formatRate(metrics.refusalRecall)} | ${formatRate(metrics.falseRefusalRate)} | ${formatRate(metrics.unsupportedSentenceRate)} |`
         )
       ].join("\n")
 
@@ -2030,6 +2038,8 @@ function metricDescription(metric: BenchmarkReportMetricName): string {
       return "回答不能な行で、通常回答に進まず refusal / no-answer として評価できた割合。unsupported answer とは別に見る。"
     case "unsupported_answer_rate":
       return "回答不能な行で、根拠なしに回答してしまった割合。低いほどよい。"
+    case "false_refusal_rate":
+      return "回答可能な行のうち、実際には refusal を返した割合。回答可能な行がない場合は未評価とし、低いほどよい。"
     case "answer_content_accuracy":
       return "回答可能な行で、回答種別・期待語句・正規表現・正規化値が満たされた割合。citation / file / page grounding とは分けて見る。"
     case "answer_contains_rate":
@@ -2329,6 +2339,7 @@ function buildMetricReportRows(summary: Summary, results: BenchmarkResultRow[]):
     metricRateRow("abstention_recall", summary.metrics.abstentionRecall, unanswerableRows.filter((row) => row.evaluation.abstentionCorrect === true).length, unanswerableRows.length, "unanswerable 行がない場合は評価対象外。"),
     metricRateRow("abstain_accuracy", summary.metrics.abstainAccuracy, unanswerableRows.filter((row) => row.evaluation.abstentionCorrect === true).length, unanswerableRows.length, "unanswerable 行がない場合は評価対象外。abstention_recall と同じ分母で、unsupported_answer_rate と分けて表示。"),
     metricRateRow("unsupported_answer_rate", summary.metrics.unsupportedAnswerRate, unanswerableRows.filter((row) => row.evaluation.unsupportedAnswer).length, unanswerableRows.length, "unanswerable 行がない場合は評価対象外。"),
+    metricRateRow("false_refusal_rate", summary.metrics.falseRefusalRate, answerableRows.filter((row) => row.evaluation.refused).length, answerableRows.length, "answerable 行がない場合は評価対象外。未承認の既定 threshold は適用しない。"),
     metricRateRow("answer_content_accuracy", summary.metrics.answerContentAccuracy, answerContentEvaluated.filter((row) => row.evaluation.answerContentCorrect).length, answerContentEvaluated.length, "answerable 行で回答種別・期待語句・正規表現・正規化値だけを見る。citation / file / page grounding は別指標。"),
     metricRateRow("answer_contains_rate", summary.metrics.answerContainsRate, containsEvaluated.filter((row) => row.evaluation.answerContainsExpected === true).length, containsEvaluated.length, "`expectedContains` / `expectedAnswer` を持つ answerable 行の期待語句一致率。"),
     metricRateRow("grounded_file_accuracy", summary.metrics.groundedFileAccuracy, groundedFileEvaluated.filter((row) => row.evaluation.groundedFileCorrect === true).length, groundedFileEvaluated.length, "回答内容に加え、citation / finalEvidence の期待ファイルまたは期待 document hit を見る。"),

@@ -30,6 +30,10 @@ describe("RailNav", () => {
     expect(screen.queryByTitle("非同期エージェント")).not.toBeInTheDocument()
     expect(screen.getByTitle("ドキュメント")).toBeInTheDocument()
     expect(screen.getByTitle("管理者設定")).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "ホーム" })).toHaveAttribute("data-audit-target", "primary")
+    for (const control of screen.getAllByRole("button")) {
+      expect(control).toHaveAttribute("data-audit-target", "primary")
+    }
 
     await userEvent.click(screen.getByTitle("管理者設定"))
 
@@ -95,6 +99,7 @@ describe("RailNav", () => {
 
     const openButton = screen.getByRole("button", { name: "メニューを開く" })
     expect(openButton).toHaveAttribute("aria-expanded", "false")
+    expect(openButton).toHaveAttribute("data-audit-target", "primary")
 
     await user.click(openButton)
 

@@ -68,7 +68,10 @@ test("implements the designed serverless resources", () => {
   template.resourceCountIs("AWS::Cognito::UserPoolClient", 1)
   template.resourceCountIs("AWS::Cognito::UserPoolGroup", APPLICATION_ROLES.length)
   template.hasResourceProperties("AWS::Cognito::UserPool", {
-    AdminCreateUserConfig: { AllowAdminCreateUserOnly: true }
+    AdminCreateUserConfig: { AllowAdminCreateUserOnly: false },
+    LambdaConfig: {
+      PostConfirmation: Match.objectLike({ "Fn::GetAtt": Match.anyValue() })
+    }
   })
   template.resourceCountIs("AWS::SecretsManager::Secret", 1)
   template.resourceCountIs("AWS::KMS::Key", 1)
@@ -249,6 +252,21 @@ test("implements the designed serverless resources", () => {
       UserPoolId: Match.anyValue()
     })
   }
+  const postConfirmationFunction = getResourceByLogicalIdPrefix(template, "PostConfirmationFunction")
+  assert.equal(postConfirmationFunction.Properties.Handler, "index.handler")
+  assert.equal(postConfirmationFunction.Properties.Runtime, "nodejs22.x")
+  assert.equal(postConfirmationFunction.Properties.Timeout, 10)
+  assert.equal(postConfirmationFunction.Properties.MemorySize, 256)
+  template.hasResourceProperties("AWS::IAM::Policy", {
+    PolicyDocument: {
+      Statement: Match.arrayWith([
+        Match.objectLike({
+          Action: "cognito-idp:AdminAddUserToGroup",
+          Effect: "Allow"
+        })
+      ])
+    }
+  })
   template.hasResourceProperties("AWS::Lambda::Function", {
     Environment: Match.objectLike({
       Variables: Match.objectLike({
@@ -274,23 +292,44 @@ test("implements the designed serverless resources", () => {
         COGNITO_APP_CLIENT_ID: Match.anyValue(),
         DEBUG_DOWNLOAD_BUCKET_NAME: Match.anyValue(),
         DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS: "900",
-        RAG_MONITORING_REQUIRED: "1",
+        RAG_MONITORING_REQUIRED: "0",
         RAG_SAFETY_STATE_TTL_SECONDS: "600",
+        RAG_GUARD_PROFILE_JSON: JSON.stringify({
+          id: "standard-safe-rag",
+          version: "standard-safe-rag-v1",
+          guards: {
+            authentication: true,
+            authorization: true,
+            classification_usage: true,
+            prompt_injection: true,
+            tool_policy: true,
+            grounding: true,
+            citation: true,
+            output_secret: true,
+            trace_redaction: true
+          }
+        }),
         PDF_OCR_FALLBACK_ENABLED: "true",
         PDF_OCR_FALLBACK_TIMEOUT_MS: "45000"
       })
     })
   })
   template.resourceCountIs("AWS::CloudFront::OriginAccessControl", 1)
-  template.hasResourceProperties("AWS::Events::Rule", {
-    ScheduleExpression: "rate(5 minutes)",
-    State: "ENABLED"
-  })
+  const backgroundSchedules = Object.entries(template.toJSON().Resources ?? {})
+    .filter(([logicalId, resource]) => (
+      ["RagQualityMonitorSchedule", "RevocationCleanupSchedule", "SecurityAuditReconciliationSchedule"]
+        .some((prefix) => logicalId.startsWith(prefix))
+      && (resource as any).Type === "AWS::Events::Rule"
+    ))
+  assert.equal(backgroundSchedules.length, 3)
+  for (const [, schedule] of backgroundSchedules) {
+    assert.equal((schedule as any).Properties.State, "DISABLED")
+  }
   template.hasResourceProperties("AWS::Lambda::Function", {
     Timeout: 300,
     MemorySize: 512,
     Environment: Match.objectLike({ Variables: Match.objectLike({
-      RAG_MONITORING_REQUIRED: "1",
+      RAG_MONITORING_REQUIRED: "0",
       RAG_ALERT_TOPIC_ARN: Match.anyValue()
     }) })
   })
@@ -448,7 +487,7 @@ test("deploys a scheduled least-privilege revocation reconciliation worker", () 
 
   template.hasResourceProperties("AWS::Events::Rule", {
     ScheduleExpression: "rate(1 minute)",
-    State: "ENABLED",
+    State: "DISABLED",
     Targets: Match.arrayWith([Match.objectLike({ Input: "{\"limitPerTenant\":100}" })])
   })
   const resources = template.toJSON().Resources ?? {}
@@ -787,7 +826,7 @@ test("deploys the tenant-scoped security audit reconciliation worker with bounde
   ))?.[1] as any
   assert.ok(schedule)
   assert.equal(schedule.Properties.ScheduleExpression, "rate(1 minute)")
-  assert.equal(schedule.Properties.State, "ENABLED")
+  assert.equal(schedule.Properties.State, "DISABLED")
   assert.match(JSON.stringify(schedule.Properties.Targets), /tenantId.*AWS::AccountId.*limit.*100/)
 
   const policies = Object.entries(resources)

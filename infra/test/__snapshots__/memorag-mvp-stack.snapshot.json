@@ -2644,7 +2644,7 @@
           ]
         },
         "AdminCreateUserConfig": {
-          "AllowAdminCreateUserOnly": true
+          "AllowAdminCreateUserOnly": false
         },
         "AutoVerifiedAttributes": [
           "email"
@@ -2654,6 +2654,14 @@
         "EnabledMfas": [
           "SOFTWARE_TOKEN_MFA"
         ],
+        "LambdaConfig": {
+          "PostConfirmation": {
+            "Fn::GetAtt": [
+              "PostConfirmationFunction3DFFAE63",
+              "Arn"
+            ]
+          }
+        },
         "MfaConfiguration": "OPTIONAL",
         "Policies": {
           "PasswordPolicy": {
@@ -2740,6 +2748,25 @@
         "Domain": "memorag-c85f22a0",
         "UserPoolId": {
           "Ref": "UserPool6BA7E5F2"
+        }
+      }
+    },
+    "UserPoolPostConfirmationCognito0E6001F8": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "PostConfirmationFunction3DFFAE63",
+            "Arn"
+          ]
+        },
+        "Principal": "cognito-idp.amazonaws.com",
+        "SourceArn": {
+          "Fn::GetAtt": [
+            "UserPool6BA7E5F2",
+            "Arn"
+          ]
         }
       }
     },
@@ -2862,6 +2889,186 @@
           "Ref": "UserPool6BA7E5F2"
         }
       }
+    },
+    "PostConfirmationLogGroup8E68D5A2": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "RetentionInDays": 30,
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ]
+      },
+      "UpdateReplacePolicy": "Retain",
+      "DeletionPolicy": "Retain"
+    },
+    "PostConfirmationFunctionServiceRoleE856FC83": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ]
+      }
+    },
+    "PostConfirmationFunctionServiceRoleDefaultPolicy49917DA4": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "cognito-idp:AdminAddUserToGroup",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":cognito-idp:ap-northeast-1:111111111111:userpool/*"
+                  ]
+                ]
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "PostConfirmationFunctionServiceRoleDefaultPolicy49917DA4",
+        "Roles": [
+          {
+            "Ref": "PostConfirmationFunctionServiceRoleE856FC83"
+          }
+        ]
+      }
+    },
+    "PostConfirmationFunction3DFFAE63": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Architectures": [
+          "arm64"
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-111111111111-ap-northeast-1",
+          "S3Key": "<asset-hash>.zip"
+        },
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "PostConfirmationLogGroup8E68D5A2"
+          }
+        },
+        "MemorySize": 256,
+        "Role": {
+          "Fn::GetAtt": [
+            "PostConfirmationFunctionServiceRoleE856FC83",
+            "Arn"
+          ]
+        },
+        "Runtime": "nodejs22.x",
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ],
+        "Timeout": 10
+      },
+      "DependsOn": [
+        "PostConfirmationFunctionServiceRoleDefaultPolicy49917DA4",
+        "PostConfirmationFunctionServiceRoleE856FC83"
+      ]
     },
     "BenchmarkRunnerAuthSecret035EF8F2": {
       "Type": "AWS::SecretsManager::Secret",
@@ -3942,8 +4149,9 @@
               "Ref": "DebugDownloadBucketAB6A16BE"
             },
             "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
-            "RAG_MONITORING_REQUIRED": "1",
+            "RAG_MONITORING_REQUIRED": "0",
             "RAG_SAFETY_STATE_TTL_SECONDS": "600",
+            "RAG_GUARD_PROFILE_JSON": "{\"id\":\"standard-safe-rag\",\"version\":\"standard-safe-rag-v1\",\"guards\":{\"authentication\":true,\"authorization\":true,\"classification_usage\":true,\"prompt_injection\":true,\"tool_policy\":true,\"grounding\":true,\"citation\":true,\"output_secret\":true,\"trace_redaction\":true}}",
             "PDF_OCR_FALLBACK_ENABLED": "true",
             "PDF_OCR_FALLBACK_TIMEOUT_MS": "45000",
             "CHAT_RUN_STATE_MACHINE_ARN": {
@@ -5064,8 +5272,9 @@
               "Ref": "DebugDownloadBucketAB6A16BE"
             },
             "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
-            "RAG_MONITORING_REQUIRED": "1",
+            "RAG_MONITORING_REQUIRED": "0",
             "RAG_SAFETY_STATE_TTL_SECONDS": "600",
+            "RAG_GUARD_PROFILE_JSON": "{\"id\":\"standard-safe-rag\",\"version\":\"standard-safe-rag-v1\",\"guards\":{\"authentication\":true,\"authorization\":true,\"classification_usage\":true,\"prompt_injection\":true,\"tool_policy\":true,\"grounding\":true,\"citation\":true,\"output_secret\":true,\"trace_redaction\":true}}",
             "PDF_OCR_FALLBACK_ENABLED": "true",
             "PDF_OCR_FALLBACK_TIMEOUT_MS": "45000",
             "CHAT_RUN_STATE_MACHINE_ARN": {
@@ -5746,8 +5955,9 @@
               "Ref": "DebugDownloadBucketAB6A16BE"
             },
             "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
-            "RAG_MONITORING_REQUIRED": "1",
-            "RAG_SAFETY_STATE_TTL_SECONDS": "600"
+            "RAG_MONITORING_REQUIRED": "0",
+            "RAG_SAFETY_STATE_TTL_SECONDS": "600",
+            "RAG_GUARD_PROFILE_JSON": "{\"id\":\"standard-safe-rag\",\"version\":\"standard-safe-rag-v1\",\"guards\":{\"authentication\":true,\"authorization\":true,\"classification_usage\":true,\"prompt_injection\":true,\"tool_policy\":true,\"grounding\":true,\"citation\":true,\"output_secret\":true,\"trace_redaction\":true}}"
           }
         },
         "Handler": "index.handler",
@@ -6161,8 +6371,9 @@
               "Ref": "DebugDownloadBucketAB6A16BE"
             },
             "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
-            "RAG_MONITORING_REQUIRED": "1",
-            "RAG_SAFETY_STATE_TTL_SECONDS": "600"
+            "RAG_MONITORING_REQUIRED": "0",
+            "RAG_SAFETY_STATE_TTL_SECONDS": "600",
+            "RAG_GUARD_PROFILE_JSON": "{\"id\":\"standard-safe-rag\",\"version\":\"standard-safe-rag-v1\",\"guards\":{\"authentication\":true,\"authorization\":true,\"classification_usage\":true,\"prompt_injection\":true,\"tool_policy\":true,\"grounding\":true,\"citation\":true,\"output_secret\":true,\"trace_redaction\":true}}"
           }
         },
         "Handler": "index.handler",
@@ -6530,8 +6741,9 @@
               "Ref": "DebugDownloadBucketAB6A16BE"
             },
             "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
-            "RAG_MONITORING_REQUIRED": "1",
-            "RAG_SAFETY_STATE_TTL_SECONDS": "600"
+            "RAG_MONITORING_REQUIRED": "0",
+            "RAG_SAFETY_STATE_TTL_SECONDS": "600",
+            "RAG_GUARD_PROFILE_JSON": "{\"id\":\"standard-safe-rag\",\"version\":\"standard-safe-rag-v1\",\"guards\":{\"authentication\":true,\"authorization\":true,\"classification_usage\":true,\"prompt_injection\":true,\"tool_policy\":true,\"grounding\":true,\"citation\":true,\"output_secret\":true,\"trace_redaction\":true}}"
           }
         },
         "Handler": "index.handler",
@@ -7086,8 +7298,9 @@
               "Ref": "DebugDownloadBucketAB6A16BE"
             },
             "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
-            "RAG_MONITORING_REQUIRED": "1",
+            "RAG_MONITORING_REQUIRED": "0",
             "RAG_SAFETY_STATE_TTL_SECONDS": "600",
+            "RAG_GUARD_PROFILE_JSON": "{\"id\":\"standard-safe-rag\",\"version\":\"standard-safe-rag-v1\",\"guards\":{\"authentication\":true,\"authorization\":true,\"classification_usage\":true,\"prompt_injection\":true,\"tool_policy\":true,\"grounding\":true,\"citation\":true,\"output_secret\":true,\"trace_redaction\":true}}",
             "PDF_OCR_FALLBACK_ENABLED": "true",
             "PDF_OCR_FALLBACK_TIMEOUT_MS": "45000"
           }
@@ -7506,8 +7719,9 @@
               "Ref": "DebugDownloadBucketAB6A16BE"
             },
             "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
-            "RAG_MONITORING_REQUIRED": "1",
-            "RAG_SAFETY_STATE_TTL_SECONDS": "600"
+            "RAG_MONITORING_REQUIRED": "0",
+            "RAG_SAFETY_STATE_TTL_SECONDS": "600",
+            "RAG_GUARD_PROFILE_JSON": "{\"id\":\"standard-safe-rag\",\"version\":\"standard-safe-rag-v1\",\"guards\":{\"authentication\":true,\"authorization\":true,\"classification_usage\":true,\"prompt_injection\":true,\"tool_policy\":true,\"grounding\":true,\"citation\":true,\"output_secret\":true,\"trace_redaction\":true}}"
           }
         },
         "Handler": "index.handler",
@@ -8000,8 +8214,9 @@
               "Ref": "DebugDownloadBucketAB6A16BE"
             },
             "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
-            "RAG_MONITORING_REQUIRED": "1",
-            "RAG_SAFETY_STATE_TTL_SECONDS": "600"
+            "RAG_MONITORING_REQUIRED": "0",
+            "RAG_SAFETY_STATE_TTL_SECONDS": "600",
+            "RAG_GUARD_PROFILE_JSON": "{\"id\":\"standard-safe-rag\",\"version\":\"standard-safe-rag-v1\",\"guards\":{\"authentication\":true,\"authorization\":true,\"classification_usage\":true,\"prompt_injection\":true,\"tool_policy\":true,\"grounding\":true,\"citation\":true,\"output_secret\":true,\"trace_redaction\":true}}"
           }
         },
         "Handler": "index.handler",
@@ -8903,8 +9118,9 @@
               "Ref": "DebugDownloadBucketAB6A16BE"
             },
             "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
-            "RAG_MONITORING_REQUIRED": "1",
-            "RAG_SAFETY_STATE_TTL_SECONDS": "600"
+            "RAG_MONITORING_REQUIRED": "0",
+            "RAG_SAFETY_STATE_TTL_SECONDS": "600",
+            "RAG_GUARD_PROFILE_JSON": "{\"id\":\"standard-safe-rag\",\"version\":\"standard-safe-rag-v1\",\"guards\":{\"authentication\":true,\"authorization\":true,\"classification_usage\":true,\"prompt_injection\":true,\"tool_policy\":true,\"grounding\":true,\"citation\":true,\"output_secret\":true,\"trace_redaction\":true}}"
           }
         },
         "Handler": "index.handler",
@@ -8957,9 +9173,9 @@
     "RevocationCleanupScheduleF357B692": {
       "Type": "AWS::Events::Rule",
       "Properties": {
-        "Description": "Reconcile tenant-scoped deny-first revocation cleanup manifests.",
+        "Description": "Disabled by the cost-first MVP decision; explicit cleanup remains available.",
         "ScheduleExpression": "rate(1 minute)",
-        "State": "ENABLED",
+        "State": "DISABLED",
         "Tags": [
           {
             "Key": "Application",
@@ -9326,8 +9542,9 @@
               "Ref": "DebugDownloadBucketAB6A16BE"
             },
             "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
-            "RAG_MONITORING_REQUIRED": "1",
-            "RAG_SAFETY_STATE_TTL_SECONDS": "600"
+            "RAG_MONITORING_REQUIRED": "0",
+            "RAG_SAFETY_STATE_TTL_SECONDS": "600",
+            "RAG_GUARD_PROFILE_JSON": "{\"id\":\"standard-safe-rag\",\"version\":\"standard-safe-rag-v1\",\"guards\":{\"authentication\":true,\"authorization\":true,\"classification_usage\":true,\"prompt_injection\":true,\"tool_policy\":true,\"grounding\":true,\"citation\":true,\"output_secret\":true,\"trace_redaction\":true}}"
           }
         },
         "Handler": "index.handler",
@@ -9380,9 +9597,9 @@
     "SecurityAuditReconciliationSchedule6C1B6D38": {
       "Type": "AWS::Events::Rule",
       "Properties": {
-        "Description": "Finalize tenant-scoped security mutation audits after authoritative state reconciliation.",
+        "Description": "Disabled by the cost-first MVP decision; explicit audit repair remains available.",
         "ScheduleExpression": "rate(1 minute)",
-        "State": "ENABLED",
+        "State": "DISABLED",
         "Tags": [
           {
             "Key": "Application",
@@ -9719,8 +9936,9 @@
               "Ref": "DebugDownloadBucketAB6A16BE"
             },
             "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
-            "RAG_MONITORING_REQUIRED": "1",
+            "RAG_MONITORING_REQUIRED": "0",
             "RAG_SAFETY_STATE_TTL_SECONDS": "600",
+            "RAG_GUARD_PROFILE_JSON": "{\"id\":\"standard-safe-rag\",\"version\":\"standard-safe-rag-v1\",\"guards\":{\"authentication\":true,\"authorization\":true,\"classification_usage\":true,\"prompt_injection\":true,\"tool_policy\":true,\"grounding\":true,\"citation\":true,\"output_secret\":true,\"trace_redaction\":true}}",
             "RAG_ALERT_TOPIC_ARN": {
               "Ref": "RagQualityAlertTopic3AFB5A32"
             }
@@ -9776,9 +9994,9 @@
     "RagQualityMonitorScheduleCFE9DF24": {
       "Type": "AWS::Events::Rule",
       "Properties": {
-        "Description": "Evaluate production RAG quality/security signals and apply the approved safety runbook.",
+        "Description": "Disabled by the cost-first MVP decision; continuous RAG monitoring is deferred.",
         "ScheduleExpression": "rate(5 minutes)",
-        "State": "ENABLED",
+        "State": "DISABLED",
         "Tags": [
           {
             "Key": "Application",

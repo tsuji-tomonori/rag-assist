@@ -10,7 +10,7 @@
 
 用途概要: Lambda function
 
-リソース数: 15
+リソース数: 16
 
 ## Logical ID 一覧
 
@@ -26,6 +26,7 @@
 | [Document Ingest Run Mark Failed Function](#document-ingest-run-mark-failed-function) | `DocumentIngestRunMarkFailedFunction41F16DD3` | Document Ingest Run Mark Failed Function (Lambda function) |
 | [Document Ingest Run Worker Function](#document-ingest-run-worker-function) | `DocumentIngestRunWorkerFunctionBBDBF694` | Document Ingest Run Worker Function (Lambda function) |
 | [Heavy Api Function](#heavy-api-function) | `HeavyApiFunction4BC152A5` | Heavy Api Function (Lambda function) |
+| [Post Confirmation Function](#post-confirmation-function) | `PostConfirmationFunction3DFFAE63` | Post Confirmation Function (Lambda function) |
 | [Rag Quality Monitor Function](#rag-quality-monitor-function) | `RagQualityMonitorFunction9BE8E903` | Rag Quality Monitor Function (Lambda function) |
 | [Revocation Cleanup Function](#revocation-cleanup-function) | `RevocationCleanupFunctionE7C00D6D` | Revocation Cleanup Function (Lambda function) |
 | [S3Vectors Provider Fn](#s3vectors-provider-fn) | `S3VectorsProviderFn215E3A4E` | S3Vectors Provider Fn (Lambda function) |
@@ -93,7 +94,8 @@ Logical ID: `ApiFunctionCE271BD4`
 | `PDF_OCR_FALLBACK_ENABLED` | true |
 | `PDF_OCR_FALLBACK_TIMEOUT_MS` | 45000 |
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
-| `RAG_MONITORING_REQUIRED` | 1 |
+| `RAG_GUARD_PROFILE_JSON` | {"id":"standard-safe-rag","version":"standard-safe-rag-v1","guards":{"authentication":true,"authorization":true,"classification_usage":true,"prompt_injection":true,"tool_policy":true,"grounding":true,"citation":true,"output_secret":true,"trace_redaction":true}} |
+| `RAG_MONITORING_REQUIRED` | 0 |
 | `RAG_SAFETY_STATE_TTL_SECONDS` | 600 |
 | `USAGE_ACCOUNTING_MODE` | shadow |
 | `USAGE_EVENTS_TABLE_NAME` | Ref:UsageEventsTable215FE3DD |
@@ -157,7 +159,8 @@ Logical ID: `BenchmarkRunAuthorizationFunction16D4CD86`
 | `MOCK_BEDROCK` | false |
 | `NODE_ENV` | production |
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
-| `RAG_MONITORING_REQUIRED` | 1 |
+| `RAG_GUARD_PROFILE_JSON` | {"id":"standard-safe-rag","version":"standard-safe-rag-v1","guards":{"authentication":true,"authorization":true,"classification_usage":true,"prompt_injection":true,"tool_policy":true,"grounding":true,"citation":true,"output_secret":true,"trace_redaction":true}} |
+| `RAG_MONITORING_REQUIRED` | 0 |
 | `RAG_SAFETY_STATE_TTL_SECONDS` | 600 |
 | `USAGE_ACCOUNTING_MODE` | shadow |
 | `USAGE_EVENTS_TABLE_NAME` | Ref:UsageEventsTable215FE3DD |
@@ -221,7 +224,8 @@ Logical ID: `ChatRunEventsStreamFunctionA12E11AC`
 | `MOCK_BEDROCK` | false |
 | `NODE_ENV` | production |
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
-| `RAG_MONITORING_REQUIRED` | 1 |
+| `RAG_GUARD_PROFILE_JSON` | {"id":"standard-safe-rag","version":"standard-safe-rag-v1","guards":{"authentication":true,"authorization":true,"classification_usage":true,"prompt_injection":true,"tool_policy":true,"grounding":true,"citation":true,"output_secret":true,"trace_redaction":true}} |
+| `RAG_MONITORING_REQUIRED` | 0 |
 | `RAG_SAFETY_STATE_TTL_SECONDS` | 600 |
 | `USAGE_ACCOUNTING_MODE` | shadow |
 | `USAGE_EVENTS_TABLE_NAME` | Ref:UsageEventsTable215FE3DD |
@@ -285,7 +289,8 @@ Logical ID: `ChatRunMarkFailedFunction23223E28`
 | `MOCK_BEDROCK` | false |
 | `NODE_ENV` | production |
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
-| `RAG_MONITORING_REQUIRED` | 1 |
+| `RAG_GUARD_PROFILE_JSON` | {"id":"standard-safe-rag","version":"standard-safe-rag-v1","guards":{"authentication":true,"authorization":true,"classification_usage":true,"prompt_injection":true,"tool_policy":true,"grounding":true,"citation":true,"output_secret":true,"trace_redaction":true}} |
+| `RAG_MONITORING_REQUIRED` | 0 |
 | `RAG_SAFETY_STATE_TTL_SECONDS` | 600 |
 | `USAGE_ACCOUNTING_MODE` | shadow |
 | `USAGE_EVENTS_TABLE_NAME` | Ref:UsageEventsTable215FE3DD |
@@ -349,7 +354,8 @@ Logical ID: `ChatRunWorkerFunction3C85A553`
 | `MOCK_BEDROCK` | false |
 | `NODE_ENV` | production |
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
-| `RAG_MONITORING_REQUIRED` | 1 |
+| `RAG_GUARD_PROFILE_JSON` | {"id":"standard-safe-rag","version":"standard-safe-rag-v1","guards":{"authentication":true,"authorization":true,"classification_usage":true,"prompt_injection":true,"tool_policy":true,"grounding":true,"citation":true,"output_secret":true,"trace_redaction":true}} |
+| `RAG_MONITORING_REQUIRED` | 0 |
 | `RAG_SAFETY_STATE_TTL_SECONDS` | 600 |
 | `USAGE_ACCOUNTING_MODE` | shadow |
 | `USAGE_EVENTS_TABLE_NAME` | Ref:UsageEventsTable215FE3DD |
@@ -447,7 +453,8 @@ Logical ID: `DocumentIngestRunMarkFailedFunction41F16DD3`
 | `MOCK_BEDROCK` | false |
 | `NODE_ENV` | production |
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
-| `RAG_MONITORING_REQUIRED` | 1 |
+| `RAG_GUARD_PROFILE_JSON` | {"id":"standard-safe-rag","version":"standard-safe-rag-v1","guards":{"authentication":true,"authorization":true,"classification_usage":true,"prompt_injection":true,"tool_policy":true,"grounding":true,"citation":true,"output_secret":true,"trace_redaction":true}} |
+| `RAG_MONITORING_REQUIRED` | 0 |
 | `RAG_SAFETY_STATE_TTL_SECONDS` | 600 |
 | `USAGE_ACCOUNTING_MODE` | shadow |
 | `USAGE_EVENTS_TABLE_NAME` | Ref:UsageEventsTable215FE3DD |
@@ -514,7 +521,8 @@ Logical ID: `DocumentIngestRunWorkerFunctionBBDBF694`
 | `PDF_OCR_FALLBACK_ENABLED` | true |
 | `PDF_OCR_FALLBACK_TIMEOUT_MS` | 45000 |
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
-| `RAG_MONITORING_REQUIRED` | 1 |
+| `RAG_GUARD_PROFILE_JSON` | {"id":"standard-safe-rag","version":"standard-safe-rag-v1","guards":{"authentication":true,"authorization":true,"classification_usage":true,"prompt_injection":true,"tool_policy":true,"grounding":true,"citation":true,"output_secret":true,"trace_redaction":true}} |
+| `RAG_MONITORING_REQUIRED` | 0 |
 | `RAG_SAFETY_STATE_TTL_SECONDS` | 600 |
 | `USAGE_ACCOUNTING_MODE` | shadow |
 | `USAGE_EVENTS_TABLE_NAME` | Ref:UsageEventsTable215FE3DD |
@@ -584,7 +592,8 @@ Logical ID: `HeavyApiFunction4BC152A5`
 | `PDF_OCR_FALLBACK_ENABLED` | true |
 | `PDF_OCR_FALLBACK_TIMEOUT_MS` | 45000 |
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
-| `RAG_MONITORING_REQUIRED` | 1 |
+| `RAG_GUARD_PROFILE_JSON` | {"id":"standard-safe-rag","version":"standard-safe-rag-v1","guards":{"authentication":true,"authorization":true,"classification_usage":true,"prompt_injection":true,"tool_policy":true,"grounding":true,"citation":true,"output_secret":true,"trace_redaction":true}} |
+| `RAG_MONITORING_REQUIRED` | 0 |
 | `RAG_SAFETY_STATE_TTL_SECONDS` | 600 |
 | `USAGE_ACCOUNTING_MODE` | shadow |
 | `USAGE_EVENTS_TABLE_NAME` | Ref:UsageEventsTable215FE3DD |
@@ -594,6 +603,21 @@ Logical ID: `HeavyApiFunction4BC152A5`
 | `USE_LOCAL_USAGE_EVENT_STORE` | false |
 | `USE_LOCAL_VECTOR_STORE` | false |
 | `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |
+
+### Post Confirmation Function
+
+Logical ID: `PostConfirmationFunction3DFFAE63`
+
+用途推定: Post Confirmation Function (Lambda function)
+
+| 設定項目 | 値 |
+| --- | --- |
+| `handler` | index.handler |
+| `runtime` | nodejs22.x |
+| `architectures` | [arm64] |
+| `memorySize` | 256 |
+| `timeoutSeconds` | 10 |
+| `role` | [Post Confirmation Function Service Role](aws-iam-role.md#post-confirmation-function-service-role) (`PostConfirmationFunctionServiceRoleE856FC83`) |
 
 ### Rag Quality Monitor Function
 
@@ -649,7 +673,8 @@ Logical ID: `RagQualityMonitorFunction9BE8E903`
 | `NODE_ENV` | production |
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
 | `RAG_ALERT_TOPIC_ARN` | Ref:RagQualityAlertTopic3AFB5A32 |
-| `RAG_MONITORING_REQUIRED` | 1 |
+| `RAG_GUARD_PROFILE_JSON` | {"id":"standard-safe-rag","version":"standard-safe-rag-v1","guards":{"authentication":true,"authorization":true,"classification_usage":true,"prompt_injection":true,"tool_policy":true,"grounding":true,"citation":true,"output_secret":true,"trace_redaction":true}} |
+| `RAG_MONITORING_REQUIRED` | 0 |
 | `RAG_SAFETY_STATE_TTL_SECONDS` | 600 |
 | `USAGE_ACCOUNTING_MODE` | shadow |
 | `USAGE_EVENTS_TABLE_NAME` | Ref:UsageEventsTable215FE3DD |
@@ -713,7 +738,8 @@ Logical ID: `RevocationCleanupFunctionE7C00D6D`
 | `MOCK_BEDROCK` | false |
 | `NODE_ENV` | production |
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
-| `RAG_MONITORING_REQUIRED` | 1 |
+| `RAG_GUARD_PROFILE_JSON` | {"id":"standard-safe-rag","version":"standard-safe-rag-v1","guards":{"authentication":true,"authorization":true,"classification_usage":true,"prompt_injection":true,"tool_policy":true,"grounding":true,"citation":true,"output_secret":true,"trace_redaction":true}} |
+| `RAG_MONITORING_REQUIRED` | 0 |
 | `RAG_SAFETY_STATE_TTL_SECONDS` | 600 |
 | `USAGE_ACCOUNTING_MODE` | shadow |
 | `USAGE_EVENTS_TABLE_NAME` | Ref:UsageEventsTable215FE3DD |
@@ -810,7 +836,8 @@ Logical ID: `SecurityAuditReconciliationFunction9A53A79D`
 | `MOCK_BEDROCK` | false |
 | `NODE_ENV` | production |
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
-| `RAG_MONITORING_REQUIRED` | 1 |
+| `RAG_GUARD_PROFILE_JSON` | {"id":"standard-safe-rag","version":"standard-safe-rag-v1","guards":{"authentication":true,"authorization":true,"classification_usage":true,"prompt_injection":true,"tool_policy":true,"grounding":true,"citation":true,"output_secret":true,"trace_redaction":true}} |
+| `RAG_MONITORING_REQUIRED` | 0 |
 | `RAG_SAFETY_STATE_TTL_SECONDS` | 600 |
 | `USAGE_ACCOUNTING_MODE` | shadow |
 | `USAGE_EVENTS_TABLE_NAME` | Ref:UsageEventsTable215FE3DD |

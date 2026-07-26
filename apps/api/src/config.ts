@@ -143,6 +143,7 @@ export const config = {
   defaultMemoryModelId: process.env.DEFAULT_MEMORY_MODEL_ID ?? process.env.DEFAULT_MODEL_ID ?? "amazon.nova-lite-v1:0",
   embeddingModelId: process.env.EMBEDDING_MODEL_ID ?? "amazon.titan-embed-text-v2:0",
   embeddingDimensions: numberEnv("EMBEDDING_DIMENSIONS", 1024),
+  ragGuardProfileJson: process.env.RAG_GUARD_PROFILE_JSON,
   ragProfileId: process.env.RAG_PROFILE_ID ?? "default",
   ragDomainPolicyId: process.env.RAG_DOMAIN_POLICY_ID ?? "default-answer-policy",
   ragAdaptiveRetrieval: boolEnv("RAG_ADAPTIVE_RETRIEVAL", false),

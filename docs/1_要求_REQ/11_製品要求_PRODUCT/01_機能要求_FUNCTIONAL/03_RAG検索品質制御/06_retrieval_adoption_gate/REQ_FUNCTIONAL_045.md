@@ -53,10 +53,22 @@
 | 受け入れ基準 | `AC-FR045-001` から `AC-FR045-004` |
 | 優先度 | S |
 | 安定性 | Medium |
-| 変更履歴 | 2026-05-08 初版 |
+| 変更履歴 | 2026-05-08 初版、2026-07-16 dataset 固有分岐除去と検証 trace を同期 |
+
+## 実装・検証トレーサビリティ
+
+| 受け入れ条件 | 実装 evidence | 自動検証 evidence |
+|---|---|---|
+| `AC-FR045-001` | `apps/api/src/chat-orchestration/nodes/retrieval-evaluator.ts`、debug trace | `apps/api/src/chat-orchestration/nodes/node-units.test.ts` |
+| `AC-FR045-002` | `apps/api/src/rag/online/post-retrieval/rerank/reranker.service.ts`、`apps/api/src/rag/online/generation/prompt/grounded-prompt-builder.ts` | `apps/api/src/rag/prompts.test.ts` の複数 corpus／unrelated negative、`apps/api/src/chat-orchestration/nodes/node-units.test.ts` の refusal 経路 |
+| `AC-FR045-003` | `apps/api/src/rag/online/post-retrieval/answerability/answerability-gate.ts` | `apps/api/src/chat-orchestration/nodes/node-units.test.ts` の `no_relevant_chunks`／不足 fact 経路 |
+| `AC-FR045-004` | production の evidence 採用を質問語彙・retrieval score・汎用構造判定へ統一 | `benchmark/release-audit.test.ts`、`npm run rag:release:source-audit` の `datasetSpecificBranchCount=0` |
+
+metadata の `domainPolicy`、`ragPolicy`、`answerPolicy`、`docType` は evidence 採用 policy の切替条件にしない。既知の benchmark corpus 語彙を product runtime へ追加した場合は release source audit を失敗させる。
 
 ## 関連文書
 
 - `docs/1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/03_RAG検索品質制御/04_検索結果評価/REQ_FUNCTIONAL_016.md`
 - `docs/1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/03_RAG検索品質制御/02_Hybrid_retrieval/REQ_FUNCTIONAL_026.md`
 - `docs/2_アーキテクチャ_ARC/31_品質属性_QA/ARC_QA_001.md`
+- `docs/3_設計_DES/11_詳細設計_DLD/DES_DLD_001.md`

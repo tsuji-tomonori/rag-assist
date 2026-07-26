@@ -1,6 +1,4 @@
 import { parseJsonObject } from "../../../_shared/json.js"
-import { selectAnswerPolicyForMetadata } from "../../../_shared/policies/answer-policy.js"
-import { hasInvalidRequirementsClassificationAnswer, isRequirementsClassificationQuestion } from "../prompt/grounded-prompt-builder.js"
 import { ragRuntimePolicy } from "../../../../chat-orchestration/runtime-policy.js"
 import { validateAnswerRequirements } from "../../../../chat-orchestration/question-requirements.js"
 import type { ChatOrchestrationState, ChatOrchestrationUpdate } from "../../../../chat-orchestration/state.js"
@@ -26,13 +24,6 @@ export async function validateCitations(state: ChatOrchestrationState): Promise<
     return citationFailure(state.rawAnswer)
   }
 
-  const answerPolicy = selectAnswerPolicyForMetadata(
-    state.selectedChunks.map((chunk) => chunk.metadata as unknown as Record<string, unknown>),
-    ragRuntimePolicy.profile.answerPolicy
-  )
-  if (isRequirementsClassificationQuestion(state.question) && hasInvalidRequirementsClassificationAnswer(answerJson.answer, answerPolicy)) {
-    return citationFailure(state.rawAnswer)
-  }
   const requirementIssues = validateAnswerRequirements(state.question, answerJson.answer)
   if (requirementIssues.length > 0) {
     return citationFailure(

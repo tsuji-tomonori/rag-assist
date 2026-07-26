@@ -1,7 +1,7 @@
 import { act, renderHook } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { getMe } from "../../features/admin/api/currentUserApi.js"
-import type { AuthSession } from "../../authClient.js"
+import type { AuthSession } from "../../features/auth/api/authClient.js"
 import { useCurrentUser } from "./useCurrentUser.js"
 
 vi.mock("../../features/admin/api/currentUserApi.js", () => ({

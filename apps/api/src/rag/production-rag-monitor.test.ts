@@ -251,6 +251,30 @@ test("FR-093 required monitoring fails closed when safety state is absent", asyn
   )
 })
 
+test("cost-first mode ignores a stale safety-state object when monitoring is disabled", async () => {
+  const store = new LocalObjectStore(await mkdtemp(path.join(os.tmpdir(), "rag-monitor-disabled-")))
+  await store.putText(RAG_SAFETY_STATE_KEY, JSON.stringify({
+    schemaVersion: 1,
+    stateVersion: 1,
+    policyId: "legacy-monitor",
+    policyVersion: "legacy",
+    activeRuntimeProfileVersion: "runtime-v1",
+    quarantinedRuntimeProfileVersions: ["runtime-v2"],
+    promotionFrozen: true,
+    documentQuarantineRequired: true,
+    responseMode: "refuse",
+    updatedAt: "2020-01-01T00:00:00.000Z",
+    validUntil: "2020-01-01T00:10:00.000Z"
+  } satisfies RagSafetyState))
+
+  await assert.doesNotReject(() => assertRagSafetyInterlock({
+    objectStore: store,
+    runtimeProfileVersion: "runtime-v2",
+    required: false,
+    now: "2026-07-22T00:00:00.000Z"
+  }))
+})
+
 test("FR-093 rejects a rolled-back candidate runtime and permits only the active last-known-safe runtime", async () => {
   const store = new LocalObjectStore(await mkdtemp(path.join(os.tmpdir(), "rag-monitor-runtime-mismatch-")))
   await store.putText(RAG_SAFETY_STATE_KEY, JSON.stringify({

@@ -363,13 +363,19 @@ test("HTTP contract validates major endpoint responses against /openapi.json", a
     })
     assert.equal(postHistory.status, 200)
     const savedHistory = (await postHistory.json()) as Record<string, unknown>
-    assert.equal(savedHistory.schemaVersion, 2)
+    assert.equal(savedHistory.schemaVersion, 3)
     assert.equal(savedHistory.isFavorite, false)
     validateSchema(savedHistory, responseSchema(openapi, "/conversation-history", "post", 200), openapi)
 
     const history = await getJson(`http://127.0.0.1:${port}/conversation-history`)
-    assert.equal(history.body.history[0].schemaVersion, 2)
+    assert.equal(history.body.history[0].schemaVersion, 3)
     validateSchema(history.body, responseSchema(openapi, "/conversation-history", "get", 200), openapi)
+
+    const historyItem = await getJson(`http://127.0.0.1:${port}/conversation-history/conversation-1`)
+    assert.equal(historyItem.body.id, "conversation-1")
+    validateSchema(historyItem.body, responseSchema(openapi, "/conversation-history/{id}", "get", 200), openapi)
+    const unknownHistory = await fetch(`http://127.0.0.1:${port}/conversation-history/unknown`)
+    assert.equal(unknownHistory.status, 404)
 
     const createAdminUser = await fetch(`http://127.0.0.1:${port}/admin/users`, {
       method: "POST",

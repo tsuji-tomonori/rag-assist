@@ -2,7 +2,7 @@
 
 # DELETE /conversation-history/{id} IF仕様
 
-- 実装 route: `apps/api/src/routes/conversation-history-routes.ts:54 (DELETE /conversation-history/{id})`
+- 実装 route: `apps/api/src/routes/conversation-history-routes.ts:75 (DELETE /conversation-history/{id})`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 会話履歴を削除する

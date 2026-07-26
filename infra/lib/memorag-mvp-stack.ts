@@ -48,6 +48,21 @@ const defaultBenchmarkSource = {
 
 const benchmarkCodeBuildTimeout = Duration.hours(3)
 const benchmarkStateMachineTimeout = Duration.hours(9)
+const standardRagGuardProfileJson = JSON.stringify({
+  id: "standard-safe-rag",
+  version: "standard-safe-rag-v1",
+  guards: {
+    authentication: true,
+    authorization: true,
+    classification_usage: true,
+    prompt_injection: true,
+    tool_policy: true,
+    grounding: true,
+    citation: true,
+    output_secret: true,
+    trace_redaction: true
+  }
+})
 
 export class MemoRagMvpStack extends Stack {
   constructor(scope: Construct, id: string, props?: MemoRagMvpStackProps) {
@@ -343,7 +358,7 @@ export class MemoRagMvpStack extends Stack {
 
 
     const userPool = new cognito.UserPool(this, "UserPool", {
-      selfSignUpEnabled: false,
+      selfSignUpEnabled: true,
       signInAliases: { email: true },
       autoVerify: { email: true },
       mfa: cognito.Mfa.OPTIONAL,
@@ -378,6 +393,27 @@ export class MemoRagMvpStack extends Stack {
         description: `MemoRAG role: ${role}`
       })
     }
+
+    const postConfirmationLogGroup = new logs.LogGroup(this, "PostConfirmationLogGroup", {
+      retention: logs.RetentionDays.ONE_MONTH,
+      removalPolicy: RemovalPolicy.RETAIN
+    })
+    const postConfirmationFn = new lambda.Function(this, "PostConfirmationFunction", {
+      code: lambda.Code.fromAsset(path.join(__dirname, "../lambda-dist/cognito-post-confirmation")),
+      handler: "index.handler",
+      runtime: lambda.Runtime.NODEJS_22_X,
+      architecture: lambda.Architecture.ARM_64,
+      timeout: Duration.seconds(10),
+      memorySize: 256,
+      logGroup: postConfirmationLogGroup
+    })
+    postConfirmationFn.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ["cognito-idp:AdminAddUserToGroup"],
+        resources: [Stack.of(this).formatArn({ service: "cognito-idp", resource: "userpool", resourceName: "*" })]
+      })
+    )
+    userPool.addTrigger(cognito.UserPoolOperation.POST_CONFIRMATION, postConfirmationFn)
 
     const benchmarkRunnerAuthSecret = benchmarkRunnerAuthSecretIdOverride
       ? (benchmarkRunnerAuthSecretIdOverride.startsWith("arn:")
@@ -453,8 +489,9 @@ export class MemoRagMvpStack extends Stack {
       COGNITO_APP_CLIENT_ID: userPoolClient.userPoolClientId,
       DEBUG_DOWNLOAD_BUCKET_NAME: debugDownloadBucket.bucketName,
       DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS: "900",
-      RAG_MONITORING_REQUIRED: "1",
-      RAG_SAFETY_STATE_TTL_SECONDS: "600"
+      RAG_MONITORING_REQUIRED: "0",
+      RAG_SAFETY_STATE_TTL_SECONDS: "600",
+      RAG_GUARD_PROFILE_JSON: standardRagGuardProfileJson
     } satisfies ApiRuntimeEnv
     const apiFunctionEnvironment = {
       ...apiEnvironment,
@@ -594,8 +631,9 @@ export class MemoRagMvpStack extends Stack {
       environment: apiEnvironment
     })
     const revocationCleanupSchedule = new events.Rule(this, "RevocationCleanupSchedule", {
-      description: "Reconcile tenant-scoped deny-first revocation cleanup manifests.",
-      schedule: events.Schedule.rate(Duration.minutes(1))
+      description: "Disabled by the cost-first MVP decision; explicit cleanup remains available.",
+      schedule: events.Schedule.rate(Duration.minutes(1)),
+      enabled: false
     })
     revocationCleanupSchedule.addTarget(new eventTargets.LambdaFunction(revocationCleanupFn, {
       event: events.RuleTargetInput.fromObject({ limitPerTenant: 100 })
@@ -616,8 +654,9 @@ export class MemoRagMvpStack extends Stack {
       environment: apiEnvironment
     })
     const securityAuditReconciliationSchedule = new events.Rule(this, "SecurityAuditReconciliationSchedule", {
-      description: "Finalize tenant-scoped security mutation audits after authoritative state reconciliation.",
-      schedule: events.Schedule.rate(Duration.minutes(1))
+      description: "Disabled by the cost-first MVP decision; explicit audit repair remains available.",
+      schedule: events.Schedule.rate(Duration.minutes(1)),
+      enabled: false
     })
     securityAuditReconciliationSchedule.addTarget(new eventTargets.LambdaFunction(securityAuditReconciliationFn, {
       event: events.RuleTargetInput.fromObject({ tenantId: cdk.Aws.ACCOUNT_ID, limit: 100 })
@@ -638,8 +677,9 @@ export class MemoRagMvpStack extends Stack {
       environment: apiEnvironment
     })
     const ragQualityMonitorSchedule = new events.Rule(this, "RagQualityMonitorSchedule", {
-      description: "Evaluate production RAG quality/security signals and apply the approved safety runbook.",
-      schedule: events.Schedule.rate(Duration.minutes(5))
+      description: "Disabled by the cost-first MVP decision; continuous RAG monitoring is deferred.",
+      schedule: events.Schedule.rate(Duration.minutes(5)),
+      enabled: false
     })
     ragQualityMonitorSchedule.addTarget(new eventTargets.LambdaFunction(ragQualityMonitorFn, {
       event: events.RuleTargetInput.fromObject({ windowMinutes: 5 })

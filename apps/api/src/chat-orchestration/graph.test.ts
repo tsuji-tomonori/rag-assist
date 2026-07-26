@@ -22,7 +22,7 @@ import { MockBedrockTextModel } from "../adapters/mock-bedrock.js"
 import { MemoRagService } from "../rag/memorag-service.js"
 import { answerReplayCandidateCounts, answerReplayDecision, applyChatOrchestrationUpdate, runChatOrchestration } from "./graph.js"
 import type { ChatOrchestrationState } from "./state.js"
-import type { DebugStep, DebugTrace } from "../types.js"
+import { CHAT_ORCHESTRATION_TRACE_TARGET_TYPE, type DebugStep, type DebugTrace } from "../types.js"
 
 test("fixed MemoRAG workflow answers from selected evidence and records fixed trace steps", async () => {
   const service = new MemoRagService(await createTestDeps())
@@ -47,6 +47,7 @@ test("fixed MemoRAG workflow answers from selected evidence and records fixed tr
     [
       "analyze_input",
       "build_temporal_context",
+      "normalize_search_scope",
       "detect_tool_intent",
       "build_conversation_state",
       "decontextualize_query",
@@ -333,6 +334,7 @@ test("fixed workflow executes nodes in the declared order", async () => {
     [
       "analyze_input",
       "build_temporal_context",
+      "normalize_search_scope",
       "detect_tool_intent",
       "build_conversation_state",
       "decontextualize_query",
@@ -376,6 +378,7 @@ test("fixed workflow answers explicit temporal calculations from computed facts 
     [
       "analyze_input",
       "build_temporal_context",
+      "normalize_search_scope",
       "detect_tool_intent",
       "build_conversation_state",
       "decontextualize_query",
@@ -1094,7 +1097,7 @@ test("fixed workflow answers English ChatRAG VPN follow-up without refusal conta
 
 async function createTestDeps(): Promise<Dependencies> {
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-agent-test-"))
-  return {
+  return { ragGuardProfile: safeTestRagGuardProfile(),
     objectStore: new LocalObjectStore(dataDir),
     memoryVectorStore: new LocalVectorStore(dataDir, "memory-vectors.json"),
     evidenceVectorStore: new LocalVectorStore(dataDir, "evidence-vectors.json"),
@@ -1205,6 +1208,7 @@ function assertSafeDebugStep(
 
 function assertSanitizedDebugTrace(trace: DebugTrace | undefined): asserts trace is DebugTrace {
   assert.ok(trace)
+  assert.equal(trace.targetType, CHAT_ORCHESTRATION_TRACE_TARGET_TYPE)
   assert.equal(trace.visibility, "operator_sanitized")
   assert.match(trace.question, /^sha256:[0-9a-f]{64}$/)
   assert.equal(trace.answerPreview, "[redacted:document-content]")
@@ -1356,6 +1360,50 @@ function replayDiagnostics(candidateCount: number, deniedCandidateCount: number)
       semantic: 0,
       hybrid: 0,
       memory: 0
+    }
+  }
+}
+
+test("FR-089 orchestration rejects an injected unsafe profile before downstream access", async () => {
+  const deps = await createTestDeps()
+  let downstreamAccessed = false
+  const guardedObjectStore = new Proxy(deps.objectStore, {
+    get(target, property, receiver) {
+      downstreamAccessed = true
+      return Reflect.get(target, property, receiver)
+    }
+  })
+
+  await assert.rejects(
+    () => runChatOrchestration({
+      ...deps,
+      objectStore: guardedObjectStore,
+      ragGuardProfile: {
+        ...deps.ragGuardProfile,
+        guards: { ...deps.ragGuardProfile.guards, grounding: false }
+      }
+    }, { question: "must not reach the orchestration graph" }),
+    (error) => error instanceof Error
+      && error.name === "UnsafeRagDegradationProfileError"
+      && error.message.includes("grounding")
+  )
+  assert.equal(downstreamAccessed, false)
+})
+
+function safeTestRagGuardProfile(): Dependencies["ragGuardProfile"] {
+  return {
+    id: "test-safe-rag",
+    version: "test-safe-rag-v1",
+    guards: {
+      authentication: true,
+      authorization: true,
+      classification_usage: true,
+      prompt_injection: true,
+      tool_policy: true,
+      grounding: true,
+      citation: true,
+      output_secret: true,
+      trace_redaction: true
     }
   }
 }

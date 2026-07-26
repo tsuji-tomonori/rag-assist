@@ -43,10 +43,22 @@
 | 受け入れ基準 | `AC-SQ003-001` から `AC-SQ003-004` |
 | 優先度 | A |
 | 安定性 | Medium |
-| 変更履歴 | 2026-05-08 初版 |
+| 変更履歴 | 2026-05-08 初版、2026-07-16 domain-neutral policy と再導入防止 evidence を同期 |
+
+## 実装・検証トレーサビリティ
+
+| 受け入れ条件 | 実装 evidence | 自動検証 evidence |
+|---|---|---|
+| `AC-SQ003-001` | `apps/api/src/chat-orchestration/question-requirements.ts`、`apps/api/src/chat-orchestration/policy-computation.ts`、`apps/api/src/rag/online/post-retrieval/answerability/answerability-gate.ts` | `apps/api/src/chat-orchestration/nodes/node-units.test.ts`、`apps/api/src/rag/profiles.test.ts` |
+| `AC-SQ003-002` | `apps/api/src/rag/online/generation/verification/answer-support-verifier.ts`。corpus metadata や expected field を判定に使わない | `apps/api/src/chat-orchestration/nodes/node-units.test.ts` の unsupported refusal、`benchmark/release-audit.test.ts` |
+| `AC-SQ003-003` | answerability／computed fact／support verification の reason と debug trace | `apps/api/src/chat-orchestration/nodes/node-units.test.ts` |
+| `AC-SQ003-004` | `answerability-gate.ts` と support verifier が `NO_ANSWER`／確認経路へ分岐 | `apps/api/src/chat-orchestration/nodes/node-units.test.ts` の unrelated-only／unsupported negative |
+
+複数 corpus、日本語の言い換え、英語、無関係文書を同じ evidence ranking policy で検証する。特定 dataset の正解語句を evidence 採用、citation validation、support verification の shortcut として使用しない。
 
 ## 関連文書
 
 - `docs/1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/04_回答検証・ガードレール/01_回答前ガード/REQ_FUNCTIONAL_014.md`
 - `docs/1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/04_回答検証・ガードレール/02_回答後検証/REQ_FUNCTIONAL_015.md`
 - `docs/2_アーキテクチャ_ARC/31_品質属性_QA/ARC_QA_001.md`
+- `docs/3_設計_DES/11_詳細設計_DLD/DES_DLD_001.md`
