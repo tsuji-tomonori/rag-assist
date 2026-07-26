@@ -48,19 +48,19 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 2 | `hasPermission` | has permission の実装処理を担当する。 | `apps/api/src/authorization.ts:187 (hasPermission)` |
 | 1 | `validQuery` | valid query の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:28 (validQuery)` |
 | 2 | `validRequest` | valid request の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:36 (validRequest)` |
-| 1 | `MemoRagService.getCostAuditSummary` | get cost audit summary の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:2175 (MemoRagService.getCostAuditSummary)` |
-| 2 | `defaultedUsageQuery` | defaulted usage query の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:266 (defaultedUsageQuery)` |
-| 2 | `MemoRagService.listUsageSummaries` | list usage summaries の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:2165 (MemoRagService.listUsageSummaries)` |
+| 1 | `MemoRagService.getCostAuditSummary` | get cost audit summary の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:2282 (MemoRagService.getCostAuditSummary)` |
+| 2 | `defaultedUsageQuery` | defaulted usage query の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:267 (defaultedUsageQuery)` |
+| 2 | `MemoRagService.listUsageSummaries` | list usage summaries の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:2272 (MemoRagService.listUsageSummaries)` |
 | 2 | `usageCompleteness` | usage completeness の実装処理を担当する。 | `apps/api/src/rag/_shared/usage/usage-pricing-catalog.ts:50 (usageCompleteness)` |
 | 2 | `priceUsageEvents` | price usage events の実装処理を担当する。 | `apps/api/src/rag/_shared/usage/usage-pricing-catalog.ts:19 (priceUsageEvents)` |
-| 2 | `roundUsageCost` | round usage cost の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:321 (roundUsageCost)` |
+| 2 | `roundUsageCost` | round usage cost の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:322 (roundUsageCost)` |
 | 1 | `isInvalidUsageQuery` | is invalid usage query の実装処理を担当する。 | `apps/api/src/routes/admin-routes.ts:728 (isInvalidUsageQuery)` |
 
 ## 5. データ・外部境界
 
 | 種別 | 境界 | Target | Operation | 目的 | Caller | 実装位置 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 参照 | Store | `this.deps.usageEventStore` | `query` | `this.deps.usageEventStore` に対して query を実行する。 | `MemoRagService.listUsageSummaries` | `apps/api/src/rag/memorag-service.ts:2170 (MemoRagService.listUsageSummaries)` |
+| 参照 | Store | `this.deps.usageEventStore` | `query` | `this.deps.usageEventStore` に対して query を実行する。 | `MemoRagService.listUsageSummaries` | `apps/api/src/rag/memorag-service.ts:2277 (MemoRagService.listUsageSummaries)` |
 | 実行 | External | `catalog<br>    .filter((entry) => entry.provider === event.provider)<br>    ` | `filter` | `catalog<br>    .filter((entry) => entry.provider === event.provider)<br>    ` へ filter を実行する。 | `findPrice` | `apps/api/src/rag/_shared/usage/usage-pricing-catalog.ts:69 (findPrice)` |
 | 実行 | External | `catalog<br>    .filter((entry) => entry.provider === event.provider)<br>    .filter((entry) => entry.region === event.region \|\| entry.region === "*")<br>    ` | `filter` | `catalog<br>    .filter((entry) => entry.provider === event.provider)<br>    .filter((entry) => entry.region === event.region \|\| entry.region === "*")<br>    ` へ filter を実行する。 | `findPrice` | `apps/api/src/rag/_shared/usage/usage-pricing-catalog.ts:69 (findPrice)` |
 | 実行 | External | `catalog<br>    .filter((entry) => entry.provider === event.provider)<br>    .filter((entry) => entry.region === event.region \|\| entry.region === "*")<br>    .filter((entry) => entry.modelId === event.modelId \|\| entry.modelId === "*")<br>    ` | `filter` | `catalog<br>    .filter((entry) => entry.provider === event.provider)<br>    .filter((entry) => entry.region === event.region \|\| entry.region === "*")<br>    .filter((entry) => entry.modelId === event.modelId \|\| entry.modelId === "*")<br>    ` へ filter を実行する。 | `findPrice` | `apps/api/src/rag/_shared/usage/usage-pricing-catalog.ts:69 (findPrice)` |

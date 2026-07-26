@@ -38,7 +38,7 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 0 | `GET /benchmark-suites handler` | GET /benchmark-suites の request を受け、検証・認可・service 呼び出し・HTTP 応答を調整する。 | `apps/api/src/routes/benchmark-routes.ts:103 (GET /benchmark-suites handler)` |
 | 1 | `requirePermission` | require permission の実装処理を担当する。 | `apps/api/src/authorization.ts:183 (requirePermission)` |
 | 2 | `hasPermission` | has permission の実装処理を担当する。 | `apps/api/src/authorization.ts:187 (hasPermission)` |
-| 1 | `MemoRagService.listBenchmarkSuites` | list benchmark suites の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4203 (MemoRagService.listBenchmarkSuites)` |
+| 1 | `MemoRagService.listBenchmarkSuites` | list benchmark suites の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4256 (MemoRagService.listBenchmarkSuites)` |
 
 ## 5. データ・外部境界
 

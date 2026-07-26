@@ -35,11 +35,11 @@
 | ---: | --- | --- | --- | --- | --- |
 | B001 | `POST /questions/{questionId}/search-improvement-candidates handler` | if | `candidate` が存在しない、または偽である | `!candidate` | `apps/api/src/routes/question-routes.ts:154 (POST /questions/{questionId}/search-improvement-candidates handler)` |
 | B002 | `requirePermission` | if | 利用者が 指定された permission を持たない | `!hasPermission(user, permission)` | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| B003 | `MemoRagService.createSearchImprovementCandidate` | if | `question` が存在しない、または偽である | `!question` | `apps/api/src/rag/memorag-service.ts:1412 (MemoRagService.createSearchImprovementCandidate)` |
+| B003 | `MemoRagService.createSearchImprovementCandidate` | if | `question` が存在しない、または偽である | `!question` | `apps/api/src/rag/memorag-service.ts:1519 (MemoRagService.createSearchImprovementCandidate)` |
 
 ## 4. 到達する主要実装
 
-handler を起点に TypeScript symbol を解決し、深さ 2 までの主要関数・method を列挙しています。深い helper を含む全到達関数は 29 件で、永続化・外部接続は深さにかかわらず次節へ集約しています。
+handler を起点に TypeScript symbol を解決し、深さ 2 までの主要関数・method を列挙しています。深い helper を含む全到達関数は 30 件で、永続化・外部接続は深さにかかわらず次節へ集約しています。
 
 | 深さ | Symbol | 責務 | 実装位置 |
 | ---: | --- | --- | --- |
@@ -49,32 +49,32 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 1 | `validParam` | valid param の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:24 (validParam)` |
 | 2 | `validRequest` | valid request の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:36 (validRequest)` |
 | 1 | `validJson` | valid json の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:20 (validJson)` |
-| 1 | `MemoRagService.createSearchImprovementCandidate` | create search improvement candidate の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1410 (MemoRagService.createSearchImprovementCandidate)` |
-| 2 | `MemoRagService.getQuestion` | get question の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3139 (MemoRagService.getQuestion)` |
-| 2 | `authoritativeActorTenantId` | authoritative actor tenant id の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5906 (authoritativeActorTenantId)` |
-| 2 | `createAliasRecordVersion` | create alias record version の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5847 (createAliasRecordVersion)` |
-| 2 | `normalizeAliasTerm` | normalize alias term の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5680 (normalizeAliasTerm)` |
-| 2 | `normalizeAliasExpansions` | normalize alias expansions の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5684 (normalizeAliasExpansions)` |
-| 2 | `aliasScopeForTenant` | alias scope for tenant の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5708 (aliasScopeForTenant)` |
-| 2 | `trimOptional` | trim optional の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5693 (trimOptional)` |
-| 2 | `normalizeStringList` | normalize string list の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5688 (normalizeStringList)` |
-| 2 | `appendAliasAudit` | append alias audit の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5817 (appendAliasAudit)` |
-| 2 | `MemoRagService.mutateAliasLedger` | mutate alias ledger の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3612 (MemoRagService.mutateAliasLedger)` |
+| 1 | `MemoRagService.createSearchImprovementCandidate` | create search improvement candidate の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1517 (MemoRagService.createSearchImprovementCandidate)` |
+| 2 | `MemoRagService.getQuestion` | get question の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3235 (MemoRagService.getQuestion)` |
+| 2 | `authoritativeActorTenantId` | authoritative actor tenant id の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5516 (authoritativeActorTenantId)` |
+| 2 | `createAliasRecordVersion` | create alias record version の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5457 (createAliasRecordVersion)` |
+| 2 | `normalizeAliasTerm` | normalize alias term の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5317 (normalizeAliasTerm)` |
+| 2 | `normalizeAliasExpansions` | normalize alias expansions の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5321 (normalizeAliasExpansions)` |
+| 2 | `aliasScopeForTenant` | alias scope for tenant の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5345 (aliasScopeForTenant)` |
+| 2 | `trimOptional` | trim optional の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5330 (trimOptional)` |
+| 2 | `normalizeStringList` | normalize string list の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5325 (normalizeStringList)` |
+| 2 | `appendAliasAudit` | append alias audit の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5427 (appendAliasAudit)` |
+| 2 | `MemoRagService.mutateAliasLedger` | mutate alias ledger の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3705 (MemoRagService.mutateAliasLedger)` |
 
 ## 5. データ・外部境界
 
 | 種別 | 境界 | Target | Operation | 目的 | Caller | 実装位置 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 参照 | Store | `this.deps.questionStore` | `get` | `this.deps.questionStore` に対して get を実行する。 | `MemoRagService.getQuestion` | `apps/api/src/rag/memorag-service.ts:3140 (MemoRagService.getQuestion)` |
-| 実行 | Store | `ledger.aliases` | `push` | `ledger.aliases` に対して push を実行する。 | `MemoRagService.createSearchImprovementCandidate` | `apps/api/src/rag/memorag-service.ts:1440 (MemoRagService.createSearchImprovementCandidate)` |
-| 実行 | Store | `ledger.auditLog` | `push` | `ledger.auditLog` に対して push を実行する。 | `appendAliasAudit` | `apps/api/src/rag/memorag-service.ts:5831 (appendAliasAudit)` |
-| 実行 | Store | `this` | `mutateAliasLedger` | `this` に対して mutate alias ledger を実行する。 | `MemoRagService.createSearchImprovementCandidate` | `apps/api/src/rag/memorag-service.ts:1414 (MemoRagService.createSearchImprovementCandidate)` |
-| 参照 | Store | `this` | `loadAliasLedger` | `this` に対して load alias ledger を実行する。 | `MemoRagService.mutateAliasLedger` | `apps/api/src/rag/memorag-service.ts:3620 (MemoRagService.mutateAliasLedger)` |
-| 参照 | Store | `this.deps.objectStore` | `getTextWithVersion` | `this.deps.objectStore` に対して get text with version を実行する。 | `MemoRagService.loadAliasLedger` | `apps/api/src/rag/memorag-service.ts:3590 (MemoRagService.loadAliasLedger)` |
-| 実行 | Store | `normalizeAliasLedger` | `normalizeAliasLedger` | `normalizeAliasLedger` に対して normalize alias ledger を実行する。 | `MemoRagService.loadAliasLedger` | `apps/api/src/rag/memorag-service.ts:3594 (MemoRagService.loadAliasLedger)` |
-| 作成・追記 | Store | `this` | `saveAliasLedger` | `this` に対して save alias ledger を実行する。 | `MemoRagService.mutateAliasLedger` | `apps/api/src/rag/memorag-service.ts:3624 (MemoRagService.mutateAliasLedger)` |
-| 作成・追記 | Store | `this.deps.objectStore` | `putTextIfVersion` | `this.deps.objectStore` に対して put text if version を実行する。 | `MemoRagService.saveAliasLedger` | `apps/api/src/rag/memorag-service.ts:3603 (MemoRagService.saveAliasLedger)` |
-| 参照 | Store | `this.deps.objectStore` | `getTextWithVersion` | `this.deps.objectStore` に対して get text with version を実行する。 | `MemoRagService.saveAliasLedger` | `apps/api/src/rag/memorag-service.ts:3609 (MemoRagService.saveAliasLedger)` |
+| 参照 | Store | `this.ports.questionStore` | `get` | `this.ports.questionStore` に対して get を実行する。 | `QuestionService.get` | `apps/api/src/questions/question-service.ts:58 (QuestionService.get)` |
+| 実行 | Store | `ledger.aliases` | `push` | `ledger.aliases` に対して push を実行する。 | `MemoRagService.createSearchImprovementCandidate` | `apps/api/src/rag/memorag-service.ts:1547 (MemoRagService.createSearchImprovementCandidate)` |
+| 実行 | Store | `ledger.auditLog` | `push` | `ledger.auditLog` に対して push を実行する。 | `appendAliasAudit` | `apps/api/src/rag/memorag-service.ts:5441 (appendAliasAudit)` |
+| 実行 | Store | `this` | `mutateAliasLedger` | `this` に対して mutate alias ledger を実行する。 | `MemoRagService.createSearchImprovementCandidate` | `apps/api/src/rag/memorag-service.ts:1521 (MemoRagService.createSearchImprovementCandidate)` |
+| 参照 | Store | `this` | `loadAliasLedger` | `this` に対して load alias ledger を実行する。 | `MemoRagService.mutateAliasLedger` | `apps/api/src/rag/memorag-service.ts:3713 (MemoRagService.mutateAliasLedger)` |
+| 参照 | Store | `this.deps.objectStore` | `getTextWithVersion` | `this.deps.objectStore` に対して get text with version を実行する。 | `MemoRagService.loadAliasLedger` | `apps/api/src/rag/memorag-service.ts:3683 (MemoRagService.loadAliasLedger)` |
+| 実行 | Store | `normalizeAliasLedger` | `normalizeAliasLedger` | `normalizeAliasLedger` に対して normalize alias ledger を実行する。 | `MemoRagService.loadAliasLedger` | `apps/api/src/rag/memorag-service.ts:3687 (MemoRagService.loadAliasLedger)` |
+| 作成・追記 | Store | `this` | `saveAliasLedger` | `this` に対して save alias ledger を実行する。 | `MemoRagService.mutateAliasLedger` | `apps/api/src/rag/memorag-service.ts:3717 (MemoRagService.mutateAliasLedger)` |
+| 作成・追記 | Store | `this.deps.objectStore` | `putTextIfVersion` | `this.deps.objectStore` に対して put text if version を実行する。 | `MemoRagService.saveAliasLedger` | `apps/api/src/rag/memorag-service.ts:3696 (MemoRagService.saveAliasLedger)` |
+| 参照 | Store | `this.deps.objectStore` | `getTextWithVersion` | `this.deps.objectStore` に対して get text with version を実行する。 | `MemoRagService.saveAliasLedger` | `apps/api/src/rag/memorag-service.ts:3702 (MemoRagService.saveAliasLedger)` |
 
 ## 6. 応答・メッセージ
 

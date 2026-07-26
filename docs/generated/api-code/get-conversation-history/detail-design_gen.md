@@ -40,15 +40,15 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 0 | `GET /conversation-history handler` | GET /conversation-history の request を受け、検証・認可・service 呼び出し・HTTP 応答を調整する。 | `apps/api/src/routes/conversation-history-routes.ts:21 (GET /conversation-history handler)` |
 | 1 | `requirePermission` | require permission の実装処理を担当する。 | `apps/api/src/authorization.ts:183 (requirePermission)` |
 | 2 | `hasPermission` | has permission の実装処理を担当する。 | `apps/api/src/authorization.ts:187 (hasPermission)` |
-| 1 | `MemoRagService.listConversationHistory` | list conversation history の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4132 (MemoRagService.listConversationHistory)` |
-| 2 | `tenantPartitionedOwnerKey` | tenant partitioned owner key の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5914 (tenantPartitionedOwnerKey)` |
+| 1 | `MemoRagService.listConversationHistory` | list conversation history の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4225 (MemoRagService.listConversationHistory)` |
+| 2 | `tenantPartitionedOwnerKey` | tenant partitioned owner key の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5524 (tenantPartitionedOwnerKey)` |
 
 ## 5. データ・外部境界
 
 | 種別 | 境界 | Target | Operation | 目的 | Caller | 実装位置 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 参照 | Store | `this.deps.conversationHistoryStore` | `list` | `this.deps.conversationHistoryStore` に対して list を実行する。 | `MemoRagService.listConversationHistory` | `apps/api/src/rag/memorag-service.ts:4135 (MemoRagService.listConversationHistory)` |
-| 参照 | Store | `this.deps.favoriteStore` | `list` | `this.deps.favoriteStore` に対して list を実行する。 | `MemoRagService.listConversationHistory` | `apps/api/src/rag/memorag-service.ts:4136 (MemoRagService.listConversationHistory)` |
+| 参照 | Store | `this.deps.conversationHistoryStore` | `list` | `this.deps.conversationHistoryStore` に対して list を実行する。 | `MemoRagService.listConversationHistory` | `apps/api/src/rag/memorag-service.ts:4228 (MemoRagService.listConversationHistory)` |
+| 参照 | Store | `this.deps.favoriteStore` | `list` | `this.deps.favoriteStore` に対して list を実行する。 | `MemoRagService.listConversationHistory` | `apps/api/src/rag/memorag-service.ts:4229 (MemoRagService.listConversationHistory)` |
 
 ## 6. 応答・メッセージ
 

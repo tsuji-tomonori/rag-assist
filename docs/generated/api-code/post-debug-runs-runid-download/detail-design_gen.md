@@ -36,8 +36,8 @@ debug trace ダウンロード URL を作成する
 | ---: | --- | --- | --- | --- | --- |
 | B001 | `POST /debug-runs/{runId}/download handler` | if | `download` が存在しない、または偽である | `!download` | `apps/api/src/routes/debug-routes.ts:132 (POST /debug-runs/{runId}/download handler)` |
 | B002 | `requirePermission` | if | 利用者が 指定された permission を持たない | `!hasPermission(user, permission)` | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| B003 | `MemoRagService.createDebugTraceDownloadUrl` | if | `config.debugDownloadBucketName` が存在しない、または偽である | `!config.debugDownloadBucketName` | `apps/api/src/rag/memorag-service.ts:5109 (MemoRagService.createDebugTraceDownloadUrl)` |
-| B004 | `MemoRagService.createDebugTraceDownloadUrl` | if | `trace` が存在しない、または偽である | `!trace` | `apps/api/src/rag/memorag-service.ts:5111 (MemoRagService.createDebugTraceDownloadUrl)` |
+| B003 | `MemoRagService.createDebugTraceDownloadUrl` | if | `config.debugDownloadBucketName` が存在しない、または偽である | `!config.debugDownloadBucketName` | `apps/api/src/rag/memorag-service.ts:4808 (MemoRagService.createDebugTraceDownloadUrl)` |
+| B004 | `MemoRagService.createDebugTraceDownloadUrl` | if | `trace` が存在しない、または偽である | `!trace` | `apps/api/src/rag/memorag-service.ts:4810 (MemoRagService.createDebugTraceDownloadUrl)` |
 | B005 | `settleNonEnumerationTiming` | if | `remaining` が `0` より大きい | `remaining > 0` | `apps/api/src/security/public-resource-response.ts:42 (settleNonEnumerationTiming)` |
 
 ## 4. 到達する主要実装
@@ -51,18 +51,18 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 2 | `hasPermission` | has permission の実装処理を担当する。 | `apps/api/src/authorization.ts:187 (hasPermission)` |
 | 1 | `validParam` | valid param の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:24 (validParam)` |
 | 2 | `validRequest` | valid request の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:36 (validRequest)` |
-| 1 | `MemoRagService.createDebugTraceDownloadUrl` | create debug trace download url の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5108 (MemoRagService.createDebugTraceDownloadUrl)` |
-| 2 | `MemoRagService.getDebugRun` | get debug run の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:2344 (MemoRagService.getDebugRun)` |
-| 2 | `formatDebugTraceJson` | format debug trace json の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5984 (formatDebugTraceJson)` |
-| 2 | `createDebugTraceDownloadMetadata` | create debug trace download metadata の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5971 (createDebugTraceDownloadMetadata)` |
+| 1 | `MemoRagService.createDebugTraceDownloadUrl` | create debug trace download url の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4807 (MemoRagService.createDebugTraceDownloadUrl)` |
+| 2 | `MemoRagService.getDebugRun` | get debug run の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:2451 (MemoRagService.getDebugRun)` |
+| 2 | `formatDebugTraceJson` | format debug trace json の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5594 (formatDebugTraceJson)` |
+| 2 | `createDebugTraceDownloadMetadata` | create debug trace download metadata の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5581 (createDebugTraceDownloadMetadata)` |
 | 1 | `settleNonEnumerationTiming` | settle non enumeration timing の実装処理を担当する。 | `apps/api/src/security/public-resource-response.ts:40 (settleNonEnumerationTiming)` |
 
 ## 5. データ・外部境界
 
 | 種別 | 境界 | Target | Operation | 目的 | Caller | 実装位置 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 参照 | Store | `this.deps.objectStore` | `listKeys` | `this.deps.objectStore` に対して list keys を実行する。 | `MemoRagService.getDebugRun` | `apps/api/src/rag/memorag-service.ts:2346 (MemoRagService.getDebugRun)` |
-| 参照 | Store | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `MemoRagService.getDebugRun` | `apps/api/src/rag/memorag-service.ts:2349 (MemoRagService.getDebugRun)` |
+| 参照 | Store | `this.deps.objectStore` | `listKeys` | `this.deps.objectStore` に対して list keys を実行する。 | `MemoRagService.getDebugRun` | `apps/api/src/rag/memorag-service.ts:2453 (MemoRagService.getDebugRun)` |
+| 参照 | Store | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `MemoRagService.getDebugRun` | `apps/api/src/rag/memorag-service.ts:2456 (MemoRagService.getDebugRun)` |
 
 ## 6. 応答・メッセージ
 

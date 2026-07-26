@@ -39,15 +39,15 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 0 | `GET /admin/quality-actions handler` | GET /admin/quality-actions の request を受け、検証・認可・service 呼び出し・HTTP 応答を調整する。 | `apps/api/src/routes/admin-routes.ts:612 (GET /admin/quality-actions handler)` |
 | 1 | `requirePermission` | require permission の実装処理を担当する。 | `apps/api/src/authorization.ts:183 (requirePermission)` |
 | 2 | `hasPermission` | has permission の実装処理を担当する。 | `apps/api/src/authorization.ts:187 (hasPermission)` |
-| 1 | `MemoRagService.listQualityActionCards` | list quality action cards の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:2194 (MemoRagService.listQualityActionCards)` |
-| 2 | `MemoRagService.listDocuments` | list documents の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:901 (MemoRagService.listDocuments)` |
-| 2 | `qualityActionCardsForManifest` | quality action cards for manifest の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5419 (qualityActionCardsForManifest)` |
+| 1 | `MemoRagService.listQualityActionCards` | list quality action cards の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:2301 (MemoRagService.listQualityActionCards)` |
+| 2 | `MemoRagService.listDocuments` | list documents の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1008 (MemoRagService.listDocuments)` |
+| 2 | `qualityActionCardsForManifest` | quality action cards for manifest の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5073 (qualityActionCardsForManifest)` |
 
 ## 5. データ・外部境界
 
 | 種別 | 境界 | Target | Operation | 目的 | Caller | 実装位置 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 参照 | Store | `this.deps.objectStore` | `listKeys` | `this.deps.objectStore` に対して list keys を実行する。 | `MemoRagService.listDocuments` | `apps/api/src/rag/memorag-service.ts:903 (MemoRagService.listDocuments)` |
+| 参照 | Store | `this.deps.objectStore` | `listKeys` | `this.deps.objectStore` に対して list keys を実行する。 | `MemoRagService.listDocuments` | `apps/api/src/rag/memorag-service.ts:1010 (MemoRagService.listDocuments)` |
 | 参照 | Store | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `readTenantManifestByKey` | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:93 (readTenantManifestByKey)` |
 | 参照 | Store | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `loadPublicationPointer` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1809 (loadPublicationPointer)` |
 | 参照 | Store | `this.deps.documentGroupStore` | `list` | `this.deps.documentGroupStore` に対して list を実行する。 | `FolderPermissionService.resolveEffectiveFolderPermissionDetail` | `apps/api/src/folders/folder-permission-service.ts:145 (FolderPermissionService.resolveEffectiveFolderPermissionDetail)` |

@@ -1,18 +1,45 @@
 import { randomUUID } from "node:crypto"
 import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3"
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
-import { SFNClient, StartExecutionCommand, StopExecutionCommand } from "@aws-sdk/client-sfn"
+import { SFNClient, StartExecutionCommand } from "@aws-sdk/client-sfn"
 import { config } from "../config.js"
 import { getPermissionsForGroups, hasPermission, rolePermissions, type Role } from "../authorization.js"
 import {
   APPLICATION_ROLE_DISPLAY_CATALOG
 } from "@memorag-mvp/contract/access-control"
 import type { Dependencies } from "../dependencies.js"
-import { sanitizeProviderText, type AsyncAgentProviderArtifact, type AsyncAgentProviderInput, type AsyncAgentProviderResult } from "../async-agent/provider.js"
+import { sanitizeProviderText, type AsyncAgentProviderInput, type AsyncAgentProviderResult } from "../async-agent/provider.js"
+import { AgentProviderCatalogService } from "../async-agent/provider-catalog-service.js"
+import { AsyncAgentRunRepository } from "../async-agent/async-agent-run-repository.js"
+import { AsyncAgentArtifactRepository } from "../async-agent/async-agent-artifact-repository.js"
+import { AsyncAgentRunQueryService } from "../async-agent/async-agent-run-query-service.js"
+import {
+  AsyncAgentRunCreationService,
+  createAsyncAgentRunId,
+  type CreateAsyncAgentRunInput
+} from "../async-agent/async-agent-run-creation-service.js"
+import { BenchmarkRunQueryService } from "../benchmark/benchmark-run-query-service.js"
+import { BenchmarkRunCancellationService } from "../benchmark/benchmark-run-cancellation-service.js"
+import { BenchmarkRunReauthorizationService } from "../benchmark/benchmark-run-reauthorization-service.js"
+import {
+  BenchmarkRunCreationService,
+  type CreateBenchmarkRunInput
+} from "../benchmark/benchmark-run-creation-service.js"
+import { BenchmarkArtifactRevocationCleanupDriverFactory } from "../benchmark/benchmark-artifact-revocation-cleanup-driver.js"
+import { stopBenchmarkExecution } from "../benchmark/benchmark-execution-stopper.js"
+import {
+  AwsBenchmarkExecutionStarter,
+  type BenchmarkExecutionStarter
+} from "../benchmark/benchmark-execution-starter.js"
+import {
+  BenchmarkArtifactDownloadService,
+  type BenchmarkDownloadArtifact
+} from "../benchmark/benchmark-artifact-download-service.js"
+import { signBenchmarkArtifact } from "../benchmark/benchmark-artifact-signer.js"
 import { debugTraceObjectKey, runChatOrchestration } from "./orchestration/chat-rag-orchestrator.js"
 import { llmOptions, normalizeMaxIterations, normalizeMemoryTopK, normalizeMinScore, normalizeSearchTopK, normalizeTopK, ragRuntimePolicy } from "../chat-orchestration/runtime-policy.js"
 import type { ChatInput, ChatOrchestrationResult } from "../chat-orchestration/types.js"
-import { DEBUG_TRACE_SANITIZE_POLICY_VERSION, DEBUG_TRACE_SCHEMA_VERSION, type AdminExportArtifact, type AgentProviderAvailability, type AgentProviderSetting, type AgentRuntimeProvider, type AsyncAgentRun, type AccessRoleDefinition, type AliasAuditLogItem, type AliasAuditLogPage, type AliasDefinition, type AliasListPage, type AuthoritativeAdmissionContext, type BenchmarkMode, type BenchmarkRun, type BenchmarkRunner, type BenchmarkRunThresholds, type BenchmarkSuite, type ChatRun, type ChatToolInvocation, type Chunk, type ConversationHistoryItem, type CostAuditSummary, type DebugReplayPlan, type DebugTrace, type DocumentGroup, type DocumentIngestRun, type DocumentManifest, type DocumentManifestSummary, type ExtractionWarning, type FavoriteItem, type FavoriteListItem, type FavoriteTargetType, type HumanQuestion, type IngestAdmissionContext, type JsonValue, type ManagedUser, type ManagedUserAdminView, type ManagedUserAuditAction, type ManagedUserAuditLogEntry, type ManagedUserAuditLogPage, type ManagedUserDeletionPreflight, type ManagedUserListPage, type MemoryCard, type ParsedDocumentPreview, type PublishedAliasArtifact, type QualityActionCard, type ReindexMigration, type StagedPublicationFence, type StructuredBlock, type UserUsageSummary, type VectorRecord } from "../types.js"
+import { DEBUG_TRACE_SANITIZE_POLICY_VERSION, DEBUG_TRACE_SCHEMA_VERSION, type AdminExportArtifact, type AgentProviderAvailability, type AgentProviderSetting, type AgentRuntimeProvider, type AsyncAgentRun, type AccessRoleDefinition, type AliasAuditLogItem, type AliasAuditLogPage, type AliasDefinition, type AliasListPage, type AuthoritativeAdmissionContext, type BenchmarkRun, type BenchmarkSuite, type ChatRun, type ChatToolInvocation, type Chunk, type ConversationHistoryItem, type CostAuditSummary, type DebugReplayPlan, type DebugTrace, type DocumentGroup, type DocumentIngestRun, type DocumentManifest, type DocumentManifestSummary, type ExtractionWarning, type FavoriteListItem, type FavoriteTargetType, type HumanQuestion, type IngestAdmissionContext, type JsonValue, type ManagedUser, type ManagedUserAdminView, type ManagedUserAuditAction, type ManagedUserAuditLogEntry, type ManagedUserAuditLogPage, type ManagedUserDeletionPreflight, type ManagedUserListPage, type MemoryCard, type ParsedDocumentPreview, type PublishedAliasArtifact, type QualityActionCard, type ReindexMigration, type StagedPublicationFence, type StructuredBlock, type UserUsageSummary, type VectorRecord } from "../types.js"
 import type { ReplayDecisionReasonCode } from "../types.js"
 import type { AppUser } from "../auth.js"
 import type { CreatedDirectoryUser } from "../adapters/user-directory.js"
@@ -76,12 +103,7 @@ import {
   ObjectStoreAccountRevocationRegistry
 } from "../security/account-revocation-registry.js"
 import {
-  ObjectStoreRevocationCleanupCoordinator,
-  type RevocationCleanupDriver,
-  type RevocationCleanupManifest,
-  type RevocationCleanupScope,
-  type RevocationCleanupTarget,
-  type RevocationCleanupTargetReference
+  ObjectStoreRevocationCleanupCoordinator
 } from "./_shared/security/revocation-cleanup-coordinator.js"
 import { ObjectStoreRevocationCleanupRepairOutbox } from "./_shared/security/revocation-cleanup-repair-outbox.js"
 import { ProductionRagObservationProducer } from "./quality-control/production-rag-observation-producer.js"
@@ -97,12 +119,17 @@ import {
   type ResourceGroupMembershipMutationResult
 } from "../security/resource-group-membership-service.js"
 import { ObjectStoreResourceGroupMembershipCleanupRepairStore } from "../security/resource-group-membership-cleanup-repair-store.js"
-import { tenantPartitionId, tenantStorageKey } from "../security/tenant-partition.js"
+import { tenantPartitionId } from "../security/tenant-partition.js"
 import { securityResourceReference } from "../security/security-resource-reference.js"
 import type { UsageBreakdown, UsageEvent, UsageListQuery, UsageSummaryPage } from "../types.js"
 import { normalizeUsageQuery, type UsageEventPage } from "../adapters/usage-event-store.js"
 import { priceUsageEvents, usageCompleteness } from "./_shared/usage/usage-pricing-catalog.js"
 import { UsageTrackingTextModel } from "./_shared/usage/usage-tracking-text-model.js"
+import { FavoriteService } from "../favorites/favorite-service.js"
+import {
+  QuestionService,
+  questionUserDisplayName
+} from "../questions/question-service.js"
 import {
   enforceResolvedResourceOperation,
   resolvedResourceScope,
@@ -134,32 +161,6 @@ type MemoryJson = {
   likelyQuestions?: string[]
   constraints?: string[]
 }
-
-type CreateBenchmarkRunInput = {
-  suiteId?: string
-  mode?: BenchmarkMode
-  runner?: BenchmarkRunner
-  modelId?: string
-  embeddingModelId?: string
-  topK?: number
-  memoryTopK?: number
-  minScore?: number
-  concurrency?: number
-  thresholds?: BenchmarkRunThresholds
-}
-
-type CreateAsyncAgentRunInput = {
-  provider: AgentRuntimeProvider
-  modelId: string
-  instruction: string
-  selectedFolderIds?: string[]
-  selectedDocumentIds?: string[]
-  selectedSkillIds?: string[]
-  selectedAgentProfileIds?: string[]
-  budget?: AsyncAgentRun["budget"]
-}
-
-type BenchmarkDownloadArtifact = "report" | "summary" | "results" | "logs"
 
 type AdminLedger = {
   users: ManagedUser[]
@@ -440,7 +441,113 @@ const benchmarkSuites: BenchmarkSuite[] = [
 ]
 
 export class MemoRagService {
-  constructor(private readonly deps: Dependencies) {}
+  private readonly agentProviderCatalogService: AgentProviderCatalogService
+  private readonly asyncAgentArtifactRepository: AsyncAgentArtifactRepository
+  private readonly asyncAgentRunCreationService: AsyncAgentRunCreationService
+  private readonly asyncAgentRunQueryService: AsyncAgentRunQueryService
+  private readonly asyncAgentRunRepository: AsyncAgentRunRepository
+  private readonly benchmarkArtifactDownloadService: BenchmarkArtifactDownloadService
+  private readonly benchmarkArtifactRevocationCleanupDriverFactory: BenchmarkArtifactRevocationCleanupDriverFactory
+  private readonly benchmarkExecutionStarter: BenchmarkExecutionStarter
+  private readonly benchmarkRunCancellationService: BenchmarkRunCancellationService
+  private readonly benchmarkRunCreationService: BenchmarkRunCreationService
+  private readonly benchmarkRunQueryService: BenchmarkRunQueryService
+  private readonly benchmarkRunReauthorizationService: BenchmarkRunReauthorizationService
+  private readonly favoriteService: FavoriteService
+  private readonly questionService: QuestionService
+
+  constructor(private readonly deps: Dependencies) {
+    this.agentProviderCatalogService = new AgentProviderCatalogService({
+      registry: deps.asyncAgentProviders
+    })
+    this.asyncAgentArtifactRepository = new AsyncAgentArtifactRepository({
+      objectStore: deps.objectStore,
+      createArtifactId: () => `artifact_${randomUUID().slice(0, 12)}`,
+      sanitizeText: sanitizeProviderText
+    })
+    this.asyncAgentRunRepository = new AsyncAgentRunRepository(deps.objectStore)
+    this.asyncAgentRunCreationService = new AsyncAgentRunCreationService({
+      runRepository: this.asyncAgentRunRepository,
+      authorizeSelections: (actor, input) => this.assertAsyncAgentSelectionsReadable(actor, input),
+      findProvider: (provider) => this.agentProviderCatalogService.findRuntimeProvider(provider),
+      tenantIdForActor: (actor) => actor.tenantId ?? defaultTenantId,
+      now: () => new Date().toISOString(),
+      createRunId: createAsyncAgentRunId,
+      createMountId: () => `mount_${randomUUID().slice(0, 12)}`
+    })
+    this.asyncAgentRunQueryService = new AsyncAgentRunQueryService({
+      runRepository: this.asyncAgentRunRepository,
+      tenantIdForActor: authoritativeActorTenantId,
+      canListRun: (actor, run) => hasPermission(actor, "agent:read:managed") || run.requesterUserId === actor.userId,
+      canGetRun: (actor, run) => this.canReadAsyncAgentRun(actor, run)
+    })
+    this.benchmarkRunQueryService = new BenchmarkRunQueryService({
+      benchmarkRunStore: deps.benchmarkRunStore,
+      codeBuildLogReader: deps.codeBuildLogReader,
+      tenantIdForActor: authoritativeActorTenantId
+    })
+    this.benchmarkRunCancellationService = new BenchmarkRunCancellationService({
+      benchmarkRunStore: deps.benchmarkRunStore,
+      tenantIdForActor: authoritativeActorTenantId,
+      stopExecution: stopBenchmarkExecution,
+      now: () => new Date().toISOString()
+    })
+    this.benchmarkRunReauthorizationService = new BenchmarkRunReauthorizationService({
+      benchmarkRunStore: deps.benchmarkRunStore,
+      authorizeBoundary: (run, boundary) => this.authorizeBenchmarkRunBoundary(run, boundary),
+      reconcileRevokedArtifacts: (run, boundary, revoked) => this.reconcileRevokedBenchmarkArtifacts(run, boundary, revoked),
+      now: () => new Date().toISOString()
+    })
+    this.benchmarkArtifactRevocationCleanupDriverFactory = new BenchmarkArtifactRevocationCleanupDriverFactory({
+      benchmarkRunStore: deps.benchmarkRunStore,
+      artifactStore: deps.benchmarkArtifactStore
+    })
+    this.benchmarkExecutionStarter = new AwsBenchmarkExecutionStarter({
+      region: config.region,
+      stateMachineArn: config.benchmarkStateMachineArn,
+      bucketName: config.benchmarkBucketName,
+      targetApiBaseUrl: config.benchmarkTargetApiBaseUrl
+    })
+    this.benchmarkRunCreationService = new BenchmarkRunCreationService({
+      benchmarkRunStore: deps.benchmarkRunStore,
+      suites: benchmarkSuites,
+      defaults: {
+        suiteId: "standard-agent-v1",
+        runner: "codebuild",
+        modelId: config.defaultModelId,
+        embeddingModelId: config.embeddingModelId
+      },
+      executionEnabled: Boolean(config.benchmarkStateMachineArn),
+      tenantIdForActor: authoritativeActorTenantId,
+      securityResourceRefsForActor: (actor) => this.securityResourceRefsForActor(actor),
+      normalizeTopK: (mode, value) => mode === "search" ? normalizeSearchTopK(value) : normalizeTopK(value),
+      normalizeMemoryTopK,
+      normalizeMinScore,
+      authorizeBoundary: (run, boundary) => this.authorizeBenchmarkRunBoundary(run, boundary),
+      executionStarter: this.benchmarkExecutionStarter,
+      now: () => new Date().toISOString(),
+      createRunId: createBenchmarkRunId
+    })
+    this.benchmarkArtifactDownloadService = new BenchmarkArtifactDownloadService({
+      benchmarkRunStore: deps.benchmarkRunStore,
+      tenantIdForActor: authoritativeActorTenantId,
+      signArtifact: signBenchmarkArtifact,
+      bucketName: config.benchmarkBucketName,
+      downloadExpiresInSeconds: config.benchmarkDownloadExpiresInSeconds
+    })
+    this.favoriteService = new FavoriteService({
+      favoriteStore: deps.favoriteStore,
+      conversationHistoryStore: deps.conversationHistoryStore,
+      ownerKey: tenantPartitionedOwnerKey,
+      listAccessibleDocuments: async (user) => this.listDocuments(user),
+      listAccessibleFolders: async (user) => this.listDocumentGroups(user)
+    })
+    this.questionService = new QuestionService({
+      questionStore: deps.questionStore,
+      defaultAssigneeGroupId: config.defaultSupportAssigneeGroupId,
+      resolveUserDisplayName: questionUserDisplayName
+    })
+  }
 
   async getResourceGroupMembershipState(actor: AppUser, groupId: string) {
     return this.resourceGroupMembershipService().getState(actor, groupId)
@@ -3110,45 +3217,31 @@ export class MemoRagService {
   }
 
   async createQuestion(input: CreateQuestionInput, user?: AppUser): Promise<HumanQuestion> {
-    const defaultAssigneeGroupId = config.defaultSupportAssigneeGroupId || undefined
-    const assigneeGroupId = input.assigneeUserId || input.assigneeGroupId
-      ? input.assigneeGroupId
-      : defaultAssigneeGroupId
-    return this.deps.questionStore.create({
-      ...input,
-      requesterUserId: user?.userId,
-      requesterName: input.requesterName?.trim() || userDisplayName(user),
-      requesterDepartment: input.requesterDepartment?.trim() || "未設定",
-      assigneeGroupId,
-      sanitizedDiagnostics: sanitizeSupportDiagnostics(input.sanitizedDiagnostics, input.answerUnavailableReason)
-    })
+    return this.questionService.create(input, user)
   }
 
   async listAssignedQuestions(userId: string, groupIds: string[]): Promise<HumanQuestion[]> {
-    return this.deps.questionStore.listAssignedToUser(userId, groupIds)
+    return this.questionService.listAssigned(userId, groupIds)
   }
 
   async listRequestedQuestions(userId: string): Promise<HumanQuestion[]> {
-    return this.deps.questionStore.listRequestedByUser(userId)
+    return this.questionService.listRequested(userId)
   }
 
   async listAllQuestionsForAdmin(): Promise<HumanQuestion[]> {
-    return this.deps.questionStore.listAllForAdmin()
+    return this.questionService.listAllForAdmin()
   }
 
   async getQuestion(questionId: string): Promise<HumanQuestion | undefined> {
-    return this.deps.questionStore.get(questionId)
+    return this.questionService.get(questionId)
   }
 
   async answerQuestion(questionId: string, input: AnswerQuestionInput, user?: AppUser): Promise<HumanQuestion> {
-    return this.deps.questionStore.answer(questionId, {
-      ...input,
-      responderName: input.responderName?.trim() || userDisplayName(user)
-    })
+    return this.questionService.answer(questionId, input, user)
   }
 
   async resolveQuestion(questionId: string): Promise<HumanQuestion> {
-    return this.deps.questionStore.resolve(questionId)
+    return this.questionService.resolve(questionId)
   }
 
   private async updateManagedUserStatus(
@@ -4149,55 +4242,15 @@ export class MemoRagService {
   }
 
   async saveFavorite(user: AppUser, input: { targetType: FavoriteTargetType; targetId: string; label?: string; note?: string }): Promise<FavoriteListItem> {
-    if (!favoriteTargetResolverImplemented(input.targetType)) {
-      throw new Error(`Unsupported favorite target type: ${input.targetType}`)
-    }
-    const favorite = await this.deps.favoriteStore.save(tenantPartitionedOwnerKey(user), input)
-    return this.resolveFavoriteVisibility(user, favorite)
+    return this.favoriteService.save(user, input)
   }
 
   async deleteFavorite(subject: AppUser | string, targetType: FavoriteTargetType, targetId: string, tenantId?: string): Promise<void> {
-    await this.deps.favoriteStore.delete(tenantPartitionedOwnerKey(subject, tenantId), targetType, targetId)
+    await this.favoriteService.delete(subject, targetType, targetId, tenantId)
   }
 
   async listFavorites(user: AppUser): Promise<FavoriteListItem[]> {
-    const [favorites, history] = await Promise.all([
-      this.deps.favoriteStore.list(tenantPartitionedOwnerKey(user)),
-      this.deps.conversationHistoryStore.list(tenantPartitionedOwnerKey(user))
-    ])
-    const historyIds = new Set(history.map((item) => item.id))
-    const documents = new Map((await this.listDocuments(user)).map((document) => [document.documentId, document]))
-    const folders = new Map((await this.listDocumentGroups(user)).map((folder) => [folder.groupId, folder]))
-    return favorites.map((favorite) => {
-      if (favorite.targetType === "chatSession") {
-        return favoriteListItem(favorite, historyIds.has(favorite.targetId))
-      }
-      if (favorite.targetType === "document") {
-        const document = documents.get(favorite.targetId)
-        return favoriteListItem(favorite, Boolean(document), document?.fileName)
-      }
-      if (favorite.targetType === "folder") {
-        const folder = folders.get(favorite.targetId)
-        return favoriteListItem(favorite, Boolean(folder), folder?.canonicalPath ?? folder?.name)
-      }
-      return favoriteListItem(favorite, false)
-    })
-  }
-
-  private async resolveFavoriteVisibility(user: AppUser, favorite: FavoriteItem): Promise<FavoriteListItem> {
-    if (favorite.targetType === "chatSession") {
-      const history = await this.deps.conversationHistoryStore.list(tenantPartitionedOwnerKey(user))
-      return favoriteListItem(favorite, history.some((item) => item.id === favorite.targetId))
-    }
-    if (favorite.targetType === "document") {
-      const document = (await this.listDocuments(user)).find((item) => item.documentId === favorite.targetId)
-      return favoriteListItem(favorite, Boolean(document), document?.fileName)
-    }
-    if (favorite.targetType === "folder") {
-      const folder = (await this.listDocumentGroups(user)).find((item) => item.groupId === favorite.targetId)
-      return favoriteListItem(favorite, Boolean(folder), folder?.canonicalPath ?? folder?.name)
-    }
-    return favoriteListItem(favorite, false)
+    return this.favoriteService.list(user)
   }
 
   listBenchmarkSuites(): BenchmarkSuite[] {
@@ -4211,109 +4264,27 @@ export class MemoRagService {
     reason?: string
     configuredModelIds: string[]
   }> {
-    return this.deps.asyncAgentProviders?.list() ?? []
+    return this.agentProviderCatalogService.listRuntimeProviders()
   }
 
   listAgentProviderSettings(): AgentProviderSetting[] {
-    return this.listAgentRuntimeProviders().map((provider) => ({
-      provider: provider.provider,
-      displayName: provider.displayName,
-      availability: provider.availability,
-      credentialMode: provider.availability === "disabled"
-        ? "disabled"
-        : provider.availability === "not_configured"
-          ? "not_configured"
-          : "environment",
-      configuredModelIds: provider.configuredModelIds,
-      reason: provider.reason
-    }))
+    return this.agentProviderCatalogService.listProviderSettings()
   }
 
   async createAsyncAgentRun(user: AppUser, input: CreateAsyncAgentRunInput): Promise<AsyncAgentRun> {
-    await this.assertAsyncAgentSelectionsReadable(user, input)
-
-    const now = new Date().toISOString()
-    const agentRunId = createAsyncAgentRunId(now)
-    const provider = this.listAgentRuntimeProviders().find((candidate) => candidate.provider === input.provider)
-    const availability = provider?.availability ?? "provider_unavailable"
-    const blocked = availability !== "available"
-    const selectedFolderIds = uniqueStrings(input.selectedFolderIds ?? [])
-    const selectedDocumentIds = uniqueStrings(input.selectedDocumentIds ?? [])
-    const workspaceId = `workspace_${agentRunId}`
-    const run: AsyncAgentRun = {
-      agentRunId,
-      runId: agentRunId,
-      tenantId: user.tenantId ?? defaultTenantId,
-      requesterUserId: user.userId,
-      requesterEmail: user.email,
-      requesterGroups: [...user.cognitoGroups],
-      provider: input.provider,
-      modelId: input.modelId,
-      status: blocked ? "blocked" : "queued",
-      providerAvailability: availability,
-      failureReasonCode: blocked ? availability === "not_configured" || availability === "disabled" ? "not_configured" : "provider_unavailable" : undefined,
-      failureReason: blocked
-        ? availability === "not_configured" || availability === "disabled"
-          ? "Provider execution is not configured. G1 records the run contract without starting a provider."
-          : "Provider is unavailable. G1 does not create mock provider executions."
-        : undefined,
-      instruction: input.instruction,
-      selectedFolderIds,
-      selectedDocumentIds,
-      selectedSkillIds: uniqueStrings(input.selectedSkillIds ?? []),
-      selectedAgentProfileIds: uniqueStrings(input.selectedAgentProfileIds ?? []),
-      workspaceId,
-      workspaceMounts: [
-        ...selectedFolderIds.map((folderId) => ({
-          mountId: `mount_${randomUUID().slice(0, 12)}`,
-          workspaceId,
-          sourceType: "folder" as const,
-          sourceId: folderId,
-          mountedPath: `/workspace/read-only/folders/${folderId}`,
-          accessMode: "readOnly" as const,
-          permissionCheckedAt: now
-        })),
-        ...selectedDocumentIds.map((documentId) => ({
-          mountId: `mount_${randomUUID().slice(0, 12)}`,
-          workspaceId,
-          sourceType: "document" as const,
-          sourceId: documentId,
-          mountedPath: `/workspace/read-only/documents/${documentId}`,
-          accessMode: "readOnly" as const,
-          permissionCheckedAt: now
-        }))
-      ],
-      artifactIds: [],
-      artifacts: [],
-      budget: input.budget,
-      createdBy: user.userId,
-      createdAt: now,
-      completedAt: blocked ? now : undefined,
-      updatedAt: now
-    }
-
-    await this.saveAsyncAgentRun(run)
-    return run
+    return this.asyncAgentRunCreationService.create(user, input)
   }
 
   async listAsyncAgentRuns(user: AppUser): Promise<AsyncAgentRun[]> {
-    const runs = await this.loadAsyncAgentRuns(authoritativeActorTenantId(user))
-    const canReadManaged = hasPermission(user, "agent:read:managed")
-    return runs
-      .filter((run) => canReadManaged || run.requesterUserId === user.userId)
-      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
-      .slice(0, 100)
+    return this.asyncAgentRunQueryService.list(user)
   }
 
   async getAsyncAgentRun(user: AppUser, agentRunId: string): Promise<AsyncAgentRun | undefined> {
-    const run = await this.loadAsyncAgentRun(authoritativeActorTenantId(user), agentRunId)
-    if (!run) return undefined
-    if (!this.canReadAsyncAgentRun(user, run)) throw forbiddenError("Forbidden")
-    return run
+    return this.asyncAgentRunQueryService.get(user, agentRunId)
   }
 
   async cancelAsyncAgentRun(user: AppUser, agentRunId: string): Promise<AsyncAgentRun | undefined> {
-    const run = await this.loadAsyncAgentRun(authoritativeActorTenantId(user), agentRunId)
+    const run = await this.asyncAgentRunRepository.get(authoritativeActorTenantId(user), agentRunId)
     if (!run) return undefined
     if (!this.canReadAsyncAgentRun(user, run)) throw forbiddenError("Forbidden")
     if (run.status === "completed" || run.status === "failed" || run.status === "cancelled" || run.status === "expired") return run
@@ -4326,18 +4297,16 @@ export class MemoRagService {
       completedAt: now,
       updatedAt: now
     }
-    await this.saveAsyncAgentRun(updated)
+    await this.asyncAgentRunRepository.save(updated)
     return updated
   }
 
   async listAsyncAgentArtifacts(user: AppUser, agentRunId: string): Promise<AsyncAgentRun["artifacts"] | undefined> {
-    const run = await this.getAsyncAgentRun(user, agentRunId)
-    return run?.artifacts
+    return this.asyncAgentRunQueryService.listArtifacts(user, agentRunId)
   }
 
   async getAsyncAgentArtifact(user: AppUser, agentRunId: string, artifactId: string): Promise<AsyncAgentRun["artifacts"][number] | undefined> {
-    const artifacts = await this.listAsyncAgentArtifacts(user, agentRunId)
-    return artifacts?.find((artifact) => artifact.artifactId === artifactId)
+    return this.asyncAgentRunQueryService.getArtifact(user, agentRunId, artifactId)
   }
 
   async updateAsyncAgentArtifactWriteback(
@@ -4394,12 +4363,12 @@ export class MemoRagService {
       updatedAt: now,
       artifacts: run.artifacts.map((candidate) => candidate.artifactId === artifactId ? nextArtifact : candidate)
     }
-    await this.saveAsyncAgentRun(updatedRun)
+    await this.asyncAgentRunRepository.save(updatedRun)
     return nextArtifact
   }
 
   async executeAsyncAgentRun(tenantId: string, runId: string): Promise<AsyncAgentRun> {
-    const run = await this.loadAsyncAgentRun(tenantId, runId)
+    const run = await this.asyncAgentRunRepository.get(tenantId, runId)
     if (!run) throw new Error(`Async agent run not found: ${runId}`)
     if (run.status === "blocked" || run.status === "failed" || run.status === "cancelled" || run.status === "completed") return run
     try {
@@ -4410,7 +4379,7 @@ export class MemoRagService {
       throw error
     }
     const now = new Date().toISOString()
-    const provider = this.deps.asyncAgentProviders?.get(run.provider)
+    const provider = this.agentProviderCatalogService.getAdapter(run.provider)
     const providerDefinition = provider?.definition()
     if (!provider || providerDefinition?.availability !== "available") {
       const updated: AsyncAgentRun = {
@@ -4422,7 +4391,7 @@ export class MemoRagService {
         completedAt: now,
         updatedAt: now
       }
-      await this.saveAsyncAgentRun(updated)
+      await this.asyncAgentRunRepository.save(updated)
       return updated
     }
 
@@ -4433,7 +4402,7 @@ export class MemoRagService {
       startedAt: run.startedAt ?? now,
       updatedAt: now
     }
-    await this.saveAsyncAgentRun(running)
+    await this.asyncAgentRunRepository.save(running)
 
     const input: AsyncAgentProviderInput = {
       agentRunId: running.agentRunId,
@@ -4465,9 +4434,9 @@ export class MemoRagService {
       throw error
     }
     const artifacts = result.status === "completed"
-      ? await this.persistAsyncAgentArtifacts(running, result.artifacts, completedAt, result.logText)
+      ? await this.asyncAgentArtifactRepository.persist(running, result.artifacts, completedAt, result.logText)
       : result.logText
-        ? await this.persistAsyncAgentArtifacts(running, [{
+        ? await this.asyncAgentArtifactRepository.persist(running, [{
             artifactType: "log",
             fileName: "provider-log.txt",
             mimeType: "text/plain",
@@ -4499,7 +4468,7 @@ export class MemoRagService {
       if (isPermissionRevokedError(error)) return this.failAsyncAgentPermission(running, artifacts)
       throw error
     }
-    await this.saveAsyncAgentRun(updated)
+    await this.asyncAgentRunRepository.save(updated)
     return updated
   }
 
@@ -4507,7 +4476,7 @@ export class MemoRagService {
     run: AsyncAgentRun,
     newlyWrittenArtifacts: AsyncAgentRun["artifacts"] = []
   ): Promise<AsyncAgentRun> {
-    await Promise.all(newlyWrittenArtifacts.map((artifact) => this.deps.objectStore.deleteObject(artifact.storageRef)))
+    await this.asyncAgentArtifactRepository.cleanup(newlyWrittenArtifacts)
     const completedAt = new Date().toISOString()
     const failed: AsyncAgentRun = {
       ...run,
@@ -4519,109 +4488,12 @@ export class MemoRagService {
       completedAt,
       updatedAt: completedAt
     }
-    await this.saveAsyncAgentRun(failed)
+    await this.asyncAgentRunRepository.save(failed)
     return failed
   }
 
-  private async persistAsyncAgentArtifacts(
-    run: AsyncAgentRun,
-    artifacts: AsyncAgentProviderArtifact[],
-    createdAt: string,
-    logText?: string
-  ): Promise<AsyncAgentRun["artifacts"]> {
-    const normalizedArtifacts = [...artifacts]
-    if (logText?.trim()) {
-      normalizedArtifacts.push({
-        artifactType: "log",
-        fileName: "provider-log.txt",
-        mimeType: "text/plain",
-        text: logText,
-        writebackStatus: "not_requested"
-      })
-    }
-
-    const persisted = await Promise.all(normalizedArtifacts.map(async (artifact) => {
-      const artifactId = `artifact_${randomUUID().slice(0, 12)}`
-      const fileName = sanitizeArtifactFileName(artifact.fileName)
-      const storageRef = `${asyncAgentRunPrefix(run.tenantId)}${encodeURIComponent(run.agentRunId)}/artifacts/${artifactId}/${fileName}`
-      const text = sanitizeProviderText(artifact.text)
-      await this.deps.objectStore.putText(storageRef, text)
-      return {
-        artifactId,
-        agentRunId: run.agentRunId,
-        artifactType: artifact.artifactType,
-        fileName,
-        mimeType: artifact.mimeType,
-        size: Buffer.byteLength(text, "utf-8"),
-        storageRef,
-        createdAt,
-        writebackStatus: artifact.writebackStatus ?? "not_requested"
-      }
-    }))
-    return persisted
-  }
-
   async createBenchmarkRun(user: AppUser, input: CreateBenchmarkRunInput): Promise<BenchmarkRun> {
-    const suite = benchmarkSuites.find((candidate) => candidate.suiteId === (input.suiteId ?? "standard-agent-v1"))
-    if (!suite) throw new Error(`Unknown benchmark suite: ${input.suiteId}`)
-    if ((input.mode ?? suite.mode) !== suite.mode) throw new Error(`Suite ${suite.suiteId} does not support mode ${input.mode}`)
-    if ((input.runner ?? "codebuild") !== "codebuild") throw new Error("Only codebuild runner is supported in this version")
-
-    const now = new Date().toISOString()
-    const runId = createBenchmarkRunId(now)
-    const tenantId = authoritativeActorTenantId(user)
-    const outputPrefix = `runs/${tenantPartitionId(tenantId)}/${runId}`
-    const run: BenchmarkRun = {
-      runId,
-      status: "queued",
-      mode: suite.mode,
-      runner: "codebuild",
-      suiteId: suite.suiteId,
-      datasetS3Key: suite.datasetS3Key,
-      createdBy: user.userId,
-      tenantId,
-      securityResourceRefs: await this.securityResourceRefsForActor(user),
-      createdAt: now,
-      updatedAt: now,
-      modelId: input.modelId ?? config.defaultModelId,
-      embeddingModelId: input.embeddingModelId ?? config.embeddingModelId,
-      topK: input.topK === undefined
-        ? suite.mode === "search"
-          ? ragRuntimePolicy.retrieval.defaultSearchBenchmarkTopK
-          : ragRuntimePolicy.retrieval.defaultTopK
-        : suite.mode === "search"
-          ? normalizeSearchTopK(input.topK)
-          : normalizeTopK(input.topK),
-      memoryTopK: normalizeMemoryTopK(input.memoryTopK),
-      minScore: normalizeMinScore(input.minScore),
-      concurrency: input.concurrency ?? suite.defaultConcurrency,
-      thresholds: input.thresholds,
-      summaryS3Key: `${outputPrefix}/summary.json`,
-      reportS3Key: `${outputPrefix}/report.md`,
-      resultsS3Key: `${outputPrefix}/results.jsonl`
-    }
-
-    await this.deps.benchmarkRunStore.create(run)
-    if (!config.benchmarkStateMachineArn) return run
-
-    try {
-      await this.authorizeBenchmarkRunBoundary(run, "start")
-      await this.authorizeBenchmarkRunBoundary(run, "protected_read")
-      await this.authorizeBenchmarkRunBoundary(run, "external_side_effect")
-      const executionArn = await this.startBenchmarkExecution(run, outputPrefix)
-      await this.authorizeBenchmarkRunBoundary(run, "durable_commit")
-      return this.deps.benchmarkRunStore.update(run.tenantId, run.runId, { executionArn })
-    } catch (err) {
-      const permissionRevoked = isPermissionRevokedError(err)
-      const failed = await this.deps.benchmarkRunStore.update(run.tenantId, run.runId, {
-        status: "failed",
-        completedAt: new Date().toISOString(),
-        error: permissionRevoked ? "permission_revoked" : err instanceof Error ? err.message : String(err),
-        errorCode: permissionRevoked ? "permission_revoked" : "execution_error"
-      })
-      if (permissionRevoked) return failed
-      throw err
-    }
+    return this.benchmarkRunCreationService.create(user, input)
   }
 
   async reauthorizeBenchmarkRunExecution(
@@ -4629,30 +4501,7 @@ export class MemoRagService {
     runId: string,
     boundary: WorkerAuthorizationBoundary
   ): Promise<BenchmarkRun> {
-    const run = await this.deps.benchmarkRunStore.get(tenantId, runId)
-    if (!run) throw new PermissionRevokedError("benchmark_run_unavailable")
-    if (run.status === "failed" && run.errorCode === "permission_revoked") {
-      throw new PermissionRevokedError("benchmark_run_authorization_already_revoked")
-    }
-    if (boundary === "start" ? run.status !== "queued" : run.status !== "running") {
-      throw new Error("benchmark_run_not_active")
-    }
-    try {
-      await this.authorizeBenchmarkRunBoundary(run, boundary)
-      return run
-    } catch (error) {
-      if (!isPermissionRevokedError(error)) throw error
-      const completedAt = new Date().toISOString()
-      const failed = await this.deps.benchmarkRunStore.update(tenantId, runId, {
-        status: "failed",
-        error: "permission_revoked",
-        errorCode: "permission_revoked",
-        completedAt,
-        updatedAt: completedAt
-      })
-      await this.reconcileRevokedBenchmarkArtifacts(failed, boundary, error)
-      throw error
-    }
+    return this.benchmarkRunReauthorizationService.reauthorize(tenantId, runId, boundary)
   }
 
   private async reconcileRevokedBenchmarkArtifacts(
@@ -4660,7 +4509,7 @@ export class MemoRagService {
     boundary: WorkerAuthorizationBoundary,
     revoked: PermissionRevokedError
   ): Promise<void> {
-    const targets = benchmarkEvaluationArtifactTargets(run)
+    const targets = this.benchmarkArtifactRevocationCleanupDriverFactory.knownTargets(run)
     const coordinator = new ObjectStoreRevocationCleanupCoordinator(this.deps.objectStore)
     const operationId = `benchmark-artifact-revoke:${run.runId}`
     await coordinator.register({
@@ -4677,111 +4526,28 @@ export class MemoRagService {
     await coordinator.reconcile(
       run.tenantId,
       operationId,
-      this.benchmarkArtifactCleanupDriver(run, targets)
+      this.benchmarkArtifactRevocationCleanupDriverFactory.create(run)
     ).catch(() => undefined)
   }
 
-  private benchmarkArtifactCleanupDriver(
-    run: BenchmarkRun,
-    targets: readonly RevocationCleanupTargetReference[]
-  ): RevocationCleanupDriver {
-    const artifactStore = this.deps.benchmarkArtifactStore
-    const allowedReferences = new Set(targets.map((target) => target.reference))
-    const prefix = benchmarkRunArtifactPrefix(run)
-    return {
-      isAuthoritativeDenyCurrent: async (manifest: RevocationCleanupManifest) => {
-        const current = await this.deps.benchmarkRunStore.get(run.tenantId, run.runId)
-        return current?.status === "failed"
-          && current.errorCode === "permission_revoked"
-          && current.updatedAt === manifest.authoritativeDeny.version
-      },
-      discover: async (_manifest: RevocationCleanupManifest, scope: RevocationCleanupScope) => (
-        scope === "evaluation_artifact" ? targets : []
-      ),
-      cleanup: async (_manifest: RevocationCleanupManifest, target: RevocationCleanupTarget) => {
-        if (!artifactStore) throw new Error("Benchmark artifact cleanup store is unavailable")
-        if (target.scope !== "evaluation_artifact" || !allowedReferences.has(target.reference)) {
-          throw new Error("Benchmark artifact cleanup target escaped its run partition")
-        }
-        await artifactStore.deleteObject(target.reference)
-      },
-      findResiduals: async (_manifest: RevocationCleanupManifest, scope: RevocationCleanupScope) => {
-        if (scope !== "evaluation_artifact") return []
-        if (!artifactStore) throw new Error("Benchmark artifact cleanup store is unavailable")
-        const existing = new Set(await artifactStore.listKeys(prefix))
-        return targets.filter((target) => existing.has(target.reference))
-      }
-    }
-  }
-
   async listBenchmarkRuns(actor: AppUser): Promise<BenchmarkRun[]> {
-    return this.deps.benchmarkRunStore.list(authoritativeActorTenantId(actor))
+    return this.benchmarkRunQueryService.list(actor)
   }
 
   async getBenchmarkRun(actor: AppUser, runId: string): Promise<BenchmarkRun | undefined> {
-    return this.deps.benchmarkRunStore.get(authoritativeActorTenantId(actor), runId)
+    return this.benchmarkRunQueryService.get(actor, runId)
   }
 
   async cancelBenchmarkRun(actor: AppUser, runId: string): Promise<BenchmarkRun | undefined> {
-    const tenantId = authoritativeActorTenantId(actor)
-    const run = await this.deps.benchmarkRunStore.get(tenantId, runId)
-    if (!run) return undefined
-    if (run.executionArn) {
-      const states = new SFNClient({ region: config.region })
-      await states.send(new StopExecutionCommand({
-        executionArn: run.executionArn,
-        cause: "Cancelled from MemoRAG admin benchmark view"
-      }))
-    }
-    return this.deps.benchmarkRunStore.update(tenantId, runId, {
-      status: "cancelled",
-      completedAt: new Date().toISOString()
-    })
+    return this.benchmarkRunCancellationService.cancel(actor, runId)
   }
 
   async createBenchmarkArtifactDownloadUrl(actor: AppUser, runId: string, artifact: BenchmarkDownloadArtifact): Promise<{ url: string; expiresInSeconds: number; objectKey: string } | undefined> {
-    const run = await this.deps.benchmarkRunStore.get(authoritativeActorTenantId(actor), runId)
-    if (!run) return undefined
-    if (artifact === "logs") {
-      if (!run.codeBuildLogUrl) return undefined
-      return {
-        url: run.codeBuildLogUrl,
-        expiresInSeconds: config.benchmarkDownloadExpiresInSeconds,
-        objectKey: run.codeBuildBuildId ?? run.runId
-      }
-    }
-    if (!config.benchmarkBucketName) throw new Error("BENCHMARK_BUCKET_NAME is not configured")
-    const objectKey = artifact === "summary" ? run.summaryS3Key : artifact === "results" ? run.resultsS3Key : run.reportS3Key
-    if (!objectKey) return undefined
-
-    const expiresInSeconds = Math.max(60, config.benchmarkDownloadExpiresInSeconds)
-    const s3 = new S3Client({ region: config.region })
-    const downloadMetadata = createBenchmarkArtifactDownloadMetadata(runId, artifact, objectKey)
-    const url = await getSignedUrl(s3, new GetObjectCommand({
-      Bucket: config.benchmarkBucketName,
-      Key: downloadMetadata.objectKey,
-      ResponseContentDisposition: downloadMetadata.contentDisposition
-    }), { expiresIn: expiresInSeconds })
-    return { url, expiresInSeconds, objectKey }
+    return this.benchmarkArtifactDownloadService.createDownload(actor, runId, artifact)
   }
 
   async getBenchmarkCodeBuildLogText(actor: AppUser, runId: string): Promise<{ text: string; fileName: string; contentDisposition: string } | undefined> {
-    const run = await this.deps.benchmarkRunStore.get(authoritativeActorTenantId(actor), runId)
-    if (!run) return undefined
-
-    const text = await this.deps.codeBuildLogReader?.getText({
-      buildId: run.codeBuildBuildId,
-      logGroupName: run.codeBuildLogGroupName,
-      logStreamName: run.codeBuildLogStreamName
-    })
-    if (text === undefined) return undefined
-
-    const fileName = `benchmark-logs-${runId.replace(/[^a-zA-Z0-9._-]/g, "_")}.txt`
-    return {
-      text,
-      fileName,
-      contentDisposition: `attachment; filename="${fileName}"`
-    }
+    return this.benchmarkRunQueryService.getCodeBuildLogText(actor, runId)
   }
 
   private async assertCurrentWorkerAuthorization(
@@ -5010,73 +4776,6 @@ export class MemoRagService {
     return hasPermission(user, "agent:read:managed")
   }
 
-  private async loadAsyncAgentRuns(tenantId: string): Promise<AsyncAgentRun[]> {
-    const prefix = asyncAgentRunPrefix(tenantId)
-    const keys = await this.deps.objectStore.listKeys(prefix)
-    const runs = await Promise.all(
-      keys
-        .filter((key) => key.startsWith(prefix) && /^agent-runs\/tenant:[a-f0-9]{24}\/runs\/[^/]+\.json$/u.test(key))
-        .map(async (key) => JSON.parse(await this.deps.objectStore.getText(key)) as AsyncAgentRun)
-    )
-    return runs.map((run) => assertAsyncAgentTenant(normalizeAsyncAgentRun(run), tenantId))
-  }
-
-  private async loadAsyncAgentRun(tenantId: string, agentRunId: string): Promise<AsyncAgentRun | undefined> {
-    try {
-      const run = normalizeAsyncAgentRun(JSON.parse(await this.deps.objectStore.getText(asyncAgentRunObjectKey(tenantId, agentRunId))) as AsyncAgentRun)
-      return assertAsyncAgentTenant(run, tenantId)
-    } catch (error: unknown) {
-      if (isMissingObjectError(error)) {
-        try {
-          await this.deps.objectStore.getText(`agent-runs/${encodeURIComponent(agentRunId)}.json`)
-          throw new Error("Legacy unscoped async agent run requires tenant migration", { cause: error })
-        } catch (legacyError) {
-          if (isMissingObjectError(legacyError)) return undefined
-          throw legacyError
-        }
-      }
-      throw error
-    }
-  }
-
-  private async saveAsyncAgentRun(run: AsyncAgentRun): Promise<void> {
-    await this.deps.objectStore.putText(asyncAgentRunObjectKey(run.tenantId, run.agentRunId), JSON.stringify(run, null, 2), "application/json; charset=utf-8")
-  }
-
-  private async startBenchmarkExecution(run: BenchmarkRun, outputPrefix: string): Promise<string> {
-    const states = new SFNClient({ region: config.region })
-    const response = await states.send(
-      new StartExecutionCommand({
-        stateMachineArn: config.benchmarkStateMachineArn,
-        name: workerExecutionName(run.tenantId, run.runId),
-        input: JSON.stringify({
-          runId: run.runId,
-          storageRunId: tenantStorageKey(run.tenantId, run.runId),
-          createdBy: run.createdBy,
-          tenantId: run.tenantId,
-          mode: run.mode,
-          runner: run.runner,
-          suiteId: run.suiteId,
-          datasetS3Key: run.datasetS3Key,
-          datasetS3Uri: `s3://${config.benchmarkBucketName}/${run.datasetS3Key}`,
-          outputS3Prefix: `s3://${config.benchmarkBucketName}/${outputPrefix}`,
-          apiBaseUrl: config.benchmarkTargetApiBaseUrl,
-          modelId: run.modelId,
-          embeddingModelId: run.embeddingModelId,
-          topK: run.topK,
-          memoryTopK: run.memoryTopK,
-          minScore: run.minScore,
-          concurrency: run.concurrency,
-          summaryS3Key: run.summaryS3Key,
-          reportS3Key: run.reportS3Key,
-          resultsS3Key: run.resultsS3Key
-        })
-      })
-    )
-    if (!response.executionArn) throw new Error("Step Functions executionArn was not returned")
-    return response.executionArn
-  }
-
   private async startChatRunExecution(tenantId: string, runId: string): Promise<string> {
     const states = new SFNClient({ region: config.region })
     const response = await states.send(
@@ -5257,18 +4956,6 @@ function chunkPageRange(chunks: Chunk[]): Pick<MemoryCard, "pageStart" | "pageEn
   }
 }
 
-function benchmarkRunArtifactPrefix(run: Pick<BenchmarkRun, "tenantId" | "runId">): string {
-  return `runs/${tenantPartitionId(run.tenantId)}/${run.runId}/`
-}
-
-function benchmarkEvaluationArtifactTargets(run: BenchmarkRun): RevocationCleanupTargetReference[] {
-  const prefix = benchmarkRunArtifactPrefix(run)
-  return ["results.jsonl", "summary.json", "report.md", "release-audit.json"].map((fileName) => ({
-    scope: "evaluation_artifact",
-    reference: `${prefix}${fileName}`
-  }))
-}
-
 function benchmarkRevocationTrigger(error: PermissionRevokedError): "account_revoked" | "role_revoked" {
   return ["account_deleted", "account_inactive", "subject_mismatch", "tenant_membership_revoked"].includes(error.denialReason)
     ? "account_revoked"
@@ -5278,16 +4965,6 @@ function benchmarkRevocationTrigger(error: PermissionRevokedError): "account_rev
 function createBenchmarkRunId(now: string): string {
   const compact = now.replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z")
   return `bench_${compact}_${randomUUID().slice(0, 8)}`
-}
-
-function createAsyncAgentRunId(now: string): string {
-  const compact = now.replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z")
-  return `agent_${compact}_${randomUUID().slice(0, 8)}`
-}
-
-function sanitizeArtifactFileName(fileName: string): string {
-  const sanitized = fileName.replace(/[^a-zA-Z0-9._-]/g, "_").replace(/^_+/, "")
-  return sanitized || "artifact.txt"
 }
 
 function createChatRunId(now: string): string {
@@ -5342,33 +5019,10 @@ function createDocumentIngestRunId(now: string): string {
   return `ingest_${compact}_${randomUUID().slice(0, 8)}`
 }
 
-function asyncAgentRunPrefix(tenantId: string): string {
-  return `agent-runs/${tenantPartitionId(tenantId)}/runs/`
-}
-
-function asyncAgentRunObjectKey(tenantId: string, agentRunId: string): string {
-  return `${asyncAgentRunPrefix(tenantId)}${encodeURIComponent(agentRunId)}.json`
-}
-
 function workerExecutionName(tenantId: string, runId: string): string {
   return `${tenantPartitionId(tenantId).replace(":", "-")}-${runId}`
     .replace(/[^a-zA-Z0-9_-]/g, "-")
     .slice(0, 80)
-}
-
-function normalizeAsyncAgentRun(run: AsyncAgentRun): AsyncAgentRun {
-  return {
-    ...run,
-    runId: run.runId ?? run.agentRunId,
-    workspaceMounts: run.workspaceMounts ?? [],
-    artifactIds: run.artifactIds ?? [],
-    artifacts: run.artifacts ?? []
-  }
-}
-
-function assertAsyncAgentTenant(run: AsyncAgentRun, tenantId: string): AsyncAgentRun {
-  if (run.tenantId !== tenantId) throw new Error("Async agent run tenant storage integrity mismatch")
-  return run
 }
 
 function buildParsedDocumentPreview(manifest: DocumentManifest): ParsedDocumentPreview {
@@ -5517,25 +5171,6 @@ function toJsonValue(value: unknown): JsonValue | undefined {
   return JSON.parse(JSON.stringify(value)) as JsonValue
 }
 
-function artifactExtension(artifact: BenchmarkDownloadArtifact): string {
-  if (artifact === "report") return ".md"
-  if (artifact === "summary") return ".json"
-  return ".jsonl"
-}
-
-export function createBenchmarkArtifactDownloadMetadata(
-  runId: string,
-  artifact: "report" | "summary" | "results",
-  objectKey: string
-): { fileName: string; objectKey: string; contentDisposition: string } {
-  const fileName = `benchmark-${artifact}-${runId.replace(/[^a-zA-Z0-9._-]/g, "_")}${artifactExtension(artifact)}`
-  return {
-    fileName,
-    objectKey,
-    contentDisposition: `attachment; filename="${fileName}"`
-  }
-}
-
 function reindexPublicationScope(
   actor: AppUser,
   manifest: DocumentManifest,
@@ -5554,6 +5189,8 @@ function reindexPublicationScope(
   })
   return { tenantId, actorId: actor.userId, sourceId, sourceVersion, purpose: "reindex" }
 }
+
+export { createBenchmarkArtifactDownloadMetadata } from "../benchmark/benchmark-artifact-download-service.js"
 
 function reindexAdmissionContext(manifest: DocumentManifest, fence: StagedPublicationFence): AuthoritativeAdmissionContext {
   const admission = manifest.admission
@@ -5785,33 +5422,6 @@ function normalizeAliasLedger(raw: Partial<AliasLedger>): AliasLedger {
     }
   })
   return { schemaVersion: 2, aliases, auditLog }
-}
-
-function sanitizeSupportDiagnostics(
-  diagnostics: HumanQuestion["sanitizedDiagnostics"] | undefined,
-  fallbackAnswerUnavailableReason?: string
-): HumanQuestion["sanitizedDiagnostics"] | undefined {
-  if (!diagnostics && !fallbackAnswerUnavailableReason) return undefined
-  const sanitized: NonNullable<HumanQuestion["sanitizedDiagnostics"]> = {
-    tier: "support_sanitized",
-    answerUnavailableReason: trimOptional(diagnostics?.answerUnavailableReason) ?? trimOptional(fallbackAnswerUnavailableReason),
-    retrievalQuality: diagnostics?.retrievalQuality,
-    qualityCauses: diagnostics?.qualityCauses?.filter(isSupportQualityCause),
-    visibleCitationIds: normalizeStringList(diagnostics?.visibleCitationIds, 20),
-    visibleDocumentIds: normalizeStringList(diagnostics?.visibleDocumentIds, 20),
-    visibleChunkIds: normalizeStringList(diagnostics?.visibleChunkIds, 50),
-    qualityWarnings: normalizeStringList(diagnostics?.qualityWarnings, 20),
-    suggestedNextActions: diagnostics?.suggestedNextActions?.filter(isSupportNextAction)
-  }
-  return Object.fromEntries(Object.entries(sanitized).filter(([, value]) => value !== undefined)) as HumanQuestion["sanitizedDiagnostics"]
-}
-
-function isSupportQualityCause(value: unknown): value is NonNullable<HumanQuestion["qualityCause"]> {
-  return ["retrieval_gap", "low_quality_evidence", "stale_document", "extraction_warning", "unsupported_answer", "other"].includes(String(value))
-}
-
-function isSupportNextAction(value: unknown): value is NonNullable<NonNullable<HumanQuestion["sanitizedDiagnostics"]>["suggestedNextActions"]>[number] {
-  return ["search_improvement_review", "document_owner_review", "document_reparse", "rag_exclusion_review", "benchmark_case_review"].includes(String(value))
 }
 
 function appendAliasAudit(
@@ -6259,42 +5869,9 @@ function uniqueStrings(values: string[]): string[] {
   return [...new Set(values.map((value) => value.trim()).filter(Boolean))].sort()
 }
 
-function userDisplayName(user?: AppUser): string {
-  return user?.email?.trim() || user?.userId?.trim() || "未設定"
-}
-
 function compareConversationHistoryForDisplay(a: ConversationHistoryItem, b: ConversationHistoryItem): number {
   if (Boolean(a.isFavorite) !== Boolean(b.isFavorite)) return a.isFavorite ? -1 : 1
   return b.updatedAt.localeCompare(a.updatedAt)
-}
-
-function stripFavoriteStorageKeys(favorite: FavoriteItem): Omit<FavoriteItem, "ownerUserId" | "targetKey"> {
-  const { ownerUserId: _ownerUserId, targetKey: _targetKey, ...visible } = favorite
-  return visible
-}
-
-function favoriteListItem(favorite: FavoriteItem, accessible: boolean, resolvedLabel?: string): FavoriteListItem {
-  const visible = stripFavoriteStorageKeys(favorite)
-  if (!accessible) {
-    return {
-      favoriteId: visible.favoriteId,
-      targetType: visible.targetType,
-      targetId: visible.targetId,
-      accessible: false,
-      label: "この項目には現在アクセスできません",
-      createdAt: visible.createdAt,
-      updatedAt: visible.updatedAt
-    }
-  }
-  return {
-    ...visible,
-    label: resolvedLabel ?? visible.label,
-    accessible: true
-  }
-}
-
-function favoriteTargetResolverImplemented(targetType: FavoriteTargetType): boolean {
-  return targetType === "chatSession" || targetType === "document" || targetType === "folder"
 }
 
 function forbiddenError(message: string): Error & { status: number } {

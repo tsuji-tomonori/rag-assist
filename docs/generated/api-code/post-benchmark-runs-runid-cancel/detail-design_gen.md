@@ -35,12 +35,10 @@ benchmark run をキャンセルする
 | ---: | --- | --- | --- | --- | --- |
 | B001 | `POST /benchmark-runs/{runId}/cancel handler` | if | `run` が存在しない、または偽である | `!run` | `apps/api/src/routes/benchmark-routes.ts:192 (POST /benchmark-runs/{runId}/cancel handler)` |
 | B002 | `requirePermission` | if | 利用者が 指定された permission を持たない | `!hasPermission(user, permission)` | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| B003 | `MemoRagService.cancelBenchmarkRun` | if | `run` が存在しない、または偽である | `!run` | `apps/api/src/rag/memorag-service.ts:4728 (MemoRagService.cancelBenchmarkRun)` |
-| B004 | `MemoRagService.cancelBenchmarkRun` | if | `run.executionArn` が存在し、真である | `run.executionArn` | `apps/api/src/rag/memorag-service.ts:4729 (MemoRagService.cancelBenchmarkRun)` |
 
 ## 4. 到達する主要実装
 
-handler を起点に TypeScript symbol を解決し、深さ 2 までの主要関数・method を列挙しています。深い helper を含む全到達関数は 12 件で、永続化・外部接続は深さにかかわらず次節へ集約しています。
+handler を起点に TypeScript symbol を解決し、深さ 2 までの主要関数・method を列挙しています。深い helper を含む全到達関数は 11 件で、永続化・外部接続は深さにかかわらず次節へ集約しています。
 
 | 深さ | Symbol | 責務 | 実装位置 |
 | ---: | --- | --- | --- |
@@ -49,8 +47,8 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 2 | `hasPermission` | has permission の実装処理を担当する。 | `apps/api/src/authorization.ts:187 (hasPermission)` |
 | 1 | `validParam` | valid param の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:24 (validParam)` |
 | 2 | `validRequest` | valid request の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:36 (validRequest)` |
-| 1 | `MemoRagService.cancelBenchmarkRun` | cancel benchmark run の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4725 (MemoRagService.cancelBenchmarkRun)` |
-| 2 | `authoritativeActorTenantId` | authoritative actor tenant id の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5906 (authoritativeActorTenantId)` |
+| 1 | `MemoRagService.cancelBenchmarkRun` | cancel benchmark run の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4541 (MemoRagService.cancelBenchmarkRun)` |
+| 2 | `BenchmarkRunCancellationService.cancel` | cancel の実装処理を担当する。 | `apps/api/src/benchmark/benchmark-run-cancellation-service.ts:22 (BenchmarkRunCancellationService.cancel)` |
 | 1 | `resourceUnavailable` | resource unavailable の実装処理を担当する。 | `apps/api/src/routes/benchmark-routes.ts:254 (resourceUnavailable)` |
 | 2 | `settleNonEnumerationTiming` | settle non enumeration timing の実装処理を担当する。 | `apps/api/src/security/public-resource-response.ts:40 (settleNonEnumerationTiming)` |
 
@@ -58,8 +56,8 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 
 | 種別 | 境界 | Target | Operation | 目的 | Caller | 実装位置 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 参照 | Store | `this.deps.benchmarkRunStore` | `get` | `this.deps.benchmarkRunStore` に対して get を実行する。 | `MemoRagService.cancelBenchmarkRun` | `apps/api/src/rag/memorag-service.ts:4727 (MemoRagService.cancelBenchmarkRun)` |
-| 更新 | Store | `this.deps.benchmarkRunStore` | `update` | `this.deps.benchmarkRunStore` に対して update を実行する。 | `MemoRagService.cancelBenchmarkRun` | `apps/api/src/rag/memorag-service.ts:4736 (MemoRagService.cancelBenchmarkRun)` |
+| 参照 | Store | `this.ports.benchmarkRunStore` | `get` | `this.ports.benchmarkRunStore` に対して get を実行する。 | `BenchmarkRunCancellationService.cancel` | `apps/api/src/benchmark/benchmark-run-cancellation-service.ts:24 (BenchmarkRunCancellationService.cancel)` |
+| 更新 | Store | `this.ports.benchmarkRunStore` | `update` | `this.ports.benchmarkRunStore` に対して update を実行する。 | `BenchmarkRunCancellationService.cancel` | `apps/api/src/benchmark/benchmark-run-cancellation-service.ts:34 (BenchmarkRunCancellationService.cancel)` |
 
 ## 6. 応答・メッセージ
 

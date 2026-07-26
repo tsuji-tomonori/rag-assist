@@ -38,15 +38,15 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 0 | `GET /chat-tool-invocations handler` | GET /chat-tool-invocations の request を受け、検証・認可・service 呼び出し・HTTP 応答を調整する。 | `apps/api/src/routes/chat-routes.ts:189 (GET /chat-tool-invocations handler)` |
 | 1 | `requirePermission` | require permission の実装処理を担当する。 | `apps/api/src/authorization.ts:183 (requirePermission)` |
 | 2 | `hasPermission` | has permission の実装処理を担当する。 | `apps/api/src/authorization.ts:187 (hasPermission)` |
-| 1 | `MemoRagService.listChatToolInvocations` | list chat tool invocations の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:2352 (MemoRagService.listChatToolInvocations)` |
-| 2 | `MemoRagService.listDebugRuns` | list debug runs の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:2333 (MemoRagService.listDebugRuns)` |
+| 1 | `MemoRagService.listChatToolInvocations` | list chat tool invocations の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:2459 (MemoRagService.listChatToolInvocations)` |
+| 2 | `MemoRagService.listDebugRuns` | list debug runs の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:2440 (MemoRagService.listDebugRuns)` |
 
 ## 5. データ・外部境界
 
 | 種別 | 境界 | Target | Operation | 目的 | Caller | 実装位置 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 参照 | Store | `this.deps.objectStore` | `listKeys` | `this.deps.objectStore` に対して list keys を実行する。 | `MemoRagService.listDebugRuns` | `apps/api/src/rag/memorag-service.ts:2335 (MemoRagService.listDebugRuns)` |
-| 参照 | Store | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `MemoRagService.listDebugRuns` | `apps/api/src/rag/memorag-service.ts:2339 (MemoRagService.listDebugRuns)` |
+| 参照 | Store | `this.deps.objectStore` | `listKeys` | `this.deps.objectStore` に対して list keys を実行する。 | `MemoRagService.listDebugRuns` | `apps/api/src/rag/memorag-service.ts:2442 (MemoRagService.listDebugRuns)` |
+| 参照 | Store | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `MemoRagService.listDebugRuns` | `apps/api/src/rag/memorag-service.ts:2446 (MemoRagService.listDebugRuns)` |
 
 ## 6. 応答・メッセージ
 

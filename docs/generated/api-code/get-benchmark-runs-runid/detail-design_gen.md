@@ -38,7 +38,7 @@ benchmark run 詳細を取得する
 
 ## 4. 到達する主要実装
 
-handler を起点に TypeScript symbol を解決し、深さ 2 までの主要関数・method を列挙しています。深い helper を含む全到達関数は 12 件で、永続化・外部接続は深さにかかわらず次節へ集約しています。
+handler を起点に TypeScript symbol を解決し、深さ 2 までの主要関数・method を列挙しています。深い helper を含む全到達関数は 11 件で、永続化・外部接続は深さにかかわらず次節へ集約しています。
 
 | 深さ | Symbol | 責務 | 実装位置 |
 | ---: | --- | --- | --- |
@@ -47,8 +47,8 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 2 | `hasPermission` | has permission の実装処理を担当する。 | `apps/api/src/authorization.ts:187 (hasPermission)` |
 | 1 | `validParam` | valid param の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:24 (validParam)` |
 | 2 | `validRequest` | valid request の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:36 (validRequest)` |
-| 1 | `MemoRagService.getBenchmarkRun` | get benchmark run の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4721 (MemoRagService.getBenchmarkRun)` |
-| 2 | `authoritativeActorTenantId` | authoritative actor tenant id の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5906 (authoritativeActorTenantId)` |
+| 1 | `MemoRagService.getBenchmarkRun` | get benchmark run の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4537 (MemoRagService.getBenchmarkRun)` |
+| 2 | `BenchmarkRunQueryService.get` | get の実装処理を担当する。 | `apps/api/src/benchmark/benchmark-run-query-service.ts:19 (BenchmarkRunQueryService.get)` |
 | 1 | `resourceUnavailable` | resource unavailable の実装処理を担当する。 | `apps/api/src/routes/benchmark-routes.ts:254 (resourceUnavailable)` |
 | 2 | `settleNonEnumerationTiming` | settle non enumeration timing の実装処理を担当する。 | `apps/api/src/security/public-resource-response.ts:40 (settleNonEnumerationTiming)` |
 
@@ -56,7 +56,7 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 
 | 種別 | 境界 | Target | Operation | 目的 | Caller | 実装位置 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 参照 | Store | `this.deps.benchmarkRunStore` | `get` | `this.deps.benchmarkRunStore` に対して get を実行する。 | `MemoRagService.getBenchmarkRun` | `apps/api/src/rag/memorag-service.ts:4722 (MemoRagService.getBenchmarkRun)` |
+| 参照 | Store | `this.ports.benchmarkRunStore` | `get` | `this.ports.benchmarkRunStore` に対して get を実行する。 | `BenchmarkRunQueryService.get` | `apps/api/src/benchmark/benchmark-run-query-service.ts:20 (BenchmarkRunQueryService.get)` |
 
 ## 6. 応答・メッセージ
 

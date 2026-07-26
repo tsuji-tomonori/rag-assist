@@ -16,7 +16,6 @@
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
 | F001 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| F002 | `MemoRagService.saveFavorite` | if | favorite target resolver implemented の判定結果が真ではない | `apps/api/src/rag/memorag-service.ts:4152 (MemoRagService.saveFavorite)` |
 
 ## 3. コード由来テストケース
 
@@ -25,12 +24,10 @@
 | TC001 | 正常系 | お気に入り shortcut を作成する が成功 response を返す。 | `apps/api/src/routes/favorite-routes.ts:41 (POST /favorites handler)` |
 | TC002 | F001: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
 | TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC004 | F002: 条件成立 | favorite target resolver implemented の判定結果が真ではない 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:4152 (MemoRagService.saveFavorite)` |
-| TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:4152 (MemoRagService.saveFavorite)` |
-| TC006 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
-| TC007 | HTTP 400 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
-| TC008 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
-| TC009 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC004 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC005 | HTTP 400 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC006 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
+| TC007 | HTTP 403 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 
 ## 4. 検証方針
 

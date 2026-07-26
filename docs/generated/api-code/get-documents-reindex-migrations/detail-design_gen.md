@@ -38,16 +38,16 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 0 | `GET /documents/reindex-migrations handler` | GET /documents/reindex-migrations の request を受け、検証・認可・service 呼び出し・HTTP 応答を調整する。 | `apps/api/src/routes/document-routes.ts:1404 (GET /documents/reindex-migrations handler)` |
 | 1 | `requirePermission` | require permission の実装処理を担当する。 | `apps/api/src/authorization.ts:183 (requirePermission)` |
 | 2 | `hasPermission` | has permission の実装処理を担当する。 | `apps/api/src/authorization.ts:187 (hasPermission)` |
-| 1 | `MemoRagService.listReindexMigrations` | list reindex migrations の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:897 (MemoRagService.listReindexMigrations)` |
-| 2 | `MemoRagService.loadReindexMigrationLedger` | load reindex migration ledger の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3741 (MemoRagService.loadReindexMigrationLedger)` |
+| 1 | `MemoRagService.listReindexMigrations` | list reindex migrations の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1004 (MemoRagService.listReindexMigrations)` |
+| 2 | `MemoRagService.loadReindexMigrationLedger` | load reindex migration ledger の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3834 (MemoRagService.loadReindexMigrationLedger)` |
 
 ## 5. データ・外部境界
 
 | 種別 | 境界 | Target | Operation | 目的 | Caller | 実装位置 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 参照 | Store | `this` | `loadReindexMigrationLedger` | `this` に対して load reindex migration ledger を実行する。 | `MemoRagService.listReindexMigrations` | `apps/api/src/rag/memorag-service.ts:898 (MemoRagService.listReindexMigrations)` |
-| 参照 | Store | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `MemoRagService.loadReindexMigrationLedger` | `apps/api/src/rag/memorag-service.ts:3743 (MemoRagService.loadReindexMigrationLedger)` |
-| 実行 | Store | `(await this.loadReindexMigrationLedger())` | `sort` | `(await this.loadReindexMigrationLedger())` に対して sort を実行する。 | `MemoRagService.listReindexMigrations` | `apps/api/src/rag/memorag-service.ts:898 (MemoRagService.listReindexMigrations)` |
+| 参照 | Store | `this` | `loadReindexMigrationLedger` | `this` に対して load reindex migration ledger を実行する。 | `MemoRagService.listReindexMigrations` | `apps/api/src/rag/memorag-service.ts:1005 (MemoRagService.listReindexMigrations)` |
+| 参照 | Store | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `MemoRagService.loadReindexMigrationLedger` | `apps/api/src/rag/memorag-service.ts:3836 (MemoRagService.loadReindexMigrationLedger)` |
+| 実行 | Store | `(await this.loadReindexMigrationLedger())` | `sort` | `(await this.loadReindexMigrationLedger())` に対して sort を実行する。 | `MemoRagService.listReindexMigrations` | `apps/api/src/rag/memorag-service.ts:1005 (MemoRagService.listReindexMigrations)` |
 
 ## 6. 応答・メッセージ
 

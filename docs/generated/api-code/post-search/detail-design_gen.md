@@ -42,8 +42,8 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 2 | `hasPermission` | has permission の実装処理を担当する。 | `apps/api/src/authorization.ts:187 (hasPermission)` |
 | 1 | `validJson` | valid json の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:20 (validJson)` |
 | 2 | `validRequest` | valid request の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:36 (validRequest)` |
-| 1 | `MemoRagService.search` | search の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3107 (MemoRagService.search)` |
-| 2 | `MemoRagService.assertSearchScopeReadable` | assert search scope readable の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1261 (MemoRagService.assertSearchScopeReadable)` |
+| 1 | `MemoRagService.search` | search の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3214 (MemoRagService.search)` |
+| 2 | `MemoRagService.assertSearchScopeReadable` | assert search scope readable の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1368 (MemoRagService.assertSearchScopeReadable)` |
 | 2 | `searchRag` | search rag の実装処理を担当する。 | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:215 (searchRag)` |
 
 ## 5. データ・外部境界

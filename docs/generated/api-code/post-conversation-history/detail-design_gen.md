@@ -42,14 +42,14 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 2 | `hasPermission` | has permission の実装処理を担当する。 | `apps/api/src/authorization.ts:187 (hasPermission)` |
 | 1 | `validJson` | valid json の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:20 (validJson)` |
 | 2 | `validRequest` | valid request の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:36 (validRequest)` |
-| 1 | `MemoRagService.saveConversationHistory` | save conversation history の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4127 (MemoRagService.saveConversationHistory)` |
-| 2 | `tenantPartitionedOwnerKey` | tenant partitioned owner key の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5914 (tenantPartitionedOwnerKey)` |
+| 1 | `MemoRagService.saveConversationHistory` | save conversation history の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4220 (MemoRagService.saveConversationHistory)` |
+| 2 | `tenantPartitionedOwnerKey` | tenant partitioned owner key の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5524 (tenantPartitionedOwnerKey)` |
 
 ## 5. データ・外部境界
 
 | 種別 | 境界 | Target | Operation | 目的 | Caller | 実装位置 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 作成・追記 | Store | `this.deps.conversationHistoryStore` | `save` | `this.deps.conversationHistoryStore` に対して save を実行する。 | `MemoRagService.saveConversationHistory` | `apps/api/src/rag/memorag-service.ts:4129 (MemoRagService.saveConversationHistory)` |
+| 作成・追記 | Store | `this.deps.conversationHistoryStore` | `save` | `this.deps.conversationHistoryStore` に対して save を実行する。 | `MemoRagService.saveConversationHistory` | `apps/api/src/rag/memorag-service.ts:4222 (MemoRagService.saveConversationHistory)` |
 
 ## 6. 応答・メッセージ
 

@@ -36,7 +36,7 @@ debug trace 詳細を取得する
 | ---: | --- | --- | --- | --- | --- |
 | B001 | `GET /debug-runs/{runId} handler` | if | `trace` が存在しない、または偽である | `!trace` | `apps/api/src/routes/debug-routes.ts:70 (GET /debug-runs/{runId} handler)` |
 | B002 | `requirePermission` | if | 利用者が 指定された permission を持たない | `!hasPermission(user, permission)` | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| B003 | `MemoRagService.getDebugRun` | if | `key` が存在しない、または偽である | `!key` | `apps/api/src/rag/memorag-service.ts:2348 (MemoRagService.getDebugRun)` |
+| B003 | `MemoRagService.getDebugRun` | if | `key` が存在しない、または偽である | `!key` | `apps/api/src/rag/memorag-service.ts:2455 (MemoRagService.getDebugRun)` |
 | B004 | `settleNonEnumerationTiming` | if | `remaining` が `0` より大きい | `remaining > 0` | `apps/api/src/security/public-resource-response.ts:42 (settleNonEnumerationTiming)` |
 
 ## 4. 到達する主要実装
@@ -50,18 +50,18 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 2 | `hasPermission` | has permission の実装処理を担当する。 | `apps/api/src/authorization.ts:187 (hasPermission)` |
 | 1 | `validParam` | valid param の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:24 (validParam)` |
 | 2 | `validRequest` | valid request の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:36 (validRequest)` |
-| 1 | `MemoRagService.getDebugRun` | get debug run の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:2344 (MemoRagService.getDebugRun)` |
-| 2 | `localTestActor` | local test actor の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5925 (localTestActor)` |
-| 2 | `debugTraceTenantPrefix` | debug trace tenant prefix の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5939 (debugTraceTenantPrefix)` |
-| 2 | `normalizeDebugTrace` | normalize debug trace の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5988 (normalizeDebugTrace)` |
+| 1 | `MemoRagService.getDebugRun` | get debug run の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:2451 (MemoRagService.getDebugRun)` |
+| 2 | `localTestActor` | local test actor の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5535 (localTestActor)` |
+| 2 | `debugTraceTenantPrefix` | debug trace tenant prefix の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5549 (debugTraceTenantPrefix)` |
+| 2 | `normalizeDebugTrace` | normalize debug trace の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5598 (normalizeDebugTrace)` |
 | 1 | `settleNonEnumerationTiming` | settle non enumeration timing の実装処理を担当する。 | `apps/api/src/security/public-resource-response.ts:40 (settleNonEnumerationTiming)` |
 
 ## 5. データ・外部境界
 
 | 種別 | 境界 | Target | Operation | 目的 | Caller | 実装位置 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 参照 | Store | `this.deps.objectStore` | `listKeys` | `this.deps.objectStore` に対して list keys を実行する。 | `MemoRagService.getDebugRun` | `apps/api/src/rag/memorag-service.ts:2346 (MemoRagService.getDebugRun)` |
-| 参照 | Store | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `MemoRagService.getDebugRun` | `apps/api/src/rag/memorag-service.ts:2349 (MemoRagService.getDebugRun)` |
+| 参照 | Store | `this.deps.objectStore` | `listKeys` | `this.deps.objectStore` に対して list keys を実行する。 | `MemoRagService.getDebugRun` | `apps/api/src/rag/memorag-service.ts:2453 (MemoRagService.getDebugRun)` |
+| 参照 | Store | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `MemoRagService.getDebugRun` | `apps/api/src/rag/memorag-service.ts:2456 (MemoRagService.getDebugRun)` |
 
 ## 6. 応答・メッセージ
 

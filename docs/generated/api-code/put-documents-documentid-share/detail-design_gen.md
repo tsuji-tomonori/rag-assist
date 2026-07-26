@@ -46,7 +46,7 @@
 | B003 | `PUT /documents/{documentId}/share handler` | if | `err` が `DocumentShareConflictError` の instance である | `err instanceof DocumentShareConflictError` | `apps/api/src/routes/document-routes.ts:923 (PUT /documents/{documentId}/share handler)` |
 | B004 | `PUT /documents/{documentId}/share handler` | if | is forbidden error の判定結果が真である | `isForbiddenError(err)` | `apps/api/src/routes/document-routes.ts:924 (PUT /documents/{documentId}/share handler)` |
 | B005 | `PUT /documents/{documentId}/share handler` | if | `err` が `Error` の instance である、かつ `err.message` が "ENOENT" を含む、または `err.message` が "NoSuchKey" を含む | `err instanceof Error && (err.message.includes("ENOENT") \|\| err.message.includes("NoSuchKey"))` | `apps/api/src/routes/document-routes.ts:925 (PUT /documents/{documentId}/share handler)` |
-| B006 | `MemoRagService.updateDocumentShare` | if | can share document の判定結果が真ではない | `!canShareDocument(effectivePermission, actor)` | `apps/api/src/rag/memorag-service.ts:1200 (MemoRagService.updateDocumentShare)` |
+| B006 | `MemoRagService.updateDocumentShare` | if | can share document の判定結果が真ではない | `!canShareDocument(effectivePermission, actor)` | `apps/api/src/rag/memorag-service.ts:1307 (MemoRagService.updateDocumentShare)` |
 
 ## 4. 到達する主要実装
 
@@ -58,10 +58,10 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 1 | `validParam` | valid param の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:24 (validParam)` |
 | 2 | `validRequest` | valid request の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:36 (validRequest)` |
 | 1 | `validJson` | valid json の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:20 (validJson)` |
-| 1 | `MemoRagService.updateDocumentShare` | update document share の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1192 (MemoRagService.updateDocumentShare)` |
-| 2 | `authoritativeActorTenantId` | authoritative actor tenant id の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5906 (authoritativeActorTenantId)` |
-| 2 | `forbiddenError` | forbidden error の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6300 (forbiddenError)` |
-| 2 | `MemoRagService.getManifest` | get manifest の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3926 (MemoRagService.getManifest)` |
+| 1 | `MemoRagService.updateDocumentShare` | update document share の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1299 (MemoRagService.updateDocumentShare)` |
+| 2 | `authoritativeActorTenantId` | authoritative actor tenant id の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5516 (authoritativeActorTenantId)` |
+| 2 | `forbiddenError` | forbidden error の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5877 (forbiddenError)` |
+| 2 | `MemoRagService.getManifest` | get manifest の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4019 (MemoRagService.getManifest)` |
 | 2 | `DocumentPermissionService.resolveEffectiveDocumentPermission` | resolve effective document permission の実装処理を担当する。 | `apps/api/src/documents/document-permission-service.ts:122 (DocumentPermissionService.resolveEffectiveDocumentPermission)` |
 | 2 | `canShareDocument` | can share document の実装処理を担当する。 | `apps/api/src/documents/document-permission-service.ts:819 (canShareDocument)` |
 | 2 | `DocumentPermissionService.replaceVersionedDocumentSharePolicy` | replace versioned document share policy の実装処理を担当する。 | `apps/api/src/documents/document-permission-service.ts:254 (DocumentPermissionService.replaceVersionedDocumentSharePolicy)` |

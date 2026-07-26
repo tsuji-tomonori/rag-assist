@@ -38,7 +38,7 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 0 | `GET /admin/roles handler` | GET /admin/roles の request を受け、検証・認可・service 呼び出し・HTTP 応答を調整する。 | `apps/api/src/routes/admin-routes.ts:350 (GET /admin/roles handler)` |
 | 1 | `requirePermission` | require permission の実装処理を担当する。 | `apps/api/src/authorization.ts:183 (requirePermission)` |
 | 2 | `hasPermission` | has permission の実装処理を担当する。 | `apps/api/src/authorization.ts:187 (hasPermission)` |
-| 1 | `MemoRagService.listAccessRoles` | list access roles の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1330 (MemoRagService.listAccessRoles)` |
+| 1 | `MemoRagService.listAccessRoles` | list access roles の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1437 (MemoRagService.listAccessRoles)` |
 
 ## 5. データ・外部境界
 

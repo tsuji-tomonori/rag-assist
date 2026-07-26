@@ -46,15 +46,15 @@ legacy compatibility として指定した文書グループの名前と説明�
 | B003 | `POST /document-groups/{groupId}/share handler` | if | is document group input error の判定結果が真である | `isDocumentGroupInputError(err)` | `apps/api/src/routes/document-routes.ts:721 (POST /document-groups/{groupId}/share handler)` |
 | B004 | `POST /document-groups/{groupId}/share handler` | if | `err` が `Error` の instance である、かつ starts with の判定結果が真である | `err instanceof Error && err.message.startsWith("Forbidden:")` | `apps/api/src/routes/document-routes.ts:722 (POST /document-groups/{groupId}/share handler)` |
 | B005 | `requirePermission` | if | 利用者が 指定された permission を持たない | `!hasPermission(user, permission)` | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| B006 | `MemoRagService.updateDocumentGroupSharing` | if | `group` が存在しない、または偽である | `!group` | `apps/api/src/rag/memorag-service.ts:1115 (MemoRagService.updateDocumentGroupSharing)` |
-| B007 | `MemoRagService.updateDocumentGroupSharing` | if | `(await folderPermissions.resolveEffectiveFolderPermission(actor, group.groupId))` が `"full"` と異なる | `(await folderPermissions.resolveEffectiveFolderPermission(actor, group.groupId)) !== "full"` | `apps/api/src/rag/memorag-service.ts:1117 (MemoRagService.updateDocumentGroupSharing)` |
-| B008 | `MemoRagService.updateDocumentGroupSharing` | if | `input.name` が `undefined` と異なる | `input.name !== undefined` | `apps/api/src/rag/memorag-service.ts:1123 (MemoRagService.updateDocumentGroupSharing)` |
-| B009 | `MemoRagService.updateDocumentGroupSharing` | if | `input.description` が `undefined` と異なる | `input.description !== undefined` | `apps/api/src/rag/memorag-service.ts:1128 (MemoRagService.updateDocumentGroupSharing)` |
-| B010 | `MemoRagService.updateDocumentGroupSharing` | 三項条件 | `group.parentGroupId` が存在し、真である | `group.parentGroupId` | `apps/api/src/rag/memorag-service.ts:1129 (MemoRagService.updateDocumentGroupSharing)` |
-| B011 | `MemoRagService.updateDocumentGroupSharing` | if | `input.name` が `undefined` と異なる | `input.name !== undefined` | `apps/api/src/rag/memorag-service.ts:1131 (MemoRagService.updateDocumentGroupSharing)` |
-| B012 | `MemoRagService.updateDocumentGroupSharing` | if | `pathUpdates.length` が `maxDocumentGroupPathTransactionItems` より大きい | `pathUpdates.length > maxDocumentGroupPathTransactionItems` | `apps/api/src/rag/memorag-service.ts:1133 (MemoRagService.updateDocumentGroupSharing)` |
-| B013 | `MemoRagService.updateDocumentGroupSharing` | loop | map の判定結果が真である | `pathUpdates.map((updateItem) => updateItem.next)` | `apps/api/src/rag/memorag-service.ts:1134 (MemoRagService.updateDocumentGroupSharing)` |
-| B014 | `MemoRagService.updateDocumentGroupSharing` | if | `conflict` が存在し、真である | `conflict` | `apps/api/src/rag/memorag-service.ts:1141 (MemoRagService.updateDocumentGroupSharing)` |
+| B006 | `MemoRagService.updateDocumentGroupSharing` | if | `group` が存在しない、または偽である | `!group` | `apps/api/src/rag/memorag-service.ts:1222 (MemoRagService.updateDocumentGroupSharing)` |
+| B007 | `MemoRagService.updateDocumentGroupSharing` | if | `(await folderPermissions.resolveEffectiveFolderPermission(actor, group.groupId))` が `"full"` と異なる | `(await folderPermissions.resolveEffectiveFolderPermission(actor, group.groupId)) !== "full"` | `apps/api/src/rag/memorag-service.ts:1224 (MemoRagService.updateDocumentGroupSharing)` |
+| B008 | `MemoRagService.updateDocumentGroupSharing` | if | `input.name` が `undefined` と異なる | `input.name !== undefined` | `apps/api/src/rag/memorag-service.ts:1230 (MemoRagService.updateDocumentGroupSharing)` |
+| B009 | `MemoRagService.updateDocumentGroupSharing` | if | `input.description` が `undefined` と異なる | `input.description !== undefined` | `apps/api/src/rag/memorag-service.ts:1235 (MemoRagService.updateDocumentGroupSharing)` |
+| B010 | `MemoRagService.updateDocumentGroupSharing` | 三項条件 | `group.parentGroupId` が存在し、真である | `group.parentGroupId` | `apps/api/src/rag/memorag-service.ts:1236 (MemoRagService.updateDocumentGroupSharing)` |
+| B011 | `MemoRagService.updateDocumentGroupSharing` | if | `input.name` が `undefined` と異なる | `input.name !== undefined` | `apps/api/src/rag/memorag-service.ts:1238 (MemoRagService.updateDocumentGroupSharing)` |
+| B012 | `MemoRagService.updateDocumentGroupSharing` | if | `pathUpdates.length` が `maxDocumentGroupPathTransactionItems` より大きい | `pathUpdates.length > maxDocumentGroupPathTransactionItems` | `apps/api/src/rag/memorag-service.ts:1240 (MemoRagService.updateDocumentGroupSharing)` |
+| B013 | `MemoRagService.updateDocumentGroupSharing` | loop | map の判定結果が真である | `pathUpdates.map((updateItem) => updateItem.next)` | `apps/api/src/rag/memorag-service.ts:1241 (MemoRagService.updateDocumentGroupSharing)` |
+| B014 | `MemoRagService.updateDocumentGroupSharing` | if | `conflict` が存在し、真である | `conflict` | `apps/api/src/rag/memorag-service.ts:1248 (MemoRagService.updateDocumentGroupSharing)` |
 
 ## 4. 到達する主要実装
 
@@ -68,15 +68,15 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 1 | `validParam` | valid param の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:24 (validParam)` |
 | 2 | `validRequest` | valid request の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:36 (validRequest)` |
 | 1 | `validJson` | valid json の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:20 (validJson)` |
-| 1 | `MemoRagService.updateDocumentGroupSharing` | update document group sharing の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1109 (MemoRagService.updateDocumentGroupSharing)` |
-| 2 | `authoritativeActorTenantId` | authoritative actor tenant id の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5906 (authoritativeActorTenantId)` |
-| 2 | `forbiddenError` | forbidden error の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6300 (forbiddenError)` |
-| 2 | `normalizeDocumentGroups` | normalize document groups の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6204 (normalizeDocumentGroups)` |
-| 2 | `normalizeDocumentGroupName` | normalize document group name の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6116 (normalizeDocumentGroupName)` |
+| 1 | `MemoRagService.updateDocumentGroupSharing` | update document group sharing の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1216 (MemoRagService.updateDocumentGroupSharing)` |
+| 2 | `authoritativeActorTenantId` | authoritative actor tenant id の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5516 (authoritativeActorTenantId)` |
+| 2 | `forbiddenError` | forbidden error の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5877 (forbiddenError)` |
+| 2 | `normalizeDocumentGroups` | normalize document groups の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5814 (normalizeDocumentGroups)` |
+| 2 | `normalizeDocumentGroupName` | normalize document group name の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5726 (normalizeDocumentGroupName)` |
 | 2 | `FolderPermissionService.resolveEffectiveFolderPermission` | resolve effective folder permission の実装処理を担当する。 | `apps/api/src/folders/folder-permission-service.ts:98 (FolderPermissionService.resolveEffectiveFolderPermission)` |
 | 2 | `FolderPermissionService.assertFolderOperation` | assert folder operation の実装処理を担当する。 | `apps/api/src/folders/folder-permission-service.ts:102 (FolderPermissionService.assertFolderOperation)` |
-| 2 | `validateDocumentGroupName` | validate document group name の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6101 (validateDocumentGroupName)` |
-| 2 | `buildDocumentGroupPathUpdates` | build document group path updates の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6148 (buildDocumentGroupPathUpdates)` |
+| 2 | `validateDocumentGroupName` | validate document group name の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5711 (validateDocumentGroupName)` |
+| 2 | `buildDocumentGroupPathUpdates` | build document group path updates の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5758 (buildDocumentGroupPathUpdates)` |
 | 1 | `resourceUnavailable` | resource unavailable の実装処理を担当する。 | `apps/api/src/routes/document-routes.ts:293 (resourceUnavailable)` |
 | 2 | `settleNonEnumerationTiming` | settle non enumeration timing の実装処理を担当する。 | `apps/api/src/security/public-resource-response.ts:40 (settleNonEnumerationTiming)` |
 | 1 | `isDocumentGroupInputError` | is document group input error の実装処理を担当する。 | `apps/api/src/routes/document-routes.ts:1625 (isDocumentGroupInputError)` |
@@ -85,15 +85,15 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 
 | 種別 | 境界 | Target | Operation | 目的 | Caller | 実装位置 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 参照 | Store | `this.deps.documentGroupStore` | `list` | `this.deps.documentGroupStore` に対して list を実行する。 | `MemoRagService.updateDocumentGroupSharing` | `apps/api/src/rag/memorag-service.ts:1113 (MemoRagService.updateDocumentGroupSharing)` |
+| 参照 | Store | `this.deps.documentGroupStore` | `list` | `this.deps.documentGroupStore` に対して list を実行する。 | `MemoRagService.updateDocumentGroupSharing` | `apps/api/src/rag/memorag-service.ts:1220 (MemoRagService.updateDocumentGroupSharing)` |
 | 参照 | Store | `this.deps.documentGroupStore` | `list` | `this.deps.documentGroupStore` に対して list を実行する。 | `FolderPermissionService.resolveEffectiveFolderPermissionDetail` | `apps/api/src/folders/folder-permission-service.ts:145 (FolderPermissionService.resolveEffectiveFolderPermissionDetail)` |
 | 参照 | Store | `this.deps.userGroupStore` | `get` | `this.deps.userGroupStore` に対して get を実行する。 | `FolderPermissionService.resolveUserMembershipPermission` | `apps/api/src/folders/folder-permission-service.ts:780 (FolderPermissionService.resolveUserMembershipPermission)` |
 | 参照 | Store | `this.deps.groupMembershipStore` | `listByGroupId` | `this.deps.groupMembershipStore` に対して list by group id を実行する。 | `FolderPermissionService.resolveUserMembershipPermission` | `apps/api/src/folders/folder-permission-service.ts:781 (FolderPermissionService.resolveUserMembershipPermission)` |
 | 参照 | Store | `this.deps.folderPolicyStore` | `findByFolderId` | `this.deps.folderPolicyStore` に対して find by folder id を実行する。 | `FolderPermissionService.resolvePolicyContext` | `apps/api/src/folders/folder-permission-service.ts:695 (FolderPermissionService.resolvePolicyContext)` |
 | 参照 | Store | `this.deps.folderPolicyStore` | `get` | `this.deps.folderPolicyStore` に対して get を実行する。 | `FolderPermissionService.resolvePolicyContext` | `apps/api/src/folders/folder-permission-service.ts:711 (FolderPermissionService.resolvePolicyContext)` |
 | 参照 | Store | `this.deps.documentGroupStore` | `get` | `this.deps.documentGroupStore` に対して get を実行する。 | `FolderPermissionService.assertFolderOperation` | `apps/api/src/folders/folder-permission-service.ts:110 (FolderPermissionService.assertFolderOperation)` |
-| 更新 | Store | `this.deps.documentGroupStore` | `updateWithPathLocks` | `this.deps.documentGroupStore` に対して update with path locks を実行する。 | `MemoRagService.updateDocumentGroupSharing` | `apps/api/src/rag/memorag-service.ts:1143 (MemoRagService.updateDocumentGroupSharing)` |
-| 更新 | Store | `this.deps.documentGroupStore` | `updateWithPathLocks` | `this.deps.documentGroupStore` に対して update with path locks を実行する。 | `MemoRagService.updateDocumentGroupSharing` | `apps/api/src/rag/memorag-service.ts:1146 (MemoRagService.updateDocumentGroupSharing)` |
+| 更新 | Store | `this.deps.documentGroupStore` | `updateWithPathLocks` | `this.deps.documentGroupStore` に対して update with path locks を実行する。 | `MemoRagService.updateDocumentGroupSharing` | `apps/api/src/rag/memorag-service.ts:1250 (MemoRagService.updateDocumentGroupSharing)` |
+| 更新 | Store | `this.deps.documentGroupStore` | `updateWithPathLocks` | `this.deps.documentGroupStore` に対して update with path locks を実行する。 | `MemoRagService.updateDocumentGroupSharing` | `apps/api/src/rag/memorag-service.ts:1253 (MemoRagService.updateDocumentGroupSharing)` |
 
 ## 6. 応答・メッセージ
 

@@ -49,22 +49,22 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 2 | `hasPermission` | has permission の実装処理を担当する。 | `apps/api/src/authorization.ts:187 (hasPermission)` |
 | 1 | `validQuery` | valid query の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:28 (validQuery)` |
 | 2 | `validRequest` | valid request の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:36 (validRequest)` |
-| 1 | `MemoRagService.listAliasAuditLog` | list alias audit log の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1648 (MemoRagService.listAliasAuditLog)` |
-| 2 | `MemoRagService.loadAliasLedger` | load alias ledger の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3588 (MemoRagService.loadAliasLedger)` |
-| 2 | `authoritativeActorTenantId` | authoritative actor tenant id の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5906 (authoritativeActorTenantId)` |
+| 1 | `MemoRagService.listAliasAuditLog` | list alias audit log の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1755 (MemoRagService.listAliasAuditLog)` |
+| 2 | `MemoRagService.loadAliasLedger` | load alias ledger の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3681 (MemoRagService.loadAliasLedger)` |
+| 2 | `authoritativeActorTenantId` | authoritative actor tenant id の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5516 (authoritativeActorTenantId)` |
 | 2 | `pageByStableCursor` | page by stable cursor の実装処理を担当する。 | `apps/api/src/admin/keyset-pagination.ts:16 (pageByStableCursor)` |
 
 ## 5. データ・外部境界
 
 | 種別 | 境界 | Target | Operation | 目的 | Caller | 実装位置 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 参照 | Store | `this` | `loadAliasLedger` | `this` に対して load alias ledger を実行する。 | `MemoRagService.listAliasAuditLog` | `apps/api/src/rag/memorag-service.ts:1649 (MemoRagService.listAliasAuditLog)` |
-| 参照 | Store | `this.deps.objectStore` | `getTextWithVersion` | `this.deps.objectStore` に対して get text with version を実行する。 | `MemoRagService.loadAliasLedger` | `apps/api/src/rag/memorag-service.ts:3590 (MemoRagService.loadAliasLedger)` |
-| 実行 | Store | `normalizeAliasLedger` | `normalizeAliasLedger` | `normalizeAliasLedger` に対して normalize alias ledger を実行する。 | `MemoRagService.loadAliasLedger` | `apps/api/src/rag/memorag-service.ts:3594 (MemoRagService.loadAliasLedger)` |
-| 実行 | Store | `ledger.auditLog<br>      ` | `filter` | `ledger.auditLog<br>      ` に対して filter を実行する。 | `MemoRagService.listAliasAuditLog` | `apps/api/src/rag/memorag-service.ts:1652 (MemoRagService.listAliasAuditLog)` |
-| 実行 | Store | `ledger.auditLog<br>      .filter((entry) => entry.tenantId === tenantId)<br>      ` | `filter` | `ledger.auditLog<br>      .filter((entry) => entry.tenantId === tenantId)<br>      ` に対して filter を実行する。 | `MemoRagService.listAliasAuditLog` | `apps/api/src/rag/memorag-service.ts:1652 (MemoRagService.listAliasAuditLog)` |
-| 実行 | Store | `ledger.auditLog<br>      .filter((entry) => entry.tenantId === tenantId)<br>      .filter((entry) => !query.action \|\| entry.action === query.action)<br>      ` | `filter` | `ledger.auditLog<br>      .filter((entry) => entry.tenantId === tenantId)<br>      .filter((entry) => !query.action \|\| entry.action === query.action)<br>      ` に対して filter を実行する。 | `MemoRagService.listAliasAuditLog` | `apps/api/src/rag/memorag-service.ts:1652 (MemoRagService.listAliasAuditLog)` |
-| 実行 | Store | `ledger.auditLog<br>      .filter((entry) => entry.tenantId === tenantId)<br>      .filter((entry) => !query.action \|\| entry.action === query.action)<br>      .filter((entry) => !query.aliasId \|\| entry.aliasId === query.aliasId)<br>      ` | `filter` | `ledger.auditLog<br>      .filter((entry) => entry.tenantId === tenantId)<br>      .filter((entry) => !query.action \|\| entry.action === query.action)<br>      .filter((entry) => !query.aliasId \|\| entry.aliasId === query.aliasId)<br>      ` に対して filter を実行する。 | `MemoRagService.listAliasAuditLog` | `apps/api/src/rag/memorag-service.ts:1652 (MemoRagService.listAliasAuditLog)` |
+| 参照 | Store | `this` | `loadAliasLedger` | `this` に対して load alias ledger を実行する。 | `MemoRagService.listAliasAuditLog` | `apps/api/src/rag/memorag-service.ts:1756 (MemoRagService.listAliasAuditLog)` |
+| 参照 | Store | `this.deps.objectStore` | `getTextWithVersion` | `this.deps.objectStore` に対して get text with version を実行する。 | `MemoRagService.loadAliasLedger` | `apps/api/src/rag/memorag-service.ts:3683 (MemoRagService.loadAliasLedger)` |
+| 実行 | Store | `normalizeAliasLedger` | `normalizeAliasLedger` | `normalizeAliasLedger` に対して normalize alias ledger を実行する。 | `MemoRagService.loadAliasLedger` | `apps/api/src/rag/memorag-service.ts:3687 (MemoRagService.loadAliasLedger)` |
+| 実行 | Store | `ledger.auditLog<br>      ` | `filter` | `ledger.auditLog<br>      ` に対して filter を実行する。 | `MemoRagService.listAliasAuditLog` | `apps/api/src/rag/memorag-service.ts:1759 (MemoRagService.listAliasAuditLog)` |
+| 実行 | Store | `ledger.auditLog<br>      .filter((entry) => entry.tenantId === tenantId)<br>      ` | `filter` | `ledger.auditLog<br>      .filter((entry) => entry.tenantId === tenantId)<br>      ` に対して filter を実行する。 | `MemoRagService.listAliasAuditLog` | `apps/api/src/rag/memorag-service.ts:1759 (MemoRagService.listAliasAuditLog)` |
+| 実行 | Store | `ledger.auditLog<br>      .filter((entry) => entry.tenantId === tenantId)<br>      .filter((entry) => !query.action \|\| entry.action === query.action)<br>      ` | `filter` | `ledger.auditLog<br>      .filter((entry) => entry.tenantId === tenantId)<br>      .filter((entry) => !query.action \|\| entry.action === query.action)<br>      ` に対して filter を実行する。 | `MemoRagService.listAliasAuditLog` | `apps/api/src/rag/memorag-service.ts:1759 (MemoRagService.listAliasAuditLog)` |
+| 実行 | Store | `ledger.auditLog<br>      .filter((entry) => entry.tenantId === tenantId)<br>      .filter((entry) => !query.action \|\| entry.action === query.action)<br>      .filter((entry) => !query.aliasId \|\| entry.aliasId === query.aliasId)<br>      ` | `filter` | `ledger.auditLog<br>      .filter((entry) => entry.tenantId === tenantId)<br>      .filter((entry) => !query.action \|\| entry.action === query.action)<br>      .filter((entry) => !query.aliasId \|\| entry.aliasId === query.aliasId)<br>      ` に対して filter を実行する。 | `MemoRagService.listAliasAuditLog` | `apps/api/src/rag/memorag-service.ts:1759 (MemoRagService.listAliasAuditLog)` |
 
 ## 6. 応答・メッセージ
 

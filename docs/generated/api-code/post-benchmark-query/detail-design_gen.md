@@ -34,18 +34,18 @@ BENCHMARK_RUNNER が必須の suiteId を指定し、server allowlist で解決�
 | B001 | `requirePermission` | if | 利用者が 指定された permission を持たない | `!hasPermission(user, permission)` | `apps/api/src/authorization.ts:184 (requirePermission)` |
 | B002 | `benchmarkHttp` | catch | 例外が発生した場合に catch 処理へ移る | `error` | `apps/api/src/routes/benchmark-routes.ts:262 (benchmarkHttp)` |
 | B003 | `benchmarkHttp` | if | `error` が `BenchmarkEvaluationContextError` の instance である | `error instanceof BenchmarkEvaluationContextError` | `apps/api/src/routes/benchmark-routes.ts:263 (benchmarkHttp)` |
-| B004 | `MemoRagService.chat` | if | `actor` が存在し、真である | `actor` | `apps/api/src/rag/memorag-service.ts:2397 (MemoRagService.chat)` |
-| B005 | `MemoRagService.chat` | 三項条件 | `actor` が存在し、真である | `actor` | `apps/api/src/rag/memorag-service.ts:2399 (MemoRagService.chat)` |
-| B006 | `MemoRagService.chat` | 三項条件 | `authorize` が存在し、真である | `authorize` | `apps/api/src/rag/memorag-service.ts:2412 (MemoRagService.chat)` |
-| B007 | `MemoRagService.chat` | if | `authorize` が存在し、真である | `authorize` | `apps/api/src/rag/memorag-service.ts:2413 (MemoRagService.chat)` |
-| B008 | `MemoRagService.chat` | 三項条件 | `authorize` が存在し、真である | `authorize` | `apps/api/src/rag/memorag-service.ts:2421 (MemoRagService.chat)` |
-| B009 | `MemoRagService.chat` | 三項条件 | `currentActor` が存在し、真である | `currentActor` | `apps/api/src/rag/memorag-service.ts:2429 (MemoRagService.chat)` |
-| B010 | `MemoRagService.chat` | if | `authorize` が存在し、真である | `authorize` | `apps/api/src/rag/memorag-service.ts:2431 (MemoRagService.chat)` |
-| B011 | `MemoRagService.chat` | catch | 例外が発生した場合に catch 処理へ移る | `error` | `apps/api/src/rag/memorag-service.ts:2433 (MemoRagService.chat)` |
-| B012 | `MemoRagService.chat` | if | `persistedTrace` が存在し、真である、または `observationArtifactId` が存在し、真である、かつ `currentActor?.tenantId` が存在し、真である | `(persistedTrace \|\| observationArtifactId) && currentActor?.tenantId` | `apps/api/src/rag/memorag-service.ts:2434 (MemoRagService.chat)` |
-| B013 | `MemoRagService.chat` | 三項条件 | `persistedTrace` が存在し、真である | `persistedTrace` | `apps/api/src/rag/memorag-service.ts:2437 (MemoRagService.chat)` |
-| B014 | `MemoRagService.chat` | 三項条件 | `persistedTrace` が存在し、真である | `persistedTrace` | `apps/api/src/rag/memorag-service.ts:2438 (MemoRagService.chat)` |
-| B015 | `MemoRagService.chat` | 三項条件 | `observationArtifactId` が存在し、真である | `observationArtifactId` | `apps/api/src/rag/memorag-service.ts:2439 (MemoRagService.chat)` |
+| B004 | `MemoRagService.chat` | if | `actor` が存在し、真である | `actor` | `apps/api/src/rag/memorag-service.ts:2504 (MemoRagService.chat)` |
+| B005 | `MemoRagService.chat` | 三項条件 | `actor` が存在し、真である | `actor` | `apps/api/src/rag/memorag-service.ts:2506 (MemoRagService.chat)` |
+| B006 | `MemoRagService.chat` | 三項条件 | `authorize` が存在し、真である | `authorize` | `apps/api/src/rag/memorag-service.ts:2519 (MemoRagService.chat)` |
+| B007 | `MemoRagService.chat` | if | `authorize` が存在し、真である | `authorize` | `apps/api/src/rag/memorag-service.ts:2520 (MemoRagService.chat)` |
+| B008 | `MemoRagService.chat` | 三項条件 | `authorize` が存在し、真である | `authorize` | `apps/api/src/rag/memorag-service.ts:2528 (MemoRagService.chat)` |
+| B009 | `MemoRagService.chat` | 三項条件 | `currentActor` が存在し、真である | `currentActor` | `apps/api/src/rag/memorag-service.ts:2536 (MemoRagService.chat)` |
+| B010 | `MemoRagService.chat` | if | `authorize` が存在し、真である | `authorize` | `apps/api/src/rag/memorag-service.ts:2538 (MemoRagService.chat)` |
+| B011 | `MemoRagService.chat` | catch | 例外が発生した場合に catch 処理へ移る | `error` | `apps/api/src/rag/memorag-service.ts:2540 (MemoRagService.chat)` |
+| B012 | `MemoRagService.chat` | if | `persistedTrace` が存在し、真である、または `observationArtifactId` が存在し、真である、かつ `currentActor?.tenantId` が存在し、真である | `(persistedTrace \|\| observationArtifactId) && currentActor?.tenantId` | `apps/api/src/rag/memorag-service.ts:2541 (MemoRagService.chat)` |
+| B013 | `MemoRagService.chat` | 三項条件 | `persistedTrace` が存在し、真である | `persistedTrace` | `apps/api/src/rag/memorag-service.ts:2544 (MemoRagService.chat)` |
+| B014 | `MemoRagService.chat` | 三項条件 | `persistedTrace` が存在し、真である | `persistedTrace` | `apps/api/src/rag/memorag-service.ts:2545 (MemoRagService.chat)` |
+| B015 | `MemoRagService.chat` | 三項条件 | `observationArtifactId` が存在し、真である | `observationArtifactId` | `apps/api/src/rag/memorag-service.ts:2546 (MemoRagService.chat)` |
 
 ## 4. 到達する主要実装
 
@@ -61,13 +61,13 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 1 | `prepareBenchmarkQueryInvocation` | prepare benchmark query invocation の実装処理を担当する。 | `apps/api/src/benchmark/evaluation-context.ts:112 (prepareBenchmarkQueryInvocation)` |
 | 2 | `resolveBenchmarkEvaluationContext` | resolve benchmark evaluation context の実装処理を担当する。 | `apps/api/src/benchmark/evaluation-context.ts:71 (resolveBenchmarkEvaluationContext)` |
 | 1 | `benchmarkHttp` | benchmark http の実装処理を担当する。 | `apps/api/src/routes/benchmark-routes.ts:259 (benchmarkHttp)` |
-| 1 | `MemoRagService.chat` | chat の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:2395 (MemoRagService.chat)` |
-| 2 | `localTestActor` | local test actor の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5925 (localTestActor)` |
-| 2 | `MemoRagService.assertSearchScopeReadable` | assert search scope readable の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1261 (MemoRagService.assertSearchScopeReadable)` |
-| 2 | `MemoRagService.assertCurrentWorkerAuthorization` | assert current worker authorization の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4787 (MemoRagService.assertCurrentWorkerAuthorization)` |
-| 2 | `anonymous function` | anonymous function の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:2399 (anonymous function)` |
-| 2 | `MemoRagService.usageTrackedDependencies` | usage tracked dependencies の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5163 (MemoRagService.usageTrackedDependencies)` |
-| 2 | `MemoRagService.securityResourceRefsForActor` | security resource refs for actor の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1270 (MemoRagService.securityResourceRefsForActor)` |
+| 1 | `MemoRagService.chat` | chat の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:2502 (MemoRagService.chat)` |
+| 2 | `localTestActor` | local test actor の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5535 (localTestActor)` |
+| 2 | `MemoRagService.assertSearchScopeReadable` | assert search scope readable の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1368 (MemoRagService.assertSearchScopeReadable)` |
+| 2 | `MemoRagService.assertCurrentWorkerAuthorization` | assert current worker authorization の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4553 (MemoRagService.assertCurrentWorkerAuthorization)` |
+| 2 | `anonymous function` | anonymous function の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:2506 (anonymous function)` |
+| 2 | `MemoRagService.usageTrackedDependencies` | usage tracked dependencies の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4862 (MemoRagService.usageTrackedDependencies)` |
+| 2 | `MemoRagService.securityResourceRefsForActor` | security resource refs for actor の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1377 (MemoRagService.securityResourceRefsForActor)` |
 | 2 | `runChatOrchestration` | run chat orchestration の実装処理を担当する。 | `apps/api/src/rag/orchestration/chat-rag-orchestrator.ts:709 (runChatOrchestration)` |
 | 2 | `debugTraceObjectKey` | debug trace object key の実装処理を担当する。 | `apps/api/src/rag/orchestration/chat-rag-orchestrator.ts:1224 (debugTraceObjectKey)` |
 | 2 | `ProductionRagObservationProducer.deleteArtifactSamples` | delete artifact samples の実装処理を担当する。 | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:296 (ProductionRagObservationProducer.deleteArtifactSamples)` |
@@ -82,9 +82,9 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 参照 | Store | `this.deps.folderPolicyStore` | `findByFolderId` | `this.deps.folderPolicyStore` に対して find by folder id を実行する。 | `FolderPermissionService.resolvePolicyContext` | `apps/api/src/folders/folder-permission-service.ts:695 (FolderPermissionService.resolvePolicyContext)` |
 | 参照 | Store | `this.deps.folderPolicyStore` | `get` | `this.deps.folderPolicyStore` に対して get を実行する。 | `FolderPermissionService.resolvePolicyContext` | `apps/api/src/folders/folder-permission-service.ts:711 (FolderPermissionService.resolvePolicyContext)` |
 | 参照 | External | `this.identityProvider` | `getCurrentIdentityBySubject` | `this.identityProvider` へ get current identity by subject を実行する。 | `CurrentWorkerAuthorization.assertAuthorized` | `apps/api/src/security/current-worker-authorization.ts:51 (CurrentWorkerAuthorization.assertAuthorized)` |
-| 参照 | Store | `this.deps.groupMembershipStore` | `listByMember` | `this.deps.groupMembershipStore` に対して list by member を実行する。 | `MemoRagService.securityResourceRefsForActor` | `apps/api/src/rag/memorag-service.ts:1277 (MemoRagService.securityResourceRefsForActor)` |
-| 実行 | Store | `(await this.deps.groupMembershipStore.listByMember(tenantId, "user", actor.userId))<br>      ` | `map` | `(await this.deps.groupMembershipStore.listByMember(tenantId, "user", actor.userId))<br>      ` に対して map を実行する。 | `MemoRagService.securityResourceRefsForActor` | `apps/api/src/rag/memorag-service.ts:1277 (MemoRagService.securityResourceRefsForActor)` |
-| 参照 | Store | `this.deps.groupMembershipStore` | `listByMember` | `this.deps.groupMembershipStore` に対して list by member を実行する。 | `MemoRagService.securityResourceRefsForActor` | `apps/api/src/rag/memorag-service.ts:1285 (MemoRagService.securityResourceRefsForActor)` |
+| 参照 | Store | `this.deps.groupMembershipStore` | `listByMember` | `this.deps.groupMembershipStore` に対して list by member を実行する。 | `MemoRagService.securityResourceRefsForActor` | `apps/api/src/rag/memorag-service.ts:1384 (MemoRagService.securityResourceRefsForActor)` |
+| 実行 | Store | `(await this.deps.groupMembershipStore.listByMember(tenantId, "user", actor.userId))<br>      ` | `map` | `(await this.deps.groupMembershipStore.listByMember(tenantId, "user", actor.userId))<br>      ` に対して map を実行する。 | `MemoRagService.securityResourceRefsForActor` | `apps/api/src/rag/memorag-service.ts:1384 (MemoRagService.securityResourceRefsForActor)` |
+| 参照 | Store | `this.deps.groupMembershipStore` | `listByMember` | `this.deps.groupMembershipStore` に対して list by member を実行する。 | `MemoRagService.securityResourceRefsForActor` | `apps/api/src/rag/memorag-service.ts:1392 (MemoRagService.securityResourceRefsForActor)` |
 | 参照 | Store | `input.objectStore` | `getText` | `input.objectStore` に対して get text を実行する。 | `assertRagSafetyInterlock` | `apps/api/src/rag/quality-control/production-rag-monitor.ts:311 (assertRagSafetyInterlock)` |
 | 実行 | External | `deps.textModel` | `embed` | `deps.textModel` へ embed を実行する。 | `createEmbedQueriesNode` | `apps/api/src/chat-orchestration/nodes/embed-queries.ts:13 (createEmbedQueriesNode)` |
 | 参照 | Store | `deps.objectStore` | `listKeys` | `deps.objectStore` に対して list keys を実行する。 | `getLexicalIndex` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:603 (getLexicalIndex)` |
@@ -144,11 +144,11 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 実行 | Store | `new ProductionRagObservationProducer(deps.objectStore)` | `captureChatOutcome` | `new ProductionRagObservationProducer(deps.objectStore)` に対して capture chat outcome を実行する。 | `runChatOrchestration` | `apps/api/src/rag/orchestration/chat-rag-orchestrator.ts:872 (runChatOrchestration)` |
 | 作成・追記 | Store | `deps.objectStore` | `putText` | `deps.objectStore` に対して put text を実行する。 | `persistDebugTrace` | `apps/api/src/rag/orchestration/chat-rag-orchestrator.ts:1118 (persistDebugTrace)` |
 | 実行 | Store | `new ProductionRagObservationProducer(deps.objectStore)` | `captureDebugTrace` | `new ProductionRagObservationProducer(deps.objectStore)` に対して capture debug trace を実行する。 | `persistDebugTrace` | `apps/api/src/rag/orchestration/chat-rag-orchestrator.ts:1119 (persistDebugTrace)` |
-| 削除 | Store | `this.deps.objectStore` | `deleteObject` | `this.deps.objectStore` に対して delete object を実行する。 | `MemoRagService.chat` | `apps/api/src/rag/memorag-service.ts:2437 (MemoRagService.chat)` |
+| 削除 | Store | `this.deps.objectStore` | `deleteObject` | `this.deps.objectStore` に対して delete object を実行する。 | `MemoRagService.chat` | `apps/api/src/rag/memorag-service.ts:2544 (MemoRagService.chat)` |
 | 参照 | Store | `this.objectStore` | `listKeys` | `this.objectStore` に対して list keys を実行する。 | `ProductionRagObservationProducer.deleteArtifactSamples` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:299 (ProductionRagObservationProducer.deleteArtifactSamples)` |
 | 参照 | Store | `this.objectStore` | `getText` | `this.objectStore` に対して get text を実行する。 | `ProductionRagObservationProducer.deleteArtifactSamples` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:303 (ProductionRagObservationProducer.deleteArtifactSamples)` |
 | 削除 | Store | `this.objectStore` | `deleteObject` | `this.objectStore` に対して delete object を実行する。 | `ProductionRagObservationProducer.deleteArtifactSamples` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:310 (ProductionRagObservationProducer.deleteArtifactSamples)` |
-| 実行 | Store | `Promise.all([<br>          ...(persistedTrace ? [this.deps.objectStore.deleteObject(debugTraceObjectKey(persistedTrace))] : []),<br>          ...(persistedTrace ? [producer.deleteArtifactSamples("debug_trace", persistedTrace.runId, currentActor.tenantId)] : []),<br>          ...(observationArtifactId ? [producer.deleteArtifactSamples("normal_chat", observationArtifactId, currentActor.tenantId)] : [])<br>        ])` | `catch` | `Promise.all([<br>          ...(persistedTrace ? [this.deps.objectStore.deleteObject(debugTraceObjectKey(persistedTrace))] : []),<br>          ...(persistedTrace ? [producer.deleteArtifactSamples("debug_trace", persistedTrace.runId, currentActor.tenantId)] : []),<br>          ...(observationArtifactId ? [producer.deleteArtifactSamples("normal_chat", observationArtifactId, currentActor.tenantId)] : [])<br>        ])` に対して catch を実行する。 | `MemoRagService.chat` | `apps/api/src/rag/memorag-service.ts:2436 (MemoRagService.chat)` |
+| 実行 | Store | `Promise.all([<br>          ...(persistedTrace ? [this.deps.objectStore.deleteObject(debugTraceObjectKey(persistedTrace))] : []),<br>          ...(persistedTrace ? [producer.deleteArtifactSamples("debug_trace", persistedTrace.runId, currentActor.tenantId)] : []),<br>          ...(observationArtifactId ? [producer.deleteArtifactSamples("normal_chat", observationArtifactId, currentActor.tenantId)] : [])<br>        ])` | `catch` | `Promise.all([<br>          ...(persistedTrace ? [this.deps.objectStore.deleteObject(debugTraceObjectKey(persistedTrace))] : []),<br>          ...(persistedTrace ? [producer.deleteArtifactSamples("debug_trace", persistedTrace.runId, currentActor.tenantId)] : []),<br>          ...(observationArtifactId ? [producer.deleteArtifactSamples("normal_chat", observationArtifactId, currentActor.tenantId)] : [])<br>        ])` に対して catch を実行する。 | `MemoRagService.chat` | `apps/api/src/rag/memorag-service.ts:2543 (MemoRagService.chat)` |
 
 ## 6. 応答・メッセージ
 

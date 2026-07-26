@@ -30,7 +30,6 @@
 | # | 所属関数 | 種別 | 条件の意味 | 根拠式 | 実装位置 |
 | ---: | --- | --- | --- | --- | --- |
 | B001 | `requirePermission` | if | 利用者が 指定された permission を持たない | `!hasPermission(user, permission)` | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| B002 | `MemoRagService.createQuestion` | 三項条件 | `input.assigneeUserId` が存在し、真である、または `input.assigneeGroupId` が存在し、真である | `input.assigneeUserId \|\| input.assigneeGroupId` | `apps/api/src/rag/memorag-service.ts:3114 (MemoRagService.createQuestion)` |
 
 ## 4. 到達する主要実装
 
@@ -43,15 +42,14 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 2 | `hasPermission` | has permission の実装処理を担当する。 | `apps/api/src/authorization.ts:187 (hasPermission)` |
 | 1 | `validJson` | valid json の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:20 (validJson)` |
 | 2 | `validRequest` | valid request の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:36 (validRequest)` |
-| 1 | `MemoRagService.createQuestion` | create question の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3112 (MemoRagService.createQuestion)` |
-| 2 | `userDisplayName` | user display name の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6262 (userDisplayName)` |
-| 2 | `sanitizeSupportDiagnostics` | sanitize support diagnostics の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5790 (sanitizeSupportDiagnostics)` |
+| 1 | `MemoRagService.createQuestion` | create question の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3219 (MemoRagService.createQuestion)` |
+| 2 | `QuestionService.create` | create の実装処理を担当する。 | `apps/api/src/questions/question-service.ts:27 (QuestionService.create)` |
 
 ## 5. データ・外部境界
 
 | 種別 | 境界 | Target | Operation | 目的 | Caller | 実装位置 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 作成・追記 | Store | `this.deps.questionStore` | `create` | `this.deps.questionStore` に対して create を実行する。 | `MemoRagService.createQuestion` | `apps/api/src/rag/memorag-service.ts:3117 (MemoRagService.createQuestion)` |
+| 作成・追記 | Store | `this.ports.questionStore` | `create` | `this.ports.questionStore` に対して create を実行する。 | `QuestionService.create` | `apps/api/src/questions/question-service.ts:32 (QuestionService.create)` |
 
 ## 6. 応答・メッセージ
 

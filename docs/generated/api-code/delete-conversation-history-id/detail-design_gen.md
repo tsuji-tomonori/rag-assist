@@ -43,14 +43,14 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 2 | `hasPermission` | has permission の実装処理を担当する。 | `apps/api/src/authorization.ts:187 (hasPermission)` |
 | 1 | `validParam` | valid param の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:24 (validParam)` |
 | 2 | `validRequest` | valid request の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:36 (validRequest)` |
-| 1 | `MemoRagService.deleteConversationHistory` | delete conversation history の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4147 (MemoRagService.deleteConversationHistory)` |
-| 2 | `tenantPartitionedOwnerKey` | tenant partitioned owner key の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5914 (tenantPartitionedOwnerKey)` |
+| 1 | `MemoRagService.deleteConversationHistory` | delete conversation history の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4240 (MemoRagService.deleteConversationHistory)` |
+| 2 | `tenantPartitionedOwnerKey` | tenant partitioned owner key の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5524 (tenantPartitionedOwnerKey)` |
 
 ## 5. データ・外部境界
 
 | 種別 | 境界 | Target | Operation | 目的 | Caller | 実装位置 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 削除 | Store | `this.deps.conversationHistoryStore` | `delete` | `this.deps.conversationHistoryStore` に対して delete を実行する。 | `MemoRagService.deleteConversationHistory` | `apps/api/src/rag/memorag-service.ts:4148 (MemoRagService.deleteConversationHistory)` |
+| 削除 | Store | `this.deps.conversationHistoryStore` | `delete` | `this.deps.conversationHistoryStore` に対して delete を実行する。 | `MemoRagService.deleteConversationHistory` | `apps/api/src/rag/memorag-service.ts:4241 (MemoRagService.deleteConversationHistory)` |
 
 ## 6. 応答・メッセージ
 

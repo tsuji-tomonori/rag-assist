@@ -31,9 +31,9 @@
 | # | 所属関数 | 種別 | 条件の意味 | 根拠式 | 実装位置 |
 | ---: | --- | --- | --- | --- | --- |
 | B001 | `requirePermission` | if | 利用者が 指定された permission を持たない | `!hasPermission(user, permission)` | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| B002 | `MemoRagService.listDocumentGroups` | if | `detail.permission` が `"none"` と異なる | `detail.permission !== "none"` | `apps/api/src/rag/memorag-service.ts:1023 (MemoRagService.listDocumentGroups)` |
-| B003 | `MemoRagService.listDocumentGroups` | catch | 例外が発生した場合に catch 処理へ移る | `error` | `apps/api/src/rag/memorag-service.ts:1026 (MemoRagService.listDocumentGroups)` |
-| B004 | `MemoRagService.listDocumentGroups` | if | `error` が `ResourceOperationAuthorizationError` の instance である | `error instanceof ResourceOperationAuthorizationError` | `apps/api/src/rag/memorag-service.ts:1027 (MemoRagService.listDocumentGroups)` |
+| B002 | `MemoRagService.listDocumentGroups` | if | `detail.permission` が `"none"` と異なる | `detail.permission !== "none"` | `apps/api/src/rag/memorag-service.ts:1130 (MemoRagService.listDocumentGroups)` |
+| B003 | `MemoRagService.listDocumentGroups` | catch | 例外が発生した場合に catch 処理へ移る | `error` | `apps/api/src/rag/memorag-service.ts:1133 (MemoRagService.listDocumentGroups)` |
+| B004 | `MemoRagService.listDocumentGroups` | if | `error` が `ResourceOperationAuthorizationError` の instance である | `error instanceof ResourceOperationAuthorizationError` | `apps/api/src/rag/memorag-service.ts:1134 (MemoRagService.listDocumentGroups)` |
 | B005 | `decodeCollectionCursor` | if | `cursor` が存在しない、または偽である | `!cursor` | `apps/api/src/routes/document-routes.ts:279 (decodeCollectionCursor)` |
 | B006 | `decodeCollectionCursor` | if | test の判定結果が真ではない | `!/^(0\|[1-9][0-9]*)$/u.test(decoded)` | `apps/api/src/routes/document-routes.ts:283 (decodeCollectionCursor)` |
 | B007 | `decodeCollectionCursor` | if | `Buffer.from(decoded, "utf-8").toString("base64url")` が `normalized` と異なる | `Buffer.from(decoded, "utf-8").toString("base64url") !== normalized` | `apps/api/src/routes/document-routes.ts:284 (decodeCollectionCursor)` |
@@ -52,9 +52,9 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 2 | `hasPermission` | has permission の実装処理を担当する。 | `apps/api/src/authorization.ts:187 (hasPermission)` |
 | 1 | `validQuery` | valid query の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:28 (validQuery)` |
 | 2 | `validRequest` | valid request の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:36 (validRequest)` |
-| 1 | `MemoRagService.listDocumentGroups` | list document groups の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1018 (MemoRagService.listDocumentGroups)` |
-| 2 | `authoritativeActorTenantId` | authoritative actor tenant id の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5906 (authoritativeActorTenantId)` |
-| 2 | `normalizeDocumentGroups` | normalize document groups の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6204 (normalizeDocumentGroups)` |
+| 1 | `MemoRagService.listDocumentGroups` | list document groups の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1125 (MemoRagService.listDocumentGroups)` |
+| 2 | `authoritativeActorTenantId` | authoritative actor tenant id の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5516 (authoritativeActorTenantId)` |
+| 2 | `normalizeDocumentGroups` | normalize document groups の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5814 (normalizeDocumentGroups)` |
 | 2 | `FolderPermissionService.resolveEffectiveFolderPermissionDetail` | resolve effective folder permission detail の実装処理を担当する。 | `apps/api/src/folders/folder-permission-service.ts:138 (FolderPermissionService.resolveEffectiveFolderPermissionDetail)` |
 | 2 | `FolderPermissionService.assertFolderOperation` | assert folder operation の実装処理を担当する。 | `apps/api/src/folders/folder-permission-service.ts:102 (FolderPermissionService.assertFolderOperation)` |
 | 1 | `decodeCollectionCursor` | decode collection cursor の実装処理を担当する。 | `apps/api/src/routes/document-routes.ts:278 (decodeCollectionCursor)` |
@@ -64,7 +64,7 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 
 | 種別 | 境界 | Target | Operation | 目的 | Caller | 実装位置 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 参照 | Store | `this.deps.documentGroupStore` | `list` | `this.deps.documentGroupStore` に対して list を実行する。 | `MemoRagService.listDocumentGroups` | `apps/api/src/rag/memorag-service.ts:1019 (MemoRagService.listDocumentGroups)` |
+| 参照 | Store | `this.deps.documentGroupStore` | `list` | `this.deps.documentGroupStore` に対して list を実行する。 | `MemoRagService.listDocumentGroups` | `apps/api/src/rag/memorag-service.ts:1126 (MemoRagService.listDocumentGroups)` |
 | 参照 | Store | `this.deps.documentGroupStore` | `list` | `this.deps.documentGroupStore` に対して list を実行する。 | `FolderPermissionService.resolveEffectiveFolderPermissionDetail` | `apps/api/src/folders/folder-permission-service.ts:145 (FolderPermissionService.resolveEffectiveFolderPermissionDetail)` |
 | 参照 | Store | `this.deps.userGroupStore` | `get` | `this.deps.userGroupStore` に対して get を実行する。 | `FolderPermissionService.resolveUserMembershipPermission` | `apps/api/src/folders/folder-permission-service.ts:780 (FolderPermissionService.resolveUserMembershipPermission)` |
 | 参照 | Store | `this.deps.groupMembershipStore` | `listByGroupId` | `this.deps.groupMembershipStore` に対して list by group id を実行する。 | `FolderPermissionService.resolveUserMembershipPermission` | `apps/api/src/folders/folder-permission-service.ts:781 (FolderPermissionService.resolveUserMembershipPermission)` |

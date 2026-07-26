@@ -52,7 +52,7 @@
 
 ## 4. 到達する主要実装
 
-handler を起点に TypeScript symbol を解決し、深さ 2 までの主要関数・method を列挙しています。深い helper を含む全到達関数は 14 件で、永続化・外部接続は深さにかかわらず次節へ集約しています。
+handler を起点に TypeScript symbol を解決し、深さ 2 までの主要関数・method を列挙しています。深い helper を含む全到達関数は 15 件で、永続化・外部接続は深さにかかわらず次節へ集約しています。
 
 | 深さ | Symbol | 責務 | 実装位置 |
 | ---: | --- | --- | --- |
@@ -63,20 +63,21 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 1 | `requirePermission` | require permission の実装処理を担当する。 | `apps/api/src/authorization.ts:183 (requirePermission)` |
 | 1 | `validParam` | valid param の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:24 (validParam)` |
 | 2 | `validRequest` | valid request の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:36 (validRequest)` |
-| 1 | `MemoRagService.getQuestion` | get question の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3139 (MemoRagService.getQuestion)` |
+| 1 | `MemoRagService.getQuestion` | get question の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3235 (MemoRagService.getQuestion)` |
+| 2 | `QuestionService.get` | get の実装処理を担当する。 | `apps/api/src/questions/question-service.ts:57 (QuestionService.get)` |
 | 1 | `canReadAllTickets` | can read all tickets の実装処理を担当する。 | `apps/api/src/routes/question-routes.ts:193 (canReadAllTickets)` |
 | 1 | `canAccessAssignedTicket` | can access assigned ticket の実装処理を担当する。 | `apps/api/src/routes/question-routes.ts:197 (canAccessAssignedTicket)` |
 | 2 | `supportGroupIds` | support group ids の実装処理を担当する。 | `apps/api/src/routes/question-routes.ts:203 (supportGroupIds)` |
 | 1 | `validJson` | valid json の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:20 (validJson)` |
-| 1 | `MemoRagService.answerQuestion` | answer question の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3143 (MemoRagService.answerQuestion)` |
-| 2 | `userDisplayName` | user display name の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6262 (userDisplayName)` |
+| 1 | `MemoRagService.answerQuestion` | answer question の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3239 (MemoRagService.answerQuestion)` |
+| 2 | `QuestionService.answer` | answer の実装処理を担当する。 | `apps/api/src/questions/question-service.ts:61 (QuestionService.answer)` |
 
 ## 5. データ・外部境界
 
 | 種別 | 境界 | Target | Operation | 目的 | Caller | 実装位置 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 参照 | Store | `this.deps.questionStore` | `get` | `this.deps.questionStore` に対して get を実行する。 | `MemoRagService.getQuestion` | `apps/api/src/rag/memorag-service.ts:3140 (MemoRagService.getQuestion)` |
-| 更新 | Store | `this.deps.questionStore` | `answer` | `this.deps.questionStore` に対して answer を実行する。 | `MemoRagService.answerQuestion` | `apps/api/src/rag/memorag-service.ts:3144 (MemoRagService.answerQuestion)` |
+| 参照 | Store | `this.ports.questionStore` | `get` | `this.ports.questionStore` に対して get を実行する。 | `QuestionService.get` | `apps/api/src/questions/question-service.ts:58 (QuestionService.get)` |
+| 更新 | Store | `this.ports.questionStore` | `answer` | `this.ports.questionStore` に対して answer を実行する。 | `QuestionService.answer` | `apps/api/src/questions/question-service.ts:62 (QuestionService.answer)` |
 
 ## 6. 応答・メッセージ
 

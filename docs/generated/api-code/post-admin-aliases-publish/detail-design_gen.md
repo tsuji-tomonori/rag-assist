@@ -37,13 +37,13 @@
 | B001 | `POST /admin/aliases/publish handler` | catch | 例外が発生した場合に catch 処理へ移る | `error` | `apps/api/src/routes/admin-routes.ts:565 (POST /admin/aliases/publish handler)` |
 | B002 | `POST /admin/aliases/publish handler` | if | `error` が `AliasGovernanceError` の instance である | `error instanceof AliasGovernanceError` | `apps/api/src/routes/admin-routes.ts:566 (POST /admin/aliases/publish handler)` |
 | B003 | `requirePermission` | if | 利用者が 指定された permission を持たない | `!hasPermission(user, permission)` | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| B004 | `MemoRagService.publishAliases` | if | `(state.storeVersion ?? "absent")` が `input.expectedVersion` と異なる | `(state.storeVersion ?? "absent") !== input.expectedVersion` | `apps/api/src/rag/memorag-service.ts:1586 (MemoRagService.publishAliases)` |
-| B005 | `MemoRagService.publishAliases` | if | `aliases.length` が `0` と等しい | `aliases.length === 0` | `apps/api/src/rag/memorag-service.ts:1601 (MemoRagService.publishAliases)` |
-| B006 | `MemoRagService.publishAliases` | loop | `ledger.aliases` が存在し、真である | `ledger.aliases` | `apps/api/src/rag/memorag-service.ts:1607 (MemoRagService.publishAliases)` |
-| B007 | `MemoRagService.publishAliases` | if | `published` が存在し、真である | `published` | `apps/api/src/rag/memorag-service.ts:1609 (MemoRagService.publishAliases)` |
-| B008 | `MemoRagService.publishAliases` | if | `alias.searchImprovement` が存在し、真である | `alias.searchImprovement` | `apps/api/src/rag/memorag-service.ts:1611 (MemoRagService.publishAliases)` |
-| B009 | `MemoRagService.publishAliases` | catch | 例外が発生した場合に catch 処理へ移る | `error` | `apps/api/src/rag/memorag-service.ts:1633 (MemoRagService.publishAliases)` |
-| B010 | `MemoRagService.publishAliases` | if | is conditional object write error の判定結果が真である | `isConditionalObjectWriteError(error)` | `apps/api/src/rag/memorag-service.ts:1634 (MemoRagService.publishAliases)` |
+| B004 | `MemoRagService.publishAliases` | if | `(state.storeVersion ?? "absent")` が `input.expectedVersion` と異なる | `(state.storeVersion ?? "absent") !== input.expectedVersion` | `apps/api/src/rag/memorag-service.ts:1693 (MemoRagService.publishAliases)` |
+| B005 | `MemoRagService.publishAliases` | if | `aliases.length` が `0` と等しい | `aliases.length === 0` | `apps/api/src/rag/memorag-service.ts:1708 (MemoRagService.publishAliases)` |
+| B006 | `MemoRagService.publishAliases` | loop | `ledger.aliases` が存在し、真である | `ledger.aliases` | `apps/api/src/rag/memorag-service.ts:1714 (MemoRagService.publishAliases)` |
+| B007 | `MemoRagService.publishAliases` | if | `published` が存在し、真である | `published` | `apps/api/src/rag/memorag-service.ts:1716 (MemoRagService.publishAliases)` |
+| B008 | `MemoRagService.publishAliases` | if | `alias.searchImprovement` が存在し、真である | `alias.searchImprovement` | `apps/api/src/rag/memorag-service.ts:1718 (MemoRagService.publishAliases)` |
+| B009 | `MemoRagService.publishAliases` | catch | 例外が発生した場合に catch 処理へ移る | `error` | `apps/api/src/rag/memorag-service.ts:1740 (MemoRagService.publishAliases)` |
+| B010 | `MemoRagService.publishAliases` | if | is conditional object write error の判定結果が真である | `isConditionalObjectWriteError(error)` | `apps/api/src/rag/memorag-service.ts:1741 (MemoRagService.publishAliases)` |
 | B011 | `aliasGovernanceStatus` | if | `error.result` が `"conflict"` と等しい | `error.result === "conflict"` | `apps/api/src/routes/admin-routes.ts:733 (aliasGovernanceStatus)` |
 | B012 | `aliasGovernanceStatus` | if | `error.result` が `"denied"` と等しい | `error.result === "denied"` | `apps/api/src/routes/admin-routes.ts:734 (aliasGovernanceStatus)` |
 
@@ -58,17 +58,17 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 2 | `hasPermission` | has permission の実装処理を担当する。 | `apps/api/src/authorization.ts:187 (hasPermission)` |
 | 1 | `validJson` | valid json の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:20 (validJson)` |
 | 2 | `validRequest` | valid request の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:36 (validRequest)` |
-| 1 | `MemoRagService.publishAliases` | publish aliases の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1582 (MemoRagService.publishAliases)` |
-| 2 | `authoritativeActorTenantId` | authoritative actor tenant id の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5906 (authoritativeActorTenantId)` |
-| 2 | `canonicalAliasReason` | canonical alias reason の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5721 (canonicalAliasReason)` |
-| 2 | `MemoRagService.loadAliasLedger` | load alias ledger の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3588 (MemoRagService.loadAliasLedger)` |
-| 2 | `aliasTenantId` | alias tenant id の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5713 (aliasTenantId)` |
-| 2 | `MemoRagService.recordAliasMutationResult` | record alias mutation result の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3635 (MemoRagService.recordAliasMutationResult)` |
-| 2 | `appendAliasAudit` | append alias audit の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5817 (appendAliasAudit)` |
-| 2 | `MemoRagService.saveAliasLedger` | save alias ledger の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3602 (MemoRagService.saveAliasLedger)` |
-| 2 | `isConditionalObjectWriteError` | is conditional object write error の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5960 (isConditionalObjectWriteError)` |
-| 2 | `createAliasVersion` | create alias version の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5851 (createAliasVersion)` |
-| 2 | `createAliasRecordVersion` | create alias record version の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5847 (createAliasRecordVersion)` |
+| 1 | `MemoRagService.publishAliases` | publish aliases の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1689 (MemoRagService.publishAliases)` |
+| 2 | `authoritativeActorTenantId` | authoritative actor tenant id の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5516 (authoritativeActorTenantId)` |
+| 2 | `canonicalAliasReason` | canonical alias reason の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5358 (canonicalAliasReason)` |
+| 2 | `MemoRagService.loadAliasLedger` | load alias ledger の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3681 (MemoRagService.loadAliasLedger)` |
+| 2 | `aliasTenantId` | alias tenant id の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5350 (aliasTenantId)` |
+| 2 | `MemoRagService.recordAliasMutationResult` | record alias mutation result の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3728 (MemoRagService.recordAliasMutationResult)` |
+| 2 | `appendAliasAudit` | append alias audit の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5427 (appendAliasAudit)` |
+| 2 | `MemoRagService.saveAliasLedger` | save alias ledger の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3695 (MemoRagService.saveAliasLedger)` |
+| 2 | `isConditionalObjectWriteError` | is conditional object write error の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5570 (isConditionalObjectWriteError)` |
+| 2 | `createAliasVersion` | create alias version の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5461 (createAliasVersion)` |
+| 2 | `createAliasRecordVersion` | create alias record version の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5457 (createAliasRecordVersion)` |
 | 2 | `tenantPartitionId` | tenant partition id の実装処理を担当する。 | `apps/api/src/security/tenant-partition.ts:3 (tenantPartitionId)` |
 | 2 | `aliasArtifactLatestKeyForTenant` | alias artifact latest key for tenant の実装処理を担当する。 | `apps/api/src/search/alias-artifacts.ts:9 (aliasArtifactLatestKeyForTenant)` |
 | 1 | `aliasGovernanceStatus` | alias governance status の実装処理を担当する。 | `apps/api/src/routes/admin-routes.ts:732 (aliasGovernanceStatus)` |
@@ -77,20 +77,20 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 
 | 種別 | 境界 | Target | Operation | 目的 | Caller | 実装位置 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 参照 | Store | `this` | `loadAliasLedger` | `this` に対して load alias ledger を実行する。 | `MemoRagService.publishAliases` | `apps/api/src/rag/memorag-service.ts:1585 (MemoRagService.publishAliases)` |
-| 参照 | Store | `this.deps.objectStore` | `getTextWithVersion` | `this.deps.objectStore` に対して get text with version を実行する。 | `MemoRagService.loadAliasLedger` | `apps/api/src/rag/memorag-service.ts:3590 (MemoRagService.loadAliasLedger)` |
-| 実行 | Store | `normalizeAliasLedger` | `normalizeAliasLedger` | `normalizeAliasLedger` に対して normalize alias ledger を実行する。 | `MemoRagService.loadAliasLedger` | `apps/api/src/rag/memorag-service.ts:3594 (MemoRagService.loadAliasLedger)` |
-| 実行 | Store | `ledger.auditLog` | `push` | `ledger.auditLog` に対して push を実行する。 | `appendAliasAudit` | `apps/api/src/rag/memorag-service.ts:5831 (appendAliasAudit)` |
-| 実行 | Store | `this` | `mutateAliasLedger` | `this` に対して mutate alias ledger を実行する。 | `MemoRagService.recordAliasMutationResult` | `apps/api/src/rag/memorag-service.ts:3642 (MemoRagService.recordAliasMutationResult)` |
-| 参照 | Store | `this` | `loadAliasLedger` | `this` に対して load alias ledger を実行する。 | `MemoRagService.mutateAliasLedger` | `apps/api/src/rag/memorag-service.ts:3620 (MemoRagService.mutateAliasLedger)` |
-| 作成・追記 | Store | `this` | `saveAliasLedger` | `this` に対して save alias ledger を実行する。 | `MemoRagService.mutateAliasLedger` | `apps/api/src/rag/memorag-service.ts:3624 (MemoRagService.mutateAliasLedger)` |
-| 作成・追記 | Store | `this.deps.objectStore` | `putTextIfVersion` | `this.deps.objectStore` に対して put text if version を実行する。 | `MemoRagService.saveAliasLedger` | `apps/api/src/rag/memorag-service.ts:3603 (MemoRagService.saveAliasLedger)` |
-| 参照 | Store | `this.deps.objectStore` | `getTextWithVersion` | `this.deps.objectStore` に対して get text with version を実行する。 | `MemoRagService.saveAliasLedger` | `apps/api/src/rag/memorag-service.ts:3609 (MemoRagService.saveAliasLedger)` |
-| 実行 | Store | `ledger.aliases<br>      ` | `filter` | `ledger.aliases<br>      ` に対して filter を実行する。 | `MemoRagService.publishAliases` | `apps/api/src/rag/memorag-service.ts:1593 (MemoRagService.publishAliases)` |
-| 実行 | Store | `ledger.aliases<br>      .filter((alias) => aliasTenantId(alias) === tenantId && alias.status === "approved")<br>      ` | `map` | `ledger.aliases<br>      .filter((alias) => aliasTenantId(alias) === tenantId && alias.status === "approved")<br>      ` に対して map を実行する。 | `MemoRagService.publishAliases` | `apps/api/src/rag/memorag-service.ts:1593 (MemoRagService.publishAliases)` |
-| 作成・追記 | Store | `this.deps.objectStore` | `putText` | `this.deps.objectStore` に対して put text を実行する。 | `MemoRagService.publishAliases` | `apps/api/src/rag/memorag-service.ts:1622 (MemoRagService.publishAliases)` |
-| 作成・追記 | Store | `this` | `saveAliasLedger` | `this` に対して save alias ledger を実行する。 | `MemoRagService.publishAliases` | `apps/api/src/rag/memorag-service.ts:1632 (MemoRagService.publishAliases)` |
-| 作成・追記 | Store | `this.deps.objectStore` | `putText` | `this.deps.objectStore` に対して put text を実行する。 | `MemoRagService.publishAliases` | `apps/api/src/rag/memorag-service.ts:1640 (MemoRagService.publishAliases)` |
+| 参照 | Store | `this` | `loadAliasLedger` | `this` に対して load alias ledger を実行する。 | `MemoRagService.publishAliases` | `apps/api/src/rag/memorag-service.ts:1692 (MemoRagService.publishAliases)` |
+| 参照 | Store | `this.deps.objectStore` | `getTextWithVersion` | `this.deps.objectStore` に対して get text with version を実行する。 | `MemoRagService.loadAliasLedger` | `apps/api/src/rag/memorag-service.ts:3683 (MemoRagService.loadAliasLedger)` |
+| 実行 | Store | `normalizeAliasLedger` | `normalizeAliasLedger` | `normalizeAliasLedger` に対して normalize alias ledger を実行する。 | `MemoRagService.loadAliasLedger` | `apps/api/src/rag/memorag-service.ts:3687 (MemoRagService.loadAliasLedger)` |
+| 実行 | Store | `ledger.auditLog` | `push` | `ledger.auditLog` に対して push を実行する。 | `appendAliasAudit` | `apps/api/src/rag/memorag-service.ts:5441 (appendAliasAudit)` |
+| 実行 | Store | `this` | `mutateAliasLedger` | `this` に対して mutate alias ledger を実行する。 | `MemoRagService.recordAliasMutationResult` | `apps/api/src/rag/memorag-service.ts:3735 (MemoRagService.recordAliasMutationResult)` |
+| 参照 | Store | `this` | `loadAliasLedger` | `this` に対して load alias ledger を実行する。 | `MemoRagService.mutateAliasLedger` | `apps/api/src/rag/memorag-service.ts:3713 (MemoRagService.mutateAliasLedger)` |
+| 作成・追記 | Store | `this` | `saveAliasLedger` | `this` に対して save alias ledger を実行する。 | `MemoRagService.mutateAliasLedger` | `apps/api/src/rag/memorag-service.ts:3717 (MemoRagService.mutateAliasLedger)` |
+| 作成・追記 | Store | `this.deps.objectStore` | `putTextIfVersion` | `this.deps.objectStore` に対して put text if version を実行する。 | `MemoRagService.saveAliasLedger` | `apps/api/src/rag/memorag-service.ts:3696 (MemoRagService.saveAliasLedger)` |
+| 参照 | Store | `this.deps.objectStore` | `getTextWithVersion` | `this.deps.objectStore` に対して get text with version を実行する。 | `MemoRagService.saveAliasLedger` | `apps/api/src/rag/memorag-service.ts:3702 (MemoRagService.saveAliasLedger)` |
+| 実行 | Store | `ledger.aliases<br>      ` | `filter` | `ledger.aliases<br>      ` に対して filter を実行する。 | `MemoRagService.publishAliases` | `apps/api/src/rag/memorag-service.ts:1700 (MemoRagService.publishAliases)` |
+| 実行 | Store | `ledger.aliases<br>      .filter((alias) => aliasTenantId(alias) === tenantId && alias.status === "approved")<br>      ` | `map` | `ledger.aliases<br>      .filter((alias) => aliasTenantId(alias) === tenantId && alias.status === "approved")<br>      ` に対して map を実行する。 | `MemoRagService.publishAliases` | `apps/api/src/rag/memorag-service.ts:1700 (MemoRagService.publishAliases)` |
+| 作成・追記 | Store | `this.deps.objectStore` | `putText` | `this.deps.objectStore` に対して put text を実行する。 | `MemoRagService.publishAliases` | `apps/api/src/rag/memorag-service.ts:1729 (MemoRagService.publishAliases)` |
+| 作成・追記 | Store | `this` | `saveAliasLedger` | `this` に対して save alias ledger を実行する。 | `MemoRagService.publishAliases` | `apps/api/src/rag/memorag-service.ts:1739 (MemoRagService.publishAliases)` |
+| 作成・追記 | Store | `this.deps.objectStore` | `putText` | `this.deps.objectStore` に対して put text を実行する。 | `MemoRagService.publishAliases` | `apps/api/src/rag/memorag-service.ts:1747 (MemoRagService.publishAliases)` |
 
 ## 6. 応答・メッセージ
 

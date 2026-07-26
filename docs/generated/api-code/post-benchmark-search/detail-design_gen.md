@@ -48,8 +48,8 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 1 | `prepareBenchmarkSearchInvocation` | prepare benchmark search invocation の実装処理を担当する。 | `apps/api/src/benchmark/evaluation-context.ts:134 (prepareBenchmarkSearchInvocation)` |
 | 2 | `resolveBenchmarkEvaluationContext` | resolve benchmark evaluation context の実装処理を担当する。 | `apps/api/src/benchmark/evaluation-context.ts:71 (resolveBenchmarkEvaluationContext)` |
 | 1 | `benchmarkHttp` | benchmark http の実装処理を担当する。 | `apps/api/src/routes/benchmark-routes.ts:259 (benchmarkHttp)` |
-| 1 | `MemoRagService.search` | search の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3107 (MemoRagService.search)` |
-| 2 | `MemoRagService.assertSearchScopeReadable` | assert search scope readable の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1261 (MemoRagService.assertSearchScopeReadable)` |
+| 1 | `MemoRagService.search` | search の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3214 (MemoRagService.search)` |
+| 2 | `MemoRagService.assertSearchScopeReadable` | assert search scope readable の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1368 (MemoRagService.assertSearchScopeReadable)` |
 | 2 | `searchRag` | search rag の実装処理を担当する。 | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:215 (searchRag)` |
 
 ## 5. データ・外部境界

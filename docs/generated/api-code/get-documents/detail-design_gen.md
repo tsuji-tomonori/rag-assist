@@ -34,12 +34,12 @@
 | ---: | --- | --- | --- | --- | --- |
 | B001 | `GET /documents handler` | if | 利用者が "rag:doc:read" permission を持たない、かつ 利用者が "benchmark:seed_corpus" permission を持たない | `!hasPermission(user, "rag:doc:read") && !hasPermission(user, "benchmark:seed_corpus")` | `apps/api/src/routes/document-routes.ts:837 (GET /documents handler)` |
 | B002 | `GET /documents handler` | 三項条件 | 利用者が "rag:doc:read" permission を持つ | `hasPermission(user, "rag:doc:read")` | `apps/api/src/routes/document-routes.ts:841 (GET /documents handler)` |
-| B003 | `MemoRagService.listDocuments` | if | is missing object error の判定結果が真である | `isMissingObjectError(error)` | `apps/api/src/rag/memorag-service.ts:908 (MemoRagService.listDocuments)` |
-| B004 | `MemoRagService.listDocuments` | 三項条件 | `user` が存在し、真である | `user` | `apps/api/src/rag/memorag-service.ts:922 (MemoRagService.listDocuments)` |
-| B005 | `MemoRagService.listDocuments` | 三項条件 | `user` が存在し、真である | `user` | `apps/api/src/rag/memorag-service.ts:925 (MemoRagService.listDocuments)` |
-| B006 | `MemoRagService.listDocuments` | if | `user` が存在しない、または偽である、または `permissionService` が存在しない、または偽である | `!user \|\| !permissionService` | `apps/api/src/rag/memorag-service.ts:930 (MemoRagService.listDocuments)` |
-| B007 | `MemoRagService.listBenchmarkDocumentManifests` | if | `config.benchmarkEvaluationEnabled` が存在しない、または偽である、または `tenantId` が存在しない、または偽である | `!config.benchmarkEvaluationEnabled \|\| !tenantId` | `apps/api/src/rag/memorag-service.ts:955 (MemoRagService.listBenchmarkDocumentManifests)` |
-| B008 | `MemoRagService.listBenchmarkDocumentManifests` | if | is missing object error の判定結果が真である | `isMissingObjectError(error)` | `apps/api/src/rag/memorag-service.ts:962 (MemoRagService.listBenchmarkDocumentManifests)` |
+| B003 | `MemoRagService.listDocuments` | if | is missing object error の判定結果が真である | `isMissingObjectError(error)` | `apps/api/src/rag/memorag-service.ts:1015 (MemoRagService.listDocuments)` |
+| B004 | `MemoRagService.listDocuments` | 三項条件 | `user` が存在し、真である | `user` | `apps/api/src/rag/memorag-service.ts:1029 (MemoRagService.listDocuments)` |
+| B005 | `MemoRagService.listDocuments` | 三項条件 | `user` が存在し、真である | `user` | `apps/api/src/rag/memorag-service.ts:1032 (MemoRagService.listDocuments)` |
+| B006 | `MemoRagService.listDocuments` | if | `user` が存在しない、または偽である、または `permissionService` が存在しない、または偽である | `!user \|\| !permissionService` | `apps/api/src/rag/memorag-service.ts:1037 (MemoRagService.listDocuments)` |
+| B007 | `MemoRagService.listBenchmarkDocumentManifests` | if | `config.benchmarkEvaluationEnabled` が存在しない、または偽である、または `tenantId` が存在しない、または偽である | `!config.benchmarkEvaluationEnabled \|\| !tenantId` | `apps/api/src/rag/memorag-service.ts:1062 (MemoRagService.listBenchmarkDocumentManifests)` |
+| B008 | `MemoRagService.listBenchmarkDocumentManifests` | if | is missing object error の判定結果が真である | `isMissingObjectError(error)` | `apps/api/src/rag/memorag-service.ts:1069 (MemoRagService.listBenchmarkDocumentManifests)` |
 | B009 | `decodeCollectionCursor` | if | `cursor` が存在しない、または偽である | `!cursor` | `apps/api/src/routes/document-routes.ts:279 (decodeCollectionCursor)` |
 | B010 | `decodeCollectionCursor` | if | test の判定結果が真ではない | `!/^(0\|[1-9][0-9]*)$/u.test(decoded)` | `apps/api/src/routes/document-routes.ts:283 (decodeCollectionCursor)` |
 | B011 | `decodeCollectionCursor` | if | `Buffer.from(decoded, "utf-8").toString("base64url")` が `normalized` と異なる | `Buffer.from(decoded, "utf-8").toString("base64url") !== normalized` | `apps/api/src/routes/document-routes.ts:284 (decodeCollectionCursor)` |
@@ -59,19 +59,19 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 2 | `getPermissionsForGroups` | get permissions for groups の実装処理を担当する。 | `apps/api/src/authorization.ts:106 (getPermissionsForGroups)` |
 | 1 | `validQuery` | valid query の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:28 (validQuery)` |
 | 2 | `validRequest` | valid request の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:36 (validRequest)` |
-| 1 | `MemoRagService.listDocuments` | list documents の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:901 (MemoRagService.listDocuments)` |
-| 2 | `MemoRagService.documentAccessTenantId` | document access tenant id の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3934 (MemoRagService.documentAccessTenantId)` |
+| 1 | `MemoRagService.listDocuments` | list documents の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1008 (MemoRagService.listDocuments)` |
+| 2 | `MemoRagService.documentAccessTenantId` | document access tenant id の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4027 (MemoRagService.documentAccessTenantId)` |
 | 2 | `tenantManifestPrefix` | tenant manifest prefix の実装処理を担当する。 | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:57 (tenantManifestPrefix)` |
 | 2 | `readTenantManifestByKey` | read tenant manifest by key の実装処理を担当する。 | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:88 (readTenantManifestByKey)` |
-| 2 | `isMissingObjectError` | is missing object error の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5949 (isMissingObjectError)` |
+| 2 | `isMissingObjectError` | is missing object error の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5559 (isMissingObjectError)` |
 | 2 | `createPublicationPointerSnapshot` | create publication pointer snapshot の実装処理を担当する。 | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:142 (createPublicationPointerSnapshot)` |
 | 2 | `isManifestCurrentPublication` | is manifest current publication の実装処理を担当する。 | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1500 (isManifestCurrentPublication)` |
-| 2 | `stringValue` | string value の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6347 (stringValue)` |
-| 2 | `MemoRagService.canAccessDocumentManifest` | can access document manifest の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1228 (MemoRagService.canAccessDocumentManifest)` |
+| 2 | `stringValue` | string value の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5924 (stringValue)` |
+| 2 | `MemoRagService.canAccessDocumentManifest` | can access document manifest の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1335 (MemoRagService.canAccessDocumentManifest)` |
 | 2 | `DocumentPermissionService.resolveEffectiveDocumentPermission` | resolve effective document permission の実装処理を担当する。 | `apps/api/src/documents/document-permission-service.ts:122 (DocumentPermissionService.resolveEffectiveDocumentPermission)` |
-| 2 | `MemoRagService.sanitizeDirectSharedManifestForList` | sanitize direct shared manifest for list の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1246 (MemoRagService.sanitizeDirectSharedManifestForList)` |
-| 2 | `documentCapabilities` | document capabilities の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6089 (documentCapabilities)` |
-| 1 | `MemoRagService.listBenchmarkDocumentManifests` | list benchmark document manifests の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:953 (MemoRagService.listBenchmarkDocumentManifests)` |
+| 2 | `MemoRagService.sanitizeDirectSharedManifestForList` | sanitize direct shared manifest for list の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1353 (MemoRagService.sanitizeDirectSharedManifestForList)` |
+| 2 | `documentCapabilities` | document capabilities の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5699 (documentCapabilities)` |
+| 1 | `MemoRagService.listBenchmarkDocumentManifests` | list benchmark document manifests の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1060 (MemoRagService.listBenchmarkDocumentManifests)` |
 | 1 | `decodeCollectionCursor` | decode collection cursor の実装処理を担当する。 | `apps/api/src/routes/document-routes.ts:278 (decodeCollectionCursor)` |
 | 1 | `authorizedOnlyPage` | authorized only page の実装処理を担当する。 | `apps/api/src/security/public-resource-response.ts:56 (authorizedOnlyPage)` |
 
@@ -79,7 +79,7 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 
 | 種別 | 境界 | Target | Operation | 目的 | Caller | 実装位置 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 参照 | Store | `this.deps.objectStore` | `listKeys` | `this.deps.objectStore` に対して list keys を実行する。 | `MemoRagService.listDocuments` | `apps/api/src/rag/memorag-service.ts:903 (MemoRagService.listDocuments)` |
+| 参照 | Store | `this.deps.objectStore` | `listKeys` | `this.deps.objectStore` に対して list keys を実行する。 | `MemoRagService.listDocuments` | `apps/api/src/rag/memorag-service.ts:1010 (MemoRagService.listDocuments)` |
 | 参照 | Store | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `readTenantManifestByKey` | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:93 (readTenantManifestByKey)` |
 | 参照 | Store | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `loadPublicationPointer` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1809 (loadPublicationPointer)` |
 | 参照 | Store | `this.deps.documentGroupStore` | `list` | `this.deps.documentGroupStore` に対して list を実行する。 | `FolderPermissionService.resolveEffectiveFolderPermissionDetail` | `apps/api/src/folders/folder-permission-service.ts:145 (FolderPermissionService.resolveEffectiveFolderPermissionDetail)` |
@@ -92,7 +92,7 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 参照 | Store | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `DocumentPermissionService.loadLegacyDocumentGrants` | `apps/api/src/documents/document-permission-service.ts:537 (DocumentPermissionService.loadLegacyDocumentGrants)` |
 | 参照 | Store | `this.deps.userGroupStore` | `get` | `this.deps.userGroupStore` に対して get を実行する。 | `DocumentPermissionService.resolveUserMembershipPermission` | `apps/api/src/documents/document-permission-service.ts:683 (DocumentPermissionService.resolveUserMembershipPermission)` |
 | 参照 | Store | `this.deps.groupMembershipStore` | `listByGroupId` | `this.deps.groupMembershipStore` に対して list by group id を実行する。 | `DocumentPermissionService.resolveUserMembershipPermission` | `apps/api/src/documents/document-permission-service.ts:684 (DocumentPermissionService.resolveUserMembershipPermission)` |
-| 参照 | Store | `this.deps.objectStore` | `listKeys` | `this.deps.objectStore` に対して list keys を実行する。 | `MemoRagService.listBenchmarkDocumentManifests` | `apps/api/src/rag/memorag-service.ts:958 (MemoRagService.listBenchmarkDocumentManifests)` |
+| 参照 | Store | `this.deps.objectStore` | `listKeys` | `this.deps.objectStore` に対して list keys を実行する。 | `MemoRagService.listBenchmarkDocumentManifests` | `apps/api/src/rag/memorag-service.ts:1065 (MemoRagService.listBenchmarkDocumentManifests)` |
 
 ## 6. 応答・メッセージ
 

@@ -99,10 +99,10 @@
 | B045 | `enforceDocumentCreateOperation` | 三項条件 | `scope?.scopeType` が `"group"` と等しい | `scope?.scopeType === "group"` | `apps/api/src/routes/document-routes.ts:480 (enforceDocumentCreateOperation)` |
 | B046 | `enforceDocumentCreateOperation` | if | `groupIds.length` が `0` より大きい | `groupIds.length > 0` | `apps/api/src/routes/document-routes.ts:481 (enforceDocumentCreateOperation)` |
 | B047 | `enforceDocumentCreateOperation` | loop | `groupIds` が存在し、真である | `groupIds` | `apps/api/src/routes/document-routes.ts:483 (enforceDocumentCreateOperation)` |
-| B048 | `MemoRagService.createCurrentDocumentIngestAuthorization` | 三項条件 | `input.purpose` が `"benchmarkSeed"` と等しい | `input.purpose === "benchmarkSeed"` | `apps/api/src/rag/memorag-service.ts:488 (MemoRagService.createCurrentDocumentIngestAuthorization)` |
-| B049 | `MemoRagService.createCurrentDocumentIngestAuthorization` | 三項条件 | `input.purpose` が `"chatAttachment"` と等しい | `input.purpose === "chatAttachment"` | `apps/api/src/rag/memorag-service.ts:490 (MemoRagService.createCurrentDocumentIngestAuthorization)` |
-| B050 | `MemoRagService.ingest` | 三項条件 | `tenantId` が存在し、真である、かつ `this.deps.usageEventStore` が存在し、真である、かつ `this.usageRolloutMode()` が `"disabled"` と異なる | `tenantId && this.deps.usageEventStore && this.usageRolloutMode() !== "disabled"` | `apps/api/src/rag/memorag-service.ts:468 (MemoRagService.ingest)` |
-| B051 | `MemoRagService.discardUncommittedIngest` | if | some の判定結果が真である | `results.some((result) => result.status === "rejected")` | `apps/api/src/rag/memorag-service.ts:522 (MemoRagService.discardUncommittedIngest)` |
+| B048 | `MemoRagService.createCurrentDocumentIngestAuthorization` | 三項条件 | `input.purpose` が `"benchmarkSeed"` と等しい | `input.purpose === "benchmarkSeed"` | `apps/api/src/rag/memorag-service.ts:595 (MemoRagService.createCurrentDocumentIngestAuthorization)` |
+| B049 | `MemoRagService.createCurrentDocumentIngestAuthorization` | 三項条件 | `input.purpose` が `"chatAttachment"` と等しい | `input.purpose === "chatAttachment"` | `apps/api/src/rag/memorag-service.ts:597 (MemoRagService.createCurrentDocumentIngestAuthorization)` |
+| B050 | `MemoRagService.ingest` | 三項条件 | `tenantId` が存在し、真である、かつ `this.deps.usageEventStore` が存在し、真である、かつ `this.usageRolloutMode()` が `"disabled"` と異なる | `tenantId && this.deps.usageEventStore && this.usageRolloutMode() !== "disabled"` | `apps/api/src/rag/memorag-service.ts:575 (MemoRagService.ingest)` |
+| B051 | `MemoRagService.discardUncommittedIngest` | if | some の判定結果が真である | `results.some((result) => result.status === "rejected")` | `apps/api/src/rag/memorag-service.ts:629 (MemoRagService.discardUncommittedIngest)` |
 
 ## 4. 到達する主要実装
 
@@ -123,7 +123,7 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 2 | `isBenchmarkSeedPdfUpload` | is benchmark seed pdf upload の実装処理を担当する。 | `apps/api/src/routes/benchmark-seed.ts:366 (isBenchmarkSeedPdfUpload)` |
 | 2 | `hasBenchmarkSeedReservedDocumentMetadata` | has benchmark seed reserved document metadata の実装処理を担当する。 | `apps/api/src/routes/benchmark-seed.ts:94 (hasBenchmarkSeedReservedDocumentMetadata)` |
 | 1 | `scopedMetadata` | scoped metadata の実装処理を担当する。 | `apps/api/src/routes/document-routes.ts:314 (scopedMetadata)` |
-| 2 | `MemoRagService.assertDocumentGroupsWritable` | assert document groups writable の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1153 (MemoRagService.assertDocumentGroupsWritable)` |
+| 2 | `MemoRagService.assertDocumentGroupsWritable` | assert document groups writable の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1260 (MemoRagService.assertDocumentGroupsWritable)` |
 | 2 | `resolvedResourceScope` | resolved resource scope の実装処理を担当する。 | `apps/api/src/security/production-resource-operation-authorizer.ts:53 (resolvedResourceScope)` |
 | 2 | `enforceResolvedResourceOperation` | enforce resolved resource operation の実装処理を担当する。 | `apps/api/src/security/production-resource-operation-authorizer.ts:37 (enforceResolvedResourceOperation)` |
 | 1 | `authoritativeAdmissionContext` | authoritative admission context の実装処理を担当する。 | `apps/api/src/routes/document-routes.ts:356 (authoritativeAdmissionContext)` |
@@ -131,23 +131,23 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 2 | `resolveBenchmarkEvaluationContext` | resolve benchmark evaluation context の実装処理を担当する。 | `apps/api/src/benchmark/evaluation-context.ts:71 (resolveBenchmarkEvaluationContext)` |
 | 2 | `createVersionedReference` | create versioned reference の実装処理を担当する。 | `apps/api/src/rag/offline/pre-retrieval/admission/source-admission.ts:211 (createVersionedReference)` |
 | 1 | `enforceDocumentCreateOperation` | enforce document create operation の実装処理を担当する。 | `apps/api/src/routes/document-routes.ts:469 (enforceDocumentCreateOperation)` |
-| 1 | `MemoRagService.createCurrentDocumentIngestAuthorization` | create current document ingest authorization の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:482 (MemoRagService.createCurrentDocumentIngestAuthorization)` |
-| 2 | `MemoRagService.isDocumentIngestContextAuthorized` | is document ingest context authorized の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4906 (MemoRagService.isDocumentIngestContextAuthorized)` |
-| 2 | `MemoRagService.assertCurrentWorkerAuthorization` | assert current worker authorization の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4787 (MemoRagService.assertCurrentWorkerAuthorization)` |
-| 2 | `authorize` | authorize の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:493 (authorize)` |
-| 1 | `anonymous function` | anonymous function の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:508 (anonymous function)` |
-| 1 | `anonymous function` | anonymous function の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:509 (anonymous function)` |
-| 1 | `MemoRagService.ingest` | ingest の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:461 (MemoRagService.ingest)` |
-| 2 | `MemoRagService.usageRolloutMode` | usage rollout mode の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5176 (MemoRagService.usageRolloutMode)` |
-| 2 | `MemoRagService.createMemoryCards` | create memory cards の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5134 (MemoRagService.createMemoryCards)` |
+| 1 | `MemoRagService.createCurrentDocumentIngestAuthorization` | create current document ingest authorization の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:589 (MemoRagService.createCurrentDocumentIngestAuthorization)` |
+| 2 | `MemoRagService.isDocumentIngestContextAuthorized` | is document ingest context authorized の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4672 (MemoRagService.isDocumentIngestContextAuthorized)` |
+| 2 | `MemoRagService.assertCurrentWorkerAuthorization` | assert current worker authorization の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4553 (MemoRagService.assertCurrentWorkerAuthorization)` |
+| 2 | `authorize` | authorize の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:600 (authorize)` |
+| 1 | `anonymous function` | anonymous function の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:615 (anonymous function)` |
+| 1 | `anonymous function` | anonymous function の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:616 (anonymous function)` |
+| 1 | `MemoRagService.ingest` | ingest の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:568 (MemoRagService.ingest)` |
+| 2 | `MemoRagService.usageRolloutMode` | usage rollout mode の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4875 (MemoRagService.usageRolloutMode)` |
+| 2 | `MemoRagService.createMemoryCards` | create memory cards の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4833 (MemoRagService.createMemoryCards)` |
 | 2 | `runIngestPipeline` | run ingest pipeline の実装処理を担当する。 | `apps/api/src/rag/offline/pre-retrieval/ingestion/ingest-run.service.ts:65 (runIngestPipeline)` |
 | 2 | `registerUncommittedIngestCleanupReconciliation` | register uncommitted ingest cleanup reconciliation の実装処理を担当する。 | `apps/api/src/rag/offline/pre-retrieval/ingestion/ingest-run.service.ts:532 (registerUncommittedIngestCleanupReconciliation)` |
-| 1 | `anonymous function` | anonymous function の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:512 (anonymous function)` |
-| 1 | `MemoRagService.registerSourceGovernance` | register source governance の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:527 (MemoRagService.registerSourceGovernance)` |
-| 2 | `MemoRagService.sourceGovernanceApprovalService` | source governance approval service の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3780 (MemoRagService.sourceGovernanceApprovalService)` |
+| 1 | `anonymous function` | anonymous function の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:619 (anonymous function)` |
+| 1 | `MemoRagService.registerSourceGovernance` | register source governance の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:634 (MemoRagService.registerSourceGovernance)` |
+| 2 | `MemoRagService.sourceGovernanceApprovalService` | source governance approval service の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3873 (MemoRagService.sourceGovernanceApprovalService)` |
 | 2 | `SourceGovernanceApprovalService.ensureInitialRecord` | ensure initial record の実装処理を担当する。 | `apps/api/src/rag/offline/pre-retrieval/admission/source-governance-approval-service.ts:221 (SourceGovernanceApprovalService.ensureInitialRecord)` |
 | 1 | `documentManifestSummary` | document manifest summary の実装処理を担当する。 | `apps/api/src/routes/document-routes.ts:197 (documentManifestSummary)` |
-| 1 | `MemoRagService.discardUncommittedIngest` | discard uncommitted ingest の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:517 (MemoRagService.discardUncommittedIngest)` |
+| 1 | `MemoRagService.discardUncommittedIngest` | discard uncommitted ingest の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:624 (MemoRagService.discardUncommittedIngest)` |
 | 2 | `deleteUncommittedIngestArtifacts` | delete uncommitted ingest artifacts の実装処理を担当する。 | `apps/api/src/rag/offline/pre-retrieval/ingestion/ingest-run.service.ts:511 (deleteUncommittedIngestArtifacts)` |
 | 2 | `discardUncommittedSourceGovernanceRecord` | discard uncommitted source governance record の実装処理を担当する。 | `apps/api/src/rag/offline/pre-retrieval/admission/source-governance-approval-service.ts:914 (discardUncommittedSourceGovernanceRecord)` |
 | 1 | `isPermissionRevokedError` | is permission revoked error の実装処理を担当する。 | `apps/api/src/security/current-worker-authorization.ts:98 (isPermissionRevokedError)` |
@@ -162,7 +162,7 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 参照 | Store | `this.deps.folderPolicyStore` | `findByFolderId` | `this.deps.folderPolicyStore` に対して find by folder id を実行する。 | `FolderPermissionService.resolvePolicyContext` | `apps/api/src/folders/folder-permission-service.ts:695 (FolderPermissionService.resolvePolicyContext)` |
 | 参照 | Store | `this.deps.folderPolicyStore` | `get` | `this.deps.folderPolicyStore` に対して get を実行する。 | `FolderPermissionService.resolvePolicyContext` | `apps/api/src/folders/folder-permission-service.ts:711 (FolderPermissionService.resolvePolicyContext)` |
 | 参照 | External | `this.identityProvider` | `getCurrentIdentityBySubject` | `this.identityProvider` へ get current identity by subject を実行する。 | `CurrentWorkerAuthorization.assertAuthorized` | `apps/api/src/security/current-worker-authorization.ts:51 (CurrentWorkerAuthorization.assertAuthorized)` |
-| 実行 | External | `textModel` | `generate` | `textModel` へ generate を実行する。 | `MemoRagService.createMemoryCards` | `apps/api/src/rag/memorag-service.ts:5135 (MemoRagService.createMemoryCards)` |
+| 実行 | External | `textModel` | `generate` | `textModel` へ generate を実行する。 | `MemoRagService.createMemoryCards` | `apps/api/src/rag/memorag-service.ts:4834 (MemoRagService.createMemoryCards)` |
 | 参照 | Store | `input.objectStore` | `getText` | `input.objectStore` に対して get text を実行する。 | `assertRagSafetyInterlock` | `apps/api/src/rag/quality-control/production-rag-monitor.ts:311 (assertRagSafetyInterlock)` |
 | 実行 | Store | `(() => {<br>        const structuredText = input.text ?? input.structuredBlocks.map((block) => block.text).join("\n\n")<br>        return limitDocument({<br>          text: structuredText,<br>          blocks: input.structuredBlocks,<br>          sourceExtractorVersion: input` | `sourceExtractorVersion ?? "structured-blocks-ledger-v1"<br>        })<br>      })` | `(() => {<br>        const structuredText = input.text ?? input.structuredBlocks.map((block) => block.text).join("\n\n")<br>        return limitDocument({<br>          text: structuredText,<br>          blocks: input.structuredBlocks,<br>          sourceExtractorVersion: input` に対して source extractor version ?? "structured blocks ledger v1"<br>        })<br>      }) を実行する。 | `runIngestPipeline` | `apps/api/src/rag/offline/pre-retrieval/ingestion/ingest-run.service.ts:93 (runIngestPipeline)` |
 | 参照 | Store | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `embedWithCache` | `apps/api/src/rag/offline/pre-retrieval/embedding/embedding-cache.ts:21 (embedWithCache)` |
@@ -192,7 +192,7 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 作成・追記 | Store | `this.deps.objectStore` | `putTextIfVersion` | `this.deps.objectStore` に対して put text if version を実行する。 | `StagedPublicationCoordinator.begin` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:222 (StagedPublicationCoordinator.begin)` |
 | 作成・追記 | Store | `this.deps.objectStore` | `putTextIfVersion` | `this.deps.objectStore` に対して put text if version を実行する。 | `StagedPublicationCoordinator.acquireLease` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:617 (StagedPublicationCoordinator.acquireLease)` |
 | 参照 | Store | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `readTenantManifestByKey` | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:93 (readTenantManifestByKey)` |
-| 参照 | Store | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `MemoRagService.stageApprovedSourceGovernancePublication` | `apps/api/src/rag/memorag-service.ts:3858 (MemoRagService.stageApprovedSourceGovernancePublication)` |
+| 参照 | Store | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `MemoRagService.stageApprovedSourceGovernancePublication` | `apps/api/src/rag/memorag-service.ts:3951 (MemoRagService.stageApprovedSourceGovernancePublication)` |
 | 参照 | Store | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `loadStructuredBlocksForManifest` | `apps/api/src/rag/_shared/storage/manifest-chunks.ts:35 (loadStructuredBlocksForManifest)` |
 | 参照 | Store | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `StagedPublicationCoordinator.loadManifest` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1490 (StagedPublicationCoordinator.loadManifest)` |
 | 参照 | Store | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `StagedPublicationCoordinator.validateStagedManifest` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:733 (StagedPublicationCoordinator.validateStagedManifest)` |
