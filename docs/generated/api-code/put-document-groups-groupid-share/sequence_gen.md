@@ -69,10 +69,10 @@ sequenceDiagram
 
 | # | Caller | 境界 | 処理 | コード | 実装位置 |
 | ---: | --- | --- | --- | --- | --- |
-| 1 | `PUT /document-groups/{groupId}/share handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/document-routes.ts:674 (PUT /document-groups/{groupId}/share handler)` |
-| 2 | `PUT /document-groups/{groupId}/share handler` | Validation | schema 検証済みの path parameter を取得する。 | `validParam<{ groupId: string }>(c)` | `apps/api/src/routes/document-routes.ts:675 (PUT /document-groups/{groupId}/share handler)` |
-| 3 | `PUT /document-groups/{groupId}/share handler` | Validation | schema 検証済みの JSON request body を取得する。 | `validJson<z.infer<typeof ReplaceVersionedFolderPolicyRequestSchema>>(c)` | `apps/api/src/routes/document-routes.ts:676 (PUT /document-groups/{groupId}/share handler)` |
-| 4 | `PUT /document-groups/{groupId}/share handler` | Auth | replace versioned folder policy により認証・認可条件を確認する。 | `permissions.replaceVersionedFolderPolicy(user, groupId, body)` | `apps/api/src/routes/document-routes.ts:679 (PUT /document-groups/{groupId}/share handler)` |
+| 1 | `PUT /document-groups/{groupId}/share handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/document-routes.ts:675 (PUT /document-groups/{groupId}/share handler)` |
+| 2 | `PUT /document-groups/{groupId}/share handler` | Validation | schema 検証済みの path parameter を取得する。 | `validParam<{ groupId: string }>(c)` | `apps/api/src/routes/document-routes.ts:676 (PUT /document-groups/{groupId}/share handler)` |
+| 3 | `PUT /document-groups/{groupId}/share handler` | Validation | schema 検証済みの JSON request body を取得する。 | `validJson<z.infer<typeof ReplaceVersionedFolderPolicyRequestSchema>>(c)` | `apps/api/src/routes/document-routes.ts:677 (PUT /document-groups/{groupId}/share handler)` |
+| 4 | `PUT /document-groups/{groupId}/share handler` | Auth | replace versioned folder policy により認証・認可条件を確認する。 | `permissions.replaceVersionedFolderPolicy(user, groupId, body)` | `apps/api/src/routes/document-routes.ts:680 (PUT /document-groups/{groupId}/share handler)` |
 | 5 | `FolderPermissionService.replaceVersionedFolderPolicy` | Service | service の record early policy failure 処理を呼び出す。 | `this.recordEarlyPolicyFailure(actor, folderId, input, "denied", auditOutbox)` | `apps/api/src/folders/folder-permission-service.ts:313 (FolderPermissionService.replaceVersionedFolderPolicy)` |
 | 6 | `FolderPermissionService.replaceVersionedFolderPolicy` | Store | `this.deps.documentGroupStore` に対して get を実行する。 | `this.deps.documentGroupStore.get(actorTenantId, folderId)` | `apps/api/src/folders/folder-permission-service.ts:318 (FolderPermissionService.replaceVersionedFolderPolicy)` |
 | 7 | `FolderPermissionService.replaceVersionedFolderPolicy` | Service | service の record early policy failure 処理を呼び出す。 | `this.recordEarlyPolicyFailure(actor, folderId, input, "failed", auditOutbox)` | `apps/api/src/folders/folder-permission-service.ts:320 (FolderPermissionService.replaceVersionedFolderPolicy)` |
@@ -108,21 +108,21 @@ sequenceDiagram
 | 37 | `readManifest` | Store | `objectStore` に対して get text with version を実行する。 | `objectStore.getTextWithVersion(key)` | `apps/api/src/rag/_shared/security/revocation-cleanup-coordinator.ts:636 (readManifest)` |
 | 38 | `ObjectStoreRevocationCleanupCoordinator.register` | Store | `this.objectStore` に対して put text if version を実行する。 | `this.objectStore.putTextIfVersion(key, JSON.stringify(manifest, null, 2), undefined, "application/json")` | `apps/api/src/rag/_shared/security/revocation-cleanup-coordinator.ts:169 (ObjectStoreRevocationCleanupCoordinator.register)` |
 | 39 | `FolderPermissionService.replaceVersionedFolderPolicy` | Service | service の complete policy mutation 処理を呼び出す。 | `this.completePolicyMutation(auditIntent, "failed", replaced.policy)` | `apps/api/src/folders/folder-permission-service.ts:460 (FolderPermissionService.replaceVersionedFolderPolicy)` |
-| 40 | `PUT /document-groups/{groupId}/share handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json(await permissions.replaceVersionedFolderPolicy(user, groupId, body), 200)` | `apps/api/src/routes/document-routes.ts:679 (PUT /document-groups/{groupId}/share handler)` |
-| 41 | `PUT /document-groups/{groupId}/share handler` | HTTP/SSE | HTTP 409 で JSON response を返す。 | `c.json({ error: "Folder share policy version conflict" }, 409)` | `apps/api/src/routes/document-routes.ts:683 (PUT /document-groups/{groupId}/share handler)` |
-| 42 | `PUT /document-groups/{groupId}/share handler` | HTTP/SSE | HTTP 400 で JSON response を返す。 | `c.json({ error: error.message }, 400)` | `apps/api/src/routes/document-routes.ts:684 (PUT /document-groups/{groupId}/share handler)` |
-| 43 | `PUT /document-groups/{groupId}/share handler` | HTTP/SSE | HTTP 503 で JSON response を返す。 | `c.json({ error: "Folder sharing is unavailable" }, 503)` | `apps/api/src/routes/document-routes.ts:685 (PUT /document-groups/{groupId}/share handler)` |
-| 44 | `PUT /document-groups/{groupId}/share handler` | HTTP/SSE | HTTP 503 で JSON response を返す。 | `c.json({ error: "Folder sharing is unavailable" }, 503)` | `apps/api/src/routes/document-routes.ts:687 (PUT /document-groups/{groupId}/share handler)` |
+| 40 | `PUT /document-groups/{groupId}/share handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json(await permissions.replaceVersionedFolderPolicy(user, groupId, body), 200)` | `apps/api/src/routes/document-routes.ts:680 (PUT /document-groups/{groupId}/share handler)` |
+| 41 | `PUT /document-groups/{groupId}/share handler` | HTTP/SSE | HTTP 409 で JSON response を返す。 | `c.json({ error: "Folder share policy version conflict" }, 409)` | `apps/api/src/routes/document-routes.ts:684 (PUT /document-groups/{groupId}/share handler)` |
+| 42 | `PUT /document-groups/{groupId}/share handler` | HTTP/SSE | HTTP 400 で JSON response を返す。 | `c.json({ error: error.message }, 400)` | `apps/api/src/routes/document-routes.ts:685 (PUT /document-groups/{groupId}/share handler)` |
+| 43 | `PUT /document-groups/{groupId}/share handler` | HTTP/SSE | HTTP 503 で JSON response を返す。 | `c.json({ error: "Folder sharing is unavailable" }, 503)` | `apps/api/src/routes/document-routes.ts:686 (PUT /document-groups/{groupId}/share handler)` |
+| 44 | `PUT /document-groups/{groupId}/share handler` | HTTP/SSE | HTTP 503 で JSON response を返す。 | `c.json({ error: "Folder sharing is unavailable" }, 503)` | `apps/api/src/routes/document-routes.ts:688 (PUT /document-groups/{groupId}/share handler)` |
 
 ## 分岐
 
 | ID | Function | 条件 | 実装位置 |
 | --- | --- | --- | --- |
-| B001 | `PUT /document-groups/{groupId}/share handler` | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:680 (PUT /document-groups/{groupId}/share handler)` |
-| B002 | `PUT /document-groups/{groupId}/share handler` | `error` が `HTTPException` の instance である、かつ `error.status` が `403` と等しい | `apps/api/src/routes/document-routes.ts:681 (PUT /document-groups/{groupId}/share handler)` |
-| B003 | `PUT /document-groups/{groupId}/share handler` | `error` が `FolderPolicyMutationError` の instance である | `apps/api/src/routes/document-routes.ts:682 (PUT /document-groups/{groupId}/share handler)` |
-| B004 | `PUT /document-groups/{groupId}/share handler` | `error.result` が `"conflict"` と等しい | `apps/api/src/routes/document-routes.ts:683 (PUT /document-groups/{groupId}/share handler)` |
-| B005 | `PUT /document-groups/{groupId}/share handler` | `error.result` が `"denied"` と等しい | `apps/api/src/routes/document-routes.ts:684 (PUT /document-groups/{groupId}/share handler)` |
+| B001 | `PUT /document-groups/{groupId}/share handler` | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:681 (PUT /document-groups/{groupId}/share handler)` |
+| B002 | `PUT /document-groups/{groupId}/share handler` | `error` が `HTTPException` の instance である、かつ `error.status` が `403` と等しい | `apps/api/src/routes/document-routes.ts:682 (PUT /document-groups/{groupId}/share handler)` |
+| B003 | `PUT /document-groups/{groupId}/share handler` | `error` が `FolderPolicyMutationError` の instance である | `apps/api/src/routes/document-routes.ts:683 (PUT /document-groups/{groupId}/share handler)` |
+| B004 | `PUT /document-groups/{groupId}/share handler` | `error.result` が `"conflict"` と等しい | `apps/api/src/routes/document-routes.ts:684 (PUT /document-groups/{groupId}/share handler)` |
+| B005 | `PUT /document-groups/{groupId}/share handler` | `error.result` が `"denied"` と等しい | `apps/api/src/routes/document-routes.ts:685 (PUT /document-groups/{groupId}/share handler)` |
 | B006 | `FolderPermissionService.replaceVersionedFolderPolicy` | `auditOutbox` が存在しない、または偽である、または `principalDirectory` が存在しない、または偽である | `apps/api/src/folders/folder-permission-service.ts:308 (FolderPermissionService.replaceVersionedFolderPolicy)` |
 | B007 | `FolderPermissionService.replaceVersionedFolderPolicy` | is canonical identifier の判定結果が真ではない | `apps/api/src/folders/folder-permission-service.ts:312 (FolderPermissionService.replaceVersionedFolderPolicy)` |
 | B008 | `FolderPermissionService.replaceVersionedFolderPolicy` | 例外が発生した場合に catch 処理へ移る | `apps/api/src/folders/folder-permission-service.ts:319 (FolderPermissionService.replaceVersionedFolderPolicy)` |

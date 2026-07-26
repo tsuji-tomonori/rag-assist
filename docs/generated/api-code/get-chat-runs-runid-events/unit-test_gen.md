@@ -20,7 +20,7 @@
 | 到達 symbol | FR-074 worker failure persists an unknown-null replay manifest and a redacted trace | `apps/api/src/rag/memorag-service.test.ts:2715 (FR-074 worker failure persists an unknown-null replay manifest and a redacted trace)` |
 | 到達 symbol | FR-090 ingest reauthorizes after the final event and compensates before persisting success | `apps/api/src/rag/memorag-service.test.ts:2784 (FR-090 ingest reauthorizes after the final event and compensates before persisting success)` |
 | 到達 symbol | FR-090 revoke after governance creation compensates all ingest artifacts and never publishes success | `apps/api/src/rag/memorag-service.test.ts:2844 (FR-090 revoke after governance creation compensates all ingest artifacts and never publishes success)` |
-| 到達 symbol | chat and document ingest SSE routes keep Last-Event-ID reconnect and event format | `apps/api/src/security/access-control-policy.test.ts:558 (chat and document ingest SSE routes keep Last-Event-ID reconnect and event format)` |
+| 到達 symbol | chat and document ingest SSE routes keep Last-Event-ID reconnect and event format | `apps/api/src/security/access-control-policy.test.ts:583 (chat and document ingest SSE routes keep Last-Event-ID reconnect and event format)` |
 
 ## 2. 実装分岐から導くテスト要因
 
@@ -34,9 +34,9 @@
 | F006 | `GET /chat-runs/{runId}/events handler` | loop | `events` が存在し、真である | `apps/api/src/routes/chat-routes.ts:118 (GET /chat-runs/{runId}/events handler)` |
 | F007 | `GET /chat-runs/{runId}/events handler` | if | `item.type` が `"final"` と等しい、または `item.type` が `"error"` と等しい | `apps/api/src/routes/chat-routes.ts:125 (GET /chat-runs/{runId}/events handler)` |
 | F008 | `GET /chat-runs/{runId}/events handler` | if | `Date.now() - lastHeartbeat` が `15_000` より大きい | `apps/api/src/routes/chat-routes.ts:128 (GET /chat-runs/{runId}/events handler)` |
-| F009 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| F010 | `getPermissionsForGroups` | loop | `groups` が存在し、真である | `apps/api/src/authorization.ts:108 (getPermissionsForGroups)` |
-| F011 | `getPermissionsForGroups` | loop | `rolePermissions[group as Role]` が `[]` の条件を満たす | `apps/api/src/authorization.ts:109 (getPermissionsForGroups)` |
+| F009 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |
+| F010 | `getPermissionsForGroups` | loop | `groups` が存在し、真である | `apps/api/src/authorization.ts:109 (getPermissionsForGroups)` |
+| F011 | `getPermissionsForGroups` | loop | `rolePermissions[group as Role]` が `[]` の条件を満たす | `apps/api/src/authorization.ts:110 (getPermissionsForGroups)` |
 | F012 | `settleNonEnumerationTiming` | if | `remaining` が `0` より大きい | `apps/api/src/security/public-resource-response.ts:42 (settleNonEnumerationTiming)` |
 | F013 | `eventPayload` | if | `item.stage` が `undefined` と異なる | `apps/api/src/chat-run-events-stream.ts:139 (eventPayload)` |
 | F014 | `eventPayload` | if | `item.message` が `undefined` と異なる | `apps/api/src/chat-run-events-stream.ts:140 (eventPayload)` |
@@ -64,12 +64,12 @@
 | TC015 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/chat-routes.ts:125 (GET /chat-runs/{runId}/events handler)` |
 | TC016 | F008: 条件成立 | `Date.now() - lastHeartbeat` が `15_000` より大きい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/chat-routes.ts:128 (GET /chat-runs/{runId}/events handler)` |
 | TC017 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/chat-routes.ts:128 (GET /chat-runs/{runId}/events handler)` |
-| TC018 | F009: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC019 | F009: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC020 | F010: 0件 | 反復対象が空でも不正な副作用や例外を生じない。 | `apps/api/src/authorization.ts:108 (getPermissionsForGroups)` |
-| TC021 | F010: 複数件 | 各要素を順に処理し、順序・終了条件を守る。 | `apps/api/src/authorization.ts:108 (getPermissionsForGroups)` |
-| TC022 | F011: 0件 | 反復対象が空でも不正な副作用や例外を生じない。 | `apps/api/src/authorization.ts:109 (getPermissionsForGroups)` |
-| TC023 | F011: 複数件 | 各要素を順に処理し、順序・終了条件を守る。 | `apps/api/src/authorization.ts:109 (getPermissionsForGroups)` |
+| TC018 | F009: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
+| TC019 | F009: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
+| TC020 | F010: 0件 | 反復対象が空でも不正な副作用や例外を生じない。 | `apps/api/src/authorization.ts:109 (getPermissionsForGroups)` |
+| TC021 | F010: 複数件 | 各要素を順に処理し、順序・終了条件を守る。 | `apps/api/src/authorization.ts:109 (getPermissionsForGroups)` |
+| TC022 | F011: 0件 | 反復対象が空でも不正な副作用や例外を生じない。 | `apps/api/src/authorization.ts:110 (getPermissionsForGroups)` |
+| TC023 | F011: 複数件 | 各要素を順に処理し、順序・終了条件を守る。 | `apps/api/src/authorization.ts:110 (getPermissionsForGroups)` |
 | TC024 | F012: 条件成立 | `remaining` が `0` より大きい 場合の response / side effect が実装どおりである。 | `apps/api/src/security/public-resource-response.ts:42 (settleNonEnumerationTiming)` |
 | TC025 | F012: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/security/public-resource-response.ts:42 (settleNonEnumerationTiming)` |
 | TC026 | F013: 条件成立 | `item.stage` が `undefined` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/chat-run-events-stream.ts:139 (eventPayload)` |

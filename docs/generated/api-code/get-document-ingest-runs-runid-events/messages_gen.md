@@ -19,8 +19,8 @@
 | M004 | OpenAPI contract | `404` | 指定したリソースが見つかりません。 | OpenAPI で宣言された HTTP 404 response | runtime OpenAPI |
 | M005 | 例外 | `503` | Benchmark evaluation is unavailable | `config.benchmarkEvaluationEnabled` が存在しない、または偽である、または trim の判定結果が真ではない | `apps/api/src/routes/document-routes.ts:158 (uploadTenantId)` |
 | M006 | 例外 | `403` | Forbidden | `tenantId` が存在しない、または偽である | `apps/api/src/routes/document-routes.ts:163 (uploadTenantId)` |
-| M007 | SSE/Event | `heartbeat` | SSE event: heartbeat | `Date.now() - lastHeartbeat` が `15_000` より大きい | `apps/api/src/routes/document-routes.ts:1257 (GET /document-ingest-runs/{runId}/events handler)` |
-| M008 | SSE/Event | `timeout` | stream timeout. reconnect with Last-Event-ID. | 当該処理へ到達した場合 | `apps/api/src/routes/document-routes.ts:1267 (GET /document-ingest-runs/{runId}/events handler)` |
+| M007 | SSE/Event | `heartbeat` | SSE event: heartbeat | `Date.now() - lastHeartbeat` が `15_000` より大きい | `apps/api/src/routes/document-routes.ts:1258 (GET /document-ingest-runs/{runId}/events handler)` |
+| M008 | SSE/Event | `timeout` | stream timeout. reconnect with Last-Event-ID. | 当該処理へ到達した場合 | `apps/api/src/routes/document-routes.ts:1268 (GET /document-ingest-runs/{runId}/events handler)` |
 
 ## 読み方
 

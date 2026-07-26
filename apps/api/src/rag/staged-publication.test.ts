@@ -786,6 +786,7 @@ function admissionContext(lifecycleStatus: "active" | "staging"): AuthoritativeA
     lifecycleRef: reference(`lifecycle-${lifecycleStatus}`),
     provenanceRef: reference("provenance"),
     inspectionStatus: "passed",
+    malwareScan: { status: "clean", profileVersion: "malware-scan-test-v1" },
     qualityProfile: approvedQualityProfile(),
     lifecycleStatus,
     scope: { scopeType: "personal", allowedUsers: ["owner-publication"] }
@@ -850,7 +851,12 @@ async function seedPublishedGovernance(
         ragEligibility: "eligible",
         flags: []
       },
-      inspection: { status: "passed", profileVersion: "inspection-v1" },
+      inspection: {
+        status: "passed",
+        profileVersion: "inspection-v1",
+        malwareStatus: "clean",
+        malwareProfileVersion: "malware-scan-v1"
+      },
       classificationRef: admission.classificationRef,
       usagePolicyRef: admission.usagePolicyRef,
       qualityRef: admission.qualityRef,

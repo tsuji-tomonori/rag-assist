@@ -1,7 +1,8 @@
 import assert from "node:assert/strict"
 import test from "node:test"
+import { ROLE_PERMISSION_CATALOG, UNASSIGNED_APPLICATION_PERMISSIONS } from "@memorag-mvp/contract/access-control"
 import { ChatToolDefinitionSchema, ChatToolInvocationSchema } from "../schemas.js"
-import { CHAT_TOOL_DEFINITIONS, RAG_CHAT_TOOL_NODE_MAPPINGS, RAG_IMPLEMENTED_TOOL_IDS, buildChatToolInvocationsFromTrace, listEnabledChatToolDefinitions } from "./tool-registry.js"
+import { CHAT_TOOL_DEFINITIONS, RAG_CHAT_TOOL_NODE_MAPPINGS, RAG_IMPLEMENTED_TOOL_IDS, buildChatToolInvocationsFromTrace, getChatToolAuthorizationContractsForGraphNode, listEnabledChatToolDefinitions, resolveChatToolAuthorizationContracts } from "./tool-registry.js"
 
 test("chat tool registry exposes implemented RAG tools with permission, approval, audit, and trace metadata", () => {
   const enabled = listEnabledChatToolDefinitions()
@@ -17,6 +18,31 @@ test("chat tool registry exposes implemented RAG tools with permission, approval
     assert.ok(definition.requiredFeaturePermission.length > 0)
     assert.ok(definition.traceLabels.length > 0)
   }
+})
+
+test("enabled RAG tools use canonical feature permissions granted to CHAT_USER", () => {
+  const enabled = listEnabledChatToolDefinitions()
+  const canonicalPermissions = new Set<string>([
+    ...Object.values(ROLE_PERMISSION_CATALOG).flat(),
+    ...UNASSIGNED_APPLICATION_PERMISSIONS
+  ])
+  const chatUserPermissions = new Set<string>(ROLE_PERMISSION_CATALOG.CHAT_USER)
+
+  assert.deepEqual(
+    enabled.filter((tool) => !canonicalPermissions.has(tool.requiredFeaturePermission)).map((tool) => tool.toolId),
+    [],
+    "enabled tool permissions must exist in the canonical application permission catalog"
+  )
+  assert.deepEqual(
+    enabled.filter((tool) => !chatUserPermissions.has(tool.requiredFeaturePermission)).map((tool) => tool.toolId),
+    [],
+    "enabled graph-backed tools must not exceed the current CHAT_USER feature grant"
+  )
+  assert.deepEqual(
+    enabled.filter((tool) => tool.requiredFeaturePermission !== "chat:create").map((tool) => tool.toolId),
+    [],
+    "all enabled graph-backed tools execute within the current chat:create boundary"
+  )
 })
 
 test("non-RAG and follow-up dependent tools remain disabled metadata, not executable placeholders", () => {
@@ -76,4 +102,32 @@ test("debug trace steps can be projected into audit-oriented ChatToolInvocation 
     assert.equal(invocation.status, "succeeded")
     assert.equal(invocation.requesterUserId, "user-1")
   }
+})
+
+test("FR-049 graph-node authorization validates every mapped enabled tool and deduplicates equivalent contracts", () => {
+  assert.deepEqual(getChatToolAuthorizationContractsForGraphNode("rerank_chunks"), [{
+    toolIds: ["rag.rerank", "rag.select_final_context"],
+    requiredFeaturePermission: "chat:create",
+    requiredResourcePermission: "readOnly"
+  }])
+  assert.deepEqual(getChatToolAuthorizationContractsForGraphNode("analyze_input"), [])
+
+  for (const mapping of RAG_CHAT_TOOL_NODE_MAPPINGS) {
+    for (const graphNodeLabel of mapping.traceLabels) {
+      assert.ok(
+        getChatToolAuthorizationContractsForGraphNode(graphNodeLabel)
+          .some((contract) => contract.toolIds.includes(mapping.toolId)),
+        `${mapping.toolId}:${graphNodeLabel} must be validated before node execution`
+      )
+    }
+  }
+
+  assert.throws(
+    () => resolveChatToolAuthorizationContracts(["support.ticket.create"]),
+    /enabled implemented RAG tool/
+  )
+  assert.throws(
+    () => resolveChatToolAuthorizationContracts(["missing.tool"]),
+    /enabled implemented RAG tool/
+  )
 })

@@ -2,7 +2,7 @@
 
 # GET /documents/reindex-migrations IF仕様
 
-- 実装 route: `apps/api/src/routes/document-routes.ts:1395 (GET /documents/reindex-migrations)`
+- 実装 route: `apps/api/src/routes/document-routes.ts:1396 (GET /documents/reindex-migrations)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 再インデックス移行一覧を取得する

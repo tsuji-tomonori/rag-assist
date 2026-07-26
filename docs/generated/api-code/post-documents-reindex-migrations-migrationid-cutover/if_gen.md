@@ -2,7 +2,7 @@
 
 # POST /documents/reindex-migrations/{migrationId}/cutover IF仕様
 
-- 実装 route: `apps/api/src/routes/document-routes.ts:1443 (POST /documents/reindex-migrations/{migrationId}/cutover)`
+- 実装 route: `apps/api/src/routes/document-routes.ts:1444 (POST /documents/reindex-migrations/{migrationId}/cutover)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 再インデックス結果へ切り替える

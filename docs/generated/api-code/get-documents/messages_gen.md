@@ -18,7 +18,7 @@
 | M003 | OpenAPI contract | `401` | 認証が必要です。 | OpenAPI で宣言された HTTP 401 response | runtime OpenAPI |
 | M004 | OpenAPI contract | `403` | 対象操作を実行する権限がありません。 | OpenAPI で宣言された HTTP 403 response | runtime OpenAPI |
 | M005 | OpenAPI contract | `500` | サーバー内部で処理エラーが発生しました。 | OpenAPI で宣言された HTTP 500 response | runtime OpenAPI |
-| M006 | 例外 | `403` | Forbidden | 利用者が "rag:doc:read" permission を持たない、かつ 利用者が "benchmark:seed_corpus" permission を持たない | `apps/api/src/routes/document-routes.ts:838 (GET /documents handler)` |
+| M006 | 例外 | `403` | Forbidden | 利用者が "rag:doc:read" permission を持たない、かつ 利用者が "benchmark:seed_corpus" permission を持たない | `apps/api/src/routes/document-routes.ts:839 (GET /documents handler)` |
 | M007 | 例外 | `-` | Artifact key is invalid | `normalized` が存在しない、または偽である、または `normalized` が ".." を含む | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:127 (normalizeRelativeKey)` |
 | M008 | 例外 | `-` | Authoritative tenant is required | `normalized` が存在しない、または偽である | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:121 (requiredTenantId)` |
 | M009 | 例外 | `-` | Authoritative tenant is required | `normalized` が存在しない、または偽である | `apps/api/src/security/tenant-partition.ts:5 (tenantPartitionId)` |

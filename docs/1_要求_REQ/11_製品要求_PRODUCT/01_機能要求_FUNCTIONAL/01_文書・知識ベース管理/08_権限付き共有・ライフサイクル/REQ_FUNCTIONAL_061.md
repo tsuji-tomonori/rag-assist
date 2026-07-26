@@ -38,6 +38,7 @@
 | 安定性 | High |
 | Confidence | inferred |
 | 所有者 | Document platform / Security |
+| 変更履歴 | 2026-07-11 初版。2026-07-18 parent active / tenant integrityをadministrative-principal fullより先に評価する実装証跡を追記 |
 | 変更履歴 | 2026-07-11 初版 |
 
 ## 受け入れ条件
@@ -66,7 +67,7 @@
 | 実現可能性 | OK | 既存 service を単一化して実現可能 |
 | 検証可能性 | OK | parent/child、explicit/inherited、nested membership matrix |
 | ニーズ適合 | OK | 権限外 folder の利用と経路差を防ぐ |
-| 実装適合 | OK（confirmed） | `folder-permission-service.ts` が nearest explicit/child override/cycle/mandatory deny/admin invariant を単一 decision で評価し、folder permission tests が legacy boundary も含め検証する |
+| 実装適合 | OK（confirmed） | `folder-permission-service.ts` が parent missing / archived / tenant不一致を含むresource integrityをadministrative-principal fullより先に評価し、nearest explicit/child override/cycle/mandatory deny/admin invariantを単一decisionで処理する。folder permission testsがbroken parent × admin、root/active parent、legacy boundaryを検証する |
 
 ## トレース
 

@@ -994,6 +994,8 @@ export class StagedPublicationCoordinator {
       || previous.manifestObjectKey !== run.previousManifestObjectKey
       || previousAdmission?.status !== "approved"
       || previousAdmission.inspectionStatus !== "passed"
+      || previousAdmission.malwareScan?.status !== "clean"
+      || !previousAdmission.malwareScan.profileVersion
       || previousAdmission.tenantId !== run.scope.tenantId
       || previous.processingStatus !== "complete"
       || previous.publicationEligible !== true

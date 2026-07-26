@@ -440,6 +440,7 @@ function authoritativeAdmissionContext(
     lifecycleRef: createVersionedReference(`lifecycle:${sourceIdentifier}`, "ingest-lifecycle-v1", "active"),
     provenanceRef: createVersionedReference(`provenance:${sourceIdentifier}`, "source-route-v1", sourceIdentifier),
     inspectionStatus: purpose === "benchmarkSeed" || purpose === "chatAttachment" ? "passed" : "unknown",
+    malwareScan: { status: "unknown" },
     qualityProfile,
     lifecycleStatus: "active",
     scope: resolvedScope

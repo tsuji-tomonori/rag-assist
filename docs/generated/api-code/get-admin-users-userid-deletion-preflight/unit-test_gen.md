@@ -14,8 +14,8 @@
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `GET /admin/users/{userId}/deletion-preflight handler` | if | `preflight` が存在しない、または偽である | `apps/api/src/routes/admin-routes.ts:174 (GET /admin/users/{userId}/deletion-preflight handler)` |
-| F002 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| F001 | `GET /admin/users/{userId}/deletion-preflight handler` | if | `preflight` が存在しない、または偽である | `apps/api/src/routes/admin-routes.ts:241 (GET /admin/users/{userId}/deletion-preflight handler)` |
+| F002 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | F003 | `MemoRagService.getManagedUserDeletionPreflight` | if | `target` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1745 (MemoRagService.getManagedUserDeletionPreflight)` |
 | F004 | `MemoRagService.getManagedUserDeletionPreflight` | if | `this.deps.verifiedIdentityProvider` が存在し、真である、かつ `this.deps.userDirectory` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1748 (MemoRagService.getManagedUserDeletionPreflight)` |
 | F005 | `MemoRagService.getManagedUserDeletionPreflight` | if | `currentActor` が存在しない、または偽である、または `currentTarget` が存在しない、または偽である、または `currentActor.accountStatus` が `"active"` と異なる、または `currentActor.tenantId` が `currentTarget.tenantId` と異なる、または `actor.tenantId` が `currentActor.tenantId` と異なる、または `currentActor.userId` が `currentTarget.userId` と等しい | `apps/api/src/rag/memorag-service.ts:1754 (MemoRagService.getManagedUserDeletionPreflight)` |
@@ -27,11 +27,11 @@
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | ユーザー削除前の移管条件を取得する が成功 response を返す。 | `apps/api/src/routes/admin-routes.ts:169 (GET /admin/users/{userId}/deletion-preflight handler)` |
-| TC002 | F001: 条件成立 | `preflight` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:174 (GET /admin/users/{userId}/deletion-preflight handler)` |
-| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:174 (GET /admin/users/{userId}/deletion-preflight handler)` |
-| TC004 | F002: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| TC001 | 正常系 | ユーザー削除前の移管条件を取得する が成功 response を返す。 | `apps/api/src/routes/admin-routes.ts:236 (GET /admin/users/{userId}/deletion-preflight handler)` |
+| TC002 | F001: 条件成立 | `preflight` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:241 (GET /admin/users/{userId}/deletion-preflight handler)` |
+| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:241 (GET /admin/users/{userId}/deletion-preflight handler)` |
+| TC004 | F002: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
+| TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | TC006 | F003: 条件成立 | `target` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1745 (MemoRagService.getManagedUserDeletionPreflight)` |
 | TC007 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1745 (MemoRagService.getManagedUserDeletionPreflight)` |
 | TC008 | F004: 条件成立 | `this.deps.verifiedIdentityProvider` が存在し、真である、かつ `this.deps.userDirectory` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1748 (MemoRagService.getManagedUserDeletionPreflight)` |

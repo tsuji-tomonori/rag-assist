@@ -13,9 +13,9 @@ _静的に直接対応を確認できた test case はありません。`unit-te
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
 | F001 | `POST /debug-runs/{runId}/download handler` | if | `download` が存在しない、または偽である | `apps/api/src/routes/debug-routes.ts:132 (POST /debug-runs/{runId}/download handler)` |
-| F002 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| F003 | `MemoRagService.createDebugTraceDownloadUrl` | if | `config.debugDownloadBucketName` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:5109 (MemoRagService.createDebugTraceDownloadUrl)` |
-| F004 | `MemoRagService.createDebugTraceDownloadUrl` | if | `trace` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:5111 (MemoRagService.createDebugTraceDownloadUrl)` |
+| F002 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |
+| F003 | `MemoRagService.createDebugTraceDownloadUrl` | if | `config.debugDownloadBucketName` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:5127 (MemoRagService.createDebugTraceDownloadUrl)` |
+| F004 | `MemoRagService.createDebugTraceDownloadUrl` | if | `trace` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:5129 (MemoRagService.createDebugTraceDownloadUrl)` |
 | F005 | `settleNonEnumerationTiming` | if | `remaining` が `0` より大きい | `apps/api/src/security/public-resource-response.ts:42 (settleNonEnumerationTiming)` |
 
 ## 3. コード由来テストケース
@@ -25,12 +25,12 @@ _静的に直接対応を確認できた test case はありません。`unit-te
 | TC001 | 正常系 | debug trace ダウンロード URL を作成する が成功 response を返す。 | `apps/api/src/routes/debug-routes.ts:126 (POST /debug-runs/{runId}/download handler)` |
 | TC002 | F001: 条件成立 | `download` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/debug-routes.ts:132 (POST /debug-runs/{runId}/download handler)` |
 | TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/debug-routes.ts:132 (POST /debug-runs/{runId}/download handler)` |
-| TC004 | F002: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC006 | F003: 条件成立 | `config.debugDownloadBucketName` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:5109 (MemoRagService.createDebugTraceDownloadUrl)` |
-| TC007 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:5109 (MemoRagService.createDebugTraceDownloadUrl)` |
-| TC008 | F004: 条件成立 | `trace` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:5111 (MemoRagService.createDebugTraceDownloadUrl)` |
-| TC009 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:5111 (MemoRagService.createDebugTraceDownloadUrl)` |
+| TC004 | F002: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
+| TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
+| TC006 | F003: 条件成立 | `config.debugDownloadBucketName` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:5127 (MemoRagService.createDebugTraceDownloadUrl)` |
+| TC007 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:5127 (MemoRagService.createDebugTraceDownloadUrl)` |
+| TC008 | F004: 条件成立 | `trace` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:5129 (MemoRagService.createDebugTraceDownloadUrl)` |
+| TC009 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:5129 (MemoRagService.createDebugTraceDownloadUrl)` |
 | TC010 | F005: 条件成立 | `remaining` が `0` より大きい 場合の response / side effect が実装どおりである。 | `apps/api/src/security/public-resource-response.ts:42 (settleNonEnumerationTiming)` |
 | TC011 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/security/public-resource-response.ts:42 (settleNonEnumerationTiming)` |
 | TC012 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

@@ -70,7 +70,7 @@
 | 到達 symbol | asynchronous chat run stores debug trace by reference | `apps/api/src/rag/memorag-service.test.ts:2599 (asynchronous chat run stores debug trace by reference)` |
 | 到達 symbol | service ingest falls back when memory JSON parse fails and surfaces generate timeout | `apps/api/src/rag/memorag-service.test.ts:3450 (service ingest falls back when memory JSON parse fails and surfaces generate timeout)` |
 | 到達 symbol | FR-020 public ingest persists document, section, and concept memory with raw-evidence trace metadata | `apps/api/src/rag/multi-abstraction-memory.test.ts:14 (FR-020 public ingest persists document, section, and concept memory with raw-evidence trace metadata)` |
-| 到達 symbol | FR-068 production path re-ingests quarantine into a fenced candidate and publishes only the approved artifact | `apps/api/src/rag/offline/pre-retrieval/admission/source-governance-approval-service.test.ts:374 (FR-068 production path re-ingests quarantine into a fenced candidate and publishes only the approved artifact)` |
+| 到達 symbol | FR-068 production path re-ingests quarantine into a fenced candidate and publishes only the approved artifact | `apps/api/src/rag/offline/pre-retrieval/admission/source-governance-approval-service.test.ts:431 (FR-068 production path re-ingests quarantine into a fenced candidate and publishes only the approved artifact)` |
 | 到達 symbol | service search applies ACL and metadata filters across lexical and vector results | `apps/api/src/search/hybrid-search.test.ts:408 (service search applies ACL and metadata filters across lexical and vector results)` |
 | 到達 symbol | service search denies group-scoped manifests to non-members without legacy ACLs | `apps/api/src/search/hybrid-search.test.ts:486 (service search denies group-scoped manifests to non-members without legacy ACLs)` |
 | 到達 symbol | service search publishes and reuses immutable lexical index artifacts | `apps/api/src/search/hybrid-search.test.ts:873 (service search publishes and reuses immutable lexical index artifacts)` |
@@ -82,13 +82,13 @@
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `POST /documents handler` | if | 利用者が "rag:doc:write:group" permission を持たない、かつ 利用者が "benchmark:seed_corpus" permission を持たない | `apps/api/src/routes/document-routes.ts:987 (POST /documents handler)` |
-| F002 | `POST /documents handler` | if | `body.text` が存在しない、または偽である、かつ `body.contentBase64` が存在しない、または偽である、かつ `body.textractJson` が存在しない、または偽である | `apps/api/src/routes/document-routes.ts:991 (POST /documents handler)` |
-| F003 | `POST /documents handler` | 三項条件 | is benchmark seed upload の判定結果が真である | `apps/api/src/routes/document-routes.ts:992 (POST /documents handler)` |
-| F004 | `POST /documents handler` | if | `purpose` が `"document"` と等しい | `apps/api/src/routes/document-routes.ts:1008 (POST /documents handler)` |
-| F005 | `POST /documents handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:1010 (POST /documents handler)` |
-| F006 | `POST /documents handler` | if | `manifest` が存在し、真である | `apps/api/src/routes/document-routes.ts:1011 (POST /documents handler)` |
-| F007 | `POST /documents handler` | if | is permission revoked error の判定結果が真である | `apps/api/src/routes/document-routes.ts:1012 (POST /documents handler)` |
+| F001 | `POST /documents handler` | if | 利用者が "rag:doc:write:group" permission を持たない、かつ 利用者が "benchmark:seed_corpus" permission を持たない | `apps/api/src/routes/document-routes.ts:988 (POST /documents handler)` |
+| F002 | `POST /documents handler` | if | `body.text` が存在しない、または偽である、かつ `body.contentBase64` が存在しない、または偽である、かつ `body.textractJson` が存在しない、または偽である | `apps/api/src/routes/document-routes.ts:992 (POST /documents handler)` |
+| F003 | `POST /documents handler` | 三項条件 | is benchmark seed upload の判定結果が真である | `apps/api/src/routes/document-routes.ts:993 (POST /documents handler)` |
+| F004 | `POST /documents handler` | if | `purpose` が `"document"` と等しい | `apps/api/src/routes/document-routes.ts:1009 (POST /documents handler)` |
+| F005 | `POST /documents handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:1011 (POST /documents handler)` |
+| F006 | `POST /documents handler` | if | `manifest` が存在し、真である | `apps/api/src/routes/document-routes.ts:1012 (POST /documents handler)` |
+| F007 | `POST /documents handler` | if | is permission revoked error の判定結果が真である | `apps/api/src/routes/document-routes.ts:1013 (POST /documents handler)` |
 | F008 | `authorizeDocumentUpload` | if | is benchmark seed upload の判定結果が真である | `apps/api/src/routes/benchmark-seed.ts:56 (authorizeDocumentUpload)` |
 | F009 | `authorizeDocumentUpload` | if | 利用者が "benchmark:seed_corpus" permission を持つ | `apps/api/src/routes/benchmark-seed.ts:57 (authorizeDocumentUpload)` |
 | F010 | `authorizeDocumentUpload` | if | has benchmark seed reserved document metadata の判定結果が真である | `apps/api/src/routes/benchmark-seed.ts:60 (authorizeDocumentUpload)` |
@@ -124,11 +124,11 @@
 | F040 | `authoritativeAdmissionContext` | 三項条件 | `purpose` が `"chatAttachment"` と等しい | `apps/api/src/routes/document-routes.ts:425 (authoritativeAdmissionContext)` |
 | F041 | `authoritativeAdmissionContext` | 三項条件 | `qualityProfile` が存在し、真である | `apps/api/src/routes/document-routes.ts:429 (authoritativeAdmissionContext)` |
 | F042 | `authoritativeAdmissionContext` | 三項条件 | `purpose` が `"benchmarkSeed"` と等しい、または `purpose` が `"chatAttachment"` と等しい | `apps/api/src/routes/document-routes.ts:442 (authoritativeAdmissionContext)` |
-| F043 | `enforceDocumentCreateOperation` | if | `purpose` が `"chatAttachment"` と等しい | `apps/api/src/routes/document-routes.ts:476 (enforceDocumentCreateOperation)` |
-| F044 | `enforceDocumentCreateOperation` | 三項条件 | `purpose` が `"benchmarkSeed"` と等しい | `apps/api/src/routes/document-routes.ts:477 (enforceDocumentCreateOperation)` |
-| F045 | `enforceDocumentCreateOperation` | 三項条件 | `scope?.scopeType` が `"group"` と等しい | `apps/api/src/routes/document-routes.ts:480 (enforceDocumentCreateOperation)` |
-| F046 | `enforceDocumentCreateOperation` | if | `groupIds.length` が `0` より大きい | `apps/api/src/routes/document-routes.ts:481 (enforceDocumentCreateOperation)` |
-| F047 | `enforceDocumentCreateOperation` | loop | `groupIds` が存在し、真である | `apps/api/src/routes/document-routes.ts:483 (enforceDocumentCreateOperation)` |
+| F043 | `enforceDocumentCreateOperation` | if | `purpose` が `"chatAttachment"` と等しい | `apps/api/src/routes/document-routes.ts:477 (enforceDocumentCreateOperation)` |
+| F044 | `enforceDocumentCreateOperation` | 三項条件 | `purpose` が `"benchmarkSeed"` と等しい | `apps/api/src/routes/document-routes.ts:478 (enforceDocumentCreateOperation)` |
+| F045 | `enforceDocumentCreateOperation` | 三項条件 | `scope?.scopeType` が `"group"` と等しい | `apps/api/src/routes/document-routes.ts:481 (enforceDocumentCreateOperation)` |
+| F046 | `enforceDocumentCreateOperation` | if | `groupIds.length` が `0` より大きい | `apps/api/src/routes/document-routes.ts:482 (enforceDocumentCreateOperation)` |
+| F047 | `enforceDocumentCreateOperation` | loop | `groupIds` が存在し、真である | `apps/api/src/routes/document-routes.ts:484 (enforceDocumentCreateOperation)` |
 | F048 | `MemoRagService.createCurrentDocumentIngestAuthorization` | 三項条件 | `input.purpose` が `"benchmarkSeed"` と等しい | `apps/api/src/rag/memorag-service.ts:488 (MemoRagService.createCurrentDocumentIngestAuthorization)` |
 | F049 | `MemoRagService.createCurrentDocumentIngestAuthorization` | 三項条件 | `input.purpose` が `"chatAttachment"` と等しい | `apps/api/src/rag/memorag-service.ts:490 (MemoRagService.createCurrentDocumentIngestAuthorization)` |
 | F050 | `MemoRagService.ingest` | 三項条件 | `tenantId` が存在し、真である、かつ `this.deps.usageEventStore` が存在し、真である、かつ `this.usageRolloutMode()` が `"disabled"` と異なる | `apps/api/src/rag/memorag-service.ts:468 (MemoRagService.ingest)` |
@@ -138,20 +138,20 @@
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | 文書を同期登録する（非推奨） が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:984 (POST /documents handler)` |
-| TC002 | F001: 条件成立 | 利用者が "rag:doc:write:group" permission を持たない、かつ 利用者が "benchmark:seed_corpus" permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:987 (POST /documents handler)` |
-| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:987 (POST /documents handler)` |
-| TC004 | F002: 条件成立 | `body.text` が存在しない、または偽である、かつ `body.contentBase64` が存在しない、または偽である、かつ `body.textractJson` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:991 (POST /documents handler)` |
-| TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:991 (POST /documents handler)` |
-| TC006 | F003: 条件成立 | is benchmark seed upload の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:992 (POST /documents handler)` |
-| TC007 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:992 (POST /documents handler)` |
-| TC008 | F004: 条件成立 | `purpose` が `"document"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1008 (POST /documents handler)` |
-| TC009 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1008 (POST /documents handler)` |
-| TC010 | F005: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/document-routes.ts:1010 (POST /documents handler)` |
-| TC011 | F006: 条件成立 | `manifest` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1011 (POST /documents handler)` |
-| TC012 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1011 (POST /documents handler)` |
-| TC013 | F007: 条件成立 | is permission revoked error の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1012 (POST /documents handler)` |
-| TC014 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1012 (POST /documents handler)` |
+| TC001 | 正常系 | 文書を同期登録する（非推奨） が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:985 (POST /documents handler)` |
+| TC002 | F001: 条件成立 | 利用者が "rag:doc:write:group" permission を持たない、かつ 利用者が "benchmark:seed_corpus" permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:988 (POST /documents handler)` |
+| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:988 (POST /documents handler)` |
+| TC004 | F002: 条件成立 | `body.text` が存在しない、または偽である、かつ `body.contentBase64` が存在しない、または偽である、かつ `body.textractJson` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:992 (POST /documents handler)` |
+| TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:992 (POST /documents handler)` |
+| TC006 | F003: 条件成立 | is benchmark seed upload の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:993 (POST /documents handler)` |
+| TC007 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:993 (POST /documents handler)` |
+| TC008 | F004: 条件成立 | `purpose` が `"document"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1009 (POST /documents handler)` |
+| TC009 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1009 (POST /documents handler)` |
+| TC010 | F005: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/document-routes.ts:1011 (POST /documents handler)` |
+| TC011 | F006: 条件成立 | `manifest` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1012 (POST /documents handler)` |
+| TC012 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1012 (POST /documents handler)` |
+| TC013 | F007: 条件成立 | is permission revoked error の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1013 (POST /documents handler)` |
+| TC014 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1013 (POST /documents handler)` |
 | TC015 | F008: 条件成立 | is benchmark seed upload の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/benchmark-seed.ts:56 (authorizeDocumentUpload)` |
 | TC016 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/benchmark-seed.ts:56 (authorizeDocumentUpload)` |
 | TC017 | F009: 条件成立 | 利用者が "benchmark:seed_corpus" permission を持つ 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/benchmark-seed.ts:57 (authorizeDocumentUpload)` |
@@ -221,16 +221,16 @@
 | TC081 | F041: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:429 (authoritativeAdmissionContext)` |
 | TC082 | F042: 条件成立 | `purpose` が `"benchmarkSeed"` と等しい、または `purpose` が `"chatAttachment"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:442 (authoritativeAdmissionContext)` |
 | TC083 | F042: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:442 (authoritativeAdmissionContext)` |
-| TC084 | F043: 条件成立 | `purpose` が `"chatAttachment"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:476 (enforceDocumentCreateOperation)` |
-| TC085 | F043: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:476 (enforceDocumentCreateOperation)` |
-| TC086 | F044: 条件成立 | `purpose` が `"benchmarkSeed"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:477 (enforceDocumentCreateOperation)` |
-| TC087 | F044: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:477 (enforceDocumentCreateOperation)` |
-| TC088 | F045: 条件成立 | `scope?.scopeType` が `"group"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:480 (enforceDocumentCreateOperation)` |
-| TC089 | F045: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:480 (enforceDocumentCreateOperation)` |
-| TC090 | F046: 条件成立 | `groupIds.length` が `0` より大きい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:481 (enforceDocumentCreateOperation)` |
-| TC091 | F046: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:481 (enforceDocumentCreateOperation)` |
-| TC092 | F047: 0件 | 反復対象が空でも不正な副作用や例外を生じない。 | `apps/api/src/routes/document-routes.ts:483 (enforceDocumentCreateOperation)` |
-| TC093 | F047: 複数件 | 各要素を順に処理し、順序・終了条件を守る。 | `apps/api/src/routes/document-routes.ts:483 (enforceDocumentCreateOperation)` |
+| TC084 | F043: 条件成立 | `purpose` が `"chatAttachment"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:477 (enforceDocumentCreateOperation)` |
+| TC085 | F043: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:477 (enforceDocumentCreateOperation)` |
+| TC086 | F044: 条件成立 | `purpose` が `"benchmarkSeed"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:478 (enforceDocumentCreateOperation)` |
+| TC087 | F044: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:478 (enforceDocumentCreateOperation)` |
+| TC088 | F045: 条件成立 | `scope?.scopeType` が `"group"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:481 (enforceDocumentCreateOperation)` |
+| TC089 | F045: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:481 (enforceDocumentCreateOperation)` |
+| TC090 | F046: 条件成立 | `groupIds.length` が `0` より大きい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:482 (enforceDocumentCreateOperation)` |
+| TC091 | F046: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:482 (enforceDocumentCreateOperation)` |
+| TC092 | F047: 0件 | 反復対象が空でも不正な副作用や例外を生じない。 | `apps/api/src/routes/document-routes.ts:484 (enforceDocumentCreateOperation)` |
+| TC093 | F047: 複数件 | 各要素を順に処理し、順序・終了条件を守る。 | `apps/api/src/routes/document-routes.ts:484 (enforceDocumentCreateOperation)` |
 | TC094 | F048: 条件成立 | `input.purpose` が `"benchmarkSeed"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:488 (MemoRagService.createCurrentDocumentIngestAuthorization)` |
 | TC095 | F048: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:488 (MemoRagService.createCurrentDocumentIngestAuthorization)` |
 | TC096 | F049: 条件成立 | `input.purpose` が `"chatAttachment"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:490 (MemoRagService.createCurrentDocumentIngestAuthorization)` |

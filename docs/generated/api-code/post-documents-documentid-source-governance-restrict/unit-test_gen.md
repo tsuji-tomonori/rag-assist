@@ -8,39 +8,39 @@
 
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
-| 到達 symbol | FR-068 production path re-ingests quarantine into a fenced candidate and publishes only the approved artifact | `apps/api/src/rag/offline/pre-retrieval/admission/source-governance-approval-service.test.ts:374 (FR-068 production path re-ingests quarantine into a fenced candidate and publishes only the approved artifact)` |
+| 到達 symbol | FR-068 production path re-ingests quarantine into a fenced candidate and publishes only the approved artifact | `apps/api/src/rag/offline/pre-retrieval/admission/source-governance-approval-service.test.ts:431 (FR-068 production path re-ingests quarantine into a fenced candidate and publishes only the approved artifact)` |
 
 ## 2. 実装分岐から導くテスト要因
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `POST /documents/{documentId}/source-governance/restrict handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:568 (POST /documents/{documentId}/source-governance/restrict handler)` |
-| F002 | `POST /documents/{documentId}/source-governance/restrict handler` | if | `error` が `SourceGovernanceValidationError` の instance である | `apps/api/src/routes/document-routes.ts:569 (POST /documents/{documentId}/source-governance/restrict handler)` |
-| F003 | `POST /documents/{documentId}/source-governance/restrict handler` | if | `error` が `SourceGovernanceDeniedError` の instance である | `apps/api/src/routes/document-routes.ts:570 (POST /documents/{documentId}/source-governance/restrict handler)` |
-| F004 | `POST /documents/{documentId}/source-governance/restrict handler` | if | `error` が `SourceGovernanceConflictError` の instance である | `apps/api/src/routes/document-routes.ts:571 (POST /documents/{documentId}/source-governance/restrict handler)` |
-| F005 | `POST /documents/{documentId}/source-governance/restrict handler` | if | `error` が `SourceGovernanceUnavailableError` の instance である | `apps/api/src/routes/document-routes.ts:572 (POST /documents/{documentId}/source-governance/restrict handler)` |
-| F006 | `POST /documents/{documentId}/source-governance/restrict handler` | if | `error` が `Error` の instance である、かつ `error.message` が "ENOENT" を含む、または `error.message` が "NoSuchKey" を含む | `apps/api/src/routes/document-routes.ts:573 (POST /documents/{documentId}/source-governance/restrict handler)` |
-| F007 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| F001 | `POST /documents/{documentId}/source-governance/restrict handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:569 (POST /documents/{documentId}/source-governance/restrict handler)` |
+| F002 | `POST /documents/{documentId}/source-governance/restrict handler` | if | `error` が `SourceGovernanceValidationError` の instance である | `apps/api/src/routes/document-routes.ts:570 (POST /documents/{documentId}/source-governance/restrict handler)` |
+| F003 | `POST /documents/{documentId}/source-governance/restrict handler` | if | `error` が `SourceGovernanceDeniedError` の instance である | `apps/api/src/routes/document-routes.ts:571 (POST /documents/{documentId}/source-governance/restrict handler)` |
+| F004 | `POST /documents/{documentId}/source-governance/restrict handler` | if | `error` が `SourceGovernanceConflictError` の instance である | `apps/api/src/routes/document-routes.ts:572 (POST /documents/{documentId}/source-governance/restrict handler)` |
+| F005 | `POST /documents/{documentId}/source-governance/restrict handler` | if | `error` が `SourceGovernanceUnavailableError` の instance である | `apps/api/src/routes/document-routes.ts:573 (POST /documents/{documentId}/source-governance/restrict handler)` |
+| F006 | `POST /documents/{documentId}/source-governance/restrict handler` | if | `error` が `Error` の instance である、かつ `error.message` が "ENOENT" を含む、または `error.message` が "NoSuchKey" を含む | `apps/api/src/routes/document-routes.ts:574 (POST /documents/{documentId}/source-governance/restrict handler)` |
+| F007 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | F008 | `publicSourceGovernanceRecord` | 三項条件 | `stagedPublication` が存在し、真である | `apps/api/src/routes/document-routes.ts:114 (publicSourceGovernanceRecord)` |
 
 ## 3. コード由来テストケース
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | 公開済み情報源の利用を制限する が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:560 (POST /documents/{documentId}/source-governance/restrict handler)` |
-| TC002 | F001: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/document-routes.ts:568 (POST /documents/{documentId}/source-governance/restrict handler)` |
-| TC003 | F002: 条件成立 | `error` が `SourceGovernanceValidationError` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:569 (POST /documents/{documentId}/source-governance/restrict handler)` |
-| TC004 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:569 (POST /documents/{documentId}/source-governance/restrict handler)` |
-| TC005 | F003: 条件成立 | `error` が `SourceGovernanceDeniedError` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:570 (POST /documents/{documentId}/source-governance/restrict handler)` |
-| TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:570 (POST /documents/{documentId}/source-governance/restrict handler)` |
-| TC007 | F004: 条件成立 | `error` が `SourceGovernanceConflictError` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:571 (POST /documents/{documentId}/source-governance/restrict handler)` |
-| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:571 (POST /documents/{documentId}/source-governance/restrict handler)` |
-| TC009 | F005: 条件成立 | `error` が `SourceGovernanceUnavailableError` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:572 (POST /documents/{documentId}/source-governance/restrict handler)` |
-| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:572 (POST /documents/{documentId}/source-governance/restrict handler)` |
-| TC011 | F006: 条件成立 | `error` が `Error` の instance である、かつ `error.message` が "ENOENT" を含む、または `error.message` が "NoSuchKey" を含む 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:573 (POST /documents/{documentId}/source-governance/restrict handler)` |
-| TC012 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:573 (POST /documents/{documentId}/source-governance/restrict handler)` |
-| TC013 | F007: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC014 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| TC001 | 正常系 | 公開済み情報源の利用を制限する が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:561 (POST /documents/{documentId}/source-governance/restrict handler)` |
+| TC002 | F001: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/document-routes.ts:569 (POST /documents/{documentId}/source-governance/restrict handler)` |
+| TC003 | F002: 条件成立 | `error` が `SourceGovernanceValidationError` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:570 (POST /documents/{documentId}/source-governance/restrict handler)` |
+| TC004 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:570 (POST /documents/{documentId}/source-governance/restrict handler)` |
+| TC005 | F003: 条件成立 | `error` が `SourceGovernanceDeniedError` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:571 (POST /documents/{documentId}/source-governance/restrict handler)` |
+| TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:571 (POST /documents/{documentId}/source-governance/restrict handler)` |
+| TC007 | F004: 条件成立 | `error` が `SourceGovernanceConflictError` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:572 (POST /documents/{documentId}/source-governance/restrict handler)` |
+| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:572 (POST /documents/{documentId}/source-governance/restrict handler)` |
+| TC009 | F005: 条件成立 | `error` が `SourceGovernanceUnavailableError` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:573 (POST /documents/{documentId}/source-governance/restrict handler)` |
+| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:573 (POST /documents/{documentId}/source-governance/restrict handler)` |
+| TC011 | F006: 条件成立 | `error` が `Error` の instance である、かつ `error.message` が "ENOENT" を含む、または `error.message` が "NoSuchKey" を含む 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:574 (POST /documents/{documentId}/source-governance/restrict handler)` |
+| TC012 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:574 (POST /documents/{documentId}/source-governance/restrict handler)` |
+| TC013 | F007: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
+| TC014 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | TC015 | F008: 条件成立 | `stagedPublication` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:114 (publicSourceGovernanceRecord)` |
 | TC016 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:114 (publicSourceGovernanceRecord)` |
 | TC017 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

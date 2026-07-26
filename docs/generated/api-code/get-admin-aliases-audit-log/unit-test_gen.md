@@ -16,20 +16,20 @@
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `GET /admin/aliases/audit-log handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/admin-routes.ts:589 (GET /admin/aliases/audit-log handler)` |
-| F002 | `GET /admin/aliases/audit-log handler` | if | `error` が `InvalidPageCursorError` の instance である | `apps/api/src/routes/admin-routes.ts:590 (GET /admin/aliases/audit-log handler)` |
-| F003 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| F001 | `GET /admin/aliases/audit-log handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/admin-routes.ts:656 (GET /admin/aliases/audit-log handler)` |
+| F002 | `GET /admin/aliases/audit-log handler` | if | `error` が `InvalidPageCursorError` の instance である | `apps/api/src/routes/admin-routes.ts:657 (GET /admin/aliases/audit-log handler)` |
+| F003 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |
 
 ## 3. コード由来テストケース
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | 検索 alias 監査ログを取得する が成功 response を返す。 | `apps/api/src/routes/admin-routes.ts:583 (GET /admin/aliases/audit-log handler)` |
-| TC002 | F001: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/admin-routes.ts:589 (GET /admin/aliases/audit-log handler)` |
-| TC003 | F002: 条件成立 | `error` が `InvalidPageCursorError` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:590 (GET /admin/aliases/audit-log handler)` |
-| TC004 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:590 (GET /admin/aliases/audit-log handler)` |
-| TC005 | F003: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| TC001 | 正常系 | 検索 alias 監査ログを取得する が成功 response を返す。 | `apps/api/src/routes/admin-routes.ts:650 (GET /admin/aliases/audit-log handler)` |
+| TC002 | F001: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/admin-routes.ts:656 (GET /admin/aliases/audit-log handler)` |
+| TC003 | F002: 条件成立 | `error` が `InvalidPageCursorError` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:657 (GET /admin/aliases/audit-log handler)` |
+| TC004 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:657 (GET /admin/aliases/audit-log handler)` |
+| TC005 | F003: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
+| TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | TC007 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC008 | HTTP 400 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC009 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

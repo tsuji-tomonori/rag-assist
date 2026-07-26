@@ -2,7 +2,7 @@
 
 # POST /documents/uploads/{uploadId}/ingest IF仕様
 
-- 実装 route: `apps/api/src/routes/document-routes.ts:1089 (POST /documents/uploads/{uploadId}/ingest)`
+- 実装 route: `apps/api/src/routes/document-routes.ts:1090 (POST /documents/uploads/{uploadId}/ingest)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: アップロード済み文書を取り込む

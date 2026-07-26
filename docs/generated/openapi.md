@@ -25,6 +25,7 @@ Grounded internal-document QA API. Answers only from uploaded documents; otherwi
 | `POST` | `/admin/costs/export` | 概算コスト export URL を作成する | [詳細](openapi/post-admin-costs-export.md) |
 | `GET` | `/admin/quality-actions` | 文書品質 action card 一覧を取得する | [詳細](openapi/get-admin-quality-actions.md) |
 | `GET` | `/admin/roles` | 利用可能なロール一覧を取得する | [詳細](openapi/get-admin-roles.md) |
+| `POST` | `/admin/security-audit/quarantines/{intentId}/redrive` | 隔離された監査 intent を手動再投入する | [詳細](openapi/post-admin-security-audit-quarantines-intentid-redrive.md) |
 | `GET` | `/admin/usage` | 利用状況を取得する | [詳細](openapi/get-admin-usage.md) |
 | `POST` | `/admin/usage/export` | 利用状況 export URL を作成する | [詳細](openapi/post-admin-usage-export.md) |
 | `POST` | `/admin/users` | 管理対象ユーザーを作成する | [詳細](openapi/post-admin-users.md) |

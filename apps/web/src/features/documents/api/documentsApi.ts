@@ -107,14 +107,22 @@ type UploadSession = {
 type DocumentIngestRun = {
   runId: string
   status: "queued" | "running" | "succeeded" | "rejected" | "failed" | "cancelled"
+  stage?: string
   eventsPath?: string
   manifest?: DocumentManifest
   error?: string
 }
 
+export type DocumentIngestProgressPhase = "queued" | "running" | "preprocessing" | "extracting" | "unknown"
+
 export type DocumentUploadProgress = {
-  phase: "preparing" | "transferring" | "creatingRun" | "extracting" | "chunking" | "embedding" | "indexing" | "complete"
+  phase: "preparing" | "transferring" | "creatingRun" | DocumentIngestProgressPhase | "complete"
   runId?: string
+}
+
+export function documentIngestProgressPhase(stage: string | undefined): DocumentIngestProgressPhase {
+  if (stage === "queued" || stage === "running" || stage === "preprocessing" || stage === "extracting") return stage
+  return "unknown"
 }
 
 export async function createDocumentUpload(input: {
@@ -206,8 +214,6 @@ export async function uploadDocumentFile(input: {
 async function waitForDocumentIngestRun(initialRun: DocumentIngestRun, onProgress?: (progress: DocumentUploadProgress) => void): Promise<DocumentManifest> {
   let run = initialRun
   const deadline = Date.now() + 15 * 60 * 1000
-  const pollPhases: DocumentUploadProgress["phase"][] = ["extracting", "chunking", "embedding", "indexing"]
-  let pollCount = 0
   while (Date.now() < deadline) {
     if (run.status === "succeeded" && run.manifest) {
       onProgress?.({ phase: "complete", runId: run.runId })
@@ -215,10 +221,9 @@ async function waitForDocumentIngestRun(initialRun: DocumentIngestRun, onProgres
     }
     if (run.status === "rejected") throw new Error(run.error ?? "文書取り込みは受け入れポリシーにより拒否されました")
     if (run.status === "failed" || run.status === "cancelled") throw new Error(run.error ?? `document ingest run ${run.status}`)
-    onProgress?.({ phase: pollPhases[Math.min(pollCount, pollPhases.length - 1)]!, runId: run.runId })
+    onProgress?.({ phase: documentIngestProgressPhase(run.stage), runId: run.runId })
     await sleep(1000)
     run = await getDocumentIngestRun(run.runId)
-    pollCount += 1
   }
   throw new Error("document ingest run timed out")
 }

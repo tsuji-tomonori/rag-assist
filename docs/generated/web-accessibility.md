@@ -387,9 +387,9 @@
 | ドキュメント | DocumentDetailPanel | label | 作成後にこのフォルダへ移動 | 「作成後にこのフォルダへ移動」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:451 |
 | ドキュメント | DocumentDetailPanel | input | 作成後にこのフォルダへ移動 | 「作成後にこのフォルダへ移動」を入力または選択する項目。 | 状態: disabled=!canCreateGroups \|\| operationState.creatingGroup | apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:452 |
 | ドキュメント | DocumentDetailPanel | button | 新規フォルダ | 「新規フォルダ」を実行するボタン。 | 状態: disabled=!canCreateGroup | apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:466 |
-| ドキュメント | UploadProgressPanel | button | 詳細を開く | 「詳細を開く」を実行するボタン。 | - | apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:565 |
-| ドキュメント | UploadProgressPanel | button | この資料に質問する | 「この資料に質問する」を実行するボタン。 | - | apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:566 |
-| ドキュメント | UploadProgressPanel | button | フォルダ内で表示 | 「フォルダ内で表示」を実行するボタン。 | - | apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:567 |
+| ドキュメント | UploadProgressPanel | button | 詳細を開く | 「詳細を開く」を実行するボタン。 | - | apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:576 |
+| ドキュメント | UploadProgressPanel | button | この資料に質問する | 「この資料に質問する」を実行するボタン。 | - | apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:577 |
+| ドキュメント | UploadProgressPanel | button | フォルダ内で表示 | 「フォルダ内で表示」を実行するボタン。 | - | apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:578 |
 | ドキュメント | DocumentFilePanel | button | ドキュメントを追加 | 「ドキュメントを追加」を実行するボタン。 | 説明参照: addDocumentDisabledReason ? "document-add-disabled-reason" : undefined<br>状態: disabled=!canOpenDocumentAdd | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:140 |
 | ドキュメント | DocumentFilePanel | button | フォルダ設定を開く | 「フォルダ設定を開く」を実行するボタン。 | 状態: disabled=(!canShareGroups && !canMoveGroups && !canCreateGroups && !canWrite) \|\| operationState.sh… | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:151 |
 | ドキュメント | DocumentFilePanel | button | 絞り込みをリセット | 「絞り込みをリセット」を実行するボタン。 | - | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:182 |

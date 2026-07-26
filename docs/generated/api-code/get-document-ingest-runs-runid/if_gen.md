@@ -2,7 +2,7 @@
 
 # GET /document-ingest-runs/{runId} IF仕様
 
-- 実装 route: `apps/api/src/routes/document-routes.ts:1191 (GET /document-ingest-runs/{runId})`
+- 実装 route: `apps/api/src/routes/document-routes.ts:1192 (GET /document-ingest-runs/{runId})`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 文書取り込み run を取得する

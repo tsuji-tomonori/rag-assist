@@ -1,5 +1,13 @@
 import type { AppUser } from "../auth.js"
 import type { Dependencies } from "../dependencies.js"
+import {
+  ObjectStoreRevocationCleanupCoordinator,
+  type RegisterRevocationCleanupInput
+} from "../rag/_shared/security/revocation-cleanup-coordinator.js"
+import {
+  ObjectStoreRevocationCleanupRepairOutbox,
+  type RevocationCleanupRepairIntent
+} from "../rag/_shared/security/revocation-cleanup-repair-outbox.js"
 import { tenantManifestPrefix } from "../rag/_shared/storage/tenant-artifacts.js"
 import {
   enforceResolvedResourceOperation,
@@ -26,7 +34,13 @@ type FolderArchiveDeps = Pick<Dependencies,
   | "securityAuditOutbox"
   | "localTestIngestAdmissionContext"
   | "legacyGlobalDocumentArtifacts"
->
+> & Readonly<{
+  cleanupCoordinator?: Pick<ObjectStoreRevocationCleanupCoordinator, "register">
+  cleanupRepairOutbox?: Pick<
+    ObjectStoreRevocationCleanupRepairOutbox,
+    "prepare" | "markDenyCommitted" | "markCleanupRegistered" | "markAbandoned"
+  >
+}>
 
 export type ArchiveFolderInput = Readonly<{
   expectedVersion: string
@@ -48,6 +62,11 @@ export class FolderArchiveError extends Error {
 export class FolderArchiveService {
   private readonly permissions: FolderPermissionService
   private readonly auditOutbox: SecurityMutationAuditOutboxPort
+  private readonly cleanupCoordinator: Pick<ObjectStoreRevocationCleanupCoordinator, "register">
+  private readonly cleanupRepairOutbox: Pick<
+    ObjectStoreRevocationCleanupRepairOutbox,
+    "prepare" | "markDenyCommitted" | "markCleanupRegistered" | "markAbandoned"
+  >
 
   constructor(
     private readonly deps: FolderArchiveDeps,
@@ -55,6 +74,8 @@ export class FolderArchiveService {
   ) {
     this.permissions = new FolderPermissionService(deps)
     this.auditOutbox = deps.securityAuditOutbox ?? new ObjectStoreSecurityMutationAuditOutbox(deps.objectStore, now)
+    this.cleanupCoordinator = deps.cleanupCoordinator ?? new ObjectStoreRevocationCleanupCoordinator(deps.objectStore, now)
+    this.cleanupRepairOutbox = deps.cleanupRepairOutbox ?? new ObjectStoreRevocationCleanupRepairOutbox(deps.objectStore)
   }
 
   async archive(actor: AppUser, folderId: string, input: ArchiveFolderInput): Promise<DocumentGroup> {
@@ -85,6 +106,7 @@ export class FolderArchiveService {
       reason: input.reason,
       policyVersion: FOLDER_ARCHIVE_POLICY_VERSION
     })
+    let cleanupRepair: RevocationCleanupRepairIntent | undefined
     try {
       if (input.expectedVersion !== current.updatedAt) throw new FolderArchiveError("Folder version conflict", "conflict")
       const detail = await this.permissions.resolveEffectiveFolderPermissionDetail(actor, folderId)
@@ -109,13 +131,39 @@ export class FolderArchiveService {
         },
         satisfiedGuards: ["descendantImpactConfirmed", "denyFirstLifecycleApplied"]
       })
+      const cleanupRegistration = folderArchiveCleanupRegistration(audit.intentId, next)
+      cleanupRepair = await this.cleanupRepairOutbox.prepare({
+        expectedBeforeDenyVersion: current.updatedAt,
+        cleanupRegistration,
+        preparedAt: next.updatedAt
+      })
       const [committed] = await this.deps.documentGroupStore.updateWithPathLocks(current.tenantId, [{ current, next }])
       if (!committed) throw new Error("Folder archive returned no state")
       archived = committed
     } catch (error) {
+      if (cleanupRepair) {
+        await this.cleanupRepairOutbox.markAbandoned(cleanupRepair, this.now().toISOString()).catch(() => undefined)
+      }
       const normalized = normalizeError(error)
       await this.auditOutbox.complete(audit.intentId, current.tenantId, normalized.result, auditFolder(current))
       throw normalized
+    }
+    try {
+      if (!cleanupRepair) throw new Error("Folder archive cleanup repair was not prepared")
+      if (cleanupRepair.cleanupRegistration.authoritativeDenyVersion !== folderArchiveDenyVersion(archived)) {
+        throw new Error("Folder archive deny version does not match its cleanup repair intent")
+      }
+      const committedRepair = await this.cleanupRepairOutbox.markDenyCommitted(
+        cleanupRepair,
+        archived.updatedAt
+      )
+      await this.cleanupCoordinator.register(committedRepair.cleanupRegistration)
+      await this.cleanupRepairOutbox.markCleanupRegistered(committedRepair, archived.updatedAt)
+    } catch (error) {
+      // The archived state and pre-CAS repair are durable. Keep the audit
+      // pending so the cleanup worker can recreate the ledger before the
+      // authoritative resolver finalizes the operation.
+      throw new FolderArchiveError("Folder archive cleanup registration failed", "failed", { cause: error })
     }
     try {
       await this.auditOutbox.complete(audit.intentId, current.tenantId, "success", auditFolder(archived))
@@ -168,6 +216,41 @@ export class FolderArchiveService {
   }
 }
 
+export function folderArchiveCleanupRegistration(
+  auditIntentId: string,
+  archived: DocumentGroup
+): RegisterRevocationCleanupInput & { operationId: string } {
+  if (
+    !canonical(auditIntentId)
+    || !canonical(archived.tenantId)
+    || !canonical(archived.groupId)
+    || archived.status !== "archived"
+    || !isCanonicalTimestamp(archived.updatedAt)
+  ) throw new Error("Folder archive cleanup identity is invalid")
+  const reference = `folder:${archived.groupId}`
+  return {
+    operationId: `folder-archive:${auditIntentId}`,
+    tenantId: archived.tenantId,
+    resourceType: "folder",
+    resourceId: archived.groupId,
+    trigger: "archived",
+    deniedPurposes: ["normal_rag", "external_model", "logging", "evaluation"],
+    authoritativeDenyVersion: folderArchiveDenyVersion(archived),
+    authoritativeDenyConfirmedAt: archived.updatedAt,
+    knownTargets: [
+      { scope: "grant", reference },
+      { scope: "cache", reference },
+      { scope: "session", reference: `${reference}/session` },
+      { scope: "queued_run", reference },
+      { scope: "evaluation_artifact", reference }
+    ]
+  }
+}
+
+function folderArchiveDenyVersion(archived: DocumentGroup): string {
+  return `folder:${archived.updatedAt}`
+}
+
 function validateInput(folderId: string, input: ArchiveFolderInput): void {
   if (!canonical(folderId) || !canonical(input.expectedVersion)) throw new FolderArchiveError("Invalid folder archive request", "denied")
   if (!canonical(input.reason) || input.reason.length > 1000) throw new FolderArchiveError("Mutation reason is required", "denied")
@@ -205,6 +288,10 @@ function stringValue(value: JsonValue | undefined): string | undefined {
 
 function canonical(value: string | undefined): value is string {
   return typeof value === "string" && value.length > 0 && value.trim() === value
+}
+
+function isCanonicalTimestamp(value: string): boolean {
+  return Number.isFinite(Date.parse(value)) && new Date(value).toISOString() === value
 }
 
 function isMissingObjectError(error: unknown): boolean {

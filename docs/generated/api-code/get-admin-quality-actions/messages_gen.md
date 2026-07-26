@@ -16,7 +16,7 @@
 | M001 | OpenAPI contract | `200` | リクエストは成功し、レスポンス body に結果を返します。 | OpenAPI で宣言された HTTP 200 response | runtime OpenAPI |
 | M002 | OpenAPI contract | `401` | 認証が必要です。 | OpenAPI で宣言された HTTP 401 response | runtime OpenAPI |
 | M003 | OpenAPI contract | `403` | 対象操作を実行する権限がありません。 | OpenAPI で宣言された HTTP 403 response | runtime OpenAPI |
-| M004 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| M004 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | M005 | 例外 | `-` | Artifact key is invalid | `normalized` が存在しない、または偽である、または `normalized` が ".." を含む | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:127 (normalizeRelativeKey)` |
 | M006 | 例外 | `-` | Authoritative tenant is required | `normalized` が存在しない、または偽である | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:121 (requiredTenantId)` |
 | M007 | 例外 | `-` | Authoritative tenant is required | `normalized` が存在しない、または偽である | `apps/api/src/security/tenant-partition.ts:5 (tenantPartitionId)` |

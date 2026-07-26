@@ -62,6 +62,8 @@ export type ApproveSourceGovernanceInput = Readonly<{
   inspection: Readonly<{
     status: "passed"
     profileVersion: string
+    malwareStatus: "clean"
+    malwareProfileVersion: string
   }>
 }>
 
@@ -704,6 +706,10 @@ export function createApprovedSourceAdmissionContext(
     ),
     provenanceRef: admission.provenanceRef,
     inspectionStatus: "passed",
+    malwareScan: {
+      status: "clean",
+      profileVersion: approval.inspection.malwareProfileVersion
+    },
     qualityProfile: approval.qualityProfile,
     lifecycleStatus: "staging",
     scope: {
@@ -736,7 +742,8 @@ function validateApprovalInput(input: ApproveSourceGovernanceInput): ApproveSour
     input.classification.policyVersion,
     input.usagePolicy.policyVersion,
     input.qualityPolicyVersion,
-    input.inspection.profileVersion
+    input.inspection.profileVersion,
+    input.inspection.malwareProfileVersion
   ]) {
     if (!version.trim() || version.trim() !== version) {
       throw new SourceGovernanceValidationError("All governance profile versions are required and must be canonical")
@@ -744,6 +751,9 @@ function validateApprovalInput(input: ApproveSourceGovernanceInput): ApproveSour
   }
   if (input.inspection.status !== "passed") {
     throw new SourceGovernanceValidationError("Source inspection must pass before approval")
+  }
+  if (input.inspection.malwareStatus !== "clean") {
+    throw new SourceGovernanceValidationError("Source malware scan must be clean before approval")
   }
   const purposes = [...input.usagePolicy.allowedPurposes]
   if (
@@ -850,6 +860,8 @@ function assertApprovedStagedCandidate(
     || candidate.publicationEligible !== true
     || candidate.admission?.status !== "approved"
     || candidate.admission.inspectionStatus !== "passed"
+    || candidate.admission.malwareScan?.status !== "clean"
+    || candidate.admission.malwareScan.profileVersion !== approval.inspection.malwareProfileVersion
     || candidate.admission.tenantId !== record.tenantId
     || candidate.admission.classificationRef?.hash !== approval.classificationRef.hash
     || candidate.admission.usagePolicyRef?.hash !== approval.usagePolicyRef.hash
@@ -1123,7 +1135,9 @@ function auditProposedState(input: ApproveSourceGovernanceInput): JsonValue {
     usagePolicyVersion: input.usagePolicy?.policyVersion ?? null,
     allowedPurposes: Array.isArray(input.usagePolicy?.allowedPurposes) ? [...input.usagePolicy.allowedPurposes] : [],
     qualityPolicyVersion: input.qualityPolicyVersion ?? null,
-    inspectionProfileVersion: input.inspection?.profileVersion ?? null
+    inspectionProfileVersion: input.inspection?.profileVersion ?? null,
+    malwareStatus: input.inspection?.malwareStatus ?? null,
+    malwareProfileVersion: input.inspection?.malwareProfileVersion ?? null
   }
 }
 

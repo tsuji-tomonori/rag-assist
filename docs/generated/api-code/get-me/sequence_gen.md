@@ -31,5 +31,5 @@ sequenceDiagram
 
 | ID | Function | 条件 | 実装位置 |
 | --- | --- | --- | --- |
-| B001 | `getPermissionsForGroups` | `groups` が存在し、真である | `apps/api/src/authorization.ts:108 (getPermissionsForGroups)` |
-| B002 | `getPermissionsForGroups` | `rolePermissions[group as Role]` が `[]` の条件を満たす | `apps/api/src/authorization.ts:109 (getPermissionsForGroups)` |
+| B001 | `getPermissionsForGroups` | `groups` が存在し、真である | `apps/api/src/authorization.ts:109 (getPermissionsForGroups)` |
+| B002 | `getPermissionsForGroups` | `rolePermissions[group as Role]` が `[]` の条件を満たす | `apps/api/src/authorization.ts:110 (getPermissionsForGroups)` |

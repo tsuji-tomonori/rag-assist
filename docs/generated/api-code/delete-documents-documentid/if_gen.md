@@ -2,7 +2,7 @@
 
 # DELETE /documents/{documentId} IF仕様
 
-- 実装 route: `apps/api/src/routes/document-routes.ts:1567 (DELETE /documents/{documentId})`
+- 実装 route: `apps/api/src/routes/document-routes.ts:1568 (DELETE /documents/{documentId})`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 文書を削除する

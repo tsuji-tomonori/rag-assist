@@ -20,8 +20,8 @@
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `POST /documents/uploads/{uploadId}/content handler` | if | `deps.objectStore.createUploadUrl` が存在し、真である | `apps/api/src/routes/document-routes.ts:1078 (POST /documents/uploads/{uploadId}/content handler)` |
-| F002 | `POST /documents/uploads/{uploadId}/content handler` | if | `uploaded.length` が `config.documentUploadMaxBytes` より大きい | `apps/api/src/routes/document-routes.ts:1083 (POST /documents/uploads/{uploadId}/content handler)` |
+| F001 | `POST /documents/uploads/{uploadId}/content handler` | if | `deps.objectStore.createUploadUrl` が存在し、真である | `apps/api/src/routes/document-routes.ts:1079 (POST /documents/uploads/{uploadId}/content handler)` |
+| F002 | `POST /documents/uploads/{uploadId}/content handler` | if | `uploaded.length` が `config.documentUploadMaxBytes` より大きい | `apps/api/src/routes/document-routes.ts:1084 (POST /documents/uploads/{uploadId}/content handler)` |
 | F003 | `decodeUploadId` | if | starts with の判定結果が真ではない、または `objectKey` が ".." を含む | `apps/api/src/routes/document-routes.ts:174 (decodeUploadId)` |
 | F004 | `decodeUploadId` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:176 (decodeUploadId)` |
 | F005 | `uploadPurposeForKey` | if | starts with の判定結果が真である | `apps/api/src/routes/document-routes.ts:149 (uploadPurposeForKey)` |
@@ -37,11 +37,11 @@
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | 文書アップロード内容を保存する が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:1072 (POST /documents/uploads/{uploadId}/content handler)` |
-| TC002 | F001: 条件成立 | `deps.objectStore.createUploadUrl` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1078 (POST /documents/uploads/{uploadId}/content handler)` |
-| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1078 (POST /documents/uploads/{uploadId}/content handler)` |
-| TC004 | F002: 条件成立 | `uploaded.length` が `config.documentUploadMaxBytes` より大きい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1083 (POST /documents/uploads/{uploadId}/content handler)` |
-| TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1083 (POST /documents/uploads/{uploadId}/content handler)` |
+| TC001 | 正常系 | 文書アップロード内容を保存する が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:1073 (POST /documents/uploads/{uploadId}/content handler)` |
+| TC002 | F001: 条件成立 | `deps.objectStore.createUploadUrl` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1079 (POST /documents/uploads/{uploadId}/content handler)` |
+| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1079 (POST /documents/uploads/{uploadId}/content handler)` |
+| TC004 | F002: 条件成立 | `uploaded.length` が `config.documentUploadMaxBytes` より大きい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1084 (POST /documents/uploads/{uploadId}/content handler)` |
+| TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1084 (POST /documents/uploads/{uploadId}/content handler)` |
 | TC006 | F003: 条件成立 | starts with の判定結果が真ではない、または `objectKey` が ".." を含む 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:174 (decodeUploadId)` |
 | TC007 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:174 (decodeUploadId)` |
 | TC008 | F004: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/document-routes.ts:176 (decodeUploadId)` |

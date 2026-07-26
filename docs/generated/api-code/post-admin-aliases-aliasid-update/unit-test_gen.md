@@ -17,31 +17,31 @@
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `POST /admin/aliases/{aliasId}/update handler` | if | `alias` が存在しない、または偽である | `apps/api/src/routes/admin-routes.ts:435 (POST /admin/aliases/{aliasId}/update handler)` |
-| F002 | `POST /admin/aliases/{aliasId}/update handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/admin-routes.ts:437 (POST /admin/aliases/{aliasId}/update handler)` |
-| F003 | `POST /admin/aliases/{aliasId}/update handler` | if | `error` が `AliasGovernanceError` の instance である | `apps/api/src/routes/admin-routes.ts:438 (POST /admin/aliases/{aliasId}/update handler)` |
-| F004 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| F001 | `POST /admin/aliases/{aliasId}/update handler` | if | `alias` が存在しない、または偽である | `apps/api/src/routes/admin-routes.ts:502 (POST /admin/aliases/{aliasId}/update handler)` |
+| F002 | `POST /admin/aliases/{aliasId}/update handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/admin-routes.ts:504 (POST /admin/aliases/{aliasId}/update handler)` |
+| F003 | `POST /admin/aliases/{aliasId}/update handler` | if | `error` が `AliasGovernanceError` の instance である | `apps/api/src/routes/admin-routes.ts:505 (POST /admin/aliases/{aliasId}/update handler)` |
+| F004 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | F005 | `MemoRagService.updateAlias` | if | `alias` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:1460 (MemoRagService.updateAlias)` |
 | F006 | `MemoRagService.updateAlias` | 三項条件 | `alias.status` が `"disabled"` と等しい | `apps/api/src/rag/memorag-service.ts:1462 (MemoRagService.updateAlias)` |
 | F007 | `MemoRagService.updateAlias` | if | `invalid` が存在し、真である | `apps/api/src/rag/memorag-service.ts:1463 (MemoRagService.updateAlias)` |
 | F008 | `MemoRagService.updateAlias` | if | `input.term` が `undefined` と異なる | `apps/api/src/rag/memorag-service.ts:1465 (MemoRagService.updateAlias)` |
 | F009 | `MemoRagService.updateAlias` | if | `input.expansions` が `undefined` と異なる | `apps/api/src/rag/memorag-service.ts:1466 (MemoRagService.updateAlias)` |
 | F010 | `MemoRagService.updateAlias` | if | `input.scope` が `undefined` と異なる | `apps/api/src/rag/memorag-service.ts:1467 (MemoRagService.updateAlias)` |
-| F011 | `aliasGovernanceStatus` | if | `error.result` が `"conflict"` と等しい | `apps/api/src/routes/admin-routes.ts:733 (aliasGovernanceStatus)` |
-| F012 | `aliasGovernanceStatus` | if | `error.result` が `"denied"` と等しい | `apps/api/src/routes/admin-routes.ts:734 (aliasGovernanceStatus)` |
+| F011 | `aliasGovernanceStatus` | if | `error.result` が `"conflict"` と等しい | `apps/api/src/routes/admin-routes.ts:800 (aliasGovernanceStatus)` |
+| F012 | `aliasGovernanceStatus` | if | `error.result` が `"denied"` と等しい | `apps/api/src/routes/admin-routes.ts:801 (aliasGovernanceStatus)` |
 
 ## 3. コード由来テストケース
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | 検索 alias draft を更新する が成功 response を返す。 | `apps/api/src/routes/admin-routes.ts:428 (POST /admin/aliases/{aliasId}/update handler)` |
-| TC002 | F001: 条件成立 | `alias` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:435 (POST /admin/aliases/{aliasId}/update handler)` |
-| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:435 (POST /admin/aliases/{aliasId}/update handler)` |
-| TC004 | F002: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/admin-routes.ts:437 (POST /admin/aliases/{aliasId}/update handler)` |
-| TC005 | F003: 条件成立 | `error` が `AliasGovernanceError` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:438 (POST /admin/aliases/{aliasId}/update handler)` |
-| TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:438 (POST /admin/aliases/{aliasId}/update handler)` |
-| TC007 | F004: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| TC001 | 正常系 | 検索 alias draft を更新する が成功 response を返す。 | `apps/api/src/routes/admin-routes.ts:495 (POST /admin/aliases/{aliasId}/update handler)` |
+| TC002 | F001: 条件成立 | `alias` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:502 (POST /admin/aliases/{aliasId}/update handler)` |
+| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:502 (POST /admin/aliases/{aliasId}/update handler)` |
+| TC004 | F002: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/admin-routes.ts:504 (POST /admin/aliases/{aliasId}/update handler)` |
+| TC005 | F003: 条件成立 | `error` が `AliasGovernanceError` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:505 (POST /admin/aliases/{aliasId}/update handler)` |
+| TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:505 (POST /admin/aliases/{aliasId}/update handler)` |
+| TC007 | F004: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
+| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | TC009 | F005: 条件成立 | `alias` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1460 (MemoRagService.updateAlias)` |
 | TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1460 (MemoRagService.updateAlias)` |
 | TC011 | F006: 条件成立 | `alias.status` が `"disabled"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1462 (MemoRagService.updateAlias)` |
@@ -54,10 +54,10 @@
 | TC018 | F009: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1466 (MemoRagService.updateAlias)` |
 | TC019 | F010: 条件成立 | `input.scope` が `undefined` と異なる 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:1467 (MemoRagService.updateAlias)` |
 | TC020 | F010: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:1467 (MemoRagService.updateAlias)` |
-| TC021 | F011: 条件成立 | `error.result` が `"conflict"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:733 (aliasGovernanceStatus)` |
-| TC022 | F011: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:733 (aliasGovernanceStatus)` |
-| TC023 | F012: 条件成立 | `error.result` が `"denied"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:734 (aliasGovernanceStatus)` |
-| TC024 | F012: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:734 (aliasGovernanceStatus)` |
+| TC021 | F011: 条件成立 | `error.result` が `"conflict"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:800 (aliasGovernanceStatus)` |
+| TC022 | F011: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:800 (aliasGovernanceStatus)` |
+| TC023 | F012: 条件成立 | `error.result` が `"denied"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/admin-routes.ts:801 (aliasGovernanceStatus)` |
+| TC024 | F012: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/admin-routes.ts:801 (aliasGovernanceStatus)` |
 | TC025 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC026 | HTTP 400 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC027 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

@@ -49,6 +49,6 @@ sequenceDiagram
 | --- | --- | --- | --- |
 | B001 | `GET /resource-groups/{groupId} handler` | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/resource-group-routes.ts:130 (GET /resource-groups/{groupId} handler)` |
 | B002 | `GET /resource-groups/{groupId} handler` | `error` が `ResourceGroupLifecycleError` の instance である、かつ `error.result` が `"denied"` と等しい | `apps/api/src/routes/resource-group-routes.ts:131 (GET /resource-groups/{groupId} handler)` |
-| B003 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| B003 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | B004 | `lifecycleService` | `deps.securityAuditOutbox` が存在しない、または偽である | `apps/api/src/routes/resource-group-routes.ts:364 (lifecycleService)` |
 | B005 | `resourceUnavailable` | entries の判定結果が真である | `apps/api/src/routes/resource-group-routes.ts:395 (resourceUnavailable)` |

@@ -11,6 +11,7 @@ import type { ServerManagedIdentity, VerifiedIdentityProvider } from "../../../.
 import type { SecurityMutationAuditDraft, SecurityMutationAuditIntent, SecurityMutationAuditOutboxPort, SecurityMutationResult } from "../../../../security/security-mutation-audit-outbox.js"
 import type { DocumentManifest, RetrievedVector, VectorRecord } from "../../../../types.js"
 import type { Dependencies } from "../../../../dependencies.js"
+import { ApproveSourceGovernanceRequestSchema } from "../../../../schemas.js"
 import { ObjectStoreSecurityMutationAuditOutbox } from "../../../../security/security-mutation-audit-outbox.js"
 import { MemoRagService } from "../../../memorag-service.js"
 import { currentEligibilitySnapshotFromAuthoritativeState } from "../../../_shared/security/current-rag-eligibility.js"
@@ -123,6 +124,62 @@ test("FR-068 rejects incomplete or inconsistent explicit governance profiles bef
   )
   assert.deepEqual(harness.publisher.phases, [])
   assert.deepEqual(harness.audit.results, ["denied"])
+})
+
+test("FR-068 governance approval rejects every non-clean or unversioned malware verdict before staging", async (t) => {
+  for (const malwareStatus of ["unknown", "pending", "infected", "failed", "timeout"] as const) {
+    await t.test(malwareStatus, async () => {
+      const harness = createHarness()
+      const initial = await harness.service.ensureInitialRecord(harness.source)
+      const valid = approvalInput(initial.version)
+      const invalid = {
+        ...valid,
+        inspection: { ...valid.inspection, malwareStatus }
+      } as unknown as ApproveSourceGovernanceInput
+
+      await assert.rejects(
+        () => harness.service.approve(actorSnapshot, harness.source, invalid),
+        SourceGovernanceValidationError
+      )
+      assert.deepEqual(harness.publisher.phases, [])
+      assert.deepEqual(harness.audit.results, ["denied"])
+    })
+  }
+
+  const harness = createHarness()
+  const initial = await harness.service.ensureInitialRecord(harness.source)
+  const valid = approvalInput(initial.version)
+  await assert.rejects(
+    () => harness.service.approve(actorSnapshot, harness.source, {
+      ...valid,
+      inspection: { ...valid.inspection, malwareProfileVersion: "" }
+    }),
+    SourceGovernanceValidationError
+  )
+  assert.deepEqual(harness.publisher.phases, [])
+  assert.deepEqual(harness.audit.results, ["denied"])
+})
+
+test("FR-068 approval API schema requires the canonical clean malware verdict and profile", () => {
+  const valid = approvalInput("version-1")
+  assert.equal(ApproveSourceGovernanceRequestSchema.safeParse(valid).success, true)
+
+  assert.equal(ApproveSourceGovernanceRequestSchema.safeParse({
+    ...valid,
+    inspection: {
+      status: valid.inspection.status,
+      profileVersion: valid.inspection.profileVersion,
+      malwareProfileVersion: valid.inspection.malwareProfileVersion
+    }
+  }).success, false)
+  assert.equal(ApproveSourceGovernanceRequestSchema.safeParse({
+    ...valid,
+    inspection: { ...valid.inspection, malwareStatus: "pending" }
+  }).success, false)
+  assert.equal(ApproveSourceGovernanceRequestSchema.safeParse({
+    ...valid,
+    inspection: { ...valid.inspection, malwareProfileVersion: "" }
+  }).success, false)
 })
 
 test("FR-068 staged publication failure leaves a non-active reconciliation record and failed audit", async () => {
@@ -552,7 +609,12 @@ function approvalInput(expectedVersion: string): ApproveSourceGovernanceInput & 
       flags: []
     },
     qualityPolicyVersion: "quality-v9",
-    inspection: { status: "passed", profileVersion: "inspection-v3" }
+    inspection: {
+      status: "passed",
+      profileVersion: "inspection-v3",
+      malwareStatus: "clean",
+      malwareProfileVersion: "malware-scan-v3"
+    }
   }
 }
 
@@ -630,6 +692,10 @@ function stagedCandidate(source: DocumentManifest, input: Parameters<SourceGover
       usagePolicyRef: input.approval.usagePolicyRef,
       qualityRef: input.approval.qualityRef,
       inspectionStatus: "passed",
+      malwareScan: {
+        status: "clean",
+        profileVersion: input.approval.inspection.malwareProfileVersion
+      },
       reasons: []
     },
     qualityProfile: input.approval.qualityProfile,

@@ -76,9 +76,9 @@
 | M061 | 例外 | `-` | Revocation cleanup idempotency key was reused with different input | `manifest.resourceType` が `input.resourceType` と異なる、または `manifest.resourceId` が `input.resourceId` と異なる、または `manifest.trigger` が `input.trigger` と異なる、または `manifest.authoritativeDeny.version` が `input.authoritativeDenyVersion` と異なる、または `manifest.authoritativeDeny.confirmedAt` が `input.authoritativeDenyConfirmedAt` と異なる、または `JSON.stringify(manifest.deniedPurposes)` が `JSON.stringify(input.deniedPurposes)` と異なる | `apps/api/src/rag/_shared/security/revocation-cleanup-coordinator.ts:549 (assertSameRegistration)` |
 | M062 | 例外 | `-` | Revocation cleanup idempotency key was reused with different targets | some の判定結果が真である | `apps/api/src/rag/_shared/security/revocation-cleanup-coordinator.ts:552 (assertSameRegistration)` |
 | M063 | 例外 | `-` | Folder revocation cleanup registration failed | 例外を捕捉した場合 | `apps/api/src/folders/folder-permission-service.ts:461 (FolderPermissionService.replaceVersionedFolderPolicy)` |
-| M064 | HTTP 実装応答 | `409` | Folder share policy version conflict | `error.result` が `"conflict"` と等しい | `apps/api/src/routes/document-routes.ts:683 (PUT /document-groups/{groupId}/share handler)` |
-| M065 | HTTP 実装応答 | `503` | Folder sharing is unavailable | `error` が `FolderPolicyMutationError` の instance である | `apps/api/src/routes/document-routes.ts:685 (PUT /document-groups/{groupId}/share handler)` |
-| M066 | HTTP 実装応答 | `503` | Folder sharing is unavailable | 例外を捕捉した場合 | `apps/api/src/routes/document-routes.ts:687 (PUT /document-groups/{groupId}/share handler)` |
+| M064 | HTTP 実装応答 | `409` | Folder share policy version conflict | `error.result` が `"conflict"` と等しい | `apps/api/src/routes/document-routes.ts:684 (PUT /document-groups/{groupId}/share handler)` |
+| M065 | HTTP 実装応答 | `503` | Folder sharing is unavailable | `error` が `FolderPolicyMutationError` の instance である | `apps/api/src/routes/document-routes.ts:686 (PUT /document-groups/{groupId}/share handler)` |
+| M066 | HTTP 実装応答 | `503` | Folder sharing is unavailable | 例外を捕捉した場合 | `apps/api/src/routes/document-routes.ts:688 (PUT /document-groups/{groupId}/share handler)` |
 
 ## 読み方
 

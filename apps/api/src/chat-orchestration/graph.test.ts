@@ -129,7 +129,7 @@ test("FR-074 answer replay carries measured pre/post authorization candidate cou
     emit: async () => undefined,
     authorizeProtectedRead: async () => {
       protectedReadCount += 1
-      if (protectedReadCount !== 3) return
+      if (protectedReadCount !== 16) return // mapped tool gates add 13 checks before the post-answer replay check
       const current = JSON.parse(await deps.objectStore.getText(manifest.manifestObjectKey)) as Record<string, unknown>
       const metadata = current.metadata as Record<string, unknown> | undefined
       await deps.objectStore.putText(manifest.manifestObjectKey, JSON.stringify({
@@ -1403,3 +1403,25 @@ function safeTestRagGuardProfile(): Dependencies["ragGuardProfile"] {
     }
   }
 }
+
+test("FR-049 rejects a mapped tool contract before the graph node body completes", async () => {
+  const deps = await createTestDeps()
+  let protectedReadChecks = 0
+
+  await assert.rejects(
+    () => runChatOrchestration(deps, {
+      question: "計算を伴う質問を処理する",
+      useMemory: false,
+      maxIterations: 1
+    }, undefined, {
+      emit: async () => undefined,
+      authorizeProtectedRead: async () => {
+        protectedReadChecks += 1
+        throw new Error("tool_permission_denied")
+      }
+    }),
+    /tool_permission_denied/
+  )
+
+  assert.equal(protectedReadChecks, 1)
+})

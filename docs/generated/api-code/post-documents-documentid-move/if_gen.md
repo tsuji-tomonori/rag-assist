@@ -2,7 +2,7 @@
 
 # POST /documents/{documentId}/move IF仕様
 
-- 実装 route: `apps/api/src/routes/document-routes.ts:931 (POST /documents/{documentId}/move)`
+- 実装 route: `apps/api/src/routes/document-routes.ts:932 (POST /documents/{documentId}/move)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 文書を別フォルダへ移動する
@@ -62,7 +62,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 347 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 350 field(s) |
 | `400` | リクエスト形式または入力値が不正です。 | `application/json` | 2 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
@@ -124,6 +124,9 @@ Media type: `application/json`
 | `document.admission.provenanceRef.version` | `string` | yes | `response.document.admission.provenanceRef.version` の値。項目名は version を表します。 | minLength=1 |
 | `document.admission.provenanceRef.hash` | `string` | yes | `response.document.admission.provenanceRef.hash` の値。項目名は hash を表します。 | - |
 | `document.admission.inspectionStatus` | `enum(passed \| failed \| unknown)` | yes | `response.document.admission.inspectionStatus` の値。項目名は inspection status を表します。 | enum=passed, failed, unknown |
+| `document.admission.malwareScan` | `object` | no | `response.document.admission.malwareScan` の値。項目名は malware scan を表します。 | - |
+| `document.admission.malwareScan.status` | `enum(clean \| unknown \| pending \| infected \| failed \| timeout)` | yes | 現在の処理状態または管理状態。 | enum=clean, unknown, pending, infected, failed, timeout |
+| `document.admission.malwareScan.profileVersion` | `string` | no | `response.document.admission.malwareScan.profileVersion` の値。項目名は profile version を表します。 | - |
 | `document.admission.reasons` | `array<string>` | yes | `response.document.admission.reasons` の値。項目名は reasons を表します。 | - |
 | `document.admission.rejectedProtectedMetadataKeys` | `array<string>` | yes | `response.document.admission.rejectedProtectedMetadataKeys` の値。項目名は rejected protected metadata keys を表します。 | - |
 | `document.admission.admittedAt` | `string` | yes | `response.document.admission.admittedAt` の値。項目名は admitted at を表します。 | - |

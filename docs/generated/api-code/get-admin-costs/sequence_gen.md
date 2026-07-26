@@ -32,21 +32,21 @@ sequenceDiagram
 
 | # | Caller | 境界 | 処理 | コード | 実装位置 |
 | ---: | --- | --- | --- | --- | --- |
-| 1 | `GET /admin/costs handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/admin-routes.ts:684 (GET /admin/costs handler)` |
-| 2 | `GET /admin/costs handler` | Auth | "cost:read:all" permission を必須条件として確認する。 | `requirePermission(user, "cost:read:all")` | `apps/api/src/routes/admin-routes.ts:685 (GET /admin/costs handler)` |
-| 3 | `GET /admin/costs handler` | Service | service の get cost audit summary 処理を呼び出す。 | `service.getCostAuditSummary(user, validQuery<z.infer<typeof UsageQuerySchema>>(c))` | `apps/api/src/routes/admin-routes.ts:687 (GET /admin/costs handler)` |
-| 4 | `MemoRagService.getCostAuditSummary` | Service | service の list usage summaries 処理を呼び出す。 | `this.listUsageSummaries(actor, normalized)` | `apps/api/src/rag/memorag-service.ts:2177 (MemoRagService.getCostAuditSummary)` |
-| 5 | `MemoRagService.listUsageSummaries` | Store | `this.deps.usageEventStore` に対して query を実行する。 | `this.deps.usageEventStore.query(tenantId, normalized)` | `apps/api/src/rag/memorag-service.ts:2170 (MemoRagService.listUsageSummaries)` |
+| 1 | `GET /admin/costs handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/admin-routes.ts:751 (GET /admin/costs handler)` |
+| 2 | `GET /admin/costs handler` | Auth | "cost:read:all" permission を必須条件として確認する。 | `requirePermission(user, "cost:read:all")` | `apps/api/src/routes/admin-routes.ts:752 (GET /admin/costs handler)` |
+| 3 | `GET /admin/costs handler` | Service | service の get cost audit summary 処理を呼び出す。 | `service.getCostAuditSummary(user, validQuery<z.infer<typeof UsageQuerySchema>>(c))` | `apps/api/src/routes/admin-routes.ts:754 (GET /admin/costs handler)` |
+| 4 | `MemoRagService.getCostAuditSummary` | Service | service の list usage summaries 処理を呼び出す。 | `this.listUsageSummaries(actor, normalized)` | `apps/api/src/rag/memorag-service.ts:2195 (MemoRagService.getCostAuditSummary)` |
+| 5 | `MemoRagService.listUsageSummaries` | Store | `this.deps.usageEventStore` に対して query を実行する。 | `this.deps.usageEventStore.query(tenantId, normalized)` | `apps/api/src/rag/memorag-service.ts:2188 (MemoRagService.listUsageSummaries)` |
 | 6 | `findPrice` | External | `catalog<br>    .filter((entry) => entry.provider === event.provider)<br>    ` へ filter を実行する。 | `catalog .filter((entry) => entry.provider === event.provider) .filter((entry) => entry.region === event.region \|\| entry.region === "*")` | `apps/api/src/rag/_shared/usage/usage-pricing-catalog.ts:69 (findPrice)` |
 | 7 | `findPrice` | External | `catalog<br>    .filter((entry) => entry.provider === event.provider)<br>    .filter((entry) => entry.region === event.region \|\| entry.region === "*")<br>    ` へ filter を実行する。 | `catalog .filter((entry) => entry.provider === event.provider) .filter((entry) => entry.region === event.region \|\| entry.region === "*") .filter((entry) => entry.modelId === event.modelId \|\| entry.modelId === "*")` | `apps/api/src/rag/_shared/usage/usage-pricing-catalog.ts:69 (findPrice)` |
 | 8 | `findPrice` | External | `catalog<br>    .filter((entry) => entry.provider === event.provider)<br>    .filter((entry) => entry.region === event.region \|\| entry.region === "*")<br>    .filter((entry) => entry.modelId === event.modelId \|\| entry.modelId === "*")<br>    ` へ filter を実行する。 | `catalog .filter((entry) => entry.provider === event.provider) .filter((entry) => entry.region === event.region \|\| entry.region === "*") .filter((entry) => entry.modelId === event.modelId \|\| entry.modelId === "*") .filte…` | `apps/api/src/rag/_shared/usage/usage-pricing-catalog.ts:69 (findPrice)` |
-| 9 | `GET /admin/costs handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json(await service.getCostAuditSummary(user, validQuery<z.infer<typeof UsageQuerySchema>>(c)), 200)` | `apps/api/src/routes/admin-routes.ts:687 (GET /admin/costs handler)` |
-| 10 | `GET /admin/costs handler` | HTTP/SSE | HTTP 400 で JSON response を返す。 | `c.json({ error: "Invalid cost query or cursor" }, 400)` | `apps/api/src/routes/admin-routes.ts:689 (GET /admin/costs handler)` |
+| 9 | `GET /admin/costs handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json(await service.getCostAuditSummary(user, validQuery<z.infer<typeof UsageQuerySchema>>(c)), 200)` | `apps/api/src/routes/admin-routes.ts:754 (GET /admin/costs handler)` |
+| 10 | `GET /admin/costs handler` | HTTP/SSE | HTTP 400 で JSON response を返す。 | `c.json({ error: "Invalid cost query or cursor" }, 400)` | `apps/api/src/routes/admin-routes.ts:756 (GET /admin/costs handler)` |
 
 ## 分岐
 
 | ID | Function | 条件 | 実装位置 |
 | --- | --- | --- | --- |
-| B001 | `GET /admin/costs handler` | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/admin-routes.ts:688 (GET /admin/costs handler)` |
-| B002 | `GET /admin/costs handler` | is invalid usage query の判定結果が真である | `apps/api/src/routes/admin-routes.ts:689 (GET /admin/costs handler)` |
-| B003 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| B001 | `GET /admin/costs handler` | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/admin-routes.ts:755 (GET /admin/costs handler)` |
+| B002 | `GET /admin/costs handler` | is invalid usage query の判定結果が真である | `apps/api/src/routes/admin-routes.ts:756 (GET /admin/costs handler)` |
+| B003 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |

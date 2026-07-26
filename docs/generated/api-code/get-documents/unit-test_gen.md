@@ -32,8 +32,8 @@
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `GET /documents handler` | if | 利用者が "rag:doc:read" permission を持たない、かつ 利用者が "benchmark:seed_corpus" permission を持たない | `apps/api/src/routes/document-routes.ts:837 (GET /documents handler)` |
-| F002 | `GET /documents handler` | 三項条件 | 利用者が "rag:doc:read" permission を持つ | `apps/api/src/routes/document-routes.ts:841 (GET /documents handler)` |
+| F001 | `GET /documents handler` | if | 利用者が "rag:doc:read" permission を持たない、かつ 利用者が "benchmark:seed_corpus" permission を持たない | `apps/api/src/routes/document-routes.ts:838 (GET /documents handler)` |
+| F002 | `GET /documents handler` | 三項条件 | 利用者が "rag:doc:read" permission を持つ | `apps/api/src/routes/document-routes.ts:842 (GET /documents handler)` |
 | F003 | `MemoRagService.listDocuments` | if | is missing object error の判定結果が真である | `apps/api/src/rag/memorag-service.ts:908 (MemoRagService.listDocuments)` |
 | F004 | `MemoRagService.listDocuments` | 三項条件 | `user` が存在し、真である | `apps/api/src/rag/memorag-service.ts:922 (MemoRagService.listDocuments)` |
 | F005 | `MemoRagService.listDocuments` | 三項条件 | `user` が存在し、真である | `apps/api/src/rag/memorag-service.ts:925 (MemoRagService.listDocuments)` |
@@ -51,11 +51,11 @@
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | 登録文書一覧を取得する が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:835 (GET /documents handler)` |
-| TC002 | F001: 条件成立 | 利用者が "rag:doc:read" permission を持たない、かつ 利用者が "benchmark:seed_corpus" permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:837 (GET /documents handler)` |
-| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:837 (GET /documents handler)` |
-| TC004 | F002: 条件成立 | 利用者が "rag:doc:read" permission を持つ 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:841 (GET /documents handler)` |
-| TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:841 (GET /documents handler)` |
+| TC001 | 正常系 | 登録文書一覧を取得する が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:836 (GET /documents handler)` |
+| TC002 | F001: 条件成立 | 利用者が "rag:doc:read" permission を持たない、かつ 利用者が "benchmark:seed_corpus" permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:838 (GET /documents handler)` |
+| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:838 (GET /documents handler)` |
+| TC004 | F002: 条件成立 | 利用者が "rag:doc:read" permission を持つ 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:842 (GET /documents handler)` |
+| TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:842 (GET /documents handler)` |
 | TC006 | F003: 条件成立 | is missing object error の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:908 (MemoRagService.listDocuments)` |
 | TC007 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:908 (MemoRagService.listDocuments)` |
 | TC008 | F004: 条件成立 | `user` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:922 (MemoRagService.listDocuments)` |

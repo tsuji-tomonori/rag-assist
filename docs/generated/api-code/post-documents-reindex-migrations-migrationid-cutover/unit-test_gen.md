@@ -20,10 +20,10 @@
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `POST /documents/reindex-migrations/{migrationId}/cutover handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:1461 (POST /documents/reindex-migrations/{migrationId}/cutover handler)` |
-| F002 | `POST /documents/reindex-migrations/{migrationId}/cutover handler` | if | is forbidden error の判定結果が真である | `apps/api/src/routes/document-routes.ts:1462 (POST /documents/reindex-migrations/{migrationId}/cutover handler)` |
-| F003 | `POST /documents/reindex-migrations/{migrationId}/cutover handler` | if | `err` が `Error` の instance である、かつ `err.message` が "not found" を含む | `apps/api/src/routes/document-routes.ts:1463 (POST /documents/reindex-migrations/{migrationId}/cutover handler)` |
-| F004 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| F001 | `POST /documents/reindex-migrations/{migrationId}/cutover handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:1462 (POST /documents/reindex-migrations/{migrationId}/cutover handler)` |
+| F002 | `POST /documents/reindex-migrations/{migrationId}/cutover handler` | if | is forbidden error の判定結果が真である | `apps/api/src/routes/document-routes.ts:1463 (POST /documents/reindex-migrations/{migrationId}/cutover handler)` |
+| F003 | `POST /documents/reindex-migrations/{migrationId}/cutover handler` | if | `err` が `Error` の instance である、かつ `err.message` が "not found" を含む | `apps/api/src/routes/document-routes.ts:1464 (POST /documents/reindex-migrations/{migrationId}/cutover handler)` |
+| F004 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | F005 | `MemoRagService.cutoverReindexMigration` | if | `migration` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:664 (MemoRagService.cutoverReindexMigration)` |
 | F006 | `MemoRagService.cutoverReindexMigration` | 三項条件 | `migration.publicationRunId` が存在し、真である | `apps/api/src/rag/memorag-service.ts:667 (MemoRagService.cutoverReindexMigration)` |
 | F007 | `MemoRagService.cutoverReindexMigration` | if | `migration.status` が `"staged"` と異なる、かつ 「`compensation` が存在し、真である、かつ `migration.status` が `"rolled_back"` と等しい」ではない | `apps/api/src/rag/memorag-service.ts:670 (MemoRagService.cutoverReindexMigration)` |
@@ -39,14 +39,14 @@
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | 再インデックス結果へ切り替える が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:1454 (POST /documents/reindex-migrations/{migrationId}/cutover handler)` |
-| TC002 | F001: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/document-routes.ts:1461 (POST /documents/reindex-migrations/{migrationId}/cutover handler)` |
-| TC003 | F002: 条件成立 | is forbidden error の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1462 (POST /documents/reindex-migrations/{migrationId}/cutover handler)` |
-| TC004 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1462 (POST /documents/reindex-migrations/{migrationId}/cutover handler)` |
-| TC005 | F003: 条件成立 | `err` が `Error` の instance である、かつ `err.message` が "not found" を含む 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1463 (POST /documents/reindex-migrations/{migrationId}/cutover handler)` |
-| TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1463 (POST /documents/reindex-migrations/{migrationId}/cutover handler)` |
-| TC007 | F004: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| TC001 | 正常系 | 再インデックス結果へ切り替える が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:1455 (POST /documents/reindex-migrations/{migrationId}/cutover handler)` |
+| TC002 | F001: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/document-routes.ts:1462 (POST /documents/reindex-migrations/{migrationId}/cutover handler)` |
+| TC003 | F002: 条件成立 | is forbidden error の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1463 (POST /documents/reindex-migrations/{migrationId}/cutover handler)` |
+| TC004 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1463 (POST /documents/reindex-migrations/{migrationId}/cutover handler)` |
+| TC005 | F003: 条件成立 | `err` が `Error` の instance である、かつ `err.message` が "not found" を含む 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1464 (POST /documents/reindex-migrations/{migrationId}/cutover handler)` |
+| TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1464 (POST /documents/reindex-migrations/{migrationId}/cutover handler)` |
+| TC007 | F004: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
+| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | TC009 | F005: 条件成立 | `migration` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:664 (MemoRagService.cutoverReindexMigration)` |
 | TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:664 (MemoRagService.cutoverReindexMigration)` |
 | TC011 | F006: 条件成立 | `migration.publicationRunId` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:667 (MemoRagService.cutoverReindexMigration)` |

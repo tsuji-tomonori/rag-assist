@@ -210,6 +210,61 @@ test("tenant mismatch and broken folder ancestry are mandatory deny even for adm
   assert.equal(await service.resolveEffectiveFolderPermission(user("owner-1"), "cycle-a"), "none")
 })
 
+test("parent integrity mandatory deny precedes administrative principal full", async () => {
+  const { documentGroupStore, service } = await fixture()
+  await documentGroupStore.create(group({
+    groupId: "missing-parent-child",
+    ownerUserId: "owner-1",
+    parentGroupId: "missing-parent"
+  }))
+  await documentGroupStore.create(group({ groupId: "archived-parent", ownerUserId: "owner-1", status: "archived" }))
+  await documentGroupStore.create(group({
+    groupId: "archived-parent-child",
+    ownerUserId: "owner-1",
+    parentGroupId: "archived-parent"
+  }))
+  await documentGroupStore.create(group({ groupId: "active-parent", ownerUserId: "owner-1" }))
+  await documentGroupStore.create(group({
+    groupId: "active-parent-child",
+    ownerUserId: "owner-1",
+    parentGroupId: "active-parent"
+  }))
+  await documentGroupStore.create(group({ groupId: "root-folder", ownerUserId: "owner-1" }))
+
+  for (const folderId of ["missing-parent-child", "archived-parent-child"]) {
+    const denied = await service.resolveEffectiveFolderPermissionDetail(user("owner-1"), folderId)
+    assert.equal(denied.permission, "none")
+    assert.equal(denied.decision.reasonCode, "resource_integrity_unverified")
+  }
+
+  for (const folderId of ["active-parent-child", "root-folder"]) {
+    const allowed = await service.resolveEffectiveFolderPermissionDetail(user("owner-1"), folderId)
+    assert.equal(allowed.permission, "full")
+    assert.equal(allowed.decision.reasonCode, "administrative_principal")
+  }
+})
+
+test("cross-tenant parent integrity denies administrative principal before full", async () => {
+  const { documentGroupStore, folderPolicyStore, groupMembershipStore, userGroupStore } = await fixture()
+  const crossTenantParent = group({ groupId: "cross-tenant-parent", ownerUserId: "owner-1", tenantId: "tenant-b" })
+  const child = group({ groupId: "cross-tenant-child", ownerUserId: "owner-1", parentGroupId: crossTenantParent.groupId })
+  const service = new FolderPermissionService({
+    documentGroupStore: {
+      ...documentGroupStore,
+      list: async () => [crossTenantParent, child],
+      get: async (_tenantId: string, groupId: string) => [crossTenantParent, child].find((group) => group.groupId === groupId)
+    } as unknown as typeof documentGroupStore,
+    folderPolicyStore,
+    groupMembershipStore,
+    userGroupStore
+  })
+
+  const denied = await service.resolveEffectiveFolderPermissionDetail(user("owner-1"), child.groupId)
+
+  assert.equal(denied.permission, "none")
+  assert.equal(denied.decision.reasonCode, "resource_integrity_unverified")
+})
+
 test("folder with no authoritative tenant fails closed instead of inheriting the default tenant", async () => {
   const { documentGroupStore, folderPolicyStore, groupMembershipStore, userGroupStore } = await fixture()
   const missingTenantFolder = {

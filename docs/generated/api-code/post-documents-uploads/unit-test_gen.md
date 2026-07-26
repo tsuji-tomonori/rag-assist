@@ -14,7 +14,7 @@
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `POST /documents/uploads handler` | 三項条件 | `s3Upload` が存在し、真である | `apps/api/src/routes/document-routes.ts:1049 (POST /documents/uploads handler)` |
+| F001 | `POST /documents/uploads handler` | 三項条件 | `s3Upload` が存在し、真である | `apps/api/src/routes/document-routes.ts:1050 (POST /documents/uploads handler)` |
 | F002 | `authorizeDocumentUploadSession` | if | `purpose` が `"chatAttachment"` と等しい | `apps/api/src/routes/document-routes.ts:123 (authorizeDocumentUploadSession)` |
 | F003 | `authorizeDocumentUploadSession` | if | 利用者が "chat:create" permission を持つ | `apps/api/src/routes/document-routes.ts:124 (authorizeDocumentUploadSession)` |
 | F004 | `authorizeDocumentUploadSession` | if | `purpose` が `"benchmarkSeed"` と等しい | `apps/api/src/routes/document-routes.ts:127 (authorizeDocumentUploadSession)` |
@@ -27,9 +27,9 @@
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | 文書アップロード URL を作成する が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:1034 (POST /documents/uploads handler)` |
-| TC002 | F001: 条件成立 | `s3Upload` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1049 (POST /documents/uploads handler)` |
-| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1049 (POST /documents/uploads handler)` |
+| TC001 | 正常系 | 文書アップロード URL を作成する が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:1035 (POST /documents/uploads handler)` |
+| TC002 | F001: 条件成立 | `s3Upload` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1050 (POST /documents/uploads handler)` |
+| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1050 (POST /documents/uploads handler)` |
 | TC004 | F002: 条件成立 | `purpose` が `"chatAttachment"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:123 (authorizeDocumentUploadSession)` |
 | TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:123 (authorizeDocumentUploadSession)` |
 | TC006 | F003: 条件成立 | 利用者が "chat:create" permission を持つ 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:124 (authorizeDocumentUploadSession)` |

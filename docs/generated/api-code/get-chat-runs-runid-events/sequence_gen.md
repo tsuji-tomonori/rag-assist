@@ -65,9 +65,9 @@ sequenceDiagram
 | B006 | `GET /chat-runs/{runId}/events handler` | `events` が存在し、真である | `apps/api/src/routes/chat-routes.ts:118 (GET /chat-runs/{runId}/events handler)` |
 | B007 | `GET /chat-runs/{runId}/events handler` | `item.type` が `"final"` と等しい、または `item.type` が `"error"` と等しい | `apps/api/src/routes/chat-routes.ts:125 (GET /chat-runs/{runId}/events handler)` |
 | B008 | `GET /chat-runs/{runId}/events handler` | `Date.now() - lastHeartbeat` が `15_000` より大きい | `apps/api/src/routes/chat-routes.ts:128 (GET /chat-runs/{runId}/events handler)` |
-| B009 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| B010 | `getPermissionsForGroups` | `groups` が存在し、真である | `apps/api/src/authorization.ts:108 (getPermissionsForGroups)` |
-| B011 | `getPermissionsForGroups` | `rolePermissions[group as Role]` が `[]` の条件を満たす | `apps/api/src/authorization.ts:109 (getPermissionsForGroups)` |
+| B009 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |
+| B010 | `getPermissionsForGroups` | `groups` が存在し、真である | `apps/api/src/authorization.ts:109 (getPermissionsForGroups)` |
+| B011 | `getPermissionsForGroups` | `rolePermissions[group as Role]` が `[]` の条件を満たす | `apps/api/src/authorization.ts:110 (getPermissionsForGroups)` |
 | B012 | `settleNonEnumerationTiming` | `remaining` が `0` より大きい | `apps/api/src/security/public-resource-response.ts:42 (settleNonEnumerationTiming)` |
 | B013 | `eventPayload` | `item.stage` が `undefined` と異なる | `apps/api/src/chat-run-events-stream.ts:139 (eventPayload)` |
 | B014 | `eventPayload` | `item.message` が `undefined` と異なる | `apps/api/src/chat-run-events-stream.ts:140 (eventPayload)` |

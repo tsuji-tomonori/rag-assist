@@ -2042,11 +2042,11 @@ export class MemoRagService {
     const tenantId = authoritativeActorTenantId(actor)
     const usersById = new Map(db.users.map((user) => [user.userId, user]))
     const securityIntents = await new ObjectStoreSecurityMutationAuditOutbox(this.deps.objectStore).listAll(tenantId)
-    const securityAuditLog: ManagedUserAuditLogEntry[] = securityIntents.map((intent) => {
+    const securityAuditLog: ManagedUserAuditLogEntry[] = securityIntents.flatMap((intent) => {
       const target = usersById.get(intent.draft.targetId)
       const before = jsonRecord(intent.draft.before)
       const after = jsonRecord(intent.after ?? intent.requestedCompletion?.after ?? intent.draft.proposedAfter)
-      return {
+      const mutationEntry: ManagedUserAuditLogEntry = {
         auditId: intent.intentId,
         action: adminAuditActionForOperation(intent.draft.operation),
         result: intent.status === "completed" ? intent.result! : "pending",
@@ -2065,6 +2065,24 @@ export class MemoRagService {
         createdAt: intent.createdAt,
         completedAt: intent.completedAt
       }
+      const redriveEntries: ManagedUserAuditLogEntry[] = (intent.redriveHistory ?? []).map((record, index) => ({
+        auditId: `${intent.intentId}:redrive:${index + 1}`,
+        action: "security_audit.quarantine.redrive",
+        result: "success",
+        reason: record.reason,
+        tenantId,
+        targetType: "securityMutationAuditIntent",
+        actorUserId: record.actorId,
+        actorEmail: usersById.get(record.actorId)?.email,
+        targetUserId: intent.intentId,
+        policyVersion: record.policyVersion,
+        source: "security_audit_outbox",
+        beforeGroups: [],
+        afterGroups: [],
+        createdAt: record.requestedAt,
+        completedAt: record.requestedAt
+      }))
+      return [mutationEntry, ...redriveEntries]
     })
     const normalizedQuery = query.query?.trim().toLowerCase()
     const legacyAuditLog = (db.auditLog ?? []).map((entry) => normalizeLegacyAdminAuditEntry(entry, tenantId))
@@ -5558,7 +5576,9 @@ function reindexPublicationScope(
 function reindexAdmissionContext(manifest: DocumentManifest, fence: StagedPublicationFence): AuthoritativeAdmissionContext {
   const admission = manifest.admission
   if (
-    admission?.status !== "approved" || admission.inspectionStatus !== "passed" || !admission.tenantId || !admission.ownerUserId
+    admission?.status !== "approved" || admission.inspectionStatus !== "passed"
+    || admission.malwareScan?.status !== "clean" || !admission.malwareScan.profileVersion
+    || !admission.tenantId || !admission.ownerUserId
     || !admission.authorizationRef || !admission.classificationRef || !admission.usagePolicyRef
     || !admission.qualityRef || !admission.lifecycleRef || !admission.provenanceRef || !manifest.qualityProfile
   ) throw new Error("Source manifest does not have a complete authoritative admission record")
@@ -5576,6 +5596,7 @@ function reindexAdmissionContext(manifest: DocumentManifest, fence: StagedPublic
     lifecycleRef: createVersionedReference(`lifecycle:${fence.runId}`, "staged-publication-v1", `${fence.fencingToken}:staging`),
     provenanceRef: createVersionedReference(`provenance:${fence.runId}`, "staged-publication-v1", `${manifest.documentVersion}:${fence.artifactId}`),
     inspectionStatus: "passed",
+    malwareScan: { ...admission.malwareScan },
     qualityProfile: manifest.qualityProfile,
     lifecycleStatus: "staging",
     scope: {
@@ -5597,7 +5618,9 @@ function reindexAdmissionContext(manifest: DocumentManifest, fence: StagedPublic
 function restoredAdmissionContext(manifest: DocumentManifest, migrationId: string): AuthoritativeAdmissionContext {
   const admission = manifest.admission
   if (
-    admission?.status !== "approved" || admission.inspectionStatus !== "passed" || !admission.tenantId || !admission.ownerUserId
+    admission?.status !== "approved" || admission.inspectionStatus !== "passed"
+    || admission.malwareScan?.status !== "clean" || !admission.malwareScan.profileVersion
+    || !admission.tenantId || !admission.ownerUserId
     || !admission.authorizationRef || !admission.classificationRef || !admission.usagePolicyRef
     || !admission.qualityRef || !admission.lifecycleRef || !admission.provenanceRef || !manifest.qualityProfile
   ) throw new Error("Previous manifest does not have a complete authoritative admission record")
@@ -5615,6 +5638,7 @@ function restoredAdmissionContext(manifest: DocumentManifest, migrationId: strin
     lifecycleRef: createVersionedReference(`lifecycle:${migrationId}:rollback`, "rollback-v1", "active"),
     provenanceRef: createVersionedReference(`provenance:${migrationId}:rollback`, "rollback-v1", manifest.documentVersion ?? manifest.documentId),
     inspectionStatus: "passed",
+    malwareScan: { ...admission.malwareScan },
     qualityProfile: manifest.qualityProfile,
     lifecycleStatus: "active",
     scope: {

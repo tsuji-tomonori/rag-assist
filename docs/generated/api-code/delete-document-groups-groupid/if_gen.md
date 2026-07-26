@@ -2,7 +2,7 @@
 
 # DELETE /document-groups/{groupId} IF仕様
 
-- 実装 route: `apps/api/src/routes/document-routes.ts:779 (DELETE /document-groups/{groupId})`
+- 実装 route: `apps/api/src/routes/document-routes.ts:780 (DELETE /document-groups/{groupId})`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 空のフォルダをアーカイブする

@@ -2,7 +2,7 @@
 
 # POST /documents/reindex-migrations/{migrationId}/rollback IF仕様
 
-- 実装 route: `apps/api/src/routes/document-routes.ts:1469 (POST /documents/reindex-migrations/{migrationId}/rollback)`
+- 実装 route: `apps/api/src/routes/document-routes.ts:1470 (POST /documents/reindex-migrations/{migrationId}/rollback)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 再インデックス切替を戻す

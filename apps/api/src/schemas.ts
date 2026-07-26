@@ -281,7 +281,9 @@ export const ApproveSourceGovernanceRequestSchema = z.object({
   qualityPolicyVersion: z.string().trim().min(1).max(200),
   inspection: z.object({
     status: z.literal("passed"),
-    profileVersion: z.string().trim().min(1).max(200)
+    profileVersion: z.string().trim().min(1).max(200),
+    malwareStatus: z.literal("clean"),
+    malwareProfileVersion: z.string().trim().min(1).max(200)
   })
 })
 
@@ -296,7 +298,12 @@ const ApprovedSourceGovernancePolicySchema = z.object({
   classification: SourceClassificationSchema,
   usagePolicy: SourceUsagePolicySchema,
   qualityProfile: DocumentQualityProfileSchema,
-  inspection: z.object({ status: z.literal("passed"), profileVersion: z.string() }),
+  inspection: z.object({
+    status: z.literal("passed"),
+    profileVersion: z.string(),
+    malwareStatus: z.literal("clean"),
+    malwareProfileVersion: z.string()
+  }),
   classificationRef: VersionedRecordReferenceSchema,
   usagePolicyRef: VersionedRecordReferenceSchema,
   qualityRef: VersionedRecordReferenceSchema,
@@ -378,6 +385,10 @@ const SourceAdmissionRecordSchema = z.object({
   lifecycleRef: VersionedRecordReferenceSchema.optional(),
   provenanceRef: VersionedRecordReferenceSchema.optional(),
   inspectionStatus: z.enum(["passed", "failed", "unknown"]),
+  malwareScan: z.object({
+    status: z.enum(["clean", "unknown", "pending", "infected", "failed", "timeout"]),
+    profileVersion: z.string().optional()
+  }).optional(),
   reasons: z.array(z.string()),
   rejectedProtectedMetadataKeys: z.array(z.string()),
   admittedAt: z.string(),
@@ -1100,6 +1111,21 @@ export const ManagedUserListQuerySchema = z.object({
 export const AdminAuditExportRequestSchema = z.object({
   query: AdminAuditLogQuerySchema.omit({ cursor: true, limit: true }).default({}),
   reason: z.string().trim().min(1).max(1000)
+})
+
+export const SecurityAuditQuarantineRedriveRequestSchema = z.object({
+  idempotencyKey: z.string()
+    .regex(/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/)
+    .openapi({ example: "redrive-20260717-001" }),
+  reason: z.string().trim().min(1).max(1000).openapi({ example: "resolver deployment後の手動再投入" })
+})
+
+export const SecurityAuditQuarantineRedriveResponseSchema = z.object({
+  intentId: z.string(),
+  status: z.enum(["pending", "finalization_pending"]),
+  idempotencyKey: z.string(),
+  requestedAt: z.string(),
+  redriveCount: z.number().int().positive()
 })
 
 export const AccessRoleDefinitionSchema = z.object({

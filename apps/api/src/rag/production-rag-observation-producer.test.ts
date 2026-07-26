@@ -629,7 +629,12 @@ test("FR-093 current governance denial emits a production eligibility propagatio
         ragEligibility: "eligible",
         flags: []
       },
-      inspection: { status: "passed", profileVersion: "inspection-v1" },
+      inspection: {
+        status: "passed",
+        profileVersion: "inspection-v1",
+        malwareStatus: "clean",
+        malwareProfileVersion: "malware-scan-v1"
+      },
       classificationRef: admission.classificationRef,
       usagePolicyRef: admission.usagePolicyRef,
       qualityRef: admission.qualityRef,

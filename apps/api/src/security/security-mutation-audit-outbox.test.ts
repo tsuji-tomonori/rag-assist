@@ -7,7 +7,8 @@ import { LocalObjectStore } from "../adapters/local-object-store.js"
 import type { ObjectStore, VersionedText } from "../adapters/object-store.js"
 import {
   ObjectStoreSecurityMutationAuditOutbox,
-  SecurityMutationAuditCompletionPendingError
+  SecurityMutationAuditCompletionPendingError,
+  SecurityMutationAuditRedriveError
 } from "./security-mutation-audit-outbox.js"
 
 test("security mutation audit outbox persists intent before final result", async () => {
@@ -132,6 +133,195 @@ test("pending enumeration applies its limit after filtering completed records", 
   assert.deepEqual((await outbox.listPending("tenant-a", 1)).map((intent) => intent.intentId), [expectedPending.intentId])
 })
 
+test("reconciliation failures converge on a bounded durable quarantine and leave raw errors unstored", async () => {
+  const dataDir = await mkdtemp(path.join(tmpdir(), "security-audit-outbox-quarantine-test-"))
+  const objectStore = new LocalObjectStore(dataDir)
+  const outbox = new ObjectStoreSecurityMutationAuditOutbox(
+    objectStore,
+    () => new Date("2026-07-11T00:00:20.000Z")
+  )
+  const intent = await outbox.prepare(draft("tenant-a", "source-poison"))
+
+  await Promise.all(Array.from({ length: 8 }, () => outbox.recordReconciliationFailure(
+    "tenant-a",
+    intent.intentId,
+    "authoritative_resolution_failed",
+    3
+  )))
+
+  const quarantined = await outbox.get("tenant-a", intent.intentId)
+  assert.equal(quarantined.status, "quarantined")
+  assert.deepEqual(quarantined.reconciliation, {
+    attempts: 3,
+    maxAttempts: 3,
+    lastFailureCode: "authoritative_resolution_failed",
+    lastAttemptedAt: "2026-07-11T00:00:20.000Z",
+    quarantinedAt: "2026-07-11T00:00:20.000Z"
+  })
+  assert.deepEqual(await outbox.listPending("tenant-a"), [])
+  assert.doesNotMatch(JSON.stringify(quarantined), /stack|simulated|exception/i)
+  await assert.rejects(
+    () => outbox.recordReconciliationFailure("tenant-b", intent.intentId, "authoritative_resolution_failed", 3),
+    /not found/
+  )
+})
+
+test("corrupt and stale reconciliation evidence fails closed", async () => {
+  const dataDir = await mkdtemp(path.join(tmpdir(), "security-audit-outbox-corrupt-quarantine-test-"))
+  const objectStore = new LocalObjectStore(dataDir)
+  const outbox = new ObjectStoreSecurityMutationAuditOutbox(objectStore)
+  const intent = await outbox.prepare(draft("tenant-a", "source-corrupt"))
+  const [key] = await objectStore.listKeys("security-audit/intents/tenant-a/")
+  await objectStore.putText(key!, JSON.stringify({
+    ...intent,
+    status: "quarantined",
+    reconciliation: {
+      attempts: 2,
+      maxAttempts: 3,
+      lastFailureCode: "raw_infrastructure_error",
+      lastAttemptedAt: "not-a-timestamp",
+      quarantinedAt: "2026-07-11T00:00:20.000Z"
+    }
+  }))
+
+  await assert.rejects(() => outbox.get("tenant-a", intent.intentId), /reconciliation evidence is invalid/)
+})
+
+test("quarantined intent redrive atomically preserves operator audit and restores scheduled pending state", async () => {
+  const dataDir = await mkdtemp(path.join(tmpdir(), "security-audit-redrive-test-"))
+  const objectStore = new LocalObjectStore(dataDir)
+  const outbox = new ObjectStoreSecurityMutationAuditOutbox(
+    objectStore,
+    () => new Date("2026-07-17T09:30:00.000Z")
+  )
+  const intent = await outbox.prepare(draft("tenant-a", "source-redrive"))
+  await quarantine(outbox, intent.intentId)
+
+  const accepted = await outbox.redriveQuarantined("tenant-a", intent.intentId, redriveCommand())
+
+  assert.deepEqual(accepted, {
+    intentId: intent.intentId,
+    status: "pending",
+    idempotencyKey: "redrive-001",
+    requestedAt: "2026-07-17T09:30:00.000Z",
+    redriveCount: 1
+  })
+  const restored = await outbox.get("tenant-a", intent.intentId)
+  assert.equal(restored.status, "pending")
+  assert.equal(restored.reconciliation, undefined)
+  assert.deepEqual(restored.redriveHistory, [{
+    idempotencyKey: "redrive-001",
+    actorId: "system-admin-1",
+    reason: "resolver deployment completed",
+    policyVersion: "security-audit-quarantine-redrive-v1:memorag-access-role-catalog-v3",
+    requestedAt: "2026-07-17T09:30:00.000Z",
+    restoredStatus: "pending",
+    previousReconciliation: {
+      attempts: 3,
+      maxAttempts: 3,
+      lastFailureCode: "authoritative_resolution_failed",
+      lastAttemptedAt: "2026-07-17T09:30:00.000Z",
+      quarantinedAt: "2026-07-17T09:30:00.000Z"
+    }
+  }])
+  assert.deepEqual((await outbox.listPending("tenant-a")).map((candidate) => candidate.intentId), [intent.intentId])
+})
+
+test("redrive restores finalization_pending when a durable requested completion exists", async () => {
+  const dataDir = await mkdtemp(path.join(tmpdir(), "security-audit-redrive-finalization-test-"))
+  const inner = new LocalObjectStore(dataDir)
+  const store = new FinalEventFailingObjectStore(inner)
+  const outbox = new ObjectStoreSecurityMutationAuditOutbox(store)
+  const intent = await outbox.prepare(draft("tenant-a", "source-finalization-redrive"))
+  const after = { status: "published", revision: 2 }
+  await assert.rejects(() => outbox.complete(intent.intentId, "tenant-a", "success", after))
+  await quarantine(outbox, intent.intentId)
+
+  const accepted = await outbox.redriveQuarantined("tenant-a", intent.intentId, redriveCommand())
+
+  assert.equal(accepted.status, "finalization_pending")
+  const restored = await outbox.get("tenant-a", intent.intentId)
+  assert.equal(restored.status, "finalization_pending")
+  assert.deepEqual(restored.requestedCompletion?.after, after)
+  assert.equal(restored.redriveHistory?.[0]?.restoredStatus, "finalization_pending")
+})
+
+test("duplicate redrive requests converge and remain idempotent after worker completion", async () => {
+  const dataDir = await mkdtemp(path.join(tmpdir(), "security-audit-redrive-duplicate-test-"))
+  const outbox = new ObjectStoreSecurityMutationAuditOutbox(new LocalObjectStore(dataDir))
+  const intent = await outbox.prepare(draft("tenant-a", "source-redrive-duplicate"))
+  await quarantine(outbox, intent.intentId)
+
+  const duplicates = await Promise.all(Array.from({ length: 8 }, () => (
+    outbox.redriveQuarantined("tenant-a", intent.intentId, redriveCommand())
+  )))
+  assert.equal(new Set(duplicates.map((result) => JSON.stringify(result))).size, 1)
+  assert.equal((await outbox.get("tenant-a", intent.intentId)).redriveHistory?.length, 1)
+
+  await outbox.complete(intent.intentId, "tenant-a", "success", intent.draft.proposedAfter)
+  assert.deepEqual(
+    await outbox.redriveQuarantined("tenant-a", intent.intentId, redriveCommand()),
+    duplicates[0]
+  )
+})
+
+test("redrive rejects idempotency payload drift and a second operation while the intent is active", async () => {
+  const dataDir = await mkdtemp(path.join(tmpdir(), "security-audit-redrive-conflict-test-"))
+  const outbox = new ObjectStoreSecurityMutationAuditOutbox(new LocalObjectStore(dataDir))
+  const intent = await outbox.prepare(draft("tenant-a", "source-redrive-conflict"))
+  await quarantine(outbox, intent.intentId)
+  await outbox.redriveQuarantined("tenant-a", intent.intentId, redriveCommand())
+
+  await assert.rejects(
+    () => outbox.redriveQuarantined("tenant-a", intent.intentId, { ...redriveCommand(), reason: "different reason" }),
+    (error) => error instanceof SecurityMutationAuditRedriveError && error.code === "idempotency_conflict"
+  )
+  await assert.rejects(
+    () => outbox.redriveQuarantined("tenant-a", intent.intentId, { ...redriveCommand(), idempotencyKey: "redrive-002" }),
+    (error) => error instanceof SecurityMutationAuditRedriveError && error.code === "not_quarantined"
+  )
+})
+
+test("redrive hides cross-tenant intent identity and fails closed on corrupt quarantine evidence", async () => {
+  const dataDir = await mkdtemp(path.join(tmpdir(), "security-audit-redrive-boundary-test-"))
+  const objectStore = new LocalObjectStore(dataDir)
+  const outbox = new ObjectStoreSecurityMutationAuditOutbox(objectStore)
+  const intent = await outbox.prepare(draft("tenant-a", "source-redrive-boundary"))
+  await quarantine(outbox, intent.intentId)
+
+  await assert.rejects(
+    () => outbox.redriveQuarantined("tenant-b", intent.intentId, redriveCommand()),
+    (error) => error instanceof SecurityMutationAuditRedriveError && error.code === "not_found"
+  )
+
+  const [key] = await objectStore.listKeys("security-audit/intents/tenant-a/")
+  const stored = JSON.parse(await objectStore.getText(key!))
+  stored.reconciliation.attempts = 2
+  await objectStore.putText(key!, JSON.stringify(stored))
+  await assert.rejects(
+    () => outbox.redriveQuarantined("tenant-a", intent.intentId, redriveCommand()),
+    (error) => error instanceof SecurityMutationAuditRedriveError && error.code === "unavailable"
+  )
+})
+
+test("redrive audit write failure leaves the intent quarantined", async () => {
+  const dataDir = await mkdtemp(path.join(tmpdir(), "security-audit-redrive-write-failure-test-"))
+  const inner = new LocalObjectStore(dataDir)
+  const store = new RedriveFailingObjectStore(inner)
+  const outbox = new ObjectStoreSecurityMutationAuditOutbox(store)
+  const intent = await outbox.prepare(draft("tenant-a", "source-redrive-write-failure"))
+  await quarantine(outbox, intent.intentId)
+  store.failRedriveWrites = true
+
+  await assert.rejects(
+    () => outbox.redriveQuarantined("tenant-a", intent.intentId, redriveCommand()),
+    (error) => error instanceof SecurityMutationAuditRedriveError && error.code === "unavailable"
+  )
+  const unchanged = await outbox.get("tenant-a", intent.intentId)
+  assert.equal(unchanged.status, "quarantined")
+  assert.equal(unchanged.redriveHistory, undefined)
+})
+
 test("completed schema-v1 records from the pre-staging writer remain readable and immutable", async () => {
   const dataDir = await mkdtemp(path.join(tmpdir(), "security-audit-outbox-legacy-test-"))
   const objectStore = new LocalObjectStore(dataDir)
@@ -168,6 +358,26 @@ function draft(tenantId: string, targetId: string) {
   }
 }
 
+function redriveCommand() {
+  return {
+    actorId: "system-admin-1",
+    idempotencyKey: "redrive-001",
+    reason: "resolver deployment completed",
+    policyVersion: "security-audit-quarantine-redrive-v1:memorag-access-role-catalog-v3"
+  }
+}
+
+async function quarantine(outbox: ObjectStoreSecurityMutationAuditOutbox, intentId: string): Promise<void> {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    await outbox.recordReconciliationFailure(
+      "tenant-a",
+      intentId,
+      "authoritative_resolution_failed",
+      3
+    )
+  }
+}
+
 class FinalEventFailingObjectStore implements ObjectStore {
   failCompletedWrites = true
 
@@ -180,6 +390,34 @@ class FinalEventFailingObjectStore implements ObjectStore {
   putTextIfVersion(key: string, text: string, expectedVersion: string | undefined, contentType?: string): Promise<void> {
     if (this.failCompletedWrites && text.includes('"status": "completed"')) {
       throw new Error("simulated final audit event outage")
+    }
+    return this.inner.putTextIfVersion(key, text, expectedVersion, contentType)
+  }
+
+  putBytes(key: string, bytes: Uint8Array, contentType?: string): Promise<void> {
+    return this.inner.putBytes(key, bytes, contentType)
+  }
+
+  getText(key: string): Promise<string> { return this.inner.getText(key) }
+  getTextWithVersion(key: string): Promise<VersionedText> { return this.inner.getTextWithVersion(key) }
+  getBytes(key: string): Promise<Buffer> { return this.inner.getBytes(key) }
+  getObjectSize(key: string): Promise<number> { return this.inner.getObjectSize(key) }
+  deleteObject(key: string): Promise<void> { return this.inner.deleteObject(key) }
+  listKeys(prefix: string): Promise<string[]> { return this.inner.listKeys(prefix) }
+}
+
+class RedriveFailingObjectStore implements ObjectStore {
+  failRedriveWrites = false
+
+  constructor(private readonly inner: ObjectStore) {}
+
+  putText(key: string, text: string, contentType?: string): Promise<void> {
+    return this.inner.putText(key, text, contentType)
+  }
+
+  putTextIfVersion(key: string, text: string, expectedVersion: string | undefined, contentType?: string): Promise<void> {
+    if (this.failRedriveWrites && text.includes('"redriveHistory"')) {
+      throw new Error("simulated redrive audit outage")
     }
     return this.inner.putTextIfVersion(key, text, expectedVersion, contentType)
   }

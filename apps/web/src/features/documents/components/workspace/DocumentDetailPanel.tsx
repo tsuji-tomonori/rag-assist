@@ -527,14 +527,22 @@ export function UploadProgressPanel({
   onAskUploadedDocument?: (document: DocumentManifest) => void
   onShowUploadedFolder: (groupId: string) => void
 }) {
-  const steps: Array<{ phase: NonNullable<DocumentUploadState>["phase"]; label: string }> = [
+  const localSteps: Array<{ phase: NonNullable<DocumentUploadState>["phase"]; label: string }> = [
     { phase: "preparing", label: "アップロード準備中" },
     { phase: "transferring", label: "ファイル転送中" },
-    { phase: "creatingRun", label: "取り込みジョブ作成中" },
-    { phase: "extracting", label: "テキスト抽出中" },
-    { phase: "chunking", label: "チャンク作成中" },
-    { phase: "embedding", label: "ベクトル化中" },
-    { phase: "indexing", label: "検索インデックス反映中" },
+    { phase: "creatingRun", label: "取り込みジョブ作成中" }
+  ]
+  const apiSteps: Array<{ phase: NonNullable<DocumentUploadState>["phase"]; label: string }> = [
+    { phase: "queued", label: "取り込み待機中" },
+    { phase: "running", label: "取り込み処理中" },
+    { phase: "preprocessing", label: "アップロード済み文書を読込中" },
+    { phase: "extracting", label: "文書解析中" }
+  ]
+  const steps: Array<{ phase: NonNullable<DocumentUploadState>["phase"]; label: string }> = [
+    ...localSteps,
+    ...(uploadState.phase === "unknown"
+      ? [{ phase: "unknown" as const, label: "詳細な取り込み段階を確認できません" }]
+      : apiSteps),
     { phase: "complete", label: "完了" }
   ]
   const activeIndex = uploadState.phase === "failed" ? -1 : steps.findIndex((step) => step.phase === uploadState.phase)
@@ -556,8 +564,11 @@ export function UploadProgressPanel({
       {uploadState.phase === "failed" && (
         <p className="upload-error-message">失敗原因: {uploadErrorLabel(uploadState.errorKind)}{uploadState.errorMessage ? `（${uploadState.errorMessage}）` : ""}</p>
       )}
-      {uploadState.phase !== "failed" && uploadState.phase !== "complete" && (
-        <p className="field-hint">取り込み run の詳細ステップは API status から推定しています。</p>
+      {uploadState.phase === "unknown" && (
+        <p className="field-hint">取り込み run は進行中ですが、API から詳細ステージを取得できません。</p>
+      )}
+      {uploadState.phase !== "failed" && uploadState.phase !== "complete" && uploadState.phase !== "unknown" && (
+        <p className="field-hint">表示中の取り込み段階は API の run stage に基づきます。</p>
       )}
       {uploadState.phase === "complete" && (
         uploadedDocument ? (

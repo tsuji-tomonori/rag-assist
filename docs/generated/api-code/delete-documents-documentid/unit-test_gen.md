@@ -20,14 +20,14 @@
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `DELETE /documents/{documentId} handler` | if | 利用者が "rag:doc:delete:group" permission を持たない | `apps/api/src/routes/document-routes.ts:1598 (DELETE /documents/{documentId} handler)` |
-| F002 | `DELETE /documents/{documentId} handler` | if | `tenantId` が存在しない、または偽である、または `ownerUserId` が存在しない、または偽である | `apps/api/src/routes/document-routes.ts:1602 (DELETE /documents/{documentId} handler)` |
-| F003 | `DELETE /documents/{documentId} handler` | 三項条件 | `auditActorId` が存在し、真である | `apps/api/src/routes/document-routes.ts:1612 (DELETE /documents/{documentId} handler)` |
-| F004 | `DELETE /documents/{documentId} handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:1614 (DELETE /documents/{documentId} handler)` |
-| F005 | `DELETE /documents/{documentId} handler` | 三項条件 | `err` が `Error` の instance である | `apps/api/src/routes/document-routes.ts:1615 (DELETE /documents/{documentId} handler)` |
-| F006 | `DELETE /documents/{documentId} handler` | if | is forbidden error の判定結果が真である、または `err` が `HTTPException` の instance である、かつ `err.status` が `403` と等しい | `apps/api/src/routes/document-routes.ts:1616 (DELETE /documents/{documentId} handler)` |
-| F007 | `DELETE /documents/{documentId} handler` | if | `message` が "ENOENT" を含む、または `message` が "NoSuchKey" を含む、または `message` が "NotFound" を含む | `apps/api/src/routes/document-routes.ts:1617 (DELETE /documents/{documentId} handler)` |
-| F008 | `DELETE /documents/{documentId} handler` | if | `err` が `DocumentMutationConflictError` の instance である | `apps/api/src/routes/document-routes.ts:1618 (DELETE /documents/{documentId} handler)` |
+| F001 | `DELETE /documents/{documentId} handler` | if | 利用者が "rag:doc:delete:group" permission を持たない | `apps/api/src/routes/document-routes.ts:1599 (DELETE /documents/{documentId} handler)` |
+| F002 | `DELETE /documents/{documentId} handler` | if | `tenantId` が存在しない、または偽である、または `ownerUserId` が存在しない、または偽である | `apps/api/src/routes/document-routes.ts:1603 (DELETE /documents/{documentId} handler)` |
+| F003 | `DELETE /documents/{documentId} handler` | 三項条件 | `auditActorId` が存在し、真である | `apps/api/src/routes/document-routes.ts:1613 (DELETE /documents/{documentId} handler)` |
+| F004 | `DELETE /documents/{documentId} handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:1615 (DELETE /documents/{documentId} handler)` |
+| F005 | `DELETE /documents/{documentId} handler` | 三項条件 | `err` が `Error` の instance である | `apps/api/src/routes/document-routes.ts:1616 (DELETE /documents/{documentId} handler)` |
+| F006 | `DELETE /documents/{documentId} handler` | if | is forbidden error の判定結果が真である、または `err` が `HTTPException` の instance である、かつ `err.status` が `403` と等しい | `apps/api/src/routes/document-routes.ts:1617 (DELETE /documents/{documentId} handler)` |
+| F007 | `DELETE /documents/{documentId} handler` | if | `message` が "ENOENT" を含む、または `message` が "NoSuchKey" を含む、または `message` が "NotFound" を含む | `apps/api/src/routes/document-routes.ts:1618 (DELETE /documents/{documentId} handler)` |
+| F008 | `DELETE /documents/{documentId} handler` | if | `err` が `DocumentMutationConflictError` の instance である | `apps/api/src/routes/document-routes.ts:1619 (DELETE /documents/{documentId} handler)` |
 | F009 | `authorizeDocumentDelete` | if | 利用者が "rag:doc:delete:group" permission を持つ | `apps/api/src/routes/benchmark-seed.ts:398 (authorizeDocumentDelete)` |
 | F010 | `authorizeDocumentDelete` | if | is document deletion tombstone の判定結果が真である | `apps/api/src/routes/benchmark-seed.ts:399 (authorizeDocumentDelete)` |
 | F011 | `authorizeDocumentDelete` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/benchmark-seed.ts:403 (authorizeDocumentDelete)` |
@@ -36,28 +36,28 @@
 | F014 | `authorizeDocumentDelete` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/benchmark-seed.ts:416 (authorizeDocumentDelete)` |
 | F015 | `authorizeDocumentDelete` | if | is benchmark seed document manifest の判定結果が真ではない、かつ 「`deletionRetry` が存在し、真である、かつ is benchmark seed document identity の判定結果が真である」ではない | `apps/api/src/routes/benchmark-seed.ts:420 (authorizeDocumentDelete)` |
 | F016 | `MemoRagService.getBenchmarkDocumentManifest` | if | `tenantId` が存在しない、または偽である | `apps/api/src/rag/memorag-service.ts:949 (MemoRagService.getBenchmarkDocumentManifest)` |
-| F017 | `stringValue` | 三項条件 | `typeof value` が `"string"` と等しい | `apps/api/src/routes/document-routes.ts:450 (stringValue)` |
+| F017 | `stringValue` | 三項条件 | `typeof value` が `"string"` と等しい | `apps/api/src/routes/document-routes.ts:451 (stringValue)` |
 
 ## 3. コード由来テストケース
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | 文書を削除する が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:1589 (DELETE /documents/{documentId} handler)` |
-| TC002 | F001: 条件成立 | 利用者が "rag:doc:delete:group" permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1598 (DELETE /documents/{documentId} handler)` |
-| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1598 (DELETE /documents/{documentId} handler)` |
-| TC004 | F002: 条件成立 | `tenantId` が存在しない、または偽である、または `ownerUserId` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1602 (DELETE /documents/{documentId} handler)` |
-| TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1602 (DELETE /documents/{documentId} handler)` |
-| TC006 | F003: 条件成立 | `auditActorId` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1612 (DELETE /documents/{documentId} handler)` |
-| TC007 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1612 (DELETE /documents/{documentId} handler)` |
-| TC008 | F004: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/document-routes.ts:1614 (DELETE /documents/{documentId} handler)` |
-| TC009 | F005: 条件成立 | `err` が `Error` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1615 (DELETE /documents/{documentId} handler)` |
-| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1615 (DELETE /documents/{documentId} handler)` |
-| TC011 | F006: 条件成立 | is forbidden error の判定結果が真である、または `err` が `HTTPException` の instance である、かつ `err.status` が `403` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1616 (DELETE /documents/{documentId} handler)` |
-| TC012 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1616 (DELETE /documents/{documentId} handler)` |
-| TC013 | F007: 条件成立 | `message` が "ENOENT" を含む、または `message` が "NoSuchKey" を含む、または `message` が "NotFound" を含む 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1617 (DELETE /documents/{documentId} handler)` |
-| TC014 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1617 (DELETE /documents/{documentId} handler)` |
-| TC015 | F008: 条件成立 | `err` が `DocumentMutationConflictError` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1618 (DELETE /documents/{documentId} handler)` |
-| TC016 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1618 (DELETE /documents/{documentId} handler)` |
+| TC001 | 正常系 | 文書を削除する が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:1590 (DELETE /documents/{documentId} handler)` |
+| TC002 | F001: 条件成立 | 利用者が "rag:doc:delete:group" permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1599 (DELETE /documents/{documentId} handler)` |
+| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1599 (DELETE /documents/{documentId} handler)` |
+| TC004 | F002: 条件成立 | `tenantId` が存在しない、または偽である、または `ownerUserId` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1603 (DELETE /documents/{documentId} handler)` |
+| TC005 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1603 (DELETE /documents/{documentId} handler)` |
+| TC006 | F003: 条件成立 | `auditActorId` が存在し、真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1613 (DELETE /documents/{documentId} handler)` |
+| TC007 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1613 (DELETE /documents/{documentId} handler)` |
+| TC008 | F004: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/document-routes.ts:1615 (DELETE /documents/{documentId} handler)` |
+| TC009 | F005: 条件成立 | `err` が `Error` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1616 (DELETE /documents/{documentId} handler)` |
+| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1616 (DELETE /documents/{documentId} handler)` |
+| TC011 | F006: 条件成立 | is forbidden error の判定結果が真である、または `err` が `HTTPException` の instance である、かつ `err.status` が `403` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1617 (DELETE /documents/{documentId} handler)` |
+| TC012 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1617 (DELETE /documents/{documentId} handler)` |
+| TC013 | F007: 条件成立 | `message` が "ENOENT" を含む、または `message` が "NoSuchKey" を含む、または `message` が "NotFound" を含む 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1618 (DELETE /documents/{documentId} handler)` |
+| TC014 | F007: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1618 (DELETE /documents/{documentId} handler)` |
+| TC015 | F008: 条件成立 | `err` が `DocumentMutationConflictError` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:1619 (DELETE /documents/{documentId} handler)` |
+| TC016 | F008: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:1619 (DELETE /documents/{documentId} handler)` |
 | TC017 | F009: 条件成立 | 利用者が "rag:doc:delete:group" permission を持つ 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/benchmark-seed.ts:398 (authorizeDocumentDelete)` |
 | TC018 | F009: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/benchmark-seed.ts:398 (authorizeDocumentDelete)` |
 | TC019 | F010: 条件成立 | is document deletion tombstone の判定結果が真である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/benchmark-seed.ts:399 (authorizeDocumentDelete)` |
@@ -72,8 +72,8 @@
 | TC028 | F015: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/benchmark-seed.ts:420 (authorizeDocumentDelete)` |
 | TC029 | F016: 条件成立 | `tenantId` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/rag/memorag-service.ts:949 (MemoRagService.getBenchmarkDocumentManifest)` |
 | TC030 | F016: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/rag/memorag-service.ts:949 (MemoRagService.getBenchmarkDocumentManifest)` |
-| TC031 | F017: 条件成立 | `typeof value` が `"string"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:450 (stringValue)` |
-| TC032 | F017: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:450 (stringValue)` |
+| TC031 | F017: 条件成立 | `typeof value` が `"string"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:451 (stringValue)` |
+| TC032 | F017: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:451 (stringValue)` |
 | TC033 | HTTP 200 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC034 | HTTP 400 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |
 | TC035 | HTTP 401 | contract または実装 message と status の組み合わせを確認する。 | `messages_gen.md` |

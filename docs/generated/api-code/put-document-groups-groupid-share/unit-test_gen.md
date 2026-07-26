@@ -14,11 +14,11 @@
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `PUT /document-groups/{groupId}/share handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:680 (PUT /document-groups/{groupId}/share handler)` |
-| F002 | `PUT /document-groups/{groupId}/share handler` | if | `error` が `HTTPException` の instance である、かつ `error.status` が `403` と等しい | `apps/api/src/routes/document-routes.ts:681 (PUT /document-groups/{groupId}/share handler)` |
-| F003 | `PUT /document-groups/{groupId}/share handler` | if | `error` が `FolderPolicyMutationError` の instance である | `apps/api/src/routes/document-routes.ts:682 (PUT /document-groups/{groupId}/share handler)` |
-| F004 | `PUT /document-groups/{groupId}/share handler` | if | `error.result` が `"conflict"` と等しい | `apps/api/src/routes/document-routes.ts:683 (PUT /document-groups/{groupId}/share handler)` |
-| F005 | `PUT /document-groups/{groupId}/share handler` | if | `error.result` が `"denied"` と等しい | `apps/api/src/routes/document-routes.ts:684 (PUT /document-groups/{groupId}/share handler)` |
+| F001 | `PUT /document-groups/{groupId}/share handler` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/document-routes.ts:681 (PUT /document-groups/{groupId}/share handler)` |
+| F002 | `PUT /document-groups/{groupId}/share handler` | if | `error` が `HTTPException` の instance である、かつ `error.status` が `403` と等しい | `apps/api/src/routes/document-routes.ts:682 (PUT /document-groups/{groupId}/share handler)` |
+| F003 | `PUT /document-groups/{groupId}/share handler` | if | `error` が `FolderPolicyMutationError` の instance である | `apps/api/src/routes/document-routes.ts:683 (PUT /document-groups/{groupId}/share handler)` |
+| F004 | `PUT /document-groups/{groupId}/share handler` | if | `error.result` が `"conflict"` と等しい | `apps/api/src/routes/document-routes.ts:684 (PUT /document-groups/{groupId}/share handler)` |
+| F005 | `PUT /document-groups/{groupId}/share handler` | if | `error.result` が `"denied"` と等しい | `apps/api/src/routes/document-routes.ts:685 (PUT /document-groups/{groupId}/share handler)` |
 | F006 | `FolderPermissionService.replaceVersionedFolderPolicy` | if | `auditOutbox` が存在しない、または偽である、または `principalDirectory` が存在しない、または偽である | `apps/api/src/folders/folder-permission-service.ts:308 (FolderPermissionService.replaceVersionedFolderPolicy)` |
 | F007 | `FolderPermissionService.replaceVersionedFolderPolicy` | if | is canonical identifier の判定結果が真ではない | `apps/api/src/folders/folder-permission-service.ts:312 (FolderPermissionService.replaceVersionedFolderPolicy)` |
 | F008 | `FolderPermissionService.replaceVersionedFolderPolicy` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/folders/folder-permission-service.ts:319 (FolderPermissionService.replaceVersionedFolderPolicy)` |
@@ -46,16 +46,16 @@
 
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
-| TC001 | 正常系 | フォルダ共有 policy を置き換える が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:672 (PUT /document-groups/{groupId}/share handler)` |
-| TC002 | F001: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/document-routes.ts:680 (PUT /document-groups/{groupId}/share handler)` |
-| TC003 | F002: 条件成立 | `error` が `HTTPException` の instance である、かつ `error.status` が `403` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:681 (PUT /document-groups/{groupId}/share handler)` |
-| TC004 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:681 (PUT /document-groups/{groupId}/share handler)` |
-| TC005 | F003: 条件成立 | `error` が `FolderPolicyMutationError` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:682 (PUT /document-groups/{groupId}/share handler)` |
-| TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:682 (PUT /document-groups/{groupId}/share handler)` |
-| TC007 | F004: 条件成立 | `error.result` が `"conflict"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:683 (PUT /document-groups/{groupId}/share handler)` |
-| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:683 (PUT /document-groups/{groupId}/share handler)` |
-| TC009 | F005: 条件成立 | `error.result` が `"denied"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:684 (PUT /document-groups/{groupId}/share handler)` |
-| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:684 (PUT /document-groups/{groupId}/share handler)` |
+| TC001 | 正常系 | フォルダ共有 policy を置き換える が成功 response を返す。 | `apps/api/src/routes/document-routes.ts:673 (PUT /document-groups/{groupId}/share handler)` |
+| TC002 | F001: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/document-routes.ts:681 (PUT /document-groups/{groupId}/share handler)` |
+| TC003 | F002: 条件成立 | `error` が `HTTPException` の instance である、かつ `error.status` が `403` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:682 (PUT /document-groups/{groupId}/share handler)` |
+| TC004 | F002: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:682 (PUT /document-groups/{groupId}/share handler)` |
+| TC005 | F003: 条件成立 | `error` が `FolderPolicyMutationError` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:683 (PUT /document-groups/{groupId}/share handler)` |
+| TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:683 (PUT /document-groups/{groupId}/share handler)` |
+| TC007 | F004: 条件成立 | `error.result` が `"conflict"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:684 (PUT /document-groups/{groupId}/share handler)` |
+| TC008 | F004: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:684 (PUT /document-groups/{groupId}/share handler)` |
+| TC009 | F005: 条件成立 | `error.result` が `"denied"` と等しい 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/document-routes.ts:685 (PUT /document-groups/{groupId}/share handler)` |
+| TC010 | F005: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/document-routes.ts:685 (PUT /document-groups/{groupId}/share handler)` |
 | TC011 | F006: 条件成立 | `auditOutbox` が存在しない、または偽である、または `principalDirectory` が存在しない、または偽である 場合の response / side effect が実装どおりである。 | `apps/api/src/folders/folder-permission-service.ts:308 (FolderPermissionService.replaceVersionedFolderPolicy)` |
 | TC012 | F006: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/folders/folder-permission-service.ts:308 (FolderPermissionService.replaceVersionedFolderPolicy)` |
 | TC013 | F007: 条件成立 | is canonical identifier の判定結果が真ではない 場合の response / side effect が実装どおりである。 | `apps/api/src/folders/folder-permission-service.ts:312 (FolderPermissionService.replaceVersionedFolderPolicy)` |

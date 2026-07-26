@@ -153,7 +153,12 @@ function approvalInput() {
       flags: []
     },
     qualityPolicyVersion: "quality-v1",
-    inspection: { status: "passed", profileVersion: "inspection-v1" }
+    inspection: {
+      status: "passed",
+      profileVersion: "inspection-v1",
+      malwareStatus: "clean",
+      malwareProfileVersion: "malware-scan-v1"
+    }
   }
 }
 

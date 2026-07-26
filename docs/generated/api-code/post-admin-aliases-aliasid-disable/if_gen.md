@@ -2,7 +2,7 @@
 
 # POST /admin/aliases/{aliasId}/disable IF仕様
 
-- 実装 route: `apps/api/src/routes/admin-routes.ts:513 (POST /admin/aliases/{aliasId}/disable)`
+- 実装 route: `apps/api/src/routes/admin-routes.ts:580 (POST /admin/aliases/{aliasId}/disable)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 検索 alias を無効化する

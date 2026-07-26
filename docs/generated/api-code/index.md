@@ -4,9 +4,9 @@
 
 runtime OpenAPI と TypeScript 実装を対応付け、各 API の詳細設計、IF、メッセージ、query、sequence、unit test 仕様を生成しています。
 
-- API 数: 97
+- API 数: 98
 - API 別文書数: 6
-- 文書総数: 582
+- 文書総数: 588
 
 | Method | Path | Summary | OpenAPI | 6文書 |
 | --- | --- | --- | --- | --- |
@@ -24,6 +24,7 @@ runtime OpenAPI と TypeScript 実装を対応付け、各 API の詳細設計�
 | `POST` | `/admin/costs/export` | 概算コスト export URL を作成する | yes | [detail-design](post-admin-costs-export/detail-design_gen.md) / [if](post-admin-costs-export/if_gen.md) / [messages](post-admin-costs-export/messages_gen.md) / [query](post-admin-costs-export/query_gen.md) / [sequence](post-admin-costs-export/sequence_gen.md) / [unit-test](post-admin-costs-export/unit-test_gen.md) |
 | `GET` | `/admin/quality-actions` | 文書品質 action card 一覧を取得する | yes | [detail-design](get-admin-quality-actions/detail-design_gen.md) / [if](get-admin-quality-actions/if_gen.md) / [messages](get-admin-quality-actions/messages_gen.md) / [query](get-admin-quality-actions/query_gen.md) / [sequence](get-admin-quality-actions/sequence_gen.md) / [unit-test](get-admin-quality-actions/unit-test_gen.md) |
 | `GET` | `/admin/roles` | 利用可能なロール一覧を取得する | yes | [detail-design](get-admin-roles/detail-design_gen.md) / [if](get-admin-roles/if_gen.md) / [messages](get-admin-roles/messages_gen.md) / [query](get-admin-roles/query_gen.md) / [sequence](get-admin-roles/sequence_gen.md) / [unit-test](get-admin-roles/unit-test_gen.md) |
+| `POST` | `/admin/security-audit/quarantines/{intentId}/redrive` | 隔離された監査 intent を手動再投入する | yes | [detail-design](post-admin-security-audit-quarantines-intentid-redrive/detail-design_gen.md) / [if](post-admin-security-audit-quarantines-intentid-redrive/if_gen.md) / [messages](post-admin-security-audit-quarantines-intentid-redrive/messages_gen.md) / [query](post-admin-security-audit-quarantines-intentid-redrive/query_gen.md) / [sequence](post-admin-security-audit-quarantines-intentid-redrive/sequence_gen.md) / [unit-test](post-admin-security-audit-quarantines-intentid-redrive/unit-test_gen.md) |
 | `GET` | `/admin/usage` | 利用状況を取得する | yes | [detail-design](get-admin-usage/detail-design_gen.md) / [if](get-admin-usage/if_gen.md) / [messages](get-admin-usage/messages_gen.md) / [query](get-admin-usage/query_gen.md) / [sequence](get-admin-usage/sequence_gen.md) / [unit-test](get-admin-usage/unit-test_gen.md) |
 | `POST` | `/admin/usage/export` | 利用状況 export URL を作成する | yes | [detail-design](post-admin-usage-export/detail-design_gen.md) / [if](post-admin-usage-export/if_gen.md) / [messages](post-admin-usage-export/messages_gen.md) / [query](post-admin-usage-export/query_gen.md) / [sequence](post-admin-usage-export/sequence_gen.md) / [unit-test](post-admin-usage-export/unit-test_gen.md) |
 | `GET` | `/admin/users` | 管理対象ユーザー一覧を取得する | yes | [detail-design](get-admin-users/detail-design_gen.md) / [if](get-admin-users/if_gen.md) / [messages](get-admin-users/messages_gen.md) / [query](get-admin-users/query_gen.md) / [sequence](get-admin-users/sequence_gen.md) / [unit-test](get-admin-users/unit-test_gen.md) |

@@ -38,7 +38,7 @@ backend、infra、Web が別々の role 一覧を持つと、付与できない 
 | 安定性 | High |
 | Confidence | inferred |
 | 所有者 | Security / Identity Platform |
-| 変更履歴 | 2026-07-11 初版 |
+| 変更履歴 | 2026-07-11 初版、2026-07-17 catalog v3でSYSTEM_ADMIN限定のsecurity audit quarantine redrive permissionを追加 |
 
 ## 受け入れ条件
 
@@ -67,7 +67,7 @@ backend、infra、Web が別々の role 一覧を持つと、付与できない 
 | 検証可能性 | OK | backend/infra/Web/worker catalog contract test へ変換できる |
 | ニーズ適合 | OK | 管理者が選択した role と実際の権限を一致させる |
 | 原子性 | OK | role catalog の source of truth を一つにするという一つの invariant を規定する |
-| 実装適合 | OK（confirmed） | `packages/contract/src/access-control.ts` を identity/API/Web/infra/worker の canonical catalog とし、role provisioning/access-control contract tests が parity と unknown deny を検証する |
+| 実装適合 | OK（confirmed） | `packages/contract/src/access-control.ts` を identity/API/Web/infra/worker の canonical catalog とする。v3ではsystem recovery専用`access:audit:redrive`を`SYSTEM_ADMIN`だけへ割り当て、`ACCESS_ADMIN`へ付与しないことをcontract/static testで固定する。role provisioning/access-control contract tests は parity と unknown deny を検証する |
 | 合意 | pending | canonical catalog の owner と version rollout 手順を承認する必要がある |
 
 ## トレース

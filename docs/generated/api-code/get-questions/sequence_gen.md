@@ -31,11 +31,11 @@ sequenceDiagram
 | ---: | --- | --- | --- | --- | --- |
 | 1 | `GET /questions handler` | Auth | 認証済み利用者を request context から取得する。 | `c.get("user")` | `apps/api/src/routes/question-routes.ts:62 (GET /questions handler)` |
 | 2 | `GET /questions handler` | Service | service の list all questions for admin 処理を呼び出す。 | `service.listAllQuestionsForAdmin()` | `apps/api/src/routes/question-routes.ts:63 (GET /questions handler)` |
-| 3 | `MemoRagService.listAllQuestionsForAdmin` | Store | `this.deps.questionStore` に対して list all for admin を実行する。 | `this.deps.questionStore.listAllForAdmin()` | `apps/api/src/rag/memorag-service.ts:3136 (MemoRagService.listAllQuestionsForAdmin)` |
+| 3 | `MemoRagService.listAllQuestionsForAdmin` | Store | `this.deps.questionStore` に対して list all for admin を実行する。 | `this.deps.questionStore.listAllForAdmin()` | `apps/api/src/rag/memorag-service.ts:3154 (MemoRagService.listAllQuestionsForAdmin)` |
 | 4 | `GET /questions handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json({ questions: await service.listAllQuestionsForAdmin() }, 200)` | `apps/api/src/routes/question-routes.ts:63 (GET /questions handler)` |
 | 5 | `GET /questions handler` | Auth | "answer:edit" permission を必須条件として確認する。 | `requirePermission(user, "answer:edit")` | `apps/api/src/routes/question-routes.ts:64 (GET /questions handler)` |
 | 6 | `GET /questions handler` | Service | service の list assigned questions 処理を呼び出す。 | `service.listAssignedQuestions(user.userId, supportGroupIds(user))` | `apps/api/src/routes/question-routes.ts:65 (GET /questions handler)` |
-| 7 | `MemoRagService.listAssignedQuestions` | Store | `this.deps.questionStore` に対して list assigned to user を実行する。 | `this.deps.questionStore.listAssignedToUser(userId, groupIds)` | `apps/api/src/rag/memorag-service.ts:3128 (MemoRagService.listAssignedQuestions)` |
+| 7 | `MemoRagService.listAssignedQuestions` | Store | `this.deps.questionStore` に対して list assigned to user を実行する。 | `this.deps.questionStore.listAssignedToUser(userId, groupIds)` | `apps/api/src/rag/memorag-service.ts:3146 (MemoRagService.listAssignedQuestions)` |
 | 8 | `GET /questions handler` | HTTP/SSE | HTTP 200 で JSON response を返す。 | `c.json({ questions: await service.listAssignedQuestions(user.userId, supportGroupIds(user)) }, 200)` | `apps/api/src/routes/question-routes.ts:65 (GET /questions handler)` |
 
 ## 分岐
@@ -43,4 +43,4 @@ sequenceDiagram
 | ID | Function | 条件 | 実装位置 |
 | --- | --- | --- | --- |
 | B001 | `GET /questions handler` | can read all tickets の判定結果が真である | `apps/api/src/routes/question-routes.ts:63 (GET /questions handler)` |
-| B002 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| B002 | `requirePermission` | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |

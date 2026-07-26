@@ -12,7 +12,7 @@
 | 到達 symbol | service persists document quality profile and excludes ineligible documents from normal RAG search | `apps/api/src/rag/memorag-service.test.ts:445 (service persists document quality profile and excludes ineligible documents from normal RAG search)` |
 | 到達 symbol | service inherits parent document group sharing unless child has explicit policy | `apps/api/src/rag/memorag-service.test.ts:858 (service inherits parent document group sharing unless child has explicit policy)` |
 | 到達 symbol | search includes owner-owned group scoped documents despite ordinary folder denial | `apps/api/src/rag/memorag-service.test.ts:1105 (search includes owner-owned group scoped documents despite ordinary folder denial)` |
-| 到達 symbol | FR-068 production path re-ingests quarantine into a fenced candidate and publishes only the approved artifact | `apps/api/src/rag/offline/pre-retrieval/admission/source-governance-approval-service.test.ts:374 (FR-068 production path re-ingests quarantine into a fenced candidate and publishes only the approved artifact)` |
+| 到達 symbol | FR-068 production path re-ingests quarantine into a fenced candidate and publishes only the approved artifact | `apps/api/src/rag/offline/pre-retrieval/admission/source-governance-approval-service.test.ts:431 (FR-068 production path re-ingests quarantine into a fenced candidate and publishes only the approved artifact)` |
 | 到達 symbol | service search applies ACL and metadata filters across lexical and vector results | `apps/api/src/search/hybrid-search.test.ts:408 (service search applies ACL and metadata filters across lexical and vector results)` |
 | 到達 symbol | service search denies group-scoped manifests to non-members without legacy ACLs | `apps/api/src/search/hybrid-search.test.ts:486 (service search denies group-scoped manifests to non-members without legacy ACLs)` |
 | 到達 symbol | service search publishes and reuses immutable lexical index artifacts | `apps/api/src/search/hybrid-search.test.ts:873 (service search publishes and reuses immutable lexical index artifacts)` |
@@ -23,7 +23,7 @@
 
 | Factor | Function | 種別 | 条件・発生要因 | 実装位置 |
 | --- | --- | --- | --- | --- |
-| F001 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| F001 | `requirePermission` | if | 利用者が 指定された permission を持たない | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | F002 | `benchmarkHttp` | catch | 例外が発生した場合に catch 処理へ移る | `apps/api/src/routes/benchmark-routes.ts:262 (benchmarkHttp)` |
 | F003 | `benchmarkHttp` | if | `error` が `BenchmarkEvaluationContextError` の instance である | `apps/api/src/routes/benchmark-routes.ts:263 (benchmarkHttp)` |
 
@@ -32,8 +32,8 @@
 | Case | シナリオ | 期待観点 | 根拠 |
 | --- | --- | --- | --- |
 | TC001 | 正常系 | 検索ベンチマークを実行する が成功 response を返す。 | `apps/api/src/routes/benchmark-routes.ts:85 (POST /benchmark/search handler)` |
-| TC002 | F001: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:184 (requirePermission)` |
+| TC002 | F001: 条件成立 | 利用者が 指定された permission を持たない 場合の response / side effect が実装どおりである。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
+| TC003 | F001: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/authorization.ts:185 (requirePermission)` |
 | TC004 | F002: 例外発生 | catch が例外を握りつぶさず、実装どおり応答変換または再送出する。 | `apps/api/src/routes/benchmark-routes.ts:262 (benchmarkHttp)` |
 | TC005 | F003: 条件成立 | `error` が `BenchmarkEvaluationContextError` の instance である 場合の response / side effect が実装どおりである。 | `apps/api/src/routes/benchmark-routes.ts:263 (benchmarkHttp)` |
 | TC006 | F003: 条件不成立 | 反対側または後続処理へ進み、成立側の副作用を行わない。 | `apps/api/src/routes/benchmark-routes.ts:263 (benchmarkHttp)` |

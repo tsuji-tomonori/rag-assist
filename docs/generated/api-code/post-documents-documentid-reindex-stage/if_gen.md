@@ -2,7 +2,7 @@
 
 # POST /documents/{documentId}/reindex/stage IF仕様
 
-- 実装 route: `apps/api/src/routes/document-routes.ts:1410 (POST /documents/{documentId}/reindex/stage)`
+- 実装 route: `apps/api/src/routes/document-routes.ts:1411 (POST /documents/{documentId}/reindex/stage)`
 - contract source: runtime `GET /openapi.json`
 
 Summary: 再インデックスを stage する
