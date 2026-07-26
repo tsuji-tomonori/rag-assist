@@ -1,0 +1,97 @@
+name: Requirements evidence current main convergence
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+concurrency:
+  group: requirements-evidence-main-convergence
+  cancel-in-progress: true
+
+jobs:
+  converge:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout convergence branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: integration/issue-358-requirements-evidence-main-convergence
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Configure git and reset to current main
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main codex/issue-358-requirements-evidence-sync
+          git reset --hard origin/main
+
+      - name: Cherry-pick requirements evidence bounded unit
+        shell: bash
+        run: |
+          set -euo pipefail
+          for commit in \
+            985b57059c2058bac974f1b21171763e25908334 \
+            01ff8b7568a2d7be0598f8d6f8400a4a61bb099a
+          do
+            if git cherry-pick "$commit"; then
+              continue
+            fi
+
+            while IFS= read -r path; do
+              case "$path" in
+                docs/generated/*)
+                  git checkout --ours -- "$path"
+                  git add -- "$path"
+                  ;;
+              esac
+            done < <(git diff --name-only --diff-filter=U)
+
+            remaining="$(git diff --name-only --diff-filter=U)"
+            if [ -n "$remaining" ]; then
+              printf 'Unresolved source conflicts remain:\n%s\n' "$remaining" >&2
+              exit 1
+            fi
+            GIT_EDITOR=true git cherry-pick --continue
+          done
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Regenerate source-backed API docs
+        run: |
+          npm run docs:openapi
+          npm run docs:api-code
+
+      - name: Validate converged tree
+        run: |
+          npm run ci
+          npm run docs:openapi:check
+          npm run docs:api-code:check
+          npm run docs:web-inventory:check
+          npm run docs:web-trace:test
+          npm run docs:infra-inventory:check
+          npm run docs:hidden-unicode:check
+          npm run rag:release:source-audit
+          git diff --check
+
+      - name: Commit generated convergence result and replace control history
+        run: |
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m "🔄 要件evidenceをcurrent mainへ再収束"
+          fi
+          git push --force-with-lease origin HEAD:integration/issue-358-requirements-evidence-main-convergence
