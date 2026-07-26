@@ -19,6 +19,8 @@ runtime OpenAPI と一部 docs quality gate はあるが、REST/oRPC/shared cont
 - [ ] lifecycle/deprecated/breaking metadata と承認 flow を機械可読にする。
 - [ ] auth、CORS、error sanitize、request ID が protected/public/OPTIONS で一貫する。
 - [ ] bypass route、stale generated docs、breaking schema の否定試験を追加する。
+- [ ] chat / ingest / benchmark / async agent の identifier、状態、event、artifact、idempotency を共通 worker contract または明示的な差分契約として定義する。
+- [ ] worker ごとの missing identifier、別 tenant、replay、terminal state、artifact 追跡を executable test で検証する。
 
 ## 検証・文書
 

@@ -2,7 +2,7 @@
 
 - 要件ID: `NFR-012`
 - 種別: `REQ_NON_FUNCTIONAL`
-- 状態: Draft
+- 状態: Draft（metadata allowlist decision・実装確認済み）
 - 優先度: A
 
 ## 要件
@@ -12,7 +12,7 @@
 ## 受け入れ条件（この要件専用）
 
 - AC-NFR012-001: `POST /search` の `results[].metadata` は allowlist 方式で返却項目を制限すること。
-- AC-NFR012-002: `results[].metadata` は `tenantId`、`source`、`docType`、`department` 以外を返さないこと。
+- AC-NFR012-002: reader 向け `results[].metadata` は Decision NFR012-D001 の reader allowlist だけを返し、`tenantId`、owner、ACL、allowed user、policy/lifecycle 内部状態を返さないこと。
 - AC-NFR012-003: `diagnostics.indexVersion` は document ID や alias 本文を含まない opaque value であること。
 - AC-NFR012-004: `diagnostics.aliasVersion` は alias 本文を含まない opaque value または `none` であること。
 - AC-NFR012-005: alias、ACL、許可 user、内部 project code の非漏えいは API test または unit test で検証されること。
@@ -57,6 +57,25 @@
 | 実現可能性 | OK | response shaping と version hash で実装可能 |
 | 検証可能性 | OK | search unit test と schema test で確認可能 |
 | ニーズ適合 | OK | alias 管理の production 安全化に対応する |
+
+## Decision NFR012-D001: authorized public metadata allowlist
+
+- 状態: `confirmed`
+- 決定: 公開 response metadata の source of truth は `sanitizeAuthorizedResourceMetadata` とする。
+- reader allowlist: `source`, `docType`, `department`, `drawingSourceType`, `pageOrSheet`, `drawingNo`, `sheetTitle`, `scale`, `sourceType`, `groupId`, `groupIds`。
+- benchmark 例外: benchmark audience だけ reader allowlist に `benchmarkSuiteId` を追加する。通常 reader へは返さない。
+- `tenantId` 除外理由: tenant は authorization/filter 境界であり、authorized resource の表示 metadata ではない。response に複製すると tenant identifier の推測面を増やすため、認可済み result でも公開しない。
+- group metadata の扱い: `groupId` / `groupIds` は認可済み resource の navigation 用 public metadata として許可する。ACL group、allowed user、owner、domain policy 等の security policy state は許可しない。
+- 変更規則: allowlist の追加は、利用目的、機微性、reader/benchmark audience、negative disclosure test を同じ変更で更新する。
+
+## 実装・検証トレース
+
+- `confirmed`: `apps/api/src/security/public-resource-response.ts` の `sanitizeAuthorizedResourceMetadata` が reader/benchmark allowlist を中央管理する。
+- `confirmed`: `apps/api/src/security/public-resource-response.test.ts` は `tenantId`、owner、ACL、domain policy、lifecycle、reader 向け `benchmarkSuiteId` を除外し、許可した表示 metadata だけを返すことを検証する。
+- `confirmed`: `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts` は検索 result metadata に同 sanitizer を適用する。
+- `confirmed`: `apps/api/src/search/hybrid-search.test.ts` は search response と diagnostics の非漏えい・opaque version behavior を検証する。
+- `conflict`: 旧 AC-NFR012-002 の `tenantId` 公開と4 field固定は、中央 sanitizer の現行 security decision と不一致のため置換した。
+- `open_question`: なし。
 
 ## 関連文書
 

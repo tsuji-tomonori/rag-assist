@@ -1002,6 +1002,51 @@ test("fixed workflow continues when sufficient context judge returns partial wit
   assertSafeDebugStep(gateStep, "sufficient_context_gate")
 })
 
+test("fixed workflow refuses an unanswerable judge result even when retrieved evidence matches the question", async () => {
+  const deps = await createTestDeps()
+  const baseTextModel = deps.textModel
+  deps.textModel = {
+    embed: baseTextModel.embed.bind(baseTextModel),
+    generate: async (prompt, options) => {
+      if (prompt.includes("SUFFICIENT_CONTEXT_JSON")) {
+        return JSON.stringify({
+          label: "UNANSWERABLE",
+          confidence: 0.61,
+          requiredFacts: ["経費精算の期限"],
+          supportedFacts: [],
+          missingFacts: ["回答に必要な根拠"],
+          conflictingFacts: [],
+          supportingChunkIds: [],
+          reason: "検索済み根拠だけでは回答できません。"
+        })
+      }
+      return baseTextModel.generate(prompt, options)
+    }
+  }
+  const service = new MemoRagService(deps)
+
+  await service.ingest({
+    fileName: "expense-policy.txt",
+    text: "経費精算の期限は30日以内です。申請システムから提出します。"
+  })
+
+  const result = await service.chat({
+    question: "経費精算の期限は？",
+    includeDebug: true,
+    minScore: 0.05,
+    maxIterations: 1
+  })
+
+  assert.equal(result.isAnswerable, false)
+  assert.equal(result.answer, "資料からは回答できません。")
+  assert.deepEqual(result.citations, [])
+  assert.equal(result.debug?.steps.some((step) => step.label === "generate_answer"), false)
+  const gateStep = result.debug?.steps.find((step) => step.label === "sufficient_context_gate")
+  assertSafeDebugStep(gateStep, "sufficient_context_gate")
+  assert.equal(gateStep?.status, "warning")
+  assert.doesNotMatch(JSON.stringify(gateStep), /検索済み根拠だけでは回答できません/)
+})
+
 test("fixed workflow answers English ChatRAG VPN follow-up without refusal contamination", async () => {
   const service = new MemoRagService(await createTestDeps())
 

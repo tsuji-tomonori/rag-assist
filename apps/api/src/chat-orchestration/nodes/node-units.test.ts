@@ -619,7 +619,7 @@ test("sufficient context gate does not override unanswerable judgement", async (
   assert.deepEqual(result.citations, [])
 })
 
-test("sufficient context gate proceeds on anchored unanswerable judgement with retrieved evidence", async () => {
+test("sufficient context gate refuses anchored unanswerable judgement even with retrieved evidence", async () => {
   const deps = createDeps()
   const baseModel = deps.textModel
   deps.textModel = {
@@ -678,8 +678,11 @@ test("sufficient context gate proceeds on anchored unanswerable judgement with r
   )
 
   assert.equal(result.sufficientContext?.label, "UNANSWERABLE")
-  assert.equal(result.answerability?.isAnswerable, true)
-  assert.equal(result.answer, undefined)
+  assert.equal(result.answerability?.isAnswerable, false)
+  assert.equal(result.answerability?.reason, "missing_required_fact")
+  assert.equal(result.answer, NO_ANSWER)
+  assert.deepEqual(result.citations, [])
+  assert.match(result.sufficientContext?.reason ?? "", /一部情報が不足/)
 })
 
 test("sufficient context gate keeps generic partial questions refused without a subject cue", async () => {
