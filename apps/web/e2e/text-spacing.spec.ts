@@ -133,7 +133,7 @@ async function collectSpacingEvidence(locator: Locator): Promise<SpacingEvidence
   })
 }
 
-test('E2E-UI-TEXT-SPACING-001: 320px の主要 journey は代表 text-spacing override でも操作可能である @smoke', async ({ page }, testInfo) => {
+test('E2E-UI-TEXT-SPACING-001: 320px の主要 journey は代表 text-spacing override でも操作可能である @smoke @ui-quality', async ({ page }, testInfo) => {
   await page.setViewportSize(viewport)
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto('/')

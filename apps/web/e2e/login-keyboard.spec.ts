@@ -48,7 +48,7 @@ async function focusedEvidence(page: Page, label: string, locator: Locator): Pro
   return evidence
 }
 
-test('E2E-UI-LOGIN-KEYBOARD-001: login前画面をkeyboard-onlyで完了できる @smoke', async ({ page }, testInfo) => {
+test('E2E-UI-LOGIN-KEYBOARD-001: login前画面をkeyboard-onlyで完了できる @smoke @ui-quality', async ({ page }, testInfo) => {
   const results: ViewportEvidence[] = []
 
   for (const viewport of viewports) {

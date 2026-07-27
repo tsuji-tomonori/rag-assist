@@ -73,9 +73,16 @@ branch ancestryを検査するgateがなく、本文上の依存関係だけで�
 - 目視では、composer / run ID / noteの到達可能性をviewport内で改善し、mobileのoptional suggestionをscroll領域へ収める意図したreflowだった。欠落、permission漏えい、読めない重なりは確認しなかった。
 - 他のvisual baselineは変更せず、この4枚だけをCI actualへ同期した。
 
+## required evidence gate補強
+
+- baseline同期後のWeb UI Qualityは既存10件が成功したが、新規6 evidence files / 9 testsはCI実走対象ではなく、local `--list`だけであった。
+- 未実走を完了扱いしないため、9 testsへ`@ui-quality`を付与し、`test:e2e:ui-quality`の明示file listへ追加した。
+- required Chromium gateはvisual / axe / mobile 10件とevidence 9件の合計19 testsを同一Playwright runで実行し、同一artifactへ証跡を残す。
+- localでは19 testsの解決、lint、Web typecheck、trace 13件、generated Web inventory freshnessを再確認した。
+
 ## 未完了・blocker
 
-- 4 visual baseline同期後のfinal-head Web UI Quality再実行は待ち。
+- 19 testsへ拡張したfinal-head Web UI Quality再実行は待ち。
 - manual evidence baselineは、keyboard `not_run`、screen reader / browser zoom / real device `blocked`、matrix `open_question`、`ready:false`のまま。
 - 200% / 400%はviewport proxyであり、実browser zoom passとは主張しない。
 - representative screen reader、Firefox / WebKit、touch / real deviceは未検証。
@@ -90,7 +97,7 @@ branch ancestryを検査するgateがなく、本文上の依存関係だけで�
 
 ## 次の作業
 
-1. 4 visual baselineだけを追加commitして既存Draft PR #462 branchへfast-forwardする。
-2. final-head Web UI Quality、MemoRAG CI、semverを確認する。
+1. required evidence gate追加を既存Draft PR #462 branchへfast-forwardする。
+2. 19-test final-head Web UI Quality、MemoRAG CI、semverを確認する。
 3. PR / Issueコメントへ最終CIと未完了を追記する。
 4. manual evidenceとowner判断は後続taskとして継続する。

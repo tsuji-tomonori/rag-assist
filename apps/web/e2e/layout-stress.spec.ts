@@ -168,7 +168,7 @@ test.beforeEach(async ({ page }) => {
   await installLayoutStressRoutes(page)
 })
 
-test('E2E-UI-LAYOUT-STRESS-001: reduced-motion で長文回答と長い引用名が reflow する @smoke', async ({ page }, testInfo) => {
+test('E2E-UI-LAYOUT-STRESS-001: reduced-motion で長文回答と長い引用名が reflow する @smoke @ui-quality', async ({ page }, testInfo) => {
   await signIn(page)
   expect(await page.evaluate(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(true)
   await page.evaluate(() => {
@@ -206,7 +206,7 @@ test('E2E-UI-LAYOUT-STRESS-001: reduced-motion で長文回答と長い引用名
   })
 })
 
-test('E2E-UI-LAYOUT-STRESS-001: 長いファイル名・多数件・0件が320pxで reflow する @smoke', async ({ page }, testInfo) => {
+test('E2E-UI-LAYOUT-STRESS-001: 長いファイル名・多数件・0件が320pxで reflow する @smoke @ui-quality', async ({ page }, testInfo) => {
   await signIn(page)
   expect(await page.evaluate(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(true)
   const states: DimensionEvidence[] = []

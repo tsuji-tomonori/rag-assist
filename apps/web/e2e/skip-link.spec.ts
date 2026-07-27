@@ -6,7 +6,7 @@ const viewportCases = [
 ] as const
 
 for (const viewportCase of viewportCases) {
-  test(`E2E-UI-SKIP-001: ${viewportCase.name} で反復 navigation を迂回して main へ移動できる @smoke`, async ({ page }, testInfo) => {
+  test(`E2E-UI-SKIP-001: ${viewportCase.name} で反復 navigation を迂回して main へ移動できる @smoke @ui-quality`, async ({ page }, testInfo) => {
     await page.setViewportSize(viewportCase.viewport)
     await page.goto('/')
     await page.getByPlaceholder('メールアドレスを入力').fill('local@example.com')

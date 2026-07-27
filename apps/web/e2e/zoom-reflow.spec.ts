@@ -49,7 +49,7 @@ async function assertNoRootOverflow(page: Page, view: string): Promise<ReflowSta
 }
 
 for (const zoomCase of zoomCases) {
-  test(`E2E-UI-ZOOM-REFLOW-001: 1280px 基準 ${zoomCase.zoomPercent}% proxy は主要 view を reflow する @smoke`, async ({ page }, testInfo) => {
+  test(`E2E-UI-ZOOM-REFLOW-001: 1280px 基準 ${zoomCase.zoomPercent}% proxy は主要 view を reflow する @smoke @ui-quality`, async ({ page }, testInfo) => {
     await page.setViewportSize({ width: zoomCase.cssViewportWidth, height: viewportHeight })
     await page.emulateMedia({ reducedMotion: 'reduce' })
 

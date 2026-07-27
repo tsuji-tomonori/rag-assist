@@ -15,11 +15,12 @@
     "Repaired the canonical trace for four executable E2E IDs and the relocated login unit evidence",
     "Regenerated Web inventory, traceability, accessibility, component, feature, screen, and quality-matrix documents",
     "Passed repository lint, Web typecheck/build, 443 Web unit tests, 13 trace tests, 5 semantic tests, 7 manual-evidence schema tests, canonical docs, generated docs, OpenAPI, and diff checks",
-    "Reviewed the first final-head Web UI Quality artifact and synchronized only four deterministic visual baselines affected by the intended viewport-height reflow"
+    "Reviewed the first final-head Web UI Quality artifact and synchronized only four deterministic visual baselines affected by the intended viewport-height reflow",
+    "Added all nine new accessibility evidence tests to the required Chromium gate instead of treating test discovery as execution"
   ],
   "remaining_items": [
     "Publish the non-rewriting merge commit to the existing draft pull request #462 branch",
-    "Confirm final-head Web UI Quality, MemoRAG CI, and semver workflows after the four-baseline synchronization",
+    "Confirm the expanded 19-test final-head Web UI Quality, MemoRAG CI, and semver workflows",
     "Update pull request #462 body, acceptance evidence, self-review, and Issue #345 progress",
     "Run approved manual keyboard, representative screen-reader, real-browser 200/400-percent zoom, and real-device verification",
     "Resolve OQ-UI-002 owner, cadence, and approved matrix decisions"

@@ -197,7 +197,7 @@ function expectControlInsideViewport(control: RectEvidence, viewportState: Viewp
   expect(control.bottom, `${label} の下端が viewport 外です`).toBeLessThanOrEqual(viewportState.innerHeight)
 }
 
-test('E2E-UI-VIRTUAL-KEYBOARD-001: focus中のviewport縮小でもchatを送信できる @smoke', async ({ page }, testInfo) => {
+test('E2E-UI-VIRTUAL-KEYBOARD-001: focus中のviewport縮小でもchatを送信できる @smoke @ui-quality', async ({ page }, testInfo) => {
   await page.setViewportSize(initialViewport)
   await installChatRoute(page)
   await signIn(page)

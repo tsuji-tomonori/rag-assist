@@ -124,6 +124,7 @@ evidence stack の統合ブランチ作成後、current main を同ブランチ�
 - lint、Web typecheck/build、Web unit 443件、trace 13件、semantic 5件、manual evidence schema 7件、docs / generated checksは成功した。
 - Chromium E2E 9件は解決可能であることを`--list`で確認した。ローカル実走はChromium executable未導入かつdownload endpointが0 MiBを返す環境制約でblocked。final-head Web UI Qualityを必須確認とする。
 - final-head Web UI Quality 1回目は6 tests pass、4 visual mismatchでfailした。artifactのexpected / actual / diffを目視し、viewport-height統合後の意図したreflowかつretry間でdeterministicと確認したため、chat empty、answer/citations、debug、mobile chatの4 baselineだけを同期した。
+- baseline同期後の既存Web UI Quality 10件は成功したが、新規evidence 9件がCI実走対象外と判明した。9件へ`@ui-quality`を付与して同一required Chromium runへ追加し、合計19件をfail-closedで実走する。
 - manual evidenceは`ready:false`を維持し、実browser zoom / screen reader / real deviceを完了扱いしていない。
 
 ## 受け入れ条件の現在値
