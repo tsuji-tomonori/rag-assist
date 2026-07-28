@@ -93,7 +93,7 @@
 - `ResourceState.tsx` owns the discriminated state model, target/source metadata, alert/status/live/busy semantics, focus option, retry/back/support actions, partial summaries, and stale source/as-of disclosure.
 - `useResourceStateController.ts` settles endpoint parts independently, maps HTTP 401/403 to permission, retains last confirmed content as stale after refresh failure, ignores superseded requests, and publishes only public-safe failure text while raw detail remains in developer logging.
 - `useAppShellState.ts` applies the controller to history、favorites、questions、documents catalog/reindex、benchmark runs/suites、admin endpoint parts、debug runs. Feature adapters hide unconfirmed counts/content and keep successful parts available.
-- `E2E-UI-STATE-001` exercises initial loading/500/confirmed-empty recovery、actual HTTP 403、admin partial recovery、source/as-of stale recovery. Primitive/controller/component tests cover all state variants and false-zero rules.
+- `E2E-UI-STATE-001` is part of the required Chromium UI quality gate and exercises history initial loading/500/confirmed-empty recovery、actual HTTP 403、admin partial recovery、source/as-of stale recovery. Primitive/controller/component tests cover all state variants and false-zero rules; the other six AppViews remain blocked in the cross-screen content-state matrix until feature evidence exists.
 
 ```mermaid
 stateDiagram-v2

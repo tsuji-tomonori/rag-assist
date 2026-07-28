@@ -1116,7 +1116,7 @@ test('E2E-UI-ROUTE-002: denied・invalid deep link は protected fetch なしで
   await expect(page).toHaveURL(/\?view=history$/)
 })
 
-test('E2E-UI-STATE-001: loading・500・empty・retry recovery を対象 region で区別する @smoke', async ({ page }) => {
+test('E2E-UI-STATE-001: loading・500・empty・retry recovery を対象 region で区別する @smoke @ui-quality', async ({ page }) => {
   let historyReads = 0
   let releaseFirstRead: (() => void) | undefined
   const firstReadGate = new Promise<void>((resolve) => { releaseFirstRead = resolve })
@@ -1155,7 +1155,7 @@ test('E2E-UI-STATE-001: loading・500・empty・retry recovery を対象 region 
   expect(historyReads).toBe(2)
 })
 
-test('E2E-UI-STATE-001: HTTP 403 は empty/zero ではなく permission denied として content を隠す @smoke', async ({ page }) => {
+test('E2E-UI-STATE-001: HTTP 403 は empty/zero ではなく permission denied として content を隠す @smoke @ui-quality', async ({ page }) => {
   await page.route(/http:\/\/(api\.visual\.test|127\.0\.0\.1:8787)\/conversation-history$/, async (route) => {
     if (route.request().method() === 'GET') {
       await route.fulfill({ status: 403, contentType: 'text/plain', body: 'forbidden private history id' })
@@ -1175,7 +1175,7 @@ test('E2E-UI-STATE-001: HTTP 403 は empty/zero ではなく permission denied �
   await expect(page.locator('#history-resource-region')).not.toContainText('条件に一致する履歴はありません')
 })
 
-test('E2E-UI-STATE-001: admin partial success は成功・失敗 part を分けて retry recovery する @smoke', async ({ page }) => {
+test('E2E-UI-STATE-001: admin partial success は成功・失敗 part を分けて retry recovery する @smoke @ui-quality', async ({ page }) => {
   let auditReads = 0
   await page.route(/http:\/\/(api\.visual\.test|127\.0\.0\.1:8787)\/admin\/audit-log(?:\?.*)?$/, async (route) => {
     auditReads += 1
@@ -1202,7 +1202,7 @@ test('E2E-UI-STATE-001: admin partial success は成功・失敗 part を分け�
   expect(auditReads).toBe(2)
 })
 
-test('E2E-UI-STATE-001: refresh failure は as-of/source 付き stale data を保持して回復する @smoke', async ({ page }) => {
+test('E2E-UI-STATE-001: refresh failure は as-of/source 付き stale data を保持して回復する @smoke @ui-quality', async ({ page }) => {
   let failNextUserRefresh = false
   await page.route(/http:\/\/(api\.visual\.test|127\.0\.0\.1:8787)\/admin\/(users|roles|audit-log|usage|costs)(?:\?.*)?$/, async (route) => {
     const path = new URL(route.request().url()).pathname

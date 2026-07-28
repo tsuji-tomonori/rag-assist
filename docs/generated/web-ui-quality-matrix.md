@@ -57,7 +57,7 @@
 | history | AC-SQ016-004 | pass | blocked | blocked | muted foreground remediation後、1280px axe serious/critical blocker 0。manual contrast reviewは未実施 |
 | history | AC-SQ016-005 | pass | blocked | blocked | 4 viewportで24px minimumと44px primary targetの未解決candidate 0。manual touch evidenceは未実施 |
 | history | AC-SQ016-006 | pass | blocked | blocked | 4 viewportのreduced-motion computed auditはpass。orientation / safe-area / virtual-keyboard実機は未検証 |
-| history | AC-SQ016-007 | blocked | blocked | blocked | content-state matrixのfeature evidence待ち |
+| history | AC-SQ016-007 | pass | blocked | blocked | required E2E-UI-STATE-001でloading→500→retry→confirmed emptyとHTTP 403を区別し、false zeroとprivate detail露出を防ぐ。manual evidenceは未実施 |
 | history | AC-SQ016-008 | not_applicable | blocked | blocked | manual required scopeは未実施 |
 | favorites | AC-SQ016-001 | pass | blocked | blocked | CI run 29516940570 / artifact 8383090126の4 viewportでroot/unresolved overflow 0。実browser zoomは未検証 |
 | favorites | AC-SQ016-002 | blocked | blocked | blocked | focus candidate auditとkeyboard journey evidence待ち |
@@ -81,7 +81,7 @@
 | admin | AC-SQ016-004 | pass | blocked | blocked | muted foreground remediation後、1280px axe serious/critical blocker 0。manual contrast reviewは未実施 |
 | admin | AC-SQ016-005 | pass | blocked | blocked | 4 viewportで24px minimumと44px primary targetの未解決candidate 0。manual touch evidenceは未実施 |
 | admin | AC-SQ016-006 | pass | blocked | blocked | 4 viewportのreduced-motion computed auditはpass。orientation / safe-area / virtual-keyboard実機は未検証 |
-| admin | AC-SQ016-007 | blocked | blocked | blocked | content-state matrixのfeature evidence待ち |
+| admin | AC-SQ016-007 | pass | blocked | blocked | required E2E-UI-STATE-001でpartial/stale/source/as-of/retry recoveryを区別し、成功dataを保持する。manual evidenceは未実施 |
 | admin | AC-SQ016-008 | not_applicable | blocked | blocked | manual required scopeは未実施 |
 | documents | AC-SQ016-001 | pass | blocked | blocked | 4 viewportでroot/unresolved overflow 0。desktop row 6件はfocus可能なtable ownerとkeyboard代替操作付きsupported_scroll。実browser zoomは未検証 |
 | documents | AC-SQ016-002 | blocked | blocked | blocked | focus candidate auditとkeyboard journey evidence待ち |
