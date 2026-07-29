@@ -67,6 +67,21 @@ Playwright server は `tsx` CLI の sandbox IPC 制約を `node --import tsx` �
 - favorite resume journey。
 - 他5 AppViews の画面単位状態証跡。
 
+## 指示への適合
+
+| 要件 | 状況 | 根拠 |
+| --- | --- | --- |
+| current main / 前回差分 / open PR・Issue / tasks / 正本・生成物を確認 | 対応 | main・PR #462・Issue #345・品質matrixとUI正本を再確認 |
+| 重複しない最優先の小改善を1件選定 | 対応 | favorites feature state evidenceのみに限定 |
+| task・実装・正本・生成物を同期 | 対応 | task、E2E、2正本、JSON matrix、generated matrix |
+| lint・typecheck・unit・E2E・docs check | 一部未検証 | static/unit/docsはpass、local E2E実走はChromium取得blocker |
+| Draft PR更新・受け入れ条件・セルフレビュー・Issue進捗 | 進行中 | branch更新後、final-head CIを待ってGitHubコメントを追加 |
+| 未検証を完了扱いしない | 対応 | taskは`do`、manual / overallと他5画面は`blocked` |
+| merge / deploy / release /破壊的変更をしない | 対応 | いずれも未実施 |
+
+総合fit: 4.3 / 5.0（約86%）。実装・文書・ローカル静的/単体検証は指示に適合する一方、
+local Chromium実走、final-head CI、GitHub上の最終記録が未完了のため満点としない。
+
 ## 次の具体作業
 
 1. commit / push 後に Draft PR #462 の final-head checks を確認する。
