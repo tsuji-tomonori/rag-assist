@@ -1175,6 +1175,68 @@ test('E2E-UI-STATE-001: HTTP 403 は empty/zero ではなく permission denied �
   await expect(page.locator('#history-resource-region')).not.toContainText('条件に一致する履歴はありません')
 })
 
+test('E2E-UI-STATE-001: favorites loading・500・empty・retry recovery は未確認の zero を表示しない @smoke @ui-quality', async ({ page }) => {
+  let favoritesReads = 0
+  let releaseFirstRead: (() => void) | undefined
+  const firstReadGate = new Promise<void>((resolve) => { releaseFirstRead = resolve })
+  await page.route(/http:\/\/(api\.visual\.test|127\.0\.0\.1:8787)\/favorites$/, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.fallback()
+      return
+    }
+    favoritesReads += 1
+    if (favoritesReads === 1) {
+      await firstReadGate
+      await route.fulfill({ status: 500, contentType: 'text/plain', body: 'RequestId: private-favorite-id at FavoriteStore (/srv/favorites.ts:12)' })
+      return
+    }
+    await route.fulfill({ json: { favorites: [] } })
+  })
+
+  await signIn(page)
+  await page.getByTitle('お気に入り').click()
+  const favoritesRegion = page.getByRole('region', { name: 'お気に入り', exact: true })
+  const dataRegion = page.locator('#favorites-resource-region')
+  await expect(dataRegion).toHaveAttribute('aria-busy', 'true')
+  await expect(favoritesRegion).toContainText('お気に入りを読み込んでいます')
+  await expect(favoritesRegion).toContainText('お気に入りを確認中')
+  await expect(favoritesRegion).not.toContainText('0 件のショートカット')
+  await expect(dataRegion).not.toContainText('お気に入りはありません。')
+
+  releaseFirstRead?.()
+  const errorState = favoritesRegion.locator('[data-state-kind="error"]')
+  await expect(errorState).toContainText('お気に入りを取得できませんでした')
+  await expect(errorState).not.toContainText('private-favorite-id')
+  await expect(favoritesRegion).not.toContainText('0 件のショートカット')
+  await expect(dataRegion).not.toContainText('お気に入りはありません。')
+
+  await errorState.getByRole('button', { name: '再試行' }).click()
+  await expect(favoritesRegion.locator('[data-state-kind="recovered"]')).toContainText('お気に入りを更新しました')
+  await expect(favoritesRegion).toContainText('お気に入りはありません。')
+  await expect(favoritesRegion).toContainText('0 件のショートカット')
+  expect(favoritesReads).toBe(2)
+})
+
+test('E2E-UI-STATE-001: favorites HTTP 403 は empty/zero ではなく permission denied として content を隠す @smoke @ui-quality', async ({ page }) => {
+  await page.route(/http:\/\/(api\.visual\.test|127\.0\.0\.1:8787)\/favorites$/, async (route) => {
+    if (route.request().method() === 'GET') {
+      await route.fulfill({ status: 403, contentType: 'text/plain', body: 'forbidden private favorite id' })
+      return
+    }
+    await route.fallback()
+  })
+
+  await signIn(page)
+  await page.getByTitle('お気に入り').click()
+  const favoritesRegion = page.getByRole('region', { name: 'お気に入り', exact: true })
+  const permissionState = favoritesRegion.locator('[data-state-kind="permission"]')
+  await expect(permissionState).toHaveAttribute('role', 'alert')
+  await expect(permissionState).toContainText('お気に入りを表示できません')
+  await expect(permissionState).not.toContainText('private favorite id')
+  await expect(favoritesRegion).not.toContainText('0 件のショートカット')
+  await expect(page.locator('#favorites-resource-region')).not.toContainText('お気に入りはありません。')
+})
+
 test('E2E-UI-STATE-001: admin partial success は成功・失敗 part を分けて retry recovery する @smoke @ui-quality', async ({ page }) => {
   let auditReads = 0
   await page.route(/http:\/\/(api\.visual\.test|127\.0\.0\.1:8787)\/admin\/audit-log(?:\?.*)?$/, async (route) => {

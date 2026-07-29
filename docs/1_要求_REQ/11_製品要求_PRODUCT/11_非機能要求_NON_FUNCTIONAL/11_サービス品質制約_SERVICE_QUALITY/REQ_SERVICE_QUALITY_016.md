@@ -68,11 +68,11 @@
 | 実現可能性 | pass with manual dependency | code/test fixes are feasible; screen-reader/real-device evidence requires the named environments. |
 | 検証可能性 | pass | numeric thresholds and journey evidence are explicit. |
 
-## 現在の自動証跡（2026-07-29）
+## 現在の自動証跡（2026-07-30）
 
 - `E2E-UI-SKIP-001`: 認証後 shell の最初の keyboard focus で skip link を表示し、desktop 1280×720 / mobile 320×720 の双方で反復 navigation を越えて一意な `main` landmark へ focus を移す。
 - `E2E-UI-LOGIN-KEYBOARD-001`: login 前の email から secondary action までの DOM 順 Tab order、3px outline、native required validation、Space による remember 切替、password 上の Enter submit、認証後 chat 到達、horizontal containment を 1280×720 / 320×720 で検証する。rejected authentication の alert/form description/focus/retry は component test で検証する。
-- `E2E-UI-STATE-001`: history の loading→500→retry→confirmed empty と HTTP 403、admin の partial→retry→recovered と source/as-of 付き stale→retry→recovered を required Chromium UI quality gate で検証する。証拠のない他6画面の `AC-SQ016-007` automated status は `blocked` を維持する。
+- `E2E-UI-STATE-001`: history / favorites の loading→500→retry→confirmed empty と HTTP 403、admin の partial→retry→recovered と source/as-of 付き stale→retry→recovered を required Chromium UI quality gate で検証する。証拠のない他5画面の `AC-SQ016-007` automated status は `blocked` を維持する。
 - 上記は Chromium keyboard automation であり、representative screen reader、実 browser の 200%/400% zoom、real device、Firefox、WebKit の手動・browser evidence を代替しない。
 
 ## Phase別 evidence contract（2026-07-16）
