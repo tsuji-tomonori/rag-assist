@@ -1,6 +1,6 @@
 # Issue #345 共通状態 E2E を required UI gate に含める
 
-状態: do
+状態: done
 
 タスク種別: 修正
 
@@ -62,12 +62,12 @@
 
 ## 受け入れ条件
 
-- [ ] `E2E-UI-STATE-001` の4シナリオが `ui-quality` scenario で列挙・実行される。
-- [ ] history / admin の loading / error / permission / partial / stale / retry 証拠が required gate の failure を遮断する。
-- [ ] history / admin の `AC-SQ016-007` automated status と正本・生成物が一致する。
-- [ ] 他6 view、manual screen reader、実 browser 200% / 400% zoom、real-device、Firefox / WebKit の未完了状態を pass にしない。
-- [ ] lint、Web typecheck / unit、trace / semantic / docs checks と final-head GitHub Actions が成功する。
-- [ ] Draft PR #462 と Issue #345 に結果と残余 gap を記録する。
+- [x] `E2E-UI-STATE-001` の4シナリオが `ui-quality` scenario で列挙・実行される。
+- [x] history / admin の loading / error / permission / partial / stale / retry 証拠が required gate の failure を遮断する。
+- [x] history / admin の `AC-SQ016-007` automated status と正本・生成物が一致する。
+- [x] 他6 view、manual screen reader、実 browser 200% / 400% zoom、real-device、Firefox / WebKit の未完了状態を pass にしない。
+- [x] lint、Web typecheck / unit、trace / semantic / docs checks と final-head GitHub Actions が成功する。
+- [x] Draft PR #462 と Issue #345 に結果と残余 gap を記録する。
 
 ## 検証計画
 
@@ -101,5 +101,8 @@
 - required selector は既存19件から23件へ増え、4状態シナリオを列挙した。
 - history / admin の `AC-SQ016-007` automated statusだけを `pass` とし、overall / manual は `blocked` を維持した。
 - lint、Web typecheck、Web unit 443件、trace 13件、semantic 5件、manual evidence contract 7件、canonical docs / Web・infra generated docs / hidden Unicode checks は成功した。
-- local Chromium executable は未導入のため E2E 実走は未実施。final-head GitHub Actions の23件成功を完了条件として残す。
+- local Chromium executable は未導入のためローカル E2E 実走は未実施。代替せず、final-head GitHub Actionsで23件を実走して成功した。
 - manual baseline は `pass: 0`、`blocked: 3`、`not_run: 1`、`ready: false` を維持した。
+- [Web UI Quality 30409382853](https://github.com/tsuji-tomonori/rag-assist/actions/runs/30409382853) は23/23成功、1.2分。artifact `8707828895`、digest `sha256:b8632180cb6a4cb042eaddc0cead25fb53a059317a4354f2a83e13553dc5ce79`。
+- [MemoRAG CI 30409382852](https://github.com/tsuji-tomonori/rag-assist/actions/runs/30409382852) と [semver 30409382881](https://github.com/tsuji-tomonori/rag-assist/actions/runs/30409382881) は成功した。
+- PR #462 の受け入れ条件コメントとセルフレビューを head `c941e4fb` に同期した。

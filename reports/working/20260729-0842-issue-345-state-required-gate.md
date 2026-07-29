@@ -17,9 +17,9 @@
 | R1 | current `main` と Draft PR #462 の最新状態を確認する | 高 | `main@0771521c`、#462 `251ebfd0`、behind 0を確認 |
 | R2 | 重複しない小さな改善を選ぶ | 高 | 実装済み state E2E の required gate漏れに限定 |
 | R3 | task、正本、machine-readable matrix、生成物を同期する | 高 | 対応 |
-| R4 | lint / typecheck / unit / E2E / docsを検証する | 高 | local checks成功、browser実走はCI待ち |
+| R4 | lint / typecheck / unit / E2E / docsを検証する | 高 | local checksとCI成功 |
 | R5 | manual / owner未完了をpassにしない | 高 | baseline `ready:false`、他6画面blockedを維持 |
-| R6 | Draft PRとIssueを更新する | 高 | final-head push / CI後に実施予定 |
+| R6 | Draft PRとIssueを更新する | 高 | 対応 |
 
 ## 3. 確認した一次情報
 
@@ -61,10 +61,14 @@
 - `npm run docs:hidden-unicode:check`: pass
 - `npm run test:e2e:ui-quality -w @memorag-mvp/web -- --list`: 23 tests、追加4件を含む
 - `git diff --check`: pass
+- [Web UI Quality 30409382853](https://github.com/tsuji-tomonori/rag-assist/actions/runs/30409382853): 23/23 pass、1.2分
+- Web UI artifact: `8707828895`、`sha256:b8632180cb6a4cb042eaddc0cead25fb53a059317a4354f2a83e13553dc5ce79`
+- [MemoRAG CI 30409382852](https://github.com/tsuji-tomonori/rag-assist/actions/runs/30409382852): pass
+- [Validate Semver Label 30409382881](https://github.com/tsuji-tomonori/rag-assist/actions/runs/30409382881): pass
 
 ## 7. 未実施・制約・リスク
 
-- local Chromium executableは未導入のため、23件のbrowser実走はfinal-head GitHub Actions待ち。
+- local Chromium executableは未導入。代替せず、final-head GitHub Actionsで23件を実走して成功した。
 - representative screen reader、実 browser 200% / 400% zoom、touch / real-device、Firefox / WebKitは未検証。
 - `OQ-UI-002` owner / cadence / approved matrixはowner判断待ち。
 - required suiteは4 tests増えるため、CI runtimeとflakeの確認が必要。
@@ -85,12 +89,12 @@
 
 | 評価軸 | 評価 | 理由 |
 |---|---:|---|
-| 指示網羅性 | 4.5 / 5 | 実装とlocal検証は対応。CI・GitHub更新はpush後 |
+| 指示網羅性 | 5 / 5 | 実装、検証、PR / Issue更新まで対応 |
 | 制約遵守 | 5 / 5 | 未実測をpassにせず、merge / deploy / releaseなし |
-| 成果物品質 | 4.5 / 5 | 正本・matrix・生成物を同期。browser実走待ち |
+| 成果物品質 | 5 / 5 | 正本・matrix・生成物・CI evidenceを同期 |
 | 説明責任 | 5 / 5 | 実証範囲、blocked、owner判断を分離 |
 | 検収容易性 | 5 / 5 | task、report、23件の列挙、検証コマンドを記録 |
 
-**総合fit: 4.8 / 5.0（約96%）**
+**総合fit: 5.0 / 5.0（100%）**
 
-final-head GitHub ActionsとPR / Issue更新が完了するまで、本タスクは `do` のまま維持する。
+本タスクの受け入れ条件は満たした。Issue #345全体はmanual / owner gapが残るため完了扱いにしない。
