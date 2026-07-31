@@ -185,7 +185,7 @@
         "AC-SQ016-004": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "mode labelをAA muted tokenへ統一し、1280px axe serious/critical blocker 0。manual contrast reviewは未実施" },
         "AC-SQ016-005": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "4 viewportで24px minimumと44px primary targetの未解決candidate 0。manual touch evidenceは未実施" },
         "AC-SQ016-006": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "4 viewportのreduced-motion computed auditはpass。orientation / safe-area / virtual-keyboard実機は未検証" },
-        "AC-SQ016-007": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "content-state matrixのfeature evidence待ち" },
+        "AC-SQ016-007": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "required E2E-UI-STATE-001でruns/suitesのloading、部分500、retry→confirmed empty、両APIのHTTP 403を区別し、false zeroとprivate detail露出を防ぐ。manual evidenceは未実施" },
         "AC-SQ016-008": { "automated": "not_applicable", "manual": "blocked", "overall": "blocked", "note": "manual required scopeは未実施" }
       }
     },

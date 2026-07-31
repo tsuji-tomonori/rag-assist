@@ -1237,6 +1237,86 @@ test('E2E-UI-STATE-001: favorites HTTP 403 は empty/zero ではなく permissio
   await expect(page.locator('#favorites-resource-region')).not.toContainText('お気に入りはありません。')
 })
 
+test('E2E-UI-STATE-001: benchmark loading・partial・retry recovery は失敗 part を zero として表示しない @smoke @ui-quality', async ({ page }) => {
+  let runReads = 0
+  let suiteReads = 0
+  let releaseFirstRunRead: (() => void) | undefined
+  const firstRunReadGate = new Promise<void>((resolve) => { releaseFirstRunRead = resolve })
+  await page.route(/http:\/\/(api\.visual\.test|127\.0\.0\.1:8787)\/benchmark-runs$/, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.fallback()
+      return
+    }
+    runReads += 1
+    if (runReads === 1) {
+      await firstRunReadGate
+      await route.fulfill({ status: 500, contentType: 'text/plain', body: 'RequestId: private-benchmark-run at BenchmarkStore (/srv/benchmark.ts:14)' })
+      return
+    }
+    await route.fulfill({ json: { benchmarkRuns: [] } })
+  })
+  await page.route(/http:\/\/(api\.visual\.test|127\.0\.0\.1:8787)\/benchmark-suites$/, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.fallback()
+      return
+    }
+    suiteReads += 1
+    await route.fulfill({ json: { suites: [{ suiteId: 'standard-agent-v1', label: 'Agent standard', mode: 'agent', datasetS3Key: 'datasets/agent/standard-v1.jsonl', preset: 'standard', defaultConcurrency: 1 }] } })
+  })
+
+  await signIn(page)
+  await page.getByTitle('性能テスト').click()
+  const benchmarkRegion = page.getByRole('region', { name: '性能テスト', exact: true })
+  const dataRegion = page.locator('#benchmark-resource-region')
+  await expect(dataRegion).toHaveAttribute('aria-busy', 'true')
+  await expect(benchmarkRegion).toContainText('性能テストを読み込んでいます')
+  await expect(benchmarkRegion).toContainText('実行履歴を確認中')
+  await expect(benchmarkRegion).not.toContainText('件の実行履歴')
+  await expect(benchmarkRegion.getByRole('region', { name: /性能テスト実行履歴/ })).toHaveCount(0)
+
+  releaseFirstRunRead?.()
+  const partialState = benchmarkRegion.locator('[data-state-kind="partial"]')
+  await expect(partialState).toContainText('性能テストの一部を取得できませんでした')
+  await expect(partialState).toContainText('取得済み')
+  await expect(partialState).toContainText('テスト定義')
+  await expect(partialState).toContainText('未更新')
+  await expect(partialState).toContainText('実行履歴')
+  await expect(partialState).not.toContainText('private-benchmark-run')
+  await expect(benchmarkRegion).toContainText('Agent standard')
+  await expect(benchmarkRegion).not.toContainText('件の実行履歴')
+  await expect(benchmarkRegion.getByRole('region', { name: /性能テスト実行履歴/ })).toHaveCount(0)
+
+  await partialState.getByRole('button', { name: '失敗した項目を再試行' }).click()
+  await expect(benchmarkRegion.locator('[data-state-kind="recovered"]')).toContainText('性能テストを更新しました')
+  await expect(benchmarkRegion).toContainText('0 件の実行履歴')
+  await expect(benchmarkRegion).toContainText('実行履歴はまだありません。')
+  await expect(benchmarkRegion.getByRole('region', { name: /性能テスト実行履歴/ })).toBeVisible()
+  expect(runReads).toBe(2)
+  expect(suiteReads).toBe(2)
+})
+
+test('E2E-UI-STATE-001: benchmark HTTP 403 は empty/zero ではなく permission denied として content を隠す @smoke @ui-quality', async ({ page }) => {
+  await page.route(/http:\/\/(api\.visual\.test|127\.0\.0\.1:8787)\/benchmark-(runs|suites)$/, async (route) => {
+    if (route.request().method() === 'GET') {
+      await route.fulfill({ status: 403, contentType: 'text/plain', body: 'forbidden private benchmark configuration' })
+      return
+    }
+    await route.fallback()
+  })
+
+  await signIn(page)
+  await page.getByTitle('性能テスト').click()
+  const benchmarkRegion = page.getByRole('region', { name: '性能テスト', exact: true })
+  const permissionState = benchmarkRegion.locator('[data-state-kind="permission"]')
+  await expect(permissionState).toHaveAttribute('role', 'alert')
+  await expect(permissionState).toContainText('性能テストを表示できません')
+  await expect(permissionState).not.toContainText('private benchmark configuration')
+  await expect(benchmarkRegion).not.toContainText('件の実行履歴')
+  await expect(benchmarkRegion).not.toContainText('Agent standard')
+  await expect(benchmarkRegion.getByRole('region', { name: /性能テスト実行履歴/ })).toHaveCount(0)
+  await expect(permissionState.getByRole('button', { name: '戻る' })).toBeVisible()
+})
+
 test('E2E-UI-STATE-001: admin partial success は成功・失敗 part を分けて retry recovery する @smoke @ui-quality', async ({ page }) => {
   let auditReads = 0
   await page.route(/http:\/\/(api\.visual\.test|127\.0\.0\.1:8787)\/admin\/audit-log(?:\?.*)?$/, async (route) => {
