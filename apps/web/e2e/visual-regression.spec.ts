@@ -1237,6 +1237,74 @@ test('E2E-UI-STATE-001: favorites HTTP 403 は empty/zero ではなく permissio
   await expect(page.locator('#favorites-resource-region')).not.toContainText('お気に入りはありません。')
 })
 
+test('E2E-UI-STATE-001: assignee loading・500・empty・retry recovery は未確認の zero と kanban を表示しない @smoke @ui-quality', async ({ page }) => {
+  let questionReads = 0
+  let releaseFirstRead: (() => void) | undefined
+  const firstReadGate = new Promise<void>((resolve) => { releaseFirstRead = resolve })
+  await page.route(/http:\/\/(api\.visual\.test|127\.0\.0\.1:8787)\/questions$/, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.fallback()
+      return
+    }
+    questionReads += 1
+    if (questionReads === 1) {
+      await firstReadGate
+      await route.fulfill({ status: 500, contentType: 'text/plain', body: 'RequestId: private-question-id at QuestionStore (/srv/questions.ts:18)' })
+      return
+    }
+    await route.fulfill({ json: { questions: [] } })
+  })
+
+  await signIn(page)
+  await page.getByTitle('担当者対応').click()
+  const assigneeRegion = page.getByRole('region', { name: '担当者対応', exact: true })
+  const dataRegion = page.locator('#assignee-resource-region')
+  await expect(dataRegion).toHaveAttribute('aria-busy', 'true')
+  await expect(assigneeRegion).toContainText('担当者対応を読み込んでいます')
+  await expect(assigneeRegion).toContainText('問い合わせを確認中')
+  await expect(assigneeRegion).not.toContainText('0 件が対応待ち')
+  await expect(dataRegion).not.toContainText('担当者へ送信された質問はまだありません。')
+  await expect(dataRegion.locator('.assignee-kanban')).toHaveCount(0)
+
+  releaseFirstRead?.()
+  const errorState = assigneeRegion.locator('[data-state-kind="error"]')
+  await expect(errorState).toContainText('担当者対応を取得できませんでした')
+  await expect(errorState).not.toContainText('private-question-id')
+  await expect(assigneeRegion).not.toContainText('0 件が対応待ち')
+  await expect(dataRegion).not.toContainText('担当者へ送信された質問はまだありません。')
+  await expect(dataRegion.locator('.assignee-kanban')).toHaveCount(0)
+
+  await errorState.getByRole('button', { name: '再試行' }).click()
+  await expect(assigneeRegion.locator('[data-state-kind="recovered"]')).toContainText('担当者対応を更新しました')
+  await expect(assigneeRegion).toContainText('担当者へ送信された質問はまだありません。')
+  await expect(assigneeRegion).toContainText('0 件が対応待ち')
+  await expect(dataRegion.locator('.assignee-kanban')).toHaveCount(0)
+  expect(questionReads).toBe(2)
+})
+
+test('E2E-UI-STATE-001: assignee HTTP 403 は empty/zero ではなく permission denied として content を隠す @smoke @ui-quality', async ({ page }) => {
+  await page.route(/http:\/\/(api\.visual\.test|127\.0\.0\.1:8787)\/questions$/, async (route) => {
+    if (route.request().method() === 'GET') {
+      await route.fulfill({ status: 403, contentType: 'text/plain', body: 'forbidden private question id' })
+      return
+    }
+    await route.fallback()
+  })
+
+  await signIn(page)
+  await page.getByTitle('担当者対応').click()
+  const assigneeRegion = page.getByRole('region', { name: '担当者対応', exact: true })
+  const dataRegion = page.locator('#assignee-resource-region')
+  const permissionState = assigneeRegion.locator('[data-state-kind="permission"]')
+  await expect(permissionState).toHaveAttribute('role', 'alert')
+  await expect(permissionState).toContainText('担当者対応を表示できません')
+  await expect(permissionState).not.toContainText('private question id')
+  await expect(permissionState.getByRole('button', { name: '戻る' })).toBeVisible()
+  await expect(assigneeRegion).not.toContainText('0 件が対応待ち')
+  await expect(dataRegion).not.toContainText('担当者へ送信された質問はまだありません。')
+  await expect(dataRegion.locator('.assignee-kanban')).toHaveCount(0)
+})
+
 test('E2E-UI-STATE-001: benchmark loading・partial・retry recovery は失敗 part を zero として表示しない @smoke @ui-quality', async ({ page }) => {
   let runReads = 0
   let suiteReads = 0

@@ -49,7 +49,7 @@
 | assignee | AC-SQ016-004 | blocked | blocked | blocked | computed/axe contrast baselineとmanual review待ち |
 | assignee | AC-SQ016-005 | pass | blocked | blocked | checkboxを24px、RailNav primary targetを44px classへ修正し、4 viewportで未解決candidate 0。manual touch evidenceは未実施 |
 | assignee | AC-SQ016-006 | pass | blocked | blocked | 4 viewportのreduced-motion computed auditはpass。orientation / safe-area / virtual-keyboard実機は未検証 |
-| assignee | AC-SQ016-007 | blocked | blocked | blocked | content-state matrixのfeature evidence待ち |
+| assignee | AC-SQ016-007 | pass | blocked | blocked | required E2E-UI-STATE-001でloading→500→retry→confirmed emptyとHTTP 403を区別し、false zero、未確認kanban、private detail露出を防ぐ。manual evidenceは未実施 |
 | assignee | AC-SQ016-008 | not_applicable | blocked | blocked | manual required scopeは未実施 |
 | history | AC-SQ016-001 | pass | blocked | blocked | CI run 29516940570 / artifact 8383090126の4 viewportでroot/unresolved overflow 0。実browser zoomは未検証 |
 | history | AC-SQ016-002 | blocked | blocked | blocked | focus candidate auditとkeyboard journey evidence待ち |

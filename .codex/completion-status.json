@@ -5,46 +5,50 @@
     "Advance GitHub Issue #345 through bounded, non-duplicative UI/UX improvements",
     "Keep current main, canonical requirements, generated documents, implementation, tests, tasks, and pull request evidence synchronized",
     "Preserve 320px and 400-percent reachability, keyboard, screen-reader, state, permission, retry, and E2E traceability as explicit quality scope",
-    "Update a draft pull request and Issue #345 without merge, deploy, release, destructive history rewriting, or false completion claims"
+    "Update draft pull request #462 and Issue #345 without merge, deploy, release, destructive history rewriting, or false completion claims"
   ],
   "completed_items": [
-    "Inspected current main, Issue #345, open UI pull requests, task lifecycle, canonical UI requirements, and generated Web documents",
-    "Selected existing draft pull request #462 instead of creating a duplicate UI improvement pull request",
-    "Merged current main 0771521c into the old evidence stack locally without rewriting published history",
-    "Preserved pull requests #448 and #466 while adding zoom-reflow proxy, layout stress, virtual-keyboard proxy, text-spacing, skip-link, login-keyboard, and manual-evidence contracts",
-    "Repaired the canonical trace for four executable E2E IDs and the relocated login unit evidence",
-    "Regenerated Web inventory, traceability, accessibility, component, feature, screen, and quality-matrix documents",
-    "Passed repository lint, Web typecheck/build, 443 Web unit tests, 13 trace tests, 5 semantic tests, 7 manual-evidence schema tests, canonical docs, generated docs, OpenAPI, and diff checks",
-    "Reviewed the first final-head Web UI Quality artifact and synchronized only four deterministic visual baselines affected by the intended viewport-height reflow",
-    "Added all nine new accessibility evidence tests to the required Chromium gate instead of treating test discovery as execution"
+    "Inspected current main 0771521c, Issue #345, open pull requests and issues, task lifecycle, canonical UI requirements, generated Web documents, and draft pull request #462 review state",
+    "Confirmed draft pull request #462 is behind zero, ahead twenty-three, draft, mergeable, and has no unresolved review threads",
+    "Selected the assignee state evidence as the smallest non-duplicative unit and avoided production AssigneeWorkspace changes that overlap open pull request #461",
+    "Added two required E2E-UI-STATE-001 scenarios for assignee loading, HTTP 500, retry, confirmed empty, HTTP 403, false-zero suppression, protected-content suppression, and private-detail suppression",
+    "Updated SQ-016, DES_UI_UX_001, the machine-readable quality matrix, and the generated quality matrix so only assignee automated evidence becomes pass",
+    "Kept chat, documents, profile, all manual evidence, and all overall statuses blocked",
+    "Passed targeted ESLint, Web typecheck, Web build, 443 Web unit tests, 13 trace tests, 5 semantic tests, generated-document freshness, canonical docs validation, hidden Unicode, and diff checks",
+    "Resolved exactly two assignee scenarios in the Playwright target list"
   ],
   "remaining_items": [
-    "Publish the non-rewriting merge commit to the existing draft pull request #462 branch",
-    "Confirm the expanded 19-test final-head Web UI Quality, MemoRAG CI, and semver workflows",
+    "Commit and publish the bounded assignee state evidence update to existing draft pull request #462 without rewriting published history",
+    "Confirm final-head Web UI Quality, MemoRAG CI, and semver workflows",
     "Update pull request #462 body, acceptance evidence, self-review, and Issue #345 progress",
-    "Run approved manual keyboard, representative screen-reader, real-browser 200/400-percent zoom, and real-device verification",
+    "Add feature state evidence for chat, documents, and profile",
+    "Run approved representative screen-reader, real-browser 200/400-percent zoom, touch, real-device, Firefox, and WebKit verification",
     "Resolve OQ-UI-002 owner, cadence, and approved matrix decisions"
   ],
   "blocked_items": [
-    "Local Chromium E2E execution is blocked because no browser executable is installed and the browser download endpoint returned a zero-byte payload",
-    "Representative screen-reader, real-browser zoom, and real-device evidence has no completed manual execution record",
+    "Local Chromium E2E execution is blocked because no browser executable is installed; API and Web servers start after bypassing the tsx CLI IPC restriction",
+    "MemoRAG CI is expected to remain blocked by the separately tracked API C1 coverage gap until final-head CI proves otherwise",
+    "Representative screen-reader, real-browser zoom, touch, real-device, Firefox, and WebKit evidence has no completed execution record",
     "Manual evidence matrix approval remains an open owner question"
   ],
   "validation": [
     {
-      "command": "npm run lint",
-      "result": "pass",
-      "note": "Repository-wide ESLint completed with zero warnings"
+      "command": "npx eslint apps/web/e2e/visual-regression.spec.ts",
+      "result": "pass"
     },
     {
-      "command": "npm run typecheck -w @memorag-mvp/web && npm run build -w @memorag-mvp/web",
-      "result": "pass",
-      "note": "TypeScript and Vite build passed; only the existing chunk-size advisory remained"
+      "command": "npm run typecheck -w @memorag-mvp/web",
+      "result": "pass"
     },
     {
-      "command": "TZ=UTC npm test -w @memorag-mvp/web",
+      "command": "TZ=Asia/Tokyo npm test -w @memorag-mvp/web",
       "result": "pass",
       "note": "61 files and 443 tests passed"
+    },
+    {
+      "command": "npm run build -w @memorag-mvp/web",
+      "result": "pass",
+      "note": "Vite build passed with the existing chunk-size advisory"
     },
     {
       "command": "npm run docs:web-trace:test && npm run test:web-semantic-ui",
@@ -52,35 +56,24 @@
       "note": "13 trace and matrix tests plus 5 semantic contract tests passed"
     },
     {
-      "command": "npm run docs:manual-a11y-evidence:test && npm run docs:manual-a11y-evidence:check",
-      "result": "pass",
-      "note": "Seven schema tests passed; honest baseline remains ready false"
+      "command": "npm run docs:web-inventory:check && python3 scripts/validate_docs.py && npm run docs:hidden-unicode:check",
+      "result": "pass"
     },
     {
-      "command": "canonical and generated document checks",
+      "command": "Playwright assignee target E2E list",
       "result": "pass",
-      "note": "Web inventory, API code, infra inventory, OpenAPI quality, hidden Unicode, and canonical docs passed"
+      "note": "Exactly two required Chromium scenarios resolved"
     },
     {
-      "command": "Playwright target E2E list",
-      "result": "pass",
-      "note": "Nine Chromium tests in six evidence files resolved"
-    },
-    {
-      "command": "Playwright target E2E execution",
+      "command": "Playwright assignee target E2E execution",
       "result": "blocked",
-      "note": "API and Web servers started; browser launch was blocked by missing Chromium and the browser download endpoint returned a zero-byte payload"
+      "note": "API and Web servers started after an equivalent temporary node --import tsx launch; browser launch was blocked by missing Chromium, and the temporary config change was reverted"
     },
     {
-      "command": "GitHub Actions Web UI Quality run 30226064611",
-      "result": "fail",
-      "note": "Six tests passed and four deterministic visual mismatches were reviewed from artifact 8638599781; only the four intended viewport-reflow baselines were synchronized"
-    },
-    {
-      "command": "git diff --check and unresolved-conflict check",
+      "command": "git diff --check",
       "result": "pass"
     }
   ],
-  "next_action": "Commit and publish the non-rewriting main convergence to draft pull request #462, then verify final-head CI and update GitHub evidence",
+  "next_action": "Commit and publish the assignee state evidence to draft pull request #462, then verify final-head CI and update GitHub evidence without claiming manual completion",
   "safe_to_continue_without_user": true
 }
