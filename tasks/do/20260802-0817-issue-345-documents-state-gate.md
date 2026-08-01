@@ -68,15 +68,15 @@ matrix validatorはstatus構造と参照整合を確認するが、各画面のH
 
 ## 受け入れ条件
 
-- [ ] `E2E-UI-STATE-001` が `documents` のloading、部分HTTP 500、retry、confirmed empty、全HTTP 403を実画面境界で検証する。
-- [ ] loading / partial / permission中に未確認の件数、文書一覧、confirmed empty説明を表示しない。
-- [ ] partial stateが取得済みreindexと未更新catalogを区別し、raw HTTP errorのprivate detailを表示しない。
-- [ ] retry後にrecovered state、confirmed empty、0件表示を表示し、各resourceの読み込み回数を固定する。
-- [ ] permission stateでprotected contentを隠し、戻り導線を表示する。
+- [x] `E2E-UI-STATE-001` が `documents` のloading、部分HTTP 500、retry、confirmed empty、全HTTP 403を実画面境界で検証する。
+- [x] loading / partial / permission中に未確認の件数、文書一覧、confirmed empty説明を表示しない。
+- [x] partial stateが取得済みreindexと未更新catalogを区別し、raw HTTP errorのprivate detailを表示しない。
+- [x] retry後にrecovered state、confirmed empty、0件表示を表示し、各resourceの読み込み回数を固定する。
+- [x] permission stateでprotected contentを隠し、戻り導線を表示する。
 - [x] `documents / AC-SQ016-007` のautomatedのみを `pass` とし、manual / overallと他2画面は `blocked` を維持する。
 - [x] `REQ_SERVICE_QUALITY_016`、`DES_UI_UX_001`、machine-readable matrix、生成文書が同じ証跡を参照する。
 - [x] targeted E2E、lint、typecheck、unit、trace / semantic / docs checksが成功するか、実行不能理由を未完了として記録する。
-- [ ] Draft PR #462を更新し、日本語の受け入れ条件コメント、セルフレビュー、Issue #345の進捗記録を残す。
+- [x] Draft PR #462を更新し、日本語の受け入れ条件コメント、セルフレビュー、Issue #345の進捗記録を残す。
 
 ## 実装計画
 
@@ -140,3 +140,7 @@ matrix validatorはstatus構造と参照整合を確認するが、各画面のH
 - pass: Playwright test listing（追加2件をChromium対象として検出）
 - blocked: targeted Playwright execution。既定serverは`tsx` CLI IPC制約で起動不能。同じentrypointを一時的に`node --import tsx`で起動してAPI / Web server準備までは確認したが、Chromium executableがなくbrowser launch前に停止した。設定差分は戻し、final-head GitHub Actionsを判定根拠にする。
 - pass: `git diff --check`
+- initial CI finding: [Web UI Quality run 30723527549](https://github.com/tsuji-tomonori/rag-assist/actions/runs/30723527549) は状態見出しの期待値が正規表示名「文書ワークスペース」と不一致で追加2件のみ失敗。実装契約を変更せず期待値を補正した。
+- pass: [Web UI Quality run 30723653119](https://github.com/tsuji-tomonori/rag-assist/actions/runs/30723653119)（31 / 31、artifact `8825643713`）
+- pass: [MemoRAG CI run 30723653103](https://github.com/tsuji-tomonori/rag-assist/actions/runs/30723653103)。API C1 80.48%は目標85%未達だが既存改善taskへ分離された既知gapとしてworkflow判定は成功。
+- pass: [semver run 30723653120](https://github.com/tsuji-tomonori/rag-assist/actions/runs/30723653120)

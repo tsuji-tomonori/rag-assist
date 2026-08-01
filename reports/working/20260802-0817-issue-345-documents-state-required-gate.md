@@ -68,11 +68,18 @@ final-head GitHub Actionsのrequired Web UI Qualityを完了判定に使う。
 
 ## 未完了
 
-- final-head Web UI Quality / MemoRAG CI / semver。
 - `chat` / `profile` の画面単位状態証跡。
 - 代表screen reader、実browser 200% / 400% zoom、touch / real device、Firefox / WebKit。
 - `OQ-UI-002` owner / cadence / approved matrix。
-- 既存API C1 coverage taskの解消。
+- API C1 80.48%から目標85%への改善。MemoRAG CI workflowは既存改善taskへの分離を認識して成功したが、品質目標自体は未達。
+
+## GitHub Actions
+
+- 初回Web UI Quality `30723527549`: 既存29件成功、追加2件のみ状態見出しの期待値不一致で失敗。actual DOMが正規表示名「文書ワークスペース」を返すことを確認した。
+- 対応: production behaviorや状態契約を変えず、loading / partial / retrying / recovered / permissionの期待見出しを正規表示名へ補正した。
+- [Web UI Quality `30723653119`](https://github.com/tsuji-tomonori/rag-assist/actions/runs/30723653119): 31 / 31成功。artifact `8825643713`、digest `sha256:a632a9d01970c4e3aa27b875bbb2f01d3e8932aad273a7072766e3b3690fe815`。
+- [MemoRAG CI `30723653103`](https://github.com/tsuji-tomonori/rag-assist/actions/runs/30723653103): workflow成功。lint / typecheck / docs / tests / builds / synth成功。API C1は80.48%で目標85%未達のため、既存taskを未完了のまま維持する。
+- [semver `30723653120`](https://github.com/tsuji-tomonori/rag-assist/actions/runs/30723653120): 成功。
 
 ## 指示への適合
 
@@ -82,16 +89,16 @@ final-head GitHub Actionsのrequired Web UI Qualityを完了判定に使う。
 | 重複しない最優先の小改善を1件選定 | 対応 | documents feature state evidenceに限定し、PR #458 / #461のproduction filesを回避 |
 | task・実装・正本・生成物を同期 | 対応 | task、E2E、2正本、JSON matrix、generated matrix、completion status |
 | lint・typecheck・unit・E2E・docs check | 一部未検証 | static/unit/docsはpass、local E2E実走はChromium不在でblocked |
-| Draft PR更新・受け入れ条件・セルフレビュー・Issue進捗 | 進行中 | branch更新後、final-head CIを待ってGitHubコメントを追加 |
+| Draft PR更新・受け入れ条件・セルフレビュー・Issue進捗 | 対応 | Draft PR #462とIssue #345へfinal-head証跡・blocker・次候補を記録 |
 | 未検証を完了扱いしない | 対応 | taskは`do`、manual / overallと残り2画面は`blocked` |
 | merge / deploy / release /破壊的変更をしない | 対応 | いずれも未実施 |
 
-総合fit: 4.3 / 5.0（約86%）。実装・文書・ローカル静的/単体検証は指示に適合する一方、
-local Chromium実走、final-head CI、GitHub上の最終記録が未完了のため満点としない。
+総合fit: 4.7 / 5.0（約94%）。実装・文書・ローカル静的/単体検証・final-head actual Chromium CIは指示に適合する一方、
+manual screen-reader / zoom / real-device、残り2画面、API C1品質目標は未完了のため満点としない。
 
 ## 次の具体作業
 
-1. commit / publish後にDraft PR #462のfinal-head checksを確認する。
-2. Web UI Qualityが成功した場合のみ、E2E関連受け入れ条件を完了へ更新する。
-3. PRへ日本語の受け入れ条件コメントとセルフレビューを残す。
-4. Issue #345に実装、検証、blocker、未完了、次候補を記録する。
+1. `profile` のstate contractをN/Aとするかmutation feedbackへ結ぶかowner判断を得る。
+2. `chat` のloading / retry境界を既存streaming stateと重複させず定義する。
+3. 代表screen reader、実browser 400% zoom、touch / real deviceのmanual evidenceを承認済みmatrixへ記録する。
+4. 既存API C1改善taskを進め、品質目標85%未達を解消する。
