@@ -9,19 +9,19 @@
   ],
   "completed_items": [
     "Inspected current main 0771521c, Issue #345, open pull requests and issues, task lifecycle, canonical UI requirements, generated Web documents, and draft pull request #462 review state",
-    "Confirmed draft pull request #462 is behind zero, ahead twenty-three, draft, mergeable, and has no unresolved review threads",
-    "Selected the assignee state evidence as the smallest non-duplicative unit and avoided production AssigneeWorkspace changes that overlap open pull request #461",
-    "Added two required E2E-UI-STATE-001 scenarios for assignee loading, HTTP 500, retry, confirmed empty, HTTP 403, false-zero suppression, protected-content suppression, and private-detail suppression",
-    "Updated SQ-016, DES_UI_UX_001, the machine-readable quality matrix, and the generated quality matrix so only assignee automated evidence becomes pass",
-    "Kept chat, documents, profile, all manual evidence, and all overall statuses blocked",
+    "Confirmed draft pull request #462 is behind zero, ahead twenty-four, draft, mergeable, and has no unresolved review threads",
+    "Selected the documents state evidence as the smallest non-duplicative unit and avoided production files that overlap open pull requests #458 and #461",
+    "Added two required E2E-UI-STATE-001 scenarios for documents catalog and reindex loading, partial HTTP 500, retry, confirmed empty, all-resource HTTP 403, false-zero suppression, protected-content suppression, and private-detail suppression",
+    "Updated SQ-016, DES_UI_UX_001, the machine-readable quality matrix, and the generated quality matrix so only documents automated evidence becomes pass",
+    "Kept chat, profile, all manual evidence, and all overall statuses blocked",
     "Passed targeted ESLint, Web typecheck, Web build, 443 Web unit tests, 13 trace tests, 5 semantic tests, generated-document freshness, canonical docs validation, hidden Unicode, and diff checks",
-    "Resolved exactly two assignee scenarios in the Playwright target list"
+    "Resolved exactly two documents scenarios in the Playwright target list"
   ],
   "remaining_items": [
-    "Commit and publish the bounded assignee state evidence update to existing draft pull request #462 without rewriting published history",
+    "Commit and publish the bounded documents state evidence update to existing draft pull request #462 without rewriting published history",
     "Confirm final-head Web UI Quality, MemoRAG CI, and semver workflows",
     "Update pull request #462 body, acceptance evidence, self-review, and Issue #345 progress",
-    "Add feature state evidence for chat, documents, and profile",
+    "Resolve feature state evidence decisions for chat and profile",
     "Run approved representative screen-reader, real-browser 200/400-percent zoom, touch, real-device, Firefox, and WebKit verification",
     "Resolve OQ-UI-002 owner, cadence, and approved matrix decisions"
   ],
@@ -60,12 +60,12 @@
       "result": "pass"
     },
     {
-      "command": "Playwright assignee target E2E list",
+      "command": "Playwright documents target E2E list",
       "result": "pass",
       "note": "Exactly two required Chromium scenarios resolved"
     },
     {
-      "command": "Playwright assignee target E2E execution",
+      "command": "Playwright documents target E2E execution",
       "result": "blocked",
       "note": "API and Web servers started after an equivalent temporary node --import tsx launch; browser launch was blocked by missing Chromium, and the temporary config change was reverted"
     },
@@ -74,6 +74,6 @@
       "result": "pass"
     }
   ],
-  "next_action": "Commit and publish the assignee state evidence to draft pull request #462, then verify final-head CI and update GitHub evidence without claiming manual completion",
+  "next_action": "Commit and publish the documents state evidence to draft pull request #462, then verify final-head CI and update GitHub evidence without claiming manual completion",
   "safe_to_continue_without_user": true
 }

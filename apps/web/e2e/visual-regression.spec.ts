@@ -1305,6 +1305,107 @@ test('E2E-UI-STATE-001: assignee HTTP 403 は empty/zero ではなく permission
   await expect(dataRegion.locator('.assignee-kanban')).toHaveCount(0)
 })
 
+test('E2E-UI-STATE-001: documents loading・partial・retry recovery は未確認の catalog を zero として表示しない @smoke @ui-quality', async ({ page }) => {
+  let documentReads = 0
+  let groupReads = 0
+  let migrationReads = 0
+  let releaseFirstDocumentRead: (() => void) | undefined
+  let releaseRetryDocumentRead: (() => void) | undefined
+  const firstDocumentReadGate = new Promise<void>((resolve) => { releaseFirstDocumentRead = resolve })
+  const retryDocumentReadGate = new Promise<void>((resolve) => { releaseRetryDocumentRead = resolve })
+
+  await page.route(/http:\/\/(api\.visual\.test|127\.0\.0\.1:8787)\/documents$/, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.fallback()
+      return
+    }
+    documentReads += 1
+    if (documentReads === 1) {
+      await firstDocumentReadGate
+      await route.fulfill({ status: 500, contentType: 'text/plain', body: 'RequestId: private-document-id at DocumentStore (/srv/documents.ts:24)' })
+      return
+    }
+    await retryDocumentReadGate
+    await route.fulfill({ json: { documents: [] } })
+  })
+  await page.route(/http:\/\/(api\.visual\.test|127\.0\.0\.1:8787)\/document-groups$/, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.fallback()
+      return
+    }
+    groupReads += 1
+    await route.fulfill({ json: { groups: [] } })
+  })
+  await page.route(/http:\/\/(api\.visual\.test|127\.0\.0\.1:8787)\/documents\/reindex-migrations$/, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.fallback()
+      return
+    }
+    migrationReads += 1
+    await route.fulfill({ json: { migrations: [] } })
+  })
+
+  await signIn(page)
+  await page.getByTitle('ドキュメント').click()
+  const documentsRegion = page.getByRole('region', { name: 'ドキュメント管理', exact: true })
+  const dataRegion = page.locator('#documents-resource-region')
+  await expect(dataRegion).toHaveAttribute('aria-busy', 'true')
+  await expect(documentsRegion).toContainText('ドキュメントを読み込んでいます')
+  await expect(dataRegion.locator('.document-file-panel')).toHaveCount(0)
+  await expect(dataRegion).not.toContainText('0 / 0 件を表示')
+  await expect(dataRegion).not.toContainText('ドキュメントを登録しましょう')
+
+  releaseFirstDocumentRead?.()
+  const partialState = documentsRegion.locator('[data-state-kind="partial"]')
+  await expect(partialState).toContainText('ドキュメントの一部を取得できませんでした')
+  await expect(partialState).toContainText('取得済み')
+  await expect(partialState).toContainText('再インデックス履歴')
+  await expect(partialState).toContainText('未更新')
+  await expect(partialState).toContainText('文書とフォルダ')
+  await expect(partialState).not.toContainText('private-document-id')
+  await expect(dataRegion.locator('.document-file-panel')).toHaveCount(0)
+  await expect(dataRegion).not.toContainText('0 / 0 件を表示')
+  await expect(dataRegion).not.toContainText('ドキュメントを登録しましょう')
+
+  await partialState.getByRole('button', { name: '失敗した項目を再試行' }).click()
+  await expect(dataRegion).toHaveAttribute('aria-busy', 'true')
+  await expect(documentsRegion.locator('[data-state-kind="retrying"]')).toContainText('ドキュメントを再試行しています')
+  await expect(dataRegion.locator('.document-file-panel')).toHaveCount(0)
+
+  releaseRetryDocumentRead?.()
+  await expect(documentsRegion.locator('[data-state-kind="recovered"]')).toContainText('ドキュメントを更新しました')
+  await expect(dataRegion.getByRole('region', { name: '登録文書一覧' })).toBeVisible()
+  await expect(dataRegion).toContainText('ドキュメントを登録しましょう')
+  await expect(dataRegion).toContainText('0 件（対象内 0 件）')
+  await expect(dataRegion).toContainText('0 / 0 件を表示（全体 0 件）')
+  expect(documentReads).toBe(2)
+  expect(groupReads).toBe(2)
+  expect(migrationReads).toBe(2)
+})
+
+test('E2E-UI-STATE-001: documents全resourceのHTTP 403は empty/zero ではなくpermission deniedとしてcontentを隠す @smoke @ui-quality', async ({ page }) => {
+  await page.route(/http:\/\/(api\.visual\.test|127\.0\.0\.1:8787)\/(?:documents|document-groups|documents\/reindex-migrations)$/, async (route) => {
+    if (route.request().method() === 'GET') {
+      await route.fulfill({ status: 403, contentType: 'text/plain', body: 'forbidden private document principal' })
+      return
+    }
+    await route.fallback()
+  })
+
+  await signIn(page)
+  await page.getByTitle('ドキュメント').click()
+  const documentsRegion = page.getByRole('region', { name: 'ドキュメント管理', exact: true })
+  const dataRegion = page.locator('#documents-resource-region')
+  const permissionState = documentsRegion.locator('[data-state-kind="permission"]')
+  await expect(permissionState).toHaveAttribute('role', 'alert')
+  await expect(permissionState).toContainText('ドキュメントを表示できません')
+  await expect(permissionState).not.toContainText('private document principal')
+  await expect(permissionState.getByRole('button', { name: '戻る' })).toBeVisible()
+  await expect(dataRegion.locator('.document-file-panel')).toHaveCount(0)
+  await expect(dataRegion).not.toContainText('0 / 0 件を表示')
+  await expect(dataRegion).not.toContainText('ドキュメントを登録しましょう')
+})
+
 test('E2E-UI-STATE-001: benchmark loading・partial・retry recovery は失敗 part を zero として表示しない @smoke @ui-quality', async ({ page }) => {
   let runReads = 0
   let suiteReads = 0
