@@ -3,16 +3,19 @@ import { expect, type Page, type TestInfo, test } from '@playwright/test'
 type AccessibilityContractNode = {
   role: string
   name: string
+  value: string
 }
 
 type ExpectedNode = {
   role: string
   name?: string
+  value?: string
 }
 
 const evidenceRoles = new Set([
   'alert',
   'button',
+  'combobox',
   'complementary',
   'form',
   'heading',
@@ -24,7 +27,7 @@ const evidenceRoles = new Set([
   'textbox'
 ])
 
-test('E2E-UI-SR-SEMANTICS-001: representative views expose stable Chromium accessibility tree contracts @smoke', async ({ page }, testInfo) => {
+test('E2E-UI-SR-SEMANTICS-001: representative views expose stable Chromium accessibility tree contracts @smoke @ui-quality', async ({ page }, testInfo) => {
   await page.goto('/')
   await expect(page.getByRole('heading', { name: '社内QAチャットボット' })).toBeVisible()
 
@@ -57,6 +60,18 @@ test('E2E-UI-SR-SEMANTICS-001: representative views expose stable Chromium acces
     { role: 'region', name: '登録文書一覧' },
     { role: 'region', name: '現在の文書表示条件' }
   ])
+
+  await page.getByRole('button', { name: '個人設定', exact: true }).click()
+  await expect(page.getByRole('region', { name: '個人設定', exact: true })).toBeVisible()
+  await expectAccessibilityContract(page, testInfo, 'profile', [
+    { role: 'main' },
+    { role: 'navigation', name: '画面' },
+    { role: 'region', name: '個人設定' },
+    { role: 'heading', name: '個人設定' },
+    { role: 'combobox', name: '送信キー', value: 'Enterで送信' },
+    { role: 'button', name: 'チャットへ戻る' },
+    { role: 'button', name: 'サインアウト' }
+  ])
 })
 
 async function signIn(page: Page) {
@@ -82,7 +97,8 @@ async function expectAccessibilityContract(
   for (const expectedNode of expectedNodes) {
     const matched = nodes.some((node) => (
       node.role === expectedNode.role &&
-      (expectedNode.name === undefined || node.name === expectedNode.name)
+      (expectedNode.name === undefined || node.name === expectedNode.name) &&
+      (expectedNode.value === undefined || node.value === expectedNode.value)
     ))
     expect(matched, `missing accessibility node ${JSON.stringify(expectedNode)} in ${label}`).toBe(true)
   }
@@ -96,7 +112,8 @@ async function readAccessibilityTree(page: Page): Promise<AccessibilityContractN
       .filter((node) => !node.ignored && typeof node.role?.value === 'string' && evidenceRoles.has(node.role.value))
       .map((node) => ({
         role: String(node.role?.value ?? ''),
-        name: String(node.name?.value ?? '')
+        name: String(node.name?.value ?? ''),
+        value: String(node.value?.value ?? '')
       }))
   } finally {
     await session.detach()

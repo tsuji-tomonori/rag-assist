@@ -2,92 +2,43 @@
   "complete": false,
   "status": "partially_complete",
   "requested_items": [
-    "Advance GitHub Issue #345 through bounded, non-duplicative UI/UX improvements",
-    "Keep current main, canonical requirements, generated documents, implementation, tests, tasks, and pull request evidence synchronized",
-    "Preserve 320px and 400-percent reachability, keyboard, screen-reader, state, permission, retry, and E2E traceability as explicit quality scope",
-    "Update draft pull request #462 and Issue #345 without merge, deploy, release, destructive history rewriting, or false completion claims"
+    "Advance GitHub Issue #345 through one bounded non-duplicative UI improvement",
+    "Synchronize current main, implementation, canonical requirements, generated documents, task, pull request, and issue evidence",
+    "Preserve keyboard, screen-reader, 320px and 400-percent, state, permission, retry, and traceability gaps without false completion",
+    "Do not merge, deploy, release, force-push, or perform destructive changes"
   ],
   "completed_items": [
-    "Inspected current main 0771521c, Issue #345, open pull requests and issues, task lifecycle, canonical UI requirements, generated Web documents, and draft pull request #462 review state",
-    "Confirmed draft pull request #462 is behind zero, draft, mergeable, and has no unresolved review threads",
-    "Selected the documents state evidence as the smallest non-duplicative unit and avoided production files that overlap open pull requests #458 and #461",
-    "Added two required E2E-UI-STATE-001 scenarios for documents catalog and reindex loading, partial HTTP 500, retry, confirmed empty, all-resource HTTP 403, false-zero suppression, protected-content suppression, and private-detail suppression",
-    "Updated SQ-016, DES_UI_UX_001, the machine-readable quality matrix, and the generated quality matrix so only documents automated evidence becomes pass",
-    "Kept chat, profile, all manual evidence, and all overall statuses blocked",
-    "Passed targeted ESLint, Web typecheck, Web build, 443 Web unit tests, 13 trace tests, 5 semantic tests, generated-document freshness, canonical docs validation, hidden Unicode, and diff checks",
-    "Resolved exactly two documents scenarios in the Playwright target list",
-    "Published the bounded update to existing draft pull request #462 through fast-forward commits without rewriting history",
-    "Corrected state-title expectations from actual Chromium evidence without changing production behavior",
-    "Passed final-head Web UI Quality with 31 of 31 Chromium tests, MemoRAG CI, and semver validation"
+    "Confirmed current main 0771521c and draft pull request #462 remain converged with no new main changes",
+    "Selected profile keyboard and Chromium accessibility-tree evidence without assuming the unresolved profile state contract",
+    "Added a 3-pixel visible focus indicator to profile select and button controls",
+    "Expanded E2E-UI-KEYBOARD-NAV-001 and E2E-UI-SR-SEMANTICS-001 to cover profile keyboard operation and name-role-value semantics",
+    "Added both E2E specifications to the required Chromium UI quality command, increasing the listed suite from 31 to 33 tests",
+    "Updated SQ-016, DES_UI_UX_001, the machine-readable quality matrix, and the generated matrix so only profile AC-SQ016-002 and AC-SQ016-003 automated evidence becomes pass",
+    "Passed lint, Web typecheck, Web build, 443 Web unit tests, 13 trace tests, 5 semantic tests, generated-document freshness, canonical docs validation, manual evidence structure, infra inventory, hidden Unicode, OpenAPI, API code docs, and diff checks"
   ],
   "remaining_items": [
+    "Publish the prepared fast-forward update to draft pull request #462 and confirm final-head GitHub Actions",
+    "Update the pull request body, acceptance comment, self-review, and Issue #345 with final evidence",
     "Resolve feature state evidence decisions for chat and profile",
     "Run approved representative screen-reader, real-browser 200/400-percent zoom, touch, real-device, Firefox, and WebKit verification",
     "Resolve OQ-UI-002 owner, cadence, and approved matrix decisions"
   ],
   "blocked_items": [
-    "Local Chromium E2E execution is blocked because no browser executable is installed; API and Web servers start after bypassing the tsx CLI IPC restriction",
-    "API C1 branch coverage remains 80.48 percent against the 85 percent quality target even though MemoRAG CI recognizes the separately tracked recovery task and succeeds",
+    "Local Chromium E2E execution is blocked because the sandbox rejects the tsx IPC listener before the API server starts",
+    "The task CLI is unavailable, so the inspected docs-check subcommands were executed directly",
     "Representative screen-reader, real-browser zoom, touch, real-device, Firefox, and WebKit evidence has no completed execution record",
-    "Manual evidence matrix approval remains an open owner question"
+    "API C1 branch coverage remains below the 85-percent quality target in the latest known final CI evidence"
   ],
   "validation": [
-    {
-      "command": "npx eslint apps/web/e2e/visual-regression.spec.ts",
-      "result": "pass"
-    },
-    {
-      "command": "npm run typecheck -w @memorag-mvp/web",
-      "result": "pass"
-    },
-    {
-      "command": "TZ=Asia/Tokyo npm test -w @memorag-mvp/web",
-      "result": "pass",
-      "note": "61 files and 443 tests passed"
-    },
-    {
-      "command": "npm run build -w @memorag-mvp/web",
-      "result": "pass",
-      "note": "Vite build passed with the existing chunk-size advisory"
-    },
-    {
-      "command": "npm run docs:web-trace:test && npm run test:web-semantic-ui",
-      "result": "pass",
-      "note": "13 trace and matrix tests plus 5 semantic contract tests passed"
-    },
-    {
-      "command": "npm run docs:web-inventory:check && python3 scripts/validate_docs.py && npm run docs:hidden-unicode:check",
-      "result": "pass"
-    },
-    {
-      "command": "Playwright documents target E2E list",
-      "result": "pass",
-      "note": "Exactly two required Chromium scenarios resolved"
-    },
-    {
-      "command": "Playwright documents target E2E execution",
-      "result": "blocked",
-      "note": "API and Web servers started after an equivalent temporary node --import tsx launch; browser launch was blocked by missing Chromium, and the temporary config change was reverted"
-    },
-    {
-      "command": "GitHub Actions Web UI Quality run 30723653119",
-      "result": "pass",
-      "note": "31 of 31 required Chromium tests passed; evidence artifact 8825643713"
-    },
-    {
-      "command": "GitHub Actions MemoRAG CI run 30723653103",
-      "result": "pass",
-      "note": "Workflow passed; API C1 remains 80.48 percent against the 85 percent quality target and stays tracked separately"
-    },
-    {
-      "command": "GitHub Actions Validate Semver Label run 30723653120",
-      "result": "pass"
-    },
-    {
-      "command": "git diff --check",
-      "result": "pass"
-    }
+    { "command": "npm run lint", "result": "pass" },
+    { "command": "npm run typecheck -w @memorag-mvp/web", "result": "pass" },
+    { "command": "TZ=Asia/Tokyo npm test -w @memorag-mvp/web", "result": "pass", "note": "61 files and 443 tests passed" },
+    { "command": "npm run build -w @memorag-mvp/web", "result": "pass", "note": "Existing chunk-size advisory only" },
+    { "command": "npm run test:e2e:ui-quality -w @memorag-mvp/web -- --list", "result": "pass", "note": "33 required Chromium tests listed" },
+    { "command": "Targeted Chromium E2E execution", "result": "blocked", "note": "tsx IPC listen EPERM in the sandbox" },
+    { "command": "UI trace, semantic, canonical, generated, manual evidence, infra, hidden Unicode, OpenAPI, and API code docs checks", "result": "pass" },
+    { "command": "git diff --check", "result": "pass" }
   ],
-  "next_action": "Resolve the chat and profile state-evidence decisions while preserving manual accessibility and API C1 quality gaps as incomplete",
+  "next_action": "Publish the fast-forward update to draft pull request #462, confirm final-head CI, and record acceptance and residual blockers in the pull request and Issue #345",
   "safe_to_continue_without_user": true
 }

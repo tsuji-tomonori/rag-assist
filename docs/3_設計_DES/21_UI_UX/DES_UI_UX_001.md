@@ -60,7 +60,7 @@
 | `benchmark` | `/?view=benchmark` | `canReadBenchmarkRuns` | `operator`, `system-admin` | `JOB-UI-BENCHMARK`: start/observe/cancel/download authorized run | `FR-010`, `FR-011`, `FR-048`, `FR-094`〜`FR-098`, `SQ-016`; `AC-FR048-001`, `AC-FR096-001` | `E2E-VIEW-BENCHMARK-001`, `E2E-UI-NAV-002`, `E2E-UI-ROUTE-002`, `E2E-UI-STATE-001`, `E2E-UI-RISK-001` | partial: target-attached start/cancel result and required run/suite loading/partial/permission/retry/false-zero evidence exist; manual evidence missing |
 | `admin` | `/?view=admin`; `section`, `adminQuery`, `aliasStatus`, `auditAction`, `sort`, `selected` | `canSeeAdminSettings` composite | `system-admin` | `JOB-UI-ADMIN`: source/as-of と対象を確認し、許可された governance/observation 操作を行う | `FR-023`, `FR-024`, `FR-027`, `FR-094`〜`FR-098`, `SQ-016`; `AC-FR023-001`, `AC-FR024-001`, `AC-FR027-011`, `AC-FR096-001`, `AC-FR097-001` | `E2E-VIEW-ADMIN-001`, `E2E-UI-ADMIN-001`, `E2E-UI-NAV-002`, `E2E-UI-ROUTE-002`, `E2E-UI-STATE-001`, `E2E-UI-RISK-001` | implemented automated admin scope: URL 復元、part 単位回復、server-defined alias version/reason/audit、cursor、320〜1280px reflow、axe、非開示 denied route。代表 screen reader、400% zoom、real device と共通 security audit projection は未検証・後続 task。 |
 | `documents` | `/documents`; `/documents/groups/:id`; `/documents/:id`; `/documents/reindex-migrations/:id`; `?view=documents&...` accepted and normalized | `canReadDocuments` | `operator`, `system-admin` | `JOB-UI-DOCUMENTS`: find/select/upload/share/manage/ask within effective permission | `FR-001`, `FR-002`, `FR-038`, `FR-064`, `FR-094`〜`FR-098`, `SQ-016`; `AC-FR001-001`, `AC-FR001-008`, `AC-FR094-002`, `AC-FR097-001`〜`005`, `AC-FR098-001`〜`005` | `E2E-VIEW-DOCUMENTS-001`, `E2E-UI-NAV-002`, `E2E-UI-ROUTE-001`, `E2E-UI-ROUTE-002`, `E2E-UI-STATE-001`, `E2E-UI-RISK-001`, `E2E-UI-DOCUMENTS-001` | implemented: authorized current context、page restoration、safe normalization、progressive disclosure、keyboard/axe、many/long/320〜1280px、required catalog/reindex loading/partial/permission/retry/false-zero evidence exist; manual screen-reader/zoom/real-device evidence remains cross-screen scope |
-| `profile` | `/?view=profile` | authenticated shell | all | `JOB-UI-PROFILE`: inspect/update own settings and sign out | `FR-051`, `FR-094`, `FR-095`, `SQ-016`; `AC-FR094-001`, `AC-FR094-002` | `E2E-VIEW-PROFILE-001`, `E2E-UI-NAV-001`, `E2E-UI-NAV-002`, `E2E-UI-ROUTE-001` | partial: <=720px menu reachability is automated; settings persistence and manual a11y remain |
+| `profile` | `/?view=profile` | authenticated shell | all | `JOB-UI-PROFILE`: inspect/update own settings and sign out | `FR-051`, `FR-094`, `FR-095`, `SQ-016`; `AC-FR094-001`, `AC-FR094-002`, `AC-SQ016-002`, `AC-SQ016-003` | `E2E-VIEW-PROFILE-001`, `E2E-UI-NAV-001`, `E2E-UI-NAV-002`, `E2E-UI-ROUTE-001`, `E2E-UI-KEYBOARD-NAV-001`, `E2E-UI-SR-SEMANTICS-001` | partial: <=720px menu reachability、keyboard-only setting change / return、Chromium AX name / role / value are required-automated; settings persistence、state contract、manual screen-reader/zoom/real-device evidence remain |
 
 ## Chat-to-human question journey contract
 
@@ -343,14 +343,20 @@ chat、assignee、requester history の有人対応 journey gap は `tasks/done/
 
 No proposed default is recorded as executed evidence until its task produces the required result.
 
-## Automated UI quality gate（2026-07-16）
+## Automated UI quality gate（2026-08-03更新）
 
-- PR required: Chromium で representative full-page axe serious / critical、320 / 375px mobile navigation、deterministic visual regression を実行する。
+- PR required: Chromium で representative full-page axe serious / critical、320 / 375px mobile navigation、deterministic visual regression、keyboard navigation、Chromium accessibility tree contractを実行する。
 - Change detection: `apps/web/**`、shared contract、Web inventory、UI canonical docs、dependency / Taskfile / workflow の変更を対象にし、無関係な backend / infra-only PR では高コスト gate を起動しない。
 - Failure semantics: test failure、300 pixelsを超える visual mismatch、browser launch failure、missing baseline は非0。OS / browser の anti-aliasing による300 pixels以下の微小差だけを許容し、step に `continue-on-error` を付けず、artifact upload だけを `always()` で実行する。
 - Scheduled scope: Firefox / WebKit の `@ui-quality` を週次と手動 dispatch で実行する。scheduled result は PR-required Chromium と別 job / result とし、未実行を pass に変換しない。
 - Evidence: Playwright HTML report、test-results、trace、screenshot、video を retention 14日で保存する。
 - Exclusion: automation は representative screen reader、実 browser zoom、touch / virtual keyboard、real-device の手動証跡を代替しない。
+
+### Profile keyboard / semantic contract
+
+- `E2E-UI-KEYBOARD-NAV-001` は個人設定へのEnter / Space到達、送信キーcomboboxのnative arrow-key value変更、3px focus indicator、Enterによるチャット復帰をrequired Chromium gateで検証する。
+- `E2E-UI-SR-SEMANTICS-001` は個人設定region / heading、送信キーcomboboxのname / value、戻る・sign out buttonのname / roleをCDP `Accessibility.getFullAXTree`で検証し、JSONをevidenceとして添付する。
+- 個人設定内のnative select / buttonは3px `:focus-visible`と2px offsetを持つ。AX name / role / valueは既存native semanticsを回帰検出し、representative screen reader、実browser 200% / 400% zoom、touch / real device、Firefox / WebKitの実測はmanual / scheduled evidenceとして`blocked`を維持する。
 
 ## Cross-screen Phase A matrix / audit（2026-07-16）
 

@@ -23,7 +23,7 @@ npm run test:e2e:smoke -w @memorag-mvp/web
 
 ## Screen reader semantic contract
 
-`screen-reader-semantics.spec.ts` は Chromium の accessibility tree を CDP 経由で取得し、login / chat / documents の代表画面で landmark、form、control の role と accessible name が欠落しないことを検査します。各画面の検査時には、検査対象 role と name の JSON を Playwright report へ attach します。
+`screen-reader-semantics.spec.ts` は Chromium の accessibility tree を CDP 経由で取得し、login / chat / documents / profile の代表画面で landmark、form、control の role と accessible name が欠落しないことを検査します。profileでは送信キーcomboboxのvalueも検証します。各画面の検査時には、検査対象 role、name、value の JSON を Playwright report へ attach します。
 
 新規 semantic contract のみ実行する場合は、repository root で次を実行します。
 

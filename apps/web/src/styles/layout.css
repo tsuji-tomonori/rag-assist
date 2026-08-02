@@ -631,6 +631,12 @@ button:has(.button-spinner) {
   font-weight: 800;
 }
 
+.personal-setting-field select:focus-visible,
+.personal-settings-card button:focus-visible {
+  outline: 3px solid #143f8f;
+  outline-offset: 2px;
+}
+
 .personal-settings-actions {
   display: flex;
   justify-content: flex-end;

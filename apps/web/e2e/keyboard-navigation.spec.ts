@@ -34,7 +34,7 @@ const destinations: KeyboardDestination[] = [
   }
 ]
 
-test('E2E-UI-KEYBOARD-NAV-001: primary views remain reachable with Tab and Enter or Space @smoke', async ({ page }) => {
+test('E2E-UI-KEYBOARD-NAV-001: primary views and profile controls remain keyboard reachable @smoke @ui-quality', async ({ page }) => {
   await page.goto('/')
   await keyboardSignIn(page)
 
@@ -60,6 +60,20 @@ test('E2E-UI-KEYBOARD-NAV-001: primary views remain reachable with Tab and Enter
     await expect(page.getByRole('region', { name: destination.region })).toBeVisible()
     await expect(control).toHaveAttribute('aria-current', 'page')
   }
+
+  const submitShortcut = page.getByRole('combobox', { name: '送信キー' })
+  await tabTo(page, submitShortcut)
+  await expectKeyboardFocus(submitShortcut)
+  await expect(submitShortcut).toHaveValue('enter')
+  await page.keyboard.press('ArrowDown')
+  await expect(submitShortcut).toHaveValue('ctrlEnter')
+
+  const backToChat = page.getByRole('button', { name: 'チャットへ戻る' })
+  await tabTo(page, backToChat)
+  await expectKeyboardFocus(backToChat)
+  await page.keyboard.press('Enter')
+  await expect(page).toHaveURL(/\/$/)
+  await expect(page.getByRole('region', { name: 'チャット', exact: true })).toBeVisible()
 })
 
 async function keyboardSignIn(page: Page) {

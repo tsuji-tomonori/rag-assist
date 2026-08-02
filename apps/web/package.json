@@ -16,7 +16,7 @@
     "test:e2e:install": "playwright install --with-deps chromium",
     "test:e2e:smoke:local": "npm run test:e2e:install && npm run test:e2e:smoke",
     "test:e2e:all:local": "npm run test:e2e:install && npm run test:e2e:all",
-    "test:e2e:ui-quality": "E2E_SCENARIO=ui-quality playwright test e2e/visual-regression.spec.ts e2e/zoom-reflow.spec.ts e2e/layout-stress.spec.ts e2e/viewport-keyboard.spec.ts e2e/text-spacing.spec.ts e2e/skip-link.spec.ts e2e/login-keyboard.spec.ts --project=chromium",
+    "test:e2e:ui-quality": "E2E_SCENARIO=ui-quality playwright test e2e/visual-regression.spec.ts e2e/zoom-reflow.spec.ts e2e/layout-stress.spec.ts e2e/viewport-keyboard.spec.ts e2e/text-spacing.spec.ts e2e/skip-link.spec.ts e2e/login-keyboard.spec.ts e2e/keyboard-navigation.spec.ts e2e/screen-reader-semantics.spec.ts --project=chromium",
     "test:e2e:cross-browser": "E2E_SCENARIO=cross-browser E2E_CROSS_BROWSER=1 playwright test e2e/visual-regression.spec.ts --project=firefox-scheduled --project=webkit-scheduled"
   },
   "dependencies": {
