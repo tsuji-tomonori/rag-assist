@@ -57,7 +57,7 @@
 | 受け入れ基準 | `AC-SQ016-001`〜`AC-SQ016-008` |
 | 優先度 | S |
 | 安定性 | High |
-| 変更履歴 | 2026-07-14 Issue #345 から追加。2026-07-17 `AC-SQ016-002` の shell skip link と login 前 keyboard-only journey の自動証跡を追加。2026-08-03 個人設定のkeyboard-only journeyとChromium AX tree契約をrequired gateへ追加 |
+| 変更履歴 | 2026-07-14 Issue #345 から追加。2026-07-17 `AC-SQ016-002` の shell skip link と login 前 keyboard-only journey の自動証跡を追加。2026-08-03 個人設定のkeyboard-only journeyとChromium AX tree契約をrequired gateへ追加。2026-08-04 チャットの処理中・SSE再接続・安全なerror・権限案内をrequired gateへ追加 |
 
 ## 妥当性確認
 
@@ -68,11 +68,11 @@
 | 実現可能性 | pass with manual dependency | code/test fixes are feasible; screen-reader/real-device evidence requires the named environments. |
 | 検証可能性 | pass | numeric thresholds and journey evidence are explicit. |
 
-## 現在の自動証跡（2026-08-03）
+## 現在の自動証跡（2026-08-04）
 
 - `E2E-UI-SKIP-001`: 認証後 shell の最初の keyboard focus で skip link を表示し、desktop 1280×720 / mobile 320×720 の双方で反復 navigation を越えて一意な `main` landmark へ focus を移す。
 - `E2E-UI-LOGIN-KEYBOARD-001`: login 前の email から secondary action までの DOM 順 Tab order、3px outline、native required validation、Space による remember 切替、password 上の Enter submit、認証後 chat 到達、horizontal containment を 1280×720 / 320×720 で検証する。rejected authentication の alert/form description/focus/retry は component test で検証する。
-- `E2E-UI-STATE-001`: history / favorites / assignee の loading→500→retry→confirmed empty と HTTP 403、benchmark の loading→500 partial→retry→confirmed empty と HTTP 403、admin の partial→retry→recovered と source/as-of 付き stale→retry→recovered、documents の catalog / reindex loading→部分500→retry→confirmed empty と全resource HTTP 403を required Chromium UI quality gate で検証する。証拠のない他2画面の `AC-SQ016-007` automated status は `blocked` を維持する。
+- `E2E-UI-STATE-001`: chat の初期案内→処理中→SSE timeout→`Last-Event-ID`再接続→回答回復、HTTP 500のprivate detail非表示、`chat:create`不足時の明示案内と送信抑止、history / favorites / assignee の loading→500→retry→confirmed empty と HTTP 403、benchmark の loading→500 partial→retry→confirmed empty と HTTP 403、admin の partial→retry→recovered と source/as-of 付き stale→retry→recovered、documents の catalog / reindex loading→部分500→retry→confirmed empty と全resource HTTP 403を required Chromium UI quality gate で検証する。状態契約のowner判断がないprofileの `AC-SQ016-007` automated status は `blocked` を維持する。
 - `E2E-UI-KEYBOARD-NAV-001`: 個人設定へkeyboard-onlyで到達し、送信キーcomboboxのvalueを矢印キーで変更し、3px focus indicatorを確認してチャットへ復帰できることをrequired Chromium gateで検証する。
 - `E2E-UI-SR-SEMANTICS-001`: 個人設定のregion / heading、送信キーcomboboxのname / value、戻る・sign out buttonをChromium accessibility treeで検証し、JSON evidenceをPlaywright reportへ添付する。
 - 上記は Chromium keyboard automation であり、representative screen reader、実 browser の 200%/400% zoom、real device、Firefox、WebKit の手動・browser evidence を代替しない。

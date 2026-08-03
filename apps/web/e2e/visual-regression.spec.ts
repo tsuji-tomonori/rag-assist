@@ -1116,6 +1116,98 @@ test('E2E-UI-ROUTE-002: denied・invalid deep link は protected fetch なしで
   await expect(page).toHaveURL(/\?view=history$/)
 })
 
+test('E2E-UI-STATE-001: chat は初期案内・処理中・SSE timeout・Last-Event-ID retry・回答回復を区別する @smoke @ui-quality', async ({ page }) => {
+  let eventReads = 0
+  let retryLastEventId: string | undefined
+  let releaseRetry: (() => void) | undefined
+  const retryGate = new Promise<void>((resolve) => { releaseRetry = resolve })
+
+  await page.route(/http:\/\/(api\.visual\.test|127\.0\.0\.1:8787)\/rpc\/chat\/startRun$/, async (route) => {
+    await route.fulfill({
+      json: {
+        json: {
+          runId: 'chat-state-run',
+          status: 'queued',
+          eventsPath: '/chat-runs/chat-state-run/events'
+        }
+      }
+    })
+  })
+  await page.route(/http:\/\/(api\.visual\.test|127\.0\.0\.1:8787)\/chat-runs\/chat-state-run\/events$/, async (route) => {
+    eventReads += 1
+    if (eventReads === 1) {
+      await route.fulfill({
+        contentType: 'text/event-stream',
+        body: 'id: 3\nevent: timeout\ndata: {"message":"stream timeout"}\n\n'
+      })
+      return
+    }
+
+    retryLastEventId = route.request().headers()['last-event-id']
+    await retryGate
+    await route.fulfill({
+      contentType: 'text/event-stream',
+      body: 'id: 4\nevent: final\ndata: {"answer":"再接続後の回答です。","isAnswerable":true,"citations":[],"retrieved":[]}\n\n'
+    })
+  })
+
+  await signIn(page)
+  const chat = page.getByRole('region', { name: 'チャット', exact: true })
+  await expect(chat.getByRole('region', { name: 'チャット開始' })).toBeVisible()
+  await expect(chat.getByRole('heading', { name: '何を確認しますか？' })).toBeVisible()
+
+  await chat.getByRole('textbox', { name: '質問' }).fill('長い処理を確認して')
+  await chat.getByRole('button', { name: '質問を送信' }).click()
+  await expect(chat.locator('.processing-row')).toContainText('回答を生成中')
+  await expect(chat.getByRole('button', { name: '質問を送信' })).toBeDisabled()
+  await expect(chat.locator('.processing-row')).toContainText('処理が続いています。再接続しています')
+
+  expect(eventReads).toBe(2)
+  expect(retryLastEventId).toBe('3')
+  releaseRetry?.()
+
+  await expect(chat.getByText('再接続後の回答です。')).toBeVisible()
+  await expect(chat.locator('.processing-row')).toHaveCount(0)
+  await expect(chat.getByRole('textbox', { name: '質問' })).toBeEnabled()
+})
+
+test('E2E-UI-STATE-001: chat HTTP 500 は安全なerrorを表示しprivate detailを隠す @smoke @ui-quality', async ({ page }) => {
+  const privateDetail = 'RequestId: private-chat-request at InternalChatService.run()'
+  await page.route(/http:\/\/(api\.visual\.test|127\.0\.0\.1:8787)\/rpc\/chat\/startRun$/, async (route) => {
+    await route.fulfill({ status: 500, contentType: 'text/plain', body: privateDetail })
+  })
+
+  await signIn(page)
+  const chat = page.getByRole('region', { name: 'チャット', exact: true })
+  await chat.getByRole('textbox', { name: '質問' }).fill('失敗時の表示を確認して')
+  await chat.getByRole('button', { name: '質問を送信' }).click()
+
+  const error = page.locator('[data-state-target="chat"][data-state-kind="error"]')
+  await expect(error).toHaveAttribute('role', 'alert')
+  await expect(error).toContainText('処理を完了できませんでした')
+  await expect(error).not.toContainText(privateDetail)
+  await expect(chat.getByText('private-chat-request')).toHaveCount(0)
+})
+
+test('E2E-UI-STATE-001: chat:create 不足は権限案内を表示し送信requestを発行しない @smoke @ui-quality', async ({ page }) => {
+  await installCurrentUserPermissions(page, ['chat:read:own'])
+  const chatStarts: string[] = []
+  page.on('request', (request) => {
+    if (new URL(request.url()).pathname === '/rpc/chat/startRun') chatStarts.push(request.method())
+  })
+
+  await signIn(page)
+  const chat = page.getByRole('region', { name: 'チャット', exact: true })
+  await expect(chat.getByRole('alert')).toContainText('質問を送信する権限がありません')
+  await expect(chat.getByRole('button', { name: '質問を送信' })).toBeDisabled()
+
+  const question = chat.getByRole('textbox', { name: '質問' })
+  await question.fill('権限なしでは送信しない')
+  await question.press('Enter')
+  await expect(chat.getByRole('button', { name: '質問を送信' })).toBeDisabled()
+  expect(chatStarts).toEqual([])
+})
+
 test('E2E-UI-STATE-001: loading・500・empty・retry recovery を対象 region で区別する @smoke @ui-quality', async ({ page }) => {
   let historyReads = 0
   let releaseFirstRead: (() => void) | undefined

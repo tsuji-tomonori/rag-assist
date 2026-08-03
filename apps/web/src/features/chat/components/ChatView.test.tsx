@@ -15,6 +15,7 @@ const defaultProps: Parameters<typeof ChatView>[0] = {
   latestMessageRef: { current: null },
   currentUser: { userId: "user-1", email: "tester@example.com", groups: ["CHAT_USER"], permissions: ["chat:create"] },
   loading: false,
+  canCreateChat: true,
   canAsk: true,
   canWriteDocuments: false,
   modelId: "amazon.nova-lite-v1:0",
@@ -93,5 +94,18 @@ describe("ChatView debug permission", () => {
     expect(screen.getByText("対象文書: requirements.md")).toBeInTheDocument()
     await userEvent.click(screen.getByRole("button", { name: "対象文書を解除" }))
     expect(onClearDocumentScope).toHaveBeenCalledTimes(1)
+  })
+
+  it("chat:create 権限がなければ送信不可の理由をalertで説明する", () => {
+    renderChatView({ canCreateChat: false, canAsk: false })
+
+    expect(screen.getByRole("alert")).toHaveTextContent("質問を送信する権限がありません")
+    expect(screen.getByRole("button", { name: "質問を送信" })).toBeDisabled()
+  })
+
+  it("chat:create 権限があれば権限案内を表示しない", () => {
+    renderChatView()
+
+    expect(screen.queryByText("質問を送信する権限がありません", { exact: false })).not.toBeInTheDocument()
   })
 })

@@ -41,7 +41,7 @@
 | chat | AC-SQ016-004 | blocked | blocked | blocked | computed/axe contrast baselineとmanual review待ち |
 | chat | AC-SQ016-005 | pass | blocked | blocked | 4 viewportで24px minimumと44px primary targetの未解決candidate 0。manual touch evidenceは未実施 |
 | chat | AC-SQ016-006 | pass | blocked | blocked | 4 viewportのreduced-motion computed auditはpass。orientation / safe-area / virtual-keyboard実機は未検証 |
-| chat | AC-SQ016-007 | blocked | blocked | blocked | content-state matrixのfeature evidence待ち |
+| chat | AC-SQ016-007 | pass | blocked | blocked | required E2E-UI-STATE-001で初期案内、処理中、SSE timeout、Last-Event-ID retry、回答回復、安全なHTTP 500 error、chat:create不足の案内と送信抑止を検証する。manual evidenceは未実施 |
 | chat | AC-SQ016-008 | not_applicable | blocked | blocked | manual required scopeは未実施 |
 | assignee | AC-SQ016-001 | pass | blocked | blocked | 4 / 2 / 1 column remediation後、CI run 29516940570の320/375/768/1280pxでroot/unresolved overflow 0。実browser zoomは未検証 |
 | assignee | AC-SQ016-002 | blocked | blocked | blocked | focus candidate auditとkeyboard journey evidence待ち |

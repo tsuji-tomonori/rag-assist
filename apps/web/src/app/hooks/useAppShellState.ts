@@ -615,6 +615,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       latestMessageRef,
       currentUser,
       loading,
+      canCreateChat,
       canAsk,
       canWriteDocuments,
       modelId,
