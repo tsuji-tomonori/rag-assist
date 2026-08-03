@@ -91,14 +91,14 @@ required gateで実走しないため、該当2基準の自動証跡を合格判
 
 ## 受け入れ条件
 
-- [ ] keyboard-onlyで個人設定へ到達し、送信キーのvalueを変更し、チャットへ戻れる。
-- [ ] focus対象に可視3px outlineがあり、個人設定内のfocus順でtargetへ到達できる。
-- [ ] Chromium AX treeで個人設定region、heading、送信キーcombobox、戻る・sign out buttonのname / roleを検証する。
-- [ ] `test:e2e:ui-quality`がkeyboard / AX treeの2 specをrequired Chromium対象として列挙する。
-- [ ] `profile / AC-SQ016-002` / `003`のautomatedのみを`pass`とし、manual / overallを`blocked`に維持する。
-- [ ] `SQ-016`、`DES_UI_UX_001`、traceability、quality matrix、生成物が同じ証跡を参照する。
-- [ ] targeted E2E、lint、typecheck、unit、build、trace / semantic / docs checksが成功するか、実行不能理由を未完了として記録する。
-- [ ] Draft PR #462、受け入れ条件、セルフレビュー、Issue #345へfinal-head結果を記録する。
+- [x] keyboard-onlyで個人設定へ到達し、送信キーのvalueを変更し、チャットへ戻れる。
+- [x] focus対象に可視3px outlineがあり、個人設定内のfocus順でtargetへ到達できる。
+- [x] Chromium AX treeで個人設定region、heading、送信キーcombobox、戻る・sign out buttonのname / roleを検証する。
+- [x] `test:e2e:ui-quality`がkeyboard / AX treeの2 specをrequired Chromium対象として列挙する。
+- [x] `profile / AC-SQ016-002` / `003`のautomatedのみを`pass`とし、manual / overallを`blocked`に維持する。
+- [x] `SQ-016`、`DES_UI_UX_001`、traceability、quality matrix、生成物が同じ証跡を参照する。
+- [x] targeted E2E、lint、typecheck、unit、build、trace / semantic / docs checksが成功するか、実行不能理由を未完了として記録する。
+- [x] Draft PR #462、受け入れ条件、セルフレビュー、Issue #345へfinal-head結果を記録する。
 
 ## 検証計画
 
@@ -136,4 +136,11 @@ required gateで実走しないため、該当2基準の自動証跡を合格判
 - blocked: targeted Chromium E2E実走。sandboxの`tsx` IPCが`listen EPERM`となりAPI server起動前に停止した。final-head GitHub Actionsで実走する。
 - unavailable: `task docs:check`は`task` CLI未導入。確認済みTaskfileの下位コマンドを直接実行した。
 
-final-head CI、PR本文・受け入れ条件・セルフレビュー、Issue #345コメントは未完了のため、状態は`do`を維持する。
+## 2026-08-03 GitHub Actions
+
+- pass: [Web UI Quality run 30773229830](https://github.com/tsuji-tomonori/rag-assist/actions/runs/30773229830)（33 / 33）
+- pass: [MemoRAG CI run 30773229895](https://github.com/tsuji-tomonori/rag-assist/actions/runs/30773229895)
+- pass: [Validate Semver Label run 30773229841](https://github.com/tsuji-tomonori/rag-assist/actions/runs/30773229841)
+- quality gap: API C1は80.48%で85%目標未達。既存`tasks/todo/20260712-coverage-api-c1-recovery.md`で追跡し、本taskの完了根拠にはしない。
+
+本taskの自動受け入れ条件は満たしたが、Issue #345全体のmanual evidenceとowner判断が未完了のため、状態は`do`を維持する。

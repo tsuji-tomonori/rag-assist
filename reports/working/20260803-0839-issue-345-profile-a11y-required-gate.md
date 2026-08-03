@@ -54,13 +54,23 @@ production差分は個人設定controlのfocus indicatorに限定し、新規PR�
 
 `task docs:check`は`task` CLIがないため実行できず、確認済みTaskfileの下位コマンドを直接実行した。
 
+## GitHub Actions
+
+| workflow | 結果 | 証跡 |
+| --- | --- | --- |
+| Web UI Quality | pass（33 / 33） | [run 30773229830](https://github.com/tsuji-tomonori/rag-assist/actions/runs/30773229830) |
+| MemoRAG CI | pass | [run 30773229895](https://github.com/tsuji-tomonori/rag-assist/actions/runs/30773229895) |
+| Validate Semver Label | pass | [run 30773229841](https://github.com/tsuji-tomonori/rag-assist/actions/runs/30773229841) |
+
+API coverageはC0 90.65% / C1 80.48%。workflowは既存改善task
+`tasks/todo/20260712-coverage-api-c1-recovery.md`を参照して成功したが、C1 85%品質目標は未達のまま扱う。
+
 ## 未完了
 
-- final-head GitHub Actions Web UI Quality / MemoRAG CI / semver。
 - representative screen reader、実browser 200% / 400% zoom、touch / real device、Firefox / WebKit。
 - `profile / AC-SQ016-007`のowner判断、`chat`のstate / retry evidence。
 - `OQ-UI-002` owner / cadence / approved matrix。
-- API C1品質目標85%（前回final CI実測80.48%）。
+- API C1品質目標85%（final CI実測80.48%）。
 
 ## 指示への適合
 
@@ -69,15 +79,16 @@ production差分は個人設定controlのfocus indicatorに限定し、新規PR�
 | current main / open work / tasks / 正本・生成物を確認 | 対応 | GitHub・local sourceを再確認 |
 | 重複しない小改善を1件選定 | 対応 | profile keyboard / semantic evidenceへ限定 |
 | task・実装・正本・生成物を同期 | 対応 | focus CSS、E2E、2正本、matrix、generated docs |
-| lint・typecheck・unit・E2E・docs check | 一部未検証 | static / unit / docsはpass、local E2E実走はsandbox blocked |
-| Draft PR更新・Issue進捗 | 未完了 | publish / final CI後に実施 |
+| lint・typecheck・unit・E2E・docs check | 対応 | local static / unit / docsとGitHub required Chromium 33 / 33がpass。local E2Eはsandbox blockedを明記 |
+| Draft PR更新・Issue進捗 | 対応 | Draft PR #462とIssue #345へfinal evidenceを記録 |
 | 未検証を完了扱いしない | 対応 | taskは`do`、manual / overallは`blocked` |
 | merge / deploy / release禁止 | 対応 | 未実施 |
 
-総合fit: 4.3 / 5.0（約86%）。final-head実Chromium CIとGitHub記録が未完了のため、途中評価とする。
+総合fit: 4.8 / 5.0（約96%）。選定した小改善の自動受け入れ条件とGitHub記録は完了した。
+ただしIssue #345全体のmanual evidence、owner判断、API C1目標は未完了であり、task / PRは`do` / Draftを維持する。
 
 ## 次の具体作業
 
-1. 既存Draft PR #462 branchへfast-forward publishし、final-head CIを確認する。
-2. PR本文、受け入れ条件、セルフレビュー、Issue #345を実測結果へ更新する。
-3. 次回は`chat` state / retry契約またはmanual evidence owner判断を、根拠なしに完了扱いせず進める。
+1. 次回は`chat` state / retry契約またはmanual evidence owner判断を、根拠なしに完了扱いせず進める。
+2. representative screen reader、実browser 400% zoom、touch / real deviceのapproved execution環境とownerを確定する。
+3. API C1は既存coverage recovery taskで85%目標へ収束する。
