@@ -57,7 +57,10 @@ production差分は`ChatView`の権限案内と既存認可値の結線に限定
 
 ## GitHub Actions
 
-final-head実走前。Web UI Quality / MemoRAG CI / Validate Semver Labelの結果と、API C1品質目標は公開後に追記する。
+初回head `f2a97ffd`ではWeb UI Quality 35 / 36が成功し、HTTP 500の1件のみ失敗した。
+oRPCがraw private detailを`Internal Server Error`へ置換していたためprivate値は非表示だったが、
+英語の内部server文言が利用者向け説明として残る実欠陥を検出した。`publicSafeUiError`の一般化対象へ追加し、
+unit regressionを追加した。修正後final-headのWeb UI Quality / MemoRAG CI / Validate Semver Label結果は再実走後に追記する。
 
 ## 未完了
 

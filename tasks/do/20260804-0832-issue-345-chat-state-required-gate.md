@@ -116,4 +116,5 @@ README / OpenAPI / API設計 / 運用文書はproduct・API・運用契約を変
 - pass: UI trace 13件、semantic UI 5件、canonical docs、generated inventory、manual evidence structure、infra inventory、hidden Unicode、OpenAPI、API code docs、`git diff --check`。
 - blocked: targeted Chromium E2E実走。sandboxが`tsx` IPC listenerを`listen EPERM`で拒否し、API server起動前に停止した。final-head GitHub Actionsで実走する。
 - unavailable: `task docs:check`は`task` CLI未導入。確認済みTaskfileの下位コマンドを直接実行した。
-- pending: final-head GitHub ActionsとDraft PR / Issue更新。
+- initial CI finding: [Web UI Quality run 30863421790](https://github.com/tsuji-tomonori/rag-assist/actions/runs/30863421790)は追加3件中HTTP 500だけ失敗。oRPCがraw private detailを`Internal Server Error`へ置換していたためprivate値は非表示だったが、英語の内部server文言が利用者向け説明として残った。`publicSafeUiError`の一般化対象へ追加し、unit regressionを追加した。
+- pending: 修正後final-head GitHub ActionsとDraft PR / Issue更新。
