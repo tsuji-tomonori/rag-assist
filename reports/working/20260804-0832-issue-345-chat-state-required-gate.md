@@ -60,11 +60,19 @@ production差分は`ChatView`の権限案内と既存認可値の結線に限定
 初回head `f2a97ffd`ではWeb UI Quality 35 / 36が成功し、HTTP 500の1件のみ失敗した。
 oRPCがraw private detailを`Internal Server Error`へ置換していたためprivate値は非表示だったが、
 英語の内部server文言が利用者向け説明として残る実欠陥を検出した。`publicSafeUiError`の一般化対象へ追加し、
-unit regressionを追加した。修正後final-headのWeb UI Quality / MemoRAG CI / Validate Semver Label結果は再実走後に追記する。
+unit regressionを追加した。
+
+| workflow | 結果 | 証跡 |
+| --- | --- | --- |
+| Web UI Quality | pass（36 / 36） | [run 30863691510](https://github.com/tsuji-tomonori/rag-assist/actions/runs/30863691510)、artifact `8875333124`、digest `sha256:60b48220a3ba0990a42b4e97cea7ca0c21674678a8b7285547257322b60f0e8c` |
+| MemoRAG CI | pass | [run 30863691432](https://github.com/tsuji-tomonori/rag-assist/actions/runs/30863691432) |
+| Validate Semver Label | pass | [run 30863691438](https://github.com/tsuji-tomonori/rag-assist/actions/runs/30863691438) |
+
+API coverageはC0 90.65% / C1 80.48%、WebはC0 90.85% / C1 85.76%。workflowは成功したが、
+API C1 85%品質目標は既存`tasks/todo/20260712-coverage-api-c1-recovery.md`で未完了のまま扱う。
 
 ## 未完了
 
-- final-head required Chromium E2E / CI。
 - representative screen reader、実browser 200% / 400% zoom、touch / real device、Firefox / WebKit。
 - `profile / AC-SQ016-007`のowner判断。
 - `OQ-UI-002` owner / cadence / approved matrix。
@@ -77,13 +85,13 @@ unit regressionを追加した。修正後final-headのWeb UI Quality / MemoRAG 
 | current main / open work / tasks / 正本・生成物を確認 | 対応 | GitHub・local sourceを再確認 |
 | 重複しない小改善を1件選定 | 対応 | chat state / permission evidenceへ限定 |
 | task・実装・正本・生成物を同期 | 対応 | alert、E2E、2正本、matrix、generated docs |
-| lint・typecheck・unit・E2E・docs check | 一部未完了 | local static / unit / docsはpass、local Chromiumはsandbox blocked、final CI待ち |
-| Draft PR更新・Issue進捗 | 未完了 | 公開後にfinal evidenceを記録する |
+| lint・typecheck・unit・E2E・docs check | 対応 | local static / unit / docsとGitHub required Chromium 36 / 36がpass。local E2E blockedは明記 |
+| Draft PR更新・Issue進捗 | 対応 | Draft PR #462とIssue #345へfinal evidenceを記録 |
 | 未検証を完了扱いしない | 対応 | taskは`do`、manual / overallは`blocked` |
 | merge / deploy / release禁止 | 対応 | 未実施 |
 
 ## 次の具体作業
 
-1. Draft PR #462へ公開してrequired Chromium 36件を実走する。
-2. final CIをtask / report / PR / Issueへ記録する。
-3. 次回はprofile state owner判断またはapproved manual evidence環境を、根拠なしに完了扱いせず進める。
+1. 次回はprofile state owner判断またはapproved manual evidence環境を、根拠なしに完了扱いせず進める。
+2. representative screen reader、実browser 400% zoom、touch / real deviceのapproved execution環境とownerを確定する。
+3. API C1は既存coverage recovery taskで85%目標へ収束する。

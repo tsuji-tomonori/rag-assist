@@ -72,7 +72,7 @@ Issue #345 と Draft PR #462 は、8 AppViews のUI品質証跡をrequired Chrom
 - [x] `chat / AC-SQ016-007`のautomatedのみを`pass`とし、manual / overallを`blocked`に維持する。
 - [x] SQ-016、UI/UX正本、machine-readable matrix、生成物が同じ証跡を参照する。
 - [x] targeted lint / typecheck / unit / build / E2E / docs checksが成功するか、実行不能理由を未完了として記録する。
-- [ ] Draft PR #462、受け入れ条件、セルフレビュー、Issue #345へfinal-head結果を記録する。
+- [x] Draft PR #462、受け入れ条件、セルフレビュー、Issue #345へfinal-head結果を記録する。
 
 ## 実装・文書保守計画
 
@@ -117,4 +117,7 @@ README / OpenAPI / API設計 / 運用文書はproduct・API・運用契約を変
 - blocked: targeted Chromium E2E実走。sandboxが`tsx` IPC listenerを`listen EPERM`で拒否し、API server起動前に停止した。final-head GitHub Actionsで実走する。
 - unavailable: `task docs:check`は`task` CLI未導入。確認済みTaskfileの下位コマンドを直接実行した。
 - initial CI finding: [Web UI Quality run 30863421790](https://github.com/tsuji-tomonori/rag-assist/actions/runs/30863421790)は追加3件中HTTP 500だけ失敗。oRPCがraw private detailを`Internal Server Error`へ置換していたためprivate値は非表示だったが、英語の内部server文言が利用者向け説明として残った。`publicSafeUiError`の一般化対象へ追加し、unit regressionを追加した。
-- pending: 修正後final-head GitHub ActionsとDraft PR / Issue更新。
+- pass: 修正head `28fd6ea7`の[Web UI Quality run 30863691510](https://github.com/tsuji-tomonori/rag-assist/actions/runs/30863691510)（36 / 36、artifact `8875333124`、digest `sha256:60b48220a3ba0990a42b4e97cea7ca0c21674678a8b7285547257322b60f0e8c`）。
+- pass: [MemoRAG CI run 30863691432](https://github.com/tsuji-tomonori/rag-assist/actions/runs/30863691432)と[semver run 30863691438](https://github.com/tsuji-tomonori/rag-assist/actions/runs/30863691438)。API C1は80.48%で85%目標未達のため、既存coverage taskを維持する。
+
+本taskの自動受け入れ条件は満たしたが、Issue #345全体のmanual evidence、profile owner判断、API C1目標が未完了のため、状態は`do`を維持する。

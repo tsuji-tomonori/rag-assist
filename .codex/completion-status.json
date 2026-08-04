@@ -36,10 +36,10 @@
     { "command": "Targeted Chromium E2E execution", "result": "blocked", "note": "tsx IPC listen EPERM in the sandbox" },
     { "command": "UI trace, semantic, canonical, generated, manual evidence, infra, hidden Unicode, OpenAPI, and API code docs checks", "result": "pass" },
     { "command": "git diff --check", "result": "pass" },
-    { "command": "GitHub Actions Web UI Quality", "result": "pending", "note": "Final-head execution required" },
-    { "command": "GitHub Actions MemoRAG CI", "result": "pending", "note": "Final-head execution required; API C1 target remains unresolved" },
-    { "command": "GitHub Actions Validate Semver Label", "result": "pending", "note": "Final-head execution required" }
+    { "command": "GitHub Actions Web UI Quality", "result": "pass", "note": "36 of 36 required Chromium tests passed in run 30863691510" },
+    { "command": "GitHub Actions MemoRAG CI", "result": "pass", "note": "Run 30863691432 passed; API C1 remains 80.48 percent against the 85-percent quality target" },
+    { "command": "GitHub Actions Validate Semver Label", "result": "pass", "note": "Run 30863691438 passed" }
   ],
-  "next_action": "Publish the bounded chat state evidence to draft pull request 462, verify final-head CI, then resolve the profile state contract or establish an approved manual evidence environment",
+  "next_action": "Resolve the profile state contract or establish an approved environment and owner for representative screen-reader, real-browser 400-percent zoom, touch, and real-device evidence",
   "safe_to_continue_without_user": true
 }
