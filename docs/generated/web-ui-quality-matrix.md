@@ -97,7 +97,7 @@
 | profile | AC-SQ016-004 | blocked | blocked | blocked | computed/axe contrast baselineとmanual review待ち |
 | profile | AC-SQ016-005 | pass | blocked | blocked | 4 viewportで24px minimumと44px primary targetの未解決candidate 0。manual touch evidenceは未実施 |
 | profile | AC-SQ016-006 | pass | blocked | blocked | 4 viewportのreduced-motion computed auditはpass。orientation / safe-area / virtual-keyboard実機は未検証 |
-| profile | AC-SQ016-007 | blocked | blocked | blocked | content-state matrixのfeature evidence待ち |
+| profile | AC-SQ016-007 | blocked | blocked | blocked | required E2E-UI-STATE-001で送信キーのsession-only scope、polite変更status、画面往復保持を限定検証する。FR-051の永続化、保存失敗/retry/permission、N/A分類とowner判断、manual evidenceは未完了 |
 | profile | AC-SQ016-008 | not_applicable | blocked | blocked | manual required scopeは未実施 |
 
 ## Phase boundary

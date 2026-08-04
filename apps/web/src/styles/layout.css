@@ -597,7 +597,7 @@ button:has(.button-spinner) {
 }
 
 .personal-settings-list dt,
-.personal-setting-field span {
+.personal-setting-field label {
   color: #68758f;
   font-size: 13px;
   font-weight: 900;
@@ -629,6 +629,24 @@ button:has(.button-spinner) {
   background: #fff;
   font-size: 14px;
   font-weight: 800;
+}
+
+.personal-setting-help,
+.personal-setting-status {
+  max-width: 62ch;
+  margin: 0;
+  color: #52627c;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.personal-setting-status {
+  border-left: 3px solid #2f6fed;
+  padding: 8px 10px;
+  color: #273750;
+  background: #f4f8ff;
 }
 
 .personal-setting-field select:focus-visible,

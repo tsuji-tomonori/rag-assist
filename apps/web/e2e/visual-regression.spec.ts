@@ -1208,6 +1208,33 @@ test('E2E-UI-STATE-001: chat:create 不足は権限案内を表示し送信reque
   expect(chatStarts).toEqual([])
 })
 
+test('E2E-UI-STATE-001: profile はsession scopeと変更結果を通知し画面往復で値を維持する @smoke @ui-quality', async ({ page }) => {
+  await signIn(page)
+  await page.getByRole('button', { name: '個人設定', exact: true }).click()
+
+  let profile = page.getByRole('region', { name: '個人設定', exact: true })
+  const shortcut = profile.getByRole('combobox', { name: '送信キー' })
+  await expect(shortcut).toHaveAccessibleDescription(/現在のサインイン中だけ有効です。再読み込みまたは再サインインすると/)
+  await expect(shortcut).toHaveValue('enter')
+
+  await shortcut.selectOption('ctrlEnter')
+  const status = profile.getByRole('status')
+  await expect(status).toContainText('送信キーを「Ctrl+Enterで送信」に変更しました')
+  await expect(status).toContainText('現在のサインイン中だけ有効です')
+
+  await profile.getByRole('button', { name: 'チャットへ戻る' }).click()
+  await expect(page.getByRole('region', { name: 'チャット', exact: true })).toBeVisible()
+  await page.getByRole('button', { name: '個人設定', exact: true }).click()
+
+  profile = page.getByRole('region', { name: '個人設定', exact: true })
+  await expect(profile.getByRole('combobox', { name: '送信キー' })).toHaveValue('ctrlEnter')
+  await expect(profile.getByRole('status')).toHaveCount(0)
+
+  await page.reload()
+  profile = page.getByRole('region', { name: '個人設定', exact: true })
+  await expect(profile.getByRole('combobox', { name: '送信キー' })).toHaveValue('enter')
+})
+
 test('E2E-UI-STATE-001: loading・500・empty・retry recovery を対象 region で区別する @smoke @ui-quality', async ({ page }) => {
   let historyReads = 0
   let releaseFirstRead: (() => void) | undefined

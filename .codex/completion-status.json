@@ -9,16 +9,18 @@
   ],
   "completed_items": [
     "Confirmed current main 0771521c and draft pull request #462 remain converged with no new main changes",
-    "Selected chat state and permission evidence without assuming the unresolved profile state contract",
-    "Added an accessible permission explanation while preserving the existing chat authorization value and disabled submit behavior",
-    "Expanded E2E-UI-STATE-001 to cover initial guidance, processing, SSE timeout, Last-Event-ID retry, recovery, safe HTTP 500 error, and permission request suppression",
-    "Increased the required Chromium listing from 33 to 36 tests",
-    "Updated SQ-016, DES_UI_UX_001, the machine-readable quality matrix, and the generated matrix so only chat AC-SQ016-007 automated evidence becomes pass",
-    "Passed lint, Web typecheck, Web build, 445 Web unit tests, 13 trace tests, 5 semantic tests, generated-document freshness, canonical docs validation, manual evidence structure, infra inventory, hidden Unicode, OpenAPI, API code docs, and diff checks"
+    "Selected honest profile session feedback without assuming FR-051 persistence or the unresolved profile state classification",
+    "Associated the submit shortcut field with a visible current-sign-in-only explanation",
+    "Added a visible polite status that announces the selected shortcut and session scope",
+    "Added unit evidence and one required E2E-UI-STATE-001 scenario for description, change feedback, same-session navigation retention, and reload reset",
+    "Kept profile AC-SQ016-007 blocked while documenting the bounded evidence and unresolved persistence, failure, retry, permission, N/A, and owner decisions",
+    "Updated SQ-016, DES_UI_UX_001, the machine-readable quality matrix, and generated Web documentation",
+    "Passed lint, Web typecheck, Web build, 446 Web unit tests, 13 trace tests, 5 semantic tests, generated-document freshness, canonical docs validation, manual evidence structure, infra inventory, hidden Unicode, OpenAPI, API code docs, and diff checks"
   ],
   "remaining_items": [
-    "Resolve the feature state evidence decision for profile",
-    "Run approved representative screen-reader, real-browser 200/400-percent zoom, touch, real-device, Firefox, and WebKit verification",
+    "Publish the bounded profile feedback change to draft pull request #462 and confirm final-head CI",
+    "Resolve FR-051 persistence and the profile AC-SQ016-007 N/A or state-evidence owner decision",
+    "Run approved representative-screen-reader, real-browser 200/400-percent zoom, touch, real-device, Firefox, and WebKit verification",
     "Resolve OQ-UI-002 owner, cadence, and approved matrix decisions"
   ],
   "blocked_items": [
@@ -28,18 +30,16 @@
     "API C1 branch coverage remains below the 85-percent quality target in the latest known final CI evidence"
   ],
   "validation": [
+    { "command": "npm exec -w @memorag-mvp/web -- vitest run src/app/components/PersonalSettingsView.test.tsx src/app/hooks/useAppShellState.test.ts", "result": "pass", "note": "2 files and 9 tests passed after repairing the accessible-name regression found by the first run" },
     { "command": "npm run lint", "result": "pass" },
     { "command": "npm run typecheck -w @memorag-mvp/web", "result": "pass" },
-    { "command": "TZ=Asia/Tokyo npm test -w @memorag-mvp/web", "result": "pass", "note": "61 files and 445 tests passed" },
+    { "command": "TZ=Asia/Tokyo npm test -w @memorag-mvp/web", "result": "pass", "note": "62 files and 446 tests passed" },
     { "command": "npm run build -w @memorag-mvp/web", "result": "pass", "note": "Existing chunk-size advisory only" },
-    { "command": "npm run test:e2e:ui-quality -w @memorag-mvp/web -- --list", "result": "pass", "note": "36 required Chromium tests listed" },
-    { "command": "Targeted Chromium E2E execution", "result": "blocked", "note": "tsx IPC listen EPERM in the sandbox" },
-    { "command": "UI trace, semantic, canonical, generated, manual evidence, infra, hidden Unicode, OpenAPI, and API code docs checks", "result": "pass" },
-    { "command": "git diff --check", "result": "pass" },
-    { "command": "GitHub Actions Web UI Quality", "result": "pass", "note": "36 of 36 required Chromium tests passed in run 30863691510" },
-    { "command": "GitHub Actions MemoRAG CI", "result": "pass", "note": "Run 30863691432 passed; API C1 remains 80.48 percent against the 85-percent quality target" },
-    { "command": "GitHub Actions Validate Semver Label", "result": "pass", "note": "Run 30863691438 passed" }
+    { "command": "npm run test:e2e:ui-quality -w @memorag-mvp/web -- --list", "result": "pass", "note": "37 required Chromium tests listed" },
+    { "command": "Targeted profile Chromium E2E execution", "result": "blocked", "note": "tsx IPC listen EPERM in the sandbox" },
+    { "command": "UI trace, semantic, canonical, generated, manual evidence, infra, hidden Unicode, OpenAPI, and API code docs checks", "result": "pass", "note": "Manual evidence structure passed but readiness remains false with three blocked and one not-run item" },
+    { "command": "git diff --check", "result": "pass" }
   ],
-  "next_action": "Resolve the profile state contract or establish an approved environment and owner for representative screen-reader, real-browser 400-percent zoom, touch, and real-device evidence",
+  "next_action": "Fast-forward draft pull request #462, confirm final-head GitHub Actions, update acceptance and self-review comments, and record the bounded progress on Issue #345",
   "safe_to_continue_without_user": true
 }
