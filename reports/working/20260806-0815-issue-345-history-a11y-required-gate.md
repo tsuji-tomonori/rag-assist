@@ -15,7 +15,7 @@
 | source | kind | date / revision | reliability |
 | --- | --- | --- | --- |
 | GitHub Issue #345 / latest comment | issue evidence | 2026-08-05 / comment 5185990105 | confirmed |
-| Draft PR #462 | current integration | head `bdf357ce`, base `main@0771521c` | confirmed |
+| Draft PR #462 | current integration | final implementation head `94ca7c77`, base `main@0771521c` | confirmed |
 | current main | repository baseline | `0771521c` | confirmed |
 | open PR #461 filenames | parallel change scope | 2026-08-06確認 | confirmed |
 | `AGENTS.md` / repository skills | workflow policy | PR head | confirmed |
@@ -79,12 +79,16 @@
 - UI trace: pass（13 tests）
 - semantic UI: pass（5 tests）
 - canonical / generated / manual evidence / infra / hidden Unicode / OpenAPI / API code docs / diff checks: pass
+- final-head [Web UI Quality](https://github.com/tsuji-tomonori/rag-assist/actions/runs/31057076424): pass（37 / 37、artifact `8950690693`、digest `sha256:bd398380100d48dba832487eaba82a3eac39e7f2a350b43b3803a25e341b1c3d`）
+- final-head [MemoRAG CI](https://github.com/tsuji-tomonori/rag-assist/actions/runs/31057076429): pass（API C0 90.65% / C1 80.48%、Web C0 90.86% / C1 85.77%）
+- final-head [semver検査](https://github.com/tsuji-tomonori/rag-assist/actions/runs/31057076433): pass
 
 ## 未対応・制約・リスク
 
 - targeted Chromium実走はsandboxが`tsx` IPC listenerを`EPERM`で拒否し、API server起動前にblocked。権限昇格せずfinal-head GitHub Actionsで確認する。
 - `task` CLIがないため、内容を確認した`docs:check`の下位コマンドを直接実行した。
-- CI結果、PR本文・受け入れ条件・セルフレビュー、Issue #345コメントは初回commit時点でpending。
+- Git push用HTTPS credentialはlocal cloneにないため、GitHub AppのGit data APIでblob SHAとlocal blob SHA、生成tree SHAとlocal tree SHAを一致確認し、forceなしでPR branchをfast-forwardした。
+- final-head GitHub Actionsは成功した。PR本文・受け入れ条件・セルフレビュー、Issue #345コメントは最終記録commit後に反映する。
 - representative screen reader、実browser 200% / 400% zoom、touch / real device、Firefox / WebKitは未実施。
 - profileのFR-051永続化・保存失敗/retry/permission/N/A分類・owner判断は未完了。
 - API C1 85%目標は既存coverage taskで追跡し、本変更では扱わない。

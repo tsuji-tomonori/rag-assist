@@ -86,14 +86,14 @@ required Chromium E2Eで回帰検出し、正本・machine-readable matrix・生
 
 ## 受け入れ条件
 
-- [ ] keyboard-onlyで履歴へ到達し、検索、並び順、お気に入り絞り込み、会話選択へ順に到達・操作できる。
-- [ ] 対象controlに可視3px outlineがあり、Tab focus順で到達できる。
-- [ ] Chromium AX treeで履歴region / heading / searchbox / combobox / checkbox /主要buttonのname / role / valueを検証する。
-- [ ] test-only fixtureがproduction UI/data pathへ混入しない。
-- [ ] `history / AC-SQ016-002` / `003`のautomatedのみを`pass`とし、manual / overallを`blocked`に維持する。
-- [ ] `SQ-016`、`DES_UI_UX_001`、quality matrix、生成物が同じ証跡を参照する。
-- [ ] targeted E2E、lint、typecheck、unit、build、trace / semantic / docs checksが成功するか、実行不能理由を未完了として記録する。
-- [ ] Draft PR #462、受け入れ条件、セルフレビュー、Issue #345へfinal-head結果を記録する。
+- [x] keyboard-onlyで履歴へ到達し、検索、並び順、お気に入り絞り込み、会話選択へ順に到達・操作できる。
+- [x] 対象controlに可視3px outlineがあり、Tab focus順で到達できる。
+- [x] Chromium AX treeで履歴region / heading / searchbox / combobox / checkbox /主要buttonのname / role / valueを検証する。
+- [x] test-only fixtureがproduction UI/data pathへ混入しない。
+- [x] `history / AC-SQ016-002` / `003`のautomatedのみを`pass`とし、manual / overallを`blocked`に維持する。
+- [x] `SQ-016`、`DES_UI_UX_001`、quality matrix、生成物が同じ証跡を参照する。
+- [x] targeted E2E、lint、typecheck、unit、build、trace / semantic / docs checksが成功するか、実行不能理由を未完了として記録する。
+- [x] Draft PR #462、受け入れ条件、セルフレビュー、Issue #345へfinal-head結果を記録する。
 
 ## 検証計画
 
@@ -131,4 +131,12 @@ required Chromium E2Eで回帰検出し、正本・machine-readable matrix・生
 - blocked: targeted Chromium E2E実走。sandboxの`tsx` IPCが`listen EPERM`となりAPI server起動前に停止した。final-head GitHub Actionsで実走する。
 - unavailable: `task docs:check`は`task` CLI未導入。確認済みTaskfileの下位コマンドを直接実行した。
 
-final-head CI、Draft PR本文・受け入れ条件・セルフレビュー、Issue #345コメントは未完了のため、状態は`do`を維持する。
+## 2026-08-06 final-head検証
+
+- pass: [Web UI Quality run 31057076424](https://github.com/tsuji-tomonori/rag-assist/actions/runs/31057076424)（37 / 37）
+- evidence: artifact `8950690693` / digest `sha256:bd398380100d48dba832487eaba82a3eac39e7f2a350b43b3803a25e341b1c3d`
+- pass: [MemoRAG CI run 31057076429](https://github.com/tsuji-tomonori/rag-assist/actions/runs/31057076429)
+- pass: [semver run 31057076433](https://github.com/tsuji-tomonori/rag-assist/actions/runs/31057076433)
+- known gap: API C1 80.48%は85%未達。既存task `tasks/todo/20260712-coverage-api-c1-recovery.md`で追跡する。
+
+選択したautomated evidenceの受け入れ条件は満たした。一方、manual / overall証跡、FR-051 owner判断、API C1、OQ-UI-002は未完了であり、累積PRと本taskは`Draft` / `do`を維持する。
