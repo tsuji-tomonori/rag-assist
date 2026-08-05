@@ -94,7 +94,7 @@
 - [x] `profile / AC-SQ016-007`をpassへ昇格せず、永続化・remote state・manual検証・owner判断をblockedとして維持する。
 - [x] 正本、machine-readable matrix / trace、生成文書が同じ証跡と未完了境界を参照する。
 - [x] 選定したlint、typecheck、unit、build、E2E、docs checksが成功するか、実行不能理由を未完了として記録する。
-- [ ] Draft PR #462、受け入れ条件、セルフレビュー、Issue #345へfinal-head結果を記録する。
+- [x] Draft PR #462、受け入れ条件、セルフレビュー、Issue #345へ検証済みheadの結果を記録する。
 
 ## 検証計画
 
@@ -129,4 +129,16 @@
 - readiness false: manual evidenceはpass 0 / blocked 3 / not_run 1。
 - unavailable: `task` CLI。確認済み`docs:check`の下位コマンドを直接実行。
 
-taskはfinal-head CI、PR/Issue更新、owner/manual/API C1 gapが未完了のため`do`を維持する。
+限定taskの自動検証は完了したが、owner/manual/API C1 gapが未完了のため`do`を維持する。
+
+## 2026-08-05 GitHub検証・記録
+
+- publish: Draft PR #462を`53145d6a`へnon-force fast-forwardし、`main@0771521c`からbehind 0 / ahead 35、Draft・mergeableを確認。
+- pass: Web UI Quality run 30961744074でrequired Chromium 37/37。
+- pass: MemoRAG CI run 30961744527。generated inventoryを含む全workflow stepが成功。
+- pass: semver run 30961744057。
+- artifact: `web-ui-quality-chromium-1` ID 8913228302、digest `sha256:db215dda7a2f893539cfbd36d32f43bbda67526ee12585f2e1d30ed2acdb6915`。
+- repair: 初回MemoRAG CI run 30961181694は、大容量`web-ui-inventory.json`のGitHub転送途中切断でfreshnessのみ失敗。他17 blobのlocal SHA一致と、再発行blob `55bd1ca2`のlocal SHA完全一致を確認後、修復headで成功。
+- record: PR本文、受け入れ条件comment 5085986405、self-review comment 5085986463、Issue #345 comment 5185990105を更新。
+
+限定taskの実装・自動検証・GitHub記録は完了した。ただしFR-051/profile owner判断、manual evidence、API C1、OQ-UI-002は未完了のため、累積taskとPRは`do` / Draftを維持する。

@@ -17,8 +17,8 @@
 | R1 | 最新GitHub/repository状態を確認 | 対応 |
 | R2 | 非重複な小改善を1件選定 | 対応 |
 | R3 | implementation / canonical / generated / taskを同期 | 対応 |
-| R4 | lint / typecheck / unit / E2E / docs check | local完了、actual ChromiumはCI待ち |
-| R5 | Draft PR / acceptance / self-review / Issue更新 | 未実施、push後に実行 |
+| R4 | lint / typecheck / unit / E2E / docs check | local完了、required Chromium 37/37成功 |
+| R5 | Draft PR / acceptance / self-review / Issue更新 | 対応 |
 | R6 | 未検証・owner判断を未完了として維持 | 対応 |
 
 ## 3. 検討・判断
@@ -59,6 +59,15 @@
 - `npm run test:e2e:ui-quality -w @memorag-mvp/web -- --list`: 37 tests。
 - canonical / OpenAPI / API code docs / UI trace / semantic / manual evidence structure / Web and infra inventory / hidden Unicode / diff checks: pass。
 
+### GitHub Actions
+
+- Web UI Quality run 30961744074: 37/37 pass。
+- MemoRAG CI run 30961744527: pass。API C1は80.48%で品質目標85%未達を維持。
+- Validate Semver Label run 30961744057: pass。
+- Web UI artifact 8913228302: digest `sha256:db215dda7a2f893539cfbd36d32f43bbda67526ee12585f2e1d30ed2acdb6915`。
+- 初回MemoRAG CI run 30961181694のfreshness failureは、大容量generated JSONのGitHub転送途中切断が原因。他17 blobのlocal SHA一致と該当blob `55bd1ca2`の完全一致を確認して再発行し、修復headで成功。
+- Draft PR本文、受け入れ条件、セルフレビュー、Issue #345 comment 5185990105を更新。
+
 ## 7. 未対応・制約・リスク
 
 - targeted Chromium: sandboxの`tsx` IPC `listen EPERM`でAPI起動前にblocked。GitHub Actionsで確認する。
@@ -72,12 +81,12 @@
 
 | 評価軸 | 評価 | 理由 |
 | --- | ---: | --- |
-| 指示網羅性 | 4.0 / 5 | local成果物は完了、GitHub publish / final CI待ち |
+| 指示網羅性 | 5.0 / 5 | 限定改善の実装、同期、GitHub検証・記録まで完了 |
 | 制約遵守 | 5.0 / 5 | owner判断を代行せず、禁止操作を未実施 |
-| 成果物品質 | 4.5 / 5 | 初回検査の実欠陥を修復、actual Chromium待ち |
+| 成果物品質 | 5.0 / 5 | 初回検査の実欠陥と転送欠損を修復しrequired Chromium成功 |
 | 説明責任 | 5.0 / 5 | blocked / unverifiedを分離 |
-| 検収容易性 | 4.5 / 5 | AC / E2E / matrix / reportを対応付け |
+| 検収容易性 | 5.0 / 5 | AC / E2E / matrix / report / CI artifactを対応付け |
 
-**総合fit: 4.6 / 5（約92%）**
+**総合fit: 5.0 / 5（限定taskの完了条件に対して100%）**
 
-GitHub publish、final-head CI、PR/Issueコメントを完了後に再評価する。
+Issue #345全体はowner/manual/API C1/OQ-UI-002が残るため未完了であり、PRはDraftを維持する。
