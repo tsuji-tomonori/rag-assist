@@ -329,6 +329,13 @@
               "AC-FR096-001",
               "AC-FR096-003"
             ]
+          },
+          {
+            "id": "SQ-016",
+            "acceptanceCriteria": [
+              "AC-SQ016-002",
+              "AC-SQ016-003"
+            ]
           }
         ],
         "verifications": [

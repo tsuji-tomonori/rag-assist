@@ -4,17 +4,20 @@ type AccessibilityContractNode = {
   role: string
   name: string
   value: string
+  checked: string
 }
 
 type ExpectedNode = {
   role: string
   name?: string
   value?: string
+  checked?: string
 }
 
 const evidenceRoles = new Set([
   'alert',
   'button',
+  'checkbox',
   'combobox',
   'complementary',
   'form',
@@ -22,12 +25,14 @@ const evidenceRoles = new Set([
   'main',
   'navigation',
   'region',
+  'searchbox',
   'status',
   'table',
   'textbox'
 ])
 
 test('E2E-UI-SR-SEMANTICS-001: representative views expose stable Chromium accessibility tree contracts @smoke @ui-quality', async ({ page }, testInfo) => {
+  await installHistoryRoute(page)
   await page.goto('/')
   await expect(page.getByRole('heading', { name: '社内QAチャットボット' })).toBeVisible()
 
@@ -61,6 +66,21 @@ test('E2E-UI-SR-SEMANTICS-001: representative views expose stable Chromium acces
     { role: 'region', name: '現在の文書表示条件' }
   ])
 
+  await page.getByRole('navigation', { name: '画面' }).getByRole('button', { name: '履歴' }).click()
+  await expect(page.getByRole('region', { name: '履歴', exact: true })).toBeVisible()
+  await expectAccessibilityContract(page, testInfo, 'history', [
+    { role: 'main' },
+    { role: 'navigation', name: '画面' },
+    { role: 'region', name: '履歴' },
+    { role: 'heading', name: '履歴' },
+    { role: 'searchbox', name: '履歴を検索' },
+    { role: 'combobox', name: '履歴の並び順', value: '新しい順' },
+    { role: 'checkbox', name: 'お気に入りのみ', checked: 'false' },
+    { role: 'button', name: '履歴のsemantic証跡をお気に入りに追加' },
+    { role: 'button', name: '削除' },
+    { role: 'button', name: 'チャットへ戻る' }
+  ])
+
   await page.getByRole('button', { name: '個人設定', exact: true }).click()
   await expect(page.getByRole('region', { name: '個人設定', exact: true })).toBeVisible()
   await expectAccessibilityContract(page, testInfo, 'profile', [
@@ -73,6 +93,32 @@ test('E2E-UI-SR-SEMANTICS-001: representative views expose stable Chromium acces
     { role: 'button', name: 'サインアウト' }
   ])
 })
+
+async function installHistoryRoute(page: Page) {
+  await page.route(/http:\/\/127\.0\.0\.1:8787\/conversation-history$/, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.fallback()
+      return
+    }
+
+    await route.fulfill({
+      json: {
+        history: [{
+          schemaVersion: 1,
+          id: 'semantic-history-1',
+          title: '履歴のsemantic証跡',
+          updatedAt: '2026-08-06T00:00:00.000Z',
+          isFavorite: false,
+          messages: [{
+            role: 'user',
+            text: '支援技術向けの意味論を確認する',
+            createdAt: '2026-08-06T00:00:00.000Z'
+          }]
+        }]
+      }
+    })
+  })
+}
 
 async function signIn(page: Page) {
   await page.getByRole('textbox', { name: 'メールアドレス' }).fill('semantic-admin@example.com')
@@ -98,7 +144,8 @@ async function expectAccessibilityContract(
     const matched = nodes.some((node) => (
       node.role === expectedNode.role &&
       (expectedNode.name === undefined || node.name === expectedNode.name) &&
-      (expectedNode.value === undefined || node.value === expectedNode.value)
+      (expectedNode.value === undefined || node.value === expectedNode.value) &&
+      (expectedNode.checked === undefined || node.checked === expectedNode.checked)
     ))
     expect(matched, `missing accessibility node ${JSON.stringify(expectedNode)} in ${label}`).toBe(true)
   }
@@ -113,7 +160,8 @@ async function readAccessibilityTree(page: Page): Promise<AccessibilityContractN
       .map((node) => ({
         role: String(node.role?.value ?? ''),
         name: String(node.name?.value ?? ''),
-        value: String(node.value?.value ?? '')
+        value: String(node.value?.value ?? ''),
+        checked: String(node.properties?.find((property) => property.name === 'checked')?.value?.value ?? '')
       }))
   } finally {
     await session.detach()
