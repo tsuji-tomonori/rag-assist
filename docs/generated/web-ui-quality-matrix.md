@@ -69,7 +69,7 @@
 | favorites | AC-SQ016-008 | not_applicable | blocked | blocked | manual required scopeは未実施 |
 | benchmark | AC-SQ016-001 | pass | blocked | blocked | CI run 29516940570 / artifact 8383090126の4 viewportでroot/unresolved overflow 0。native input 1件はownerとkeyboard代替操作付きsupported_scroll。実browser zoomは未検証 |
 | benchmark | AC-SQ016-002 | pass | blocked | blocked | 実行履歴をaccessible name / focus indicator付きscroll regionへ修正し、scrollable-region-focusable blocker 0。manual keyboard journeyは未実施 |
-| benchmark | AC-SQ016-003 | blocked | blocked | blocked | axe/name-state baselineとscreen reader evidence待ち |
+| benchmark | AC-SQ016-003 | pass | blocked | blocked | required E2E-UI-SR-SEMANTICS-001でbenchmark region/heading、suite・dataset・model・concurrency controlのname/role/value、実行履歴scroll region/tableのChromium AX tree契約を検証。representative screen readerは未実施 |
 | benchmark | AC-SQ016-004 | pass | blocked | blocked | mode labelをAA muted tokenへ統一し、1280px axe serious/critical blocker 0。manual contrast reviewは未実施 |
 | benchmark | AC-SQ016-005 | pass | blocked | blocked | 4 viewportで24px minimumと44px primary targetの未解決candidate 0。manual touch evidenceは未実施 |
 | benchmark | AC-SQ016-006 | pass | blocked | blocked | 4 viewportのreduced-motion computed auditはpass。orientation / safe-area / virtual-keyboard実機は未検証 |

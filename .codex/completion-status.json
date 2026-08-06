@@ -3,46 +3,39 @@
   "status": "partially_complete",
   "requested_items": [
     "Advance GitHub Issue #345 through one bounded non-duplicative UI improvement",
-    "Synchronize current main, implementation, canonical requirements, generated documents, task, pull request, and issue evidence",
-    "Preserve keyboard, screen-reader, 320px and 400-percent, state, permission, retry, and traceability gaps without false completion",
+    "Synchronize implementation, canonical requirements, generated documents, task, pull request, and issue evidence",
+    "Preserve manual accessibility and owner-decision gaps without false completion",
     "Do not merge, deploy, release, force-push, or perform destructive changes"
   ],
   "completed_items": [
-    "Confirmed current main 0771521c and draft pull request #462 remain unchanged and converged since the previous run",
-    "Inspected Issue #345, open pull requests and issues, tasks, canonical documents, generated documents, and parallel pull request #461 scope",
-    "Selected history keyboard and semantic evidence without modifying HistoryWorkspace.tsx changed by parallel pull request #461",
-    "Added 3-pixel focus indicators for history navigation, toolbar, filter, and conversation controls",
-    "Extended required keyboard E2E with history search, sort, favorites filter, and conversation selection using native keys",
-    "Extended required Chromium accessibility-tree E2E with history name, role, value, and checked-state contracts",
-    "Kept test fixtures inside Playwright routes and did not add production mock data or fallback values",
-    "Linked history to SQ-016 acceptance criteria 002 and 003 and synchronized canonical design, machine-readable trace, quality matrix, and generated Web documents",
-    "Passed lint, Web typecheck, Web build, 446 Web unit tests, 13 trace tests, 5 semantic tests, generated-document freshness, canonical docs validation, manual evidence structure, infra inventory, hidden Unicode, OpenAPI, API code docs, and diff checks"
+    "Confirmed current main 0771521c and draft pull request #462 head 538db8dc remain unchanged and converged",
+    "Selected benchmark AC-SQ016-003 as the only remaining automated benchmark criterion and avoided production files changed by parallel pull requests #461 and #463",
+    "Extended the required Chromium accessibility-tree contract with benchmark landmarks, headings, field values, actions, scroll region, and table",
+    "Kept deterministic benchmark fixtures inside Playwright routes and did not modify production component, API, permission, or dataset behavior",
+    "Linked benchmark to SQ-016 AC-SQ016-003 and synchronized canonical design, machine-readable trace, quality matrix, and generated Web documents",
+    "Passed repository lint, Web typecheck, Web build, 446 Web unit tests, 13 trace tests, 5 semantic tests, generated-document freshness, canonical docs, OpenAPI, API code docs, manual evidence structure, infra inventory, hidden Unicode, and diff checks"
   ],
   "remaining_items": [
-    "Resolve FR-051 persistence and the profile AC-SQ016-007 N/A or state-evidence owner decision",
-    "Run approved representative-screen-reader, real-browser 200/400-percent zoom, touch, real-device, Firefox, and WebKit verification",
-    "Resolve OQ-UI-002 owner, cadence, and approved matrix decisions"
+    "Confirm the new benchmark accessibility-tree contract in final-head GitHub Actions",
+    "Record final-head CI and self-review on draft pull request #462 and Issue #345",
+    "Resolve FR-051 persistence and the profile state-evidence owner decision",
+    "Run approved representative-screen-reader, real-browser 200/400-percent zoom, touch, real-device, Firefox, and WebKit verification"
   ],
   "blocked_items": [
     "Local Chromium E2E execution is blocked because the sandbox rejects the tsx IPC listener before the API server starts",
-    "The task CLI is unavailable, so the inspected docs-check subcommands were executed directly",
-    "Representative screen-reader, real-browser zoom, touch, real-device, Firefox, and WebKit evidence has no completed execution record",
-    "API C1 branch coverage remains below the 85-percent quality target in the latest known final CI evidence"
+    "Manual accessibility evidence remains not release-ready with three blocked and one not-run check",
+    "API C1 branch coverage remains below the 85-percent quality target in the latest known CI evidence"
   ],
   "validation": [
-    { "command": "npx eslint apps/web/e2e/keyboard-navigation.spec.ts apps/web/e2e/screen-reader-semantics.spec.ts --max-warnings=0", "result": "pass" },
+    { "command": "npx eslint apps/web/e2e/screen-reader-semantics.spec.ts --max-warnings=0", "result": "pass" },
     { "command": "npm run lint", "result": "pass" },
     { "command": "npm run typecheck -w @memorag-mvp/web", "result": "pass" },
     { "command": "TZ=Asia/Tokyo npm test -w @memorag-mvp/web", "result": "pass", "note": "62 files and 446 tests passed" },
     { "command": "npm run build -w @memorag-mvp/web", "result": "pass", "note": "Existing chunk-size advisory only" },
-    { "command": "Targeted keyboard and accessibility-tree Playwright listing", "result": "pass", "note": "2 required Chromium specs listed" },
-    { "command": "Targeted history Chromium E2E execution", "result": "blocked", "note": "tsx IPC listen EPERM in the sandbox" },
-    { "command": "UI trace, semantic, canonical, generated, manual evidence, infra, hidden Unicode, OpenAPI, and API code docs checks", "result": "pass", "note": "Manual evidence structure passed but readiness remains false with three blocked and one not-run item" },
-    { "command": "git diff --check", "result": "pass" },
-    { "command": "Final-head Web UI Quality", "result": "pass", "note": "Run 31057076424; 37 of 37 required Chromium tests passed" },
-    { "command": "Final-head MemoRAG CI", "result": "pass", "note": "Run 31057076429; API C1 remains 80.48 percent and is tracked by the existing recovery task" },
-    { "command": "Final-head semver validation", "result": "pass", "note": "Run 31057076433" }
+    { "command": "Targeted accessibility-tree Playwright listing", "result": "pass", "note": "One required Chromium spec listed" },
+    { "command": "Targeted benchmark Chromium E2E execution", "result": "blocked", "note": "tsx IPC listen EPERM in the sandbox" },
+    { "command": "UI trace, semantic, canonical, generated, manual evidence, infra, hidden Unicode, OpenAPI, API code docs, and diff checks", "result": "pass" }
   ],
-  "next_action": "Collect representative screen-reader, real-browser zoom, and real-device evidence after owner and environment decisions; keep draft pull request #462 unmerged",
+  "next_action": "Publish the bounded change to draft pull request #462, verify final-head GitHub Actions, and record evidence without marking manual checks complete",
   "safe_to_continue_without_user": true
 }
