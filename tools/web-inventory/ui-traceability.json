@@ -317,7 +317,8 @@
       ],
       "requirements": [
         { "id": "FR-094", "acceptanceCriteria": ["AC-FR094-002"] },
-        { "id": "FR-095", "acceptanceCriteria": ["AC-FR095-002"] }
+        { "id": "FR-095", "acceptanceCriteria": ["AC-FR095-002"] },
+        { "id": "SQ-016", "acceptanceCriteria": ["AC-SQ016-002", "AC-SQ016-003"] }
       ],
       "verifications": [
         { "id": "E2E-VIEW-FAVORITES-001", "status": "implemented", "evidence": ["apps/web/e2e/visual-regression.spec.ts"] }

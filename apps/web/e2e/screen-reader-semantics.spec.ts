@@ -34,6 +34,7 @@ const evidenceRoles = new Set([
 
 test('E2E-UI-SR-SEMANTICS-001: representative views expose stable Chromium accessibility tree contracts @smoke @ui-quality', async ({ page }, testInfo) => {
   await installHistoryRoute(page)
+  await installFavoritesRoute(page)
   await installBenchmarkRoutes(page)
   await page.goto('/')
   await expect(page.getByRole('heading', { name: '社内QAチャットボット' })).toBeVisible()
@@ -80,6 +81,19 @@ test('E2E-UI-SR-SEMANTICS-001: representative views expose stable Chromium acces
     { role: 'checkbox', name: 'お気に入りのみ', checked: 'false' },
     { role: 'button', name: '履歴のsemantic証跡をお気に入りに追加' },
     { role: 'button', name: '削除' },
+    { role: 'button', name: 'チャットへ戻る' }
+  ])
+
+  await page.getByRole('navigation', { name: '画面' }).getByRole('button', { name: 'お気に入り' }).click()
+  await expect(page.getByRole('region', { name: 'お気に入り', exact: true })).toBeVisible()
+  await expectAccessibilityContract(page, testInfo, 'favorites', [
+    { role: 'main' },
+    { role: 'navigation', name: '画面' },
+    { role: 'region', name: 'お気に入り' },
+    { role: 'heading', name: 'お気に入り' },
+    { role: 'heading', name: '項目一覧' },
+    { role: 'heading', name: '会話' },
+    { role: 'heading', name: '文書' },
     { role: 'button', name: 'チャットへ戻る' }
   ])
 
@@ -136,6 +150,40 @@ async function installHistoryRoute(page: Page) {
             createdAt: '2026-08-06T00:00:00.000Z'
           }]
         }]
+      }
+    })
+  })
+}
+
+async function installFavoritesRoute(page: Page) {
+  await page.route(/http:\/\/127\.0\.0\.1:8787\/favorites$/, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.fallback()
+      return
+    }
+
+    await route.fulfill({
+      json: {
+        favorites: [
+          {
+            favoriteId: 'semantic-favorite-chat',
+            targetType: 'chatSession',
+            targetId: 'semantic-conversation-1',
+            label: 'お気に入りのsemantic会話',
+            accessible: true,
+            createdAt: '2026-08-08T00:00:00.000Z',
+            updatedAt: '2026-08-08T00:00:00.000Z'
+          },
+          {
+            favoriteId: 'semantic-favorite-document',
+            targetType: 'document',
+            targetId: 'semantic-document-1',
+            label: 'お気に入りのsemantic文書',
+            accessible: false,
+            createdAt: '2026-08-08T00:00:00.000Z',
+            updatedAt: '2026-08-08T00:00:00.000Z'
+          }
+        ]
       }
     })
   })

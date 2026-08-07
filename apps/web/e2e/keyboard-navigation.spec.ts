@@ -15,6 +15,12 @@ const destinations: KeyboardDestination[] = [
     region: '履歴'
   },
   {
+    label: 'お気に入り',
+    key: 'Space',
+    url: /\?view=favorites$/,
+    region: 'お気に入り'
+  },
+  {
     label: 'ドキュメント',
     key: 'Enter',
     url: /\/documents$/,
@@ -40,8 +46,9 @@ const destinations: KeyboardDestination[] = [
   }
 ]
 
-test('E2E-UI-KEYBOARD-NAV-001: primary views, history, and profile controls remain keyboard reachable @smoke @ui-quality', async ({ page }) => {
+test('E2E-UI-KEYBOARD-NAV-001: primary views, history, favorites, and profile controls remain keyboard reachable @smoke @ui-quality', async ({ page }) => {
   await installHistoryRoute(page)
+  await installFavoritesRoute(page)
   await page.goto('/')
   await keyboardSignIn(page)
 
@@ -69,6 +76,9 @@ test('E2E-UI-KEYBOARD-NAV-001: primary views, history, and profile controls rema
 
     if (destination.label === '履歴') {
       await verifyHistoryKeyboardJourney(page)
+    }
+    if (destination.label === 'お気に入り') {
+      await verifyFavoritesKeyboardJourney(page)
     }
   }
 
@@ -113,6 +123,29 @@ async function installHistoryRoute(page: Page) {
   })
 }
 
+async function installFavoritesRoute(page: Page) {
+  await page.route(/http:\/\/127\.0\.0\.1:8787\/favorites$/, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.fallback()
+      return
+    }
+
+    await route.fulfill({
+      json: {
+        favorites: [{
+          favoriteId: 'keyboard-favorite-1',
+          targetType: 'chatSession',
+          targetId: 'keyboard-conversation-1',
+          label: 'お気に入りのkeyboard証跡',
+          accessible: true,
+          createdAt: '2026-08-08T00:00:00.000Z',
+          updatedAt: '2026-08-08T00:00:00.000Z'
+        }]
+      }
+    })
+  })
+}
+
 async function verifyHistoryKeyboardJourney(page: Page) {
   const search = page.getByRole('searchbox', { name: '履歴を検索' })
   await tabTo(page, search)
@@ -138,6 +171,17 @@ async function verifyHistoryKeyboardJourney(page: Page) {
   await tabTo(page, conversation)
   await expectKeyboardFocus(conversation)
   await page.keyboard.press('Enter')
+  await expect(page.getByRole('region', { name: 'チャット', exact: true })).toBeVisible()
+}
+
+async function verifyFavoritesKeyboardJourney(page: Page) {
+  await expect(page.getByText('お気に入りのkeyboard証跡')).toBeVisible()
+
+  const backToChat = page.getByRole('button', { name: 'チャットへ戻る' })
+  await tabTo(page, backToChat)
+  await expectKeyboardFocus(backToChat)
+  await page.keyboard.press('Enter')
+  await expect(page).toHaveURL(/\/$/)
   await expect(page.getByRole('region', { name: 'チャット', exact: true })).toBeVisible()
 }
 
