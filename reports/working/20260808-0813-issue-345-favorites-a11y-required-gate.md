@@ -14,13 +14,14 @@
 - current main: `0771521cbe505d3ffeddcbe34deff89f67de8702`
 - 更新対象: Draft PR #462、Issue #345
 - open PR #461は`FavoritesWorkspace.tsx`のIcon importだけを変更し、今回のE2E・正本・matrixとは重複しない。
-- favoritesは`AC-SQ016-002` / `003`だけが画面固有の自動証跡待ちで、production componentを変更せずに閉じられるため今回の小改善に選定した。
+- favoritesは`AC-SQ016-002` / `003`だけが画面固有の自動証跡待ちで、production DOMを変更せずに閉じられるため今回の小改善に選定した。
 
 ## 3. 実施内容
 
 - `E2E-UI-KEYBOARD-NAV-001`へ、お気に入りnavigationのSpace操作、戻るbuttonへのTab到達、3px focus indicator、Enterによるチャット復帰を追加した。
 - `E2E-UI-SR-SEMANTICS-001`へ、お気に入りregion / heading、項目一覧・target type見出し、戻るbuttonのChromium AX tree契約とJSON attachmentを追加した。
-- favorite fixtureはPlaywright routeへ限定し、production component / API / permission / favorite resume / delete契約を変更していない。
+- 初回final-head CIが戻るbuttonのfocus indicator欠落（browser既定1px）を検出したため、履歴画面と共有するstyle selectorをお気に入りへ拡張し、3px outlineへ修正した。
+- favorite fixtureはPlaywright routeへ限定し、production DOM / API / permission / favorite resume / delete契約を変更していない。
 - `SQ-016`、`DES_UI_UX_001`、machine-readable trace / matrix、生成文書、E2E READMEを同じ証跡へ同期した。
 - favoritesのautomated statusだけを`pass`へ更新し、manual / overallは`blocked`を維持した。
 
@@ -51,7 +52,7 @@
 | 観点 | 評価 | 根拠 |
 | --- | --- | --- |
 | 正本・文書間整合性 | 合格 | `SQ-016`、UI正本、authored JSON、generated docsを同期 |
-| 今回のスコープ境界 | 合格 | production・API・認可・未実装journeyを明示的に除外 |
+| 今回のスコープ境界 | 合格 | focus-visible styleだけを修正し、DOM・API・認可・未実装journeyを明示的に除外 |
 | 要求品質 | 合格 | `AC-SQ016-002` / `003`と観測可能なE2Eを関連付け |
 | 技術的実現可能性 | 合格 |既存native control / landmarkとPlaywright route fixtureで実現 |
 | automated test可能性 | 条件付き | listing /静的契約はpass、Chromium実走はfinal-head CI待ち |
@@ -71,6 +72,7 @@
 - `npm run docs:web-trace:test`: pass（13 tests）。
 - `npm run test:web-semantic-ui`: pass（5 tests）。
 - canonical docs、generated inventory、OpenAPI、API code docs、manual evidence構造、infra inventory、hidden Unicode、`git diff --check`: pass。
+- 初回final-head Web UI Quality: fail（36 / 37 pass）。戻るbuttonがbrowser既定1px outlineのままであることを検出し、style selectorを修正した。
 
 ### 未実施・制約
 
@@ -91,5 +93,5 @@
 ## 7. 禁止事項と残余リスク
 
 - merge、deploy、release、force-push、破壊的変更は実施しない。
-- RAG根拠性、認可境界、benchmark dataset、API / storeを変更していない。
+- RAG根拠性、認可境界、benchmark dataset、API / store、production DOMを変更していない。
 - #461統合時はIcon import差分が残るが、今回の変更対象と競合しない。

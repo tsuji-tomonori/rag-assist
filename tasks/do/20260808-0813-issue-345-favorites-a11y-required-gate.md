@@ -27,6 +27,7 @@ keyboard-onlyでの到達・復帰と支援技術向けname / roleをrequired ga
 - `keyboard-navigation.spec.ts` は主要navigationと履歴・個人設定を検査するが、お気に入りへの到達・復帰を検査しない。
 - `screen-reader-semantics.spec.ts` はlogin / chat / documents / history / benchmark / profileを検査するが、お気に入りを含まない。
 - `favorites / AC-SQ016-002` / `003` はquality matrixで`automated: blocked`である。
+- 初回final-head CIは、戻るbuttonへのTab到達後もbrowser既定の1px outlineしか表示されず、期待する3px focus indicatorが未実装であることを検出した。
 - current `main@0771521c` とDraft PR #462 `1d085966`は前回実行後に変化していない。
 - open PR #461は`FavoritesWorkspace.tsx`のIcon importだけを変更し、今回のE2E spec・正本・matrixは変更しない。
 
@@ -43,6 +44,7 @@ keyboard-onlyでの到達・復帰と支援技術向けname / roleをrequired ga
 ### 対策と対象範囲
 
 - お気に入りへのkeyboard到達と戻るbuttonからのチャット復帰をnative keyで検証する。
+- 戻るbuttonへ履歴画面と同じ3px focus-visible styleを適用する。
 - お気に入りregion / heading / target type見出し / 戻るbuttonをChromium AX tree契約へ追加する。
 - `favorites / AC-SQ016-002` / `003`のautomatedだけを更新し、manual / overallは`blocked`を維持する。
 
@@ -56,11 +58,12 @@ required Chromium E2Eで回帰検出し、正本・machine-readable trace / matr
 - `apps/web/e2e/keyboard-navigation.spec.ts`
 - `apps/web/e2e/screen-reader-semantics.spec.ts`
 - `apps/web/e2e/README.md`
+- `apps/web/src/styles/features/history.css`
 - `REQ_SERVICE_QUALITY_016.md` / `DES_UI_UX_001.md`
 - `tools/web-inventory/ui-traceability.json` / `ui-quality-matrix.json` と生成物
 - task / report / completion status / Draft PR #462 / Issue #345
 
-production component、API、permission、favorite resume / delete機能は変更しない。fixtureはPlaywright routeだけに置く。
+production componentの構造、API、permission、favorite resume / delete機能は変更しない。検出したfocus-visible欠落だけを既存styleへ収束し、fixtureはPlaywright routeだけに置く。
 
 ## 実行計画
 
@@ -79,7 +82,7 @@ production component、API、permission、favorite resume / delete機能は変�
 ## 受け入れ条件
 
 - [x] keyboard-onlyでお気に入りへ到達し、戻るbuttonへTab到達してEnterでチャットへ復帰できる。
-- [x] 対象buttonに既存の可視3px outlineがあり、Tab focusで到達できる。
+- [x] 対象buttonに可視3px outlineを適用し、Tab focusで到達できる。
 - [x] Chromium AX treeでお気に入りregion / heading / target type見出し / 戻るbuttonのname / roleを検証する。
 - [x] test-only fixtureがproduction UI / data pathへ混入しない。
 - [x] `favorites / AC-SQ016-002` / `003`のautomatedのみを`pass`とし、manual / overallを`blocked`に維持する。
@@ -106,7 +109,7 @@ production component、API、permission、favorite resume / delete機能は変�
 
 - 未完了: favorite resume / delete journey、representative screen reader、実browser 200% / 400% zoom、touch / real device、Firefox / WebKit、`OQ-UI-002`。
 - 未完了: profileの`FR-051`永続化・保存失敗/retry/permission/N/A分類・owner判断、API C1 85%目標。
-- リスク: #461統合後にIcon import競合の解消は必要だが、本taskは`FavoritesWorkspace.tsx`を変更しない。
+- リスク: #461統合後にIcon import競合の解消は必要だが、本taskは`FavoritesWorkspace.tsx`を変更しない。style selectorだけを変更する。
 - 禁止: merge、deploy、release、force-push、破壊的変更は行わない。
 
 ## 2026-08-08 ローカル検証

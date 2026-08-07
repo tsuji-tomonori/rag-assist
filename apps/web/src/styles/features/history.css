@@ -34,7 +34,7 @@
   font-weight: 700;
 }
 
-.assignee-workspace[aria-label="履歴"] .assignee-header button:focus-visible,
+.assignee-workspace:is([aria-label="履歴"], [aria-label="お気に入り"]) .assignee-header button:focus-visible,
 .history-toolbar input:focus-visible,
 .history-toolbar select:focus-visible,
 .favorite-filter input:focus-visible,
