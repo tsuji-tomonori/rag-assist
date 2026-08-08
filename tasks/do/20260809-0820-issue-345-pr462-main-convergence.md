@@ -44,9 +44,9 @@ Draft PR #462 は UI/UX 品質証跡を継続追加しているが、最終更�
 
 ## 受け入れ条件
 
-- [ ] `origin/main@8e542b31` と PR #462 head `13d142ee` をpublished historyの書き換えなしで統合し、behind 0にする。
-- [ ] mainのFR-014/API正本・生成文書と、PR #462のSQ-016/UI正本・生成文書を一意に保持し、重複・競合・stale生成物がない。
-- [ ] Web lint / typecheck / unit / build、UI trace / semantic、required Playwright解決、canonical/generated docs check、main追加分のtargeted API testが成功する。
+- [x] `origin/main@8e542b31` と PR #462 head `13d142ee` をpublished historyの書き換えなしで統合し、behind 0にする。
+- [x] mainのFR-014/API正本・生成文書と、PR #462のSQ-016/UI正本・生成文書を一意に保持し、重複・競合・stale生成物がない。
+- [x] Web lint / typecheck / unit / build、UI trace / semantic、required Playwright解決、canonical/generated docs check、main追加分のtargeted API testが成功する。
 - [ ] final headのWeb UI Quality、MemoRAG CI、semver検査を確認し、失敗・未実行を完了扱いにしない。
 - [ ] Draft PR本文、日本語の受け入れ条件・セルフレビュー、Issue #345、作業レポートを最新結果へ同期する。
 - [ ] representative screen reader、実browser 200%/400% zoom、touch/実機、Firefox/WebKit、FR-051 owner判断、API C1を未完了として維持する。
@@ -68,3 +68,20 @@ Draft PR #462 は UI/UX 品質証跡を継続追加しているが、最終更�
 - 長期stackのため、path競合がなくても正本と生成物の意味的driftが残る可能性がある。
 - final-head CIはAPI coverage thresholdを含み、既存C1不足が再発する可能性がある。
 - automated AX/viewport evidenceはmanual screen reader・実browser zoom・実機証跡を代替しない。
+
+## 2026-08-09 実施結果
+
+- task開始commit `716ca608` の後、merge commit `05593dc6` で `origin/main@8e542b31` と PR #462 head `13d142ee` を2-parent mergeした。競合はなく、local比較は behind 0 / ahead 43。
+- main追加分とPR固有差分の同一pathは0件。FR-014/API正本・生成文書とSQ-016/UI正本・生成文書をともに保持した。
+- `npm ci` は初回、既定cache `/root/.npm` を作成できず停止した。workspace外の権限拡張は行わず、`NPM_CONFIG_CACHE=/tmp/rag-assist-npm-cache npm ci` でlockfileどおり504 packagesを配置した。
+- `npm run lint`: pass。
+- `npm run typecheck -w @memorag-mvp/web`: pass。
+- `TZ=Asia/Tokyo npm test -w @memorag-mvp/web`: 62 files / 446 tests pass。
+- `npm run build -w @memorag-mvp/web`: pass。既存の500 kB超chunk warningは残るがbuild failureではない。
+- main追加分の `graph.test.ts` / `node-units.test.ts`: 77 tests pass。
+- UI trace / matrix: 13 tests pass。semantic UI: 5 tests pass。
+- required Playwright: Chromium 9 files / 37 testsへの解決を `--list` で確認。実browser実行はfinal-head Web UI Qualityへ委ね、ローカル実行済みとは扱わない。
+- canonical docs、OpenAPI、API code 98 APIs / 588 documents、manual evidence contract、Web inventory / quality matrix、infra inventory、hidden Unicode、`git diff --check`: pass。
+- task/report対象のpre-commit: pass。CLIと既定cacheが未配置だったため、`uvx`と`/tmp`配下のtool/cacheを使用し、権限拡張は行っていない。
+- manual evidenceは `pass=0 / blocked=3 / not_run=1 / ready=false`。代表screen reader、実browser zoom、touch/実機を未完了のまま保持した。
+- final-head GitHub Actions、PR/Issue更新はこのtaskの後続手順であり、完了前はtaskを`do`、PRをDraftに維持する。
