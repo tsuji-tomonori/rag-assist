@@ -1,6 +1,6 @@
 # Open PR のマージ可否確認とマージ実行
 
-- 状態: do
+- 状態: done
 - タスク種別: 調査
 - 作成日: 2026-08-08
 - ブランチ: `codex/pr-merge-audit-20260808`
@@ -50,8 +50,17 @@ repository の open PR について、ドラフト、競合、CI、レビュー�
 - [ ] マージ条件を満たす PR が exact head SHA 指定でマージされている。
 - [ ] マージしない PR の理由と次の action が記録されている。
 - [ ] 各マージ後の main と残 open PR の状態が再確認されている。
-- [ ] 作業レポート、検証結果、GitHub Apps 操作、未実施事項が記録されている。
-- [ ] 監査記録 PR に受け入れ条件コメントとセルフレビューコメントが日本語で投稿されている。
+- [x] 作業レポート、検証結果、GitHub Apps 操作、未実施事項が記録されている。
+- [x] 監査記録 PR に受け入れ条件コメントとセルフレビューコメントが日本語で投稿されている。
+
+## 監査記録 PR
+
+- PR: `#469` https://github.com/tsuji-tomonori/rag-assist/pull/469
+- content head: `61cf5ff3f4b6cccc3ac39d7133c11a475499d781`
+- semver label: `semver:patch`
+- 受け入れ条件コメント: `5224004851`
+- セルフレビューコメント: `5224004898`
+- task done 更新は同じ PR branch へ追加 commit として push する。
 
 ## 検証計画
 

@@ -5,7 +5,7 @@
 - 対象 branch: `codex/pr-merge-audit-20260808`
 - 調査開始時 main: `0771521cbe505d3ffeddcbe34deff89f67de8702`
 - マージ後 main: `7e00dce8411a768927032ef7848a445621c564d0`
-- 状態: `#467` マージ済み。残る 7 PR は全件 Draft / mergeable false
+- 状態: `#467` マージ済み。残る 7 PR は全件 Draft / mergeable false。監査記録 PR `#469` 作成・コメント完了
 
 ## 1. 受けた指示
 
@@ -83,7 +83,7 @@
 | 成果物 | 形式 | 内容 | 指示との対応 |
 | --- | --- | --- | --- |
 | PR `#467` merge commit `7e00dce8` | GitHub merge | merge-ready PR の取り込み | R4 |
-| `tasks/do/20260808-1057-open-pr-merge-audit.md` | Markdown | 計画、受け入れ条件、監査結果 | R1-R6 |
+| `tasks/done/20260808-1057-open-pr-merge-audit.md` | Markdown | 計画、受け入れ条件、監査結果 | R1-R6 |
 | `reports/working/20260808-1101-open-pr-merge-audit.md` | Markdown | PR 判定とマージ証跡 | R1-R6 |
 
 README、REQ/ARC/DES/OPS は更新していない。本タスク固有の production behavior 変更はなく、`#467` 側で必要な FR-014 正文と生成文書が同期済みのためである。
@@ -108,3 +108,13 @@ README、REQ/ARC/DES/OPS は更新していない。本タスク固有の produc
 - `#462` は CI green だが本文に未完了の manual evidence と owner 判断があり、Draft を解除していない。
 - `#460` は `#467` と FR-014 が重複するため、再収束時に focused patch を二重取り込みしない確認が必要である。
 - branch delete、PR close、deploy、release は実施していない。
+
+## 10. 監査記録 PR
+
+- PR: `#469` https://github.com/tsuji-tomonori/rag-assist/pull/469
+- content head: `61cf5ff3f4b6cccc3ac39d7133c11a475499d781`
+- label: `semver:patch`
+- 受け入れ条件コメント: `5224004851`
+- セルフレビューコメント: `5224004898`
+- PR 作成時点の変更は task/report の2ファイルのみで、blocking / should fix はなしと判定した。
+- task done 更新を同じ branch へ push 後、final-head GitHub Actions を確認する。
