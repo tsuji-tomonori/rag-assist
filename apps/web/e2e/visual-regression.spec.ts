@@ -1116,7 +1116,126 @@ test('E2E-UI-ROUTE-002: denied・invalid deep link は protected fetch なしで
   await expect(page).toHaveURL(/\?view=history$/)
 })
 
-test('E2E-UI-STATE-001: loading・500・empty・retry recovery を対象 region で区別する @smoke', async ({ page }) => {
+test('E2E-UI-STATE-001: chat は初期案内・処理中・SSE timeout・Last-Event-ID retry・回答回復を区別する @smoke @ui-quality', async ({ page }) => {
+  let eventReads = 0
+  let retryLastEventId: string | undefined
+  let releaseRetry: (() => void) | undefined
+  const retryGate = new Promise<void>((resolve) => { releaseRetry = resolve })
+
+  await page.route(/http:\/\/(api\.visual\.test|127\.0\.0\.1:8787)\/rpc\/chat\/startRun$/, async (route) => {
+    await route.fulfill({
+      json: {
+        json: {
+          runId: 'chat-state-run',
+          status: 'queued',
+          eventsPath: '/chat-runs/chat-state-run/events'
+        }
+      }
+    })
+  })
+  await page.route(/http:\/\/(api\.visual\.test|127\.0\.0\.1:8787)\/chat-runs\/chat-state-run\/events$/, async (route) => {
+    eventReads += 1
+    if (eventReads === 1) {
+      await route.fulfill({
+        contentType: 'text/event-stream',
+        body: 'id: 3\nevent: timeout\ndata: {"message":"stream timeout"}\n\n'
+      })
+      return
+    }
+
+    retryLastEventId = route.request().headers()['last-event-id']
+    await retryGate
+    await route.fulfill({
+      contentType: 'text/event-stream',
+      body: 'id: 4\nevent: final\ndata: {"answer":"再接続後の回答です。","isAnswerable":true,"citations":[],"retrieved":[]}\n\n'
+    })
+  })
+
+  await signIn(page)
+  const chat = page.getByRole('region', { name: 'チャット', exact: true })
+  await expect(chat.getByRole('region', { name: 'チャット開始' })).toBeVisible()
+  await expect(chat.getByRole('heading', { name: '何を確認しますか？' })).toBeVisible()
+
+  await chat.getByRole('textbox', { name: '質問' }).fill('長い処理を確認して')
+  await chat.getByRole('button', { name: '質問を送信' }).click()
+  await expect(chat.locator('.processing-row')).toContainText('回答を生成中')
+  await expect(chat.getByRole('button', { name: '質問を送信' })).toBeDisabled()
+  await expect(chat.locator('.processing-row')).toContainText('処理が続いています。再接続しています')
+
+  expect(eventReads).toBe(2)
+  expect(retryLastEventId).toBe('3')
+  releaseRetry?.()
+
+  await expect(chat.getByText('再接続後の回答です。')).toBeVisible()
+  await expect(chat.locator('.processing-row')).toHaveCount(0)
+  await expect(chat.getByRole('textbox', { name: '質問' })).toBeEnabled()
+})
+
+test('E2E-UI-STATE-001: chat HTTP 500 は安全なerrorを表示しprivate detailを隠す @smoke @ui-quality', async ({ page }) => {
+  const privateDetail = 'RequestId: private-chat-request at InternalChatService.run()'
+  await page.route(/http:\/\/(api\.visual\.test|127\.0\.0\.1:8787)\/rpc\/chat\/startRun$/, async (route) => {
+    await route.fulfill({ status: 500, contentType: 'text/plain', body: privateDetail })
+  })
+
+  await signIn(page)
+  const chat = page.getByRole('region', { name: 'チャット', exact: true })
+  await chat.getByRole('textbox', { name: '質問' }).fill('失敗時の表示を確認して')
+  await chat.getByRole('button', { name: '質問を送信' }).click()
+
+  const error = page.locator('[data-state-target="chat"][data-state-kind="error"]')
+  await expect(error).toHaveAttribute('role', 'alert')
+  await expect(error).toContainText('処理を完了できませんでした')
+  await expect(error).not.toContainText(privateDetail)
+  await expect(chat.getByText('private-chat-request')).toHaveCount(0)
+})
+
+test('E2E-UI-STATE-001: chat:create 不足は権限案内を表示し送信requestを発行しない @smoke @ui-quality', async ({ page }) => {
+  await installCurrentUserPermissions(page, ['chat:read:own'])
+  const chatStarts: string[] = []
+  page.on('request', (request) => {
+    if (new URL(request.url()).pathname === '/rpc/chat/startRun') chatStarts.push(request.method())
+  })
+
+  await signIn(page)
+  const chat = page.getByRole('region', { name: 'チャット', exact: true })
+  await expect(chat.getByRole('alert')).toContainText('質問を送信する権限がありません')
+  await expect(chat.getByRole('button', { name: '質問を送信' })).toBeDisabled()
+
+  const question = chat.getByRole('textbox', { name: '質問' })
+  await question.fill('権限なしでは送信しない')
+  await question.press('Enter')
+  await expect(chat.getByRole('button', { name: '質問を送信' })).toBeDisabled()
+  expect(chatStarts).toEqual([])
+})
+
+test('E2E-UI-STATE-001: profile はsession scopeと変更結果を通知し画面往復で値を維持する @smoke @ui-quality', async ({ page }) => {
+  await signIn(page)
+  await page.getByRole('button', { name: '個人設定', exact: true }).click()
+
+  let profile = page.getByRole('region', { name: '個人設定', exact: true })
+  const shortcut = profile.getByRole('combobox', { name: '送信キー' })
+  await expect(shortcut).toHaveAccessibleDescription(/現在のサインイン中だけ有効です。再読み込みまたは再サインインすると/)
+  await expect(shortcut).toHaveValue('enter')
+
+  await shortcut.selectOption('ctrlEnter')
+  const status = profile.getByRole('status')
+  await expect(status).toContainText('送信キーを「Ctrl+Enterで送信」に変更しました')
+  await expect(status).toContainText('現在のサインイン中だけ有効です')
+
+  await profile.getByRole('button', { name: 'チャットへ戻る' }).click()
+  await expect(page.getByRole('region', { name: 'チャット', exact: true })).toBeVisible()
+  await page.getByRole('button', { name: '個人設定', exact: true }).click()
+
+  profile = page.getByRole('region', { name: '個人設定', exact: true })
+  await expect(profile.getByRole('combobox', { name: '送信キー' })).toHaveValue('ctrlEnter')
+  await expect(profile.getByRole('status')).toHaveCount(0)
+
+  await page.reload()
+  profile = page.getByRole('region', { name: '個人設定', exact: true })
+  await expect(profile.getByRole('combobox', { name: '送信キー' })).toHaveValue('enter')
+})
+
+test('E2E-UI-STATE-001: loading・500・empty・retry recovery を対象 region で区別する @smoke @ui-quality', async ({ page }) => {
   let historyReads = 0
   let releaseFirstRead: (() => void) | undefined
   const firstReadGate = new Promise<void>((resolve) => { releaseFirstRead = resolve })
@@ -1155,7 +1274,7 @@ test('E2E-UI-STATE-001: loading・500・empty・retry recovery を対象 region 
   expect(historyReads).toBe(2)
 })
 
-test('E2E-UI-STATE-001: HTTP 403 は empty/zero ではなく permission denied として content を隠す @smoke', async ({ page }) => {
+test('E2E-UI-STATE-001: HTTP 403 は empty/zero ではなく permission denied として content を隠す @smoke @ui-quality', async ({ page }) => {
   await page.route(/http:\/\/(api\.visual\.test|127\.0\.0\.1:8787)\/conversation-history$/, async (route) => {
     if (route.request().method() === 'GET') {
       await route.fulfill({ status: 403, contentType: 'text/plain', body: 'forbidden private history id' })
@@ -1175,7 +1294,318 @@ test('E2E-UI-STATE-001: HTTP 403 は empty/zero ではなく permission denied �
   await expect(page.locator('#history-resource-region')).not.toContainText('条件に一致する履歴はありません')
 })
 
-test('E2E-UI-STATE-001: admin partial success は成功・失敗 part を分けて retry recovery する @smoke', async ({ page }) => {
+test('E2E-UI-STATE-001: favorites loading・500・empty・retry recovery は未確認の zero を表示しない @smoke @ui-quality', async ({ page }) => {
+  let favoritesReads = 0
+  let releaseFirstRead: (() => void) | undefined
+  const firstReadGate = new Promise<void>((resolve) => { releaseFirstRead = resolve })
+  await page.route(/http:\/\/(api\.visual\.test|127\.0\.0\.1:8787)\/favorites$/, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.fallback()
+      return
+    }
+    favoritesReads += 1
+    if (favoritesReads === 1) {
+      await firstReadGate
+      await route.fulfill({ status: 500, contentType: 'text/plain', body: 'RequestId: private-favorite-id at FavoriteStore (/srv/favorites.ts:12)' })
+      return
+    }
+    await route.fulfill({ json: { favorites: [] } })
+  })
+
+  await signIn(page)
+  await page.getByTitle('お気に入り').click()
+  const favoritesRegion = page.getByRole('region', { name: 'お気に入り', exact: true })
+  const dataRegion = page.locator('#favorites-resource-region')
+  await expect(dataRegion).toHaveAttribute('aria-busy', 'true')
+  await expect(favoritesRegion).toContainText('お気に入りを読み込んでいます')
+  await expect(favoritesRegion).toContainText('お気に入りを確認中')
+  await expect(favoritesRegion).not.toContainText('0 件のショートカット')
+  await expect(dataRegion).not.toContainText('お気に入りはありません。')
+
+  releaseFirstRead?.()
+  const errorState = favoritesRegion.locator('[data-state-kind="error"]')
+  await expect(errorState).toContainText('お気に入りを取得できませんでした')
+  await expect(errorState).not.toContainText('private-favorite-id')
+  await expect(favoritesRegion).not.toContainText('0 件のショートカット')
+  await expect(dataRegion).not.toContainText('お気に入りはありません。')
+
+  await errorState.getByRole('button', { name: '再試行' }).click()
+  await expect(favoritesRegion.locator('[data-state-kind="recovered"]')).toContainText('お気に入りを更新しました')
+  await expect(favoritesRegion).toContainText('お気に入りはありません。')
+  await expect(favoritesRegion).toContainText('0 件のショートカット')
+  expect(favoritesReads).toBe(2)
+})
+
+test('E2E-UI-STATE-001: favorites HTTP 403 は empty/zero ではなく permission denied として content を隠す @smoke @ui-quality', async ({ page }) => {
+  await page.route(/http:\/\/(api\.visual\.test|127\.0\.0\.1:8787)\/favorites$/, async (route) => {
+    if (route.request().method() === 'GET') {
+      await route.fulfill({ status: 403, contentType: 'text/plain', body: 'forbidden private favorite id' })
+      return
+    }
+    await route.fallback()
+  })
+
+  await signIn(page)
+  await page.getByTitle('お気に入り').click()
+  const favoritesRegion = page.getByRole('region', { name: 'お気に入り', exact: true })
+  const permissionState = favoritesRegion.locator('[data-state-kind="permission"]')
+  await expect(permissionState).toHaveAttribute('role', 'alert')
+  await expect(permissionState).toContainText('お気に入りを表示できません')
+  await expect(permissionState).not.toContainText('private favorite id')
+  await expect(favoritesRegion).not.toContainText('0 件のショートカット')
+  await expect(page.locator('#favorites-resource-region')).not.toContainText('お気に入りはありません。')
+})
+
+test('E2E-UI-STATE-001: assignee loading・500・empty・retry recovery は未確認の zero と kanban を表示しない @smoke @ui-quality', async ({ page }) => {
+  let questionReads = 0
+  let releaseFirstRead: (() => void) | undefined
+  const firstReadGate = new Promise<void>((resolve) => { releaseFirstRead = resolve })
+  await page.route(/http:\/\/(api\.visual\.test|127\.0\.0\.1:8787)\/questions$/, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.fallback()
+      return
+    }
+    questionReads += 1
+    if (questionReads === 1) {
+      await firstReadGate
+      await route.fulfill({ status: 500, contentType: 'text/plain', body: 'RequestId: private-question-id at QuestionStore (/srv/questions.ts:18)' })
+      return
+    }
+    await route.fulfill({ json: { questions: [] } })
+  })
+
+  await signIn(page)
+  await page.getByTitle('担当者対応').click()
+  const assigneeRegion = page.getByRole('region', { name: '担当者対応', exact: true })
+  const dataRegion = page.locator('#assignee-resource-region')
+  await expect(dataRegion).toHaveAttribute('aria-busy', 'true')
+  await expect(assigneeRegion).toContainText('担当者対応を読み込んでいます')
+  await expect(assigneeRegion).toContainText('問い合わせを確認中')
+  await expect(assigneeRegion).not.toContainText('0 件が対応待ち')
+  await expect(dataRegion).not.toContainText('担当者へ送信された質問はまだありません。')
+  await expect(dataRegion.locator('.assignee-kanban')).toHaveCount(0)
+
+  releaseFirstRead?.()
+  const errorState = assigneeRegion.locator('[data-state-kind="error"]')
+  await expect(errorState).toContainText('担当者対応を取得できませんでした')
+  await expect(errorState).not.toContainText('private-question-id')
+  await expect(assigneeRegion).not.toContainText('0 件が対応待ち')
+  await expect(dataRegion).not.toContainText('担当者へ送信された質問はまだありません。')
+  await expect(dataRegion.locator('.assignee-kanban')).toHaveCount(0)
+
+  await errorState.getByRole('button', { name: '再試行' }).click()
+  await expect(assigneeRegion.locator('[data-state-kind="recovered"]')).toContainText('担当者対応を更新しました')
+  await expect(assigneeRegion).toContainText('担当者へ送信された質問はまだありません。')
+  await expect(assigneeRegion).toContainText('0 件が対応待ち')
+  await expect(dataRegion.locator('.assignee-kanban')).toHaveCount(0)
+  expect(questionReads).toBe(2)
+})
+
+test('E2E-UI-STATE-001: assignee HTTP 403 は empty/zero ではなく permission denied として content を隠す @smoke @ui-quality', async ({ page }) => {
+  await page.route(/http:\/\/(api\.visual\.test|127\.0\.0\.1:8787)\/questions$/, async (route) => {
+    if (route.request().method() === 'GET') {
+      await route.fulfill({ status: 403, contentType: 'text/plain', body: 'forbidden private question id' })
+      return
+    }
+    await route.fallback()
+  })
+
+  await signIn(page)
+  await page.getByTitle('担当者対応').click()
+  const assigneeRegion = page.getByRole('region', { name: '担当者対応', exact: true })
+  const dataRegion = page.locator('#assignee-resource-region')
+  const permissionState = assigneeRegion.locator('[data-state-kind="permission"]')
+  await expect(permissionState).toHaveAttribute('role', 'alert')
+  await expect(permissionState).toContainText('担当者対応を表示できません')
+  await expect(permissionState).not.toContainText('private question id')
+  await expect(permissionState.getByRole('button', { name: '戻る' })).toBeVisible()
+  await expect(assigneeRegion).not.toContainText('0 件が対応待ち')
+  await expect(dataRegion).not.toContainText('担当者へ送信された質問はまだありません。')
+  await expect(dataRegion.locator('.assignee-kanban')).toHaveCount(0)
+})
+
+test('E2E-UI-STATE-001: documents loading・partial・retry recovery は未確認の catalog を zero として表示しない @smoke @ui-quality', async ({ page }) => {
+  let documentReads = 0
+  let groupReads = 0
+  let migrationReads = 0
+  let releaseFirstDocumentRead: (() => void) | undefined
+  let releaseRetryDocumentRead: (() => void) | undefined
+  const firstDocumentReadGate = new Promise<void>((resolve) => { releaseFirstDocumentRead = resolve })
+  const retryDocumentReadGate = new Promise<void>((resolve) => { releaseRetryDocumentRead = resolve })
+
+  await page.route(/http:\/\/(api\.visual\.test|127\.0\.0\.1:8787)\/documents$/, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.fallback()
+      return
+    }
+    documentReads += 1
+    if (documentReads === 1) {
+      await firstDocumentReadGate
+      await route.fulfill({ status: 500, contentType: 'text/plain', body: 'RequestId: private-document-id at DocumentStore (/srv/documents.ts:24)' })
+      return
+    }
+    await retryDocumentReadGate
+    await route.fulfill({ json: { documents: [] } })
+  })
+  await page.route(/http:\/\/(api\.visual\.test|127\.0\.0\.1:8787)\/document-groups$/, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.fallback()
+      return
+    }
+    groupReads += 1
+    await route.fulfill({ json: { groups: [] } })
+  })
+  await page.route(/http:\/\/(api\.visual\.test|127\.0\.0\.1:8787)\/documents\/reindex-migrations$/, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.fallback()
+      return
+    }
+    migrationReads += 1
+    await route.fulfill({ json: { migrations: [] } })
+  })
+
+  await signIn(page)
+  await page.getByTitle('ドキュメント').click()
+  const documentsRegion = page.getByRole('region', { name: 'ドキュメント管理', exact: true })
+  const dataRegion = page.locator('#documents-resource-region')
+  await expect(dataRegion).toHaveAttribute('aria-busy', 'true')
+  await expect(documentsRegion).toContainText('文書ワークスペースを読み込んでいます')
+  await expect(dataRegion.locator('.document-file-panel')).toHaveCount(0)
+  await expect(dataRegion).not.toContainText('0 / 0 件を表示')
+  await expect(dataRegion).not.toContainText('ドキュメントを登録しましょう')
+
+  releaseFirstDocumentRead?.()
+  const partialState = documentsRegion.locator('[data-state-kind="partial"]')
+  await expect(partialState).toContainText('文書ワークスペースの一部を取得できませんでした')
+  await expect(partialState).toContainText('取得済み')
+  await expect(partialState).toContainText('再インデックス履歴')
+  await expect(partialState).toContainText('未更新')
+  await expect(partialState).toContainText('文書とフォルダ')
+  await expect(partialState).not.toContainText('private-document-id')
+  await expect(dataRegion.locator('.document-file-panel')).toHaveCount(0)
+  await expect(dataRegion).not.toContainText('0 / 0 件を表示')
+  await expect(dataRegion).not.toContainText('ドキュメントを登録しましょう')
+
+  await partialState.getByRole('button', { name: '失敗した項目を再試行' }).click()
+  await expect(dataRegion).toHaveAttribute('aria-busy', 'true')
+  await expect(documentsRegion.locator('[data-state-kind="retrying"]')).toContainText('文書ワークスペースを再試行しています')
+  await expect(dataRegion.locator('.document-file-panel')).toHaveCount(0)
+
+  releaseRetryDocumentRead?.()
+  await expect(documentsRegion.locator('[data-state-kind="recovered"]')).toContainText('文書ワークスペースを更新しました')
+  await expect(dataRegion.getByRole('region', { name: '登録文書一覧' })).toBeVisible()
+  await expect(dataRegion).toContainText('ドキュメントを登録しましょう')
+  await expect(dataRegion).toContainText('0 件（対象内 0 件）')
+  await expect(dataRegion).toContainText('0 / 0 件を表示（全体 0 件）')
+  expect(documentReads).toBe(2)
+  expect(groupReads).toBe(2)
+  expect(migrationReads).toBe(2)
+})
+
+test('E2E-UI-STATE-001: documents全resourceのHTTP 403は empty/zero ではなくpermission deniedとしてcontentを隠す @smoke @ui-quality', async ({ page }) => {
+  await page.route(/http:\/\/(api\.visual\.test|127\.0\.0\.1:8787)\/(?:documents|document-groups|documents\/reindex-migrations)$/, async (route) => {
+    if (route.request().method() === 'GET') {
+      await route.fulfill({ status: 403, contentType: 'text/plain', body: 'forbidden private document principal' })
+      return
+    }
+    await route.fallback()
+  })
+
+  await signIn(page)
+  await page.getByTitle('ドキュメント').click()
+  const documentsRegion = page.getByRole('region', { name: 'ドキュメント管理', exact: true })
+  const dataRegion = page.locator('#documents-resource-region')
+  const permissionState = documentsRegion.locator('[data-state-kind="permission"]')
+  await expect(permissionState).toHaveAttribute('role', 'alert')
+  await expect(permissionState).toContainText('文書ワークスペースを表示できません')
+  await expect(permissionState).not.toContainText('private document principal')
+  await expect(permissionState.getByRole('button', { name: '戻る' })).toBeVisible()
+  await expect(dataRegion.locator('.document-file-panel')).toHaveCount(0)
+  await expect(dataRegion).not.toContainText('0 / 0 件を表示')
+  await expect(dataRegion).not.toContainText('ドキュメントを登録しましょう')
+})
+
+test('E2E-UI-STATE-001: benchmark loading・partial・retry recovery は失敗 part を zero として表示しない @smoke @ui-quality', async ({ page }) => {
+  let runReads = 0
+  let suiteReads = 0
+  let releaseFirstRunRead: (() => void) | undefined
+  const firstRunReadGate = new Promise<void>((resolve) => { releaseFirstRunRead = resolve })
+  await page.route(/http:\/\/(api\.visual\.test|127\.0\.0\.1:8787)\/benchmark-runs$/, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.fallback()
+      return
+    }
+    runReads += 1
+    if (runReads === 1) {
+      await firstRunReadGate
+      await route.fulfill({ status: 500, contentType: 'text/plain', body: 'RequestId: private-benchmark-run at BenchmarkStore (/srv/benchmark.ts:14)' })
+      return
+    }
+    await route.fulfill({ json: { benchmarkRuns: [] } })
+  })
+  await page.route(/http:\/\/(api\.visual\.test|127\.0\.0\.1:8787)\/benchmark-suites$/, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.fallback()
+      return
+    }
+    suiteReads += 1
+    await route.fulfill({ json: { suites: [{ suiteId: 'standard-agent-v1', label: 'Agent standard', mode: 'agent', datasetS3Key: 'datasets/agent/standard-v1.jsonl', preset: 'standard', defaultConcurrency: 1 }] } })
+  })
+
+  await signIn(page)
+  await page.getByTitle('性能テスト').click()
+  const benchmarkRegion = page.getByRole('region', { name: '性能テスト', exact: true })
+  const dataRegion = page.locator('#benchmark-resource-region')
+  await expect(dataRegion).toHaveAttribute('aria-busy', 'true')
+  await expect(benchmarkRegion).toContainText('性能テストを読み込んでいます')
+  await expect(benchmarkRegion).toContainText('実行履歴を確認中')
+  await expect(benchmarkRegion).not.toContainText('件の実行履歴')
+  await expect(benchmarkRegion.getByRole('region', { name: /性能テスト実行履歴/ })).toHaveCount(0)
+
+  releaseFirstRunRead?.()
+  const partialState = benchmarkRegion.locator('[data-state-kind="partial"]')
+  await expect(partialState).toContainText('性能テストの一部を取得できませんでした')
+  await expect(partialState).toContainText('取得済み')
+  await expect(partialState).toContainText('テスト定義')
+  await expect(partialState).toContainText('未更新')
+  await expect(partialState).toContainText('実行履歴')
+  await expect(partialState).not.toContainText('private-benchmark-run')
+  await expect(benchmarkRegion).toContainText('Agent standard')
+  await expect(benchmarkRegion).not.toContainText('件の実行履歴')
+  await expect(benchmarkRegion.getByRole('region', { name: /性能テスト実行履歴/ })).toHaveCount(0)
+
+  await partialState.getByRole('button', { name: '失敗した項目を再試行' }).click()
+  await expect(benchmarkRegion.locator('[data-state-kind="recovered"]')).toContainText('性能テストを更新しました')
+  await expect(benchmarkRegion).toContainText('0 件の実行履歴')
+  await expect(benchmarkRegion).toContainText('実行履歴はまだありません。')
+  await expect(benchmarkRegion.getByRole('region', { name: /性能テスト実行履歴/ })).toBeVisible()
+  expect(runReads).toBe(2)
+  expect(suiteReads).toBe(2)
+})
+
+test('E2E-UI-STATE-001: benchmark HTTP 403 は empty/zero ではなく permission denied として content を隠す @smoke @ui-quality', async ({ page }) => {
+  await page.route(/http:\/\/(api\.visual\.test|127\.0\.0\.1:8787)\/benchmark-(runs|suites)$/, async (route) => {
+    if (route.request().method() === 'GET') {
+      await route.fulfill({ status: 403, contentType: 'text/plain', body: 'forbidden private benchmark configuration' })
+      return
+    }
+    await route.fallback()
+  })
+
+  await signIn(page)
+  await page.getByTitle('性能テスト').click()
+  const benchmarkRegion = page.getByRole('region', { name: '性能テスト', exact: true })
+  const permissionState = benchmarkRegion.locator('[data-state-kind="permission"]')
+  await expect(permissionState).toHaveAttribute('role', 'alert')
+  await expect(permissionState).toContainText('性能テストを表示できません')
+  await expect(permissionState).not.toContainText('private benchmark configuration')
+  await expect(benchmarkRegion).not.toContainText('件の実行履歴')
+  await expect(benchmarkRegion).not.toContainText('Agent standard')
+  await expect(benchmarkRegion.getByRole('region', { name: /性能テスト実行履歴/ })).toHaveCount(0)
+  await expect(permissionState.getByRole('button', { name: '戻る' })).toBeVisible()
+})
+
+test('E2E-UI-STATE-001: admin partial success は成功・失敗 part を分けて retry recovery する @smoke @ui-quality', async ({ page }) => {
   let auditReads = 0
   await page.route(/http:\/\/(api\.visual\.test|127\.0\.0\.1:8787)\/admin\/audit-log(?:\?.*)?$/, async (route) => {
     auditReads += 1
@@ -1202,7 +1632,7 @@ test('E2E-UI-STATE-001: admin partial success は成功・失敗 part を分け�
   expect(auditReads).toBe(2)
 })
 
-test('E2E-UI-STATE-001: refresh failure は as-of/source 付き stale data を保持して回復する @smoke', async ({ page }) => {
+test('E2E-UI-STATE-001: refresh failure は as-of/source 付き stale data を保持して回復する @smoke @ui-quality', async ({ page }) => {
   let failNextUserRefresh = false
   await page.route(/http:\/\/(api\.visual\.test|127\.0\.0\.1:8787)\/admin\/(users|roles|audit-log|usage|costs)(?:\?.*)?$/, async (route) => {
     const path = new URL(route.request().url()).pathname

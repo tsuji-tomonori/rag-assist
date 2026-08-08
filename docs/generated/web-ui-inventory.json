@@ -329,6 +329,13 @@
               "AC-FR096-001",
               "AC-FR096-003"
             ]
+          },
+          {
+            "id": "SQ-016",
+            "acceptanceCriteria": [
+              "AC-SQ016-002",
+              "AC-SQ016-003"
+            ]
           }
         ],
         "verifications": [
@@ -395,6 +402,13 @@
             "id": "FR-095",
             "acceptanceCriteria": [
               "AC-FR095-002"
+            ]
+          },
+          {
+            "id": "SQ-016",
+            "acceptanceCriteria": [
+              "AC-SQ016-002",
+              "AC-SQ016-003"
             ]
           }
         ],
@@ -469,6 +483,12 @@
             "acceptanceCriteria": [
               "AC-FR096-002",
               "AC-FR096-004"
+            ]
+          },
+          {
+            "id": "SQ-016",
+            "acceptanceCriteria": [
+              "AC-SQ016-003"
             ]
           }
         ],
@@ -780,7 +800,7 @@
         "profile"
       ],
       "componentCount": 7,
-      "interactionCount": 15
+      "interactionCount": 16
     },
     {
       "feature": "auth",
@@ -899,6 +919,7 @@
         "RailNav",
         "ResourceStatePanel",
         "TopBar",
+        "a",
         "div",
         "main"
       ],
@@ -921,8 +942,10 @@
         "header",
         "label",
         "option",
+        "p",
         "section",
         "select",
+        "small",
         "span"
       ],
       "certainty": "confirmed"
@@ -2181,9 +2204,31 @@
   ],
   "interactions": [
     {
-      "id": "apps/web/src/app/components/PersonalSettingsView.tsx:25:button",
+      "id": "apps/web/src/app/AppShell.tsx:13:a",
+      "file": "apps/web/src/app/AppShell.tsx",
+      "line": 13,
+      "feature": "app",
+      "component": "AppShell",
+      "element": "a",
+      "isIntrinsic": true,
+      "label": "メインコンテンツへ移動",
+      "a11y": {
+        "accessibleName": "メインコンテンツへ移動",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/app/components/PersonalSettingsView.tsx:38:button",
       "file": "apps/web/src/app/components/PersonalSettingsView.tsx",
-      "line": 25,
+      "line": 38,
       "feature": "app",
       "component": "PersonalSettingsView",
       "element": "button",
@@ -2217,16 +2262,16 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/app/components/PersonalSettingsView.tsx:35:label",
+      "id": "apps/web/src/app/components/PersonalSettingsView.tsx:49:label",
       "file": "apps/web/src/app/components/PersonalSettingsView.tsx",
-      "line": 35,
+      "line": 49,
       "feature": "app",
       "component": "PersonalSettingsView",
       "element": "label",
       "isIntrinsic": true,
-      "label": "送信キー / Enterで送信 / Ctrl+Enterで送信",
+      "label": "送信キー",
       "a11y": {
-        "accessibleName": "送信キー / Enterで送信 / Ctrl+Enterで送信",
+        "accessibleName": "送信キー",
         "accessibleNameSource": "visible-text",
         "descriptionRefs": "-",
         "role": "-",
@@ -2244,9 +2289,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/app/components/PersonalSettingsView.tsx:37:select",
+      "id": "apps/web/src/app/components/PersonalSettingsView.tsx:50:select",
       "file": "apps/web/src/app/components/PersonalSettingsView.tsx",
-      "line": 37,
+      "line": 50,
       "feature": "app",
       "component": "PersonalSettingsView",
       "element": "select",
@@ -2255,7 +2300,7 @@
       "a11y": {
         "accessibleName": "Enterで送信 / Ctrl+Enterで送信",
         "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
+        "descriptionRefs": "profile-submit-shortcut-help",
         "role": "-",
         "state": [],
         "status": "ok",
@@ -2264,7 +2309,7 @@
       "handlers": [
         {
           "name": "onChange",
-          "value": "(event) => onSetSubmitShortcut(event.target.value as SubmitShortcut)"
+          "value": "(event) => handleSubmitShortcutChange(event.target.value as SubmitShortcut)"
         }
       ],
       "attributes": [
@@ -2273,20 +2318,24 @@
           "value": "profile-submit-shortcut"
         },
         {
+          "name": "aria-describedby",
+          "value": "profile-submit-shortcut-help"
+        },
+        {
           "name": "value",
           "value": "submitShortcut"
         },
         {
           "name": "onChange",
-          "value": "(event) => onSetSubmitShortcut(event.target.value as SubmitShortcut)"
+          "value": "(event) => handleSubmitShortcutChange(event.target.value as SubmitShortcut)"
         }
       ],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/app/components/PersonalSettingsView.tsx:42:option",
+      "id": "apps/web/src/app/components/PersonalSettingsView.tsx:56:option",
       "file": "apps/web/src/app/components/PersonalSettingsView.tsx",
-      "line": 42,
+      "line": 56,
       "feature": "app",
       "component": "PersonalSettingsView",
       "element": "option",
@@ -2311,9 +2360,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/app/components/PersonalSettingsView.tsx:43:option",
+      "id": "apps/web/src/app/components/PersonalSettingsView.tsx:57:option",
       "file": "apps/web/src/app/components/PersonalSettingsView.tsx",
-      "line": 43,
+      "line": 57,
       "feature": "app",
       "component": "PersonalSettingsView",
       "element": "option",
@@ -2338,9 +2387,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/app/components/PersonalSettingsView.tsx:48:button",
+      "id": "apps/web/src/app/components/PersonalSettingsView.tsx:67:button",
       "file": "apps/web/src/app/components/PersonalSettingsView.tsx",
-      "line": 48,
+      "line": 67,
       "feature": "app",
       "component": "PersonalSettingsView",
       "element": "button",
@@ -17265,8 +17314,61 @@
         ]
       },
       {
+        "id": "E2E-UI-SKIP-001",
+        "status": "implemented",
+        "evidence": [
+          "apps/web/e2e/skip-link.spec.ts"
+        ]
+      },
+      {
+        "id": "E2E-UI-LOGIN-KEYBOARD-001",
+        "status": "implemented",
+        "evidence": [
+          "apps/web/e2e/login-keyboard.spec.ts",
+          "apps/web/src/features/auth/components/LoginPage.test.tsx"
+        ]
+      },
+      {
+        "id": "E2E-UI-LAYOUT-STRESS-001",
+        "status": "implemented",
+        "evidence": [
+          "apps/web/e2e/layout-stress.spec.ts"
+        ]
+      },
+      {
+        "id": "E2E-UI-TEXT-SPACING-001",
+        "status": "implemented",
+        "evidence": [
+          "apps/web/e2e/text-spacing.spec.ts"
+        ]
+      },
+      {
+        "id": "E2E-UI-VIRTUAL-KEYBOARD-001",
+        "status": "implemented",
+        "evidence": [
+          "apps/web/e2e/viewport-keyboard.spec.ts"
+        ]
+      },
+      {
+        "id": "E2E-UI-ZOOM-REFLOW-001",
+        "status": "implemented",
+        "evidence": [
+          "apps/web/e2e/zoom-reflow.spec.ts"
+        ]
+      },
+      {
+        "id": "NONUI-UI-MANUAL-EVIDENCE-001",
+        "status": "implemented",
+        "evidence": [
+          "tools/web-inventory/manual-a11y-evidence.test.mjs"
+        ]
+      },
+      {
         "id": "E2E-UI-MANUAL-001",
         "status": "manual",
+        "evidence": [
+          "reports/working/issue-345-manual-a11y-evidence-baseline.json"
+        ],
         "task": "tasks/todo/20260714-issue-345-manual-a11y-evidence.md"
       }
     ]

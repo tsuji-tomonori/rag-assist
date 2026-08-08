@@ -23,9 +23,12 @@
 ## 測定・検証
 
 - `NONUI-UI-GATE-001`: severe axe/mobile/visual/browser/trace fixtures fail required gate。
+- `NONUI-UI-MANUAL-EVIDENCE-001`: versioned manual evidence record の pass/fail/blocked/not-run 必須根拠と release readiness 判定を検証する。
 - `E2E-UI-A11Y-001`: keyboard and representative screen-reader journeys。
 - `E2E-UI-RESPONSIVE-001`: viewport/zoom/motion/content extremes。
 - CI branch-protection status and PR evidence audit。
+
+`tools/web-inventory/manual-a11y-evidence-contract.json` と `manual-a11y-evidence.mjs` を manual evidence の versioned executable contract とする。structural check は honest blocked baseline を有効な未完了 record として保存し、release/Issue completion 用 `require-pass` は承認済み matrix の required check がすべて manual pass でない限り非 0 とする。automation/proxy evidence は manual pass を作らない。
 
 ## 要件の源泉・背景
 
@@ -51,7 +54,7 @@
 | 受け入れ基準 | `AC-NFR018-001`〜`AC-NFR018-007` |
 | 優先度 | A |
 | 安定性 | Medium |
-| 変更履歴 | 2026-07-14 Issue #345 から追加 |
+| 変更履歴 | 2026-07-14 Issue #345 から追加。2026-07-17 manual evidence の versioned contract、honest blocked baseline、release readiness command を追加 |
 
 ## 妥当性確認
 

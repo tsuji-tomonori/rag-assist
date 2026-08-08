@@ -9,6 +9,18 @@ type KeyboardDestination = {
 
 const destinations: KeyboardDestination[] = [
   {
+    label: '履歴',
+    key: 'Enter',
+    url: /\?view=history$/,
+    region: '履歴'
+  },
+  {
+    label: 'お気に入り',
+    key: 'Space',
+    url: /\?view=favorites$/,
+    region: 'お気に入り'
+  },
+  {
     label: 'ドキュメント',
     key: 'Enter',
     url: /\/documents$/,
@@ -34,7 +46,9 @@ const destinations: KeyboardDestination[] = [
   }
 ]
 
-test('E2E-UI-KEYBOARD-NAV-001: primary views remain reachable with Tab and Enter or Space @smoke', async ({ page }) => {
+test('E2E-UI-KEYBOARD-NAV-001: primary views, history, favorites, and profile controls remain keyboard reachable @smoke @ui-quality', async ({ page }) => {
+  await installHistoryRoute(page)
+  await installFavoritesRoute(page)
   await page.goto('/')
   await keyboardSignIn(page)
 
@@ -59,8 +73,117 @@ test('E2E-UI-KEYBOARD-NAV-001: primary views remain reachable with Tab and Enter
     await expect(page).toHaveURL(destination.url)
     await expect(page.getByRole('region', { name: destination.region })).toBeVisible()
     await expect(control).toHaveAttribute('aria-current', 'page')
+
+    if (destination.label === '履歴') {
+      await verifyHistoryKeyboardJourney(page)
+    }
+    if (destination.label === 'お気に入り') {
+      await verifyFavoritesKeyboardJourney(page)
+    }
   }
+
+  const submitShortcut = page.getByRole('combobox', { name: '送信キー' })
+  await tabTo(page, submitShortcut)
+  await expectKeyboardFocus(submitShortcut)
+  await expect(submitShortcut).toHaveValue('enter')
+  await page.keyboard.press('ArrowDown')
+  await expect(submitShortcut).toHaveValue('ctrlEnter')
+
+  const backToChat = page.getByRole('button', { name: 'チャットへ戻る' })
+  await tabTo(page, backToChat)
+  await expectKeyboardFocus(backToChat)
+  await page.keyboard.press('Enter')
+  await expect(page).toHaveURL(/\/$/)
+  await expect(page.getByRole('region', { name: 'チャット', exact: true })).toBeVisible()
 })
+
+async function installHistoryRoute(page: Page) {
+  await page.route(/http:\/\/127\.0\.0\.1:8787\/conversation-history$/, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.fallback()
+      return
+    }
+
+    await route.fulfill({
+      json: {
+        history: [{
+          schemaVersion: 1,
+          id: 'keyboard-history-1',
+          title: '履歴のkeyboard証跡',
+          updatedAt: '2026-08-06T00:00:00.000Z',
+          isFavorite: true,
+          messages: [{
+            role: 'user',
+            text: 'keyboard-onlyで履歴を確認する',
+            createdAt: '2026-08-06T00:00:00.000Z'
+          }]
+        }]
+      }
+    })
+  })
+}
+
+async function installFavoritesRoute(page: Page) {
+  await page.route(/http:\/\/127\.0\.0\.1:8787\/favorites$/, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.fallback()
+      return
+    }
+
+    await route.fulfill({
+      json: {
+        favorites: [{
+          favoriteId: 'keyboard-favorite-1',
+          targetType: 'chatSession',
+          targetId: 'keyboard-conversation-1',
+          label: 'お気に入りのkeyboard証跡',
+          accessible: true,
+          createdAt: '2026-08-08T00:00:00.000Z',
+          updatedAt: '2026-08-08T00:00:00.000Z'
+        }]
+      }
+    })
+  })
+}
+
+async function verifyHistoryKeyboardJourney(page: Page) {
+  const search = page.getByRole('searchbox', { name: '履歴を検索' })
+  await tabTo(page, search)
+  await expectKeyboardFocus(search)
+  await page.keyboard.type('keyboard')
+  await expect(search).toHaveValue('keyboard')
+
+  const sortOrder = page.getByRole('combobox', { name: '履歴の並び順' })
+  await tabTo(page, sortOrder)
+  await expectKeyboardFocus(sortOrder)
+  await page.keyboard.press('ArrowDown')
+  await expect(sortOrder).toHaveValue('oldest')
+
+  const favoritesOnly = page.getByRole('checkbox', { name: 'お気に入りのみ' })
+  await tabTo(page, favoritesOnly)
+  await expectKeyboardFocus(favoritesOnly)
+  await page.keyboard.press('Space')
+  await expect(favoritesOnly).toBeChecked()
+
+  const conversation = page.locator('.history-item > button:not(.favorite-toggle):not(.history-delete-button)', {
+    hasText: '履歴のkeyboard証跡'
+  })
+  await tabTo(page, conversation)
+  await expectKeyboardFocus(conversation)
+  await page.keyboard.press('Enter')
+  await expect(page.getByRole('region', { name: 'チャット', exact: true })).toBeVisible()
+}
+
+async function verifyFavoritesKeyboardJourney(page: Page) {
+  await expect(page.getByText('お気に入りのkeyboard証跡')).toBeVisible()
+
+  const backToChat = page.getByRole('button', { name: 'チャットへ戻る' })
+  await tabTo(page, backToChat)
+  await expectKeyboardFocus(backToChat)
+  await page.keyboard.press('Enter')
+  await expect(page).toHaveURL(/\/$/)
+  await expect(page.getByRole('region', { name: 'チャット', exact: true })).toBeVisible()
+}
 
 async function keyboardSignIn(page: Page) {
   const email = page.getByRole('textbox', { name: 'メールアドレス' })

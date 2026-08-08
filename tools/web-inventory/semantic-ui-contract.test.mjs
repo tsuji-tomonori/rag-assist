@@ -97,7 +97,9 @@ test('AppShell keeps primary navigation outside the single main landmark', async
   const shell = await read('apps/web/src/app/AppShell.tsx')
 
   assert.match(shell, /<div className="app-frame">/)
-  assert.match(shell, /<main className="main-area">/)
+  assert.match(shell, /<main className="main-area"[^>]*>/)
+  assert.match(shell, /href="#main-content"/)
+  assert.match(shell, /id="main-content"/)
   assert.doesNotMatch(shell, /<main className="app-frame">/)
 })
 

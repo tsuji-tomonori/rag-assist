@@ -33,7 +33,7 @@ concurrency:
 
 jobs:
   chromium-required:
-    name: Required Chromium axe, mobile, and visual
+    name: Required Chromium axe, mobile, visual, and evidence
     if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20

@@ -36,6 +36,19 @@
   text-align: center;
 }
 
+.chat-permission-notice {
+  margin: 0 0 12px;
+  border: 1px solid #b7791f;
+  border-left-width: 4px;
+  border-radius: 6px;
+  padding: 10px 12px;
+  color: #5f370e;
+  background: #fff8e6;
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 1.5;
+}
+
 .empty-orbit {
   position: relative;
   display: grid;
