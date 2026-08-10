@@ -36,7 +36,7 @@
 | view | AC | automated | manual | overall | note |
 | --- | --- | --- | --- | --- | --- |
 | chat | AC-SQ016-001 | pass | blocked | blocked | CI run 29516940570 / artifact 8383090126の4 viewportでroot/unresolved overflow 0。実browser zoomは未検証 |
-| chat | AC-SQ016-002 | blocked | blocked | blocked | focus candidate auditとkeyboard journey evidence待ち |
+| chat | AC-SQ016-002 | pass | blocked | blocked | required E2E-UI-KEYBOARD-NAV-001で質問textboxへのTab到達、composerの3px focus indicator、Enter送信、処理中から回答への復帰をkeyboard-onlyで検証。manual keyboard journeyは未実施 |
 | chat | AC-SQ016-003 | blocked | blocked | blocked | axe/name-state baselineとscreen reader evidence待ち |
 | chat | AC-SQ016-004 | blocked | blocked | blocked | computed/axe contrast baselineとmanual review待ち |
 | chat | AC-SQ016-005 | pass | blocked | blocked | 4 viewportで24px minimumと44px primary targetの未解決candidate 0。manual touch evidenceは未実施 |

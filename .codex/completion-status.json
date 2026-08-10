@@ -8,34 +8,34 @@
     "Do not merge, deploy, release, force-push, or perform destructive changes"
   ],
   "completed_items": [
-    "Confirmed current main 0771521c and draft pull request #462 head 538db8dc remain unchanged and converged",
-    "Selected benchmark AC-SQ016-003 as the only remaining automated benchmark criterion and avoided production files changed by parallel pull requests #461 and #463",
-    "Extended the required Chromium accessibility-tree contract with benchmark landmarks, headings, field values, actions, scroll region, and table",
-    "Kept deterministic benchmark fixtures inside Playwright routes and did not modify production component, API, permission, or dataset behavior",
-    "Linked benchmark to SQ-016 AC-SQ016-003 and synchronized canonical design, machine-readable trace, quality matrix, and generated Web documents",
+    "Confirmed current main 8e542b31 and draft pull request #462 head c0b79d9a are converged with behind zero",
+    "Selected chat AC-SQ016-002 as a bounded automated gap and avoided Chat component files changed by parallel pull request #461",
+    "Added a three-pixel composer focus indicator for keyboard users",
+    "Extended the required Chromium keyboard contract with chat textbox focus, Enter submission, processing, and answer recovery",
+    "Kept deterministic startRun and SSE fixtures inside Playwright and did not modify production API, permission, RAG, or dataset behavior",
+    "Linked chat to SQ-016 AC-SQ016-002 and synchronized canonical design, machine-readable trace, quality matrix, and generated Web documents",
     "Passed repository lint, Web typecheck, Web build, 446 Web unit tests, 13 trace tests, 5 semantic tests, generated-document freshness, canonical docs, OpenAPI, API code docs, manual evidence structure, infra inventory, hidden Unicode, and diff checks"
   ],
   "remaining_items": [
-    "Confirm the new benchmark accessibility-tree contract in final-head GitHub Actions",
+    "Confirm the new chat keyboard contract in final-head GitHub Actions",
     "Record final-head CI and self-review on draft pull request #462 and Issue #345",
     "Resolve FR-051 persistence and the profile state-evidence owner decision",
     "Run approved representative-screen-reader, real-browser 200/400-percent zoom, touch, real-device, Firefox, and WebKit verification"
   ],
   "blocked_items": [
-    "Local Chromium E2E execution is blocked because the sandbox rejects the tsx IPC listener before the API server starts",
+    "Local Chromium E2E execution is blocked because the Playwright Chromium executable is not installed; the tsx IPC limitation was bypassed with the same node entrypoint",
     "Manual accessibility evidence remains not release-ready with three blocked and one not-run check",
     "API C1 branch coverage remains below the 85-percent quality target in the latest known CI evidence"
   ],
   "validation": [
-    { "command": "npx eslint apps/web/e2e/screen-reader-semantics.spec.ts --max-warnings=0", "result": "pass" },
     { "command": "npm run lint", "result": "pass" },
     { "command": "npm run typecheck -w @memorag-mvp/web", "result": "pass" },
     { "command": "TZ=Asia/Tokyo npm test -w @memorag-mvp/web", "result": "pass", "note": "62 files and 446 tests passed" },
     { "command": "npm run build -w @memorag-mvp/web", "result": "pass", "note": "Existing chunk-size advisory only" },
-    { "command": "Targeted accessibility-tree Playwright listing", "result": "pass", "note": "One required Chromium spec listed" },
-    { "command": "Targeted benchmark Chromium E2E execution", "result": "blocked", "note": "tsx IPC listen EPERM in the sandbox" },
+    { "command": "Targeted keyboard Playwright listing", "result": "pass", "note": "One required Chromium spec listed" },
+    { "command": "Targeted chat keyboard Chromium E2E execution", "result": "blocked", "note": "Playwright Chromium executable is not installed in the sandbox" },
     { "command": "UI trace, semantic, canonical, generated, manual evidence, infra, hidden Unicode, OpenAPI, API code docs, and diff checks", "result": "pass" }
   ],
-  "next_action": "Publish the bounded change to draft pull request #462, verify final-head GitHub Actions, and record evidence without marking manual checks complete",
+  "next_action": "Publish the bounded chat keyboard change to draft pull request #462, verify final-head GitHub Actions, and record evidence without marking manual checks complete",
   "safe_to_continue_without_user": true
 }

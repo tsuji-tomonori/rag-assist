@@ -2,7 +2,7 @@
 
 - 保存先: `tasks/do/20260810-0853-issue-345-chat-keyboard-required-gate.md`
 - 状態: do
-- タスク種別: 機能追加
+- タスク種別: 修正
 - 関連 Issue: #345
 - 更新対象 PR: #462
 
@@ -13,6 +13,40 @@ Draft PR #462 は current `main@8e542b31` を祖先に含み、画面横断の v
 
 open PR #461 は本番 Chat component を変更するため、本タスクでは本番 component を変更せず、PR #462 の E2E・正本・品質マトリクスだけを更新して競合を増やさない。
 
+## なぜなぜ分析
+
+### 問題文
+
+2026-08-10 時点のPR #462 headでは、keyboard-onlyでチャットの質問textboxへ到達しても、computed focus indicatorが表示されない。`SQ-016 / AC-SQ016-002` はkeyboard focusを視認可能にすることを求めるが、品質マトリクスのchat automated statusは`blocked`で、required E2Eもこの経路を検査していない。
+
+### confirmed
+
+- `ChatComposer.tsx`は質問入力にnative `textarea`を使い、keyboard Enter送信を実装している。
+- `apps/web/src/styles/features/chat.css`の`.composer textarea`は`outline: 0`を指定する。
+- 同selectorまたは親composerには、keyboard focus時に代替3px indicatorを表示する規則がない。
+- `keyboard-navigation.spec.ts`はnavigation、history、favorites、profileを検査するが、chat textareaのfocus・送信・回答復帰は検査しない。
+- open PR #461はChat componentを変更するが、`apps/web/src/styles/features/chat.css`とPR #462のE2E・SQ-016・quality matrixは変更対象に含めない。
+
+### inferred
+
+- textareaのbrowser既定outlineを消した際、composer全体のvisual styleを優先し、keyboard focusの代替indicatorが同時に定義されなかった。
+- required gateがchat journeyを通らないため、focus indicator欠落が既存unit/state E2Eでは検出されなかった。
+
+### open questions
+
+- representative screen reader、実browser 200% / 400% zoom、touch / 実機での実測結果は本環境では取得できない。manual taskのblockedを維持する。
+- #461統合後のChat component treeは変わり得るが、native textareaと`.composer`契約を維持する限り本修正は独立して適用できる。
+
+### 根本原因
+
+直接原因は`.composer textarea`がbrowser outlineを無効化しながら代替focus-visible indicatorを定義していないこと、流出原因はrequired keyboard gateがチャット入力から回答までを対象にしていないことである。
+
+### 全量対応方針
+
+- `.composer:focus-within`へWCAG 2.2 AAのFocus Appearanceを満たす3px indicatorを追加し、textarea以外の内部controlへfocusした場合も入力領域の現在位置を示す。
+- required `E2E-UI-KEYBOARD-NAV-001`でTab到達、computed 3px indicator、Enter送信、処理中、回答復帰を検査し、発生原因と流出原因を同時に断つ。
+- chatの`AC-SQ016-002`だけをpassへ更新し、manual evidenceと未確認axisはblockedのまま維持する。
+
 ## 目的
 
 チャットの質問入力、3px focus indicator、Enter 送信、処理中、回答復帰を required Chromium E2E で追跡し、`AC-SQ016-002` の automated evidence を画面から受け入れ条件まで一意に結ぶ。
@@ -21,6 +55,7 @@ open PR #461 は本番 Chat component を変更するため、本タスクでは
 
 - `apps/web/e2e/keyboard-navigation.spec.ts`
 - `apps/web/e2e/README.md`
+- `apps/web/src/styles/features/chat.css`
 - `docs/1_要求_REQ/**/REQ_SERVICE_QUALITY_016.md`
 - `docs/3_設計_DES/21_UI_UX/DES_UI_UX_001.md`
 - `tools/web-inventory/ui-quality-matrix.json`
@@ -32,6 +67,7 @@ open PR #461 は本番 Chat component を変更するため、本タスクでは
 
 - Playwright route fixture は E2E 内に限定し、本番 API、認可、RAG、DOM 契約を変更しない。
 - native textbox へ Tab で到達し、computed 3px focus indicator を確認する。
+- textareaの既存`outline: 0`を個別復活させず、`.composer:focus-within`へ3px indicatorを追加して入力領域全体のfocusを明示する。
 - 既定の Enter 送信で startRun と SSE final を経由し、処理中から回答へ回復することを確認する。
 - 自動証跡は representative screen reader、実 browser 200% / 400% zoom、touch / 実機、Firefox / WebKit の代替にしない。
 - `chat / AC-SQ016-002` の automated status だけを根拠に応じて更新し、manual / overall は `blocked` のまま維持する。
@@ -48,7 +84,7 @@ open PR #461 は本番 Chat component を変更するため、本タスクでは
 
 1. current main、PR #462、open PR、task、正本、生成物の重複とgapを確定する。
 2. task開始commit後、PR #462 headを非破壊 mergeする。
-3. required keyboard E2Eへチャット journeyを追加する。
+3. composerのfocus-visible欠落を局所CSSで修正し、required keyboard E2Eへチャット journeyを追加する。
 4. SQ-016、UI設計、trace、matrix、E2E READMEを同じ evidenceへ同期する。
 5. 正規 generatorを実行し、生成物freshnessを確認する。
 6. 最小十分な lint、typecheck、unit、E2E、docs checkを実行する。
@@ -65,7 +101,7 @@ open PR #461 は本番 Chat component を変更するため、本タスクでは
 
 ## 受け入れ条件
 
-- [ ] Given サインイン済みでチャット画面が表示されている、When keyboard-onlyで質問textboxへTab移動する、Then textboxがfocusされcomputed outlineがsolid 3pxである。
+- [ ] Given サインイン済みでチャット画面が表示されている、When keyboard-onlyで質問textboxへTab移動する、Then textboxがfocusされcomposerのcomputed outlineがsolid 3pxである。
 - [ ] Given 質問textboxに文字列がある、When 既定のEnterを押す、Then `POST /rpc/chat/startRun` が1回発行され、処理中表示を経てfixture由来の回答が表示される。
 - [ ] `E2E-UI-KEYBOARD-NAV-001` がrequired `@ui-quality` Chromium gateで成功する。
 - [ ] `chat / AC-SQ016-002` の正本、設計、machine-readable trace / matrix、生成文書が同じE2E evidenceを参照する。
@@ -92,6 +128,7 @@ open PR #461 は本番 Chat component を変更するため、本タスクでは
 ## PRレビュー観点
 
 - 本番Chat componentや並行PR #461の変更へ重複していないか。
+- `.composer:focus-within`が内部controlの操作を妨げず、3px indicatorを安定して表示するか。
 - route fixtureがE2Eに閉じ、本番RAG回答・認可・dataset固有分岐を変更していないか。
 - Enter送信のrequest回数、処理中、回答復帰、focus indicatorが観測可能か。
 - `AC-SQ016-002`だけを根拠に応じてpassへ更新し、manual / overallを誤ってpassにしていないか。
@@ -104,3 +141,11 @@ open PR #461 は本番 Chat component を変更するため、本タスクでは
 - 決定事項: private detail、permission、SSE retryは既存 `E2E-UI-STATE-001` の責務とし、本タスクへ重複させない。
 - リスク: local Chromiumが未導入の場合はrequired E2E実走をGitHub Actionsへ委ねる。その場合、taskとPRはfinal-head CI確認まで未完了とする。
 - リスク: 代表screen readerと実browser zoomは自動化結果から推定せず、manual taskのblockedを維持する。
+
+## 実施結果（2026-08-10 / local）
+
+- `.composer:focus-within`へ3px indicatorを追加し、required keyboard E2Eへchat質問入力、Enter送信、処理中、回答復帰を追加した。
+- chat / `AC-SQ016-002`のautomated statusだけを`pass`へ更新し、manual / overallは`blocked`を維持した。
+- lint、Web typecheck、Web unit 446件、build、trace 13件、semantic 5件、canonical / generated docs checksはpassした。
+- local Chromium実走はbrowser executable未導入でblocked。final-head Web UI Qualityを必須確認する。
+- PR / Issue記録とfinal-head CIが未完了のため、状態は`do`を維持する。

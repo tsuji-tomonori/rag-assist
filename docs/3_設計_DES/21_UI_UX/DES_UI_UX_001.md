@@ -53,7 +53,7 @@
 
 | View | Canonical URL / accepted pattern | Current route guard | Personas | Primary job | Requirement / AC | Executable evidence | Current |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `chat` | `/`; `/?view=chat` is normalized to `/` | authenticated shell; submit uses `canCreateChat` | `standard-user`, `answer-editor`, `operator`, `system-admin` | `JOB-UI-CHAT`: ask → processing → answer/refusal/clarification → citation/follow-up/escalation → targeted ticket result | `FR-003`〜`FR-005`, `FR-009`, `FR-021`, `FR-029`, `FR-042`, `FR-043`, `FR-094`〜`FR-096`, `SQ-016`; `AC-FR042-001`, `AC-FR043-003`, `AC-FR094-001`, `AC-FR095-001`, `AC-SQ016-007` | `E2E-VIEW-CHAT-001`, `E2E-UI-NAV-001`, `E2E-UI-ROUTE-001`, `E2E-UI-STATE-001`, `E2E-UI-QUESTION-001`, `E2E-UI-QUESTION-002` | implemented automated journey: initial guidance、processing、SSE retry/recovery、safe error、permission notice、answer/refusal/clarification/citation/escalation and targeted result exist; manual screen-reader/zoom/real-device evidence remains |
+| `chat` | `/`; `/?view=chat` is normalized to `/` | authenticated shell; submit uses `canCreateChat` | `standard-user`, `answer-editor`, `operator`, `system-admin` | `JOB-UI-CHAT`: ask → processing → answer/refusal/clarification → citation/follow-up/escalation → targeted ticket result | `FR-003`〜`FR-005`, `FR-009`, `FR-021`, `FR-029`, `FR-042`, `FR-043`, `FR-094`〜`FR-096`, `SQ-016`; `AC-FR042-001`, `AC-FR043-003`, `AC-FR094-001`, `AC-FR095-001`, `AC-SQ016-002`, `AC-SQ016-007` | `E2E-VIEW-CHAT-001`, `E2E-UI-NAV-001`, `E2E-UI-ROUTE-001`, `E2E-UI-STATE-001`, `E2E-UI-QUESTION-001`, `E2E-UI-QUESTION-002`, `E2E-UI-KEYBOARD-NAV-001` | implemented automated journey: keyboard-only question focus / Enter submit / answer recovery、initial guidance、processing、SSE retry/recovery、safe error、permission notice、answer/refusal/clarification/citation/escalation and targeted result exist; manual screen-reader/zoom/real-device evidence remains |
 | `assignee` | `/?view=assignee` | `canAnswerQuestions` | `answer-editor`, `system-admin` | `JOB-UI-ASSIGNEE`: filter/select/answer/resolve with assignment and next-action context | `FR-031`〜`FR-033`, `FR-094`〜`FR-098`, `SQ-016`; `AC-FR031-001`, `AC-FR032-004`, `AC-FR094-003` | `E2E-VIEW-ASSIGNEE-001`, `E2E-UI-NAV-002`, `E2E-UI-ROUTE-002`, `E2E-UI-STATE-001`, `E2E-UI-QUESTION-001` | implemented automated journey: five ticket states、assignment、answer handoff、input retention、locked terminal state、required loading/error/permission/retry/false-zero evidence exist; manual screen-reader/zoom/real-device evidence remains |
 | `history` | `/?view=history` | no `AppRoutes` guard; data uses own-history boundary | all signed-in personas | `JOB-UI-HISTORY`: search/select/inspect question status/resume/delete own conversation | `FR-022`, `FR-030`, `FR-034`〜`FR-036`, `FR-044`, `FR-094`〜`FR-097`, `SQ-016`; `AC-FR022-002`, `AC-FR030-001`, `AC-FR094-002`, `AC-FR096-001`, `AC-FR096-003`, `AC-SQ016-002`, `AC-SQ016-003` | `E2E-VIEW-HISTORY-001`, `E2E-UI-NAV-001`, `E2E-UI-ROUTE-001`, `E2E-UI-STATE-001`, `E2E-UI-RISK-001`, `E2E-UI-QUESTION-001`, `E2E-UI-KEYBOARD-NAV-001`, `E2E-UI-SR-SEMANTICS-001` | implemented automated journey: targeted ticket status/assignment/next action、many/long/mobile continuity、requester-only redaction、keyboard-only toolbar / conversation selection、Chromium AX name / role / value / checked state exist; manual screen-reader/zoom/real-device evidence remains |
 | `favorites` | `/?view=favorites` | no `AppRoutes` guard; data uses own-history boundary | all signed-in personas | `JOB-UI-FAVORITES`: inspect and resume favorited own conversation | `FR-028`, `FR-094`, `FR-095`, `FR-097`, `SQ-016`; `AC-FR028-004`, `AC-FR094-002`, `AC-SQ016-002`, `AC-SQ016-003` | `E2E-VIEW-FAVORITES-001`, `E2E-UI-NAV-001`, `E2E-UI-ROUTE-001`, `E2E-UI-STATE-001`, `E2E-UI-KEYBOARD-NAV-001`, `E2E-UI-SR-SEMANTICS-001` | partial: mobile reachability、browser-history restoration、required state/false-zero、keyboard-only到達・復帰、Chromium AX name / role evidence exist; favorite resume / delete journey and manual screen-reader/zoom/real-device evidence remain |
@@ -343,7 +343,7 @@ chat、assignee、requester history の有人対応 journey gap は `tasks/done/
 
 No proposed default is recorded as executed evidence until its task produces the required result.
 
-## Automated UI quality gate（2026-08-06更新）
+## Automated UI quality gate（2026-08-10更新）
 
 - PR required: Chromium で representative full-page axe serious / critical、320 / 375px mobile navigation、deterministic visual regression、keyboard navigation、Chromium accessibility tree contractを実行する。
 - Change detection: `apps/web/**`、shared contract、Web inventory、UI canonical docs、dependency / Taskfile / workflow の変更を対象にし、無関係な backend / infra-only PR では高コスト gate を起動しない。
@@ -351,6 +351,12 @@ No proposed default is recorded as executed evidence until its task produces the
 - Scheduled scope: Firefox / WebKit の `@ui-quality` を週次と手動 dispatch で実行する。scheduled result は PR-required Chromium と別 job / result とし、未実行を pass に変換しない。
 - Evidence: Playwright HTML report、test-results、trace、screenshot、video を retention 14日で保存する。
 - Exclusion: automation は representative screen reader、実 browser zoom、touch / virtual keyboard、real-device の手動証跡を代替しない。
+
+### Chat keyboard contract
+
+- `E2E-UI-KEYBOARD-NAV-001` は質問textboxへのTab到達、composerの3px focus indicator、既定Enter送信、処理中から回答への復帰をrequired Chromium gateで検証する。
+- composerはnative textareaの個別outlineを復活させず、`:focus-within`で入力領域全体に3px indicatorを表示する。test-only startRun / SSE fixtureはPlaywright routeへ限定し、production API、permission、RAG回答契約を変更しない。
+- Chromium keyboard自動証跡はrepresentative screen reader、実browser 200% / 400% zoom、touch / real device、Firefox / WebKitの実測を代替しない。
 
 ### Profile keyboard / semantic contract
 

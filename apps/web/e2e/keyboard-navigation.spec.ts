@@ -7,6 +7,12 @@ type KeyboardDestination = {
   region: string
 }
 
+type ChatKeyboardRouteState = {
+  startRuns: number
+  eventReads: number
+  releaseAnswer: () => void
+}
+
 const destinations: KeyboardDestination[] = [
   {
     label: '履歴',
@@ -47,10 +53,13 @@ const destinations: KeyboardDestination[] = [
 ]
 
 test('E2E-UI-KEYBOARD-NAV-001: primary views, history, favorites, and profile controls remain keyboard reachable @smoke @ui-quality', async ({ page }) => {
+  const chatRouteState = await installChatRoute(page)
   await installHistoryRoute(page)
   await installFavoritesRoute(page)
   await page.goto('/')
   await keyboardSignIn(page)
+
+  await verifyChatKeyboardJourney(page, chatRouteState)
 
   const navigation = page.getByRole('navigation', { name: '画面' })
   await expect(navigation).toBeVisible()
@@ -123,6 +132,40 @@ async function installHistoryRoute(page: Page) {
   })
 }
 
+async function installChatRoute(page: Page): Promise<ChatKeyboardRouteState> {
+  let releaseAnswer: () => void = () => undefined
+  const answerGate = new Promise<void>((resolve) => { releaseAnswer = resolve })
+  const state: ChatKeyboardRouteState = {
+    startRuns: 0,
+    eventReads: 0,
+    releaseAnswer: () => releaseAnswer()
+  }
+
+  await page.route(/http:\/\/127\.0\.0\.1:8787\/rpc\/chat\/startRun$/, async (route) => {
+    state.startRuns += 1
+    await route.fulfill({
+      json: {
+        json: {
+          runId: 'keyboard-chat-run',
+          status: 'queued',
+          eventsPath: '/chat-runs/keyboard-chat-run/events'
+        }
+      }
+    })
+  })
+
+  await page.route(/http:\/\/127\.0\.0\.1:8787\/chat-runs\/keyboard-chat-run\/events$/, async (route) => {
+    state.eventReads += 1
+    await answerGate
+    await route.fulfill({
+      contentType: 'text/event-stream',
+      body: 'id: 1\nevent: final\ndata: {"answer":"keyboard-onlyで回答へ復帰しました。","isAnswerable":true,"citations":[],"retrieved":[]}\n\n'
+    })
+  })
+
+  return state
+}
+
 async function installFavoritesRoute(page: Page) {
   await page.route(/http:\/\/127\.0\.0\.1:8787\/favorites$/, async (route) => {
     if (route.request().method() !== 'GET') {
@@ -172,6 +215,30 @@ async function verifyHistoryKeyboardJourney(page: Page) {
   await expectKeyboardFocus(conversation)
   await page.keyboard.press('Enter')
   await expect(page.getByRole('region', { name: 'チャット', exact: true })).toBeVisible()
+}
+
+async function verifyChatKeyboardJourney(page: Page, routeState: ChatKeyboardRouteState) {
+  const chat = page.getByRole('region', { name: 'チャット', exact: true })
+  const question = chat.getByRole('textbox', { name: '質問' })
+  await tabTo(page, question)
+  await expect(question).toBeFocused()
+
+  const composer = chat.getByRole('form', { name: '質問入力' })
+  await expect.poll(async () => composer.evaluate((element) => {
+    const style = getComputedStyle(element)
+    return `${style.outlineStyle}:${style.outlineWidth}:${style.outlineColor}`
+  })).toMatch(/^solid:3px:/)
+
+  await page.keyboard.type('keyboard-onlyでチャットを送信する')
+  await page.keyboard.press('Enter')
+
+  await expect(chat.locator('.processing-row')).toContainText('回答を生成中')
+  expect(routeState.startRuns).toBe(1)
+  expect(routeState.eventReads).toBe(1)
+  routeState.releaseAnswer()
+  await expect(chat.getByText('keyboard-onlyで回答へ復帰しました。')).toBeVisible()
+  await expect(chat.locator('.processing-row')).toHaveCount(0)
+  await expect(question).toBeEnabled()
 }
 
 async function verifyFavoritesKeyboardJourney(page: Page) {

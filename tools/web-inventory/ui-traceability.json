@@ -216,7 +216,8 @@
         { "id": "FR-043", "acceptanceCriteria": ["AC-FR043-001", "AC-FR043-003", "AC-FR043-004"] },
         { "id": "FR-094", "acceptanceCriteria": ["AC-FR094-002", "AC-FR094-004"] },
         { "id": "FR-095", "acceptanceCriteria": ["AC-FR095-001", "AC-FR095-003", "AC-FR095-004"] },
-        { "id": "FR-096", "acceptanceCriteria": ["AC-FR096-003", "AC-FR096-004"] }
+        { "id": "FR-096", "acceptanceCriteria": ["AC-FR096-003", "AC-FR096-004"] },
+        { "id": "SQ-016", "acceptanceCriteria": ["AC-SQ016-002", "AC-SQ016-007"] }
       ],
       "verifications": [
         { "id": "E2E-VIEW-CHAT-001", "status": "implemented", "evidence": ["apps/web/e2e/visual-regression.spec.ts"] }

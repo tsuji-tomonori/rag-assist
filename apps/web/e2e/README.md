@@ -32,3 +32,9 @@ npx playwright test apps/web/e2e/screen-reader-semantics.spec.ts --config apps/w
 ```
 
 この自動テストは、Chromium が支援技術向けに公開する semantic tree の回帰検出です。NVDA、JAWS、VoiceOver 等の実 screen reader での読み上げ・操作の合格証跡には代替しません。また、実 browser の 200% / 400% zoom、touch 操作、real-device、Firefox / WebKit の accessibility mapping は別途検証が必要です。
+
+## Keyboard navigation contract
+
+`keyboard-navigation.spec.ts` は、チャットの質問textboxへのTab到達、composerの3px focus indicator、既定Enterによる送信、処理中から回答への復帰に加え、primary view navigation、履歴、お気に入り、個人設定の代表controlをkeyboard-onlyで検査します。route fixtureはPlaywright内に限定し、本番API・認可・RAG回答を置き換えません。
+
+この自動テストはrequired Chromium keyboard evidenceです。代表screen reader、実browserの200% / 400% zoom、touch / real-device、Firefox / WebKitの手動・browser evidenceは別途必要です。
