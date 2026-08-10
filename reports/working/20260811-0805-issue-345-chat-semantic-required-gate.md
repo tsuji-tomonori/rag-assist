@@ -58,7 +58,14 @@
 - FR-051永続化・profile state contract、OQ-UI-002 owner / cadence / matrixはowner判断待ち。
 - API C1 80.48%は目標85%未達で、既存taskで追跡中。
 
-## 7. 指示適合度
+## 7. 初回final-head CIで検出・修正した事項
+
+- Web UI Quality run `31442177263`は36 / 37で失敗した。
+- 失敗はidle chatのbusy=false assertionで、Chromium AX treeがfalse propertyを省略する仕様とreaderの空文字defaultが不一致だった。
+- busy=true propertyは変更せず、property omissionだけをfalseへ正規化した。DOM contractやproduction behaviorは変更していない。
+- artifact `9083285138`、digest `sha256:e34db4a1845ea41e4a86f8377c4ba41992ccea59b2cca7c5e921b142e16b8312`を失敗証跡として保持する。
+
+## 8. 指示適合度
 
 総合fit: 4.2 / 5.0（約84%）
 

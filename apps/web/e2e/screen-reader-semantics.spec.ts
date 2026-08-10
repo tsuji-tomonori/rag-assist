@@ -345,7 +345,7 @@ async function readAccessibilityTree(page: Page): Promise<AccessibilityContractN
         name: String(node.name?.value ?? ''),
         value: String(node.value?.value ?? ''),
         checked: String(node.properties?.find((property) => property.name === 'checked')?.value?.value ?? ''),
-        busy: String(node.properties?.find((property) => property.name === 'busy')?.value?.value ?? ''),
+        busy: String(node.properties?.find((property) => property.name === 'busy')?.value?.value ?? false),
         live: String(node.properties?.find((property) => property.name === 'live')?.value?.value ?? '')
       }))
   } finally {

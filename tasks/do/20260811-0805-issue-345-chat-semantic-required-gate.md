@@ -145,3 +145,4 @@ open PR #461 は `MessageList.tsx` や `ProcessingAnswer.tsx` を変更するた
 - repository lint、Web typecheck、Web unit 447件、build、UI trace 13件、semantic 5件、canonical / generated docs checksは成功した。
 - 対象Playwrightは1件をdiscoveryできた。local実走は`tsx` IPC `listen EPERM`とbrowser download 0-byte応答によりblockedのため、final-head Web UI Qualityを必須確認する。
 - PR / Issue記録とfinal-head CIが未完了であり、状態は`do`を維持する。
+- 初回final-head Web UI Qualityは36 / 37で失敗した。Chromium AX treeは`aria-busy="false"`をproperty omissionで表すため、readerが欠落値をfalseへ正規化せずidle/completed assertionと不一致になった。busy propertyが存在するtrueはそのまま保持し、欠落だけをfalseへ正規化するよう修正した。
