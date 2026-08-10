@@ -87,10 +87,16 @@
 - `task docs:check`: `task` binary未導入のため実行不能。解決先の全9コマンドを直接実行し、OpenAPIだけ`tsx` IPCを避ける同一entrypointで確認した。
 - representative screen reader、実browser 200% / 400% zoom、touch / 実機、Firefox / WebKitは未実施。
 
+### 初回final-head CIと修正
+
+- Web UI Quality run `31343805209`は36 / 37で失敗した。`processing-row`表示後もstartRun / SSE route callbackが完了していない場合があり、同期的な回数assertが0を観測した。
+- 発生原因はE2Eの非同期route到達に対する待機不足で、本番実装の失敗ではない。`startRuns`と`eventReads`を`expect.poll`で1になるまで待つよう修正した。
+- 修正後にlint、Web typecheck、対象Playwright discovery（Chromium 1件）を再確認した。Chromium実走はfinal-head CIで再判定する。
+
 ## 7. 残余リスクと次の作業
 
-1. GitHub AppsでDraft PR #462 branchへnon-force publishする。
-2. final-head Web UI Quality、MemoRAG CI、semver検査を確認し、失敗時はlog根拠で修正またはblockerを記録する。
+1. CI待機修正をGitHub AppsでDraft PR #462 branchへnon-force publishする。
+2. 新しいfinal-head Web UI Quality、MemoRAG CI、semver検査を確認し、失敗時はlog根拠で修正またはblockerを記録する。
 3. PR本文、受け入れ条件、セルフレビュー、Issue #345へfinal headと未完了事項を同期する。
 4. representative screen reader、実browser zoom、touch / 実機は既存manual taskで取得する。
 5. FR-051永続化とAPI C1は既存owner / coverage taskへ分離したままにする。

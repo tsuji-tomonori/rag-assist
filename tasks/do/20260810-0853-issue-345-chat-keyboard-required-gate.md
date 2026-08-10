@@ -148,4 +148,6 @@ open PR #461 は本番 Chat component を変更するため、本タスクでは
 - chat / `AC-SQ016-002`のautomated statusだけを`pass`へ更新し、manual / overallは`blocked`を維持した。
 - lint、Web typecheck、Web unit 446件、build、trace 13件、semantic 5件、canonical / generated docs checksはpassした。
 - local Chromium実走はbrowser executable未導入でblocked。final-head Web UI Qualityを必須確認する。
+- 初回final-head Web UI Qualityは36 / 37で失敗した。処理中表示の直後にAPI / SSE route回数を同期assertした待機不足が原因で、`expect.poll`へ置換してroute到達を待つよう修正した。
+- 修正後のlint、Web typecheck、対象Playwright discoveryはpass。再度final-head CIを必須確認する。
 - PR / Issue記録とfinal-head CIが未完了のため、状態は`do`を維持する。

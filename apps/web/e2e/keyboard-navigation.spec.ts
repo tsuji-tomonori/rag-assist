@@ -233,8 +233,8 @@ async function verifyChatKeyboardJourney(page: Page, routeState: ChatKeyboardRou
   await page.keyboard.press('Enter')
 
   await expect(chat.locator('.processing-row')).toContainText('回答を生成中')
-  expect(routeState.startRuns).toBe(1)
-  expect(routeState.eventReads).toBe(1)
+  await expect.poll(() => routeState.startRuns).toBe(1)
+  await expect.poll(() => routeState.eventReads).toBe(1)
   routeState.releaseAnswer()
   await expect(chat.getByText('keyboard-onlyで回答へ復帰しました。')).toBeVisible()
   await expect(chat.locator('.processing-row')).toHaveCount(0)
