@@ -345,10 +345,14 @@ async function readAccessibilityTree(page: Page): Promise<AccessibilityContractN
         name: String(node.name?.value ?? ''),
         value: String(node.value?.value ?? ''),
         checked: String(node.properties?.find((property) => property.name === 'checked')?.value?.value ?? ''),
-        busy: String(node.properties?.find((property) => property.name === 'busy')?.value?.value ?? false),
+        busy: normalizeBooleanAxProperty(node.properties?.find((property) => property.name === 'busy')?.value?.value),
         live: String(node.properties?.find((property) => property.name === 'live')?.value?.value ?? '')
       }))
   } finally {
     await session.detach()
   }
+}
+
+function normalizeBooleanAxProperty(value: unknown): string {
+  return value === true || value === 1 || value === 'true' || value === '1' ? 'true' : 'false'
 }

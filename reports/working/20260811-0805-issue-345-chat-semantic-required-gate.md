@@ -70,3 +70,9 @@
 総合fit: 4.2 / 5.0（約84%）
 
 小改善の選定、実装、正本・生成物同期、ローカル検証は実施した。Draft PR / Issue更新とfinal-head CIが未完了であり、manual accessibility scopeも意図どおり未完了のため満点ではない。
+
+## 9. 2回目final-head CIで検出・修正した事項
+
+- Web UI Quality run `31442552933`は36 / 37で失敗し、再試行でも処理中chatのbusy=true assertionだけが一致しなかった。
+- artifact `9083406524`（digest `sha256:8ec66d25463ad6d99a6ebb26d521ccb05dbeef693a8c485dd069b5d5afacb064`）の`chat-processing-chromium-accessibility-tree.json`を確認し、region「チャット」にはbusy=`1`が公開され、処理中articleにはlive=`polite`が公開されていることを確認した。
+- Chromium CDPのboolean propertyが数値`1`で返る場合を`true`へ正規化した。production DOM、ARIA contract、期待値を弱めず、AX treeのfalse→true→false検査を維持した。
