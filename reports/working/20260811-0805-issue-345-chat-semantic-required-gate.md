@@ -76,3 +76,14 @@
 - Web UI Quality run `31442552933`は36 / 37で失敗し、再試行でも処理中chatのbusy=true assertionだけが一致しなかった。
 - artifact `9083406524`（digest `sha256:8ec66d25463ad6d99a6ebb26d521ccb05dbeef693a8c485dd069b5d5afacb064`）の`chat-processing-chromium-accessibility-tree.json`を確認し、region「チャット」にはbusy=`1`が公開され、処理中articleにはlive=`polite`が公開されていることを確認した。
 - Chromium CDPのboolean propertyが数値`1`で返る場合を`true`へ正規化した。production DOM、ARIA contract、期待値を弱めず、AX treeのfalse→true→false検査を維持した。
+
+## 10. 最終head CI・GitHub記録
+
+- head `a3b543bba0a83054b6cdbae08d98bcf03034badb`はcurrent main `8e542b31`に対してbehind 0 / ahead 52、Draft・mergeableである。
+- Web UI Quality run `31442999561`: 37 / 37 success。artifact `9083557180`、digest `sha256:2683b4ecbef9d1dcd72076dd7667e2bdcae1361c179e9a4e9f6f54afc36f9bd6`。
+- MemoRAG CI run `31442999564`: success。
+- Validate Semver Label run `31442999565`: success。
+- 受け入れ確認: PR comment `5247330212`。
+- セルフレビュー: PR comment `5247330296`。今回sliceに残るactionable findingなし。
+- Issue #345進捗: issue comment `5247331993`。
+- manual / owner判断のblockerが残るためtaskは`do`、PRはDraftを維持した。merge / deploy / release / force-pushは実施していない。

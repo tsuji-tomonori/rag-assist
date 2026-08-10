@@ -96,15 +96,15 @@ open PR #461 は `MessageList.tsx` や `ProcessingAnswer.tsx` を変更するた
 
 ## 受け入れ条件
 
-- [ ] Given チャットがidle、When Chromium AX treeを取得する、Then「チャット」regionのbusy stateはfalseである。
-- [ ] Given 質問を送信して回答生成中、When Chromium AX treeを取得する、Then「チャット」regionのbusy stateはtrueで、処理中内容がpolite live statusとして公開される。
-- [ ] Given fixture回答を受信する、When 処理が完了する、Then chat regionのbusy stateはfalseへ戻り、回答が表示される。
-- [ ] `E2E-UI-SR-SEMANTICS-001`がrequired `@ui-quality` Chromium gateで成功する。
-- [ ] `chat / SQ-016 / AC-SQ016-003 / E2E-UI-SR-SEMANTICS-001`を正本、設計、trace / matrix、生成文書で相互追跡できる。
-- [ ] lint、Web typecheck、Web unit、対象E2E、docs checkが成功する。実行不能な検証は理由とfinal CI代替を記録する。
-- [ ] representative screen reader、実browser 200% / 400% zoom、touch / 実機、Firefox / WebKit、FR-051 owner判断、API C1、OQ-UI-002を未完了として維持する。
-- [ ] Draft PR #462の本文、受け入れ確認、セルフレビュー、Issue #345へ最終headとblockerを記録する。
-- [ ] merge、deploy、release、force-push、破壊的変更を行わない。
+- [x] Given チャットがidle、When Chromium AX treeを取得する、Then「チャット」regionのbusy stateはfalseである。
+- [x] Given 質問を送信して回答生成中、When Chromium AX treeを取得する、Then「チャット」regionのbusy stateはtrueで、処理中内容がpolite live statusとして公開される。
+- [x] Given fixture回答を受信する、When 処理が完了する、Then chat regionのbusy stateはfalseへ戻り、回答が表示される。
+- [x] `E2E-UI-SR-SEMANTICS-001`がrequired `@ui-quality` Chromium gateで成功する。
+- [x] `chat / SQ-016 / AC-SQ016-003 / E2E-UI-SR-SEMANTICS-001`を正本、設計、trace / matrix、生成文書で相互追跡できる。
+- [x] lint、Web typecheck、Web unit、対象E2E、docs checkが成功する。実行不能な検証は理由とfinal CI代替を記録する。
+- [x] representative screen reader、実browser 200% / 400% zoom、touch / 実機、Firefox / WebKit、FR-051 owner判断、API C1、OQ-UI-002を未完了として維持する。
+- [x] Draft PR #462の本文、受け入れ確認、セルフレビュー、Issue #345へ最終headとblockerを記録する。
+- [x] merge、deploy、release、force-push、破壊的変更を行わない。
 
 ## 検証計画
 
@@ -147,3 +147,5 @@ open PR #461 は `MessageList.tsx` や `ProcessingAnswer.tsx` を変更するた
 - PR / Issue記録とfinal-head CIが未完了であり、状態は`do`を維持する。
 - 初回final-head Web UI Qualityは36 / 37で失敗した。Chromium AX treeは`aria-busy="false"`をproperty omissionで表すため、readerが欠落値をfalseへ正規化せずidle/completed assertionと不一致になった。busy propertyが存在するtrueはそのまま保持し、欠落だけをfalseへ正規化するよう修正した。
 - 2回目のfinal-head Web UI Qualityも36 / 37で失敗した。取得済みartifactの`chat-processing` AX JSONから、Chromium CDPはbusy=trueをbooleanではなく数値`1`として返すことを特定した。falseのproperty omissionとtrueの`1`をそれぞれ`false` / `true`へ正規化し、DOM attributeへの代替assertionに弱めずAX tree検査を維持した。
+- head `a3b543bb`でWeb UI Quality 37 / 37、MemoRAG CI、semver検査がすべて成功した。受け入れ確認はPR comment `5247330212`、セルフレビューは`5247330296`、Issue #345進捗は`5247331993`へ記録した。
+- 本sliceの受け入れ条件は満たしたが、manual / owner判断の累積blockerが残るためtaskは`do`、PRはDraftを維持する。
