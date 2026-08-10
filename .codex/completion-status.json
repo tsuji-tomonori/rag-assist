@@ -8,34 +8,34 @@
     "Do not merge, deploy, release, force-push, or perform destructive changes"
   ],
   "completed_items": [
-    "Confirmed current main 8e542b31 and draft pull request #462 head c0b79d9a are converged with behind zero",
-    "Selected chat AC-SQ016-002 as a bounded automated gap and avoided Chat component files changed by parallel pull request #461",
-    "Added a three-pixel composer focus indicator for keyboard users",
-    "Extended the required Chromium keyboard contract with chat textbox focus, Enter submission, processing, and answer recovery",
+    "Confirmed current main 8e542b31 and draft pull request #462 head b7202b65 are converged with behind zero",
+    "Selected chat AC-SQ016-003 as a bounded automated gap and avoided MessageList and ProcessingAnswer files changed by parallel pull request #461",
+    "Exposed the chat region processing state through aria-busy",
+    "Extended the required Chromium accessibility-tree contract with idle, processing, completed busy states and polite live semantics",
     "Kept deterministic startRun and SSE fixtures inside Playwright and did not modify production API, permission, RAG, or dataset behavior",
-    "Linked chat to SQ-016 AC-SQ016-002 and synchronized canonical design, machine-readable trace, quality matrix, and generated Web documents",
-    "Passed repository lint, Web typecheck, Web build, 446 Web unit tests, 13 trace tests, 5 semantic tests, generated-document freshness, canonical docs, OpenAPI, API code docs, manual evidence structure, infra inventory, hidden Unicode, and diff checks"
+    "Linked chat to SQ-016 AC-SQ016-003 and synchronized canonical design, machine-readable trace, quality matrix, and generated Web documents",
+    "Passed repository lint, Web typecheck, Web build, 447 Web unit tests, 13 trace tests, 5 semantic tests, generated-document freshness, canonical docs, OpenAPI, API code docs, manual evidence structure, infra inventory, hidden Unicode, and diff checks"
   ],
   "remaining_items": [
-    "Confirm the new chat keyboard contract in final-head GitHub Actions",
+    "Confirm the new chat dynamic accessibility contract in final-head GitHub Actions",
     "Record final-head CI and self-review on draft pull request #462 and Issue #345",
     "Resolve FR-051 persistence and the profile state-evidence owner decision",
     "Run approved representative-screen-reader, real-browser 200/400-percent zoom, touch, real-device, Firefox, and WebKit verification"
   ],
   "blocked_items": [
-    "Local Chromium E2E execution is blocked because the Playwright Chromium executable is not installed; the tsx IPC limitation was bypassed with the same node entrypoint",
+    "Local Chromium E2E execution is blocked because tsx IPC listen is denied and the browser download endpoint returned a zero-byte response",
     "Manual accessibility evidence remains not release-ready with three blocked and one not-run check",
     "API C1 branch coverage remains below the 85-percent quality target in the latest known CI evidence"
   ],
   "validation": [
     { "command": "npm run lint", "result": "pass" },
     { "command": "npm run typecheck -w @memorag-mvp/web", "result": "pass" },
-    { "command": "TZ=Asia/Tokyo npm test -w @memorag-mvp/web", "result": "pass", "note": "62 files and 446 tests passed" },
+    { "command": "TZ=Asia/Tokyo npm test -w @memorag-mvp/web", "result": "pass", "note": "62 files and 447 tests passed" },
     { "command": "npm run build -w @memorag-mvp/web", "result": "pass", "note": "Existing chunk-size advisory only" },
-    { "command": "Targeted keyboard Playwright listing", "result": "pass", "note": "One required Chromium spec listed" },
-    { "command": "Targeted chat keyboard Chromium E2E execution", "result": "blocked", "note": "Playwright Chromium executable is not installed in the sandbox" },
+    { "command": "Targeted screen-reader semantic Playwright listing", "result": "pass", "note": "One required Chromium spec listed" },
+    { "command": "Targeted chat dynamic semantic Chromium E2E execution", "result": "blocked", "note": "tsx IPC listen denied and Playwright browser download returned zero bytes" },
     { "command": "UI trace, semantic, canonical, generated, manual evidence, infra, hidden Unicode, OpenAPI, API code docs, and diff checks", "result": "pass" }
   ],
-  "next_action": "Publish the bounded chat keyboard change to draft pull request #462, verify final-head GitHub Actions, and record evidence without marking manual checks complete",
+  "next_action": "Publish the bounded chat dynamic semantic change to draft pull request #462, verify final-head GitHub Actions, and record evidence without marking manual checks complete",
   "safe_to_continue_without_user": true
 }

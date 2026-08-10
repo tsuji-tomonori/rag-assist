@@ -5,6 +5,8 @@ type AccessibilityContractNode = {
   name: string
   value: string
   checked: string
+  busy: string
+  live: string
 }
 
 type ExpectedNode = {
@@ -12,10 +14,19 @@ type ExpectedNode = {
   name?: string
   value?: string
   checked?: string
+  busy?: string
+  live?: string
+}
+
+type ChatSemanticRouteState = {
+  startRuns: number
+  eventReads: number
+  releaseAnswer: () => void
 }
 
 const evidenceRoles = new Set([
   'alert',
+  'article',
   'button',
   'checkbox',
   'combobox',
@@ -33,6 +44,7 @@ const evidenceRoles = new Set([
 ])
 
 test('E2E-UI-SR-SEMANTICS-001: representative views expose stable Chromium accessibility tree contracts @smoke @ui-quality', async ({ page }, testInfo) => {
+  const chatRouteState = await installChatRoute(page)
   await installHistoryRoute(page)
   await installFavoritesRoute(page)
   await installBenchmarkRoutes(page)
@@ -52,11 +64,13 @@ test('E2E-UI-SR-SEMANTICS-001: representative views expose stable Chromium acces
     { role: 'main' },
     { role: 'heading', name: '社内QAチャットボットエージェント' },
     { role: 'navigation', name: '画面' },
-    { role: 'region', name: 'チャット' },
+    { role: 'region', name: 'チャット', busy: 'false' },
     { role: 'form', name: '質問入力' },
     { role: 'textbox', name: '質問' },
     { role: 'button', name: '質問を送信' }
   ])
+
+  await verifyChatDynamicSemantics(page, testInfo, chatRouteState)
 
   await page.getByRole('navigation', { name: '画面' }).getByRole('button', { name: 'ドキュメント' }).click()
   await expect(page.getByRole('region', { name: 'ドキュメント管理' })).toBeVisible()
@@ -128,6 +142,65 @@ test('E2E-UI-SR-SEMANTICS-001: representative views expose stable Chromium acces
     { role: 'button', name: 'サインアウト' }
   ])
 })
+
+async function installChatRoute(page: Page): Promise<ChatSemanticRouteState> {
+  let releaseAnswer: () => void = () => undefined
+  const answerGate = new Promise<void>((resolve) => { releaseAnswer = resolve })
+  const state: ChatSemanticRouteState = {
+    startRuns: 0,
+    eventReads: 0,
+    releaseAnswer: () => releaseAnswer()
+  }
+
+  await page.route(/http:\/\/127\.0\.0\.1:8787\/rpc\/chat\/startRun$/, async (route) => {
+    state.startRuns += 1
+    await route.fulfill({
+      json: {
+        json: {
+          runId: 'semantic-chat-run',
+          status: 'queued',
+          eventsPath: '/chat-runs/semantic-chat-run/events'
+        }
+      }
+    })
+  })
+
+  await page.route(/http:\/\/127\.0\.0\.1:8787\/chat-runs\/semantic-chat-run\/events$/, async (route) => {
+    state.eventReads += 1
+    await answerGate
+    await route.fulfill({
+      contentType: 'text/event-stream',
+      body: 'id: 1\nevent: final\ndata: {"answer":"semantic stateから回答へ復帰しました。","isAnswerable":true,"citations":[],"retrieved":[]}\n\n'
+    })
+  })
+
+  return state
+}
+
+async function verifyChatDynamicSemantics(
+  page: Page,
+  testInfo: TestInfo,
+  routeState: ChatSemanticRouteState
+) {
+  const chat = page.getByRole('region', { name: 'チャット', exact: true })
+  const question = chat.getByRole('textbox', { name: '質問' })
+  await question.fill('回答処理中のsemantic stateを確認する')
+  await chat.getByRole('button', { name: '質問を送信' }).click()
+
+  await expect(chat.locator('.processing-row')).toContainText('回答を生成中')
+  await expect.poll(() => routeState.startRuns).toBe(1)
+  await expect.poll(() => routeState.eventReads).toBe(1)
+  await expectAccessibilityContract(page, testInfo, 'chat-processing', [
+    { role: 'region', name: 'チャット', busy: 'true' },
+    { role: 'article', live: 'polite' }
+  ])
+
+  routeState.releaseAnswer()
+  await expect(chat.getByText('semantic stateから回答へ復帰しました。')).toBeVisible()
+  await expectAccessibilityContract(page, testInfo, 'chat-completed', [
+    { role: 'region', name: 'チャット', busy: 'false' }
+  ])
+}
 
 async function installHistoryRoute(page: Page) {
   await page.route(/http:\/\/127\.0\.0\.1:8787\/conversation-history$/, async (route) => {
@@ -253,7 +326,9 @@ async function expectAccessibilityContract(
       node.role === expectedNode.role &&
       (expectedNode.name === undefined || node.name === expectedNode.name) &&
       (expectedNode.value === undefined || node.value === expectedNode.value) &&
-      (expectedNode.checked === undefined || node.checked === expectedNode.checked)
+      (expectedNode.checked === undefined || node.checked === expectedNode.checked) &&
+      (expectedNode.busy === undefined || node.busy === expectedNode.busy) &&
+      (expectedNode.live === undefined || node.live === expectedNode.live)
     ))
     expect(matched, `missing accessibility node ${JSON.stringify(expectedNode)} in ${label}`).toBe(true)
   }
@@ -269,7 +344,9 @@ async function readAccessibilityTree(page: Page): Promise<AccessibilityContractN
         role: String(node.role?.value ?? ''),
         name: String(node.name?.value ?? ''),
         value: String(node.value?.value ?? ''),
-        checked: String(node.properties?.find((property) => property.name === 'checked')?.value?.value ?? '')
+        checked: String(node.properties?.find((property) => property.name === 'checked')?.value?.value ?? ''),
+        busy: String(node.properties?.find((property) => property.name === 'busy')?.value?.value ?? ''),
+        live: String(node.properties?.find((property) => property.name === 'live')?.value?.value ?? '')
       }))
   } finally {
     await session.detach()

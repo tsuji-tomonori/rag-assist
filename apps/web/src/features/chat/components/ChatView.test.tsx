@@ -108,4 +108,14 @@ describe("ChatView debug permission", () => {
 
     expect(screen.queryByText("質問を送信する権限がありません", { exact: false })).not.toBeInTheDocument()
   })
+
+  it("回答処理中だけチャットregionをbusyとして公開する", () => {
+    const { rerender } = renderChatView()
+
+    expect(screen.getByRole("region", { name: "チャット" })).toHaveAttribute("aria-busy", "false")
+
+    rerender(<ChatView {...defaultProps} isProcessing pendingActivity="回答を生成中" />)
+
+    expect(screen.getByRole("region", { name: "チャット" })).toHaveAttribute("aria-busy", "true")
+  })
 })
