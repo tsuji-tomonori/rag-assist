@@ -135,7 +135,7 @@ test('E2E-UI-LOGIN-KEYBOARD-001: login前画面をkeyboard-onlyで完了でき�
   await testInfo.attach('login-keyboard-evidence.json', {
     body: Buffer.from(JSON.stringify({
       evidenceId: 'E2E-UI-LOGIN-KEYBOARD-001',
-      evidenceBoundary: 'Automated Chromium keyboard and native validation evidence; not representative screen-reader, real browser zoom, real-device, Firefox, or WebKit evidence',
+      evidenceBoundary: 'Automated keyboard and native validation evidence in the configured browser project; not representative screen-reader, real browser zoom, or real-device evidence',
       results
     }, null, 2)),
     contentType: 'application/json'

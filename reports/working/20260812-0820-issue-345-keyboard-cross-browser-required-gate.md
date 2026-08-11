@@ -30,7 +30,9 @@
 
 ## 最終head CI
 
-- pending: Web UI QualityのChromium required jobと新しいFirefox／WebKit keyboard required job。
+- pass: 初回head `0ff88717`のChromium required job。
+- partial: 初回head `0ff88717`のcross-browser keyboard jobはWebKit 2件とFirefox loginが成功し、Firefox主要画面だけが固定40回のTab探索上限で失敗した。失敗artifactでは対象の「チャット」buttonがvisible／focusableで、40回後のactive elementがmodel comboboxだったため、production focus defectではなくbrowserごとのfocusable要素数に依存するtest helperと診断した。
+- fix pending: keyboard-onlyのTab操作は維持し、最大120回まで一巡できる探索と直近focus targetの失敗診断へ更新した。login証跡のbrowser境界文言もconfigured project基準へ修正した。
 - pending: MemoRAG CI、semver label validation。
 
 ## 未完了・境界

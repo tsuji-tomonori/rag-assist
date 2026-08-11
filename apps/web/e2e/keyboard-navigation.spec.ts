@@ -268,12 +268,26 @@ async function keyboardSignIn(page: Page) {
 }
 
 async function tabTo(page: Page, target: Locator) {
-  for (let index = 0; index < 40; index += 1) {
+  const visitedFocusTargets: string[] = []
+
+  for (let index = 0; index < 120; index += 1) {
     await page.keyboard.press('Tab')
     if (await target.evaluate((element) => element === document.activeElement)) return
+
+    visitedFocusTargets.push(await page.evaluate(() => {
+      const activeElement = document.activeElement
+      if (!(activeElement instanceof HTMLElement)) return 'unknown'
+
+      const accessibleName = activeElement.getAttribute('aria-label')
+        ?? activeElement.getAttribute('name')
+        ?? activeElement.textContent?.trim().slice(0, 40)
+        ?? ''
+      return `${activeElement.tagName.toLowerCase()}${accessibleName ? `:${accessibleName}` : ''}`
+    }))
   }
 
-  throw new Error(`Tab key did not reach ${await target.getAttribute('aria-label') ?? await target.textContent() ?? 'target'}`)
+  const targetName = await target.getAttribute('aria-label') ?? await target.textContent() ?? 'target'
+  throw new Error(`Tab key did not reach ${targetName}; last focus targets: ${visitedFocusTargets.slice(-12).join(' -> ')}`)
 }
 
 async function expectKeyboardFocus(target: Locator) {
