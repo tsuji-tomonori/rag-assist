@@ -8,37 +8,36 @@
     "Do not merge, deploy, release, force-push, or perform destructive changes"
   ],
   "completed_items": [
-    "Confirmed current main 8e542b31 and draft pull request #462 head b7202b65 are converged with behind zero",
-    "Selected chat AC-SQ016-003 as a bounded automated gap and avoided MessageList and ProcessingAnswer files changed by parallel pull request #461",
-    "Exposed the chat region processing state through aria-busy",
-    "Extended the required Chromium accessibility-tree contract with idle, processing, completed busy states and polite live semantics",
-    "Kept deterministic startRun and SSE fixtures inside Playwright and did not modify production API, permission, RAG, or dataset behavior",
-    "Linked chat to SQ-016 AC-SQ016-003 and synchronized canonical design, machine-readable trace, quality matrix, and generated Web documents",
-    "Passed repository lint, Web typecheck, Web build, 447 Web unit tests, 13 trace tests, 5 semantic tests, generated-document freshness, canonical docs, OpenAPI, API code docs, manual evidence structure, infra inventory, hidden Unicode, and diff checks",
-    "Passed final-head Web UI Quality 37 of 37, MemoRAG CI, and semver validation",
-    "Recorded pull request acceptance, self-review, and Issue 345 progress while retaining Draft and do status"
+    "Confirmed current main 8e542b31 and pull request #462 head 38e7d8c0 are converged with behind zero",
+    "Restored pull request #462 to Draft because required manual accessibility evidence remains incomplete",
+    "Selected a bounded Firefox and WebKit keyboard gate that avoids production paths changed by parallel pull request #461",
+    "Added a pull-request-required Firefox and WebKit job for the existing login and primary-view keyboard journeys",
+    "Kept the broader Firefox and WebKit visual accessibility scope scheduled and separate",
+    "Linked chat, history, favorites, and profile through SQ-016 AC-SQ016-002 to the two keyboard E2E IDs and workflow evidence",
+    "Synchronized canonical design, machine-readable trace, quality matrix, generated Web documents, task, and report",
+    "Passed repository lint, Web typecheck, Web build, 447 Web unit tests, four-test E2E discovery, 13 trace tests, 5 semantic tests, generated-document freshness, canonical docs, OpenAPI, API code docs, manual evidence structure, infra inventory, hidden Unicode, and diff checks"
   ],
   "remaining_items": [
+    "Confirm the final-head GitHub Actions Firefox and WebKit four-test execution and other required checks",
+    "Record pull request acceptance, self-review, and Issue 345 progress",
     "Resolve FR-051 persistence and the profile state-evidence owner decision",
-    "Run approved representative-screen-reader, real-browser 200/400-percent zoom, touch, real-device, Firefox, and WebKit verification"
+    "Run approved representative-screen-reader, real-browser 200/400-percent zoom, touch, real-device, and Firefox/WebKit accessibility-tree verification"
   ],
   "blocked_items": [
-    "Local Chromium E2E execution is blocked because tsx IPC listen is denied and the browser download endpoint returned a zero-byte response",
+    "Local Firefox launch timed out because the sandbox exposes /proc/self/uid_map as read-only",
+    "Local WebKit launch is blocked by missing GStreamer, GTK, Graphene, Wayland, and related host libraries",
     "Manual accessibility evidence remains not release-ready with three blocked and one not-run check",
-    "API C1 branch coverage remains below the 85-percent quality target in the latest known CI evidence"
+    "API C1 branch coverage remains below the 85-percent quality target in the latest known evidence"
   ],
   "validation": [
     { "command": "npm run lint", "result": "pass" },
     { "command": "npm run typecheck -w @memorag-mvp/web", "result": "pass" },
     { "command": "TZ=Asia/Tokyo npm test -w @memorag-mvp/web", "result": "pass", "note": "62 files and 447 tests passed" },
     { "command": "npm run build -w @memorag-mvp/web", "result": "pass", "note": "Existing chunk-size advisory only" },
-    { "command": "Targeted screen-reader semantic Playwright listing", "result": "pass", "note": "One required Chromium spec listed" },
-    { "command": "Targeted chat dynamic semantic Chromium E2E execution", "result": "blocked", "note": "tsx IPC listen denied and Playwright browser download returned zero bytes" },
-    { "command": "UI trace, semantic, canonical, generated, manual evidence, infra, hidden Unicode, OpenAPI, API code docs, and diff checks", "result": "pass" },
-    { "command": "GitHub Actions Web UI Quality run 31442999561", "result": "pass", "note": "37 of 37; artifact 9083557180" },
-    { "command": "GitHub Actions MemoRAG CI run 31442999564", "result": "pass" },
-    { "command": "GitHub Actions Validate Semver Label run 31442999565", "result": "pass" }
+    { "command": "npm run test:e2e:cross-browser:keyboard -w @memorag-mvp/web -- --list", "result": "pass", "note": "Four tests across Firefox and WebKit listed" },
+    { "command": "Targeted Firefox and WebKit keyboard E2E execution", "result": "blocked", "note": "Browser launch environment failures before test assertions" },
+    { "command": "UI trace, semantic, canonical, generated, manual evidence, infra, hidden Unicode, OpenAPI, API code docs, and diff checks", "result": "pass" }
   ],
-  "next_action": "Keep draft pull request #462 unmerged and continue with the next non-overlapping Issue #345 unit while manual screen-reader, zoom, device, cross-browser, and owner-decision gaps remain incomplete",
+  "next_action": "Push the bounded change to draft pull request #462, require final-head cross-browser CI success, and record the result without closing manual accessibility blockers",
   "safe_to_continue_without_user": true
 }

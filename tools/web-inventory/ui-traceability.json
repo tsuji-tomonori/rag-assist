@@ -118,7 +118,7 @@
     {
       "id": "E2E-UI-KEYBOARD-NAV-001",
       "status": "implemented",
-      "evidence": ["apps/web/e2e/keyboard-navigation.spec.ts"]
+      "evidence": ["apps/web/e2e/keyboard-navigation.spec.ts", ".github/workflows/web-ui-quality.yml"]
     },
     {
       "id": "E2E-UI-SR-SEMANTICS-001",
@@ -160,7 +160,8 @@
       "status": "implemented",
       "evidence": [
         "apps/web/e2e/login-keyboard.spec.ts",
-        "apps/web/src/features/auth/components/LoginPage.test.tsx"
+        "apps/web/src/features/auth/components/LoginPage.test.tsx",
+        ".github/workflows/web-ui-quality.yml"
       ]
     },
     {

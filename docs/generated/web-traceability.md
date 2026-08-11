@@ -57,7 +57,7 @@
 | E2E-UI-SEMANTIC-001 | implemented | apps/web/e2e/visual-regression.spec.ts | - |
 | E2E-UI-CROSS-SCREEN-AUDIT-001 | implemented | apps/web/e2e/visual-regression.spec.ts<br>apps/web/e2e/cross-screen-audit.ts | - |
 | E2E-UI-A11Y-GATE-001 | implemented | apps/web/e2e/visual-regression.spec.ts | - |
-| E2E-UI-KEYBOARD-NAV-001 | implemented | apps/web/e2e/keyboard-navigation.spec.ts | - |
+| E2E-UI-KEYBOARD-NAV-001 | implemented | apps/web/e2e/keyboard-navigation.spec.ts<br>.github/workflows/web-ui-quality.yml | - |
 | E2E-UI-SR-SEMANTICS-001 | implemented | apps/web/e2e/screen-reader-semantics.spec.ts | - |
 | E2E-UI-TOUCH-NAV-001 | implemented | apps/web/e2e/touch-navigation.spec.ts | - |
 | E2E-UI-RISK-001 | implemented | apps/web/e2e/visual-regression.spec.ts | - |
@@ -65,7 +65,7 @@
 | E2E-UI-QUESTION-001 | implemented | apps/web/e2e/question-journey.spec.ts | - |
 | E2E-UI-QUESTION-002 | implemented | apps/web/e2e/question-journey.spec.ts | - |
 | E2E-UI-SKIP-001 | implemented | apps/web/e2e/skip-link.spec.ts | - |
-| E2E-UI-LOGIN-KEYBOARD-001 | implemented | apps/web/e2e/login-keyboard.spec.ts<br>apps/web/src/features/auth/components/LoginPage.test.tsx | - |
+| E2E-UI-LOGIN-KEYBOARD-001 | implemented | apps/web/e2e/login-keyboard.spec.ts<br>apps/web/src/features/auth/components/LoginPage.test.tsx<br>.github/workflows/web-ui-quality.yml | - |
 | E2E-UI-LAYOUT-STRESS-001 | implemented | apps/web/e2e/layout-stress.spec.ts | - |
 | E2E-UI-TEXT-SPACING-001 | implemented | apps/web/e2e/text-spacing.spec.ts | - |
 | E2E-UI-VIRTUAL-KEYBOARD-001 | implemented | apps/web/e2e/viewport-keyboard.spec.ts | - |

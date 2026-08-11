@@ -37,4 +37,11 @@ npx playwright test apps/web/e2e/screen-reader-semantics.spec.ts --config apps/w
 
 `keyboard-navigation.spec.ts` は、チャットの質問textboxへのTab到達、composerの3px focus indicator、既定Enterによる送信、処理中から回答への復帰に加え、primary view navigation、履歴、お気に入り、個人設定の代表controlをkeyboard-onlyで検査します。route fixtureはPlaywright内に限定し、本番API・認可・RAG回答を置き換えません。
 
-この自動テストはrequired Chromium keyboard evidenceです。代表screen reader、実browserの200% / 400% zoom、touch / real-device、Firefox / WebKitの手動・browser evidenceは別途必要です。
+PRでは`login-keyboard.spec.ts`と`keyboard-navigation.spec.ts`をChromiumに加えてFirefox／WebKitでもrequired gateとして実行します。限定cross-browser scopeだけをローカルで列挙・実行する場合は、repository rootで次を実行します。
+
+```bash
+npm run test:e2e:cross-browser:keyboard -w @memorag-mvp/web -- --list
+npm run test:e2e:cross-browser:keyboard -w @memorag-mvp/web
+```
+
+週次／手動dispatchのFirefox／WebKit visual accessibility scopeは`test:e2e:cross-browser`として別に維持します。このkeyboard自動証跡は、代表screen reader、実browserの200% / 400% zoom、touch / real-device、Firefox／WebKitのaccessibility tree mapping、ならびに対象外画面の網羅検証を代替しません。

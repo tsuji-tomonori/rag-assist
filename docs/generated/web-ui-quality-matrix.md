@@ -10,7 +10,7 @@
 | AC | 品質軸 | automated owner | automated evidence | manual owner | manual task |
 | --- | --- | --- | --- | --- | --- |
 | AC-SQ016-001 | viewport・zoom・reflow・content/function loss | Phase A audit / Phase B-C remediation | `apps/web/e2e/visual-regression.spec.ts`<br>`apps/web/e2e/cross-screen-audit.ts` | manual evidence task | tasks/todo/20260714-issue-345-manual-a11y-evidence.md |
-| AC-SQ016-002 | keyboard・focus order/visible/obscured・dialog recovery | Phase A audit / Phase B-C remediation | `apps/web/e2e/visual-regression.spec.ts`<br>`apps/web/e2e/cross-screen-audit.ts`<br>`apps/web/e2e/keyboard-navigation.spec.ts` | manual evidence task | tasks/todo/20260714-issue-345-manual-a11y-evidence.md |
+| AC-SQ016-002 | keyboard・focus order/visible/obscured・dialog recovery | Phase A audit / Phase B-C remediation | `apps/web/e2e/visual-regression.spec.ts`<br>`apps/web/e2e/cross-screen-audit.ts`<br>`apps/web/e2e/login-keyboard.spec.ts`<br>`apps/web/e2e/keyboard-navigation.spec.ts`<br>`.github/workflows/web-ui-quality.yml` | manual evidence task | tasks/todo/20260714-issue-345-manual-a11y-evidence.md |
 | AC-SQ016-003 | accessible name・role・state・value・live/error semantics | Phase A audit / Phase B-C remediation | `apps/web/e2e/visual-regression.spec.ts`<br>`apps/web/e2e/cross-screen-audit.ts`<br>`apps/web/e2e/screen-reader-semantics.spec.ts` | manual evidence task | tasks/todo/20260714-issue-345-manual-a11y-evidence.md |
 | AC-SQ016-004 | text・non-text UI・focus indicator contrast・color independence | Phase A audit / Phase B-C remediation | `apps/web/e2e/visual-regression.spec.ts` | manual evidence task | tasks/todo/20260714-issue-345-manual-a11y-evidence.md |
 | AC-SQ016-005 | 24×24 minimum target・primary 44〜48px class target | Phase A candidate audit / Phase B-C remediation | `apps/web/e2e/visual-regression.spec.ts`<br>`apps/web/e2e/cross-screen-audit.ts` | manual evidence task | tasks/todo/20260714-issue-345-manual-a11y-evidence.md |
@@ -36,7 +36,7 @@
 | view | AC | automated | manual | overall | note |
 | --- | --- | --- | --- | --- | --- |
 | chat | AC-SQ016-001 | pass | blocked | blocked | CI run 29516940570 / artifact 8383090126の4 viewportでroot/unresolved overflow 0。実browser zoomは未検証 |
-| chat | AC-SQ016-002 | pass | blocked | blocked | required E2E-UI-KEYBOARD-NAV-001で質問textboxへのTab到達、composerの3px focus indicator、Enter送信、処理中から回答への復帰をkeyboard-onlyで検証。manual keyboard journeyは未実施 |
+| chat | AC-SQ016-002 | pass | blocked | blocked | required E2E-UI-KEYBOARD-NAV-001をChromium／Firefox／WebKitで実行し、質問textboxへのTab到達、composerの3px focus indicator、Enter送信、処理中から回答への復帰をkeyboard-onlyで検証。manual keyboard journeyは未実施 |
 | chat | AC-SQ016-003 | pass | blocked | blocked | required E2E-UI-SR-SEMANTICS-001でchat region / form / textbox /送信buttonのname / roleとidle→処理中→完了のbusy / polite live stateをChromium AX treeから検証。代表screen readerのmanual evidenceは未実施 |
 | chat | AC-SQ016-004 | blocked | blocked | blocked | computed/axe contrast baselineとmanual review待ち |
 | chat | AC-SQ016-005 | pass | blocked | blocked | 4 viewportで24px minimumと44px primary targetの未解決candidate 0。manual touch evidenceは未実施 |
@@ -52,7 +52,7 @@
 | assignee | AC-SQ016-007 | pass | blocked | blocked | required E2E-UI-STATE-001でloading→500→retry→confirmed emptyとHTTP 403を区別し、false zero、未確認kanban、private detail露出を防ぐ。manual evidenceは未実施 |
 | assignee | AC-SQ016-008 | not_applicable | blocked | blocked | manual required scopeは未実施 |
 | history | AC-SQ016-001 | pass | blocked | blocked | CI run 29516940570 / artifact 8383090126の4 viewportでroot/unresolved overflow 0。実browser zoomは未検証 |
-| history | AC-SQ016-002 | pass | blocked | blocked | required E2E-UI-KEYBOARD-NAV-001で履歴への到達、検索・並び替え・お気に入り絞り込み・会話選択、3px focus indicatorをkeyboard-onlyで検証。manual keyboard journeyは未実施 |
+| history | AC-SQ016-002 | pass | blocked | blocked | required E2E-UI-KEYBOARD-NAV-001をChromium／Firefox／WebKitで実行し、履歴への到達、検索・並び替え・お気に入り絞り込み・会話選択、3px focus indicatorをkeyboard-onlyで検証。manual keyboard journeyは未実施 |
 | history | AC-SQ016-003 | pass | blocked | blocked | required E2E-UI-SR-SEMANTICS-001で履歴region/heading、検索searchbox、並び順comboboxのvalue、お気に入りcheckboxのchecked state、主要buttonのChromium AX tree契約を検証。representative screen readerは未実施 |
 | history | AC-SQ016-004 | pass | blocked | blocked | muted foreground remediation後、1280px axe serious/critical blocker 0。manual contrast reviewは未実施 |
 | history | AC-SQ016-005 | pass | blocked | blocked | 4 viewportで24px minimumと44px primary targetの未解決candidate 0。manual touch evidenceは未実施 |
@@ -60,7 +60,7 @@
 | history | AC-SQ016-007 | pass | blocked | blocked | required E2E-UI-STATE-001でloading→500→retry→confirmed emptyとHTTP 403を区別し、false zeroとprivate detail露出を防ぐ。manual evidenceは未実施 |
 | history | AC-SQ016-008 | not_applicable | blocked | blocked | manual required scopeは未実施 |
 | favorites | AC-SQ016-001 | pass | blocked | blocked | CI run 29516940570 / artifact 8383090126の4 viewportでroot/unresolved overflow 0。実browser zoomは未検証 |
-| favorites | AC-SQ016-002 | pass | blocked | blocked | required E2E-UI-KEYBOARD-NAV-001でお気に入りnavigationへのSpace到達、戻るbuttonへのTab到達、3px focus indicator、Enterによるチャット復帰をkeyboard-onlyで検証。favorite resume / delete journeyとmanual keyboard journeyは未完了 |
+| favorites | AC-SQ016-002 | pass | blocked | blocked | required E2E-UI-KEYBOARD-NAV-001をChromium／Firefox／WebKitで実行し、お気に入りnavigationへのSpace到達、戻るbuttonへのTab到達、3px focus indicator、Enterによるチャット復帰をkeyboard-onlyで検証。favorite resume / delete journeyとmanual keyboard journeyは未完了 |
 | favorites | AC-SQ016-003 | pass | blocked | blocked | required E2E-UI-SR-SEMANTICS-001でお気に入りregion/heading、項目一覧・target type見出し、戻るbuttonのChromium AX tree契約を検証。representative screen readerは未実施 |
 | favorites | AC-SQ016-004 | pass | blocked | blocked | muted foreground remediation後、1280px axe serious/critical blocker 0。manual contrast reviewは未実施 |
 | favorites | AC-SQ016-005 | pass | blocked | blocked | 4 viewportで24px minimumと44px primary targetの未解決candidate 0。manual touch evidenceは未実施 |
@@ -92,7 +92,7 @@
 | documents | AC-SQ016-007 | pass | blocked | blocked | required E2E-UI-STATE-001でcatalog/reindexのloading、部分500、retry→confirmed empty、全resourceのHTTP 403を区別し、false zeroとprivate detail露出を防ぐ。manual evidenceは未実施 |
 | documents | AC-SQ016-008 | not_applicable | blocked | blocked | manual required scopeは未実施 |
 | profile | AC-SQ016-001 | pass | blocked | blocked | CI run 29516940570 / artifact 8383090126の4 viewportでroot/unresolved overflow 0。実browser zoomは未検証 |
-| profile | AC-SQ016-002 | pass | blocked | blocked | required E2E-UI-KEYBOARD-NAV-001で個人設定への到達、送信キー変更、チャット復帰、3px focus indicatorをkeyboard-onlyで検証。manual keyboard journeyは未実施 |
+| profile | AC-SQ016-002 | pass | blocked | blocked | required E2E-UI-KEYBOARD-NAV-001をChromium／Firefox／WebKitで実行し、個人設定への到達、送信キー変更、チャット復帰、3px focus indicatorをkeyboard-onlyで検証。manual keyboard journeyは未実施 |
 | profile | AC-SQ016-003 | pass | blocked | blocked | required E2E-UI-SR-SEMANTICS-001で個人設定region/heading、送信キーcomboboxのname/value、戻る・sign out buttonのChromium AX tree契約を検証。representative screen readerは未実施 |
 | profile | AC-SQ016-004 | blocked | blocked | blocked | computed/axe contrast baselineとmanual review待ち |
 | profile | AC-SQ016-005 | pass | blocked | blocked | 4 viewportで24px minimumと44px primary targetの未解決candidate 0。manual touch evidenceは未実施 |

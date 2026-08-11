@@ -23,7 +23,7 @@
       "automated": {
         "required": true,
         "owner": "Phase A audit / Phase B-C remediation",
-        "evidence": ["apps/web/e2e/visual-regression.spec.ts", "apps/web/e2e/cross-screen-audit.ts", "apps/web/e2e/keyboard-navigation.spec.ts"]
+        "evidence": ["apps/web/e2e/visual-regression.spec.ts", "apps/web/e2e/cross-screen-audit.ts", "apps/web/e2e/login-keyboard.spec.ts", "apps/web/e2e/keyboard-navigation.spec.ts", ".github/workflows/web-ui-quality.yml"]
       },
       "manual": {
         "required": true,
@@ -128,7 +128,7 @@
       "view": "chat",
       "criteria": {
         "AC-SQ016-001": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "CI run 29516940570 / artifact 8383090126の4 viewportでroot/unresolved overflow 0。実browser zoomは未検証" },
-        "AC-SQ016-002": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "required E2E-UI-KEYBOARD-NAV-001で質問textboxへのTab到達、composerの3px focus indicator、Enter送信、処理中から回答への復帰をkeyboard-onlyで検証。manual keyboard journeyは未実施" },
+        "AC-SQ016-002": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "required E2E-UI-KEYBOARD-NAV-001をChromium／Firefox／WebKitで実行し、質問textboxへのTab到達、composerの3px focus indicator、Enter送信、処理中から回答への復帰をkeyboard-onlyで検証。manual keyboard journeyは未実施" },
         "AC-SQ016-003": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "required E2E-UI-SR-SEMANTICS-001でchat region / form / textbox /送信buttonのname / roleとidle→処理中→完了のbusy / polite live stateをChromium AX treeから検証。代表screen readerのmanual evidenceは未実施" },
         "AC-SQ016-004": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "computed/axe contrast baselineとmanual review待ち" },
         "AC-SQ016-005": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "4 viewportで24px minimumと44px primary targetの未解決candidate 0。manual touch evidenceは未実施" },
@@ -154,7 +154,7 @@
       "view": "history",
       "criteria": {
         "AC-SQ016-001": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "CI run 29516940570 / artifact 8383090126の4 viewportでroot/unresolved overflow 0。実browser zoomは未検証" },
-        "AC-SQ016-002": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "required E2E-UI-KEYBOARD-NAV-001で履歴への到達、検索・並び替え・お気に入り絞り込み・会話選択、3px focus indicatorをkeyboard-onlyで検証。manual keyboard journeyは未実施" },
+        "AC-SQ016-002": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "required E2E-UI-KEYBOARD-NAV-001をChromium／Firefox／WebKitで実行し、履歴への到達、検索・並び替え・お気に入り絞り込み・会話選択、3px focus indicatorをkeyboard-onlyで検証。manual keyboard journeyは未実施" },
         "AC-SQ016-003": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "required E2E-UI-SR-SEMANTICS-001で履歴region/heading、検索searchbox、並び順comboboxのvalue、お気に入りcheckboxのchecked state、主要buttonのChromium AX tree契約を検証。representative screen readerは未実施" },
         "AC-SQ016-004": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "muted foreground remediation後、1280px axe serious/critical blocker 0。manual contrast reviewは未実施" },
         "AC-SQ016-005": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "4 viewportで24px minimumと44px primary targetの未解決candidate 0。manual touch evidenceは未実施" },
@@ -167,7 +167,7 @@
       "view": "favorites",
       "criteria": {
         "AC-SQ016-001": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "CI run 29516940570 / artifact 8383090126の4 viewportでroot/unresolved overflow 0。実browser zoomは未検証" },
-        "AC-SQ016-002": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "required E2E-UI-KEYBOARD-NAV-001でお気に入りnavigationへのSpace到達、戻るbuttonへのTab到達、3px focus indicator、Enterによるチャット復帰をkeyboard-onlyで検証。favorite resume / delete journeyとmanual keyboard journeyは未完了" },
+        "AC-SQ016-002": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "required E2E-UI-KEYBOARD-NAV-001をChromium／Firefox／WebKitで実行し、お気に入りnavigationへのSpace到達、戻るbuttonへのTab到達、3px focus indicator、Enterによるチャット復帰をkeyboard-onlyで検証。favorite resume / delete journeyとmanual keyboard journeyは未完了" },
         "AC-SQ016-003": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "required E2E-UI-SR-SEMANTICS-001でお気に入りregion/heading、項目一覧・target type見出し、戻るbuttonのChromium AX tree契約を検証。representative screen readerは未実施" },
         "AC-SQ016-004": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "muted foreground remediation後、1280px axe serious/critical blocker 0。manual contrast reviewは未実施" },
         "AC-SQ016-005": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "4 viewportで24px minimumと44px primary targetの未解決candidate 0。manual touch evidenceは未実施" },
@@ -219,7 +219,7 @@
       "view": "profile",
       "criteria": {
         "AC-SQ016-001": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "CI run 29516940570 / artifact 8383090126の4 viewportでroot/unresolved overflow 0。実browser zoomは未検証" },
-        "AC-SQ016-002": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "required E2E-UI-KEYBOARD-NAV-001で個人設定への到達、送信キー変更、チャット復帰、3px focus indicatorをkeyboard-onlyで検証。manual keyboard journeyは未実施" },
+        "AC-SQ016-002": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "required E2E-UI-KEYBOARD-NAV-001をChromium／Firefox／WebKitで実行し、個人設定への到達、送信キー変更、チャット復帰、3px focus indicatorをkeyboard-onlyで検証。manual keyboard journeyは未実施" },
         "AC-SQ016-003": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "required E2E-UI-SR-SEMANTICS-001で個人設定region/heading、送信キーcomboboxのname/value、戻る・sign out buttonのChromium AX tree契約を検証。representative screen readerは未実施" },
         "AC-SQ016-004": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "computed/axe contrast baselineとmanual review待ち" },
         "AC-SQ016-005": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "4 viewportで24px minimumと44px primary targetの未解決candidate 0。manual touch evidenceは未実施" },
