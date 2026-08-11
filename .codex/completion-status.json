@@ -16,8 +16,8 @@
     "Linked chat, history, favorites, and profile through SQ-016 AC-SQ016-002 to the two keyboard E2E IDs and workflow evidence",
     "Synchronized canonical design, machine-readable trace, quality matrix, generated Web documents, task, and report",
     "Passed repository lint, Web typecheck, Web build, 447 Web unit tests, four-test E2E discovery, 13 trace tests, 5 semantic tests, generated-document freshness, canonical docs, OpenAPI, API code docs, manual evidence structure, infra inventory, hidden Unicode, and diff checks",
-    "Diagnosed the initial cross-browser CI result: both WebKit tests and Firefox login passed, while Firefox primary navigation exceeded a brittle 40-Tab helper limit",
-    "Preserved real keyboard traversal while allowing a full 120-step focus cycle and adding focused-target diagnostics"
+    "Diagnosed the cross-browser CI result: both WebKit tests and Firefox login passed, while Firefox does not wrap forward Tab from the final focusable model selector to the document start",
+    "Removed the browser-dependent wrap assumption by using Shift+Tab for the keyboard-only return from the composer to preceding navigation and retained focused-target diagnostics"
   ],
   "remaining_items": [
     "Confirm the final-head GitHub Actions Firefox and WebKit four-test execution and other required checks",

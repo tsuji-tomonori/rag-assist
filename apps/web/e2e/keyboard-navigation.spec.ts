@@ -66,7 +66,7 @@ test('E2E-UI-KEYBOARD-NAV-001: primary views, history, favorites, and profile co
   await expect(page.getByRole('region', { name: 'チャット', exact: true })).toBeVisible()
 
   const chat = navigation.getByRole('button', { name: 'チャット' })
-  await tabTo(page, chat)
+  await tabTo(page, chat, 'Shift+Tab')
   await expectKeyboardFocus(chat)
   await expect(chat).toHaveAttribute('aria-current', 'page')
 
@@ -267,11 +267,11 @@ async function keyboardSignIn(page: Page) {
   await expect(page.getByRole('region', { name: 'チャット', exact: true })).toBeVisible()
 }
 
-async function tabTo(page: Page, target: Locator) {
+async function tabTo(page: Page, target: Locator, key: 'Tab' | 'Shift+Tab' = 'Tab') {
   const visitedFocusTargets: string[] = []
 
   for (let index = 0; index < 120; index += 1) {
-    await page.keyboard.press('Tab')
+    await page.keyboard.press(key)
     if (await target.evaluate((element) => element === document.activeElement)) return
 
     visitedFocusTargets.push(await page.evaluate(() => {
@@ -287,7 +287,7 @@ async function tabTo(page: Page, target: Locator) {
   }
 
   const targetName = await target.getAttribute('aria-label') ?? await target.textContent() ?? 'target'
-  throw new Error(`Tab key did not reach ${targetName}; last focus targets: ${visitedFocusTargets.slice(-12).join(' -> ')}`)
+  throw new Error(`${key} did not reach ${targetName}; last focus targets: ${visitedFocusTargets.slice(-12).join(' -> ')}`)
 }
 
 async function expectKeyboardFocus(target: Locator) {

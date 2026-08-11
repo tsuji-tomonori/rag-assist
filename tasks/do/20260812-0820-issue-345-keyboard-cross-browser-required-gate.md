@@ -167,6 +167,6 @@ open PR #461はshared UIと各画面production componentを変更するため、
 - [x] `SQ-016`、UI設計、traceability、quality matrix、生成文書を同期した。
 - [x] lint、Web typecheck、Web build、Web unit 447件、E2E discovery 4件、trace 13件、semantic 5件、docs freshness／canonical checkが成功した。
 - [ ] Firefox／WebKit E2Eのローカル実走。Firefoxはsandboxの`/proc/self/uid_map` read-onlyでlaunch timeout、WebKitは必要なGStreamer／GTK等共有library不足でbrowser launch不可だった。test assertion到達前の環境blockerであり、final-head GitHub Actionsを必須確認する。
-- [x] 初回GitHub ActionsでWebKit 2件とFirefox loginは成功した。Firefox主要画面だけが固定40回のTab探索上限に達したため、keyboard-only操作を維持したまま探索上限と失敗診断を改善した。
+- [x] 初回GitHub ActionsでWebKit 2件とFirefox loginは成功した。Firefox主要画面だけが前方Tabを文書末尾から先頭へwrapするテスト前提で失敗したため、composerから前方にあるnavigationへはShift+Tabで戻るkeyboard-only journeyへ修正した。
 - [ ] final-head GitHub Actions、PR受け入れ確認／セルフレビュー、Issue #345の記録。
 - [ ] representative screen reader、実browser 200%／400% zoom、touch／real device、Firefox／WebKit AX treeは未完了を維持する。
