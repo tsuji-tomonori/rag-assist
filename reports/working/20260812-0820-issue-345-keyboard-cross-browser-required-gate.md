@@ -34,8 +34,9 @@
 - partial: 初回head `0ff88717`のcross-browser keyboard jobはWebKit 2件とFirefox loginが成功し、Firefox主要画面だけが固定40回の前方Tab探索で失敗した。失敗artifactでは対象の「チャット」buttonがvisible／focusableで、active elementがmodel comboboxだった。
 - partial: 2回目head `dff9948e`で探索上限を120回へ拡張してもFirefoxはmodel comboboxに留まった。Firefoxは文書末尾のfocusable要素から前方Tabを文書先頭へwrapしないため、production focus defectではなくテストがbrowser依存のwrapを前提にしていたと確定した。
 - partial: 3回目head `1bb5562e`では初期navigation到達をShift+Tabで通過し、履歴からチャットへ戻った後の「お気に入り」で同じ末尾境界を再現した。これは単一遷移ではなくhelper全体の前方wrap前提である。
-- fix pending: 前方向が同じfocus targetで停滞した場合はShift+Tabへ切り替え、両方向のnative keyboard traversalで対象へ到達するhelperへ修正した。直近focus targetの失敗診断と、login証跡のconfigured browser境界文言も維持する。
-- pending: MemoRAG CI、semver label validation。
+- pass: implementation head `564e9840`で、前方向が同じDOM focus targetに停滞した場合だけShift+Tabへ切り替えるhelperへ修正し、Firefox 2件＋WebKit 2件が4/4成功した。artifact `9123423309`、digest `sha256:35337348894fb7a0d157f19aaa5c3016834403053bc6dce58ac1166c05983405`。
+- pass: Web UI QualityのChromium required scopeは37/37成功した。artifact `9123442000`、digest `sha256:ddba2ac0634766eea1994a30a87aa2dda63dfa3dc385135c5272b5536acb67d9`。
+- pass: MemoRAG CIとsemver label validation。API C1は80.48%で既存改善task追跡中だが、今回のCI契約では全stepが成功した。
 
 ## 未完了・境界
 

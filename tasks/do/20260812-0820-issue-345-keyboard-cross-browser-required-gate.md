@@ -168,5 +168,6 @@ open PR #461はshared UIと各画面production componentを変更するため、
 - [x] lint、Web typecheck、Web build、Web unit 447件、E2E discovery 4件、trace 13件、semantic 5件、docs freshness／canonical checkが成功した。
 - [ ] Firefox／WebKit E2Eのローカル実走。Firefoxはsandboxの`/proc/self/uid_map` read-onlyでlaunch timeout、WebKitは必要なGStreamer／GTK等共有library不足でbrowser launch不可だった。test assertion到達前の環境blockerであり、final-head GitHub Actionsを必須確認する。
 - [x] GitHub ActionsでWebKit 2件とFirefox loginは継続成功した。Firefox主要画面は前方Tabを文書末尾から先頭へwrapしないため、前方向が末尾で停滞したときShift+Tabで逆方向を探索するkeyboard-only journeyへ修正した。
-- [ ] final-head GitHub Actions、PR受け入れ確認／セルフレビュー、Issue #345の記録。
+- [x] implementation head `564e9840`でWeb UI Quality 37件、Firefox／WebKit 4件、MemoRAG CI、semver検査が成功した。
+- [ ] PR受け入れ確認／セルフレビュー、Issue #345の記録。
 - [ ] representative screen reader、実browser 200%／400% zoom、touch／real device、Firefox／WebKit AX treeは未完了を維持する。
