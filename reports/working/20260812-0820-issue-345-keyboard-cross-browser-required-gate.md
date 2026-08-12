@@ -37,6 +37,7 @@
 - pass: implementation head `564e9840`で、前方向が同じDOM focus targetに停滞した場合だけShift+Tabへ切り替えるhelperへ修正し、Firefox 2件＋WebKit 2件が4/4成功した。artifact `9123423309`、digest `sha256:35337348894fb7a0d157f19aaa5c3016834403053bc6dce58ac1166c05983405`。
 - pass: Web UI QualityのChromium required scopeは37/37成功した。artifact `9123442000`、digest `sha256:ddba2ac0634766eea1994a30a87aa2dda63dfa3dc385135c5272b5536acb67d9`。
 - pass: MemoRAG CIとsemver label validation。API C1は80.48%で既存改善task追跡中だが、今回のCI契約では全stepが成功した。
+- pass: PR #462の本文、受け入れ確認 `#issuecomment-5260461305`、セルフレビュー `#issuecomment-5260464806`、Issue #345進捗 `#issuecomment-5260470062`を更新した。
 
 ## 未完了・境界
 
