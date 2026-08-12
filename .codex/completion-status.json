@@ -17,7 +17,7 @@
     "Synchronized canonical design, machine-readable trace, quality matrix, generated Web documents, task, and report",
     "Passed repository lint, Web typecheck, Web build, 447 Web unit tests, four-test E2E discovery, 13 trace tests, 5 semantic tests, generated-document freshness, canonical docs, OpenAPI, API code docs, manual evidence structure, infra inventory, hidden Unicode, and diff checks",
     "Diagnosed the cross-browser CI result: both WebKit tests and Firefox login passed, while Firefox does not wrap forward Tab from the final focusable model selector to the document start",
-    "Removed the browser-dependent wrap assumption by using Shift+Tab for the keyboard-only return from the composer to preceding navigation and retained focused-target diagnostics"
+    "Removed the browser-dependent wrap assumption by switching to reverse Shift+Tab traversal when forward focus reaches a document boundary, while retaining keyboard-only operation and focused-target diagnostics"
   ],
   "remaining_items": [
     "Confirm the final-head GitHub Actions Firefox and WebKit four-test execution and other required checks",

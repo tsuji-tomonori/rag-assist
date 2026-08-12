@@ -33,7 +33,8 @@
 - pass: 初回head `0ff88717`のChromium required job。
 - partial: 初回head `0ff88717`のcross-browser keyboard jobはWebKit 2件とFirefox loginが成功し、Firefox主要画面だけが固定40回の前方Tab探索で失敗した。失敗artifactでは対象の「チャット」buttonがvisible／focusableで、active elementがmodel comboboxだった。
 - partial: 2回目head `dff9948e`で探索上限を120回へ拡張してもFirefoxはmodel comboboxに留まった。Firefoxは文書末尾のfocusable要素から前方Tabを文書先頭へwrapしないため、production focus defectではなくテストがbrowser依存のwrapを前提にしていたと確定した。
-- fix pending: composerより前方にあるnavigationへはShift+Tabで戻るkeyboard-only journeyへ修正した。直近focus targetの失敗診断と、login証跡のconfigured browser境界文言も維持する。
+- partial: 3回目head `1bb5562e`では初期navigation到達をShift+Tabで通過し、履歴からチャットへ戻った後の「お気に入り」で同じ末尾境界を再現した。これは単一遷移ではなくhelper全体の前方wrap前提である。
+- fix pending: 前方向が同じfocus targetで停滞した場合はShift+Tabへ切り替え、両方向のnative keyboard traversalで対象へ到達するhelperへ修正した。直近focus targetの失敗診断と、login証跡のconfigured browser境界文言も維持する。
 - pending: MemoRAG CI、semver label validation。
 
 ## 未完了・境界

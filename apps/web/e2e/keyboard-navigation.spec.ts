@@ -269,25 +269,38 @@ async function keyboardSignIn(page: Page) {
 
 async function tabTo(page: Page, target: Locator, key: 'Tab' | 'Shift+Tab' = 'Tab') {
   const visitedFocusTargets: string[] = []
+  const traversalKeys: Array<'Tab' | 'Shift+Tab'> = [key, key === 'Tab' ? 'Shift+Tab' : 'Tab']
 
-  for (let index = 0; index < 120; index += 1) {
-    await page.keyboard.press(key)
-    if (await target.evaluate((element) => element === document.activeElement)) return
+  for (const traversalKey of traversalKeys) {
+    let stagnantSteps = 0
 
-    visitedFocusTargets.push(await page.evaluate(() => {
-      const activeElement = document.activeElement
-      if (!(activeElement instanceof HTMLElement)) return 'unknown'
+    for (let index = 0; index < 120; index += 1) {
+      const previousFocus = await page.evaluateHandle(() => document.activeElement)
+      await page.keyboard.press(traversalKey)
+      const targetReached = await target.evaluate((element) => element === document.activeElement)
+      const focusDidNotMove = await previousFocus.evaluate((element) => element === document.activeElement)
+      await previousFocus.dispose()
+      if (targetReached) return
 
-      const accessibleName = activeElement.getAttribute('aria-label')
-        ?? activeElement.getAttribute('name')
-        ?? activeElement.textContent?.trim().slice(0, 40)
-        ?? ''
-      return `${activeElement.tagName.toLowerCase()}${accessibleName ? `:${accessibleName}` : ''}`
-    }))
+      const focusTarget = await page.evaluate(() => {
+        const activeElement = document.activeElement
+        if (!(activeElement instanceof HTMLElement)) return 'unknown'
+
+        const accessibleName = activeElement.getAttribute('aria-label')
+          ?? activeElement.getAttribute('name')
+          ?? activeElement.textContent?.trim().slice(0, 40)
+          ?? ''
+        return `${activeElement.tagName.toLowerCase()}${accessibleName ? `:${accessibleName}` : ''}`
+      })
+      visitedFocusTargets.push(`${traversalKey}:${focusTarget}`)
+
+      stagnantSteps = focusDidNotMove ? stagnantSteps + 1 : 0
+      if (stagnantSteps >= 2) break
+    }
   }
 
   const targetName = await target.getAttribute('aria-label') ?? await target.textContent() ?? 'target'
-  throw new Error(`${key} did not reach ${targetName}; last focus targets: ${visitedFocusTargets.slice(-12).join(' -> ')}`)
+  throw new Error(`Tab traversal did not reach ${targetName}; last focus targets: ${visitedFocusTargets.slice(-12).join(' -> ')}`)
 }
 
 async function expectKeyboardFocus(target: Locator) {
