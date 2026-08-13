@@ -15,10 +15,12 @@
     "Kept the broader Firefox and WebKit visual accessibility scope scheduled and separate",
     "Linked chat through SQ-016 AC-SQ016-003 and NFR-018 AC-NFR018-004 to the new E2E and workflow evidence",
     "Synchronized canonical requirements and design, machine-readable trace and quality matrix, generated Web documents, E2E README, task, and report",
-    "Passed repository lint, Web typecheck, Web build, 447 Web unit tests, six-test E2E discovery, 13 trace tests, 5 semantic tests, generated-document freshness, canonical docs, OpenAPI, API code docs, manual evidence structure, infra inventory, and diff checks"
+    "Passed repository lint, Web typecheck, Web build, 447 Web unit tests, six-test E2E discovery, 13 trace tests, 5 semantic tests, generated-document freshness, canonical docs, OpenAPI, API code docs, manual evidence structure, infra inventory, and diff checks",
+    "Used the initial remote failure to correct the chat navigation hierarchy under the primary-navigation complementary landmark without weakening role or name assertions",
+    "Passed implementation-head Web UI Quality with 37 Chromium tests and six Firefox/WebKit required tests, plus MemoRAG CI and semver validation",
+    "Updated pull request acceptance, self-review, and Issue 345 progress while preserving Draft and do status"
   ],
   "remaining_items": [
-    "Pass final-head GitHub Actions and update pull request acceptance, self-review, and Issue 345 progress evidence",
     "Resolve FR-051 persistence and the profile state-evidence owner decision",
     "Run approved representative-screen-reader, real-browser 200/400-percent zoom, touch, real-device, and Firefox/WebKit native accessibility-tree verification"
   ],
@@ -33,9 +35,11 @@
     { "command": "TZ=Asia/Tokyo npm test -w @memorag-mvp/web", "result": "pass", "note": "62 files and 447 tests passed" },
     { "command": "npm run build -w @memorag-mvp/web", "result": "pass", "note": "Existing chunk-size advisory only" },
     { "command": "npm run test:e2e:cross-browser:required -w @memorag-mvp/web -- --list", "result": "pass", "note": "Six tests across Firefox and WebKit listed" },
-    { "command": "Targeted Firefox and WebKit semantic E2E execution", "result": "blocked", "note": "Local tsx IPC listen EPERM prevented the API webServer from starting; final-head GitHub Actions is required" },
+    { "command": "Targeted Firefox and WebKit semantic E2E execution", "result": "pass", "note": "GitHub Actions implementation head passed all six required Firefox/WebKit tests; local tsx IPC listen EPERM remains an environment blocker" },
+    { "command": "GitHub Actions Web UI Quality run 31653473093", "result": "pass", "note": "37 Chromium tests and six Firefox/WebKit required tests passed" },
+    { "command": "GitHub Actions MemoRAG CI run 31653473097 and semver run 31653473112", "result": "pass" },
     { "command": "UI trace, semantic, canonical, generated, manual evidence, infra, hidden Unicode, OpenAPI, API code docs, and diff checks", "result": "pass" }
   ],
-  "next_action": "Push the implementation head, require final-head GitHub Actions success, and record pull request and Issue 345 evidence without treating automation as manual pass",
+  "next_action": "Run one approved manual accessibility evidence axis without treating automated cross-browser semantic evidence as a manual pass",
   "safe_to_continue_without_user": true
 }

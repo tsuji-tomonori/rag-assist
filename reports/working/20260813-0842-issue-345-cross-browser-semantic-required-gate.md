@@ -30,9 +30,11 @@
 
 ## Final-head CI／GitHub記録
 
-- pending: Web UI QualityのChromium required scopeとFirefox／WebKit 6件。
-- pending: MemoRAG CI、semver label validation。
-- pending: PR本文、受け入れ確認、セルフレビュー、Issue #345進捗コメント。
+- pass: implementation head `9d714564`のWeb UI Quality run `31653473093`。Chromium 37/37、Firefox／WebKit required 6/6が成功した。
+- pass: cross-browser artifact `9163479385`、digest `sha256:f697a7cce2a26443223050f71c766c1b3fdd4ae96142209dfe0495db71202cde`。
+- pass: Chromium artifact `9163492838`、digest `sha256:6c2b1aaac9014515d495d62da87e533cfb10b6c25d61964d838e35e6305a9f53`。
+- pass: MemoRAG CI run `31653473097`とsemver run `31653473112`。
+- pass: PR本文、受け入れ確認 `#issuecomment-5274329792`、セルフレビュー `#pullrequestreview-4922252933`、Issue #345進捗 `#issuecomment-5274329960`を更新した。
 
 ## 未完了・境界
 

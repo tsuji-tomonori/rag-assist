@@ -161,5 +161,6 @@ loginとchatの代表semantic contract、およびchat処理中の`busy`／`live
 - [x] repository lint、Web typecheck、Web build、Web unit 62 files / 447 tests、trace 13 tests、semantic 5 tests、manual evidence contract 7 tests、generated Web inventory、canonical docs、OpenAPI、API code docs、infra inventory、diff checkが成功した。
 - [x] initial-head CIでchat画面の`navigation "画面"`が`complementary "主要ナビゲーション"`配下である実accessibility hierarchyを検出した。期待snapshotを実装と正本に一致するlandmark階層へ修正し、name／role検査を弱めていない。
 - [ ] 対象E2Eのlocal実走。sandboxの`tsx` IPCが`listen EPERM`となりAPI webServerを起動できず、assertion到達前に停止した。環境blockerであり、final-head GitHub Actionsを必須確認する。
-- [ ] Draft PR #462のfinal-head CI、受け入れ確認、セルフレビュー、Issue #345進捗記録。
+- [x] implementation head `9d714564`でWeb UI QualityのChromium 37/37、Firefox／WebKit required 6/6、MemoRAG CI、semver検査が成功した。
+- [x] Draft PR #462の本文、受け入れ確認 `#issuecomment-5274329792`、セルフレビュー `#pullrequestreview-4922252933`、Issue #345進捗 `#issuecomment-5274329960`を更新した。
 - [ ] representative screen reader、実browser 200%／400% zoom、touch／real device、Firefox／WebKit native accessibility treeのengine固有debug出力、FR-051 owner判断、API C1は未完了を維持する。
