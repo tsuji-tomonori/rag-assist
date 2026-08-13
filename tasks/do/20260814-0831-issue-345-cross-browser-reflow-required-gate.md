@@ -165,7 +165,8 @@ Draft PR #462はcurrent `main@8e542b31`を祖先に含み、Firefox／WebKitのk
 - [x] `SQ-016`、`NFR-018`、`DES_UI_UX_001`、machine-readable trace / quality matrix、生成文書、E2E READMEを同期した。
 - [x] repository lint、Web typecheck、Web build、Web unit 62 files / 447 tests、trace 13 tests、semantic 5 tests、manual evidence contract 7 tests、generated Web inventory、canonical docs、OpenAPI、API code docs、infra inventory、hidden Unicode、diff checkが成功した。
 - [x] OpenAPI checkは`tsx` CLIのIPCが`listen EPERM`となったため、同一entryを`node --import tsx`で実行して成功した。permission escalationは行っていない。
-- [ ] 対象E2Eのlocal実走。sandboxがnetwork-enabled webServer実行をtest開始前に拒否したためblocked。final-head GitHub Actionsを必須確認する。
-- [ ] final-head CI、PR本文／受け入れ確認／セルフレビュー、Issue #345コメントはcommit公開後に実施する。
+- [x] GitHub Actions `Web UI Quality`でFirefox 5件＋WebKit 5件のrequired cross-browser E2E 10/10とChromium E2E 37/37が成功し、artifactを保存した。local実走はsandboxがnetwork-enabled webServer実行をtest開始前に拒否したためblockedのままとし、CIを実走証跡とする。
+- [x] final implementation head `c51a85ce`でWeb UI Quality、MemoRAG CI、semver検査がすべて成功した。
+- [x] Draft PR #462本文を更新し、受け入れ確認 `#issuecomment-5287729824` とセルフレビュー `#pullrequestreview-4932567816` を記録した。
+- [ ] Issue #345コメントとevidence-only final headのCIは証跡commit公開後に実施する。
 - [ ] representative screen reader、browser UIを操作する実200%／400% zoom、text-only zoom、OS scaling、touch／real device、Firefox／WebKit native accessibility tree、FR-051 owner判断、API C1は未完了を維持する。
-

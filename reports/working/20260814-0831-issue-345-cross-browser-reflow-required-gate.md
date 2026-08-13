@@ -54,10 +54,16 @@ Issue #345を、current main、open PR／Issue、task、正本／生成文書と
 - manual evidence contract: 7 tests pass。baselineは3 blocked / 1 not_run、ready falseを維持。
 - canonical docs、Web generated freshness、OpenAPI、API code 98 APIs / 588 documents、infra inventory、hidden Unicode、`git diff --check`: pass。
 - OpenAPIの`tsx` CLIはIPC `listen EPERM`。同一entryを`node --import tsx`で実行してpass。
+- GitHub Actions Web UI Quality（implementation head `c51a85ce`）: Firefox／WebKit required 10/10、Chromium 37/37 pass。
+- GitHub Actions semver検査（implementation head `c51a85ce`）: pass。
+- GitHub Actions MemoRAG CI（implementation head `c51a85ce`）: pass。lint、typecheck、docs、coverage test、build、synthを含む全stepが成功した。
+- cross-browser artifact: `web-ui-quality-cross-browser-accessibility-1`（artifact id `9202455972`、digest `sha256:2249f5b2f5ca67ad19a185ecd72aa257f6aa737f28310bb5afa5d4caf7b6fdd1`）。
+- Chromium artifact: artifact id `9202461947`、digest `sha256:29507c2d1fe03d802c6ab89f1454e36c4b72ecc8e999da93a8b4b81c7bdc63d6`。
+- Draft PR #462本文を更新し、受け入れ確認 `#issuecomment-5287729824` とセルフレビュー `#pullrequestreview-4932567816` を記録した。
 
 ## 未実施・制約・リスク
 
-- cross-browser実走はsandboxがnetwork-enabled webServer実行を開始前に拒否したためblocked。final-head GitHub Actionsを実走証跡とする。
+- local cross-browser実走はsandboxがnetwork-enabled webServer実行を開始前に拒否したためblocked。implementation headのGitHub Actions成功を実走証跡とする。
 - representative screen reader、browser UI実200%／400% zoom、text-only zoom、OS scaling、touch／real device、Firefox／WebKit native AX treeは未検証。
 - FR-051 persistence／owner判断、API C1 85%、OQ-UI-002は未完了。
 - merge、deploy、release、force-push、破壊的変更は行わない。
@@ -65,4 +71,3 @@ Issue #345を、current main、open PR／Issue、task、正本／生成文書と
 ## 指示へのfit評価
 
 今回のsliceは既存自動reflow契約を2 browserへ広げるだけでproduction競合を増やさず、320 CSS px境界と画面→要件→AC→E2E→CIの追跡を前進させる。manual zoomを完了扱いしないため、Issue全体、task、PRは未完了／Draftを維持する。
-
