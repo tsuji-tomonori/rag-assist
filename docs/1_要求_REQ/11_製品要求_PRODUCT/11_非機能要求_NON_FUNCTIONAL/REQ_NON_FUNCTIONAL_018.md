@@ -54,7 +54,7 @@
 | 受け入れ基準 | `AC-NFR018-001`〜`AC-NFR018-007` |
 | 優先度 | A |
 | 安定性 | Medium |
-| 変更履歴 | 2026-07-14 Issue #345 から追加。2026-07-17 manual evidence の versioned contract、honest blocked baseline、release readiness command を追加 |
+| 変更履歴 | 2026-07-14 Issue #345 から追加。2026-07-17 manual evidence の versioned contract、honest blocked baseline、release readiness command を追加。2026-08-12 login / primary keyboard journeyをFirefox／WebKitのPR required scopeへ追加。2026-08-13 login / chatの限定semantic contractをFirefox／WebKitのPR required scopeへ追加 |
 
 ## 妥当性確認
 
@@ -71,11 +71,11 @@
 - `tasks/do/20260714-issue-345-ui-automated-quality-gates.md`
 - `tasks/todo/20260714-issue-345-manual-a11y-evidence.md`
 
-## 自動品質 gate の実装（2026-07-16）
+## 自動品質 gate の実装（2026-08-13更新）
 
-- pull request の required scope は Chromium とし、UI / shared contract / Web inventory / UI design・requirement / dependency / workflow 変更時だけ `.github/workflows/web-ui-quality.yml` を実行する。
+- pull request の required scope はChromiumの代表axe / mobile / visual / semanticと、Firefox／WebKitのlogin・主要keyboard journeyおよびlogin / chat限定semantic contractとする。UI / shared contract / Web inventory / UI design・requirement / dependency / workflow 変更時だけ `.github/workflows/web-ui-quality.yml` を実行する。
 - `E2E-UI-A11Y-GATE-001` は login、chat、documents、questions、admin の full-page axe 結果から serious / critical violation を抽出し、1件以上なら非0終了する。
 - `E2E-UI-NAV-001` / `002` は 320 / 375px の permission-aware primary navigation、focus、reduced motion、overflow を Chromium required scope で検証する。
 - `@visual` fixture は OS / browser の微小な anti-aliasing 差を最大300 pixelsまで許容し、それを超える deterministic screenshot mismatch を failure にする。HTML report、test-results、trace、screenshot、video を artifact として保持する。
-- Firefox / WebKit は週次および手動 dispatch の scheduled scope とする。未実行・失敗は Chromium pass と混同せず、artifact と workflow result で追跡する。
+- Firefox / WebKit のより広いvisual scopeは週次および手動dispatchのscheduled scopeに分離する。required / scheduledの未実行・失敗は他browserのpassと混同せず、artifactとworkflow resultで追跡する。
 - manual keyboard、representative screen reader、実 browser 200% / 400% zoom、touch / real-device evidence は本 gate で代替せず、`tasks/todo/20260714-issue-345-manual-a11y-evidence.md` の完了まで未達として扱う。

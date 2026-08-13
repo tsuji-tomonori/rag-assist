@@ -8,26 +8,22 @@
     "Do not merge, deploy, release, force-push, or perform destructive changes"
   ],
   "completed_items": [
-    "Confirmed current main 8e542b31 and pull request #462 head 38e7d8c0 are converged with behind zero",
-    "Restored pull request #462 to Draft because required manual accessibility evidence remains incomplete",
-    "Selected a bounded Firefox and WebKit keyboard gate that avoids production paths changed by parallel pull request #461",
-    "Added a pull-request-required Firefox and WebKit job for the existing login and primary-view keyboard journeys",
+    "Confirmed current main 8e542b31 and pull request #462 head 8f80e63d are converged with behind zero",
+    "Selected a bounded Firefox and WebKit semantic gate without changing production UI, API, authorization, or RAG paths",
+    "Added E2E-UI-CROSS-BROWSER-SEMANTICS-001 for login and chat ARIA snapshots plus chat dynamic ARIA state evidence",
+    "Expanded the pull-request-required Firefox and WebKit scope from four keyboard tests to four keyboard plus two semantic tests",
     "Kept the broader Firefox and WebKit visual accessibility scope scheduled and separate",
-    "Linked chat, history, favorites, and profile through SQ-016 AC-SQ016-002 to the two keyboard E2E IDs and workflow evidence",
-    "Synchronized canonical design, machine-readable trace, quality matrix, generated Web documents, task, and report",
-    "Passed repository lint, Web typecheck, Web build, 447 Web unit tests, four-test E2E discovery, 13 trace tests, 5 semantic tests, generated-document freshness, canonical docs, OpenAPI, API code docs, manual evidence structure, infra inventory, hidden Unicode, and diff checks",
-    "Diagnosed the cross-browser CI result: both WebKit tests and Firefox login passed, while Firefox does not wrap forward Tab from the final focusable model selector to the document start",
-    "Removed the browser-dependent wrap assumption by switching to reverse Shift+Tab traversal when forward focus reaches a document boundary, while retaining keyboard-only operation and focused-target diagnostics",
-    "Passed the implementation-head Web UI Quality gate with 37 Chromium tests and four Firefox/WebKit keyboard tests, plus MemoRAG CI and semver validation",
-    "Updated pull request acceptance, self-review, and Issue 345 progress while preserving Draft and do status"
+    "Linked chat through SQ-016 AC-SQ016-003 and NFR-018 AC-NFR018-004 to the new E2E and workflow evidence",
+    "Synchronized canonical requirements and design, machine-readable trace and quality matrix, generated Web documents, E2E README, task, and report",
+    "Passed repository lint, Web typecheck, Web build, 447 Web unit tests, six-test E2E discovery, 13 trace tests, 5 semantic tests, generated-document freshness, canonical docs, OpenAPI, API code docs, manual evidence structure, infra inventory, and diff checks"
   ],
   "remaining_items": [
+    "Pass final-head GitHub Actions and update pull request acceptance, self-review, and Issue 345 progress evidence",
     "Resolve FR-051 persistence and the profile state-evidence owner decision",
-    "Run approved representative-screen-reader, real-browser 200/400-percent zoom, touch, real-device, and Firefox/WebKit accessibility-tree verification"
+    "Run approved representative-screen-reader, real-browser 200/400-percent zoom, touch, real-device, and Firefox/WebKit native accessibility-tree verification"
   ],
   "blocked_items": [
-    "Local Firefox launch timed out because the sandbox exposes /proc/self/uid_map as read-only",
-    "Local WebKit launch is blocked by missing GStreamer, GTK, Graphene, Wayland, and related host libraries",
+    "Local E2E webServer startup is blocked because sandboxed tsx IPC listen returns EPERM",
     "Manual accessibility evidence remains not release-ready with three blocked and one not-run check",
     "API C1 branch coverage remains below the 85-percent quality target in the latest known evidence"
   ],
@@ -36,12 +32,10 @@
     { "command": "npm run typecheck -w @memorag-mvp/web", "result": "pass" },
     { "command": "TZ=Asia/Tokyo npm test -w @memorag-mvp/web", "result": "pass", "note": "62 files and 447 tests passed" },
     { "command": "npm run build -w @memorag-mvp/web", "result": "pass", "note": "Existing chunk-size advisory only" },
-    { "command": "npm run test:e2e:cross-browser:keyboard -w @memorag-mvp/web -- --list", "result": "pass", "note": "Four tests across Firefox and WebKit listed" },
-    { "command": "Targeted Firefox and WebKit keyboard E2E execution", "result": "pass", "note": "GitHub Actions implementation head passed four tests; local browser launches remain environment-blocked" },
-    { "command": "GitHub Actions Web UI Quality run 31548620027", "result": "pass", "note": "37 Chromium tests and four Firefox/WebKit keyboard tests passed" },
-    { "command": "GitHub Actions MemoRAG CI run 31548620137 and semver run 31548620069", "result": "pass", "note": "All workflow steps passed; API C1 80.48 percent remains tracked by its existing improvement task" },
+    { "command": "npm run test:e2e:cross-browser:required -w @memorag-mvp/web -- --list", "result": "pass", "note": "Six tests across Firefox and WebKit listed" },
+    { "command": "Targeted Firefox and WebKit semantic E2E execution", "result": "blocked", "note": "Local tsx IPC listen EPERM prevented the API webServer from starting; final-head GitHub Actions is required" },
     { "command": "UI trace, semantic, canonical, generated, manual evidence, infra, hidden Unicode, OpenAPI, API code docs, and diff checks", "result": "pass" }
   ],
-  "next_action": "Run one approved manual accessibility evidence axis without treating automated cross-browser evidence as a manual pass",
+  "next_action": "Push the implementation head, require final-head GitHub Actions success, and record pull request and Issue 345 evidence without treating automation as manual pass",
   "safe_to_continue_without_user": true
 }

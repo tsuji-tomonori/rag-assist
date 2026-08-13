@@ -41,7 +41,7 @@
     },
     {
       "id": "NFR-018",
-      "acceptanceCriteria": ["AC-NFR018-001", "AC-NFR018-002", "AC-NFR018-005", "AC-NFR018-007"],
+      "acceptanceCriteria": ["AC-NFR018-001", "AC-NFR018-002", "AC-NFR018-004", "AC-NFR018-005", "AC-NFR018-007"],
       "appliesTo": ["*"]
     },
     {
@@ -221,7 +221,8 @@
         { "id": "SQ-016", "acceptanceCriteria": ["AC-SQ016-002", "AC-SQ016-003", "AC-SQ016-007"] }
       ],
       "verifications": [
-        { "id": "E2E-VIEW-CHAT-001", "status": "implemented", "evidence": ["apps/web/e2e/visual-regression.spec.ts"] }
+        { "id": "E2E-VIEW-CHAT-001", "status": "implemented", "evidence": ["apps/web/e2e/visual-regression.spec.ts"] },
+        { "id": "E2E-UI-CROSS-BROWSER-SEMANTICS-001", "status": "implemented", "evidence": ["apps/web/e2e/cross-browser-semantics.spec.ts", ".github/workflows/web-ui-quality.yml"] }
       ],
       "implementationStatus": "implemented",
       "implementationEvidence": [

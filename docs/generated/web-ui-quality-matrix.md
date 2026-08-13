@@ -11,7 +11,7 @@
 | --- | --- | --- | --- | --- | --- |
 | AC-SQ016-001 | viewport・zoom・reflow・content/function loss | Phase A audit / Phase B-C remediation | `apps/web/e2e/visual-regression.spec.ts`<br>`apps/web/e2e/cross-screen-audit.ts` | manual evidence task | tasks/todo/20260714-issue-345-manual-a11y-evidence.md |
 | AC-SQ016-002 | keyboard・focus order/visible/obscured・dialog recovery | Phase A audit / Phase B-C remediation | `apps/web/e2e/visual-regression.spec.ts`<br>`apps/web/e2e/cross-screen-audit.ts`<br>`apps/web/e2e/login-keyboard.spec.ts`<br>`apps/web/e2e/keyboard-navigation.spec.ts`<br>`.github/workflows/web-ui-quality.yml` | manual evidence task | tasks/todo/20260714-issue-345-manual-a11y-evidence.md |
-| AC-SQ016-003 | accessible name・role・state・value・live/error semantics | Phase A audit / Phase B-C remediation | `apps/web/e2e/visual-regression.spec.ts`<br>`apps/web/e2e/cross-screen-audit.ts`<br>`apps/web/e2e/screen-reader-semantics.spec.ts` | manual evidence task | tasks/todo/20260714-issue-345-manual-a11y-evidence.md |
+| AC-SQ016-003 | accessible name・role・state・value・live/error semantics | Phase A audit / Phase B-C remediation | `apps/web/e2e/visual-regression.spec.ts`<br>`apps/web/e2e/cross-screen-audit.ts`<br>`apps/web/e2e/screen-reader-semantics.spec.ts`<br>`apps/web/e2e/cross-browser-semantics.spec.ts`<br>`.github/workflows/web-ui-quality.yml` | manual evidence task | tasks/todo/20260714-issue-345-manual-a11y-evidence.md |
 | AC-SQ016-004 | text・non-text UI・focus indicator contrast・color independence | Phase A audit / Phase B-C remediation | `apps/web/e2e/visual-regression.spec.ts` | manual evidence task | tasks/todo/20260714-issue-345-manual-a11y-evidence.md |
 | AC-SQ016-005 | 24×24 minimum target・primary 44〜48px class target | Phase A candidate audit / Phase B-C remediation | `apps/web/e2e/visual-regression.spec.ts`<br>`apps/web/e2e/cross-screen-audit.ts` | manual evidence task | tasks/todo/20260714-issue-345-manual-a11y-evidence.md |
 | AC-SQ016-006 | reduced motion・orientation・safe area・virtual keyboard・fixed UI | Phase A candidate audit / Phase B-C remediation | `apps/web/e2e/visual-regression.spec.ts`<br>`apps/web/e2e/cross-screen-audit.ts` | manual evidence task | tasks/todo/20260714-issue-345-manual-a11y-evidence.md |
@@ -37,7 +37,7 @@
 | --- | --- | --- | --- | --- | --- |
 | chat | AC-SQ016-001 | pass | blocked | blocked | CI run 29516940570 / artifact 8383090126の4 viewportでroot/unresolved overflow 0。実browser zoomは未検証 |
 | chat | AC-SQ016-002 | pass | blocked | blocked | required E2E-UI-KEYBOARD-NAV-001をChromium／Firefox／WebKitで実行し、質問textboxへのTab到達、composerの3px focus indicator、Enter送信、処理中から回答への復帰をkeyboard-onlyで検証。manual keyboard journeyは未実施 |
-| chat | AC-SQ016-003 | pass | blocked | blocked | required E2E-UI-SR-SEMANTICS-001でchat region / form / textbox /送信buttonのname / roleとidle→処理中→完了のbusy / polite live stateをChromium AX treeから検証。代表screen readerのmanual evidenceは未実施 |
+| chat | AC-SQ016-003 | pass | blocked | blocked | required E2E-UI-SR-SEMANTICS-001でChromium AX tree、E2E-UI-CROSS-BROWSER-SEMANTICS-001でFirefox／WebKitのlogin / chat ARIA snapshotとdynamic ARIA stateを検証。代表screen readerのmanual evidenceは未実施 |
 | chat | AC-SQ016-004 | blocked | blocked | blocked | computed/axe contrast baselineとmanual review待ち |
 | chat | AC-SQ016-005 | pass | blocked | blocked | 4 viewportで24px minimumと44px primary targetの未解決candidate 0。manual touch evidenceは未実施 |
 | chat | AC-SQ016-006 | pass | blocked | blocked | 4 viewportのreduced-motion computed auditはpass。orientation / safe-area / virtual-keyboard実機は未検証 |

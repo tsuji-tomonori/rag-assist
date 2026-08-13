@@ -68,8 +68,8 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
-  cross-browser-keyboard-required:
-    name: Required Firefox and WebKit keyboard accessibility
+  cross-browser-accessibility-required:
+    name: Required Firefox and WebKit keyboard and semantics
     if: ${{ github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.run-cross-browser) }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -90,14 +90,14 @@ jobs:
       - name: Install Firefox and WebKit
         run: npm exec -w @memorag-mvp/web -- playwright install --with-deps firefox webkit
 
-      - name: Run required cross-browser keyboard gate
-        run: npm run test:e2e:cross-browser:keyboard -w @memorag-mvp/web
+      - name: Run required cross-browser accessibility gate
+        run: npm run test:e2e:cross-browser:required -w @memorag-mvp/web
 
-      - name: Upload required cross-browser keyboard evidence
+      - name: Upload required cross-browser accessibility evidence
         if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
-          name: web-ui-quality-cross-browser-keyboard-${{ github.run_attempt }}
+          name: web-ui-quality-cross-browser-accessibility-${{ github.run_attempt }}
           path: |
             apps/web/playwright-report/
             apps/web/test-results/
