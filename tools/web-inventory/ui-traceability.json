@@ -182,7 +182,11 @@
     {
       "id": "E2E-UI-ZOOM-REFLOW-001",
       "status": "implemented",
-      "evidence": ["apps/web/e2e/zoom-reflow.spec.ts"]
+      "evidence": [
+        "apps/web/e2e/zoom-reflow.spec.ts",
+        "apps/web/package.json",
+        ".github/workflows/web-ui-quality.yml"
+      ]
     },
     {
       "id": "NONUI-UI-MANUAL-EVIDENCE-001",

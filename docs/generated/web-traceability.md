@@ -69,7 +69,7 @@
 | E2E-UI-LAYOUT-STRESS-001 | implemented | apps/web/e2e/layout-stress.spec.ts | - |
 | E2E-UI-TEXT-SPACING-001 | implemented | apps/web/e2e/text-spacing.spec.ts | - |
 | E2E-UI-VIRTUAL-KEYBOARD-001 | implemented | apps/web/e2e/viewport-keyboard.spec.ts | - |
-| E2E-UI-ZOOM-REFLOW-001 | implemented | apps/web/e2e/zoom-reflow.spec.ts | - |
+| E2E-UI-ZOOM-REFLOW-001 | implemented | apps/web/e2e/zoom-reflow.spec.ts<br>apps/web/package.json<br>.github/workflows/web-ui-quality.yml | - |
 | NONUI-UI-MANUAL-EVIDENCE-001 | implemented | tools/web-inventory/manual-a11y-evidence.test.mjs | - |
 | E2E-UI-MANUAL-001 | manual | reports/working/issue-345-manual-a11y-evidence-baseline.json | tasks/todo/20260714-issue-345-manual-a11y-evidence.md |
 

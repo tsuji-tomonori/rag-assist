@@ -206,7 +206,7 @@ The UI does not infer success from a dismissed dialog or timeout and does not re
 | Motion | `prefers-reduced-motion` | E2E/component/visual |
 | Content | long text/file names, many/zero items, loading/error/permission/partial/stale | deterministic fixtures |
 | Contrast/target | WCAG 2.2 relevant ratios and 24px minimum target; 44–48px primary target where practical | token/tool/layout/manual review |
-| Browser | Chromium desktop + mobile PR-required target; Firefox/WebKit login / primary keyboard journey PR-required target; broader Firefox/WebKit `@ui-quality` scheduled scope | CI evidence |
+| Browser | Chromium desktop + mobile PR-required target; Firefox/WebKit login / primary keyboard / login-chat semantics / 640-320 CSS px reflow proxy PR-required target; broader Firefox/WebKit `@ui-quality` scheduled scope | CI evidence |
 
 Automated accessibility, DOM snapshots, and accessibility tree inspection do not replace keyboard, representative screen-reader, zoom, or real-device evidence.
 
@@ -343,14 +343,14 @@ chat、assignee、requester history の有人対応 journey gap は `tasks/done/
 
 No proposed default is recorded as executed evidence until its task produces the required result.
 
-## Automated UI quality gate（2026-08-13更新）
+## Automated UI quality gate（2026-08-14更新）
 
-- PR required: Chromium で representative full-page axe serious / critical、320 / 375px mobile navigation、deterministic visual regression、keyboard navigation、Chromium accessibility tree contractを実行する。加えてFirefox／WebKitでloginと主要画面のkeyboard journey、およびlogin / chat限定のARIA snapshot・dynamic ARIA state contractを実行する。
+- PR required: Chromium で representative full-page axe serious / critical、320 / 375px mobile navigation、deterministic visual regression、keyboard navigation、Chromium accessibility tree contractを実行する。加えてFirefox／WebKitでloginと主要画面のkeyboard journey、login / chat限定のARIA snapshot・dynamic ARIA state contract、およびchat / documents / assignee / admin / profileの640 / 320 CSS px reflow proxyを実行する。
 - Change detection: `apps/web/**`、shared contract、Web inventory、UI canonical docs、dependency / Taskfile / workflow の変更を対象にし、無関係な backend / infra-only PR では高コスト gate を起動しない。
 - Failure semantics: test failure、300 pixelsを超える visual mismatch、browser launch failure、missing baseline は非0。OS / browser の anti-aliasing による300 pixels以下の微小差だけを許容し、step に `continue-on-error` を付けず、artifact upload だけを `always()` で実行する。
 - Scheduled scope: Firefox / WebKit のより広い `visual-regression.spec.ts` `@ui-quality` を週次と手動 dispatch で実行する。scheduled result は限定したPR-required cross-browser keyboard jobと別job / resultとし、未実行をpassに変換しない。
 - Evidence: Playwright HTML report、test-results、trace、screenshot、video を retention 14日で保存する。
-- Exclusion: automation は representative screen reader、実 browser zoom、touch / virtual keyboard、real-device の手動証跡を代替しない。
+- Exclusion: CSS viewport reflow proxyを含むautomationはrepresentative screen reader、browser UIを操作する実zoom、text-only zoom、OS scaling、touch / virtual keyboard、real-deviceの手動証跡を代替しない。
 
 ### Chat keyboard contract
 

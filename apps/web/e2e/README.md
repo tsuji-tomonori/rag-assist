@@ -37,11 +37,11 @@ npx playwright test apps/web/e2e/screen-reader-semantics.spec.ts --config apps/w
 
 `keyboard-navigation.spec.ts` は、チャットの質問textboxへのTab到達、composerの3px focus indicator、既定Enterによる送信、処理中から回答への復帰に加え、primary view navigation、履歴、お気に入り、個人設定の代表controlをkeyboard-onlyで検査します。route fixtureはPlaywright内に限定し、本番API・認可・RAG回答を置き換えません。
 
-PRでは`login-keyboard.spec.ts`と`keyboard-navigation.spec.ts`に加え、`cross-browser-semantics.spec.ts`をFirefox／WebKitのrequired gateとして実行します。後者はlogin / chatのname・roleをPlaywright ARIA snapshotで、chat処理中の`aria-busy` / `aria-live`と完了時の解除を同じbrowser project内のARIA属性で検証し、project名付きsnapshot / state JSONをartifactへ添付します。限定cross-browser scopeだけをローカルで列挙・実行する場合は、repository rootで次を実行します。
+PRでは`login-keyboard.spec.ts`、`keyboard-navigation.spec.ts`、`cross-browser-semantics.spec.ts`、`zoom-reflow.spec.ts`をFirefox／WebKitのrequired gateとして実行します。semantic testはlogin / chatのname・roleをPlaywright ARIA snapshotで、chat処理中の`aria-busy` / `aria-live`と完了時の解除を同じbrowser project内のARIA属性で検証します。reflow testは1280px基準の200%相当（640 CSS px）／400%相当（320 CSS px）でchatからdocuments / assignee / admin / profileへ到達し、document rootの水平overflowがないことを検証します。snapshot / state / reflow JSONにはbrowser project名とevidence boundaryを含めてartifactへ添付します。限定cross-browser scopeだけをローカルで列挙・実行する場合は、repository rootで次を実行します。
 
 ```bash
 npm run test:e2e:cross-browser:required -w @memorag-mvp/web -- --list
 npm run test:e2e:cross-browser:required -w @memorag-mvp/web
 ```
 
-週次／手動dispatchのFirefox／WebKit visual accessibility scopeは`test:e2e:cross-browser`として別に維持します。このkeyboard / ARIA snapshot / DOM state自動証跡は、代表screen reader、実browserの200% / 400% zoom、touch / real-device、Firefox／WebKit native accessibility treeのengine固有debug出力、ならびに対象外画面の網羅検証を代替しません。
+週次／手動dispatchのFirefox／WebKit visual accessibility scopeは`test:e2e:cross-browser`として別に維持します。このkeyboard / ARIA snapshot / DOM state / CSS viewport reflow proxy自動証跡は、代表screen reader、browser UIを操作する実200% / 400% zoom、text-only zoom、OS scaling、touch / real-device、Firefox／WebKit native accessibility treeのengine固有debug出力、ならびに対象外画面の網羅検証を代替しません。

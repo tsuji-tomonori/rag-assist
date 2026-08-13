@@ -74,9 +74,10 @@ for (const zoomCase of zoomCases) {
       })
     }
 
-    await testInfo.attach(`zoom-reflow-${zoomCase.zoomPercent}-percent.json`, {
+    await testInfo.attach(`zoom-reflow-${testInfo.project.name}-${zoomCase.zoomPercent}-percent.json`, {
       body: Buffer.from(JSON.stringify({
         evidenceId: 'E2E-UI-ZOOM-REFLOW-001',
+        browserProject: testInfo.project.name,
         physicalReferenceWidth,
         zoomPercent: zoomCase.zoomPercent,
         cssViewport: {

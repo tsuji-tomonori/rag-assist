@@ -8,38 +8,37 @@
     "Do not merge, deploy, release, force-push, or perform destructive changes"
   ],
   "completed_items": [
-    "Confirmed current main 8e542b31 and pull request #462 head 8f80e63d are converged with behind zero",
-    "Selected a bounded Firefox and WebKit semantic gate without changing production UI, API, authorization, or RAG paths",
-    "Added E2E-UI-CROSS-BROWSER-SEMANTICS-001 for login and chat ARIA snapshots plus chat dynamic ARIA state evidence",
-    "Expanded the pull-request-required Firefox and WebKit scope from four keyboard tests to four keyboard plus two semantic tests",
-    "Kept the broader Firefox and WebKit visual accessibility scope scheduled and separate",
-    "Linked chat through SQ-016 AC-SQ016-003 and NFR-018 AC-NFR018-004 to the new E2E and workflow evidence",
-    "Synchronized canonical requirements and design, machine-readable trace and quality matrix, generated Web documents, E2E README, task, and report",
-    "Passed repository lint, Web typecheck, Web build, 447 Web unit tests, six-test E2E discovery, 13 trace tests, 5 semantic tests, generated-document freshness, canonical docs, OpenAPI, API code docs, manual evidence structure, infra inventory, and diff checks",
-    "Used the initial remote failure to correct the chat navigation hierarchy under the primary-navigation complementary landmark without weakening role or name assertions",
-    "Passed implementation-head Web UI Quality with 37 Chromium tests and six Firefox/WebKit required tests, plus MemoRAG CI and semver validation",
-    "Updated pull request acceptance, self-review, and Issue 345 progress while preserving Draft and do status"
+    "Confirmed current main 8e542b31 and pull request 462 head eb513ddf are converged with behind zero",
+    "Selected a bounded Firefox and WebKit reflow proxy gate without changing production UI, API, authorization, or RAG paths",
+    "Added the existing E2E-UI-ZOOM-REFLOW-001 to the pull-request-required Firefox and WebKit scope",
+    "Attached the Playwright browser project name to each reflow evidence record",
+    "Expanded required cross-browser discovery from six to ten tests while keeping broader visual coverage scheduled",
+    "Linked five views through SQ-016 AC-SQ016-001 and NFR-018 AC-NFR018-004 to the reflow E2E and workflow evidence",
+    "Synchronized canonical requirements and design, machine-readable trace and quality matrix, generated Web documents, E2E README, task, and analysis report",
+    "Passed repository lint, Web typecheck, Web build, 447 Web unit tests, ten-test E2E discovery, 13 trace tests, 5 semantic tests, generated-document freshness, canonical docs, OpenAPI, API code docs, manual evidence structure, infra inventory, hidden Unicode, and diff checks",
+    "Kept real-browser zoom, representative screen reader, touch, real-device, Firefox and WebKit native accessibility-tree evidence, owner decisions, and API C1 incomplete"
   ],
   "remaining_items": [
+    "Publish the implementation commit to pull request 462 and confirm final-head GitHub Actions",
+    "Update pull request acceptance, self-review, body, and Issue 345 progress evidence",
     "Resolve FR-051 persistence and the profile state-evidence owner decision",
     "Run approved representative-screen-reader, real-browser 200/400-percent zoom, touch, real-device, and Firefox/WebKit native accessibility-tree verification"
   ],
   "blocked_items": [
-    "Local E2E webServer startup is blocked because sandboxed tsx IPC listen returns EPERM",
+    "Local cross-browser E2E execution was denied before startup by the sandbox network-execution approval boundary; final-head GitHub Actions is required",
     "Manual accessibility evidence remains not release-ready with three blocked and one not-run check",
     "API C1 branch coverage remains below the 85-percent quality target in the latest known evidence"
   ],
   "validation": [
+    { "command": "npm ci", "result": "pass", "note": "Initial default cache path was unwritable; reran the same lockfile install with a temporary writable HOME/cache through the npm CLI" },
     { "command": "npm run lint", "result": "pass" },
     { "command": "npm run typecheck -w @memorag-mvp/web", "result": "pass" },
     { "command": "TZ=Asia/Tokyo npm test -w @memorag-mvp/web", "result": "pass", "note": "62 files and 447 tests passed" },
     { "command": "npm run build -w @memorag-mvp/web", "result": "pass", "note": "Existing chunk-size advisory only" },
-    { "command": "npm run test:e2e:cross-browser:required -w @memorag-mvp/web -- --list", "result": "pass", "note": "Six tests across Firefox and WebKit listed" },
-    { "command": "Targeted Firefox and WebKit semantic E2E execution", "result": "pass", "note": "GitHub Actions implementation head passed all six required Firefox/WebKit tests; local tsx IPC listen EPERM remains an environment blocker" },
-    { "command": "GitHub Actions Web UI Quality run 31653473093", "result": "pass", "note": "37 Chromium tests and six Firefox/WebKit required tests passed" },
-    { "command": "GitHub Actions MemoRAG CI run 31653473097 and semver run 31653473112", "result": "pass" },
-    { "command": "UI trace, semantic, canonical, generated, manual evidence, infra, hidden Unicode, OpenAPI, API code docs, and diff checks", "result": "pass" }
+    { "command": "npm run test:e2e:cross-browser:required -w @memorag-mvp/web -- --list", "result": "pass", "note": "Ten tests across Firefox and WebKit listed" },
+    { "command": "npm run test:e2e:cross-browser:required -w @memorag-mvp/web", "result": "blocked", "note": "Sandbox denied network-enabled webServer execution before test startup; GitHub Actions is required" },
+    { "command": "UI trace, semantic, canonical, generated, manual evidence, infra, hidden Unicode, OpenAPI, API code docs, and diff checks", "result": "pass", "note": "OpenAPI tsx CLI IPC failed with EPERM and passed through node --import tsx without permission escalation" }
   ],
-  "next_action": "Run one approved manual accessibility evidence axis without treating automated cross-browser semantic evidence as a manual pass",
+  "next_action": "Publish the bounded implementation to pull request 462, confirm final-head CI, and record acceptance, self-review, and Issue 345 evidence",
   "safe_to_continue_without_user": true
 }
