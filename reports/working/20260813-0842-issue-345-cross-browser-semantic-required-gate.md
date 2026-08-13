@@ -26,6 +26,7 @@
 - pass: UI trace 13 tests、semantic UI 5 tests、manual evidence contract 7 tests。
 - pass: generated Web inventory freshness、canonical docs、OpenAPI quality（`node --import tsx`）、API code docs、infra inventory、diff check。
 - blocked: 対象E2Eのlocal実走はsandboxの`tsx` IPC `listen EPERM`でAPI webServerを起動できず、assertion到達前に停止した。
+- fail/fixed: initial remote head `681e2115`ではFirefox／WebKitともchat snapshotのnavigation hierarchyが不一致だった。CI取得snapshotにより`navigation "画面"`はtop-levelではなく`complementary "主要ナビゲーション"`配下と確認し、期待landmark階層を実装／正本に一致させた。role／name assertionは維持した。
 
 ## Final-head CI／GitHub記録
 

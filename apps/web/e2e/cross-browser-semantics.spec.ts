@@ -23,7 +23,8 @@ test('E2E-UI-CROSS-BROWSER-SEMANTICS-001: login and chat expose stable cross-bro
   await signIn(page)
   const chat = page.getByRole('region', { name: 'チャット', exact: true })
   await expectAriaSnapshot(page.locator('body'), testInfo, 'chat-idle', `
-    - navigation "画面"
+    - complementary "主要ナビゲーション":
+        - navigation "画面"
     - main:
         - heading "社内QAチャットボットエージェント" [level=1]
         - region "チャット":
