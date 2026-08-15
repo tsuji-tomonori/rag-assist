@@ -53,6 +53,10 @@
 | cross-browser required discovery | pass | Firefox 7＋WebKit 7、合計14 tests／5 files |
 | cross-browser layout-stress実走 | blocked | webServer起動前にsandbox network approval boundaryで拒否。CIを必須証跡とする |
 | 実装head Web UI Quality | fail（修正前） | Firefox 7／7、WebKit 6／7。履歴region overflowを再試行でも検出し、CSS selectorを修正 |
+| 修正head Web UI Quality | pass | run `31853021631`。初回attemptは別のWebKit長文chatが1 flaky、cross-browser job再実行はretryなし14／14 |
+| cross-browser artifact | pass | `9238209862`、digest `sha256:103156b62fcf3b270d457028c8a516b0e0ab2bb6d4056b075e2e5154b16e1504` |
+| 修正head MemoRAG CI | pass | run `31853021579`。lint、typecheck、docs、unit、coverage、build、synthを含む |
+| 修正head semver | pass | run `31853021619` |
 | UI trace | pass | 13 tests |
 | semantic UI | pass | 5 tests |
 | manual evidence contract | pass | 7 tests。baselineはblocked 3／not_run 1、release-ready false |
@@ -74,8 +78,8 @@
 
 ## 7. 未完了・制約・リスク
 
-- final-head GitHub Actions、Draft PR本文／受け入れ確認／セルフレビュー、Issue #345コメントはpush後に実施する。
-- 修正後headのFirefox／WebKit required 14件はCI再実走待ちであり、修正前失敗だけで完了扱いしない。
+- evidence-only headのGitHub Actions、Draft PR本文／受け入れ確認／セルフレビュー、Issue #345コメントはrepository evidence公開後に実施する。
+- 修正headのFirefox／WebKit required 14件は再実行でretryなし全件成功した。初回attemptの別scenario 1 flakyは隠さず記録し、履歴overflowの再発ではないことをjob logで確認した。
 - representative screen reader、browser UIを操作する実200%／400% zoom、text-only zoom、OS scaling、touch／real device、Firefox／WebKit native accessibility treeは未実施である。
 - FR-051永続化／profile state contract、API C1 85%、OQ-UI-002 owner／cadenceは未解決である。
 - PR #461との生成物重複は、統合順に応じて最終sourceからgeneratorを再実行する必要がある。
@@ -83,12 +87,12 @@
 ## 8. 次の具体的作業
 
 1. 履歴CSS selector修正を#462 branchへ非破壊pushする。
-2. 修正headのWeb UI Quality 14件、MemoRAG CI、semverを確認する。
+2. evidence-only headのGitHub Actionsを確認する（修正headの必須3 workflowは成功済み）。
 3. task／completion status／本レポートへCI証跡を追記する。
 4. Draft PR本文、受け入れ確認、セルフレビュー、Issue #345を更新する。
 
 ## 9. 指示へのfit評価
 
-総合fit: 4.3 / 5.0（約86%）
+総合fit: 4.7 / 5.0（約94%）
 
-理由: 実装・正本・生成物・local検証は同期したが、final-head CIとGitHub記録、manual／owner依存項目が未完了であるため、現時点では完了扱いにしない。
+理由: 実装・正本・生成物・local検証・実装head CIは同期したが、evidence-only headとGitHub記録、manual／owner依存項目が未完了であるため、Issue全体は完了扱いにしない。

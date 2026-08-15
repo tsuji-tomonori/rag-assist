@@ -171,5 +171,8 @@ Draft PR #462はcurrent `main@8e542b31`を祖先に含み、Firefox／WebKitでk
 - [ ] Firefox／WebKit対象E2Eのlocal実走はwebServer起動前にsandboxのnetwork approval boundaryで拒否された。権限拡張せず、final-head GitHub Actionsを実走証跡とする。
 - [x] 実装head `c5b8a8d9` のrequired CIでFirefox 14／14、WebKit 13／14となり、再試行を含め履歴regionが`clientWidth=320`／`scrollWidth=386`でoverflowする決定的な不具合を検出した。
 - [x] 失敗artifactのスクリーンショットとAX snapshotから、`.history-toolbar input`の`width: 100%`がcheckboxにも適用されることを特定し、検索入力へselectorを限定した。修正headのCI再確認までは未完了とする。
-- [ ] final-head GitHub Actionsを確認し、Draft PR #462、セルフレビュー、Issue #345を更新する。
+- [x] 修正head `c3f3d0ff` のWeb UI Quality run `31853021631`は成功した。初回attemptは別scenarioのWebKit長文chatが1回timeoutし`13 passed / 1 flaky`だったため、cross-browser jobだけを再実行し、retryなしの`14 passed (1.1m)`を確認した。
+- [x] 修正headのChromium requiredとsemver検査が成功した。cross-browser artifact `9238209862`（digest `sha256:103156b62fcf3b270d457028c8a516b0e0ab2bb6d4056b075e2e5154b16e1504`）を保存した。
+- [x] 修正headのMemoRAG CI run `31853021579`も成功し、実装headの必須3 workflowを確認した。
+- [ ] evidence-only headを公開・確認し、Draft PR #462、セルフレビュー、Issue #345を更新する。
 - [ ] representative screen reader、実browser zoom、touch／real-device、Firefox／WebKit native accessibility tree、FR-051 owner判断、API C1は未完了を維持する。
