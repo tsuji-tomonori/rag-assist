@@ -66,7 +66,7 @@
 | E2E-UI-QUESTION-002 | implemented | apps/web/e2e/question-journey.spec.ts | - |
 | E2E-UI-SKIP-001 | implemented | apps/web/e2e/skip-link.spec.ts | - |
 | E2E-UI-LOGIN-KEYBOARD-001 | implemented | apps/web/e2e/login-keyboard.spec.ts<br>apps/web/src/features/auth/components/LoginPage.test.tsx<br>.github/workflows/web-ui-quality.yml | - |
-| E2E-UI-LAYOUT-STRESS-001 | implemented | apps/web/e2e/layout-stress.spec.ts | - |
+| E2E-UI-LAYOUT-STRESS-001 | implemented | apps/web/e2e/layout-stress.spec.ts<br>apps/web/package.json<br>.github/workflows/web-ui-quality.yml | - |
 | E2E-UI-TEXT-SPACING-001 | implemented | apps/web/e2e/text-spacing.spec.ts | - |
 | E2E-UI-VIRTUAL-KEYBOARD-001 | implemented | apps/web/e2e/viewport-keyboard.spec.ts | - |
 | E2E-UI-ZOOM-REFLOW-001 | implemented | apps/web/e2e/zoom-reflow.spec.ts<br>apps/web/package.json<br>.github/workflows/web-ui-quality.yml | - |

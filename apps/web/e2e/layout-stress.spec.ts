@@ -169,6 +169,7 @@ test.beforeEach(async ({ page }) => {
 })
 
 test('E2E-UI-LAYOUT-STRESS-001: reduced-motion で長文回答と長い引用名が reflow する @smoke @ui-quality', async ({ page }, testInfo) => {
+  const browserProject = testInfo.project.name
   await signIn(page)
   expect(await page.evaluate(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(true)
   await page.evaluate(() => {
@@ -191,9 +192,10 @@ test('E2E-UI-LAYOUT-STRESS-001: reduced-motion で長文回答と長い引用名
   expect(scrollRecords.some((record) => record.behavior === 'auto' && record.className.includes('message-row'))).toBe(true)
 
   const dimensions = await assertNoHorizontalOverflow(page, chatRegion, 'chat-long-answer')
-  await testInfo.attach('layout-stress-reduced-motion-chat.json', {
+  await testInfo.attach(`layout-stress-reduced-motion-chat-${browserProject}.json`, {
     body: Buffer.from(JSON.stringify({
       evidenceId: 'E2E-UI-LAYOUT-STRESS-001',
+      browserProject,
       viewport,
       prefersReducedMotion: true,
       longAnswerLength: longAnswer.length,
@@ -207,6 +209,7 @@ test('E2E-UI-LAYOUT-STRESS-001: reduced-motion で長文回答と長い引用名
 })
 
 test('E2E-UI-LAYOUT-STRESS-001: 長いファイル名・多数件・0件が320pxで reflow する @smoke @ui-quality', async ({ page }, testInfo) => {
+  const browserProject = testInfo.project.name
   await signIn(page)
   expect(await page.evaluate(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(true)
   const states: DimensionEvidence[] = []
@@ -230,9 +233,10 @@ test('E2E-UI-LAYOUT-STRESS-001: 長いファイル名・多数件・0件が320px
   await expect(favoritesRegion).toContainText('取得は完了しており、保存済みのお気に入りは 0 件です。')
   states.push(await assertNoHorizontalOverflow(page, favoritesRegion, 'favorites-zero-items'))
 
-  await testInfo.attach('layout-stress-collection-states.json', {
+  await testInfo.attach(`layout-stress-collection-states-${browserProject}.json`, {
     body: Buffer.from(JSON.stringify({
       evidenceId: 'E2E-UI-LAYOUT-STRESS-001',
+      browserProject,
       viewport,
       prefersReducedMotion: true,
       fixtures: {

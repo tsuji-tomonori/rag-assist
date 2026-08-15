@@ -1,0 +1,90 @@
+# Issue #345 cross-browser content-extreme required gate 作業レポート
+
+保存先: `reports/working/20260815-0849-issue-345-cross-browser-layout-stress-required-gate.md`
+
+## 1. 受けた指示
+
+- current main、前回以降の変更、open PR／Issue、task、正本・生成物を確認する。
+- Issue #345を重複しない最優先の小さな改善1件で前進させる。
+- 受け入れ条件付きtask、実装、正本・生成物同期、最小十分な検証、Draft PR更新、Issueコメントまで行う。
+- 320px／400% zoom、keyboard／screen reader、各種状態、追跡可能性、並行PR競合、正本文書の一意性を優先する。
+- manual／CI／owner未確認を完了扱いせず、merge／deploy／release／破壊的変更を行わない。
+
+## 2. 要件整理
+
+| 要件ID | 指示・要件 | 重要度 | 対応状況 |
+| --- | --- | ---: | --- |
+| R1 | latest mainと#462、open PR／Issueを確認 | 高 | 対応 |
+| R2 | 非重複の小さなUI改善を1件選定 | 高 | Firefox／WebKit content-extreme required gateを選定 |
+| R3 | task→実装→正本→生成物→E2Eの追跡 | 高 | 対応 |
+| R4 | lint、typecheck、unit、E2E、docs check | 高 | local実ブラウザ以外は成功、E2E実走はCI待ち |
+| R5 | Draft PR #462とIssue #345を更新 | 高 | final-head CI後に更新予定 |
+| R6 | manual／owner未検証を残す | 高 | blocked／未完了を維持 |
+
+## 3. 検討・判断
+
+- current `main@8e542b31`と#462 `fd668b85`はbehind 0であり、main再統合は不要だった。
+- open UI PR #461はshared UI primitiveとproduction componentを広く変更するため、本変更ではproduction UI／shared sourceを変更しない。
+- 前回の640／320 CSS px到達・root overflow gateを、長文回答、長い引用・ファイル名、履歴35件、確認済み0件、reduced motion、region overflowへ深める既存`E2E-UI-LAYOUT-STRESS-001`を選定した。
+- cross-browser required増分は2 scenario×2 browserの4件だけとし、より広いvisual scopeはscheduledのまま維持した。
+- #461との新規path overlapは正規generator出力`docs/generated/web-ui-inventory.json`だけである。authored sourceは競合せず、#461統合時は最終sourceからgeneratorを再実行する。
+- 自動viewport／fixture証跡は実browser zoom、screen reader、touch、実機を証明しないため、manual／overall statusを`blocked`のまま維持した。
+
+## 4. 実施作業
+
+- `tasks/do/20260815-0849-issue-345-cross-browser-layout-stress-required-gate.md`を作成し、5件の受け入れ条件を固定した。
+- `layout-stress.spec.ts`のJSONとattachment名へPlaywright browser projectを追加した。
+- Firefox／WebKit required scriptへ既存layout-stress 2 scenarioを追加し、workflow表示名を同期した。
+- `SQ-016`、`NFR-018`、UI設計、machine-readable trace／quality matrix、E2E READMEを同期した。
+- 正規generatorでWeb trace／inventory／quality matrixを再生成した。
+- 14件のcross-browser discovery、repository lint、Web typecheck／unit／build、trace／semantic／manual evidence、canonical／generated docs checksを実行した。
+
+## 5. 検証結果
+
+| 検証 | 結果 | 補足 |
+| --- | --- | --- |
+| `npm ci --cache /tmp/npm-cache-issue345-20260815` | pass | lockfile install 504 packages |
+| `npm run lint` | pass | warning 0 |
+| Web typecheck | pass | `tsc --noEmit` |
+| Web unit | pass | 62 files／447 tests |
+| Web build | pass | 既存chunk-size advisoryのみ |
+| cross-browser required discovery | pass | Firefox 7＋WebKit 7、合計14 tests／5 files |
+| cross-browser layout-stress実走 | blocked | webServer起動前にsandbox network approval boundaryで拒否。CIを必須証跡とする |
+| UI trace | pass | 13 tests |
+| semantic UI | pass | 5 tests |
+| manual evidence contract | pass | 7 tests。baselineはblocked 3／not_run 1、release-ready false |
+| Web generated freshness | pass | 正規generator後にfresh |
+| canonical docs | pass | `scripts/validate_docs.py` |
+| OpenAPI | pass | `node --import tsx`でquality check |
+| API code docs | pass | 98 APIs／588 documents |
+| infra／hidden Unicode／Taskfile alias／diff | pass | 差分なし |
+
+## 6. 成果物
+
+| 成果物 | 内容 | 指示との対応 |
+| --- | --- | --- |
+| task | 受け入れ条件、検証計画、未完了境界 | task要件 |
+| E2E／workflow | Firefox／WebKit 4件のrequired増分 | 320px・content extremes |
+| 正本／authored matrix | SQ-016、NFR-018、UI設計、trace、quality matrix | 追跡・正本同期 |
+| generated docs | Web trace、inventory、quality matrix | 生成物同期 |
+| 本レポート | 判断、検証、blocker、次作業 | 作業報告 |
+
+## 7. 未完了・制約・リスク
+
+- final-head GitHub Actions、Draft PR本文／受け入れ確認／セルフレビュー、Issue #345コメントはpush後に実施する。
+- representative screen reader、browser UIを操作する実200%／400% zoom、text-only zoom、OS scaling、touch／real device、Firefox／WebKit native accessibility treeは未実施である。
+- FR-051永続化／profile state contract、API C1 85%、OQ-UI-002 owner／cadenceは未解決である。
+- PR #461との生成物重複は、統合順に応じて最終sourceからgeneratorを再実行する必要がある。
+
+## 8. 次の具体的作業
+
+1. 実装commitを#462 branchへ非破壊pushする。
+2. final-headのWeb UI Quality、MemoRAG CI、semverを確認する。
+3. task／completion status／本レポートへCI証跡を追記する。
+4. Draft PR本文、受け入れ確認、セルフレビュー、Issue #345を更新する。
+
+## 9. 指示へのfit評価
+
+総合fit: 4.3 / 5.0（約86%）
+
+理由: 実装・正本・生成物・local検証は同期したが、final-head CIとGitHub記録、manual／owner依存項目が未完了であるため、現時点では完了扱いにしない。

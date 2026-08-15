@@ -8,21 +8,20 @@
     "Do not merge, deploy, release, force-push, or perform destructive changes"
   ],
   "completed_items": [
-    "Confirmed current main 8e542b31 and pull request 462 head eb513ddf are converged with behind zero",
-    "Selected a bounded Firefox and WebKit reflow proxy gate without changing production UI, API, authorization, or RAG paths",
-    "Added the existing E2E-UI-ZOOM-REFLOW-001 to the pull-request-required Firefox and WebKit scope",
-    "Attached the Playwright browser project name to each reflow evidence record",
-    "Expanded required cross-browser discovery from six to ten tests while keeping broader visual coverage scheduled",
-    "Linked five views through SQ-016 AC-SQ016-001 and NFR-018 AC-NFR018-004 to the reflow E2E and workflow evidence",
-    "Synchronized canonical requirements and design, machine-readable trace and quality matrix, generated Web documents, E2E README, task, and analysis report",
-    "Passed repository lint, Web typecheck, Web build, 447 Web unit tests, ten-test E2E discovery, 13 trace tests, 5 semantic tests, generated-document freshness, canonical docs, OpenAPI, API code docs, manual evidence structure, infra inventory, hidden Unicode, and diff checks",
-    "Kept real-browser zoom, representative screen reader, touch, real-device, Firefox and WebKit native accessibility-tree evidence, owner decisions, and API C1 incomplete",
-    "Published the implementation to draft pull request 462 and confirmed Web UI Quality, MemoRAG CI, and semver checks on implementation head c51a85ce",
-    "Updated the pull request body and recorded acceptance comment 5287729824 and self-review 4932567816"
+    "Confirmed current main 8e542b31 and pull request 462 head fd668b85 are converged with behind zero",
+    "Selected the existing 320 CSS pixel content-extreme reflow contract without changing production UI, shared primitives, API, authorization, or RAG paths",
+    "Added E2E-UI-LAYOUT-STRESS-001 to the pull-request-required Firefox and WebKit scope",
+    "Attached the Playwright browser project name to each layout-stress evidence record and attachment name",
+    "Expanded required cross-browser discovery from ten to fourteen tests while keeping broader visual coverage scheduled",
+    "Linked chat, documents, history, and favorites through SQ-016 and NFR-018 to AC-SQ016-001/006/007, AC-NFR018-004, E2E-UI-LAYOUT-STRESS-001, and the required workflow",
+    "Synchronized canonical requirements and design, machine-readable trace and quality matrix, generated Web documents, E2E README, task, and work report",
+    "Passed repository lint, Web typecheck, Web build, 447 Web unit tests, fourteen-test E2E discovery, 13 trace tests, 5 semantic tests, generated-document freshness, canonical docs, OpenAPI, API code docs, manual evidence structure, infra inventory, hidden Unicode, Taskfile alias, and diff checks",
+    "Kept real-browser zoom, representative screen reader, touch, real-device, Firefox and WebKit native accessibility-tree evidence, owner decisions, and API C1 incomplete"
   ],
   "remaining_items": [
-    "Publish the evidence-only repository record and confirm its final-head GitHub Actions",
-    "Update Issue 345 progress evidence and final-head pull request evidence",
+    "Publish the implementation to draft pull request 462 and confirm final-head GitHub Actions",
+    "Update the pull request body and record acceptance and self-review evidence",
+    "Update Issue 345 progress evidence",
     "Resolve FR-051 persistence and the profile state-evidence owner decision",
     "Run approved representative-screen-reader, real-browser 200/400-percent zoom, touch, real-device, and Firefox/WebKit native accessibility-tree verification"
   ],
@@ -32,18 +31,15 @@
     "API C1 branch coverage remains below the 85-percent quality target in the latest known evidence"
   ],
   "validation": [
-    { "command": "npm ci", "result": "pass", "note": "Initial default cache path was unwritable; reran the same lockfile install with a temporary writable HOME/cache through the npm CLI" },
+    { "command": "npm ci --cache /tmp/npm-cache-issue345-20260815", "result": "pass", "note": "Lockfile install completed with 504 packages" },
     { "command": "npm run lint", "result": "pass" },
     { "command": "npm run typecheck -w @memorag-mvp/web", "result": "pass" },
     { "command": "TZ=Asia/Tokyo npm test -w @memorag-mvp/web", "result": "pass", "note": "62 files and 447 tests passed" },
     { "command": "npm run build -w @memorag-mvp/web", "result": "pass", "note": "Existing chunk-size advisory only" },
-    { "command": "npm run test:e2e:cross-browser:required -w @memorag-mvp/web -- --list", "result": "pass", "note": "Ten tests across Firefox and WebKit listed" },
-    { "command": "npm run test:e2e:cross-browser:required -w @memorag-mvp/web", "result": "blocked", "note": "Sandbox denied network-enabled webServer execution before test startup; GitHub Actions provided the execution evidence" },
-    { "command": "GitHub Actions Web UI Quality at c51a85ce", "result": "pass", "note": "Firefox and WebKit required 10/10; Chromium 37/37; evidence artifacts retained" },
-    { "command": "GitHub Actions MemoRAG CI at c51a85ce", "result": "pass", "note": "Lint, typecheck, docs, coverage tests, builds, and synth passed" },
-    { "command": "GitHub Actions Validate Semver Label at c51a85ce", "result": "pass" },
-    { "command": "UI trace, semantic, canonical, generated, manual evidence, infra, hidden Unicode, OpenAPI, API code docs, and diff checks", "result": "pass", "note": "OpenAPI tsx CLI IPC failed with EPERM and passed through node --import tsx without permission escalation" }
+    { "command": "cross-browser required Playwright discovery", "result": "pass", "note": "Fourteen tests across Firefox and WebKit listed" },
+    { "command": "cross-browser required E2E execution", "result": "blocked", "note": "Sandbox denied network-enabled webServer execution before test startup; final-head GitHub Actions is required" },
+    { "command": "UI trace, semantic, canonical, generated, manual evidence, infra, hidden Unicode, OpenAPI, API code docs, Taskfile alias, and diff checks", "result": "pass", "note": "OpenAPI passed through node --import tsx without permission escalation" }
   ],
-  "next_action": "Publish the evidence-only repository record, confirm final-head CI, and record Issue 345 plus final-head pull request evidence",
+  "next_action": "Publish the implementation, confirm final-head CI, and record pull-request plus Issue 345 evidence",
   "safe_to_continue_without_user": true
 }

@@ -17351,7 +17351,9 @@
         "id": "E2E-UI-LAYOUT-STRESS-001",
         "status": "implemented",
         "evidence": [
-          "apps/web/e2e/layout-stress.spec.ts"
+          "apps/web/e2e/layout-stress.spec.ts",
+          "apps/web/package.json",
+          ".github/workflows/web-ui-quality.yml"
         ]
       },
       {
