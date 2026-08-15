@@ -147,6 +147,9 @@ Draft PR #462はcurrent `main@8e542b31`を祖先に含み、Firefox／WebKitでk
 - [x] `E2E-UI-CROSS-BROWSER-STATE-001`を追加し、Firefox 2件＋WebKit 2件だけを既存required scopeへ接続した。production UI、API、認可、RAG contractは変更していない。
 - [x] `SQ-016`、`NFR-018`、`DES_UI_UX_001`、machine-readable trace／quality matrix、正規生成文書、E2E README、workflow表示名を同期した。
 - [x] repository lint、Web typecheck、Web build、Web unit 62 files／447 tests、18-test discovery、trace 13、semantic 5、manual evidence contract 7、canonical／generated docs、OpenAPI、API code docs、infra inventory、hidden Unicode、Taskfile alias、diff checkが成功した。
-- [ ] Firefox／WebKit対象E2Eのlocal実走はnetwork-enabled webServerを起動するsandbox境界で拒否された。権限拡張せず、final-head GitHub Actionsを実走証跡とする。
+- [x] 修正head `9191058f` のWeb UI Quality run `31915498568`でChromium requiredとFirefox／WebKit required 18／18が成功した。cross-browser jobはretry／flakyなしで、artifact `9254810495`（digest `sha256:eca86fd6c3e4f4924593f505dff3c11c6d6f8ce237ac5f0fbbe9ec7d7e4df4bb`）を保存した。
+- [ ] Firefox／WebKit対象E2Eのlocal実走はnetwork-enabled webServerを起動するsandbox境界で拒否された。権限拡張せず、GitHub Actionsを実走証跡とする。
+- [x] 修正headのMemoRAG CI run `31915498575`とsemver run `31915498559`が成功した。
+- [ ] evidence-only final headのWeb UI Quality／MemoRAG CI／semverを確認する。
 - [ ] Draft PR #462、セルフレビュー、Issue #345を更新する。
 - [x] manual／overall statusは`blocked`、FR-051／API C1／OQ-UI-002は未完了として維持した。

@@ -8,18 +8,17 @@
     "Do not merge, deploy, release, force-push, or perform destructive changes"
   ],
   "completed_items": [
-    "Confirmed current main 8e542b31 and pull request 462 head fd668b85 are converged with behind zero",
-    "Selected the existing 320 CSS pixel content-extreme reflow contract and limited production remediation to the history search-input CSS selector without changing shared primitives, API, authorization, or RAG paths",
-    "Added E2E-UI-LAYOUT-STRESS-001 to the pull-request-required Firefox and WebKit scope",
-    "Attached the Playwright browser project name to each layout-stress evidence record and attachment name",
-    "Expanded required cross-browser discovery from ten to fourteen tests while keeping broader visual coverage scheduled",
-    "Linked chat, documents, history, and favorites through SQ-016 and NFR-018 to AC-SQ016-001/006/007, AC-NFR018-004, E2E-UI-LAYOUT-STRESS-001, and the required workflow",
-    "Synchronized canonical requirements and design, machine-readable trace and quality matrix, generated Web documents, E2E README, task, and work report",
-    "Passed repository lint, Web typecheck, Web build, 447 Web unit tests, fourteen-test E2E discovery, 13 trace tests, 5 semantic tests, generated-document freshness, canonical docs, OpenAPI, API code docs, manual evidence structure, infra inventory, hidden Unicode, Taskfile alias, and diff checks",
-    "Detected deterministic WebKit history overflow at 320 client pixels versus 386 scroll pixels on implementation head c5b8a8d9 and traced it to the search-input width selector applying to the favorites checkbox",
-    "Restricted the width rule to input type search and confirmed Web UI Quality run 31853021631 with a clean fourteen-test cross-browser rerun",
-    "Confirmed MemoRAG CI run 31853021579 and semver run 31853021619 on the remediation head",
-    "Kept real-browser zoom, representative screen reader, touch, real-device, Firefox and WebKit native accessibility-tree evidence, owner decisions, and API C1 incomplete"
+    "Confirmed current main 8e542b31 and pull request 462 are converged with behind zero",
+    "Selected history loading, error, retry, confirmed-empty, and permission states as the bounded Firefox and WebKit required-gate increment",
+    "Added E2E-UI-CROSS-BROWSER-STATE-001 as two scenarios per browser and expanded the required cross-browser scope from fourteen to eighteen tests",
+    "Prevented false zero and private detail exposure while preserving retry recovery and permission-specific feedback",
+    "Linked history through SQ-016 and NFR-018 to AC-SQ016-007, AC-NFR018-004, E2E-UI-CROSS-BROWSER-STATE-001, and the required workflow",
+    "Synchronized canonical requirements and design, authored trace and quality matrix, generated Web documents, E2E README, workflow label, task, and report",
+    "Passed repository lint, Web typecheck, Web build, 447 Web unit tests, eighteen-test E2E discovery, 13 trace tests, 5 semantic tests, generated-document freshness, canonical docs, OpenAPI, API code docs, manual evidence structure, infra inventory, hidden Unicode, Taskfile alias, and diff checks",
+    "Diagnosed the first GitHub Actions failure as an E2E expectation mismatch for React's omitted aria-busy attribute and repaired it without relaxing state, security, retry, or false-zero expectations",
+    "Confirmed Web UI Quality run 31915498568 with successful Chromium required and retry-free Firefox and WebKit eighteen of eighteen",
+    "Confirmed MemoRAG CI run 31915498575 and semver run 31915498559",
+    "Kept representative screen reader, real-browser zoom, touch, real-device, native accessibility-tree evidence, owner decisions, and API C1 incomplete"
   ],
   "remaining_items": [
     "Publish the evidence-only repository record and confirm its final-head GitHub Actions",
@@ -29,23 +28,23 @@
     "Run approved representative-screen-reader, real-browser 200/400-percent zoom, touch, real-device, and Firefox/WebKit native accessibility-tree verification"
   ],
   "blocked_items": [
-    "Local cross-browser E2E execution was denied before startup by the sandbox network-execution approval boundary; final-head GitHub Actions is required",
+    "Local cross-browser E2E execution was denied before startup by the sandbox network-execution approval boundary; GitHub Actions supplies automated execution evidence",
     "Manual accessibility evidence remains not release-ready with three blocked and one not-run check",
     "API C1 branch coverage remains below the 85-percent quality target in the latest known evidence"
   ],
   "validation": [
-    { "command": "npm ci --cache /tmp/npm-cache-issue345-20260815", "result": "pass", "note": "Lockfile install completed with 504 packages" },
+    { "command": "npm ci", "result": "pass", "note": "Lockfile install completed with 504 packages" },
     { "command": "npm run lint", "result": "pass" },
     { "command": "npm run typecheck -w @memorag-mvp/web", "result": "pass" },
     { "command": "TZ=Asia/Tokyo npm test -w @memorag-mvp/web", "result": "pass", "note": "62 files and 447 tests passed" },
     { "command": "npm run build -w @memorag-mvp/web", "result": "pass", "note": "Existing chunk-size advisory only" },
-    { "command": "cross-browser required Playwright discovery", "result": "pass", "note": "Fourteen tests across Firefox and WebKit listed" },
-    { "command": "cross-browser required E2E execution", "result": "blocked", "note": "Sandbox denied network-enabled webServer execution before test startup; GitHub Actions provides the execution evidence" },
-    { "command": "GitHub Actions Web UI Quality run 31853021631", "result": "pass", "note": "Initial attempt had one unrelated WebKit chat timeout that passed on retry; dedicated cross-browser rerun completed fourteen of fourteen without retry" },
-    { "command": "GitHub Actions Validate Semver Label run 31853021619", "result": "pass" },
-    { "command": "GitHub Actions MemoRAG CI run 31853021579", "result": "pass" },
-    { "command": "UI trace, semantic, canonical, generated, manual evidence, infra, hidden Unicode, OpenAPI, API code docs, Taskfile alias, and diff checks", "result": "pass", "note": "OpenAPI passed through node --import tsx without permission escalation" }
+    { "command": "cross-browser required Playwright discovery", "result": "pass", "note": "Eighteen tests across Firefox and WebKit listed" },
+    { "command": "cross-browser required local E2E execution", "result": "blocked", "note": "Sandbox denied network-enabled webServer execution before test startup" },
+    { "command": "GitHub Actions Web UI Quality run 31915498568", "result": "pass", "note": "Chromium required succeeded and Firefox/WebKit completed eighteen of eighteen without retry or flaky result" },
+    { "command": "GitHub Actions Validate Semver Label run 31915498559", "result": "pass" },
+    { "command": "GitHub Actions MemoRAG CI run 31915498575", "result": "pass" },
+    { "command": "UI trace, semantic, canonical, generated, manual evidence, infra, hidden Unicode, OpenAPI, API code docs, Taskfile alias, and diff checks", "result": "pass", "note": "Task CLI was unavailable, so resolved Taskfile commands were run directly" }
   ],
-  "next_action": "Publish the evidence-only record and update pull-request plus Issue 345 evidence",
+  "next_action": "Publish evidence-only records, confirm final-head workflows, and update pull request plus Issue 345 evidence",
   "safe_to_continue_without_user": true
 }
