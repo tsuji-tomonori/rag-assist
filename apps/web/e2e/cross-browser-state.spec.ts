@@ -39,7 +39,7 @@ test('E2E-UI-CROSS-BROWSER-STATE-001: history loading・error・retry・confirme
 
   await error.getByRole('button', { name: '再試行' }).click()
   await expect(history.locator('[data-state-kind="recovered"]')).toContainText('会話履歴を更新しました')
-  await expect(resource).toHaveAttribute('aria-busy', 'false')
+  await expect(resource).not.toHaveAttribute('aria-busy')
   await expect(history).toContainText('条件に一致する履歴はありません')
   await expect(history).toContainText('0 件の会話')
   expect(historyReads).toBe(2)
