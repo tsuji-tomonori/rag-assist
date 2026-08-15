@@ -57,7 +57,7 @@
 | 受け入れ基準 | `AC-SQ016-001`〜`AC-SQ016-008` |
 | 優先度 | S |
 | 安定性 | High |
-| 変更履歴 | 2026-07-14 Issue #345 から追加。2026-07-17 `AC-SQ016-002` の shell skip link と login 前 keyboard-only journey の自動証跡を追加。2026-08-03 個人設定のkeyboard-only journeyとChromium AX tree契約をrequired gateへ追加。2026-08-04 チャットの処理中・SSE再接続・安全なerror・権限案内をrequired gateへ追加。2026-08-05 個人設定のsession-only scopeとpolite変更statusの限定証跡を追加。2026-08-06 履歴のkeyboard-only journeyとChromium AX tree契約をrequired gateへ追加。2026-08-07 benchmarkのChromium AX tree契約をrequired gateへ追加。2026-08-08 お気に入りのkeyboard-only到達・復帰とChromium AX tree契約をrequired gateへ追加。2026-08-10 チャット質問入力の3px focus indicatorとkeyboard-only送信・回答復帰をrequired gateへ追加。2026-08-12 loginと主要画面のkeyboard journeyをFirefox／WebKitのPR required gateへ追加。2026-08-13 login / chatのARIA snapshotとchat動的ARIA stateをFirefox／WebKitのPR required gateへ追加。2026-08-14 640 / 320 CSS pxのreflow proxyをFirefox／WebKitのPR required gateへ追加。2026-08-15 320 CSS pxのcontent-extreme fixtureをFirefox／WebKitのPR required gateへ追加 |
+| 変更履歴 | 2026-07-14 Issue #345 から追加。2026-07-17 `AC-SQ016-002` の shell skip link と login 前 keyboard-only journey の自動証跡を追加。2026-08-03 個人設定のkeyboard-only journeyとChromium AX tree契約をrequired gateへ追加。2026-08-04 チャットの処理中・SSE再接続・安全なerror・権限案内をrequired gateへ追加。2026-08-05 個人設定のsession-only scopeとpolite変更statusの限定証跡を追加。2026-08-06 履歴のkeyboard-only journeyとChromium AX tree契約をrequired gateへ追加。2026-08-07 benchmarkのChromium AX tree契約をrequired gateへ追加。2026-08-08 お気に入りのkeyboard-only到達・復帰とChromium AX tree契約をrequired gateへ追加。2026-08-10 チャット質問入力の3px focus indicatorとkeyboard-only送信・回答復帰をrequired gateへ追加。2026-08-12 loginと主要画面のkeyboard journeyをFirefox／WebKitのPR required gateへ追加。2026-08-13 login / chatのARIA snapshotとchat動的ARIA stateをFirefox／WebKitのPR required gateへ追加。2026-08-14 640 / 320 CSS pxのreflow proxyをFirefox／WebKitのPR required gateへ追加。2026-08-15 320 CSS pxのcontent-extreme fixtureをFirefox／WebKitのPR required gateへ追加。2026-08-16 履歴のloading／error／permission／retry state contractをFirefox／WebKitのPR required gateへ追加 |
 
 ## 妥当性確認
 
@@ -68,7 +68,7 @@
 | 実現可能性 | pass with manual dependency | code/test fixes are feasible; screen-reader/real-device evidence requires the named environments. |
 | 検証可能性 | pass | numeric thresholds and journey evidence are explicit. |
 
-## 現在の自動証跡（2026-08-15）
+## 現在の自動証跡（2026-08-16）
 
 - `E2E-UI-SKIP-001`: 認証後 shell の最初の keyboard focus で skip link を表示し、desktop 1280×720 / mobile 320×720 の双方で反復 navigation を越えて一意な `main` landmark へ focus を移す。
 - `E2E-UI-LOGIN-KEYBOARD-001`: login 前の email から secondary action までの DOM 順 Tab order、3px outline、native required validation、Space による remember 切替、password 上の Enter submit、認証後 chat 到達、horizontal containment を 1280×720 / 320×720 で検証する。PR required gateではChromium、Firefox、WebKitで実行し、rejected authentication の alert/form description/focus/retry は component test で検証する。
@@ -76,9 +76,10 @@
 - `E2E-UI-KEYBOARD-NAV-001`: チャットの質問textboxへTabで到達し、composerの3px focus indicator、既定Enter送信、処理中から回答への復帰を検証する。あわせて履歴へkeyboard-onlyで到達し、検索・並び順・お気に入り絞り込み・会話選択をnative keyで操作できること、お気に入りへSpaceで到達して戻るbuttonからEnterでチャットへ復帰できること、ならびに個人設定の送信キー変更とチャット復帰を3px focus indicator付きでChromium、Firefox、WebKitのPR required gateから検証する。
 - `E2E-UI-SR-SEMANTICS-001`: チャットのregion / form / textbox /送信buttonとidle→回答処理中→完了に伴うbusy / polite live state、履歴のregion / heading / searchbox / combobox value / checkbox checked state /主要button、お気に入りのregion / heading / target type見出し /戻るbutton、benchmarkのregion / heading / suite・dataset・model・concurrency control value /実行履歴scroll region・table、ならびに個人設定のregion / heading / combobox value /主要buttonをChromium accessibility treeで検証し、JSON evidenceをPlaywright reportへ添付する。
 - `E2E-UI-CROSS-BROWSER-SEMANTICS-001`: login formとchat region / form / textbox / buttonのname・roleをPlaywright ARIA snapshotで検証し、chatのidle→処理中→完了に伴う`aria-busy` / `aria-live`と処理中articleのroleを同じFirefox／WebKit projectで検証する。snapshotとstate JSONにはbrowser project名とevidence boundaryを付ける。
+- `E2E-UI-CROSS-BROWSER-STATE-001`: 履歴のloading→HTTP 500→retry→confirmed emptyとHTTP 403をFirefox／WebKitのPR required gateで検証し、未確認dataをempty／zeroへ変換せず、private detailを表示しないことを確認する。state JSONにはbrowser project名、状態系列、test-only fixture境界を付ける。
 - `E2E-UI-ZOOM-REFLOW-001`: 1280px基準の200%相当（640 CSS px）／400%相当（320 CSS px）でchatからdocuments / assignee / admin / profileへ到達し、document rootの水平overflowがないことをChromium／Firefox／WebKitのPR required gateで検証する。JSON evidenceにはbrowser project名、CSS viewport、各viewのURL／dimensions、実browser zoomではないboundaryを付ける。
 - `E2E-UI-LAYOUT-STRESS-001`: 320 CSS pxとreduced motionで長文回答の先頭／末尾、長い引用・ファイル名、履歴35件、確認済みお気に入り0件をchat / documents / history / favoritesで表示し、document rootと対象regionの水平overflowがないことをChromium／Firefox／WebKitのPR required gateで検証する。JSON evidenceにはbrowser project名、viewport、fixture量、URL／dimensions、実browser zoom・実支援技術・実機ではないboundaryを付ける。
-- Firefox／WebKitの自動証跡はlogin / chatのsemantic contract、主要keyboard journey、5 viewのCSS viewport reflow proxy、4 viewの320 CSS px content-extreme fixtureに限定する。representative screen reader、browser UIを操作する実200%/400% zoom、text-only zoom、OS scaling、touch／real device、Firefox／WebKit native accessibility treeのengine固有debug出力、非対象画面のbrowser evidenceを代替しない。
+- Firefox／WebKitの自動証跡はlogin / chatのsemantic contract、履歴の代表resource state、主要keyboard journey、5 viewのCSS viewport reflow proxy、4 viewの320 CSS px content-extreme fixtureに限定する。representative screen reader、browser UIを操作する実200%/400% zoom、text-only zoom、OS scaling、touch／real device、Firefox／WebKit native accessibility treeのengine固有debug出力、非対象画面のbrowser evidenceを代替しない。
 
 ## Phase別 evidence contract（2026-07-16）
 

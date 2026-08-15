@@ -69,7 +69,7 @@ jobs:
           retention-days: 14
 
   cross-browser-accessibility-required:
-    name: Required Firefox and WebKit keyboard, semantics, reflow, and content extremes
+    name: Required Firefox and WebKit keyboard, semantics, states, reflow, and content extremes
     if: ${{ github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.run-cross-browser) }}
     runs-on: ubuntu-latest
     timeout-minutes: 20

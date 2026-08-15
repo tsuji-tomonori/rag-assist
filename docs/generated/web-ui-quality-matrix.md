@@ -57,7 +57,7 @@
 | history | AC-SQ016-004 | pass | blocked | blocked | muted foreground remediation後、1280px axe serious/critical blocker 0。manual contrast reviewは未実施 |
 | history | AC-SQ016-005 | pass | blocked | blocked | 4 viewportで24px minimumと44px primary targetの未解決candidate 0。manual touch evidenceは未実施 |
 | history | AC-SQ016-006 | pass | blocked | blocked | 4 viewportのcomputed auditとChromium／Firefox／WebKit required E2E-UI-LAYOUT-STRESS-001をreduced motionで検証。orientation / safe-area / virtual-keyboard実機は未検証 |
-| history | AC-SQ016-007 | pass | blocked | blocked | required E2E-UI-STATE-001のloading→500→retry→confirmed empty／403に加え、Chromium／Firefox／WebKit required E2E-UI-LAYOUT-STRESS-001で履歴35件と長いtitleを検証。manual evidenceは未実施 |
+| history | AC-SQ016-007 | pass | blocked | blocked | required E2E-UI-STATE-001に加え、Chromium／Firefox／WebKit required E2E-UI-CROSS-BROWSER-STATE-001でloading→500→retry→confirmed empty／403、false zero、private detail非表示を検証し、E2E-UI-LAYOUT-STRESS-001で履歴35件と長いtitleも検証。manual evidenceは未実施 |
 | history | AC-SQ016-008 | not_applicable | blocked | blocked | manual required scopeは未実施 |
 | favorites | AC-SQ016-001 | pass | blocked | blocked | 4 viewport auditのroot/unresolved overflow 0に加え、Chromium／Firefox／WebKit required E2E-UI-LAYOUT-STRESS-001で320pxの確認済み0件とregion overflow 0を検証。実browser zoomは未検証 |
 | favorites | AC-SQ016-002 | pass | blocked | blocked | required E2E-UI-KEYBOARD-NAV-001をChromium／Firefox／WebKitで実行し、お気に入りnavigationへのSpace到達、戻るbuttonへのTab到達、3px focus indicator、Enterによるチャット復帰をkeyboard-onlyで検証。favorite resume / delete journeyとmanual keyboard journeyは未完了 |
