@@ -17,6 +17,7 @@ Draft PR #462はcurrent `main@8e542b31`を祖先に含み、Firefox／WebKitでk
 ## 対象範囲
 
 - 既存`layout-stress.spec.ts`のFirefox／WebKit required実走
+- required実走で検出した履歴filter checkboxのWebKit 320px overflow修正
 - browser projectを識別できるJSON artifactとattachment名
 - cross-browser required script／workflow表示名
 - `SQ-016`、`NFR-018`、`DES_UI_UX_001`
@@ -25,7 +26,7 @@ Draft PR #462はcurrent `main@8e542b31`を祖先に含み、Firefox／WebKitでk
 
 ## 対象外
 
-- production UI component、shared primitive、API、認証・認可、RAG回答contractの変更
+- shared primitive、History component markup、API、認証・認可、RAG回答contractの変更
 - browser UIの実200%／400% zoom、text-only zoom、OS scaling、DPR
 - representative screen reader、touch／virtual keyboard／real device
 - Firefox／WebKit native accessibility tree debug evidence
@@ -128,7 +129,7 @@ Draft PR #462はcurrent `main@8e542b31`を祖先に含み、Firefox／WebKitでk
 
 - required scriptがFirefox 7件＋WebKit 7件をdiscoveryする
 - evidence boundaryが実zoom／実screen reader／実機ではないことを明記する
-- production UI／API／認可／RAG contractに差分がない
+- 履歴検索欄のwidth規則がcheckboxへ波及せず、API／認可／RAG contractに差分がない
 
 ## 検証計画
 
@@ -149,7 +150,7 @@ Draft PR #462はcurrent `main@8e542b31`を祖先に含み、Firefox／WebKitでk
 
 ## PRレビュー観点
 
-- production UI、shared primitive、API、認可、RAG契約に変更がないか。
+- production差分が履歴検索入力のCSS selector限定であり、shared primitive、API、認可、RAG契約に変更がないか。
 - required scopeが既存layout-stress 2 case×2 browserだけに限定されているか。
 - fixture automationをmanual screen reader／zoom／real-deviceのpassへ読み替えていないか。
 - 正本、E2E ID、script、workflow、trace、generated docsが一致するか。
@@ -168,5 +169,7 @@ Draft PR #462はcurrent `main@8e542b31`を祖先に含み、Firefox／WebKitでk
 - [x] `SQ-016`、`NFR-018`、`DES_UI_UX_001`、machine-readable trace／quality matrix、生成文書、E2E READMEを同期した。
 - [x] repository lint、Web typecheck、Web build、Web unit 62 files／447 tests、trace 13 tests、semantic 5 tests、manual evidence contract 7 tests、generated Web inventory、canonical docs、OpenAPI、API code docs、infra inventory、hidden Unicode、Taskfile alias、diff checkが成功した。
 - [ ] Firefox／WebKit対象E2Eのlocal実走はwebServer起動前にsandboxのnetwork approval boundaryで拒否された。権限拡張せず、final-head GitHub Actionsを実走証跡とする。
+- [x] 実装head `c5b8a8d9` のrequired CIでFirefox 14／14、WebKit 13／14となり、再試行を含め履歴regionが`clientWidth=320`／`scrollWidth=386`でoverflowする決定的な不具合を検出した。
+- [x] 失敗artifactのスクリーンショットとAX snapshotから、`.history-toolbar input`の`width: 100%`がcheckboxにも適用されることを特定し、検索入力へselectorを限定した。修正headのCI再確認までは未完了とする。
 - [ ] final-head GitHub Actionsを確認し、Draft PR #462、セルフレビュー、Issue #345を更新する。
 - [ ] representative screen reader、実browser zoom、touch／real-device、Firefox／WebKit native accessibility tree、FR-051 owner判断、API C1は未完了を維持する。

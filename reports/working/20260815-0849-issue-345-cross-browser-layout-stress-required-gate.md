@@ -24,7 +24,7 @@
 ## 3. 検討・判断
 
 - current `main@8e542b31`と#462 `fd668b85`はbehind 0であり、main再統合は不要だった。
-- open UI PR #461はshared UI primitiveとproduction componentを広く変更するため、本変更ではproduction UI／shared sourceを変更しない。
+- open UI PR #461はshared UI primitiveとproduction componentを広く変更するため、当初はproduction UI／shared sourceを変更しない方針とした。ただしrequired CIが履歴CSSの実不具合を検出したため、#461が変更しない`history.css`の検索入力selectorだけを修正対象へ追加した。
 - 前回の640／320 CSS px到達・root overflow gateを、長文回答、長い引用・ファイル名、履歴35件、確認済み0件、reduced motion、region overflowへ深める既存`E2E-UI-LAYOUT-STRESS-001`を選定した。
 - cross-browser required増分は2 scenario×2 browserの4件だけとし、より広いvisual scopeはscheduledのまま維持した。
 - #461との新規path overlapは正規generator出力`docs/generated/web-ui-inventory.json`だけである。authored sourceは競合せず、#461統合時は最終sourceからgeneratorを再実行する。
@@ -38,6 +38,8 @@
 - `SQ-016`、`NFR-018`、UI設計、machine-readable trace／quality matrix、E2E READMEを同期した。
 - 正規generatorでWeb trace／inventory／quality matrixを再生成した。
 - 14件のcross-browser discovery、repository lint、Web typecheck／unit／build、trace／semantic／manual evidence、canonical／generated docs checksを実行した。
+- 実装head `c5b8a8d9` のrequired CIではFirefoxが全件成功し、WebKitの履歴35件だけが再試行を含め`clientWidth=320`／`scrollWidth=386`で失敗した。artifactのスクリーンショットではcheckboxが横幅全体を占有してラベルをregion外へ押し出していた。
+- `.history-toolbar input`がsearch inputとcheckboxの両方へ`width: 100%`を与えていたため、`input[type="search"]`へ限定した。期待値やE2E fixtureは緩和していない。
 
 ## 5. 検証結果
 
@@ -50,6 +52,7 @@
 | Web build | pass | 既存chunk-size advisoryのみ |
 | cross-browser required discovery | pass | Firefox 7＋WebKit 7、合計14 tests／5 files |
 | cross-browser layout-stress実走 | blocked | webServer起動前にsandbox network approval boundaryで拒否。CIを必須証跡とする |
+| 実装head Web UI Quality | fail（修正前） | Firefox 7／7、WebKit 6／7。履歴region overflowを再試行でも検出し、CSS selectorを修正 |
 | UI trace | pass | 13 tests |
 | semantic UI | pass | 5 tests |
 | manual evidence contract | pass | 7 tests。baselineはblocked 3／not_run 1、release-ready false |
@@ -72,14 +75,15 @@
 ## 7. 未完了・制約・リスク
 
 - final-head GitHub Actions、Draft PR本文／受け入れ確認／セルフレビュー、Issue #345コメントはpush後に実施する。
+- 修正後headのFirefox／WebKit required 14件はCI再実走待ちであり、修正前失敗だけで完了扱いしない。
 - representative screen reader、browser UIを操作する実200%／400% zoom、text-only zoom、OS scaling、touch／real device、Firefox／WebKit native accessibility treeは未実施である。
 - FR-051永続化／profile state contract、API C1 85%、OQ-UI-002 owner／cadenceは未解決である。
 - PR #461との生成物重複は、統合順に応じて最終sourceからgeneratorを再実行する必要がある。
 
 ## 8. 次の具体的作業
 
-1. 実装commitを#462 branchへ非破壊pushする。
-2. final-headのWeb UI Quality、MemoRAG CI、semverを確認する。
+1. 履歴CSS selector修正を#462 branchへ非破壊pushする。
+2. 修正headのWeb UI Quality 14件、MemoRAG CI、semverを確認する。
 3. task／completion status／本レポートへCI証跡を追記する。
 4. Draft PR本文、受け入れ確認、セルフレビュー、Issue #345を更新する。
 
