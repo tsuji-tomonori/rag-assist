@@ -48,7 +48,11 @@
 | Chromium artifact | pass | `9254811423`、digest `sha256:8c94ed6888c4e7d06fe6265f85c3d43513d67e013dc03870e6f199b0a71db587` |
 | 修正head semver | pass | run `31915498559` |
 | 修正head MemoRAG CI | pass | run `31915498575`。API／Web coverage、build、synthを含む全job成功 |
-| evidence-only final-head GitHub Actions | pending | repository evidence公開後に確認する |
+| evidence-head Web UI Quality | pass | run `31915883140`。Chromium required成功、Firefox／WebKit 18／18、retry／flakyなし |
+| evidence-head cross-browser artifact | pass | `9254898373`、digest `sha256:dae3f250cfd8113877ee2a5ee54eda4a4ea7164b973875c29551fb2376dc011b` |
+| evidence-head Chromium artifact | pass | `9254901227`、digest `sha256:6984c210805f97d94fe7af027654dcbdf2ff603c87a9dba25d2f8d13285f51f1` |
+| evidence-head MemoRAG CI | pass | run `31915883144` |
+| evidence-head semver | pass | run `31915883139` |
 
 ## 5. CI検出と修復
 
@@ -66,12 +70,19 @@
 
 ## 7. 次の具体的作業
 
-1. final-head GitHub Actionsを確認し、retry／flakyを含め結果を記録する。
-2. task／completion status／本レポートへ最終headとrun IDを同期する。
-3. Draft PR #462本文、受け入れ確認、セルフレビュー、Issue #345を更新する。
+1. final record commitのGitHub Actionsを確認する。
+2. representative screen reader、実browser zoom、touch／実機を承認済み環境で実施する。
+3. FR-051、API C1、OQ-UI-002のowner判断を進める。
 
 ## 8. fit評価
 
 総合fit: 4.7 / 5.0（約94%）
 
-理由: boundedなE2E、正本、生成物、local検証は同期したが、final-head CIとGitHub記録、manual／owner依存項目を未完了として残しているため、Issue全体は完了扱いにしない。
+理由: boundedなE2E、正本、生成物、local検証、evidence-head CI、PR／Issue記録を同期した。manual／owner依存項目を未完了として残しているため、Issue全体は完了扱いにしない。
+
+## 9. GitHub記録
+
+- [Draft PR #462](https://github.com/tsuji-tomonori/rag-assist/pull/462)
+- [受け入れ確認](https://github.com/tsuji-tomonori/rag-assist/pull/462#issuecomment-5304836582)
+- [セルフレビュー](https://github.com/tsuji-tomonori/rag-assist/pull/462#pullrequestreview-4944984602)
+- [Issue #345進捗](https://github.com/tsuji-tomonori/rag-assist/issues/345#issuecomment-5304836743)

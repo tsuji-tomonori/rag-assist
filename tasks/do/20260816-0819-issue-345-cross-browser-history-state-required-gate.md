@@ -150,6 +150,6 @@ Draft PR #462はcurrent `main@8e542b31`を祖先に含み、Firefox／WebKitでk
 - [x] 修正head `9191058f` のWeb UI Quality run `31915498568`でChromium requiredとFirefox／WebKit required 18／18が成功した。cross-browser jobはretry／flakyなしで、artifact `9254810495`（digest `sha256:eca86fd6c3e4f4924593f505dff3c11c6d6f8ce237ac5f0fbbe9ec7d7e4df4bb`）を保存した。
 - [ ] Firefox／WebKit対象E2Eのlocal実走はnetwork-enabled webServerを起動するsandbox境界で拒否された。権限拡張せず、GitHub Actionsを実走証跡とする。
 - [x] 修正headのMemoRAG CI run `31915498575`とsemver run `31915498559`が成功した。
-- [ ] evidence-only final headのWeb UI Quality／MemoRAG CI／semverを確認する。
-- [ ] Draft PR #462、セルフレビュー、Issue #345を更新する。
+- [x] evidence head `2f846beb`のWeb UI Quality run `31915883140`、MemoRAG CI run `31915883144`、semver run `31915883139`が成功した。Firefox／WebKitは18／18、retry／flakyなし。cross-browser artifact `9254898373`（digest `sha256:dae3f250cfd8113877ee2a5ee54eda4a4ea7164b973875c29551fb2376dc011b`）を保存した。
+- [x] Draft PR #462本文、[受け入れ確認](https://github.com/tsuji-tomonori/rag-assist/pull/462#issuecomment-5304836582)、[セルフレビュー](https://github.com/tsuji-tomonori/rag-assist/pull/462#pullrequestreview-4944984602)、[Issue #345進捗](https://github.com/tsuji-tomonori/rag-assist/issues/345#issuecomment-5304836743)を更新した。
 - [x] manual／overall statusは`blocked`、FR-051／API C1／OQ-UI-002は未完了として維持した。
