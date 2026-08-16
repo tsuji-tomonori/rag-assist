@@ -135,3 +135,9 @@ Draft PR #462はcurrent `main@8e542b31`を祖先に含み、担当者対応の32
 - open PR #461と`AssigneeWorkspace.tsx`は同一pathだが変更hunkは別である。統合時は#461のshared UI importを保持し、今回のlandmark／ID変更を再適用して生成Web inventoryを最終sourceから再生成する。
 - local browser／host service制約時はblockedを明記し、final-head GitHub Actionsを自動実走証跡とする。
 - representative screen reader、実browser zoom、touch／実機、Firefox／WebKit native AX、FR-051、API C1、OQ-UI-002は未完了を維持する。
+
+## CI修復記録
+
+- initial Web UI Quality run `31979123888`は、追加した「担当者対応カンバン」が既存の画面到達locatorへ部分一致し、親workspaceとの2件一致でstrict-mode違反になった。
+- Chromiumは36／37、Firefox／WebKitは16／18が成功し、失敗は同一locatorに限定された。
+- product semantics、journey、state期待を緩めず、画面regionの既存assertionへ`exact: true`を追加して再検証する。

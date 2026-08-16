@@ -81,7 +81,7 @@ test('E2E-UI-KEYBOARD-NAV-001: primary views, history, favorites, assignee, and 
     await page.keyboard.press(destination.key)
 
     await expect(page).toHaveURL(destination.url)
-    await expect(page.getByRole('region', { name: destination.region })).toBeVisible()
+    await expect(page.getByRole('region', { name: destination.region, exact: true })).toBeVisible()
     await expect(control).toHaveAttribute('aria-current', 'page')
 
     if (destination.label === '履歴') {

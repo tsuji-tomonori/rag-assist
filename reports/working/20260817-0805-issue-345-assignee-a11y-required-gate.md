@@ -41,6 +41,8 @@
 
 Web unitの初回実行はtimezoneが`-0400`となり、既存の日付表示期待2件だけが失敗した。production差分との因果がないことを確認し、正本の想定実行環境に合わせて`TZ=Asia/Tokyo`を明示して全448件を再実行し成功した。`tsx` CLIはsandbox IPCで`EPERM`となったため、同じvalidatorを`node --import tsx`で実行し成功した。いずれも検査をskipしていない。
 
+initial GitHub Actions run `31979123888`は、新しい「担当者対応カンバン」regionの追加により、既存の画面到達locator `getByRole('region', { name: '担当者対応' })`が親workspaceとカンバンを部分一致で同時に選択し、Chromium 1件とFirefox／WebKit各1件でstrict-mode違反になった。product semanticsと期待journeyを緩めず、画面到達assertionを既存意図どおり`exact: true`へ固定した。初回runはChromium 36／37、Firefox／WebKit 16／18が成功し、他の失敗はなかった。
+
 ## Acceptance status
 
 - `AC-20260817-001`: implementation / unit / target discovery pass。final-head browser CI待ち。
