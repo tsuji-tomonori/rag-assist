@@ -52,10 +52,11 @@ const destinations: KeyboardDestination[] = [
   }
 ]
 
-test('E2E-UI-KEYBOARD-NAV-001: primary views, history, favorites, and profile controls remain keyboard reachable @smoke @ui-quality', async ({ page }) => {
+test('E2E-UI-KEYBOARD-NAV-001: primary views, history, favorites, assignee, and profile controls remain keyboard reachable @smoke @ui-quality', async ({ page }) => {
   const chatRouteState = await installChatRoute(page)
   await installHistoryRoute(page)
   await installFavoritesRoute(page)
+  await installAssigneeRoute(page)
   await page.goto('/')
   await keyboardSignIn(page)
 
@@ -88,6 +89,9 @@ test('E2E-UI-KEYBOARD-NAV-001: primary views, history, favorites, and profile co
     }
     if (destination.label === 'お気に入り') {
       await verifyFavoritesKeyboardJourney(page)
+    }
+    if (destination.label === '担当者対応') {
+      await verifyAssigneeKeyboardJourney(page)
     }
   }
 
@@ -189,6 +193,36 @@ async function installFavoritesRoute(page: Page) {
   })
 }
 
+async function installAssigneeRoute(page: Page) {
+  await page.route(/http:\/\/127\.0\.0\.1:8787\/questions(?:\?.*)?$/, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.fallback()
+      return
+    }
+
+    await route.fulfill({
+      json: {
+        questions: [{
+          questionId: 'keyboard-assignee-1',
+          title: '担当者keyboard対応',
+          question: 'keyboard-onlyで回答を一時保持してください。',
+          requesterName: '依頼者',
+          requesterDepartment: '利用部門',
+          assigneeDepartment: '総務部',
+          assigneeGroupId: 'support',
+          category: '手続き',
+          priority: 'normal',
+          status: 'open',
+          sourceQuestion: '担当者画面をkeyboardで操作できるか？',
+          chatAnswer: '担当者による確認が必要です。',
+          createdAt: '2026-08-17T00:00:00.000Z',
+          updatedAt: '2026-08-17T00:00:00.000Z'
+        }]
+      }
+    })
+  })
+}
+
 async function verifyHistoryKeyboardJourney(page: Page) {
   const search = page.getByRole('searchbox', { name: '履歴を検索' })
   await tabTo(page, search)
@@ -250,6 +284,46 @@ async function verifyFavoritesKeyboardJourney(page: Page) {
   await page.keyboard.press('Enter')
   await expect(page).toHaveURL(/\/$/)
   await expect(page.getByRole('region', { name: 'チャット', exact: true })).toBeVisible()
+}
+
+async function verifyAssigneeKeyboardJourney(page: Page) {
+  const statusFilter = page.getByRole('combobox', { name: 'ステータス' })
+  await tabTo(page, statusFilter)
+  await expectKeyboardFocus(statusFilter)
+  await page.keyboard.press('ArrowDown')
+  await expect(statusFilter).toHaveValue('unassigned')
+
+  const search = page.getByRole('searchbox', { name: '検索' })
+  await tabTo(page, search)
+  await expectKeyboardFocus(search)
+  await page.keyboard.type('keyboard')
+  await expect(search).toHaveValue('keyboard')
+
+  const question = page.getByRole('button', { name: '担当者keyboard対応を選択' })
+  await tabTo(page, question)
+  await expectKeyboardFocus(question)
+  await expect(question).toHaveAttribute('aria-pressed', 'true')
+  await page.keyboard.press('Enter')
+  await expect(question).toHaveAttribute('aria-pressed', 'true')
+
+  const answerBody = page.getByRole('textbox', { name: '回答内容' })
+  await tabTo(page, answerBody)
+  await expectKeyboardFocus(answerBody)
+  await page.keyboard.type('keyboard-onlyで入力した一時回答')
+  await expect(answerBody).toHaveValue('keyboard-onlyで入力した一時回答')
+
+  const notifyRequester = page.getByRole('checkbox', { name: '質問者へ通知する' })
+  await tabTo(page, notifyRequester)
+  await expectKeyboardFocus(notifyRequester)
+  await expect(notifyRequester).toBeChecked()
+  await page.keyboard.press('Space')
+  await expect(notifyRequester).not.toBeChecked()
+
+  const holdDraft = page.getByRole('button', { name: '入力を一時保持' })
+  await tabTo(page, holdDraft)
+  await expectKeyboardFocus(holdDraft)
+  await page.keyboard.press('Enter')
+  await expect(page.getByRole('status')).toContainText('この画面に入力を一時保持')
 }
 
 async function keyboardSignIn(page: Page) {

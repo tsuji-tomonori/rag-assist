@@ -27,51 +27,51 @@
 
 | コンポーネント | 要素 | ラベル | 操作説明 | 状態・補足 | ハンドラ | 場所 | 確度 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| AssigneeWorkspace | button | チャットへ戻る | 「チャットへ戻る」を実行するボタン。 | - | onClick=onBack | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:168 | confirmed |
-| AssigneeWorkspace | button | `${question.title}を選択` | 「`${question.title}を選択`」を実行するボタン。 | 状態: aria-pressed=selected?.questionId === question.questionId | onClick=() => onSelect(question.questionId) | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:228 | confirmed |
-| AssigneeWorkspace | button | 入力を一時保持 | 「入力を一時保持」を実行するボタン。 | 状態: disabled=loading \|\| !answerWritable \|\| !isDirty | onClick=onHoldDraft | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:310 | confirmed |
-| AssigneeWorkspace | button | 回答を送信 | 「回答を送信」を実行するボタン。 | 状態: disabled=loading \|\| !answerWritable \|\| !answerTitle.trim() \|\| !answerBody.trim() | - | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:311 | confirmed |
+| AssigneeWorkspace | button | チャットへ戻る | 「チャットへ戻る」を実行するボタン。 | - | onClick=onBack | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:172 | confirmed |
+| AssigneeWorkspace | button | `${question.title}を選択` | 「`${question.title}を選択`」を実行するボタン。 | 状態: aria-pressed=selected?.questionId === question.questionId | onClick=() => onSelect(question.questionId) | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:233 | confirmed |
+| AssigneeWorkspace | button | 入力を一時保持 | 「入力を一時保持」を実行するボタン。 | 状態: disabled=loading \|\| !answerWritable \|\| !isDirty | onClick=onHoldDraft | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:315 | confirmed |
+| AssigneeWorkspace | button | 回答を送信 | 「回答を送信」を実行するボタン。 | 状態: disabled=loading \|\| !answerWritable \|\| !answerTitle.trim() \|\| !answerBody.trim() | - | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:316 | confirmed |
 
 ## フォーム
 
 | コンポーネント | ラベル | フォーム説明 | 状態・補足 | 送信ハンドラ | 場所 | 確度 |
 | --- | --- | --- | --- | --- | --- | --- |
-| AssigneeWorkspace | 回答作成 / 回答タイトル / 回答内容 / 参照資料 / 関連リンク / 内部メモ / 質問者へ通知する / 入力を一時保持 / 回答を送信 | 「回答作成 / 回答タイトル / 回答内容 / 参照資料 / 関連リンク / 内部メモ / 質問者へ通知する / 入力を一時保持 / 回答を送信」を入力・送信するフォーム。 | - | onSubmit=onSubmit | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:278 | confirmed |
+| AssigneeWorkspace | 参照: answerFormHeadingId | 「参照: answerFormHeadingId」を入力・送信するフォーム。 | - | onSubmit=onSubmit | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:283 | confirmed |
 
 ## 入力項目
 
 | コンポーネント | 要素 | ラベル | 入力項目の説明 | 状態・補足 | ハンドラ | 場所 | 確度 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| AssigneeWorkspace | select | すべて | 「すべて」を選ぶ選択項目。 | - | onChange=(event) => setStatusFilter(event.target.value as AssigneeLaneId \| "all") | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:193 | confirmed |
-| AssigneeWorkspace | input | タイトル・名前・部署で検索 | 「タイトル・名前・部署で検索」を入力または選択する項目。 | - | onChange=(event) => setSearchQuery(event.target.value) | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:202 | confirmed |
-| AssigneeWorkspace | input | 回答タイトル | 「回答タイトル」を入力または選択する項目。 | 状態: disabled=!answerWritable \|\| loading | onChange=(event) => { setAnswerTitle(event.target.value); markDirty() } | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:282 | confirmed |
-| AssigneeWorkspace | textarea | 回答内容 | 「回答内容」を複数行で入力する項目。 | 状態: disabled=!answerWritable \|\| loading | onChange=(event) => { setAnswerBody(event.target.value); markDirty() } | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:286 | confirmed |
-| AssigneeWorkspace | input | 資料名、URL、またはナレッジリンク | 「資料名、URL、またはナレッジリンク」を入力または選択する項目。 | 状態: disabled=!answerWritable \|\| loading | onChange=(event) => { setReferences(event.target.value); markDirty() } | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:290 | confirmed |
-| AssigneeWorkspace | textarea | 内部メモ | 「内部メモ」を複数行で入力する項目。 | 状態: disabled=!answerWritable \|\| loading | onChange=(event) => { setInternalMemo(event.target.value); markDirty() } | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:294 | confirmed |
-| AssigneeWorkspace | input | 質問者へ通知する | 「質問者へ通知する」を入力または選択する項目。 | 状態: disabled=!answerWritable \|\| loading | onChange=(event) => { setNotifyRequester(event.target.checked); markDirty() } | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:297 | confirmed |
+| AssigneeWorkspace | select | すべて | 「すべて」を選ぶ選択項目。 | - | onChange=(event) => setStatusFilter(event.target.value as AssigneeLaneId \| "all") | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:197 | confirmed |
+| AssigneeWorkspace | input | タイトル・名前・部署で検索 | 「タイトル・名前・部署で検索」を入力または選択する項目。 | - | onChange=(event) => setSearchQuery(event.target.value) | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:206 | confirmed |
+| AssigneeWorkspace | input | 回答タイトル | 「回答タイトル」を入力または選択する項目。 | 状態: disabled=!answerWritable \|\| loading | onChange=(event) => { setAnswerTitle(event.target.value); markDirty() } | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:287 | confirmed |
+| AssigneeWorkspace | textarea | 回答内容 | 「回答内容」を複数行で入力する項目。 | 状態: disabled=!answerWritable \|\| loading | onChange=(event) => { setAnswerBody(event.target.value); markDirty() } | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:291 | confirmed |
+| AssigneeWorkspace | input | 資料名、URL、またはナレッジリンク | 「資料名、URL、またはナレッジリンク」を入力または選択する項目。 | 状態: disabled=!answerWritable \|\| loading | onChange=(event) => { setReferences(event.target.value); markDirty() } | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:295 | confirmed |
+| AssigneeWorkspace | textarea | 内部メモ | 「内部メモ」を複数行で入力する項目。 | 状態: disabled=!answerWritable \|\| loading | onChange=(event) => { setInternalMemo(event.target.value); markDirty() } | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:299 | confirmed |
+| AssigneeWorkspace | input | 質問者へ通知する | 「質問者へ通知する」を入力または選択する項目。 | 状態: disabled=!answerWritable \|\| loading | onChange=(event) => { setNotifyRequester(event.target.checked); markDirty() } | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:302 | confirmed |
 
 ## UI 操作要素の全量
 
 | コンポーネント | 要素 | ラベル | UI 説明 | 状態・補足 | ハンドラ | 場所 | 確度 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| AssigneeWorkspace | button | チャットへ戻る | 「チャットへ戻る」を実行するボタン。 | - | onClick=onBack | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:168 | confirmed |
-| AssigneeWorkspace | label | ステータス / すべて | 「ステータス / すべて」に紐づく入力ラベル。 | - | - | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:191 | confirmed |
-| AssigneeWorkspace | select | すべて | 「すべて」を選ぶ選択項目。 | - | onChange=(event) => setStatusFilter(event.target.value as AssigneeLaneId \| "all") | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:193 | confirmed |
-| AssigneeWorkspace | option | すべて | 「すべて」を表す option 要素。 | - | - | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:194 | confirmed |
-| AssigneeWorkspace | option | ステータス / すべて | 「ステータス / すべて」を表す option 要素。 | - | - | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:196 | confirmed |
-| AssigneeWorkspace | label | 検索 | 「検索」に紐づく入力ラベル。 | - | - | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:200 | confirmed |
-| AssigneeWorkspace | input | タイトル・名前・部署で検索 | 「タイトル・名前・部署で検索」を入力または選択する項目。 | - | onChange=(event) => setSearchQuery(event.target.value) | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:202 | confirmed |
-| AssigneeWorkspace | button | `${question.title}を選択` | 「`${question.title}を選択`」を実行するボタン。 | 状態: aria-pressed=selected?.questionId === question.questionId | onClick=() => onSelect(question.questionId) | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:228 | confirmed |
-| AssigneeWorkspace | form | 回答作成 / 回答タイトル / 回答内容 / 参照資料 / 関連リンク / 内部メモ / 質問者へ通知する / 入力を一時保持 / 回答を送信 | 「回答作成 / 回答タイトル / 回答内容 / 参照資料 / 関連リンク / 内部メモ / 質問者へ通知する / 入力を一時保持 / 回答を送信」を入力・送信するフォーム。 | - | onSubmit=onSubmit | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:278 | confirmed |
-| AssigneeWorkspace | label | 回答タイトル | 「回答タイトル」に紐づく入力ラベル。 | - | - | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:280 | confirmed |
-| AssigneeWorkspace | input | 回答タイトル | 「回答タイトル」を入力または選択する項目。 | 状態: disabled=!answerWritable \|\| loading | onChange=(event) => { setAnswerTitle(event.target.value); markDirty() } | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:282 | confirmed |
-| AssigneeWorkspace | label | 回答内容 | 「回答内容」に紐づく入力ラベル。 | - | - | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:284 | confirmed |
-| AssigneeWorkspace | textarea | 回答内容 | 「回答内容」を複数行で入力する項目。 | 状態: disabled=!answerWritable \|\| loading | onChange=(event) => { setAnswerBody(event.target.value); markDirty() } | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:286 | confirmed |
-| AssigneeWorkspace | label | 参照資料 / 関連リンク | 「参照資料 / 関連リンク」に紐づく入力ラベル。 | - | - | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:288 | confirmed |
-| AssigneeWorkspace | input | 資料名、URL、またはナレッジリンク | 「資料名、URL、またはナレッジリンク」を入力または選択する項目。 | 状態: disabled=!answerWritable \|\| loading | onChange=(event) => { setReferences(event.target.value); markDirty() } | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:290 | confirmed |
-| AssigneeWorkspace | label | 内部メモ | 「内部メモ」に紐づく入力ラベル。 | - | - | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:292 | confirmed |
-| AssigneeWorkspace | textarea | 内部メモ | 「内部メモ」を複数行で入力する項目。 | 状態: disabled=!answerWritable \|\| loading | onChange=(event) => { setInternalMemo(event.target.value); markDirty() } | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:294 | confirmed |
-| AssigneeWorkspace | label | 質問者へ通知する | 「質問者へ通知する」に紐づく入力ラベル。 | - | - | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:296 | confirmed |
-| AssigneeWorkspace | input | 質問者へ通知する | 「質問者へ通知する」を入力または選択する項目。 | 状態: disabled=!answerWritable \|\| loading | onChange=(event) => { setNotifyRequester(event.target.checked); markDirty() } | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:297 | confirmed |
-| AssigneeWorkspace | button | 入力を一時保持 | 「入力を一時保持」を実行するボタン。 | 状態: disabled=loading \|\| !answerWritable \|\| !isDirty | onClick=onHoldDraft | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:310 | confirmed |
-| AssigneeWorkspace | button | 回答を送信 | 「回答を送信」を実行するボタン。 | 状態: disabled=loading \|\| !answerWritable \|\| !answerTitle.trim() \|\| !answerBody.trim() | - | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:311 | confirmed |
+| AssigneeWorkspace | button | チャットへ戻る | 「チャットへ戻る」を実行するボタン。 | - | onClick=onBack | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:172 | confirmed |
+| AssigneeWorkspace | label | ステータス / すべて | 「ステータス / すべて」に紐づく入力ラベル。 | - | - | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:195 | confirmed |
+| AssigneeWorkspace | select | すべて | 「すべて」を選ぶ選択項目。 | - | onChange=(event) => setStatusFilter(event.target.value as AssigneeLaneId \| "all") | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:197 | confirmed |
+| AssigneeWorkspace | option | すべて | 「すべて」を表す option 要素。 | - | - | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:198 | confirmed |
+| AssigneeWorkspace | option | ステータス / すべて | 「ステータス / すべて」を表す option 要素。 | - | - | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:200 | confirmed |
+| AssigneeWorkspace | label | 検索 | 「検索」に紐づく入力ラベル。 | - | - | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:204 | confirmed |
+| AssigneeWorkspace | input | タイトル・名前・部署で検索 | 「タイトル・名前・部署で検索」を入力または選択する項目。 | - | onChange=(event) => setSearchQuery(event.target.value) | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:206 | confirmed |
+| AssigneeWorkspace | button | `${question.title}を選択` | 「`${question.title}を選択`」を実行するボタン。 | 状態: aria-pressed=selected?.questionId === question.questionId | onClick=() => onSelect(question.questionId) | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:233 | confirmed |
+| AssigneeWorkspace | form | 参照: answerFormHeadingId | 「参照: answerFormHeadingId」を入力・送信するフォーム。 | - | onSubmit=onSubmit | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:283 | confirmed |
+| AssigneeWorkspace | label | 回答タイトル | 「回答タイトル」に紐づく入力ラベル。 | - | - | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:285 | confirmed |
+| AssigneeWorkspace | input | 回答タイトル | 「回答タイトル」を入力または選択する項目。 | 状態: disabled=!answerWritable \|\| loading | onChange=(event) => { setAnswerTitle(event.target.value); markDirty() } | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:287 | confirmed |
+| AssigneeWorkspace | label | 回答内容 | 「回答内容」に紐づく入力ラベル。 | - | - | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:289 | confirmed |
+| AssigneeWorkspace | textarea | 回答内容 | 「回答内容」を複数行で入力する項目。 | 状態: disabled=!answerWritable \|\| loading | onChange=(event) => { setAnswerBody(event.target.value); markDirty() } | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:291 | confirmed |
+| AssigneeWorkspace | label | 参照資料 / 関連リンク | 「参照資料 / 関連リンク」に紐づく入力ラベル。 | - | - | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:293 | confirmed |
+| AssigneeWorkspace | input | 資料名、URL、またはナレッジリンク | 「資料名、URL、またはナレッジリンク」を入力または選択する項目。 | 状態: disabled=!answerWritable \|\| loading | onChange=(event) => { setReferences(event.target.value); markDirty() } | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:295 | confirmed |
+| AssigneeWorkspace | label | 内部メモ | 「内部メモ」に紐づく入力ラベル。 | - | - | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:297 | confirmed |
+| AssigneeWorkspace | textarea | 内部メモ | 「内部メモ」を複数行で入力する項目。 | 状態: disabled=!answerWritable \|\| loading | onChange=(event) => { setInternalMemo(event.target.value); markDirty() } | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:299 | confirmed |
+| AssigneeWorkspace | label | 質問者へ通知する | 「質問者へ通知する」に紐づく入力ラベル。 | - | - | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:301 | confirmed |
+| AssigneeWorkspace | input | 質問者へ通知する | 「質問者へ通知する」を入力または選択する項目。 | 状態: disabled=!answerWritable \|\| loading | onChange=(event) => { setNotifyRequester(event.target.checked); markDirty() } | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:302 | confirmed |
+| AssigneeWorkspace | button | 入力を一時保持 | 「入力を一時保持」を実行するボタン。 | 状態: disabled=loading \|\| !answerWritable \|\| !isDirty | onClick=onHoldDraft | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:315 | confirmed |
+| AssigneeWorkspace | button | 回答を送信 | 「回答を送信」を実行するボタン。 | 状態: disabled=loading \|\| !answerWritable \|\| !answerTitle.trim() \|\| !answerBody.trim() | - | apps/web/src/features/questions/components/AssigneeWorkspace.tsx:316 | confirmed |

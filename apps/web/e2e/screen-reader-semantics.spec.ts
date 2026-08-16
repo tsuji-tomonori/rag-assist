@@ -5,6 +5,7 @@ type AccessibilityContractNode = {
   name: string
   value: string
   checked: string
+  pressed: string
   busy: string
   live: string
 }
@@ -14,6 +15,7 @@ type ExpectedNode = {
   name?: string
   value?: string
   checked?: string
+  pressed?: string
   busy?: string
   live?: string
 }
@@ -48,6 +50,7 @@ test('E2E-UI-SR-SEMANTICS-001: representative views expose stable Chromium acces
   await installHistoryRoute(page)
   await installFavoritesRoute(page)
   await installBenchmarkRoutes(page)
+  await installAssigneeRoute(page)
   await page.goto('/')
   await expect(page.getByRole('heading', { name: '社内QAチャットボット' })).toBeVisible()
 
@@ -109,6 +112,30 @@ test('E2E-UI-SR-SEMANTICS-001: representative views expose stable Chromium acces
     { role: 'heading', name: '会話' },
     { role: 'heading', name: '文書' },
     { role: 'button', name: 'チャットへ戻る' }
+  ])
+
+  await page.getByRole('navigation', { name: '画面' }).getByRole('button', { name: '担当者対応' }).click()
+  await expect(page.getByRole('region', { name: '担当者対応', exact: true })).toBeVisible()
+  await expectAccessibilityContract(page, testInfo, 'assignee', [
+    { role: 'main' },
+    { role: 'navigation', name: '画面' },
+    { role: 'region', name: '担当者対応' },
+    { role: 'heading', name: '担当者対応' },
+    { role: 'region', name: '問い合わせ一覧' },
+    { role: 'combobox', name: 'ステータス', value: 'すべて' },
+    { role: 'searchbox', name: '検索' },
+    { role: 'region', name: '担当者対応カンバン' },
+    { role: 'region', name: '未対応' },
+    { role: 'button', name: '担当者a11y証跡を選択', pressed: 'true' },
+    { role: 'complementary', name: '選択中の問い合わせと回答作成' },
+    { role: 'region', name: '問い合わせ概要' },
+    { role: 'form', name: '回答作成' },
+    { role: 'textbox', name: '回答タイトル', value: '担当者a11y証跡への回答' },
+    { role: 'textbox', name: '回答内容' },
+    { role: 'checkbox', name: '質問者へ通知する', checked: 'true' },
+    { role: 'status', live: 'polite' },
+    { role: 'button', name: '入力を一時保持' },
+    { role: 'button', name: '回答を送信' }
   ])
 
   await page.getByRole('navigation', { name: '画面' }).getByRole('button', { name: '性能テスト' }).click()
@@ -301,6 +328,36 @@ async function installBenchmarkRoutes(page: Page) {
   })
 }
 
+async function installAssigneeRoute(page: Page) {
+  await page.route(/http:\/\/127\.0\.0\.1:8787\/questions(?:\?.*)?$/, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.fallback()
+      return
+    }
+
+    await route.fulfill({
+      json: {
+        questions: [{
+          questionId: 'semantic-assignee-1',
+          title: '担当者a11y証跡',
+          question: '担当者画面の意味構造を確認してください。',
+          requesterName: '依頼者',
+          requesterDepartment: '利用部門',
+          assigneeDepartment: '総務部',
+          assigneeGroupId: 'support',
+          category: '手続き',
+          priority: 'normal',
+          status: 'open',
+          sourceQuestion: '担当者画面の意味構造は？',
+          chatAnswer: '担当者による確認が必要です。',
+          createdAt: '2026-08-17T00:00:00.000Z',
+          updatedAt: '2026-08-17T00:00:00.000Z'
+        }]
+      }
+    })
+  })
+}
+
 async function signIn(page: Page) {
   await page.getByRole('textbox', { name: 'メールアドレス' }).fill('semantic-admin@example.com')
   await page.getByRole('textbox', { name: 'パスワード' }).fill('LocalPassword123!')
@@ -327,6 +384,7 @@ async function expectAccessibilityContract(
       (expectedNode.name === undefined || node.name === expectedNode.name) &&
       (expectedNode.value === undefined || node.value === expectedNode.value) &&
       (expectedNode.checked === undefined || node.checked === expectedNode.checked) &&
+      (expectedNode.pressed === undefined || node.pressed === expectedNode.pressed) &&
       (expectedNode.busy === undefined || node.busy === expectedNode.busy) &&
       (expectedNode.live === undefined || node.live === expectedNode.live)
     ))
@@ -345,6 +403,7 @@ async function readAccessibilityTree(page: Page): Promise<AccessibilityContractN
         name: String(node.name?.value ?? ''),
         value: String(node.value?.value ?? ''),
         checked: String(node.properties?.find((property) => property.name === 'checked')?.value?.value ?? ''),
+        pressed: String(node.properties?.find((property) => property.name === 'pressed')?.value?.value ?? ''),
         busy: normalizeBooleanAxProperty(node.properties?.find((property) => property.name === 'busy')?.value?.value),
         live: String(node.properties?.find((property) => property.name === 'live')?.value?.value ?? '')
       }))

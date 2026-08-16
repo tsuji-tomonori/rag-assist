@@ -264,7 +264,8 @@
         { "id": "FR-095", "acceptanceCriteria": ["AC-FR095-004"] },
         { "id": "FR-096", "acceptanceCriteria": ["AC-FR096-003", "AC-FR096-004"] },
         { "id": "FR-097", "acceptanceCriteria": ["AC-FR097-001"] },
-        { "id": "FR-098", "acceptanceCriteria": ["AC-FR098-001"] }
+        { "id": "FR-098", "acceptanceCriteria": ["AC-FR098-001"] },
+        { "id": "SQ-016", "acceptanceCriteria": ["AC-SQ016-002", "AC-SQ016-003", "AC-SQ016-007"] }
       ],
       "verifications": [
         { "id": "E2E-VIEW-ASSIGNEE-001", "status": "implemented", "evidence": ["apps/web/e2e/visual-regression.spec.ts"] }

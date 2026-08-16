@@ -23,7 +23,7 @@ npm run test:e2e:smoke -w @memorag-mvp/web
 
 ## Screen reader semantic contract
 
-`screen-reader-semantics.spec.ts` は Chromium の accessibility tree を CDP 経由で取得し、login / chat / documents / history / favorites / benchmark / profile の代表画面で landmark、form、control の role と accessible name が欠落しないことを検査します。chatではidle→回答処理中→完了に伴うregionのbusy stateと処理中行のpolite live semantics、historyでは並び順comboboxのvalueとお気に入りcheckboxのchecked state、favoritesでは画面・一覧・target type見出しと戻るbutton、benchmarkではsuite・dataset・model・concurrencyのvalueと実行履歴scroll region / table、profileでは送信キーcomboboxのvalueも検証します。各画面の検査時には、検査対象 role、name、value、checked / busy / live state の JSON を Playwright report へ attach します。
+`screen-reader-semantics.spec.ts` は Chromium の accessibility tree を CDP 経由で取得し、login / chat / documents / history / favorites / assignee / benchmark / profile の代表画面で landmark、form、control の role と accessible name が欠落しないことを検査します。chatではidle→回答処理中→完了に伴うregionのbusy stateと処理中行のpolite live semantics、historyでは並び順comboboxのvalueとお気に入りcheckboxのchecked state、favoritesでは画面・一覧・target type見出しと戻るbutton、assigneeではworkspace・一覧・lane・選択中詳細・回答formのlandmarkとfilter value・question pressed・notify checked・polite status、benchmarkではsuite・dataset・model・concurrencyのvalueと実行履歴scroll region / table、profileでは送信キーcomboboxのvalueも検証します。各画面の検査時には、検査対象 role、name、value、checked / pressed / busy / live state の JSON を Playwright report へ attach します。
 
 新規 semantic contract のみ実行する場合は、repository root で次を実行します。
 
@@ -35,7 +35,7 @@ npx playwright test apps/web/e2e/screen-reader-semantics.spec.ts --config apps/w
 
 ## Keyboard navigation contract
 
-`keyboard-navigation.spec.ts` は、チャットの質問textboxへのTab到達、composerの3px focus indicator、既定Enterによる送信、処理中から回答への復帰に加え、primary view navigation、履歴、お気に入り、個人設定の代表controlをkeyboard-onlyで検査します。route fixtureはPlaywright内に限定し、本番API・認可・RAG回答を置き換えません。
+`keyboard-navigation.spec.ts` は、チャットの質問textboxへのTab到達、composerの3px focus indicator、既定Enterによる送信、処理中から回答への復帰に加え、primary view navigation、履歴、お気に入り、担当者対応、個人設定の代表controlをkeyboard-onlyで検査します。担当者対応ではステータス絞り込み・検索・問い合わせ選択・回答入力・通知切替・一時保持と3px focus indicatorを検証します。route fixtureはPlaywright内に限定し、本番API・認可・RAG回答を置き換えません。
 
 PRでは`login-keyboard.spec.ts`、`keyboard-navigation.spec.ts`、`cross-browser-semantics.spec.ts`、`cross-browser-state.spec.ts`、`zoom-reflow.spec.ts`、`layout-stress.spec.ts`をFirefox／WebKitのrequired gateとして実行します。semantic testはlogin / chatのname・roleをPlaywright ARIA snapshotで、chat処理中の`aria-busy` / `aria-live`と完了時の解除を同じbrowser project内のARIA属性で検証します。state testは履歴のloading→500→retry→confirmed emptyとHTTP 403を区別し、false zeroとprivate detail露出を防ぎます。reflow testは1280px基準の200%相当（640 CSS px）／400%相当（320 CSS px）でchatからdocuments / assignee / admin / profileへ到達し、document rootの水平overflowがないことを検証します。content-extreme testは320pxとreduced motionで長文回答、長い引用・ファイル名、履歴35件、確認済みお気に入り0件の表示とroot／regionの水平containmentを検証します。snapshot / state / reflow / content-extreme JSONにはbrowser project名とevidence boundaryを含めてartifactへ添付します。限定cross-browser scopeだけをローカルで列挙・実行する場合は、repository rootで次を実行します。
 

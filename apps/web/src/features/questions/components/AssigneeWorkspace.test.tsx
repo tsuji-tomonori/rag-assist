@@ -41,6 +41,18 @@ function renderWorkspace(overrides: Partial<Parameters<typeof AssigneeWorkspace>
 }
 
 describe("AssigneeWorkspace question journey", () => {
+  it("exposes named landmarks for the workspace, queue, selected detail, and answer form", () => {
+    renderWorkspace()
+
+    expect(screen.getByRole("region", { name: "担当者対応" })).toBeInTheDocument()
+    expect(screen.getByRole("region", { name: "問い合わせ一覧" })).toBeInTheDocument()
+    expect(screen.getByRole("region", { name: "担当者対応カンバン" })).toBeInTheDocument()
+    expect(screen.getByRole("region", { name: "未対応" })).toBeInTheDocument()
+    expect(screen.getByRole("complementary", { name: "選択中の問い合わせと回答作成" })).toBeInTheDocument()
+    expect(screen.getByRole("region", { name: "問い合わせ概要" })).toBeInTheDocument()
+    expect(screen.getByRole("form", { name: "回答作成" })).toBeInTheDocument()
+  })
+
   it("maps all API states into the four lanes without dropping intermediate states", () => {
     renderWorkspace({
       questions: [
