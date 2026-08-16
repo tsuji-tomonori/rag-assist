@@ -143,3 +143,5 @@ Draft PR #462はcurrent `main@8e542b31`を祖先に含み、担当者対応の32
 - product semantics、journey、state期待を緩めず、画面regionの既存assertionへ`exact: true`を追加して再検証する。
 - second run `31979365958`でregion到達後、未対応filter中の回答入力により問い合わせが対応中laneへ移り、選択中formも消えるproduction defectを検出した。
 - 選択中でdirtyまたは一時保持済みの問い合わせだけside panel contextを保持し、lane cardはfilterどおり非表示とする。回答入力／一時保持の到達性をunitとE2Eで再検証する。
+- third implementation run `31979655720`はChromium 37／37、Firefox／WebKit 18／18で成功した。
+- 同じheadのMemoRAG CI `31979655718`はlint、typecheck、unit、build、正本文書、trace、semanticを通過した後、上記production修正で行番号が変わった生成Web inventory 3件のfreshness差分だけで失敗した。正規generatorを再実行し、`--check`と`git diff --check`の成功を確認してfinal record headへ含める。

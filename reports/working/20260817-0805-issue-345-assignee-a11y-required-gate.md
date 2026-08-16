@@ -21,7 +21,7 @@
 | diff whitespace | pass | `git diff --check` |
 | Web lint | pass | direct ESLint、warnings 0 |
 | Web typecheck | pass | `npm run typecheck -w @memorag-mvp/web` |
-| targeted unit | pass | `AssigneeWorkspace.test.tsx` 5 tests |
+| targeted unit | pass | `AssigneeWorkspace.test.tsx` 6 tests |
 | Web unit | pass | `TZ=Asia/Tokyo`、62 files / 448 tests |
 | Web build | pass | TypeScript + Vite。既存chunk-size warningのみ |
 | target Chromium E2E discovery | pass | keyboard／semantics、2 testsを検出 |
@@ -45,15 +45,22 @@ initial GitHub Actions run `31979123888`は、新しい「担当者対応カン�
 
 second GitHub Actions run `31979365958`は上記region到達を通過し、未対応filter中の問い合わせへ回答を入力した時点で回答formが消えるproduction defectを検出した。`markDirty`が問い合わせを即座に対応中laneへ再分類する一方、選択中詳細もfiltered collectionから解決していたことが原因である。選択中でdirtyまたは一時保持済みの問い合わせだけはside panel contextを保持し、lane cardはfilterどおり非表示とする。Chromium 36／37、Firefox／WebKit 16／18が成功し、失敗は同じkeyboard journeyに限定された。
 
+third implementation run `31979655720`はChromium 37／37、Firefox／WebKit 18／18で成功し、browser required gateの修復を確認した。同じheadのMemoRAG CI `31979655718`はlint、typecheck、全unit、build、正本文書、trace、semantic、manual evidence contractを通過した後、production修正で`AssigneeWorkspace.tsx`の行番号が4行ずれた生成Web inventory 3件のfreshness差分だけで失敗した。正規generatorを再実行し、`docs/generated/web-accessibility.md`、`docs/generated/web-features/questions.md`、`docs/generated/web-ui-inventory.json`を同期した。`--check`と`git diff --check`は成功した。
+
 ## Acceptance status
 
-- `AC-20260817-001`: implementation / unit / target discovery pass。final-head browser CI待ち。
-- `AC-20260817-002`: implementation / unit / target discovery pass。final-head Chromium AX CI待ち。
+- `AC-20260817-001`: implementation / unit pass。implementation-head browser CIはChromium 37／37、Firefox／WebKit 18／18で成功。
+- `AC-20260817-002`: implementation / unit pass。implementation-head Chromium AX CI成功。
 - `AC-20260817-003`: canonical／authored／generated trace同期とfreshness check pass。manual／overall blocked維持。
-- `AC-20260817-004`: local non-browser checks pass。Draft PR／Issue記録とfinal-head CI待ち。
+- `AC-20260817-004`: local non-browser checks pass。PR受け入れ確認とセルフレビューを記録済み。生成物同期後のfinal record head CIとIssue記録待ち。
+
+PR記録:
+
+- [受け入れ確認](https://github.com/tsuji-tomonori/rag-assist/pull/462#issuecomment-5310281660)
+- [セルフレビュー](https://github.com/tsuji-tomonori/rag-assist/pull/462#issuecomment-5310282319)
 
 ## Incomplete and next action
 
 - representative screen reader、実browser 200%／400% zoom、touch／実機、Firefox／WebKit native AXは未実施である。
 - FR-051の永続化・owner判断、API C1 85%、OQ-UI-002は本変更の対象外で未完了である。
-- final-head GitHub Actions結果を確認して本記録、PR、Issueへ追記する。manual未実施が残るためtaskは`do`、PRはDraftを維持する。
+- 生成物同期後のfinal record head GitHub Actionsを確認し、PRとIssueへ結果を追記する。manual未実施が残るためtaskは`do`、PRはDraftを維持する。
