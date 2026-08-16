@@ -84,7 +84,11 @@ export function AssigneeWorkspace({
     ].join("\n").toLowerCase()
     return matchesLane && (normalizedQuery.length === 0 || haystack.includes(normalizedQuery))
   })
-  const selected = visibleQuestions.find((question) => question.questionId === selectedQuestionId) ?? visibleQuestions[0]
+  const selectedOutsideFilter = questions.find((question) =>
+    question.questionId === selectedQuestionId &&
+    (isDirty || localDraftQuestionIds.has(question.questionId))
+  )
+  const selected = visibleQuestions.find((question) => question.questionId === selectedQuestionId) ?? selectedOutsideFilter ?? visibleQuestions[0]
   const openCount = questions.filter((question) => question.status === "open" || question.status === "in_progress").length
   const hasQuestionResult = dataState.parts.length === 0
     ? hasConfirmedResourceResult(dataState)

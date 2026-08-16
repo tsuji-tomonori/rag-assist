@@ -43,6 +43,8 @@ Web unitの初回実行はtimezoneが`-0400`となり、既存の日付表示期
 
 initial GitHub Actions run `31979123888`は、新しい「担当者対応カンバン」regionの追加により、既存の画面到達locator `getByRole('region', { name: '担当者対応' })`が親workspaceとカンバンを部分一致で同時に選択し、Chromium 1件とFirefox／WebKit各1件でstrict-mode違反になった。product semanticsと期待journeyを緩めず、画面到達assertionを既存意図どおり`exact: true`へ固定した。初回runはChromium 36／37、Firefox／WebKit 16／18が成功し、他の失敗はなかった。
 
+second GitHub Actions run `31979365958`は上記region到達を通過し、未対応filter中の問い合わせへ回答を入力した時点で回答formが消えるproduction defectを検出した。`markDirty`が問い合わせを即座に対応中laneへ再分類する一方、選択中詳細もfiltered collectionから解決していたことが原因である。選択中でdirtyまたは一時保持済みの問い合わせだけはside panel contextを保持し、lane cardはfilterどおり非表示とする。Chromium 36／37、Firefox／WebKit 16／18が成功し、失敗は同じkeyboard journeyに限定された。
+
 ## Acceptance status
 
 - `AC-20260817-001`: implementation / unit / target discovery pass。final-head browser CI待ち。

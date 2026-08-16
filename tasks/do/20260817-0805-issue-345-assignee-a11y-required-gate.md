@@ -141,3 +141,5 @@ Draft PR #462はcurrent `main@8e542b31`を祖先に含み、担当者対応の32
 - initial Web UI Quality run `31979123888`は、追加した「担当者対応カンバン」が既存の画面到達locatorへ部分一致し、親workspaceとの2件一致でstrict-mode違反になった。
 - Chromiumは36／37、Firefox／WebKitは16／18が成功し、失敗は同一locatorに限定された。
 - product semantics、journey、state期待を緩めず、画面regionの既存assertionへ`exact: true`を追加して再検証する。
+- second run `31979365958`でregion到達後、未対応filter中の回答入力により問い合わせが対応中laneへ移り、選択中formも消えるproduction defectを検出した。
+- 選択中でdirtyまたは一時保持済みの問い合わせだけside panel contextを保持し、lane cardはfilterどおり非表示とする。回答入力／一時保持の到達性をunitとE2Eで再検証する。

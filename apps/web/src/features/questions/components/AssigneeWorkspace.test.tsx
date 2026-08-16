@@ -95,6 +95,22 @@ describe("AssigneeWorkspace question journey", () => {
     expect(screen.queryByText(/下書きを保存済み/)).not.toBeInTheDocument()
   })
 
+  it("keeps the selected answer form reachable when an edit moves the question outside the active lane filter", async () => {
+    renderWorkspace()
+
+    await userEvent.selectOptions(screen.getByRole("combobox", { name: "ステータス" }), "unassigned")
+    const body = screen.getByRole("textbox", { name: "回答内容" })
+    await userEvent.type(body, "絞り込み中の一時回答")
+
+    expect(body).toHaveValue("絞り込み中の一時回答")
+    expect(screen.queryByRole("button", { name: "申請期限を選択" })).not.toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole("button", { name: "入力を一時保持" }))
+
+    expect(screen.getByRole("textbox", { name: "回答内容" })).toHaveValue("絞り込み中の一時回答")
+    expect(screen.getByRole("status")).toHaveTextContent("この画面に入力を一時保持")
+  })
+
   it("does not expose an edit action for answered tickets", () => {
     renderWorkspace({ questions: [question({ status: "answered", answerBody: "確定回答" })] })
 
