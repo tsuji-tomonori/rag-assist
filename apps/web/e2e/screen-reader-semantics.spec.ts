@@ -6,7 +6,7 @@ type AccessibilityContractNode = {
   value: string
   checked: string
   pressed: string
-  selected: string
+  expanded: string
   busy: string
   live: string
 }
@@ -17,7 +17,7 @@ type ExpectedNode = {
   value?: string
   checked?: string
   pressed?: string
-  selected?: string
+  expanded?: string
   busy?: string
   live?: string
 }
@@ -104,11 +104,11 @@ test('E2E-UI-SR-SEMANTICS-001: representative views expose stable Chromium acces
 
   await page.getByRole('button', { name: 'semantic-policy.pdfの詳細を表示' }).click()
   await expect(page.getByRole('dialog', { name: 'semantic-policy.pdf' })).toBeVisible()
+  await expect(page.locator('[role="row"][aria-selected="true"]')).toContainText('semantic-policy.pdf')
   await expectAccessibilityContract(page, testInfo, 'documents-selected', [
-    { role: 'row', selected: 'true' },
     { role: 'dialog', name: 'semantic-policy.pdf' },
     { role: 'button', name: '文書詳細を閉じる' },
-    { role: 'button', name: '技術・品質詳細を表示' },
+    { role: 'button', name: '技術・品質詳細を表示', expanded: 'false' },
     { role: 'button', name: 'この資料に質問する' }
   ])
   await page.getByRole('button', { name: '文書詳細を閉じる' }).click()
@@ -484,7 +484,7 @@ async function expectAccessibilityContract(
       (expectedNode.value === undefined || node.value === expectedNode.value) &&
       (expectedNode.checked === undefined || node.checked === expectedNode.checked) &&
       (expectedNode.pressed === undefined || node.pressed === expectedNode.pressed) &&
-      (expectedNode.selected === undefined || node.selected === expectedNode.selected) &&
+      (expectedNode.expanded === undefined || node.expanded === expectedNode.expanded) &&
       (expectedNode.busy === undefined || node.busy === expectedNode.busy) &&
       (expectedNode.live === undefined || node.live === expectedNode.live)
     ))
@@ -504,7 +504,7 @@ async function readAccessibilityTree(page: Page): Promise<AccessibilityContractN
         value: String(node.value?.value ?? ''),
         checked: String(node.properties?.find((property) => property.name === 'checked')?.value?.value ?? ''),
         pressed: String(node.properties?.find((property) => property.name === 'pressed')?.value?.value ?? ''),
-        selected: normalizeBooleanAxProperty(node.properties?.find((property) => property.name === 'selected')?.value?.value),
+        expanded: normalizeBooleanAxProperty(node.properties?.find((property) => property.name === 'expanded')?.value?.value),
         busy: normalizeBooleanAxProperty(node.properties?.find((property) => property.name === 'busy')?.value?.value),
         live: String(node.properties?.find((property) => property.name === 'live')?.value?.value ?? '')
       }))
