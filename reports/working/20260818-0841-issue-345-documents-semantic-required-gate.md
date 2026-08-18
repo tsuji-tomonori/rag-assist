@@ -39,10 +39,18 @@
 ## GitHub状態
 
 - 対象: Draft PR #462
-- final head: CI待ち
-- Web UI Quality: CI待ち
-- MemoRAG CI: CI待ち
-- semver: CI待ち
+- 実装・修復head: `f5438754c69d334f91e384c333b02b76320d7baa`
+- Web UI Quality run `32083354028`: success。Chromium 37/37、Firefox／WebKit 18/18、retry／flaky 0
+- Chromium artifact `9305870662`: `sha256:98753a88888cf95f7b30849c00b3e54f8ce5d7f7491580f66f797271faf9ebf3`
+- cross-browser artifact `9305873830`: `sha256:aa297e3898ecfa0ba3739349c35fa5740e731fe7ab0401c9e7bf4552faf5c7e3`
+- MemoRAG CI run `32083353951`: success。lint、typecheck、unit／coverage、build、docs freshnessを含む
+- semver run `32083354012`: success
+
+## CI修復ループ
+
+1. head `718f95ec`のWeb UI Quality run `32082928768`はChromium 36/37。table rowのDOM `aria-selected=true`がCDP AX propertyとして公開されず失敗した。
+2. 選択行はDOM ARIA属性で検証し、AX stateはdetail disclosureの`expanded=false`で検証する実際の証跡境界へ修正した。正本、matrix、task／reportも同期した。
+3. 修復head `f5438754`でWeb UI Quality、MemoRAG CI、semverがすべて成功した。
 
 ## 未完了・blocker
 
