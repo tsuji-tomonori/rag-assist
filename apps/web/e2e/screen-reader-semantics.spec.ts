@@ -6,6 +6,7 @@ type AccessibilityContractNode = {
   value: string
   checked: string
   pressed: string
+  selected: string
   busy: string
   live: string
 }
@@ -16,6 +17,7 @@ type ExpectedNode = {
   value?: string
   checked?: string
   pressed?: string
+  selected?: string
   busy?: string
   live?: string
 }
@@ -33,11 +35,13 @@ const evidenceRoles = new Set([
   'checkbox',
   'combobox',
   'complementary',
+  'dialog',
   'form',
   'heading',
   'main',
   'navigation',
   'region',
+  'row',
   'searchbox',
   'spinbutton',
   'status',
@@ -49,6 +53,7 @@ test('E2E-UI-SR-SEMANTICS-001: representative views expose stable Chromium acces
   const chatRouteState = await installChatRoute(page)
   await installHistoryRoute(page)
   await installFavoritesRoute(page)
+  await installDocumentsRoutes(page)
   await installBenchmarkRoutes(page)
   await installAssigneeRoute(page)
   await page.goto('/')
@@ -79,12 +84,34 @@ test('E2E-UI-SR-SEMANTICS-001: representative views expose stable Chromium acces
   await expect(page.getByRole('region', { name: 'ドキュメント管理' })).toBeVisible()
   await expectAccessibilityContract(page, testInfo, 'documents', [
     { role: 'main' },
+    { role: 'heading', name: 'ドキュメント管理' },
     { role: 'navigation', name: '画面' },
     { role: 'region', name: 'ドキュメント管理' },
+    { role: 'navigation', name: 'パンくず' },
     { role: 'complementary', name: 'フォルダツリー' },
+    { role: 'searchbox', name: 'フォルダを検索' },
     { role: 'region', name: '登録文書一覧' },
-    { role: 'region', name: '現在の文書表示条件' }
+    { role: 'region', name: '現在の文書表示条件' },
+    { role: 'searchbox', name: 'ファイル名検索' },
+    { role: 'combobox', name: '種別', value: 'すべて' },
+    { role: 'combobox', name: '状態', value: 'すべて' },
+    { role: 'combobox', name: '所属フォルダ', value: 'すべて' },
+    { role: 'combobox', name: '並び替え', value: '更新日 新しい順' },
+    { role: 'combobox', name: '表示件数', value: '25件' },
+    { role: 'table', name: '登録文書' },
+    { role: 'button', name: 'semantic-policy.pdfの詳細を表示' }
   ])
+
+  await page.getByRole('button', { name: 'semantic-policy.pdfの詳細を表示' }).click()
+  await expect(page.getByRole('dialog', { name: 'semantic-policy.pdf' })).toBeVisible()
+  await expectAccessibilityContract(page, testInfo, 'documents-selected', [
+    { role: 'row', selected: 'true' },
+    { role: 'dialog', name: 'semantic-policy.pdf' },
+    { role: 'button', name: '文書詳細を閉じる' },
+    { role: 'button', name: '技術・品質詳細を表示' },
+    { role: 'button', name: 'この資料に質問する' }
+  ])
+  await page.getByRole('button', { name: '文書詳細を閉じる' }).click()
 
   await page.getByRole('navigation', { name: '画面' }).getByRole('button', { name: '履歴' }).click()
   await expect(page.getByRole('region', { name: '履歴', exact: true })).toBeVisible()
@@ -289,6 +316,78 @@ async function installFavoritesRoute(page: Page) {
   })
 }
 
+async function installDocumentsRoutes(page: Page) {
+  await page.route(/http:\/\/127\.0\.0\.1:8787\/(?:documents(?:\/reindex-migrations)?|document-groups)$/, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.fallback()
+      return
+    }
+
+    const path = new URL(route.request().url()).pathname
+    if (path === '/documents') {
+      await route.fulfill({
+        json: {
+          documents: [{
+            detailLevel: 'manager',
+            documentId: 'semantic-document-1',
+            fileName: 'semantic-policy.pdf',
+            mimeType: 'application/pdf',
+            chunkCount: 12,
+            memoryCardCount: 3,
+            status: 'ready',
+            metadata: { groupIds: ['semantic-group-1'] },
+            currentUserEffectivePermission: 'full',
+            capabilities: {
+              canRead: true,
+              canShare: true,
+              canMove: true,
+              canDelete: true,
+              canReindex: true
+            },
+            createdAt: '2026-08-18T00:00:00.000Z',
+            updatedAt: '2026-08-18T00:01:00.000Z'
+          }]
+        }
+      })
+      return
+    }
+
+    if (path === '/document-groups') {
+      await route.fulfill({
+        json: {
+          groups: [{
+            schemaVersion: 2,
+            itemType: 'documentGroup',
+            tenantId: 'local-e2e',
+            groupId: 'semantic-group-1',
+            name: 'semantic規程',
+            normalizedName: 'semantic規程',
+            canonicalPath: '/semantic規程',
+            normalizedCanonicalPath: '/semantic規程',
+            adminPrincipalType: 'user',
+            adminPrincipalId: 'semantic-admin',
+            adminPathPk: 'local-e2e#user#semantic-admin',
+            parentPathPk: 'local-e2e#user#semantic-admin#ROOT',
+            visibility: 'private',
+            ownerUserId: 'semantic-admin',
+            sharedUserIds: [],
+            sharedGroups: [],
+            managerUserIds: ['semantic-admin'],
+            effectivePermission: 'full',
+            detailLevel: 'manager',
+            capabilities: { canRead: true, canManage: true },
+            createdAt: '2026-08-18T00:00:00.000Z',
+            updatedAt: '2026-08-18T00:01:00.000Z'
+          }]
+        }
+      })
+      return
+    }
+
+    await route.fulfill({ json: { migrations: [] } })
+  })
+}
+
 async function installBenchmarkRoutes(page: Page) {
   await page.route(/http:\/\/127\.0\.0\.1:8787\/benchmark-suites(?:\?.*)?$/, async (route) => {
     await route.fulfill({
@@ -385,6 +484,7 @@ async function expectAccessibilityContract(
       (expectedNode.value === undefined || node.value === expectedNode.value) &&
       (expectedNode.checked === undefined || node.checked === expectedNode.checked) &&
       (expectedNode.pressed === undefined || node.pressed === expectedNode.pressed) &&
+      (expectedNode.selected === undefined || node.selected === expectedNode.selected) &&
       (expectedNode.busy === undefined || node.busy === expectedNode.busy) &&
       (expectedNode.live === undefined || node.live === expectedNode.live)
     ))
@@ -404,6 +504,7 @@ async function readAccessibilityTree(page: Page): Promise<AccessibilityContractN
         value: String(node.value?.value ?? ''),
         checked: String(node.properties?.find((property) => property.name === 'checked')?.value?.value ?? ''),
         pressed: String(node.properties?.find((property) => property.name === 'pressed')?.value?.value ?? ''),
+        selected: normalizeBooleanAxProperty(node.properties?.find((property) => property.name === 'selected')?.value?.value),
         busy: normalizeBooleanAxProperty(node.properties?.find((property) => property.name === 'busy')?.value?.value),
         live: String(node.properties?.find((property) => property.name === 'live')?.value?.value ?? '')
       }))
