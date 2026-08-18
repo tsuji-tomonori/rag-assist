@@ -17,7 +17,7 @@ Draft PR #462はcurrent `main@8e542b31`を祖先に含み、文書画面の320 C
 ## 対象範囲
 
 - test-only documents／document-groups／reindex-migrations fixture
-- 文書workspace、パンくず、folder tree、folder search、file list、current context、filter controls、file table、selected row、detail dialog／主要actionのChromium AX契約
+- 文書workspace、パンくず、folder tree、folder search、file list、current context、filter controls、file table、detail dialog／主要action／disclosure expandedのChromium AX契約と選択行のDOM `aria-selected`
 - `E2E-UI-SR-SEMANTICS-001`のdocuments scenarioとJSON evidence
 - `SQ-016`、`DES_UI_UX_001`、machine-readable trace／quality matrix、正規生成文書
 - 本task、仕様分析、作業レポート
@@ -53,7 +53,8 @@ Draft PR #462はcurrent `main@8e542b31`を祖先に含み、文書画面の320 C
 - Then workspace、パンくず、folder tree、folder search、file list、current contextが安定したname／roleを持つ
 - Then filename search、type／status／folder／sort／page-size controlsが安定したname／role／valueを持つ
 - Then file tableと対象文書のdetail actionが安定したname／roleを持つ
-- Then detail action後のrowがselected stateを公開し、detail dialogと主要actionが安定したname／roleを持つ
+- Then detail action後のrowがDOM `aria-selected=true`を公開する
+- Then detail dialogと主要actionが安定したname／roleを持ち、技術・品質詳細の初期expanded stateが`false`である
 - Then normalized JSON evidenceをPlaywright reportへ保存する
 
 ### AC-20260818-002: test fixtureをproduction境界から分離する
