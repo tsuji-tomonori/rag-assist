@@ -31,7 +31,7 @@
 
 ## Acceptance criteria
 
-- `AC-20260818-001`（confirmed）: documentsのlandmark、search、filter values、table、selected row、detail dialog／主要actionをChromium AX treeで検査し、JSON evidenceを添付する。
+- `AC-20260818-001`（confirmed）: documentsのlandmark、search、filter values、table、detail dialog／主要action／disclosure expandedをChromium AX treeで検査し、選択行のDOM `aria-selected`とJSON evidenceを添付する。
 - `AC-20260818-002`（confirmed）: fixtureをPlaywright routeへ限定し、production／permission contractを変更しない。
 - `AC-20260818-003`（confirmed）: `documents → SQ-016 → AC-SQ016-003 → quality matrix global evidence → E2E-UI-SR-SEMANTICS-001 → Chromium required`を追跡し、manual／overallはblockedを維持する。
 - `AC-20260818-004`（confirmed）: code、unit、E2E、正本、authored matrix、生成物、GitHub記録を同期する。
@@ -45,7 +45,7 @@
 3. workspace、breadcrumb、folder tree、file list、contextを取得する。
 4. folder／filename searchbox、type／status／folder／sort／page-size comboboxのname／valueを取得する。
 5. named file tableとfixture文書のdetail buttonを取得する。
-6. detail action後のselected row、detail dialog、close／ask actionを取得する。
+6. detail action後のDOM `aria-selected`、detail dialog、close／ask action、disclosure expanded stateを取得する。
 7. normalized Chromium AX JSONをbrowser project名付きで添付する。
 
 ### NONUI-UI-TRACE-001
