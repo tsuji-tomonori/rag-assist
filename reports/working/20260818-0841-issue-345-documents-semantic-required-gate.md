@@ -2,7 +2,7 @@
 
 ## 結果
 
-- Draft PR #462の既存`E2E-UI-SR-SEMANTICS-001`に、文書画面の検索、filter value、file table、selected row、detail dialog／主要actionのChromium AX tree契約を追加した。
+- Draft PR #462の既存`E2E-UI-SR-SEMANTICS-001`に、文書画面の検索、filter value、file table、detail dialog／主要action／disclosure expandedのChromium AX tree契約と選択行のDOM `aria-selected`を追加した。
 - fixtureはPlaywright routeに限定し、`DocumentWorkspace`、配下production component、API、effective permissionは変更していない。
 - `documents → SQ-016 → AC-SQ016-003 → quality matrix global evidence → E2E-UI-SR-SEMANTICS-001 → Chromium required`を正本、authored JSON、生成文書で同期した。
 - `documents / AC-SQ016-003`はautomatedだけを`pass`とし、manual／overallは`blocked`を維持した。
@@ -19,7 +19,7 @@
 
 - fixtureはGETのdocuments／document-groups／reindex-migrationsに限定し、mutationと想定外methodは従来routeへfallbackする。
 - internal IDではなくvisible file nameでdetail actionとdialogを識別する。
-- selected stateをnormalized AX propertyとして追加し、既存画面のcontract判定は変更しない。
+- Chromium AX treeがtable rowの`aria-selected` propertyを公開しないことを初回CIで確認した。選択行はDOM attributeで検証し、AX stateはdetail disclosureの`expanded=false`で検証する。
 - open PR #461が変更するproduction文書componentには触れず、競合範囲をE2E／正本／追跡に限定した。#461統合後の最終DOM再検証は後続とする。
 - automationを代表screen reader、実browser zoom、touch／実機のmanual passに読み替えていない。
 
