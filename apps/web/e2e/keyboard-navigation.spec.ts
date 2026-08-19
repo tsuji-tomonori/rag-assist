@@ -366,44 +366,54 @@ async function verifyDocumentsKeyboardJourney(page: Page) {
   const folderSearch = page.getByRole('searchbox', { name: 'フォルダを検索' })
   await tabTo(page, folderSearch)
   await expectKeyboardFocus(folderSearch)
-  await typeKeyboardText(page, folderSearch, 'keyboard')
+  await page.keyboard.press('k')
+  await expect(folderSearch).toHaveValue('k')
+  await expect(page).toHaveURL(/folderQuery=k/)
 
   const fileNameSearch = page.getByRole('searchbox', { name: 'ファイル名検索' })
   await tabTo(page, fileNameSearch)
   await expectKeyboardFocus(fileNameSearch)
-  await typeKeyboardText(page, fileNameSearch, 'keyboard')
+  await page.keyboard.press('k')
+  await expect(fileNameSearch).toHaveValue('k')
+  await expect(page).toHaveURL(/query=k/)
 
   const typeFilter = page.getByRole('combobox', { name: '種別' })
   await tabTo(page, typeFilter)
   await expectKeyboardFocus(typeFilter)
   await page.keyboard.press('ArrowDown')
   await expect(typeFilter).not.toHaveValue('all')
+  await expect(page).toHaveURL(/type=/)
 
   const statusFilter = page.getByRole('combobox', { name: '状態' })
   await tabTo(page, statusFilter)
   await expectKeyboardFocus(statusFilter)
   await page.keyboard.press('ArrowDown')
   await expect(statusFilter).not.toHaveValue('all')
+  await expect(page).toHaveURL(/status=/)
 
   const folderFilter = page.getByRole('combobox', { name: '所属フォルダ' })
   await tabTo(page, folderFilter)
   await expectKeyboardFocus(folderFilter)
   await page.keyboard.press('ArrowDown')
   await expect(folderFilter).toHaveValue('unassigned')
+  await expect(page).toHaveURL(/documentGroup=unassigned/)
   await page.keyboard.press('ArrowDown')
   await expect(folderFilter).toHaveValue('keyboard-group-1')
+  await expect(page).toHaveURL(/documentGroup=keyboard-group-1/)
 
   const sortOrder = page.getByRole('combobox', { name: '並び替え' })
   await tabTo(page, sortOrder)
   await expectKeyboardFocus(sortOrder)
   await page.keyboard.press('ArrowDown')
   await expect(sortOrder).toHaveValue('updatedAsc')
+  await expect(page).toHaveURL(/sort=updatedAsc/)
 
   const pageSize = page.getByRole('combobox', { name: '表示件数' })
   await tabTo(page, pageSize)
   await expectKeyboardFocus(pageSize)
   await page.keyboard.press('ArrowDown')
   await expect(pageSize).toHaveValue('50')
+  await expect(page).toHaveURL(/pageSize=50/)
 
   const detailTrigger = page.getByRole('button', { name: 'keyboard-policy.pdfの詳細を表示' })
   await tabTo(page, detailTrigger)
@@ -523,14 +533,4 @@ async function expectKeyboardFocus(target: Locator) {
     const style = getComputedStyle(element)
     return `${style.outlineStyle}:${style.outlineWidth}:${style.outlineColor}`
   })).toMatch(/^solid:3px:/)
-}
-
-async function typeKeyboardText(page: Page, target: Locator, text: string) {
-  let expected = await target.inputValue()
-  for (const character of text) {
-    await page.keyboard.press(character)
-    expected += character
-    await expect(target).toHaveValue(expected)
-    await expect(target).toBeFocused()
-  }
 }

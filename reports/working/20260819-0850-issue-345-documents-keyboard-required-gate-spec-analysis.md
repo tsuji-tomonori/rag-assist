@@ -21,7 +21,7 @@
 - 既存documents semantic E2EにはGET限定fixtureと安定したaccessible name／roleがある。`confirmed`
 - production `DocumentDetailDrawer`は初期focus、Tab focus trap、Escape、trigger focus restoreを実装済みである。`confirmed`
 - 初回required CIはfolder searchのfocusが移動した一方、computed outlineが3pxではなく失敗し、documents主要controlのvisible focus欠落を検出した。`confirmed`
-- 3px修復後のChromium CIはzero-delay複数key送出がroute同期中のcontrolled value `k`だけを観測したため、各key後にprefix valueとfocus保持を待つ実利用相当のkeyboard sequenceへ変更した。`confirmed`
+- 3px修復後のCIはkeyboard変更とURL state echoが落ち着く前に次のkey／controlへ進むengine差を検出したため、各controlのkeyboard変更後にvalueと正規URLの両方を待つsequenceへ変更した。`confirmed`
 - #461は`DocumentWorkspace`配下を変更する。`confirmed`
 - browser自動検査はrepresentative screen reader／manual keyboard／実browser zoomを代替しない。`confirmed`
 

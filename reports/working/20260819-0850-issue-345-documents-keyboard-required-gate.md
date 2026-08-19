@@ -43,7 +43,9 @@ current main、Draft PR #462、open PR #461／#464、`tasks/todo/`／`tasks/do/`
 2. keyboard検査を緩めず、documentsの主要control／detail actionへ3px `:focus-visible`と2px offsetを追加した。
 3. 修復head `2b9c4bde`のChromium jobはoutline検査を通過した後、zero-delay複数key送出とroute同期の間でcontrolled valueが`k`だけになり失敗した。
 4. click／programmatic focusへ置換せず、各keyの後にprefix valueとfocus保持を検証するsequenceへ変更した。次のkeyを送る前にReact／URL stateの反映を待つため、入力欠落もfocus逸脱も検出できる。
-5. 再修復headのCI結果は待機中。
+5. 再修復head `db068114`はさらに先へ進み、engineごとのURL state echo前にselect操作へ進むraceと、footer page-size selectの3px outline欠落を検出した。
+6. test-only fixtureに一致する1文字をkeyboard入力し、各search／select変更後にvalueと正規URLの両方を待つsequenceへ変更した。page-size selectにも同じ3px focus indicatorを追加した。
+7. 再々修復headのCI結果は待機中。
 
 ## 受け入れ判定
 
