@@ -135,3 +135,13 @@ open PR #461は`AdminWorkspace`と配下componentを変更するため、今回�
 - #461統合後にaccessible name／DOM順序が変わる可能性があり、最終DOMで再実走が必要。
 - Chromium／Firefox／WebKit E2Eはbrowser keyboard contractのproxyで、代表screen readerや実機を代替しない。
 - adminのsemantic `AC-SQ016-003`は今回の対象外で引き続きblocked。
+
+## 実施結果
+
+- final head: `21466930`
+- `AC-20260820-001`: pass。overview cardと概要／ユーザーsection tabをTab・Enterだけで操作し、3px focusと`section=users`をrequired E2Eで確認した。
+- `AC-20260820-002`: pass。ユーザー検索、状態、並び順、検索buttonをkeyboard-onlyで操作し、値とURL stateをrequired E2Eで確認した。
+- `AC-20260820-003`: pass。`admin → SQ-016 → AC-SQ016-002 → E2E-UI-KEYBOARD-NAV-001`を一意に同期し、manual／overallと`AC-SQ016-003`はblockedを維持した。
+- `AC-20260820-004`: automated pass。Web UI Quality、MemoRAG CI、semver、ローカルのtrace／matrix／semantic／manual evidence／docs検査が成功した。
+- 初回Chromium CIは検索inputを`searchbox`として参照したtest locator不一致を検出した。実DOMのnative inputは`textbox`であるため修正し、final headのChromium／Firefox／WebKitで再実行して成功した。
+- representative screen reader、manual keyboard、実browser 200%／400% zoom、touch／実機、Firefox／WebKit native accessibility tree、#461統合後の最終DOM再確認は未完了である。したがってtaskは`do`、PRはDraftを維持する。

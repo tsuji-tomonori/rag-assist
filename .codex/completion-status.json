@@ -8,35 +8,36 @@
     "Do not merge, deploy, release, force-push, or perform destructive changes"
   ],
   "completed_items": [
-    "Confirmed current main 8e542b31 and draft pull request 462 are converged with behind zero",
+    "Confirmed current main 8e542b31 and draft pull request 462 were converged with behind zero at selection time",
     "Selected admin AC-SQ016-002 as the bounded non-duplicative keyboard required-gate increment while open pull request 461 owns production admin components",
     "Added test-only GET admin fixtures and keyboard-only overview, section, user search, status, sort, and submit journey",
     "Linked admin through SQ-016 and AC-SQ016-002 to the unique cross-view E2E-UI-KEYBOARD-NAV-001 for Chromium, Firefox, and WebKit required execution",
     "Synchronized canonical requirements and design, authored trace and quality matrix, generated Web documents, task, specification analysis, and work report",
     "Passed 25 trace, quality-matrix, semantic, and manual-evidence tests, quality-matrix freshness, canonical docs validation, and diff checks",
     "Added an explicit three-pixel focus indicator to native admin workspace controls",
+    "Repaired the initial Chromium locator role mismatch and passed final-head Web UI Quality in Chromium, Firefox, and WebKit",
+    "Passed final-head MemoRAG CI and semver validation, including Web lint, typecheck, unit, build, and canonical/generated-document checks",
     "Kept manual keyboard, representative screen reader, real-browser zoom, touch, real-device, native accessibility-tree evidence, admin semantics, owner decisions, and API C1 incomplete"
   ],
   "remaining_items": [
-    "Run final implementation-head Web UI Quality, MemoRAG CI, and semver validation",
-    "Record acceptance, self-review, and final evidence on draft pull request 462 and Issue 345",
     "Resolve FR-051 persistence and the profile state-evidence owner decision",
-    "Run approved representative-screen-reader, real-browser 200/400-percent zoom, touch, real-device, and Firefox/WebKit native accessibility-tree verification"
+    "Run approved representative-screen-reader, real-browser 200/400-percent zoom, touch, real-device, and Firefox/WebKit native accessibility-tree verification",
+    "Re-run the admin keyboard journey against the final DOM after pull request 461 is integrated"
   ],
   "blocked_items": [
-    "The isolated worktree has no installed Web dependencies and dependency-fetching npm execution was denied by the runtime boundary; final implementation-head GitHub Actions must supply Web lint, typecheck, unit, build, and browser evidence",
+    "The isolated worktree had no installed Web dependencies and dependency-fetching npm execution was denied by the runtime boundary; successful final-head GitHub Actions supplied Web lint, typecheck, unit, build, and browser evidence",
     "Manual accessibility evidence remains not release-ready with three blocked and one not-run check",
-    "API C1 branch coverage remains below the 85-percent quality target in the latest known evidence"
+    "API C1 branch coverage is 80.48 percent, below the 85-percent quality target, and remains tracked by tasks/todo/20260712-coverage-api-c1-recovery.md"
   ],
   "validation": [
     { "command": "node --test tools/web-inventory/ui-traceability.test.mjs tools/web-inventory/ui-quality-matrix.test.mjs tools/web-inventory/semantic-ui-contract.test.mjs tools/web-inventory/manual-a11y-evidence.test.mjs", "result": "pass", "note": "25 tests passed" },
     { "command": "node tools/web-inventory/generate-ui-quality-matrix.mjs --check", "result": "pass" },
     { "command": "python3 scripts/validate_docs.py", "result": "pass" },
     { "command": "git diff --check", "result": "pass" },
-    { "command": "Web UI Quality", "result": "pending", "note": "Final implementation head is not published yet" },
-    { "command": "MemoRAG CI", "result": "pending", "note": "Final implementation head is not published yet" },
-    { "command": "Validate Semver Label", "result": "pending", "note": "Final implementation head is not published yet" }
+    { "command": "Web UI Quality run 32314782818", "result": "pass", "note": "Chromium, Firefox, and WebKit required jobs passed" },
+    { "command": "MemoRAG CI run 32314782893", "result": "pass", "note": "Web lint, typecheck, unit, build, and docs checks passed" },
+    { "command": "Validate Semver Label run 32314782910", "result": "pass" }
   ],
-  "next_action": "Publish the admin keyboard required-gate increment to draft pull request 462, repair any required CI failure, then record acceptance, self-review, and Issue 345 evidence",
+  "next_action": "Record acceptance, self-review, and blockers on draft pull request 462 and Issue 345, then re-run admin evidence after pull request 461 changes the final DOM",
   "safe_to_continue_without_user": true
 }
