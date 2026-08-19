@@ -366,14 +366,12 @@ async function verifyDocumentsKeyboardJourney(page: Page) {
   const folderSearch = page.getByRole('searchbox', { name: 'フォルダを検索' })
   await tabTo(page, folderSearch)
   await expectKeyboardFocus(folderSearch)
-  await page.keyboard.type('keyboard')
-  await expect(folderSearch).toHaveValue('keyboard')
+  await typeKeyboardText(page, folderSearch, 'keyboard')
 
   const fileNameSearch = page.getByRole('searchbox', { name: 'ファイル名検索' })
   await tabTo(page, fileNameSearch)
   await expectKeyboardFocus(fileNameSearch)
-  await page.keyboard.type('keyboard')
-  await expect(fileNameSearch).toHaveValue('keyboard')
+  await typeKeyboardText(page, fileNameSearch, 'keyboard')
 
   const typeFilter = page.getByRole('combobox', { name: '種別' })
   await tabTo(page, typeFilter)
@@ -391,6 +389,7 @@ async function verifyDocumentsKeyboardJourney(page: Page) {
   await tabTo(page, folderFilter)
   await expectKeyboardFocus(folderFilter)
   await page.keyboard.press('ArrowDown')
+  await expect(folderFilter).toHaveValue('unassigned')
   await page.keyboard.press('ArrowDown')
   await expect(folderFilter).toHaveValue('keyboard-group-1')
 
@@ -524,4 +523,14 @@ async function expectKeyboardFocus(target: Locator) {
     const style = getComputedStyle(element)
     return `${style.outlineStyle}:${style.outlineWidth}:${style.outlineColor}`
   })).toMatch(/^solid:3px:/)
+}
+
+async function typeKeyboardText(page: Page, target: Locator, text: string) {
+  let expected = await target.inputValue()
+  for (const character of text) {
+    await page.keyboard.press(character)
+    expected += character
+    await expect(target).toHaveValue(expected)
+    await expect(target).toBeFocused()
+  }
 }

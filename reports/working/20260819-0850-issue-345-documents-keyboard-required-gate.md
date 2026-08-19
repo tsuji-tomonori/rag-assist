@@ -41,7 +41,9 @@ current main、Draft PR #462、open PR #461／#464、`tasks/todo/`／`tasks/do/`
 
 1. 実装head `4cdbae8c`のWeb UI Quality run `32199927920`はChromiumとFirefox／WebKitの全projectでdocuments folder searchのcomputed outlineが3pxにならず失敗した。focus自体は対象へ到達していた。
 2. keyboard検査を緩めず、documentsの主要control／detail actionへ3px `:focus-visible`と2px offsetを追加した。
-3. 修復headのCI結果は待機中。
+3. 修復head `2b9c4bde`のChromium jobはoutline検査を通過した後、zero-delay複数key送出とroute同期の間でcontrolled valueが`k`だけになり失敗した。
+4. click／programmatic focusへ置換せず、各keyの後にprefix valueとfocus保持を検証するsequenceへ変更した。次のkeyを送る前にReact／URL stateの反映を待つため、入力欠落もfocus逸脱も検出できる。
+5. 再修復headのCI結果は待機中。
 
 ## 受け入れ判定
 
