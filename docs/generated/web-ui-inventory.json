@@ -610,6 +610,12 @@
             "acceptanceCriteria": [
               "AC-FR098-003"
             ]
+          },
+          {
+            "id": "SQ-016",
+            "acceptanceCriteria": [
+              "AC-SQ016-002"
+            ]
           }
         ],
         "verifications": [

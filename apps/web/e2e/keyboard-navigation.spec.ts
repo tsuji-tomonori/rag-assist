@@ -58,6 +58,7 @@ test('E2E-UI-KEYBOARD-NAV-001: primary views and feature controls remain keyboar
   await installFavoritesRoute(page)
   await installDocumentsRoute(page)
   await installAssigneeRoute(page)
+  await installAdminRoute(page)
   await page.goto('/')
   await keyboardSignIn(page)
 
@@ -96,6 +97,9 @@ test('E2E-UI-KEYBOARD-NAV-001: primary views and feature controls remain keyboar
     }
     if (destination.label === '担当者対応') {
       await verifyAssigneeKeyboardJourney(page)
+    }
+    if (destination.label === '管理者設定') {
+      await verifyAdminKeyboardJourney(page)
     }
   }
 
@@ -299,6 +303,105 @@ async function installAssigneeRoute(page: Page) {
   })
 }
 
+async function installAdminRoute(page: Page) {
+  await page.route(/http:\/\/127\.0\.0\.1:8787\/admin\/(?:users|roles|audit-log|usage|costs|aliases(?:\/audit-log)?)(?:\?.*)?$/, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.fallback()
+      return
+    }
+
+    const path = new URL(route.request().url()).pathname
+    if (path === '/admin/users') {
+      await route.fulfill({
+        json: {
+          users: [{
+            userId: 'keyboard-admin',
+            email: 'keyboard-admin@example.com',
+            displayName: 'Keyboard Admin',
+            status: 'active',
+            groups: ['SYSTEM_ADMIN'],
+            createdAt: '2026-08-20T00:00:00.000Z',
+            updatedAt: '2026-08-20T00:00:00.000Z',
+            capability: {
+              canAssignRoles: false,
+              canSuspend: false,
+              canUnsuspend: false,
+              canDelete: false,
+              blockers: ['self_mutation']
+            }
+          }],
+          total: 1,
+          truncated: false,
+          source: 'authoritative_identity',
+          asOf: '2026-08-20T00:00:00.000Z',
+          version: 'keyboard-ledger-v1'
+        }
+      })
+      return
+    }
+
+    if (path === '/admin/roles') {
+      await route.fulfill({
+        json: {
+          roles: [{
+            role: 'SYSTEM_ADMIN',
+            displayName: 'システム管理者',
+            description: 'システム全体の管理を行います。',
+            kind: 'systemPreset',
+            permissions: []
+          }],
+          catalogVersion: 'keyboard-role-catalog-v1',
+          source: 'canonical-application-role-catalog',
+          asOf: '2026-08-20T00:00:00.000Z'
+        }
+      })
+      return
+    }
+
+    if (path === '/admin/audit-log') {
+      await route.fulfill({
+        json: {
+          auditLog: [],
+          total: 0,
+          truncated: false,
+          source: 'managed-user-audit-ledger',
+          asOf: '2026-08-20T00:00:00.000Z'
+        }
+      })
+      return
+    }
+
+    if (path === '/admin/aliases') {
+      await route.fulfill({
+        json: {
+          aliases: [],
+          total: 0,
+          truncated: false,
+          source: 'tenant-alias-ledger',
+          asOf: '2026-08-20T00:00:00.000Z',
+          version: 'keyboard-alias-ledger-v1'
+        }
+      })
+      return
+    }
+
+    if (path === '/admin/aliases/audit-log') {
+      await route.fulfill({
+        json: {
+          auditLog: [],
+          total: 0,
+          truncated: false,
+          source: 'tenant-alias-ledger',
+          asOf: '2026-08-20T00:00:00.000Z'
+        }
+      })
+      return
+    }
+
+    await route.fulfill({ json: null })
+  })
+}
+
 async function verifyHistoryKeyboardJourney(page: Page) {
   const search = page.getByRole('searchbox', { name: '履歴を検索' })
   await tabTo(page, search)
@@ -474,6 +577,56 @@ async function verifyAssigneeKeyboardJourney(page: Page) {
   await expectKeyboardFocus(holdDraft)
   await page.keyboard.press('Enter')
   await expect(page.getByRole('status')).toContainText('この画面に入力を一時保持')
+}
+
+async function verifyAdminKeyboardJourney(page: Page) {
+  const usersCard = page.getByRole('button', { name: 'ユーザー管理を開く' })
+  await tabTo(page, usersCard)
+  await expectKeyboardFocus(usersCard)
+  await page.keyboard.press('Enter')
+  await expect(page).toHaveURL(/view=admin.*section=users/)
+  await expect(page.getByRole('region', { name: 'ユーザー管理一覧' })).toBeVisible()
+
+  const overviewTab = page.getByRole('button', { name: '概要', exact: true })
+  await tabTo(page, overviewTab)
+  await expectKeyboardFocus(overviewTab)
+  await page.keyboard.press('Enter')
+  await expect(page).toHaveURL(/\?view=admin$/)
+  await expect(overviewTab).toHaveAttribute('aria-current', 'page')
+
+  const usersTab = page.getByRole('button', { name: 'ユーザー', exact: true })
+  await tabTo(page, usersTab)
+  await expectKeyboardFocus(usersTab)
+  await page.keyboard.press('Enter')
+  await expect(page).toHaveURL(/view=admin.*section=users/)
+  await expect(usersTab).toHaveAttribute('aria-current', 'page')
+
+  const search = page.getByRole('searchbox', { name: 'ユーザー・ロールを検索' })
+  await tabTo(page, search)
+  await expectKeyboardFocus(search)
+  await page.keyboard.type('keyboard')
+  await expect(search).toHaveValue('keyboard')
+
+  const status = page.getByRole('combobox', { name: '状態', exact: true })
+  await tabTo(page, status)
+  await expectKeyboardFocus(status)
+  await page.keyboard.press('End')
+  await expect(status).toHaveValue('suspended')
+  await expect(page).toHaveURL(/userStatus=suspended/)
+
+  const sort = page.getByRole('combobox', { name: '並び順', exact: true })
+  await tabTo(page, sort)
+  await expectKeyboardFocus(sort)
+  await page.keyboard.press('ArrowDown')
+  await expect(sort).toHaveValue('updatedDesc')
+  await expect(page).toHaveURL(/userSort=updatedDesc/)
+
+  const submit = page.getByRole('button', { name: '検索', exact: true })
+  await tabTo(page, submit)
+  await expectKeyboardFocus(submit)
+  await page.keyboard.press('Enter')
+  await expect(page).toHaveURL(/adminQuery=keyboard/)
+  await expect(search).toHaveValue('keyboard')
 }
 
 async function keyboardSignIn(page: Page) {
