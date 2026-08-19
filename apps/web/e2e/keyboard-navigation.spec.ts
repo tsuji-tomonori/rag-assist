@@ -601,7 +601,7 @@ async function verifyAdminKeyboardJourney(page: Page) {
   await expect(page).toHaveURL(/view=admin.*section=users/)
   await expect(usersTab).toHaveAttribute('aria-current', 'page')
 
-  const search = page.getByRole('searchbox', { name: 'ユーザー・ロールを検索' })
+  const search = page.getByRole('textbox', { name: 'ユーザー・ロールを検索' })
   await tabTo(page, search)
   await expectKeyboardFocus(search)
   await page.keyboard.type('keyboard')
