@@ -15,6 +15,7 @@ current main、Draft PR #462、open PR #461／#464、`tasks/todo/`／`tasks/do/`
 - `E2E-UI-KEYBOARD-NAV-001`へdocuments journeyを追加した。
 - Tabでfolder search、filename search、type／status／folder／sort／page-size、document detail triggerへ到達し、native keyboard入力と3px focus indicatorを検証する。
 - Enterでdetail dialogを開き、close buttonへの初期focus、Shift+Tab／Tabのfocus trap、Escape close、trigger focus restoreを検証する。
+- 初回required CIがfolder searchの3px outline欠落をChromium／Firefox／WebKitで再現したため、folder search、filter controls、detail trigger、drawer actionへ3px／2px offsetの`:focus-visible`を追加した。
 - fixtureはPlaywright route内のGET `/documents`、`/document-groups`、`/documents/reindex-migrations`だけに限定し、production component、API、permission、mutation契約は変更していない。
 
 ## 正本・生成物同期
@@ -35,6 +36,12 @@ current main、Draft PR #462、open PR #461／#464、`tasks/todo/`／`tasks/do/`
 | `git diff --check` | pass | whitespace errorなし |
 | Web lint／typecheck／unit／build | CIで検証 | ローカルworktreeに依存packageがなく、取得を伴うnpm操作は実行環境に拒否された |
 | Chromium／Firefox／WebKit E2E | CIで検証 | PR required workflowを正本証跡とする |
+
+## CI修復ループ
+
+1. 実装head `4cdbae8c`のWeb UI Quality run `32199927920`はChromiumとFirefox／WebKitの全projectでdocuments folder searchのcomputed outlineが3pxにならず失敗した。focus自体は対象へ到達していた。
+2. keyboard検査を緩めず、documentsの主要control／detail actionへ3px `:focus-visible`と2px offsetを追加した。
+3. 修復headのCI結果は待機中。
 
 ## 受け入れ判定
 

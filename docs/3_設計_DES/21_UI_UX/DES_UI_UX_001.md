@@ -406,6 +406,7 @@ No proposed default is recorded as executed evidence until its task produces the
 ### Documents keyboard / semantic contract
 
 - `E2E-UI-KEYBOARD-NAV-001`はfolder／filename search、type／status／folder／sort／page-size、document detail triggerへTabで到達し、native keyboardで値を変更する。detail dialogはclose buttonへの初期focus、Shift+Tab／Tabのfocus trap、Escape close、trigger focus restoreと3px focus indicatorをrequired Chromium／Firefox／WebKit gateで検証する。
+- folder search／clear、document filter、detail trigger、drawer actionは3px primary outlineと2px offsetの`:focus-visible`を共有し、browser default outlineだけに依存しない。
 - `E2E-UI-SR-SEMANTICS-001`は文書workspace / breadcrumb / folder tree / file list / current context、folder / filename search、type / status / folder / sort / page-size value、named file table、文書固有detail action、detail dialog /主要action / disclosure expandedをCDP `Accessibility.getFullAXTree`で検証し、JSONをevidenceとして添付する。選択行はDOM `aria-selected=true`も別途検証する。
 - test-only documents / document-groups / reindex-migrations fixtureはPlaywright routeへ限定し、production component、API、effective permission、文書mutation契約を変更しない。cross-browser keyboardとChromium AX treeの自動証跡はmanual keyboard、representative screen reader、実browser 200% / 400% zoom、touch / real device、Firefox / WebKit accessibility treeの実測を代替しない。
 

@@ -20,6 +20,7 @@ open PR #461は`DocumentWorkspace`と配下componentを変更するため、今�
 ## スコープ
 
 - `apps/web/e2e/keyboard-navigation.spec.ts`のtest-only文書fixtureとkeyboard journey
+- `apps/web/src/styles/features/documents.css`の対象control／dialog action用3px focus indicator
 - 検索・filter・sort・page-size・document detail triggerのTab到達と3px focus indicator
 - dialog初期focus、Tab／Shift+Tab focus trap、Escape close、trigger focus restore
 - `SQ-016`、`DES_UI_UX_001`、machine-readable quality matrix、正規生成文書
@@ -36,7 +37,7 @@ open PR #461は`DocumentWorkspace`と配下componentを変更するため、今�
 
 1. 既存semantic fixtureと本番DOM contractを照合する。
 2. keyboard E2EへGET限定の文書fixtureを追加する。
-3. documentsの検索・filter・sort・選択・dialog focus trap／restoreをkeyboard-onlyで検査する。
+3. documentsの検索・filter・sort・選択・dialog focus trap／restoreをkeyboard-onlyで検査し、欠落したfocus indicatorを修正する。
 4. `AC-SQ016-002`の自動証跡を正本、設計、品質マトリクス、生成文書へ同期する。
 5. targeted test、lint、typecheck、unit、E2E、docs checkを実行し、CI失敗時は修正して再実行する。
 6. Draft PR #462、受け入れ確認、セルフレビュー、Issue #345を更新する。

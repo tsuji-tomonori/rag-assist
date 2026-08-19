@@ -20,6 +20,7 @@
 - 既存keyboard E2Eはdocumentsへのnavigation到達だけを検査し、画面内controlやdialogを検査しない。`confirmed`
 - 既存documents semantic E2EにはGET限定fixtureと安定したaccessible name／roleがある。`confirmed`
 - production `DocumentDetailDrawer`は初期focus、Tab focus trap、Escape、trigger focus restoreを実装済みである。`confirmed`
+- 初回required CIはfolder searchのfocusが移動した一方、computed outlineが3pxではなく失敗し、documents主要controlのvisible focus欠落を検出した。`confirmed`
 - #461は`DocumentWorkspace`配下を変更する。`confirmed`
 - browser自動検査はrepresentative screen reader／manual keyboard／実browser zoomを代替しない。`confirmed`
 
@@ -27,7 +28,7 @@
 
 | candidate | priority | duplication／conflict | decision |
 |---|---:|---|---|
-| documents keyboard journey | P0 | productionを変更しなければ#461と競合を限定できる | 採用 |
+| documents keyboard journey／focus indicator | P0 | #461が変更しないfeature CSSへ限定して競合を抑える | 採用 |
 | documents contrast | P1 | AC-SQ016-004全画面の横断方針が必要 | 次候補 |
 | #461 production component修正 | P0 | open PRのscopeと直接重複 | 不採用 |
 | manual screen reader／実zoom | P0 | 現環境で代表機器・読み上げ確認ができない | blocked維持 |
@@ -76,7 +77,7 @@
 
 | requirement | design | implementation | test | gap before | intended state |
 |---|---|---|---|---|---|
-| SQ-016 / AC-SQ016-002 | DES_UI_UX_001 documents row | existing DocumentWorkspace／DocumentDetailDrawer | E2E-UI-KEYBOARD-NAV-001 | screen-level journeyなし | automated pass、manual／overall blocked |
+| SQ-016 / AC-SQ016-002 | DES_UI_UX_001 documents row | existing DocumentWorkspace／DocumentDetailDrawer＋documents focus CSS | E2E-UI-KEYBOARD-NAV-001 | screen-level journey／3px focusなし | automated pass、manual／overall blocked |
 
 ## Open questions
 
