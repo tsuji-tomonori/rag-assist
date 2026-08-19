@@ -45,14 +45,22 @@ current main、Draft PR #462、open PR #461／#464、`tasks/todo/`／`tasks/do/`
 4. click／programmatic focusへ置換せず、各keyの後にprefix valueとfocus保持を検証するsequenceへ変更した。次のkeyを送る前にReact／URL stateの反映を待つため、入力欠落もfocus逸脱も検出できる。
 5. 再修復head `db068114`はさらに先へ進み、engineごとのURL state echo前にselect操作へ進むraceと、footer page-size selectの3px outline欠落を検出した。
 6. test-only fixtureに一致する1文字をkeyboard入力し、各search／select変更後にvalueと正規URLの両方を待つsequenceへ変更した。page-size selectにも同じ3px focus indicatorを追加した。
-7. 再々修復headのCI結果は待機中。
+7. 再々修復head `46eb7a15`でWeb UI Quality run `32201210544`が成功した。Chromium required、Firefox／WebKit requiredの両jobでretry／失敗なくkeyboard journeyを完走した。
+
+## GitHub Actions
+
+| workflow | run | 結果 |
+| --- | --- | --- |
+| Web UI Quality | `32201210544` | pass。Chromium／Firefox／WebKit required成功 |
+| MemoRAG CI | `32201210548` | pass。lint、typecheck、unit、build、正本・生成物check成功 |
+| Validate Semver Label | `32201210497` | pass |
 
 ## 受け入れ判定
 
-- `AC-20260819-001`: 実装済み。cross-browser CI成功までは未完了。
-- `AC-20260819-002`: 実装済み。cross-browser CI成功までは未完了。
+- `AC-20260819-001`: pass。keyboard入力、各controlの3px focus、値／URL state反映、detail openをcross-browser requiredで確認した。
+- `AC-20260819-002`: pass。dialog初期focus、両方向focus trap、Escape、trigger restoreをcross-browser requiredで確認した。
 - `AC-20260819-003`: pass。documentsだけを更新し、manual／overallとcontrastはblockedを維持した。
-- `AC-20260819-004`: 部分完了。ローカル依存不要検査はpass。Web一式とGitHub Actionsは待機中。
+- `AC-20260819-004`: pass。ローカル依存不要検査とfinal implementation headのWeb UI Quality、MemoRAG CI、semverが成功した。
 
 ## セルフレビュー観点
 
@@ -71,4 +79,4 @@ current main、Draft PR #462、open PR #461／#464、`tasks/todo/`／`tasks/do/`
 
 ## 次の作業
 
-Draft PR #462のfinal headでWeb UI Quality、MemoRAG CI、semverを確認し、受け入れ確認・セルフレビュー・Issue #345へ結果と未完了を記録する。
+Draft PR #462へ受け入れ確認・セルフレビューを追加し、Issue #345へ成功証跡と未完了を記録する。#461統合後はdocuments最終DOMのaccessible name、Tab順、focus indicatorを再実走する。
