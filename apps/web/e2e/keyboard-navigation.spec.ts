@@ -52,10 +52,11 @@ const destinations: KeyboardDestination[] = [
   }
 ]
 
-test('E2E-UI-KEYBOARD-NAV-001: primary views, history, favorites, assignee, and profile controls remain keyboard reachable @smoke @ui-quality', async ({ page }) => {
+test('E2E-UI-KEYBOARD-NAV-001: primary views and feature controls remain keyboard reachable @smoke @ui-quality', async ({ page }) => {
   const chatRouteState = await installChatRoute(page)
   await installHistoryRoute(page)
   await installFavoritesRoute(page)
+  await installDocumentsRoute(page)
   await installAssigneeRoute(page)
   await page.goto('/')
   await keyboardSignIn(page)
@@ -89,6 +90,9 @@ test('E2E-UI-KEYBOARD-NAV-001: primary views, history, favorites, assignee, and 
     }
     if (destination.label === 'お気に入り') {
       await verifyFavoritesKeyboardJourney(page)
+    }
+    if (destination.label === 'ドキュメント') {
+      await verifyDocumentsKeyboardJourney(page)
     }
     if (destination.label === '担当者対応') {
       await verifyAssigneeKeyboardJourney(page)
@@ -193,6 +197,78 @@ async function installFavoritesRoute(page: Page) {
   })
 }
 
+async function installDocumentsRoute(page: Page) {
+  await page.route(/http:\/\/127\.0\.0\.1:8787\/(?:documents(?:\/reindex-migrations)?|document-groups)$/, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.fallback()
+      return
+    }
+
+    const path = new URL(route.request().url()).pathname
+    if (path === '/documents') {
+      await route.fulfill({
+        json: {
+          documents: [{
+            detailLevel: 'manager',
+            documentId: 'keyboard-document-1',
+            fileName: 'keyboard-policy.pdf',
+            mimeType: 'application/pdf',
+            chunkCount: 12,
+            memoryCardCount: 3,
+            status: 'ready',
+            metadata: { groupIds: ['keyboard-group-1'] },
+            currentUserEffectivePermission: 'full',
+            capabilities: {
+              canRead: true,
+              canShare: true,
+              canMove: true,
+              canDelete: true,
+              canReindex: true
+            },
+            createdAt: '2026-08-19T00:00:00.000Z',
+            updatedAt: '2026-08-19T00:01:00.000Z'
+          }]
+        }
+      })
+      return
+    }
+
+    if (path === '/document-groups') {
+      await route.fulfill({
+        json: {
+          groups: [{
+            schemaVersion: 2,
+            itemType: 'documentGroup',
+            tenantId: 'local-e2e',
+            groupId: 'keyboard-group-1',
+            name: 'keyboard規程',
+            normalizedName: 'keyboard規程',
+            canonicalPath: '/keyboard規程',
+            normalizedCanonicalPath: '/keyboard規程',
+            adminPrincipalType: 'user',
+            adminPrincipalId: 'keyboard-admin',
+            adminPathPk: 'local-e2e#user#keyboard-admin',
+            parentPathPk: 'local-e2e#user#keyboard-admin#ROOT',
+            visibility: 'private',
+            ownerUserId: 'keyboard-admin',
+            sharedUserIds: [],
+            sharedGroups: [],
+            managerUserIds: ['keyboard-admin'],
+            effectivePermission: 'full',
+            detailLevel: 'manager',
+            capabilities: { canRead: true, canManage: true },
+            createdAt: '2026-08-19T00:00:00.000Z',
+            updatedAt: '2026-08-19T00:01:00.000Z'
+          }]
+        }
+      })
+      return
+    }
+
+    await route.fulfill({ json: { migrations: [] } })
+  })
+}
+
 async function installAssigneeRoute(page: Page) {
   await page.route(/http:\/\/127\.0\.0\.1:8787\/questions(?:\?.*)?$/, async (route) => {
     if (route.request().method() !== 'GET') {
@@ -284,6 +360,71 @@ async function verifyFavoritesKeyboardJourney(page: Page) {
   await page.keyboard.press('Enter')
   await expect(page).toHaveURL(/\/$/)
   await expect(page.getByRole('region', { name: 'チャット', exact: true })).toBeVisible()
+}
+
+async function verifyDocumentsKeyboardJourney(page: Page) {
+  const folderSearch = page.getByRole('searchbox', { name: 'フォルダを検索' })
+  await tabTo(page, folderSearch)
+  await expectKeyboardFocus(folderSearch)
+  await page.keyboard.type('keyboard')
+  await expect(folderSearch).toHaveValue('keyboard')
+
+  const fileNameSearch = page.getByRole('searchbox', { name: 'ファイル名検索' })
+  await tabTo(page, fileNameSearch)
+  await expectKeyboardFocus(fileNameSearch)
+  await page.keyboard.type('keyboard')
+  await expect(fileNameSearch).toHaveValue('keyboard')
+
+  const typeFilter = page.getByRole('combobox', { name: '種別' })
+  await tabTo(page, typeFilter)
+  await expectKeyboardFocus(typeFilter)
+  await page.keyboard.press('ArrowDown')
+  await expect(typeFilter).not.toHaveValue('all')
+
+  const statusFilter = page.getByRole('combobox', { name: '状態' })
+  await tabTo(page, statusFilter)
+  await expectKeyboardFocus(statusFilter)
+  await page.keyboard.press('ArrowDown')
+  await expect(statusFilter).not.toHaveValue('all')
+
+  const folderFilter = page.getByRole('combobox', { name: '所属フォルダ' })
+  await tabTo(page, folderFilter)
+  await expectKeyboardFocus(folderFilter)
+  await page.keyboard.press('ArrowDown')
+  await page.keyboard.press('ArrowDown')
+  await expect(folderFilter).toHaveValue('keyboard-group-1')
+
+  const sortOrder = page.getByRole('combobox', { name: '並び替え' })
+  await tabTo(page, sortOrder)
+  await expectKeyboardFocus(sortOrder)
+  await page.keyboard.press('ArrowDown')
+  await expect(sortOrder).toHaveValue('updatedAsc')
+
+  const pageSize = page.getByRole('combobox', { name: '表示件数' })
+  await tabTo(page, pageSize)
+  await expectKeyboardFocus(pageSize)
+  await page.keyboard.press('ArrowDown')
+  await expect(pageSize).toHaveValue('50')
+
+  const detailTrigger = page.getByRole('button', { name: 'keyboard-policy.pdfの詳細を表示' })
+  await tabTo(page, detailTrigger)
+  await expectKeyboardFocus(detailTrigger)
+  await page.keyboard.press('Enter')
+
+  const dialog = page.getByRole('dialog', { name: 'keyboard-policy.pdf' })
+  await expect(dialog).toBeVisible()
+  const closeButton = dialog.getByRole('button', { name: '文書詳細を閉じる' })
+  await expectKeyboardFocus(closeButton)
+
+  await page.keyboard.press('Shift+Tab')
+  const lastDialogButton = dialog.locator('button:not([disabled])').last()
+  await expect(lastDialogButton).toBeFocused()
+  await page.keyboard.press('Tab')
+  await expect(closeButton).toBeFocused()
+
+  await page.keyboard.press('Escape')
+  await expect(dialog).toHaveCount(0)
+  await expectKeyboardFocus(detailTrigger)
 }
 
 async function verifyAssigneeKeyboardJourney(page: Page) {

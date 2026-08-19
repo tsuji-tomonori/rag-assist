@@ -84,7 +84,7 @@
 | admin | AC-SQ016-007 | pass | blocked | blocked | required E2E-UI-STATE-001でpartial/stale/source/as-of/retry recoveryを区別し、成功dataを保持する。manual evidenceは未実施 |
 | admin | AC-SQ016-008 | not_applicable | blocked | blocked | manual required scopeは未実施 |
 | documents | AC-SQ016-001 | pass | blocked | blocked | required E2E-UI-ZOOM-REFLOW-001のChromium／Firefox／WebKit 640/320 CSS px到達・root overflow 0に加え、required E2E-UI-LAYOUT-STRESS-001で320pxの長いファイル名とregion overflow 0を検証。desktop row 6件はfocus可能なtable ownerとkeyboard代替操作付きsupported_scroll。実browser zoomは未検証 |
-| documents | AC-SQ016-002 | blocked | blocked | blocked | focus candidate auditとkeyboard journey evidence待ち |
+| documents | AC-SQ016-002 | pass | blocked | blocked | required E2E-UI-KEYBOARD-NAV-001をChromium／Firefox／WebKitで実行し、folder／filename search、type／status／folder／sort／page-size、文書detail trigger、dialog初期focus／focus trap／Escape／trigger復帰と3px focus indicatorをkeyboard-onlyで検証。manual keyboard journeyは未実施 |
 | documents | AC-SQ016-003 | pass | blocked | blocked | required E2E-UI-SR-SEMANTICS-001でworkspace／breadcrumb／folder tree／current context、folder／filename search、filter value、file table、detail dialog／主要action／disclosure expandedのChromium AX tree契約とrowのDOM aria-selectedを検証。representative screen readerは未実施 |
 | documents | AC-SQ016-004 | blocked | blocked | blocked | computed/axe contrast baselineとmanual review待ち |
 | documents | AC-SQ016-005 | pass | blocked | blocked | 4 viewportで24px minimumと44px primary targetの未解決candidate 0。manual touch evidenceは未実施 |

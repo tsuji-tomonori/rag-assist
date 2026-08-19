@@ -1,0 +1,63 @@
+# Issue #345 文書画面keyboard required gate 作業記録
+
+- 日時: 2026-08-19 08:50 JST
+- task: `tasks/do/20260819-0850-issue-345-documents-keyboard-required-gate.md`
+- Draft PR: #462
+- base: `main@8e542b31`
+- scope: `documents / AC-SQ016-002`
+
+## 選定理由
+
+current main、Draft PR #462、open PR #461／#464、`tasks/todo/`／`tasks/do/`、UI正本・authored matrix・生成文書を確認した。documentsは320 CSS px reflow、loading／error／permission／retry、Chromium semantic contractまでrequired gate化済みだが、keyboard journeyだけがautomated `blocked`だった。open PR #461が`DocumentWorkspace`と配下componentを変更中のため、production codeと競合しないtest-only GET fixtureと既存DOM contractの検証を最小増分に選んだ。
+
+## 実装
+
+- `E2E-UI-KEYBOARD-NAV-001`へdocuments journeyを追加した。
+- Tabでfolder search、filename search、type／status／folder／sort／page-size、document detail triggerへ到達し、native keyboard入力と3px focus indicatorを検証する。
+- Enterでdetail dialogを開き、close buttonへの初期focus、Shift+Tab／Tabのfocus trap、Escape close、trigger focus restoreを検証する。
+- fixtureはPlaywright route内のGET `/documents`、`/document-groups`、`/documents/reindex-migrations`だけに限定し、production component、API、permission、mutation契約は変更していない。
+
+## 正本・生成物同期
+
+- `REQ_SERVICE_QUALITY_016.md`へ2026-08-19の証跡とcross-browser required境界を追記した。
+- `DES_UI_UX_001.md`のdocuments行とkeyboard／semantic contractを更新した。
+- `ui-traceability.json`で`documents → SQ-016 → AC-SQ016-002`を追加した。
+- `ui-quality-matrix.json`でdocumentsの`AC-SQ016-002`だけをautomated `pass`へ更新し、manual／overallは`blocked`を維持した。
+- 正規generatorで`web-screens.md`、`web-traceability.md`、`web-ui-inventory.json`、`web-ui-quality-matrix.md`を同期した。
+
+## ローカル検証
+
+| 検証 | 結果 | 備考 |
+| --- | --- | --- |
+| UI trace／quality matrix／semantic／manual evidence tests | pass | 25 tests |
+| `node tools/web-inventory/generate-ui-quality-matrix.mjs --check` | pass | staleなし |
+| `python3 scripts/validate_docs.py` | pass | canonical docs |
+| `git diff --check` | pass | whitespace errorなし |
+| Web lint／typecheck／unit／build | CIで検証 | ローカルworktreeに依存packageがなく、取得を伴うnpm操作は実行環境に拒否された |
+| Chromium／Firefox／WebKit E2E | CIで検証 | PR required workflowを正本証跡とする |
+
+## 受け入れ判定
+
+- `AC-20260819-001`: 実装済み。cross-browser CI成功までは未完了。
+- `AC-20260819-002`: 実装済み。cross-browser CI成功までは未完了。
+- `AC-20260819-003`: pass。documentsだけを更新し、manual／overallとcontrastはblockedを維持した。
+- `AC-20260819-004`: 部分完了。ローカル依存不要検査はpass。Web一式とGitHub Actionsは待機中。
+
+## セルフレビュー観点
+
+- clickや`locator.focus()`でkeyboard journeyを代替していない。
+- dialog境界は最初→最後と最後→最初の循環、Escape、trigger復帰を検証する。
+- test-only dataはGET routeに閉じ、非GETはfallbackする。
+- #461と重なるproduction componentを変更していない。
+- browser automationをmanual keyboard、代表screen reader、実browser zoom、touch／実機のpassへ読み替えていない。
+
+## 未完了・blocker
+
+- representative screen reader、manual keyboard、実browser 200%／400% zoom、touch／実機、Firefox／WebKit native accessibility treeは未実施。
+- documentsの`AC-SQ016-004` contrastはblockedのまま。
+- `FR-051`永続化・owner判断とAPI C1 80.48%の既知gapは今回のscope外で未完了。
+- #461統合後は最終DOMでaccessible nameとTab順を再実走する必要がある。
+
+## 次の作業
+
+Draft PR #462のfinal headでWeb UI Quality、MemoRAG CI、semverを確認し、受け入れ確認・セルフレビュー・Issue #345へ結果と未完了を記録する。

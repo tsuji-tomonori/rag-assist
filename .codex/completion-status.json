@@ -8,46 +8,31 @@
     "Do not merge, deploy, release, force-push, or perform destructive changes"
   ],
   "completed_items": [
-    "Confirmed current main 8e542b31 and pull request 462 are converged with behind zero",
-    "Selected history loading, error, retry, confirmed-empty, and permission states as the bounded Firefox and WebKit required-gate increment",
-    "Added E2E-UI-CROSS-BROWSER-STATE-001 as two scenarios per browser and expanded the required cross-browser scope from fourteen to eighteen tests",
-    "Prevented false zero and private detail exposure while preserving retry recovery and permission-specific feedback",
-    "Linked history through SQ-016 and NFR-018 to AC-SQ016-007, AC-NFR018-004, E2E-UI-CROSS-BROWSER-STATE-001, and the required workflow",
-    "Synchronized canonical requirements and design, authored trace and quality matrix, generated Web documents, E2E README, workflow label, task, and report",
-    "Passed repository lint, Web typecheck, Web build, 447 Web unit tests, eighteen-test E2E discovery, 13 trace tests, 5 semantic tests, generated-document freshness, canonical docs, OpenAPI, API code docs, manual evidence structure, infra inventory, hidden Unicode, Taskfile alias, and diff checks",
-    "Diagnosed the first GitHub Actions failure as an E2E expectation mismatch for React's omitted aria-busy attribute and repaired it without relaxing state, security, retry, or false-zero expectations",
-    "Confirmed Web UI Quality run 31915498568 with successful Chromium required and retry-free Firefox and WebKit eighteen of eighteen",
-    "Confirmed MemoRAG CI run 31915498575 and semver run 31915498559 on the repair head",
-    "Confirmed evidence-head Web UI Quality run 31915883140 with retry-free Firefox and WebKit eighteen of eighteen, MemoRAG CI run 31915883144, and semver run 31915883139",
-    "Updated draft pull request 462, acceptance evidence, self-review, and Issue 345 progress evidence",
-    "Kept representative screen reader, real-browser zoom, touch, real-device, native accessibility-tree evidence, owner decisions, and API C1 incomplete"
+    "Confirmed current main 8e542b31 and draft pull request 462 are converged with behind zero",
+    "Selected documents AC-SQ016-002 as the bounded non-duplicative keyboard required-gate increment while open pull request 461 owns production document components",
+    "Added a test-only GET documents fixture and keyboard-only search, filter, sort, page-size, document selection, dialog focus trap, Escape, and trigger-restore journey",
+    "Linked documents through SQ-016 and AC-SQ016-002 to E2E-UI-KEYBOARD-NAV-001 for Chromium, Firefox, and WebKit required execution",
+    "Synchronized canonical requirements and design, authored trace and quality matrix, generated Web documents, task, specification analysis, and work report",
+    "Passed 25 trace, quality-matrix, semantic, and manual-evidence tests, quality-matrix freshness, canonical docs validation, and diff checks",
+    "Kept manual keyboard, representative screen reader, real-browser zoom, touch, real-device, native accessibility-tree evidence, documents contrast, owner decisions, and API C1 incomplete"
   ],
   "remaining_items": [
-    "Confirm GitHub Actions on the final record-only commit",
+    "Publish the implementation to draft pull request 462 and confirm GitHub Actions on its final head",
     "Resolve FR-051 persistence and the profile state-evidence owner decision",
     "Run approved representative-screen-reader, real-browser 200/400-percent zoom, touch, real-device, and Firefox/WebKit native accessibility-tree verification"
   ],
   "blocked_items": [
-    "Local cross-browser E2E execution was denied before startup by the sandbox network-execution approval boundary; GitHub Actions supplies automated execution evidence",
+    "The isolated worktree has no installed Web dependencies and dependency-fetching npm execution was denied by the runtime boundary; GitHub Actions must supply Web lint, typecheck, unit, build, and browser evidence",
     "Manual accessibility evidence remains not release-ready with three blocked and one not-run check",
     "API C1 branch coverage remains below the 85-percent quality target in the latest known evidence"
   ],
   "validation": [
-    { "command": "npm ci", "result": "pass", "note": "Lockfile install completed with 504 packages" },
-    { "command": "npm run lint", "result": "pass" },
-    { "command": "npm run typecheck -w @memorag-mvp/web", "result": "pass" },
-    { "command": "TZ=Asia/Tokyo npm test -w @memorag-mvp/web", "result": "pass", "note": "62 files and 447 tests passed" },
-    { "command": "npm run build -w @memorag-mvp/web", "result": "pass", "note": "Existing chunk-size advisory only" },
-    { "command": "cross-browser required Playwright discovery", "result": "pass", "note": "Eighteen tests across Firefox and WebKit listed" },
-    { "command": "cross-browser required local E2E execution", "result": "blocked", "note": "Sandbox denied network-enabled webServer execution before test startup" },
-    { "command": "GitHub Actions Web UI Quality run 31915498568", "result": "pass", "note": "Chromium required succeeded and Firefox/WebKit completed eighteen of eighteen without retry or flaky result" },
-    { "command": "GitHub Actions Validate Semver Label run 31915498559", "result": "pass" },
-    { "command": "GitHub Actions MemoRAG CI run 31915498575", "result": "pass" },
-    { "command": "GitHub Actions Web UI Quality run 31915883140", "result": "pass", "note": "Chromium required succeeded and Firefox/WebKit completed eighteen of eighteen without retry or flaky result" },
-    { "command": "GitHub Actions MemoRAG CI run 31915883144", "result": "pass" },
-    { "command": "GitHub Actions Validate Semver Label run 31915883139", "result": "pass" },
-    { "command": "UI trace, semantic, canonical, generated, manual evidence, infra, hidden Unicode, OpenAPI, API code docs, Taskfile alias, and diff checks", "result": "pass", "note": "Task CLI was unavailable, so resolved Taskfile commands were run directly" }
+    { "command": "node --test tools/web-inventory/ui-traceability.test.mjs tools/web-inventory/ui-quality-matrix.test.mjs tools/web-inventory/semantic-ui-contract.test.mjs tools/web-inventory/manual-a11y-evidence.test.mjs", "result": "pass", "note": "25 tests passed" },
+    { "command": "node tools/web-inventory/generate-ui-quality-matrix.mjs --check", "result": "pass" },
+    { "command": "python3 scripts/validate_docs.py", "result": "pass" },
+    { "command": "git diff --check", "result": "pass" },
+    { "command": "Web lint, typecheck, unit, build, and Chromium/Firefox/WebKit E2E", "result": "blocked", "note": "Local dependencies are absent; final pull-request CI is pending" }
   ],
-  "next_action": "Confirm workflows on the final record-only commit, then retain draft status pending manual and owner evidence",
+  "next_action": "Publish to draft pull request 462, confirm final-head workflows, and record acceptance and blockers on the pull request and Issue 345",
   "safe_to_continue_without_user": true
 }
