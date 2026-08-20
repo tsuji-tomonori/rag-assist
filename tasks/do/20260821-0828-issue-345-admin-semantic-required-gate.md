@@ -110,3 +110,11 @@ open PR #461は`AdminWorkspace`と配下componentを変更するため、今回�
 - #461統合後にaccessible name／DOMが変わる可能性があり、最終DOMで再実走が必要。
 - Chromium AX treeは代表screen readerやFirefox／WebKit native accessibility treeを代替しない。
 
+## 実施結果
+
+- implementation head: `b8d4d25f`
+- `AC-20260821-001`: pass。管理workspace／heading／section navigationと概要・ユーザー・戻るbuttonをChromium AX treeで確認した。
+- `AC-20260821-002`: pass。ユーザー管理region／heading、search landmark／textbox、状態・並び順のvalue、作成form、ユーザー一覧tableをChromium AX treeで確認した。
+- `AC-20260821-003`: pass。`admin → SQ-016 → AC-SQ016-003 → E2E-UI-SR-SEMANTICS-001 → Chromium required`を正本・設計・authored trace／matrix・生成文書へ同期し、manual／overallはblockedを維持した。
+- `AC-20260821-004`: automated pass。Web UI Quality 37/37、MemoRAG CI、semverがimplementation headで成功した。
+- representative screen reader、manual keyboard、実browser 200%／400% zoom、touch／実機、Firefox／WebKit native accessibility tree、#461統合後の最終DOM再確認は未完了である。したがってtaskは`do`、PRはDraftを維持する。

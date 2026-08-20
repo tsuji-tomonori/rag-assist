@@ -23,10 +23,10 @@ taskとPRは未完了・Draftを維持する。representative screen reader、�
 
 | AC | 状態 | 証拠 |
 |---|---|---|
-| AC-20260821-001 | CI待ち | `admin-overview` AX JSON contractをrequired E2Eへ追加 |
-| AC-20260821-002 | CI待ち | `admin-users` AX JSON contractをrequired E2Eへ追加 |
+| AC-20260821-001 | pass | `admin-overview` AX JSON contractを含むWeb UI Quality 37/37 |
+| AC-20260821-002 | pass | `admin-users` AX JSON contractを含むWeb UI Quality 37/37 |
 | AC-20260821-003 | pass | 正本・設計・authored trace／matrix・生成文書を一意に同期 |
-| AC-20260821-004 | CI待ち | ローカル文書・machine-readable検査はpass、Web／Playwright／final-head CI待ち |
+| AC-20260821-004 | pass | Web UI Quality、MemoRAG CI、semverがimplementation headで成功 |
 
 ## ローカル検証
 
@@ -36,10 +36,11 @@ taskとPRは未完了・Draftを維持する。representative screen reader、�
 | quality matrix freshness | pass | 正規generator `--check` |
 | `python3 scripts/validate_docs.py` | pass | canonical docs |
 | `git diff --check` | pass | whitespace errorなし |
-| Web inventory生成 | partial | `typescript` package不在のためfull generatorは未実行。production sourceは未変更で、authored trace差分だけを既存生成形式へ同期。final-head CIでofficial check必須 |
-| Web lint／typecheck／unit／build | pending | final-head MemoRAG CIで実行 |
-| Chromium E2E | pending | final-head Web UI Qualityで実行 |
-| semver | pending | final-head CIで実行 |
+| Web inventory生成 | pass | ローカルは`typescript` package不在のためfull generator未実行。authored trace差分を既存生成形式へ同期し、MemoRAG CIのofficial freshness checkが成功 |
+| Web lint／typecheck／unit／build | pass | MemoRAG CI `32429727673` |
+| Chromium E2E | pass | Web UI Quality `32429727700`、37/37 |
+| cross-browser required E2E | pass | Web UI Quality `32429727700` |
+| semver | pass | Validate Semver Label `32429727683` |
 
 ## 自己レビュー
 
@@ -56,4 +57,3 @@ taskとPRは未完了・Draftを維持する。representative screen reader、�
 - #461統合後の最終DOM再検証。
 - `FR-051` persistenceのowner判断。
 - API C1 branch coverage 80.48%（85%未達、既存taskで追跡）。
-
