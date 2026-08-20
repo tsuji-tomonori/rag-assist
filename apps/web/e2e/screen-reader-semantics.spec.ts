@@ -42,6 +42,7 @@ const evidenceRoles = new Set([
   'navigation',
   'region',
   'row',
+  'search',
   'searchbox',
   'spinbutton',
   'status',
@@ -56,6 +57,7 @@ test('E2E-UI-SR-SEMANTICS-001: representative views expose stable Chromium acces
   await installDocumentsRoutes(page)
   await installBenchmarkRoutes(page)
   await installAssigneeRoute(page)
+  await installAdminRoutes(page)
   await page.goto('/')
   await expect(page.getByRole('heading', { name: '社内QAチャットボット' })).toBeVisible()
 
@@ -182,6 +184,37 @@ test('E2E-UI-SR-SEMANTICS-001: representative views expose stable Chromium acces
     { role: 'button', name: 'チャットへ戻る' },
     { role: 'region', name: '性能テスト実行履歴。左右にスクロールできます' },
     { role: 'table' }
+  ])
+
+  await page.getByRole('navigation', { name: '画面' }).getByRole('button', { name: '管理者設定' }).click()
+  await expect(page.getByRole('region', { name: '管理者設定', exact: true })).toBeVisible()
+  await expectAccessibilityContract(page, testInfo, 'admin-overview', [
+    { role: 'main' },
+    { role: 'navigation', name: '画面' },
+    { role: 'region', name: '管理者設定' },
+    { role: 'heading', name: '管理者設定' },
+    { role: 'navigation', name: '管理セクション' },
+    { role: 'button', name: '概要' },
+    { role: 'button', name: 'ユーザー' },
+    { role: 'button', name: 'チャットへ戻る' }
+  ])
+
+  await page.getByRole('navigation', { name: '管理セクション' }).getByRole('button', { name: 'ユーザー' }).click()
+  await expect(page.getByRole('region', { name: 'ユーザー管理一覧' })).toBeVisible()
+  await expectAccessibilityContract(page, testInfo, 'admin-users', [
+    { role: 'region', name: '管理者設定' },
+    { role: 'navigation', name: '管理セクション' },
+    { role: 'region', name: 'ユーザー管理一覧' },
+    { role: 'heading', name: 'ユーザー管理' },
+    { role: 'search', name: '管理対象ユーザーを絞り込む' },
+    { role: 'textbox', name: 'ユーザー・ロールを検索' },
+    { role: 'combobox', name: '状態', value: 'すべて' },
+    { role: 'combobox', name: '並び順', value: 'メール昇順' },
+    { role: 'form', name: '管理対象ユーザー作成' },
+    { role: 'textbox', name: 'メール' },
+    { role: 'textbox', name: '表示名' },
+    { role: 'combobox', name: '初期ロール', value: 'システム管理者 (SYSTEM_ADMIN)' },
+    { role: 'table', name: 'ユーザー一覧' }
   ])
 
   await page.getByRole('button', { name: '個人設定', exact: true }).click()
@@ -454,6 +487,105 @@ async function installAssigneeRoute(page: Page) {
         }]
       }
     })
+  })
+}
+
+async function installAdminRoutes(page: Page) {
+  await page.route(/http:\/\/127\.0\.0\.1:8787\/admin\/(?:users|roles|audit-log|usage|costs|aliases(?:\/audit-log)?)(?:\?.*)?$/, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.fallback()
+      return
+    }
+
+    const path = new URL(route.request().url()).pathname
+    if (path === '/admin/users') {
+      await route.fulfill({
+        json: {
+          users: [{
+            userId: 'semantic-admin',
+            email: 'semantic-admin@example.com',
+            displayName: 'Semantic Admin',
+            status: 'active',
+            groups: ['SYSTEM_ADMIN'],
+            createdAt: '2026-08-21T00:00:00.000Z',
+            updatedAt: '2026-08-21T00:00:00.000Z',
+            capability: {
+              canAssignRoles: false,
+              canSuspend: false,
+              canUnsuspend: false,
+              canDelete: false,
+              blockers: ['self_mutation']
+            }
+          }],
+          total: 1,
+          truncated: false,
+          source: 'authoritative_identity',
+          asOf: '2026-08-21T00:00:00.000Z',
+          version: 'semantic-ledger-v1'
+        }
+      })
+      return
+    }
+
+    if (path === '/admin/roles') {
+      await route.fulfill({
+        json: {
+          roles: [{
+            role: 'SYSTEM_ADMIN',
+            displayName: 'システム管理者',
+            description: 'システム全体の管理を行います。',
+            kind: 'systemPreset',
+            permissions: []
+          }],
+          catalogVersion: 'semantic-role-catalog-v1',
+          source: 'canonical-application-role-catalog',
+          asOf: '2026-08-21T00:00:00.000Z'
+        }
+      })
+      return
+    }
+
+    if (path === '/admin/audit-log') {
+      await route.fulfill({
+        json: {
+          auditLog: [],
+          total: 0,
+          truncated: false,
+          source: 'managed-user-audit-ledger',
+          asOf: '2026-08-21T00:00:00.000Z'
+        }
+      })
+      return
+    }
+
+    if (path === '/admin/aliases') {
+      await route.fulfill({
+        json: {
+          aliases: [],
+          total: 0,
+          truncated: false,
+          source: 'tenant-alias-ledger',
+          asOf: '2026-08-21T00:00:00.000Z',
+          version: 'semantic-alias-ledger-v1'
+        }
+      })
+      return
+    }
+
+    if (path === '/admin/aliases/audit-log') {
+      await route.fulfill({
+        json: {
+          auditLog: [],
+          total: 0,
+          truncated: false,
+          source: 'tenant-alias-ledger',
+          asOf: '2026-08-21T00:00:00.000Z'
+        }
+      })
+      return
+    }
+
+    await route.fulfill({ json: null })
   })
 }
 

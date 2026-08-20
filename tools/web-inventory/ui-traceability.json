@@ -386,7 +386,7 @@
         { "id": "FR-096", "acceptanceCriteria": ["AC-FR096-005"] },
         { "id": "FR-097", "acceptanceCriteria": ["AC-FR097-001", "AC-FR097-002"] },
         { "id": "FR-098", "acceptanceCriteria": ["AC-FR098-003"] },
-        { "id": "SQ-016", "acceptanceCriteria": ["AC-SQ016-002"] }
+        { "id": "SQ-016", "acceptanceCriteria": ["AC-SQ016-002", "AC-SQ016-003"] }
       ],
       "verifications": [
         { "id": "E2E-VIEW-ADMIN-001", "status": "implemented", "evidence": ["apps/web/e2e/visual-regression.spec.ts"] },
