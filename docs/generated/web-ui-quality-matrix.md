@@ -46,7 +46,7 @@
 | assignee | AC-SQ016-001 | pass | blocked | blocked | 4 / 2 / 1 column remediation後、required E2E-UI-ZOOM-REFLOW-001をChromium／Firefox／WebKitの640/320 CSS pxで実行し、到達・root overflow 0を検証。実browser zoomは未検証 |
 | assignee | AC-SQ016-002 | pass | blocked | blocked | required E2E-UI-KEYBOARD-NAV-001をChromium／Firefox／WebKitで実行し、ステータス絞り込み・検索・問い合わせ選択・回答入力・通知切替・一時保持と3px focus indicatorをkeyboard-onlyで検証。manual keyboard journeyは未実施 |
 | assignee | AC-SQ016-003 | pass | blocked | blocked | required E2E-UI-SR-SEMANTICS-001でworkspace／一覧／lane／選択中詳細／回答form、filter value、question pressed、notify checked、polite statusのChromium AX tree契約を検証。representative screen readerは未実施 |
-| assignee | AC-SQ016-004 | blocked | blocked | blocked | computed/axe contrast baselineとmanual review待ち |
+| assignee | AC-SQ016-004 | pass | blocked | blocked | required E2E-UI-CONTRAST-002で320 / 1280 CSS pxの担当者対応color-contrast違反0、検索入力の実computed 3px focus indicator比3:1以上、permission stateの可視text・alert・private content suppressionを検証。manual contrast reviewと実browser zoomは未実施 |
 | assignee | AC-SQ016-005 | pass | blocked | blocked | checkboxを24px、RailNav primary targetを44px classへ修正し、4 viewportで未解決candidate 0。manual touch evidenceは未実施 |
 | assignee | AC-SQ016-006 | pass | blocked | blocked | 4 viewportのreduced-motion computed auditはpass。orientation / safe-area / virtual-keyboard実機は未検証 |
 | assignee | AC-SQ016-007 | pass | blocked | blocked | required E2E-UI-STATE-001でloading→500→retry→confirmed emptyとHTTP 403を区別し、false zero、未確認kanban、private detail露出を防ぐ。manual evidenceは未実施 |
