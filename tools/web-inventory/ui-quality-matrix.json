@@ -53,7 +53,7 @@
       "automated": {
         "required": true,
         "owner": "Phase A audit / Phase B-C remediation",
-        "evidence": ["apps/web/e2e/visual-regression.spec.ts"]
+        "evidence": ["apps/web/e2e/visual-regression.spec.ts", ".github/workflows/web-ui-quality.yml"]
       },
       "manual": {
         "required": true,
@@ -130,7 +130,7 @@
         "AC-SQ016-001": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "required E2E-UI-ZOOM-REFLOW-001のChromium／Firefox／WebKit 640/320 CSS px到達・root overflow 0に加え、required E2E-UI-LAYOUT-STRESS-001で320pxの長文回答・長い引用名とregion overflow 0を検証。実browser zoomは未検証" },
         "AC-SQ016-002": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "required E2E-UI-KEYBOARD-NAV-001をChromium／Firefox／WebKitで実行し、質問textboxへのTab到達、composerの3px focus indicator、Enter送信、処理中から回答への復帰をkeyboard-onlyで検証。manual keyboard journeyは未実施" },
         "AC-SQ016-003": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "required E2E-UI-SR-SEMANTICS-001でChromium AX tree、E2E-UI-CROSS-BROWSER-SEMANTICS-001でFirefox／WebKitのlogin / chat ARIA snapshotとdynamic ARIA stateを検証。代表screen readerのmanual evidenceは未実施" },
-        "AC-SQ016-004": { "automated": "blocked", "manual": "blocked", "overall": "blocked", "note": "computed/axe contrast baselineとmanual review待ち" },
+        "AC-SQ016-004": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "required E2E-UI-CONTRAST-001で320 / 1280 CSS pxのchat color-contrast違反0、composerの実computed 3px focus indicator比3:1以上、permission stateの可視text・alert・disabled controlを検証。manual contrast reviewと実browser zoomは未実施" },
         "AC-SQ016-005": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "4 viewportで24px minimumと44px primary targetの未解決candidate 0。manual touch evidenceは未実施" },
         "AC-SQ016-006": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "4 viewportのcomputed auditとChromium／Firefox／WebKit required E2E-UI-LAYOUT-STRESS-001でreduced motion下の長文回答を検証。orientation / safe-area / virtual-keyboard実機は未検証" },
         "AC-SQ016-007": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "required E2E-UI-STATE-001の初期／処理中／retry／error／permissionに加え、Chromium／Firefox／WebKit required E2E-UI-LAYOUT-STRESS-001で長文回答と長い引用名を検証。manual evidenceは未実施" },
