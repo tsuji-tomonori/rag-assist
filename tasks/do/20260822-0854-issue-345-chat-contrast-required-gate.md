@@ -75,13 +75,13 @@ chat限定の`E2E-UI-CONTRAST-001`を追加し、320 / 1280 CSS pxのtext contra
 
 ## 受け入れ条件
 
-- [ ] `E2E-UI-CONTRAST-001`が320 / 1280 CSS pxのchat text contrastをaxeで検査し、seriousな`color-contrast` violation 0を要求する。
-- [ ] 同E2Eが質問入力composerの実computed 3px focus indicatorと背景比3:1以上を検査する。
-- [ ] 同E2Eがpermission stateの可視text、alert semantics、disabled送信controlを検査し、色だけに依存しない状態cueを証明する。
-- [ ] `chat → SQ-016 → AC-SQ016-004 → E2E-UI-CONTRAST-001`が正本、authored trace/matrix、生成文書で一致する。
-- [ ] chatのautomated statusだけがpassとなり、manual / overallおよび他画面の未検証statusはblockedを維持する。
-- [ ] 選定したlint、typecheck、unit、build、targeted E2E、trace/matrix、docs checkが成功する。
-- [ ] Draft PR #462に最終headと検証結果を反映し、受け入れ確認・セルフレビュー・Issue #345進捗を日本語で記録する。
+- [x] `E2E-UI-CONTRAST-001`が320 / 1280 CSS pxのchat text contrastをaxeで検査し、seriousな`color-contrast` violation 0を要求する。
+- [x] 同E2Eが質問入力composerの実computed 3px focus indicatorと背景比3:1以上を検査する。
+- [x] 同E2Eがpermission stateの可視text、alert semantics、disabled送信controlを検査し、色だけに依存しない状態cueを証明する。
+- [x] `chat → SQ-016 → AC-SQ016-004 → E2E-UI-CONTRAST-001`が正本、authored trace/matrix、生成文書で一致する。
+- [x] chatのautomated statusだけがpassとなり、manual / overallおよび他画面の未検証statusはblockedを維持する。
+- [x] 選定したlint、typecheck、unit、build、targeted E2E、trace/matrix、docs checkが成功する。
+- [x] Draft PR #462に最終headと検証結果を反映し、受け入れ確認・セルフレビュー・Issue #345進捗を日本語で記録する。
 
 ## 検証計画
 
@@ -109,3 +109,10 @@ chat限定の`E2E-UI-CONTRAST-001`を追加し、320 / 1280 CSS pxのtext contra
 - axeはcanvas/image/brand fidelityやmanual知覚を完全には代替しない。
 - CSS viewport 320pxは実browser 400% zoomを代替しない。
 - PlaywrightのChromium computed styleはFirefox / WebKit native renderingやrepresentative screen readerを代替しない。
+
+## 実施結果
+
+- 実装head `40872aed0a040f3c772a24c3aea80a4e9db5e18d`でWeb UI Quality、MemoRAG CI、semver検査が成功した。
+- ローカルでWeb lint、typecheck、unit 449件、build、trace / semantic / docs checksが成功した。
+- [受け入れ確認](https://github.com/tsuji-tomonori/rag-assist/pull/462#issuecomment-5376732302)、[セルフレビュー](https://github.com/tsuji-tomonori/rag-assist/pull/462#issuecomment-5376733157)、[Issue #345進捗](https://github.com/tsuji-tomonori/rag-assist/issues/345#issuecomment-5376734373)を記録した。
+- 本taskの自動証跡ACは満たしたが、Issue #345全体のmanual evidence、他画面contrast、owner判断、#461統合後再検証が未完了のため、状態は`do`を維持する。

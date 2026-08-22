@@ -58,7 +58,7 @@ Issue #345を、current main、前回後の変更、open work、task、正本・
 
 ## 指示へのfit評価
 
-総合fit: 4.0 / 5.0。実装・正本同期・ローカル検証は満たしたが、required Playwright実走、final-head CI、GitHub記録がこの時点では未完了である。
+総合fit: 4.8 / 5.0。実装・正本同期・ローカル検証・required CI・GitHub記録を完了した。manual screen reader、実browser zoom、実機、他画面contrast、owner判断は未完了として維持した。
 
 - 小さな改善1件: 適合。chat contrast evidenceだけを追加。
 - 320px / keyboard / screen reader / states: 320pxとfocus / permission cueを自動検証。manual screen readerと実zoomは未完了を維持。
@@ -67,9 +67,18 @@ Issue #345を、current main、前回後の変更、open work、task、正本・
 - 競合・正本一意性: #461 production pathを避け、生成物を手編集しない。
 - merge / deploy / release / force-push: 未実施。
 
+## GitHub証跡
+
+- 実装head: `40872aed0a040f3c772a24c3aea80a4e9db5e18d`
+- [Web UI Quality](https://github.com/tsuji-tomonori/rag-assist/actions/runs/32539531822): required Chromium、Firefox / WebKitとも成功
+- [MemoRAG CI](https://github.com/tsuji-tomonori/rag-assist/actions/runs/32539531824): lint、typecheck、unit / coverage、build、docs freshnessを含め成功
+- [Validate Semver Label](https://github.com/tsuji-tomonori/rag-assist/actions/runs/32539531818): 成功
+- [受け入れ確認](https://github.com/tsuji-tomonori/rag-assist/pull/462#issuecomment-5376732302)
+- [セルフレビュー](https://github.com/tsuji-tomonori/rag-assist/pull/462#issuecomment-5376733157)
+- [Issue #345進捗](https://github.com/tsuji-tomonori/rag-assist/issues/345#issuecomment-5376734373)
+
 ## 未対応・リスク
 
-- final-head CIとGitHubコメントはcommit / push後に追記する。
 - manual contrast、representative screen reader、実browser 200% / 400% zoom、touch / real deviceは未完了。
 - assignee / documents / profileのcontrast automated evidenceはblocked。
 - #461統合後はfinal production DOMで再実走が必要。
