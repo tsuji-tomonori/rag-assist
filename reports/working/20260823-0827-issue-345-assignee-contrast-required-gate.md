@@ -42,6 +42,7 @@ Issue #345を、current main、前回後の変更、open work、task、正本・
 - targeted Playwright実走はlocalhost API / Web server起動がsandbox approval境界で停止したため未実施。final-head GitHub Actions Web UI Qualityで検証する。
 - `tsc -p apps/web/e2e/tsconfig.json --noEmit`は既存`cross-screen-audit.ts`の`DOMTokenList` / `NodeList` iterable設定4件で失敗した。今回の差分由来ではなくrepository required scriptにも含まれないが、合格扱いしない。
 - 初回unitはTZ未指定で日付期待2件が失敗した。UTC固定後に同じ449件を再実行して成功した。
+- 初回Web UI Quality `32605762679`は既存38件とFirefox / WebKit jobが成功し、新規testのみaxe include対象0件で失敗した。production regionが`aria-labelledby`で命名される実DOMに合わせて`.assignee-workspace[aria-labelledby]`へ境界を修正し、role / name、contrast rule、閾値、permission cueの要求は維持した。
 
 ## 成果物
 

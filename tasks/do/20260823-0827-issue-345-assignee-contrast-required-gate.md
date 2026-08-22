@@ -103,6 +103,12 @@ axeの全画面baselineとkeyboard focus幅の証跡が別々に存在し、`AC-
 - PR #461のshared UI production pathと競合していないか。
 - 正本と生成物の所在が重複していないか。
 
+## CI修復記録
+
+- 初回Web UI Quality `32605762679`は、既存38件とFirefox / WebKit jobが成功し、新規`E2E-UI-CONTRAST-002`だけが初回・retryとも失敗した。
+- 失敗原因はaxe対象を`section[aria-label="担当者対応"]`と指定した一方、production regionは`aria-labelledby`で命名されており、対象要素が0件だったこと。role / accessible nameによるPlaywright検査は同じDOMで成功していた。
+- axe対象を実DOMの`.assignee-workspace[aria-labelledby]`へ限定し直した。regionのrole / name、`color-contrast` rule、focus 3:1、permission複数cueの要求は緩和していない。
+
 ## リスク
 
 - axeはcanvas/image/brand fidelityやmanual知覚を完全には代替しない。

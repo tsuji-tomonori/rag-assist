@@ -1130,7 +1130,7 @@ test('E2E-UI-CONTRAST-002: assigneeのtext・focus indicator・permission state�
     expect(focusIndicator.contrastRatio).toBeGreaterThanOrEqual(3)
 
     const contrastScan = await new AxeBuilder({ page })
-      .include('section[aria-label="担当者対応"]')
+      .include('.assignee-workspace[aria-labelledby]')
       .withRules(['color-contrast'])
       .analyze()
     expect(
@@ -1163,7 +1163,7 @@ test('E2E-UI-CONTRAST-002: assigneeのtext・focus indicator・permission state�
   await expect(dataRegion.locator('.assignee-kanban')).toHaveCount(0)
 
   const permissionContrastScan = await new AxeBuilder({ page })
-    .include('section[aria-label="担当者対応"]')
+    .include('.assignee-workspace[aria-labelledby]')
     .withRules(['color-contrast'])
     .analyze()
   expect(
