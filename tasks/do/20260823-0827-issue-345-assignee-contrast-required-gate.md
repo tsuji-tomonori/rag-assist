@@ -108,6 +108,8 @@ axeの全画面baselineとkeyboard focus幅の証跡が別々に存在し、`AC-
 - 初回Web UI Quality `32605762679`は、既存38件とFirefox / WebKit jobが成功し、新規`E2E-UI-CONTRAST-002`だけが初回・retryとも失敗した。
 - 失敗原因はaxe対象を`section[aria-label="担当者対応"]`と指定した一方、production regionは`aria-labelledby`で命名されており、対象要素が0件だったこと。role / accessible nameによるPlaywright検査は同じDOMで成功していた。
 - axe対象を実DOMの`.assignee-workspace[aria-labelledby]`へ限定し直した。regionのrole / name、`color-contrast` rule、focus 3:1、permission複数cueの要求は緩和していない。
+- 修正head `d56ee34f`のWeb UI QualityはChromium 39/39、Firefox / WebKit 18/18で成功した。MemoRAG CI `32606041959`は実処理がbuild / synthまで成功した一方、公開時にlarge generated JSONの転送出力が途中省略され、`Check generated web inventory`だけがfailure outcomeとなった。
+- local検証treeの生成JSONはfreshness check成功・Git objectも完全であり、source / generator起因ではない。公開branch上の破損blobだけをlocal Git objectと一致する完全内容へ復旧し、final-head CIを再実行する。
 
 ## リスク
 

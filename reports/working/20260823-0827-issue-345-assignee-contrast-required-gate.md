@@ -43,6 +43,7 @@ Issue #345を、current main、前回後の変更、open work、task、正本・
 - `tsc -p apps/web/e2e/tsconfig.json --noEmit`は既存`cross-screen-audit.ts`の`DOMTokenList` / `NodeList` iterable設定4件で失敗した。今回の差分由来ではなくrepository required scriptにも含まれないが、合格扱いしない。
 - 初回unitはTZ未指定で日付期待2件が失敗した。UTC固定後に同じ449件を再実行して成功した。
 - 初回Web UI Quality `32605762679`は既存38件とFirefox / WebKit jobが成功し、新規testのみaxe include対象0件で失敗した。production regionが`aria-labelledby`で命名される実DOMに合わせて`.assignee-workspace[aria-labelledby]`へ境界を修正し、role / name、contrast rule、閾値、permission cueの要求は維持した。
+- 修正head `d56ee34f`のWeb UI QualityはChromium 39/39、Firefox / WebKit 18/18で成功した。MemoRAG CI `32606041959`はAPI / Web tests、build、synthまで成功したが、公開時にlarge generated JSONの転送出力が途中省略され、`Check generated web inventory`だけがfailure outcomeになった。local Git objectは完全かつfreshness check成功のため、公開branch上の破損blobをlocal内容と一致させて再実行する。
 
 ## 成果物
 
