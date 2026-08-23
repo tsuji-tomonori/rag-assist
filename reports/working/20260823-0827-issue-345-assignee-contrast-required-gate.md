@@ -60,7 +60,7 @@ Issue #345を、current main、前回後の変更、open work、task、正本・
 
 ## 指示へのfit評価
 
-総合fit: 4.3 / 5.0。実装・正本同期・ローカル検証は完了したが、final-head CIとGitHub記録はこの時点で未完了。manual screen reader、実browser zoom、実機、他画面contrast、owner判断は未完了として維持した。
+総合fit: 4.8 / 5.0。実装・正本同期・ローカル検証・GitHub required CI・受け入れ確認・セルフレビュー・Issue進捗記録まで完了した。manual screen reader、実browser zoom、実機、他画面contrast、owner判断は未完了として維持した。
 
 - 小さな改善1件: 適合。担当者対応contrast evidenceだけを追加。
 - 320px / keyboard / screen reader / states: 320pxとfocus / permission cueを自動検証対象にした。manual screen readerと実zoomは未完了を維持。
@@ -71,13 +71,13 @@ Issue #345を、current main、前回後の変更、open work、task、正本・
 
 ## GitHub証跡
 
-- 実装head: CI待ち
-- Web UI Quality: CI待ち
-- MemoRAG CI: CI待ち
-- Validate Semver Label: CI待ち
-- 受け入れ確認: 未記録
-- セルフレビュー: 未記録
-- Issue #345進捗: 未記録
+- 実装・復旧head: `f0dbae37762a48bc0084463a824c894e8d8a7bf5`（local / remote tree `280d6aba6f75ef6b391c39f21402c1b360f02b12`一致）
+- [Web UI Quality](https://github.com/tsuji-tomonori/rag-assist/actions/runs/32606519075): Chromium 39/39、Firefox / WebKit 18/18成功
+- [MemoRAG CI](https://github.com/tsuji-tomonori/rag-assist/actions/runs/32606519106): 成功
+- [Validate Semver Label](https://github.com/tsuji-tomonori/rag-assist/actions/runs/32606519072): 成功
+- [受け入れ確認](https://github.com/tsuji-tomonori/rag-assist/pull/462#issuecomment-5383278680)
+- [セルフレビュー](https://github.com/tsuji-tomonori/rag-assist/pull/462#issuecomment-5383278611)
+- [Issue #345進捗](https://github.com/tsuji-tomonori/rag-assist/issues/345#issuecomment-5383278545)
 
 ## 未対応・リスク
 

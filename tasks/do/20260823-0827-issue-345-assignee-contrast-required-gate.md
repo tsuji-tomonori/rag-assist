@@ -74,13 +74,13 @@ axeの全画面baselineとkeyboard focus幅の証跡が別々に存在し、`AC-
 
 ## 受け入れ条件
 
-- [ ] `E2E-UI-CONTRAST-002`が320 / 1280 CSS pxの担当者対応text contrastをaxeで検査し、`color-contrast` violation 0を要求する。
-- [ ] 同E2Eが検索入力の実computed 3px focus indicatorと背景比3:1以上を検査する。
-- [ ] 同E2Eがpermission stateの可視text、alert semantics、private content suppressionを検査し、色だけに依存しない状態cueを証明する。
-- [ ] `assignee → SQ-016 → AC-SQ016-004 → E2E-UI-CONTRAST-002`が正本、authored trace/matrix、生成文書で一致する。
-- [ ] 担当者対応のautomated statusだけがpassとなり、manual / overallおよび他画面の未検証statusはblockedを維持する。
-- [ ] 選定したlint、typecheck、unit、build、targeted E2E、trace/matrix、docs checkが成功する。
-- [ ] Draft PR #462に最終headと検証結果を反映し、受け入れ確認・セルフレビュー・Issue #345進捗を日本語で記録する。
+- [x] `E2E-UI-CONTRAST-002`が320 / 1280 CSS pxの担当者対応text contrastをaxeで検査し、`color-contrast` violation 0を要求する。
+- [x] 同E2Eが検索入力の実computed 3px focus indicatorと背景比3:1以上を検査する。
+- [x] 同E2Eがpermission stateの可視text、alert semantics、private content suppressionを検査し、色だけに依存しない状態cueを証明する。
+- [x] `assignee → SQ-016 → AC-SQ016-004 → E2E-UI-CONTRAST-002`が正本、authored trace/matrix、生成文書で一致する。
+- [x] 担当者対応のautomated statusだけがpassとなり、manual / overallおよび他画面の未検証statusはblockedを維持する。
+- [x] 選定したlint、typecheck、unit、build、targeted E2E、trace/matrix、docs checkが成功する。
+- [x] Draft PR #462に最終headと検証結果を反映し、受け入れ確認・セルフレビュー・Issue #345進捗を日本語で記録する。
 
 ## 検証計画
 
@@ -110,6 +110,18 @@ axeの全画面baselineとkeyboard focus幅の証跡が別々に存在し、`AC-
 - axe対象を実DOMの`.assignee-workspace[aria-labelledby]`へ限定し直した。regionのrole / name、`color-contrast` rule、focus 3:1、permission複数cueの要求は緩和していない。
 - 修正head `d56ee34f`のWeb UI QualityはChromium 39/39、Firefox / WebKit 18/18で成功した。MemoRAG CI `32606041959`は実処理がbuild / synthまで成功した一方、公開時にlarge generated JSONの転送出力が途中省略され、`Check generated web inventory`だけがfailure outcomeとなった。
 - local検証treeの生成JSONはfreshness check成功・Git objectも完全であり、source / generator起因ではない。公開branch上の破損blobだけをlocal Git objectと一致する完全内容へ復旧し、final-head CIを再実行する。
+
+## 最終検証・記録
+
+- 実装・復旧head: `f0dbae37762a48bc0084463a824c894e8d8a7bf5`、local / remote tree: `280d6aba6f75ef6b391c39f21402c1b360f02b12`
+- [Web UI Quality](https://github.com/tsuji-tomonori/rag-assist/actions/runs/32606519075): Chromium 39/39、Firefox / WebKit 18/18成功
+- [MemoRAG CI](https://github.com/tsuji-tomonori/rag-assist/actions/runs/32606519106): 成功
+- [semver検査](https://github.com/tsuji-tomonori/rag-assist/actions/runs/32606519072): 成功
+- [受け入れ確認](https://github.com/tsuji-tomonori/rag-assist/pull/462#issuecomment-5383278680)
+- [セルフレビュー](https://github.com/tsuji-tomonori/rag-assist/pull/462#issuecomment-5383278611)
+- [Issue #345進捗](https://github.com/tsuji-tomonori/rag-assist/issues/345#issuecomment-5383278545)
+
+このtaskの自動受け入れ条件は満たしたが、Issue #345全体のmanual evidence、実browser zoom、実機、documents / profile contrast、owner判断が未完了のため、状態は`do`を維持する。
 
 ## リスク
 
