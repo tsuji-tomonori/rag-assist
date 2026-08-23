@@ -1191,6 +1191,113 @@ test('E2E-UI-CONTRAST-002: assigneeのtext・focus indicator・permission state�
   })
 })
 
+test('E2E-UI-CONTRAST-003: documentsのtext・focus indicator・permission stateはcontrastを満たし色だけに依存しない @ui-quality', async ({ page }, testInfo) => {
+  await signIn(page)
+
+  const viewportEvidence = []
+  for (const width of [320, 1280] as const) {
+    await page.setViewportSize({ width, height: width === 320 ? 720 : 900 })
+    await page.goto('/documents')
+
+    const documentsRegion = page.getByRole('region', { name: 'ドキュメント管理', exact: true })
+    const folderSearch = documentsRegion.getByPlaceholder('フォルダを検索')
+    await expect(documentsRegion).toBeVisible()
+    await folderSearch.focus()
+
+    const focusIndicator = await folderSearch.evaluate((element) => {
+      const style = getComputedStyle(element)
+      const parseColor = (value: string) => {
+        const channels = value.match(/[\d.]+/g)?.slice(0, 3).map(Number)
+        if (!channels || channels.length !== 3) throw new Error(`Unsupported computed color: ${value}`)
+        return channels
+      }
+      const luminance = (value: string) => {
+        const channels = parseColor(value).map((channel) => {
+          const normalized = channel / 255
+          return normalized <= 0.04045
+            ? normalized / 12.92
+            : ((normalized + 0.055) / 1.055) ** 2.4
+        })
+        return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2]
+      }
+      const foreground = luminance(style.outlineColor)
+      const background = luminance(style.backgroundColor)
+      const ratio = (Math.max(foreground, background) + 0.05) / (Math.min(foreground, background) + 0.05)
+      return {
+        outlineStyle: style.outlineStyle,
+        outlineWidth: Number.parseFloat(style.outlineWidth),
+        outlineColor: style.outlineColor,
+        backgroundColor: style.backgroundColor,
+        contrastRatio: ratio
+      }
+    })
+
+    expect(focusIndicator.outlineStyle).toBe('solid')
+    expect(focusIndicator.outlineWidth).toBeGreaterThanOrEqual(3)
+    expect(focusIndicator.contrastRatio).toBeGreaterThanOrEqual(3)
+
+    const contrastScan = await new AxeBuilder({ page })
+      .include('section.document-workspace[aria-label="ドキュメント管理"]')
+      .withRules(['color-contrast'])
+      .analyze()
+    expect(
+      contrastScan.violations,
+      `${width}px documents color contrast violations\n${JSON.stringify(contrastScan.violations, null, 2)}`
+    ).toEqual([])
+
+    viewportEvidence.push({
+      width,
+      focusIndicator,
+      axeRule: 'color-contrast',
+      axeViolations: contrastScan.violations
+    })
+  }
+
+  await page.route(/http:\/\/(api\.visual\.test|127\.0\.0\.1:8787)\/(?:documents|document-groups|documents\/reindex-migrations)$/, async (route) => {
+    if (route.request().method() === 'GET') {
+      await route.fulfill({ status: 403, contentType: 'text/plain', body: 'forbidden private document principal' })
+      return
+    }
+    await route.fallback()
+  })
+  await page.goto('/documents')
+  const documentsRegion = page.getByRole('region', { name: 'ドキュメント管理', exact: true })
+  const dataRegion = page.locator('#documents-resource-region')
+  const permissionAlert = documentsRegion.locator('[data-state-kind="permission"]')
+  await expect(permissionAlert).toContainText('文書ワークスペースを表示できません')
+  await expect(permissionAlert).toHaveAttribute('role', 'alert')
+  await expect(permissionAlert).not.toContainText('private document principal')
+  await expect(dataRegion.locator('.document-file-panel')).toHaveCount(0)
+
+  const permissionContrastScan = await new AxeBuilder({ page })
+    .include('section.document-workspace[aria-label="ドキュメント管理"]')
+    .withRules(['color-contrast'])
+    .analyze()
+  expect(
+    permissionContrastScan.violations,
+    `documents permission state color contrast violations\n${JSON.stringify(permissionContrastScan.violations, null, 2)}`
+  ).toEqual([])
+
+  await testInfo.attach('documents-contrast-evidence.json', {
+    body: Buffer.from(`${JSON.stringify({
+      schemaVersion: 1,
+      requirement: 'SQ-016',
+      acceptanceCriterion: 'AC-SQ016-004',
+      browserProject: testInfo.project.name,
+      viewportEvidence,
+      colorIndependence: {
+        visibleText: await permissionAlert.innerText(),
+        semanticRole: await permissionAlert.getAttribute('role'),
+        privateDocumentPanelCount: await dataRegion.locator('.document-file-panel').count(),
+        axeRule: 'color-contrast',
+        axeViolations: permissionContrastScan.violations
+      },
+      boundary: 'Chromium automated axe/computed-style evidence; representative screen reader, manual perception, real browser zoom, OS scaling, and real-device evidence are not covered.'
+    }, null, 2)}\n`),
+    contentType: 'application/json'
+  })
+})
+
 test('E2E-UI-NAV-002: 最大権限 persona は 320px mobile menu から全許可 view と個人設定へ到達する @smoke @mobile-required', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 720 })
   await page.emulateMedia({ reducedMotion: 'reduce' })
