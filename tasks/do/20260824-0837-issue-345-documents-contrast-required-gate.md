@@ -74,13 +74,13 @@ axeの全画面baselineとkeyboard focus幅の証跡が別々に存在し、`AC-
 
 ## 受け入れ条件
 
-- [ ] `E2E-UI-CONTRAST-003`が320 / 1280 CSS pxの文書画面text contrastをaxeで検査し、`color-contrast` violation 0を要求する。
-- [ ] 同E2Eがフォルダ検索入力の実computed 3px focus indicatorと背景比3:1以上を検査する。
-- [ ] 同E2Eがpermission stateの可視text、alert semantics、private content suppressionを検査し、色だけに依存しない状態cueを証明する。
-- [ ] `documents → SQ-016 → AC-SQ016-004 → E2E-UI-CONTRAST-003`が正本、authored trace/matrix、生成文書で一致する。
-- [ ] 文書画面のautomated statusだけがpassとなり、manual / overallおよびprofileの未検証statusはblockedを維持する。
-- [ ] 選定したlint、typecheck、unit、build、targeted E2E、trace/matrix、docs checkが成功する。
-- [ ] Draft PR #462に最終headと検証結果を反映し、受け入れ確認・セルフレビュー・Issue #345進捗を日本語で記録する。
+- [x] `E2E-UI-CONTRAST-003`が320 / 1280 CSS pxの文書画面text contrastをaxeで検査し、`color-contrast` violation 0を要求する。
+- [x] 同E2Eがフォルダ検索入力の実computed 3px focus indicatorと背景比3:1以上を検査する。
+- [x] 同E2Eがpermission stateの可視text、alert semantics、private content suppressionを検査し、色だけに依存しない状態cueを証明する。
+- [x] `documents → SQ-016 → AC-SQ016-004 → E2E-UI-CONTRAST-003`が正本、authored trace/matrix、生成文書で一致する。
+- [x] 文書画面のautomated statusだけがpassとなり、manual / overallおよびprofileの未検証statusはblockedを維持する。
+- [x] 選定したlint、typecheck、unit、build、targeted E2E、trace/matrix、docs checkが成功する。
+- [x] Draft PR #462に実装headと検証結果を反映し、受け入れ確認・セルフレビュー・Issue #345進捗を日本語で記録する。
 
 ## 検証計画
 
@@ -108,3 +108,15 @@ axeの全画面baselineとkeyboard focus幅の証跡が別々に存在し、`AC-
 - axeはcanvas/image/brand fidelityやmanual知覚を完全には代替しない。
 - CSS viewport 320pxは実browser 400% zoomを代替しない。
 - PlaywrightのChromium computed styleはFirefox / WebKit native renderingやrepresentative screen readerを代替しない。
+
+## 実装head検証・記録
+
+- head: `79ec9f2ac1c743703dc9674d5222617afdbb3c69`
+- [Web UI Quality](https://github.com/tsuji-tomonori/rag-assist/actions/runs/32674766499): Chromium 40/40、Firefox / WebKit 18/18成功
+- [MemoRAG CI](https://github.com/tsuji-tomonori/rag-assist/actions/runs/32674766496): 成功
+- [semver検査](https://github.com/tsuji-tomonori/rag-assist/actions/runs/32674766517): 成功
+- [受け入れ確認](https://github.com/tsuji-tomonori/rag-assist/pull/462#issuecomment-5389204565)
+- [セルフレビュー](https://github.com/tsuji-tomonori/rag-assist/pull/462#issuecomment-5389204505)
+- [Issue #345進捗](https://github.com/tsuji-tomonori/rag-assist/issues/345#issuecomment-5389204414)
+
+このtaskの自動受け入れ条件は満たしたが、Issue #345全体のmanual evidence、実browser zoom、実機、profile contrast、owner判断が未完了のため、状態は`do`を維持する。

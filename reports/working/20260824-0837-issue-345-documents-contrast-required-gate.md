@@ -70,8 +70,18 @@ Issue #345をcurrent main、前回差分、open PR / Issue、task、正本・生
 - task、E2E、正本、authored trace / matrix、生成文書を一意な経路で同期した。
 - automation evidenceをmanual / real zoom完了へ読み替えず、taskとDraft PRを未完了として維持する。
 
+## GitHub Actions・記録
+
+- 実装head: `79ec9f2ac1c743703dc9674d5222617afdbb3c69`
+- [Web UI Quality](https://github.com/tsuji-tomonori/rag-assist/actions/runs/32674766499): Chromium 40/40、Firefox / WebKit 18/18成功
+- [MemoRAG CI](https://github.com/tsuji-tomonori/rag-assist/actions/runs/32674766496): 成功
+- [semver検査](https://github.com/tsuji-tomonori/rag-assist/actions/runs/32674766517): 成功
+- [受け入れ確認](https://github.com/tsuji-tomonori/rag-assist/pull/462#issuecomment-5389204565)
+- [セルフレビュー](https://github.com/tsuji-tomonori/rag-assist/pull/462#issuecomment-5389204505)
+- [Issue #345進捗](https://github.com/tsuji-tomonori/rag-assist/issues/345#issuecomment-5389204414)
+
 ## 未対応・制約・リスク
 
-- final-head GitHub Actions、Draft PR本文、受け入れ確認、セルフレビュー、Issue #345コメントは公開後に記録する。
+- 最終記録headのGitHub ActionsとDraft PR本文更新は公開後に確認する。
 - profile `AC-SQ016-004`、FR-051 / OQ-UI-002 owner判断、API C1 85%は残件。
 - merge、deploy、release、force-push、破壊的変更は行わない。
