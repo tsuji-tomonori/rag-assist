@@ -464,7 +464,8 @@
       ],
       "verifications": [
         { "id": "E2E-VIEW-PROFILE-001", "status": "implemented", "evidence": ["apps/web/e2e/visual-regression.spec.ts"] },
-        { "id": "E2E-UI-CONTRAST-004", "status": "implemented", "evidence": ["apps/web/e2e/visual-regression.spec.ts", ".github/workflows/web-ui-quality.yml"] }
+        { "id": "E2E-UI-CONTRAST-004", "status": "implemented", "evidence": ["apps/web/e2e/visual-regression.spec.ts", ".github/workflows/web-ui-quality.yml"] },
+        { "id": "E2E-UI-CROSS-BROWSER-SEMANTICS-002", "status": "implemented", "evidence": ["apps/web/e2e/cross-browser-semantics.spec.ts", ".github/workflows/web-ui-quality.yml"] }
       ],
       "implementationStatus": "partial",
       "implementationEvidence": ["apps/web/src/app/components/PersonalSettingsView.tsx"],
