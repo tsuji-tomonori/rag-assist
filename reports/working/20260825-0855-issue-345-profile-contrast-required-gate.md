@@ -74,20 +74,21 @@ Issue #345をcurrent main、前回差分、open PR / Issue、task、正本・生
 - 最優先の小さな改善1件に限定し、production競合なしのprofile contrast証跡gapを選んだ。
 - task、E2E、正本、authored trace / matrix、生成文書を一意な経路で同期した。
 - automation evidenceをmanual / real zoom / FR-051完了へ読み替えず、taskとDraft PRを未完了として維持する。
-- 総合fit: 4.5 / 5.0。GitHub ActionsとGitHub記録は公開後に確認するため、現時点ではpartially complete。
+- 総合fit: 4.8 / 5.0。今回の自動受け入れ条件とGitHub記録は完了したが、Issue全体のmanual / owner evidenceは未完了のためpartially complete。
 
 ## GitHub Actions・記録
 
-- 実装head: 未公開
-- Web UI Quality: 未実行
-- MemoRAG CI: 未実行
-- semver検査: 未実行
-- 受け入れ確認: 未投稿
-- セルフレビュー: 未投稿
-- Issue #345進捗: 未投稿
+- 実装head: `309516fc52205a832d28b4bbfa35b3a7cffde892`
+- [Web UI Quality](https://github.com/tsuji-tomonori/rag-assist/actions/runs/32792690077): Chromium 41/41、Firefox / WebKit 18/18、retry・flakyなし
+- [MemoRAG CI](https://github.com/tsuji-tomonori/rag-assist/actions/runs/32792689902): 成功
+- [semver検査](https://github.com/tsuji-tomonori/rag-assist/actions/runs/32792689823): 成功
+- [受け入れ確認](https://github.com/tsuji-tomonori/rag-assist/pull/462#issuecomment-5403267752)
+- [セルフレビュー](https://github.com/tsuji-tomonori/rag-assist/pull/462#pullrequestreview-5013772063)
+- [Issue #345進捗](https://github.com/tsuji-tomonori/rag-assist/issues/345#issuecomment-5403270765)
+- 初回headで既存SSE retry testの同期assert raceを1 flakyとして検出し、`expect.poll`へ修復後に上記headで再検証した。
 
 ## 未対応・制約・リスク
 
-- 実装head / 最終記録headのGitHub ActionsとDraft PR本文更新は公開後に確認する。
+- 最終記録headのGitHub ActionsとDraft PR本文更新は公開後に確認する。
 - FR-051 / OQ-UI-002 owner判断、manual evidence、実browser zoom、実機、API C1 85%は残件。
 - merge、deploy、release、force-push、破壊的変更は行わない。
