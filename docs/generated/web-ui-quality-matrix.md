@@ -94,7 +94,7 @@
 | profile | AC-SQ016-001 | pass | blocked | blocked | required E2E-UI-ZOOM-REFLOW-001をChromium／Firefox／WebKitの640/320 CSS pxで実行し、到達・root overflow 0を検証。CSS viewport proxyであり実browser zoomは未検証 |
 | profile | AC-SQ016-002 | pass | blocked | blocked | required E2E-UI-KEYBOARD-NAV-001をChromium／Firefox／WebKitで実行し、個人設定への到達、送信キー変更、チャット復帰、3px focus indicatorをkeyboard-onlyで検証。manual keyboard journeyは未実施 |
 | profile | AC-SQ016-003 | pass | blocked | blocked | required E2E-UI-SR-SEMANTICS-001で個人設定region/heading、送信キーcomboboxのname/value、戻る・sign out buttonのChromium AX tree契約を検証。representative screen readerは未実施 |
-| profile | AC-SQ016-004 | blocked | blocked | blocked | computed/axe contrast baselineとmanual review待ち |
+| profile | AC-SQ016-004 | pass | blocked | blocked | required E2E-UI-CONTRAST-004で320 / 1280 CSS pxの個人設定color-contrast違反0、送信キーselectの実computed 3px focus indicator比3:1以上、変更statusの可視text・status role・polite live semanticsを検証。manual contrast reviewと実browser zoomは未実施 |
 | profile | AC-SQ016-005 | pass | blocked | blocked | 4 viewportで24px minimumと44px primary targetの未解決candidate 0。manual touch evidenceは未実施 |
 | profile | AC-SQ016-006 | pass | blocked | blocked | 4 viewportのreduced-motion computed auditはpass。orientation / safe-area / virtual-keyboard実機は未検証 |
 | profile | AC-SQ016-007 | blocked | blocked | blocked | required E2E-UI-STATE-001で送信キーのsession-only scope、polite変更status、画面往復保持を限定検証する。FR-051の永続化、保存失敗/retry/permission、N/A分類とowner判断、manual evidenceは未完了 |

@@ -459,10 +459,12 @@
       ],
       "requirements": [
         { "id": "FR-094", "acceptanceCriteria": ["AC-FR094-001", "AC-FR094-004"] },
-        { "id": "FR-095", "acceptanceCriteria": ["AC-FR095-003"] }
+        { "id": "FR-095", "acceptanceCriteria": ["AC-FR095-003"] },
+        { "id": "SQ-016", "acceptanceCriteria": ["AC-SQ016-002", "AC-SQ016-003", "AC-SQ016-004", "AC-SQ016-007"] }
       ],
       "verifications": [
-        { "id": "E2E-VIEW-PROFILE-001", "status": "implemented", "evidence": ["apps/web/e2e/visual-regression.spec.ts"] }
+        { "id": "E2E-VIEW-PROFILE-001", "status": "implemented", "evidence": ["apps/web/e2e/visual-regression.spec.ts"] },
+        { "id": "E2E-UI-CONTRAST-004", "status": "implemented", "evidence": ["apps/web/e2e/visual-regression.spec.ts", ".github/workflows/web-ui-quality.yml"] }
       ],
       "implementationStatus": "partial",
       "implementationEvidence": ["apps/web/src/app/components/PersonalSettingsView.tsx"],

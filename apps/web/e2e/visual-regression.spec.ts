@@ -1298,6 +1298,104 @@ test('E2E-UI-CONTRAST-003: documentsのtext・focus indicator・permission state
   })
 })
 
+test('E2E-UI-CONTRAST-004: profileのtext・focus indicator・変更statusはcontrastを満たし色だけに依存しない @ui-quality', async ({ page }, testInfo) => {
+  await signIn(page)
+
+  const viewportEvidence = []
+  for (const width of [320, 1280] as const) {
+    await page.setViewportSize({ width, height: width === 320 ? 720 : 900 })
+    await page.goto('/?view=profile')
+
+    const profile = page.getByRole('region', { name: '個人設定', exact: true })
+    const shortcut = profile.getByRole('combobox', { name: '送信キー' })
+    await expect(profile).toBeVisible()
+    await shortcut.focus()
+
+    const focusIndicator = await shortcut.evaluate((element) => {
+      const style = getComputedStyle(element)
+      const parseColor = (value: string) => {
+        const channels = value.match(/[\d.]+/g)?.slice(0, 3).map(Number)
+        if (!channels || channels.length !== 3) throw new Error(`Unsupported computed color: ${value}`)
+        return channels
+      }
+      const luminance = (value: string) => {
+        const channels = parseColor(value).map((channel) => {
+          const normalized = channel / 255
+          return normalized <= 0.04045
+            ? normalized / 12.92
+            : ((normalized + 0.055) / 1.055) ** 2.4
+        })
+        return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2]
+      }
+      const foreground = luminance(style.outlineColor)
+      const background = luminance(style.backgroundColor)
+      const ratio = (Math.max(foreground, background) + 0.05) / (Math.min(foreground, background) + 0.05)
+      return {
+        outlineStyle: style.outlineStyle,
+        outlineWidth: Number.parseFloat(style.outlineWidth),
+        outlineColor: style.outlineColor,
+        backgroundColor: style.backgroundColor,
+        contrastRatio: ratio
+      }
+    })
+
+    expect(focusIndicator.outlineStyle).toBe('solid')
+    expect(focusIndicator.outlineWidth).toBeGreaterThanOrEqual(3)
+    expect(focusIndicator.contrastRatio).toBeGreaterThanOrEqual(3)
+
+    const contrastScan = await new AxeBuilder({ page })
+      .include('section.settings-workspace[aria-label="個人設定"]')
+      .withRules(['color-contrast'])
+      .analyze()
+    expect(
+      contrastScan.violations,
+      `${width}px profile color contrast violations\n${JSON.stringify(contrastScan.violations, null, 2)}`
+    ).toEqual([])
+
+    viewportEvidence.push({
+      width,
+      focusIndicator,
+      axeRule: 'color-contrast',
+      axeViolations: contrastScan.violations
+    })
+  }
+
+  const profile = page.getByRole('region', { name: '個人設定', exact: true })
+  await profile.getByRole('combobox', { name: '送信キー' }).selectOption('ctrlEnter')
+  const changeStatus = profile.getByRole('status')
+  await expect(changeStatus).toContainText('Ctrl+Enterで送信')
+  await expect(changeStatus).toContainText('現在のサインイン中だけ有効です')
+  await expect(changeStatus).toHaveAttribute('aria-live', 'polite')
+
+  const statusContrastScan = await new AxeBuilder({ page })
+    .include('section.settings-workspace[aria-label="個人設定"]')
+    .withRules(['color-contrast'])
+    .analyze()
+  expect(
+    statusContrastScan.violations,
+    `profile change status color contrast violations\n${JSON.stringify(statusContrastScan.violations, null, 2)}`
+  ).toEqual([])
+
+  await testInfo.attach('profile-contrast-evidence.json', {
+    body: Buffer.from(`${JSON.stringify({
+      schemaVersion: 1,
+      requirement: 'SQ-016',
+      acceptanceCriterion: 'AC-SQ016-004',
+      browserProject: testInfo.project.name,
+      viewportEvidence,
+      colorIndependence: {
+        visibleText: await changeStatus.innerText(),
+        semanticRole: await changeStatus.getAttribute('role'),
+        liveMode: await changeStatus.getAttribute('aria-live'),
+        axeRule: 'color-contrast',
+        axeViolations: statusContrastScan.violations
+      },
+      boundary: 'Chromium automated axe/computed-style evidence; representative screen reader, manual perception, real browser zoom, OS scaling, and real-device evidence are not covered. FR-051 persistence, failure, retry, and permission contracts are not covered.'
+    }, null, 2)}\n`),
+    contentType: 'application/json'
+  })
+})
+
 test('E2E-UI-NAV-002: 最大権限 persona は 320px mobile menu から全許可 view と個人設定へ到達する @smoke @mobile-required', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 720 })
   await page.emulateMedia({ reducedMotion: 'reduce' })

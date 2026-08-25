@@ -829,6 +829,15 @@
             "acceptanceCriteria": [
               "AC-FR095-003"
             ]
+          },
+          {
+            "id": "SQ-016",
+            "acceptanceCriteria": [
+              "AC-SQ016-002",
+              "AC-SQ016-003",
+              "AC-SQ016-004",
+              "AC-SQ016-007"
+            ]
           }
         ],
         "verifications": [
@@ -837,6 +846,14 @@
             "status": "implemented",
             "evidence": [
               "apps/web/e2e/visual-regression.spec.ts"
+            ]
+          },
+          {
+            "id": "E2E-UI-CONTRAST-004",
+            "status": "implemented",
+            "evidence": [
+              "apps/web/e2e/visual-regression.spec.ts",
+              ".github/workflows/web-ui-quality.yml"
             ]
           }
         ],
