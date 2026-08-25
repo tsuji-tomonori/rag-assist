@@ -1575,8 +1575,8 @@ test('E2E-UI-STATE-001: chat は初期案内・処理中・SSE timeout・Last-Ev
   await expect(chat.getByRole('button', { name: '質問を送信' })).toBeDisabled()
   await expect(chat.locator('.processing-row')).toContainText('処理が続いています。再接続しています')
 
-  expect(eventReads).toBe(2)
-  expect(retryLastEventId).toBe('3')
+  await expect.poll(() => eventReads).toBe(2)
+  await expect.poll(() => retryLastEventId).toBe('3')
   releaseRetry?.()
 
   await expect(chat.getByText('再接続後の回答です。')).toBeVisible()
