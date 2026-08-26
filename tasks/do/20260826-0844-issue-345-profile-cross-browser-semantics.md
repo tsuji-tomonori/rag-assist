@@ -65,8 +65,8 @@ profile限定のrequired semantic E2Eを追加し、evidence helperをE2E ID引�
 - [x] snapshot / state JSONにbrowser project名、新しいE2E ID、native AX tree／代表screen readerではない境界が記録される。
 - [x] `profile → SQ-016 → AC-SQ016-003 → E2E-UI-CROSS-BROWSER-SEMANTICS-002`が正本、authored trace / matrix、生成文書で一致する。
 - [x] manual / overallと`AC-SQ016-007`はblockedを維持し、自動証跡をrepresentative screen readerやFR-051完了へ読み替えない。
-- [ ] 最小十分なlint、typecheck、unit、build、targeted E2E、trace / matrix / docs checkが成功する。
-- [ ] Draft PR #462、受け入れ確認、セルフレビュー、Issue #345へ結果と残件を記録する。
+- [x] 最小十分なlint、typecheck、unit、build、targeted E2E、trace / matrix / docs checkが成功する。
+- [x] Draft PR #462、受け入れ確認、セルフレビュー、Issue #345へ結果と残件を記録する。
 
 ## 検証計画
 
@@ -86,3 +86,15 @@ profile限定のrequired semantic E2Eを追加し、evidence helperをE2E ID引�
 - Playwright ARIA snapshotとDOM ARIA stateはrepresentative screen readerやnative browser AX treeのengine固有出力を代替しない。
 - required suiteの実走はbrowser起動とlocalhost serverを必要とするため、local環境でblockedの場合はGitHub Actions結果を未完了のまま待つ。
 - #461統合後はfinal production DOMに対する再検証が必要である。
+
+## 実装head検証・記録
+
+- head: `38bab5d5c74cb6d60ac61a74f78ebb8c5c15c73f`
+- [Web UI Quality](https://github.com/tsuji-tomonori/rag-assist/actions/runs/32913144798): Chromium 41/41、Firefox／WebKit 20/20、retry・flakyなし
+- [MemoRAG CI](https://github.com/tsuji-tomonori/rag-assist/actions/runs/32913144785): 成功
+- [semver検査](https://github.com/tsuji-tomonori/rag-assist/actions/runs/32913144813): 成功
+- [受け入れ確認](https://github.com/tsuji-tomonori/rag-assist/pull/462#issuecomment-5418735540)
+- [セルフレビュー](https://github.com/tsuji-tomonori/rag-assist/pull/462#pullrequestreview-5025528414)
+- [Issue #345進捗](https://github.com/tsuji-tomonori/rag-assist/issues/345#issuecomment-5418735369)
+
+今回sliceの自動受け入れ条件は満たした。Issue #345全体のrepresentative screen reader、native AX、実browser zoom、実機、FR-051 owner判断が未完了のため、状態は`do`を維持する。

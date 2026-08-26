@@ -49,9 +49,19 @@ Issue #345をcurrent main、前回差分、open PR / Issue、task、正本・生
 
 ## Fit評価
 
-今回sliceの実装・文書同期・静的検証は満たした。required browser実走とGitHub記録は公開後に確認する。Issue全体のmanual / owner evidenceが未完了のため、taskとPRは`do`／Draftを維持する。
+今回sliceの実装・文書同期・required browser実走・GitHub記録は満たした。Issue全体のmanual / owner evidenceが未完了のため、taskとPRは`do`／Draftを維持する。
 
-総合fit（公開前）: 4.3 / 5.0。小さな1件、正本一意性、証跡境界、禁止操作は満たしたが、required CIとGitHub記録が未完了である。
+総合fit: 4.8 / 5.0。小さな1件、正本一意性、required CI、GitHub記録、証跡境界、禁止操作を満たした。Issue全体のmanual／owner evidenceは未完了である。
+
+## GitHub Actions・記録
+
+- 実装head: `38bab5d5c74cb6d60ac61a74f78ebb8c5c15c73f`
+- [Web UI Quality](https://github.com/tsuji-tomonori/rag-assist/actions/runs/32913144798): Chromium 41/41、Firefox／WebKit 20/20、retry・flakyなし
+- [MemoRAG CI](https://github.com/tsuji-tomonori/rag-assist/actions/runs/32913144785): 成功
+- [semver検査](https://github.com/tsuji-tomonori/rag-assist/actions/runs/32913144813): 成功
+- [受け入れ確認](https://github.com/tsuji-tomonori/rag-assist/pull/462#issuecomment-5418735540)
+- [セルフレビュー](https://github.com/tsuji-tomonori/rag-assist/pull/462#pullrequestreview-5025528414)
+- [Issue #345進捗](https://github.com/tsuji-tomonori/rag-assist/issues/345#issuecomment-5418735369)
 
 ## 禁止操作
 
