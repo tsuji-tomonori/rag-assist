@@ -93,6 +93,64 @@ test('E2E-UI-CROSS-BROWSER-SEMANTICS-002: profile exposes stable cross-browser s
   })
 })
 
+test('E2E-UI-CROSS-BROWSER-SEMANTICS-003: assignee exposes stable cross-browser semantics @ui-quality', async ({ page }, testInfo) => {
+  const evidenceId = 'E2E-UI-CROSS-BROWSER-SEMANTICS-003'
+  await installAssigneeRoute(page)
+  await page.goto('/')
+  await signIn(page)
+  await page.getByRole('navigation', { name: '画面' }).getByRole('button', { name: '担当者対応' }).click()
+
+  const assignee = page.getByRole('region', { name: '担当者対応', exact: true })
+  await expect(assignee).toBeVisible()
+  await expectAriaSnapshot(assignee, testInfo, evidenceId, 'assignee-idle', `
+    - heading "担当者対応" [level=2]
+    - button "チャットへ戻る"
+    - region "問い合わせ一覧":
+        - heading "問い合わせ一覧" [level=3]
+        - combobox "ステータス":
+            - option "すべて" [selected]
+            - option "未対応"
+            - option "対応中"
+            - option "確認待ち"
+            - option "解決済み"
+        - searchbox "検索"
+    - region "担当者対応カンバン":
+        - region "未対応":
+            - heading "未対応" [level=3]
+            - button "担当者cross-browser semantic証跡を選択" [pressed]
+    - complementary "選択中の問い合わせと回答作成":
+        - region "問い合わせ概要":
+            - heading "問い合わせ概要" [level=3]
+        - form "回答作成":
+            - heading "回答作成" [level=3]
+            - textbox "回答タイトル": 担当者cross-browser semantic証跡への回答
+            - textbox "回答内容"
+            - checkbox "質問者へ通知する" [checked]
+            - status: 入力はこの画面に一時保持されていません
+            - button "入力を一時保持" [disabled]
+            - button "回答を送信" [disabled]
+  `)
+
+  const selectedQuestion = assignee.getByRole('button', { name: '担当者cross-browser semantic証跡を選択' })
+  const status = assignee.getByRole('status')
+  await expect(selectedQuestion).toHaveAttribute('aria-pressed', 'true')
+  await expect(assignee.getByRole('combobox', { name: 'ステータス' })).toHaveValue('all')
+  await expect(assignee.getByRole('checkbox', { name: '質問者へ通知する' })).toBeChecked()
+  await expect(status).toHaveAttribute('aria-live', 'polite')
+
+  await assignee.getByRole('textbox', { name: '回答内容' }).fill('FirefoxとWebKitで担当者回答のsemantic stateを確認します。')
+  await expect(status).toHaveText('未送信の変更があります')
+  await attachSemanticEvidence(assignee, testInfo, evidenceId, 'assignee-draft-changed', {
+    statusFilterValue: await assignee.getByRole('combobox', { name: 'ステータス' }).inputValue(),
+    selectedQuestionPressed: await selectedQuestion.getAttribute('aria-pressed'),
+    notifyRequesterChecked: await assignee.getByRole('checkbox', { name: '質問者へ通知する' }).isChecked() ? 'true' : 'false',
+    statusComputedRole: 'status',
+    statusRoleAttribute: await status.getAttribute('role'),
+    statusLive: await status.getAttribute('aria-live'),
+    statusText: await status.innerText()
+  })
+})
+
 async function installChatRoute(page: Page): Promise<ChatSemanticRouteState> {
   let releaseAnswer: () => void = () => undefined
   const answerGate = new Promise<void>((resolve) => { releaseAnswer = resolve })
@@ -125,6 +183,36 @@ async function installChatRoute(page: Page): Promise<ChatSemanticRouteState> {
   })
 
   return state
+}
+
+async function installAssigneeRoute(page: Page) {
+  await page.route(/http:\/\/127\.0\.0\.1:8787\/questions(?:\?.*)?$/, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.fallback()
+      return
+    }
+
+    await route.fulfill({
+      json: {
+        questions: [{
+          questionId: 'cross-browser-semantic-assignee-1',
+          title: '担当者cross-browser semantic証跡',
+          question: '担当者画面の意味構造をFirefoxとWebKitで確認してください。',
+          requesterName: '依頼者',
+          requesterDepartment: '利用部門',
+          assigneeDepartment: '総務部',
+          assigneeGroupId: 'support',
+          category: '手続き',
+          priority: 'normal',
+          status: 'open',
+          sourceQuestion: '担当者画面の意味構造はbrowser間で安定しているか？',
+          chatAnswer: '担当者による確認が必要です。',
+          createdAt: '2026-08-27T00:00:00.000Z',
+          updatedAt: '2026-08-27T00:00:00.000Z'
+        }]
+      }
+    })
+  })
 }
 
 async function signIn(page: Page) {

@@ -70,7 +70,7 @@
 | 実現可能性 | pass with manual dependency | code/test fixes are feasible; screen-reader/real-device evidence requires the named environments. |
 | 検証可能性 | pass | numeric thresholds and journey evidence are explicit. |
 
-## 現在の自動証跡（2026-08-23）
+## 現在の自動証跡（2026-08-27）
 
 - `E2E-UI-SKIP-001`: 認証後 shell の最初の keyboard focus で skip link を表示し、desktop 1280×720 / mobile 320×720 の双方で反復 navigation を越えて一意な `main` landmark へ focus を移す。
 - `E2E-UI-LOGIN-KEYBOARD-001`: login 前の email から secondary action までの DOM 順 Tab order、3px outline、native required validation、Space による remember 切替、password 上の Enter submit、認証後 chat 到達、horizontal containment を 1280×720 / 320×720 で検証する。PR required gateではChromium、Firefox、WebKitで実行し、rejected authentication の alert/form description/focus/retry は component test で検証する。
@@ -83,10 +83,11 @@
 - `E2E-UI-CONTRAST-004`: 個人設定を320 / 1280 CSS pxで表示してaxe `color-contrast` violation 0を要求し、送信キーselect focus時のoutlineを実computed styleから3px以上かつ背景比3:1以上と検証する。送信キー変更時は可視text、`role=status`、`aria-live=polite`の複数cueと同じcontrast検査を要求する。Chromium自動証跡であり、manual perception、representative screen reader、実browser zoom、OS scaling、real deviceを代替しない。`FR-051`の永続化、保存失敗/retry/permission、N/A分類とowner判断は対象外で、`AC-SQ016-007`のblocked状態を変更しない。
 - `E2E-UI-CROSS-BROWSER-SEMANTICS-001`: login formとchat region / form / textbox / buttonのname・roleをPlaywright ARIA snapshotで検証し、chatのidle→処理中→完了に伴う`aria-busy` / `aria-live`と処理中articleのroleを同じFirefox／WebKit projectで検証する。snapshotとstate JSONにはbrowser project名とevidence boundaryを付ける。
 - `E2E-UI-CROSS-BROWSER-SEMANTICS-002`: 個人設定regionのheading、送信キーcomboboxのname / value、戻る・sign out buttonをPlaywright ARIA snapshotで検証し、送信キー変更後のcombobox value、可視status text、`role=status`、`aria-live=polite`を同じFirefox／WebKit projectで検証する。snapshotとstate JSONにはbrowser project名と、representative screen reader／native AX treeではないevidence boundaryを付ける。
+- `E2E-UI-CROSS-BROWSER-SEMANTICS-003`: 担当者対応regionのheading、問い合わせ一覧、ステータスcomboboxのname / value、検索searchbox、選択中問い合わせbuttonのpressed state、回答form、通知checkboxのchecked state、draft statusをPlaywright ARIA snapshotで検証する。回答内容変更後は可視status text、`role=status`、`aria-live=polite`を同じFirefox／WebKit projectで検証し、browser project名とrepresentative screen reader／native AX treeではないevidence boundaryを付ける。
 - `E2E-UI-CROSS-BROWSER-STATE-001`: 履歴のloading→HTTP 500→retry→confirmed emptyとHTTP 403をFirefox／WebKitのPR required gateで検証し、未確認dataをempty／zeroへ変換せず、private detailを表示しないことを確認する。state JSONにはbrowser project名、状態系列、test-only fixture境界を付ける。
 - `E2E-UI-ZOOM-REFLOW-001`: 1280px基準の200%相当（640 CSS px）／400%相当（320 CSS px）でchatからdocuments / assignee / admin / profileへ到達し、document rootの水平overflowがないことをChromium／Firefox／WebKitのPR required gateで検証する。JSON evidenceにはbrowser project名、CSS viewport、各viewのURL／dimensions、実browser zoomではないboundaryを付ける。
 - `E2E-UI-LAYOUT-STRESS-001`: 320 CSS pxとreduced motionで長文回答の先頭／末尾、長い引用・ファイル名、履歴35件、確認済みお気に入り0件をchat / documents / history / favoritesで表示し、document rootと対象regionの水平overflowがないことをChromium／Firefox／WebKitのPR required gateで検証する。JSON evidenceにはbrowser project名、viewport、fixture量、URL／dimensions、実browser zoom・実支援技術・実機ではないboundaryを付ける。
-- Firefox／WebKitの自動証跡はlogin / chat / profileのsemantic contract、履歴の代表resource state、主要keyboard journey、5 viewのCSS viewport reflow proxy、4 viewの320 CSS px content-extreme fixtureに限定する。representative screen reader、browser UIを操作する実200%/400% zoom、text-only zoom、OS scaling、touch／real device、Firefox／WebKit native accessibility treeのengine固有debug出力、非対象画面のbrowser evidenceを代替しない。
+- Firefox／WebKitの自動証跡はlogin / chat / profile / assigneeのsemantic contract、履歴の代表resource state、主要keyboard journey、5 viewのCSS viewport reflow proxy、4 viewの320 CSS px content-extreme fixtureに限定する。representative screen reader、browser UIを操作する実200%/400% zoom、text-only zoom、OS scaling、touch／real device、Firefox／WebKit native accessibility treeのengine固有debug出力、非対象画面のbrowser evidenceを代替しない。
 
 ## Phase別 evidence contract（2026-07-16）
 
