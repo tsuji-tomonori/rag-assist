@@ -108,3 +108,11 @@
 2. CI失敗時はsnapshot / browser差を修復して再実行する。
 3. final head成功後にPR本文・受け入れ確認・セルフレビュー・Issue #345を更新する。
 4. manual / owner gapが残るためtaskは`do`、PRはDraftを維持する。
+
+## 10. Remote publication
+
+- GitHub Appsで12ファイルを1 commitとして作成し、既存PR branchをfast-forwardした。
+- implementation head: `dc668839a3ffe5797a3e3269a5834ee0e5560831`
+- current `main@8e542b31`に対してbehind 0 / ahead 123。
+- 通常の`git push`は実行環境にGitHub認証情報がなく失敗したため、repository既定のGitHub Apps flowへ切り替えた。force-pushは行っていない。
+- low-level ref更新だけではGitHub Actions runが作成されなかったため、この記録更新をContents API commitとして発行し、pull request `synchronize` / required workflow起動を再試行する。
