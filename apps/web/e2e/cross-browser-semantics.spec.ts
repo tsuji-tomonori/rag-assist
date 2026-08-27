@@ -103,32 +103,33 @@ test('E2E-UI-CROSS-BROWSER-SEMANTICS-003: assignee exposes stable cross-browser 
   const assignee = page.getByRole('region', { name: '担当者対応', exact: true })
   await expect(assignee).toBeVisible()
   await expectAriaSnapshot(assignee, testInfo, evidenceId, 'assignee-idle', `
-    - heading "担当者対応" [level=2]
-    - button "チャットへ戻る"
-    - region "問い合わせ一覧":
-        - heading "問い合わせ一覧" [level=3]
-        - combobox "ステータス":
-            - option "すべて" [selected]
-            - option "未対応"
-            - option "対応中"
-            - option "確認待ち"
-            - option "解決済み"
-        - searchbox "検索"
-    - region "担当者対応カンバン":
-        - region "未対応":
-            - heading "未対応" [level=3]
-            - button "担当者cross-browser semantic証跡を選択" [pressed]
-    - complementary "選択中の問い合わせと回答作成":
-        - region "問い合わせ概要":
-            - heading "問い合わせ概要" [level=3]
-        - form "回答作成":
-            - heading "回答作成" [level=3]
-            - textbox "回答タイトル": 担当者cross-browser semantic証跡への回答
-            - textbox "回答内容"
-            - checkbox "質問者へ通知する" [checked]
-            - status: 入力はこの画面に一時保持されていません
-            - button "入力を一時保持" [disabled]
-            - button "回答を送信" [disabled]
+    - region "担当者対応":
+        - button "チャットへ戻る"
+        - heading "担当者対応" [level=2]
+        - region "問い合わせ一覧":
+            - heading "問い合わせ一覧" [level=3]
+            - combobox "ステータス":
+                - option "すべて" [selected]
+                - option "未対応"
+                - option "対応中"
+                - option "確認待ち"
+                - option "解決済み"
+            - searchbox "検索"
+        - region "担当者対応カンバン":
+            - region "未対応":
+                - heading "未対応" [level=3]
+                - button "担当者cross-browser semantic証跡を選択" [pressed]
+        - complementary "選択中の問い合わせと回答作成":
+            - region "問い合わせ概要":
+                - heading "問い合わせ概要" [level=3]
+            - form "回答作成":
+                - heading "回答作成" [level=3]
+                - textbox "回答タイトル": 担当者cross-browser semantic証跡への回答
+                - textbox "回答内容"
+                - checkbox "質問者へ通知する" [checked]
+                - status: 入力はこの画面に一時保持されていません
+                - button "入力を一時保持" [disabled]
+                - button "回答を送信" [disabled]
   `)
 
   const selectedQuestion = assignee.getByRole('button', { name: '担当者cross-browser semantic証跡を選択' })
