@@ -58,3 +58,9 @@
 2. Web UI QualityのFirefox／WebKit required 24件とChromium、MemoRAG CI、semver検査を確認する。
 3. browser差分を検出した場合はsnapshot contractを過剰緩和せず、原因を分類して修復する。
 4. 最終headで受け入れ確認、セルフレビュー、Issue #345進捗を記録する。
+
+## Remote publication
+
+- implementation head: `75a415472745907049ca6e055f07b270fae88bb1`
+- remote tree転送時に2件のUnicode pathが引用文字列として追加されたため、`6f481c66870ae8ede693415edd178b24e1c19535`で誤pathを削除し、既存の正本pathへ同一内容を反映した。履歴はfast-forwardで保持し、force-pushしていない。
+- GitHub Actionsを発火させるrecord commitを追加し、required CIを確認する。
