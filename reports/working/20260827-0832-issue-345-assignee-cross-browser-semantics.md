@@ -102,15 +102,15 @@
 
 ## 8. 未対応・制約・リスク
 
-- 未対応: final record headのGitHub Actions、PR受け入れコメント、セルフレビュー、Issue #345コメント。
+- 今回sliceの未対応: なし。final record headのGitHub Actions、PR受け入れコメント、セルフレビュー、Issue #345コメントまで完了した。
 - 制約: local WebKit host dependencies、Firefox page setup、sandbox `tsx` IPC。
 - リスク: #461統合後はproduction DOMが変わるため、同じsemantic contractの再検証が必要である。
 - 継続blocker: representative screen reader、native AX tree、実browser zoom、manual keyboard / contrast、touch／実機、#461統合後の再検証、FR-051 / OQ-UI-002 owner判断、API C1 85%。
 
 ## 9. 次の作業
 
-1. final record headのGitHub Actionsを確認する。
-2. PR本文・受け入れ確認・セルフレビュー・Issue #345を更新する。
+1. #461統合後、最終production DOMに対して同じsemantic journeyを再検証する。
+2. representative screen reader / native AX / real zoom / device evidenceをowner決定後に収集する。
 3. manual / owner gapが残るためtaskは`do`、PRはDraftを維持する。
 
 ## 10. Remote publication
@@ -123,3 +123,5 @@
 - initial CI head: `07062df1bb08cd5dc9260de71497ac8c355bac3a`（新規Firefox／WebKit 2件のみsnapshot境界不一致）。
 - repaired implementation head: `40519c8c10ae2dcef459456f1110f906c376c23a`。
 - repaired headのWeb UI Quality、MemoRAG CI、semverはすべて成功。
+- record head `457c1d1e9edbcf6c09a9dc17e1e3c5c51d355487`でも[Web UI Quality](https://github.com/tsuji-tomonori/rag-assist/actions/runs/33026229547)、[MemoRAG CI](https://github.com/tsuji-tomonori/rag-assist/actions/runs/33026229584)、[semver](https://github.com/tsuji-tomonori/rag-assist/actions/runs/33026229612)がすべて成功した。
+- [PR受け入れ確認](https://github.com/tsuji-tomonori/rag-assist/pull/462#issuecomment-5432715092)、[セルフレビュー](https://github.com/tsuji-tomonori/rag-assist/pull/462#issuecomment-5432716720)、[Issue #345進捗](https://github.com/tsuji-tomonori/rag-assist/issues/345#issuecomment-5432718411)を記録した。
