@@ -65,15 +65,15 @@ Draft PR #462 は current `main@8e542b31` を祖先に含み、Firefox／WebKit 
 
 ## 受け入れ条件
 
-- [ ] `E2E-UI-CROSS-BROWSER-SEMANTICS-003`がFirefox／WebKitで担当者対応のheading、問い合わせ一覧、filter name/value、選択card pressed state、回答form、notify checked state、polite statusを検証する。
-- [ ] 回答内容変更後にvisible status text、`role=status`、`aria-live=polite`が同じ実走で検証される。
-- [ ] browser project名、新E2E ID、Playwright ARIA snapshot / DOM stateの証跡境界をartifactへ記録する。
-- [ ] `assignee → SQ-016 → AC-SQ016-003 → E2E-UI-CROSS-BROWSER-SEMANTICS-003`が正本、authored trace / matrix、生成文書で一致する。
-- [ ] required Firefox／WebKit scopeの内訳が、実装と一致するsemantic 6件／合計22件へ更新される。
-- [ ] production component / CSS / API / authorization / RAG contractを変更しない。
-- [ ] manual / overall statusは`blocked`を維持し、representative screen reader、native AX tree、実browser zoom、実機をpass扱いしない。
-- [ ] 選定したlint、typecheck、unit、build、E2E discovery、docs / freshness checks、`git diff --check`が成功する。
-- [ ] Draft PR #462、PR受け入れコメント、セルフレビュー、Issue #345進捗が更新される。
+- [x] `E2E-UI-CROSS-BROWSER-SEMANTICS-003`がFirefox／WebKitで担当者対応のheading、問い合わせ一覧、filter name/value、選択card pressed state、回答form、notify checked state、polite statusを検証する。
+- [x] 回答内容変更後にvisible status text、`role=status`、`aria-live=polite`が同じ実走で検証される。
+- [x] browser project名、新E2E ID、Playwright ARIA snapshot / DOM stateの証跡境界をartifactへ記録する。
+- [x] `assignee → SQ-016 → AC-SQ016-003 → E2E-UI-CROSS-BROWSER-SEMANTICS-003`が正本、authored trace / matrix、生成文書で一致する。
+- [x] required Firefox／WebKit scopeの内訳が、実装と一致するsemantic 6件／合計22件へ更新される。
+- [x] production component / CSS / API / authorization / RAG contractを変更しない。
+- [x] manual / overall statusは`blocked`を維持し、representative screen reader、native AX tree、実browser zoom、実機をpass扱いしない。
+- [x] 選定したlint、typecheck、unit、build、E2E discovery、docs / freshness checks、`git diff --check`が成功する。
+- [x] Draft PR #462、PR受け入れコメント、セルフレビュー、Issue #345進捗が更新される。
 
 ## 検証計画
 
@@ -108,3 +108,10 @@ Draft PR #462 は current `main@8e542b31` を祖先に含み、Firefox／WebKit 
 - Firefox／WebKitのARIA snapshot差により、Chromiumだけでは見えないrole/name差がCIで検出される可能性がある。
 - #461統合後は最終production DOMに対する再検証が必要である。
 - #462は累積stackであり、本sliceがpassしてもPR全体はmerge-readyではない。
+
+## 検証結果
+
+- ローカル: lint、E2E TypeScript、Web typecheck、449 unit tests、build、required 22件discovery、docs generation / trace / semantic / freshness / structure checks、`git diff --check`が成功。
+- 初回GitHub Actions: 新規test 2件のみ、locator root regionを欠いたARIA snapshot境界不一致をFirefox／WebKitで検出。
+- 修復後GitHub Actions: Web UI Quality Chromium 41/41、Firefox／WebKit required 22/22、MemoRAG CI、semverが成功。
+- 未検証: representative screen reader、native AX tree、実browser 200%／400% zoom、touch／実機、#461統合後の再検証、FR-051 / OQ-UI-002 owner判断、API C1 85%。このためtaskは`do`、PRはDraftを維持する。
