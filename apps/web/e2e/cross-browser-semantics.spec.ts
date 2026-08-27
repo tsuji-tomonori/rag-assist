@@ -152,6 +152,86 @@ test('E2E-UI-CROSS-BROWSER-SEMANTICS-003: assignee exposes stable cross-browser 
   })
 })
 
+test('E2E-UI-CROSS-BROWSER-SEMANTICS-004: documents expose stable cross-browser semantics @ui-quality', async ({ page }, testInfo) => {
+  const evidenceId = 'E2E-UI-CROSS-BROWSER-SEMANTICS-004'
+  await installDocumentsRoute(page)
+  await page.goto('/')
+  await signIn(page)
+  await page.getByRole('navigation', { name: '画面' }).getByRole('button', { name: 'ドキュメント' }).click()
+
+  const workspace = page.getByRole('region', { name: 'ドキュメント管理', exact: true })
+  await expect(workspace).toBeVisible()
+  await expectAriaSnapshot(workspace, testInfo, evidenceId, 'documents-idle', `
+    - region "ドキュメント管理":
+        - button "前の画面へ戻る"
+        - heading "ドキュメント管理" [level=2]
+        - navigation "パンくず"
+        - complementary "フォルダツリー":
+            - search:
+                - searchbox "フォルダを検索"
+        - region "登録文書一覧":
+            - heading "すべてのドキュメント" [level=3]
+            - region "現在の文書表示条件"
+            - searchbox "ファイル名検索"
+            - combobox "種別":
+                - option "すべて" [selected]
+            - combobox "状態":
+                - option "すべて" [selected]
+            - combobox "所属フォルダ":
+                - option "すべて" [selected]
+            - combobox "並び替え":
+                - option "更新日 新しい順" [selected]
+            - combobox "表示件数":
+                - option "25件" [selected]
+            - table "登録文書"
+  `)
+
+  const folderSearch = workspace.getByRole('searchbox', { name: 'フォルダを検索' })
+  const fileNameSearch = workspace.getByRole('searchbox', { name: 'ファイル名検索' })
+  const typeFilter = workspace.getByRole('combobox', { name: '種別' })
+  const statusFilter = workspace.getByRole('combobox', { name: '状態' })
+  const folderFilter = workspace.getByRole('combobox', { name: '所属フォルダ' })
+  const sortOrder = workspace.getByRole('combobox', { name: '並び替え' })
+  const pageSize = workspace.getByRole('combobox', { name: '表示件数' })
+  await expect(folderSearch).toHaveValue('')
+  await expect(fileNameSearch).toHaveValue('')
+  await expect(typeFilter).toHaveValue('all')
+  await expect(statusFilter).toHaveValue('all')
+  await expect(folderFilter).toHaveValue('all')
+  await expect(sortOrder).toHaveValue('updatedDesc')
+  await expect(pageSize).toHaveValue('25')
+
+  await workspace.getByRole('button', { name: 'cross-browser-policy.pdfの詳細を表示' }).click()
+  const selectedRow = workspace.locator('[role="row"][aria-selected="true"]')
+  await expect(selectedRow).toContainText('cross-browser-policy.pdf')
+
+  const dialog = page.getByRole('dialog', { name: 'cross-browser-policy.pdf' })
+  await expect(dialog).toBeVisible()
+  await expectAriaSnapshot(dialog, testInfo, evidenceId, 'documents-detail', `
+    - dialog "cross-browser-policy.pdf":
+        - heading "cross-browser-policy.pdf" [level=3]
+        - button "文書詳細を閉じる"
+        - button "技術・品質詳細を表示"
+        - button "この資料に質問する"
+  `)
+
+  const technicalDisclosure = dialog.getByRole('button', { name: '技術・品質詳細を表示' })
+  await expect(technicalDisclosure).toHaveAttribute('aria-expanded', 'false')
+  await technicalDisclosure.click()
+  await expect(dialog.getByRole('button', { name: '技術・品質詳細を閉じる' })).toHaveAttribute('aria-expanded', 'true')
+  await attachSemanticEvidence(dialog, testInfo, evidenceId, 'documents-detail-expanded', {
+    folderSearchValue: await folderSearch.inputValue(),
+    fileNameSearchValue: await fileNameSearch.inputValue(),
+    typeFilterValue: await typeFilter.inputValue(),
+    statusFilterValue: await statusFilter.inputValue(),
+    folderFilterValue: await folderFilter.inputValue(),
+    sortValue: await sortOrder.inputValue(),
+    pageSizeValue: await pageSize.inputValue(),
+    selectedRow: await selectedRow.getAttribute('aria-selected'),
+    technicalDisclosureExpanded: await dialog.getByRole('button', { name: '技術・品質詳細を閉じる' }).getAttribute('aria-expanded')
+  })
+})
+
 async function installChatRoute(page: Page): Promise<ChatSemanticRouteState> {
   let releaseAnswer: () => void = () => undefined
   const answerGate = new Promise<void>((resolve) => { releaseAnswer = resolve })
@@ -213,6 +293,78 @@ async function installAssigneeRoute(page: Page) {
         }]
       }
     })
+  })
+}
+
+async function installDocumentsRoute(page: Page) {
+  await page.route(/http:\/\/127\.0\.0\.1:8787\/(?:documents(?:\/reindex-migrations)?|document-groups)$/, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.fallback()
+      return
+    }
+
+    const path = new URL(route.request().url()).pathname
+    if (path === '/documents') {
+      await route.fulfill({
+        json: {
+          documents: [{
+            detailLevel: 'manager',
+            documentId: 'cross-browser-document-1',
+            fileName: 'cross-browser-policy.pdf',
+            mimeType: 'application/pdf',
+            chunkCount: 12,
+            memoryCardCount: 3,
+            status: 'ready',
+            metadata: { groupIds: ['cross-browser-group-1'] },
+            currentUserEffectivePermission: 'full',
+            capabilities: {
+              canRead: true,
+              canShare: true,
+              canMove: true,
+              canDelete: true,
+              canReindex: true
+            },
+            createdAt: '2026-08-28T00:00:00.000Z',
+            updatedAt: '2026-08-28T00:01:00.000Z'
+          }]
+        }
+      })
+      return
+    }
+
+    if (path === '/document-groups') {
+      await route.fulfill({
+        json: {
+          groups: [{
+            schemaVersion: 2,
+            itemType: 'documentGroup',
+            tenantId: 'local-e2e',
+            groupId: 'cross-browser-group-1',
+            name: 'cross-browser規程',
+            normalizedName: 'cross-browser規程',
+            canonicalPath: '/cross-browser規程',
+            normalizedCanonicalPath: '/cross-browser規程',
+            adminPrincipalType: 'user',
+            adminPrincipalId: 'cross-browser-admin',
+            adminPathPk: 'local-e2e#user#cross-browser-admin',
+            parentPathPk: 'local-e2e#user#cross-browser-admin#ROOT',
+            visibility: 'private',
+            ownerUserId: 'cross-browser-admin',
+            sharedUserIds: [],
+            sharedGroups: [],
+            managerUserIds: ['cross-browser-admin'],
+            effectivePermission: 'full',
+            detailLevel: 'manager',
+            capabilities: { canRead: true, canManage: true },
+            createdAt: '2026-08-28T00:00:00.000Z',
+            updatedAt: '2026-08-28T00:01:00.000Z'
+          }]
+        }
+      })
+      return
+    }
+
+    await route.fulfill({ json: { migrations: [] } })
   })
 }
 
