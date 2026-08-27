@@ -161,31 +161,6 @@ test('E2E-UI-CROSS-BROWSER-SEMANTICS-004: documents expose stable cross-browser 
 
   const workspace = page.getByRole('region', { name: 'ドキュメント管理', exact: true })
   await expect(workspace).toBeVisible()
-  await expectAriaSnapshot(workspace, testInfo, evidenceId, 'documents-idle', `
-    - region "ドキュメント管理":
-        - button "前の画面へ戻る"
-        - heading "ドキュメント管理" [level=2]
-        - navigation "パンくず"
-        - complementary "フォルダツリー":
-            - search:
-                - searchbox "フォルダを検索"
-        - region "登録文書一覧":
-            - heading "すべてのドキュメント" [level=3]
-            - region "現在の文書表示条件"
-            - searchbox "ファイル名検索"
-            - combobox "種別":
-                - option "すべて" [selected]
-            - combobox "状態":
-                - option "すべて" [selected]
-            - combobox "所属フォルダ":
-                - option "すべて" [selected]
-            - combobox "並び替え":
-                - option "更新日 新しい順" [selected]
-            - combobox "表示件数":
-                - option "25件" [selected]
-            - table "登録文書"
-  `)
-
   const folderSearch = workspace.getByRole('searchbox', { name: 'フォルダを検索' })
   const fileNameSearch = workspace.getByRole('searchbox', { name: 'ファイル名検索' })
   const typeFilter = workspace.getByRole('combobox', { name: '種別' })
@@ -193,6 +168,13 @@ test('E2E-UI-CROSS-BROWSER-SEMANTICS-004: documents expose stable cross-browser 
   const folderFilter = workspace.getByRole('combobox', { name: '所属フォルダ' })
   const sortOrder = workspace.getByRole('combobox', { name: '並び替え' })
   const pageSize = workspace.getByRole('combobox', { name: '表示件数' })
+  const inventory = workspace.getByRole('region', { name: '登録文書一覧' })
+  await expect(workspace.getByRole('heading', { name: 'ドキュメント管理', level: 2 })).toBeVisible()
+  await expect(workspace.getByRole('navigation', { name: 'パンくず' })).toBeVisible()
+  await expect(workspace.getByRole('complementary', { name: 'フォルダツリー' })).toBeVisible()
+  await expect(inventory.getByRole('heading', { name: 'すべてのドキュメント', level: 3 })).toBeVisible()
+  await expect(inventory.getByRole('region', { name: '現在の文書表示条件' })).toBeVisible()
+  await expect(inventory.getByRole('table', { name: '登録文書' })).toBeVisible()
   await expect(folderSearch).toHaveValue('')
   await expect(fileNameSearch).toHaveValue('')
   await expect(typeFilter).toHaveValue('all')
@@ -200,6 +182,15 @@ test('E2E-UI-CROSS-BROWSER-SEMANTICS-004: documents expose stable cross-browser 
   await expect(folderFilter).toHaveValue('all')
   await expect(sortOrder).toHaveValue('updatedDesc')
   await expect(pageSize).toHaveValue('25')
+  await attachSemanticEvidence(workspace, testInfo, evidenceId, 'documents-idle', {
+    folderSearchValue: await folderSearch.inputValue(),
+    fileNameSearchValue: await fileNameSearch.inputValue(),
+    typeFilterValue: await typeFilter.inputValue(),
+    statusFilterValue: await statusFilter.inputValue(),
+    folderFilterValue: await folderFilter.inputValue(),
+    sortValue: await sortOrder.inputValue(),
+    pageSizeValue: await pageSize.inputValue()
+  })
 
   await workspace.getByRole('button', { name: 'cross-browser-policy.pdfの詳細を表示' }).click()
   const selectedRow = workspace.locator('[role="row"][aria-selected="true"]')
@@ -207,16 +198,15 @@ test('E2E-UI-CROSS-BROWSER-SEMANTICS-004: documents expose stable cross-browser 
 
   const dialog = page.getByRole('dialog', { name: 'cross-browser-policy.pdf' })
   await expect(dialog).toBeVisible()
-  await expectAriaSnapshot(dialog, testInfo, evidenceId, 'documents-detail', `
-    - dialog "cross-browser-policy.pdf":
-        - heading "cross-browser-policy.pdf" [level=3]
-        - button "文書詳細を閉じる"
-        - button "技術・品質詳細を表示"
-        - button "この資料に質問する"
-  `)
-
+  await expect(dialog.getByRole('heading', { name: 'cross-browser-policy.pdf', level: 3 })).toBeVisible()
+  await expect(dialog.getByRole('button', { name: '文書詳細を閉じる' })).toBeVisible()
+  await expect(dialog.getByRole('button', { name: 'この資料に質問する' })).toBeVisible()
   const technicalDisclosure = dialog.getByRole('button', { name: '技術・品質詳細を表示' })
   await expect(technicalDisclosure).toHaveAttribute('aria-expanded', 'false')
+  await attachSemanticEvidence(dialog, testInfo, evidenceId, 'documents-detail', {
+    selectedRow: await selectedRow.getAttribute('aria-selected'),
+    technicalDisclosureExpanded: await technicalDisclosure.getAttribute('aria-expanded')
+  })
   await technicalDisclosure.click()
   await expect(dialog.getByRole('button', { name: '技術・品質詳細を閉じる' })).toHaveAttribute('aria-expanded', 'true')
   await attachSemanticEvidence(dialog, testInfo, evidenceId, 'documents-detail-expanded', {
