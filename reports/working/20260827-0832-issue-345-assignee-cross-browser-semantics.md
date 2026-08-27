@@ -15,7 +15,7 @@
 |---|---|---:|---|
 | R1 | 既存作業と重複しないsmall slice | 高 | 担当者対応cross-browser semanticsを選定 |
 | R2 | 画面→要件→AC→E2E追跡 | 高 | `assignee → SQ-016 → AC-SQ016-003 → E2E-UI-CROSS-BROWSER-SEMANTICS-003`を同期 |
-| R3 | Firefox／WebKit required gate | 高 | test追加・22件discovery成功、実走CI待ち |
+| R3 | Firefox／WebKit required gate | 高 | test追加・22件discovery成功、GitHub Actions 22/22成功 |
 | R4 | 正本・generated同期 | 高 | generatorで同期済み |
 | R5 | #461との競合抑止 | 高 | production sourceを変更せずtest/docs/authored sourceのみ |
 | R6 | 未検証を未完了として維持 | 高 | manual / native AX / real zoom / deviceをblocked維持 |
@@ -27,6 +27,7 @@
 - assigneeはChromium AX、Firefox／WebKit keyboard、Chromium contrastまでrequiredだが、Firefox／WebKit semantic snapshotが未被覆だったため今回のsliceに選定した。
 - `DES_UI_UX_001.md`にprofile semantic追加前の「semantic 2件／合計18件」が残っていたため、新規testを含む実装実態「semantic 6件／合計22件」へ同時修正した。
 - Playwright ARIA snapshot / DOM stateはrepresentative screen readerやnative browser AX treeの代替ではないため、manual / overallは`blocked`のままとした。
+- 初回CIでlocator自身の`region "担当者対応"`を期待snapshot境界から外していた不一致をFirefox／WebKitともに検出した。CIの実snapshotに基づきroot regionとDOM順序を明示し、再実行で両browserをpassさせた。
 
 ## 4. 実施作業
 
@@ -71,43 +72,46 @@
 - `npm run docs:hidden-unicode:check`
 - authored JSON parse
 - `git diff --check`
+- [Web UI Quality run 33025656050](https://github.com/tsuji-tomonori/rag-assist/actions/runs/33025656050): Chromium 41/41、Firefox／WebKit required 22/22
+- [Validate Semver Label run 33025656012](https://github.com/tsuji-tomonori/rag-assist/actions/runs/33025656012): success
+- [MemoRAG CI run 33025656019](https://github.com/tsuji-tomonori/rag-assist/actions/runs/33025656019): lint、type-check、test、build、docs / synthを含めsuccess
 
 ### 初回失敗と修復
 
 - plain Web unitはworkspace timezone UTCにより既存の日付表示期待2件が1日前となった。今回差分と無関係で、fixture契約に合わせ`TZ=Asia/Tokyo`を明示して449/449成功した。
+- implementation head `07062df1`のWeb UI Qualityでは新規2件だけが失敗し、locator root regionとDOM順序のsnapshot境界不一致を検出した。実snapshotへ期待境界を合わせた`40519c8c`で、retry / flakyなしのFirefox／WebKit 22/22成功を確認した。
 
 ### 未実施・制約
 
 - local Firefox／WebKit実走は完了していない。
   - 標準API起動はsandboxが`tsx` IPC socketを`EPERM`で拒否した。
   - IPC不要の`node --import tsx`でAPI / Webを起動して再試行したが、Firefoxはpage setup timeout、WebKitはhost library不足で実走不能だった。
-  - 対象test discoveryと全required 22件の解決は成功した。GitHub Actions required jobの実走結果を待ち、失敗時は同じbranchで修復する。
+  - 対象test discoveryと全required 22件の解決は成功した。local制約をGitHub ActionsのFirefox／WebKit実走で補い、22/22成功を確認した。
 
 ## 7. 指示へのfit評価
 
 | 評価軸 | 評価 | 理由 |
 |---|---:|---|
-| 指示網羅性 | 4.6 / 5 | 実装・正本・生成物・ローカル検証は対応、CI実走待ち |
+| 指示網羅性 | 4.9 / 5 | 実装・正本・生成物・ローカル検証とrequired browser CIを対応 |
 | 制約遵守 | 5 / 5 | Draft維持、production ownership非侵食、merge等なし |
-| 成果物品質 | 4.5 / 5 | trace / artifact boundaryあり、browser実走結果待ち |
+| 成果物品質 | 4.9 / 5 | trace / artifact boundaryとFirefox／WebKit実走証跡あり |
 | 説明責任 | 5 / 5 | initial failure、sandbox制約、manual gapを分離記録 |
 | 検収容易性 | 4.8 / 5 | E2E ID、22件discovery、command evidenceを明示 |
 
-総合fit: 4.8 / 5（CI待ちのため未完了）。
+総合fit: 4.9 / 5（manual / owner blockerを完了扱いしないためtask / PRはDraft維持）。
 
 ## 8. 未対応・制約・リスク
 
-- 未対応: final-head GitHub Actions、PR受け入れコメント、セルフレビュー、Issue #345コメント。
+- 未対応: final record headのGitHub Actions、PR受け入れコメント、セルフレビュー、Issue #345コメント。
 - 制約: local WebKit host dependencies、Firefox page setup、sandbox `tsx` IPC。
-- リスク: Firefox／WebKitの実snapshot差がCIで初めて検出される可能性がある。
+- リスク: #461統合後はproduction DOMが変わるため、同じsemantic contractの再検証が必要である。
 - 継続blocker: representative screen reader、native AX tree、実browser zoom、manual keyboard / contrast、touch／実機、#461統合後の再検証、FR-051 / OQ-UI-002 owner判断、API C1 85%。
 
 ## 9. 次の作業
 
-1. commit / pushしてrequired GitHub Actionsを実走する。
-2. CI失敗時はsnapshot / browser差を修復して再実行する。
-3. final head成功後にPR本文・受け入れ確認・セルフレビュー・Issue #345を更新する。
-4. manual / owner gapが残るためtaskは`do`、PRはDraftを維持する。
+1. final record headのGitHub Actionsを確認する。
+2. PR本文・受け入れ確認・セルフレビュー・Issue #345を更新する。
+3. manual / owner gapが残るためtaskは`do`、PRはDraftを維持する。
 
 ## 10. Remote publication
 
@@ -116,3 +120,6 @@
 - current `main@8e542b31`に対してbehind 0 / ahead 123。
 - 通常の`git push`は実行環境にGitHub認証情報がなく失敗したため、repository既定のGitHub Apps flowへ切り替えた。force-pushは行っていない。
 - low-level ref更新だけではGitHub Actions runが作成されなかったため、この記録更新をContents API commitとして発行し、pull request `synchronize` / required workflow起動を再試行する。
+- initial CI head: `07062df1bb08cd5dc9260de71497ac8c355bac3a`（新規Firefox／WebKit 2件のみsnapshot境界不一致）。
+- repaired implementation head: `40519c8c10ae2dcef459456f1110f906c376c23a`。
+- repaired headのWeb UI Quality、MemoRAG CI、semverはすべて成功。
