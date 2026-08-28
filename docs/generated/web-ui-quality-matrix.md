@@ -77,7 +77,7 @@
 | benchmark | AC-SQ016-008 | not_applicable | blocked | blocked | manual required scopeは未実施 |
 | admin | AC-SQ016-001 | pass | blocked | blocked | required E2E-UI-ZOOM-REFLOW-001をChromium／Firefox／WebKitの640/320 CSS pxで実行し、到達・root overflow 0を検証。CSS viewport proxyであり実browser zoomは未検証 |
 | admin | AC-SQ016-002 | pass | blocked | blocked | required E2E-UI-KEYBOARD-NAV-001をChromium／Firefox／WebKitで実行し、overviewのユーザー管理card、概要／ユーザーsection tab、ユーザー検索・状態・並び順・検索確定と3px focus indicatorをkeyboard-onlyで検証。manual keyboard journeyは未実施 |
-| admin | AC-SQ016-003 | pass | blocked | blocked | required E2E-UI-SR-SEMANTICS-001で管理workspace／heading／section navigation、ユーザー管理region、検索landmark／textbox、filter value、作成form、ユーザー一覧tableのChromium AX tree契約を検証。representative screen readerは未実施 |
+| admin | AC-SQ016-003 | pass | blocked | blocked | required E2E-UI-SR-SEMANTICS-001で管理workspace／heading／section navigation、ユーザー管理region、検索landmark／textbox、filter value、作成form、ユーザー一覧tableのChromium AX tree契約を検証。E2E-UI-CROSS-BROWSER-SEMANTICS-005でFirefox／WebKitのworkspace／section navigation／current state、ユーザー管理region／search／filter value／作成form／table／polite取得statusを検証。representative screen readerとnative Firefox／WebKit AX treeは未実施 |
 | admin | AC-SQ016-004 | pass | blocked | blocked | muted foreground remediation後、1280px axe serious/critical blocker 0。manual contrast reviewは未実施 |
 | admin | AC-SQ016-005 | pass | blocked | blocked | 4 viewportで24px minimumと44px primary targetの未解決candidate 0。manual touch evidenceは未実施 |
 | admin | AC-SQ016-006 | pass | blocked | blocked | 4 viewportのreduced-motion computed auditはpass。orientation / safe-area / virtual-keyboard実機は未検証 |

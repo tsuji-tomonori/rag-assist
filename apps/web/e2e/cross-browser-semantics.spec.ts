@@ -222,6 +222,61 @@ test('E2E-UI-CROSS-BROWSER-SEMANTICS-004: documents expose stable cross-browser 
   })
 })
 
+test('E2E-UI-CROSS-BROWSER-SEMANTICS-005: admin exposes stable cross-browser semantics @ui-quality', async ({ page }, testInfo) => {
+  const evidenceId = 'E2E-UI-CROSS-BROWSER-SEMANTICS-005'
+  await installAdminRoutes(page)
+  await page.goto('/')
+  await signIn(page)
+  await page.getByRole('navigation', { name: '画面' }).getByRole('button', { name: '管理者設定' }).click()
+
+  const workspace = page.getByRole('region', { name: '管理者設定', exact: true })
+  await expect(workspace).toBeVisible()
+  const sectionNavigation = workspace.getByRole('navigation', { name: '管理セクション' })
+  const overviewSection = sectionNavigation.getByRole('button', { name: '概要', exact: true })
+  const usersSection = sectionNavigation.getByRole('button', { name: 'ユーザー', exact: true })
+  await expect(workspace.getByRole('heading', { name: '管理者設定', level: 2 })).toBeVisible()
+  await expect(workspace.getByRole('button', { name: 'チャットへ戻る' })).toBeVisible()
+  await expect(sectionNavigation).toBeVisible()
+  await expect(overviewSection).toHaveAttribute('aria-current', 'page')
+  await expect(usersSection).not.toHaveAttribute('aria-current')
+  await attachSemanticEvidence(workspace, testInfo, evidenceId, 'admin-overview', {
+    overviewCurrent: await overviewSection.getAttribute('aria-current'),
+    usersCurrent: await usersSection.getAttribute('aria-current')
+  })
+
+  await usersSection.click()
+  const users = workspace.getByRole('region', { name: 'ユーザー管理一覧' })
+  await expect(users).toBeVisible()
+  const query = users.getByRole('textbox', { name: 'ユーザー・ロールを検索' })
+  const statusFilter = users.getByRole('combobox', { name: '状態' })
+  const sortOrder = users.getByRole('combobox', { name: '並び順' })
+  const initialRole = users.getByRole('combobox', { name: '初期ロール' })
+  const dataStatus = users.getByRole('status')
+  await expect(usersSection).toHaveAttribute('aria-current', 'page')
+  await expect(overviewSection).not.toHaveAttribute('aria-current')
+  await expect(users.getByRole('heading', { name: 'ユーザー管理', level: 3 })).toBeVisible()
+  await expect(users.getByRole('search', { name: '管理対象ユーザーを絞り込む' })).toBeVisible()
+  await expect(users.getByRole('form', { name: '管理対象ユーザー作成' })).toBeVisible()
+  await expect(users.getByRole('table', { name: 'ユーザー一覧' })).toBeVisible()
+  await expect(query).toHaveValue('')
+  await expect(statusFilter).toHaveValue('')
+  await expect(sortOrder).toHaveValue('emailAsc')
+  await expect(initialRole).toHaveValue('SYSTEM_ADMIN')
+  await expect(dataStatus).toHaveAttribute('aria-live', 'polite')
+  await expect(dataStatus).toContainText('取得元: authoritative_identity')
+  await attachSemanticEvidence(users, testInfo, evidenceId, 'admin-users', {
+    overviewCurrent: await overviewSection.getAttribute('aria-current'),
+    usersCurrent: await usersSection.getAttribute('aria-current'),
+    queryValue: await query.inputValue(),
+    statusFilterValue: await statusFilter.inputValue(),
+    sortValue: await sortOrder.inputValue(),
+    initialRoleValue: await initialRole.inputValue(),
+    dataStatusComputedRole: 'status',
+    dataStatusRoleAttribute: await dataStatus.getAttribute('role'),
+    dataStatusLive: await dataStatus.getAttribute('aria-live')
+  })
+})
+
 async function installChatRoute(page: Page): Promise<ChatSemanticRouteState> {
   let releaseAnswer: () => void = () => undefined
   const answerGate = new Promise<void>((resolve) => { releaseAnswer = resolve })
@@ -355,6 +410,105 @@ async function installDocumentsRoute(page: Page) {
     }
 
     await route.fulfill({ json: { migrations: [] } })
+  })
+}
+
+async function installAdminRoutes(page: Page) {
+  await page.route(/http:\/\/127\.0\.0\.1:8787\/admin\/(?:users|roles|audit-log|usage|costs|aliases(?:\/audit-log)?)(?:\?.*)?$/, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.fallback()
+      return
+    }
+
+    const path = new URL(route.request().url()).pathname
+    if (path === '/admin/users') {
+      await route.fulfill({
+        json: {
+          users: [{
+            userId: 'cross-browser-semantic-admin',
+            email: 'cross-browser-semantic-admin@example.com',
+            displayName: 'Cross-browser Semantic Admin',
+            status: 'active',
+            groups: ['SYSTEM_ADMIN'],
+            createdAt: '2026-08-29T00:00:00.000Z',
+            updatedAt: '2026-08-29T00:00:00.000Z',
+            capability: {
+              canAssignRoles: false,
+              canSuspend: false,
+              canUnsuspend: false,
+              canDelete: false,
+              blockers: ['self_mutation']
+            }
+          }],
+          total: 1,
+          truncated: false,
+          source: 'authoritative_identity',
+          asOf: '2026-08-29T00:00:00.000Z',
+          version: 'cross-browser-semantic-ledger-v1'
+        }
+      })
+      return
+    }
+
+    if (path === '/admin/roles') {
+      await route.fulfill({
+        json: {
+          roles: [{
+            role: 'SYSTEM_ADMIN',
+            displayName: 'システム管理者',
+            description: 'システム全体の管理を行います。',
+            kind: 'systemPreset',
+            permissions: []
+          }],
+          catalogVersion: 'cross-browser-semantic-role-catalog-v1',
+          source: 'canonical-application-role-catalog',
+          asOf: '2026-08-29T00:00:00.000Z'
+        }
+      })
+      return
+    }
+
+    if (path === '/admin/audit-log') {
+      await route.fulfill({
+        json: {
+          auditLog: [],
+          total: 0,
+          truncated: false,
+          source: 'managed-user-audit-ledger',
+          asOf: '2026-08-29T00:00:00.000Z'
+        }
+      })
+      return
+    }
+
+    if (path === '/admin/aliases') {
+      await route.fulfill({
+        json: {
+          aliases: [],
+          total: 0,
+          truncated: false,
+          source: 'tenant-alias-ledger',
+          asOf: '2026-08-29T00:00:00.000Z',
+          version: 'cross-browser-semantic-alias-ledger-v1'
+        }
+      })
+      return
+    }
+
+    if (path === '/admin/aliases/audit-log') {
+      await route.fulfill({
+        json: {
+          auditLog: [],
+          total: 0,
+          truncated: false,
+          source: 'tenant-alias-ledger',
+          asOf: '2026-08-29T00:00:00.000Z'
+        }
+      })
+      return
+    }
+
+    await route.fulfill({ json: null })
   })
 }
 
