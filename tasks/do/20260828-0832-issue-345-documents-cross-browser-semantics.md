@@ -65,15 +65,15 @@ documentsはIssue #345初回inventoryで132操作要素を持つ高密度画面�
 
 ## 受け入れ条件
 
-- [ ] `E2E-UI-CROSS-BROWSER-SEMANTICS-004`がFirefox／WebKitでdocuments workspace、breadcrumb、folder tree、folder／filename search、filter value、文書tableを検証する。
-- [ ] 文書detail dialog、close／question action、selected row、technical disclosureのcollapsed→expanded stateを同じ実走で検証する。
-- [ ] browser project名、新E2E ID、Playwright ARIA snapshot / DOM stateの証跡境界をartifactへ記録する。
-- [ ] `documents → SQ-016 → AC-SQ016-003 → E2E-UI-CROSS-BROWSER-SEMANTICS-004`が正本、authored trace / matrix、生成文書で一致する。
-- [ ] required Firefox／WebKit scopeの内訳がsemantic 8件／合計24件へ更新される。
-- [ ] production component / CSS / API / authorization / RAG contractを変更しない。
-- [ ] manual / overall statusは`blocked`を維持し、representative screen reader、native AX tree、実browser zoom、実機をpass扱いしない。
-- [ ] 選定したlint、typecheck、unit、build、E2E discovery、docs / freshness checks、`git diff --check`が成功する。
-- [ ] Draft PR #462、PR受け入れコメント、セルフレビュー、Issue #345進捗が更新される。
+- [x] `E2E-UI-CROSS-BROWSER-SEMANTICS-004`がFirefox／WebKitでdocuments workspace、breadcrumb、folder tree、folder／filename search、filter value、文書tableを検証する。
+- [x] 文書detail dialog、close／question action、selected row、technical disclosureのcollapsed→expanded stateを同じ実走で検証する。
+- [x] browser project名、新E2E ID、Playwright ARIA snapshot / DOM stateの証跡境界をartifactへ記録する。
+- [x] `documents → SQ-016 → AC-SQ016-003 → E2E-UI-CROSS-BROWSER-SEMANTICS-004`が正本、authored trace / matrix、生成文書で一致する。
+- [x] required Firefox／WebKit scopeの内訳がsemantic 8件／合計24件へ更新される。
+- [x] production component / CSS / API / authorization / RAG contractを変更しない。
+- [x] manual / overall statusは`blocked`を維持し、representative screen reader、native AX tree、実browser zoom、実機をpass扱いしない。
+- [x] 選定したlint、typecheck、unit、build、E2E discovery、docs / freshness checks、`git diff --check`が成功する。
+- [x] Draft PR #462、PR受け入れコメント、セルフレビュー、Issue #345進捗が更新される。
 
 ## 検証計画
 
