@@ -61,6 +61,9 @@
 - initial head `9ec0395c`: Chromium requiredは成功。Firefox／WebKit requiredは既存24件が成功し、新規2件だけが同じ箇所で失敗した。
 - 原因: `AdminPanelDataStatus`は明示的な`role=status`／`aria-live=polite`を持つが、Firefox／WebKitのPlaywright `getByRole('status')` locatorでは要素が解決されなかった。前段のusers region／filter／form／table／value assertionsは成功している。
 - 修復: status要素だけをusers region内の明示的DOM role/live属性とfixture source textで限定し、`role`／`aria-live`／可視textを検証する。enclosing users regionのPlaywright ARIA snapshotは別途添付し、DOM stateとsnapshotの証跡境界をJSONへ明記する。
+- repair head `30a9622d`: Chromium requiredと既存Firefox／WebKit 24件は再度成功したが、新規2件はsuccess statusではなく部分失敗alertを表示して失敗した。CI artifactのpage snapshotで管理対象ユーザーだけが`取得失敗`、問い合わせ参照`ui-admin-users-2`となることを確認した。
+- 確定原因: 新規admin user fixtureが現行strict decoder必須の`effectivePermissions`と`projection` evidenceを欠いていた。API失敗やproduct不具合ではなく、古いfixture形状だった。
+- 追加修復: fixtureへserver-defined permission projection、source／as-of／reconciliation stateを追加し、成功dataのpolite statusを検証対象へ戻した。
 - false pass防止: statusの検証を削除せず、代表screen reader／native AX treeのpassにも昇格しない。修復headのrequired CI結果が確定するまで未完了とする。
 
 ## Lifecycle / cleanup recommendation

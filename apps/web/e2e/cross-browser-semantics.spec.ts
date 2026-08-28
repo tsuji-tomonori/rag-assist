@@ -432,8 +432,14 @@ async function installAdminRoutes(page: Page) {
             displayName: 'Cross-browser Semantic Admin',
             status: 'active',
             groups: ['SYSTEM_ADMIN'],
+            effectivePermissions: ['admin:users:read'],
             createdAt: '2026-08-29T00:00:00.000Z',
             updatedAt: '2026-08-29T00:00:00.000Z',
+            projection: {
+              source: 'authoritative_identity',
+              asOf: '2026-08-29T00:00:00.000Z',
+              reconciliationState: 'current'
+            },
             capability: {
               canAssignRoles: false,
               canSuspend: false,
