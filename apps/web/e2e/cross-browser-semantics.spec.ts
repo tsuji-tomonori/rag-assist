@@ -251,7 +251,7 @@ test('E2E-UI-CROSS-BROWSER-SEMANTICS-005: admin exposes stable cross-browser sem
   const statusFilter = users.getByRole('combobox', { name: '状態' })
   const sortOrder = users.getByRole('combobox', { name: '並び順' })
   const initialRole = users.getByRole('combobox', { name: '初期ロール' })
-  const dataStatus = users.getByRole('status')
+  const dataStatus = users.locator('[role="status"][aria-live="polite"]', { hasText: '取得元: authoritative_identity' })
   await expect(usersSection).toHaveAttribute('aria-current', 'page')
   await expect(overviewSection).not.toHaveAttribute('aria-current')
   await expect(users.getByRole('heading', { name: 'ユーザー管理', level: 3 })).toBeVisible()
@@ -262,6 +262,8 @@ test('E2E-UI-CROSS-BROWSER-SEMANTICS-005: admin exposes stable cross-browser sem
   await expect(statusFilter).toHaveValue('')
   await expect(sortOrder).toHaveValue('emailAsc')
   await expect(initialRole).toHaveValue('SYSTEM_ADMIN')
+  await expect(dataStatus).toBeVisible()
+  await expect(dataStatus).toHaveAttribute('role', 'status')
   await expect(dataStatus).toHaveAttribute('aria-live', 'polite')
   await expect(dataStatus).toContainText('取得元: authoritative_identity')
   await attachSemanticEvidence(users, testInfo, evidenceId, 'admin-users', {
@@ -271,7 +273,7 @@ test('E2E-UI-CROSS-BROWSER-SEMANTICS-005: admin exposes stable cross-browser sem
     statusFilterValue: await statusFilter.inputValue(),
     sortValue: await sortOrder.inputValue(),
     initialRoleValue: await initialRole.inputValue(),
-    dataStatusComputedRole: 'status',
+    dataStatusEvidenceBoundary: 'explicit DOM role/live attributes plus enclosing Playwright ARIA snapshot',
     dataStatusRoleAttribute: await dataStatus.getAttribute('role'),
     dataStatusLive: await dataStatus.getAttribute('aria-live')
   })

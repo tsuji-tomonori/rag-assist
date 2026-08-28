@@ -56,6 +56,13 @@
 - MemoRAG CI: pending
 - semver check: pending
 
+## CI repair loop
+
+- initial head `9ec0395c`: Chromium requiredは成功。Firefox／WebKit requiredは既存24件が成功し、新規2件だけが同じ箇所で失敗した。
+- 原因: `AdminPanelDataStatus`は明示的な`role=status`／`aria-live=polite`を持つが、Firefox／WebKitのPlaywright `getByRole('status')` locatorでは要素が解決されなかった。前段のusers region／filter／form／table／value assertionsは成功している。
+- 修復: status要素だけをusers region内の明示的DOM role/live属性とfixture source textで限定し、`role`／`aria-live`／可視textを検証する。enclosing users regionのPlaywright ARIA snapshotは別途添付し、DOM stateとsnapshotの証跡境界をJSONへ明記する。
+- false pass防止: statusの検証を削除せず、代表screen reader／native AX treeのpassにも昇格しない。修復headのrequired CI結果が確定するまで未完了とする。
+
 ## Lifecycle / cleanup recommendation
 
 - evidence artifact retentionはworkflow既定の14日を維持する。
