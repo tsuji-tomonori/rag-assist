@@ -64,6 +64,7 @@
 - implementation head: `75a415472745907049ca6e055f07b270fae88bb1`
 - remote tree転送時に2件のUnicode pathが引用文字列として追加されたため、`6f481c66870ae8ede693415edd178b24e1c19535`で誤pathを削除し、既存の正本pathへ同一内容を反映した。履歴はfast-forwardで保持し、force-pushしていない。
 - GitHub Actionsを発火させるrecord commit `6d945ff52a5a0c6c8f5cf19a760a05fa46f1ebf9`を追加した。
+- task acceptance、CI、PR／Issue証跡をまとめたacceptance record headは`caaad53be4706b5469982bbdcba8bc6183e1c7ca`。
 
 ## Requirement fit
 
