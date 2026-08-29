@@ -73,7 +73,7 @@ Draft PR #462 は current `main@8e542b31` を祖先に含み、管理者設定�
 - [x] production component / CSS / API / authorization / RAG contractを変更しない。
 - [x] manual / overall statusは`blocked`を維持し、representative screen reader、native AX tree、実browser zoom、実機をpass扱いしない。
 - [x] 選定したlint、typecheck、unit、build、E2E discovery、docs / freshness checks、`git diff --check`が成功する。
-- [ ] Draft PR #462、PR受け入れコメント、セルフレビュー、Issue #345進捗が更新される。
+- [x] Draft PR #462、PR受け入れコメント、セルフレビュー、Issue #345進捗が更新される。
 
 ## 検証計画
 

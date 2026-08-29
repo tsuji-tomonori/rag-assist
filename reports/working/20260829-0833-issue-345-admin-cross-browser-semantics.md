@@ -51,10 +51,12 @@
 
 ## CI待ち
 
-- Required Firefox and WebKit keyboard, semantics, states, reflow, and content extremes: pending
-- Chromium Web UI Quality: pending
-- MemoRAG CI: pending
-- semver check: pending
+- implementation head: `9afa21e047a989f1e0e414b6e9f6759cd0b35cfe`
+- [Web UI Quality run 33222146485](https://github.com/tsuji-tomonori/rag-assist/actions/runs/33222146485): success。Chromium required成功、Firefox／WebKit required 26 / 26成功。
+- [MemoRAG CI run 33222146548](https://github.com/tsuji-tomonori/rag-assist/actions/runs/33222146548): success。
+- [Validate Semver Label run 33222146503](https://github.com/tsuji-tomonori/rag-assist/actions/runs/33222146503): success。
+- [PR受け入れコメント](https://github.com/tsuji-tomonori/rag-assist/pull/462#issuecomment-5459060793)と[セルフレビュー](https://github.com/tsuji-tomonori/rag-assist/pull/462#pullrequestreview-5055970815)を追加した。
+- [Issue #345進捗コメント](https://github.com/tsuji-tomonori/rag-assist/issues/345#issuecomment-5459066100)へ完了証跡と未完了blockerを記録した。
 
 ## CI repair loop
 
@@ -64,7 +66,8 @@
 - repair head `30a9622d`: Chromium requiredと既存Firefox／WebKit 24件は再度成功したが、新規2件はsuccess statusではなく部分失敗alertを表示して失敗した。CI artifactのpage snapshotで管理対象ユーザーだけが`取得失敗`、問い合わせ参照`ui-admin-users-2`となることを確認した。
 - 確定原因: 新規admin user fixtureが現行strict decoder必須の`effectivePermissions`と`projection` evidenceを欠いていた。API失敗やproduct不具合ではなく、古いfixture形状だった。
 - 追加修復: fixtureへserver-defined permission projection、source／as-of／reconciliation stateを追加し、成功dataのpolite statusを検証対象へ戻した。
-- false pass防止: statusの検証を削除せず、代表screen reader／native AX treeのpassにも昇格しない。修復headのrequired CI結果が確定するまで未完了とする。
+- final implementation head `9afa21e0`: Web UI Quality成功。Chromium requiredとFirefox／WebKit required 26 / 26が成功し、retry／flaky failureなし。
+- false pass防止: statusの検証を削除せず、代表screen reader／native AX treeのpassにも昇格しない。
 
 ## Lifecycle / cleanup recommendation
 
