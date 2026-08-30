@@ -6,7 +6,7 @@
 - `history → SQ-016 → AC-SQ016-003 → E2E-UI-CROSS-BROWSER-SEMANTICS-006`をSQ-016正本、UI正本、authored trace / quality matrix、generated Web docsへ同期した。
 - required Firefox／WebKit scopeはsemantic 12件、全28件となった。
 - production component / CSS / API / authorization / RAG contractは変更していない。
-- local実ブラウザ実走はsandbox内のAPI server起動時に`tsx` IPC socketが`EPERM`となるため未完了。Firefox／WebKit required実走はGitHub Actions待ちである。
+- local実ブラウザ実走はsandbox内のAPI server起動時に`tsx` IPC socketが`EPERM`となるため未完了。GitHub ActionsではFirefox／WebKit required 28/28が成功した。
 
 ## 実装範囲
 
@@ -49,11 +49,16 @@
 - #461統合後は最終production DOMとgenerated inventoryに対して再検証が必要である。
 - Draft PR #462は累積stackであり、本sliceのCI成功だけでmerge-readyとはしない。
 
-## CI待ち
+## CI / GitHub evidence
 
-- implementation head: push後に記録する。
-- Web UI Quality、MemoRAG CI、Validate Semver Labelはpush後に確認する。
-- PR受け入れコメント、セルフレビュー、Issue #345進捗コメントはCI結果確定後に追加する。
+- verified head: `7d295ac266a2442c5937bcbd87312973cf3850cd`
+- [Web UI Quality](https://github.com/tsuji-tomonori/rag-assist/actions/runs/33283187822): pass。Firefox／WebKit required 28/28、Chromium required成功。
+- [MemoRAG CI](https://github.com/tsuji-tomonori/rag-assist/actions/runs/33283187837): pass。
+- [Validate Semver Label](https://github.com/tsuji-tomonori/rag-assist/actions/runs/33283187819): pass。
+- 初回headでは`docs/generated/web-ui-inventory.json`だけが転送上限で切り詰められ、docs validation / freshnessが失敗した。ローカルblob SHA `7597cc9bff3ce5bdf6f3423814fada711be911fa`とGitHub blob SHAの一致を確認して修復し、3系統を再実行した。
+- [PR受け入れ確認](https://github.com/tsuji-tomonori/rag-assist/pull/462#issuecomment-5465771919)
+- [セルフレビュー](https://github.com/tsuji-tomonori/rag-assist/pull/462#pullrequestreview-5059568662)
+- [Issue #345進捗](https://github.com/tsuji-tomonori/rag-assist/issues/345#issuecomment-5465773188)
 
 ## Lifecycle / cleanup recommendation
 
