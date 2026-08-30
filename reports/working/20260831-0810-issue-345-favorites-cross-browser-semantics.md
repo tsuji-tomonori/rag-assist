@@ -7,7 +7,7 @@
 - required Firefox／WebKit scopeはsemantic 14件、全30件となった。
 - production component／CSS／API／authorization／RAG contractは変更していない。
 - 現行productionに存在しないfavorite resume／delete actionをfixtureや要件へ追加せず、未完了を維持した。
-- local実ブラウザ実走はsandbox内API serverの`tsx` IPC socketが`EPERM`となるため未完了。Firefox／WebKit required実走はGitHub Actions待ちである。
+- local実ブラウザ実走はsandbox内API serverの`tsx` IPC socketが`EPERM`となるため未完了。GitHub ActionsではFirefox／WebKit required 30/30が成功した。
 
 ## 実装範囲
 
@@ -50,11 +50,15 @@
 - #461統合後は最終production DOMとgenerated inventoryに対して再検証が必要である。
 - Draft PR #462は累積stackであり、本sliceのCI成功だけでmerge-readyとはしない。
 
-## CI待ち
+## CI / GitHub evidence
 
-- implementation head: push後に記録する。
-- Web UI Quality、MemoRAG CI、Validate Semver Labelはpush後に確認する。
-- PR受け入れコメント、セルフレビュー、Issue #345進捗はCI結果確定後に追加する。
+- verified implementation head: `7d67a2a29ab3347e1cd9eebe85095513f389018a`
+- [Web UI Quality](https://github.com/tsuji-tomonori/rag-assist/actions/runs/33341646169): pass。Firefox／WebKit required 30/30、Chromium required成功。
+- [MemoRAG CI](https://github.com/tsuji-tomonori/rag-assist/actions/runs/33341646166): pass。
+- [Validate Semver Label](https://github.com/tsuji-tomonori/rag-assist/actions/runs/33341646205): pass。
+- [PR受け入れ確認](https://github.com/tsuji-tomonori/rag-assist/pull/462#issuecomment-5471943055)
+- [セルフレビュー](https://github.com/tsuji-tomonori/rag-assist/pull/462#issuecomment-5471943112)
+- [Issue #345進捗](https://github.com/tsuji-tomonori/rag-assist/issues/345#issuecomment-5471944328)
 
 ## Lifecycle / cleanup recommendation
 

@@ -72,7 +72,7 @@ Draft PR #462 head `750ed0a5` は current `main@8e542b31` を祖先に含み、b
 - [x] production component／CSS／API／authorization／RAG contractを変更しない。
 - [x] manual／overall statusは`blocked`を維持し、未実装のfavorite resume／deleteやmanual証跡をpass扱いしない。
 - [x] 選定したlint、typecheck、unit、build、E2E discovery、docs／freshness checks、`git diff --check`が成功する。
-- [ ] Draft PR #462、PR受け入れコメント、セルフレビュー、Issue #345進捗が更新される。
+- [x] Draft PR #462、PR受け入れコメント、セルフレビュー、Issue #345進捗が更新される。
 
 ## 検証計画
 
