@@ -279,6 +279,45 @@ test('E2E-UI-CROSS-BROWSER-SEMANTICS-005: admin exposes stable cross-browser sem
   })
 })
 
+test('E2E-UI-CROSS-BROWSER-SEMANTICS-006: history exposes stable cross-browser semantics @ui-quality', async ({ page }, testInfo) => {
+  const evidenceId = 'E2E-UI-CROSS-BROWSER-SEMANTICS-006'
+  await installHistoryRoute(page)
+  await page.goto('/')
+  await signIn(page)
+  await page.getByRole('navigation', { name: '画面' }).getByRole('button', { name: '履歴' }).click()
+
+  const history = page.getByRole('region', { name: '履歴', exact: true })
+  await expect(history).toBeVisible()
+  const query = history.getByRole('searchbox', { name: '履歴を検索' })
+  const sortOrder = history.getByRole('combobox', { name: '履歴の並び順' })
+  const favoritesOnly = history.getByRole('checkbox', { name: 'お気に入りのみ' })
+  await expect(history.getByRole('heading', { name: '履歴', level: 2 })).toBeVisible()
+  await expect(history.getByRole('heading', { name: '会話一覧', level: 3 })).toBeVisible()
+  await expect(history.getByRole('button', { name: '履歴のcross-browser semantic証跡をお気に入りに追加' })).toBeVisible()
+  await expect(history.getByRole('button', { name: '削除' })).toBeVisible()
+  await expect(history.getByRole('button', { name: 'チャットへ戻る' })).toBeVisible()
+  await expect(query).toHaveValue('')
+  await expect(sortOrder).toHaveValue('newest')
+  await expect(favoritesOnly).not.toBeChecked()
+  await attachSemanticEvidence(history, testInfo, evidenceId, 'history-idle', {
+    queryValue: await query.inputValue(),
+    sortValue: await sortOrder.inputValue(),
+    favoritesOnlyChecked: await favoritesOnly.isChecked() ? 'true' : 'false'
+  })
+
+  await query.fill('cross-browser')
+  await sortOrder.selectOption('oldest')
+  await favoritesOnly.check()
+  await expect(query).toHaveValue('cross-browser')
+  await expect(sortOrder).toHaveValue('oldest')
+  await expect(favoritesOnly).toBeChecked()
+  await attachSemanticEvidence(history, testInfo, evidenceId, 'history-filtered', {
+    queryValue: await query.inputValue(),
+    sortValue: await sortOrder.inputValue(),
+    favoritesOnlyChecked: await favoritesOnly.isChecked() ? 'true' : 'false'
+  })
+})
+
 async function installChatRoute(page: Page): Promise<ChatSemanticRouteState> {
   let releaseAnswer: () => void = () => undefined
   const answerGate = new Promise<void>((resolve) => { releaseAnswer = resolve })
@@ -517,6 +556,32 @@ async function installAdminRoutes(page: Page) {
     }
 
     await route.fulfill({ json: null })
+  })
+}
+
+async function installHistoryRoute(page: Page) {
+  await page.route(/http:\/\/127\.0\.0\.1:8787\/conversation-history$/, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.fallback()
+      return
+    }
+
+    await route.fulfill({
+      json: {
+        history: [{
+          schemaVersion: 1,
+          id: 'cross-browser-semantic-history-1',
+          title: '履歴のcross-browser semantic証跡',
+          updatedAt: '2026-08-30T00:00:00.000Z',
+          isFavorite: false,
+          messages: [{
+            role: 'user',
+            text: '履歴画面の意味構造をFirefoxとWebKitで確認する',
+            createdAt: '2026-08-30T00:00:00.000Z'
+          }]
+        }]
+      }
+    })
   })
 }
 
