@@ -318,6 +318,45 @@ test('E2E-UI-CROSS-BROWSER-SEMANTICS-006: history exposes stable cross-browser s
   })
 })
 
+test('E2E-UI-CROSS-BROWSER-SEMANTICS-007: favorites expose stable cross-browser semantics @ui-quality', async ({ page }, testInfo) => {
+  const evidenceId = 'E2E-UI-CROSS-BROWSER-SEMANTICS-007'
+  await installFavoritesRoute(page)
+  await page.goto('/')
+  await signIn(page)
+  await page.getByRole('navigation', { name: '画面' }).getByRole('button', { name: 'お気に入り' }).click()
+
+  const favorites = page.getByRole('region', { name: 'お気に入り', exact: true })
+  await expect(favorites).toBeVisible()
+  await expectAriaSnapshot(favorites, testInfo, evidenceId, 'favorites-loaded', `
+    - button "チャットへ戻る"
+    - heading "お気に入り" [level=2]
+    - heading "項目一覧" [level=3]
+    - heading "会話" [level=3]
+    - heading "文書" [level=3]
+  `)
+
+  const backButton = favorites.getByRole('button', { name: 'チャットへ戻る' })
+  const accessibleLabel = favorites.getByText('お気に入りのcross-browser semantic会話', { exact: true })
+  const accessibleTarget = favorites.getByText('cross-browser-semantic-conversation-1', { exact: true })
+  const inaccessibleLabel = favorites.getByText('お気に入りのcross-browser semantic文書', { exact: true })
+  const inaccessibleCue = favorites.getByText('アクセス不可', { exact: true })
+  await expect(accessibleLabel).toBeVisible()
+  await expect(accessibleTarget).toBeVisible()
+  await expect(inaccessibleLabel).toBeVisible()
+  await expect(inaccessibleCue).toBeVisible()
+  await expect(backButton).toBeVisible()
+  await attachSemanticEvidence(favorites, testInfo, evidenceId, 'favorites-item-state', {
+    favoriteCount: 2,
+    groupCount: 2,
+    accessibleLabel: await accessibleLabel.innerText(),
+    accessibleTargetId: await accessibleTarget.innerText(),
+    inaccessibleLabel: await inaccessibleLabel.innerText(),
+    inaccessibleCue: await inaccessibleCue.innerText(),
+    backButtonComputedRole: 'button',
+    backButtonRoleAttribute: await backButton.getAttribute('role')
+  })
+})
+
 async function installChatRoute(page: Page): Promise<ChatSemanticRouteState> {
   let releaseAnswer: () => void = () => undefined
   const answerGate = new Promise<void>((resolve) => { releaseAnswer = resolve })
@@ -580,6 +619,40 @@ async function installHistoryRoute(page: Page) {
             createdAt: '2026-08-30T00:00:00.000Z'
           }]
         }]
+      }
+    })
+  })
+}
+
+async function installFavoritesRoute(page: Page) {
+  await page.route(/http:\/\/127\.0\.0\.1:8787\/favorites$/, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.fallback()
+      return
+    }
+
+    await route.fulfill({
+      json: {
+        favorites: [
+          {
+            favoriteId: 'cross-browser-semantic-favorite-chat',
+            targetType: 'chatSession',
+            targetId: 'cross-browser-semantic-conversation-1',
+            label: 'お気に入りのcross-browser semantic会話',
+            accessible: true,
+            createdAt: '2026-08-31T00:00:00.000Z',
+            updatedAt: '2026-08-31T00:00:00.000Z'
+          },
+          {
+            favoriteId: 'cross-browser-semantic-favorite-document',
+            targetType: 'document',
+            targetId: 'cross-browser-semantic-document-1',
+            label: 'お気に入りのcross-browser semantic文書',
+            accessible: false,
+            createdAt: '2026-08-31T00:00:00.000Z',
+            updatedAt: '2026-08-31T00:00:00.000Z'
+          }
+        ]
       }
     })
   })
