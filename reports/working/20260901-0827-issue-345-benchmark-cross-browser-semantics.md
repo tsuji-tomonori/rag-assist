@@ -6,7 +6,7 @@
 - `benchmark → SQ-016 → AC-SQ016-003 → E2E-UI-CROSS-BROWSER-SEMANTICS-008`をSQ-016正本、UI正本、authored trace／quality matrix、generated Web docsへ同期した。
 - required Firefox／WebKit scopeはsemantic 16件、全32件となった。
 - production component／CSS／API／authorization／RAG contractは変更していない。
-- local実ブラウザ実走はsandbox内API serverの`tsx` IPC socketが`EPERM`となるため未完了。final-head GitHub Actionsの結果を別証跡として記録する。
+- local実ブラウザ実走はsandbox内API serverの`tsx` IPC socketが`EPERM`となるため未完了。GitHub ActionsではFirefox／WebKit required 32/32が成功した。
 
 ## 実装範囲
 
@@ -50,13 +50,13 @@
 
 ## CI / GitHub evidence
 
-- final implementation head: CI完了後に追記する。
-- Web UI Quality: pending。
-- MemoRAG CI: pending。
-- Validate Semver Label: pending。
-- PR受け入れ確認: pending。
-- セルフレビュー: pending。
-- Issue #345進捗: pending。
+- verified implementation head: `51e1982ae750d2cef655d23055f39431c7e95046`
+- [Web UI Quality](https://github.com/tsuji-tomonori/rag-assist/actions/runs/33451627498): pass。Firefox／WebKit required 32/32、Chromium required成功。
+- [MemoRAG CI](https://github.com/tsuji-tomonori/rag-assist/actions/runs/33451627450): pass。
+- [Validate Semver Label](https://github.com/tsuji-tomonori/rag-assist/actions/runs/33451627621): pass。
+- [PR受け入れ確認](https://github.com/tsuji-tomonori/rag-assist/pull/462#issuecomment-5486399592)
+- [セルフレビュー](https://github.com/tsuji-tomonori/rag-assist/pull/462#pullrequestreview-5072589659)
+- [Issue #345進捗](https://github.com/tsuji-tomonori/rag-assist/issues/345#issuecomment-5486403752)
 
 ## Lifecycle / cleanup recommendation
 
