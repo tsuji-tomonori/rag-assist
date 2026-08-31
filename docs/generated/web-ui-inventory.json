@@ -574,6 +574,14 @@
             "evidence": [
               "apps/web/e2e/visual-regression.spec.ts"
             ]
+          },
+          {
+            "id": "E2E-UI-CROSS-BROWSER-SEMANTICS-008",
+            "status": "implemented",
+            "evidence": [
+              "apps/web/e2e/cross-browser-semantics.spec.ts",
+              ".github/workflows/web-ui-quality.yml"
+            ]
           }
         ],
         "implementationStatus": "partial",

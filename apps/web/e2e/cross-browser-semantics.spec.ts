@@ -357,6 +357,46 @@ test('E2E-UI-CROSS-BROWSER-SEMANTICS-007: favorites expose stable cross-browser 
   })
 })
 
+test('E2E-UI-CROSS-BROWSER-SEMANTICS-008: benchmark exposes stable cross-browser semantics @ui-quality', async ({ page }, testInfo) => {
+  const evidenceId = 'E2E-UI-CROSS-BROWSER-SEMANTICS-008'
+  await installBenchmarkRoutes(page)
+  await page.goto('/')
+  await signIn(page)
+  await page.getByRole('navigation', { name: '画面' }).getByRole('button', { name: '性能テスト' }).click()
+
+  const benchmark = page.getByRole('region', { name: '性能テスト', exact: true })
+  await expect(benchmark).toBeVisible()
+  const suite = benchmark.getByRole('combobox', { name: 'テスト種別' })
+  const dataset = benchmark.getByRole('textbox', { name: 'データセット' })
+  const model = benchmark.getByRole('combobox', { name: 'モデル' })
+  const concurrency = benchmark.getByRole('spinbutton', { name: '並列数' })
+  const history = benchmark.getByRole('region', { name: '性能テスト実行履歴。左右にスクロールできます' })
+  const historyTable = history.getByRole('table')
+
+  await expect(benchmark.getByRole('heading', { name: '性能テスト', level: 2 })).toBeVisible()
+  await expect(benchmark.getByRole('heading', { name: 'ジョブ起動', level: 3 })).toBeVisible()
+  await expect(suite).toHaveValue('standard-agent-v1')
+  await expect(dataset).toHaveValue('datasets/agent/standard-v1.jsonl')
+  await expect(model).toHaveValue('amazon.nova-lite-v1:0')
+  await expect(concurrency).toHaveValue('1')
+  await expect(benchmark.getByRole('button', { name: '性能テストを実行' })).toBeVisible()
+  await expect(benchmark.getByRole('button', { name: '更新', exact: true })).toBeVisible()
+  await expect(benchmark.getByRole('button', { name: 'チャットへ戻る' })).toBeVisible()
+  await expect(benchmark.getByRole('heading', { name: '実行履歴', level: 3 })).toBeVisible()
+  await expect(history).toHaveAttribute('tabindex', '0')
+  await expect(historyTable).toBeVisible()
+  await expect(historyTable.getByRole('row')).toHaveCount(2)
+
+  await attachSemanticEvidence(benchmark, testInfo, evidenceId, 'benchmark-loaded', {
+    suiteValue: await suite.inputValue(),
+    datasetValue: await dataset.inputValue(),
+    modelValue: await model.inputValue(),
+    concurrencyValue: await concurrency.inputValue(),
+    historyTabIndex: await history.getAttribute('tabindex'),
+    historyRowCount: await historyTable.getByRole('row').count()
+  })
+})
+
 async function installChatRoute(page: Page): Promise<ChatSemanticRouteState> {
   let releaseAnswer: () => void = () => undefined
   const answerGate = new Promise<void>((resolve) => { releaseAnswer = resolve })
@@ -653,6 +693,45 @@ async function installFavoritesRoute(page: Page) {
             updatedAt: '2026-08-31T00:00:00.000Z'
           }
         ]
+      }
+    })
+  })
+}
+
+async function installBenchmarkRoutes(page: Page) {
+  await page.route(/http:\/\/127\.0\.0\.1:8787\/benchmark-suites(?:\?.*)?$/, async (route) => {
+    await route.fulfill({
+      json: {
+        suites: [{
+          suiteId: 'standard-agent-v1',
+          label: 'Agent standard',
+          mode: 'agent',
+          datasetS3Key: 'datasets/agent/standard-v1.jsonl',
+          preset: 'standard',
+          defaultConcurrency: 1
+        }]
+      }
+    })
+  })
+
+  await page.route(/http:\/\/127\.0\.0\.1:8787\/benchmark-runs(?:\?.*)?$/, async (route) => {
+    await route.fulfill({
+      json: {
+        benchmarkRuns: [{
+          runId: 'cross-browser-semantic-benchmark-1',
+          suiteId: 'standard-agent-v1',
+          status: 'succeeded',
+          mode: 'agent',
+          runner: 'codebuild',
+          modelId: 'amazon.nova-lite-v1:0',
+          datasetS3Key: 'datasets/agent/standard-v1.jsonl',
+          createdBy: 'cross-browser-semantic-admin',
+          createdAt: '2026-09-01T00:00:00.000Z',
+          updatedAt: '2026-09-01T00:01:00.000Z',
+          startedAt: '2026-09-01T00:00:00.000Z',
+          completedAt: '2026-09-01T00:01:00.000Z',
+          metrics: { p50LatencyMs: 850, p95LatencyMs: 1400, answerableAccuracy: 0.92, retrievalRecallAt20: 0.88 }
+        }]
       }
     })
   })
