@@ -15,7 +15,7 @@
 | AC-SQ016-004 | text・non-text UI・focus indicator contrast・color independence | Phase A audit / Phase B-C remediation | `apps/web/e2e/visual-regression.spec.ts`<br>`.github/workflows/web-ui-quality.yml` | manual evidence task | tasks/todo/20260714-issue-345-manual-a11y-evidence.md |
 | AC-SQ016-005 | 24×24 minimum target・primary 44〜48px class target | Phase A candidate audit / Phase B-C remediation | `apps/web/e2e/visual-regression.spec.ts`<br>`apps/web/e2e/cross-screen-audit.ts` | manual evidence task | tasks/todo/20260714-issue-345-manual-a11y-evidence.md |
 | AC-SQ016-006 | reduced motion・orientation・safe area・virtual keyboard・fixed UI | Phase A candidate audit / Phase B-C remediation | `apps/web/e2e/visual-regression.spec.ts`<br>`apps/web/e2e/cross-screen-audit.ts`<br>`apps/web/e2e/layout-stress.spec.ts`<br>`.github/workflows/web-ui-quality.yml` | manual evidence task | tasks/todo/20260714-issue-345-manual-a11y-evidence.md |
-| AC-SQ016-007 | long/many/zero/loading/error/permission/partial/stale state | Phase C feature batches | `apps/web/e2e/visual-regression.spec.ts`<br>`apps/web/e2e/layout-stress.spec.ts`<br>`.github/workflows/web-ui-quality.yml` | manual evidence task | tasks/todo/20260714-issue-345-manual-a11y-evidence.md |
+| AC-SQ016-007 | long/many/zero/loading/error/permission/partial/stale state | Phase C feature batches | `apps/web/e2e/visual-regression.spec.ts`<br>`apps/web/e2e/cross-browser-state.spec.ts`<br>`apps/web/e2e/layout-stress.spec.ts`<br>`.github/workflows/web-ui-quality.yml` | manual evidence task | tasks/todo/20260714-issue-345-manual-a11y-evidence.md |
 | AC-SQ016-008 | manual evidence required scope | not applicable | - | manual evidence task | tasks/todo/20260714-issue-345-manual-a11y-evidence.md |
 
 ## 画面・persona・journey
@@ -89,7 +89,7 @@
 | documents | AC-SQ016-004 | pass | blocked | blocked | required E2E-UI-CONTRAST-003で320 / 1280 CSS pxの文書画面color-contrast違反0、フォルダ検索入力の実computed 3px focus indicator比3:1以上、permission stateの可視text・alert・private content suppressionを検証。manual contrast reviewと実browser zoomは未実施 |
 | documents | AC-SQ016-005 | pass | blocked | blocked | 4 viewportで24px minimumと44px primary targetの未解決candidate 0。manual touch evidenceは未実施 |
 | documents | AC-SQ016-006 | pass | blocked | blocked | 4 viewportのcomputed auditとChromium／Firefox／WebKit required E2E-UI-LAYOUT-STRESS-001をreduced motionで検証。orientation / safe-area / virtual-keyboard実機は未検証 |
-| documents | AC-SQ016-007 | pass | blocked | blocked | required E2E-UI-STATE-001のcatalog/reindex loading／部分500／retry／empty／403に加え、Chromium／Firefox／WebKit required E2E-UI-LAYOUT-STRESS-001で長いファイル名を検証。manual evidenceは未実施 |
+| documents | AC-SQ016-007 | pass | blocked | blocked | required E2E-UI-STATE-001に加え、Chromium／Firefox／WebKit required E2E-UI-CROSS-BROWSER-STATE-002でcatalog／folder／reindexのloading、文書取得500によるpartial、retry→confirmed empty、全resource 403を区別し、false zero／emptyとprivate detail露出を防ぐ。E2E-UI-LAYOUT-STRESS-001で長いファイル名も検証。manual evidenceは未実施 |
 | documents | AC-SQ016-008 | not_applicable | blocked | blocked | manual required scopeは未実施 |
 | profile | AC-SQ016-001 | pass | blocked | blocked | required E2E-UI-ZOOM-REFLOW-001をChromium／Firefox／WebKitの640/320 CSS pxで実行し、到達・root overflow 0を検証。CSS viewport proxyであり実browser zoomは未検証 |
 | profile | AC-SQ016-002 | pass | blocked | blocked | required E2E-UI-KEYBOARD-NAV-001をChromium／Firefox／WebKitで実行し、個人設定への到達、送信キー変更、チャット復帰、3px focus indicatorをkeyboard-onlyで検証。manual keyboard journeyは未実施 |
