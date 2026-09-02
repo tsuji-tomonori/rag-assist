@@ -73,17 +73,17 @@ Draft PR #462 head `edd62fe6` は current `main@8e542b31` を祖先に含み、b
 
 ## 受け入れ条件
 
-- [ ] `E2E-UI-CROSS-BROWSER-STATE-002`がFirefox／WebKitで文書resourceのloading中に`aria-busy=true`と文脈付きloadingを検証し、未確認catalog／zero／emptyを表示しない。
-- [ ] 文書APIの部分500で安全なpartial state、取得済み／未更新の区別、private detail非表示を検証する。
-- [ ] retrying後にrecovered status、confirmed empty、0件表示、resource再取得回数を検証する。
-- [ ] 全resource HTTP 403をpermission alertとして表示し、private detail／catalog／zero／emptyを隠す。
-- [ ] browser project名、state sequence、新E2E ID、evidence boundaryをartifactへ記録する。
-- [ ] `documents → SQ-016 → AC-SQ016-007 → E2E-UI-CROSS-BROWSER-STATE-002`が正本、authored trace／matrix、生成文書で一致する。
-- [ ] required Firefox／WebKit scopeの内訳と合計件数が実test discoveryと一致する。
-- [ ] production component／CSS／API／authorization／RAG contractを変更しない。
-- [ ] manual／overall statusは`blocked`を維持し、実AWS操作やmanual証跡をpass扱いしない。
-- [ ] 選定したlint、typecheck、unit、build、E2E discovery、docs／freshness checks、`git diff --check`が成功する。
-- [ ] Draft PR #462、PR受け入れコメント、セルフレビュー、Issue #345進捗が更新される。
+- [x] `E2E-UI-CROSS-BROWSER-STATE-002`がFirefox／WebKitで文書resourceのloading中に`aria-busy=true`と文脈付きloadingを検証し、未確認catalog／zero／emptyを表示しない。
+- [x] 文書APIの部分500で安全なpartial state、取得済み／未更新の区別、private detail非表示を検証する。
+- [x] retrying後にrecovered status、confirmed empty、0件表示、resource再取得回数を検証する。
+- [x] 全resource HTTP 403をpermission alertとして表示し、private detail／catalog／zero／emptyを隠す。
+- [x] browser project名、state sequence、新E2E ID、evidence boundaryをartifactへ記録する。
+- [x] `documents → SQ-016 → AC-SQ016-007 → E2E-UI-CROSS-BROWSER-STATE-002`が正本、authored trace／matrix、生成文書で一致する。
+- [x] required Firefox／WebKit scopeの内訳と合計件数が実test discoveryと一致する。
+- [x] production component／CSS／API／authorization／RAG contractを変更しない。
+- [x] manual／overall statusは`blocked`を維持し、実AWS操作やmanual証跡をpass扱いしない。
+- [x] 選定したlint、typecheck、unit、build、E2E discovery、docs／freshness checks、`git diff --check`が成功する。
+- [x] Draft PR #462、PR受け入れコメント、セルフレビュー、Issue #345進捗が更新される。
 
 ## 検証計画
 
