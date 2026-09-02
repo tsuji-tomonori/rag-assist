@@ -146,7 +146,7 @@
         "AC-SQ016-004": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "required E2E-UI-CONTRAST-002で320 / 1280 CSS pxの担当者対応color-contrast違反0、検索入力の実computed 3px focus indicator比3:1以上、permission stateの可視text・alert・private content suppressionを検証。manual contrast reviewと実browser zoomは未実施" },
         "AC-SQ016-005": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "checkboxを24px、RailNav primary targetを44px classへ修正し、4 viewportで未解決candidate 0。manual touch evidenceは未実施" },
         "AC-SQ016-006": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "4 viewportのreduced-motion computed auditはpass。orientation / safe-area / virtual-keyboard実機は未検証" },
-        "AC-SQ016-007": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "required E2E-UI-STATE-001でloading→500→retry→confirmed emptyとHTTP 403を区別し、false zero、未確認kanban、private detail露出を防ぐ。manual evidenceは未実施" },
+        "AC-SQ016-007": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "required E2E-UI-STATE-001に加え、Chromium／Firefox／WebKit required E2E-UI-CROSS-BROWSER-STATE-003でloading→500→retry→confirmed emptyとHTTP 403を区別し、false zero、未確認kanban、private detail露出を防ぐ。manual evidenceは未実施" },
         "AC-SQ016-008": { "automated": "not_applicable", "manual": "blocked", "overall": "blocked", "note": "manual required scopeは未実施" }
       }
     },

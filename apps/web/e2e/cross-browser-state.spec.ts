@@ -201,6 +201,106 @@ test('E2E-UI-CROSS-BROWSER-STATE-002: documents全resourceのHTTP 403をemptyで
   })
 })
 
+test('E2E-UI-CROSS-BROWSER-STATE-003: assignee loading・error・retry・confirmed emptyを区別する @ui-quality', async ({ page }, testInfo) => {
+  let questionReads = 0
+  let releaseFirstRead: () => void = () => undefined
+  let releaseRetryRead: () => void = () => undefined
+  const firstReadGate = new Promise<void>((resolve) => { releaseFirstRead = resolve })
+  const retryReadGate = new Promise<void>((resolve) => { releaseRetryRead = resolve })
+
+  await page.route(/http:\/\/127\.0\.0\.1:8787\/questions$/, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.fallback()
+      return
+    }
+    questionReads += 1
+    if (questionReads === 1) {
+      await firstReadGate
+      await route.fulfill({
+        status: 500,
+        contentType: 'text/plain',
+        body: 'RequestId: private-question-id at QuestionStore (/srv/questions.ts:18)'
+      })
+      return
+    }
+    await retryReadGate
+    await route.fulfill({ json: { questions: [] } })
+  })
+
+  await signIn(page)
+  await page.getByTitle('担当者対応').click()
+
+  const assignee = page.getByRole('region', { name: '担当者対応', exact: true })
+  const resource = page.locator('#assignee-resource-region')
+  await expect(resource).toHaveAttribute('aria-busy', 'true')
+  await expect(assignee).toContainText('担当者対応を読み込んでいます')
+  await expect(assignee).toContainText('問い合わせを確認中')
+  await expect(assignee).not.toContainText('0 件が対応待ち')
+  await expect(resource).not.toContainText('担当者へ送信された質問はまだありません。')
+  await expect(resource.locator('.assignee-kanban')).toHaveCount(0)
+
+  releaseFirstRead()
+  const error = assignee.locator('[data-state-kind="error"]')
+  await expect(error).toHaveAttribute('role', 'alert')
+  await expect(error).toContainText('担当者対応を取得できませんでした')
+  await expect(error).not.toContainText('private-question-id')
+  await expect(assignee).not.toContainText('0 件が対応待ち')
+  await expect(resource).not.toContainText('担当者へ送信された質問はまだありません。')
+  await expect(resource.locator('.assignee-kanban')).toHaveCount(0)
+
+  await error.getByRole('button', { name: '再試行' }).click()
+  await expect(resource).toHaveAttribute('aria-busy', 'true')
+  await expect(assignee.locator('[data-state-kind="retrying"]')).toContainText('担当者対応を再試行しています')
+  await expect(assignee).not.toContainText('0 件が対応待ち')
+  await expect(resource.locator('.assignee-kanban')).toHaveCount(0)
+
+  releaseRetryRead()
+  await expect(assignee.locator('[data-state-kind="recovered"]')).toContainText('担当者対応を更新しました')
+  await expect(resource).not.toHaveAttribute('aria-busy')
+  await expect(assignee).toContainText('担当者へ送信された質問はまだありません。')
+  await expect(assignee).toContainText('0 件が対応待ち')
+  await expect(resource.locator('.assignee-kanban')).toHaveCount(0)
+  expect(questionReads).toBe(2)
+
+  await attachStateEvidence(testInfo, 'E2E-UI-CROSS-BROWSER-STATE-003', 'assignee', 'loading-error-retry-empty', {
+    questionReads,
+    sequence: ['loading', 'error', 'retrying', 'recovered', 'confirmed-empty'],
+    falseZeroExposedBeforeConfirmation: false,
+    privateDetailExposed: false
+  })
+})
+
+test('E2E-UI-CROSS-BROWSER-STATE-003: assignee HTTP 403をemptyではなくpermissionとして扱う @ui-quality', async ({ page }, testInfo) => {
+  await page.route(/http:\/\/127\.0\.0\.1:8787\/questions$/, async (route) => {
+    if (route.request().method() === 'GET') {
+      await route.fulfill({ status: 403, contentType: 'text/plain', body: 'forbidden private question id' })
+      return
+    }
+    await route.fallback()
+  })
+
+  await signIn(page)
+  await page.getByTitle('担当者対応').click()
+
+  const assignee = page.getByRole('region', { name: '担当者対応', exact: true })
+  const resource = page.locator('#assignee-resource-region')
+  const permission = assignee.locator('[data-state-kind="permission"]')
+  await expect(permission).toHaveAttribute('role', 'alert')
+  await expect(permission).toContainText('担当者対応を表示できません')
+  await expect(permission).not.toContainText('private question id')
+  await expect(permission.getByRole('button', { name: '戻る' })).toBeVisible()
+  await expect(assignee).not.toContainText('0 件が対応待ち')
+  await expect(resource).not.toContainText('担当者へ送信された質問はまだありません。')
+  await expect(resource.locator('.assignee-kanban')).toHaveCount(0)
+
+  await attachStateEvidence(testInfo, 'E2E-UI-CROSS-BROWSER-STATE-003', 'assignee', 'permission', {
+    sequence: ['loading', 'permission'],
+    emptyExposed: false,
+    falseZeroExposed: false,
+    privateDetailExposed: false
+  })
+})
+
 async function signIn(page: Page) {
   await page.goto('/')
   await page.getByPlaceholder('メールアドレスを入力').fill('local@example.com')

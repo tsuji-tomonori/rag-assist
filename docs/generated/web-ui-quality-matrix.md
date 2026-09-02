@@ -49,7 +49,7 @@
 | assignee | AC-SQ016-004 | pass | blocked | blocked | required E2E-UI-CONTRAST-002で320 / 1280 CSS pxの担当者対応color-contrast違反0、検索入力の実computed 3px focus indicator比3:1以上、permission stateの可視text・alert・private content suppressionを検証。manual contrast reviewと実browser zoomは未実施 |
 | assignee | AC-SQ016-005 | pass | blocked | blocked | checkboxを24px、RailNav primary targetを44px classへ修正し、4 viewportで未解決candidate 0。manual touch evidenceは未実施 |
 | assignee | AC-SQ016-006 | pass | blocked | blocked | 4 viewportのreduced-motion computed auditはpass。orientation / safe-area / virtual-keyboard実機は未検証 |
-| assignee | AC-SQ016-007 | pass | blocked | blocked | required E2E-UI-STATE-001でloading→500→retry→confirmed emptyとHTTP 403を区別し、false zero、未確認kanban、private detail露出を防ぐ。manual evidenceは未実施 |
+| assignee | AC-SQ016-007 | pass | blocked | blocked | required E2E-UI-STATE-001に加え、Chromium／Firefox／WebKit required E2E-UI-CROSS-BROWSER-STATE-003でloading→500→retry→confirmed emptyとHTTP 403を区別し、false zero、未確認kanban、private detail露出を防ぐ。manual evidenceは未実施 |
 | assignee | AC-SQ016-008 | not_applicable | blocked | blocked | manual required scopeは未実施 |
 | history | AC-SQ016-001 | pass | blocked | blocked | 4 viewport auditのroot/unresolved overflow 0に加え、Chromium／Firefox／WebKit required E2E-UI-LAYOUT-STRESS-001で320pxの履歴35件・長いtitleとregion overflow 0を検証。実browser zoomは未検証 |
 | history | AC-SQ016-002 | pass | blocked | blocked | required E2E-UI-KEYBOARD-NAV-001をChromium／Firefox／WebKitで実行し、履歴への到達、検索・並び替え・お気に入り絞り込み・会話選択、3px focus indicatorをkeyboard-onlyで検証。manual keyboard journeyは未実施 |
