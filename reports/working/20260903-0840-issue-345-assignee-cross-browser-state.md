@@ -57,6 +57,15 @@ Issue #345 の current main、open PR／Issue、task、正本・生成文書を�
 - required Firefox／WebKit discovery 40件
 - 受け入れ条件付きtaskと仕様分析
 
+## GitHub Actions・レビュー結果
+
+- 実装 head `5643dc922af1fa6c261faa0a6b83b0ed8dd0f612`
+- [Web UI Quality](https://github.com/tsuji-tomonori/rag-assist/actions/runs/33697157755): success。Firefox／WebKit required 40/40、retry／flakyなし。
+- [MemoRAG CI](https://github.com/tsuji-tomonori/rag-assist/actions/runs/33697157927): success。
+- [Validate Semver Label](https://github.com/tsuji-tomonori/rag-assist/actions/runs/33697157776): success。
+- [受け入れ確認](https://github.com/tsuji-tomonori/rag-assist/pull/462#issuecomment-5518220508) と [セルフレビュー](https://github.com/tsuji-tomonori/rag-assist/pull/462#pullrequestreview-5096448461) を Draft PR #462 に追加した。
+- [Issue #345 進捗コメント](https://github.com/tsuji-tomonori/rag-assist/issues/345#issuecomment-5518220696) に変更境界、CI証跡、未完了事項を記録した。
+
 ## 指示へのfit評価
 
 - 1件の小さな改善に限定し、production component／API／認可／RAG behaviorを変更していない。
@@ -66,7 +75,7 @@ Issue #345 の current main、open PR／Issue、task、正本・生成文書を�
 
 ## 未対応・制約・リスク
 
-- CIのFirefox／WebKit 4件とfull required 40件はcommit／push後に確認するまで未完了。
+- Firefox／WebKit新規4実走分とfull required 40件はGitHub Actionsで成功した。ローカル実ブラウザ実走はブラウザバイナリ不在のため未検証である。
 - 代表screen reader、native AX tree、実browser 200%／400% zoom、text-only zoom、OS scaling、touch／実機は未完了。
 - #461統合後の再検証、FR-051／OQ-UI-002のowner判断、E2E tsconfig baseline、API C1 85%は未完了。
 - PRとtaskはDraft／`do`を維持する。merge、deploy、release、force-pushは行わない。

@@ -41,11 +41,18 @@ PR #462 の Firefox／WebKit 必須 gate は担当者対応の keyboard・semant
 
 ## 受け入れ条件
 
-- [ ] `E2E-UI-CROSS-BROWSER-STATE-003` が Firefox／WebKit 必須 scope に含まれ、担当者対応の loading → HTTP 500 error → retrying → recovered → confirmed empty を区別する。
-- [ ] loading／error／retrying 中に未確認の 0 件表示・カンバンを公開せず、private error detail を表示しない。
-- [ ] 問い合わせ一覧の HTTP 403 を empty ではなく対象付き permission alert とし、0 件表示・カンバン・private detail を公開しない。
-- [ ] `assignee → SQ-016 → AC-SQ016-007 → E2E-UI-CROSS-BROWSER-STATE-003` が正本・quality matrix・trace metadata・生成 Web inventory で一意に追跡できる。
-- [ ] 選定した lint、typecheck、unit、E2E、docs checks の結果と、未検証の manual evidence／#461 統合後再検証／owner 判断を task・PR・Issue に記録する。
+- [x] `E2E-UI-CROSS-BROWSER-STATE-003` が Firefox／WebKit 必須 scope に含まれ、担当者対応の loading → HTTP 500 error → retrying → recovered → confirmed empty を区別する。
+- [x] loading／error／retrying 中に未確認の 0 件表示・カンバンを公開せず、private error detail を表示しない。
+- [x] 問い合わせ一覧の HTTP 403 を empty ではなく対象付き permission alert とし、0 件表示・カンバン・private detail を公開しない。
+- [x] `assignee → SQ-016 → AC-SQ016-007 → E2E-UI-CROSS-BROWSER-STATE-003` が正本・quality matrix・trace metadata・生成 Web inventory で一意に追跡できる。
+- [x] 選定した lint、typecheck、unit、E2E、docs checks の結果と、未検証の manual evidence／#461 統合後再検証／owner 判断を task・PR・Issue に記録する。
+
+## 実施結果
+
+- 実装 head `5643dc92` で [Web UI Quality](https://github.com/tsuji-tomonori/rag-assist/actions/runs/33697157755) が成功し、Firefox／WebKit required 40/40 を確認した。
+- [MemoRAG CI](https://github.com/tsuji-tomonori/rag-assist/actions/runs/33697157927) と [semver 検査](https://github.com/tsuji-tomonori/rag-assist/actions/runs/33697157776) も成功した。
+- [PR 受け入れ確認](https://github.com/tsuji-tomonori/rag-assist/pull/462#issuecomment-5518220508)、[セルフレビュー](https://github.com/tsuji-tomonori/rag-assist/pull/462#pullrequestreview-5096448461)、[Issue #345 進捗](https://github.com/tsuji-tomonori/rag-assist/issues/345#issuecomment-5518220696)へ、検証済み範囲と未完了事項を記録した。
+- 代表 screen reader、native AX tree、実ブラウザ 200%／400% zoom、touch／実機、#461 統合後の再検証、owner 判断、E2E tsconfig baseline、API C1 85% は未完了である。累積作業が残るため状態は `do` を維持する。
 
 ## 検証計画
 
