@@ -34,8 +34,8 @@ Issue #345 の current main、open PR／Issue、task、正本・生成文書を�
 
 ### blocked／未検証
 
-- fresh worktreeに依存パッケージがなく、`npm run docs:web-inventory`はTypeScript package不足で停止した。生成差分はauthored metadataから同期したが、full inventory freshnessはGitHub Actionsで判定する。
-- 同じ理由でlocal lint、Web typecheck、unit、build、Playwright discovery／実走は未検証であり、GitHub Actions最終headで判定する。
+- fresh worktreeに依存パッケージがなく、`npm run docs:web-inventory`はTypeScript package不足で停止した。生成差分はauthored metadataから同期し、full inventory freshnessはGitHub Actionsで成功した。
+- 同じ理由でlocal lint、Web typecheck、unit、build、Playwright discovery／実走は未検証である。これらはGitHub Actionsのimplementation headで成功した。
 - 既知のE2E専用tsconfig baseline、代表screen reader、native AX tree、実browser zoom、touch／実機は未検証である。
 
 ## 成果物
@@ -47,18 +47,23 @@ Issue #345 の current main、open PR／Issue、task、正本・生成文書を�
 
 ## GitHub Actions・レビュー結果
 
-- CI、受け入れ確認、セルフレビュー、Issue #345進捗はcommit／push後に追記する。
+- implementation headは`d5c2fd46`。
+- [Web UI Quality](https://github.com/tsuji-tomonori/rag-assist/actions/runs/33820550134): Firefox／WebKit required 44/44 成功、retry・flaky なし。
+- [MemoRAG CI](https://github.com/tsuji-tomonori/rag-assist/actions/runs/33820550318): install、lint、typecheck、unit／coverage、build、canonical docs、trace、quality matrix、generated inventory freshnessを含めて成功。
+- [semver 検査](https://github.com/tsuji-tomonori/rag-assist/actions/runs/33820550193): 成功（patch）。
+- [受け入れ条件確認](https://github.com/tsuji-tomonori/rag-assist/pull/462#issuecomment-5533865678)と[セルフレビュー](https://github.com/tsuji-tomonori/rag-assist/pull/462#issuecomment-5533865768)をPR #462へ記録した。inline review threadは0件で、blocking findingはなかった。
+- [Issue #345進捗](https://github.com/tsuji-tomonori/rag-assist/issues/345#issuecomment-5533865582)へ実装・検証・未完了境界を記録した。
 
 ## 指示へのfit評価
 
 - 1件の小さな改善に限定し、production component／API／認可／RAG behaviorを変更していない。
 - loading／error／retry／empty／permission、screen→requirement→AC→E2E traceを優先した。
 - #461とのproduction source競合を避け、#341〜#344はmerged済みのため新規所有競合を追加していない。
-- 正本文書の責務を分散していない。生成物のfull freshnessはCI成功まで未完了として扱う。
+- 正本文書の責務を分散していない。生成物のfull freshnessはCIで成功した。
 
 ## 未対応・制約・リスク
 
-- Firefox／WebKit新規4実走分とfull required 44件はCI成功まで未完了。
+- Firefox／WebKit新規4実走分とfull required 44件はCIで成功した。ただしPlaywrightは代表screen reader、native AX tree、実browser zoom、touch／実機を代替しない。
 - favorite resume／delete、代表screen reader、native AX tree、実browser 200%／400% zoom、text-only zoom、OS scaling、touch／実機は未完了。
 - #461統合後の再検証、FR-051／OQ-UI-002のowner判断、E2E tsconfig baseline、API C1 85%は未完了。
 - PRとtaskはDraft／`do`を維持する。merge、deploy、release、force-pushは行わない。

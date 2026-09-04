@@ -42,11 +42,20 @@ PR #462 の Firefox／WebKit 必須 gate はお気に入りの keyboard・semant
 
 ## 受け入れ条件
 
-- [ ] `E2E-UI-CROSS-BROWSER-STATE-004` が Firefox／WebKit 必須 scope に含まれ、お気に入りの loading → HTTP 500 error → retrying → recovered → confirmed empty を区別する。
-- [ ] loading／error／retrying 中に未確認の 0 件表示・empty を公開せず、private error detail を表示しない。
-- [ ] お気に入り一覧の HTTP 403 を empty ではなく対象付き permission alert とし、0 件表示・private detail を公開しない。
-- [ ] `favorites → SQ-016 → AC-SQ016-007 → E2E-UI-CROSS-BROWSER-STATE-004` が正本・quality matrix・trace metadata・生成 Web inventory で一意に追跡できる。
-- [ ] 選定した lint、typecheck、unit、E2E、docs checks の結果と、未検証の manual evidence／#461 統合後再検証／owner 判断を task・PR・Issue に記録する。
+- [x] `E2E-UI-CROSS-BROWSER-STATE-004` が Firefox／WebKit 必須 scope に含まれ、お気に入りの loading → HTTP 500 error → retrying → recovered → confirmed empty を区別する。
+- [x] loading／error／retrying 中に未確認の 0 件表示・empty を公開せず、private error detail を表示しない。
+- [x] お気に入り一覧の HTTP 403 を empty ではなく対象付き permission alert とし、0 件表示・private detail を公開しない。
+- [x] `favorites → SQ-016 → AC-SQ016-007 → E2E-UI-CROSS-BROWSER-STATE-004` が正本・quality matrix・trace metadata・生成 Web inventory で一意に追跡できる。
+- [x] 選定した lint、typecheck、unit、E2E、docs checks の結果と、未検証の manual evidence／#461 統合後再検証／owner 判断を task・PR・Issue に記録する。
+
+## 実施結果
+
+- implementation head: `d5c2fd46`
+- [Web UI Quality](https://github.com/tsuji-tomonori/rag-assist/actions/runs/33820550134): Firefox／WebKit required 44/44 成功、retry・flaky なし
+- [MemoRAG CI](https://github.com/tsuji-tomonori/rag-assist/actions/runs/33820550318): lint、typecheck、unit、build、正本・生成文書・trace・quality checks 成功
+- [semver 検査](https://github.com/tsuji-tomonori/rag-assist/actions/runs/33820550193): 成功（patch）
+- [受け入れ条件確認](https://github.com/tsuji-tomonori/rag-assist/pull/462#issuecomment-5533865678)、[セルフレビュー](https://github.com/tsuji-tomonori/rag-assist/pull/462#issuecomment-5533865768)、[Issue #345 進捗](https://github.com/tsuji-tomonori/rag-assist/issues/345#issuecomment-5533865582)を記録した。
+- favorite resume／delete、代表 screen reader、native AX tree、実ブラウザ 200%／400% zoom、touch／実機、#461 統合後の再検証、FR-051／OQ-UI-002 の owner 判断、API C1 85%、既存 E2E tsconfig 不整合は未完了である。このため task は `do`、PR は Draft を維持する。
 
 ## 検証計画
 
