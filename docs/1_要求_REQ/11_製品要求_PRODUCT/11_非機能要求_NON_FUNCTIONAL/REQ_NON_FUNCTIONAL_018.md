@@ -54,7 +54,7 @@
 | 受け入れ基準 | `AC-NFR018-001`〜`AC-NFR018-007` |
 | 優先度 | A |
 | 安定性 | Medium |
-| 変更履歴 | 2026-07-14 Issue #345 から追加。2026-07-17 manual evidence の versioned contract、honest blocked baseline、release readiness command を追加。2026-08-12 login / primary keyboard journeyをFirefox／WebKitのPR required scopeへ追加。2026-08-13〜09-01 9画面の限定semantic contractを同required scopeへ追加。2026-08-14 640 / 320 CSS pxの5 view reflow proxyを追加。2026-08-15 320 CSS pxの4 view content-extreme fixtureを追加。2026-08-16〜09-03 履歴／文書／担当者対応のloading／errorまたはpartial／permission／retry状態を追加 |
+| 変更履歴 | 2026-07-14 Issue #345 から追加。2026-07-17 manual evidence の versioned contract、honest blocked baseline、release readiness command を追加。2026-08-12 login / primary keyboard journeyをFirefox／WebKitのPR required scopeへ追加。2026-08-13〜09-01 9画面の限定semantic contractを同required scopeへ追加。2026-08-14 640 / 320 CSS pxの5 view reflow proxyを追加。2026-08-15 320 CSS pxの4 view content-extreme fixtureを追加。2026-08-16〜09-04 履歴／文書／担当者対応／お気に入りのloading／errorまたはpartial／permission／retry状態を追加 |
 
 ## 妥当性確認
 
@@ -71,9 +71,9 @@
 - `tasks/do/20260714-issue-345-ui-automated-quality-gates.md`
 - `tasks/todo/20260714-issue-345-manual-a11y-evidence.md`
 
-## 自動品質 gate の実装（2026-09-03更新）
+## 自動品質 gate の実装（2026-09-04更新）
 
-- pull request の required scope はChromiumの代表axe / mobile / visual / semanticと、Firefox／WebKitのlogin・主要keyboard journey、login / chat / profile / assignee / documents / admin / history / favorites / benchmarkの限定semantic contract、履歴／文書／担当者対応のloading→errorまたはpartial→retry→confirmed empty／HTTP 403 state contract、chat / documents / assignee / admin / profileの640 / 320 CSS px reflow proxy、およびchat / documents / history / favoritesの320 CSS px content-extreme fixtureとする。UI / shared contract / Web inventory / UI design・requirement / dependency / workflow 変更時だけ `.github/workflows/web-ui-quality.yml` を実行する。
+- pull request の required scope はChromiumの代表axe / mobile / visual / semanticと、Firefox／WebKitのlogin・主要keyboard journey、login / chat / profile / assignee / documents / admin / history / favorites / benchmarkの限定semantic contract、履歴／文書／担当者対応／お気に入りのloading→errorまたはpartial→retry→confirmed empty／HTTP 403 state contract、chat / documents / assignee / admin / profileの640 / 320 CSS px reflow proxy、およびchat / documents / history / favoritesの320 CSS px content-extreme fixtureとする。UI / shared contract / Web inventory / UI design・requirement / dependency / workflow 変更時だけ `.github/workflows/web-ui-quality.yml` を実行する。
 - `E2E-UI-A11Y-GATE-001` は login、chat、documents、questions、admin の full-page axe 結果から serious / critical violation を抽出し、1件以上なら非0終了する。
 - `E2E-UI-NAV-001` / `002` は 320 / 375px の permission-aware primary navigation、focus、reduced motion、overflow を Chromium required scope で検証する。
 - `@visual` fixture は OS / browser の微小な anti-aliasing 差を最大300 pixelsまで許容し、それを超える deterministic screenshot mismatch を failure にする。HTML report、test-results、trace、screenshot、video を artifact として保持する。

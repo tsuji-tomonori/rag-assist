@@ -301,6 +301,102 @@ test('E2E-UI-CROSS-BROWSER-STATE-003: assignee HTTP 403をemptyではなくpermi
   })
 })
 
+test('E2E-UI-CROSS-BROWSER-STATE-004: favorites loading・error・retry・confirmed emptyを区別する @ui-quality', async ({ page }, testInfo) => {
+  let favoritesReads = 0
+  let releaseFirstRead: () => void = () => undefined
+  let releaseRetryRead: () => void = () => undefined
+  const firstReadGate = new Promise<void>((resolve) => { releaseFirstRead = resolve })
+  const retryReadGate = new Promise<void>((resolve) => { releaseRetryRead = resolve })
+
+  await page.route(/http:\/\/127\.0\.0\.1:8787\/favorites$/, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.fallback()
+      return
+    }
+    favoritesReads += 1
+    if (favoritesReads === 1) {
+      await firstReadGate
+      await route.fulfill({
+        status: 500,
+        contentType: 'text/plain',
+        body: 'RequestId: private-favorite-id at FavoriteStore (/srv/favorites.ts:12)'
+      })
+      return
+    }
+    await retryReadGate
+    await route.fulfill({ json: { favorites: [] } })
+  })
+
+  await signIn(page)
+  await page.getByTitle('お気に入り').click()
+
+  const favorites = page.getByRole('region', { name: 'お気に入り', exact: true })
+  const resource = page.locator('#favorites-resource-region')
+  await expect(resource).toHaveAttribute('aria-busy', 'true')
+  await expect(favorites).toContainText('お気に入りを読み込んでいます')
+  await expect(favorites).toContainText('お気に入りを確認中')
+  await expect(favorites).not.toContainText('0 件のショートカット')
+  await expect(resource).not.toContainText('お気に入りはありません。')
+
+  releaseFirstRead()
+  const error = favorites.locator('[data-state-kind="error"]')
+  await expect(error).toHaveAttribute('role', 'alert')
+  await expect(error).toContainText('お気に入りを取得できませんでした')
+  await expect(error).not.toContainText('private-favorite-id')
+  await expect(favorites).not.toContainText('0 件のショートカット')
+  await expect(resource).not.toContainText('お気に入りはありません。')
+
+  await error.getByRole('button', { name: '再試行' }).click()
+  await expect(resource).toHaveAttribute('aria-busy', 'true')
+  await expect(favorites.locator('[data-state-kind="retrying"]')).toContainText('お気に入りを再試行しています')
+  await expect(favorites).not.toContainText('0 件のショートカット')
+  await expect(resource).not.toContainText('お気に入りはありません。')
+
+  releaseRetryRead()
+  await expect(favorites.locator('[data-state-kind="recovered"]')).toContainText('お気に入りを更新しました')
+  await expect(resource).not.toHaveAttribute('aria-busy')
+  await expect(favorites).toContainText('お気に入りはありません。')
+  await expect(favorites).toContainText('0 件のショートカット')
+  expect(favoritesReads).toBe(2)
+
+  await attachStateEvidence(testInfo, 'E2E-UI-CROSS-BROWSER-STATE-004', 'favorites', 'loading-error-retry-empty', {
+    favoritesReads,
+    sequence: ['loading', 'error', 'retrying', 'recovered', 'confirmed-empty'],
+    falseZeroExposedBeforeConfirmation: false,
+    privateDetailExposed: false
+  })
+})
+
+test('E2E-UI-CROSS-BROWSER-STATE-004: favorites HTTP 403をemptyではなくpermissionとして扱う @ui-quality', async ({ page }, testInfo) => {
+  await page.route(/http:\/\/127\.0\.0\.1:8787\/favorites$/, async (route) => {
+    if (route.request().method() === 'GET') {
+      await route.fulfill({ status: 403, contentType: 'text/plain', body: 'forbidden private favorite id' })
+      return
+    }
+    await route.fallback()
+  })
+
+  await signIn(page)
+  await page.getByTitle('お気に入り').click()
+
+  const favorites = page.getByRole('region', { name: 'お気に入り', exact: true })
+  const resource = page.locator('#favorites-resource-region')
+  const permission = favorites.locator('[data-state-kind="permission"]')
+  await expect(permission).toHaveAttribute('role', 'alert')
+  await expect(permission).toContainText('お気に入りを表示できません')
+  await expect(permission).not.toContainText('private favorite id')
+  await expect(permission.getByRole('button', { name: '戻る' })).toBeVisible()
+  await expect(favorites).not.toContainText('0 件のショートカット')
+  await expect(resource).not.toContainText('お気に入りはありません。')
+
+  await attachStateEvidence(testInfo, 'E2E-UI-CROSS-BROWSER-STATE-004', 'favorites', 'permission', {
+    sequence: ['loading', 'permission'],
+    emptyExposed: false,
+    falseZeroExposed: false,
+    privateDetailExposed: false
+  })
+})
+
 async function signIn(page: Page) {
   await page.goto('/')
   await page.getByPlaceholder('メールアドレスを入力').fill('local@example.com')

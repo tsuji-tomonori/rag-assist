@@ -483,7 +483,8 @@
             "id": "SQ-016",
             "acceptanceCriteria": [
               "AC-SQ016-002",
-              "AC-SQ016-003"
+              "AC-SQ016-003",
+              "AC-SQ016-007"
             ]
           }
         ],
@@ -500,6 +501,14 @@
             "status": "implemented",
             "evidence": [
               "apps/web/e2e/cross-browser-semantics.spec.ts",
+              ".github/workflows/web-ui-quality.yml"
+            ]
+          },
+          {
+            "id": "E2E-UI-CROSS-BROWSER-STATE-004",
+            "status": "implemented",
+            "evidence": [
+              "apps/web/e2e/cross-browser-state.spec.ts",
               ".github/workflows/web-ui-quality.yml"
             ]
           }

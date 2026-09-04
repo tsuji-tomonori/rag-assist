@@ -336,11 +336,12 @@
       "requirements": [
         { "id": "FR-094", "acceptanceCriteria": ["AC-FR094-002"] },
         { "id": "FR-095", "acceptanceCriteria": ["AC-FR095-002"] },
-        { "id": "SQ-016", "acceptanceCriteria": ["AC-SQ016-002", "AC-SQ016-003"] }
+        { "id": "SQ-016", "acceptanceCriteria": ["AC-SQ016-002", "AC-SQ016-003", "AC-SQ016-007"] }
       ],
       "verifications": [
         { "id": "E2E-VIEW-FAVORITES-001", "status": "implemented", "evidence": ["apps/web/e2e/visual-regression.spec.ts"] },
-        { "id": "E2E-UI-CROSS-BROWSER-SEMANTICS-007", "status": "implemented", "evidence": ["apps/web/e2e/cross-browser-semantics.spec.ts", ".github/workflows/web-ui-quality.yml"] }
+        { "id": "E2E-UI-CROSS-BROWSER-SEMANTICS-007", "status": "implemented", "evidence": ["apps/web/e2e/cross-browser-semantics.spec.ts", ".github/workflows/web-ui-quality.yml"] },
+        { "id": "E2E-UI-CROSS-BROWSER-STATE-004", "status": "implemented", "evidence": ["apps/web/e2e/cross-browser-state.spec.ts", ".github/workflows/web-ui-quality.yml"] }
       ],
       "implementationStatus": "partial",
       "implementationEvidence": ["apps/web/src/features/favorites/components/FavoritesWorkspace.tsx"],
