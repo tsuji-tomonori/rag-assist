@@ -39,6 +39,15 @@ export const SupportTicketSchema = z.object({
   sourceQuestion: z.string().optional(),
   chatAnswer: z.string().optional(),
   chatRunId: z.string().optional(),
+  references: z.string().optional(),
+  answerTitle: z.string().optional(),
+  answerBody: z.string().optional(),
+  responderName: z.string().optional(),
+  responderDepartment: z.string().optional(),
+  internalMemo: z.string().optional(),
+  notifyRequester: z.boolean().optional(),
+  answeredAt: z.string().optional(),
+  resolvedAt: z.string().optional(),
   createdAt: z.string(),
   updatedAt: z.string()
 })

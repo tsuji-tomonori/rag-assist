@@ -57,7 +57,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 216 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 227 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 
@@ -129,6 +129,17 @@ Media type: `application/json`
 | `debugRuns[].startedAt` | `string` | yes | 処理を開始した日時。 | - |
 | `debugRuns[].completedAt` | `string` | yes | 処理が完了した日時。 | - |
 | `debugRuns[].totalLatencyMs` | `number` | yes | `response.debugRuns[].totalLatencyMs` の値。項目名は total latency ms を表します。 | - |
+| `debugRuns[].firstTokenTiming` | `object` | no | `response.debugRuns[].firstTokenTiming` の値。項目名は first token timing を表します。 | - |
+| `debugRuns[].firstTokenTiming.schemaVersion` | `enum(1)` | yes | `response.debugRuns[].firstTokenTiming.schemaVersion` の値。項目名は schema version を表します。 | enum=1 |
+| `debugRuns[].firstTokenTiming.unit` | `enum(ms)` | yes | `response.debugRuns[].firstTokenTiming.unit` の値。項目名は unit を表します。 | enum=ms |
+| `debugRuns[].firstTokenTiming.clock` | `enum(node_performance)` | yes | `response.debugRuns[].firstTokenTiming.clock` の値。項目名は clock を表します。 | enum=node_performance |
+| `debugRuns[].firstTokenTiming.origin` | `enum(chat_orchestration_ingress)` | yes | `response.debugRuns[].firstTokenTiming.origin` の値。項目名は origin を表します。 | enum=chat_orchestration_ingress |
+| `debugRuns[].firstTokenTiming.boundary` | `enum(answer_model_first_content_delta)` | yes | `response.debugRuns[].firstTokenTiming.boundary` の値。項目名は boundary を表します。 | enum=answer_model_first_content_delta |
+| `debugRuns[].firstTokenTiming.clientVisible` | `enum(false)` | yes | `response.debugRuns[].firstTokenTiming.clientVisible` の値。項目名は client visible を表します。 | enum=false |
+| `debugRuns[].firstTokenTiming.status` | `enum(measured \| not_applicable \| unavailable)` | yes | 現在の処理状態または管理状態。 | enum=measured, not_applicable, unavailable |
+| `debugRuns[].firstTokenTiming.latencyMs` | `number` | no | `response.debugRuns[].firstTokenTiming.latencyMs` の値。項目名は latency ms を表します。 | minimum=0 |
+| `debugRuns[].firstTokenTiming.attemptOrdinal` | `integer` | no | `response.debugRuns[].firstTokenTiming.attemptOrdinal` の値。項目名は attempt ordinal を表します。 | minimum=0 |
+| `debugRuns[].firstTokenTiming.reason` | `enum(non_answer_response \| first_content_delta_not_observed)` | no | 判断や失敗の理由。 | enum=non_answer_response, first_content_delta_not_observed |
 | `debugRuns[].status` | `enum(success \| warning \| error)` | yes | 現在の処理状態または管理状態。 | enum=success, warning, error |
 | `debugRuns[].answerPreview` | `string` | yes | `response.debugRuns[].answerPreview` の値。項目名は answer preview を表します。 | - |
 | `debugRuns[].isAnswerable` | `boolean` | yes | 資料から回答可能と判断されたかどうか。 | - |

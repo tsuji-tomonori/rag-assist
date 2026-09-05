@@ -73,6 +73,15 @@
   font-weight: 800;
 }
 
+.assignee-workspace[aria-labelledby] .assignee-header button:focus-visible,
+.assignee-toolbar :is(select, input):focus-visible,
+.question-kanban-card:focus-visible,
+.answer-form-panel :is(input, textarea):focus-visible,
+.answer-form-actions button:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
 .assignee-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(360px, 430px);

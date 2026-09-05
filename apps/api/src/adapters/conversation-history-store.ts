@@ -17,9 +17,10 @@ export interface ConversationHistoryStore {
 }
 
 export function normalizeConversationHistoryInput(input: SaveConversationHistoryInput): ConversationHistoryItem {
+  readConversationHistoryVersion(input.schemaVersion)
   return {
     ...input,
-    schemaVersion: input.schemaVersion ?? CONVERSATION_HISTORY_SCHEMA_VERSION,
+    schemaVersion: CONVERSATION_HISTORY_SCHEMA_VERSION,
     updatedAt: input.updatedAt || new Date().toISOString(),
     isFavorite: input.isFavorite ?? false,
     messages: trimMessages(input.messages),
@@ -59,4 +60,11 @@ function trimMessages(messages: ConversationMessage[]): ConversationMessage[] {
 function trimOptional(value: string | undefined, maxChars: number): string | undefined {
   if (value === undefined) return undefined
   return value.slice(0, maxChars)
+}
+
+/** Reads never promote or rewrite persisted history. */
+export function readConversationHistoryVersion(version: unknown): ConversationHistoryItem["schemaVersion"] {
+  if (version === undefined) return 1
+  if (version === 1 || version === 2 || version === 3) return version
+  throw new Error("Unsupported conversation history schema version")
 }

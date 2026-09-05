@@ -41,7 +41,9 @@ type SummaryArtifact = {
     retrievalRecallAtK?: number | null
     retrievalRecallAt20?: number | null
     retrievalMrrAtK?: number | null
+    contextRelevance?: number | null
     citationSupportPassRate?: number | null
+    faithfulness?: number | null
     noAccessLeakCount?: number
     noAccessLeakRate?: number | null
     abstainAccuracy?: number | null
@@ -56,15 +58,26 @@ type SummaryArtifact = {
     asyncFailureReasonCodeAccuracy?: number | null
     asyncNoMockArtifactRate?: number | null
     asyncArtifactMetadataRedactionPassRate?: number | null
+    firstTokenP50Ms?: number | null
+    firstTokenP95Ms?: number | null
+    firstTokenP99Ms?: number | null
+    firstTokenSampleCount?: number
   }
   turnDependencyMetrics?: Record<string, {
     total: number
     queryRewriteAccuracy?: number | null
     retrievalRecallAtK?: number | null
+    contextRelevance?: number | null
     refusalPrecision?: number | null
     refusalRecall?: number | null
     falseRefusalRate?: number | null
+    faithfulness?: number | null
     unsupportedSentenceRate?: number | null
+  }>
+  caseResults?: Array<{
+    retrieval?: { relevantRetrievedCount?: number; evaluatedRetrievedCount?: number }
+    generation?: { supportedClaimCount?: number; unsupportedClaimCount?: number; evaluatedClaimCount?: number }
+    latency?: { firstToken?: { status?: string; latencyMs?: number; attemptOrdinal?: number } }
   }>
   corpusSeed: Array<{ fileName: string; status: string; skipReason?: string }>
   skippedRows: Array<{ id?: string; fileNames: string[]; reason: string }>
@@ -131,6 +144,11 @@ test("benchmark runner skips rows that require unextractable corpus", async () =
     assert.equal(summary.total, 1)
     assert.equal(summary.skipped, 1)
     assert.equal(summary.failures.length, 0)
+    assert.equal(summary.metrics?.firstTokenP50Ms, 25)
+    assert.equal(summary.metrics?.firstTokenP95Ms, 25)
+    assert.equal(summary.metrics?.firstTokenP99Ms, 25)
+    assert.equal(summary.metrics?.firstTokenSampleCount, 1)
+    assert.equal(summary.caseResults?.[0]?.latency?.firstToken?.latencyMs, 25)
     assert.deepEqual(summary.skippedRows, [{
       id: "skip-001",
       question: "画像だけの PDF について",
@@ -141,6 +159,7 @@ test("benchmark runner skips rows that require unextractable corpus", async () =
     assert.equal(summary.corpusSeed.find((seed) => seed.fileName === "image-only.pdf")?.skipReason, "no_extractable_text")
     assert.match(readFileSync(paths.report, "utf-8"), /## Skipped Rows/)
     assert.match(readFileSync(paths.report, "utf-8"), /image-only\.pdf/)
+    assert.match(readFileSync(paths.report, "utf-8"), /\| first_token_p95_ms \| 25 \| evaluated \| 1 measured cases \|/)
   } finally {
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()))
   }
@@ -221,6 +240,130 @@ test("benchmark runner reports baseline categories, support, MRR, and ACL leak m
     assert.match(report, /citation_support_pass_rate/)
     assert.match(report, /no_access_leak_count/)
     assert.match(report, /RAG profile: default@1 retrieval=default@1 answer=default-answer-policy@1/)
+  } finally {
+    await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()))
+  }
+})
+
+test("benchmark runner reports faithfulness and context relevance from evaluated evidence", async () => {
+  const paths = artifactPaths("context-quality")
+  const datasetPath = path.join(paths.dir, "dataset.jsonl")
+  writeFileSync(datasetPath, `${JSON.stringify({
+    id: "context-quality-001",
+    question: "経費精算の期限と承認者は？",
+    answerable: true,
+    expectedResponseType: "answer",
+    expectedContains: ["30日以内"],
+    expectedFiles: ["handbook.md"]
+  })}\n`, "utf-8")
+
+  const server = createServer((_req, res) => {
+    res.setHeader("content-type", "application/json")
+    res.end(JSON.stringify({ json: {
+      id: "context-quality-001",
+      responseType: "answer",
+      answer: "経費精算は30日以内です。承認者は部門長です。",
+      isAnswerable: true,
+      firstTokenTiming: {
+        schemaVersion: 1,
+        unit: "ms",
+        clock: "node_performance",
+        origin: "chat_orchestration_ingress",
+        boundary: "answer_model_first_content_delta",
+        clientVisible: false,
+        status: "measured",
+        latencyMs: 25,
+        attemptOrdinal: 1
+      },
+      citations: [{ documentId: "doc-handbook", fileName: "handbook.md", chunkId: "relevant-1", score: 0.9 }],
+      retrieved: [
+        { documentId: "doc-handbook", fileName: "handbook.md", chunkId: "relevant-1", score: 0.9 },
+        { documentId: "doc-policy", fileName: "handbook.md", chunkId: "relevant-2", score: 0.8 },
+        { documentId: "doc-travel", fileName: "travel.md", chunkId: "noise-1", score: 0.7 },
+        { documentId: "doc-security", fileName: "security.md", chunkId: "noise-2", score: 0.6 }
+      ],
+      answerSupport: {
+        unsupportedSentences: [{ sentence: "承認者は部門長です。", reason: "根拠不足" }],
+        totalSentences: 4
+      },
+      debug: { ragProfile: defaultRagProfile(), totalLatencyMs: 10, steps: [] }
+    } }))
+  })
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve))
+  const address = server.address() as AddressInfo | null
+  assert.ok(address)
+
+  try {
+    const result = await runBenchmarkRunner({
+      API_BASE_URL: `http://127.0.0.1:${address.port}`,
+      DATASET: datasetPath,
+      OUTPUT: paths.output,
+      SUMMARY: paths.summary,
+      REPORT: paths.report
+    })
+
+    assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`)
+    const summary = readSummary(paths.summary)
+    assert.equal(summary.metrics?.faithfulness, 0.75)
+    assert.equal(summary.metrics?.contextRelevance, 0.5)
+    assert.deepEqual(summary.caseResults?.[0]?.generation, {
+      supportedClaimCount: 3,
+      unsupportedClaimCount: 1,
+      evaluatedClaimCount: 4
+    })
+    assert.equal(summary.caseResults?.[0]?.retrieval?.relevantRetrievedCount, 2)
+    assert.equal(summary.caseResults?.[0]?.retrieval?.evaluatedRetrievedCount, 4)
+    const report = readFileSync(paths.report, "utf-8")
+    assert.match(report, /\| faithfulness \| 75\.0% \| evaluated \| 3\/4 \|/)
+    assert.match(report, /\| context_relevance \| 50\.0% \| evaluated \| 2\/4 \|/)
+  } finally {
+    await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()))
+  }
+})
+
+test("benchmark runner keeps context quality unavailable without evaluated evidence", async () => {
+  const paths = artifactPaths("context-quality-unavailable")
+  const datasetPath = path.join(paths.dir, "dataset.jsonl")
+  writeFileSync(datasetPath, `${JSON.stringify({
+    id: "context-quality-unavailable-001",
+    question: "根拠が取得できない場合は？",
+    answerable: true,
+    expectedResponseType: "answer",
+    expectedFiles: ["missing.md"]
+  })}\n`, "utf-8")
+
+  const server = createServer((_req, res) => {
+    res.setHeader("content-type", "application/json")
+    res.end(JSON.stringify({ json: {
+      id: "context-quality-unavailable-001",
+      responseType: "answer",
+      answer: "回答です。",
+      isAnswerable: true,
+      citations: [],
+      retrieved: [],
+      debug: { ragProfile: defaultRagProfile(), totalLatencyMs: 10, steps: [] }
+    } }))
+  })
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve))
+  const address = server.address() as AddressInfo | null
+  assert.ok(address)
+
+  try {
+    const result = await runBenchmarkRunner({
+      API_BASE_URL: `http://127.0.0.1:${address.port}`,
+      DATASET: datasetPath,
+      OUTPUT: paths.output,
+      SUMMARY: paths.summary,
+      REPORT: paths.report
+    })
+
+    assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`)
+    const summary = readSummary(paths.summary)
+    assert.equal(summary.metrics?.faithfulness, null)
+    assert.equal(summary.metrics?.contextRelevance, null)
+    const report = readFileSync(paths.report, "utf-8")
+    assert.match(report, /\| faithfulness \| not_applicable \| not_applicable \| 0 denominator \|/)
+    assert.match(report, /\| context_relevance \| not_applicable \| not_applicable \| 0 denominator \|/)
   } finally {
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()))
   }
@@ -1056,6 +1199,17 @@ async function handleRunnerRequest(req: IncomingMessage, res: ServerResponse, ca
       responseType: "answer",
       answer: "経費精算の期限は30日以内です。",
       isAnswerable: true,
+      firstTokenTiming: {
+        schemaVersion: 1,
+        unit: "ms",
+        clock: "node_performance",
+        origin: "chat_orchestration_ingress",
+        boundary: "answer_model_first_content_delta",
+        clientVisible: false,
+        status: "measured",
+        latencyMs: 25,
+        attemptOrdinal: 1
+      },
       citations: [{ documentId: "doc-handbook", fileName: "handbook.md", chunkId: "chunk-0000", score: 0.9 }],
       retrieved: [{ documentId: "doc-handbook", fileName: "handbook.md", chunkId: "chunk-0000", score: 0.9 }],
       debug: { ragProfile: defaultRagProfile(), totalLatencyMs: 10, steps: [] }

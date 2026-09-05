@@ -41,7 +41,7 @@
     },
     {
       "id": "NFR-018",
-      "acceptanceCriteria": ["AC-NFR018-001", "AC-NFR018-002", "AC-NFR018-005", "AC-NFR018-007"],
+      "acceptanceCriteria": ["AC-NFR018-001", "AC-NFR018-002", "AC-NFR018-004", "AC-NFR018-005", "AC-NFR018-007"],
       "appliesTo": ["*"]
     },
     {
@@ -118,7 +118,7 @@
     {
       "id": "E2E-UI-KEYBOARD-NAV-001",
       "status": "implemented",
-      "evidence": ["apps/web/e2e/keyboard-navigation.spec.ts"]
+      "evidence": ["apps/web/e2e/keyboard-navigation.spec.ts", ".github/workflows/web-ui-quality.yml"]
     },
     {
       "id": "E2E-UI-SR-SEMANTICS-001",
@@ -151,8 +151,56 @@
       "evidence": ["apps/web/e2e/question-journey.spec.ts"]
     },
     {
+      "id": "E2E-UI-SKIP-001",
+      "status": "implemented",
+      "evidence": ["apps/web/e2e/skip-link.spec.ts"]
+    },
+    {
+      "id": "E2E-UI-LOGIN-KEYBOARD-001",
+      "status": "implemented",
+      "evidence": [
+        "apps/web/e2e/login-keyboard.spec.ts",
+        "apps/web/src/features/auth/components/LoginPage.test.tsx",
+        ".github/workflows/web-ui-quality.yml"
+      ]
+    },
+    {
+      "id": "E2E-UI-LAYOUT-STRESS-001",
+      "status": "implemented",
+      "evidence": [
+        "apps/web/e2e/layout-stress.spec.ts",
+        "apps/web/package.json",
+        ".github/workflows/web-ui-quality.yml"
+      ]
+    },
+    {
+      "id": "E2E-UI-TEXT-SPACING-001",
+      "status": "implemented",
+      "evidence": ["apps/web/e2e/text-spacing.spec.ts"]
+    },
+    {
+      "id": "E2E-UI-VIRTUAL-KEYBOARD-001",
+      "status": "implemented",
+      "evidence": ["apps/web/e2e/viewport-keyboard.spec.ts"]
+    },
+    {
+      "id": "E2E-UI-ZOOM-REFLOW-001",
+      "status": "implemented",
+      "evidence": [
+        "apps/web/e2e/zoom-reflow.spec.ts",
+        "apps/web/package.json",
+        ".github/workflows/web-ui-quality.yml"
+      ]
+    },
+    {
+      "id": "NONUI-UI-MANUAL-EVIDENCE-001",
+      "status": "implemented",
+      "evidence": ["tools/web-inventory/manual-a11y-evidence.test.mjs"]
+    },
+    {
       "id": "E2E-UI-MANUAL-001",
       "status": "manual",
+      "evidence": ["reports/working/issue-345-manual-a11y-evidence-baseline.json"],
       "task": "tasks/todo/20260714-issue-345-manual-a11y-evidence.md"
     }
   ],
@@ -177,10 +225,14 @@
         { "id": "FR-043", "acceptanceCriteria": ["AC-FR043-001", "AC-FR043-003", "AC-FR043-004"] },
         { "id": "FR-094", "acceptanceCriteria": ["AC-FR094-002", "AC-FR094-004"] },
         { "id": "FR-095", "acceptanceCriteria": ["AC-FR095-001", "AC-FR095-003", "AC-FR095-004"] },
-        { "id": "FR-096", "acceptanceCriteria": ["AC-FR096-003", "AC-FR096-004"] }
+        { "id": "FR-096", "acceptanceCriteria": ["AC-FR096-003", "AC-FR096-004"] },
+        { "id": "SQ-016", "acceptanceCriteria": ["AC-SQ016-002", "AC-SQ016-003", "AC-SQ016-004", "AC-SQ016-007"] }
       ],
       "verifications": [
-        { "id": "E2E-VIEW-CHAT-001", "status": "implemented", "evidence": ["apps/web/e2e/visual-regression.spec.ts"] }
+        { "id": "E2E-VIEW-CHAT-001", "status": "implemented", "evidence": ["apps/web/e2e/visual-regression.spec.ts"] },
+        { "id": "E2E-UI-CONTRAST-001", "status": "implemented", "evidence": ["apps/web/e2e/visual-regression.spec.ts", ".github/workflows/web-ui-quality.yml"] },
+        { "id": "E2E-UI-CROSS-BROWSER-SEMANTICS-001", "status": "implemented", "evidence": ["apps/web/e2e/cross-browser-semantics.spec.ts", ".github/workflows/web-ui-quality.yml"] },
+        { "id": "E2E-UI-CROSS-BROWSER-STATE-005", "status": "implemented", "evidence": ["apps/web/e2e/cross-browser-state.spec.ts", ".github/workflows/web-ui-quality.yml"] }
       ],
       "implementationStatus": "implemented",
       "implementationEvidence": [
@@ -214,10 +266,14 @@
         { "id": "FR-095", "acceptanceCriteria": ["AC-FR095-004"] },
         { "id": "FR-096", "acceptanceCriteria": ["AC-FR096-003", "AC-FR096-004"] },
         { "id": "FR-097", "acceptanceCriteria": ["AC-FR097-001"] },
-        { "id": "FR-098", "acceptanceCriteria": ["AC-FR098-001"] }
+        { "id": "FR-098", "acceptanceCriteria": ["AC-FR098-001"] },
+        { "id": "SQ-016", "acceptanceCriteria": ["AC-SQ016-002", "AC-SQ016-003", "AC-SQ016-004", "AC-SQ016-007"] }
       ],
       "verifications": [
-        { "id": "E2E-VIEW-ASSIGNEE-001", "status": "implemented", "evidence": ["apps/web/e2e/visual-regression.spec.ts"] }
+        { "id": "E2E-VIEW-ASSIGNEE-001", "status": "implemented", "evidence": ["apps/web/e2e/visual-regression.spec.ts"] },
+        { "id": "E2E-UI-CONTRAST-002", "status": "implemented", "evidence": ["apps/web/e2e/visual-regression.spec.ts", ".github/workflows/web-ui-quality.yml"] },
+        { "id": "E2E-UI-CROSS-BROWSER-SEMANTICS-003", "status": "implemented", "evidence": ["apps/web/e2e/cross-browser-semantics.spec.ts", ".github/workflows/web-ui-quality.yml"] },
+        { "id": "E2E-UI-CROSS-BROWSER-STATE-003", "status": "implemented", "evidence": ["apps/web/e2e/cross-browser-state.spec.ts", ".github/workflows/web-ui-quality.yml"] }
       ],
       "implementationStatus": "implemented",
       "implementationEvidence": [
@@ -248,10 +304,13 @@
         { "id": "FR-044", "acceptanceCriteria": ["AC-FR044-001", "AC-FR044-004"] },
         { "id": "FR-094", "acceptanceCriteria": ["AC-FR094-002"] },
         { "id": "FR-095", "acceptanceCriteria": ["AC-FR095-002", "AC-FR095-003"] },
-        { "id": "FR-096", "acceptanceCriteria": ["AC-FR096-001", "AC-FR096-003"] }
+        { "id": "FR-096", "acceptanceCriteria": ["AC-FR096-001", "AC-FR096-003"] },
+        { "id": "SQ-016", "acceptanceCriteria": ["AC-SQ016-002", "AC-SQ016-003", "AC-SQ016-007"] }
       ],
       "verifications": [
-        { "id": "E2E-VIEW-HISTORY-001", "status": "implemented", "evidence": ["apps/web/e2e/visual-regression.spec.ts"] }
+        { "id": "E2E-VIEW-HISTORY-001", "status": "implemented", "evidence": ["apps/web/e2e/visual-regression.spec.ts"] },
+        { "id": "E2E-UI-CROSS-BROWSER-STATE-001", "status": "implemented", "evidence": ["apps/web/e2e/cross-browser-state.spec.ts", ".github/workflows/web-ui-quality.yml"] },
+        { "id": "E2E-UI-CROSS-BROWSER-SEMANTICS-006", "status": "implemented", "evidence": ["apps/web/e2e/cross-browser-semantics.spec.ts", ".github/workflows/web-ui-quality.yml"] }
       ],
       "implementationStatus": "implemented",
       "implementationEvidence": [
@@ -277,10 +336,13 @@
       ],
       "requirements": [
         { "id": "FR-094", "acceptanceCriteria": ["AC-FR094-002"] },
-        { "id": "FR-095", "acceptanceCriteria": ["AC-FR095-002"] }
+        { "id": "FR-095", "acceptanceCriteria": ["AC-FR095-002"] },
+        { "id": "SQ-016", "acceptanceCriteria": ["AC-SQ016-002", "AC-SQ016-003", "AC-SQ016-007"] }
       ],
       "verifications": [
-        { "id": "E2E-VIEW-FAVORITES-001", "status": "implemented", "evidence": ["apps/web/e2e/visual-regression.spec.ts"] }
+        { "id": "E2E-VIEW-FAVORITES-001", "status": "implemented", "evidence": ["apps/web/e2e/visual-regression.spec.ts"] },
+        { "id": "E2E-UI-CROSS-BROWSER-SEMANTICS-007", "status": "implemented", "evidence": ["apps/web/e2e/cross-browser-semantics.spec.ts", ".github/workflows/web-ui-quality.yml"] },
+        { "id": "E2E-UI-CROSS-BROWSER-STATE-004", "status": "implemented", "evidence": ["apps/web/e2e/cross-browser-state.spec.ts", ".github/workflows/web-ui-quality.yml"] }
       ],
       "implementationStatus": "partial",
       "implementationEvidence": ["apps/web/src/features/favorites/components/FavoritesWorkspace.tsx"],
@@ -302,10 +364,12 @@
       "requirements": [
         { "id": "FR-094", "acceptanceCriteria": ["AC-FR094-003"] },
         { "id": "FR-095", "acceptanceCriteria": ["AC-FR095-001", "AC-FR095-005"] },
-        { "id": "FR-096", "acceptanceCriteria": ["AC-FR096-002", "AC-FR096-004"] }
+        { "id": "FR-096", "acceptanceCriteria": ["AC-FR096-002", "AC-FR096-004"] },
+        { "id": "SQ-016", "acceptanceCriteria": ["AC-SQ016-003"] }
       ],
       "verifications": [
-        { "id": "E2E-VIEW-BENCHMARK-001", "status": "implemented", "evidence": ["apps/web/e2e/visual-regression.spec.ts"] }
+        { "id": "E2E-VIEW-BENCHMARK-001", "status": "implemented", "evidence": ["apps/web/e2e/visual-regression.spec.ts"] },
+        { "id": "E2E-UI-CROSS-BROWSER-SEMANTICS-008", "status": "implemented", "evidence": ["apps/web/e2e/cross-browser-semantics.spec.ts", ".github/workflows/web-ui-quality.yml"] }
       ],
       "implementationStatus": "partial",
       "implementationEvidence": [
@@ -330,11 +394,13 @@
         { "id": "FR-095", "acceptanceCriteria": ["AC-FR095-004", "AC-FR095-005"] },
         { "id": "FR-096", "acceptanceCriteria": ["AC-FR096-005"] },
         { "id": "FR-097", "acceptanceCriteria": ["AC-FR097-001", "AC-FR097-002"] },
-        { "id": "FR-098", "acceptanceCriteria": ["AC-FR098-003"] }
+        { "id": "FR-098", "acceptanceCriteria": ["AC-FR098-003"] },
+        { "id": "SQ-016", "acceptanceCriteria": ["AC-SQ016-002", "AC-SQ016-003"] }
       ],
       "verifications": [
         { "id": "E2E-VIEW-ADMIN-001", "status": "implemented", "evidence": ["apps/web/e2e/visual-regression.spec.ts"] },
-        { "id": "E2E-UI-ADMIN-001", "status": "implemented", "evidence": ["apps/web/e2e/visual-regression.spec.ts"] }
+        { "id": "E2E-UI-ADMIN-001", "status": "implemented", "evidence": ["apps/web/e2e/visual-regression.spec.ts"] },
+        { "id": "E2E-UI-CROSS-BROWSER-SEMANTICS-005", "status": "implemented", "evidence": ["apps/web/e2e/cross-browser-semantics.spec.ts", ".github/workflows/web-ui-quality.yml"] }
       ],
       "implementationStatus": "partial",
       "implementationEvidence": [
@@ -369,10 +435,14 @@
         { "id": "FR-095", "acceptanceCriteria": ["AC-FR095-004", "AC-FR095-005"] },
         { "id": "FR-096", "acceptanceCriteria": ["AC-FR096-001", "AC-FR096-002"] },
         { "id": "FR-097", "acceptanceCriteria": ["AC-FR097-001", "AC-FR097-002", "AC-FR097-003", "AC-FR097-004", "AC-FR097-005"] },
-        { "id": "FR-098", "acceptanceCriteria": ["AC-FR098-001", "AC-FR098-002", "AC-FR098-003", "AC-FR098-004", "AC-FR098-005"] }
+        { "id": "FR-098", "acceptanceCriteria": ["AC-FR098-001", "AC-FR098-002", "AC-FR098-003", "AC-FR098-004", "AC-FR098-005"] },
+        { "id": "SQ-016", "acceptanceCriteria": ["AC-SQ016-002", "AC-SQ016-003", "AC-SQ016-004", "AC-SQ016-007"] }
       ],
       "verifications": [
-        { "id": "E2E-VIEW-DOCUMENTS-001", "status": "implemented", "evidence": ["apps/web/e2e/visual-regression.spec.ts"] }
+        { "id": "E2E-VIEW-DOCUMENTS-001", "status": "implemented", "evidence": ["apps/web/e2e/visual-regression.spec.ts"] },
+        { "id": "E2E-UI-CONTRAST-003", "status": "implemented", "evidence": ["apps/web/e2e/visual-regression.spec.ts", ".github/workflows/web-ui-quality.yml"] },
+        { "id": "E2E-UI-CROSS-BROWSER-SEMANTICS-004", "status": "implemented", "evidence": ["apps/web/e2e/cross-browser-semantics.spec.ts", ".github/workflows/web-ui-quality.yml"] },
+        { "id": "E2E-UI-CROSS-BROWSER-STATE-002", "status": "implemented", "evidence": ["apps/web/e2e/cross-browser-state.spec.ts", ".github/workflows/web-ui-quality.yml"] }
       ],
       "implementationStatus": "implemented",
       "implementationEvidence": [
@@ -399,10 +469,13 @@
       ],
       "requirements": [
         { "id": "FR-094", "acceptanceCriteria": ["AC-FR094-001", "AC-FR094-004"] },
-        { "id": "FR-095", "acceptanceCriteria": ["AC-FR095-003"] }
+        { "id": "FR-095", "acceptanceCriteria": ["AC-FR095-003"] },
+        { "id": "SQ-016", "acceptanceCriteria": ["AC-SQ016-002", "AC-SQ016-003", "AC-SQ016-004", "AC-SQ016-007"] }
       ],
       "verifications": [
-        { "id": "E2E-VIEW-PROFILE-001", "status": "implemented", "evidence": ["apps/web/e2e/visual-regression.spec.ts"] }
+        { "id": "E2E-VIEW-PROFILE-001", "status": "implemented", "evidence": ["apps/web/e2e/visual-regression.spec.ts"] },
+        { "id": "E2E-UI-CONTRAST-004", "status": "implemented", "evidence": ["apps/web/e2e/visual-regression.spec.ts", ".github/workflows/web-ui-quality.yml"] },
+        { "id": "E2E-UI-CROSS-BROWSER-SEMANTICS-002", "status": "implemented", "evidence": ["apps/web/e2e/cross-browser-semantics.spec.ts", ".github/workflows/web-ui-quality.yml"] }
       ],
       "implementationStatus": "partial",
       "implementationEvidence": ["apps/web/src/app/components/PersonalSettingsView.tsx"],

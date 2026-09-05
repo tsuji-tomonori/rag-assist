@@ -33,7 +33,7 @@ concurrency:
 
 jobs:
   chromium-required:
-    name: Required Chromium axe, mobile, and visual
+    name: Required Chromium axe, mobile, visual, and evidence
     if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -62,6 +62,42 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: web-ui-quality-chromium-${{ github.run_attempt }}
+          path: |
+            apps/web/playwright-report/
+            apps/web/test-results/
+          if-no-files-found: warn
+          retention-days: 14
+
+  cross-browser-accessibility-required:
+    name: Required Firefox and WebKit keyboard, semantics, states, reflow, and content extremes
+    if: ${{ github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.run-cross-browser) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Firefox and WebKit
+        run: npm exec -w @memorag-mvp/web -- playwright install --with-deps firefox webkit
+
+      - name: Run required cross-browser accessibility gate
+        run: npm run test:e2e:cross-browser:required -w @memorag-mvp/web
+
+      - name: Upload required cross-browser accessibility evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-ui-quality-cross-browser-accessibility-${{ github.run_attempt }}
           path: |
             apps/web/playwright-report/
             apps/web/test-results/

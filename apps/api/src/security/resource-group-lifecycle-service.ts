@@ -87,7 +87,7 @@ type CreateLifecycleIntent = {
   updatedAt: string
 }
 
-type DeleteLifecycleIntent = {
+export type DeleteLifecycleIntent = {
   schemaVersion: 1
   kind: "delete"
   status: "prepared" | "authorized" | "memberships_cleared" | "group_archived" | "completed" | "failed"
@@ -754,7 +754,7 @@ export class ResourceGroupLifecycleService {
   }
 }
 
-function membershipCleanupRegistration(
+export function membershipCleanupRegistration(
   intent: DeleteLifecycleIntent
 ): RegisterRevocationCleanupInput & { operationId: string } {
   return {
@@ -778,7 +778,7 @@ function membershipCleanupRegistration(
   }
 }
 
-function archivedGroupCleanupRegistration(
+export function archivedGroupCleanupRegistration(
   intent: DeleteLifecycleIntent
 ): RegisterRevocationCleanupInput & { operationId: string } {
   return {

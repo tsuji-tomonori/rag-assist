@@ -1,0 +1,126 @@
+{
+  "assumptions": {
+    "inputTokensPerAnswer": 20000,
+    "outputTokensPerAnswer": 3000,
+    "usdJpy": 150,
+    "taxIncluded": false,
+    "rateCheckedDate": "2026-09-05",
+    "notes": "No production usage measured. No free-tier/credits deducted. Benchmark model calls, external agents, support, domain registration, WAF, replication and retention growth are additional."
+  },
+  "estimates": [
+    {
+      "workload": {
+        "name": "idle",
+        "questions": 0,
+        "mau": 0,
+        "s3Gb": 10,
+        "dynamoGb": 1,
+        "vectors": 10000,
+        "pages": 0,
+        "ingestJobs": 0,
+        "logGb": 0,
+        "deliveryGb": 0,
+        "webRequests": 0,
+        "benchmarkMinutes": 0
+      },
+      "lineItems": {
+        "model": 0,
+        "compute": 0,
+        "api": 0,
+        "storage": 0.6835305023193359,
+        "storageRequests": 0,
+        "vectors": 0,
+        "monitoring": 0.4,
+        "delivery": 0,
+        "identity": 0,
+        "orchestration": 0,
+        "ocr": 0,
+        "dns": 0.5,
+        "benchmarkCompute": 0,
+        "websocket": 0
+      },
+      "referenceUsd": 1.583530502319336,
+      "planningReserveUsd": 2.375295753479004,
+      "planningReserveJpy": 356.2943630218506,
+      "usdJpy": 150,
+      "priceStatus": "reference rates; Tokyo quote verification pending; 50% planning reserve is not a cap",
+      "freeTierDeducted": false
+    },
+    {
+      "workload": {
+        "name": "small",
+        "questions": 1000,
+        "mau": 20,
+        "s3Gb": 10,
+        "dynamoGb": 1,
+        "vectors": 10000,
+        "pages": 100,
+        "ingestJobs": 10,
+        "logGb": 1,
+        "deliveryGb": 5,
+        "webRequests": 20000,
+        "benchmarkMinutes": 0
+      },
+      "lineItems": {
+        "model": 1.9492,
+        "compute": 0.79098257875,
+        "api": 0.021105,
+        "storage": 0.6835305023193359,
+        "storageRequests": 0.46499999999999997,
+        "vectors": 0.011947224140167238,
+        "monitoring": 3.9299999999999997,
+        "delivery": 0.44760000000000005,
+        "identity": 0.3,
+        "orchestration": 0.202,
+        "ocr": 0.15,
+        "dns": 0.5,
+        "benchmarkCompute": 0,
+        "websocket": 0.0728
+      },
+      "referenceUsd": 9.524165305209504,
+      "planningReserveUsd": 14.286247957814256,
+      "planningReserveJpy": 2142.937193672138,
+      "usdJpy": 150,
+      "priceStatus": "reference rates; Tokyo quote verification pending; 50% planning reserve is not a cap",
+      "freeTierDeducted": false
+    },
+    {
+      "workload": {
+        "name": "medium",
+        "questions": 10000,
+        "mau": 100,
+        "s3Gb": 100,
+        "dynamoGb": 10,
+        "vectors": 100000,
+        "pages": 1000,
+        "ingestJobs": 100,
+        "logGb": 10,
+        "deliveryGb": 50,
+        "webRequests": 200000,
+        "benchmarkMinutes": 0
+      },
+      "lineItems": {
+        "model": 19.492,
+        "compute": 7.909825787500001,
+        "api": 0.21105,
+        "storage": 6.835305023193359,
+        "storageRequests": 4.6499999999999995,
+        "vectors": 0.18880734443664549,
+        "monitoring": 8.700000000000001,
+        "delivery": 4.476,
+        "identity": 1.5,
+        "orchestration": 2.02,
+        "ocr": 1.5,
+        "dns": 0.5,
+        "benchmarkCompute": 0,
+        "websocket": 0.464
+      },
+      "referenceUsd": 58.44698815513001,
+      "planningReserveUsd": 87.67048223269501,
+      "planningReserveJpy": 13150.572334904251,
+      "usdJpy": 150,
+      "priceStatus": "reference rates; Tokyo quote verification pending; 50% planning reserve is not a cap",
+      "freeTierDeducted": false
+    }
+  ]
+}

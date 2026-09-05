@@ -45,15 +45,15 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 2 | `hasPermission` | has permission の実装処理を担当する。 | `apps/api/src/authorization.ts:187 (hasPermission)` |
 | 1 | `validParam` | valid param の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:24 (validParam)` |
 | 2 | `validRequest` | valid request の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:36 (validRequest)` |
-| 1 | `MemoRagService.deleteConversationHistory` | delete conversation history の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4158 (MemoRagService.deleteConversationHistory)` |
-| 2 | `MemoRagService.deleteOwnedConversationHistory` | delete owned conversation history の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5196 (MemoRagService.deleteOwnedConversationHistory)` |
+| 1 | `MemoRagService.deleteConversationHistory` | delete conversation history の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4251 (MemoRagService.deleteConversationHistory)` |
+| 2 | `MemoRagService.deleteOwnedConversationHistory` | delete owned conversation history の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4895 (MemoRagService.deleteOwnedConversationHistory)` |
 
 ## 5. データ・外部境界
 
 | 種別 | 境界 | Target | Operation | 目的 | Caller | 実装位置 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 参照 | Store | `this.deps.conversationHistoryStore` | `get` | `this.deps.conversationHistoryStore` に対して get を実行する。 | `MemoRagService.deleteOwnedConversationHistory` | `apps/api/src/rag/memorag-service.ts:5198 (MemoRagService.deleteOwnedConversationHistory)` |
-| 削除 | Store | `this.deps.conversationHistoryStore` | `delete` | `this.deps.conversationHistoryStore` に対して delete を実行する。 | `MemoRagService.deleteOwnedConversationHistory` | `apps/api/src/rag/memorag-service.ts:5199 (MemoRagService.deleteOwnedConversationHistory)` |
+| 参照 | Store | `this.deps.conversationHistoryStore` | `get` | `this.deps.conversationHistoryStore` に対して get を実行する。 | `MemoRagService.deleteOwnedConversationHistory` | `apps/api/src/rag/memorag-service.ts:4897 (MemoRagService.deleteOwnedConversationHistory)` |
+| 削除 | Store | `this.deps.conversationHistoryStore` | `delete` | `this.deps.conversationHistoryStore` に対して delete を実行する。 | `MemoRagService.deleteOwnedConversationHistory` | `apps/api/src/rag/memorag-service.ts:4898 (MemoRagService.deleteOwnedConversationHistory)` |
 
 ## 6. 応答・メッセージ
 

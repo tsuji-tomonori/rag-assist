@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react"
-import { Icon } from "../../../../shared/components/Icon.js"
+import { Icon } from "../../../../shared/ui/Icon.js"
 import { formatDateTime } from "../../../../shared/utils/format.js"
 import { documentLifecycleStatusPresentation } from "../../../../shared/ui/displayMetadata.js"
 import type { DocumentGroup, DocumentManifest } from "../../types.js"

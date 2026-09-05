@@ -1,4 +1,4 @@
-export const ROLE_CATALOG_VERSION = "memorag-access-role-catalog-v2" as const
+export const ROLE_CATALOG_VERSION = "memorag-access-role-catalog-v3" as const
 
 export const COGNITO_SESSION_INVALID_AT_ATTRIBUTE_NAME = "session_invalid_at" as const
 export const COGNITO_SESSION_INVALID_AT_USER_ATTRIBUTE = `custom:${COGNITO_SESSION_INVALID_AT_ATTRIBUTE_NAME}` as const
@@ -277,6 +277,7 @@ export const ROLE_PERMISSION_CATALOG = {
     "access:role:assign",
     "access:policy:read",
     "access:audit:export",
+    "access:audit:redrive",
     ...RESOURCE_OPERATION_FEATURE_PERMISSIONS
   ]
 } as const satisfies Record<ApplicationRole, readonly string[]>

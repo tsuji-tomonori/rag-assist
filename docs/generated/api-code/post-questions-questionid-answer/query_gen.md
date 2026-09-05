@@ -8,8 +8,8 @@
 
 | # | CRUD/実行 | Target | Method | 自然言語での目的 | Caller | コード根拠 |
 | ---: | --- | --- | --- | --- | --- | --- |
-| 1 | 参照 | `this.deps.questionStore` | `get` | `this.deps.questionStore` に対して get を実行する。 | `MemoRagService.getQuestion` | `apps/api/src/rag/memorag-service.ts:3151 (MemoRagService.getQuestion)` |
-| 2 | 更新 | `this.deps.questionStore` | `answer` | `this.deps.questionStore` に対して answer を実行する。 | `MemoRagService.answerQuestion` | `apps/api/src/rag/memorag-service.ts:3155 (MemoRagService.answerQuestion)` |
+| 1 | 参照 | `this.ports.questionStore` | `get` | `this.ports.questionStore` に対して get を実行する。 | `QuestionService.get` | `apps/api/src/questions/question-service.ts:58 (QuestionService.get)` |
+| 2 | 更新 | `this.ports.questionStore` | `answer` | `this.ports.questionStore` に対して answer を実行する。 | `QuestionService.answer` | `apps/api/src/questions/question-service.ts:62 (QuestionService.answer)` |
 
 ## 外部サービス操作
 

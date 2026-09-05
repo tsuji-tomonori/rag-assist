@@ -58,6 +58,7 @@ jobs:
       EMBEDDING_DIMENSIONS: ${{ inputs.embedding-dimensions || '1024' }}
       DEPLOYMENT_ENVIRONMENT: ${{ inputs.environment || 'dev' }}
       DEPLOYMENT_MODE: cost_priority
+      PUBLIC_ORIGIN: ${{ vars.MEMORAG_PUBLIC_ORIGIN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -81,6 +82,7 @@ jobs:
           [[ "$EMBEDDING_MODEL_ID" =~ ^[A-Za-z0-9._:/-]+$ ]] || { echo "Invalid embedding-model-id"; exit 1; }
           [[ "$EMBEDDING_DIMENSIONS" =~ ^[0-9]{1,5}$ ]] || { echo "Invalid embedding-dimensions"; exit 1; }
           [[ "$DEPLOYMENT_ENVIRONMENT" =~ ^(dev)$ ]] || { echo "Invalid environment"; exit 1; }
+          node -e 'const value = process.env.PUBLIC_ORIGIN; const url = new URL(value); if (url.protocol !== "https:" || url.origin !== value || url.username || url.password) throw new Error("MEMORAG_PUBLIC_ORIGIN must be the exact HTTPS frontend origin")'
           [[ "$DEPLOYMENT_MODE" = "cost_priority" ]] || { echo "Unsupported deployment mode"; exit 1; }
 
       - name: Prepare cost-priority deployment context
@@ -164,6 +166,7 @@ jobs:
           --context "embeddingModelId=$EMBEDDING_MODEL_ID"
           --context "embeddingDimensions=$EMBEDDING_DIMENSIONS"
           --context "deploymentEnvironment=$DEPLOYMENT_ENVIRONMENT"
+          --context "corsAllowedOrigins=$PUBLIC_ORIGIN"
           --context "ragRuntimeProfileVersion=$RAG_RUNTIME_PROFILE_VERSION"
           --context "ragWorkloadProfileVersion=$RAG_WORKLOAD_PROFILE_VERSION"
           --context "ragPriceCatalogVersion=$RAG_PRICE_CATALOG_VERSION"
@@ -183,6 +186,7 @@ jobs:
             --context "embeddingModelId=$EMBEDDING_MODEL_ID" \
             --context "embeddingDimensions=$EMBEDDING_DIMENSIONS" \
             --context "deploymentEnvironment=$DEPLOYMENT_ENVIRONMENT" \
+            --context "corsAllowedOrigins=$PUBLIC_ORIGIN" \
             --context "ragRuntimeProfileVersion=$RAG_RUNTIME_PROFILE_VERSION" \
             --context "ragWorkloadProfileVersion=$RAG_WORKLOAD_PROFILE_VERSION" \
             --context "ragPriceCatalogVersion=$RAG_PRICE_CATALOG_VERSION" \
@@ -214,6 +218,7 @@ jobs:
           --context "embeddingModelId=$EMBEDDING_MODEL_ID"
           --context "embeddingDimensions=$EMBEDDING_DIMENSIONS"
           --context "deploymentEnvironment=$DEPLOYMENT_ENVIRONMENT"
+          --context "corsAllowedOrigins=$PUBLIC_ORIGIN"
           --context "ragRuntimeProfileVersion=$RAG_RUNTIME_PROFILE_VERSION"
           --context "ragWorkloadProfileVersion=$RAG_WORKLOAD_PROFILE_VERSION"
           --context "ragPriceCatalogVersion=$RAG_PRICE_CATALOG_VERSION"

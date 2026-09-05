@@ -42,9 +42,9 @@ ParsedDocument preview を取得する
 | B002 | `GET /documents/{documentId}/parsed-preview handler` | catch | 例外が発生した場合に catch 処理へ移る | `err` | `apps/api/src/routes/document-routes.ts:1560 (GET /documents/{documentId}/parsed-preview handler)` |
 | B003 | `GET /documents/{documentId}/parsed-preview handler` | if | `err` が `Error` の instance である、かつ starts with の判定結果が真である | `err instanceof Error && err.message.startsWith("Forbidden")` | `apps/api/src/routes/document-routes.ts:1561 (GET /documents/{documentId}/parsed-preview handler)` |
 | B004 | `requirePermission` | if | 利用者が 指定された permission を持たない | `!hasPermission(user, permission)` | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| B005 | `MemoRagService.getParsedDocumentPreview` | if | is missing object error の判定結果が真である | `isMissingObjectError(error)` | `apps/api/src/rag/memorag-service.ts:984 (MemoRagService.getParsedDocumentPreview)` |
-| B006 | `MemoRagService.getParsedDocumentPreview` | if | `manifest` が存在しない、または偽である | `!manifest` | `apps/api/src/rag/memorag-service.ts:987 (MemoRagService.getParsedDocumentPreview)` |
-| B007 | `MemoRagService.getParsedDocumentPreview` | if | 条件式 `await this.canAccessDocumentManifest(user, manifest)` が成立しない | `!(await this.canAccessDocumentManifest(user, manifest))` | `apps/api/src/rag/memorag-service.ts:988 (MemoRagService.getParsedDocumentPreview)` |
+| B005 | `MemoRagService.getParsedDocumentPreview` | if | is missing object error の判定結果が真である | `isMissingObjectError(error)` | `apps/api/src/rag/memorag-service.ts:1091 (MemoRagService.getParsedDocumentPreview)` |
+| B006 | `MemoRagService.getParsedDocumentPreview` | if | `manifest` が存在しない、または偽である | `!manifest` | `apps/api/src/rag/memorag-service.ts:1094 (MemoRagService.getParsedDocumentPreview)` |
+| B007 | `MemoRagService.getParsedDocumentPreview` | if | 条件式 `await this.canAccessDocumentManifest(user, manifest)` が成立しない | `!(await this.canAccessDocumentManifest(user, manifest))` | `apps/api/src/rag/memorag-service.ts:1095 (MemoRagService.getParsedDocumentPreview)` |
 
 ## 4. 到達する主要実装
 
@@ -57,13 +57,13 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 2 | `hasPermission` | has permission の実装処理を担当する。 | `apps/api/src/authorization.ts:187 (hasPermission)` |
 | 1 | `validParam` | valid param の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:24 (validParam)` |
 | 2 | `validRequest` | valid request の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:36 (validRequest)` |
-| 1 | `MemoRagService.getParsedDocumentPreview` | get parsed document preview の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:982 (MemoRagService.getParsedDocumentPreview)` |
-| 2 | `authoritativeActorTenantId` | authoritative actor tenant id の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6090 (authoritativeActorTenantId)` |
-| 2 | `forbiddenError` | forbidden error の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6484 (forbiddenError)` |
-| 2 | `MemoRagService.getManifest` | get manifest の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3937 (MemoRagService.getManifest)` |
-| 2 | `isMissingObjectError` | is missing object error の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6133 (isMissingObjectError)` |
-| 2 | `MemoRagService.canAccessDocumentManifest` | can access document manifest の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1229 (MemoRagService.canAccessDocumentManifest)` |
-| 2 | `buildParsedDocumentPreview` | build parsed document preview の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5558 (buildParsedDocumentPreview)` |
+| 1 | `MemoRagService.getParsedDocumentPreview` | get parsed document preview の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1089 (MemoRagService.getParsedDocumentPreview)` |
+| 2 | `authoritativeActorTenantId` | authoritative actor tenant id の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5700 (authoritativeActorTenantId)` |
+| 2 | `forbiddenError` | forbidden error の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6061 (forbiddenError)` |
+| 2 | `MemoRagService.getManifest` | get manifest の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4030 (MemoRagService.getManifest)` |
+| 2 | `isMissingObjectError` | is missing object error の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5743 (isMissingObjectError)` |
+| 2 | `MemoRagService.canAccessDocumentManifest` | can access document manifest の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1336 (MemoRagService.canAccessDocumentManifest)` |
+| 2 | `buildParsedDocumentPreview` | build parsed document preview の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5212 (buildParsedDocumentPreview)` |
 | 1 | `resourceUnavailable` | resource unavailable の実装処理を担当する。 | `apps/api/src/routes/document-routes.ts:293 (resourceUnavailable)` |
 | 2 | `settleNonEnumerationTiming` | settle non enumeration timing の実装処理を担当する。 | `apps/api/src/security/public-resource-response.ts:40 (settleNonEnumerationTiming)` |
 

@@ -23,9 +23,12 @@
 ## 測定・検証
 
 - `NONUI-UI-GATE-001`: severe axe/mobile/visual/browser/trace fixtures fail required gate。
+- `NONUI-UI-MANUAL-EVIDENCE-001`: versioned manual evidence record の pass/fail/blocked/not-run 必須根拠と release readiness 判定を検証する。
 - `E2E-UI-A11Y-001`: keyboard and representative screen-reader journeys。
 - `E2E-UI-RESPONSIVE-001`: viewport/zoom/motion/content extremes。
 - CI branch-protection status and PR evidence audit。
+
+`tools/web-inventory/manual-a11y-evidence-contract.json` と `manual-a11y-evidence.mjs` を manual evidence の versioned executable contract とする。structural check は honest blocked baseline を有効な未完了 record として保存し、release/Issue completion 用 `require-pass` は承認済み matrix の required check がすべて manual pass でない限り非 0 とする。automation/proxy evidence は manual pass を作らない。
 
 ## 要件の源泉・背景
 
@@ -51,7 +54,7 @@
 | 受け入れ基準 | `AC-NFR018-001`〜`AC-NFR018-007` |
 | 優先度 | A |
 | 安定性 | Medium |
-| 変更履歴 | 2026-07-14 Issue #345 から追加 |
+| 変更履歴 | 2026-07-14 Issue #345 から追加。2026-07-17 manual evidence の versioned contract、honest blocked baseline、release readiness command を追加。2026-08-12 login / primary keyboard journeyをFirefox／WebKitのPR required scopeへ追加。2026-08-13〜09-01 9画面の限定semantic contractを同required scopeへ追加。2026-08-14 640 / 320 CSS pxの5 view reflow proxyを追加。2026-08-15 320 CSS pxの4 view content-extreme fixtureを追加。2026-08-16〜09-05 履歴／文書／担当者対応／お気に入り／チャットのloading／errorまたはpartial／permission／retry状態を追加 |
 
 ## 妥当性確認
 
@@ -68,11 +71,11 @@
 - `tasks/do/20260714-issue-345-ui-automated-quality-gates.md`
 - `tasks/todo/20260714-issue-345-manual-a11y-evidence.md`
 
-## 自動品質 gate の実装（2026-07-16）
+## 自動品質 gate の実装（2026-09-05更新）
 
-- pull request の required scope は Chromium とし、UI / shared contract / Web inventory / UI design・requirement / dependency / workflow 変更時だけ `.github/workflows/web-ui-quality.yml` を実行する。
+- pull request の required scope はChromiumの代表axe / mobile / visual / semanticと、Firefox／WebKitのlogin・主要keyboard journey、login / chat / profile / assignee / documents / admin / history / favorites / benchmarkの限定semantic contract、履歴／文書／担当者対応／お気に入りのloading→errorまたはpartial→retry→confirmed empty／HTTP 403 state contract、チャットのinitial→processing→SSE retry→recovery／error／permission state contract、chat / documents / assignee / admin / profileの640 / 320 CSS px reflow proxy、およびchat / documents / history / favoritesの320 CSS px content-extreme fixtureとする。UI / shared contract / Web inventory / UI design・requirement / dependency / workflow 変更時だけ `.github/workflows/web-ui-quality.yml` を実行する。
 - `E2E-UI-A11Y-GATE-001` は login、chat、documents、questions、admin の full-page axe 結果から serious / critical violation を抽出し、1件以上なら非0終了する。
 - `E2E-UI-NAV-001` / `002` は 320 / 375px の permission-aware primary navigation、focus、reduced motion、overflow を Chromium required scope で検証する。
 - `@visual` fixture は OS / browser の微小な anti-aliasing 差を最大300 pixelsまで許容し、それを超える deterministic screenshot mismatch を failure にする。HTML report、test-results、trace、screenshot、video を artifact として保持する。
-- Firefox / WebKit は週次および手動 dispatch の scheduled scope とする。未実行・失敗は Chromium pass と混同せず、artifact と workflow result で追跡する。
+- Firefox / WebKit のより広いvisual scopeは週次および手動dispatchのscheduled scopeに分離する。requiredのreflowは2 viewport×2 browser、content-extremeは2 scenario×2 browserだけに限定し、required / scheduledの未実行・失敗は他browserのpassと混同せず、artifactとworkflow resultで追跡する。
 - manual keyboard、representative screen reader、実 browser 200% / 400% zoom、touch / real-device evidence は本 gate で代替せず、`tasks/todo/20260714-issue-345-manual-a11y-evidence.md` の完了まで未達として扱う。

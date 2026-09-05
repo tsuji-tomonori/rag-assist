@@ -1,7 +1,9 @@
 import { randomUUID } from "node:crypto"
+import { performance } from "node:perf_hooks"
 import type { AppUser } from "../../auth.js"
 import { config } from "../../config.js"
 import type { Dependencies } from "../../dependencies.js"
+import type { GenerateOptions, TextModel } from "../../adapters/text-model.js"
 import { hasUsableComputedFact } from "../../chat-orchestration/computation.js"
 import { loadChunksForManifest } from "../_shared/storage/manifest-chunks.js"
 import { isQualityApprovedForNormalRag } from "../_shared/policies/quality-policy.js"
@@ -25,7 +27,7 @@ import {
   type MandatoryRagGuard,
   type SafeDegradationDecision
 } from "../_shared/security/safe-degradation-policy.js"
-import { CHAT_ORCHESTRATION_TRACE_TARGET_TYPE, DEBUG_TRACE_SANITIZE_POLICY_VERSION, DEBUG_TRACE_SCHEMA_VERSION, type DebugTrace } from "../../types.js"
+import { CHAT_ORCHESTRATION_TRACE_TARGET_TYPE, DEBUG_TRACE_SANITIZE_POLICY_VERSION, DEBUG_TRACE_SCHEMA_VERSION, type DebugTrace, type FirstTokenTimingEvidence } from "../../types.js"
 import type { Citation, DocumentManifest, ReplaySourceSnapshot, ReplayVersionManifest, RetrievedVector } from "../../types.js"
 import { analyzeInput } from "../../chat-orchestration/nodes/analyze-input.js"
 import { answerabilityGate } from "../online/post-retrieval/answerability/answerability-gate.js"
@@ -63,6 +65,52 @@ const systemAdminUser: AppUser = {
   cognitoGroups: [...config.localAuthGroups],
   accountStatus: "active",
   tenantId: config.localAuthTenantId
+}
+
+/** @internal Exported only for deterministic clock-lineage tests. */
+export function observeAnswerFirstToken(inner: TextModel, originMs: number): {
+  textModel: TextModel
+  evidence: (isAnswerable: boolean) => FirstTokenTimingEvidence
+} {
+  let attemptOrdinal = 0
+  let latestSuccessful: { latencyMs: number; attemptOrdinal: number } | undefined
+  const textModel: TextModel = {
+    embed: (text, options) => inner.embed(text, options),
+    async generate(prompt: string, options: GenerateOptions = {}): Promise<string> {
+      if (options.usageTask !== "finalAnswer" && options.usageTask !== "answerRepair") {
+        return inner.generate(prompt, options)
+      }
+      const currentAttempt = ++attemptOrdinal
+      let firstTokenLatencyMs: number | undefined
+      const result = await inner.generate(prompt, {
+        ...options,
+        onFirstToken: () => {
+          options.onFirstToken?.()
+          firstTokenLatencyMs ??= Math.max(0, performance.now() - originMs)
+        }
+      })
+      if (result.length > 0 && firstTokenLatencyMs !== undefined) {
+        latestSuccessful = { latencyMs: firstTokenLatencyMs, attemptOrdinal: currentAttempt }
+      }
+      return result
+    }
+  }
+  return {
+    textModel,
+    evidence: (isAnswerable) => {
+      const common = {
+        schemaVersion: 1 as const,
+        unit: "ms" as const,
+        clock: "node_performance" as const,
+        origin: "chat_orchestration_ingress" as const,
+        boundary: "answer_model_first_content_delta" as const,
+        clientVisible: false as const
+      }
+      if (!isAnswerable) return { ...common, status: "not_applicable", reason: "non_answer_response" }
+      if (!latestSuccessful) return { ...common, status: "unavailable", reason: "first_content_delta_not_observed" }
+      return { ...common, status: "measured", ...latestSuccessful }
+    }
+  }
 }
 
 export type ProgressSink = {
@@ -719,6 +767,7 @@ export async function runChatOrchestration(
   progress?: ProgressSink,
   securityResourceRefs: readonly string[] = []
 ): Promise<ChatOrchestrationResult> {
+  const timingOriginMs = performance.now()
   assertSafeRagGuardProfile(deps.ragGuardProfile)
   await assertRagSafetyInterlock({
     objectStore: deps.objectStore,
@@ -735,7 +784,8 @@ export async function runChatOrchestration(
   const modelId = input.modelId ?? config.defaultModelId
   const embeddingModelId = input.embeddingModelId ?? config.embeddingModelId
   const clueModelId = input.clueModelId ?? input.modelId ?? config.defaultMemoryModelId
-  const graph = createChatOrchestrationGraph(deps, user, progress)
+  const firstTokenObserver = observeAnswerFirstToken(deps.textModel, timingOriginMs)
+  const graph = createChatOrchestrationGraph({ ...deps, textModel: firstTokenObserver.textModel }, user, progress)
 
   const state = (await graph.invoke({
     runId,
@@ -853,6 +903,7 @@ export async function runChatOrchestration(
   const isClarification = state.clarification.needsClarification
   const outputSecretDetected = containsSensitiveOutput(answer)
   const isAnswerable = !isClarification && state.answerability.isAnswerable && answer !== NO_ANSWER && !outputSecretDetected
+  const firstTokenTiming = firstTokenObserver.evidence(isAnswerable)
   if (outputSecretDetected) answer = NO_ANSWER
   const citations = isAnswerable ? state.citations : []
   const authorizationEvaluatedAt = new Date().toISOString()
@@ -880,6 +931,7 @@ export async function runChatOrchestration(
     runId,
     observedAt: new Date().toISOString(),
     latencyMs: Math.max(0, Date.now() - startedMs),
+    firstTokenTiming,
     tenantId: user.tenantId ?? config.localAuthTenantId,
     roles: user.cognitoGroups,
     resourceIds: [...new Set([...retrieved, ...finalEvidence, ...citations].map((item) => item.documentId))],
@@ -926,6 +978,7 @@ export async function runChatOrchestration(
     requesterRoles: user.cognitoGroups,
     securityResourceRefs,
     replayDecision,
+    firstTokenTiming,
     state
   })
   progress?.recordPersistedTrace?.(persistedDebug)
@@ -940,6 +993,7 @@ export async function runChatOrchestration(
     citations,
     retrieved,
     finalEvidence,
+    firstTokenTiming,
     debug
   }
 }
@@ -1017,6 +1071,7 @@ async function persistDebugTrace(
     requesterRoles: string[]
     securityResourceRefs: readonly string[]
     replayDecision: Pick<ReplayVersionManifest["decisions"], "decisionCode" | "reasonCodes">
+    firstTokenTiming: FirstTokenTimingEvidence
     state: ChatOrchestrationState
   }
 ): Promise<DebugTrace> {
@@ -1108,6 +1163,7 @@ async function persistDebugTrace(
     startedAt: input.startedAt.toISOString(),
     completedAt: completedAt.toISOString(),
     totalLatencyMs,
+    firstTokenTiming: input.firstTokenTiming,
     status: responseStatus,
     answerPreview: input.answer,
     isAnswerable: input.isAnswerable,

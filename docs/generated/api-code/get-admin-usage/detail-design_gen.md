@@ -36,7 +36,7 @@
 | B001 | `GET /admin/usage handler` | catch | 例外が発生した場合に catch 処理へ移る | `error` | `apps/api/src/routes/admin-routes.ts:634 (GET /admin/usage handler)` |
 | B002 | `GET /admin/usage handler` | if | is invalid usage query の判定結果が真である | `isInvalidUsageQuery(error)` | `apps/api/src/routes/admin-routes.ts:635 (GET /admin/usage handler)` |
 | B003 | `requirePermission` | if | 利用者が 指定された permission を持たない | `!hasPermission(user, permission)` | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| B004 | `MemoRagService.listUsageSummaries` | 三項条件 | `rolloutMode` が `"active"` と等しい、かつ `this.deps.usageEventStore` が存在し、真である | `rolloutMode === "active" && this.deps.usageEventStore` | `apps/api/src/rag/memorag-service.ts:2170 (MemoRagService.listUsageSummaries)` |
+| B004 | `MemoRagService.listUsageSummaries` | 三項条件 | `rolloutMode` が `"active"` と等しい、かつ `this.deps.usageEventStore` が存在し、真である | `rolloutMode === "active" && this.deps.usageEventStore` | `apps/api/src/rag/memorag-service.ts:2277 (MemoRagService.listUsageSummaries)` |
 
 ## 4. 到達する主要実装
 
@@ -49,18 +49,18 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 2 | `hasPermission` | has permission の実装処理を担当する。 | `apps/api/src/authorization.ts:187 (hasPermission)` |
 | 1 | `validQuery` | valid query の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:28 (validQuery)` |
 | 2 | `validRequest` | valid request の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:36 (validRequest)` |
-| 1 | `MemoRagService.listUsageSummaries` | list usage summaries の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:2166 (MemoRagService.listUsageSummaries)` |
-| 2 | `authoritativeActorTenantId` | authoritative actor tenant id の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6090 (authoritativeActorTenantId)` |
-| 2 | `defaultedUsageQuery` | defaulted usage query の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:267 (defaultedUsageQuery)` |
-| 2 | `MemoRagService.usageRolloutMode` | usage rollout mode の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5187 (MemoRagService.usageRolloutMode)` |
-| 2 | `usageSummaryFromPage` | usage summary from page の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:280 (usageSummaryFromPage)` |
+| 1 | `MemoRagService.listUsageSummaries` | list usage summaries の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:2273 (MemoRagService.listUsageSummaries)` |
+| 2 | `authoritativeActorTenantId` | authoritative actor tenant id の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5700 (authoritativeActorTenantId)` |
+| 2 | `defaultedUsageQuery` | defaulted usage query の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:268 (defaultedUsageQuery)` |
+| 2 | `MemoRagService.usageRolloutMode` | usage rollout mode の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4886 (MemoRagService.usageRolloutMode)` |
+| 2 | `usageSummaryFromPage` | usage summary from page の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:281 (usageSummaryFromPage)` |
 | 1 | `isInvalidUsageQuery` | is invalid usage query の実装処理を担当する。 | `apps/api/src/routes/admin-routes.ts:728 (isInvalidUsageQuery)` |
 
 ## 5. データ・外部境界
 
 | 種別 | 境界 | Target | Operation | 目的 | Caller | 実装位置 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 参照 | Store | `this.deps.usageEventStore` | `query` | `this.deps.usageEventStore` に対して query を実行する。 | `MemoRagService.listUsageSummaries` | `apps/api/src/rag/memorag-service.ts:2171 (MemoRagService.listUsageSummaries)` |
+| 参照 | Store | `this.deps.usageEventStore` | `query` | `this.deps.usageEventStore` に対して query を実行する。 | `MemoRagService.listUsageSummaries` | `apps/api/src/rag/memorag-service.ts:2278 (MemoRagService.listUsageSummaries)` |
 
 ## 6. 応答・メッセージ
 
@@ -77,8 +77,8 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
-| 到達 symbol | shadow usage rollout records events without exposing read or export as the active path | `apps/api/src/rag/memorag-service.test.ts:3101 (shadow usage rollout records events without exposing read or export as the active path)` |
-| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:3469 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
+| 到達 symbol | shadow usage rollout records events without exposing read or export as the active path | `apps/api/src/rag/memorag-service.test.ts:3103 (shadow usage rollout records events without exposing read or export as the active path)` |
+| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:3471 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
 
 ## 8. 解析上の注意
 

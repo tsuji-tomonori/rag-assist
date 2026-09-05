@@ -10,7 +10,7 @@
 
 用途概要: DynamoDB table
 
-リソース数: 11
+リソース数: 13
 
 ## Logical ID 一覧
 
@@ -27,6 +27,8 @@
 | [Favorites Table](#favorites-table) | `FavoritesTable4DA8A306` | Favorites Table (DynamoDB table) |
 | [Human Questions Table](#human-questions-table) | `HumanQuestionsTable5DA9688B` | Human Questions Table (DynamoDB table) |
 | [Usage Events Table](#usage-events-table) | `UsageEventsTable215FE3DD` | Usage Events Table (DynamoDB table) |
+| [Web Socket Connections Table](#web-socket-connections-table) | `WebSocketConnectionsTable7F0028CC` | Web Socket Connections Table (DynamoDB table) |
+| [Web Socket Tickets Table](#web-socket-tickets-table) | `WebSocketTicketsTable7F084D73` | Web Socket Tickets Table (DynamoDB table) |
 
 ## Logical ID 別設定
 
@@ -176,3 +178,31 @@ Logical ID: `UsageEventsTable215FE3DD`
 | `attributeDefinitions` | [{"AttributeName":"tenantId","AttributeType":"S"},{"AttributeName":"idempotencyKey","AttributeType":"S"},{"AttributeName":"periodKey","AttributeType":"S"}] |
 | `billingMode` | PAY_PER_REQUEST |
 | `pointInTimeRecoveryEnabled` | true |
+
+### Web Socket Connections Table
+
+Logical ID: `WebSocketConnectionsTable7F0028CC`
+
+用途推定: Web Socket Connections Table (DynamoDB table)
+
+| 設定項目 | 値 |
+| --- | --- |
+| `keySchema` | [{"AttributeName":"connectionId","KeyType":"HASH"}] |
+| `attributeDefinitions` | [{"AttributeName":"connectionId","AttributeType":"S"}] |
+| `billingMode` | PAY_PER_REQUEST |
+| `pointInTimeRecoveryEnabled` | true |
+| `timeToLive` | {"AttributeName":"ttl","Enabled":true} |
+
+### Web Socket Tickets Table
+
+Logical ID: `WebSocketTicketsTable7F084D73`
+
+用途推定: Web Socket Tickets Table (DynamoDB table)
+
+| 設定項目 | 値 |
+| --- | --- |
+| `keySchema` | [{"AttributeName":"ticketHash","KeyType":"HASH"}] |
+| `attributeDefinitions` | [{"AttributeName":"ticketHash","AttributeType":"S"}] |
+| `billingMode` | PAY_PER_REQUEST |
+| `pointInTimeRecoveryEnabled` | true |
+| `timeToLive` | {"AttributeName":"ttl","Enabled":true} |

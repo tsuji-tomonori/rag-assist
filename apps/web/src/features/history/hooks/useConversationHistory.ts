@@ -23,8 +23,9 @@ export function useConversationHistory({ setError }: { setError: (error: string 
 
   const rememberConversation = useCallback((item: ConversationHistoryItem) => {
     const existing = historyRef.current.find((entry) => entry.id === item.id)
-    const nextItem = { ...item, isFavorite: item.isFavorite ?? existing?.isFavorite ?? false }
-    setHistory((prev) => [nextItem, ...prev.filter((entry) => entry.id !== nextItem.id)].sort(compareConversationHistory).slice(0, 20))
+    const nextItem: ConversationHistoryItem = { ...existing, ...item, schemaVersion: 3, isFavorite: item.isFavorite ?? existing?.isFavorite ?? false }
+    historyRef.current = [nextItem, ...historyRef.current.filter((entry) => entry.id !== nextItem.id)].sort(compareConversationHistory).slice(0, 20)
+    setHistory(historyRef.current)
     saveConversationHistory(nextItem).catch((err) => console.warn("Failed to save conversation history", err))
   }, [])
 
@@ -89,7 +90,7 @@ export function useConversationHistory({ setError }: { setError: (error: string 
         return { ...message, questionTicket: updated }
       })
       if (!changed) return item
-      const nextItem = { ...item, messages }
+      const nextItem: ConversationHistoryItem = { ...item, schemaVersion: 3, messages }
       changedItems.push(nextItem)
       return nextItem
     })
@@ -118,7 +119,7 @@ export function useConversationHistory({ setError }: { setError: (error: string 
 
 function buildConversationHistoryItem(id: string, titleCandidate: string, messages: Message[], isFavorite = false): ConversationHistoryItem {
   return {
-    schemaVersion: 1,
+    schemaVersion: 3,
     id,
     title: summarizeTitle(titleCandidate),
     updatedAt: new Date().toISOString(),

@@ -40,16 +40,16 @@
 | B002 | `POST /document-groups handler` | if | is document group input error の判定結果が真である | `isDocumentGroupInputError(err)` | `apps/api/src/routes/document-routes.ts:605 (POST /document-groups handler)` |
 | B003 | `POST /document-groups handler` | if | `err` が `Error` の instance である、かつ starts with の判定結果が真である | `err instanceof Error && err.message.startsWith("Forbidden:")` | `apps/api/src/routes/document-routes.ts:606 (POST /document-groups handler)` |
 | B004 | `requirePermission` | if | 利用者が 指定された permission を持たない | `!hasPermission(user, permission)` | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| B005 | `MemoRagService.createDocumentGroup` | if | `tenantId` が存在しない、または偽である | `!tenantId` | `apps/api/src/rag/memorag-service.ts:1055 (MemoRagService.createDocumentGroup)` |
-| B006 | `MemoRagService.createDocumentGroup` | if | `actorUserId` が存在しない、または偽である | `!actorUserId` | `apps/api/src/rag/memorag-service.ts:1056 (MemoRagService.createDocumentGroup)` |
-| B007 | `MemoRagService.createDocumentGroup` | 三項条件 | `input.parentGroupId` が存在し、真である | `input.parentGroupId` | `apps/api/src/rag/memorag-service.ts:1058 (MemoRagService.createDocumentGroup)` |
-| B008 | `MemoRagService.createDocumentGroup` | if | `input.parentGroupId` が存在し、真である、かつ `parent` が存在しない、または偽である | `input.parentGroupId && !parent` | `apps/api/src/rag/memorag-service.ts:1059 (MemoRagService.createDocumentGroup)` |
-| B009 | `MemoRagService.createDocumentGroup` | if | `parent` が存在し、真である、かつ `parent.tenantId` が `tenantId` と異なる | `parent && parent.tenantId !== tenantId` | `apps/api/src/rag/memorag-service.ts:1060 (MemoRagService.createDocumentGroup)` |
-| B010 | `MemoRagService.createDocumentGroup` | if | `parent` が存在し、真である、かつ `(await new FolderPermissionService(this.deps).resolveEffectiveFolderPermission(actor, parent.groupId))` が `"full"` と異なる | `parent && (await new FolderPermissionService(this.deps).resolveEffectiveFolderPermission(actor, parent.groupId)) !== "full"` | `apps/api/src/rag/memorag-service.ts:1063 (MemoRagService.createDocumentGroup)` |
-| B011 | `MemoRagService.createDocumentGroup` | 三項条件 | `parent` が存在し、真である | `parent` | `apps/api/src/rag/memorag-service.ts:1069 (MemoRagService.createDocumentGroup)` |
-| B012 | `MemoRagService.createDocumentGroup` | 三項条件 | `parent` が存在し、真である | `parent` | `apps/api/src/rag/memorag-service.ts:1070 (MemoRagService.createDocumentGroup)` |
-| B013 | `MemoRagService.createDocumentGroup` | if | some の判定結果が真である | `groups.some((group) => group.adminPathPk === pathFields.adminPathPk && group.normalizedCanonicalPath === pathFields.normalizedCanonicalPath)` | `apps/api/src/rag/memorag-service.ts:1082 (MemoRagService.createDocumentGroup)` |
-| B014 | `MemoRagService.createDocumentGroup` | 三項条件 | `parent` が存在し、真である | `parent` | `apps/api/src/rag/memorag-service.ts:1096 (MemoRagService.createDocumentGroup)` |
+| B005 | `MemoRagService.createDocumentGroup` | if | `tenantId` が存在しない、または偽である | `!tenantId` | `apps/api/src/rag/memorag-service.ts:1162 (MemoRagService.createDocumentGroup)` |
+| B006 | `MemoRagService.createDocumentGroup` | if | `actorUserId` が存在しない、または偽である | `!actorUserId` | `apps/api/src/rag/memorag-service.ts:1163 (MemoRagService.createDocumentGroup)` |
+| B007 | `MemoRagService.createDocumentGroup` | 三項条件 | `input.parentGroupId` が存在し、真である | `input.parentGroupId` | `apps/api/src/rag/memorag-service.ts:1165 (MemoRagService.createDocumentGroup)` |
+| B008 | `MemoRagService.createDocumentGroup` | if | `input.parentGroupId` が存在し、真である、かつ `parent` が存在しない、または偽である | `input.parentGroupId && !parent` | `apps/api/src/rag/memorag-service.ts:1166 (MemoRagService.createDocumentGroup)` |
+| B009 | `MemoRagService.createDocumentGroup` | if | `parent` が存在し、真である、かつ `parent.tenantId` が `tenantId` と異なる | `parent && parent.tenantId !== tenantId` | `apps/api/src/rag/memorag-service.ts:1167 (MemoRagService.createDocumentGroup)` |
+| B010 | `MemoRagService.createDocumentGroup` | if | `parent` が存在し、真である、かつ `(await new FolderPermissionService(this.deps).resolveEffectiveFolderPermission(actor, parent.groupId))` が `"full"` と異なる | `parent && (await new FolderPermissionService(this.deps).resolveEffectiveFolderPermission(actor, parent.groupId)) !== "full"` | `apps/api/src/rag/memorag-service.ts:1170 (MemoRagService.createDocumentGroup)` |
+| B011 | `MemoRagService.createDocumentGroup` | 三項条件 | `parent` が存在し、真である | `parent` | `apps/api/src/rag/memorag-service.ts:1176 (MemoRagService.createDocumentGroup)` |
+| B012 | `MemoRagService.createDocumentGroup` | 三項条件 | `parent` が存在し、真である | `parent` | `apps/api/src/rag/memorag-service.ts:1177 (MemoRagService.createDocumentGroup)` |
+| B013 | `MemoRagService.createDocumentGroup` | if | some の判定結果が真である | `groups.some((group) => group.adminPathPk === pathFields.adminPathPk && group.normalizedCanonicalPath === pathFields.normalizedCanonicalPath)` | `apps/api/src/rag/memorag-service.ts:1189 (MemoRagService.createDocumentGroup)` |
+| B014 | `MemoRagService.createDocumentGroup` | 三項条件 | `parent` が存在し、真である | `parent` | `apps/api/src/rag/memorag-service.ts:1203 (MemoRagService.createDocumentGroup)` |
 
 ## 4. 到達する主要実装
 
@@ -62,11 +62,11 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 2 | `hasPermission` | has permission の実装処理を担当する。 | `apps/api/src/authorization.ts:187 (hasPermission)` |
 | 1 | `validJson` | valid json の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:20 (validJson)` |
 | 2 | `validRequest` | valid request の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:36 (validRequest)` |
-| 1 | `MemoRagService.createDocumentGroup` | create document group の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1046 (MemoRagService.createDocumentGroup)` |
-| 2 | `validateDocumentGroupName` | validate document group name の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6285 (validateDocumentGroupName)` |
-| 2 | `forbiddenError` | forbidden error の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6484 (forbiddenError)` |
-| 2 | `normalizeDocumentGroups` | normalize document groups の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6388 (normalizeDocumentGroups)` |
-| 2 | `documentGroupPathFields` | document group path fields の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6304 (documentGroupPathFields)` |
+| 1 | `MemoRagService.createDocumentGroup` | create document group の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1153 (MemoRagService.createDocumentGroup)` |
+| 2 | `validateDocumentGroupName` | validate document group name の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5895 (validateDocumentGroupName)` |
+| 2 | `forbiddenError` | forbidden error の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6061 (forbiddenError)` |
+| 2 | `normalizeDocumentGroups` | normalize document groups の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5998 (normalizeDocumentGroups)` |
+| 2 | `documentGroupPathFields` | document group path fields の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5914 (documentGroupPathFields)` |
 | 2 | `FolderPermissionService.resolveEffectiveFolderPermission` | resolve effective folder permission の実装処理を担当する。 | `apps/api/src/folders/folder-permission-service.ts:98 (FolderPermissionService.resolveEffectiveFolderPermission)` |
 | 2 | `resolvedResourceScope` | resolved resource scope の実装処理を担当する。 | `apps/api/src/security/production-resource-operation-authorizer.ts:53 (resolvedResourceScope)` |
 | 2 | `enforceResolvedResourceOperation` | enforce resolved resource operation の実装処理を担当する。 | `apps/api/src/security/production-resource-operation-authorizer.ts:37 (enforceResolvedResourceOperation)` |
@@ -76,13 +76,13 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 
 | 種別 | 境界 | Target | Operation | 目的 | Caller | 実装位置 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 参照 | Store | `this.deps.documentGroupStore` | `list` | `this.deps.documentGroupStore` に対して list を実行する。 | `MemoRagService.createDocumentGroup` | `apps/api/src/rag/memorag-service.ts:1057 (MemoRagService.createDocumentGroup)` |
+| 参照 | Store | `this.deps.documentGroupStore` | `list` | `this.deps.documentGroupStore` に対して list を実行する。 | `MemoRagService.createDocumentGroup` | `apps/api/src/rag/memorag-service.ts:1164 (MemoRagService.createDocumentGroup)` |
 | 参照 | Store | `this.deps.documentGroupStore` | `list` | `this.deps.documentGroupStore` に対して list を実行する。 | `FolderPermissionService.resolveEffectiveFolderPermissionDetail` | `apps/api/src/folders/folder-permission-service.ts:145 (FolderPermissionService.resolveEffectiveFolderPermissionDetail)` |
 | 参照 | Store | `this.deps.userGroupStore` | `get` | `this.deps.userGroupStore` に対して get を実行する。 | `FolderPermissionService.resolveUserMembershipPermission` | `apps/api/src/folders/folder-permission-service.ts:780 (FolderPermissionService.resolveUserMembershipPermission)` |
 | 参照 | Store | `this.deps.groupMembershipStore` | `listByGroupId` | `this.deps.groupMembershipStore` に対して list by group id を実行する。 | `FolderPermissionService.resolveUserMembershipPermission` | `apps/api/src/folders/folder-permission-service.ts:781 (FolderPermissionService.resolveUserMembershipPermission)` |
 | 参照 | Store | `this.deps.folderPolicyStore` | `findByFolderId` | `this.deps.folderPolicyStore` に対して find by folder id を実行する。 | `FolderPermissionService.resolvePolicyContext` | `apps/api/src/folders/folder-permission-service.ts:695 (FolderPermissionService.resolvePolicyContext)` |
 | 参照 | Store | `this.deps.folderPolicyStore` | `get` | `this.deps.folderPolicyStore` に対して get を実行する。 | `FolderPermissionService.resolvePolicyContext` | `apps/api/src/folders/folder-permission-service.ts:711 (FolderPermissionService.resolvePolicyContext)` |
-| 作成・追記 | Store | `this.deps.documentGroupStore` | `createWithPathLock` | `this.deps.documentGroupStore` に対して create with path lock を実行する。 | `MemoRagService.createDocumentGroup` | `apps/api/src/rag/memorag-service.ts:1107 (MemoRagService.createDocumentGroup)` |
+| 作成・追記 | Store | `this.deps.documentGroupStore` | `createWithPathLock` | `this.deps.documentGroupStore` に対して create with path lock を実行する。 | `MemoRagService.createDocumentGroup` | `apps/api/src/rag/memorag-service.ts:1214 (MemoRagService.createDocumentGroup)` |
 
 ## 6. 応答・メッセージ
 
@@ -119,7 +119,7 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 到達 symbol | search includes owner-owned group scoped documents despite ordinary folder denial | `apps/api/src/rag/memorag-service.test.ts:1105 (search includes owner-owned group scoped documents despite ordinary folder denial)` |
 | 到達 symbol | service enforces full document group permission for delete and reindex operations | `apps/api/src/rag/memorag-service.test.ts:1132 (service enforces full document group permission for delete and reindex operations)` |
 | 到達 symbol | service search denies group-scoped manifests to non-members without legacy ACLs | `apps/api/src/search/hybrid-search.test.ts:486 (service search denies group-scoped manifests to non-members without legacy ACLs)` |
-| 到達 symbol | document group create and legacy settings routes reject embedded ACL authority | `apps/api/src/security/access-control-policy.test.ts:280 (document group create and legacy settings routes reject embedded ACL authority)` |
+| 到達 symbol | document group create and legacy settings routes reject embedded ACL authority | `apps/api/src/security/access-control-policy.test.ts:291 (document group create and legacy settings routes reject embedded ACL authority)` |
 
 ## 8. 解析上の注意
 

@@ -1,6 +1,6 @@
 import { useState } from "react"
-import { Icon } from "../../../shared/components/Icon.js"
-import { LoadingSpinner } from "../../../shared/components/LoadingSpinner.js"
+import { Icon } from "../../../shared/ui/Icon.js"
+import { LoadingSpinner } from "../../../shared/ui/LoadingSpinner.js"
 import { formatDateTime } from "../../../shared/utils/format.js"
 import type { HumanQuestion, QuestionOperationOutcome } from "../../questions/types.js"
 import { questionJourneyPresentation } from "../../questions/utils/questionJourney.js"

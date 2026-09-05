@@ -186,6 +186,15 @@
   cursor: not-allowed;
 }
 
+.folder-search-row :is(input, button):focus-visible,
+.document-filter-bar :is(input, select):focus-visible,
+.document-table-footer select:focus-visible,
+.document-row-primary-action:focus-visible,
+.document-detail-drawer button:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
 .folder-tree {
   min-height: 0;
   overflow: auto;

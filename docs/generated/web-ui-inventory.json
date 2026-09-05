@@ -107,6 +107,15 @@
               "AC-FR096-003",
               "AC-FR096-004"
             ]
+          },
+          {
+            "id": "SQ-016",
+            "acceptanceCriteria": [
+              "AC-SQ016-002",
+              "AC-SQ016-003",
+              "AC-SQ016-004",
+              "AC-SQ016-007"
+            ]
           }
         ],
         "verifications": [
@@ -115,6 +124,30 @@
             "status": "implemented",
             "evidence": [
               "apps/web/e2e/visual-regression.spec.ts"
+            ]
+          },
+          {
+            "id": "E2E-UI-CONTRAST-001",
+            "status": "implemented",
+            "evidence": [
+              "apps/web/e2e/visual-regression.spec.ts",
+              ".github/workflows/web-ui-quality.yml"
+            ]
+          },
+          {
+            "id": "E2E-UI-CROSS-BROWSER-SEMANTICS-001",
+            "status": "implemented",
+            "evidence": [
+              "apps/web/e2e/cross-browser-semantics.spec.ts",
+              ".github/workflows/web-ui-quality.yml"
+            ]
+          },
+          {
+            "id": "E2E-UI-CROSS-BROWSER-STATE-005",
+            "status": "implemented",
+            "evidence": [
+              "apps/web/e2e/cross-browser-state.spec.ts",
+              ".github/workflows/web-ui-quality.yml"
             ]
           }
         ],
@@ -221,6 +254,15 @@
             "acceptanceCriteria": [
               "AC-FR098-001"
             ]
+          },
+          {
+            "id": "SQ-016",
+            "acceptanceCriteria": [
+              "AC-SQ016-002",
+              "AC-SQ016-003",
+              "AC-SQ016-004",
+              "AC-SQ016-007"
+            ]
           }
         ],
         "verifications": [
@@ -229,6 +271,30 @@
             "status": "implemented",
             "evidence": [
               "apps/web/e2e/visual-regression.spec.ts"
+            ]
+          },
+          {
+            "id": "E2E-UI-CONTRAST-002",
+            "status": "implemented",
+            "evidence": [
+              "apps/web/e2e/visual-regression.spec.ts",
+              ".github/workflows/web-ui-quality.yml"
+            ]
+          },
+          {
+            "id": "E2E-UI-CROSS-BROWSER-SEMANTICS-003",
+            "status": "implemented",
+            "evidence": [
+              "apps/web/e2e/cross-browser-semantics.spec.ts",
+              ".github/workflows/web-ui-quality.yml"
+            ]
+          },
+          {
+            "id": "E2E-UI-CROSS-BROWSER-STATE-003",
+            "status": "implemented",
+            "evidence": [
+              "apps/web/e2e/cross-browser-state.spec.ts",
+              ".github/workflows/web-ui-quality.yml"
             ]
           }
         ],
@@ -329,6 +395,14 @@
               "AC-FR096-001",
               "AC-FR096-003"
             ]
+          },
+          {
+            "id": "SQ-016",
+            "acceptanceCriteria": [
+              "AC-SQ016-002",
+              "AC-SQ016-003",
+              "AC-SQ016-007"
+            ]
           }
         ],
         "verifications": [
@@ -337,6 +411,22 @@
             "status": "implemented",
             "evidence": [
               "apps/web/e2e/visual-regression.spec.ts"
+            ]
+          },
+          {
+            "id": "E2E-UI-CROSS-BROWSER-STATE-001",
+            "status": "implemented",
+            "evidence": [
+              "apps/web/e2e/cross-browser-state.spec.ts",
+              ".github/workflows/web-ui-quality.yml"
+            ]
+          },
+          {
+            "id": "E2E-UI-CROSS-BROWSER-SEMANTICS-006",
+            "status": "implemented",
+            "evidence": [
+              "apps/web/e2e/cross-browser-semantics.spec.ts",
+              ".github/workflows/web-ui-quality.yml"
             ]
           }
         ],
@@ -396,6 +486,14 @@
             "acceptanceCriteria": [
               "AC-FR095-002"
             ]
+          },
+          {
+            "id": "SQ-016",
+            "acceptanceCriteria": [
+              "AC-SQ016-002",
+              "AC-SQ016-003",
+              "AC-SQ016-007"
+            ]
           }
         ],
         "verifications": [
@@ -404,6 +502,22 @@
             "status": "implemented",
             "evidence": [
               "apps/web/e2e/visual-regression.spec.ts"
+            ]
+          },
+          {
+            "id": "E2E-UI-CROSS-BROWSER-SEMANTICS-007",
+            "status": "implemented",
+            "evidence": [
+              "apps/web/e2e/cross-browser-semantics.spec.ts",
+              ".github/workflows/web-ui-quality.yml"
+            ]
+          },
+          {
+            "id": "E2E-UI-CROSS-BROWSER-STATE-004",
+            "status": "implemented",
+            "evidence": [
+              "apps/web/e2e/cross-browser-state.spec.ts",
+              ".github/workflows/web-ui-quality.yml"
             ]
           }
         ],
@@ -470,6 +584,12 @@
               "AC-FR096-002",
               "AC-FR096-004"
             ]
+          },
+          {
+            "id": "SQ-016",
+            "acceptanceCriteria": [
+              "AC-SQ016-003"
+            ]
           }
         ],
         "verifications": [
@@ -478,6 +598,14 @@
             "status": "implemented",
             "evidence": [
               "apps/web/e2e/visual-regression.spec.ts"
+            ]
+          },
+          {
+            "id": "E2E-UI-CROSS-BROWSER-SEMANTICS-008",
+            "status": "implemented",
+            "evidence": [
+              "apps/web/e2e/cross-browser-semantics.spec.ts",
+              ".github/workflows/web-ui-quality.yml"
             ]
           }
         ],
@@ -557,6 +685,13 @@
             "acceptanceCriteria": [
               "AC-FR098-003"
             ]
+          },
+          {
+            "id": "SQ-016",
+            "acceptanceCriteria": [
+              "AC-SQ016-002",
+              "AC-SQ016-003"
+            ]
           }
         ],
         "verifications": [
@@ -572,6 +707,14 @@
             "status": "implemented",
             "evidence": [
               "apps/web/e2e/visual-regression.spec.ts"
+            ]
+          },
+          {
+            "id": "E2E-UI-CROSS-BROWSER-SEMANTICS-005",
+            "status": "implemented",
+            "evidence": [
+              "apps/web/e2e/cross-browser-semantics.spec.ts",
+              ".github/workflows/web-ui-quality.yml"
             ]
           }
         ],
@@ -666,6 +809,15 @@
               "AC-FR098-004",
               "AC-FR098-005"
             ]
+          },
+          {
+            "id": "SQ-016",
+            "acceptanceCriteria": [
+              "AC-SQ016-002",
+              "AC-SQ016-003",
+              "AC-SQ016-004",
+              "AC-SQ016-007"
+            ]
           }
         ],
         "verifications": [
@@ -674,6 +826,30 @@
             "status": "implemented",
             "evidence": [
               "apps/web/e2e/visual-regression.spec.ts"
+            ]
+          },
+          {
+            "id": "E2E-UI-CONTRAST-003",
+            "status": "implemented",
+            "evidence": [
+              "apps/web/e2e/visual-regression.spec.ts",
+              ".github/workflows/web-ui-quality.yml"
+            ]
+          },
+          {
+            "id": "E2E-UI-CROSS-BROWSER-SEMANTICS-004",
+            "status": "implemented",
+            "evidence": [
+              "apps/web/e2e/cross-browser-semantics.spec.ts",
+              ".github/workflows/web-ui-quality.yml"
+            ]
+          },
+          {
+            "id": "E2E-UI-CROSS-BROWSER-STATE-002",
+            "status": "implemented",
+            "evidence": [
+              "apps/web/e2e/cross-browser-state.spec.ts",
+              ".github/workflows/web-ui-quality.yml"
             ]
           }
         ],
@@ -735,6 +911,15 @@
             "acceptanceCriteria": [
               "AC-FR095-003"
             ]
+          },
+          {
+            "id": "SQ-016",
+            "acceptanceCriteria": [
+              "AC-SQ016-002",
+              "AC-SQ016-003",
+              "AC-SQ016-004",
+              "AC-SQ016-007"
+            ]
           }
         ],
         "verifications": [
@@ -743,6 +928,22 @@
             "status": "implemented",
             "evidence": [
               "apps/web/e2e/visual-regression.spec.ts"
+            ]
+          },
+          {
+            "id": "E2E-UI-CONTRAST-004",
+            "status": "implemented",
+            "evidence": [
+              "apps/web/e2e/visual-regression.spec.ts",
+              ".github/workflows/web-ui-quality.yml"
+            ]
+          },
+          {
+            "id": "E2E-UI-CROSS-BROWSER-SEMANTICS-002",
+            "status": "implemented",
+            "evidence": [
+              "apps/web/e2e/cross-browser-semantics.spec.ts",
+              ".github/workflows/web-ui-quality.yml"
             ]
           }
         ],
@@ -780,14 +981,14 @@
         "profile"
       ],
       "componentCount": 7,
-      "interactionCount": 15
+      "interactionCount": 16
     },
     {
       "feature": "auth",
       "label": "認証",
       "screens": [],
       "componentCount": 2,
-      "interactionCount": 26
+      "interactionCount": 27
     },
     {
       "feature": "benchmark",
@@ -820,7 +1021,7 @@
       "screens": [
         "documents"
       ],
-      "componentCount": 7,
+      "componentCount": 8,
       "interactionCount": 145
     },
     {
@@ -853,8 +1054,8 @@
       "feature": "shared",
       "label": "共通",
       "screens": [],
-      "componentCount": 10,
-      "interactionCount": 10
+      "componentCount": 9,
+      "interactionCount": 8
     }
   ],
   "components": [
@@ -866,7 +1067,9 @@
       ],
       "jsxUsages": [
         "AppShell",
-        "LoginPage"
+        "LoginPage",
+        "main",
+        "p"
       ],
       "certainty": "confirmed"
     },
@@ -899,6 +1102,7 @@
         "RailNav",
         "ResourceStatePanel",
         "TopBar",
+        "a",
         "div",
         "main"
       ],
@@ -921,8 +1125,10 @@
         "header",
         "label",
         "option",
+        "p",
         "section",
         "select",
+        "small",
         "span"
       ],
       "certainty": "confirmed"
@@ -1669,6 +1875,7 @@
         "EvidenceDebugTable",
         "FactCoverageTable",
         "Icon",
+        "LoadingSpinner",
         "StatusBadge",
         "article",
         "button",
@@ -1700,6 +1907,7 @@
       ],
       "jsxUsages": [
         "Icon",
+        "LoadingSpinner",
         "footer",
         "span",
         "strong"
@@ -1931,6 +2139,21 @@
       "certainty": "confirmed"
     },
     {
+      "file": "apps/web/src/features/documents/components/WorkspaceModal.tsx",
+      "feature": "documents",
+      "exports": [
+        "WorkspaceModal"
+      ],
+      "jsxUsages": [
+        "button",
+        "div",
+        "h3",
+        "header",
+        "section"
+      ],
+      "certainty": "confirmed"
+    },
+    {
       "file": "apps/web/src/features/favorites/components/FavoritesWorkspace.tsx",
       "feature": "favorites",
       "exports": [
@@ -2028,50 +2251,6 @@
       "certainty": "inferred"
     },
     {
-      "file": "apps/web/src/shared/components/ConfirmDialog.tsx",
-      "feature": "shared",
-      "exports": [
-        "ConfirmDialog"
-      ],
-      "jsxUsages": [
-        "Button",
-        "dd",
-        "div",
-        "dl",
-        "dt",
-        "h2",
-        "p",
-        "section"
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "file": "apps/web/src/shared/components/Icon.tsx",
-      "feature": "shared",
-      "exports": [
-        "Icon"
-      ],
-      "jsxUsages": [
-        "path",
-        "svg"
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "file": "apps/web/src/shared/components/LoadingSpinner.tsx",
-      "feature": "shared",
-      "exports": [
-        "LoadingSpinner",
-        "LoadingStatus"
-      ],
-      "jsxUsages": [
-        "LoadingSpinner",
-        "div",
-        "span"
-      ],
-      "certainty": "confirmed"
-    },
-    {
       "file": "apps/web/src/shared/ui/Badge.tsx",
       "feature": "shared",
       "exports": [
@@ -2105,8 +2284,9 @@
         "div",
         "dl",
         "dt",
-        "h3",
-        "p"
+        "h2",
+        "p",
+        "section"
       ],
       "certainty": "confirmed"
     },
@@ -2120,6 +2300,32 @@
         "div",
         "span",
         "strong"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/shared/ui/Icon.tsx",
+      "feature": "shared",
+      "exports": [
+        "Icon"
+      ],
+      "jsxUsages": [
+        "path",
+        "svg"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/shared/ui/LoadingSpinner.tsx",
+      "feature": "shared",
+      "exports": [
+        "LoadingSpinner",
+        "LoadingStatus"
+      ],
+      "jsxUsages": [
+        "LoadingSpinner",
+        "div",
+        "span"
       ],
       "certainty": "confirmed"
     },
@@ -2181,9 +2387,31 @@
   ],
   "interactions": [
     {
-      "id": "apps/web/src/app/components/PersonalSettingsView.tsx:25:button",
+      "id": "apps/web/src/app/AppShell.tsx:13:a",
+      "file": "apps/web/src/app/AppShell.tsx",
+      "line": 13,
+      "feature": "app",
+      "component": "AppShell",
+      "element": "a",
+      "isIntrinsic": true,
+      "label": "メインコンテンツへ移動",
+      "a11y": {
+        "accessibleName": "メインコンテンツへ移動",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/app/components/PersonalSettingsView.tsx:38:button",
       "file": "apps/web/src/app/components/PersonalSettingsView.tsx",
-      "line": 25,
+      "line": 38,
       "feature": "app",
       "component": "PersonalSettingsView",
       "element": "button",
@@ -2217,16 +2445,16 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/app/components/PersonalSettingsView.tsx:35:label",
+      "id": "apps/web/src/app/components/PersonalSettingsView.tsx:49:label",
       "file": "apps/web/src/app/components/PersonalSettingsView.tsx",
-      "line": 35,
+      "line": 49,
       "feature": "app",
       "component": "PersonalSettingsView",
       "element": "label",
       "isIntrinsic": true,
-      "label": "送信キー / Enterで送信 / Ctrl+Enterで送信",
+      "label": "送信キー",
       "a11y": {
-        "accessibleName": "送信キー / Enterで送信 / Ctrl+Enterで送信",
+        "accessibleName": "送信キー",
         "accessibleNameSource": "visible-text",
         "descriptionRefs": "-",
         "role": "-",
@@ -2244,9 +2472,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/app/components/PersonalSettingsView.tsx:37:select",
+      "id": "apps/web/src/app/components/PersonalSettingsView.tsx:50:select",
       "file": "apps/web/src/app/components/PersonalSettingsView.tsx",
-      "line": 37,
+      "line": 50,
       "feature": "app",
       "component": "PersonalSettingsView",
       "element": "select",
@@ -2255,7 +2483,7 @@
       "a11y": {
         "accessibleName": "Enterで送信 / Ctrl+Enterで送信",
         "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
+        "descriptionRefs": "profile-submit-shortcut-help",
         "role": "-",
         "state": [],
         "status": "ok",
@@ -2264,7 +2492,7 @@
       "handlers": [
         {
           "name": "onChange",
-          "value": "(event) => onSetSubmitShortcut(event.target.value as SubmitShortcut)"
+          "value": "(event) => handleSubmitShortcutChange(event.target.value as SubmitShortcut)"
         }
       ],
       "attributes": [
@@ -2273,20 +2501,24 @@
           "value": "profile-submit-shortcut"
         },
         {
+          "name": "aria-describedby",
+          "value": "profile-submit-shortcut-help"
+        },
+        {
           "name": "value",
           "value": "submitShortcut"
         },
         {
           "name": "onChange",
-          "value": "(event) => onSetSubmitShortcut(event.target.value as SubmitShortcut)"
+          "value": "(event) => handleSubmitShortcutChange(event.target.value as SubmitShortcut)"
         }
       ],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/app/components/PersonalSettingsView.tsx:42:option",
+      "id": "apps/web/src/app/components/PersonalSettingsView.tsx:56:option",
       "file": "apps/web/src/app/components/PersonalSettingsView.tsx",
-      "line": 42,
+      "line": 56,
       "feature": "app",
       "component": "PersonalSettingsView",
       "element": "option",
@@ -2311,9 +2543,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/app/components/PersonalSettingsView.tsx:43:option",
+      "id": "apps/web/src/app/components/PersonalSettingsView.tsx:57:option",
       "file": "apps/web/src/app/components/PersonalSettingsView.tsx",
-      "line": 43,
+      "line": 57,
       "feature": "app",
       "component": "PersonalSettingsView",
       "element": "option",
@@ -2338,9 +2570,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/app/components/PersonalSettingsView.tsx:48:button",
+      "id": "apps/web/src/app/components/PersonalSettingsView.tsx:67:button",
       "file": "apps/web/src/app/components/PersonalSettingsView.tsx",
-      "line": 48,
+      "line": 67,
       "feature": "app",
       "component": "PersonalSettingsView",
       "element": "button",
@@ -7280,9 +7512,51 @@
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:213:form",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:242:button",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 213,
+      "line": 242,
+      "feature": "auth",
+      "component": "LoginPage",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "未推定",
+      "a11y": {
+        "accessibleName": "未推定",
+        "accessibleNameSource": "missing",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=hostedUiUnavailable || isSubmitting || !onHostedUiLogin"
+        ],
+        "status": "missing",
+        "reason": "アクセシブル名が静的解析で確認できません。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => void submitHostedUiLogin()"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "hostedUiUnavailable || isSubmitting || !onHostedUiLogin"
+        },
+        {
+          "name": "onClick",
+          "value": "() => void submitHostedUiLogin()"
+        }
+      ],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:264:form",
+      "file": "apps/web/src/features/auth/components/LoginPage.tsx",
+      "line": 264,
       "feature": "auth",
       "component": "LoginPage",
       "element": "form",
@@ -7320,9 +7594,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:220:label",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:271:label",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 220,
+      "line": 271,
       "feature": "auth",
       "component": "LoginPage",
       "element": "label",
@@ -7342,9 +7616,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:221:input",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:272:input",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 221,
+      "line": 272,
       "feature": "auth",
       "component": "LoginPage",
       "element": "input",
@@ -7396,9 +7670,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:230:label",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:281:label",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 230,
+      "line": 281,
       "feature": "auth",
       "component": "LoginPage",
       "element": "label",
@@ -7418,9 +7692,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:231:input",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:282:input",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 231,
+      "line": 282,
       "feature": "auth",
       "component": "LoginPage",
       "element": "input",
@@ -7472,9 +7746,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:242:label",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:293:label",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 242,
+      "line": 293,
       "feature": "auth",
       "component": "LoginPage",
       "element": "label",
@@ -7494,9 +7768,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:243:input",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:294:input",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 243,
+      "line": 294,
       "feature": "auth",
       "component": "LoginPage",
       "element": "input",
@@ -7548,9 +7822,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:244:label",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:295:label",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 244,
+      "line": 295,
       "feature": "auth",
       "component": "LoginPage",
       "element": "label",
@@ -7570,9 +7844,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:245:input",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:296:input",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 245,
+      "line": 296,
       "feature": "auth",
       "component": "LoginPage",
       "element": "input",
@@ -7624,9 +7898,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:257:label",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:308:label",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 257,
+      "line": 308,
       "feature": "auth",
       "component": "LoginPage",
       "element": "label",
@@ -7646,9 +7920,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:258:input",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:309:input",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 258,
+      "line": 309,
       "feature": "auth",
       "component": "LoginPage",
       "element": "input",
@@ -7700,9 +7974,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:259:label",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:310:label",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 259,
+      "line": 310,
       "feature": "auth",
       "component": "LoginPage",
       "element": "label",
@@ -7722,9 +7996,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:260:input",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:311:input",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 260,
+      "line": 311,
       "feature": "auth",
       "component": "LoginPage",
       "element": "input",
@@ -7776,9 +8050,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:262:label",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:313:label",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 262,
+      "line": 313,
       "feature": "auth",
       "component": "LoginPage",
       "element": "label",
@@ -7798,9 +8072,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:263:input",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:314:input",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 263,
+      "line": 314,
       "feature": "auth",
       "component": "LoginPage",
       "element": "input",
@@ -7852,9 +8126,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:274:label",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:325:label",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 274,
+      "line": 325,
       "feature": "auth",
       "component": "LoginPage",
       "element": "label",
@@ -7874,9 +8148,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:275:input",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:326:input",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 275,
+      "line": 326,
       "feature": "auth",
       "component": "LoginPage",
       "element": "input",
@@ -7928,9 +8202,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:276:label",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:327:label",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 276,
+      "line": 327,
       "feature": "auth",
       "component": "LoginPage",
       "element": "label",
@@ -7950,9 +8224,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:277:input",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:328:input",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 277,
+      "line": 328,
       "feature": "auth",
       "component": "LoginPage",
       "element": "input",
@@ -8004,9 +8278,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:281:label",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:332:label",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 281,
+      "line": 332,
       "feature": "auth",
       "component": "LoginPage",
       "element": "label",
@@ -8026,9 +8300,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:281:input",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:332:input",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 281,
+      "line": 332,
       "feature": "auth",
       "component": "LoginPage",
       "element": "input",
@@ -8068,9 +8342,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:285:button",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:336:button",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 285,
+      "line": 336,
       "feature": "auth",
       "component": "LoginPage",
       "element": "button",
@@ -8101,9 +8375,9 @@
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:293:button",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:344:button",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 293,
+      "line": 344,
       "feature": "auth",
       "component": "LoginPage",
       "element": "button",
@@ -8143,9 +8417,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:294:button",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:345:button",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 294,
+      "line": 345,
       "feature": "auth",
       "component": "LoginPage",
       "element": "button",
@@ -8185,9 +8459,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/auth/components/LoginPage.tsx:297:button",
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:348:button",
       "file": "apps/web/src/features/auth/components/LoginPage.tsx",
-      "line": 297,
+      "line": 348,
       "feature": "auth",
       "component": "LoginPage",
       "element": "button",
@@ -8730,9 +9004,9 @@
       "component": "BenchmarkWorkspace",
       "element": "button",
       "isIntrinsic": true,
-      "label": "`${artifact.description}をダウンロード`",
+      "label": "`${artifact.description}: ${artifactStateLabel(run, artifact.kind)}`",
       "a11y": {
-        "accessibleName": "`${artifact.description}をダウンロード`",
+        "accessibleName": "`${artifact.description}: ${artifactStateLabel(run, artifact.kind)}`",
         "accessibleNameSource": "aria-label",
         "descriptionRefs": "-",
         "role": "-",
@@ -8755,11 +9029,11 @@
         },
         {
           "name": "title",
-          "value": "`${artifact.description}をダウンロード`"
+          "value": "`${artifact.description}: ${artifactStateLabel(run, artifact.kind)}`"
         },
         {
           "name": "aria-label",
-          "value": "`${artifact.description}をダウンロード`"
+          "value": "`${artifact.description}: ${artifactStateLabel(run, artifact.kind)}`"
         },
         {
           "name": "disabled",
@@ -8773,9 +9047,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:247:button",
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:248:button",
       "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
-      "line": 247,
+      "line": 248,
       "feature": "benchmark",
       "component": "BenchmarkWorkspace",
       "element": "button",
@@ -10298,9 +10572,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/debug/components/panel/DebugPanelBody.tsx:59:DebugFlowNodeButton",
+      "id": "apps/web/src/features/debug/components/panel/DebugPanelBody.tsx:60:DebugFlowNodeButton",
       "file": "apps/web/src/features/debug/components/panel/DebugPanelBody.tsx",
-      "line": 59,
+      "line": 60,
       "feature": "debug",
       "component": "DebugPanelBody",
       "element": "DebugFlowNodeButton",
@@ -10330,9 +10604,9 @@
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/debug/components/panel/DebugPanelBody.tsx:152:button",
+      "id": "apps/web/src/features/debug/components/panel/DebugPanelBody.tsx:153:button",
       "file": "apps/web/src/features/debug/components/panel/DebugPanelBody.tsx",
-      "line": 152,
+      "line": 153,
       "feature": "debug",
       "component": "DebugFlowNodeButton",
       "element": "button",
@@ -10372,9 +10646,9 @@
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/debug/components/panel/DebugPanelBody.tsx:226:button",
+      "id": "apps/web/src/features/debug/components/panel/DebugPanelBody.tsx:227:button",
       "file": "apps/web/src/features/debug/components/panel/DebugPanelBody.tsx",
-      "line": 226,
+      "line": 227,
       "feature": "debug",
       "component": "DebugStepList",
       "element": "button",
@@ -10695,9 +10969,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1006:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1005:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1006,
+      "line": 1005,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "button",
@@ -10739,9 +11013,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1193:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1192:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1193,
+      "line": 1192,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "button",
@@ -10779,9 +11053,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1297:form",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1296:form",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1297,
+      "line": 1296,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "form",
@@ -10811,9 +11085,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1312:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1311:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1312,
+      "line": 1311,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "button",
@@ -10847,9 +11121,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1321:label",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1320:label",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1321,
+      "line": 1320,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "label",
@@ -10869,9 +11143,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1323:select",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1322:select",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1323,
+      "line": 1322,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "select",
@@ -10905,9 +11179,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1324:option",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1323:option",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1324,
+      "line": 1323,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "option",
@@ -10932,9 +11206,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1325:option",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1324:option",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1325,
+      "line": 1324,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "option",
@@ -10959,9 +11233,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1328:label",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1327:label",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1328,
+      "line": 1327,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "label",
@@ -10981,9 +11255,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1328:input",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1327:input",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1328,
+      "line": 1327,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "input",
@@ -11017,9 +11291,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1329:label",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1328:label",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1329,
+      "line": 1328,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "label",
@@ -11039,9 +11313,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1331:select",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1330:select",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1331,
+      "line": 1330,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "select",
@@ -11075,9 +11349,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1332:option",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1331:option",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1332,
+      "line": 1331,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "option",
@@ -11102,9 +11376,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1333:option",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1332:option",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1333,
+      "line": 1332,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "option",
@@ -11129,9 +11403,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1334:option",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1333:option",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1334,
+      "line": 1333,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "option",
@@ -11156,9 +11430,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1337:label",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1336:label",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1337,
+      "line": 1336,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "label",
@@ -11178,9 +11452,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1337:textarea",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1336:textarea",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1337,
+      "line": 1336,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "textarea",
@@ -11214,9 +11488,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1338:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1337:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1338,
+      "line": 1337,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "button",
@@ -11247,9 +11521,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1344:form",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1343:form",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1344,
+      "line": 1343,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "form",
@@ -11279,9 +11553,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1346:label",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1345:label",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1346,
+      "line": 1345,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "label",
@@ -11301,9 +11575,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1348:select",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1347:select",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1348,
+      "line": 1347,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "select",
@@ -11337,9 +11611,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1349:option",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1348:option",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1349,
+      "line": 1348,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "option",
@@ -11364,9 +11638,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1351:option",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1350:option",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1351,
+      "line": 1350,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "option",
@@ -11391,9 +11665,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1355:label",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1354:label",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1355,
+      "line": 1354,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "label",
@@ -11413,9 +11687,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1355:input",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1354:input",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1355,
+      "line": 1354,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "input",
@@ -11449,9 +11723,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1358:label",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1357:label",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1358,
+      "line": 1357,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "label",
@@ -11471,9 +11745,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1358:textarea",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1357:textarea",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1358,
+      "line": 1357,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "textarea",
@@ -11507,9 +11781,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1359:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1358:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1359,
+      "line": 1358,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "button",
@@ -11535,46 +11809,6 @@
         {
           "name": "disabled",
           "value": "!documentMoveDestinationId || documentMoveNameConflict || !documentMoveReason.trim() || o…"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:1467:button",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 1467,
-      "feature": "documents",
-      "component": "WorkspaceModal",
-      "element": "button",
-      "isIntrinsic": true,
-      "label": "`${title}を閉じる`",
-      "a11y": {
-        "accessibleName": "`${title}を閉じる`",
-        "accessibleNameSource": "aria-label",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [
-        {
-          "name": "onClick",
-          "value": "onClose"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "type",
-          "value": "button"
-        },
-        {
-          "name": "onClick",
-          "value": "onClose"
-        },
-        {
-          "name": "aria-label",
-          "value": "`${title}を閉じる`"
         }
       ],
       "certainty": "confirmed"
@@ -15550,6 +15784,46 @@
       "certainty": "confirmed"
     },
     {
+      "id": "apps/web/src/features/documents/components/WorkspaceModal.tsx:9:button",
+      "file": "apps/web/src/features/documents/components/WorkspaceModal.tsx",
+      "line": 9,
+      "feature": "documents",
+      "component": "WorkspaceModal",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "`${title}を閉じる`",
+      "a11y": {
+        "accessibleName": "`${title}を閉じる`",
+        "accessibleNameSource": "aria-label",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "onClose"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "onClick",
+          "value": "onClose"
+        },
+        {
+          "name": "aria-label",
+          "value": "`${title}を閉じる`"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
       "id": "apps/web/src/features/favorites/components/FavoritesWorkspace.tsx:49:button",
       "file": "apps/web/src/features/favorites/components/FavoritesWorkspace.tsx",
       "line": 49,
@@ -15987,9 +16261,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:168:button",
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:176:button",
       "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
-      "line": 168,
+      "line": 176,
       "feature": "questions",
       "component": "AssigneeWorkspace",
       "element": "button",
@@ -16031,9 +16305,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:191:label",
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:199:label",
       "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
-      "line": 191,
+      "line": 199,
       "feature": "questions",
       "component": "AssigneeWorkspace",
       "element": "label",
@@ -16053,9 +16327,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:193:select",
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:201:select",
       "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
-      "line": 193,
+      "line": 201,
       "feature": "questions",
       "component": "AssigneeWorkspace",
       "element": "select",
@@ -16089,9 +16363,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:194:option",
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:202:option",
       "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
-      "line": 194,
+      "line": 202,
       "feature": "questions",
       "component": "AssigneeWorkspace",
       "element": "option",
@@ -16116,9 +16390,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:196:option",
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:204:option",
       "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
-      "line": 196,
+      "line": 204,
       "feature": "questions",
       "component": "AssigneeWorkspace",
       "element": "option",
@@ -16143,9 +16417,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:200:label",
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:208:label",
       "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
-      "line": 200,
+      "line": 208,
       "feature": "questions",
       "component": "AssigneeWorkspace",
       "element": "label",
@@ -16165,9 +16439,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:202:input",
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:210:input",
       "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
-      "line": 202,
+      "line": 210,
       "feature": "questions",
       "component": "AssigneeWorkspace",
       "element": "input",
@@ -16209,9 +16483,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:228:button",
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:237:button",
       "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
-      "line": 228,
+      "line": 237,
       "feature": "questions",
       "component": "AssigneeWorkspace",
       "element": "button",
@@ -16255,17 +16529,17 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:278:form",
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:287:form",
       "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
-      "line": 278,
+      "line": 287,
       "feature": "questions",
       "component": "AssigneeWorkspace",
       "element": "form",
       "isIntrinsic": true,
-      "label": "回答作成 / 回答タイトル / 回答内容 / 参照資料 / 関連リンク / 内部メモ / 質問者へ通知する / 入力を一時保持 / 回答を送信",
+      "label": "answerFormHeadingId",
       "a11y": {
-        "accessibleName": "回答作成 / 回答タイトル / 回答内容 / 参照資料 / 関連リンク / 内部メモ / 質問者へ通知する / 入力を一時保持 / 回答を送信",
-        "accessibleNameSource": "visible-text",
+        "accessibleName": "参照: answerFormHeadingId",
+        "accessibleNameSource": "aria-labelledby",
         "descriptionRefs": "-",
         "role": "-",
         "state": [],
@@ -16282,14 +16556,18 @@
         {
           "name": "onSubmit",
           "value": "onSubmit"
+        },
+        {
+          "name": "aria-labelledby",
+          "value": "answerFormHeadingId"
         }
       ],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:280:label",
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:289:label",
       "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
-      "line": 280,
+      "line": 289,
       "feature": "questions",
       "component": "AssigneeWorkspace",
       "element": "label",
@@ -16309,9 +16587,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:282:input",
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:291:input",
       "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
-      "line": 282,
+      "line": 291,
       "feature": "questions",
       "component": "AssigneeWorkspace",
       "element": "input",
@@ -16351,9 +16629,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:284:label",
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:293:label",
       "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
-      "line": 284,
+      "line": 293,
       "feature": "questions",
       "component": "AssigneeWorkspace",
       "element": "label",
@@ -16373,9 +16651,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:286:textarea",
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:295:textarea",
       "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
-      "line": 286,
+      "line": 295,
       "feature": "questions",
       "component": "AssigneeWorkspace",
       "element": "textarea",
@@ -16415,9 +16693,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:288:label",
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:297:label",
       "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
-      "line": 288,
+      "line": 297,
       "feature": "questions",
       "component": "AssigneeWorkspace",
       "element": "label",
@@ -16437,9 +16715,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:290:input",
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:299:input",
       "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
-      "line": 290,
+      "line": 299,
       "feature": "questions",
       "component": "AssigneeWorkspace",
       "element": "input",
@@ -16483,9 +16761,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:292:label",
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:301:label",
       "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
-      "line": 292,
+      "line": 301,
       "feature": "questions",
       "component": "AssigneeWorkspace",
       "element": "label",
@@ -16505,9 +16783,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:294:textarea",
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:303:textarea",
       "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
-      "line": 294,
+      "line": 303,
       "feature": "questions",
       "component": "AssigneeWorkspace",
       "element": "textarea",
@@ -16547,9 +16825,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:296:label",
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:305:label",
       "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
-      "line": 296,
+      "line": 305,
       "feature": "questions",
       "component": "AssigneeWorkspace",
       "element": "label",
@@ -16569,9 +16847,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:297:input",
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:306:input",
       "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
-      "line": 297,
+      "line": 306,
       "feature": "questions",
       "component": "AssigneeWorkspace",
       "element": "input",
@@ -16611,9 +16889,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:310:button",
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:319:button",
       "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
-      "line": 310,
+      "line": 319,
       "feature": "questions",
       "component": "AssigneeWorkspace",
       "element": "button",
@@ -16653,9 +16931,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:311:button",
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:320:button",
       "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
-      "line": 311,
+      "line": 320,
       "feature": "questions",
       "component": "AssigneeWorkspace",
       "element": "button",
@@ -16686,117 +16964,6 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/shared/components/ConfirmDialog.tsx:111:Button",
-      "file": "apps/web/src/shared/components/ConfirmDialog.tsx",
-      "line": 111,
-      "feature": "shared",
-      "component": "ConfirmDialog",
-      "element": "Button",
-      "isIntrinsic": false,
-      "label": "未推定",
-      "a11y": {
-        "accessibleName": "未推定",
-        "accessibleNameSource": "missing",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [
-          "disabled=busy"
-        ],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [
-        {
-          "name": "onClick",
-          "value": "onCancel"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "type",
-          "value": "button"
-        },
-        {
-          "name": "onClick",
-          "value": "onCancel"
-        },
-        {
-          "name": "disabled",
-          "value": "busy"
-        }
-      ],
-      "certainty": "unknown"
-    },
-    {
-      "id": "apps/web/src/shared/components/ConfirmDialog.tsx:112:Button",
-      "file": "apps/web/src/shared/components/ConfirmDialog.tsx",
-      "line": 112,
-      "feature": "shared",
-      "component": "ConfirmDialog",
-      "element": "Button",
-      "isIntrinsic": false,
-      "label": "未推定",
-      "a11y": {
-        "accessibleName": "未推定",
-        "accessibleNameSource": "missing",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [
-          "disabled=busy || confirmDisabled"
-        ],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [
-        {
-          "name": "onClick",
-          "value": "() => void confirm()"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "type",
-          "value": "button"
-        },
-        {
-          "name": "onClick",
-          "value": "() => void confirm()"
-        },
-        {
-          "name": "disabled",
-          "value": "busy || confirmDisabled"
-        }
-      ],
-      "certainty": "unknown"
-    },
-    {
-      "id": "apps/web/src/shared/components/Icon.tsx:29:svg",
-      "file": "apps/web/src/shared/components/Icon.tsx",
-      "line": 29,
-      "feature": "shared",
-      "component": "Icon",
-      "element": "svg",
-      "isIntrinsic": true,
-      "label": "未推定",
-      "a11y": {
-        "accessibleName": "未推定",
-        "accessibleNameSource": "missing",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [
-        {
-          "name": "aria-hidden",
-          "value": "true"
-        }
-      ],
-      "certainty": "unknown"
-    },
-    {
       "id": "apps/web/src/shared/ui/Button.tsx:19:button",
       "file": "apps/web/src/shared/ui/Button.tsx",
       "line": 19,
@@ -16819,17 +16986,17 @@
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/shared/ui/ConfirmDialog.tsx:108:Button",
+      "id": "apps/web/src/shared/ui/ConfirmDialog.tsx:142:Button",
       "file": "apps/web/src/shared/ui/ConfirmDialog.tsx",
-      "line": 108,
+      "line": 142,
       "feature": "shared",
       "component": "ConfirmDialog",
       "element": "Button",
       "isIntrinsic": false,
-      "label": "キャンセル",
+      "label": "未推定",
       "a11y": {
-        "accessibleName": "キャンセル",
-        "accessibleNameSource": "visible-text",
+        "accessibleName": "未推定",
+        "accessibleNameSource": "missing",
         "descriptionRefs": "-",
         "role": "-",
         "state": [
@@ -16858,12 +17025,12 @@
           "value": "busy"
         }
       ],
-      "certainty": "confirmed"
+      "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/shared/ui/ConfirmDialog.tsx:109:Button",
+      "id": "apps/web/src/shared/ui/ConfirmDialog.tsx:143:Button",
       "file": "apps/web/src/shared/ui/ConfirmDialog.tsx",
-      "line": 109,
+      "line": 143,
       "feature": "shared",
       "component": "ConfirmDialog",
       "element": "Button",
@@ -16898,6 +17065,33 @@
         {
           "name": "disabled",
           "value": "busy || confirmDisabled"
+        }
+      ],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/shared/ui/Icon.tsx:29:svg",
+      "file": "apps/web/src/shared/ui/Icon.tsx",
+      "line": 29,
+      "feature": "shared",
+      "component": "Icon",
+      "element": "svg",
+      "isIntrinsic": true,
+      "label": "未推定",
+      "a11y": {
+        "accessibleName": "未推定",
+        "accessibleNameSource": "missing",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "aria-hidden",
+          "value": "true"
         }
       ],
       "certainty": "unknown"
@@ -17112,6 +17306,7 @@
         "acceptanceCriteria": [
           "AC-NFR018-001",
           "AC-NFR018-002",
+          "AC-NFR018-004",
           "AC-NFR018-005",
           "AC-NFR018-007"
         ],
@@ -17219,7 +17414,8 @@
         "id": "E2E-UI-KEYBOARD-NAV-001",
         "status": "implemented",
         "evidence": [
-          "apps/web/e2e/keyboard-navigation.spec.ts"
+          "apps/web/e2e/keyboard-navigation.spec.ts",
+          ".github/workflows/web-ui-quality.yml"
         ]
       },
       {
@@ -17265,8 +17461,66 @@
         ]
       },
       {
+        "id": "E2E-UI-SKIP-001",
+        "status": "implemented",
+        "evidence": [
+          "apps/web/e2e/skip-link.spec.ts"
+        ]
+      },
+      {
+        "id": "E2E-UI-LOGIN-KEYBOARD-001",
+        "status": "implemented",
+        "evidence": [
+          "apps/web/e2e/login-keyboard.spec.ts",
+          "apps/web/src/features/auth/components/LoginPage.test.tsx",
+          ".github/workflows/web-ui-quality.yml"
+        ]
+      },
+      {
+        "id": "E2E-UI-LAYOUT-STRESS-001",
+        "status": "implemented",
+        "evidence": [
+          "apps/web/e2e/layout-stress.spec.ts",
+          "apps/web/package.json",
+          ".github/workflows/web-ui-quality.yml"
+        ]
+      },
+      {
+        "id": "E2E-UI-TEXT-SPACING-001",
+        "status": "implemented",
+        "evidence": [
+          "apps/web/e2e/text-spacing.spec.ts"
+        ]
+      },
+      {
+        "id": "E2E-UI-VIRTUAL-KEYBOARD-001",
+        "status": "implemented",
+        "evidence": [
+          "apps/web/e2e/viewport-keyboard.spec.ts"
+        ]
+      },
+      {
+        "id": "E2E-UI-ZOOM-REFLOW-001",
+        "status": "implemented",
+        "evidence": [
+          "apps/web/e2e/zoom-reflow.spec.ts",
+          "apps/web/package.json",
+          ".github/workflows/web-ui-quality.yml"
+        ]
+      },
+      {
+        "id": "NONUI-UI-MANUAL-EVIDENCE-001",
+        "status": "implemented",
+        "evidence": [
+          "tools/web-inventory/manual-a11y-evidence.test.mjs"
+        ]
+      },
+      {
         "id": "E2E-UI-MANUAL-001",
         "status": "manual",
+        "evidence": [
+          "reports/working/issue-345-manual-a11y-evidence-baseline.json"
+        ],
         "task": "tasks/todo/20260714-issue-345-manual-a11y-evidence.md"
       }
     ]

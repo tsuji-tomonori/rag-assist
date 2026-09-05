@@ -40,13 +40,13 @@
 | ---: | --- | --- | --- | --- | --- |
 | B001 | `GET /documents/{documentId}/extracted-text handler` | if | `download` が存在しない、または偽である | `!download` | `apps/api/src/routes/document-routes.ts:1521 (GET /documents/{documentId}/extracted-text handler)` |
 | B002 | `requirePermission` | if | 利用者が 指定された permission を持たない | `!hasPermission(user, permission)` | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| B003 | `MemoRagService.getDocumentExtractedText` | if | is missing object error の判定結果が真である | `isMissingObjectError(error)` | `apps/api/src/rag/memorag-service.ts:997 (MemoRagService.getDocumentExtractedText)` |
-| B004 | `MemoRagService.getDocumentExtractedText` | if | `manifest` が存在しない、または偽である | `!manifest` | `apps/api/src/rag/memorag-service.ts:1000 (MemoRagService.getDocumentExtractedText)` |
-| B005 | `MemoRagService.getDocumentExtractedText` | if | 条件式 `await isManifestCurrentPublication(this.deps, manifest, publicationSnapshot)` が成立しない | `!(await isManifestCurrentPublication(this.deps, manifest, publicationSnapshot))` | `apps/api/src/rag/memorag-service.ts:1002 (MemoRagService.getDocumentExtractedText)` |
-| B006 | `MemoRagService.getDocumentExtractedText` | if | `(manifest.lifecycleStatus ?? stringValue(manifest.metadata?.lifecycleStatus) ?? "active")` が `"active"` と異なる | `(manifest.lifecycleStatus ?? stringValue(manifest.metadata?.lifecycleStatus) ?? "active") !== "active"` | `apps/api/src/rag/memorag-service.ts:1003 (MemoRagService.getDocumentExtractedText)` |
-| B007 | `MemoRagService.getDocumentExtractedText` | if | `permission` が `"readOnly"` と異なる、かつ `permission` が `"full"` と異なる | `permission !== "readOnly" && permission !== "full"` | `apps/api/src/rag/memorag-service.ts:1006 (MemoRagService.getDocumentExtractedText)` |
-| B008 | `MemoRagService.getDocumentExtractedText` | catch | 例外が発生した場合に catch 処理へ移る | `error` | `apps/api/src/rag/memorag-service.ts:1009 (MemoRagService.getDocumentExtractedText)` |
-| B009 | `MemoRagService.getDocumentExtractedText` | if | `error` が `ResourceOperationAuthorizationError` の instance である | `error instanceof ResourceOperationAuthorizationError` | `apps/api/src/rag/memorag-service.ts:1010 (MemoRagService.getDocumentExtractedText)` |
+| B003 | `MemoRagService.getDocumentExtractedText` | if | is missing object error の判定結果が真である | `isMissingObjectError(error)` | `apps/api/src/rag/memorag-service.ts:1104 (MemoRagService.getDocumentExtractedText)` |
+| B004 | `MemoRagService.getDocumentExtractedText` | if | `manifest` が存在しない、または偽である | `!manifest` | `apps/api/src/rag/memorag-service.ts:1107 (MemoRagService.getDocumentExtractedText)` |
+| B005 | `MemoRagService.getDocumentExtractedText` | if | 条件式 `await isManifestCurrentPublication(this.deps, manifest, publicationSnapshot)` が成立しない | `!(await isManifestCurrentPublication(this.deps, manifest, publicationSnapshot))` | `apps/api/src/rag/memorag-service.ts:1109 (MemoRagService.getDocumentExtractedText)` |
+| B006 | `MemoRagService.getDocumentExtractedText` | if | `(manifest.lifecycleStatus ?? stringValue(manifest.metadata?.lifecycleStatus) ?? "active")` が `"active"` と異なる | `(manifest.lifecycleStatus ?? stringValue(manifest.metadata?.lifecycleStatus) ?? "active") !== "active"` | `apps/api/src/rag/memorag-service.ts:1110 (MemoRagService.getDocumentExtractedText)` |
+| B007 | `MemoRagService.getDocumentExtractedText` | if | `permission` が `"readOnly"` と異なる、かつ `permission` が `"full"` と異なる | `permission !== "readOnly" && permission !== "full"` | `apps/api/src/rag/memorag-service.ts:1113 (MemoRagService.getDocumentExtractedText)` |
+| B008 | `MemoRagService.getDocumentExtractedText` | catch | 例外が発生した場合に catch 処理へ移る | `error` | `apps/api/src/rag/memorag-service.ts:1116 (MemoRagService.getDocumentExtractedText)` |
+| B009 | `MemoRagService.getDocumentExtractedText` | if | `error` が `ResourceOperationAuthorizationError` の instance である | `error instanceof ResourceOperationAuthorizationError` | `apps/api/src/rag/memorag-service.ts:1117 (MemoRagService.getDocumentExtractedText)` |
 
 ## 4. 到達する主要実装
 
@@ -59,13 +59,13 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 2 | `hasPermission` | has permission の実装処理を担当する。 | `apps/api/src/authorization.ts:187 (hasPermission)` |
 | 1 | `validParam` | valid param の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:24 (validParam)` |
 | 2 | `validRequest` | valid request の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:36 (validRequest)` |
-| 1 | `MemoRagService.getDocumentExtractedText` | get document extracted text の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:992 (MemoRagService.getDocumentExtractedText)` |
-| 2 | `authoritativeActorTenantId` | authoritative actor tenant id の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6090 (authoritativeActorTenantId)` |
-| 2 | `MemoRagService.getManifest` | get manifest の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3937 (MemoRagService.getManifest)` |
-| 2 | `isMissingObjectError` | is missing object error の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6133 (isMissingObjectError)` |
+| 1 | `MemoRagService.getDocumentExtractedText` | get document extracted text の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1099 (MemoRagService.getDocumentExtractedText)` |
+| 2 | `authoritativeActorTenantId` | authoritative actor tenant id の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5700 (authoritativeActorTenantId)` |
+| 2 | `MemoRagService.getManifest` | get manifest の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4030 (MemoRagService.getManifest)` |
+| 2 | `isMissingObjectError` | is missing object error の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5743 (isMissingObjectError)` |
 | 2 | `createPublicationPointerSnapshot` | create publication pointer snapshot の実装処理を担当する。 | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:142 (createPublicationPointerSnapshot)` |
 | 2 | `isManifestCurrentPublication` | is manifest current publication の実装処理を担当する。 | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1500 (isManifestCurrentPublication)` |
-| 2 | `stringValue` | string value の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6531 (stringValue)` |
+| 2 | `stringValue` | string value の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6108 (stringValue)` |
 | 2 | `DocumentPermissionService.resolveEffectiveDocumentPermission` | resolve effective document permission の実装処理を担当する。 | `apps/api/src/documents/document-permission-service.ts:122 (DocumentPermissionService.resolveEffectiveDocumentPermission)` |
 | 2 | `DocumentPermissionService.assertDocumentOperation` | assert document operation の実装処理を担当する。 | `apps/api/src/documents/document-permission-service.ts:126 (DocumentPermissionService.assertDocumentOperation)` |
 | 1 | `resourceUnavailable` | resource unavailable の実装処理を担当する。 | `apps/api/src/routes/document-routes.ts:293 (resourceUnavailable)` |
@@ -89,7 +89,7 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 参照 | Store | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `DocumentPermissionService.loadLegacyDocumentGrants` | `apps/api/src/documents/document-permission-service.ts:537 (DocumentPermissionService.loadLegacyDocumentGrants)` |
 | 参照 | Store | `this.deps.userGroupStore` | `get` | `this.deps.userGroupStore` に対して get を実行する。 | `DocumentPermissionService.resolveUserMembershipPermission` | `apps/api/src/documents/document-permission-service.ts:683 (DocumentPermissionService.resolveUserMembershipPermission)` |
 | 参照 | Store | `this.deps.groupMembershipStore` | `listByGroupId` | `this.deps.groupMembershipStore` に対して list by group id を実行する。 | `DocumentPermissionService.resolveUserMembershipPermission` | `apps/api/src/documents/document-permission-service.ts:684 (DocumentPermissionService.resolveUserMembershipPermission)` |
-| 参照 | Store | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `MemoRagService.getDocumentExtractedText` | `apps/api/src/rag/memorag-service.ts:1014 (MemoRagService.getDocumentExtractedText)` |
+| 参照 | Store | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `MemoRagService.getDocumentExtractedText` | `apps/api/src/rag/memorag-service.ts:1121 (MemoRagService.getDocumentExtractedText)` |
 
 ## 6. 応答・メッセージ
 

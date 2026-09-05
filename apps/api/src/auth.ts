@@ -17,6 +17,13 @@ export type AppUser = {
   tenantId?: string
 }
 
+export type AppAuthSession = {
+  sessionId: string
+  tokenId: string
+  issuedAtEpochMs: number
+  expiresAtEpochMs: number
+}
+
 const cognitoRegion = config.cognitoRegion
 const cognitoUserPoolId = config.cognitoUserPoolId
 const cognitoAppClientId = config.cognitoAppClientId
@@ -33,13 +40,15 @@ export function configureVerifiedIdentityProvider(provider: VerifiedIdentityProv
 
 export const authMiddleware: MiddlewareHandler<AppEnv> = async (c, next) => {
   if (!config.authEnabled) {
-    c.set("user", resolveExplicitLocalAppUser({
+    const user = resolveExplicitLocalAppUser({
       userId: config.localAuthUserId,
       email: config.localAuthEmail,
       cognitoGroups: config.localAuthGroups,
       accountStatus: config.localAuthAccountStatus,
       tenantId: config.localAuthTenantId
-    }))
+    })
+    c.set("user", user)
+    c.set("authSession", resolveExplicitLocalAuthSession(user.userId))
     return next()
   }
 
@@ -59,12 +68,37 @@ export const authMiddleware: MiddlewareHandler<AppEnv> = async (c, next) => {
     throw new HTTPException(401, { message: "Unauthorized" })
   }
 
+  const authSession = resolveVerifiedAuthSession(payload)
   c.set("user", await resolveVerifiedAppUser(payload, {
     provider: verifiedIdentityProvider,
     tenantId: config.authTenantId
   }))
+  c.set("authSession", authSession)
 
   await next()
+}
+
+export function resolveVerifiedAuthSession(payload: JWTPayload): AppAuthSession {
+  const sessionId = nonEmptyString(payload.origin_jti)
+  const tokenId = nonEmptyString(payload.jti)
+  const issuedAtEpochMs = epochSecondsToMs(payload.iat)
+  const expiresAtEpochMs = epochSecondsToMs(payload.exp)
+  if (!sessionId || !tokenId || issuedAtEpochMs === undefined || expiresAtEpochMs === undefined) {
+    throw new HTTPException(401, { message: "Unauthorized" })
+  }
+  if (expiresAtEpochMs <= issuedAtEpochMs) throw new HTTPException(401, { message: "Unauthorized" })
+  return { sessionId, tokenId, issuedAtEpochMs, expiresAtEpochMs }
+}
+
+export function resolveExplicitLocalAuthSession(userId: string): AppAuthSession {
+  const canonicalUserId = userId.trim()
+  if (!canonicalUserId) throw new HTTPException(500, { message: "Local auth identity is not configured" })
+  return {
+    sessionId: `local-session:${canonicalUserId}`,
+    tokenId: `local-token:${canonicalUserId}`,
+    issuedAtEpochMs: 0,
+    expiresAtEpochMs: Number.MAX_SAFE_INTEGER
+  }
 }
 
 export async function resolveVerifiedAppUser(
@@ -135,6 +169,12 @@ function nonEmptyString(value: unknown): string | undefined {
   return normalized || undefined
 }
 
+function epochSecondsToMs(value: unknown): number | undefined {
+  if (!Number.isSafeInteger(value) || (value as number) < 0) return undefined
+  const epochMs = (value as number) * 1000
+  return Number.isSafeInteger(epochMs) ? epochMs : undefined
+}
+
 function parseExplicitAccountStatus(value: string): AccountStatus | undefined {
   if (value === "active" || value === "suspended" || value === "deleted") return value
   return undefined
@@ -142,6 +182,7 @@ function parseExplicitAccountStatus(value: string): AccountStatus | undefined {
 
 declare module "hono" {
   interface ContextVariableMap {
+    authSession: AppAuthSession
     user: AppUser
   }
 }

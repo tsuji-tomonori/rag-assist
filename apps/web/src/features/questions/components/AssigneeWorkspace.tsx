@@ -1,8 +1,8 @@
-import { type FormEvent, useEffect, useRef, useState } from "react"
+import { type FormEvent, useEffect, useId, useRef, useState } from "react"
 import type { answerQuestion } from "../api/questionsApi.js"
 import type { HumanQuestion, QuestionOperationOutcome } from "../types.js"
-import { Icon } from "../../../shared/components/Icon.js"
-import { LoadingSpinner, LoadingStatus } from "../../../shared/components/LoadingSpinner.js"
+import { Icon } from "../../../shared/ui/Icon.js"
+import { LoadingSpinner, LoadingStatus } from "../../../shared/ui/LoadingSpinner.js"
 import type { CurrentUser } from "../../../shared/types/common.js"
 import { currentUserLabel } from "../../../shared/utils/currentUserLabel.js"
 import { formatDateTime, priorityLabel } from "../../../shared/utils/format.js"
@@ -54,6 +54,10 @@ export function AssigneeWorkspace({
   onAnswer: (questionId: string, input: Parameters<typeof answerQuestion>[1]) => Promise<QuestionOperationOutcome>
   onBack: () => void
 }) {
+  const workspaceHeadingId = useId()
+  const questionListHeadingId = useId()
+  const questionDetailHeadingId = useId()
+  const answerFormHeadingId = useId()
   const [answerTitle, setAnswerTitle] = useState("")
   const [answerBody, setAnswerBody] = useState("")
   const [references, setReferences] = useState("")
@@ -80,7 +84,11 @@ export function AssigneeWorkspace({
     ].join("\n").toLowerCase()
     return matchesLane && (normalizedQuery.length === 0 || haystack.includes(normalizedQuery))
   })
-  const selected = visibleQuestions.find((question) => question.questionId === selectedQuestionId) ?? visibleQuestions[0]
+  const selectedOutsideFilter = questions.find((question) =>
+    question.questionId === selectedQuestionId &&
+    (isDirty || localDraftQuestionIds.has(question.questionId))
+  )
+  const selected = visibleQuestions.find((question) => question.questionId === selectedQuestionId) ?? selectedOutsideFilter ?? visibleQuestions[0]
   const openCount = questions.filter((question) => question.status === "open" || question.status === "in_progress").length
   const hasQuestionResult = dataState.parts.length === 0
     ? hasConfirmedResourceResult(dataState)
@@ -163,13 +171,13 @@ export function AssigneeWorkspace({
   const answerWritable = Boolean(selected && selected.status !== "answered" && selected.status !== "resolved")
 
   return (
-    <section className="assignee-workspace" aria-label="担当者対応">
+    <section className="assignee-workspace" aria-labelledby={workspaceHeadingId}>
       <header className="assignee-header">
         <button type="button" onClick={onBack} title="チャットへ戻る" aria-label="チャットへ戻る">
           <Icon name="chevron" />
         </button>
         <div>
-          <h2>担当者対応</h2>
+          <h2 id={workspaceHeadingId}>担当者対応</h2>
           <span>{hasQuestionResult ? `${openCount} 件が対応待ち` : "問い合わせを確認中"}</span>
         </div>
       </header>
@@ -186,8 +194,8 @@ export function AssigneeWorkspace({
       >
       {questions.length > 0 ? (
         <>
-          <div className="assignee-toolbar" aria-label="問い合わせ一覧">
-            <h3>問い合わせ一覧</h3>
+          <section className="assignee-toolbar" aria-labelledby={questionListHeadingId}>
+            <h3 id={questionListHeadingId}>問い合わせ一覧</h3>
             <label>
               <span>ステータス</span>
               <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as AssigneeLaneId | "all")}>
@@ -206,17 +214,18 @@ export function AssigneeWorkspace({
                 placeholder="タイトル・名前・部署で検索"
               />
             </label>
-          </div>
+          </section>
           <div className="assignee-grid">
-            <div className="assignee-kanban" aria-label="担当者対応カンバン">
+            <section className="assignee-kanban" aria-label="担当者対応カンバン">
               {ASSIGNEE_LANES.map((lane) => {
                 const laneQuestions = visibleQuestions.filter((question) => assigneeLane(question, localDraftQuestionIds.has(question.questionId)) === lane.id)
+                const laneHeadingId = `${workspaceHeadingId}-${lane.id}`
                 return (
-                  <section className={`kanban-column lane-${lane.id}`} key={lane.id} aria-label={lane.label}>
+                  <section className={`kanban-column lane-${lane.id}`} key={lane.id} aria-labelledby={laneHeadingId}>
                     <header>
                       <div>
                         <span className="kanban-status-dot" aria-hidden="true" />
-                        <h3>{lane.label}</h3>
+                        <h3 id={laneHeadingId}>{lane.label}</h3>
                       </div>
                       <span>{laneQuestions.length}</span>
                     </header>
@@ -250,11 +259,11 @@ export function AssigneeWorkspace({
                   </section>
                 )
               })}
-            </div>
+            </section>
             {selected ? (
-              <aside className="assignee-side-panel">
-                <section className="question-detail-panel">
-                  <h3>問い合わせ概要</h3>
+              <aside className="assignee-side-panel" aria-label="選択中の問い合わせと回答作成">
+                <section className="question-detail-panel" aria-labelledby={questionDetailHeadingId}>
+                  <h3 id={questionDetailHeadingId}>問い合わせ概要</h3>
                   <div className="requester-question">
                     <span className="message-avatar">U</span>
                     <p>{selected.question}</p>
@@ -275,8 +284,8 @@ export function AssigneeWorkspace({
                     <p>{selected.chatAnswer || "チャット回答は記録されていません。"}</p>
                   </div>
                 </section>
-                <form className="answer-form-panel" onSubmit={onSubmit}>
-                  <h3>回答作成</h3>
+                <form className="answer-form-panel" onSubmit={onSubmit} aria-labelledby={answerFormHeadingId}>
+                  <h3 id={answerFormHeadingId}>回答作成</h3>
                   <label>
                     <span>回答タイトル</span>
                     <input value={answerTitle} onChange={(event) => { setAnswerTitle(event.target.value); markDirty() }} maxLength={120} required disabled={!answerWritable || loading} />
