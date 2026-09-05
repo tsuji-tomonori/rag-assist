@@ -198,7 +198,7 @@ function actor(tenantId: string): AppUser {
 function benchmarkRun(tenantId: string, runId: string): BenchmarkRun {
   return {
     runId,
-    status: "queued",
+    status: "succeeded",
     mode: "agent",
     runner: "codebuild",
     suiteId: "standard-agent-v1",

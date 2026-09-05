@@ -4,9 +4,9 @@
 
 runtime OpenAPI と TypeScript 実装を対応付け、各 API の詳細設計、IF、メッセージ、query、sequence、unit test 仕様を生成しています。
 
-- API 数: 98
+- API 数: 99
 - API 別文書数: 6
-- 文書総数: 588
+- 文書総数: 594
 
 | Method | Path | Summary | OpenAPI | 6文書 |
 | --- | --- | --- | --- | --- |
@@ -108,6 +108,7 @@ runtime OpenAPI と TypeScript 実装を対応付け、各 API の詳細設計�
 | `POST` | `/resource-groups/{groupId}/share` | resource group の未対応 share を拒否する | yes | [detail-design](post-resource-groups-groupid-share/detail-design_gen.md) / [if](post-resource-groups-groupid-share/if_gen.md) / [messages](post-resource-groups-groupid-share/messages_gen.md) / [query](post-resource-groups-groupid-share/query_gen.md) / [sequence](post-resource-groups-groupid-share/sequence_gen.md) / [unit-test](post-resource-groups-groupid-share/unit-test_gen.md) |
 | `ALL` | `/rpc/*` | ALL /rpc/* を処理する | no | [detail-design](all-rpc-wildcard/detail-design_gen.md) / [if](all-rpc-wildcard/if_gen.md) / [messages](all-rpc-wildcard/messages_gen.md) / [query](all-rpc-wildcard/query_gen.md) / [sequence](all-rpc-wildcard/sequence_gen.md) / [unit-test](all-rpc-wildcard/unit-test_gen.md) |
 | `POST` | `/search` | ハイブリッド検索を実行する | yes | [detail-design](post-search/detail-design_gen.md) / [if](post-search/if_gen.md) / [messages](post-search/messages_gen.md) / [query](post-search/query_gen.md) / [sequence](post-search/sequence_gen.md) / [unit-test](post-search/unit-test_gen.md) |
+| `POST` | `/websocket/tickets` | WebSocket接続用の一回限りのチケットを発行する | yes | [detail-design](post-websocket-tickets/detail-design_gen.md) / [if](post-websocket-tickets/if_gen.md) / [messages](post-websocket-tickets/messages_gen.md) / [query](post-websocket-tickets/query_gen.md) / [sequence](post-websocket-tickets/sequence_gen.md) / [unit-test](post-websocket-tickets/unit-test_gen.md) |
 
 ## Source of truth
 

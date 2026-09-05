@@ -617,7 +617,7 @@ describe("API client", () => {
     await expect(saveConversationHistory(item)).resolves.toEqual(item)
     expect(saveFetchMock).toHaveBeenCalledWith(
       expect.stringMatching(/\/conversation-history$/),
-      expect.objectContaining({ method: "POST", body: JSON.stringify(item) })
+      expect.objectContaining({ method: "POST", body: JSON.stringify({ ...item, schemaVersion: 3 }) })
     )
 
     mockFetch({ id: item.id })

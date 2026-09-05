@@ -57,6 +57,7 @@ const expectedPublicMethodNames = [
   "getBenchmarkCodeBuildLogText",
   "getBenchmarkDocumentManifest",
   "getBenchmarkRun",
+  "getConversationHistory",
   "getCostAuditSummary",
   "getDebugRun",
   "getDocumentExtractedText",
@@ -145,6 +146,7 @@ const expectedDependencyKeys = [
   "memoryVectorStore",
   "objectStore",
   "questionStore",
+  "ragGuardProfile",
   "resourceUserPrincipalDirectory",
   "securityAuditOutbox",
   "securityAuditReconciliationOutbox",
@@ -154,7 +156,8 @@ const expectedDependencyKeys = [
   "usagePricingCatalog",
   "userDirectory",
   "userGroupStore",
-  "verifiedIdentityProvider"
+  "verifiedIdentityProvider",
+  "webSocketTicketStore"
 ] as const satisfies readonly (keyof Dependencies)[]
 
 const publicMethodTypeContract: Assert<Exact<PublicMethodName, typeof expectedPublicMethodNames[number]>> = true
@@ -204,7 +207,7 @@ const expectedConsumerMethods = {
   ],
   "apps/api/src/routes/benchmark-seed.ts": ["assertDocumentWritable", "getBenchmarkDocumentManifest", "getDocumentManifest"],
   "apps/api/src/routes/chat-routes.ts": ["chat", "listChatToolInvocations", "search", "startChatRun"],
-  "apps/api/src/routes/conversation-history-routes.ts": ["deleteConversationHistory", "listConversationHistory", "saveConversationHistory"],
+  "apps/api/src/routes/conversation-history-routes.ts": ["deleteConversationHistory", "getConversationHistory", "listConversationHistory", "saveConversationHistory"],
   "apps/api/src/routes/debug-routes.ts": ["createDebugReplayPlan", "createDebugTraceDownloadUrl", "getDebugRun", "listDebugRuns"],
   "apps/api/src/routes/document-routes.ts": [
     "approveSourceGovernance",
@@ -252,7 +255,7 @@ const expectedConstructorSites = {
   "apps/api/src/app.ts": 1,
   "apps/api/src/benchmark-run-authorization-worker.test.ts": 1,
   "apps/api/src/benchmark-run-authorization-worker.ts": 1,
-  "apps/api/src/chat-orchestration/graph.test.ts": 35,
+  "apps/api/src/chat-orchestration/graph.test.ts": 36,
   "apps/api/src/chat-run-mark-failed.ts": 1,
   "apps/api/src/chat-run-worker.ts": 1,
   "apps/api/src/document-ingest-run-mark-failed.ts": 1,
@@ -265,6 +268,7 @@ const expectedConstructorSites = {
   "apps/api/src/routes/benchmark-tenant-boundary.test.ts": 1,
   "apps/api/src/routes/resource-group-routes.test.ts": 1,
   "apps/api/src/search/hybrid-search.test.ts": 6,
+  "apps/api/src/search/temporary-attachment-boundary.test.ts": 2,
   "apps/api/src/security/account-lifecycle-current-identity.test.ts": 1
 }
 
@@ -301,7 +305,7 @@ const expectedBroadDependencyPasses = {
   constructors: {
     AdministrativePrincipalTransferService: 4,
     DocumentLifecycleMutationCoordinator: 2,
-    DocumentPermissionService: 7,
+    DocumentPermissionService: 9,
     FolderLifecycleMutationCoordinator: 1,
     FolderPermissionService: 7,
     StagedPublicationCoordinator: 8
@@ -310,7 +314,7 @@ const expectedBroadDependencyPasses = {
     deleteUncommittedIngestArtifacts: 1,
     embedWithCache: 2,
     isManifestCurrentPublication: 2,
-    loadChunksForManifest: 1,
+    loadChunksForManifest: 2,
     loadStructuredBlocksForManifest: 1,
     localTestActor: 3,
     putDocumentVectorRecords: 1,
@@ -353,7 +357,8 @@ const expectedPolicyImports = [
   "./_shared/security/derived-record-security.js",
   "./_shared/security/revocation-cleanup-coordinator.js",
   "./_shared/security/revocation-cleanup-repair-outbox.js",
-  "./_shared/security/trace-sanitizer.js",
+  "./_shared/security/session-local-evidence-scope.js",
+    "./_shared/security/trace-sanitizer.js",
   "./offline/pre-retrieval/admission/source-governance-approval-service.js"
 ]
 

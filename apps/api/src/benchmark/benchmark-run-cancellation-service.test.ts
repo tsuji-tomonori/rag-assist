@@ -129,15 +129,12 @@ test("BenchmarkRunCancellationService leaves the run unchanged when execution st
   assert.equal(run.status, "queued")
 })
 
-test("BenchmarkRunCancellationService preserves cancellation updates for terminal runs", async () => {
-  for (const status of ["succeeded", "failed", "cancelled"] as const) {
-    const run = { ...benchmarkRun("tenant-a", `run-${status}`), status }
-    const service = fixture(run, { now: () => "2026-07-17T00:05:00.000Z" })
-
-    const cancelled = await service.cancel(actor("tenant-a"), run.runId)
-
-    assert.equal(cancelled?.status, "cancelled")
-    assert.equal(cancelled?.completedAt, "2026-07-17T00:05:00.000Z")
+test("BenchmarkRunCancellationService leaves terminal runs unchanged without side effects", async () => {
+  for (const status of ["succeeded", "failed", "cancelled", "timed_out"] as const) {
+    const run = { ...benchmarkRun("tenant-a", `run-${status}`), status, executionArn: "execution-1" }
+    const unexpected = () => { throw new Error("Terminal runs must not trigger side effects") }
+    const service = fixture(run, { now: unexpected, stopExecution: unexpected, onUpdate: unexpected })
+    assert.equal(await service.cancel(actor("tenant-a"), run.runId), run)
   }
 })
 

@@ -1,6 +1,6 @@
 import { DeleteItemCommand, GetItemCommand, PutItemCommand, QueryCommand, type DynamoDBClient } from "@aws-sdk/client-dynamodb"
 import { marshall, unmarshall } from "@aws-sdk/util-dynamodb"
-import { type ConversationHistoryItem, type ConversationHistorySchemaVersion } from "../types.js"
+import type { ConversationHistoryItem, ConversationHistorySchemaVersion } from "../types.js"
 import { normalizeConversationHistoryInput, readConversationHistoryVersion, type ConversationHistoryStore, type SaveConversationHistoryInput } from "./conversation-history-store.js"
 import { createDynamoDbClient } from "./dynamodb-client.js"
 

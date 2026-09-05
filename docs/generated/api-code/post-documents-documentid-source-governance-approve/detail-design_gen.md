@@ -55,7 +55,7 @@ classification、usage、quality、inspection の明示 profile と expectedVers
 
 ## 4. 到達する主要実装
 
-handler を起点に TypeScript symbol を解決し、深さ 2 までの主要関数・method を列挙しています。深い helper を含む全到達関数は 370 件で、永続化・外部接続は深さにかかわらず次節へ集約しています。
+handler を起点に TypeScript symbol を解決し、深さ 2 までの主要関数・method を列挙しています。深い helper を含む全到達関数は 371 件で、永続化・外部接続は深さにかかわらず次節へ集約しています。
 
 | 深さ | Symbol | 責務 | 実装位置 |
 | ---: | --- | --- | --- |
@@ -65,10 +65,10 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 1 | `validParam` | valid param の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:24 (validParam)` |
 | 2 | `validRequest` | valid request の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:36 (validRequest)` |
 | 1 | `validJson` | valid json の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:20 (validJson)` |
-| 1 | `MemoRagService.approveSourceGovernance` | approve source governance の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:537 (MemoRagService.approveSourceGovernance)` |
-| 2 | `authoritativeActorTenantId` | authoritative actor tenant id の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6090 (authoritativeActorTenantId)` |
-| 2 | `MemoRagService.getManifest` | get manifest の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3937 (MemoRagService.getManifest)` |
-| 2 | `MemoRagService.sourceGovernanceApprovalService` | source governance approval service の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3791 (MemoRagService.sourceGovernanceApprovalService)` |
+| 1 | `MemoRagService.approveSourceGovernance` | approve source governance の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:644 (MemoRagService.approveSourceGovernance)` |
+| 2 | `authoritativeActorTenantId` | authoritative actor tenant id の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5700 (authoritativeActorTenantId)` |
+| 2 | `MemoRagService.getManifest` | get manifest の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4030 (MemoRagService.getManifest)` |
+| 2 | `MemoRagService.sourceGovernanceApprovalService` | source governance approval service の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3884 (MemoRagService.sourceGovernanceApprovalService)` |
 | 2 | `SourceGovernanceApprovalService.approve` | approve の実装処理を担当する。 | `apps/api/src/rag/offline/pre-retrieval/admission/source-governance-approval-service.ts:261 (SourceGovernanceApprovalService.approve)` |
 | 1 | `publicSourceGovernanceRecord` | public source governance record の実装処理を担当する。 | `apps/api/src/routes/document-routes.ts:109 (publicSourceGovernanceRecord)` |
 | 1 | `resourceUnavailable` | resource unavailable の実装処理を担当する。 | `apps/api/src/routes/document-routes.ts:293 (resourceUnavailable)` |
@@ -91,9 +91,9 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 作成・追記 | Store | `this.deps.objectStore` | `putTextIfVersion` | `this.deps.objectStore` に対して put text if version を実行する。 | `StagedPublicationCoordinator.begin` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:222 (StagedPublicationCoordinator.begin)` |
 | 作成・追記 | Store | `this.deps.objectStore` | `putTextIfVersion` | `this.deps.objectStore` に対して put text if version を実行する。 | `StagedPublicationCoordinator.acquireLease` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:617 (StagedPublicationCoordinator.acquireLease)` |
 | 参照 | Store | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `readTenantManifestByKey` | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:93 (readTenantManifestByKey)` |
-| 参照 | Store | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `MemoRagService.stageApprovedSourceGovernancePublication` | `apps/api/src/rag/memorag-service.ts:3869 (MemoRagService.stageApprovedSourceGovernancePublication)` |
+| 参照 | Store | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `MemoRagService.stageApprovedSourceGovernancePublication` | `apps/api/src/rag/memorag-service.ts:3962 (MemoRagService.stageApprovedSourceGovernancePublication)` |
 | 参照 | Store | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `loadStructuredBlocksForManifest` | `apps/api/src/rag/_shared/storage/manifest-chunks.ts:35 (loadStructuredBlocksForManifest)` |
-| 実行 | External | `textModel` | `generate` | `textModel` へ generate を実行する。 | `MemoRagService.createMemoryCards` | `apps/api/src/rag/memorag-service.ts:5146 (MemoRagService.createMemoryCards)` |
+| 実行 | External | `textModel` | `generate` | `textModel` へ generate を実行する。 | `MemoRagService.createMemoryCards` | `apps/api/src/rag/memorag-service.ts:4845 (MemoRagService.createMemoryCards)` |
 | 参照 | Store | `input.objectStore` | `getText` | `input.objectStore` に対して get text を実行する。 | `assertRagSafetyInterlock` | `apps/api/src/rag/quality-control/production-rag-monitor.ts:315 (assertRagSafetyInterlock)` |
 | 実行 | Store | `(() => {<br>        const structuredText = input.text ?? input.structuredBlocks.map((block) => block.text).join("\n\n")<br>        return limitDocument({<br>          text: structuredText,<br>          blocks: input.structuredBlocks,<br>          sourceExtractorVersion: input` | `sourceExtractorVersion ?? "structured-blocks-ledger-v1"<br>        })<br>      })` | `(() => {<br>        const structuredText = input.text ?? input.structuredBlocks.map((block) => block.text).join("\n\n")<br>        return limitDocument({<br>          text: structuredText,<br>          blocks: input.structuredBlocks,<br>          sourceExtractorVersion: input` に対して source extractor version ?? "structured blocks ledger v1"<br>        })<br>      }) を実行する。 | `runIngestPipeline` | `apps/api/src/rag/offline/pre-retrieval/ingestion/ingest-run.service.ts:93 (runIngestPipeline)` |
 | 参照 | Store | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `embedWithCache` | `apps/api/src/rag/offline/pre-retrieval/embedding/embedding-cache.ts:21 (embedWithCache)` |
@@ -115,8 +115,8 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 参照 | Store | `objectStore` | `getTextWithVersion` | `objectStore` に対して get text with version を実行する。 | `readManifest` | `apps/api/src/rag/_shared/security/revocation-cleanup-coordinator.ts:636 (readManifest)` |
 | 作成・追記 | Store | `this.objectStore` | `putTextIfVersion` | `this.objectStore` に対して put text if version を実行する。 | `ObjectStoreRevocationCleanupCoordinator.register` | `apps/api/src/rag/_shared/security/revocation-cleanup-coordinator.ts:169 (ObjectStoreRevocationCleanupCoordinator.register)` |
 | 実行 | Store | `new ProductionRagObservationProducer(deps.objectStore)` | `captureIngestManifest` | `new ProductionRagObservationProducer(deps.objectStore)` に対して capture ingest manifest を実行する。 | `runIngestPipeline` | `apps/api/src/rag/offline/pre-retrieval/ingestion/ingest-run.service.ts:504 (runIngestPipeline)` |
-| 参照 | Store | `this.objectStore` | `getText` | `this.objectStore` に対して get text を実行する。 | `ProductionRagObservationProducer.loadActivePolicy` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:783 (ProductionRagObservationProducer.loadActivePolicy)` |
-| 作成・追記 | Store | `this.objectStore` | `putText` | `this.objectStore` に対して put text を実行する。 | `ProductionRagObservationProducer.persistSample` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:762 (ProductionRagObservationProducer.persistSample)` |
+| 参照 | Store | `this.objectStore` | `getText` | `this.objectStore` に対して get text を実行する。 | `ProductionRagObservationProducer.loadActivePolicy` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:837 (ProductionRagObservationProducer.loadActivePolicy)` |
+| 作成・追記 | Store | `this.objectStore` | `putText` | `this.objectStore` に対して put text を実行する。 | `ProductionRagObservationProducer.persistSample` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:816 (ProductionRagObservationProducer.persistSample)` |
 | 参照 | Store | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `StagedPublicationCoordinator.loadManifest` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1490 (StagedPublicationCoordinator.loadManifest)` |
 | 参照 | Store | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `StagedPublicationCoordinator.validateStagedManifest` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:733 (StagedPublicationCoordinator.validateStagedManifest)` |
 | 参照 | Store | `this.deps.evidenceVectorStore` | `getByKeys` | `this.deps.evidenceVectorStore` に対して get by keys を実行する。 | `StagedPublicationCoordinator.loadVectorRecords` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1475 (StagedPublicationCoordinator.loadVectorRecords)` |
@@ -248,6 +248,7 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 例外 | `-` | `Unknown RAG quality signal: ${signalId}` | `RAG_REQUIRED_SIGNAL_IDS` が signalId as RagQualitySignalId を含まない |
 | 例外 | `-` | `Available RAG quality measurement is incomplete: ${signalId}` | is integer の判定結果が真ではない、または `item.sampleCount` が `0` より小さい、または `item.available` が存在し、真である、かつ `item.value` が `null` と等しい、または is finite の判定結果が真ではない、または `item.sampleCount` が `1` より小さい、または `item.confidence` が `null` と等しい、または `item.confidence` が `0` より小さい、または `item.confidence` が `1` より大きい |
 | 例外 | `-` | `Unavailable RAG quality measurement must not contain a value: ${signalId}` | `item.available` が存在しない、または偽である、かつ `item.value` が `null` と異なる、または `item.confidence` が `null` と異なる |
+| 例外 | `-` | `Unknown RAG diagnostic measurement: ${signalId}` | `["retrieval.context_relevance", "evaluation.artifact_failure_count", "evaluation.run_timed_out", "performance.chat_first_token_p50_ms", "performance.chat_first_token_p95_ms", "performance.chat_first_token_p99_ms"]` が signalId を含まない |
 | ログ | `-` | RAG quality source sample was not recorded | `result.skippedReason` が存在し、真である、かつ `process.env.RAG_MONITORING_REQUIRED` が `"1"` と等しい |
 | ログ | `-` | RAG quality source sample persistence failed | 例外を捕捉した場合 |
 | 例外 | `-` | Staged manifest failed publication validation | `manifest.documentId` が `run.artifactId` と異なる、または `stableHash(manifest.publicationFence)` が `stableHash(fence)` と異なる、または `fence.runId` が `run.runId` と異なる、または `fence.artifactId` が `run.artifactId` と異なる、または `fence.idempotencyKey` が `run.idempotencyKey` と異なる、または `fence.sourceId` が `run.scope.sourceId` と異なる、または `fence.purpose` が `run.scope.purpose` と異なる、または `manifest.lifecycleStatus` が `"staging"` と異なる、または `manifest.publicationEligible` が `true` と異なる、または `manifest.processingStatus` が `"complete"` と異なる、または `manifest.admission?.status` が `"approved"` と異なる、または `manifest.admission.tenantId` が `run.scope.tenantId` と異なる、または `manifest.derivedIntegrity?.verified` が `true` と異なる、または `manifest.derivedIntegrity.reasons.length` が `0` と異なる、または `manifest.documentVersion` が存在しない、または偽である、または is quality approved for normal rag の判定結果が真ではない |

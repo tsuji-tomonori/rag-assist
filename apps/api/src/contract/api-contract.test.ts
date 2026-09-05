@@ -34,8 +34,7 @@ test("HTTP contract validates major endpoint responses against /openapi.json", a
   const fixtures = await loadFixtures()
   const port = 18000 + Math.floor(Math.random() * 1000)
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-contract-"))
-  const tsxBin = path.resolve(process.cwd(), "../../node_modules/.bin/tsx")
-  const server = spawn(tsxBin, ["src/local.ts"], {
+  const server = spawn(process.execPath, ["--import", "tsx", "src/local.ts"], {
     cwd: process.cwd(),
     env: {
       ...process.env,
@@ -463,8 +462,7 @@ test("HTTP contract validates major endpoint responses against /openapi.json", a
 test("benchmark query endpoint requires authentication when auth is enabled", async () => {
   const port = 19000 + Math.floor(Math.random() * 1000)
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-contract-auth-"))
-  const tsxBin = path.resolve(process.cwd(), "../../node_modules/.bin/tsx")
-  const server = spawn(tsxBin, ["src/local.ts"], {
+  const server = spawn(process.execPath, ["--import", "tsx", "src/local.ts"], {
     cwd: process.cwd(),
     env: {
       ...process.env,
@@ -496,8 +494,7 @@ test("benchmark query endpoint requires authentication when auth is enabled", as
 test("ACCESS_ADMIN は自分自身への SYSTEM_ADMIN 付与が拒否される", async () => {
   const port = 20000 + Math.floor(Math.random() * 1000)
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-contract-access-admin-"))
-  const tsxBin = path.resolve(process.cwd(), "../../node_modules/.bin/tsx")
-  const server = spawn(tsxBin, ["src/local.ts"], {
+  const server = spawn(process.execPath, ["--import", "tsx", "src/local.ts"], {
     cwd: process.cwd(),
     env: {
       ...process.env,
@@ -531,8 +528,7 @@ test("ACCESS_ADMIN は自分自身への SYSTEM_ADMIN 付与が拒否される",
 test("document group create route requires rag:group:create", async () => {
   const port = 18000 + Math.floor(Math.random() * 1000)
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-contract-group-create-permission-"))
-  const tsxBin = path.resolve(process.cwd(), "../../node_modules/.bin/tsx")
-  const server = spawn(tsxBin, ["src/local.ts"], {
+  const server = spawn(process.execPath, ["--import", "tsx", "src/local.ts"], {
     cwd: process.cwd(),
     env: {
       ...process.env,
@@ -564,9 +560,8 @@ test("document group create route requires rag:group:create", async () => {
 test("document group create route rejects inaccessible parent and duplicate canonical path", async () => {
   const port = 18000 + Math.floor(Math.random() * 1000)
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-contract-group-create-boundary-"))
-  const tsxBin = path.resolve(process.cwd(), "../../node_modules/.bin/tsx")
 
-  const ownerServer = spawn(tsxBin, ["src/local.ts"], {
+  const ownerServer = spawn(process.execPath, ["--import", "tsx", "src/local.ts"], {
     cwd: process.cwd(),
     env: {
       ...process.env,
@@ -607,7 +602,7 @@ test("document group create route rejects inaccessible parent and duplicate cano
   }
   assert.ok(parentGroupId)
 
-  const outsiderServer = spawn(tsxBin, ["src/local.ts"], {
+  const outsiderServer = spawn(process.execPath, ["--import", "tsx", "src/local.ts"], {
     cwd: process.cwd(),
     env: {
       ...process.env,
@@ -640,9 +635,8 @@ test("document group create route rejects inaccessible parent and duplicate cano
 test("document group create route rejects read-only parent folders", async () => {
   const port = 18000 + Math.floor(Math.random() * 1000)
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-contract-group-create-readonly-parent-"))
-  const tsxBin = path.resolve(process.cwd(), "../../node_modules/.bin/tsx")
 
-  const ownerServer = spawn(tsxBin, ["src/local.ts"], {
+  const ownerServer = spawn(process.execPath, ["--import", "tsx", "src/local.ts"], {
     cwd: process.cwd(),
     env: {
       ...process.env,
@@ -675,7 +669,7 @@ test("document group create route rejects read-only parent folders", async () =>
   assert.ok(parentGroupId)
   await seedFolderReadOnlyPolicy(dataDir, parentGroupId, "owner-1", "readonly-user")
 
-  const readOnlyServer = spawn(tsxBin, ["src/local.ts"], {
+  const readOnlyServer = spawn(process.execPath, ["--import", "tsx", "src/local.ts"], {
     cwd: process.cwd(),
     env: {
       ...process.env,
@@ -708,8 +702,7 @@ test("document group create route rejects read-only parent folders", async () =>
 test("benchmark query endpoint remains available for an explicitly configured local benchmark runner", async () => {
   const port = 20000 + Math.floor(Math.random() * 1000)
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-contract-benchmark-"))
-  const tsxBin = path.resolve(process.cwd(), "../../node_modules/.bin/tsx")
-  const server = spawn(tsxBin, ["src/local.ts"], {
+  const server = spawn(process.execPath, ["--import", "tsx", "src/local.ts"], {
     cwd: process.cwd(),
     env: {
       ...process.env,
@@ -748,8 +741,7 @@ test("benchmark query endpoint remains available for an explicitly configured lo
 test("benchmark query endpoint is limited to benchmark runner permission", async () => {
   const port = 20500 + Math.floor(Math.random() * 1000)
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-contract-benchmark-query-rbac-"))
-  const tsxBin = path.resolve(process.cwd(), "../../node_modules/.bin/tsx")
-  const server = spawn(tsxBin, ["src/local.ts"], {
+  const server = spawn(process.execPath, ["--import", "tsx", "src/local.ts"], {
     cwd: process.cwd(),
     env: {
       ...process.env,
@@ -788,8 +780,7 @@ test("benchmark query endpoint is limited to benchmark runner permission", async
 test("benchmark runner can call query endpoint without benchmark run administration", async () => {
   const port = 20700 + Math.floor(Math.random() * 1000)
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-contract-benchmark-runner-rbac-"))
-  const tsxBin = path.resolve(process.cwd(), "../../node_modules/.bin/tsx")
-  const server = spawn(tsxBin, ["src/local.ts"], {
+  const server = spawn(process.execPath, ["--import", "tsx", "src/local.ts"], {
     cwd: process.cwd(),
     env: {
       ...process.env,
@@ -848,8 +839,7 @@ test("benchmark runner can call query endpoint without benchmark run administrat
 test("benchmark operators can use benchmark run administration without direct query permission", async () => {
   const port = 21900 + Math.floor(Math.random() * 1000)
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-contract-benchmark-operator-rbac-"))
-  const tsxBin = path.resolve(process.cwd(), "../../node_modules/.bin/tsx")
-  const server = spawn(tsxBin, ["src/local.ts"], {
+  const server = spawn(process.execPath, ["--import", "tsx", "src/local.ts"], {
     cwd: process.cwd(),
     env: {
       ...process.env,
@@ -917,8 +907,7 @@ test("benchmark search does not allow dataset user overrides", async () => {
   const setupPort = 20800 + Math.floor(Math.random() * 1000)
   const runnerPort = 21800 + Math.floor(Math.random() * 1000)
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-contract-benchmark-search-acl-"))
-  const tsxBin = path.resolve(process.cwd(), "../../node_modules/.bin/tsx")
-  const setupServer = spawn(tsxBin, ["src/local.ts"], {
+  const setupServer = spawn(process.execPath, ["--import", "tsx", "src/local.ts"], {
     cwd: process.cwd(),
     env: {
       ...process.env,
@@ -969,7 +958,7 @@ test("benchmark search does not allow dataset user overrides", async () => {
     await stopServer(setupServer)
   }
 
-  const runnerServer = spawn(tsxBin, ["src/local.ts"], {
+  const runnerServer = spawn(process.execPath, ["--import", "tsx", "src/local.ts"], {
     cwd: process.cwd(),
     env: {
       ...process.env,
@@ -1032,8 +1021,7 @@ test("benchmark search does not allow dataset user overrides", async () => {
 test("benchmark runner can list and upload only isolated benchmark seed documents", async () => {
   const port = 25000 + Math.floor(Math.random() * 1000)
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-contract-benchmark-seed-rbac-"))
-  const tsxBin = path.resolve(process.cwd(), "../../node_modules/.bin/tsx")
-  const server = spawn(tsxBin, ["src/local.ts"], {
+  const server = spawn(process.execPath, ["--import", "tsx", "src/local.ts"], {
     cwd: process.cwd(),
     env: {
       ...process.env,
@@ -1289,8 +1277,7 @@ test("benchmark runner can list and upload only isolated benchmark seed document
 test("document writer cannot bypass group scope with benchmark seed metadata", async () => {
   const port = 28200 + Math.floor(Math.random() * 1000)
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-contract-seed-boundary-"))
-  const tsxBin = path.resolve(process.cwd(), "../../node_modules/.bin/tsx")
-  const server = spawn(tsxBin, ["src/local.ts"], {
+  const server = spawn(process.execPath, ["--import", "tsx", "src/local.ts"], {
     cwd: process.cwd(),
     env: {
       ...process.env,
@@ -1661,8 +1648,7 @@ test("benchmark seed authorization rejects non-isolated document operations", as
 test("question and debug management endpoints enforce Phase 1 role boundaries", async () => {
   const port = 21000 + Math.floor(Math.random() * 1000)
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-contract-rbac-"))
-  const tsxBin = path.resolve(process.cwd(), "../../node_modules/.bin/tsx")
-  const server = spawn(tsxBin, ["src/local.ts"], {
+  const server = spawn(process.execPath, ["--import", "tsx", "src/local.ts"], {
     cwd: process.cwd(),
     env: {
       ...process.env,
@@ -1735,8 +1721,7 @@ test("question and debug management endpoints enforce Phase 1 role boundaries", 
 test("answer editors can list questions without user administration permission", async () => {
   const port = 22000 + Math.floor(Math.random() * 1000)
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-contract-answer-editor-"))
-  const tsxBin = path.resolve(process.cwd(), "../../node_modules/.bin/tsx")
-  const server = spawn(tsxBin, ["src/local.ts"], {
+  const server = spawn(process.execPath, ["--import", "tsx", "src/local.ts"], {
     cwd: process.cwd(),
     env: {
       ...process.env,
@@ -1766,8 +1751,7 @@ test("answer editors can list questions without user administration permission",
 test("answer editors cannot create questions without chat permission", async () => {
   const port = 23000 + Math.floor(Math.random() * 1000)
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-contract-question-create-rbac-"))
-  const tsxBin = path.resolve(process.cwd(), "../../node_modules/.bin/tsx")
-  const server = spawn(tsxBin, ["src/local.ts"], {
+  const server = spawn(process.execPath, ["--import", "tsx", "src/local.ts"], {
     cwd: process.cwd(),
     env: {
       ...process.env,
@@ -1806,8 +1790,7 @@ test("answer editors cannot create questions without chat permission", async () 
 test("Phase 2 admin endpoints enforce user, access, usage, and cost permissions", async () => {
   const port = 24000 + Math.floor(Math.random() * 1000)
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-contract-phase2-rbac-"))
-  const tsxBin = path.resolve(process.cwd(), "../../node_modules/.bin/tsx")
-  const server = spawn(tsxBin, ["src/local.ts"], {
+  const server = spawn(process.execPath, ["--import", "tsx", "src/local.ts"], {
     cwd: process.cwd(),
     env: {
       ...process.env,

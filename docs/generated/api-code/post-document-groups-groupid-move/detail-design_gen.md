@@ -55,7 +55,7 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 1 | `validParam` | valid param の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:24 (validParam)` |
 | 2 | `validRequest` | valid request の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:36 (validRequest)` |
 | 1 | `validJson` | valid json の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:20 (validJson)` |
-| 1 | `MemoRagService.moveDocumentGroup` | move document group の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1225 (MemoRagService.moveDocumentGroup)` |
+| 1 | `MemoRagService.moveDocumentGroup` | move document group の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1332 (MemoRagService.moveDocumentGroup)` |
 | 2 | `FolderLifecycleMutationCoordinator.moveFolder` | move folder の実装処理を担当する。 | `apps/api/src/folders/folder-lifecycle-mutation-coordinator.ts:175 (FolderLifecycleMutationCoordinator.moveFolder)` |
 | 1 | `resourceUnavailable` | resource unavailable の実装処理を担当する。 | `apps/api/src/routes/document-routes.ts:293 (resourceUnavailable)` |
 | 2 | `settleNonEnumerationTiming` | settle non enumeration timing の実装処理を担当する。 | `apps/api/src/security/public-resource-response.ts:40 (settleNonEnumerationTiming)` |

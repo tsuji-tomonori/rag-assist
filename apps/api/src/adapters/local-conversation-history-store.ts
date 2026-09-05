@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises"
 import path from "node:path"
-import { type ConversationHistoryItem, type ConversationHistorySchemaVersion } from "../types.js"
+import type { ConversationHistoryItem, ConversationHistorySchemaVersion } from "../types.js"
 import { normalizeConversationHistoryInput, readConversationHistoryVersion, type ConversationHistoryStore, type SaveConversationHistoryInput } from "./conversation-history-store.js"
 
 type StoredConversationHistoryItem = Omit<ConversationHistoryItem, "schemaVersion"> & {

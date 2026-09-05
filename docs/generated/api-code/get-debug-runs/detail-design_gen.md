@@ -39,17 +39,17 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 0 | `GET /debug-runs handler` | GET /debug-runs の request を受け、検証・認可・service 呼び出し・HTTP 応答を調整する。 | `apps/api/src/routes/debug-routes.ts:44 (GET /debug-runs handler)` |
 | 1 | `requirePermission` | require permission の実装処理を担当する。 | `apps/api/src/authorization.ts:183 (requirePermission)` |
 | 2 | `hasPermission` | has permission の実装処理を担当する。 | `apps/api/src/authorization.ts:187 (hasPermission)` |
-| 1 | `MemoRagService.listDebugRuns` | list debug runs の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:2334 (MemoRagService.listDebugRuns)` |
-| 2 | `localTestActor` | local test actor の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6109 (localTestActor)` |
-| 2 | `debugTraceTenantPrefix` | debug trace tenant prefix の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6123 (debugTraceTenantPrefix)` |
-| 2 | `normalizeDebugTrace` | normalize debug trace の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6172 (normalizeDebugTrace)` |
+| 1 | `MemoRagService.listDebugRuns` | list debug runs の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:2441 (MemoRagService.listDebugRuns)` |
+| 2 | `localTestActor` | local test actor の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5719 (localTestActor)` |
+| 2 | `debugTraceTenantPrefix` | debug trace tenant prefix の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5733 (debugTraceTenantPrefix)` |
+| 2 | `normalizeDebugTrace` | normalize debug trace の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5782 (normalizeDebugTrace)` |
 
 ## 5. データ・外部境界
 
 | 種別 | 境界 | Target | Operation | 目的 | Caller | 実装位置 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 参照 | Store | `this.deps.objectStore` | `listKeys` | `this.deps.objectStore` に対して list keys を実行する。 | `MemoRagService.listDebugRuns` | `apps/api/src/rag/memorag-service.ts:2336 (MemoRagService.listDebugRuns)` |
-| 参照 | Store | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `MemoRagService.listDebugRuns` | `apps/api/src/rag/memorag-service.ts:2340 (MemoRagService.listDebugRuns)` |
+| 参照 | Store | `this.deps.objectStore` | `listKeys` | `this.deps.objectStore` に対して list keys を実行する。 | `MemoRagService.listDebugRuns` | `apps/api/src/rag/memorag-service.ts:2443 (MemoRagService.listDebugRuns)` |
+| 参照 | Store | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `MemoRagService.listDebugRuns` | `apps/api/src/rag/memorag-service.ts:2447 (MemoRagService.listDebugRuns)` |
 
 ## 6. 応答・メッセージ
 
@@ -68,9 +68,9 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
 | 到達 symbol | service ingests text, lists manifests, persists debug traces, and deletes all document vectors | `apps/api/src/rag/memorag-service.test.ts:48 (service ingests text, lists manifests, persists debug traces, and deletes all document vectors)` |
-| 到達 symbol | FR-090 chat trace precommit denial writes no debug artifact, observation, final event, or success | `apps/api/src/rag/memorag-service.test.ts:2443 (FR-090 chat trace precommit denial writes no debug artifact, observation, final event, or success)` |
-| 到達 symbol | FR-090 ordinary chat final-event denial compensates its always-persisted redacted trace and observations | `apps/api/src/rag/memorag-service.test.ts:2495 (FR-090 ordinary chat final-event denial compensates its always-persisted redacted trace and observations)` |
-| 到達 symbol | service chat returns refusal and error debug trace when external dependencies fail | `apps/api/src/rag/memorag-service.test.ts:3192 (service chat returns refusal and error debug trace when external dependencies fail)` |
+| 到達 symbol | FR-090 chat trace precommit denial writes no debug artifact, observation, final event, or success | `apps/api/src/rag/memorag-service.test.ts:2445 (FR-090 chat trace precommit denial writes no debug artifact, observation, final event, or success)` |
+| 到達 symbol | FR-090 ordinary chat final-event denial compensates its always-persisted redacted trace and observations | `apps/api/src/rag/memorag-service.test.ts:2497 (FR-090 ordinary chat final-event denial compensates its always-persisted redacted trace and observations)` |
+| 到達 symbol | service chat returns refusal and error debug trace when external dependencies fail | `apps/api/src/rag/memorag-service.test.ts:3194 (service chat returns refusal and error debug trace when external dependencies fail)` |
 
 ## 8. 解析上の注意
 

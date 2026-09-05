@@ -36,13 +36,6 @@ benchmark artifact ダウンロード URL を作成する
 | ---: | --- | --- | --- | --- | --- |
 | B001 | `POST /benchmark-runs/{runId}/download handler` | if | `download` が存在しない、または偽である | `!download` | `apps/api/src/routes/benchmark-routes.ts:221 (POST /benchmark-runs/{runId}/download handler)` |
 | B002 | `requirePermission` | if | 利用者が 指定された permission を持たない | `!hasPermission(user, permission)` | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| B003 | `MemoRagService.createBenchmarkArtifactDownloadUrl` | if | `run` が存在しない、または偽である | `!run` | `apps/api/src/rag/memorag-service.ts:4755 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
-| B004 | `MemoRagService.createBenchmarkArtifactDownloadUrl` | if | `artifact` が `"logs"` と等しい | `artifact === "logs"` | `apps/api/src/rag/memorag-service.ts:4756 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
-| B005 | `MemoRagService.createBenchmarkArtifactDownloadUrl` | if | `run.codeBuildLogUrl` が存在しない、または偽である | `!run.codeBuildLogUrl` | `apps/api/src/rag/memorag-service.ts:4757 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
-| B006 | `MemoRagService.createBenchmarkArtifactDownloadUrl` | if | `config.benchmarkBucketName` が存在しない、または偽である | `!config.benchmarkBucketName` | `apps/api/src/rag/memorag-service.ts:4764 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
-| B007 | `MemoRagService.createBenchmarkArtifactDownloadUrl` | 三項条件 | `artifact` が `"summary"` と等しい | `artifact === "summary"` | `apps/api/src/rag/memorag-service.ts:4765 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
-| B008 | `MemoRagService.createBenchmarkArtifactDownloadUrl` | 三項条件 | `artifact` が `"results"` と等しい | `artifact === "results"` | `apps/api/src/rag/memorag-service.ts:4765 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
-| B009 | `MemoRagService.createBenchmarkArtifactDownloadUrl` | if | `objectKey` が存在しない、または偽である | `!objectKey` | `apps/api/src/rag/memorag-service.ts:4766 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
 
 ## 4. 到達する主要実装
 
@@ -56,9 +49,8 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 1 | `validParam` | valid param の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:24 (validParam)` |
 | 2 | `validRequest` | valid request の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:36 (validRequest)` |
 | 1 | `validJson` | valid json の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:20 (validJson)` |
-| 1 | `MemoRagService.createBenchmarkArtifactDownloadUrl` | create benchmark artifact download url の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4753 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
-| 2 | `authoritativeActorTenantId` | authoritative actor tenant id の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6090 (authoritativeActorTenantId)` |
-| 2 | `createBenchmarkArtifactDownloadMetadata` | create benchmark artifact download metadata の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5710 (createBenchmarkArtifactDownloadMetadata)` |
+| 1 | `MemoRagService.createBenchmarkArtifactDownloadUrl` | create benchmark artifact download url の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4556 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
+| 2 | `BenchmarkArtifactDownloadService.createDownload` | create download の実装処理を担当する。 | `apps/api/src/benchmark/benchmark-artifact-download-service.ts:32 (BenchmarkArtifactDownloadService.createDownload)` |
 | 1 | `resourceUnavailable` | resource unavailable の実装処理を担当する。 | `apps/api/src/routes/benchmark-routes.ts:254 (resourceUnavailable)` |
 | 2 | `settleNonEnumerationTiming` | settle non enumeration timing の実装処理を担当する。 | `apps/api/src/security/public-resource-response.ts:40 (settleNonEnumerationTiming)` |
 
@@ -66,7 +58,7 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 
 | 種別 | 境界 | Target | Operation | 目的 | Caller | 実装位置 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 参照 | Store | `this.deps.benchmarkRunStore` | `get` | `this.deps.benchmarkRunStore` に対して get を実行する。 | `MemoRagService.createBenchmarkArtifactDownloadUrl` | `apps/api/src/rag/memorag-service.ts:4754 (MemoRagService.createBenchmarkArtifactDownloadUrl)` |
+| 参照 | Store | `this.ports.benchmarkRunStore` | `get` | `this.ports.benchmarkRunStore` に対して get を実行する。 | `BenchmarkArtifactDownloadService.createDownload` | `apps/api/src/benchmark/benchmark-artifact-download-service.ts:37 (BenchmarkArtifactDownloadService.createDownload)` |
 
 ## 6. 応答・メッセージ
 
@@ -77,14 +69,14 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | OpenAPI contract | `403` | 対象操作を実行する権限がありません。 | OpenAPI で宣言された HTTP 403 response |
 | OpenAPI contract | `404` | 指定したリソースが見つかりません。 | OpenAPI で宣言された HTTP 404 response |
 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない |
-| 例外 | `-` | BENCHMARK_BUCKET_NAME is not configured | `config.benchmarkBucketName` が存在しない、または偽である |
+| 例外 | `-` | BENCHMARK_BUCKET_NAME is not configured | `this.ports.bucketName` が存在しない、または偽である |
 
 ## 7. テスト対応
 
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
-| 到達 symbol | benchmark CodeBuild log download returns the stored log URL | `apps/api/src/rag/memorag-service.test.ts:3244 (benchmark CodeBuild log download returns the stored log URL)` |
-| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:3469 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
+| 到達 symbol | benchmark CodeBuild log download returns the stored log URL | `apps/api/src/rag/memorag-service.test.ts:3246 (benchmark CodeBuild log download returns the stored log URL)` |
+| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:3471 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
 
 ## 8. 解析上の注意
 

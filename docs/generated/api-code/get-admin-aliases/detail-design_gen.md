@@ -37,9 +37,9 @@ RAG 検索で利用する alias 定義と公開状態を取得します。
 | B001 | `GET /admin/aliases handler` | catch | 例外が発生した場合に catch 処理へ移る | `error` | `apps/api/src/routes/admin-routes.ts:378 (GET /admin/aliases handler)` |
 | B002 | `GET /admin/aliases handler` | if | `error` が `InvalidPageCursorError` の instance である | `error instanceof InvalidPageCursorError` | `apps/api/src/routes/admin-routes.ts:379 (GET /admin/aliases handler)` |
 | B003 | `requirePermission` | if | 利用者が 指定された permission を持たない | `!hasPermission(user, permission)` | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| B004 | `MemoRagService.listAliases` | 三項条件 | `sort` が `"termAsc"` と等しい | `sort === "termAsc"` | `apps/api/src/rag/memorag-service.ts:1353 (MemoRagService.listAliases)` |
-| B005 | `MemoRagService.listAliases` | 三項条件 | `sort` が `"termAsc"` と等しい | `sort === "termAsc"` | `apps/api/src/rag/memorag-service.ts:1361 (MemoRagService.listAliases)` |
-| B006 | `MemoRagService.listAliases` | 三項条件 | `sort` が `"termAsc"` と等しい | `sort === "termAsc"` | `apps/api/src/rag/memorag-service.ts:1364 (MemoRagService.listAliases)` |
+| B004 | `MemoRagService.listAliases` | 三項条件 | `sort` が `"termAsc"` と等しい | `sort === "termAsc"` | `apps/api/src/rag/memorag-service.ts:1460 (MemoRagService.listAliases)` |
+| B005 | `MemoRagService.listAliases` | 三項条件 | `sort` が `"termAsc"` と等しい | `sort === "termAsc"` | `apps/api/src/rag/memorag-service.ts:1468 (MemoRagService.listAliases)` |
+| B006 | `MemoRagService.listAliases` | 三項条件 | `sort` が `"termAsc"` と等しい | `sort === "termAsc"` | `apps/api/src/rag/memorag-service.ts:1471 (MemoRagService.listAliases)` |
 
 ## 4. 到達する主要実装
 
@@ -52,22 +52,22 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 2 | `hasPermission` | has permission の実装処理を担当する。 | `apps/api/src/authorization.ts:187 (hasPermission)` |
 | 1 | `validQuery` | valid query の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:28 (validQuery)` |
 | 2 | `validRequest` | valid request の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:36 (validRequest)` |
-| 1 | `MemoRagService.listAliases` | list aliases の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1343 (MemoRagService.listAliases)` |
-| 2 | `MemoRagService.loadAliasLedger` | load alias ledger の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3599 (MemoRagService.loadAliasLedger)` |
-| 2 | `aliasTenantId` | alias tenant id の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5897 (aliasTenantId)` |
-| 2 | `authoritativeActorTenantId` | authoritative actor tenant id の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6090 (authoritativeActorTenantId)` |
+| 1 | `MemoRagService.listAliases` | list aliases の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1450 (MemoRagService.listAliases)` |
+| 2 | `MemoRagService.loadAliasLedger` | load alias ledger の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3692 (MemoRagService.loadAliasLedger)` |
+| 2 | `aliasTenantId` | alias tenant id の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5534 (aliasTenantId)` |
+| 2 | `authoritativeActorTenantId` | authoritative actor tenant id の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5700 (authoritativeActorTenantId)` |
 | 2 | `pageByStableCursor` | page by stable cursor の実装処理を担当する。 | `apps/api/src/admin/keyset-pagination.ts:16 (pageByStableCursor)` |
 
 ## 5. データ・外部境界
 
 | 種別 | 境界 | Target | Operation | 目的 | Caller | 実装位置 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 参照 | Store | `this` | `loadAliasLedger` | `this` に対して load alias ledger を実行する。 | `MemoRagService.listAliases` | `apps/api/src/rag/memorag-service.ts:1344 (MemoRagService.listAliases)` |
-| 参照 | Store | `this.deps.objectStore` | `getTextWithVersion` | `this.deps.objectStore` に対して get text with version を実行する。 | `MemoRagService.loadAliasLedger` | `apps/api/src/rag/memorag-service.ts:3601 (MemoRagService.loadAliasLedger)` |
-| 実行 | Store | `normalizeAliasLedger` | `normalizeAliasLedger` | `normalizeAliasLedger` に対して normalize alias ledger を実行する。 | `MemoRagService.loadAliasLedger` | `apps/api/src/rag/memorag-service.ts:3605 (MemoRagService.loadAliasLedger)` |
-| 実行 | Store | `ledger.aliases<br>      ` | `filter` | `ledger.aliases<br>      ` に対して filter を実行する。 | `MemoRagService.listAliases` | `apps/api/src/rag/memorag-service.ts:1348 (MemoRagService.listAliases)` |
-| 実行 | Store | `ledger.aliases<br>      .filter((alias) => aliasTenantId(alias) === tenantId)<br>      ` | `filter` | `ledger.aliases<br>      .filter((alias) => aliasTenantId(alias) === tenantId)<br>      ` に対して filter を実行する。 | `MemoRagService.listAliases` | `apps/api/src/rag/memorag-service.ts:1348 (MemoRagService.listAliases)` |
-| 実行 | Store | `ledger.aliases<br>      .filter((alias) => aliasTenantId(alias) === tenantId)<br>      .filter((alias) => !query.status \|\| alias.status === query.status)<br>      ` | `filter` | `ledger.aliases<br>      .filter((alias) => aliasTenantId(alias) === tenantId)<br>      .filter((alias) => !query.status \|\| alias.status === query.status)<br>      ` に対して filter を実行する。 | `MemoRagService.listAliases` | `apps/api/src/rag/memorag-service.ts:1348 (MemoRagService.listAliases)` |
+| 参照 | Store | `this` | `loadAliasLedger` | `this` に対して load alias ledger を実行する。 | `MemoRagService.listAliases` | `apps/api/src/rag/memorag-service.ts:1451 (MemoRagService.listAliases)` |
+| 参照 | Store | `this.deps.objectStore` | `getTextWithVersion` | `this.deps.objectStore` に対して get text with version を実行する。 | `MemoRagService.loadAliasLedger` | `apps/api/src/rag/memorag-service.ts:3694 (MemoRagService.loadAliasLedger)` |
+| 実行 | Store | `normalizeAliasLedger` | `normalizeAliasLedger` | `normalizeAliasLedger` に対して normalize alias ledger を実行する。 | `MemoRagService.loadAliasLedger` | `apps/api/src/rag/memorag-service.ts:3698 (MemoRagService.loadAliasLedger)` |
+| 実行 | Store | `ledger.aliases<br>      ` | `filter` | `ledger.aliases<br>      ` に対して filter を実行する。 | `MemoRagService.listAliases` | `apps/api/src/rag/memorag-service.ts:1455 (MemoRagService.listAliases)` |
+| 実行 | Store | `ledger.aliases<br>      .filter((alias) => aliasTenantId(alias) === tenantId)<br>      ` | `filter` | `ledger.aliases<br>      .filter((alias) => aliasTenantId(alias) === tenantId)<br>      ` に対して filter を実行する。 | `MemoRagService.listAliases` | `apps/api/src/rag/memorag-service.ts:1455 (MemoRagService.listAliases)` |
+| 実行 | Store | `ledger.aliases<br>      .filter((alias) => aliasTenantId(alias) === tenantId)<br>      .filter((alias) => !query.status \|\| alias.status === query.status)<br>      ` | `filter` | `ledger.aliases<br>      .filter((alias) => aliasTenantId(alias) === tenantId)<br>      .filter((alias) => !query.status \|\| alias.status === query.status)<br>      ` に対して filter を実行する。 | `MemoRagService.listAliases` | `apps/api/src/rag/memorag-service.ts:1455 (MemoRagService.listAliases)` |
 
 ## 6. 応答・メッセージ
 
@@ -88,7 +88,7 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 到達 symbol | alias governance enforces tenant, version, state transition, and stable cursor boundaries | `apps/api/src/rag/memorag-service.test.ts:1454 (alias governance enforces tenant, version, state transition, and stable cursor boundaries)` |
 | 到達 symbol | concurrent alias updates accept one current version and audit the stale command | `apps/api/src/rag/memorag-service.test.ts:1532 (concurrent alias updates accept one current version and audit the stale command)` |
 | 到達 symbol | service creates search improvement candidates as draft review items | `apps/api/src/rag/memorag-service.test.ts:1550 (service creates search improvement candidates as draft review items)` |
-| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:3469 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
+| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:3471 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
 | 到達 symbol | service search expands published reviewed aliases without returning alias details | `apps/api/src/search/hybrid-search.test.ts:1030 (service search expands published reviewed aliases without returning alias details)` |
 
 ## 8. 解析上の注意

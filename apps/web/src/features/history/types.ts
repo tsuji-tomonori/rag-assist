@@ -1,3 +1,4 @@
+import type { ConversationHistoryItem as SharedConversationHistoryItem } from "@memorag-mvp/contract"
 import type { ChatResponse } from "../chat/types-api.js"
 import type { HumanQuestion } from "../questions/types.js"
 
@@ -11,7 +12,7 @@ export type ConversationMessage = {
   questionTicket?: HumanQuestion
 }
 
-export type ConversationHistoryItem = Omit<import("@memorag-mvp/contract").ConversationHistoryItem, "messages" | "isFavorite"> & {
+export type ConversationHistoryItem = Omit<SharedConversationHistoryItem, "messages" | "isFavorite"> & {
   isFavorite?: boolean
   messages: ConversationMessage[]
 }

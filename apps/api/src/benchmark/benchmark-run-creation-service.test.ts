@@ -114,7 +114,8 @@ test("execution-disabled creation derives one canonical queued run from authorit
     thresholds: undefined,
     summaryS3Key: `${prefix}/summary.json`,
     reportS3Key: `${prefix}/report.md`,
-    resultsS3Key: `${prefix}/results.jsonl`
+    resultsS3Key: `${prefix}/results.jsonl`,
+    releaseAuditS3Key: `${prefix}/release-audit.json`
   })
   assert.deepEqual(fixture.events, ["create"])
   assert.deepEqual(fixture.createdRuns, [run])

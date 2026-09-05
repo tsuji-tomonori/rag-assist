@@ -862,6 +862,7 @@ export class MemoRagMvpStack extends Stack {
       retention: logs.RetentionDays.ONE_MONTH,
       removalPolicy: RemovalPolicy.RETAIN
     })
+    const boundedAuditRepairEnabled = this.node.tryGetContext("securityAuditBoundedRepairEnabled") === "true"
     const securityAuditReconciliationFn = new lambda.Function(this, "SecurityAuditReconciliationFunction", {
       code: lambda.Code.fromAsset(path.join(__dirname, "../lambda-dist/security-mutation-audit-reconciliation-worker")),
       handler: "index.handler",
@@ -870,7 +871,7 @@ export class MemoRagMvpStack extends Stack {
       memorySize: 512,
       timeout: Duration.minutes(1),
       logGroup: securityAuditReconciliationLogGroup,
-      environment: apiEnvironment
+      environment: { ...apiEnvironment, SECURITY_AUDIT_BOUNDED_REPAIR_ENABLED: String(boundedAuditRepairEnabled) }
     })
     const securityAuditReconciliationSchedule = new events.Rule(this, "SecurityAuditReconciliationSchedule", {
       description: "Disabled by the cost-first MVP decision; explicit audit repair remains available.",
@@ -1045,6 +1046,30 @@ export class MemoRagMvpStack extends Stack {
       actions: ["s3:GetObject", "s3:PutObject"],
       resources: securityAuditObjectPatterns.map((pattern) => docsBucket.arnForObjects(pattern))
     }))
+    if (boundedAuditRepairEnabled) {
+      securityAuditReconciliationFn.addToRolePolicy(new iam.PolicyStatement({
+        actions: ["dynamodb:GetItem", "dynamodb:Query"],
+        resources: [documentGroupsTable.tableArn, `${documentGroupsTable.tableArn}/index/*`]
+      }))
+      securityAuditReconciliationFn.addToRolePolicy(new iam.PolicyStatement({
+        actions: ["cognito-idp:ListUsers", "cognito-idp:AdminGetUser", "cognito-idp:AdminListGroupsForUser"],
+        resources: [userPool.userPoolArn]
+      }))
+      securityAuditReconciliationFn.addToRolePolicy(new iam.PolicyStatement({
+        actions: ["s3:GetObject"],
+        resources: [
+          `security/resource-group-lifecycle/create/${cdk.Aws.ACCOUNT_ID}/*`,
+          `security/resource-group-lifecycle/delete/${cdk.Aws.ACCOUNT_ID}/*`,
+          "security/revocation-cleanup-repairs/*", "security/revocation-cleanup/*",
+          "security/account-revocations/*", "security/administrative-principal-transfer-fences/*",
+          `documents/share-grants/${cdk.Aws.ACCOUNT_ID}/*`, "documents/share-grants.json",
+          "tenant-artifacts/*/folder-mutations/move/*",
+          `document-mutations/move/${cdk.Aws.ACCOUNT_ID}/*`,
+          `document-mutations/delete/${cdk.Aws.ACCOUNT_ID}/*`,
+          "tenant-artifacts/*/manifests/*"
+        ].map((pattern) => docsBucket.arnForObjects(pattern))
+      }))
+    }
     revocationCleanupFn.addToRolePolicy(new iam.PolicyStatement({
       actions: ["s3:ListBucket"],
       resources: [benchmarkBucket.bucketArn],

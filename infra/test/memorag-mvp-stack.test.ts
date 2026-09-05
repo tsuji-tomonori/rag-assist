@@ -1485,3 +1485,21 @@ function assertResourceTags(logicalId: string, resource: unknown, expectedTags: 
     assert.equal(tagMap.get(key), expectedValue, `${logicalId} should have ${key}=${expectedValue}`)
   }
 }
+
+
+test("bounded audit repair is opt-in and never enables schedules or broad mutation permissions", () => {
+  const template = synthesize({ securityAuditBoundedRepairEnabled: "true" })
+  const resources = template.toJSON().Resources ?? {}
+  const worker = getResourceByLogicalIdPrefix(template, "SecurityAuditReconciliationFunction")
+  assert.equal(worker.Properties.Environment.Variables.SECURITY_AUDIT_BOUNDED_REPAIR_ENABLED, "true")
+  assert.equal(getResourceByLogicalIdPrefix(synthesize(), "SecurityAuditReconciliationFunction").Properties.Environment.Variables.SECURITY_AUDIT_BOUNDED_REPAIR_ENABLED, "false")
+  const policies = Object.entries(resources)
+    .filter(([id, resource]) => id.startsWith("SecurityAuditReconciliationFunctionServiceRoleDefaultPolicy") && (resource as any).Type === "AWS::IAM::Policy")
+    .map(([, resource]) => JSON.stringify((resource as any).Properties.PolicyDocument)).join("\n")
+  assert.match(policies, /dynamodb:GetItem/)
+  assert.match(policies, /cognito-idp:AdminGetUser/)
+  assert.doesNotMatch(policies, /dynamodb:Scan|dynamodb:PutItem|cognito-idp:AdminUpdate|s3:DeleteObject|bedrock:InvokeModel/)
+  for (const resource of Object.values(resources) as any[]) {
+    if (resource.Type === "AWS::Events::Rule") assert.equal(resource.Properties.State, "DISABLED")
+  }
+})

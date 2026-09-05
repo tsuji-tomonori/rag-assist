@@ -23,6 +23,7 @@ export class BenchmarkRunCancellationService {
     const tenantId = this.ports.tenantIdForActor(actor)
     const run = await this.ports.benchmarkRunStore.get(tenantId, runId)
     if (!run) return undefined
+    if (run.status !== "queued" && run.status !== "running") return run
 
     if (run.executionArn) {
       await this.ports.stopExecution({

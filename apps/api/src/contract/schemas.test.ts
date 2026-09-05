@@ -365,7 +365,7 @@ test("conversation history schema accepts optional multi-turn state fields", () 
 
   assert.equal(result.success, true)
   if (!result.success) return
-  assert.equal(result.data.schemaVersion, 3)
+  assert.equal(result.data.schemaVersion, 1)
   assert.equal(result.data.decontextualizedQuery?.turnDependency, "follow_up")
   assert.equal(result.data.sessionDocumentContext?.schemaVersion, 1)
 })

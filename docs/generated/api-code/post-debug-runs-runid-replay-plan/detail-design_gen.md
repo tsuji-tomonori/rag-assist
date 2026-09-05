@@ -36,9 +36,9 @@ sanitize 済み trace から replay 可能性と入力概要を返します。�
 | ---: | --- | --- | --- | --- | --- |
 | B001 | `POST /debug-runs/{runId}/replay-plan handler` | if | `plan` が存在しない、または偽である | `!plan` | `apps/api/src/routes/debug-routes.ts:107 (POST /debug-runs/{runId}/replay-plan handler)` |
 | B002 | `requirePermission` | if | 利用者が 指定された permission を持たない | `!hasPermission(user, permission)` | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| B003 | `MemoRagService.createDebugReplayPlan` | if | `trace` が存在しない、または偽である | `!trace` | `apps/api/src/rag/memorag-service.ts:2363 (MemoRagService.createDebugReplayPlan)` |
-| B004 | `MemoRagService.createDebugReplayPlan` | 三項条件 | `trace.replayVersionManifest` が存在し、真である | `trace.replayVersionManifest` | `apps/api/src/rag/memorag-service.ts:2378 (MemoRagService.createDebugReplayPlan)` |
-| B005 | `MemoRagService.createDebugReplayPlan` | 三項条件 | `trace.replayVersionManifest.missingVersions.length` が `0` と等しい | `trace.replayVersionManifest.missingVersions.length === 0` | `apps/api/src/rag/memorag-service.ts:2379 (MemoRagService.createDebugReplayPlan)` |
+| B003 | `MemoRagService.createDebugReplayPlan` | if | `trace` が存在しない、または偽である | `!trace` | `apps/api/src/rag/memorag-service.ts:2470 (MemoRagService.createDebugReplayPlan)` |
+| B004 | `MemoRagService.createDebugReplayPlan` | 三項条件 | `trace.replayVersionManifest` が存在し、真である | `trace.replayVersionManifest` | `apps/api/src/rag/memorag-service.ts:2485 (MemoRagService.createDebugReplayPlan)` |
+| B005 | `MemoRagService.createDebugReplayPlan` | 三項条件 | `trace.replayVersionManifest.missingVersions.length` が `0` と等しい | `trace.replayVersionManifest.missingVersions.length === 0` | `apps/api/src/rag/memorag-service.ts:2486 (MemoRagService.createDebugReplayPlan)` |
 | B006 | `settleNonEnumerationTiming` | if | `remaining` が `0` より大きい | `remaining > 0` | `apps/api/src/security/public-resource-response.ts:42 (settleNonEnumerationTiming)` |
 
 ## 4. 到達する主要実装
@@ -52,16 +52,16 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 2 | `hasPermission` | has permission の実装処理を担当する。 | `apps/api/src/authorization.ts:187 (hasPermission)` |
 | 1 | `validParam` | valid param の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:24 (validParam)` |
 | 2 | `validRequest` | valid request の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:36 (validRequest)` |
-| 1 | `MemoRagService.createDebugReplayPlan` | create debug replay plan の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:2361 (MemoRagService.createDebugReplayPlan)` |
-| 2 | `MemoRagService.getDebugRun` | get debug run の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:2345 (MemoRagService.getDebugRun)` |
+| 1 | `MemoRagService.createDebugReplayPlan` | create debug replay plan の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:2468 (MemoRagService.createDebugReplayPlan)` |
+| 2 | `MemoRagService.getDebugRun` | get debug run の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:2452 (MemoRagService.getDebugRun)` |
 | 1 | `settleNonEnumerationTiming` | settle non enumeration timing の実装処理を担当する。 | `apps/api/src/security/public-resource-response.ts:40 (settleNonEnumerationTiming)` |
 
 ## 5. データ・外部境界
 
 | 種別 | 境界 | Target | Operation | 目的 | Caller | 実装位置 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 参照 | Store | `this.deps.objectStore` | `listKeys` | `this.deps.objectStore` に対して list keys を実行する。 | `MemoRagService.getDebugRun` | `apps/api/src/rag/memorag-service.ts:2347 (MemoRagService.getDebugRun)` |
-| 参照 | Store | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `MemoRagService.getDebugRun` | `apps/api/src/rag/memorag-service.ts:2350 (MemoRagService.getDebugRun)` |
+| 参照 | Store | `this.deps.objectStore` | `listKeys` | `this.deps.objectStore` に対して list keys を実行する。 | `MemoRagService.getDebugRun` | `apps/api/src/rag/memorag-service.ts:2454 (MemoRagService.getDebugRun)` |
+| 参照 | Store | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `MemoRagService.getDebugRun` | `apps/api/src/rag/memorag-service.ts:2457 (MemoRagService.getDebugRun)` |
 
 ## 6. 応答・メッセージ
 
