@@ -23,6 +23,7 @@ export function ChatView({
   latestMessageRef,
   currentUser,
   loading,
+  canCreateChat,
   canAsk,
   canWriteDocuments,
   modelId,
@@ -61,6 +62,7 @@ export function ChatView({
   latestMessageRef: RefObject<HTMLElement | null>
   currentUser: CurrentUser | null
   loading: boolean
+  canCreateChat: boolean
   canAsk: boolean
   canWriteDocuments: boolean
   modelId: string
@@ -94,8 +96,8 @@ export function ChatView({
 
   return (
     <section className={`split-workspace ${canShowDebugPanel ? "" : "debug-off"}`}>
-      <section className="chat-card" aria-label="チャット">
-        <ResourceStateBoundary state={dataState}>
+      <section className="chat-card" aria-label="チャット" aria-busy={isProcessing}>
+        <ResourceStateBoundary state={dataState} className="chat-resource-boundary">
         <MessageList
           messages={messages}
           questions={questions}
@@ -111,6 +113,12 @@ export function ChatView({
           onSubmitClarificationOption={onSubmitClarificationOption}
           onStartClarificationFreeform={onStartClarificationFreeform}
         />
+
+        {!canCreateChat && (
+          <p className="chat-permission-notice" role="alert">
+            質問を送信する権限がありません。閲覧できる会話は履歴から確認してください。
+          </p>
+        )}
 
         <ChatComposer
           onAsk={onAsk}

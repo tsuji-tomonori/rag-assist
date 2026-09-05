@@ -1,0 +1,780 @@
+import { expect, type Locator, type Page, type TestInfo, test } from '@playwright/test'
+
+type ChatSemanticRouteState = {
+  startRuns: number
+  eventReads: number
+  releaseAnswer: () => void
+}
+
+test('E2E-UI-CROSS-BROWSER-SEMANTICS-001: login and chat expose stable cross-browser semantics @ui-quality', async ({ page }, testInfo) => {
+  const routeState = await installChatRoute(page)
+  await page.goto('/')
+
+  await expectAriaSnapshot(page.locator('body'), testInfo, 'E2E-UI-CROSS-BROWSER-SEMANTICS-001', 'login', `
+    - heading "社内QAチャットボット" [level=1]
+    - form "Cognitoで安全にサインイン":
+        - textbox "メールアドレス"
+        - textbox "パスワード"
+        - checkbox "ログイン状態を保持"
+        - button "サインイン"
+        - button "アカウント作成"
+  `)
+
+  await signIn(page)
+  const chat = page.getByRole('region', { name: 'チャット', exact: true })
+  await expectAriaSnapshot(page.locator('body'), testInfo, 'E2E-UI-CROSS-BROWSER-SEMANTICS-001', 'chat-idle', `
+    - complementary "主要ナビゲーション":
+        - navigation "画面"
+    - main:
+        - heading "社内QAチャットボットエージェント" [level=1]
+        - region "チャット":
+            - form "質問入力":
+                - textbox "質問"
+                - button "質問を送信"
+  `)
+
+  const question = chat.getByRole('textbox', { name: '質問', exact: true })
+  await question.fill('FirefoxとWebKitでsemantic stateを確認する')
+  await chat.getByRole('button', { name: '質問を送信', exact: true }).click()
+
+  const processing = chat.getByRole('article').filter({ hasText: '回答を生成中' })
+  await expect(processing).toBeVisible()
+  await expect.poll(() => routeState.startRuns).toBe(1)
+  await expect.poll(() => routeState.eventReads).toBe(1)
+  await expect(chat).toHaveAttribute('aria-busy', 'true')
+  await expect(processing).toHaveAttribute('aria-live', 'polite')
+  await attachSemanticEvidence(chat, testInfo, 'E2E-UI-CROSS-BROWSER-SEMANTICS-001', 'chat-processing', {
+    chatBusy: await chat.getAttribute('aria-busy'),
+    processingComputedRole: 'article',
+    processingRoleAttribute: await processing.getAttribute('role'),
+    processingLive: await processing.getAttribute('aria-live')
+  })
+
+  routeState.releaseAnswer()
+  await expect(chat.getByText('cross-browser semantic stateから回答へ復帰しました。')).toBeVisible()
+  await expect(processing).toHaveCount(0)
+  await expect(chat).toHaveAttribute('aria-busy', 'false')
+  await attachSemanticEvidence(chat, testInfo, 'E2E-UI-CROSS-BROWSER-SEMANTICS-001', 'chat-completed', {
+    chatBusy: await chat.getAttribute('aria-busy'),
+    processingCount: await processing.count()
+  })
+})
+
+test('E2E-UI-CROSS-BROWSER-SEMANTICS-002: profile exposes stable cross-browser semantics @ui-quality', async ({ page }, testInfo) => {
+  const evidenceId = 'E2E-UI-CROSS-BROWSER-SEMANTICS-002'
+  await page.goto('/')
+  await signIn(page)
+  await page.getByRole('button', { name: '個人設定', exact: true }).click()
+
+  const profile = page.getByRole('region', { name: '個人設定', exact: true })
+  await expect(profile).toBeVisible()
+  await expectAriaSnapshot(profile, testInfo, evidenceId, 'profile-idle', `
+    - heading "個人設定" [level=2]
+    - button "チャットへ戻る"
+    - combobox "送信キー":
+        - option "Enterで送信" [selected]
+        - option "Ctrl+Enterで送信"
+    - button "サインアウト"
+  `)
+
+  const shortcut = profile.getByRole('combobox', { name: '送信キー', exact: true })
+  await shortcut.selectOption('ctrlEnter')
+  await expect(shortcut).toHaveValue('ctrlEnter')
+
+  const status = profile.getByRole('status')
+  await expect(status).toHaveText('送信キーを「Ctrl+Enterで送信」に変更しました。この設定は現在のサインイン中だけ有効です。')
+  await expect(status).toHaveAttribute('aria-live', 'polite')
+  await attachSemanticEvidence(profile, testInfo, evidenceId, 'profile-changed', {
+    shortcutValue: await shortcut.inputValue(),
+    statusComputedRole: 'status',
+    statusRoleAttribute: await status.getAttribute('role'),
+    statusLive: await status.getAttribute('aria-live'),
+    statusText: await status.innerText()
+  })
+})
+
+test('E2E-UI-CROSS-BROWSER-SEMANTICS-003: assignee exposes stable cross-browser semantics @ui-quality', async ({ page }, testInfo) => {
+  const evidenceId = 'E2E-UI-CROSS-BROWSER-SEMANTICS-003'
+  await installAssigneeRoute(page)
+  await page.goto('/')
+  await signIn(page)
+  await page.getByRole('navigation', { name: '画面' }).getByRole('button', { name: '担当者対応' }).click()
+
+  const assignee = page.getByRole('region', { name: '担当者対応', exact: true })
+  await expect(assignee).toBeVisible()
+  await expectAriaSnapshot(assignee, testInfo, evidenceId, 'assignee-idle', `
+    - region "担当者対応":
+        - button "チャットへ戻る"
+        - heading "担当者対応" [level=2]
+        - region "問い合わせ一覧":
+            - heading "問い合わせ一覧" [level=3]
+            - combobox "ステータス":
+                - option "すべて" [selected]
+                - option "未対応"
+                - option "対応中"
+                - option "確認待ち"
+                - option "解決済み"
+            - searchbox "検索"
+        - region "担当者対応カンバン":
+            - region "未対応":
+                - heading "未対応" [level=3]
+                - button "担当者cross-browser semantic証跡を選択" [pressed]
+        - complementary "選択中の問い合わせと回答作成":
+            - region "問い合わせ概要":
+                - heading "問い合わせ概要" [level=3]
+            - form "回答作成":
+                - heading "回答作成" [level=3]
+                - textbox "回答タイトル": 担当者cross-browser semantic証跡への回答
+                - textbox "回答内容"
+                - checkbox "質問者へ通知する" [checked]
+                - status: 入力はこの画面に一時保持されていません
+                - button "入力を一時保持" [disabled]
+                - button "回答を送信" [disabled]
+  `)
+
+  const selectedQuestion = assignee.getByRole('button', { name: '担当者cross-browser semantic証跡を選択' })
+  const status = assignee.getByRole('status')
+  await expect(selectedQuestion).toHaveAttribute('aria-pressed', 'true')
+  await expect(assignee.getByRole('combobox', { name: 'ステータス' })).toHaveValue('all')
+  await expect(assignee.getByRole('checkbox', { name: '質問者へ通知する' })).toBeChecked()
+  await expect(status).toHaveAttribute('aria-live', 'polite')
+
+  await assignee.getByRole('textbox', { name: '回答内容' }).fill('FirefoxとWebKitで担当者回答のsemantic stateを確認します。')
+  await expect(status).toHaveText('未送信の変更があります')
+  await attachSemanticEvidence(assignee, testInfo, evidenceId, 'assignee-draft-changed', {
+    statusFilterValue: await assignee.getByRole('combobox', { name: 'ステータス' }).inputValue(),
+    selectedQuestionPressed: await selectedQuestion.getAttribute('aria-pressed'),
+    notifyRequesterChecked: await assignee.getByRole('checkbox', { name: '質問者へ通知する' }).isChecked() ? 'true' : 'false',
+    statusComputedRole: 'status',
+    statusRoleAttribute: await status.getAttribute('role'),
+    statusLive: await status.getAttribute('aria-live'),
+    statusText: await status.innerText()
+  })
+})
+
+test('E2E-UI-CROSS-BROWSER-SEMANTICS-004: documents expose stable cross-browser semantics @ui-quality', async ({ page }, testInfo) => {
+  const evidenceId = 'E2E-UI-CROSS-BROWSER-SEMANTICS-004'
+  await installDocumentsRoute(page)
+  await page.goto('/')
+  await signIn(page)
+  await page.getByRole('navigation', { name: '画面' }).getByRole('button', { name: 'ドキュメント' }).click()
+
+  const workspace = page.getByRole('region', { name: 'ドキュメント管理', exact: true })
+  await expect(workspace).toBeVisible()
+  const folderSearch = workspace.getByRole('searchbox', { name: 'フォルダを検索' })
+  const fileNameSearch = workspace.getByRole('searchbox', { name: 'ファイル名検索' })
+  const typeFilter = workspace.getByRole('combobox', { name: '種別' })
+  const statusFilter = workspace.getByRole('combobox', { name: '状態' })
+  const folderFilter = workspace.getByRole('combobox', { name: '所属フォルダ' })
+  const sortOrder = workspace.getByRole('combobox', { name: '並び替え' })
+  const pageSize = workspace.getByRole('combobox', { name: '表示件数' })
+  const inventory = workspace.getByRole('region', { name: '登録文書一覧' })
+  await expect(workspace.getByRole('heading', { name: 'ドキュメント管理', level: 2 })).toBeVisible()
+  await expect(workspace.getByRole('navigation', { name: 'パンくず' })).toBeVisible()
+  await expect(workspace.getByRole('complementary', { name: 'フォルダツリー' })).toBeVisible()
+  await expect(inventory.getByRole('heading', { name: 'すべてのドキュメント', level: 3 })).toBeVisible()
+  await expect(inventory.getByRole('region', { name: '現在の文書表示条件' })).toBeVisible()
+  await expect(inventory.getByRole('table', { name: '登録文書' })).toBeVisible()
+  await expect(folderSearch).toHaveValue('')
+  await expect(fileNameSearch).toHaveValue('')
+  await expect(typeFilter).toHaveValue('all')
+  await expect(statusFilter).toHaveValue('all')
+  await expect(folderFilter).toHaveValue('all')
+  await expect(sortOrder).toHaveValue('updatedDesc')
+  await expect(pageSize).toHaveValue('25')
+  await attachSemanticEvidence(workspace, testInfo, evidenceId, 'documents-idle', {
+    folderSearchValue: await folderSearch.inputValue(),
+    fileNameSearchValue: await fileNameSearch.inputValue(),
+    typeFilterValue: await typeFilter.inputValue(),
+    statusFilterValue: await statusFilter.inputValue(),
+    folderFilterValue: await folderFilter.inputValue(),
+    sortValue: await sortOrder.inputValue(),
+    pageSizeValue: await pageSize.inputValue()
+  })
+
+  await workspace.getByRole('button', { name: 'cross-browser-policy.pdfの詳細を表示' }).click()
+  const selectedRow = workspace.locator('[role="row"][aria-selected="true"]')
+  await expect(selectedRow).toContainText('cross-browser-policy.pdf')
+
+  const dialog = page.getByRole('dialog', { name: 'cross-browser-policy.pdf' })
+  await expect(dialog).toBeVisible()
+  await expect(dialog.getByRole('heading', { name: 'cross-browser-policy.pdf', level: 3 })).toBeVisible()
+  await expect(dialog.getByRole('button', { name: '文書詳細を閉じる' })).toBeVisible()
+  await expect(dialog.getByRole('button', { name: 'この資料に質問する' })).toBeVisible()
+  const technicalDisclosure = dialog.getByRole('button', { name: '技術・品質詳細を表示' })
+  await expect(technicalDisclosure).toHaveAttribute('aria-expanded', 'false')
+  await attachSemanticEvidence(dialog, testInfo, evidenceId, 'documents-detail', {
+    selectedRow: await selectedRow.getAttribute('aria-selected'),
+    technicalDisclosureExpanded: await technicalDisclosure.getAttribute('aria-expanded')
+  })
+  await technicalDisclosure.click()
+  await expect(dialog.getByRole('button', { name: '技術・品質詳細を閉じる' })).toHaveAttribute('aria-expanded', 'true')
+  await attachSemanticEvidence(dialog, testInfo, evidenceId, 'documents-detail-expanded', {
+    folderSearchValue: await folderSearch.inputValue(),
+    fileNameSearchValue: await fileNameSearch.inputValue(),
+    typeFilterValue: await typeFilter.inputValue(),
+    statusFilterValue: await statusFilter.inputValue(),
+    folderFilterValue: await folderFilter.inputValue(),
+    sortValue: await sortOrder.inputValue(),
+    pageSizeValue: await pageSize.inputValue(),
+    selectedRow: await selectedRow.getAttribute('aria-selected'),
+    technicalDisclosureExpanded: await dialog.getByRole('button', { name: '技術・品質詳細を閉じる' }).getAttribute('aria-expanded')
+  })
+})
+
+test('E2E-UI-CROSS-BROWSER-SEMANTICS-005: admin exposes stable cross-browser semantics @ui-quality', async ({ page }, testInfo) => {
+  const evidenceId = 'E2E-UI-CROSS-BROWSER-SEMANTICS-005'
+  await installAdminRoutes(page)
+  await page.goto('/')
+  await signIn(page)
+  await page.getByRole('navigation', { name: '画面' }).getByRole('button', { name: '管理者設定' }).click()
+
+  const workspace = page.getByRole('region', { name: '管理者設定', exact: true })
+  await expect(workspace).toBeVisible()
+  const sectionNavigation = workspace.getByRole('navigation', { name: '管理セクション' })
+  const overviewSection = sectionNavigation.getByRole('button', { name: '概要', exact: true })
+  const usersSection = sectionNavigation.getByRole('button', { name: 'ユーザー', exact: true })
+  await expect(workspace.getByRole('heading', { name: '管理者設定', level: 2 })).toBeVisible()
+  await expect(workspace.getByRole('button', { name: 'チャットへ戻る' })).toBeVisible()
+  await expect(sectionNavigation).toBeVisible()
+  await expect(overviewSection).toHaveAttribute('aria-current', 'page')
+  await expect(usersSection).not.toHaveAttribute('aria-current')
+  await attachSemanticEvidence(workspace, testInfo, evidenceId, 'admin-overview', {
+    overviewCurrent: await overviewSection.getAttribute('aria-current'),
+    usersCurrent: await usersSection.getAttribute('aria-current')
+  })
+
+  await usersSection.click()
+  const users = workspace.getByRole('region', { name: 'ユーザー管理一覧' })
+  await expect(users).toBeVisible()
+  const query = users.getByRole('textbox', { name: 'ユーザー・ロールを検索' })
+  const statusFilter = users.getByRole('combobox', { name: '状態' })
+  const sortOrder = users.getByRole('combobox', { name: '並び順' })
+  const initialRole = users.getByRole('combobox', { name: '初期ロール' })
+  const dataStatus = users.locator('[role="status"][aria-live="polite"]', { hasText: '取得元: authoritative_identity' })
+  await expect(usersSection).toHaveAttribute('aria-current', 'page')
+  await expect(overviewSection).not.toHaveAttribute('aria-current')
+  await expect(users.getByRole('heading', { name: 'ユーザー管理', level: 3 })).toBeVisible()
+  await expect(users.getByRole('search', { name: '管理対象ユーザーを絞り込む' })).toBeVisible()
+  await expect(users.getByRole('form', { name: '管理対象ユーザー作成' })).toBeVisible()
+  await expect(users.getByRole('table', { name: 'ユーザー一覧' })).toBeVisible()
+  await expect(query).toHaveValue('')
+  await expect(statusFilter).toHaveValue('')
+  await expect(sortOrder).toHaveValue('emailAsc')
+  await expect(initialRole).toHaveValue('SYSTEM_ADMIN')
+  await expect(dataStatus).toBeVisible()
+  await expect(dataStatus).toHaveAttribute('role', 'status')
+  await expect(dataStatus).toHaveAttribute('aria-live', 'polite')
+  await expect(dataStatus).toContainText('取得元: authoritative_identity')
+  await attachSemanticEvidence(users, testInfo, evidenceId, 'admin-users', {
+    overviewCurrent: await overviewSection.getAttribute('aria-current'),
+    usersCurrent: await usersSection.getAttribute('aria-current'),
+    queryValue: await query.inputValue(),
+    statusFilterValue: await statusFilter.inputValue(),
+    sortValue: await sortOrder.inputValue(),
+    initialRoleValue: await initialRole.inputValue(),
+    dataStatusEvidenceBoundary: 'explicit DOM role/live attributes plus enclosing Playwright ARIA snapshot',
+    dataStatusRoleAttribute: await dataStatus.getAttribute('role'),
+    dataStatusLive: await dataStatus.getAttribute('aria-live')
+  })
+})
+
+test('E2E-UI-CROSS-BROWSER-SEMANTICS-006: history exposes stable cross-browser semantics @ui-quality', async ({ page }, testInfo) => {
+  const evidenceId = 'E2E-UI-CROSS-BROWSER-SEMANTICS-006'
+  await installHistoryRoute(page)
+  await page.goto('/')
+  await signIn(page)
+  await page.getByRole('navigation', { name: '画面' }).getByRole('button', { name: '履歴' }).click()
+
+  const history = page.getByRole('region', { name: '履歴', exact: true })
+  await expect(history).toBeVisible()
+  const query = history.getByRole('searchbox', { name: '履歴を検索' })
+  const sortOrder = history.getByRole('combobox', { name: '履歴の並び順' })
+  const favoritesOnly = history.getByRole('checkbox', { name: 'お気に入りのみ' })
+  await expect(history.getByRole('heading', { name: '履歴', level: 2 })).toBeVisible()
+  await expect(history.getByRole('heading', { name: '会話一覧', level: 3 })).toBeVisible()
+  await expect(history.getByRole('button', { name: '履歴のcross-browser semantic証跡をお気に入りに追加' })).toBeVisible()
+  await expect(history.getByRole('button', { name: '削除' })).toBeVisible()
+  await expect(history.getByRole('button', { name: 'チャットへ戻る' })).toBeVisible()
+  await expect(query).toHaveValue('')
+  await expect(sortOrder).toHaveValue('newest')
+  await expect(favoritesOnly).not.toBeChecked()
+  await attachSemanticEvidence(history, testInfo, evidenceId, 'history-idle', {
+    queryValue: await query.inputValue(),
+    sortValue: await sortOrder.inputValue(),
+    favoritesOnlyChecked: await favoritesOnly.isChecked() ? 'true' : 'false'
+  })
+
+  await query.fill('cross-browser')
+  await sortOrder.selectOption('oldest')
+  await favoritesOnly.check()
+  await expect(query).toHaveValue('cross-browser')
+  await expect(sortOrder).toHaveValue('oldest')
+  await expect(favoritesOnly).toBeChecked()
+  await attachSemanticEvidence(history, testInfo, evidenceId, 'history-filtered', {
+    queryValue: await query.inputValue(),
+    sortValue: await sortOrder.inputValue(),
+    favoritesOnlyChecked: await favoritesOnly.isChecked() ? 'true' : 'false'
+  })
+})
+
+test('E2E-UI-CROSS-BROWSER-SEMANTICS-007: favorites expose stable cross-browser semantics @ui-quality', async ({ page }, testInfo) => {
+  const evidenceId = 'E2E-UI-CROSS-BROWSER-SEMANTICS-007'
+  await installFavoritesRoute(page)
+  await page.goto('/')
+  await signIn(page)
+  await page.getByRole('navigation', { name: '画面' }).getByRole('button', { name: 'お気に入り' }).click()
+
+  const favorites = page.getByRole('region', { name: 'お気に入り', exact: true })
+  await expect(favorites).toBeVisible()
+  await expectAriaSnapshot(favorites, testInfo, evidenceId, 'favorites-loaded', `
+    - button "チャットへ戻る"
+    - heading "お気に入り" [level=2]
+    - heading "項目一覧" [level=3]
+    - heading "会話" [level=3]
+    - heading "文書" [level=3]
+  `)
+
+  const backButton = favorites.getByRole('button', { name: 'チャットへ戻る' })
+  const accessibleLabel = favorites.getByText('お気に入りのcross-browser semantic会話', { exact: true })
+  const accessibleTarget = favorites.getByText('cross-browser-semantic-conversation-1', { exact: true })
+  const inaccessibleLabel = favorites.getByText('お気に入りのcross-browser semantic文書', { exact: true })
+  const inaccessibleCue = favorites.getByText('アクセス不可', { exact: true })
+  await expect(accessibleLabel).toBeVisible()
+  await expect(accessibleTarget).toBeVisible()
+  await expect(inaccessibleLabel).toBeVisible()
+  await expect(inaccessibleCue).toBeVisible()
+  await expect(backButton).toBeVisible()
+  await attachSemanticEvidence(favorites, testInfo, evidenceId, 'favorites-item-state', {
+    favoriteCount: 2,
+    groupCount: 2,
+    accessibleLabel: await accessibleLabel.innerText(),
+    accessibleTargetId: await accessibleTarget.innerText(),
+    inaccessibleLabel: await inaccessibleLabel.innerText(),
+    inaccessibleCue: await inaccessibleCue.innerText(),
+    backButtonComputedRole: 'button',
+    backButtonRoleAttribute: await backButton.getAttribute('role')
+  })
+})
+
+test('E2E-UI-CROSS-BROWSER-SEMANTICS-008: benchmark exposes stable cross-browser semantics @ui-quality', async ({ page }, testInfo) => {
+  const evidenceId = 'E2E-UI-CROSS-BROWSER-SEMANTICS-008'
+  await installBenchmarkRoutes(page)
+  await page.goto('/')
+  await signIn(page)
+  await page.getByRole('navigation', { name: '画面' }).getByRole('button', { name: '性能テスト' }).click()
+
+  const benchmark = page.getByRole('region', { name: '性能テスト', exact: true })
+  await expect(benchmark).toBeVisible()
+  const suite = benchmark.getByRole('combobox', { name: 'テスト種別' })
+  const dataset = benchmark.getByRole('textbox', { name: 'データセット' })
+  const model = benchmark.getByRole('combobox', { name: 'モデル' })
+  const concurrency = benchmark.getByRole('spinbutton', { name: '並列数' })
+  const history = benchmark.getByRole('region', { name: '性能テスト実行履歴。左右にスクロールできます' })
+  const historyTable = history.getByRole('table')
+
+  await expect(benchmark.getByRole('heading', { name: '性能テスト', level: 2 })).toBeVisible()
+  await expect(benchmark.getByRole('heading', { name: 'ジョブ起動', level: 3 })).toBeVisible()
+  await expect(suite).toHaveValue('standard-agent-v1')
+  await expect(dataset).toHaveValue('datasets/agent/standard-v1.jsonl')
+  await expect(model).toHaveValue('amazon.nova-lite-v1:0')
+  await expect(concurrency).toHaveValue('1')
+  await expect(benchmark.getByRole('button', { name: '性能テストを実行' })).toBeVisible()
+  await expect(benchmark.getByRole('button', { name: '更新', exact: true })).toBeVisible()
+  await expect(benchmark.getByRole('button', { name: 'チャットへ戻る' })).toBeVisible()
+  await expect(benchmark.getByRole('heading', { name: '実行履歴', level: 3 })).toBeVisible()
+  await expect(history).toHaveAttribute('tabindex', '0')
+  await expect(historyTable).toBeVisible()
+  await expect(historyTable.getByRole('row')).toHaveCount(2)
+
+  await attachSemanticEvidence(benchmark, testInfo, evidenceId, 'benchmark-loaded', {
+    suiteValue: await suite.inputValue(),
+    datasetValue: await dataset.inputValue(),
+    modelValue: await model.inputValue(),
+    concurrencyValue: await concurrency.inputValue(),
+    historyTabIndex: await history.getAttribute('tabindex'),
+    historyRowCount: await historyTable.getByRole('row').count()
+  })
+})
+
+async function installChatRoute(page: Page): Promise<ChatSemanticRouteState> {
+  let releaseAnswer: () => void = () => undefined
+  const answerGate = new Promise<void>((resolve) => { releaseAnswer = resolve })
+  const state: ChatSemanticRouteState = {
+    startRuns: 0,
+    eventReads: 0,
+    releaseAnswer: () => releaseAnswer()
+  }
+
+  await page.route(/http:\/\/127\.0\.0\.1:8787\/rpc\/chat\/startRun$/, async (route) => {
+    state.startRuns += 1
+    await route.fulfill({
+      json: {
+        json: {
+          runId: 'cross-browser-semantic-run',
+          status: 'queued',
+          eventsPath: '/chat-runs/cross-browser-semantic-run/events'
+        }
+      }
+    })
+  })
+
+  await page.route(/http:\/\/127\.0\.0\.1:8787\/chat-runs\/cross-browser-semantic-run\/events$/, async (route) => {
+    state.eventReads += 1
+    await answerGate
+    await route.fulfill({
+      contentType: 'text/event-stream',
+      body: 'id: 1\nevent: final\ndata: {"answer":"cross-browser semantic stateから回答へ復帰しました。","isAnswerable":true,"citations":[],"retrieved":[]}\n\n'
+    })
+  })
+
+  return state
+}
+
+async function installAssigneeRoute(page: Page) {
+  await page.route(/http:\/\/127\.0\.0\.1:8787\/questions(?:\?.*)?$/, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.fallback()
+      return
+    }
+
+    await route.fulfill({
+      json: {
+        questions: [{
+          questionId: 'cross-browser-semantic-assignee-1',
+          title: '担当者cross-browser semantic証跡',
+          question: '担当者画面の意味構造をFirefoxとWebKitで確認してください。',
+          requesterName: '依頼者',
+          requesterDepartment: '利用部門',
+          assigneeDepartment: '総務部',
+          assigneeGroupId: 'support',
+          category: '手続き',
+          priority: 'normal',
+          status: 'open',
+          sourceQuestion: '担当者画面の意味構造はbrowser間で安定しているか？',
+          chatAnswer: '担当者による確認が必要です。',
+          createdAt: '2026-08-27T00:00:00.000Z',
+          updatedAt: '2026-08-27T00:00:00.000Z'
+        }]
+      }
+    })
+  })
+}
+
+async function installDocumentsRoute(page: Page) {
+  await page.route(/http:\/\/127\.0\.0\.1:8787\/(?:documents(?:\/reindex-migrations)?|document-groups)$/, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.fallback()
+      return
+    }
+
+    const path = new URL(route.request().url()).pathname
+    if (path === '/documents') {
+      await route.fulfill({
+        json: {
+          documents: [{
+            detailLevel: 'manager',
+            documentId: 'cross-browser-document-1',
+            fileName: 'cross-browser-policy.pdf',
+            mimeType: 'application/pdf',
+            chunkCount: 12,
+            memoryCardCount: 3,
+            status: 'ready',
+            metadata: { groupIds: ['cross-browser-group-1'] },
+            currentUserEffectivePermission: 'full',
+            capabilities: {
+              canRead: true,
+              canShare: true,
+              canMove: true,
+              canDelete: true,
+              canReindex: true
+            },
+            createdAt: '2026-08-28T00:00:00.000Z',
+            updatedAt: '2026-08-28T00:01:00.000Z'
+          }]
+        }
+      })
+      return
+    }
+
+    if (path === '/document-groups') {
+      await route.fulfill({
+        json: {
+          groups: [{
+            schemaVersion: 2,
+            itemType: 'documentGroup',
+            tenantId: 'local-e2e',
+            groupId: 'cross-browser-group-1',
+            name: 'cross-browser規程',
+            normalizedName: 'cross-browser規程',
+            canonicalPath: '/cross-browser規程',
+            normalizedCanonicalPath: '/cross-browser規程',
+            adminPrincipalType: 'user',
+            adminPrincipalId: 'cross-browser-admin',
+            adminPathPk: 'local-e2e#user#cross-browser-admin',
+            parentPathPk: 'local-e2e#user#cross-browser-admin#ROOT',
+            visibility: 'private',
+            ownerUserId: 'cross-browser-admin',
+            sharedUserIds: [],
+            sharedGroups: [],
+            managerUserIds: ['cross-browser-admin'],
+            effectivePermission: 'full',
+            detailLevel: 'manager',
+            capabilities: { canRead: true, canManage: true },
+            createdAt: '2026-08-28T00:00:00.000Z',
+            updatedAt: '2026-08-28T00:01:00.000Z'
+          }]
+        }
+      })
+      return
+    }
+
+    await route.fulfill({ json: { migrations: [] } })
+  })
+}
+
+async function installAdminRoutes(page: Page) {
+  await page.route(/http:\/\/127\.0\.0\.1:8787\/admin\/(?:users|roles|audit-log|usage|costs|aliases(?:\/audit-log)?)(?:\?.*)?$/, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.fallback()
+      return
+    }
+
+    const path = new URL(route.request().url()).pathname
+    if (path === '/admin/users') {
+      await route.fulfill({
+        json: {
+          users: [{
+            userId: 'cross-browser-semantic-admin',
+            email: 'cross-browser-semantic-admin@example.com',
+            displayName: 'Cross-browser Semantic Admin',
+            status: 'active',
+            groups: ['SYSTEM_ADMIN'],
+            effectivePermissions: ['admin:users:read'],
+            createdAt: '2026-08-29T00:00:00.000Z',
+            updatedAt: '2026-08-29T00:00:00.000Z',
+            projection: {
+              source: 'authoritative_identity',
+              asOf: '2026-08-29T00:00:00.000Z',
+              reconciliationState: 'current'
+            },
+            capability: {
+              canAssignRoles: false,
+              canSuspend: false,
+              canUnsuspend: false,
+              canDelete: false,
+              blockers: ['self_mutation']
+            }
+          }],
+          total: 1,
+          truncated: false,
+          source: 'authoritative_identity',
+          asOf: '2026-08-29T00:00:00.000Z',
+          version: 'cross-browser-semantic-ledger-v1'
+        }
+      })
+      return
+    }
+
+    if (path === '/admin/roles') {
+      await route.fulfill({
+        json: {
+          roles: [{
+            role: 'SYSTEM_ADMIN',
+            displayName: 'システム管理者',
+            description: 'システム全体の管理を行います。',
+            kind: 'systemPreset',
+            permissions: []
+          }],
+          catalogVersion: 'cross-browser-semantic-role-catalog-v1',
+          source: 'canonical-application-role-catalog',
+          asOf: '2026-08-29T00:00:00.000Z'
+        }
+      })
+      return
+    }
+
+    if (path === '/admin/audit-log') {
+      await route.fulfill({
+        json: {
+          auditLog: [],
+          total: 0,
+          truncated: false,
+          source: 'managed-user-audit-ledger',
+          asOf: '2026-08-29T00:00:00.000Z'
+        }
+      })
+      return
+    }
+
+    if (path === '/admin/aliases') {
+      await route.fulfill({
+        json: {
+          aliases: [],
+          total: 0,
+          truncated: false,
+          source: 'tenant-alias-ledger',
+          asOf: '2026-08-29T00:00:00.000Z',
+          version: 'cross-browser-semantic-alias-ledger-v1'
+        }
+      })
+      return
+    }
+
+    if (path === '/admin/aliases/audit-log') {
+      await route.fulfill({
+        json: {
+          auditLog: [],
+          total: 0,
+          truncated: false,
+          source: 'tenant-alias-ledger',
+          asOf: '2026-08-29T00:00:00.000Z'
+        }
+      })
+      return
+    }
+
+    await route.fulfill({ json: null })
+  })
+}
+
+async function installHistoryRoute(page: Page) {
+  await page.route(/http:\/\/127\.0\.0\.1:8787\/conversation-history$/, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.fallback()
+      return
+    }
+
+    await route.fulfill({
+      json: {
+        history: [{
+          schemaVersion: 1,
+          id: 'cross-browser-semantic-history-1',
+          title: '履歴のcross-browser semantic証跡',
+          updatedAt: '2026-08-30T00:00:00.000Z',
+          isFavorite: false,
+          messages: [{
+            role: 'user',
+            text: '履歴画面の意味構造をFirefoxとWebKitで確認する',
+            createdAt: '2026-08-30T00:00:00.000Z'
+          }]
+        }]
+      }
+    })
+  })
+}
+
+async function installFavoritesRoute(page: Page) {
+  await page.route(/http:\/\/127\.0\.0\.1:8787\/favorites$/, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.fallback()
+      return
+    }
+
+    await route.fulfill({
+      json: {
+        favorites: [
+          {
+            favoriteId: 'cross-browser-semantic-favorite-chat',
+            targetType: 'chatSession',
+            targetId: 'cross-browser-semantic-conversation-1',
+            label: 'お気に入りのcross-browser semantic会話',
+            accessible: true,
+            createdAt: '2026-08-31T00:00:00.000Z',
+            updatedAt: '2026-08-31T00:00:00.000Z'
+          },
+          {
+            favoriteId: 'cross-browser-semantic-favorite-document',
+            targetType: 'document',
+            targetId: 'cross-browser-semantic-document-1',
+            label: 'お気に入りのcross-browser semantic文書',
+            accessible: false,
+            createdAt: '2026-08-31T00:00:00.000Z',
+            updatedAt: '2026-08-31T00:00:00.000Z'
+          }
+        ]
+      }
+    })
+  })
+}
+
+async function installBenchmarkRoutes(page: Page) {
+  await page.route(/http:\/\/127\.0\.0\.1:8787\/benchmark-suites(?:\?.*)?$/, async (route) => {
+    await route.fulfill({
+      json: {
+        suites: [{
+          suiteId: 'standard-agent-v1',
+          label: 'Agent standard',
+          mode: 'agent',
+          datasetS3Key: 'datasets/agent/standard-v1.jsonl',
+          preset: 'standard',
+          defaultConcurrency: 1
+        }]
+      }
+    })
+  })
+
+  await page.route(/http:\/\/127\.0\.0\.1:8787\/benchmark-runs(?:\?.*)?$/, async (route) => {
+    await route.fulfill({
+      json: {
+        benchmarkRuns: [{
+          runId: 'cross-browser-semantic-benchmark-1',
+          suiteId: 'standard-agent-v1',
+          status: 'succeeded',
+          mode: 'agent',
+          runner: 'codebuild',
+          modelId: 'amazon.nova-lite-v1:0',
+          datasetS3Key: 'datasets/agent/standard-v1.jsonl',
+          createdBy: 'cross-browser-semantic-admin',
+          createdAt: '2026-09-01T00:00:00.000Z',
+          updatedAt: '2026-09-01T00:01:00.000Z',
+          startedAt: '2026-09-01T00:00:00.000Z',
+          completedAt: '2026-09-01T00:01:00.000Z',
+          metrics: { p50LatencyMs: 850, p95LatencyMs: 1400, answerableAccuracy: 0.92, retrievalRecallAt20: 0.88 }
+        }]
+      }
+    })
+  })
+}
+
+async function signIn(page: Page) {
+  await page.getByRole('textbox', { name: 'メールアドレス', exact: true }).fill('cross-browser-semantic@example.com')
+  await page.getByRole('textbox', { name: 'パスワード', exact: true }).fill('LocalPassword123!')
+  await page.getByRole('button', { name: 'サインイン', exact: true }).click()
+  await expect(page.getByRole('region', { name: 'チャット', exact: true })).toBeVisible()
+}
+
+async function expectAriaSnapshot(
+  locator: Locator,
+  testInfo: TestInfo,
+  evidenceId: string,
+  label: string,
+  expected: string
+) {
+  await expect(locator).toMatchAriaSnapshot(expected)
+  await attachSemanticEvidence(locator, testInfo, evidenceId, label, {})
+}
+
+async function attachSemanticEvidence(
+  locator: Locator,
+  testInfo: TestInfo,
+  evidenceId: string,
+  label: string,
+  state: Record<string, string | number | null>
+) {
+  const snapshot = await locator.ariaSnapshot()
+  const project = testInfo.project.name
+  await testInfo.attach(`${label}-${project}-aria-snapshot.yml`, {
+    body: Buffer.from(`${snapshot}\n`, 'utf8'),
+    contentType: 'application/yaml'
+  })
+  await testInfo.attach(`${label}-${project}-semantic-state.json`, {
+    body: Buffer.from(`${JSON.stringify({
+      evidenceId,
+      project,
+      boundary: 'Playwright ARIA snapshot plus DOM ARIA state evidence; not native browser AX-tree debug output or representative screen-reader evidence',
+      state
+    }, null, 2)}\n`, 'utf8'),
+    contentType: 'application/json'
+  })
+}

@@ -615,6 +615,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       latestMessageRef,
       currentUser,
       loading,
+      canCreateChat,
       canAsk,
       canWriteDocuments,
       modelId,
@@ -869,7 +870,7 @@ export function publicSafeUiError(value: string): string {
   const compact = value.replace(/\s+/g, " ").trim()
   const generic = "処理を完了できませんでした。入力内容と権限を確認して、もう一度お試しください。"
   if (!compact || compact.length > 240) return generic
-  if (/[{}<>]|(?:arn:|s3:\/\/|request.?id|stack|exception|traceback|select\s+.+\s+from|\bat\s+\S+\s*\()/i.test(compact)) return generic
+  if (/[{}<>]|(?:arn:|s3:\/\/|request.?id|stack|exception|traceback|internal server error|select\s+.+\s+from|\bat\s+\S+\s*\()/i.test(compact)) return generic
   return compact
 }
 

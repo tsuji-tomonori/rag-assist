@@ -22,7 +22,7 @@
   gap: 10px;
 }
 
-.history-toolbar input,
+.history-toolbar input[type="search"],
 .history-toolbar select {
   width: 100%;
   min-height: 38px;
@@ -32,6 +32,15 @@
   color: var(--color-text);
   background: var(--color-surface);
   font-weight: 700;
+}
+
+.assignee-workspace:is([aria-label="履歴"], [aria-label="お気に入り"]) .assignee-header button:focus-visible,
+.history-toolbar input:focus-visible,
+.history-toolbar select:focus-visible,
+.favorite-filter input:focus-visible,
+.history-item button:focus-visible {
+  outline: 3px solid #143f8f;
+  outline-offset: 2px;
 }
 
 .favorite-filter {
