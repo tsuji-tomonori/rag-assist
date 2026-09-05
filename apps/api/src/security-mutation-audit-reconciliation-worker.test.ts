@@ -11,7 +11,9 @@ import {
   type SourceGovernanceRecord
 } from "./rag/offline/pre-retrieval/admission/source-governance-approval-service.js"
 import {
-  createSecurityMutationAuditReconciliationHandler
+  createSecurityMutationAuditReconciliationHandler,
+  createBoundedSecurityMutationAuditReconciliationHandler,
+  createCostPrioritySecurityMutationAuditReconciliationHandler
 } from "./security-mutation-audit-reconciliation-worker.js"
 import {
   ObjectStoreSecurityMutationAuditOutbox,
@@ -307,6 +309,61 @@ test("FR-086 transient audit completion failure records a safe retry code and la
   const completed = await reconciler.reconcileTenant("tenant-1")
   assert.equal(completed.completed, 1)
   assert.equal((await outbox.get("tenant-1", intent.intentId)).status, "completed")
+})
+
+
+test("bounded production composition completes only the requested source intent without LIST", async () => {
+  const store = new VersionedMemoryObjectStore()
+  const outbox = new ObjectStoreSecurityMutationAuditOutbox(store, sequenceClock())
+  const before = sourceRecord("bounded-source", "unreviewed", 1)
+  const prepare = (id: string) => outbox.prepare({
+    actorId: "reviewer-1", tenantId: "tenant-1", targetType: "source", targetId: id,
+    operation: "source_governance.approve_publish", before: sourceGovernanceAuditValue(before),
+    proposedAfter: { status: "published" }, reason: "reviewed", policyVersion: "source-governance-approval-v1"
+  })
+  const target = await prepare(before.sourceId)
+  const untouched = await prepare("another-source")
+  await putSourceRecord(store, sourceRecord(before.sourceId, "published", 2, target.intentId))
+  store.listKeys = async () => { throw new Error("LIST is forbidden in bounded repair") }
+  let constructed = 0
+  const handler = createBoundedSecurityMutationAuditReconciliationHandler({
+    authorizedTenantId: "tenant-1",
+    createDependencies: () => {
+      constructed += 1
+      return {
+        objectStore: store, securityAuditReconciliationOutbox: outbox,
+        verifiedIdentityProvider: {}, groupMembershipStore: {}, userGroupStore: {}, folderPolicyStore: {}, documentGroupStore: {}
+      } as never
+    }
+  })
+  await assert.rejects(handler({ tenantId: "other", intentIds: [target.intentId] }), /not authorized/)
+  await assert.rejects(handler({ tenantId: "tenant-1", intentIds: [] }), /unique intent IDs/)
+  assert.equal(constructed, 0)
+  const result = await handler({ tenantId: "tenant-1", intentIds: [target.intentId] })
+  assert.equal(result.completed, 1)
+  assert.equal(result.scanned, 1)
+  assert.equal((await outbox.get("tenant-1", target.intentId)).status, "completed")
+  assert.equal((await outbox.get("tenant-1", untouched.intentId)).status, "pending")
+  assert.equal((await handler({ tenantId: "tenant-1", intentIds: [target.intentId] })).completed, 0)
+})
+
+
+test("bounded composition fails closed when audit or identity dependencies are missing", async () => {
+  for (const [deps, message] of [
+    [{}, /outbox is not configured/],
+    [{ securityAuditReconciliationOutbox: {} }, /identity provider is not configured/]
+  ] as const) {
+    const handler = createBoundedSecurityMutationAuditReconciliationHandler({
+      authorizedTenantId: "tenant-1", createDependencies: () => deps as never
+    })
+    await assert.rejects(handler({ tenantId: "tenant-1", intentIds: ["intent-1"] }), message)
+  }
+})
+
+test("default cost-priority audit consumer performs zero repair and still enforces the tenant", async () => {
+  const handler = createCostPrioritySecurityMutationAuditReconciliationHandler("tenant-1")
+  assert.deepEqual(await handler({ tenantId: "tenant-1" }), { tenantId: "tenant-1", scanned: 0, completed: 0, repaired: 0 })
+  await assert.rejects(handler({ tenantId: "tenant-2" }), /not authorized/)
 })
 
 function sourceRecord(

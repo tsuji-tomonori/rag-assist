@@ -22,6 +22,13 @@ export function estimate(workload, price = rates, usdJpy = 150) {
   for (const [key, value] of Object.entries(workload)) {
     if (key !== 'name' && (!Number.isFinite(value) || value < 0)) throw new Error(`Invalid workload: ${key}`)
   }
+  for (const key of Object.keys(scenarios[0])) {
+    if (key !== 'name' && (!Number.isFinite(workload[key]) || workload[key] < 0)) throw new Error(`Missing or invalid workload: ${key}`)
+  }
+  for (const key of Object.keys(rates)) {
+    if (!Number.isFinite(price[key]) || price[key] < 0) throw new Error(`Missing or invalid rate: ${key}`)
+  }
+  if (workload.vectors > 100000) throw new Error('This estimate requires at most 100000 vectors; model additional query tiers explicitly')
   if (!Number.isFinite(usdJpy) || usdJpy <= 0) throw new Error('Invalid exchange assumption')
   const q = workload.questions
   const vectorGb = workload.vectors * 6.17 * 1024 / 2 ** 30

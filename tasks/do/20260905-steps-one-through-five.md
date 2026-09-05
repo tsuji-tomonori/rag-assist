@@ -12,14 +12,14 @@ confirmed: 長期PRの未収束、履歴version世代差、wildcard CORS、UI検
 ## 受け入れ条件
 
 - [ ] UIを3ブラウザで検証し実overflow検出を保持
-- [ ] 履歴欠落/v1/v2/v3 read、v3 write、情報保持、unknown拒否、read時writeなし
+- [x] 履歴欠落/v1/v2/v3 read、v3 write、情報保持、unknown拒否、read時writeなし
 - [ ] CloudFront単一入口・PKCE・CORS・WSチケットの認可境界を検証
 - [ ] 共通UI・評価指標・監査の契約を収束
 - [ ] 責務分割・残機能・運用受入をAC単位で評価
-- [ ] SQ-015の定期scan無効を保持
+- [x] SQ-015の定期scan無効を保持
 - [ ] 正本と生成文書を同期しCI相当を検証
-- [ ] AWS利用量・単価・固定/変動費・無料枠・税・為替を明示
-- [ ] PR作成、受入確認・セルフレビューを記載
+- [x] AWS利用量・単価・固定/変動費・無料枠・税・為替を明示
+- [x] PR作成、受入確認・セルフレビューを記載
 
 ## 検証計画
 
@@ -28,3 +28,7 @@ targeted contract/API/Web/infra/benchmark → 全体CI/docs/3-browser E2E。実A
 ## 復旧
 
 作業ディレクトリ消失後、専用cloneへ既存PR差分を再適用。失われたローカルcommitを実装復元し再検証する。検証ログは/tmpに残存。
+
+## PR・最終確認
+
+PR #470 (Draft)、semver:minor、受入確認・セルフレビューcomment済み。詳細は`reports/working/20260905-2350-requirements-completion.md`。FR-050/FR-051、TC-003 query/subprotocolの正本整合、実機/実AWS受入が残るためdoを維持する。

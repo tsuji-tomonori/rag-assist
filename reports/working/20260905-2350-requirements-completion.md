@@ -50,3 +50,16 @@ confirmed: 長期PRの競合を現mainに統合し、認可・signup・SQ-015費
 ## Fit評価
 
 ステップ1–4の統合実装とステップ5の責務分割・費用試算を作成した。ただしFR-050/FR-051と実環境受入を残しているため「ステップ5まで全完了」という依頼には未達。PRはDraft、taskはdoに置き、未達を分かる状態にする。
+
+
+## 最終検証の追記
+
+- GitHub PR: https://github.com/tsuji-tomonori/rag-assist/pull/470 （Draft、semver:minor）。受入確認・セルフレビューcommentを作成した。
+- head fd9deb35: required Firefox/WebKit gateは成功。Chromiumは41件中40件pass、benchmark workspaceの視覚baseline1件のみ差分。artifact 9971489523のexpected/actual/diffを目視し、成果物状態の追加による表列幅・折返し差分を確認した。retry1とactualがbyte一致することを確認し、この1枚だけを同期。許容差や検査対象は変更していない。
+- API全体は1,044件中1,043件pass。残る質問本人境界testのtsx IPC起動だけを`node --import tsx`へ揃え、本人/第三者/管理者/回答担当の実HTTP testがpassした。
+- infra全体58件、Web意味トレース・semantic contract18件、費用計算3件pass。廃止ConfirmDialogの静的参照先を共有UIへ同期し、旧ファイル不在を検査。
+- 全workspace build、lint/typecheck、docs validator、Web/infra inventory freshnessはpass。
+- mainとCDK snapshot比較で既存S3/DynamoDB/Cognito UserPoolの削除0・設定変更0。追加はWebSocketConnectionsTableとWebSocketTicketsTableのみ。実deploy差分ではなくsynth比較である。
+- conflict: TC-003 AC-005/008/037はquery ticket転送を記載するが、統合した実装はquery文字列のログ漏えい回避のためSec-WebSocket-Protocol経由でticketを渡し、queryを転送しない。正本を実装に合わせて無断で書き換えず、設計の採否と実ブラウザ接続受入を未達として残す。
+
+- GitHub CIではAPI1,044件全件pass、Web473件pass。ただしAPI statement/line coverageが89.95%で90% gate未達。閾値を下げず、監査workerの本番compositionを注入可能に分離し、明示IDだけのfinalization、未指定intentの保持、tenant検査前の依存構築禁止、欠落依存の拒否、既定zero repairを追加検証する。
