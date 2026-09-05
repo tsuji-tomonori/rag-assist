@@ -1,4 +1,4 @@
-import { expect, type Page, type TestInfo, test } from '@playwright/test'
+import { expect, type Page, type Route, type TestInfo, test } from '@playwright/test'
 
 const privateHistoryDetail = 'RequestId: private-history-id at InternalHistory (/srv/history.ts:10)'
 
@@ -397,6 +397,163 @@ test('E2E-UI-CROSS-BROWSER-STATE-004: favorites HTTP 403をemptyではなくperm
   })
 })
 
+test('E2E-UI-CROSS-BROWSER-STATE-006: admin loading・partial・retry・recoveryを区別する @ui-quality', async ({ page }, testInfo) => {
+  let auditReads = 0
+  let releaseFirstAuditRead: () => void = () => undefined
+  let releaseRetryAuditRead: () => void = () => undefined
+  const firstAuditReadGate = new Promise<void>((resolve) => { releaseFirstAuditRead = resolve })
+  const retryAuditReadGate = new Promise<void>((resolve) => { releaseRetryAuditRead = resolve })
+
+  await installAdminStateRoutes(page, {
+    async audit(route) {
+      auditReads += 1
+      if (auditReads === 1) {
+        await firstAuditReadGate
+        await route.fulfill({
+          status: 500,
+          contentType: 'text/plain',
+          body: 'RequestId: private-admin-audit-id at AuditStore (/srv/admin/audit.ts:17)'
+        })
+        return
+      }
+      await retryAuditReadGate
+      await fulfillAdminAudit(route)
+    }
+  })
+
+  await signIn(page)
+  await page.getByTitle('管理者設定').click()
+
+  const admin = page.getByRole('region', { name: '管理者設定', exact: true })
+  const resource = page.locator('#admin-resource-region')
+  await expect(resource).toHaveAttribute('aria-busy', 'true')
+  await expect(admin).toContainText('管理者設定を読み込んでいます')
+  await expect(admin).not.toContainText('0 件')
+
+  releaseFirstAuditRead()
+  const partial = admin.locator('[data-state-kind="partial"]')
+  await expect(partial).toHaveAttribute('role', 'status')
+  await expect(partial).toHaveAttribute('aria-live', 'polite')
+  await expect(partial).toContainText('管理者設定の一部を取得できませんでした')
+  await expect(partial).toContainText('取得済み')
+  await expect(partial).toContainText('管理対象ユーザー')
+  await expect(partial).toContainText('未更新')
+  await expect(partial).toContainText('管理操作履歴')
+  await expect(partial).not.toContainText('private-admin-audit-id')
+  await expect(admin).toContainText('Cross-browser State Admin')
+  await expect(admin).not.toContainText('role:assign')
+
+  await partial.getByRole('button', { name: '失敗した項目を再試行' }).click()
+  await expect(resource).toHaveAttribute('aria-busy', 'true')
+  await expect(admin.locator('[data-state-kind="retrying"]')).toContainText('管理者設定を再試行しています')
+  await expect(admin).toContainText('Cross-browser State Admin')
+  await expect(admin).not.toContainText('private-admin-audit-id')
+
+  releaseRetryAuditRead()
+  await expect(admin.locator('[data-state-kind="recovered"]')).toContainText('管理者設定を更新しました')
+  await expect(resource).not.toHaveAttribute('aria-busy')
+  await expect(admin).toContainText('role:assign')
+  expect(auditReads).toBe(2)
+
+  await attachStateEvidence(testInfo, 'E2E-UI-CROSS-BROWSER-STATE-006', 'admin', 'loading-partial-retry-recovery', {
+    auditReads,
+    sequence: ['loading', 'partial', 'retrying', 'recovered'],
+    successfulUserDataPreserved: true,
+    falseZeroExposedBeforeConfirmation: false,
+    privateDetailExposed: false
+  })
+})
+
+test('E2E-UI-CROSS-BROWSER-STATE-006: admin refresh failureはsource・as-of付きstale dataを保持して回復する @ui-quality', async ({ page }, testInfo) => {
+  let userReads = 0
+  let releaseFailedRefresh: () => void = () => undefined
+  let releaseRecoveryRefresh: () => void = () => undefined
+  const failedRefreshGate = new Promise<void>((resolve) => { releaseFailedRefresh = resolve })
+  const recoveryRefreshGate = new Promise<void>((resolve) => { releaseRecoveryRefresh = resolve })
+
+  await installAdminStateRoutes(page, {
+    async users(route) {
+      userReads += 1
+      if (userReads === 2) {
+        await failedRefreshGate
+        await route.fulfill({
+          status: 500,
+          contentType: 'text/plain',
+          body: 'RequestId: private-admin-user-refresh at IdentityProjection (/srv/admin/users.ts:21)'
+        })
+        return
+      }
+      if (userReads === 3) await recoveryRefreshGate
+      await fulfillAdminUsers(route)
+    }
+  })
+
+  await signIn(page)
+  await page.getByTitle('管理者設定').click()
+  const admin = page.getByRole('region', { name: '管理者設定', exact: true })
+  await admin.getByRole('button', { name: 'ユーザー', exact: true }).click()
+  const userPanel = admin.getByRole('region', { name: 'ユーザー管理一覧', exact: true })
+  const refresh = userPanel.getByRole('button', { name: '管理対象ユーザーを更新', exact: true })
+  await expect(admin).toContainText('Cross-browser State Admin')
+
+  await refresh.click()
+  await expect(page.locator('#admin-resource-region')).toHaveAttribute('aria-busy', 'true')
+  releaseFailedRefresh()
+
+  const partial = admin.locator('[data-state-kind="partial"]')
+  await expect(partial).toContainText('管理者設定の一部を取得できませんでした')
+  await expect(partial).not.toContainText('private-admin-user-refresh')
+  const userDataStatus = userPanel.getByRole('status')
+  await expect(userDataStatus).toContainText('取得元: authoritative_identity')
+  await expect(userDataStatus).toContainText('最新情報の取得に失敗したため、最後に確認できた内容です。')
+  await expect(userDataStatus.locator('time')).toHaveAttribute('dateTime', '2026-09-06T00:00:00.000Z')
+  await expect(admin).toContainText('Cross-browser State Admin')
+
+  await refresh.click()
+  await expect(page.locator('#admin-resource-region')).toHaveAttribute('aria-busy', 'true')
+  await expect(admin.locator('[data-state-kind="retrying"]')).toContainText('管理者設定を再試行しています')
+  await expect(admin).toContainText('Cross-browser State Admin')
+  releaseRecoveryRefresh()
+
+  await expect(admin.locator('[data-state-kind="recovered"]')).toContainText('管理者設定を更新しました')
+  await expect(admin).toContainText('Cross-browser State Admin')
+  expect(userReads).toBe(3)
+
+  await attachStateEvidence(testInfo, 'E2E-UI-CROSS-BROWSER-STATE-006', 'admin', 'stale-source-as-of-recovery', {
+    userReads,
+    sequence: ['confirmed', 'refreshing', 'partial-stale', 'retrying', 'recovered'],
+    source: 'authoritative_identity',
+    asOf: '2026-09-06T00:00:00.000Z',
+    confirmedUserPreserved: true,
+    privateDetailExposed: false
+  })
+})
+
+test('E2E-UI-CROSS-BROWSER-STATE-006: admin権限不足deep linkはpermissionを表示しprotected requestを発行しない @ui-quality', async ({ page }, testInfo) => {
+  await installCurrentUserPermissions(page, ['chat:create', 'chat:read:own'])
+  const protectedRequests: string[] = []
+  page.on('request', (request) => {
+    const pathname = new URL(request.url()).pathname
+    if (pathname.startsWith('/admin/')) protectedRequests.push(pathname)
+  })
+
+  await signIn(page)
+  await page.goto('/?view=admin')
+
+  const permission = page.getByRole('alert')
+  await expect(permission).toContainText('表示する権限を確認できなかった')
+  await expect(page.getByRole('region', { name: 'チャット', exact: true })).toBeVisible()
+  await expect(page).toHaveURL(/\/$/)
+  expect(protectedRequests).toEqual([])
+
+  await attachStateEvidence(testInfo, 'E2E-UI-CROSS-BROWSER-STATE-006', 'admin', 'permission-deep-link', {
+    sequence: ['denied-deep-link', 'permission', 'canonical-chat'],
+    protectedRequests: protectedRequests.length,
+    permissionAlertVisible: true,
+    canonicalizedToAllowedView: true
+  })
+})
+
 test('E2E-UI-CROSS-BROWSER-STATE-005: chat initial・processing・SSE timeout・retry・recoveryを区別する @ui-quality', async ({ page }, testInfo) => {
   let eventReads = 0
   let retryLastEventId = ''
@@ -540,6 +697,119 @@ async function installCurrentUserPermissions(page: Page, grantedPermissions: str
         }
       }
     })
+  })
+}
+
+type AdminStateRouteOverrides = {
+  users?: (route: Route) => Promise<void>
+  audit?: (route: Route) => Promise<void>
+}
+
+async function installAdminStateRoutes(page: Page, overrides: AdminStateRouteOverrides = {}) {
+  await page.route(/http:\/\/127\.0\.0\.1:8787\/admin\/(?:users|roles|audit-log|usage|costs|aliases(?:\/audit-log)?)(?:\?.*)?$/, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.fallback()
+      return
+    }
+
+    const path = new URL(route.request().url()).pathname
+    if (path === '/admin/users') {
+      if (overrides.users) await overrides.users(route)
+      else await fulfillAdminUsers(route)
+      return
+    }
+    if (path === '/admin/audit-log') {
+      if (overrides.audit) await overrides.audit(route)
+      else await fulfillAdminAudit(route)
+      return
+    }
+    if (path === '/admin/roles') {
+      await route.fulfill({
+        json: {
+          roles: [{ role: 'SYSTEM_ADMIN', displayName: 'システム管理者', description: 'システム全体の管理を行います。', kind: 'systemPreset', permissions: [] }],
+          catalogVersion: 'cross-browser-state-role-catalog-v1',
+          source: 'canonical-application-role-catalog',
+          asOf: '2026-09-06T00:00:00.000Z'
+        }
+      })
+      return
+    }
+    if (path === '/admin/aliases') {
+      await route.fulfill({ json: { aliases: [], total: 0, truncated: false, source: 'tenant-alias-ledger', asOf: '2026-09-06T00:00:00.000Z', version: 'cross-browser-state-alias-ledger-v1' } })
+      return
+    }
+    if (path === '/admin/aliases/audit-log') {
+      await route.fulfill({ json: { auditLog: [], total: 0, truncated: false, source: 'tenant-alias-ledger', asOf: '2026-09-06T00:00:00.000Z' } })
+      return
+    }
+    if (path === '/admin/usage') {
+      await route.fulfill({ json: { users: [] } })
+      return
+    }
+    await route.fulfill({
+      json: {
+        available: true,
+        periodStart: '2026-09-01T00:00:00.000Z',
+        periodEnd: '2026-09-06T00:00:00.000Z',
+        currency: 'USD',
+        totalEstimatedUsd: 0,
+        pricingCatalogUpdatedAt: '2026-09-06T00:00:00.000Z',
+        users: [],
+        items: []
+      }
+    })
+  })
+}
+
+async function fulfillAdminUsers(route: Route) {
+  await route.fulfill({
+    json: {
+      users: [{
+        userId: 'cross-browser-state-admin',
+        email: 'cross-browser-state-admin@example.com',
+        displayName: 'Cross-browser State Admin',
+        status: 'active',
+        groups: ['SYSTEM_ADMIN'],
+        effectivePermissions: ['user:read'],
+        createdAt: '2026-09-06T00:00:00.000Z',
+        updatedAt: '2026-09-06T00:00:00.000Z',
+        projection: { source: 'authoritative_identity', asOf: '2026-09-06T00:00:00.000Z', reconciliationState: 'current' },
+        capability: { canAssignRoles: false, canSuspend: false, canUnsuspend: false, canDelete: false, blockers: ['self_mutation'] }
+      }],
+      total: 1,
+      truncated: false,
+      source: 'authoritative_identity',
+      asOf: '2026-09-06T00:00:00.000Z',
+      version: 'cross-browser-state-user-ledger-v1'
+    }
+  })
+}
+
+async function fulfillAdminAudit(route: Route) {
+  await route.fulfill({
+    json: {
+      auditLog: [{
+        auditId: 'cross-browser-state-audit-1',
+        action: 'role:assign',
+        result: 'success',
+        reason: '横断ブラウザ状態検証',
+        tenantId: 'local-e2e',
+        targetType: 'applicationRolePrincipal',
+        actorUserId: 'cross-browser-state-admin',
+        actorEmail: 'cross-browser-state-admin@example.com',
+        targetUserId: 'cross-browser-state-admin',
+        targetEmail: 'cross-browser-state-admin@example.com',
+        policyVersion: 'cross-browser-state-role-catalog-v1',
+        source: 'security_audit_outbox',
+        beforeGroups: ['CHAT_USER'],
+        afterGroups: ['SYSTEM_ADMIN'],
+        createdAt: '2026-09-06T00:00:00.000Z'
+      }],
+      total: 1,
+      truncated: false,
+      source: 'managed-user-audit-ledger',
+      asOf: '2026-09-06T00:00:00.000Z'
+    }
   })
 }
 

@@ -198,7 +198,7 @@
         "AC-SQ016-004": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "muted foreground remediation後、1280px axe serious/critical blocker 0。manual contrast reviewは未実施" },
         "AC-SQ016-005": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "4 viewportで24px minimumと44px primary targetの未解決candidate 0。manual touch evidenceは未実施" },
         "AC-SQ016-006": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "4 viewportのreduced-motion computed auditはpass。orientation / safe-area / virtual-keyboard実機は未検証" },
-        "AC-SQ016-007": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "required E2E-UI-STATE-001でpartial/stale/source/as-of/retry recoveryを区別し、成功dataを保持する。manual evidenceは未実施" },
+        "AC-SQ016-007": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "required E2E-UI-STATE-001に加え、Chromium／Firefox／WebKit required E2E-UI-CROSS-BROWSER-STATE-006でloading→監査取得500によるpartial→retry→recovery、ユーザー更新失敗時のsource・as-of付きstale data保持、権限不足deep linkのpermissionとprotected request抑止を検証し、成功part／確認済みdataを保持してfalse zeroとprivate detail露出を防ぐ。manual evidenceは未実施" },
         "AC-SQ016-008": { "automated": "not_applicable", "manual": "blocked", "overall": "blocked", "note": "manual required scopeは未実施" }
       }
     },
