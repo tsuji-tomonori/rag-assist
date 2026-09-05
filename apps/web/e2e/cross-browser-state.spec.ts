@@ -400,7 +400,9 @@ test('E2E-UI-CROSS-BROWSER-STATE-004: favorites HTTP 403をemptyではなくperm
 test('E2E-UI-CROSS-BROWSER-STATE-005: chat initial・processing・SSE timeout・retry・recoveryを区別する @ui-quality', async ({ page }, testInfo) => {
   let eventReads = 0
   let retryLastEventId = ''
+  let releaseTimeout: () => void = () => undefined
   let releaseRetry: () => void = () => undefined
+  const timeoutGate = new Promise<void>((resolve) => { releaseTimeout = resolve })
   const retryGate = new Promise<void>((resolve) => { releaseRetry = resolve })
 
   await page.route(/http:\/\/127\.0\.0\.1:8787\/rpc\/chat\/startRun$/, async (route) => {
@@ -417,6 +419,7 @@ test('E2E-UI-CROSS-BROWSER-STATE-005: chat initial・processing・SSE timeout・
   await page.route(/http:\/\/127\.0\.0\.1:8787\/chat-runs\/cross-browser-chat-state-run\/events$/, async (route) => {
     eventReads += 1
     if (eventReads === 1) {
+      await timeoutGate
       await route.fulfill({
         contentType: 'text/event-stream',
         body: 'id: 3\nevent: timeout\ndata: {"message":"stream timeout"}\n\n'
@@ -443,6 +446,7 @@ test('E2E-UI-CROSS-BROWSER-STATE-005: chat initial・processing・SSE timeout・
   await expect(chat).toHaveAttribute('aria-busy', 'true')
   await expect(chat.locator('.processing-row')).toContainText('回答を生成中')
   await expect(chat.getByRole('button', { name: '質問を送信' })).toBeDisabled()
+  releaseTimeout()
   await expect(chat.locator('.processing-row')).toContainText('処理が続いています。再接続しています')
   await expect(chat).toHaveAttribute('aria-busy', 'true')
 
