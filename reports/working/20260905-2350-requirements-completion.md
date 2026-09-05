@@ -63,3 +63,5 @@ confirmed: 長期PRの競合を現mainに統合し、認可・signup・SQ-015費
 - conflict: TC-003 AC-005/008/037はquery ticket転送を記載するが、統合した実装はquery文字列のログ漏えい回避のためSec-WebSocket-Protocol経由でticketを渡し、queryを転送しない。正本を実装に合わせて無断で書き換えず、設計の採否と実ブラウザ接続受入を未達として残す。
 
 - GitHub CIではAPI1,044件全件pass、Web473件pass。ただしAPI statement/line coverageが89.95%で90% gate未達。閾値を下げず、監査workerの本番compositionを注入可能に分離し、明示IDだけのfinalization、未指定intentの保持、tenant検査前の依存構築禁止、欠落依存の拒否、既定zero repairを追加検証する。
+
+- head 5f3383c1でChromium41件・Firefox/WebKit50件のrequired gate全件pass。API1,047件全件pass、coverage89.94%のみ未達。追加で監査保存状態の破損/偽装、retry方針変更、session証拠のexpiry/重複/上限、実WS入口のAWSアクセス前拒否を検証。coverage-summary artifactを保存するCI手順を追加し、閾値90%を維持した。

@@ -158,6 +158,15 @@ jobs:
           exit "$api_test_status"
         continue-on-error: true
 
+      - name: Upload API coverage summary
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: memorag-api-coverage-${{ github.run_attempt }}
+          path: apps/api/coverage/coverage-summary.json
+          if-no-files-found: warn
+          retention-days: 14
+
       - name: Test web with coverage
         id: web_test
         run: |

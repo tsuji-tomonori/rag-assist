@@ -60,3 +60,20 @@ test("unknown versions cannot be read or silently promoted", () => {
     assert.throws(() => normalizeConversationHistoryInput({ ...base, schemaVersion } as never), /Unsupported/)
   }
 })
+
+
+test("v3 writes bound session evidence and preserve revocation while expiring active references", () => {
+  const reference = { temporaryScopeId: "expired", fileName: "temporary.pdf", status: "active" as const,
+    expiresAt: "2020-01-01T00:00:00.000Z", updatedAt: "2020-01-01T00:00:00.000Z" }
+  const input = { ...base, sessionDocumentContext: { ...base.sessionDocumentContext, temporaryEvidence: [
+    reference, reference, { ...reference, temporaryScopeId: "revoked", status: "revoked" as const },
+    ...Array.from({ length: 25 }, (_, i) => ({ ...reference, temporaryScopeId: `future-${i}`, expiresAt: "2099-01-01T00:00:00.000Z" }))
+  ] } }
+  const saved = normalizeConversationHistoryInput(input)
+  assert.equal(saved.sessionDocumentContext?.temporaryEvidence.length, 20)
+  assert.equal(saved.sessionDocumentContext?.temporaryEvidence[0]?.status, "expired")
+  assert.equal(saved.sessionDocumentContext?.temporaryEvidence[1]?.status, "revoked")
+  assert.equal(saved.sessionDocumentContext?.temporaryEvidence[2]?.status, "active")
+  assert.equal(input.sessionDocumentContext.temporaryEvidence[0]?.status, "active")
+  assert.throws(() => normalizeConversationHistoryInput({ ...input, id: "another-session" }), /must match/)
+})

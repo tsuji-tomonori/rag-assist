@@ -344,6 +344,43 @@ test("completed schema-v1 records from the pre-staging writer remain readable an
   )
 })
 
+
+test("persisted audit state rejects malformed JSON and forged finalization evidence", async () => {
+  const store = new LocalObjectStore(await mkdtemp(path.join(tmpdir(), "audit-tamper-")))
+  const outbox = new ObjectStoreSecurityMutationAuditOutbox(store)
+  const pending = await outbox.prepare(draft("tenant-a", "source-a"))
+  const [key] = await store.listKeys("security-audit/intents/tenant-a/")
+  assert.ok(key)
+  const timestamp = "2026-07-17T00:00:00.000Z"
+  const requestedCompletion = { result: "success", after: {}, requestedAt: timestamp }
+  const corruptions = [
+    "{invalid",
+    JSON.stringify({ ...pending, result: "success" }),
+    JSON.stringify({ ...pending, status: "finalization_pending", requestedCompletion, completedAt: timestamp }),
+    JSON.stringify({ ...pending, status: "quarantined", result: "success" }),
+    JSON.stringify({ ...pending, status: "completed", result: "success", after: {} }),
+    JSON.stringify({ ...pending, redriveHistory: [] }),
+    JSON.stringify({ ...pending, reconciliation: { attempts: 1, maxAttempts: 3, lastFailureCode: "audit_completion_failed", lastAttemptedAt: timestamp, quarantinedAt: timestamp } })
+  ]
+  for (const text of corruptions) {
+    await store.putText(key, text)
+    await assert.rejects(outbox.get("tenant-a", pending.intentId), /not valid JSON|final state|already finalized|inconsistent|redrive history is invalid|non-quarantined/)
+    assert.equal(await store.getText(key), text, "reads must not repair or overwrite corrupt evidence")
+  }
+})
+
+test("audit retry policy changes and invalid limits fail before mutation", async () => {
+  const store = new LocalObjectStore(await mkdtemp(path.join(tmpdir(), "audit-policy-")))
+  const outbox = new ObjectStoreSecurityMutationAuditOutbox(store)
+  const pending = await outbox.prepare(draft("tenant-a", "source-a"))
+  for (const limit of [0, 1001, NaN]) await assert.rejects(outbox.listPending("tenant-a", limit), /limit is invalid/)
+  await assert.rejects(outbox.recordReconciliationFailure("tenant-a", pending.intentId, "unknown" as never, 3), /failure code is invalid/)
+  await assert.rejects(outbox.recordReconciliationFailure("tenant-a", pending.intentId, "audit_completion_failed", 101), /attempt limit is invalid/)
+  const retry = await outbox.recordReconciliationFailure("tenant-a", pending.intentId, "audit_completion_failed", 3)
+  await assert.rejects(outbox.recordReconciliationFailure("tenant-a", pending.intentId, "audit_completion_failed", 2), /policy changed/)
+  assert.deepEqual(await outbox.get("tenant-a", pending.intentId), retry)
+})
+
 function draft(tenantId: string, targetId: string) {
   return {
     actorId: "actor-1",
