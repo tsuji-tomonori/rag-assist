@@ -133,7 +133,7 @@
         "AC-SQ016-004": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "required E2E-UI-CONTRAST-001で320 / 1280 CSS pxのchat color-contrast違反0、composerの実computed 3px focus indicator比3:1以上、permission stateの可視text・alert・disabled controlを検証。manual contrast reviewと実browser zoomは未実施" },
         "AC-SQ016-005": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "4 viewportで24px minimumと44px primary targetの未解決candidate 0。manual touch evidenceは未実施" },
         "AC-SQ016-006": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "4 viewportのcomputed auditとChromium／Firefox／WebKit required E2E-UI-LAYOUT-STRESS-001でreduced motion下の長文回答を検証。orientation / safe-area / virtual-keyboard実機は未検証" },
-        "AC-SQ016-007": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "required E2E-UI-STATE-001の初期／処理中／retry／error／permissionに加え、Chromium／Firefox／WebKit required E2E-UI-LAYOUT-STRESS-001で長文回答と長い引用名を検証。manual evidenceは未実施" },
+        "AC-SQ016-007": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "required E2E-UI-STATE-001に加え、Chromium／Firefox／WebKit required E2E-UI-CROSS-BROWSER-STATE-005で初期→処理中→SSE timeout→Last-Event-ID retry→回答回復、HTTP 500の安全なerror、chat:create不足時のpermissionと送信抑止を検証し、E2E-UI-LAYOUT-STRESS-001で長文回答と長い引用名も検証。manual evidenceは未実施" },
         "AC-SQ016-008": { "automated": "not_applicable", "manual": "blocked", "overall": "blocked", "note": "manual required scopeは未実施" }
       }
     },

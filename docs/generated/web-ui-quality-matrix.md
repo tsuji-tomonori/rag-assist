@@ -41,7 +41,7 @@
 | chat | AC-SQ016-004 | pass | blocked | blocked | required E2E-UI-CONTRAST-001で320 / 1280 CSS pxのchat color-contrast違反0、composerの実computed 3px focus indicator比3:1以上、permission stateの可視text・alert・disabled controlを検証。manual contrast reviewと実browser zoomは未実施 |
 | chat | AC-SQ016-005 | pass | blocked | blocked | 4 viewportで24px minimumと44px primary targetの未解決candidate 0。manual touch evidenceは未実施 |
 | chat | AC-SQ016-006 | pass | blocked | blocked | 4 viewportのcomputed auditとChromium／Firefox／WebKit required E2E-UI-LAYOUT-STRESS-001でreduced motion下の長文回答を検証。orientation / safe-area / virtual-keyboard実機は未検証 |
-| chat | AC-SQ016-007 | pass | blocked | blocked | required E2E-UI-STATE-001の初期／処理中／retry／error／permissionに加え、Chromium／Firefox／WebKit required E2E-UI-LAYOUT-STRESS-001で長文回答と長い引用名を検証。manual evidenceは未実施 |
+| chat | AC-SQ016-007 | pass | blocked | blocked | required E2E-UI-STATE-001に加え、Chromium／Firefox／WebKit required E2E-UI-CROSS-BROWSER-STATE-005で初期→処理中→SSE timeout→Last-Event-ID retry→回答回復、HTTP 500の安全なerror、chat:create不足時のpermissionと送信抑止を検証し、E2E-UI-LAYOUT-STRESS-001で長文回答と長い引用名も検証。manual evidenceは未実施 |
 | chat | AC-SQ016-008 | not_applicable | blocked | blocked | manual required scopeは未実施 |
 | assignee | AC-SQ016-001 | pass | blocked | blocked | 4 / 2 / 1 column remediation後、required E2E-UI-ZOOM-REFLOW-001をChromium／Firefox／WebKitの640/320 CSS pxで実行し、到達・root overflow 0を検証。実browser zoomは未検証 |
 | assignee | AC-SQ016-002 | pass | blocked | blocked | required E2E-UI-KEYBOARD-NAV-001をChromium／Firefox／WebKitで実行し、ステータス絞り込み・検索・問い合わせ選択・回答入力・通知切替・一時保持と3px focus indicatorをkeyboard-onlyで検証。manual keyboard journeyは未実施 |

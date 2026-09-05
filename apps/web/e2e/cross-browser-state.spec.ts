@@ -397,6 +397,125 @@ test('E2E-UI-CROSS-BROWSER-STATE-004: favorites HTTP 403をemptyではなくperm
   })
 })
 
+test('E2E-UI-CROSS-BROWSER-STATE-005: chat initial・processing・SSE timeout・retry・recoveryを区別する @ui-quality', async ({ page }, testInfo) => {
+  let eventReads = 0
+  let retryLastEventId = ''
+  let releaseRetry: () => void = () => undefined
+  const retryGate = new Promise<void>((resolve) => { releaseRetry = resolve })
+
+  await page.route(/http:\/\/127\.0\.0\.1:8787\/rpc\/chat\/startRun$/, async (route) => {
+    await route.fulfill({
+      json: {
+        json: {
+          runId: 'cross-browser-chat-state-run',
+          status: 'queued',
+          eventsPath: '/chat-runs/cross-browser-chat-state-run/events'
+        }
+      }
+    })
+  })
+  await page.route(/http:\/\/127\.0\.0\.1:8787\/chat-runs\/cross-browser-chat-state-run\/events$/, async (route) => {
+    eventReads += 1
+    if (eventReads === 1) {
+      await route.fulfill({
+        contentType: 'text/event-stream',
+        body: 'id: 3\nevent: timeout\ndata: {"message":"stream timeout"}\n\n'
+      })
+      return
+    }
+
+    retryLastEventId = route.request().headers()['last-event-id'] ?? ''
+    await retryGate
+    await route.fulfill({
+      contentType: 'text/event-stream',
+      body: 'id: 4\nevent: final\ndata: {"answer":"横断ブラウザで再接続後の回答です。","isAnswerable":true,"citations":[],"retrieved":[]}\n\n'
+    })
+  })
+
+  await signIn(page)
+  const chat = page.getByRole('region', { name: 'チャット', exact: true })
+  await expect(chat.getByRole('region', { name: 'チャット開始' })).toBeVisible()
+  await expect(chat.getByRole('heading', { name: '何を確認しますか？' })).toBeVisible()
+  await expect(chat).toHaveAttribute('aria-busy', 'false')
+
+  await chat.getByRole('textbox', { name: '質問' }).fill('長い処理を横断ブラウザで確認して')
+  await chat.getByRole('button', { name: '質問を送信' }).click()
+  await expect(chat).toHaveAttribute('aria-busy', 'true')
+  await expect(chat.locator('.processing-row')).toContainText('回答を生成中')
+  await expect(chat.getByRole('button', { name: '質問を送信' })).toBeDisabled()
+  await expect(chat.locator('.processing-row')).toContainText('処理が続いています。再接続しています')
+  await expect(chat).toHaveAttribute('aria-busy', 'true')
+
+  await expect.poll(() => eventReads).toBe(2)
+  await expect.poll(() => retryLastEventId).toBe('3')
+  releaseRetry()
+
+  await expect(chat.getByText('横断ブラウザで再接続後の回答です。')).toBeVisible()
+  await expect(chat.locator('.processing-row')).toHaveCount(0)
+  await expect(chat).toHaveAttribute('aria-busy', 'false')
+  await expect(chat.getByRole('textbox', { name: '質問' })).toBeEnabled()
+
+  await attachStateEvidence(testInfo, 'E2E-UI-CROSS-BROWSER-STATE-005', 'chat', 'processing-timeout-retry-recovery', {
+    eventReads,
+    retryLastEventId,
+    sequence: ['initial', 'processing', 'timeout', 'reconnecting', 'recovered-answer'],
+    busyClearedAfterRecovery: true,
+    inputReenabledAfterRecovery: true
+  })
+})
+
+test('E2E-UI-CROSS-BROWSER-STATE-005: chat HTTP 500は安全なerrorを表示しprivate detailを隠す @ui-quality', async ({ page }, testInfo) => {
+  const privateDetail = 'RequestId: private-cross-browser-chat-request at InternalChatService.run()'
+  await page.route(/http:\/\/127\.0\.0\.1:8787\/rpc\/chat\/startRun$/, async (route) => {
+    await route.fulfill({ status: 500, contentType: 'text/plain', body: privateDetail })
+  })
+
+  await signIn(page)
+  const chat = page.getByRole('region', { name: 'チャット', exact: true })
+  await chat.getByRole('textbox', { name: '質問' }).fill('横断ブラウザで失敗時の表示を確認して')
+  await chat.getByRole('button', { name: '質問を送信' }).click()
+
+  const error = page.locator('[data-state-target="chat"][data-state-kind="error"]')
+  await expect(error).toHaveAttribute('role', 'alert')
+  await expect(error).toContainText('処理を完了できませんでした')
+  await expect(error).not.toContainText(privateDetail)
+  await expect(chat.getByText('private-cross-browser-chat-request')).toHaveCount(0)
+  await expect(chat).toHaveAttribute('aria-busy', 'false')
+
+  await attachStateEvidence(testInfo, 'E2E-UI-CROSS-BROWSER-STATE-005', 'chat', 'safe-error', {
+    sequence: ['processing', 'error'],
+    busyClearedAfterError: true,
+    privateDetailExposed: false
+  })
+})
+
+test('E2E-UI-CROSS-BROWSER-STATE-005: chat:create不足はpermissionを表示し送信requestを発行しない @ui-quality', async ({ page }, testInfo) => {
+  await installCurrentUserPermissions(page, ['chat:read:own'])
+  const chatStarts: string[] = []
+  page.on('request', (request) => {
+    if (new URL(request.url()).pathname === '/rpc/chat/startRun') chatStarts.push(request.method())
+  })
+
+  await signIn(page)
+  const chat = page.getByRole('region', { name: 'チャット', exact: true })
+  const permission = chat.getByRole('alert')
+  await expect(permission).toContainText('質問を送信する権限がありません')
+  await expect(chat.getByRole('button', { name: '質問を送信' })).toBeDisabled()
+
+  const question = chat.getByRole('textbox', { name: '質問' })
+  await question.fill('権限なしでは横断ブラウザでも送信しない')
+  await question.press('Enter')
+  await expect(chat.getByRole('button', { name: '質問を送信' })).toBeDisabled()
+  expect(chatStarts).toEqual([])
+
+  await attachStateEvidence(testInfo, 'E2E-UI-CROSS-BROWSER-STATE-005', 'chat', 'permission', {
+    sequence: ['permission', 'blocked-submit'],
+    startRequests: chatStarts.length,
+    permissionAlertVisible: true,
+    submitDisabled: true
+  })
+})
+
 async function signIn(page: Page) {
   await page.goto('/')
   await page.getByPlaceholder('メールアドレスを入力').fill('local@example.com')
@@ -405,12 +524,27 @@ async function signIn(page: Page) {
   await expect(page.getByRole('region', { name: 'チャット', exact: true })).toBeVisible()
 }
 
+async function installCurrentUserPermissions(page: Page, grantedPermissions: string[]) {
+  await page.route(/http:\/\/127\.0\.0\.1:8787\/me$/, async (route) => {
+    await route.fulfill({
+      json: {
+        user: {
+          userId: 'cross-browser-state-user',
+          email: 'cross-browser-state@example.com',
+          groups: [],
+          permissions: grantedPermissions
+        }
+      }
+    })
+  })
+}
+
 async function attachStateEvidence(
   testInfo: TestInfo,
   evidenceId: string,
   view: string,
   scenario: string,
-  observed: Record<string, boolean | number | string[]>
+  observed: Record<string, boolean | number | string | string[]>
 ) {
   const browserProject = testInfo.project.name
   await testInfo.attach(`cross-browser-${view}-state-${scenario}-${browserProject}.json`, {
