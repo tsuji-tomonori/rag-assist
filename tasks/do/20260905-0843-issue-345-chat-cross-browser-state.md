@@ -42,12 +42,24 @@ PR #462 の Firefox／WebKit 必須 gate はチャットの keyboard・semantic�
 
 ## 受け入れ条件
 
-- [ ] `E2E-UI-CROSS-BROWSER-STATE-005` が Firefox／WebKit 必須 scope に含まれ、initial → processing → SSE timeout → reconnecting → recovered answer を区別し、再接続 request が `Last-Event-ID` を引き継ぐ。
-- [ ] processing／reconnecting 中は chat を busy、送信を disabled とし、回復後だけ busy を解除して入力を再有効化する。
-- [ ] chat start の HTTP 500 は対象付き error alert を表示し、private error detail を公開しない。
-- [ ] `chat:create` 不足は対象付き permission alert と disabled 送信 control を表示し、Enter 操作を含め start request を発行しない。
-- [ ] `chat → SQ-016 → AC-SQ016-007 → E2E-UI-CROSS-BROWSER-STATE-005` が正本・quality matrix・trace metadata・生成 Web inventory で一意に追跡でき、required cross-browser scope が 50 件として一致する。
-- [ ] 選定した lint、typecheck、unit、E2E、docs checks の結果と、未検証の manual evidence／#461 統合後再検証／owner 判断を task・PR・Issue に記録する。
+- [x] `E2E-UI-CROSS-BROWSER-STATE-005` が Firefox／WebKit 必須 scope に含まれ、initial → processing → SSE timeout → reconnecting → recovered answer を区別し、再接続 request が `Last-Event-ID` を引き継ぐ。
+- [x] processing／reconnecting 中は chat を busy、送信を disabled とし、回復後だけ busy を解除して入力を再有効化する。
+- [x] chat start の HTTP 500 は対象付き error alert を表示し、private error detail を公開しない。
+- [x] `chat:create` 不足は対象付き permission alert と disabled 送信 control を表示し、Enter 操作を含め start request を発行しない。
+- [x] `chat → SQ-016 → AC-SQ016-007 → E2E-UI-CROSS-BROWSER-STATE-005` が正本・quality matrix・trace metadata・生成 Web inventory で一意に追跡でき、required cross-browser scope が 50 件として一致する。
+- [x] 選定した lint、typecheck、unit、E2E、docs checks の結果と、未検証の manual evidence／#461 統合後再検証／owner 判断を task・PR・Issue に記録する。
+
+## 受け入れ確認
+
+- implementation head: `a2e50ca6`
+- [Web UI Quality](https://github.com/tsuji-tomonori/rag-assist/actions/runs/33932618560): 成功、Firefox／WebKit required 50/50
+- [MemoRAG CI](https://github.com/tsuji-tomonori/rag-assist/actions/runs/33932618543): 成功
+- [semver 検査](https://github.com/tsuji-tomonori/rag-assist/actions/runs/33932618552): 成功
+- [PR 受け入れ確認](https://github.com/tsuji-tomonori/rag-assist/pull/462#issuecomment-5548062463)
+- [セルフレビュー](https://github.com/tsuji-tomonori/rag-assist/pull/462#pullrequestreview-5118978763)
+- [Issue #345 進捗](https://github.com/tsuji-tomonori/rag-assist/issues/345#issuecomment-5548062534)
+
+初回 CI は WebKit が瞬間的な processing 表示を観測する前に timeout へ進む速度依存を検出した。初回 SSE を明示 gate し、processing の assertion 後に timeout を解放するよう決定化して最終 implementation head で解消した。
 
 ## 検証計画
 

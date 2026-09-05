@@ -32,13 +32,17 @@
 - pass: `TZ=UTC npm test -w @memorag-mvp/web`（62 files／449 tests）
 - pass: `npm run build -w @memorag-mvp/web`
 - pass: Firefox／WebKit required test discovery（50 tests）
+- pass: [Web UI Quality](https://github.com/tsuji-tomonori/rag-assist/actions/runs/33932618560)（Firefox／WebKit required 50/50、Chromium required）
+- pass: [MemoRAG CI](https://github.com/tsuji-tomonori/rag-assist/actions/runs/33932618543)
+- pass: [semver 検査](https://github.com/tsuji-tomonori/rag-assist/actions/runs/33932618552)
 - pass: `npm run docs:web-inventory:check`
 - pass: `npm run docs:web-trace:test`（13 tests）
 - pass: `npm run test:web-semantic-ui`（5 tests）
 - pass: `python3 scripts/validate_docs.py`
 - pass: `npm run docs:hidden-unicode:check`
 - pass: `npm run check:taskfile-aliases`
-- blocked locally: 追加6 E2Eの実走。正規起動は`tsx` IPC socketの`EPERM`、代替起動後はFirefox／WebKit host library不足によりbrowser page作成前で停止した。test assertionの失敗ではないが、CI成功までは未検証として扱う。
+- blocked locally: 追加6 E2Eの実走。正規起動は`tsx` IPC socketの`EPERM`、代替起動後はFirefox／WebKit host library不足によりbrowser page作成前で停止した。test assertionの失敗ではなく、最終 implementation head の CI で6件を含む50/50を確認した。
+- fixed from initial CI: WebKitが瞬間的なprocessing表示のassertion前にtimeoutへ進む速度依存を検出した。初回SSEを明示gateし、processing確認後にtimeoutを解放する決定的なfixtureへ修正した。
 
 ## 成果物
 
@@ -53,11 +57,11 @@
 - small improvement: production変更なしの独立した3 scenario／6 browser testに限定した。
 - non-duplication: #461のproduction UI変更と重複せず、前回までのSTATE-001〜004とも別画面・別IDである。
 - traceability: screen、REQ、AC、E2E、evidence pathを一意のjoinで同期した。
-- honest completion: local browser実走、CI、manual evidence、owner判断を未完了として維持する。
+- honest completion: local browser実走、manual evidence、owner判断を未完了として維持し、CIで確認した範囲だけを完了とした。
 
 ## 未対応・制約・リスク
 
-- 最終headのCI成功、PR／Issue証跡はcommit・push後に追記する。
+- implementation head `a2e50ca6` の全CI成功と、[PR受け入れ確認](https://github.com/tsuji-tomonori/rag-assist/pull/462#issuecomment-5548062463)、[セルフレビュー](https://github.com/tsuji-tomonori/rag-assist/pull/462#pullrequestreview-5118978763)、[Issue #345進捗](https://github.com/tsuji-tomonori/rag-assist/issues/345#issuecomment-5548062534)を記録した。
 - route fixtureはproduction incident、実API／SSE、実認可、RAG回答品質を証明しない。
 - 代表screen reader、native AX tree、実ブラウザ200%／400% zoom、touch／実機は未検証である。
 - #461統合後の再検証、FR-051／OQ-UI-002のowner判断、API C1 85%、既存E2E tsconfig不整合は未完了である。
