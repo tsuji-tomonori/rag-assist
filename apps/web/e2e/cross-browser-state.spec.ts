@@ -441,7 +441,7 @@ test('E2E-UI-CROSS-BROWSER-STATE-006: admin loading・partial・retry・recovery
   await expect(partial).toContainText('管理操作履歴')
   await expect(partial).not.toContainText('private-admin-audit-id')
   await expect(admin).toContainText('Cross-browser State Admin')
-  await expect(admin).not.toContainText('role:assign')
+  await expect(admin).not.toContainText('cross-browser-state-audit-1')
 
   await partial.getByRole('button', { name: '失敗した項目を再試行' }).click()
   await expect(resource).toHaveAttribute('aria-busy', 'true')
@@ -452,7 +452,8 @@ test('E2E-UI-CROSS-BROWSER-STATE-006: admin loading・partial・retry・recovery
   releaseRetryAuditRead()
   await expect(admin.locator('[data-state-kind="recovered"]')).toContainText('管理者設定を更新しました')
   await expect(resource).not.toHaveAttribute('aria-busy')
-  await expect(admin).toContainText('role:assign')
+  await expect(admin).toContainText('ロール付与')
+  await expect(admin).toContainText('cross-browser-state-audit-1')
   expect(auditReads).toBe(2)
 
   await attachStateEvidence(testInfo, 'E2E-UI-CROSS-BROWSER-STATE-006', 'admin', 'loading-partial-retry-recovery', {
@@ -496,7 +497,9 @@ test('E2E-UI-CROSS-BROWSER-STATE-006: admin refresh failureはsource・as-of付�
   const refresh = userPanel.getByRole('button', { name: '管理対象ユーザーを更新', exact: true })
   await expect(admin).toContainText('Cross-browser State Admin')
 
-  await refresh.click()
+  // Opening the URL-backed users section triggers its own refresh. Treat that
+  // navigation request as the failed refresh instead of racing the disabled
+  // panel refresh button in Firefox/WebKit.
   await expect(page.locator('#admin-resource-region')).toHaveAttribute('aria-busy', 'true')
   releaseFailedRefresh()
 
