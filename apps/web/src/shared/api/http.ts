@@ -1,4 +1,4 @@
-import { getApiBaseUrl } from "./runtimeConfig.js"
+import { getApiBaseUrl, joinApiPath } from "./runtimeConfig.js"
 
 let authTokenProvider: (() => string | undefined) | undefined
 
@@ -26,28 +26,28 @@ export function createHeaders(hasJsonBody = false): HeadersInit {
 
 export async function get<T>(requestPath: string): Promise<T> {
   const apiBaseUrl = await getApiBaseUrl()
-  const response = await fetch(`${apiBaseUrl}${requestPath}`, { headers: createHeaders() })
+  const response = await fetch(joinApiPath(apiBaseUrl, requestPath), { headers: createHeaders() })
   await assertResponseOk(response)
   return response.json() as Promise<T>
 }
 
 export async function getText(requestPath: string): Promise<string> {
   const apiBaseUrl = await getApiBaseUrl()
-  const response = await fetch(`${apiBaseUrl}${requestPath}`, { headers: createHeaders() })
+  const response = await fetch(joinApiPath(apiBaseUrl, requestPath), { headers: createHeaders() })
   await assertResponseOk(response)
   return response.text()
 }
 
 export async function getBlob(requestPath: string): Promise<{ blob: Blob; headers: Headers }> {
   const apiBaseUrl = await getApiBaseUrl()
-  const response = await fetch(`${apiBaseUrl}${requestPath}`, { headers: createHeaders() })
+  const response = await fetch(joinApiPath(apiBaseUrl, requestPath), { headers: createHeaders() })
   await assertResponseOk(response)
   return { blob: await response.blob(), headers: response.headers }
 }
 
 export async function post<T>(requestPath: string, body: unknown): Promise<T> {
   const apiBaseUrl = await getApiBaseUrl()
-  const response = await fetch(`${apiBaseUrl}${requestPath}`, {
+  const response = await fetch(joinApiPath(apiBaseUrl, requestPath), {
     method: "POST",
     headers: createHeaders(true),
     body: JSON.stringify(body)
@@ -58,7 +58,7 @@ export async function post<T>(requestPath: string, body: unknown): Promise<T> {
 
 export async function put<T>(requestPath: string, body: unknown): Promise<T> {
   const apiBaseUrl = await getApiBaseUrl()
-  const response = await fetch(`${apiBaseUrl}${requestPath}`, {
+  const response = await fetch(joinApiPath(apiBaseUrl, requestPath), {
     method: "PUT",
     headers: createHeaders(true),
     body: JSON.stringify(body)
@@ -69,7 +69,7 @@ export async function put<T>(requestPath: string, body: unknown): Promise<T> {
 
 export async function del<T = void>(requestPath: string, parseJson = false): Promise<T> {
   const apiBaseUrl = await getApiBaseUrl()
-  const response = await fetch(`${apiBaseUrl}${requestPath}`, { method: "DELETE", headers: createHeaders() })
+  const response = await fetch(joinApiPath(apiBaseUrl, requestPath), { method: "DELETE", headers: createHeaders() })
   await assertResponseOk(response)
   if (!parseJson || response.status === 204) return undefined as T
   return response.json() as Promise<T>
@@ -77,7 +77,7 @@ export async function del<T = void>(requestPath: string, parseJson = false): Pro
 
 export async function delJson<T = void>(requestPath: string, body: unknown, parseJson = false): Promise<T> {
   const apiBaseUrl = await getApiBaseUrl()
-  const response = await fetch(`${apiBaseUrl}${requestPath}`, {
+  const response = await fetch(joinApiPath(apiBaseUrl, requestPath), {
     method: "DELETE",
     headers: createHeaders(true),
     body: JSON.stringify(body)

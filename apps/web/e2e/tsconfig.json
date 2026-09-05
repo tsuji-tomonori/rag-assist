@@ -3,7 +3,17 @@
   "compilerOptions": {
     "noImplicitOverride": false,
     "noUncheckedIndexedAccess": false,
-    "types": ["node", "@playwright/test"]
+    "types": [
+      "node",
+      "@playwright/test"
+    ],
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ]
   },
-  "include": ["./*.ts"]
+  "include": [
+    "./*.ts"
+  ]
 }

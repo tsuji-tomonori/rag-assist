@@ -1,7 +1,7 @@
 import { DeleteItemCommand, GetItemCommand, PutItemCommand, QueryCommand, type DynamoDBClient } from "@aws-sdk/client-dynamodb"
 import { marshall, unmarshall } from "@aws-sdk/util-dynamodb"
-import { CONVERSATION_HISTORY_SCHEMA_VERSION, type ConversationHistoryItem, type ConversationHistorySchemaVersion } from "../types.js"
-import { normalizeConversationHistoryInput, type ConversationHistoryStore, type SaveConversationHistoryInput } from "./conversation-history-store.js"
+import { type ConversationHistoryItem, type ConversationHistorySchemaVersion } from "../types.js"
+import { normalizeConversationHistoryInput, readConversationHistoryVersion, type ConversationHistoryStore, type SaveConversationHistoryInput } from "./conversation-history-store.js"
 import { createDynamoDbClient } from "./dynamodb-client.js"
 
 type StoredConversationHistoryItem = Omit<ConversationHistoryItem, "schemaVersion"> & {
@@ -75,6 +75,6 @@ function stripUserId(item: StoredConversationHistoryItem): ConversationHistoryIt
   const { userId: _userId, ...conversation } = item
   return {
     ...conversation,
-    schemaVersion: conversation.schemaVersion ?? CONVERSATION_HISTORY_SCHEMA_VERSION
+    schemaVersion: readConversationHistoryVersion(conversation.schemaVersion)
   }
 }

@@ -1,5 +1,6 @@
 import { setAuthTokenProvider } from "../../../shared/api/http.js"
 import { getRuntimeConfig } from "../../../shared/api/runtimeConfig.js"
+import { clearHostedUiTransient } from "./hostedUiAuth.js"
 
 export type AuthSession = {
   email: string
@@ -32,13 +33,14 @@ export async function signIn(input: { email: string; password: string; remember:
   const email = input.email.trim()
   if (!email || !input.password) throw new Error("メールアドレスとパスワードを入力してください。")
 
+  rejectDirectProductionAuth()
   if (import.meta.env.VITE_AUTH_MODE === "local") {
-    return storeSession(createLocalSession(email), input.remember)
+    return storeAuthSession(createLocalSession(email), input.remember)
   }
 
   const config = await getRuntimeConfig()
   if (config.authMode === "local") {
-    return storeSession(createLocalSession(email), input.remember)
+    return storeAuthSession(createLocalSession(email), input.remember)
   }
 
   if (!config.cognitoRegion || !config.cognitoUserPoolClientId) {
@@ -89,6 +91,7 @@ export async function completeNewPasswordChallenge(input: {
   newPassword: string
   remember: boolean
 }): Promise<AuthSession> {
+  rejectDirectProductionAuth()
   const newPassword = input.newPassword.trim()
   if (!newPassword) throw new Error("新しいパスワードを入力してください。")
 
@@ -129,6 +132,7 @@ export async function signUp(input: { email: string; password: string }): Promis
   const email = input.email.trim()
   if (!email || !input.password) throw new Error("メールアドレスとパスワードを入力してください。")
 
+  rejectDirectProductionAuth()
   if (import.meta.env.VITE_AUTH_MODE === "local") {
     return { email }
   }
@@ -172,6 +176,7 @@ export async function confirmSignUp(input: { email: string; code: string }): Pro
   const code = input.code.trim()
   if (!email || !code) throw new Error("メールアドレスと確認コードを入力してください。")
 
+  rejectDirectProductionAuth()
   if (import.meta.env.VITE_AUTH_MODE === "local") return
 
   const config = await getRuntimeConfig()
@@ -213,9 +218,10 @@ export function getStoredAuthSession(): AuthSession | null {
 export function signOut() {
   window.sessionStorage.removeItem(sessionKey)
   window.localStorage.removeItem(sessionKey)
+  clearHostedUiTransient()
 }
 
-function storeSession(session: AuthSession, remember: boolean): AuthSession {
+export function storeAuthSession(session: AuthSession, remember: boolean): AuthSession {
   const targetStorage = remember ? window.localStorage : window.sessionStorage
   const otherStorage = remember ? window.sessionStorage : window.localStorage
   targetStorage.setItem(sessionKey, JSON.stringify(session))
@@ -229,7 +235,7 @@ function storeAuthenticatedResult(email: string, body: CognitoResponseBody, reme
     throw new Error("Cognito認証レスポンスにIDトークンがありません。")
   }
 
-  return storeSession(
+  return storeAuthSession(
     {
       email,
       idToken: body.AuthenticationResult.IdToken,
@@ -310,6 +316,12 @@ function createLocalSession(email: string): AuthSession {
     idToken: "local-dev-token",
     expiresAt: Date.now() + 24 * 60 * 60 * 1000,
     cognitoGroups: ["SYSTEM_ADMIN"]
+  }
+}
+
+function rejectDirectProductionAuth() {
+  if (import.meta.env.PROD) {
+    throw new Error("本番環境ではCognito Hosted UIからサインインしてください。")
   }
 }
 

@@ -2,14 +2,31 @@ import assert from "node:assert/strict"
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import path from "node:path"
 import test from "node:test"
+import { runInNewContext } from "node:vm"
 import * as cdk from "aws-cdk-lib"
 import { Match, Template } from "aws-cdk-lib/assertions"
 import { APPLICATION_ROLES } from "@memorag-mvp/contract/access-control"
-import { MemoRagMvpStack } from "../lib/memorag-mvp-stack"
+import {
+  createDeployedFrontendRuntimeConfig,
+  MemoRagMvpStack,
+  resolveApiGatewayOriginConfiguration,
+  resolveDeployedCorsAllowedOrigin
+} from "../lib/memorag-mvp-stack"
+
+const productionApiOriginContext = {
+  restApiOriginDomainName: "rest-origin.example.com",
+  webSocketApiOriginDomainName: "ws-origin.example.com",
+  apiGatewayOriginCertificateArn: "arn:aws:acm:ap-northeast-1:111111111111:certificate/12345678-1234-1234-1234-123456789abc",
+  apiGatewayOriginHostedZoneId: "Z0123456789ABC",
+  apiGatewayOriginHostedZoneName: "example.com"
+} as const
 
 function synthesize(context?: Record<string, string>) {
   const app = new cdk.App({
-    context
+    context: {
+      corsAllowedOrigins: "http://localhost:5173",
+      ...context
+    }
   })
   const stack = new MemoRagMvpStack(app, "MemoRagMvpStackTest", {
     env: { account: "111111111111", region: "ap-northeast-1" },
@@ -60,12 +77,20 @@ function getResourceByLogicalIdPrefix(template: Template, logicalIdPrefix: strin
   return matchingEntry[1] as any
 }
 
+function executeCloudFrontFunction(functionCode: string, uri: string): string {
+  const result = runInNewContext(`${functionCode}\nhandler(event)`, {
+    event: { request: { uri } }
+  }) as { uri: string }
+  return result.uri
+}
+
 test("implements the designed serverless resources", () => {
   const template = synthesize()
 
   template.resourceCountIs("AWS::S3::Bucket", 5)
   template.resourceCountIs("AWS::Cognito::UserPool", 1)
   template.resourceCountIs("AWS::Cognito::UserPoolClient", 1)
+  template.resourceCountIs("AWS::Cognito::UserPoolDomain", 1)
   template.resourceCountIs("AWS::Cognito::UserPoolGroup", APPLICATION_ROLES.length)
   template.hasResourceProperties("AWS::Cognito::UserPool", {
     AdminCreateUserConfig: { AllowAdminCreateUserOnly: false },
@@ -73,6 +98,23 @@ test("implements the designed serverless resources", () => {
       PostConfirmation: Match.objectLike({ "Fn::GetAtt": Match.anyValue() })
     }
   })
+  template.hasResourceProperties("AWS::Cognito::UserPoolClient", {
+    GenerateSecret: false,
+    EnableTokenRevocation: true,
+    AllowedOAuthFlowsUserPoolClient: true,
+    AllowedOAuthFlows: ["code"],
+    AllowedOAuthScopes: Match.arrayWith(["openid", "email", "profile"]),
+    CallbackURLs: ["http://localhost:5173/auth/callback"],
+    LogoutURLs: ["http://localhost:5173/"],
+    SupportedIdentityProviders: ["COGNITO"]
+  })
+  const userPoolClients = template.findResources("AWS::Cognito::UserPoolClient")
+  assert.equal(Object.values(userPoolClients).length, 1)
+  const webClient = Object.values(userPoolClients)[0] as any
+  assert.ok(webClient)
+  assert.deepEqual(webClient.Properties.AllowedOAuthFlows, ["code"])
+  assert.equal(JSON.stringify(webClient.Properties.AllowedOAuthFlows).includes("implicit"), false)
+  assert.equal(webClient.Properties.GenerateSecret, false)
   template.resourceCountIs("AWS::SecretsManager::Secret", 1)
   template.resourceCountIs("AWS::KMS::Key", 1)
   template.hasResourceProperties("AWS::KMS::Key", {
@@ -170,7 +212,7 @@ test("implements the designed serverless resources", () => {
   template.hasResourceProperties("AWS::ApiGateway::GatewayResponse", {
     ResponseType: "DEFAULT_4XX",
     ResponseParameters: Match.objectLike({
-      "gatewayresponse.header.Access-Control-Allow-Origin": "'*'",
+      "gatewayresponse.header.Access-Control-Allow-Origin": "'http://localhost:5173'",
       "gatewayresponse.header.Access-Control-Allow-Headers": "'Content-Type, Authorization, Last-Event-ID'",
       "gatewayresponse.header.Access-Control-Allow-Methods": "'GET, POST, DELETE, OPTIONS'"
     })
@@ -178,7 +220,7 @@ test("implements the designed serverless resources", () => {
   template.hasResourceProperties("AWS::ApiGateway::GatewayResponse", {
     ResponseType: "DEFAULT_5XX",
     ResponseParameters: Match.objectLike({
-      "gatewayresponse.header.Access-Control-Allow-Origin": "'*'"
+      "gatewayresponse.header.Access-Control-Allow-Origin": "'http://localhost:5173'"
     })
   })
   template.hasResourceProperties("AWS::CloudFront::Distribution", {
@@ -287,7 +329,8 @@ test("implements the designed serverless resources", () => {
         AUTH_TENANT_ID: Match.anyValue(),
         BENCHMARK_EVALUATION_ENABLED: "true",
         BENCHMARK_EVALUATION_TENANT_ID: Match.anyValue(),
-        CORS_ALLOWED_ORIGINS: "*",
+        DEPLOYMENT_ENVIRONMENT: "dev",
+        CORS_ALLOWED_ORIGINS: "http://localhost:5173",
         COGNITO_USER_POOL_ID: Match.anyValue(),
         COGNITO_APP_CLIENT_ID: Match.anyValue(),
         DEBUG_DOWNLOAD_BUCKET_NAME: Match.anyValue(),
@@ -479,6 +522,407 @@ test("implements the designed serverless resources", () => {
   }
 })
 
+test("routes exact and nested API paths without rewriting API errors as SPA success responses", () => {
+  const resources = synthesize().toJSON().Resources ?? {}
+  const distributionEntries = Object.entries(resources).filter(([, resource]) => (
+    (resource as any).Type === "AWS::CloudFront::Distribution"
+  ))
+  assert.equal(distributionEntries.length, 1)
+  const distributionConfig = (distributionEntries[0]?.[1] as any).Properties.DistributionConfig
+
+  const functionEntries = Object.entries(resources).filter(([, resource]) => (
+    (resource as any).Type === "AWS::CloudFront::Function"
+  ))
+  assert.equal(functionEntries.length, 3)
+  const spaFunctionEntry = functionEntries.find(([, resource]) => (
+    (resource as any).Properties.FunctionConfig.Comment.includes("SPA client routes")
+  ))
+  const apiFunctionEntry = functionEntries.find(([, resource]) => (
+    (resource as any).Properties.FunctionConfig.Comment.includes("/api prefix")
+  ))
+  assert.ok(spaFunctionEntry)
+  assert.ok(apiFunctionEntry)
+
+  const [spaFunctionLogicalId, spaFunction] = spaFunctionEntry
+  const [apiFunctionLogicalId, apiFunction] = apiFunctionEntry
+  assert.equal(executeCloudFrontFunction(apiFunction.Properties.FunctionCode, "/api"), "/")
+  assert.equal(executeCloudFrontFunction(apiFunction.Properties.FunctionCode, "/api/v1/health"), "/v1/health")
+  assert.equal(executeCloudFrontFunction(apiFunction.Properties.FunctionCode, "/other"), "/other")
+  assert.equal(executeCloudFrontFunction(spaFunction.Properties.FunctionCode, "/settings/profile"), "/index.html")
+  assert.equal(executeCloudFrontFunction(spaFunction.Properties.FunctionCode, "/auth/callback"), "/index.html")
+  assert.equal(executeCloudFrontFunction(spaFunction.Properties.FunctionCode, "/assets/missing.js"), "/assets/missing.js")
+
+  assert.deepEqual(distributionConfig.CacheBehaviors.map((behavior: any) => behavior.PathPattern), ["api", "api/*", "ws/v1"])
+  const apiBehaviors = distributionConfig.CacheBehaviors.filter((behavior: any) => behavior.PathPattern.startsWith("api"))
+  for (const behavior of apiBehaviors) {
+    assert.deepEqual(behavior.AllowedMethods, ["GET", "HEAD", "OPTIONS", "PUT", "PATCH", "POST", "DELETE"])
+    assert.equal(behavior.CachePolicyId, "4135ea2d-6df8-44a3-9df3-4b5a84be39ad")
+    // AWS managed AllViewerExceptHostHeader forwards Authorization, Last-Event-ID,
+    // cookies, and all query strings while replacing the viewer Host for API Gateway.
+    assert.equal(behavior.OriginRequestPolicyId, "b689b0a8-53d0-40ab-baf2-68738e2966ac")
+    assert.equal(behavior.FunctionAssociations.length, 1)
+    assert.equal(behavior.FunctionAssociations[0].EventType, "viewer-request")
+    assert.deepEqual(behavior.FunctionAssociations[0].FunctionARN, {
+      "Fn::GetAtt": [apiFunctionLogicalId, "FunctionARN"]
+    })
+    assert.equal(JSON.stringify(behavior).includes(spaFunctionLogicalId), false)
+    assert.equal(behavior.ForwardedValues, undefined)
+  }
+
+  const apiOrigin = distributionConfig.Origins.find((origin: any) => (
+    origin.Id === apiBehaviors[0].TargetOriginId
+  ))
+  assert.ok(apiOrigin)
+  assert.match(JSON.stringify(apiOrigin.DomainName), /RestApi.*execute-api/)
+  assert.match(JSON.stringify(apiOrigin.OriginPath), /RestApiDeploymentStageprod/)
+  assert.deepEqual(apiOrigin.CustomOriginConfig, {
+    OriginProtocolPolicy: "https-only",
+    OriginSSLProtocols: ["TLSv1.2"]
+  })
+
+  assert.equal(distributionConfig.CustomErrorResponses, undefined)
+  assert.equal(distributionConfig.DefaultCacheBehavior.FunctionAssociations.length, 1)
+  assert.deepEqual(distributionConfig.DefaultCacheBehavior.FunctionAssociations[0].FunctionARN, {
+    "Fn::GetAtt": [spaFunctionLogicalId, "FunctionARN"]
+  })
+  assert.equal(JSON.stringify(distributionConfig.DefaultCacheBehavior).includes(apiFunctionLogicalId), false)
+})
+
+test("routes exact same-origin WebSocket entry with single-use ticket authorizer and redacted logs", () => {
+  const template = synthesize()
+  const resources = template.toJSON().Resources ?? {}
+
+  template.hasResourceProperties("AWS::ApiGatewayV2::Api", {
+    ProtocolType: "WEBSOCKET",
+    RouteSelectionExpression: "$request.body.action"
+  })
+  template.hasResourceProperties("AWS::ApiGatewayV2::Authorizer", {
+    AuthorizerType: "REQUEST",
+    IdentitySource: ["route.request.header.Sec-WebSocket-Protocol"]
+  })
+  const webSocketAuthorizer = Object.values(resources).find((resource: any) => (
+    resource.Type === "AWS::ApiGatewayV2::Authorizer"
+  )) as any
+  assert.ok(webSocketAuthorizer)
+  assert.equal(webSocketAuthorizer.Properties.AuthorizerResultTtlInSeconds, undefined)
+  template.hasResourceProperties("AWS::ApiGatewayV2::Route", {
+    RouteKey: "$connect",
+    AuthorizationType: "CUSTOM",
+    AuthorizerId: Match.anyValue()
+  })
+  template.hasResourceProperties("AWS::ApiGatewayV2::Route", {
+    RouteKey: "$disconnect",
+    AuthorizationType: "NONE"
+  })
+  template.hasResourceProperties("AWS::ApiGatewayV2::Route", {
+    RouteKey: "$default",
+    AuthorizationType: "NONE"
+  })
+  template.hasResourceProperties("AWS::ApiGatewayV2::Stage", {
+    StageName: "prod",
+    AutoDeploy: true,
+    AccessLogSettings: Match.objectLike({
+      DestinationArn: Match.anyValue(),
+      Format: Match.stringLikeRegexp("requestId.*eventType.*routeKey.*status.*connectionId")
+    }),
+    DefaultRouteSettings: {
+      DataTraceEnabled: false,
+      DetailedMetricsEnabled: true,
+      LoggingLevel: "OFF"
+    }
+  })
+
+  const ticketTables = Object.values(resources).filter((resource: any) => (
+    resource.Type === "AWS::DynamoDB::Table"
+    && resource.Properties.KeySchema?.some((key: any) => key.AttributeName === "ticketHash")
+  )) as any[]
+  assert.equal(ticketTables.length, 1)
+  assert.equal(ticketTables[0].Properties.TimeToLiveSpecification.AttributeName, "ttl")
+  const connectionTables = Object.values(resources).filter((resource: any) => (
+    resource.Type === "AWS::DynamoDB::Table"
+    && resource.Properties.KeySchema?.some((key: any) => key.AttributeName === "connectionId")
+  )) as any[]
+  assert.equal(connectionTables.length, 1)
+  assert.equal(connectionTables[0].Properties.TimeToLiveSpecification.AttributeName, "ttl")
+
+  const distribution = Object.values(resources).find((resource: any) => resource.Type === "AWS::CloudFront::Distribution") as any
+  assert.ok(distribution)
+  const wsBehavior = distribution.Properties.DistributionConfig.CacheBehaviors
+    .find((behavior: any) => behavior.PathPattern === "ws/v1")
+  assert.ok(wsBehavior)
+  assert.deepEqual(wsBehavior.AllowedMethods, ["GET", "HEAD", "OPTIONS"])
+  assert.equal(wsBehavior.CachePolicyId, "4135ea2d-6df8-44a3-9df3-4b5a84be39ad")
+  assert.equal(wsBehavior.ViewerProtocolPolicy, "https-only")
+  assert.equal(wsBehavior.FunctionAssociations.length, 1)
+
+  const wsFunctionArn = wsBehavior.FunctionAssociations[0].FunctionARN
+  const wsFunctionLogicalId = wsFunctionArn["Fn::GetAtt"]?.[0]
+  const wsFunction = resources[wsFunctionLogicalId]
+  assert.ok(wsFunction)
+  assert.equal(executeCloudFrontFunction(wsFunction.Properties.FunctionCode, "/ws/v1"), "/prod")
+  assert.equal(executeCloudFrontFunction(wsFunction.Properties.FunctionCode, "/ws/v1/other"), "/ws/v1/other")
+
+  const originPolicyId = wsBehavior.OriginRequestPolicyId?.Ref
+  const originPolicy = resources[originPolicyId]
+  assert.ok(originPolicy)
+  const policyConfig = originPolicy.Properties.OriginRequestPolicyConfig
+  assert.equal(policyConfig.QueryStringsConfig.QueryStringBehavior, "none")
+  assert.equal(policyConfig.CookiesConfig.CookieBehavior, "none")
+  assert.equal(policyConfig.HeadersConfig.HeaderBehavior, "whitelist")
+  assert.deepEqual(policyConfig.HeadersConfig.Headers.sort(), [
+    "Sec-WebSocket-Extensions",
+    "Sec-WebSocket-Key",
+    "Sec-WebSocket-Protocol",
+    "Sec-WebSocket-Version"
+  ].sort())
+
+  const stage = Object.values(resources).find((resource: any) => (
+    resource.Type === "AWS::ApiGatewayV2::Stage"
+  )) as any
+  const serializedAccessLog = stage.Properties.AccessLogSettings.Format
+  assert.doesNotMatch(serializedAccessLog, /query|header|cookie|protocol|ticket|token|authorization|jwt/i)
+
+  const authorizerPolicies = Object.entries(resources)
+    .filter(([logicalId, resource]) => logicalId.startsWith("WebSocketAuthorizerFunctionServiceRoleDefaultPolicy") && (resource as any).Type === "AWS::IAM::Policy")
+    .map(([, resource]) => JSON.stringify((resource as any).Properties.PolicyDocument))
+    .join("\n")
+  assert.match(authorizerPolicies, /dynamodb:UpdateItem/)
+  assert.doesNotMatch(authorizerPolicies, /dynamodb:(?:PutItem|DeleteItem|GetItem|Scan)/)
+  assert.match(authorizerPolicies, /cognito-idp:AdminGetUser/)
+  assert.match(authorizerPolicies, /s3:GetObject/)
+  assert.match(authorizerPolicies, /security\/account-revocations/)
+  assert.match(authorizerPolicies, /security\/administrative-principal-transfer-fences/)
+  const ticketTableLogicalId = Object.entries(resources).find(([, resource]) => (
+    (resource as any).Type === "AWS::DynamoDB::Table"
+    && (resource as any).Properties.KeySchema?.some((key: any) => key.AttributeName === "ticketHash")
+  ))?.[0]
+  assert.ok(ticketTableLogicalId)
+  const ticketIssuePolicies = Object.entries(resources).filter(([logicalId, resource]) => (
+    logicalId.startsWith("WebSocketTicketIssuePolicy") && (resource as any).Type === "AWS::IAM::Policy"
+  ))
+  assert.equal(ticketIssuePolicies.length, 1)
+  const ticketIssuePolicy = ticketIssuePolicies[0]![1] as any
+  assert.deepEqual(ticketIssuePolicy.Properties.PolicyDocument.Statement, [{
+    Action: "dynamodb:PutItem",
+    Effect: "Allow",
+    Resource: { "Fn::GetAtt": [ticketTableLogicalId, "Arn"] }
+  }])
+  assert.equal(ticketIssuePolicy.Properties.Roles.length, 2)
+  assert.match(JSON.stringify(ticketIssuePolicy.Properties.Roles), /ApiFunctionServiceRole/)
+  assert.match(JSON.stringify(ticketIssuePolicy.Properties.Roles), /HeavyApiFunctionServiceRole/)
+  const connectionPolicies = Object.entries(resources)
+    .filter(([logicalId, resource]) => logicalId.startsWith("WebSocketConnectionFunctionServiceRoleDefaultPolicy") && (resource as any).Type === "AWS::IAM::Policy")
+    .map(([, resource]) => JSON.stringify((resource as any).Properties.PolicyDocument))
+    .join("\n")
+  assert.match(connectionPolicies, /dynamodb:PutItem/)
+  assert.match(connectionPolicies, /dynamodb:DeleteItem/)
+  assert.doesNotMatch(connectionPolicies, /dynamodb:(?:UpdateItem|GetItem|Scan)/)
+  const frontendConfig = createDeployedFrontendRuntimeConfig({
+    cognitoRegion: "ap-northeast-1",
+    cognitoUserPoolId: "pool-1",
+    cognitoUserPoolClientId: "client-1",
+    cognitoHostedUiBaseUrl: "https://memorag.auth.ap-northeast-1.amazoncognito.com",
+    cognitoRedirectUri: "https://app.example.com/auth/callback",
+    cognitoLogoutUri: "https://app.example.com/"
+  })
+  assert.doesNotMatch(JSON.stringify(frontendConfig), /execute-api.*websocket|wss:/i)
+})
+
+test("keeps browser and public API outputs on CloudFront while using a production custom origin internally", () => {
+  const frontendConfig = createDeployedFrontendRuntimeConfig({
+    cognitoRegion: "ap-northeast-1",
+    cognitoUserPoolId: "pool-1",
+    cognitoUserPoolClientId: "client-1",
+    cognitoHostedUiBaseUrl: "https://memorag.auth.ap-northeast-1.amazoncognito.com",
+    cognitoRedirectUri: "https://app.example.com/auth/callback",
+    cognitoLogoutUri: "https://app.example.com/"
+  })
+  assert.deepEqual(frontendConfig, {
+    apiBaseUrl: "/api",
+    authMode: "cognito",
+    cognitoRegion: "ap-northeast-1",
+    cognitoUserPoolId: "pool-1",
+    cognitoUserPoolClientId: "client-1",
+    cognitoHostedUiBaseUrl: "https://memorag.auth.ap-northeast-1.amazoncognito.com",
+    cognitoRedirectUri: "https://app.example.com/auth/callback",
+    cognitoLogoutUri: "https://app.example.com/"
+  })
+  assert.doesNotMatch(JSON.stringify(frontendConfig), /execute-api|amazonaws\.com\/prod/)
+
+  const productionTemplate = synthesize({
+    deploymentEnvironment: "prod",
+    corsAllowedOrigins: "https://app.example.com",
+    ragAlertEmail: "rag-on-call@example.com",
+    ...productionApiOriginContext
+  })
+  productionTemplate.hasResourceProperties("AWS::Cognito::UserPoolClient", {
+    GenerateSecret: false,
+    AllowedOAuthFlows: ["code"],
+    CallbackURLs: ["https://app.example.com/auth/callback"],
+    LogoutURLs: ["https://app.example.com/"]
+  })
+
+  const template = synthesize().toJSON()
+  for (const outputName of ["ApiUrl", "OpenApiUrl"]) {
+    assert.match(JSON.stringify(template.Outputs?.[outputName]?.Value), /FrontendDistribution.*DomainName/)
+    assert.doesNotMatch(JSON.stringify(template.Outputs?.[outputName]?.Value), /execute-api/)
+  }
+
+  const developmentBenchmarkTargetValues = Object.values(template.Resources ?? {}).flatMap((resource: any) => {
+    if (resource.Type !== "AWS::Lambda::Function") return []
+    const value = resource.Properties.Environment?.Variables?.BENCHMARK_TARGET_API_BASE_URL
+    return value === undefined ? [] : [value]
+  })
+  assert.ok(developmentBenchmarkTargetValues.length > 0)
+  for (const value of developmentBenchmarkTargetValues) {
+    assert.match(JSON.stringify(value), /RestApi.*execute-api/)
+  }
+
+  const productionResources = productionTemplate.toJSON().Resources ?? {}
+  const productionBenchmarkTargetValues = Object.values(productionResources).flatMap((resource: any) => {
+    if (resource.Type !== "AWS::Lambda::Function") return []
+    const value = resource.Properties.Environment?.Variables?.BENCHMARK_TARGET_API_BASE_URL
+    return value === undefined ? [] : [value]
+  })
+  assert.ok(productionBenchmarkTargetValues.length > 0)
+  for (const value of productionBenchmarkTargetValues) {
+    assert.equal(value, "https://rest-origin.example.com/")
+  }
+})
+
+test("disables production execute-api endpoints and routes CloudFront through distinct mapped custom domains", () => {
+  const template = synthesize({
+    deploymentEnvironment: "prod",
+    corsAllowedOrigins: "https://app.example.com",
+    ragAlertEmail: "rag-on-call@example.com",
+    ...productionApiOriginContext
+  })
+  const resources = template.toJSON().Resources ?? {}
+
+  template.hasResourceProperties("AWS::ApiGateway::RestApi", {
+    DisableExecuteApiEndpoint: true,
+    EndpointConfiguration: Match.objectLike({ Types: ["REGIONAL"] })
+  })
+  template.hasResourceProperties("AWS::ApiGatewayV2::Api", {
+    ProtocolType: "WEBSOCKET",
+    DisableExecuteApiEndpoint: true
+  })
+  template.hasResourceProperties("AWS::ApiGateway::DomainName", {
+    DomainName: productionApiOriginContext.restApiOriginDomainName,
+    RegionalCertificateArn: productionApiOriginContext.apiGatewayOriginCertificateArn,
+    SecurityPolicy: "TLS_1_2",
+    EndpointConfiguration: { Types: ["REGIONAL"] }
+  })
+  template.hasResourceProperties("AWS::ApiGateway::BasePathMapping", {
+    DomainName: Match.anyValue(),
+    RestApiId: Match.anyValue(),
+    Stage: Match.anyValue()
+  })
+  template.hasResourceProperties("AWS::ApiGatewayV2::DomainName", {
+    DomainName: productionApiOriginContext.webSocketApiOriginDomainName,
+    DomainNameConfigurations: [{
+      CertificateArn: productionApiOriginContext.apiGatewayOriginCertificateArn,
+      EndpointType: "REGIONAL",
+      SecurityPolicy: "TLS_1_2"
+    }]
+  })
+  template.hasResourceProperties("AWS::ApiGatewayV2::ApiMapping", {
+    ApiId: Match.anyValue(),
+    DomainName: Match.anyValue(),
+    Stage: "prod"
+  })
+
+  const aliasRecords = Object.values(resources).filter((resource: any) => (
+    resource.Type === "AWS::Route53::RecordSet"
+  )) as any[]
+  assert.equal(aliasRecords.length, 2)
+  assert.deepEqual(
+    aliasRecords.map((record) => record.Properties.Name).sort(),
+    [
+      productionApiOriginContext.restApiOriginDomainName,
+      productionApiOriginContext.webSocketApiOriginDomainName
+    ].sort()
+  )
+  for (const record of aliasRecords) {
+    assert.equal(record.Properties.HostedZoneId, productionApiOriginContext.apiGatewayOriginHostedZoneId)
+    assert.equal(record.Properties.Type, "A")
+    assert.equal(record.Properties.AliasTarget.EvaluateTargetHealth, false)
+  }
+
+  const distribution = Object.values(resources).find((resource: any) => (
+    resource.Type === "AWS::CloudFront::Distribution"
+  )) as any
+  assert.ok(distribution)
+  const distributionConfig = distribution.Properties.DistributionConfig
+  const originDomainNames = distributionConfig.Origins.map((origin: any) => origin.DomainName)
+  assert.ok(
+    originDomainNames.includes(productionApiOriginContext.restApiOriginDomainName),
+    `REST custom origin missing: ${JSON.stringify(originDomainNames)}`
+  )
+  assert.ok(
+    originDomainNames.includes(productionApiOriginContext.webSocketApiOriginDomainName),
+    `WebSocket custom origin missing: ${JSON.stringify(originDomainNames)}`
+  )
+  assert.doesNotMatch(JSON.stringify(originDomainNames), /RestApi.*execute-api|WebSocketApi.*execute-api/)
+
+  const wsBehavior = distributionConfig.CacheBehaviors.find((behavior: any) => behavior.PathPattern === "ws/v1")
+  const wsFunctionLogicalId = wsBehavior.FunctionAssociations[0].FunctionARN["Fn::GetAtt"]?.[0]
+  const wsFunction = resources[wsFunctionLogicalId]
+  assert.ok(wsFunction)
+  assert.equal(executeCloudFrontFunction(wsFunction.Properties.FunctionCode, "/ws/v1"), "/")
+
+  for (const outputName of ["ApiUrl", "OpenApiUrl"]) {
+    const value = JSON.stringify(template.toJSON().Outputs?.[outputName]?.Value)
+    assert.match(value, /FrontendDistribution.*DomainName/)
+    assert.doesNotMatch(value, /execute-api|rest-origin|ws-origin/)
+  }
+  assert.doesNotMatch(JSON.stringify(template.toJSON().Outputs), /execute-api|rest-origin|ws-origin/)
+})
+
+test("production API Gateway custom origin configuration fails closed before synth", () => {
+  const valid = {
+    deploymentEnvironment: "prod" as const,
+    restApiDomainName: productionApiOriginContext.restApiOriginDomainName,
+    webSocketApiDomainName: productionApiOriginContext.webSocketApiOriginDomainName,
+    certificateArn: productionApiOriginContext.apiGatewayOriginCertificateArn,
+    hostedZoneId: productionApiOriginContext.apiGatewayOriginHostedZoneId,
+    hostedZoneName: productionApiOriginContext.apiGatewayOriginHostedZoneName,
+    region: "ap-northeast-1"
+  }
+  assert.deepEqual(resolveApiGatewayOriginConfiguration(valid), {
+    restApiDomainName: productionApiOriginContext.restApiOriginDomainName,
+    webSocketApiDomainName: productionApiOriginContext.webSocketApiOriginDomainName,
+    certificateArn: productionApiOriginContext.apiGatewayOriginCertificateArn,
+    hostedZoneId: productionApiOriginContext.apiGatewayOriginHostedZoneId,
+    hostedZoneName: productionApiOriginContext.apiGatewayOriginHostedZoneName
+  })
+  assert.equal(resolveApiGatewayOriginConfiguration({
+    ...valid,
+    deploymentEnvironment: "dev",
+    restApiDomainName: undefined,
+    webSocketApiDomainName: undefined,
+    certificateArn: undefined,
+    hostedZoneId: undefined,
+    hostedZoneName: undefined
+  }), undefined)
+
+  for (const [override, message] of [
+    [{ restApiDomainName: undefined }, /restApiOriginDomainName/],
+    [{ restApiDomainName: "HTTPS://rest-origin.example.com" }, /lowercase DNS name/],
+    [{ restApiDomainName: "rest-origin.execute-api.example.com" }, /execute-api/],
+    [{ webSocketApiDomainName: valid.restApiDomainName }, /distinct/],
+    [{ webSocketApiDomainName: "ws-origin.other.example" }, /subdomain/],
+    [{ hostedZoneId: "example-zone" }, /hosted zone ID/],
+    [{ certificateArn: "arn:aws:acm:us-east-1:111111111111:certificate/abc" }, /stack region/],
+    [{ certificateArn: "not-an-arn" }, /ACM certificate ARN/]
+  ] as const) {
+    assert.throws(
+      () => resolveApiGatewayOriginConfiguration({ ...valid, ...override }),
+      message
+    )
+  }
+})
+
 test("deploys a scheduled least-privilege revocation reconciliation worker", () => {
   const template = synthesize()
   const worker = getResourceByLogicalIdPrefix(template, "RevocationCleanupFunction")
@@ -527,10 +971,18 @@ test("deploys a scheduled least-privilege revocation reconciliation worker", () 
 
 test("production monitoring requires an explicit quality and safety owner notification target", () => {
   assert.throws(
-    () => synthesize({ deploymentEnvironment: "prod" }),
+    () => synthesize({
+      deploymentEnvironment: "prod",
+      corsAllowedOrigins: "https://app.example.com"
+    }),
     /ragAlertTopicArn or ragAlertEmail/
   )
-  const template = synthesize({ deploymentEnvironment: "prod", ragAlertEmail: "rag-on-call@example.com" })
+  const template = synthesize({
+    deploymentEnvironment: "prod",
+    corsAllowedOrigins: "https://app.example.com",
+    ragAlertEmail: "rag-on-call@example.com",
+    ...productionApiOriginContext
+  })
   template.hasResourceProperties("AWS::SNS::Subscription", {
     Protocol: "email",
     Endpoint: "rag-on-call@example.com"
@@ -545,6 +997,49 @@ test("production monitoring requires an explicit quality and safety owner notifi
       })])
     })
   })
+})
+
+test("TC-003 deployed CORS configuration fails closed before synth", () => {
+  for (const value of [
+    undefined,
+    "",
+    " ",
+    "*",
+    "app.example.com",
+    "http://app.example.com",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://[::1]:5173",
+    "https://app.example.com/path",
+    "https://app.example.com,https://admin.example.com"
+  ]) {
+    assert.throws(
+      () => resolveDeployedCorsAllowedOrigin(value, "prod"),
+      /CORS_ALLOWED_ORIGINS/
+    )
+  }
+  assert.throws(
+    () => resolveDeployedCorsAllowedOrigin("*", "dev"),
+    /must not include \*/
+  )
+  assert.equal(
+    resolveDeployedCorsAllowedOrigin("http://localhost:5173", "dev"),
+    "http://localhost:5173"
+  )
+  assert.equal(
+    resolveDeployedCorsAllowedOrigin("https://app.example.com", "prod"),
+    "https://app.example.com"
+  )
+})
+
+test("production synth does not inherit the repository localhost CORS default", () => {
+  assert.throws(
+    () => synthesize({
+      deploymentEnvironment: "prod",
+      ragAlertEmail: "rag-on-call@example.com"
+    }),
+    /invalid origin/
+  )
 })
 
 test("stackProvidesDefaultSupportAssigneeGroupIdToApiFunctions", () => {
@@ -690,6 +1185,14 @@ test("keeps CORS preflight routes unauthenticated", () => {
     assert.equal(method.AuthorizationType, "NONE")
     assert.equal(method.AuthorizerId, undefined)
     assert.equal(method.RequestValidatorId, undefined)
+    const integrationResponses = method.Integration?.IntegrationResponses ?? []
+    assert.ok(integrationResponses.length > 0)
+    for (const response of integrationResponses) {
+      assert.equal(
+        response.ResponseParameters?.["method.response.header.Access-Control-Allow-Origin"],
+        "'http://localhost:5173'"
+      )
+    }
   }
 
   const protectedMethods = methods.filter((method: any) => method.HttpMethod !== "OPTIONS")
@@ -760,11 +1263,12 @@ test("keeps benchmark CodeBuild runner generic and fails when auth token resolut
   assert.ok(runExternalInvoke < runExternalGuard)
   assert.ok(runExternalGuard < runExternalResponseCheck)
   assert.ok(runExternalResponseCheck < runnerCommand)
-  assert.ok(buildSpec.phases.post_build.commands.includes("if [ ! -f \"$OUTPUT\" ]; then printf '' > \"$OUTPUT\"; fi"))
-  assert.ok(buildSpec.phases.post_build.commands.includes("if [ ! -f \"$SUMMARY\" ]; then printf '{\"total\":0,\"succeeded\":0,\"failedHttp\":0,\"metrics\":{\"errorRate\":1}}\\n' > \"$SUMMARY\"; fi"))
+  assert.equal(buildSpec.phases.post_build.commands.some((command: string) => command.includes("printf") && command.includes("$OUTPUT")), false)
+  assert.equal(buildSpec.phases.post_build.commands.some((command: string) => command.includes("printf") && command.includes("$SUMMARY")), false)
   assert.ok(buildSpec.phases.post_build.commands.includes("export RELEASE_AUDIT=./benchmark/.release-audit.json"))
-  assert.ok(buildSpec.phases.post_build.commands.includes("npm run release:audit -w @memorag-mvp/benchmark -- --summary \"$SUMMARY\" --source-root apps/api/src --source-root apps/web/src --output \"$RELEASE_AUDIT\" --report-only"))
-  assert.ok(buildSpec.phases.post_build.commands.includes("aws s3 cp \"$RELEASE_AUDIT\" \"$OUTPUT_S3_PREFIX/release-audit.json\""))
+  assert.ok(buildSpec.phases.post_build.commands.some((command: string) => command.includes("[ -f \"$SUMMARY\" ]") && command.includes("npm run release:audit")))
+  assert.ok(buildSpec.phases.post_build.commands.some((command: string) => command.includes("RELEASE_AUDIT_GENERATED") && command.includes("aws s3 cp") && command.includes("release-audit.json")))
+  assert.ok(buildSpec.phases.post_build.commands.includes("node infra/scripts/update-benchmark-run-artifacts.mjs"))
   assert.ok(buildSpec.phases.post_build.commands.includes("node infra/scripts/update-benchmark-run-metrics.mjs"))
   const durableCommitPayload = buildSpec.phases.post_build.commands.findIndex((command: string) => command.includes('boundary: "durable_commit"') && command.includes("benchmark-authorize-artifact"))
   const durableCommitInvoke = buildSpec.phases.post_build.commands.findIndex((command: string) => command.includes("aws lambda invoke") && command.includes("benchmark-authorize-artifact-durable-commit"))
@@ -779,15 +1283,17 @@ test("keeps benchmark CodeBuild runner generic and fails when auth token resolut
   assert.ok(durableCommitGuard < durableCommitResponseCheck)
   assert.ok(artifactUploadIndexes.every((index) => durableCommitResponseCheck < index))
   for (const [label, uploadIndex] of ["results-artifact", "summary-artifact", "report-artifact", "release-audit-artifact"].map((label, index) => [label, artifactUploadIndexes[index]!] as const)) {
-    const authorizationIndex = buildSpec.phases.post_build.commands.indexOf(`node infra/scripts/authorize-benchmark-boundary.mjs durable_commit ${label}`)
-    assert.equal(authorizationIndex + 1, uploadIndex)
+    assert.ok(uploadIndex >= 0)
+    assert.ok(buildSpec.phases.post_build.commands[uploadIndex].includes(`authorize-benchmark-boundary.mjs durable_commit ${label}`))
   }
+  const integrityUpdateIndex = buildSpec.phases.post_build.commands.indexOf("node infra/scripts/update-benchmark-run-artifacts.mjs")
+  assert.equal(buildSpec.phases.post_build.commands.indexOf("node infra/scripts/authorize-benchmark-boundary.mjs durable_commit artifact-integrity-update") + 1, integrityUpdateIndex)
   const metricsUpdateIndex = buildSpec.phases.post_build.commands.indexOf("node infra/scripts/update-benchmark-run-metrics.mjs")
   assert.equal(
     buildSpec.phases.post_build.commands.indexOf("node infra/scripts/authorize-benchmark-boundary.mjs durable_commit metrics-update") + 1,
     metricsUpdateIndex
   )
-  assert.ok(buildSpec.phases.post_build.commands.indexOf("npm run release:audit -w @memorag-mvp/benchmark -- --summary \"$SUMMARY\" --source-root apps/api/src --source-root apps/web/src --output \"$RELEASE_AUDIT\" --report-only") < buildSpec.phases.post_build.commands.indexOf("node infra/scripts/update-benchmark-run-metrics.mjs"))
+  assert.ok(buildSpec.phases.post_build.commands.findIndex((command: string) => command.includes("npm run release:audit")) < buildSpec.phases.post_build.commands.indexOf("node infra/scripts/update-benchmark-run-metrics.mjs"))
   assert.ok(buildSpec.phases.build.commands.includes("npm run codebuild:run -w @memorag-mvp/benchmark"))
   assert.doesNotMatch(JSON.stringify(buildSpec), /standard-agent-v1|allganize-rag-evaluation-ja-v1|mtrag-v1|chatrag-bench-v1|mlit-pdf-figure-table-rag-seed-v1/)
   assert.equal(
@@ -910,10 +1416,16 @@ test("provisions tenant query indexes and uses the physical benchmark run key in
   assert.equal(stateMachines.length, 1)
   const definition = collectStringFragments((stateMachines[0]?.[1] as any).Properties.DefinitionString)
   const physicalKey = '"Key":{"runId":{"S.$":"$.storageRunId"}}'
-  assert.equal(definition.split(physicalKey).length - 1, 3)
+  assert.equal(definition.split(physicalKey).length - 1, 4)
   assert.equal(definition.includes('"Key":{"runId":{"S.$":"$.runId"}}'), false)
   assert.match(definition, /"Name":"STORAGE_RUN_ID","Value\.\$":"\$\.storageRunId"/)
   assert.match(definition, /"Name":"TENANT_ID","Value\.\$":"\$\.tenantId"/)
+  assert.match(definition, /"TimeoutSeconds":14400/)
+  assert.match(definition, /"Resource":"arn:aws:states:::codebuild:startBuild\.sync","TimeoutSeconds":14400,"Parameters":/)
+  assert.match(definition, /timed_out/)
+  assert.match(definition, /artifactIntegrity/)
+  assert.match(definition, /#integrityStatus = :complete/)
+  assert.match(definition, /#status IN \(:queued, :running\)/)
 })
 
 test("matches the synthesized CloudFormation snapshot", () => {

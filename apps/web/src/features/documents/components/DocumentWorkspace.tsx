@@ -1,6 +1,6 @@
 import { type FormEvent, type ReactNode, useEffect, useMemo, useRef, useState } from "react"
-import { Icon } from "../../../shared/components/Icon.js"
-import { LoadingStatus } from "../../../shared/components/LoadingSpinner.js"
+import { Icon } from "../../../shared/ui/Icon.js"
+import { LoadingStatus } from "../../../shared/ui/LoadingSpinner.js"
 import {
   ResourceStateBoundary,
   type UiResourceState

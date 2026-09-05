@@ -1,7 +1,7 @@
 import { type FormEvent, useState } from "react"
 import type { createQuestion } from "../../questions/api/questionsApi.js"
 import type { HumanQuestion, QuestionOperationOutcome } from "../../questions/types.js"
-import { LoadingSpinner } from "../../../shared/components/LoadingSpinner.js"
+import { LoadingSpinner } from "../../../shared/ui/LoadingSpinner.js"
 import type { CurrentUser } from "../../../shared/types/common.js"
 import { currentUserDepartmentLabel, currentUserLabel } from "../../../shared/utils/currentUserLabel.js"
 import { formatDateTime } from "../../../shared/utils/format.js"

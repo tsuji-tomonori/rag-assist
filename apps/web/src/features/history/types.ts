@@ -11,11 +11,7 @@ export type ConversationMessage = {
   questionTicket?: HumanQuestion
 }
 
-export type ConversationHistoryItem = {
-  schemaVersion: 1
-  id: string
-  title: string
-  updatedAt: string
+export type ConversationHistoryItem = Omit<import("@memorag-mvp/contract").ConversationHistoryItem, "messages" | "isFavorite"> & {
   isFavorite?: boolean
   messages: ConversationMessage[]
 }

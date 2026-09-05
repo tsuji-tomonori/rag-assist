@@ -1,5 +1,6 @@
 import { z } from "zod"
 import { JsonValueSchema } from "../json.js"
+import { SupportTicketSchema } from "./support.js"
 import { RAG_CONTRACT_LIMITS } from "../limits.js"
 
 export const ConversationCitationSchema = z.object({
@@ -306,6 +307,31 @@ export const CHAT_ORCHESTRATION_TRACE_TARGET_TYPE = "chat_orchestration_run" as 
 export const RAG_TRACE_TARGET_TYPE = "rag_run" as const
 export const LEGACY_DEBUG_TRACE_TARGET_TYPE_DEFAULT = RAG_TRACE_TARGET_TYPE
 export const DebugTraceTargetTypeSchema = z.enum(DEBUG_TRACE_TARGET_TYPES)
+export const FirstTokenTimingEvidenceSchema = z.object({
+  schemaVersion: z.literal(1),
+  unit: z.literal("ms"),
+  clock: z.literal("node_performance"),
+  origin: z.literal("chat_orchestration_ingress"),
+  boundary: z.literal("answer_model_first_content_delta"),
+  clientVisible: z.literal(false),
+  status: z.enum(["measured", "not_applicable", "unavailable"]),
+  latencyMs: z.number().finite().nonnegative().optional(),
+  attemptOrdinal: z.number().int().positive().optional(),
+  reason: z.enum(["non_answer_response", "first_content_delta_not_observed"]).optional()
+}).superRefine((value, ctx) => {
+  if (value.status === "measured" && (value.latencyMs === undefined || value.attemptOrdinal === undefined || value.reason !== undefined)) {
+    ctx.addIssue({ code: "custom", message: "measured first-token evidence requires latencyMs/attemptOrdinal and no reason" })
+  }
+  if (value.status !== "measured" && (value.latencyMs !== undefined || value.attemptOrdinal !== undefined || value.reason === undefined)) {
+    ctx.addIssue({ code: "custom", message: "unmeasured first-token evidence requires a reason and no measurement" })
+  }
+  if (value.status === "not_applicable" && value.reason !== "non_answer_response") {
+    ctx.addIssue({ code: "custom", message: "not_applicable first-token evidence requires non_answer_response" })
+  }
+  if (value.status === "unavailable" && value.reason !== "first_content_delta_not_observed") {
+    ctx.addIssue({ code: "custom", message: "unavailable first-token evidence requires first_content_delta_not_observed" })
+  }
+})
 
 export const DebugTraceSchema = z.object({
   schemaVersion: z.literal(1).default(1),
@@ -353,6 +379,7 @@ export const DebugTraceSchema = z.object({
   startedAt: z.string(),
   completedAt: z.string(),
   totalLatencyMs: z.number(),
+  firstTokenTiming: FirstTokenTimingEvidenceSchema.optional(),
   status: z.enum(["success", "warning", "error"]),
   answerPreview: z.string(),
   isAnswerable: z.boolean(),
@@ -372,6 +399,7 @@ export const ChatResponseSchema = z.object({
   citations: z.array(CitationSchema),
   retrieved: z.array(CitationSchema),
   finalEvidence: z.array(CitationSchema).optional(),
+  firstTokenTiming: FirstTokenTimingEvidenceSchema.optional(),
   debug: DebugTraceSchema.optional()
 })
 
@@ -382,6 +410,8 @@ export const ChatRunStartResponseSchema = z.object({
 })
 
 export const ConversationMessageSchema = z.object({
+  messageId: z.string().optional(),
+  questionTicket: SupportTicketSchema.optional(),
   role: z.enum(["user", "assistant"]),
   text: z.string(),
   createdAt: z.string(),
@@ -389,8 +419,23 @@ export const ConversationMessageSchema = z.object({
   result: ChatResponseSchema.optional()
 })
 
+export const SessionTemporaryEvidenceReferenceSchema = z.object({
+  temporaryScopeId: z.string().min(1).max(200),
+  documentId: z.string().min(1).max(200),
+  status: z.enum(["active", "expired", "removed", "revoked"]),
+  expiresAt: z.string().datetime(),
+  updatedAt: z.string().datetime()
+})
+
+export const SessionDocumentContextSchema = z.object({
+  schemaVersion: z.literal(1).default(1),
+  sessionId: z.string().min(1).max(200),
+  temporaryEvidence: z.array(SessionTemporaryEvidenceReferenceSchema).max(20),
+  updatedAt: z.string().datetime()
+})
+
 export const ConversationHistoryItemSchema = z.object({
-  schemaVersion: z.union([z.literal(1), z.literal(2)]).default(2),
+  schemaVersion: z.union([z.literal(1), z.literal(2), z.literal(3)]).default(1),
   id: z.string().min(1),
   title: z.string().min(1).max(120),
   updatedAt: z.string(),
@@ -401,7 +446,8 @@ export const ConversationHistoryItemSchema = z.object({
   queryFocusedSummary: z.string().max(4000).optional(),
   citationMemory: z.array(ConversationCitationMemoryItemSchema).max(50).optional(),
   taskState: ConversationTaskStateSchema.optional(),
-  toolInvocations: z.array(ChatToolInvocationSchema).max(100).optional()
+  toolInvocations: z.array(ChatToolInvocationSchema).max(100).optional(),
+  sessionDocumentContext: SessionDocumentContextSchema.optional()
 })
 
 export type ConversationHistoryTurn = z.output<typeof ConversationHistoryTurnSchema>
@@ -424,6 +470,7 @@ export type Clarification = z.output<typeof ClarificationSchema>
 export type DebugTraceTargetType = z.output<typeof DebugTraceTargetTypeSchema>
 export type DebugTrace = z.output<typeof DebugTraceSchema>
 export type ChatResponse = z.output<typeof ChatResponseSchema>
+export type FirstTokenTimingEvidence = z.output<typeof FirstTokenTimingEvidenceSchema>
 export type ChatRunStartResponse = z.output<typeof ChatRunStartResponseSchema>
 export type ConversationMessage = z.output<typeof ConversationMessageSchema>
 export type ConversationHistoryItem = z.output<typeof ConversationHistoryItemSchema>
