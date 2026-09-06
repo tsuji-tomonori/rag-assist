@@ -36,6 +36,12 @@ production component／CSS／API／authorization／RAG／benchmark dataset contr
 - PASS: generated freshness、canonical docs、hidden Unicode、authored JSON parse、Taskfile alias、`git diff --check`
 - BLOCKED: 通常のlocal E2E起動は`tsx` IPCが`EPERM`。`node --import tsx`でAPIを起動する回避後、対象4件は開始したがFirefoxの`browserContext.newPage`が60秒でtimeoutし、assertionまで到達しなかった。ローカル実ブラウザpassとは扱わず、GitHub Actions required gateを最終証跡にする。
 
+## GitHub Actions（implementation head `1bfe7655`）
+
+- PASS: [Web UI Quality run 34067344668](https://github.com/tsuji-tomonori/rag-assist/actions/runs/34067344668)。Firefox／WebKit required scopeは新規4件を含む60件。
+- PASS: [Validate Semver Label run 34067344697](https://github.com/tsuji-tomonori/rag-assist/actions/runs/34067344697)。
+- FAIL（既存blocker）: [MemoRAG CI run 34067344669](https://github.com/tsuji-tomonori/rag-assist/actions/runs/34067344669)。Web／docs／infra／benchmarkを含む個別stepは成功したが、集約結果は既存API typecheck／test／buildとC1 branch coverage 80.75%（目標85%）で失敗。本sliceはAPIを変更せず、coverage閾値を緩和しない。
+
 ## 競合・正本確認
 
 - current mainは`8e542b31`、作業開始時のPR #470 headは`4663f24f`でbehind 0。
@@ -45,7 +51,7 @@ production component／CSS／API／authorization／RAG／benchmark dataset contr
 
 ## 未完了・blocker
 
-- final-head Web UI Quality／MemoRAG CI／semverの確認。
+- final evidence headのWeb UI Quality／MemoRAG CI／semver確認。
 - representative screen reader、Firefox／WebKit native AX tree。
 - 実ブラウザ200%／400% zoom、text-only zoom、OS scaling、touch／実機、manual keyboard／contrast。
 - 実API／AWS認可、benchmark start／cancel／download。

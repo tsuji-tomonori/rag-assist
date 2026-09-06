@@ -74,18 +74,20 @@ Draft PR #470 head `4663f24f` は current `main@8e542b31` を祖先に含み、b
 - [x] production component／CSS／API／authorization／RAG／dataset contractを変更しない。
 - [x] manual／overall statusは`blocked`を維持し、実AWS benchmarkやmanual証跡をpass扱いしない。
 - [x] 選定したlint、typecheck、unit、build、E2E discovery、docs／freshness checks、`git diff --check`が成功するか、実行不能理由を未完了として記録する。
-- [ ] Draft PR #470、PR受け入れコメント、セルフレビュー、Issue #345進捗を更新する。
+- [x] Draft PR #470、PR受け入れコメント、セルフレビュー、Issue #345進捗を更新する。
 
 ## 検証結果
 
 - PASS: targeted ESLint、Web typecheck、Web unit 473件、Web build。
 - PASS: required Firefox／WebKit 60件のdiscovery（新規IDは2 browser×2 scenario）。
 - PASS: trace 13件、semantic UI 5件、generated freshness、canonical docs、hidden Unicode、authored JSON parse、Taskfile alias、`git diff --check`。
+- PASS: implementation head `1bfe7655`のWeb UI Quality、semver検査。
+- FAIL（既存blocker）: implementation headのMemoRAG CIはWeb／docs／infra／benchmarkの各stepが成功したが、集約結果はAPI typecheck／test／buildとC1 branch coverage 80.75%（目標85%）で失敗。本sliceはAPIを変更せず、閾値を緩和しない。
 - BLOCKED: ローカル実行は`tsx` IPCの`EPERM`を回避して4件を起動したが、Firefoxの`browserContext.newPage`が60秒でtimeoutした。assertion実行前のbrowser context起動失敗であり、pass扱いしない。最終判定はGitHub ActionsのFirefox／WebKit required gateで行う。
 
 ## 未完了
 
-- final-head GitHub ActionsとPR／Issue証跡の確定。
+- final evidence headのGitHub Actions確認。
 - representative screen reader／native AX tree、実ブラウザ200%／400% zoom、text-only zoom、OS scaling、touch／実機、manual keyboard／contrast。
 - 実API／AWS認可、benchmark start／cancel／download、#461統合後の再検証。
 - FR-050／FR-051、TC-003、OQ-UI-002、API C1 85%のowner判断または解消。
