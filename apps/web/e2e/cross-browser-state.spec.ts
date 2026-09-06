@@ -397,6 +397,134 @@ test('E2E-UI-CROSS-BROWSER-STATE-004: favorites HTTP 403をemptyではなくperm
   })
 })
 
+test('E2E-UI-CROSS-BROWSER-STATE-007: benchmark loading・partial・retry・confirmed emptyを区別する @ui-quality', async ({ page }, testInfo) => {
+  let runReads = 0
+  let suiteReads = 0
+  let releaseFirstRunRead: () => void = () => undefined
+  let releaseRetryRunRead: () => void = () => undefined
+  const firstRunReadGate = new Promise<void>((resolve) => { releaseFirstRunRead = resolve })
+  const retryRunReadGate = new Promise<void>((resolve) => { releaseRetryRunRead = resolve })
+
+  await page.route(/http:\/\/127\.0\.0\.1:8787\/benchmark-runs$/, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.fallback()
+      return
+    }
+    runReads += 1
+    if (runReads === 1) {
+      await firstRunReadGate
+      await route.fulfill({
+        status: 500,
+        contentType: 'text/plain',
+        body: 'RequestId: private-cross-browser-benchmark-run at BenchmarkStore (/srv/benchmark.ts:14)'
+      })
+      return
+    }
+    await retryRunReadGate
+    await route.fulfill({ json: { benchmarkRuns: [] } })
+  })
+  await page.route(/http:\/\/127\.0\.0\.1:8787\/benchmark-suites$/, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.fallback()
+      return
+    }
+    suiteReads += 1
+    await route.fulfill({
+      json: {
+        suites: [{
+          suiteId: 'cross-browser-state-agent-v1',
+          label: 'Cross-browser State Agent',
+          mode: 'agent',
+          datasetS3Key: 'datasets/cross-browser/state-agent-v1.jsonl',
+          preset: 'standard',
+          defaultConcurrency: 1
+        }]
+      }
+    })
+  })
+
+  await signIn(page)
+  await page.getByTitle('性能テスト').click()
+
+  const benchmark = page.getByRole('region', { name: '性能テスト', exact: true })
+  const resource = page.locator('#benchmark-resource-region')
+  const history = benchmark.getByRole('region', { name: /性能テスト実行履歴/ })
+  await expect(resource).toHaveAttribute('aria-busy', 'true')
+  await expect(benchmark).toContainText('性能テストを読み込んでいます')
+  await expect(benchmark).toContainText('実行履歴を確認中')
+  await expect(benchmark).not.toContainText('件の実行履歴')
+  await expect(history).toHaveCount(0)
+
+  releaseFirstRunRead()
+  const partial = benchmark.locator('[data-state-kind="partial"]')
+  await expect(partial).toHaveAttribute('role', 'status')
+  await expect(partial).toHaveAttribute('aria-live', 'polite')
+  await expect(partial).toContainText('性能テストの一部を取得できませんでした')
+  await expect(partial).toContainText('取得済み')
+  await expect(partial).toContainText('テスト定義')
+  await expect(partial).toContainText('未更新')
+  await expect(partial).toContainText('実行履歴')
+  await expect(partial).not.toContainText('private-cross-browser-benchmark-run')
+  await expect(benchmark).toContainText('Cross-browser State Agent')
+  await expect(benchmark).not.toContainText('件の実行履歴')
+  await expect(history).toHaveCount(0)
+
+  await partial.getByRole('button', { name: '失敗した項目を再試行' }).click()
+  await expect(resource).toHaveAttribute('aria-busy', 'true')
+  await expect(benchmark.locator('[data-state-kind="retrying"]')).toContainText('性能テストを再試行しています')
+  await expect(benchmark).not.toContainText('件の実行履歴')
+  await expect(history).toHaveCount(0)
+
+  releaseRetryRunRead()
+  await expect(benchmark.locator('[data-state-kind="recovered"]')).toContainText('性能テストを更新しました')
+  await expect(resource).not.toHaveAttribute('aria-busy')
+  await expect(benchmark).toContainText('0 件の実行履歴')
+  await expect(benchmark).toContainText('実行履歴はまだありません。')
+  await expect(history).toBeVisible()
+  expect(runReads).toBe(2)
+  expect(suiteReads).toBe(2)
+
+  await attachStateEvidence(testInfo, 'E2E-UI-CROSS-BROWSER-STATE-007', 'benchmark', 'loading-partial-retry-empty', {
+    runReads,
+    suiteReads,
+    sequence: ['loading', 'partial', 'retrying', 'recovered', 'confirmed-empty'],
+    successfulSuiteDataPreserved: true,
+    falseZeroExposedBeforeConfirmation: false,
+    privateDetailExposed: false
+  })
+})
+
+test('E2E-UI-CROSS-BROWSER-STATE-007: benchmark全resourceのHTTP 403をemptyではなくpermissionとして扱う @ui-quality', async ({ page }, testInfo) => {
+  await page.route(/http:\/\/127\.0\.0\.1:8787\/benchmark-(?:runs|suites)$/, async (route) => {
+    if (route.request().method() === 'GET') {
+      await route.fulfill({ status: 403, contentType: 'text/plain', body: 'forbidden private cross-browser benchmark configuration' })
+      return
+    }
+    await route.fallback()
+  })
+
+  await signIn(page)
+  await page.getByTitle('性能テスト').click()
+
+  const benchmark = page.getByRole('region', { name: '性能テスト', exact: true })
+  const permission = benchmark.locator('[data-state-kind="permission"]')
+  await expect(permission).toHaveAttribute('role', 'alert')
+  await expect(permission).toContainText('性能テストを表示できません')
+  await expect(permission).not.toContainText('private cross-browser benchmark configuration')
+  await expect(permission.getByRole('button', { name: '戻る' })).toBeVisible()
+  await expect(benchmark).not.toContainText('件の実行履歴')
+  await expect(benchmark).not.toContainText('Cross-browser State Agent')
+  await expect(benchmark.getByRole('region', { name: /性能テスト実行履歴/ })).toHaveCount(0)
+
+  await attachStateEvidence(testInfo, 'E2E-UI-CROSS-BROWSER-STATE-007', 'benchmark', 'permission', {
+    sequence: ['loading', 'permission'],
+    emptyExposed: false,
+    falseZeroExposed: false,
+    suiteDataExposed: false,
+    privateDetailExposed: false
+  })
+})
+
 test('E2E-UI-CROSS-BROWSER-STATE-006: admin loading・partial・retry・recoveryを区別する @ui-quality', async ({ page }, testInfo) => {
   let auditReads = 0
   let releaseFirstAuditRead: () => void = () => undefined
