@@ -42,12 +42,12 @@ PR #470 の Firefox／WebKit 必須 gate は管理画面の keyboard・semantic�
 
 ## 受け入れ条件
 
-- [ ] `E2E-UI-CROSS-BROWSER-STATE-006` が Firefox／WebKit 必須 scope に含まれ、loading → partial → retrying → recovered を区別し、成功partを保持して未確認値をfalse zeroへ変換しない。
-- [ ] partial／retry中はprivate error detailを公開せず、回復後だけ監査dataを表示する。
-- [ ] ユーザー一覧の更新失敗時は最後に確認できた内容と `source / as-of` をstaleとして保持し、次のretryでrecoveredへ戻る。
-- [ ] 管理権限不足のdeep linkはpermission alertを表示して正規化し、protected admin requestを発行しない。
-- [ ] `admin → SQ-016 → AC-SQ016-007 → E2E-UI-CROSS-BROWSER-STATE-006` が正本・quality matrix・trace metadata・生成 Web inventory で一意に追跡でき、required cross-browser scope の件数が一致する。
-- [ ] 選定した lint、typecheck、unit、E2E、docs checks の結果と、未検証の manual evidence／owner 判断を task・PR・Issue に記録する。
+- [x] `E2E-UI-CROSS-BROWSER-STATE-006` が Firefox／WebKit 必須 scope に含まれ、loading → partial → retrying → recovered を区別し、成功partを保持して未確認値をfalse zeroへ変換しない。
+- [x] partial／retry中はprivate error detailを公開せず、回復後だけ監査dataを表示する。
+- [x] ユーザー一覧の更新失敗時は最後に確認できた内容と `source / as-of` をstaleとして保持し、次のretryでrecoveredへ戻る。
+- [x] 管理権限不足のdeep linkはpermission alertを表示して正規化し、protected admin requestを発行しない。
+- [x] `admin → SQ-016 → AC-SQ016-007 → E2E-UI-CROSS-BROWSER-STATE-006` が正本・quality matrix・trace metadata・生成 Web inventory で一意に追跡でき、required cross-browser scope の件数が一致する。
+- [x] 選定した lint、typecheck、unit、E2E、docs checks の結果と、未検証の manual evidence／owner 判断を task・PR・Issue に記録する。
 
 ## 検証計画
 
@@ -79,3 +79,12 @@ PR #470 の Firefox／WebKit 必須 gate は管理画面の keyboard・semantic�
 - Web trace／matrix 13件、semantic UI contract 5件、Web inventory freshness、canonical docs、hidden Unicode、Taskfile alias、`git diff --check`: pass。
 - Firefox／WebKit required discovery: 6 files / 56 tests。追加分は3 scenario × 2 browserの6件。
 - Firefox／WebKit実走はbrowser本体取得後、hostのGTK4／GStreamer等required library不足によりbrowser context生成前で停止した。OS packageは追加せず、GitHub Actionsの判定を未完了として待つ。
+
+## GitHub Actions 検証結果
+
+- 初回head `d1fd169b` は Firefox／WebKit 52/56 pass。監査actionの内部IDを表示文字列として期待していたことと、ユーザーtab遷移の自動refreshに対して二重clickしていたことを検出した。
+- 表示契約をラベル／監査IDへ合わせ、tab遷移refreshを決定的に待つ修正を `9765f9e3` へ反映した。
+- [Web UI Quality 33999917574](https://github.com/tsuji-tomonori/rag-assist/actions/runs/33999917574): pass。Chromium requiredとFirefox／WebKit required 56/56を確認した。
+- [Validate Semver Label 33999917571](https://github.com/tsuji-tomonori/rag-assist/actions/runs/33999917571): pass。
+- [MemoRAG CI 33999917562](https://github.com/tsuji-tomonori/rag-assist/actions/runs/33999917562): fail。Web lint／typecheck／473 tests／build、docs checks、infra、benchmarkはpassした。本slice外の既存API test型不整合、API build、C1 branch coverage 80.75%（目標85%）が未達。
+- UI sliceの受け入れ条件は満たすが、manual evidenceと統合PR全体のblockerが残るため状態は `do`、PRはDraftを維持する。

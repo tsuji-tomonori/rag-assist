@@ -45,7 +45,9 @@
 
 ## 未完了・blocker
 
-- GitHub Actions上のFirefox／WebKit 56件、Chromium required、MemoRAG CI、semver検査はcommit前のため未確認。
+- 初回CIで、監査actionの内部IDを表示文字列として期待していたことと、ユーザーtab遷移の自動refreshへ二重clickしていたことを検出した。表示ラベル／監査IDを検証し、tab遷移refreshを決定的に待つよう修正した。
+- 修正head `9765f9e3` の [Web UI Quality](https://github.com/tsuji-tomonori/rag-assist/actions/runs/33999917574) はpass。Chromium requiredとFirefox／WebKit required 56/56を確認した。[semver検査](https://github.com/tsuji-tomonori/rag-assist/actions/runs/33999917571)もpassした。
+- [MemoRAG CI](https://github.com/tsuji-tomonori/rag-assist/actions/runs/33999917562) はfail。Web lint／typecheck／473 tests／build、docs、infra、benchmarkはpass。本sliceが変更していないAPI側でtest fixtureの型不整合、API build、C1 branch coverage 80.75%（目標85%）が残る。
 - representative screen reader、Firefox／WebKit native AX tree、実ブラウザ200%／400% zoom、text-only zoom、OS scaling、touch／実機は未実施。
 - 実API／AWS／実認可での管理操作は未実施。
 - FR-050／FR-051、TC-003 WebSocket transport判断、OQ-UI-002、API C1 85%は未完了。
