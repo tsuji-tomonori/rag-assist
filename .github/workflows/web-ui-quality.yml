@@ -32,9 +32,31 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  e2e-typecheck:
+    name: Required E2E TypeScript
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type-check E2E source
+        run: npm run typecheck:e2e -w @memorag-mvp/web
+
   chromium-required:
     name: Required Chromium axe, mobile, visual, and evidence
     if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' }}
+    needs: e2e-typecheck
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -71,6 +93,7 @@ jobs:
   cross-browser-accessibility-required:
     name: Required Firefox and WebKit keyboard, semantics, states, reflow, and content extremes
     if: ${{ github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.run-cross-browser) }}
+    needs: e2e-typecheck
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -107,6 +130,7 @@ jobs:
   cross-browser-scheduled:
     name: Scheduled Firefox and WebKit accessibility
     if: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.run-cross-browser) }}
+    needs: e2e-typecheck
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:

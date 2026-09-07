@@ -1,5 +1,15 @@
 # E2E テスト実行手順
 
+## TypeScript 検査
+
+E2E sourceはWeb production sourceとcompiler contextが異なるため、既存の`e2e/tsconfig.json`を正本として個別に型検査します。repository rootで次を実行してください。
+
+```bash
+npm run typecheck:e2e -w @memorag-mvp/web
+```
+
+Web UI Qualityはこの検査をbrowser installより前に一度だけ実行し、Chromium required、Firefox／WebKit required、scheduled Firefox／WebKitの各jobは成功した型検査jobに依存します。型検査の成功はbrowser実走やmanual evidenceを代替しません。
+
 ## ローカル実行（smoke）
 
 ```bash

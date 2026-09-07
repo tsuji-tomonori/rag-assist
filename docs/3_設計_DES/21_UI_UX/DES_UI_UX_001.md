@@ -3,7 +3,7 @@
 - ファイル: `docs/3_設計_DES/21_UI_UX/DES_UI_UX_001.md`
 - 種別: `DES_UI_UX`
 - 状態: Draft
-- 最終更新: 2026-09-05
+- 最終更新: 2026-09-08
 - Source: GitHub Issue #345、current production source、PR #341〜#344
 - Confidence: confirmed current-state sections; inferred target-design sections are labeled
 
@@ -39,6 +39,8 @@
 | `tasks/todo|do|done/` | incomplete implementation or verification ownership/state | workflow state transition | known failure/unverified required item stays out of done |
 
 `tools/web-inventory/ui-traceability.json` は production behavior または requirement 本文を再定義しない。source の `AppView` set、canonical docs の REQ/AC IDs、test source の verification IDs、repository evidence paths を join する最小 metadata である。
+
+E2E sourceはNode／Playwright型を含む`apps/web/e2e/tsconfig.json`を一意なcompiler設定とし、`npm run typecheck:e2e -w @memorag-mvp/web`でproduction Web sourceとは分離して検査する。Web UI Qualityの共通`e2e-typecheck` jobはbrowser install前に一度だけ実行し、Chromium required、Firefox／WebKit required、scheduled Firefox／WebKitの各jobは`needs`でその成功に依存する。これにより静的型不整合時は高コストなbrowser setupへ進まないが、型検査passをbrowser runtime／manual evidenceのpassへ読み替えない。
 
 ## Persona と主要 job
 
