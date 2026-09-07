@@ -68,7 +68,7 @@ Draft PR #470 head `313a5382` は current `main@8e542b31` を祖先に含み、b
 - [x] E2E README、NFR-018、DES_UI_UX_001でcommand、責務、実行順が一致する。
 - [x] E2E scenario／required件数、production source、UI trace／quality statusを変更しない。
 - [x] 選定したlint、Web／E2E typecheck、Web unit／build、E2E discovery、docs checks、workflow構文、`git diff --check`が成功する。
-- [ ] Draft PR #470、PR受け入れコメント、セルフレビュー、Issue #345進捗を更新する。
+- [x] Draft PR #470、PR受け入れコメント、セルフレビュー、Issue #345進捗を更新する。
 
 ## ローカル検証結果
 
@@ -78,7 +78,19 @@ Draft PR #470 head `313a5382` は current `main@8e542b31` を祖先に含み、b
 - PASS: workflow YAML parseと`e2e-typecheck`への3 job dependency assertion。
 - PASS: trace 13件、semantic UI 5件、manual evidence contract 7件、Web inventory freshness、canonical docs structure、OpenAPI quality、API code 99 APIs／594 documents、infra inventory、hidden Unicode、Taskfile alias、`git diff --check`。
 - INFO: `task docs:check`はTask runner不在で起動不可。同Taskfileの構成commandを直接実行した。OpenAPI npm scriptは`tsx` IPCがsandboxで`EPERM`となったため、同じsourceを`node --import tsx`で実行して成功した。
-- BLOCKED: final-head GitHub Actions、branch protectionへの新job status登録要否のowner確認。
+- PASS: implementation head `700a7ef9`のWeb UI Quality。`Required E2E TypeScript`成功後にChromium required／Firefox・WebKit requiredが成功し、PRのscheduled jobはskip。
+- PASS: implementation head `700a7ef9`のsemver検査。
+- FAIL（本slice外）: MemoRAG CIは既存API fixture readonly／`SaveConversationHistoryInput`不整合、API build、C1 80.75%（目標85%）で失敗。
+- BLOCKED: branch protectionへの新job status登録要否のowner確認。
+
+## GitHub証跡
+
+- Web UI Quality: https://github.com/tsuji-tomonori/rag-assist/actions/runs/34170361400
+- MemoRAG CI: https://github.com/tsuji-tomonori/rag-assist/actions/runs/34170361423
+- semver検査: https://github.com/tsuji-tomonori/rag-assist/actions/runs/34170361406
+- PR受け入れ確認: https://github.com/tsuji-tomonori/rag-assist/pull/470#issuecomment-5576859501
+- セルフレビュー: https://github.com/tsuji-tomonori/rag-assist/pull/470#pullrequestreview-5135889662
+- Issue #345進捗: https://github.com/tsuji-tomonori/rag-assist/issues/345#issuecomment-5576859712
 
 ## 検証計画
 

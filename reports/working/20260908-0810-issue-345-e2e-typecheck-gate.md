@@ -39,11 +39,19 @@ E2E専用TypeScript検査をWeb workspace commandとして公開し、Web UI Qua
 
 ## 受け入れ判断
 
-ローカルで検証できるsliceの条件は満たした。final-head GitHub Actionsの新`Required E2E TypeScript` jobと後続browser jobは未確認であり、CI成功までは未完了とする。新jobをbranch protectionのrequired statusへ追加する要否はrepository owner判断が必要である。
+ローカルで検証できるsliceの条件を満たした。implementation head `700a7ef9`で新`Required E2E TypeScript` jobが成功した後、Chromium requiredとFirefox／WebKit requiredが成功し、PRではscheduled jobがskipされる既存条件も維持された。semver検査も成功した。MemoRAG CIは本slice外の既存API fixture readonly／`SaveConversationHistoryInput`不整合、API build、C1 80.75%（目標85%）で失敗している。新jobをbranch protectionのrequired statusへ追加する要否はrepository owner判断が必要である。
+
+GitHub証跡:
+
+- Web UI Quality: https://github.com/tsuji-tomonori/rag-assist/actions/runs/34170361400
+- MemoRAG CI: https://github.com/tsuji-tomonori/rag-assist/actions/runs/34170361423
+- semver検査: https://github.com/tsuji-tomonori/rag-assist/actions/runs/34170361406
+- PR受け入れ確認: https://github.com/tsuji-tomonori/rag-assist/pull/470#issuecomment-5576859501
+- セルフレビュー: https://github.com/tsuji-tomonori/rag-assist/pull/470#pullrequestreview-5135889662
+- Issue #345進捗: https://github.com/tsuji-tomonori/rag-assist/issues/345#issuecomment-5576859712
 
 ## 未完了
 
-- final-head Web UI Quality／MemoRAG CI／semver。
 - branch protection required statusのowner確認。
 - representative screen reader、Firefox／WebKit native AX tree、実browser 200%／400% zoom、text-only zoom、OS scaling、touch／実機、manual keyboard／contrast。
 - 実API／AWS認可、#461統合後の再検証。
