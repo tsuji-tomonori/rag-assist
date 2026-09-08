@@ -18,6 +18,28 @@ const historyItems = Array.from({ length: 35 }, (_, index) => ({
     createdAt: '2026-07-17T00:00:00.000Z'
   }]
 }))
+const favoriteTargetTypes = [
+  'chatSession',
+  'chatMessage',
+  'folder',
+  'document',
+  'agentExecutionPreset',
+  'skill',
+  'agentProfile',
+  'benchmarkRun'
+] as const
+const favoriteItems = Array.from({ length: 24 }, (_, index) => ({
+  favoriteId: `layout-favorite-${String(index + 1).padStart(2, '0')}`,
+  targetType: favoriteTargetTypes[index % favoriteTargetTypes.length],
+  targetId: index === 0
+    ? `layout-target-${'非常に長い対象識別子'.repeat(10)}`
+    : `layout-target-${String(index + 1).padStart(2, '0')}`,
+  label: index === 0 || index === 23
+    ? `お気に入り ${String(index + 1).padStart(2, '0')} ${'非常に長いショートカット名'.repeat(8)}`
+    : `お気に入り ${String(index + 1).padStart(2, '0')}`,
+  accessible: index !== 12,
+  createdAt: '2026-09-09T00:00:00.000Z'
+}))
 
 type ScrollRecord = {
   behavior: ScrollBehavior | null
@@ -210,6 +232,16 @@ test('E2E-UI-LAYOUT-STRESS-001: reduced-motion で長文回答と長い引用名
 
 test('E2E-UI-LAYOUT-STRESS-001: 長いファイル名・多数件・0件が320pxで reflow する @smoke @ui-quality', async ({ page }, testInfo) => {
   const browserProject = testInfo.project.name
+  let favoritesReads = 0
+  await page.route(/http:\/\/127\.0\.0\.1:8787\/favorites$/, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.fallback()
+      return
+    }
+
+    favoritesReads += 1
+    await route.fulfill({ json: { favorites: favoritesReads === 1 ? favoriteItems : [] } })
+  })
   await signIn(page)
   expect(await page.evaluate(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(true)
   const states: DimensionEvidence[] = []
@@ -229,9 +261,31 @@ test('E2E-UI-LAYOUT-STRESS-001: 長いファイル名・多数件・0件が320px
 
   const favoritesRegion = await openMobileDestination(page, 'お気に入り', 'お気に入り')
   await expect(page).toHaveURL(/\?view=favorites$/)
-  await expect(favoritesRegion).toContainText('0 件のショートカット')
-  await expect(favoritesRegion).toContainText('取得は完了しており、保存済みのお気に入りは 0 件です。')
-  states.push(await assertNoHorizontalOverflow(page, favoritesRegion, 'favorites-zero-items'))
+  await expect(favoritesRegion).toContainText(`${favoriteItems.length} 件のショートカット`)
+  await expect(favoritesRegion.locator('.history-item')).toHaveCount(favoriteItems.length)
+  await expect(favoritesRegion.getByText(favoriteItems[0].label, { exact: true })).toBeVisible()
+  await expect(favoritesRegion.getByText(favoriteItems[0].targetId, { exact: true })).toBeVisible()
+  await expect(favoritesRegion.getByText('アクセス不可', { exact: true })).toBeVisible()
+
+  const lastFavorite = favoritesRegion.getByText(favoriteItems.at(-1)?.label ?? '', { exact: true })
+  await lastFavorite.scrollIntoViewIfNeeded()
+  await expect(lastFavorite).toBeVisible()
+  const lastFavoriteRect = await lastFavorite.evaluate((element) => {
+    const rect = element.getBoundingClientRect()
+    return { top: rect.top, bottom: rect.bottom }
+  })
+  expect(lastFavoriteRect.top).toBeGreaterThanOrEqual(0)
+  expect(lastFavoriteRect.bottom).toBeLessThanOrEqual(viewport.height)
+  states.push(await assertNoHorizontalOverflow(page, favoritesRegion, 'favorites-24-items'))
+
+  await page.reload()
+  const emptyFavoritesRegion = page.getByRole('region', { name: 'お気に入り', exact: true })
+  await expect(emptyFavoritesRegion).toBeVisible()
+  await expect(page).toHaveURL(/\?view=favorites$/)
+  await expect(emptyFavoritesRegion).toContainText('0 件のショートカット')
+  await expect(emptyFavoritesRegion).toContainText('取得は完了しており、保存済みのお気に入りは 0 件です。')
+  states.push(await assertNoHorizontalOverflow(page, emptyFavoritesRegion, 'favorites-zero-items'))
+  expect(favoritesReads).toBe(2)
 
   await testInfo.attach(`layout-stress-collection-states-${browserProject}.json`, {
     body: Buffer.from(JSON.stringify({
@@ -243,7 +297,13 @@ test('E2E-UI-LAYOUT-STRESS-001: 長いファイル名・多数件・0件が320px
         documentCount: 1,
         longFileNameLength: longFileName.length,
         historyCount: historyItems.length,
-        favoritesCount: 0
+        favoritesCount: favoriteItems.length,
+        favoritesTargetTypeCount: favoriteTargetTypes.length,
+        favoritesReads,
+        firstFavoriteLabelLength: favoriteItems[0].label.length,
+        firstFavoriteTargetIdLength: favoriteItems[0].targetId.length,
+        lastFavoriteLabelLength: favoriteItems.at(-1)?.label.length ?? 0,
+        confirmedEmptyFavoritesCount: 0
       },
       states,
       evidenceBoundary: 'Representative layout stress only; not exhaustive for every locale, string, item count, browser, zoom mode, screen reader, or device'

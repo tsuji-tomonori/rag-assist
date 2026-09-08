@@ -166,13 +166,13 @@
     {
       "view": "favorites",
       "criteria": {
-        "AC-SQ016-001": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "4 viewport auditのroot/unresolved overflow 0に加え、Chromium／Firefox／WebKit required E2E-UI-LAYOUT-STRESS-001で320pxの確認済み0件とregion overflow 0を検証。実browser zoomは未検証" },
+        "AC-SQ016-001": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "4 viewport auditのroot/unresolved overflow 0に加え、Chromium／Firefox／WebKit required E2E-UI-LAYOUT-STRESS-001で320pxのお気に入り24件／8 target type、長いlabel・target ID、アクセス不可cue、末尾到達、再取得後の確認済み0件とregion overflow 0を検証。実browser zoomは未検証" },
         "AC-SQ016-002": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "required E2E-UI-KEYBOARD-NAV-001をChromium／Firefox／WebKitで実行し、お気に入りnavigationへのSpace到達、戻るbuttonへのTab到達、3px focus indicator、Enterによるチャット復帰をkeyboard-onlyで検証。favorite resume / delete journeyとmanual keyboard journeyは未完了" },
         "AC-SQ016-003": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "required E2E-UI-SR-SEMANTICS-001でお気に入りregion/heading、項目一覧・target type見出し、戻るbuttonのChromium AX tree契約を検証。E2E-UI-CROSS-BROWSER-SEMANTICS-007でFirefox／WebKitのARIA snapshotと会話／文書group、item label／target ID／アクセス不可cueを検証。representative screen readerとnative Firefox／WebKit AX treeは未実施" },
         "AC-SQ016-004": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "muted foreground remediation後、1280px axe serious/critical blocker 0。manual contrast reviewは未実施" },
         "AC-SQ016-005": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "4 viewportで24px minimumと44px primary targetの未解決candidate 0。manual touch evidenceは未実施" },
         "AC-SQ016-006": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "4 viewportのcomputed auditとChromium／Firefox／WebKit required E2E-UI-LAYOUT-STRESS-001をreduced motionで検証。orientation / safe-area / virtual-keyboard実機は未検証" },
-        "AC-SQ016-007": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "required E2E-UI-STATE-001に加え、Chromium／Firefox／WebKit required E2E-UI-CROSS-BROWSER-STATE-004でloading→500→retry→confirmed emptyとHTTP 403を区別し、false zero、empty、private detail露出を防ぐ。E2E-UI-LAYOUT-STRESS-001で確認済み0件も検証。manual evidenceは未実施" },
+        "AC-SQ016-007": { "automated": "pass", "manual": "blocked", "overall": "blocked", "note": "required E2E-UI-STATE-001に加え、Chromium／Firefox／WebKit required E2E-UI-CROSS-BROWSER-STATE-004でloading→500→retry→confirmed emptyとHTTP 403を区別し、false zero、empty、private detail露出を防ぐ。E2E-UI-LAYOUT-STRESS-001でpopulated 24件から再取得後の確認済み0件への遷移も検証。manual evidenceは未実施" },
         "AC-SQ016-008": { "automated": "not_applicable", "manual": "blocked", "overall": "blocked", "note": "manual required scopeは未実施" }
       }
     },
