@@ -1,7 +1,7 @@
 # Issue #345 お気に入り実データの320px layout stressを必須gateにする
 
 - 状態: do
-- タスク種別: 機能追加
+- タスク種別: 修正
 - 対象Issue: #345
 - 対象PR: #470
 - 作成日時: 2026-09-09 08:08 JST
@@ -10,7 +10,40 @@
 
 Draft PR #470 head `da9507cf` は current `main@8e542b31` を祖先に含み、behind 0である。`E2E-UI-LAYOUT-STRESS-001` はChromium／Firefox／WebKitの必須gateで320×720 CSS pxを検証するが、お気に入り画面は確認済み0件だけを対象にしている。長いlabel／target ID、多数件、アクセス不可cueを含む実データ表示時のregion overflowと末尾到達は未検証である。
 
-並行Draft PR #461は`FavoritesWorkspace.tsx`を変更するため、今回sliceはproduction sourceを避け、既存E2Eのtest-only fixtureと一意な正本／quality metadataだけを更新する。
+並行Draft PR #461は`FavoritesWorkspace.tsx`を変更するため、今回sliceは同componentを避け、既存E2Eのtest-only fixture、favorites限定CSS、一意な正本／quality metadataだけを更新する。
+
+## なぜなぜ分析
+
+### 問題文
+
+2026-09-09、PR #470 head `e9963d1d` のChromium required E2Eで、320×720 CSS pxのお気に入り24件表示時にfavorites regionが`clientWidth=320`／`scrollWidth=1404`となり、期待する水平overflow 0から1084px外れた。初回とretryで同じ値を再現した。
+
+### 確認済み事実
+
+- document rootは320px内に収まる一方、favorites region自体が1404pxへoverflowする。
+- fixture先頭のtarget IDは空白を含まない長い文字列である。
+- favorites itemは`.history-item` grid直下に単一`span`を置き、同`span`に`min-width: 0`がない。
+- target IDを表示する`small`に折り返し規則がなく、共通`.question-list-item strong`は`white-space: nowrap`／ellipsisである。
+- history itemの主要buttonには`min-width: 0`があるため、同じ`.history-item` classでもDOM境界が異なる。
+- 既存required layout stressはfavoritesの確認済み0件だけを検査し、populated長文境界を検出しなかった。
+
+### 因果と真因
+
+1. 長いtarget IDが折り返されない。
+2. その親grid itemの自動最小幅がmax-content幅を保持する。
+3. favorites itemにだけ、contentを縮小・折り返す局所規則がない。
+4. 0件fixtureだけのrequired証跡では、実データ表示時のこの条件を通過しなかった。
+
+真因は、履歴用grid styleをfavoritesの異なるDOM構造へ再利用した際に、favorites itemの`span`／`strong`／`small`へ`min-width: 0`と長文折り返し契約を定義せず、populated content extremeをrequired testへ含めていなかったことである。
+
+### 影響範囲と全量対応
+
+- 影響: お気に入り画面の長いlabel／target ID。水平スクロールとellipsisによる情報欠落が起こり得る。
+- 非影響: history itemのbutton構造、API／認可／favorite mutation、他画面。
+- 対応: favorites regionへ限定してgridを1列化し、直下`span`を縮小可能にし、`strong`／`small`を任意位置で折り返す。
+- 検出: 24件／8種別／長文／アクセス不可／末尾到達／empty再取得を3 browser required E2Eで継続検証する。
+- 効果指標: 3 browserでpopulated／emptyのroot・region `scrollWidth <= clientWidth`、retryなし成功。
+- open question: 実browser 400% zoomと支援技術／実機は別のmanual evidenceとして未完了。
 
 ## 目的
 
@@ -19,13 +52,14 @@ Draft PR #470 head `da9507cf` は current `main@8e542b31` を祖先に含み、b
 ## 対象範囲
 
 - `apps/web/e2e/layout-stress.spec.ts`のtest-only favorites fixtureとassertion
+- `apps/web/src/styles/features/history.css`のfavorites限定reflow規則
 - `SQ-016`、`DES_UI_UX_001`、UI quality matrix
 - repository generatorが更新する`docs/generated/`
 - task、spec analysis、working report、PR／Issue証跡
 
 ## 対象外
 
-- production component／CSS／API／authorization／RAG contract
+- production component／API／authorization／RAG contract
 - favorite resume／delete機能
 - browser UIを操作する実200%／400% zoom、text-only zoom、OS scaling
 - representative screen reader、native AX tree、touch／実機
@@ -35,11 +69,13 @@ Draft PR #470 head `da9507cf` は current `main@8e542b31` を祖先に含み、b
 ## 実施計画
 
 1. test-only routeで長いlabel／target ID、全target type、多数件、アクセス不可itemを返す。
-2. 320pxで先頭／末尾の表示、件数、アクセス不可cue、root／region overflow 0を検証する。
-3. 同一journey内のreloadで再取得した確認済み0件も検証し、既存empty証跡を退行させない。
-4. SQ-016、UI設計、quality matrix、生成物を既存`E2E-UI-LAYOUT-STRESS-001`へ同期する。
-5. 最小十分なlint、typecheck、unit、build、E2E discovery／実走、docs checksを行う。
-6. Draft PR #470の受け入れ確認／セルフレビューとIssue #345へ結果・未完了境界を記録する。
+2. required CIの寸法証跡から真因と影響範囲を確定する。
+3. favorites限定CSSでitemを縮小可能・長文折り返し可能にする。
+4. 320pxで先頭／末尾の表示、件数、アクセス不可cue、root／region overflow 0を検証する。
+5. 同一journey内のreloadで再取得した確認済み0件も検証し、既存empty証跡を退行させない。
+6. SQ-016、UI設計、quality matrix、生成物を既存`E2E-UI-LAYOUT-STRESS-001`へ同期する。
+7. 最小十分なlint、typecheck、unit、build、E2E discovery／実走、docs checksを行う。
+8. Draft PR #470の受け入れ確認／セルフレビューとIssue #345へ結果・未完了境界を記録する。
 
 ## ドキュメントメンテナンス計画
 
@@ -55,7 +91,7 @@ Draft PR #470 head `da9507cf` は current `main@8e542b31` を祖先に含み、b
 - [ ] populated stateのdocument root／favorites regionに水平overflowがなく、browser project／fixture量／dimensionsがJSON evidenceに残る。
 - [ ] 同一journeyのreloadで再取得した確認済み0件を表示し、既存empty stateとoverflow 0の証跡を維持する。
 - [ ] `favorites → SQ-016 → AC-SQ016-001 / 006 / 007 → E2E-UI-LAYOUT-STRESS-001`が正本、UI設計、quality matrix、生成文書で一致する。
-- [ ] production sourceを変更せず、選定したlint、Web／E2E typecheck、unit、build、E2E、docs checksが成功する。
+- [ ] production差分をfavorites限定CSSに閉じ、component／API／認可を変更せず、選定したlint、Web／E2E typecheck、unit、build、E2E、docs checksが成功する。
 - [ ] Draft PR #470、受け入れ確認、セルフレビュー、Issue #345へfinal head、CI、未完了事項を記録する。
 
 ## 検証計画
@@ -73,7 +109,7 @@ Draft PR #470 head `da9507cf` は current `main@8e542b31` を祖先に含み、b
 - fixtureがPlaywright routeに閉じ、production fallbackへ混入していないか。
 - 0件だけでなく、長い文字列、多数件、permission cueのある実データ境界を検証しているか。
 - viewport proxyを実browser zoomへ読み替えていないか。
-- #461が所有するproduction pathを変更していないか。
+- #461が所有するcomponent pathを変更せず、CSS selectorがfavorites regionに限定されているか。
 - E2E IDを重複作成せず、既存の正本・trace joinを維持しているか。
 
 ## リスク・未完了境界

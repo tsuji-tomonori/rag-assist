@@ -64,6 +64,24 @@
   gap: 12px;
 }
 
+.assignee-workspace[aria-label="お気に入り"] .history-item {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.assignee-workspace[aria-label="お気に入り"] .history-item > span {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.assignee-workspace[aria-label="お気に入り"] .history-item strong,
+.assignee-workspace[aria-label="お気に入り"] .history-item small {
+  overflow: visible;
+  overflow-wrap: anywhere;
+  text-overflow: clip;
+  white-space: normal;
+}
+
 .history-item.history-tone-success {
   border-color: #8ccaa5;
   background: #f4fff8;
