@@ -86,13 +86,13 @@ Draft PR #470 head `da9507cf` は current `main@8e542b31` を祖先に含み、b
 
 ## 受け入れ条件
 
-- [ ] `E2E-UI-LAYOUT-STRESS-001`がChromium／Firefox／WebKit required scopeのまま、320×720 CSS pxで24件・8 target typeのお気に入りを表示する。
-- [ ] 長いlabel／target IDを持つ先頭itemと、長いlabelを持つ末尾itemが到達可能で、アクセス不可cueが可視である。
-- [ ] populated stateのdocument root／favorites regionに水平overflowがなく、browser project／fixture量／dimensionsがJSON evidenceに残る。
-- [ ] 同一journeyのreloadで再取得した確認済み0件を表示し、既存empty stateとoverflow 0の証跡を維持する。
-- [ ] `favorites → SQ-016 → AC-SQ016-001 / 006 / 007 → E2E-UI-LAYOUT-STRESS-001`が正本、UI設計、quality matrix、生成文書で一致する。
-- [ ] production差分をfavorites限定CSSに閉じ、component／API／認可を変更せず、選定したlint、Web／E2E typecheck、unit、build、E2E、docs checksが成功する。
-- [ ] Draft PR #470、受け入れ確認、セルフレビュー、Issue #345へfinal head、CI、未完了事項を記録する。
+- [x] `E2E-UI-LAYOUT-STRESS-001`がChromium／Firefox／WebKit required scopeのまま、320×720 CSS pxで24件・8 target typeのお気に入りを表示する。
+- [x] 長いlabel／target IDを持つ先頭itemと、長いlabelを持つ末尾itemが到達可能で、アクセス不可cueが可視である。
+- [x] populated stateのdocument root／favorites regionに水平overflowがなく、browser project／fixture量／dimensionsがJSON evidenceに残る。
+- [x] 同一journeyのreloadで再取得した確認済み0件を表示し、既存empty stateとoverflow 0の証跡を維持する。
+- [x] `favorites → SQ-016 → AC-SQ016-001 / 006 / 007 → E2E-UI-LAYOUT-STRESS-001`が正本、UI設計、quality matrix、生成文書で一致する。
+- [x] production差分をfavorites限定CSSに閉じ、component／API／認可を変更せず、選定したlint、Web／E2E typecheck、unit、build、E2E、docs checksが成功する。Web C0 90.02%／C1 85.12%。
+- [ ] Draft PR #470、受け入れ確認、セルフレビュー、Issue #345へfinal head、CI、未完了事項を記録する（repo証跡確定後に実施）。
 
 ## 検証計画
 
@@ -117,3 +117,13 @@ Draft PR #470 head `da9507cf` は current `main@8e542b31` を祖先に含み、b
 - 320 CSS pxはbrowser chromeを含む実400% zoomを証明しない。
 - route fixtureは実API／認可／favorite mutationの証跡ではない。
 - representative screen reader、native AX tree、実browser zoom、touch／実機、#461統合後再検証、owner判断、API既存失敗／C1 85%は未完了を維持する。
+
+## 実装head検証結果
+
+- 実装head: `60c17342`
+- Web UI Quality: https://github.com/tsuji-tomonori/rag-assist/actions/runs/34291078353 （success。Chromium 41件、Firefox／WebKit 60件）
+- Validate Semver Label: https://github.com/tsuji-tomonori/rag-assist/actions/runs/34291078357 （success）
+- MemoRAG CI: https://github.com/tsuji-tomonori/rag-assist/actions/runs/34291078368 （failure）
+  - 本slice対象のWeb lint／typecheck／unit／coverage／build、正本・trace・semantic UI・生成物検査はsuccess。
+  - Web coverageはC0 90.02%／C1 85.12%で閾値を満たす。
+  - 失敗は既存API test fixtureの型不整合によるAPI buildと、API C1 80.75%（目標85%）であり、本sliceのCSS／E2E／文書差分外。
