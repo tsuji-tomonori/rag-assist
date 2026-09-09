@@ -356,8 +356,8 @@ No proposed default is recorded as executed evidence until its task produces the
 
 ### Cross-browser content-extreme contract
 
-- `E2E-UI-LAYOUT-STRESS-001` は320×720 CSS px、`prefers-reduced-motion: reduce`で長文回答の先頭／末尾、長い引用・ファイル名、履歴35件、お気に入り24件／8 target typeの長いlabel・target ID／アクセス不可cue／末尾到達と再取得後の確認済み0件を表示し、chat / documents / history / favoritesのdocument rootと対象regionの水平containmentをChromium／Firefox／WebKitのPR required gateで検証する。
-- test-only認証、chat startRun／SSE、documents、history、favorites fixtureはPlaywright routeに限定する。JSON attachmentはbrowser project名、viewport、fixture量、URL／dimensions、automation境界を持ち、browser別に一意なattachment名とする。
+- `E2E-UI-LAYOUT-STRESS-001` は320×720 CSS px、`prefers-reduced-motion: reduce`で長文回答の先頭／末尾、長い引用・ファイル名、履歴35件の長い先頭／末尾title・末尾viewport到達、お気に入り24件／8 target typeの長いlabel・target ID／アクセス不可cue／末尾到達と再取得後の確認済み0件を表示し、chat / documents / history / favoritesのdocument rootと対象regionの水平containmentをChromium／Firefox／WebKitのPR required gateで検証する。
+- test-only認証、chat startRun／SSE、documents、history、favorites fixtureはPlaywright routeに限定する。JSON attachmentはbrowser project名、viewport、fixture量、履歴／お気に入りの末尾矩形、URL／dimensions、automation境界を持ち、browser別に一意なattachment名とする。
 - required cross-browser scopeはkeyboard 4件、semantic 16件、history state 4件、documents state 4件、assignee state 4件、favorites state 4件、chat state 6件、admin state 6件、benchmark state 4件、reflow 4件、content-extreme 4件の合計60件に限定する。より広いFirefox／WebKit visual scopeはscheduled jobに分離し、重複実行しない。
 - content-extreme fixtureのpassは実browser zoom、text-only zoom、OS scaling、IME、representative screen reader、touch／real device、任意locale／内容量の網羅を証明しない。該当manual／overall statusは`blocked`を維持する。
 

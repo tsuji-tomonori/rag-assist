@@ -255,8 +255,17 @@ test('E2E-UI-LAYOUT-STRESS-001: 長いファイル名・多数件・0件が320px
   await expect(page).toHaveURL(/\?view=history$/)
   await expect(historyRegion).toContainText('35 件の会話')
   await expect(historyRegion.locator('.history-item')).toHaveCount(35)
-  await expect(historyRegion.getByText(historyItems[0].title, { exact: true })).toBeVisible()
-  await expect(historyRegion.getByText(historyItems[34].title, { exact: true })).toBeVisible()
+  const firstHistoryTitle = historyRegion.getByText(historyItems[0].title, { exact: true })
+  const lastHistoryTitle = historyRegion.getByText(historyItems.at(-1)?.title ?? '', { exact: true })
+  await expect(firstHistoryTitle).toBeVisible()
+  await lastHistoryTitle.scrollIntoViewIfNeeded()
+  await expect(lastHistoryTitle).toBeVisible()
+  const lastHistoryRect = await lastHistoryTitle.evaluate((element) => {
+    const rect = element.getBoundingClientRect()
+    return { top: rect.top, bottom: rect.bottom }
+  })
+  expect(lastHistoryRect.top).toBeGreaterThanOrEqual(0)
+  expect(lastHistoryRect.bottom).toBeLessThanOrEqual(viewport.height)
   states.push(await assertNoHorizontalOverflow(page, historyRegion, 'history-35-items'))
 
   const favoritesRegion = await openMobileDestination(page, 'お気に入り', 'お気に入り')
@@ -297,6 +306,8 @@ test('E2E-UI-LAYOUT-STRESS-001: 長いファイル名・多数件・0件が320px
         documentCount: 1,
         longFileNameLength: longFileName.length,
         historyCount: historyItems.length,
+        firstHistoryTitleLength: historyItems[0].title.length,
+        lastHistoryTitleLength: historyItems.at(-1)?.title.length ?? 0,
         favoritesCount: favoriteItems.length,
         favoritesTargetTypeCount: favoriteTargetTypes.length,
         favoritesReads,
@@ -304,6 +315,10 @@ test('E2E-UI-LAYOUT-STRESS-001: 長いファイル名・多数件・0件が320px
         firstFavoriteTargetIdLength: favoriteItems[0].targetId.length,
         lastFavoriteLabelLength: favoriteItems.at(-1)?.label.length ?? 0,
         confirmedEmptyFavoritesCount: 0
+      },
+      reachability: {
+        lastHistoryRect,
+        lastFavoriteRect
       },
       states,
       evidenceBoundary: 'Representative layout stress only; not exhaustive for every locale, string, item count, browser, zoom mode, screen reader, or device'
