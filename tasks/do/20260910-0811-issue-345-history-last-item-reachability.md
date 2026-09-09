@@ -110,7 +110,7 @@ Draft PR #470 head `30bcb90d` はcurrent `main@8e542b31`を祖先に含み、beh
 - [x] AC-2: root／history regionの水平overflow 0を維持し、browser project、fixture量、先頭／末尾title長、末尾矩形、dimensionsをJSON evidenceへ追加した。
 - [x] AC-3: `history → SQ-016 → AC-SQ016-001 / 006 / 007 → E2E-UI-LAYOUT-STRESS-001`を正本、UI設計、authored／generated quality matrixで同期した。
 - [x] AC-4: production component／API／認可を変更していない。Web UI QualityはChromium 41件、Firefox／WebKit 60件、E2E TypeScriptを含め成功した。MemoRAG CI内のWeb lint／typecheck／unit 473件／coverage／build、正本／trace／生成物検査も成功した。
-- [ ] AC-5: report-only final headのCI、PR受け入れ確認／セルフレビュー、Issue #345へのfinal証跡を確定する。
+- [x] AC-5: PRの[受け入れ確認](https://github.com/tsuji-tomonori/rag-assist/pull/470#issuecomment-5610390593)／[セルフレビュー](https://github.com/tsuji-tomonori/rag-assist/pull/470#pullrequestreview-5161080227)、Issue #345の[進捗・未完了記録](https://github.com/tsuji-tomonori/rag-assist/issues/345#issuecomment-5610398347)を追加した。証跡専用final headのCI結果はPR／Issue上で追記する。
 
 ### CI
 
