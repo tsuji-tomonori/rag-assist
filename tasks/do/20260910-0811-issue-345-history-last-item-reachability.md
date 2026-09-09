@@ -102,3 +102,20 @@ Draft PR #470 head `30bcb90d` はcurrent `main@8e542b31`を祖先に含み、beh
 - 320 CSS pxはbrowser chromeを含む実400% zoomを証明しない。
 - route fixtureは実API／認可／永続化の証跡ではない。
 - representative screen reader、native AX tree、実browser zoom、touch／実機、#461統合後再検証、owner判断、既存API build／C1 85%は未完了を維持する。
+
+## 実装head検証結果
+
+- 実装head: `344535d7`
+- [x] AC-1: 320×720 CSS pxで履歴35件の末尾titleをviewport内へscrollし、`top >= 0`／`bottom <= 720`をChromium／Firefox／WebKit required E2Eで確認した。
+- [x] AC-2: root／history regionの水平overflow 0を維持し、browser project、fixture量、先頭／末尾title長、末尾矩形、dimensionsをJSON evidenceへ追加した。
+- [x] AC-3: `history → SQ-016 → AC-SQ016-001 / 006 / 007 → E2E-UI-LAYOUT-STRESS-001`を正本、UI設計、authored／generated quality matrixで同期した。
+- [x] AC-4: production component／API／認可を変更していない。Web UI QualityはChromium 41件、Firefox／WebKit 60件、E2E TypeScriptを含め成功した。MemoRAG CI内のWeb lint／typecheck／unit 473件／coverage／build、正本／trace／生成物検査も成功した。
+- [ ] AC-5: report-only final headのCI、PR受け入れ確認／セルフレビュー、Issue #345へのfinal証跡を確定する。
+
+### CI
+
+- Web UI Quality: https://github.com/tsuji-tomonori/rag-assist/actions/runs/34416784264 （success）
+- Validate Semver Label: https://github.com/tsuji-tomonori/rag-assist/actions/runs/34416784257 （success）
+- MemoRAG CI: https://github.com/tsuji-tomonori/rag-assist/actions/runs/34416784260 （failure）
+  - 本slice対象のWebと文書検査はsuccess。Web C0 90.02%／C1 85.12%。
+  - 既存API test fixture型不整合によるAPI typecheck／buildと、API C1 80.75%（目標85%）はfailure。API test自体は1051件pass。
