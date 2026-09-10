@@ -2,6 +2,31 @@ import { expect, type Locator, type Page, type Route, test } from '@playwright/t
 
 const viewport = { width: 320, height: 720 }
 const longFileName = `2026_全社横断アクセシビリティ確認資料_${'非常に長い識別子'.repeat(10)}_最終版.pdf`
+const documentFileTypes = [
+  { extension: 'pdf', mimeType: 'application/pdf' },
+  { extension: 'docx', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' },
+  { extension: 'pptx', mimeType: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' },
+  { extension: 'csv', mimeType: 'text/csv' },
+  { extension: 'md', mimeType: 'text/markdown' },
+  { extension: 'txt', mimeType: 'text/plain' }
+] as const
+const documentItems = Array.from({ length: 30 }, (_, index) => {
+  const fileType = documentFileTypes[index % documentFileTypes.length]
+  return {
+    documentId: `layout-document-${String(index + 1).padStart(2, '0')}`,
+    fileName: index === 0
+      ? longFileName
+      : index === 29
+        ? `文書30_${'非常に長い先頭ファイル名'.repeat(8)}.${fileType.extension}`
+        : `文書_${String(index + 1).padStart(2, '0')}.${fileType.extension}`,
+    mimeType: fileType.mimeType,
+    chunkCount: index + 1,
+    memoryCardCount: index % 9,
+    status: 'ready',
+    createdAt: `2026-09-11T00:${String(index).padStart(2, '0')}:00.000Z`,
+    updatedAt: `2026-09-11T00:${String(index).padStart(2, '0')}:30.000Z`
+  }
+})
 const longAnswer = [
   'LAYOUT-STRESS-START: 長文回答の先頭です。',
   ...Array.from({ length: 24 }, (_, index) => `確認項目 ${index + 1}: 画面幅が狭い場合も、情報を省略せず折り返して表示します。`),
@@ -79,18 +104,7 @@ async function installLayoutStressRoutes(page: Page) {
 
     if (path === '/documents' && method === 'GET') {
       await route.fulfill({
-        json: {
-          documents: [{
-            documentId: 'layout-stress-document',
-            fileName: longFileName,
-            mimeType: 'application/pdf',
-            chunkCount: 42,
-            memoryCardCount: 8,
-            status: 'ready',
-            createdAt: '2026-07-17T00:00:00.000Z',
-            updatedAt: '2026-07-17T00:01:00.000Z'
-          }]
-        }
+        json: { documents: documentItems }
       })
       return
     }
@@ -248,8 +262,28 @@ test('E2E-UI-LAYOUT-STRESS-001: 長いファイル名・多数件・0件が320px
 
   const documentsRegion = await openMobileDestination(page, 'ドキュメント', 'ドキュメント管理')
   await expect(page).toHaveURL(/\/documents$/)
-  await expect(documentsRegion.getByText(longFileName, { exact: true })).toBeVisible()
-  states.push(await assertNoHorizontalOverflow(page, documentsRegion, 'documents-long-file-name'))
+  await expect(documentsRegion.locator('.document-file-row')).toHaveCount(25)
+  await expect(documentsRegion).toContainText(`1-25 / ${documentItems.length} 件を表示`)
+
+  const documentPageSize = documentsRegion.getByLabel('表示件数', { exact: true })
+  await documentPageSize.selectOption('50')
+  await expect(documentPageSize).toHaveValue('50')
+  await expect(documentsRegion.locator('.document-file-row')).toHaveCount(documentItems.length)
+  await expect(documentsRegion).toContainText(`1-${documentItems.length} / ${documentItems.length} 件を表示`)
+
+  const firstDocumentFileName = documentItems.at(-1)?.fileName ?? ''
+  const lastDocumentFileName = documentItems[0].fileName
+  await expect(documentsRegion.getByText(firstDocumentFileName, { exact: true })).toBeVisible()
+  const lastDocument = documentsRegion.getByText(lastDocumentFileName, { exact: true })
+  await lastDocument.scrollIntoViewIfNeeded()
+  await expect(lastDocument).toBeVisible()
+  const lastDocumentRect = await lastDocument.evaluate((element) => {
+    const rect = element.getBoundingClientRect()
+    return { top: rect.top, bottom: rect.bottom }
+  })
+  expect(lastDocumentRect.top).toBeGreaterThanOrEqual(0)
+  expect(lastDocumentRect.bottom).toBeLessThanOrEqual(viewport.height)
+  states.push(await assertNoHorizontalOverflow(page, documentsRegion, 'documents-30-items'))
 
   const historyRegion = await openMobileDestination(page, '履歴', '履歴')
   await expect(page).toHaveURL(/\?view=history$/)
@@ -303,8 +337,11 @@ test('E2E-UI-LAYOUT-STRESS-001: 長いファイル名・多数件・0件が320px
       viewport,
       prefersReducedMotion: true,
       fixtures: {
-        documentCount: 1,
-        longFileNameLength: longFileName.length,
+        documentCount: documentItems.length,
+        documentFileTypeCount: documentFileTypes.length,
+        documentPageSize: 50,
+        firstDocumentFileNameLength: firstDocumentFileName.length,
+        lastDocumentFileNameLength: lastDocumentFileName.length,
         historyCount: historyItems.length,
         firstHistoryTitleLength: historyItems[0].title.length,
         lastHistoryTitleLength: historyItems.at(-1)?.title.length ?? 0,
@@ -317,6 +354,7 @@ test('E2E-UI-LAYOUT-STRESS-001: 長いファイル名・多数件・0件が320px
         confirmedEmptyFavoritesCount: 0
       },
       reachability: {
+        lastDocumentRect,
         lastHistoryRect,
         lastFavoriteRect
       },
