@@ -39,6 +39,8 @@ production component／CSSは変更せず、#461が変更する文書workspace�
 
 `npm run`は依存解決のnetwork approvalが非対話実行で中断されたため、エスカレーションせずGitHub Actionsへ委譲する。
 
+初回Web UI Quality `34543643737`は、`.document-file-row`がデータ25件にheader row 1件を加えた26件を返し、Chromiumでfailureとなった。DOM契約に合わせてデータrowを`.document-file-row:not(.document-file-head)`へ限定し、productionを変更せず修正した。final-headで同じ3-browser gateを再実行する。
+
 ## 受け入れ判断
 
 実装head `a05916e2`でAC-1〜5に対応する差分を作成した。画面→要件→受け入れ条件→E2Eは`documents → SQ-016 → AC-SQ016-001 / 006 / 007 → E2E-UI-LAYOUT-STRESS-001`で一致する。

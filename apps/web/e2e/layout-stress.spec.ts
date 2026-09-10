@@ -262,13 +262,14 @@ test('E2E-UI-LAYOUT-STRESS-001: 長いファイル名・多数件・0件が320px
 
   const documentsRegion = await openMobileDestination(page, 'ドキュメント', 'ドキュメント管理')
   await expect(page).toHaveURL(/\/documents$/)
-  await expect(documentsRegion.locator('.document-file-row')).toHaveCount(25)
+  const documentRows = documentsRegion.locator('.document-file-row:not(.document-file-head)')
+  await expect(documentRows).toHaveCount(25)
   await expect(documentsRegion).toContainText(`1-25 / ${documentItems.length} 件を表示`)
 
   const documentPageSize = documentsRegion.getByLabel('表示件数', { exact: true })
   await documentPageSize.selectOption('50')
   await expect(documentPageSize).toHaveValue('50')
-  await expect(documentsRegion.locator('.document-file-row')).toHaveCount(documentItems.length)
+  await expect(documentRows).toHaveCount(documentItems.length)
   await expect(documentsRegion).toContainText(`1-${documentItems.length} / ${documentItems.length} 件を表示`)
 
   const firstDocumentFileName = documentItems.at(-1)?.fileName ?? ''

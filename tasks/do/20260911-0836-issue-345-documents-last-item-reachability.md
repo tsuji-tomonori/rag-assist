@@ -140,3 +140,4 @@ Draft PR #470 head `f7c6d009` はcurrent `main@8e542b31`を祖先に含み、beh
 - `node scripts/check-taskfile-legacy-aliases.mjs`: pass
 - `git diff --check`: pass
 - `npm run ...`／`node tools/web-inventory/generate-web-inventory.mjs --check`: blocked。cloneに`node_modules`がなく、依存解決のnetwork approvalが非対話実行で中断され、`typescript`を解決できないため。エスカレーションは行わずfinal-head CIへ委譲する。
+- 初回Web UI Quality `34543643737`: Chromiumで`.document-file-row`がheaderを含むため期待25件／実測26件となりfailure。データrowだけを`.document-file-row:not(.document-file-head)`で数えるよう修正し、final-head CIを再実行する。
