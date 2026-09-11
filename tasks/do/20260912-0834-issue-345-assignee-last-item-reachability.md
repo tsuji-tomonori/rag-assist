@@ -116,3 +116,16 @@ Draft PR #470 head `433eba82` はcurrent `main@8e542b31`を祖先に含み、beh
 - 320 CSS pxはbrowser chromeを含む実400% zoomを証明しない。
 - route fixtureは実API／認可／永続化の証跡ではない。
 - representative screen reader、native AX tree、実browser zoom、touch／実機、#461統合後再検証、owner判断、既存API build／C1 85%は未完了を維持する。
+
+## 実装head検証結果
+
+- [x] AC-1: 32件を4レーンへ8件ずつ配置し、長い先頭／末尾contentを検証した。
+- [x] AC-2: DOM末尾カードへscrollし、矩形の`top >= 0`かつ`bottom <= 720`を3ブラウザで検証した。
+- [x] AC-3: document root／担当者対応regionの水平overflowなしと、browser別JSON evidenceを検証した。
+- [x] AC-4: `assignee → SQ-016 → AC-SQ016-001 / 006 / 007 → E2E-UI-LAYOUT-STRESS-001`を正本、UI設計、quality matrix、生成文書へ同期した。
+- [x] AC-5: production component／CSS／API／認可は変更せず、#461との競合境界を維持した。
+- [ ] AC-6: PR受け入れ確認、セルフレビュー、Issue #345進捗コメントの外部証跡を最終head確定後に追記する。
+
+remote implementation headは`b1cf2c57`。Web UI Quality `34659235875`はE2E TypeScript、Chromium 41件、Firefox／WebKit 60件を含めsuccess、semver `34659235896`もsuccess。MemoRAG CI `34659235842`はWeb unit 473件を含むWeb範囲を通過したが、本変更外の既存API fixture型不整合によるtypecheck／buildとAPI C1 80.75%（目標85%）でfailureを維持する。
+
+ローカルのcanonical docs、trace 13件、semantic UI 5件、manual evidence schema 7件、quality matrix／infra inventory freshness、hidden Unicode、Taskfile alias、git diff checkはpass。依存が配置されていないためローカルE2E TypeScriptは`tsc: not found`で実行不能とし、remote required gateのsuccessを証跡にする。
