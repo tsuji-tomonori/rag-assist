@@ -141,3 +141,4 @@ Draft PR #470 head `f7c6d009` はcurrent `main@8e542b31`を祖先に含み、beh
 - `git diff --check`: pass
 - `npm run ...`／`node tools/web-inventory/generate-web-inventory.mjs --check`: blocked。cloneに`node_modules`がなく、依存解決のnetwork approvalが非対話実行で中断され、`typescript`を解決できないため。エスカレーションは行わずfinal-head CIへ委譲する。
 - 初回Web UI Quality `34543643737`: Chromiumで`.document-file-row`がheaderを含むため期待25件／実測26件となりfailure。データrowだけを`.document-file-row:not(.document-file-head)`で数えるよう修正し、final-head CIを再実行する。
+- 2回目Web UI Quality `34544003728`: Chromiumで表示件数selectの完全一致label locatorが解決できずfailure。既存のcross-browser semantics／keyboard E2Eと同じ`combobox` role/name契約へ統一し、final-head CIを再実行する。

@@ -39,7 +39,9 @@ production component／CSSは変更せず、#461が変更する文書workspace�
 
 `npm run`は依存解決のnetwork approvalが非対話実行で中断されたため、エスカレーションせずGitHub Actionsへ委譲する。
 
-初回Web UI Quality `34543643737`は、`.document-file-row`がデータ25件にheader row 1件を加えた26件を返し、Chromiumでfailureとなった。DOM契約に合わせてデータrowを`.document-file-row:not(.document-file-head)`へ限定し、productionを変更せず修正した。final-headで同じ3-browser gateを再実行する。
+初回Web UI Quality `34543643737`は、`.document-file-row`がデータ25件にheader row 1件を加えた26件を返し、Chromiumでfailureとなった。DOM契約に合わせてデータrowを`.document-file-row:not(.document-file-head)`へ限定し、productionを変更せず修正した。
+
+2回目Web UI Quality `34544003728`は、表示件数selectのaccessible nameに対する完全一致label locatorを解決できずChromiumでfailureとなった。既存のcross-browser semantics／keyboard E2Eと同じ`combobox` role/name契約へ統一した。final-headで同じ3-browser gateを再実行する。
 
 ## 受け入れ判断
 

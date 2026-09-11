@@ -266,7 +266,7 @@ test('E2E-UI-LAYOUT-STRESS-001: 長いファイル名・多数件・0件が320px
   await expect(documentRows).toHaveCount(25)
   await expect(documentsRegion).toContainText(`1-25 / ${documentItems.length} 件を表示`)
 
-  const documentPageSize = documentsRegion.getByLabel('表示件数', { exact: true })
+  const documentPageSize = documentsRegion.getByRole('combobox', { name: '表示件数' })
   await documentPageSize.selectOption('50')
   await expect(documentPageSize).toHaveValue('50')
   await expect(documentRows).toHaveCount(documentItems.length)
