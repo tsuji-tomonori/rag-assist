@@ -65,6 +65,30 @@ const favoriteItems = Array.from({ length: 24 }, (_, index) => ({
   accessible: index !== 12,
   createdAt: '2026-09-09T00:00:00.000Z'
 }))
+const assigneeStatuses = ['open', 'in_progress', 'waiting_requester', 'resolved'] as const
+const assigneeItems = Array.from({ length: 32 }, (_, index) => ({
+  questionId: `layout-assignee-${String(index + 1).padStart(2, '0')}`,
+  title: index === 0 || index === 31
+    ? `問い合わせ ${String(index + 1).padStart(2, '0')} ${'非常に長い担当者対応タイトル'.repeat(8)}`
+    : `問い合わせ ${String(index + 1).padStart(2, '0')}`,
+  question: index === 0
+    ? `320pxでも省略せず確認する質問です。${'長い質問本文'.repeat(12)}`
+    : `問い合わせ ${index + 1} の確認内容です。`,
+  requesterName: `依頼者 ${String(index + 1).padStart(2, '0')}`,
+  requesterDepartment: index === 0 ? '全社横断アクセシビリティ推進部門'.repeat(4) : '利用部門',
+  assigneeDepartment: index === 31 ? '担当部門名が非常に長い場合の確認'.repeat(5) : '総務部',
+  assigneeGroupId: 'support',
+  category: index % 2 === 0 ? '手続き' : '規程確認',
+  priority: index % 3 === 0 ? 'urgent' : index % 3 === 1 ? 'high' : 'normal',
+  status: assigneeStatuses[index % assigneeStatuses.length],
+  sourceQuestion: `担当者対応 ${index + 1} のsource question`,
+  chatAnswer: index === 0 ? '取得済みの回答候補も狭い画面で折り返します。'.repeat(8) : '担当者による確認が必要です。',
+  createdAt: `2026-09-12T00:${String(index).padStart(2, '0')}:00.000Z`,
+  updatedAt: `2026-09-12T00:${String(index).padStart(2, '0')}:30.000Z`,
+  ...(assigneeStatuses[index % assigneeStatuses.length] === 'resolved'
+    ? { resolvedAt: `2026-09-12T01:${String(index).padStart(2, '0')}:00.000Z` }
+    : {})
+}))
 
 type ScrollRecord = {
   behavior: ScrollBehavior | null
@@ -122,6 +146,10 @@ async function installLayoutStressRoutes(page: Page) {
     }
     if (path === '/favorites' && method === 'GET') {
       await route.fulfill({ json: { favorites: [] } })
+      return
+    }
+    if (path === '/questions' && method === 'GET') {
+      await route.fulfill({ json: { questions: assigneeItems } })
       return
     }
     if (path === '/rpc/chat/startRun' && method === 'POST') {
@@ -260,6 +288,29 @@ test('E2E-UI-LAYOUT-STRESS-001: 長いファイル名・多数件・0件が320px
   expect(await page.evaluate(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(true)
   const states: DimensionEvidence[] = []
 
+  const assigneeRegion = await openMobileDestination(page, '担当者対応', '担当者対応')
+  await expect(page).toHaveURL(/\?view=assignee$/)
+  const assigneeLanes = assigneeRegion.locator('.kanban-column')
+  const assigneeCards = assigneeRegion.locator('.question-kanban-card')
+  await expect(assigneeLanes).toHaveCount(assigneeStatuses.length)
+  await expect(assigneeCards).toHaveCount(assigneeItems.length)
+  for (let index = 0; index < assigneeStatuses.length; index += 1) {
+    await expect(assigneeLanes.nth(index).locator('.question-kanban-card')).toHaveCount(8)
+  }
+  await expect(assigneeRegion.getByText(assigneeItems[0].title, { exact: true })).toBeVisible()
+  await expect(assigneeRegion.getByText(assigneeItems[0].question, { exact: true })).toBeVisible()
+
+  const lastAssigneeCard = assigneeCards.last()
+  await lastAssigneeCard.scrollIntoViewIfNeeded()
+  await expect(lastAssigneeCard).toBeVisible()
+  const lastAssigneeRect = await lastAssigneeCard.evaluate((element) => {
+    const rect = element.getBoundingClientRect()
+    return { top: rect.top, bottom: rect.bottom }
+  })
+  expect(lastAssigneeRect.top).toBeGreaterThanOrEqual(0)
+  expect(lastAssigneeRect.bottom).toBeLessThanOrEqual(viewport.height)
+  states.push(await assertNoHorizontalOverflow(page, assigneeRegion, 'assignee-32-items'))
+
   const documentsRegion = await openMobileDestination(page, 'ドキュメント', 'ドキュメント管理')
   await expect(page).toHaveURL(/\/documents$/)
   const documentRows = documentsRegion.locator('.document-file-row:not(.document-file-head)')
@@ -338,6 +389,16 @@ test('E2E-UI-LAYOUT-STRESS-001: 長いファイル名・多数件・0件が320px
       viewport,
       prefersReducedMotion: true,
       fixtures: {
+        assigneeCount: assigneeItems.length,
+        assigneeStatusCount: assigneeStatuses.length,
+        assigneeLaneCounts: await Promise.all(Array.from({ length: assigneeStatuses.length }, (_, index) =>
+          assigneeLanes.nth(index).locator('.question-kanban-card').count()
+        )),
+        firstAssigneeTitleLength: assigneeItems[0].title.length,
+        firstAssigneeQuestionLength: assigneeItems[0].question.length,
+        firstAssigneeRequesterDepartmentLength: assigneeItems[0].requesterDepartment.length,
+        lastAssigneeTitleLength: assigneeItems.at(-1)?.title.length ?? 0,
+        lastAssigneeDepartmentLength: assigneeItems.at(-1)?.assigneeDepartment.length ?? 0,
         documentCount: documentItems.length,
         documentFileTypeCount: documentFileTypes.length,
         documentPageSize: 50,
@@ -355,6 +416,7 @@ test('E2E-UI-LAYOUT-STRESS-001: 長いファイル名・多数件・0件が320px
         confirmedEmptyFavoritesCount: 0
       },
       reachability: {
+        lastAssigneeRect,
         lastDocumentRect,
         lastHistoryRect,
         lastFavoriteRect
