@@ -35,24 +35,33 @@ production component／CSSは変更せず、#461が変更する文書workspace�
 | Taskfile alias | pass |
 | git diff check | pass |
 | Web inventory freshness | blocked。`typescript`依存不在 |
-| lint／Web・E2E typecheck／Web unit／build／3-browser E2E | final-head CI待ち |
+| Web lint／typecheck／unit／coverage／build | pass。473件、C0 90.02%／C1 85.12% |
+| E2E TypeScript | pass |
+| Chromium required | pass。41件。対象外keyboard journeyは初回failure／retry successのflaky |
+| Firefox／WebKit required | pass。60件 |
+| semver | pass |
+| MemoRAG CI全体 | failure。API C1 80.75%と既存fixture型不整合によるAPI build |
 
 `npm run`は依存解決のnetwork approvalが非対話実行で中断されたため、エスカレーションせずGitHub Actionsへ委譲する。
 
 初回Web UI Quality `34543643737`は、`.document-file-row`がデータ25件にheader row 1件を加えた26件を返し、Chromiumでfailureとなった。DOM契約に合わせてデータrowを`.document-file-row:not(.document-file-head)`へ限定し、productionを変更せず修正した。
 
-2回目Web UI Quality `34544003728`は、表示件数selectのaccessible nameに対する完全一致label locatorを解決できずChromiumでfailureとなった。既存のcross-browser semantics／keyboard E2Eと同じ`combobox` role/name契約へ統一した。final-headで同じ3-browser gateを再実行する。
+2回目Web UI Quality `34544003728`は、表示件数selectのaccessible nameに対する完全一致label locatorを解決できずChromiumでfailureとなった。既存のcross-browser semantics／keyboard E2Eと同じ`combobox` role/name契約へ統一した。
+
+final implementation head `f7cd8f77`の[Web UI Quality](https://github.com/tsuji-tomonori/rag-assist/actions/runs/34544598427)はsuccessとなり、E2E TypeScript、Chromium 41件、Firefox／WebKit 60件を通過した。Chromiumの対象外keyboard journeyは初回failure／retry successのflakyだったため、再現性判断を未完了として残す。[semver検査](https://github.com/tsuji-tomonori/rag-assist/actions/runs/34544598361)もsuccess。
+
+[MemoRAG CI](https://github.com/tsuji-tomonori/rag-assist/actions/runs/34544598423)ではWeb lint／typecheck／unit 473件／C0 90.02%・C1 85.12%／build／docs checksがsuccess。API test 1,051件はpassしたが、C1 80.75%（目標85%）と既存test fixtureのreadonly／history input型不整合によるAPI buildのため全体はfailure。
 
 ## 受け入れ判断
 
-実装head `a05916e2`でAC-1〜5に対応する差分を作成した。画面→要件→受け入れ条件→E2Eは`documents → SQ-016 → AC-SQ016-001 / 006 / 007 → E2E-UI-LAYOUT-STRESS-001`で一致する。
+実装head `a05916e2`でAC-1〜5に対応する差分を作成し、remote final implementation head `f7cd8f77`で3-browser gateを確認した。画面→要件→受け入れ条件→E2Eは`documents → SQ-016 → AC-SQ016-001 / 006 / 007 → E2E-UI-LAYOUT-STRESS-001`で一致する。
 
-final-head CI、PR受け入れ確認／セルフレビュー、Issue #345への記録は未完了である。既存API blockerとmanual evidenceも残るため、taskは`do`、PRはDraftを維持する。
+[PR受け入れ確認](https://github.com/tsuji-tomonori/rag-assist/pull/470#issuecomment-5627282907)、[セルフレビュー](https://github.com/tsuji-tomonori/rag-assist/pull/470#pullrequestreview-5173574600)、[Issue #345進捗](https://github.com/tsuji-tomonori/rag-assist/issues/345#issuecomment-5627287259)を記録した。既存API blocker、Chromium keyboard flake、manual evidenceが残るため、taskは`do`、PRはDraftを維持する。
 
 ## 未完了
 
-- final-headのWeb UI Quality、MemoRAG CI、semver検査。
 - 既存API fixture型不整合によるtypecheck／build失敗とAPI C1 80.75%（目標85%）。
+- Chromium required内の対象外keyboard journeyが初回failure／retry successとなったflakyの再現性判断。
 - representative screen reader、Firefox／WebKit native AX tree、実browser 200%／400% zoom、text-only zoom、OS scaling、touch／実機、manual keyboard／contrast。
 - 実API／AWS認可、#461統合後の最終DOM再検証。
 - FR-050／FR-051、TC-003、OQ-UI-002、branch protection／owner判断。

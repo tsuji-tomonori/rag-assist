@@ -124,8 +124,8 @@ Draft PR #470 head `f7c6d009` はcurrent `main@8e542b31`を祖先に含み、beh
 - [x] AC-2: defaultの更新日新しい順で末尾になる最古文書の長いファイル名をviewport内へscrollし、`top >= 0`／`bottom <= 720`を検証するE2Eを追加した。
 - [x] AC-3: root／documents regionの水平overflow 0を維持し、6 file type、表示件数、先頭／末尾ファイル名長、末尾矩形、dimensionsをbrowser別JSON evidenceへ追加した。
 - [x] AC-4: `documents → SQ-016 → AC-SQ016-001 / 006 / 007 → E2E-UI-LAYOUT-STRESS-001`を正本、UI設計、authored／generated quality matrixで同期した。
-- [x] AC-5: production component／CSS／API／認可を変更していない。依存不要のdocs／trace検査は成功し、依存を要するlint／typecheck／unit／build／3-browser E2Eはfinal-head CI待ちである。
-- [ ] AC-6: PR／Issue証跡はfinal-head CI確認後に追加する。
+- [x] AC-5: production component／CSS／API／認可を変更していない。Web lint／typecheck／unit 473件／C0 90.02%・C1 85.12%／build／docs、E2E TypeScript、Chromium 41件、Firefox／WebKit 60件をCIで確認した。
+- [x] AC-6: PR本文、受け入れ確認、セルフレビュー、Issue #345へfinal implementation head、CI、既存API／manual blockerを記録した。
 
 ### ローカル検証
 
@@ -142,3 +142,7 @@ Draft PR #470 head `f7c6d009` はcurrent `main@8e542b31`を祖先に含み、beh
 - `npm run ...`／`node tools/web-inventory/generate-web-inventory.mjs --check`: blocked。cloneに`node_modules`がなく、依存解決のnetwork approvalが非対話実行で中断され、`typescript`を解決できないため。エスカレーションは行わずfinal-head CIへ委譲する。
 - 初回Web UI Quality `34543643737`: Chromiumで`.document-file-row`がheaderを含むため期待25件／実測26件となりfailure。データrowだけを`.document-file-row:not(.document-file-head)`で数えるよう修正し、final-head CIを再実行する。
 - 2回目Web UI Quality `34544003728`: Chromiumで表示件数selectの完全一致label locatorが解決できずfailure。既存のcross-browser semantics／keyboard E2Eと同じ`combobox` role/name契約へ統一し、final-head CIを再実行する。
+- [Web UI Quality `34544598427`](https://github.com/tsuji-tomonori/rag-assist/actions/runs/34544598427): success。E2E TypeScript、Chromium 41件、Firefox／WebKit 60件。Chromiumの対象外keyboard journeyは初回failure／retry successのflakyで、再現性判断は未完了。
+- [Validate Semver Label `34544598361`](https://github.com/tsuji-tomonori/rag-assist/actions/runs/34544598361): success。
+- [MemoRAG CI `34544598423`](https://github.com/tsuji-tomonori/rag-assist/actions/runs/34544598423): Web lint／typecheck／unit 473件／C0 90.02%・C1 85.12%／build／docs checksはsuccess。API test 1,051件はpassしたがC1 80.75%（目標85%）、既存fixtureのreadonly／history input型不整合によるAPI buildで全体failure。
+- [受け入れ確認](https://github.com/tsuji-tomonori/rag-assist/pull/470#issuecomment-5627282907)、[セルフレビュー](https://github.com/tsuji-tomonori/rag-assist/pull/470#pullrequestreview-5173574600)、[Issue #345進捗](https://github.com/tsuji-tomonori/rag-assist/issues/345#issuecomment-5627287259)を記録した。
