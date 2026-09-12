@@ -124,8 +124,10 @@ Draft PR #470 head `433eba82` はcurrent `main@8e542b31`を祖先に含み、beh
 - [x] AC-3: document root／担当者対応regionの水平overflowなしと、browser別JSON evidenceを検証した。
 - [x] AC-4: `assignee → SQ-016 → AC-SQ016-001 / 006 / 007 → E2E-UI-LAYOUT-STRESS-001`を正本、UI設計、quality matrix、生成文書へ同期した。
 - [x] AC-5: production component／CSS／API／認可は変更せず、#461との競合境界を維持した。
-- [ ] AC-6: PR受け入れ確認、セルフレビュー、Issue #345進捗コメントの外部証跡を最終head確定後に追記する。
+- [x] AC-6: [PR受け入れ確認](https://github.com/tsuji-tomonori/rag-assist/pull/470#issuecomment-5642014649)、[セルフレビュー](https://github.com/tsuji-tomonori/rag-assist/pull/470#pullrequestreview-5184347859)、[Issue #345進捗](https://github.com/tsuji-tomonori/rag-assist/issues/345#issuecomment-5642033845)へ、head／CI／未完了境界を記録した。
 
 remote implementation headは`b1cf2c57`。Web UI Quality `34659235875`はE2E TypeScript、Chromium 41件、Firefox／WebKit 60件を含めsuccess、semver `34659235896`もsuccess。MemoRAG CI `34659235842`はWeb unit 473件を含むWeb範囲を通過したが、本変更外の既存API fixture型不整合によるtypecheck／buildとAPI C1 80.75%（目標85%）でfailureを維持する。
 
 ローカルのcanonical docs、trace 13件、semantic UI 5件、manual evidence schema 7件、quality matrix／infra inventory freshness、hidden Unicode、Taskfile alias、git diff checkはpass。依存が配置されていないためローカルE2E TypeScriptは`tsc: not found`で実行不能とし、remote required gateのsuccessを証跡にする。
+
+evidence head `725a7f19`のWeb UI Quality `34659920279`とsemver `34659920335`もsuccess。MemoRAG CI `34659920312`は外部証跡同期時点で実行中のため、完了待ちを未完了としてIssueへ記録した。
