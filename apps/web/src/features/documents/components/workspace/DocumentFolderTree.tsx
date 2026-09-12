@@ -1,4 +1,4 @@
-import { Icon } from "../../../../shared/components/Icon.js"
+import { Icon } from "../../../../shared/ui/Icon.js"
 import type { DocumentGroup, DocumentManifest } from "../../types.js"
 import type { WorkspaceFolder } from "./documentWorkspaceUtils.js"
 

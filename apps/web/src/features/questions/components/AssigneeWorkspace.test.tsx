@@ -41,6 +41,18 @@ function renderWorkspace(overrides: Partial<Parameters<typeof AssigneeWorkspace>
 }
 
 describe("AssigneeWorkspace question journey", () => {
+  it("exposes named landmarks for the workspace, queue, selected detail, and answer form", () => {
+    renderWorkspace()
+
+    expect(screen.getByRole("region", { name: "担当者対応" })).toBeInTheDocument()
+    expect(screen.getByRole("region", { name: "問い合わせ一覧" })).toBeInTheDocument()
+    expect(screen.getByRole("region", { name: "担当者対応カンバン" })).toBeInTheDocument()
+    expect(screen.getByRole("region", { name: "未対応" })).toBeInTheDocument()
+    expect(screen.getByRole("complementary", { name: "選択中の問い合わせと回答作成" })).toBeInTheDocument()
+    expect(screen.getByRole("region", { name: "問い合わせ概要" })).toBeInTheDocument()
+    expect(screen.getByRole("form", { name: "回答作成" })).toBeInTheDocument()
+  })
+
   it("maps all API states into the four lanes without dropping intermediate states", () => {
     renderWorkspace({
       questions: [
@@ -81,6 +93,22 @@ describe("AssigneeWorkspace question journey", () => {
 
     expect(screen.getByRole("status")).toHaveTextContent("この画面に入力を一時保持")
     expect(screen.queryByText(/下書きを保存済み/)).not.toBeInTheDocument()
+  })
+
+  it("keeps the selected answer form reachable when an edit moves the question outside the active lane filter", async () => {
+    renderWorkspace()
+
+    await userEvent.selectOptions(screen.getByRole("combobox", { name: "ステータス" }), "unassigned")
+    const body = screen.getByRole("textbox", { name: "回答内容" })
+    await userEvent.type(body, "絞り込み中の一時回答")
+
+    expect(body).toHaveValue("絞り込み中の一時回答")
+    expect(screen.queryByRole("button", { name: "申請期限を選択" })).not.toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole("button", { name: "入力を一時保持" }))
+
+    expect(screen.getByRole("textbox", { name: "回答内容" })).toHaveValue("絞り込み中の一時回答")
+    expect(screen.getByRole("status")).toHaveTextContent("この画面に入力を一時保持")
   })
 
   it("does not expose an edit action for answered tickets", () => {

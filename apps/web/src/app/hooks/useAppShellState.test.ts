@@ -517,5 +517,8 @@ describe("publicSafeUiError", () => {
     expect(publicSafeUiError("RequestId: secret at InternalService (/srv/app.ts:10)")).toBe(
       "処理を完了できませんでした。入力内容と権限を確認して、もう一度お試しください。"
     )
+    expect(publicSafeUiError("Internal Server Error")).toBe(
+      "処理を完了できませんでした。入力内容と権限を確認して、もう一度お試しください。"
+    )
   })
 })

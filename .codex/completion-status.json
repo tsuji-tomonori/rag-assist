@@ -2,96 +2,69 @@
   "complete": false,
   "status": "partially_complete",
   "requested_items": [
-    "Complete every P0 and P1 improvement in GitHub Issue #345 without collapsing the work into one giant pull request",
-    "Make permission-aware primary journeys operable from 320px through desktop with keyboard and representative screen readers",
-    "Define and implement URL/history, common UI states, responsive navigation, destructive-operation feedback, and per-screen UX improvements",
-    "Add automated accessibility, mobile Chromium, visual regression, and semantic UI traceability gates",
-    "Keep canonical requirements, design, generated inventory, tests, reports, and pull request evidence synchronized",
-    "Complete the repository worktree, task, validation, report, commit, push, pull request, acceptance-comment, and self-review flow for each milestone"
+    "Advance GitHub Issue #345 through one bounded non-duplicative UI improvement",
+    "Synchronize implementation, canonical requirements, generated documents, task, pull request, and issue evidence",
+    "Preserve manual accessibility and owner-decision gaps without false completion",
+    "Do not merge, deploy, release, force-push, or perform destructive changes"
   ],
   "completed_items": [
-    "Confirmed pull requests #341 through #344 and the UI quality gate pull request #361 are integrated",
-    "Implemented and published the root draft pull request #381 for the 8-AppView SQ-016 quality matrix, computed audit, and fail-closed E2E trace synchronization",
-    "Registered the axe, keyboard, Chromium accessibility-tree, and touch proxy E2E IDs in the canonical cross-view trace",
-    "Kept representative screen-reader, real-browser zoom, and real-device evidence blocked instead of promoting proxy automation to manual pass",
-    "Merged current main bfaf8f20 into the pull request #381 history without rewriting published commits",
-    "Verified that current main UI canonical documents, Web implementation, Web generated inventory, and the pull request #381 Phase A artifacts have no semantic conflict",
-    "Passed local Web lint, typecheck, 441 unit tests, 13 trace/matrix tests, 4 semantic tests, canonical document validation, generated document freshness, hidden Unicode, and diff checks",
-    "Resolved the four traced Playwright sources to 26 Chromium tests; latest published-head browser execution remains pending"
+    "Confirmed current main 8e542b31 and continued draft pull request 462 without modifying pull request 461 production paths",
+    "Selected profile AC-SQ016-003 as the bounded non-duplicative cross-browser semantic evidence increment",
+    "Added E2E-UI-CROSS-BROWSER-SEMANTICS-002 for Firefox and WebKit profile ARIA snapshot, changed value, and visible polite status evidence",
+    "Parameterized semantic evidence IDs so chat and profile artifacts retain distinct provenance",
+    "Linked profile through SQ-016 and AC-SQ016-003 to the new required E2E in canonical requirements, authored trace and quality matrix, and generated Web documents",
+    "Passed local Web lint, typecheck, 449 unit tests, build, E2E TypeScript with DOM iterable support, trace, semantic, inventory, documentation, JSON, and diff checks",
+    "Preserved representative-screen-reader, native-AX-tree, real-zoom, real-device, and FR-051 owner boundaries as incomplete",
+    "Passed implementation-head Web UI Quality with Chromium 41 of 41 and Firefox/WebKit 20 of 20 without retry or flake",
+    "Passed implementation-head MemoRAG CI and semver validation",
+    "Recorded pull request acceptance, self-review, and Issue 345 progress"
   ],
   "remaining_items": [
-    "Publish the locally reintegrated draft pull request #385 head and confirm final-head CI without rewriting published history",
-    "Remediate or classify the computed serious finding, five axe serious findings, and unresolved target/overflow candidates",
-    "Complete loading, empty, error, permission, partial-success, stale, and retry evidence across every primary screen",
-    "Run manual keyboard, representative screen-reader, 320px/400-percent-zoom, and real-device verification or record an unresolved blocker",
-    "Resolve OQ-UI-002 owner decisions and complete the final issue-level audit"
+    "Publish the final documentation record and confirm final-head GitHub Actions",
+    "Run representative-screen-reader, real-browser 200/400-percent zoom, touch, and real-device verification",
+    "Resolve FR-051 persistence and OQ-UI-002 owner decisions",
+    "Re-run affected contracts against the final production DOM after pull request 461 is integrated",
+    "Recover API C1 branch coverage to the 85-percent quality target"
   ],
   "blocked_items": [
-    "Representative screen-reader and real-device evidence has no completed manual execution record",
-    "Real-browser 200-percent and 400-percent zoom evidence is incomplete",
-    "MemoRAG CI remains failed because existing API branch coverage is 80.48 percent against the 85 percent gate",
-    "Draft pull request #385 is locally converged but its public branch and final-head CI still require synchronization"
+    "Local targeted Playwright execution requires localhost server permissions unavailable in this run; GitHub Actions must supply required Firefox and WebKit browser evidence",
+    "Manual accessibility evidence remains not release-ready and is not represented as automated completion",
+    "API C1 branch coverage remains below the 85-percent target and is tracked separately"
   ],
   "validation": [
     {
-      "command": "GitHub Apps issue, pull request, compare, and recent commit inspection",
+      "command": "Web lint, typecheck, unit, and build",
       "result": "pass",
-      "note": "Issue #345, current main bfaf8f20, pull requests #381/#385/#408, and open work were inspected"
+      "note": "62 files and 449 Web unit tests passed"
     },
     {
-      "command": "git merge --no-ff origin/main",
+      "command": "E2E TypeScript and targeted Playwright discovery",
       "result": "pass",
-      "note": "Published history was not rewritten; local comparison is behind 0 and ahead 38"
+      "note": "Firefox and WebKit each resolved E2E-UI-CROSS-BROWSER-SEMANTICS-002; local execution is blocked pending GitHub Actions"
     },
     {
-      "command": "npm run lint",
+      "command": "node --test tools/web-inventory/ui-traceability.test.mjs tools/web-inventory/ui-quality-matrix.test.mjs tools/web-inventory/semantic-ui-contract.test.mjs tools/web-inventory/manual-a11y-evidence.test.mjs",
       "result": "pass",
-      "note": "Repository-wide ESLint completed with zero warnings"
+      "note": "25 tests passed"
     },
     {
-      "command": "npm run typecheck -w @memorag-mvp/web",
+      "command": "Web inventory and quality-matrix freshness, canonical docs validation, JSON parse, and git diff check",
       "result": "pass"
     },
     {
-      "command": "TZ=UTC npm test -w @memorag-mvp/web",
+      "command": "Web UI Quality run 32913144798",
       "result": "pass",
-      "note": "61 files, 441 tests"
+      "note": "Required Chromium 41/41 and Firefox/WebKit 20/20 passed without retries or flakes"
     },
     {
-      "command": "npm run docs:web-trace:test && npm run test:web-semantic-ui && npm run docs:web-inventory:check",
-      "result": "pass",
-      "note": "13 trace/matrix tests, 4 semantic tests, and Web generated-document freshness passed"
+      "command": "MemoRAG CI run 32913144785",
+      "result": "pass"
     },
     {
-      "command": "python3 scripts/validate_docs.py and generated document checks",
-      "result": "pass",
-      "note": "Canonical docs, API code 98 APIs / 588 documents, Web/infra inventory, and hidden Unicode passed"
-    },
-    {
-      "command": "npm run docs:openapi:check",
-      "result": "blocked",
-      "note": "tsx IPC listen was denied with EPERM; the same entry passed through node --import tsx without permission escalation"
-    },
-    {
-      "command": "npm exec -w @memorag-mvp/web -- playwright test e2e/visual-regression.spec.ts e2e/keyboard-navigation.spec.ts e2e/screen-reader-semantics.spec.ts e2e/touch-navigation.spec.ts --project=chromium --list",
-      "result": "pass",
-      "note": "26 tests in four files resolved"
-    },
-    {
-      "command": "GitHub Actions Web UI Quality run 30180222497",
-      "result": "pass",
-      "note": "Required Chromium axe, mobile, and visual passed; artifact 8625342163 digest sha256:8353a51e6aba9d728f5bdbbc5c51ec56ab902018260add81711615be93e8ed58"
-    },
-    {
-      "command": "GitHub Actions MemoRAG CI run 30180222486",
-      "result": "fail",
-      "note": "Web, docs, tests, builds, and synth passed; existing API branch coverage 80.48 percent missed the 85 percent gate"
-    },
-    {
-      "command": "GitHub Actions Validate Semver Label run 30180222487",
+      "command": "Validate Semver Label run 32913144813",
       "result": "pass"
     }
   ],
-  "next_action": "Publish the non-rewriting pull request #385 convergence, update Japanese acceptance and self-review evidence, and confirm final-head CI before selecting the next Issue #345 unit",
+  "next_action": "Publish the final documentation record, confirm final-head workflows, and keep manual and owner-decision blockers explicit",
   "safe_to_continue_without_user": true
 }

@@ -1,6 +1,6 @@
 import { createHeaders } from "../../../shared/api/http.js"
 import { getOrpcClient } from "../../../shared/api/orpc.js"
-import { getApiBaseUrl } from "../../../shared/api/runtimeConfig.js"
+import { getApiBaseUrl, joinApiPath } from "../../../shared/api/runtimeConfig.js"
 import type { SearchScope } from "../../documents/types.js"
 import type { ChatRequest, ChatResponse, ChatRunEvent, ChatRunStartResponse } from "../types-api.js"
 
@@ -57,7 +57,7 @@ export async function streamChatRunEvents(
     ;(headers as Record<string, string>)["Last-Event-ID"] = String(lastEventId)
   }
 
-  const response = await fetch(`${apiBaseUrl}/chat-runs/${encodeURIComponent(runId)}/events`, {
+  const response = await fetch(joinApiPath(apiBaseUrl, `/chat-runs/${encodeURIComponent(runId)}/events`), {
     method: "GET",
     headers
   })

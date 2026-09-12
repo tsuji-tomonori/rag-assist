@@ -30,7 +30,7 @@ Logical ID: `RestApiDefault4xxGatewayResponse52322928`
 | 設定項目 | 値 |
 | --- | --- |
 | `responseType` | DEFAULT_4XX |
-| `responseHeaders` | {"gatewayresponse.header.Access-Control-Allow-Origin":"'*'","gatewayresponse.header.Access-Control-Allow-Headers":"'Content-Type, Authorization, Last-Event-ID'","gatewayresponse.header.Access-Control-Allow-Methods":"'GET, POST, DELETE, OPTIONS'"} |
+| `responseHeaders` | {"gatewayresponse.header.Access-Control-Allow-Origin":"'http://localhost:5173'","gatewayresponse.header.Access-Control-Allow-Headers":"'Content-Type, Authorization, Last-Event-ID'","gatewayresponse.header.Access-Control-Allow-Methods":"'GET, POST, DELETE, OPTIONS'"} |
 
 ### Rest Api Default5xx Gateway Response
 
@@ -41,4 +41,4 @@ Logical ID: `RestApiDefault5xxGatewayResponse8E1119C1`
 | 設定項目 | 値 |
 | --- | --- |
 | `responseType` | DEFAULT_5XX |
-| `responseHeaders` | {"gatewayresponse.header.Access-Control-Allow-Origin":"'*'","gatewayresponse.header.Access-Control-Allow-Headers":"'Content-Type, Authorization, Last-Event-ID'","gatewayresponse.header.Access-Control-Allow-Methods":"'GET, POST, DELETE, OPTIONS'"} |
+| `responseHeaders` | {"gatewayresponse.header.Access-Control-Allow-Origin":"'http://localhost:5173'","gatewayresponse.header.Access-Control-Allow-Headers":"'Content-Type, Authorization, Last-Event-ID'","gatewayresponse.header.Access-Control-Allow-Methods":"'GET, POST, DELETE, OPTIONS'"} |

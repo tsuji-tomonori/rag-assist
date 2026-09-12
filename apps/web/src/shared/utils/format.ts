@@ -87,7 +87,7 @@ export function statusLabel(status: HumanQuestion["status"]): string {
   return questionStatusPresentation(status).label
 }
 
-export function runStatusLabel(status: "queued" | "running" | "succeeded" | "failed" | "cancelled"): string {
+export function runStatusLabel(status: "queued" | "running" | "succeeded" | "failed" | "timed_out" | "cancelled"): string {
   return benchmarkRunStatusPresentation(status).label
 }
 

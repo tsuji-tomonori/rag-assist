@@ -1,5 +1,5 @@
-import { Icon } from "../../../../shared/components/Icon.js"
-import type { IconName } from "../../../../shared/components/Icon.js"
+import { Icon } from "../../../../shared/ui/Icon.js"
+import type { IconName } from "../../../../shared/ui/Icon.js"
 import { EmptyState } from "../../../../shared/ui/index.js"
 import { formatCurrency } from "../../../../shared/utils/format.js"
 import type { AccessRoleDefinition, AliasDefinition, CostAuditSummary, ManagedUser, UsageSummaryPage } from "../../types.js"

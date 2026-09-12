@@ -41,16 +41,16 @@
 | B002 | `POST /documents/reindex-migrations/{migrationId}/rollback handler` | if | is forbidden error の判定結果が真である | `isForbiddenError(err)` | `apps/api/src/routes/document-routes.ts:1488 (POST /documents/reindex-migrations/{migrationId}/rollback handler)` |
 | B003 | `POST /documents/reindex-migrations/{migrationId}/rollback handler` | if | `err` が `Error` の instance である、かつ `err.message` が "not found" を含む | `err instanceof Error && err.message.includes("not found")` | `apps/api/src/routes/document-routes.ts:1489 (POST /documents/reindex-migrations/{migrationId}/rollback handler)` |
 | B004 | `requirePermission` | if | 利用者が 指定された permission を持たない | `!hasPermission(user, permission)` | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| B005 | `MemoRagService.rollbackReindexMigration` | if | `migration` が存在しない、または偽である | `!migration` | `apps/api/src/rag/memorag-service.ts:774 (MemoRagService.rollbackReindexMigration)` |
-| B006 | `MemoRagService.rollbackReindexMigration` | 三項条件 | `migration.publicationRunId` が存在し、真である | `migration.publicationRunId` | `apps/api/src/rag/memorag-service.ts:777 (MemoRagService.rollbackReindexMigration)` |
-| B007 | `MemoRagService.rollbackReindexMigration` | if | `migration.status` が `"cutover"` と異なる、かつ 「`compensation` が存在し、真である、かつ `migration.status` が `"rolled_back"` と等しい」ではない | `migration.status !== "cutover" && !(compensation && migration.status === "rolled_back")` | `apps/api/src/rag/memorag-service.ts:780 (MemoRagService.rollbackReindexMigration)` |
-| B008 | `MemoRagService.rollbackReindexMigration` | if | `migration.publicationRunId` が存在し、真である | `migration.publicationRunId` | `apps/api/src/rag/memorag-service.ts:804 (MemoRagService.rollbackReindexMigration)` |
-| B009 | `MemoRagService.rollbackReindexMigration` | if | `compensation` が存在し、真である | `compensation` | `apps/api/src/rag/memorag-service.ts:805 (MemoRagService.rollbackReindexMigration)` |
-| B010 | `MemoRagService.rollbackReindexMigration` | catch | 例外が発生した場合に catch 処理へ移る | `error` | `apps/api/src/rag/memorag-service.ts:828 (MemoRagService.rollbackReindexMigration)` |
+| B005 | `MemoRagService.rollbackReindexMigration` | if | `migration` が存在しない、または偽である | `!migration` | `apps/api/src/rag/memorag-service.ts:881 (MemoRagService.rollbackReindexMigration)` |
+| B006 | `MemoRagService.rollbackReindexMigration` | 三項条件 | `migration.publicationRunId` が存在し、真である | `migration.publicationRunId` | `apps/api/src/rag/memorag-service.ts:884 (MemoRagService.rollbackReindexMigration)` |
+| B007 | `MemoRagService.rollbackReindexMigration` | if | `migration.status` が `"cutover"` と異なる、かつ 「`compensation` が存在し、真である、かつ `migration.status` が `"rolled_back"` と等しい」ではない | `migration.status !== "cutover" && !(compensation && migration.status === "rolled_back")` | `apps/api/src/rag/memorag-service.ts:887 (MemoRagService.rollbackReindexMigration)` |
+| B008 | `MemoRagService.rollbackReindexMigration` | if | `migration.publicationRunId` が存在し、真である | `migration.publicationRunId` | `apps/api/src/rag/memorag-service.ts:911 (MemoRagService.rollbackReindexMigration)` |
+| B009 | `MemoRagService.rollbackReindexMigration` | if | `compensation` が存在し、真である | `compensation` | `apps/api/src/rag/memorag-service.ts:912 (MemoRagService.rollbackReindexMigration)` |
+| B010 | `MemoRagService.rollbackReindexMigration` | catch | 例外が発生した場合に catch 処理へ移る | `error` | `apps/api/src/rag/memorag-service.ts:935 (MemoRagService.rollbackReindexMigration)` |
 
 ## 4. 到達する主要実装
 
-handler を起点に TypeScript symbol を解決し、深さ 2 までの主要関数・method を列挙しています。深い helper を含む全到達関数は 386 件で、永続化・外部接続は深さにかかわらず次節へ集約しています。
+handler を起点に TypeScript symbol を解決し、深さ 2 までの主要関数・method を列挙しています。深い helper を含む全到達関数は 387 件で、永続化・外部接続は深さにかかわらず次節へ集約しています。
 
 | 深さ | Symbol | 責務 | 実装位置 |
 | ---: | --- | --- | --- |
@@ -59,25 +59,25 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 2 | `hasPermission` | has permission の実装処理を担当する。 | `apps/api/src/authorization.ts:187 (hasPermission)` |
 | 1 | `validParam` | valid param の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:24 (validParam)` |
 | 2 | `validRequest` | valid request の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:36 (validRequest)` |
-| 1 | `MemoRagService.rollbackReindexMigration` | rollback reindex migration の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:771 (MemoRagService.rollbackReindexMigration)` |
-| 2 | `MemoRagService.loadReindexMigrationLedger` | load reindex migration ledger の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3752 (MemoRagService.loadReindexMigrationLedger)` |
-| 2 | `authoritativeActorTenantId` | authoritative actor tenant id の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6090 (authoritativeActorTenantId)` |
+| 1 | `MemoRagService.rollbackReindexMigration` | rollback reindex migration の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:878 (MemoRagService.rollbackReindexMigration)` |
+| 2 | `MemoRagService.loadReindexMigrationLedger` | load reindex migration ledger の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3845 (MemoRagService.loadReindexMigrationLedger)` |
+| 2 | `authoritativeActorTenantId` | authoritative actor tenant id の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5700 (authoritativeActorTenantId)` |
 | 2 | `ObjectStoreReindexPublicationCompensationRepair.get` | get の実装処理を担当する。 | `apps/api/src/rag/_shared/publication/reindex-publication-compensation-repair.ts:46 (ObjectStoreReindexPublicationCompensationRepair.get)` |
-| 2 | `MemoRagService.getManifest` | get manifest の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3937 (MemoRagService.getManifest)` |
-| 2 | `MemoRagService.assertDocumentManifestWritable` | assert document manifest writable の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1164 (MemoRagService.assertDocumentManifestWritable)` |
-| 2 | `MemoRagService.assertCurrentWorkerAuthorization` | assert current worker authorization の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4798 (MemoRagService.assertCurrentWorkerAuthorization)` |
-| 2 | `authorizePublicationRollback` | authorize publication rollback の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:789 (authorizePublicationRollback)` |
-| 2 | `MemoRagService.reconcileRevokedRollback` | reconcile revoked rollback の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3708 (MemoRagService.reconcileRevokedRollback)` |
+| 2 | `MemoRagService.getManifest` | get manifest の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4030 (MemoRagService.getManifest)` |
+| 2 | `MemoRagService.assertDocumentManifestWritable` | assert document manifest writable の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1271 (MemoRagService.assertDocumentManifestWritable)` |
+| 2 | `MemoRagService.assertCurrentWorkerAuthorization` | assert current worker authorization の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4564 (MemoRagService.assertCurrentWorkerAuthorization)` |
+| 2 | `authorizePublicationRollback` | authorize publication rollback の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:896 (authorizePublicationRollback)` |
+| 2 | `MemoRagService.reconcileRevokedRollback` | reconcile revoked rollback の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3801 (MemoRagService.reconcileRevokedRollback)` |
 | 2 | `StagedPublicationCoordinator.rollback` | rollback の実装処理を担当する。 | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:475 (StagedPublicationCoordinator.rollback)` |
-| 2 | `reindexCompensationResult` | reindex compensation result の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5819 (reindexCompensationResult)` |
+| 2 | `reindexCompensationResult` | reindex compensation result の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5456 (reindexCompensationResult)` |
 | 2 | `ObjectStoreReindexPublicationCompensationRepair.markCompensated` | mark compensated の実装処理を担当する。 | `apps/api/src/rag/_shared/publication/reindex-publication-compensation-repair.ts:100 (ObjectStoreReindexPublicationCompensationRepair.markCompensated)` |
-| 2 | `MemoRagService.saveReindexMigrationLedger` | save reindex migration ledger の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3762 (MemoRagService.saveReindexMigrationLedger)` |
+| 2 | `MemoRagService.saveReindexMigrationLedger` | save reindex migration ledger の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3855 (MemoRagService.saveReindexMigrationLedger)` |
 | 2 | `ObjectStoreReindexPublicationCompensationRepair.prepare` | prepare の実装処理を担当する。 | `apps/api/src/rag/_shared/publication/reindex-publication-compensation-repair.ts:54 (ObjectStoreReindexPublicationCompensationRepair.prepare)` |
-| 2 | `authorizeRollback` | authorize rollback の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:848 (authorizeRollback)` |
-| 2 | `MemoRagService.loadStructuredBlocks` | load structured blocks の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3955 (MemoRagService.loadStructuredBlocks)` |
-| 2 | `MemoRagService.markManifestLifecycle` | mark manifest lifecycle の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4089 (MemoRagService.markManifestLifecycle)` |
-| 2 | `restoredAdmissionContext` | restored admission context の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5781 (restoredAdmissionContext)` |
-| 2 | `MemoRagService.ingest` | ingest の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:462 (MemoRagService.ingest)` |
+| 2 | `authorizeRollback` | authorize rollback の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:955 (authorizeRollback)` |
+| 2 | `MemoRagService.loadStructuredBlocks` | load structured blocks の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4048 (MemoRagService.loadStructuredBlocks)` |
+| 2 | `MemoRagService.markManifestLifecycle` | mark manifest lifecycle の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4182 (MemoRagService.markManifestLifecycle)` |
+| 2 | `restoredAdmissionContext` | restored admission context の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5418 (restoredAdmissionContext)` |
+| 2 | `MemoRagService.ingest` | ingest の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:569 (MemoRagService.ingest)` |
 | 1 | `isForbiddenError` | is forbidden error の実装処理を担当する。 | `apps/api/src/routes/document-routes.ts:310 (isForbiddenError)` |
 | 1 | `resourceUnavailable` | resource unavailable の実装処理を担当する。 | `apps/api/src/routes/document-routes.ts:293 (resourceUnavailable)` |
 | 2 | `settleNonEnumerationTiming` | settle non enumeration timing の実装処理を担当する。 | `apps/api/src/security/public-resource-response.ts:40 (settleNonEnumerationTiming)` |
@@ -86,13 +86,13 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 
 | 種別 | 境界 | Target | Operation | 目的 | Caller | 実装位置 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 参照 | Store | `this` | `loadReindexMigrationLedger` | `this` に対して load reindex migration ledger を実行する。 | `MemoRagService.rollbackReindexMigration` | `apps/api/src/rag/memorag-service.ts:772 (MemoRagService.rollbackReindexMigration)` |
-| 参照 | Store | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `MemoRagService.loadReindexMigrationLedger` | `apps/api/src/rag/memorag-service.ts:3754 (MemoRagService.loadReindexMigrationLedger)` |
-| 参照 | Store | `ledger` | `find` | `ledger` に対して find を実行する。 | `MemoRagService.rollbackReindexMigration` | `apps/api/src/rag/memorag-service.ts:773 (MemoRagService.rollbackReindexMigration)` |
-| 参照 | Store | `compensationStore` | `get` | `compensationStore` に対して get を実行する。 | `MemoRagService.rollbackReindexMigration` | `apps/api/src/rag/memorag-service.ts:778 (MemoRagService.rollbackReindexMigration)` |
+| 参照 | Store | `this` | `loadReindexMigrationLedger` | `this` に対して load reindex migration ledger を実行する。 | `MemoRagService.rollbackReindexMigration` | `apps/api/src/rag/memorag-service.ts:879 (MemoRagService.rollbackReindexMigration)` |
+| 参照 | Store | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `MemoRagService.loadReindexMigrationLedger` | `apps/api/src/rag/memorag-service.ts:3847 (MemoRagService.loadReindexMigrationLedger)` |
+| 参照 | Store | `ledger` | `find` | `ledger` に対して find を実行する。 | `MemoRagService.rollbackReindexMigration` | `apps/api/src/rag/memorag-service.ts:880 (MemoRagService.rollbackReindexMigration)` |
+| 参照 | Store | `compensationStore` | `get` | `compensationStore` に対して get を実行する。 | `MemoRagService.rollbackReindexMigration` | `apps/api/src/rag/memorag-service.ts:885 (MemoRagService.rollbackReindexMigration)` |
 | 参照 | Store | `this.objectStore` | `getTextWithVersion` | `this.objectStore` に対して get text with version を実行する。 | `ObjectStoreReindexPublicationCompensationRepair.read` | `apps/api/src/rag/_shared/publication/reindex-publication-compensation-repair.ts:162 (ObjectStoreReindexPublicationCompensationRepair.read)` |
 | 実行 | Store | `validateStored` | `validateStored` | `validateStored` に対して validate stored を実行する。 | `ObjectStoreReindexPublicationCompensationRepair.read` | `apps/api/src/rag/_shared/publication/reindex-publication-compensation-repair.ts:164 (ObjectStoreReindexPublicationCompensationRepair.read)` |
-| 参照 | Store | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `MemoRagService.rollbackReindexMigration` | `apps/api/src/rag/memorag-service.ts:783 (MemoRagService.rollbackReindexMigration)` |
+| 参照 | Store | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `MemoRagService.rollbackReindexMigration` | `apps/api/src/rag/memorag-service.ts:890 (MemoRagService.rollbackReindexMigration)` |
 | 参照 | Store | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `readTenantManifest` | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:83 (readTenantManifest)` |
 | 参照 | Store | `this.deps.documentGroupStore` | `list` | `this.deps.documentGroupStore` に対して list を実行する。 | `FolderPermissionService.resolveEffectiveFolderPermissionDetail` | `apps/api/src/folders/folder-permission-service.ts:145 (FolderPermissionService.resolveEffectiveFolderPermissionDetail)` |
 | 参照 | Store | `this.deps.userGroupStore` | `get` | `this.deps.userGroupStore` に対して get を実行する。 | `FolderPermissionService.resolveUserMembershipPermission` | `apps/api/src/folders/folder-permission-service.ts:780 (FolderPermissionService.resolveUserMembershipPermission)` |
@@ -148,26 +148,26 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 作成・追記 | Store | `this.deps.memoryVectorStore` | `put` | `this.deps.memoryVectorStore` に対して put を実行する。 | `StagedPublicationCoordinator.prepareRollbackArtifact` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1224 (StagedPublicationCoordinator.prepareRollbackArtifact)` |
 | 作成・追記 | Store | `this.deps.objectStore` | `putTextIfVersion` | `this.deps.objectStore` に対して put text if version を実行する。 | `StagedPublicationCoordinator.prepareRollbackArtifact` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1229 (StagedPublicationCoordinator.prepareRollbackArtifact)` |
 | 作成・追記 | Store | `this.deps.objectStore` | `putTextIfVersion` | `this.deps.objectStore` に対して put text if version を実行する。 | `StagedPublicationCoordinator.rollback` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:545 (StagedPublicationCoordinator.rollback)` |
-| 更新 | Store | `store` | `markCompensated` | `store` に対して mark compensated を実行する。 | `MemoRagService.reconcileRevokedRollback` | `apps/api/src/rag/memorag-service.ts:3720 (MemoRagService.reconcileRevokedRollback)` |
+| 更新 | Store | `store` | `markCompensated` | `store` に対して mark compensated を実行する。 | `MemoRagService.reconcileRevokedRollback` | `apps/api/src/rag/memorag-service.ts:3813 (MemoRagService.reconcileRevokedRollback)` |
 | 実行 | Store | `validateStored` | `validateStored` | `validateStored` に対して validate stored を実行する。 | `ObjectStoreReindexPublicationCompensationRepair.transition` | `apps/api/src/rag/_shared/publication/reindex-publication-compensation-repair.ts:149 (ObjectStoreReindexPublicationCompensationRepair.transition)` |
 | 作成・追記 | Store | `this.objectStore` | `putTextIfVersion` | `this.objectStore` に対して put text if version を実行する。 | `ObjectStoreReindexPublicationCompensationRepair.transition` | `apps/api/src/rag/_shared/publication/reindex-publication-compensation-repair.ts:151 (ObjectStoreReindexPublicationCompensationRepair.transition)` |
-| 更新 | Store | `store` | `markFailed` | `store` に対して mark failed を実行する。 | `MemoRagService.reconcileRevokedRollback` | `apps/api/src/rag/memorag-service.ts:3726 (MemoRagService.reconcileRevokedRollback)` |
-| 実行 | Store | `this` | `completeReindexCompensationLedger` | `this` に対して complete reindex compensation ledger を実行する。 | `MemoRagService.reconcileRevokedRollback` | `apps/api/src/rag/memorag-service.ts:3730 (MemoRagService.reconcileRevokedRollback)` |
-| 作成・追記 | Store | `this` | `saveReindexMigrationLedger` | `this` に対して save reindex migration ledger を実行する。 | `MemoRagService.completeReindexCompensationLedger` | `apps/api/src/rag/memorag-service.ts:3749 (MemoRagService.completeReindexCompensationLedger)` |
-| 参照 | Store | `this.deps.objectStore` | `getTextWithVersion` | `this.deps.objectStore` に対して get text with version を実行する。 | `MemoRagService.saveReindexMigrationLedger` | `apps/api/src/rag/memorag-service.ts:3766 (MemoRagService.saveReindexMigrationLedger)` |
-| 作成・追記 | Store | `this.deps.objectStore` | `putTextIfVersion` | `this.deps.objectStore` に対して put text if version を実行する。 | `MemoRagService.saveReindexMigrationLedger` | `apps/api/src/rag/memorag-service.ts:3777 (MemoRagService.saveReindexMigrationLedger)` |
-| 更新 | Store | `store` | `markCompleted` | `store` に対して mark completed を実行する。 | `MemoRagService.reconcileRevokedRollback` | `apps/api/src/rag/memorag-service.ts:3731 (MemoRagService.reconcileRevokedRollback)` |
-| 実行 | Store | `compensationStore` | `prepare` | `compensationStore` に対して prepare を実行する。 | `MemoRagService.rollbackReindexMigration` | `apps/api/src/rag/memorag-service.ts:829 (MemoRagService.rollbackReindexMigration)` |
+| 更新 | Store | `store` | `markFailed` | `store` に対して mark failed を実行する。 | `MemoRagService.reconcileRevokedRollback` | `apps/api/src/rag/memorag-service.ts:3819 (MemoRagService.reconcileRevokedRollback)` |
+| 実行 | Store | `this` | `completeReindexCompensationLedger` | `this` に対して complete reindex compensation ledger を実行する。 | `MemoRagService.reconcileRevokedRollback` | `apps/api/src/rag/memorag-service.ts:3823 (MemoRagService.reconcileRevokedRollback)` |
+| 作成・追記 | Store | `this` | `saveReindexMigrationLedger` | `this` に対して save reindex migration ledger を実行する。 | `MemoRagService.completeReindexCompensationLedger` | `apps/api/src/rag/memorag-service.ts:3842 (MemoRagService.completeReindexCompensationLedger)` |
+| 参照 | Store | `this.deps.objectStore` | `getTextWithVersion` | `this.deps.objectStore` に対して get text with version を実行する。 | `MemoRagService.saveReindexMigrationLedger` | `apps/api/src/rag/memorag-service.ts:3859 (MemoRagService.saveReindexMigrationLedger)` |
+| 作成・追記 | Store | `this.deps.objectStore` | `putTextIfVersion` | `this.deps.objectStore` に対して put text if version を実行する。 | `MemoRagService.saveReindexMigrationLedger` | `apps/api/src/rag/memorag-service.ts:3870 (MemoRagService.saveReindexMigrationLedger)` |
+| 更新 | Store | `store` | `markCompleted` | `store` に対して mark completed を実行する。 | `MemoRagService.reconcileRevokedRollback` | `apps/api/src/rag/memorag-service.ts:3824 (MemoRagService.reconcileRevokedRollback)` |
+| 実行 | Store | `compensationStore` | `prepare` | `compensationStore` に対して prepare を実行する。 | `MemoRagService.rollbackReindexMigration` | `apps/api/src/rag/memorag-service.ts:936 (MemoRagService.rollbackReindexMigration)` |
 | 作成・追記 | Store | `this.objectStore` | `putTextIfVersion` | `this.objectStore` に対して put text if version を実行する。 | `ObjectStoreReindexPublicationCompensationRepair.prepare` | `apps/api/src/rag/_shared/publication/reindex-publication-compensation-repair.ts:76 (ObjectStoreReindexPublicationCompensationRepair.prepare)` |
-| 更新 | Store | `compensationStore` | `markCompensated` | `compensationStore` に対して mark compensated を実行する。 | `MemoRagService.rollbackReindexMigration` | `apps/api/src/rag/memorag-service.ts:837 (MemoRagService.rollbackReindexMigration)` |
-| 作成・追記 | Store | `this` | `saveReindexMigrationLedger` | `this` に対して save reindex migration ledger を実行する。 | `MemoRagService.rollbackReindexMigration` | `apps/api/src/rag/memorag-service.ts:844 (MemoRagService.rollbackReindexMigration)` |
-| 参照 | Store | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `MemoRagService.rollbackReindexMigration` | `apps/api/src/rag/memorag-service.ts:863 (MemoRagService.rollbackReindexMigration)` |
+| 更新 | Store | `compensationStore` | `markCompensated` | `compensationStore` に対して mark compensated を実行する。 | `MemoRagService.rollbackReindexMigration` | `apps/api/src/rag/memorag-service.ts:944 (MemoRagService.rollbackReindexMigration)` |
+| 作成・追記 | Store | `this` | `saveReindexMigrationLedger` | `this` に対して save reindex migration ledger を実行する。 | `MemoRagService.rollbackReindexMigration` | `apps/api/src/rag/memorag-service.ts:951 (MemoRagService.rollbackReindexMigration)` |
+| 参照 | Store | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `MemoRagService.rollbackReindexMigration` | `apps/api/src/rag/memorag-service.ts:970 (MemoRagService.rollbackReindexMigration)` |
 | 参照 | Store | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `loadStructuredBlocksForManifest` | `apps/api/src/rag/_shared/storage/manifest-chunks.ts:35 (loadStructuredBlocksForManifest)` |
-| 削除 | Store | `this.deps.evidenceVectorStore` | `delete` | `this.deps.evidenceVectorStore` に対して delete を実行する。 | `MemoRagService.rollbackReindexMigration` | `apps/api/src/rag/memorag-service.ts:866 (MemoRagService.rollbackReindexMigration)` |
-| 削除 | Store | `this.deps.memoryVectorStore` | `delete` | `this.deps.memoryVectorStore` に対して delete を実行する。 | `MemoRagService.rollbackReindexMigration` | `apps/api/src/rag/memorag-service.ts:867 (MemoRagService.rollbackReindexMigration)` |
-| 作成・追記 | Store | `this.deps.objectStore` | `putText` | `this.deps.objectStore` に対して put text を実行する。 | `MemoRagService.markManifestLifecycle` | `apps/api/src/rag/memorag-service.ts:4101 (MemoRagService.markManifestLifecycle)` |
-| 実行 | Store | `restoredAdmissionContext` | `restoredAdmissionContext` | `restoredAdmissionContext` に対して restored admission context を実行する。 | `MemoRagService.rollbackReindexMigration` | `apps/api/src/rag/memorag-service.ts:869 (MemoRagService.rollbackReindexMigration)` |
-| 実行 | External | `textModel` | `generate` | `textModel` へ generate を実行する。 | `MemoRagService.createMemoryCards` | `apps/api/src/rag/memorag-service.ts:5146 (MemoRagService.createMemoryCards)` |
+| 削除 | Store | `this.deps.evidenceVectorStore` | `delete` | `this.deps.evidenceVectorStore` に対して delete を実行する。 | `MemoRagService.rollbackReindexMigration` | `apps/api/src/rag/memorag-service.ts:973 (MemoRagService.rollbackReindexMigration)` |
+| 削除 | Store | `this.deps.memoryVectorStore` | `delete` | `this.deps.memoryVectorStore` に対して delete を実行する。 | `MemoRagService.rollbackReindexMigration` | `apps/api/src/rag/memorag-service.ts:974 (MemoRagService.rollbackReindexMigration)` |
+| 作成・追記 | Store | `this.deps.objectStore` | `putText` | `this.deps.objectStore` に対して put text を実行する。 | `MemoRagService.markManifestLifecycle` | `apps/api/src/rag/memorag-service.ts:4194 (MemoRagService.markManifestLifecycle)` |
+| 実行 | Store | `restoredAdmissionContext` | `restoredAdmissionContext` | `restoredAdmissionContext` に対して restored admission context を実行する。 | `MemoRagService.rollbackReindexMigration` | `apps/api/src/rag/memorag-service.ts:976 (MemoRagService.rollbackReindexMigration)` |
+| 実行 | External | `textModel` | `generate` | `textModel` へ generate を実行する。 | `MemoRagService.createMemoryCards` | `apps/api/src/rag/memorag-service.ts:4845 (MemoRagService.createMemoryCards)` |
 | 参照 | Store | `input.objectStore` | `getText` | `input.objectStore` に対して get text を実行する。 | `assertRagSafetyInterlock` | `apps/api/src/rag/quality-control/production-rag-monitor.ts:315 (assertRagSafetyInterlock)` |
 | 実行 | Store | `(() => {<br>        const structuredText = input.text ?? input.structuredBlocks.map((block) => block.text).join("\n\n")<br>        return limitDocument({<br>          text: structuredText,<br>          blocks: input.structuredBlocks,<br>          sourceExtractorVersion: input` | `sourceExtractorVersion ?? "structured-blocks-ledger-v1"<br>        })<br>      })` | `(() => {<br>        const structuredText = input.text ?? input.structuredBlocks.map((block) => block.text).join("\n\n")<br>        return limitDocument({<br>          text: structuredText,<br>          blocks: input.structuredBlocks,<br>          sourceExtractorVersion: input` に対して source extractor version ?? "structured blocks ledger v1"<br>        })<br>      }) を実行する。 | `runIngestPipeline` | `apps/api/src/rag/offline/pre-retrieval/ingestion/ingest-run.service.ts:93 (runIngestPipeline)` |
 | 参照 | Store | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `embedWithCache` | `apps/api/src/rag/offline/pre-retrieval/embedding/embedding-cache.ts:21 (embedWithCache)` |
@@ -189,9 +189,9 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 参照 | Store | `objectStore` | `getTextWithVersion` | `objectStore` に対して get text with version を実行する。 | `readManifest` | `apps/api/src/rag/_shared/security/revocation-cleanup-coordinator.ts:636 (readManifest)` |
 | 作成・追記 | Store | `this.objectStore` | `putTextIfVersion` | `this.objectStore` に対して put text if version を実行する。 | `ObjectStoreRevocationCleanupCoordinator.register` | `apps/api/src/rag/_shared/security/revocation-cleanup-coordinator.ts:169 (ObjectStoreRevocationCleanupCoordinator.register)` |
 | 実行 | Store | `new ProductionRagObservationProducer(deps.objectStore)` | `captureIngestManifest` | `new ProductionRagObservationProducer(deps.objectStore)` に対して capture ingest manifest を実行する。 | `runIngestPipeline` | `apps/api/src/rag/offline/pre-retrieval/ingestion/ingest-run.service.ts:504 (runIngestPipeline)` |
-| 参照 | Store | `this.objectStore` | `getText` | `this.objectStore` に対して get text を実行する。 | `ProductionRagObservationProducer.loadActivePolicy` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:783 (ProductionRagObservationProducer.loadActivePolicy)` |
-| 作成・追記 | Store | `this.objectStore` | `putText` | `this.objectStore` に対して put text を実行する。 | `ProductionRagObservationProducer.persistSample` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:762 (ProductionRagObservationProducer.persistSample)` |
-| 作成・追記 | Store | `this` | `saveReindexMigrationLedger` | `this` に対して save reindex migration ledger を実行する。 | `MemoRagService.rollbackReindexMigration` | `apps/api/src/rag/memorag-service.ts:894 (MemoRagService.rollbackReindexMigration)` |
+| 参照 | Store | `this.objectStore` | `getText` | `this.objectStore` に対して get text を実行する。 | `ProductionRagObservationProducer.loadActivePolicy` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:837 (ProductionRagObservationProducer.loadActivePolicy)` |
+| 作成・追記 | Store | `this.objectStore` | `putText` | `this.objectStore` に対して put text を実行する。 | `ProductionRagObservationProducer.persistSample` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:816 (ProductionRagObservationProducer.persistSample)` |
+| 作成・追記 | Store | `this` | `saveReindexMigrationLedger` | `this` に対して save reindex migration ledger を実行する。 | `MemoRagService.rollbackReindexMigration` | `apps/api/src/rag/memorag-service.ts:1001 (MemoRagService.rollbackReindexMigration)` |
 
 ## 6. 応答・メッセージ
 
@@ -309,6 +309,7 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 例外 | `-` | `Unknown RAG quality signal: ${signalId}` | `RAG_REQUIRED_SIGNAL_IDS` が signalId as RagQualitySignalId を含まない |
 | 例外 | `-` | `Available RAG quality measurement is incomplete: ${signalId}` | is integer の判定結果が真ではない、または `item.sampleCount` が `0` より小さい、または `item.available` が存在し、真である、かつ `item.value` が `null` と等しい、または is finite の判定結果が真ではない、または `item.sampleCount` が `1` より小さい、または `item.confidence` が `null` と等しい、または `item.confidence` が `0` より小さい、または `item.confidence` が `1` より大きい |
 | 例外 | `-` | `Unavailable RAG quality measurement must not contain a value: ${signalId}` | `item.available` が存在しない、または偽である、かつ `item.value` が `null` と異なる、または `item.confidence` が `null` と異なる |
+| 例外 | `-` | `Unknown RAG diagnostic measurement: ${signalId}` | `["retrieval.context_relevance", "evaluation.artifact_failure_count", "evaluation.run_timed_out", "performance.chat_first_token_p50_ms", "performance.chat_first_token_p95_ms", "performance.chat_first_token_p99_ms"]` が signalId を含まない |
 | ログ | `-` | RAG quality source sample was not recorded | `result.skippedReason` が存在し、真である、かつ `process.env.RAG_MONITORING_REQUIRED` が `"1"` と等しい |
 | ログ | `-` | RAG quality source sample persistence failed | 例外を捕捉した場合 |
 
@@ -319,7 +320,7 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 到達 symbol | service enforces full document group permission for delete and reindex operations | `apps/api/src/rag/memorag-service.test.ts:1132 (service enforces full document group permission for delete and reindex operations)` |
 | 到達 symbol | service stages and rolls back structured blue-green reindex migrations | `apps/api/src/rag/memorag-service.test.ts:1195 (service stages and rolls back structured blue-green reindex migrations)` |
 | 到達 symbol | FR-090 revoked rollback persists ledger reconciliation and retries only after current authorization | `apps/api/src/rag/memorag-service.test.ts:1366 (FR-090 revoked rollback persists ledger reconciliation and retries only after current authorization)` |
-| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:3469 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
+| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:3471 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
 
 ## 8. 解析上の注意
 

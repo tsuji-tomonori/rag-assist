@@ -116,6 +116,10 @@ const operationDocs: Record<string, { summary: string; description: string }> = 
     summary: "ヘルスチェックを取得する",
     description: "API プロセスが応答可能かを確認するため、サービス状態を返します。"
   },
+  "POST /websocket/tickets": {
+    summary: "WebSocket接続用の一回限りのチケットを発行する",
+    description: "認証済み利用者の現在のセッションに結び付けた有効期間60秒の接続チケットを返します。チケットは一度だけ消費でき、再利用・期限切れ・失効済みセッションを拒否します。"
+  },
   "GET /me": {
     summary: "ログインユーザー情報を取得する",
     description: "認証済みユーザーの ID、ロール、有効 permission を返します。"

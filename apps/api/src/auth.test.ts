@@ -6,7 +6,43 @@ import type {
   ServerManagedIdentity,
   VerifiedIdentityProvider
 } from "./adapters/verified-identity-provider.js"
-import { resolveExplicitLocalAppUser, resolveVerifiedAppUser } from "./auth.js"
+import {
+  resolveExplicitLocalAppUser,
+  resolveExplicitLocalAuthSession,
+  resolveVerifiedAppUser,
+  resolveVerifiedAuthSession
+} from "./auth.js"
+
+test("resolveVerifiedAuthSession requires Cognito session and token binding claims", () => {
+  assert.deepEqual(resolveVerifiedAuthSession({
+    origin_jti: "session-1",
+    jti: "token-1",
+    iat: 1_783_728_000,
+    exp: 1_783_731_600
+  }), {
+    sessionId: "session-1",
+    tokenId: "token-1",
+    issuedAtEpochMs: 1_783_728_000_000,
+    expiresAtEpochMs: 1_783_731_600_000
+  })
+  for (const payload of [
+    { jti: "token-1", iat: 1, exp: 2 },
+    { origin_jti: "session-1", iat: 1, exp: 2 },
+    { origin_jti: "session-1", jti: "token-1", exp: 2 },
+    { origin_jti: "session-1", jti: "token-1", iat: 2, exp: 2 }
+  ]) {
+    assert.throws(() => resolveVerifiedAuthSession(payload), (error) => isHttpStatus(error, 401))
+  }
+})
+
+test("resolveExplicitLocalAuthSession is isolated and deterministic", () => {
+  assert.deepEqual(resolveExplicitLocalAuthSession("local-user"), {
+    sessionId: "local-session:local-user",
+    tokenId: "local-token:local-user",
+    issuedAtEpochMs: 0,
+    expiresAtEpochMs: Number.MAX_SAFE_INTEGER
+  })
+})
 
 test("resolveVerifiedAppUser uses server-managed subject, email, status, and tenant", async () => {
   let lookedUpUsername = ""

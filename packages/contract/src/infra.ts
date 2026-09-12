@@ -1,7 +1,10 @@
+import type { DeploymentEnvironment } from "./cors.js"
+
 export type BooleanEnv = "true" | "false"
 
 export type ApiRuntimeEnv = {
   NODE_ENV: "production" | "development" | "test"
+  DEPLOYMENT_ENVIRONMENT: DeploymentEnvironment
   USE_LOCAL_VECTOR_STORE: BooleanEnv
   MOCK_BEDROCK: BooleanEnv
   DOCS_BUCKET_NAME: string
@@ -9,6 +12,8 @@ export type ApiRuntimeEnv = {
   DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID: string
   CONVERSATION_HISTORY_TABLE_NAME: string
   FAVORITES_TABLE_NAME: string
+  WEBSOCKET_TICKETS_TABLE_NAME: string
+  WEBSOCKET_CONNECTIONS_TABLE_NAME: string
   BENCHMARK_RUNS_TABLE_NAME: string
   ACTIVE_RUN_AUTHORIZATION_INDEX_TABLE_NAME: string
   CHAT_RUNS_TABLE_NAME: string

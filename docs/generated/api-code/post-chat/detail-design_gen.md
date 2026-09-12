@@ -33,23 +33,23 @@
 | ---: | --- | --- | --- | --- | --- |
 | B001 | `POST /chat handler` | if | `(body.includeDebug ?? body.debug ?? false)` が `true` と等しい | `(body.includeDebug ?? body.debug ?? false) === true` | `apps/api/src/routes/chat-routes.ts:42 (POST /chat handler)` |
 | B002 | `requirePermission` | if | 利用者が 指定された permission を持たない | `!hasPermission(user, permission)` | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| B003 | `MemoRagService.chat` | 三項条件 | `actor` が存在し、真である | `actor` | `apps/api/src/rag/memorag-service.ts:2398 (MemoRagService.chat)` |
-| B004 | `MemoRagService.chat` | if | `actor` が存在し、真である | `actor` | `apps/api/src/rag/memorag-service.ts:2399 (MemoRagService.chat)` |
-| B005 | `MemoRagService.chat` | 三項条件 | `actor` が存在し、真である | `actor` | `apps/api/src/rag/memorag-service.ts:2401 (MemoRagService.chat)` |
-| B006 | `MemoRagService.chat` | 三項条件 | `authorize` が存在し、真である | `authorize` | `apps/api/src/rag/memorag-service.ts:2414 (MemoRagService.chat)` |
-| B007 | `MemoRagService.chat` | if | `authorize` が存在し、真である | `authorize` | `apps/api/src/rag/memorag-service.ts:2415 (MemoRagService.chat)` |
-| B008 | `MemoRagService.chat` | 三項条件 | `authorize` が存在し、真である | `authorize` | `apps/api/src/rag/memorag-service.ts:2423 (MemoRagService.chat)` |
-| B009 | `MemoRagService.chat` | 三項条件 | `currentActor` が存在し、真である | `currentActor` | `apps/api/src/rag/memorag-service.ts:2431 (MemoRagService.chat)` |
-| B010 | `MemoRagService.chat` | if | `authorize` が存在し、真である | `authorize` | `apps/api/src/rag/memorag-service.ts:2433 (MemoRagService.chat)` |
-| B011 | `MemoRagService.chat` | catch | 例外が発生した場合に catch 処理へ移る | `error` | `apps/api/src/rag/memorag-service.ts:2435 (MemoRagService.chat)` |
-| B012 | `MemoRagService.chat` | if | `persistedTrace` が存在し、真である、または `observationArtifactId` が存在し、真である、かつ `currentActor?.tenantId` が存在し、真である | `(persistedTrace \|\| observationArtifactId) && currentActor?.tenantId` | `apps/api/src/rag/memorag-service.ts:2436 (MemoRagService.chat)` |
-| B013 | `MemoRagService.chat` | 三項条件 | `persistedTrace` が存在し、真である | `persistedTrace` | `apps/api/src/rag/memorag-service.ts:2439 (MemoRagService.chat)` |
-| B014 | `MemoRagService.chat` | 三項条件 | `persistedTrace` が存在し、真である | `persistedTrace` | `apps/api/src/rag/memorag-service.ts:2440 (MemoRagService.chat)` |
-| B015 | `MemoRagService.chat` | 三項条件 | `observationArtifactId` が存在し、真である | `observationArtifactId` | `apps/api/src/rag/memorag-service.ts:2441 (MemoRagService.chat)` |
+| B003 | `MemoRagService.chat` | 三項条件 | `actor` が存在し、真である | `actor` | `apps/api/src/rag/memorag-service.ts:2505 (MemoRagService.chat)` |
+| B004 | `MemoRagService.chat` | if | `actor` が存在し、真である | `actor` | `apps/api/src/rag/memorag-service.ts:2506 (MemoRagService.chat)` |
+| B005 | `MemoRagService.chat` | 三項条件 | `actor` が存在し、真である | `actor` | `apps/api/src/rag/memorag-service.ts:2508 (MemoRagService.chat)` |
+| B006 | `MemoRagService.chat` | 三項条件 | `authorize` が存在し、真である | `authorize` | `apps/api/src/rag/memorag-service.ts:2521 (MemoRagService.chat)` |
+| B007 | `MemoRagService.chat` | if | `authorize` が存在し、真である | `authorize` | `apps/api/src/rag/memorag-service.ts:2522 (MemoRagService.chat)` |
+| B008 | `MemoRagService.chat` | 三項条件 | `authorize` が存在し、真である | `authorize` | `apps/api/src/rag/memorag-service.ts:2530 (MemoRagService.chat)` |
+| B009 | `MemoRagService.chat` | 三項条件 | `currentActor` が存在し、真である | `currentActor` | `apps/api/src/rag/memorag-service.ts:2538 (MemoRagService.chat)` |
+| B010 | `MemoRagService.chat` | if | `authorize` が存在し、真である | `authorize` | `apps/api/src/rag/memorag-service.ts:2540 (MemoRagService.chat)` |
+| B011 | `MemoRagService.chat` | catch | 例外が発生した場合に catch 処理へ移る | `error` | `apps/api/src/rag/memorag-service.ts:2542 (MemoRagService.chat)` |
+| B012 | `MemoRagService.chat` | if | `persistedTrace` が存在し、真である、または `observationArtifactId` が存在し、真である、かつ `currentActor?.tenantId` が存在し、真である | `(persistedTrace \|\| observationArtifactId) && currentActor?.tenantId` | `apps/api/src/rag/memorag-service.ts:2543 (MemoRagService.chat)` |
+| B013 | `MemoRagService.chat` | 三項条件 | `persistedTrace` が存在し、真である | `persistedTrace` | `apps/api/src/rag/memorag-service.ts:2546 (MemoRagService.chat)` |
+| B014 | `MemoRagService.chat` | 三項条件 | `persistedTrace` が存在し、真である | `persistedTrace` | `apps/api/src/rag/memorag-service.ts:2547 (MemoRagService.chat)` |
+| B015 | `MemoRagService.chat` | 三項条件 | `observationArtifactId` が存在し、真である | `observationArtifactId` | `apps/api/src/rag/memorag-service.ts:2548 (MemoRagService.chat)` |
 
 ## 4. 到達する主要実装
 
-handler を起点に TypeScript symbol を解決し、深さ 2 までの主要関数・method を列挙しています。深い helper を含む全到達関数は 650 件で、永続化・外部接続は深さにかかわらず次節へ集約しています。
+handler を起点に TypeScript symbol を解決し、深さ 2 までの主要関数・method を列挙しています。深い helper を含む全到達関数は 653 件で、永続化・外部接続は深さにかかわらず次節へ集約しています。
 
 | 深さ | Symbol | 責務 | 実装位置 |
 | ---: | --- | --- | --- |
@@ -58,23 +58,23 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 2 | `hasPermission` | has permission の実装処理を担当する。 | `apps/api/src/authorization.ts:187 (hasPermission)` |
 | 1 | `validJson` | valid json の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:20 (validJson)` |
 | 2 | `validRequest` | valid request の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:36 (validRequest)` |
-| 1 | `MemoRagService.chat` | chat の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:2396 (MemoRagService.chat)` |
-| 2 | `localTestActor` | local test actor の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6109 (localTestActor)` |
-| 2 | `MemoRagService.normalizeChatInputSessionEvidence` | normalize chat input session evidence の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5203 (MemoRagService.normalizeChatInputSessionEvidence)` |
-| 2 | `MemoRagService.assertSearchScopeReadable` | assert search scope readable の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1262 (MemoRagService.assertSearchScopeReadable)` |
-| 2 | `MemoRagService.assertCurrentWorkerAuthorization` | assert current worker authorization の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4798 (MemoRagService.assertCurrentWorkerAuthorization)` |
-| 2 | `anonymous function` | anonymous function の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:2401 (anonymous function)` |
-| 2 | `MemoRagService.usageTrackedDependencies` | usage tracked dependencies の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5174 (MemoRagService.usageTrackedDependencies)` |
-| 2 | `MemoRagService.securityResourceRefsForActor` | security resource refs for actor の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1271 (MemoRagService.securityResourceRefsForActor)` |
-| 2 | `runChatOrchestration` | run chat orchestration の実装処理を担当する。 | `apps/api/src/rag/orchestration/chat-rag-orchestrator.ts:715 (runChatOrchestration)` |
-| 2 | `debugTraceObjectKey` | debug trace object key の実装処理を担当する。 | `apps/api/src/rag/orchestration/chat-rag-orchestrator.ts:1231 (debugTraceObjectKey)` |
-| 2 | `ProductionRagObservationProducer.deleteArtifactSamples` | delete artifact samples の実装処理を担当する。 | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:296 (ProductionRagObservationProducer.deleteArtifactSamples)` |
+| 1 | `MemoRagService.chat` | chat の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:2503 (MemoRagService.chat)` |
+| 2 | `localTestActor` | local test actor の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5719 (localTestActor)` |
+| 2 | `MemoRagService.normalizeChatInputSessionEvidence` | normalize chat input session evidence の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4902 (MemoRagService.normalizeChatInputSessionEvidence)` |
+| 2 | `MemoRagService.assertSearchScopeReadable` | assert search scope readable の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1369 (MemoRagService.assertSearchScopeReadable)` |
+| 2 | `MemoRagService.assertCurrentWorkerAuthorization` | assert current worker authorization の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4564 (MemoRagService.assertCurrentWorkerAuthorization)` |
+| 2 | `anonymous function` | anonymous function の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:2508 (anonymous function)` |
+| 2 | `MemoRagService.usageTrackedDependencies` | usage tracked dependencies の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4873 (MemoRagService.usageTrackedDependencies)` |
+| 2 | `MemoRagService.securityResourceRefsForActor` | security resource refs for actor の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1378 (MemoRagService.securityResourceRefsForActor)` |
+| 2 | `runChatOrchestration` | run chat orchestration の実装処理を担当する。 | `apps/api/src/rag/orchestration/chat-rag-orchestrator.ts:763 (runChatOrchestration)` |
+| 2 | `debugTraceObjectKey` | debug trace object key の実装処理を担当する。 | `apps/api/src/rag/orchestration/chat-rag-orchestrator.ts:1287 (debugTraceObjectKey)` |
+| 2 | `ProductionRagObservationProducer.deleteArtifactSamples` | delete artifact samples の実装処理を担当する。 | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:318 (ProductionRagObservationProducer.deleteArtifactSamples)` |
 
 ## 5. データ・外部境界
 
 | 種別 | 境界 | Target | Operation | 目的 | Caller | 実装位置 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 参照 | Store | `this.deps.conversationHistoryStore` | `get` | `this.deps.conversationHistoryStore` に対して get を実行する。 | `MemoRagService.normalizeChatInputSessionEvidence` | `apps/api/src/rag/memorag-service.ts:5206 (MemoRagService.normalizeChatInputSessionEvidence)` |
+| 参照 | Store | `this.deps.conversationHistoryStore` | `get` | `this.deps.conversationHistoryStore` に対して get を実行する。 | `MemoRagService.normalizeChatInputSessionEvidence` | `apps/api/src/rag/memorag-service.ts:4905 (MemoRagService.normalizeChatInputSessionEvidence)` |
 | 参照 | Store | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `readTenantManifest` | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:83 (readTenantManifest)` |
 | 参照 | Store | `this.deps.documentGroupStore` | `list` | `this.deps.documentGroupStore` に対して list を実行する。 | `FolderPermissionService.resolveEffectiveFolderPermissionDetail` | `apps/api/src/folders/folder-permission-service.ts:145 (FolderPermissionService.resolveEffectiveFolderPermissionDetail)` |
 | 参照 | Store | `this.deps.userGroupStore` | `get` | `this.deps.userGroupStore` に対して get を実行する。 | `FolderPermissionService.resolveUserMembershipPermission` | `apps/api/src/folders/folder-permission-service.ts:780 (FolderPermissionService.resolveUserMembershipPermission)` |
@@ -89,9 +89,9 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 参照 | Store | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `loadStructuredBlocksForManifest` | `apps/api/src/rag/_shared/storage/manifest-chunks.ts:35 (loadStructuredBlocksForManifest)` |
 | 参照 | Store | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `loadChunksForManifest` | `apps/api/src/rag/_shared/storage/manifest-chunks.ts:10 (loadChunksForManifest)` |
 | 参照 | External | `this.identityProvider` | `getCurrentIdentityBySubject` | `this.identityProvider` へ get current identity by subject を実行する。 | `CurrentWorkerAuthorization.assertAuthorized` | `apps/api/src/security/current-worker-authorization.ts:51 (CurrentWorkerAuthorization.assertAuthorized)` |
-| 参照 | Store | `this.deps.groupMembershipStore` | `listByMember` | `this.deps.groupMembershipStore` に対して list by member を実行する。 | `MemoRagService.securityResourceRefsForActor` | `apps/api/src/rag/memorag-service.ts:1278 (MemoRagService.securityResourceRefsForActor)` |
-| 実行 | Store | `(await this.deps.groupMembershipStore.listByMember(tenantId, "user", actor.userId))<br>      ` | `map` | `(await this.deps.groupMembershipStore.listByMember(tenantId, "user", actor.userId))<br>      ` に対して map を実行する。 | `MemoRagService.securityResourceRefsForActor` | `apps/api/src/rag/memorag-service.ts:1278 (MemoRagService.securityResourceRefsForActor)` |
-| 参照 | Store | `this.deps.groupMembershipStore` | `listByMember` | `this.deps.groupMembershipStore` に対して list by member を実行する。 | `MemoRagService.securityResourceRefsForActor` | `apps/api/src/rag/memorag-service.ts:1286 (MemoRagService.securityResourceRefsForActor)` |
+| 参照 | Store | `this.deps.groupMembershipStore` | `listByMember` | `this.deps.groupMembershipStore` に対して list by member を実行する。 | `MemoRagService.securityResourceRefsForActor` | `apps/api/src/rag/memorag-service.ts:1385 (MemoRagService.securityResourceRefsForActor)` |
+| 実行 | Store | `(await this.deps.groupMembershipStore.listByMember(tenantId, "user", actor.userId))<br>      ` | `map` | `(await this.deps.groupMembershipStore.listByMember(tenantId, "user", actor.userId))<br>      ` に対して map を実行する。 | `MemoRagService.securityResourceRefsForActor` | `apps/api/src/rag/memorag-service.ts:1385 (MemoRagService.securityResourceRefsForActor)` |
+| 参照 | Store | `this.deps.groupMembershipStore` | `listByMember` | `this.deps.groupMembershipStore` に対して list by member を実行する。 | `MemoRagService.securityResourceRefsForActor` | `apps/api/src/rag/memorag-service.ts:1393 (MemoRagService.securityResourceRefsForActor)` |
 | 参照 | Store | `input.objectStore` | `getText` | `input.objectStore` に対して get text を実行する。 | `assertRagSafetyInterlock` | `apps/api/src/rag/quality-control/production-rag-monitor.ts:315 (assertRagSafetyInterlock)` |
 | 実行 | External | `deps.textModel` | `embed` | `deps.textModel` へ embed を実行する。 | `createEmbedQueriesNode` | `apps/api/src/chat-orchestration/nodes/embed-queries.ts:13 (createEmbedQueriesNode)` |
 | 参照 | Store | `deps.objectStore` | `listKeys` | `deps.objectStore` に対して list keys を実行する。 | `getLexicalIndex` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:605 (getLexicalIndex)` |
@@ -106,12 +106,12 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 参照 | Store | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `loadPublicationPointer` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1809 (loadPublicationPointer)` |
 | 参照 | Store | `objectStore` | `getTextWithVersion` | `objectStore` に対して get text with version を実行する。 | `readVersionedRecord` | `apps/api/src/rag/offline/pre-retrieval/admission/source-governance-approval-service.ts:1066 (readVersionedRecord)` |
 | 実行 | Store | `new ProductionRagObservationProducer(input.objectStore)<br>        ` | `captureEligibilityProbeOnce` | `new ProductionRagObservationProducer(input.objectStore)<br>        ` に対して capture eligibility probe once を実行する。 | `currentEligibilitySnapshotFromAuthoritativeState` | `apps/api/src/rag/_shared/security/current-rag-eligibility.ts:246 (currentEligibilitySnapshotFromAuthoritativeState)` |
-| 参照 | Store | `this.objectStore` | `getTextWithVersion` | `this.objectStore` に対して get text with version を実行する。 | `ProductionRagObservationProducer.captureEligibilityProbeOnce` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:613 (ProductionRagObservationProducer.captureEligibilityProbeOnce)` |
-| 作成・追記 | Store | `this.objectStore` | `putTextIfVersion` | `this.objectStore` に対して put text if version を実行する。 | `ProductionRagObservationProducer.captureEligibilityProbeOnce` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:632 (ProductionRagObservationProducer.captureEligibilityProbeOnce)` |
-| 参照 | Store | `this.objectStore` | `getTextWithVersion` | `this.objectStore` に対して get text with version を実行する。 | `ProductionRagObservationProducer.captureEligibilityProbeOnce` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:636 (ProductionRagObservationProducer.captureEligibilityProbeOnce)` |
-| 参照 | Store | `this.objectStore` | `getText` | `this.objectStore` に対して get text を実行する。 | `ProductionRagObservationProducer.loadActivePolicy` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:783 (ProductionRagObservationProducer.loadActivePolicy)` |
-| 作成・追記 | Store | `this.objectStore` | `putText` | `this.objectStore` に対して put text を実行する。 | `ProductionRagObservationProducer.persistSample` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:762 (ProductionRagObservationProducer.persistSample)` |
-| 作成・追記 | Store | `this.objectStore` | `putTextIfVersion` | `this.objectStore` に対して put text if version を実行する。 | `ProductionRagObservationProducer.captureEligibilityProbeOnce` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:656 (ProductionRagObservationProducer.captureEligibilityProbeOnce)` |
+| 参照 | Store | `this.objectStore` | `getTextWithVersion` | `this.objectStore` に対して get text with version を実行する。 | `ProductionRagObservationProducer.captureEligibilityProbeOnce` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:665 (ProductionRagObservationProducer.captureEligibilityProbeOnce)` |
+| 作成・追記 | Store | `this.objectStore` | `putTextIfVersion` | `this.objectStore` に対して put text if version を実行する。 | `ProductionRagObservationProducer.captureEligibilityProbeOnce` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:684 (ProductionRagObservationProducer.captureEligibilityProbeOnce)` |
+| 参照 | Store | `this.objectStore` | `getTextWithVersion` | `this.objectStore` に対して get text with version を実行する。 | `ProductionRagObservationProducer.captureEligibilityProbeOnce` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:688 (ProductionRagObservationProducer.captureEligibilityProbeOnce)` |
+| 参照 | Store | `this.objectStore` | `getText` | `this.objectStore` に対して get text を実行する。 | `ProductionRagObservationProducer.loadActivePolicy` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:837 (ProductionRagObservationProducer.loadActivePolicy)` |
+| 作成・追記 | Store | `this.objectStore` | `putText` | `this.objectStore` に対して put text を実行する。 | `ProductionRagObservationProducer.persistSample` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:816 (ProductionRagObservationProducer.persistSample)` |
+| 作成・追記 | Store | `this.objectStore` | `putTextIfVersion` | `this.objectStore` に対して put text if version を実行する。 | `ProductionRagObservationProducer.captureEligibilityProbeOnce` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:708 (ProductionRagObservationProducer.captureEligibilityProbeOnce)` |
 | 参照 | Store | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `loadPublishedAliasArtifact` | `apps/api/src/search/alias-artifacts.ts:19 (loadPublishedAliasArtifact)` |
 | 参照 | Store | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `loadPublishedAliasArtifact` | `apps/api/src/search/alias-artifacts.ts:21 (loadPublishedAliasArtifact)` |
 | 参照 | Store | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `loadLexicalIndexArtifact` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:1555 (loadLexicalIndexArtifact)` |
@@ -142,14 +142,14 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 実行 | Store | `(await Promise.all(batches.map((batch) => deps.memoryVectorStore.query(vector, topK, { ...filter, documentIds: batch }))))<br>    .flat()<br>    .sort((left, right) => right.score - left.score)<br>    ` | `slice` | `(await Promise.all(batches.map((batch) => deps.memoryVectorStore.query(vector, topK, { ...filter, documentIds: batch }))))<br>    .flat()<br>    .sort((left, right) => right.score - left.score)<br>    ` に対して slice を実行する。 | `queryAuthorizedMemoryHits` | `apps/api/src/chat-orchestration/nodes/retrieve-memory.ts:257 (queryAuthorizedMemoryHits)` |
 | 実行 | External | `deps.textModel` | `generate` | `deps.textModel` へ generate を実行する。 | `createGenerateCluesNode` | `apps/api/src/chat-orchestration/nodes/generate-clues.ts:25 (createGenerateCluesNode)` |
 | 実行 | External | `deps.textModel` | `generate` | `deps.textModel` へ generate を実行する。 | `createGenerateAnswerNode` | `apps/api/src/rag/online/generation/answer/answer-generator.ts:9 (createGenerateAnswerNode)` |
-| 実行 | Store | `new ProductionRagObservationProducer(deps.objectStore)` | `captureChatOutcome` | `new ProductionRagObservationProducer(deps.objectStore)` に対して capture chat outcome を実行する。 | `runChatOrchestration` | `apps/api/src/rag/orchestration/chat-rag-orchestrator.ts:879 (runChatOrchestration)` |
-| 作成・追記 | Store | `deps.objectStore` | `putText` | `deps.objectStore` に対して put text を実行する。 | `persistDebugTrace` | `apps/api/src/rag/orchestration/chat-rag-orchestrator.ts:1125 (persistDebugTrace)` |
-| 実行 | Store | `new ProductionRagObservationProducer(deps.objectStore)` | `captureDebugTrace` | `new ProductionRagObservationProducer(deps.objectStore)` に対して capture debug trace を実行する。 | `persistDebugTrace` | `apps/api/src/rag/orchestration/chat-rag-orchestrator.ts:1126 (persistDebugTrace)` |
-| 削除 | Store | `this.deps.objectStore` | `deleteObject` | `this.deps.objectStore` に対して delete object を実行する。 | `MemoRagService.chat` | `apps/api/src/rag/memorag-service.ts:2439 (MemoRagService.chat)` |
-| 参照 | Store | `this.objectStore` | `listKeys` | `this.objectStore` に対して list keys を実行する。 | `ProductionRagObservationProducer.deleteArtifactSamples` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:299 (ProductionRagObservationProducer.deleteArtifactSamples)` |
-| 参照 | Store | `this.objectStore` | `getText` | `this.objectStore` に対して get text を実行する。 | `ProductionRagObservationProducer.deleteArtifactSamples` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:303 (ProductionRagObservationProducer.deleteArtifactSamples)` |
-| 削除 | Store | `this.objectStore` | `deleteObject` | `this.objectStore` に対して delete object を実行する。 | `ProductionRagObservationProducer.deleteArtifactSamples` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:310 (ProductionRagObservationProducer.deleteArtifactSamples)` |
-| 実行 | Store | `Promise.all([<br>          ...(persistedTrace ? [this.deps.objectStore.deleteObject(debugTraceObjectKey(persistedTrace))] : []),<br>          ...(persistedTrace ? [producer.deleteArtifactSamples("debug_trace", persistedTrace.runId, currentActor.tenantId)] : []),<br>          ...(observationArtifactId ? [producer.deleteArtifactSamples("normal_chat", observationArtifactId, currentActor.tenantId)] : [])<br>        ])` | `catch` | `Promise.all([<br>          ...(persistedTrace ? [this.deps.objectStore.deleteObject(debugTraceObjectKey(persistedTrace))] : []),<br>          ...(persistedTrace ? [producer.deleteArtifactSamples("debug_trace", persistedTrace.runId, currentActor.tenantId)] : []),<br>          ...(observationArtifactId ? [producer.deleteArtifactSamples("normal_chat", observationArtifactId, currentActor.tenantId)] : [])<br>        ])` に対して catch を実行する。 | `MemoRagService.chat` | `apps/api/src/rag/memorag-service.ts:2438 (MemoRagService.chat)` |
+| 実行 | Store | `new ProductionRagObservationProducer(deps.objectStore)` | `captureChatOutcome` | `new ProductionRagObservationProducer(deps.objectStore)` に対して capture chat outcome を実行する。 | `runChatOrchestration` | `apps/api/src/rag/orchestration/chat-rag-orchestrator.ts:930 (runChatOrchestration)` |
+| 作成・追記 | Store | `deps.objectStore` | `putText` | `deps.objectStore` に対して put text を実行する。 | `persistDebugTrace` | `apps/api/src/rag/orchestration/chat-rag-orchestrator.ts:1181 (persistDebugTrace)` |
+| 実行 | Store | `new ProductionRagObservationProducer(deps.objectStore)` | `captureDebugTrace` | `new ProductionRagObservationProducer(deps.objectStore)` に対して capture debug trace を実行する。 | `persistDebugTrace` | `apps/api/src/rag/orchestration/chat-rag-orchestrator.ts:1182 (persistDebugTrace)` |
+| 削除 | Store | `this.deps.objectStore` | `deleteObject` | `this.deps.objectStore` に対して delete object を実行する。 | `MemoRagService.chat` | `apps/api/src/rag/memorag-service.ts:2546 (MemoRagService.chat)` |
+| 参照 | Store | `this.objectStore` | `listKeys` | `this.objectStore` に対して list keys を実行する。 | `ProductionRagObservationProducer.deleteArtifactSamples` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:321 (ProductionRagObservationProducer.deleteArtifactSamples)` |
+| 参照 | Store | `this.objectStore` | `getText` | `this.objectStore` に対して get text を実行する。 | `ProductionRagObservationProducer.deleteArtifactSamples` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:325 (ProductionRagObservationProducer.deleteArtifactSamples)` |
+| 削除 | Store | `this.objectStore` | `deleteObject` | `this.objectStore` に対して delete object を実行する。 | `ProductionRagObservationProducer.deleteArtifactSamples` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:332 (ProductionRagObservationProducer.deleteArtifactSamples)` |
+| 実行 | Store | `Promise.all([<br>          ...(persistedTrace ? [this.deps.objectStore.deleteObject(debugTraceObjectKey(persistedTrace))] : []),<br>          ...(persistedTrace ? [producer.deleteArtifactSamples("debug_trace", persistedTrace.runId, currentActor.tenantId)] : []),<br>          ...(observationArtifactId ? [producer.deleteArtifactSamples("normal_chat", observationArtifactId, currentActor.tenantId)] : [])<br>        ])` | `catch` | `Promise.all([<br>          ...(persistedTrace ? [this.deps.objectStore.deleteObject(debugTraceObjectKey(persistedTrace))] : []),<br>          ...(persistedTrace ? [producer.deleteArtifactSamples("debug_trace", persistedTrace.runId, currentActor.tenantId)] : []),<br>          ...(observationArtifactId ? [producer.deleteArtifactSamples("normal_chat", observationArtifactId, currentActor.tenantId)] : [])<br>        ])` に対して catch を実行する。 | `MemoRagService.chat` | `apps/api/src/rag/memorag-service.ts:2545 (MemoRagService.chat)` |
 
 ## 6. 応答・メッセージ
 
@@ -216,6 +216,7 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 例外 | `-` | `Unknown RAG quality signal: ${signalId}` | `RAG_REQUIRED_SIGNAL_IDS` が signalId as RagQualitySignalId を含まない |
 | 例外 | `-` | `Available RAG quality measurement is incomplete: ${signalId}` | is integer の判定結果が真ではない、または `item.sampleCount` が `0` より小さい、または `item.available` が存在し、真である、かつ `item.value` が `null` と等しい、または is finite の判定結果が真ではない、または `item.sampleCount` が `1` より小さい、または `item.confidence` が `null` と等しい、または `item.confidence` が `0` より小さい、または `item.confidence` が `1` より大きい |
 | 例外 | `-` | `Unavailable RAG quality measurement must not contain a value: ${signalId}` | `item.available` が存在しない、または偽である、かつ `item.value` が `null` と異なる、または `item.confidence` が `null` と異なる |
+| 例外 | `-` | `Unknown RAG diagnostic measurement: ${signalId}` | `["retrieval.context_relevance", "evaluation.artifact_failure_count", "evaluation.run_timed_out", "performance.chat_first_token_p50_ms", "performance.chat_first_token_p95_ms", "performance.chat_first_token_p99_ms"]` が signalId を含まない |
 | ログ | `-` | RAG quality source sample was not recorded | `result.skippedReason` が存在し、真である、かつ `process.env.RAG_MONITORING_REQUIRED` が `"1"` と等しい |
 | ログ | `-` | RAG quality source sample persistence failed | 例外を捕捉した場合 |
 | 例外 | `-` | Lexical cache fallback blocked because mandatory guard outcomes were not observed | `artifactLoad.degradationDecision?.action` が `"fail"` と等しい |

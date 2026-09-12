@@ -43,14 +43,14 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 2 | `hasPermission` | has permission の実装処理を担当する。 | `apps/api/src/authorization.ts:187 (hasPermission)` |
 | 1 | `validParam` | valid param の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:24 (validParam)` |
 | 2 | `validRequest` | valid request の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:36 (validRequest)` |
-| 1 | `MemoRagService.deleteFavorite` | delete favorite の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4170 (MemoRagService.deleteFavorite)` |
-| 2 | `tenantPartitionedOwnerKey` | tenant partitioned owner key の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6098 (tenantPartitionedOwnerKey)` |
+| 1 | `MemoRagService.deleteFavorite` | delete favorite の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4259 (MemoRagService.deleteFavorite)` |
+| 2 | `FavoriteService.delete` | delete の実装処理を担当する。 | `apps/api/src/favorites/favorite-service.ts:36 (FavoriteService.delete)` |
 
 ## 5. データ・外部境界
 
 | 種別 | 境界 | Target | Operation | 目的 | Caller | 実装位置 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 削除 | Store | `this.deps.favoriteStore` | `delete` | `this.deps.favoriteStore` に対して delete を実行する。 | `MemoRagService.deleteFavorite` | `apps/api/src/rag/memorag-service.ts:4171 (MemoRagService.deleteFavorite)` |
+| 削除 | Store | `this.ports.favoriteStore` | `delete` | `this.ports.favoriteStore` に対して delete を実行する。 | `FavoriteService.delete` | `apps/api/src/favorites/favorite-service.ts:37 (FavoriteService.delete)` |
 
 ## 6. 応答・メッセージ
 
@@ -61,8 +61,6 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | OpenAPI contract | `401` | 認証が必要です。 | OpenAPI で宣言された HTTP 401 response |
 | OpenAPI contract | `403` | 対象操作を実行する権限がありません。 | OpenAPI で宣言された HTTP 403 response |
 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない |
-| 例外 | `-` | User identity is required for tenant-partitioned storage | `userId` が存在しない、または偽である |
-| 例外 | `-` | Authoritative tenant is required for user storage | `config.authEnabled` が存在し、真である、または `config.nodeEnv` が `"production"` と等しい |
 
 ## 7. テスト対応
 

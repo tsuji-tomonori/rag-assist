@@ -1,0 +1,131 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "E2E-UI-MANUAL-001",
+  "recordedAt": "2026-07-17T20:16:36+09:00",
+  "releaseReference": {
+    "kind": "issue-progress-baseline",
+    "reference": "issue-345-manual-evidence",
+    "sourceCommit": "c1afe64a17fbcc16057ee49dd28c3a5f1b9c9eab"
+  },
+  "requirementRefs": [
+    "NFR-018/AC-NFR018-005",
+    "NFR-018/AC-NFR018-007",
+    "SQ-016/AC-SQ016-008"
+  ],
+  "matrix": {
+    "approvalStatus": "open_question",
+    "owner": { "assignmentStatus": "unassigned", "role": null },
+    "cadence": null,
+    "openQuestionIds": ["OQ-UI-002"]
+  },
+  "checks": [
+    {
+      "id": "MANUAL-UI-KEYBOARD-PRIMARY-001",
+      "evidenceClass": "manual_keyboard",
+      "required": true,
+      "status": "not_run",
+      "scope": {
+        "personas": ["standard-user", "system-admin"],
+        "journeys": ["login-to-chat", "documents", "questions", "admin", "profile"],
+        "viewport": null,
+        "zoomPercent": null,
+        "inputs": ["keyboard"]
+      },
+      "execution": null,
+      "environment": null,
+      "owner": null,
+      "evidence": [],
+      "defects": [],
+      "blocker": {
+        "reason": "automation と独立した manual keyboard 実施者と承認済み環境が未割り当てである。",
+        "risk": "browser/OS 固有の focus order、focus visibility、shortcut 競合を実操作で証明できない。",
+        "owner": { "assignmentStatus": "unassigned", "role": null },
+        "nextAction": "OQ-UI-002 の matrix/owner 承認後に独立実施者が主要 journey を計測する。",
+        "openQuestionIds": ["OQ-UI-002"],
+        "task": "tasks/todo/20260714-issue-345-manual-a11y-evidence.md"
+      },
+      "decision": null
+    },
+    {
+      "id": "MANUAL-UI-SCREEN-READER-001",
+      "evidenceClass": "screen_reader",
+      "required": true,
+      "status": "blocked",
+      "scope": {
+        "personas": ["standard-user", "system-admin"],
+        "journeys": ["login-to-chat", "documents", "questions", "admin", "profile"],
+        "viewport": null,
+        "zoomPercent": null,
+        "inputs": ["screen_reader", "keyboard", "touch"]
+      },
+      "execution": null,
+      "environment": null,
+      "owner": null,
+      "evidence": [],
+      "defects": [],
+      "blocker": {
+        "reason": "representative OS/browser/screen-reader matrix、実施者、実施環境が未承認・未割り当てである。",
+        "risk": "実読み上げ順、name/role/state/value、live/error announcement、focus recovery を証明できない。",
+        "owner": { "assignmentStatus": "unassigned", "role": null },
+        "nextAction": "OQ-UI-002 で representative matrix と owner を承認し、承認済み assistive technology で実測する。",
+        "openQuestionIds": ["OQ-UI-002"],
+        "task": "tasks/todo/20260714-issue-345-manual-a11y-evidence.md"
+      },
+      "decision": null
+    },
+    {
+      "id": "MANUAL-UI-BROWSER-ZOOM-001",
+      "evidenceClass": "browser_zoom",
+      "required": true,
+      "status": "blocked",
+      "scope": {
+        "personas": ["standard-user", "system-admin"],
+        "journeys": ["login-to-chat", "documents", "questions", "admin", "profile"],
+        "viewport": { "width": 1280, "height": 720 },
+        "zoomPercent": 400,
+        "inputs": ["keyboard", "pointer"]
+      },
+      "execution": null,
+      "environment": null,
+      "owner": null,
+      "evidence": [],
+      "defects": [],
+      "blocker": {
+        "reason": "browser-native 200%/400% zoom を計測する承認済み OS/browser 環境と実施者が未割り当てである。",
+        "risk": "viewport proxy では browser chrome、DPR、text-only zoom、OS scaling を含む実 reflow/focus を証明できない。",
+        "owner": { "assignmentStatus": "unassigned", "role": null },
+        "nextAction": "OQ-UI-002 の browser/OS matrix 承認後に 200%/400% の実 browser zoom で主要 journey を計測する。",
+        "openQuestionIds": ["OQ-UI-002"],
+        "task": "tasks/todo/20260714-issue-345-manual-a11y-evidence.md"
+      },
+      "decision": null
+    },
+    {
+      "id": "MANUAL-UI-REAL-DEVICE-001",
+      "evidenceClass": "real_device",
+      "required": true,
+      "status": "blocked",
+      "scope": {
+        "personas": ["standard-user", "system-admin"],
+        "journeys": ["login-to-chat", "documents", "questions", "admin", "profile"],
+        "viewport": null,
+        "zoomPercent": null,
+        "inputs": ["touch", "virtual_keyboard"]
+      },
+      "execution": null,
+      "environment": null,
+      "owner": null,
+      "evidence": [],
+      "defects": [],
+      "blocker": {
+        "reason": "representative mobile device、OS/browser、実施者が未承認・未割り当てである。",
+        "risk": "実 touch target、safe area、browser chrome、IME/virtual keyboard、orientation 固有の behavior を証明できない。",
+        "owner": { "assignmentStatus": "unassigned", "role": null },
+        "nextAction": "OQ-UI-002 で representative device matrix と owner を承認し、実機の touch/virtual keyboard journey を計測する。",
+        "openQuestionIds": ["OQ-UI-002"],
+        "task": "tasks/todo/20260714-issue-345-manual-a11y-evidence.md"
+      },
+      "decision": null
+    }
+  ]
+}

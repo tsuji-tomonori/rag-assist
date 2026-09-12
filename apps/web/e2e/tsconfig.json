@@ -1,0 +1,19 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "noImplicitOverride": false,
+    "noUncheckedIndexedAccess": false,
+    "types": [
+      "node",
+      "@playwright/test"
+    ],
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ]
+  },
+  "include": [
+    "./*.ts"
+  ]
+}

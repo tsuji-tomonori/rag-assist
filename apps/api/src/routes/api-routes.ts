@@ -12,12 +12,14 @@ import { registerFavoriteRoutes } from "./favorite-routes.js"
 import { registerQuestionRoutes } from "./question-routes.js"
 import { registerResourceGroupRoutes } from "./resource-group-routes.js"
 import { registerSystemRoutes } from "./system-routes.js"
+import { registerWebSocketTicketRoutes } from "./websocket-ticket-routes.js"
 
 export { isBenchmarkSeedUpload, isBenchmarkSeedUploadedObjectIngest } from "./benchmark-seed.js"
 
 export function registerApiRoutes(app: OpenAPIHono<AppEnv>, deps: Dependencies, service: MemoRagService) {
   const context = { app, deps, service }
   registerSystemRoutes(context)
+  registerWebSocketTicketRoutes(context)
   registerAdminRoutes(context)
   registerResourceGroupRoutes(context)
   registerDocumentRoutes(context)

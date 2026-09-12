@@ -60,6 +60,19 @@ describe("useConversationHistory", () => {
     expect(saveConversationHistory).toHaveBeenCalled()
   })
 
+  it("preserves v3 summary and session context when appending messages", async () => {
+    const saved = item({ schemaVersion: 3, rollingSummary: "要約を保持", queryFocusedSummary: "質問の要約",
+      sessionDocumentContext: { schemaVersion: 1, sessionId: "conv-1", temporaryEvidence: [], updatedAt: "2026-09-01T00:00:00Z" } })
+    vi.mocked(listConversationHistory).mockResolvedValue([saved])
+    const { result } = renderHook(() => useConversationHistory({ setError: vi.fn() }))
+    await act(() => result.current.refreshHistory())
+    act(() => result.current.rememberMessages("conv-1", "新しい質問", [{ role: "user", text: "質問", createdAt: "now" }]))
+    expect(saveConversationHistory).toHaveBeenLastCalledWith(expect.objectContaining({
+      schemaVersion: 3, rollingSummary: saved.rollingSummary, queryFocusedSummary: saved.queryFocusedSummary,
+      sessionDocumentContext: saved.sessionDocumentContext
+    }))
+  })
+
   it("updates linked question tickets and reports persistence errors", async () => {
     const setError = vi.fn()
     vi.mocked(saveConversationHistory).mockRejectedValueOnce(new Error("save failed")).mockRejectedValueOnce(new Error("favorite failed"))

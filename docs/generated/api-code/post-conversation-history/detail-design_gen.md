@@ -42,17 +42,17 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 2 | `hasPermission` | has permission の実装処理を担当する。 | `apps/api/src/authorization.ts:187 (hasPermission)` |
 | 1 | `validJson` | valid json の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:20 (validJson)` |
 | 2 | `validRequest` | valid request の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:36 (validRequest)` |
-| 1 | `MemoRagService.saveConversationHistory` | save conversation history の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4138 (MemoRagService.saveConversationHistory)` |
-| 2 | `tenantPartitionedOwnerKey` | tenant partitioned owner key の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6098 (tenantPartitionedOwnerKey)` |
-| 2 | `MemoRagService.resolveSessionDocumentContext` | resolve session document context の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5319 (MemoRagService.resolveSessionDocumentContext)` |
+| 1 | `MemoRagService.saveConversationHistory` | save conversation history の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4231 (MemoRagService.saveConversationHistory)` |
+| 2 | `tenantPartitionedOwnerKey` | tenant partitioned owner key の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5708 (tenantPartitionedOwnerKey)` |
+| 2 | `MemoRagService.resolveSessionDocumentContext` | resolve session document context の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5018 (MemoRagService.resolveSessionDocumentContext)` |
 
 ## 5. データ・外部境界
 
 | 種別 | 境界 | Target | Operation | 目的 | Caller | 実装位置 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 参照 | Store | `this.deps.conversationHistoryStore` | `get` | `this.deps.conversationHistoryStore` に対して get を実行する。 | `MemoRagService.resolveSessionDocumentContext` | `apps/api/src/rag/memorag-service.ts:5320 (MemoRagService.resolveSessionDocumentContext)` |
+| 参照 | Store | `this.deps.conversationHistoryStore` | `get` | `this.deps.conversationHistoryStore` に対して get を実行する。 | `MemoRagService.resolveSessionDocumentContext` | `apps/api/src/rag/memorag-service.ts:5019 (MemoRagService.resolveSessionDocumentContext)` |
 | 参照 | Store | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `readTenantManifest` | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:83 (readTenantManifest)` |
-| 作成・追記 | Store | `this.deps.conversationHistoryStore` | `save` | `this.deps.conversationHistoryStore` に対して save を実行する。 | `MemoRagService.saveConversationHistory` | `apps/api/src/rag/memorag-service.ts:4140 (MemoRagService.saveConversationHistory)` |
+| 作成・追記 | Store | `this.deps.conversationHistoryStore` | `save` | `this.deps.conversationHistoryStore` に対して save を実行する。 | `MemoRagService.saveConversationHistory` | `apps/api/src/rag/memorag-service.ts:4233 (MemoRagService.saveConversationHistory)` |
 
 ## 6. 応答・メッセージ
 

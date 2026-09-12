@@ -28,13 +28,13 @@ export function DocumentConfirmDialog({
   return (
     <ConfirmDialog
       title={details.title}
-      message={details.message}
-      rows={details.rows}
+      description={details.message}
+      details={details.rows}
       confirmLabel={details.confirmLabel}
       loading={loading}
       confirmDisabled={action.kind === "delete" && !deleteReason.trim()}
       errorMessage={errorMessage}
-      danger={details.danger}
+      tone={details.danger ? "danger" : "warning"}
       onCancel={onCancel}
       onConfirm={onConfirm}
     >

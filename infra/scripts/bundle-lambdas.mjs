@@ -52,6 +52,14 @@ await Promise.all([
     outfile: path.join(outDir, "revocation-cleanup-worker/index.js")
   }),
   bundle({
+    entry: path.join(repoRoot, "apps/api/src/websocket-authorizer.ts"),
+    outfile: path.join(outDir, "websocket-authorizer/index.js")
+  }),
+  bundle({
+    entry: path.join(repoRoot, "apps/api/src/websocket-connection-handler.ts"),
+    outfile: path.join(outDir, "websocket-connection-handler/index.js")
+  }),
+  bundle({
     entry: path.join(infraDir, "functions/s3-vectors-custom-resource.ts"),
     outfile: path.join(outDir, "s3-vectors-provider/index.js")
   }),

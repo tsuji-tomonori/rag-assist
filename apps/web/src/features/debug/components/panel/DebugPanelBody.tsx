@@ -1,5 +1,6 @@
 import type { DebugStep, DebugTrace } from "../../types.js"
-import { Icon } from "../../../../shared/components/Icon.js"
+import { Icon } from "../../../../shared/ui/Icon.js"
+import { LoadingSpinner } from "../../../../shared/ui/LoadingSpinner.js"
 import { formatLatency } from "../../../../shared/utils/format.js"
 import { StatusBadge } from "../../../../shared/ui/StatusBadge.js"
 import {
@@ -225,7 +226,7 @@ function DebugStepList({
             <div className="step-body">
               <button className="step-summary" type="button" aria-expanded={expandedStep} onClick={() => onToggleStep(step.id)}>
                 <span className="step-state">
-                  {pending ? <span className="loading-spinner" aria-hidden="true" /> : <Icon name={step.status === "warning" ? "warning" : "check"} />}
+                  {pending ? <LoadingSpinner /> : <Icon name={step.status === "warning" ? "warning" : "check"} />}
                 </span>
                 <strong>{formatDebugStepLabel(step.label)}</strong>
                 <span className="step-latency">{formatLatency(step.latencyMs)}</span>

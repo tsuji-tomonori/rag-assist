@@ -39,8 +39,14 @@ export class MockBedrockTextModel implements TextModel {
     return normalize(vector)
   }
 
-  async generate(prompt: string, _options: GenerateOptions = {}): Promise<string> {
+  async generate(prompt: string, options: GenerateOptions = {}): Promise<string> {
     if (this.failModes.generate) throw this.failModes.generate
+    const response = this.generateResponse(prompt)
+    if (response.length > 0) options.onFirstToken?.()
+    return response
+  }
+
+  private generateResponse(prompt: string): string {
     if (this.failModes.invalidJsonOnGenerate) return "not-json"
     if (prompt.includes("MEMORY_CARD_JSON")) {
       const source = extractBetween(prompt, "<document>", "</document>").slice(0, 600)

@@ -1,60 +1,59 @@
-import { type FormEvent, type ReactNode, useEffect, useMemo, useRef, useState } from "react"
-import { Icon } from "../../../shared/components/Icon.js"
-import { LoadingStatus } from "../../../shared/components/LoadingSpinner.js"
+import { WorkspaceModal } from "./WorkspaceModal.js"
+import { useEffect,useMemo,useRef,useState,type FormEvent } from "react"
+import { documentPermissionLabel,principalTypeLabel } from "../../../shared/ui/displayMetadata.js"
+import { Icon } from "../../../shared/ui/Icon.js"
 import {
-  ResourceStateBoundary,
-  type UiResourceState
+OperationFeedback,
+feedbackFromOutcome,
+processingOperationFeedback,
+upsertOperationFeedback,
+type OperationFeedbackEntry
+} from "../../../shared/ui/index.js"
+import { LoadingStatus } from "../../../shared/ui/LoadingSpinner.js"
+import {
+ResourceStateBoundary,
+type UiResourceState
 } from "../../../shared/ui/ResourceState.js"
 import {
-  createContentResourceState,
-  hasConfirmedResourceResult,
-  isResourcePartAvailable,
-  isResourceStateBusy
+createContentResourceState,
+hasConfirmedResourceResult,
+isResourcePartAvailable,
+isResourceStateBusy
 } from "../../../shared/ui/resourceStateModel.js"
-import { documentPermissionLabel, principalTypeLabel } from "../../../shared/ui/displayMetadata.js"
-import {
-  OperationFeedback,
-  confirmedOperation,
-  failedOperation,
-  feedbackFromOutcome,
-  processingOperationFeedback,
-  upsertOperationFeedback,
-  type OperationFeedbackEntry,
-  type OperationStatus
-} from "../../../shared/ui/index.js"
-import type { DocumentShareGrantInput, DocumentShareInfo, FolderPolicyEntry, MoveDocumentGroupInput, UpdateDocumentGroupInput, VersionedFolderPolicy } from "../api/documentsApi.js"
-import type { CreateDocumentGroupInput, DocumentOperationOutcome, DocumentOperationResult, DocumentOperationState, DocumentUploadResult, DocumentUploadState } from "../hooks/useDocuments.js"
-import type { DocumentGroup, DocumentManifest, ReindexMigration } from "../types.js"
+import type { DocumentShareGrantInput,DocumentShareInfo,FolderPolicyEntry,MoveDocumentGroupInput,UpdateDocumentGroupInput,VersionedFolderPolicy } from "../api/documentsApi.js"
+import type { CreateDocumentGroupInput,DocumentOperationOutcome,DocumentOperationResult,DocumentOperationState,DocumentUploadResult,DocumentUploadState } from "../hooks/useDocuments.js"
+import type { DocumentGroup,DocumentManifest,ReindexMigration } from "../types.js"
+import { canDeleteDocument,canManageDocumentGroup,canReindexDocument,documentActionFeedbackBase,documentOperationResultLabel,getAddDocumentDisabledReason,getUploadDisabledReason,isConfirmActionRunning,normalizeOperationResult,normalizeUploadResult,resourceStateAsOf,resourceStateLabel,uploadedDocumentGroupId } from "./documentWorkspaceSupport.js"
+import { DocumentAddDialog,type DocumentUploadDestination } from "./workspace/DocumentAddDialog.js"
 import { DocumentConfirmDialog } from "./workspace/DocumentConfirmDialog.js"
-import { DocumentAddDialog, type DocumentUploadDestination } from "./workspace/DocumentAddDialog.js"
 import { DocumentDetailDrawer } from "./workspace/DocumentDetailDrawer.js"
 import { DocumentDetailPanel } from "./workspace/DocumentDetailPanel.js"
 import { DocumentFilePanel } from "./workspace/DocumentFilePanel.js"
 import { DocumentFolderTree } from "./workspace/DocumentFolderTree.js"
 import {
-  buildShareDiff,
-  buildOperationEvents,
-  buildWorkspaceFolders,
-  compareDocuments,
-  descendantGroupIds,
-  type DocumentOperationEvent,
-  documentGroupIds,
-  documentStatusLabel,
-  emptyOperationState,
-  fileTypeLabel,
-  getCreateFolderDisabledReason,
-  parseSharedGroups,
-  rootFolderParentValue,
-  sharedEntries,
-  uniqueSorted,
-  type ConfirmAction,
-  type DocumentSortKey,
-  type WorkspaceFolder
-} from "./workspace/documentWorkspaceUtils.js"
-import {
-  documentWorkspaceNormalizationMessage,
-  normalizeDocumentWorkspaceUrlState
+documentWorkspaceNormalizationMessage,
+normalizeDocumentWorkspaceUrlState
 } from "./workspace/documentWorkspaceState.js"
+import {
+buildOperationEvents,
+buildShareDiff,
+buildWorkspaceFolders,
+compareDocuments,
+descendantGroupIds,
+documentGroupIds,
+documentStatusLabel,
+emptyOperationState,
+fileTypeLabel,
+getCreateFolderDisabledReason,
+parseSharedGroups,
+rootFolderParentValue,
+sharedEntries,
+uniqueSorted,
+type ConfirmAction,
+type DocumentOperationEvent,
+type DocumentSortKey,
+type WorkspaceFolder
+} from "./workspace/documentWorkspaceUtils.js"
 
 export type DocumentWorkspaceUrlState = {
   folderId?: string | undefined
@@ -1423,138 +1422,4 @@ export function DocumentWorkspace({
       )}
     </section>
   )
-}
-
-function resourceStateAsOf(state: UiResourceState): string | undefined {
-  if ("asOf" in state && state.asOf) return state.asOf
-  return state.parts
-    .map((part) => part.asOf)
-    .filter((value): value is string => Boolean(value))
-    .sort((left, right) => right.localeCompare(left))[0]
-}
-
-function resourceStateLabel(state: UiResourceState): string {
-  if (state.kind === "content") return "取得済み"
-  if (state.kind === "empty") return "0 件を確認済み"
-  if (state.kind === "partial") return "一部未取得"
-  if (state.kind === "stale") return "更新が必要"
-  if (state.kind === "recovered") return "再取得済み"
-  if (state.kind === "loading" || state.kind === "retrying") return "更新中"
-  if (state.kind === "permission") return "権限を確認できません"
-  return "取得失敗"
-}
-
-function normalizeOperationResult(result: DocumentOperationResult | void) {
-  if (!result) return confirmedOperation()
-  if ("status" in result) return result
-  return result.ok ? confirmedOperation() : failedOperation(new Error(result.error))
-}
-
-function normalizeUploadResult(result: DocumentUploadResult | DocumentOperationResult | void): { ok: true; document?: DocumentManifest } | { ok: false; error: string } {
-  return result ?? { ok: true }
-}
-
-function uploadedDocumentGroupId(document: DocumentManifest | null, uploadStateGroupId: string | undefined, uploadGroupId: string): string {
-  return document ? documentGroupIds(document)[0] ?? uploadStateGroupId ?? uploadGroupId : ""
-}
-
-function WorkspaceModal({ title, children, onClose }: { title: string; children: ReactNode; onClose: () => void }) {
-  return (
-    <div className="document-modal-backdrop" role="presentation">
-      <section className="document-modal" role="dialog" aria-modal="true" aria-label={title}>
-        <header>
-          <h3>{title}</h3>
-          <button type="button" onClick={onClose} aria-label={`${title}を閉じる`}>×</button>
-        </header>
-        {children}
-      </section>
-    </div>
-  )
-}
-
-function isConfirmActionRunning(action: ConfirmAction | null, operationState: DocumentOperationState): boolean {
-  if (!action) return false
-  if (action.kind === "delete") return operationState.deletingDocumentId === action.document.documentId
-  if (action.kind === "stage") return operationState.stagingReindexDocumentId === action.document.documentId
-  if (action.kind === "cutover") return operationState.cutoverMigrationId === action.migration.migrationId
-  return operationState.rollbackMigrationId === action.migration.migrationId
-}
-
-function documentActionFeedbackBase(
-  actionLabel: string,
-  targetLabel: string,
-  targetId: string,
-  reason: string | undefined,
-  impact: string,
-  recovery: string
-) {
-  return {
-    id: `document-action-${actionLabel}-${targetId}`,
-    actionLabel,
-    targetLabel,
-    targetId,
-    ...(reason ? { reason } : {}),
-    details: [
-      { label: "影響", value: impact },
-      { label: "回復条件", value: recovery }
-    ],
-    showUnavailableEvidence: true
-  }
-}
-
-function documentOperationResultLabel(status: Exclude<OperationStatus, "processing">): DocumentOperationEvent["result"] {
-  if (status === "success") return "反映済み"
-  if (status === "partial") return "一部確認済み"
-  if (status === "unknown") return "結果未確認"
-  return "失敗"
-}
-
-function canManageDocumentGroup(group: DocumentGroup): boolean {
-  return group.effectivePermission === "full"
-}
-
-function canDeleteDocument(document: DocumentManifest): boolean {
-  return document.capabilities?.canDelete === true
-}
-
-function canReindexDocument(document: DocumentManifest): boolean {
-  return document.capabilities?.canReindex === true
-}
-
-function getUploadDisabledReason({
-  canUpload,
-  uploadGroupId,
-  hasUploadDestination,
-  canUploadToDestination,
-  isUploading
-}: {
-  canUpload: boolean
-  uploadGroupId: string
-  hasUploadDestination: boolean
-  canUploadToDestination: boolean
-  isUploading: boolean
-}): string | null {
-  if (!canUpload) return "文書をアップロードする権限がありません。"
-  if (isUploading) return "アップロード中です。"
-  if (!uploadGroupId) return "保存先フォルダを選択するとアップロードできます。"
-  if (!hasUploadDestination) return "保存先フォルダを選択してください。"
-  if (!canUploadToDestination) return "保存先フォルダの管理権限が必要です。"
-  return null
-}
-
-function getAddDocumentDisabledReason({
-  canUpload,
-  canCreateGroups,
-  uploadDestinationCount,
-  isUploading
-}: {
-  canUpload: boolean
-  canCreateGroups: boolean
-  uploadDestinationCount: number
-  isUploading: boolean
-}): string | null {
-  if (!canUpload) return "文書をアップロードする権限がありません。"
-  if (isUploading) return "アップロード中です。"
-  if (!canCreateGroups && uploadDestinationCount === 0) return "アップロード可能なフォルダがありません。フォルダ管理者へ権限を依頼してください。"
-  return null
 }

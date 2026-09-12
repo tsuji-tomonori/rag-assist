@@ -39,6 +39,7 @@ const benchmarkRunStatus = {
   running: { label: "実行中", tone: "info" },
   succeeded: { label: "成功", tone: "success" },
   failed: { label: "失敗", tone: "danger" },
+  timed_out: { label: "タイムアウト", tone: "danger" },
   cancelled: { label: "取消済み", tone: "neutral" }
 } satisfies Record<BenchmarkRun["status"], SemanticPresentation>
 

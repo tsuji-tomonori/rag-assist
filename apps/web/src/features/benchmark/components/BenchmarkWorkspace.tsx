@@ -1,8 +1,8 @@
 import { useState } from "react"
 import type { BenchmarkRun, BenchmarkSuite } from "../types.js"
-import { ConfirmDialog } from "../../../shared/components/ConfirmDialog.js"
-import { Icon } from "../../../shared/components/Icon.js"
-import { LoadingSpinner, LoadingStatus } from "../../../shared/components/LoadingSpinner.js"
+import { ConfirmDialog } from "../../../shared/ui/index.js"
+import { Icon } from "../../../shared/ui/Icon.js"
+import { LoadingSpinner, LoadingStatus } from "../../../shared/ui/LoadingSpinner.js"
 import { downloadBenchmarkArtifact } from "../../../shared/utils/downloads.js"
 import { formatDateTime, formatMetricLatency, formatPercent } from "../../../shared/utils/format.js"
 import { StatusBadge } from "../../../shared/ui/StatusBadge.js"
@@ -77,7 +77,7 @@ export function BenchmarkWorkspace({
   const selectedSuite = suites.find((suite) => suite.suiteId === suiteId)
   const summary = summarizeBenchmarkRuns(runs)
   const runningCount = runs.filter((run) => run.status === "queued" || run.status === "running").length
-  const failedCount = runs.filter((run) => run.status === "failed").length
+  const failedCount = runs.filter((run) => run.status === "failed" || run.status === "timed_out").length
   const latestRunPresentation = summary.latestRun ? benchmarkRunStatusPresentation(summary.latestRun.status) : undefined
   const hasSuites = suites.length > 0
   const hasRunsResult = dataState.parts.length === 0
@@ -235,13 +235,14 @@ export function BenchmarkWorkspace({
                             <button
                               type="button"
                               key={artifact.kind}
-                              title={`${artifact.description}をダウンロード`}
-                              aria-label={`${artifact.description}をダウンロード`}
+                              title={`${artifact.description}: ${artifactStateLabel(run, artifact.kind)}`}
+                              aria-label={`${artifact.description}: ${artifactStateLabel(run, artifact.kind)}`}
                               disabled={!canDownload || !canDownloadArtifact(run, artifact.kind)}
                               onClick={() => void downloadBenchmarkArtifact(run.runId, artifact.kind)}
                             >
                               <Icon name="download" />
                               <span>{artifact.label}</span>
+                              <small>{artifactStateLabel(run, artifact.kind)}</small>
                             </button>
                           ))}
                           <button className="benchmark-cancel-action" type="button" title="ジョブをキャンセル" aria-label={`${run.runId}のジョブをキャンセル`} disabled={!canCancel || loading || !["queued", "running"].includes(run.status)} onClick={() => setCancelCandidate(run)}>
@@ -270,10 +271,10 @@ export function BenchmarkWorkspace({
           tone="warning"
           loading={loading}
           details={[
-            `テスト設定: ${selectedSuite?.label ?? "未設定"}`,
-            `データセット: ${selectedSuite?.datasetS3Key ?? "未設定"}`,
-            `モデル: ${modelId}`,
-            `並列数: ${concurrency}`
+            { label: "テスト設定", value: selectedSuite?.label ?? "未設定" },
+            { label: "データセット", value: selectedSuite?.datasetS3Key ?? "未設定" },
+            { label: "モデル", value: modelId },
+            { label: "並列数", value: String(concurrency) }
           ]}
           onCancel={() => setConfirmStartOpen(false)}
           onConfirm={async () => {
@@ -304,11 +305,11 @@ export function BenchmarkWorkspace({
           tone="danger"
           loading={operationFeedback.some((entry) => entry.id === `benchmark-cancel-${cancelCandidate.runId}` && entry.status === "processing")}
           details={[
-            `対象: ${suites.find((suite) => suite.suiteId === cancelCandidate.suiteId)?.label ?? cancelCandidate.suiteId}`,
-            `実行識別子: ${cancelCandidate.runId}`,
-            "影響: 未完了の測定と成果物生成を停止します",
-            "回復条件: 取消後は再開できず、新しい実行が必要です",
-            "確認が必要な理由: 未完了結果の破棄と追加コストを判断するため"
+            { label: "対象", value: suites.find((suite) => suite.suiteId === cancelCandidate.suiteId)?.label ?? cancelCandidate.suiteId },
+            { label: "実行識別子", value: cancelCandidate.runId },
+            { label: "影響", value: "未完了の測定と成果物生成を停止します" },
+            { label: "回復条件", value: "取消後は再開できず、新しい実行が必要です" },
+            { label: "確認が必要な理由", value: "未完了結果の破棄と追加コストを判断するため" }
           ]}
           onCancel={() => setCancelCandidate(null)}
           onConfirm={async () => {
@@ -387,14 +388,26 @@ function artifactKeyForRun(run: BenchmarkRun, artifact: (typeof benchmarkArtifac
 function canDownloadArtifact(run: BenchmarkRun, artifact: (typeof benchmarkArtifacts)[number]["kind"]): boolean {
   if (!artifactKeyForRun(run, artifact)) return false
   if (artifact === "logs") return true
-  return run.status === "succeeded"
+  const state = run.artifactIntegrity?.artifacts.find((item) => item.kind === artifact)
+  return state ? state.status === "available" : run.status === "succeeded"
+}
+
+function artifactStateLabel(run: BenchmarkRun, artifact: (typeof benchmarkArtifacts)[number]["kind"]): string {
+  if (artifact === "logs") return artifactKeyForRun(run, artifact) ? "生成済み" : run.status === "queued" || run.status === "running" ? "生成中" : "未生成"
+  const state = run.artifactIntegrity?.artifacts.find((item) => item.kind === artifact)?.status
+  if (state === "available") return "生成済み"
+  if (state === "generation_failed") return "生成失敗"
+  if (state === "upload_failed") return "保存失敗"
+  if (state === "pending") return "生成中"
+  if (run.status === "succeeded") return "生成済み"
+  return run.status === "queued" || run.status === "running" ? "生成中" : "未生成"
 }
 
 function summarizeBenchmarkRuns(runs: BenchmarkRun[]): {
   latestRun?: BenchmarkRun
   succeededCount: number
 } {
-  const completedRuns = runs.filter((run) => ["succeeded", "failed", "cancelled"].includes(run.status))
+  const completedRuns = runs.filter((run) => ["succeeded", "failed", "timed_out", "cancelled"].includes(run.status))
 
   return {
     latestRun: runs[0],

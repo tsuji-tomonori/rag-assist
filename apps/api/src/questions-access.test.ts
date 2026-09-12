@@ -6,7 +6,6 @@ import { spawn, type ChildProcess } from "node:child_process"
 import test from "node:test"
 
 const apiRoot = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..")
-const repoRoot = path.resolve(apiRoot, "../..")
 
 type LocalServer = {
   port: number
@@ -146,8 +145,7 @@ test("question requester can read answers and resolve only their own ticket", as
 })
 
 async function startLocalServer(dataDir: string, groups: string, userId: string, port: number): Promise<LocalServer> {
-  const tsxBin = path.resolve(repoRoot, "node_modules/.bin/tsx")
-  const child = spawn(tsxBin, ["src/local.ts"], {
+  const child = spawn(process.execPath, ["--import", "tsx", "src/local.ts"], {
     cwd: apiRoot,
     env: {
       ...process.env,

@@ -24,7 +24,7 @@ describe("displayMetadata", () => {
       ...(["active", "suspended", "deleted"] as const).map(managedUserStatusPresentation),
       ...(["open", "in_progress", "waiting_requester", "answered", "resolved"] as const).map(questionStatusPresentation),
       ...(["urgent", "high", "normal"] as const).map(questionPriorityPresentation),
-      ...(["queued", "running", "succeeded", "failed", "cancelled"] as const).map(benchmarkRunStatusPresentation),
+      ...(["queued", "running", "succeeded", "failed", "timed_out", "cancelled"] as const).map(benchmarkRunStatusPresentation),
       ...(["disabled", "not_configured", "provider_unavailable", "available"] as const).map(agentAvailabilityPresentation),
       ...(["queued", "preparing_workspace", "running", "waiting_for_approval", "completed", "failed", "blocked", "cancelled", "expired"] as const).map(agentRunStatusPresentation),
       ...(["active", "staging", "superseded"] as const).map(documentLifecycleStatusPresentation),

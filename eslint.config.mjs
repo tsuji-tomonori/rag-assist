@@ -36,10 +36,8 @@ export default tseslint.config(
         projectService: {
           allowDefaultProject: [
             "apps/web/playwright.config.ts",
-            "apps/web/vitest.config.ts",
-            "apps/web/e2e/*.ts"
-          ],
-          maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 16
+            "apps/web/vitest.config.ts"
+          ]
         },
         tsconfigRootDir
       }

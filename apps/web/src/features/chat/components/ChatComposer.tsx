@@ -2,8 +2,8 @@ import { useRef, type FormEvent } from "react"
 import type { SubmitShortcut } from "../../../app/types.js"
 import type { DocumentGroup } from "../../documents/types.js"
 import type { ChatDocumentScope } from "../hooks/useChatSession.js"
-import { Icon } from "../../../shared/components/Icon.js"
-import { LoadingSpinner } from "../../../shared/components/LoadingSpinner.js"
+import { Icon } from "../../../shared/ui/Icon.js"
+import { LoadingSpinner } from "../../../shared/ui/LoadingSpinner.js"
 
 export function ChatComposer({
   onAsk,

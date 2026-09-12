@@ -1,0 +1,429 @@
+import { expect, type Locator, type Page, type Route, test } from '@playwright/test'
+
+const viewport = { width: 320, height: 720 }
+const longFileName = `2026_全社横断アクセシビリティ確認資料_${'非常に長い識別子'.repeat(10)}_最終版.pdf`
+const documentFileTypes = [
+  { extension: 'pdf', mimeType: 'application/pdf' },
+  { extension: 'docx', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' },
+  { extension: 'pptx', mimeType: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' },
+  { extension: 'csv', mimeType: 'text/csv' },
+  { extension: 'md', mimeType: 'text/markdown' },
+  { extension: 'txt', mimeType: 'text/plain' }
+] as const
+const documentItems = Array.from({ length: 30 }, (_, index) => {
+  const fileType = documentFileTypes[index % documentFileTypes.length]
+  return {
+    documentId: `layout-document-${String(index + 1).padStart(2, '0')}`,
+    fileName: index === 0
+      ? longFileName
+      : index === 29
+        ? `文書30_${'非常に長い先頭ファイル名'.repeat(8)}.${fileType.extension}`
+        : `文書_${String(index + 1).padStart(2, '0')}.${fileType.extension}`,
+    mimeType: fileType.mimeType,
+    chunkCount: index + 1,
+    memoryCardCount: index % 9,
+    status: 'ready',
+    createdAt: `2026-09-11T00:${String(index).padStart(2, '0')}:00.000Z`,
+    updatedAt: `2026-09-11T00:${String(index).padStart(2, '0')}:30.000Z`
+  }
+})
+const longAnswer = [
+  'LAYOUT-STRESS-START: 長文回答の先頭です。',
+  ...Array.from({ length: 24 }, (_, index) => `確認項目 ${index + 1}: 画面幅が狭い場合も、情報を省略せず折り返して表示します。`),
+  'LAYOUT-STRESS-END: 長文回答の末尾です。'
+].join('\n\n')
+const historyItems = Array.from({ length: 35 }, (_, index) => ({
+  id: `layout-history-${String(index + 1).padStart(2, '0')}`,
+  title: `履歴 ${String(index + 1).padStart(2, '0')} ${'長い会話タイトル'.repeat(index === 0 || index === 34 ? 6 : 1)}`,
+  updatedAt: `2026-07-17T${String(index % 24).padStart(2, '0')}:${String(index).padStart(2, '0')}:00.000Z`,
+  isFavorite: false,
+  messages: [{
+    role: 'user',
+    text: `履歴 ${index + 1} の確認内容`,
+    createdAt: '2026-07-17T00:00:00.000Z'
+  }]
+}))
+const favoriteTargetTypes = [
+  'chatSession',
+  'chatMessage',
+  'folder',
+  'document',
+  'agentExecutionPreset',
+  'skill',
+  'agentProfile',
+  'benchmarkRun'
+] as const
+const favoriteItems = Array.from({ length: 24 }, (_, index) => ({
+  favoriteId: `layout-favorite-${String(index + 1).padStart(2, '0')}`,
+  targetType: favoriteTargetTypes[index % favoriteTargetTypes.length],
+  targetId: index === 0
+    ? `layout-target-${'非常に長い対象識別子'.repeat(10)}`
+    : `layout-target-${String(index + 1).padStart(2, '0')}`,
+  label: index === 0 || index === 23
+    ? `お気に入り ${String(index + 1).padStart(2, '0')} ${'非常に長いショートカット名'.repeat(8)}`
+    : `お気に入り ${String(index + 1).padStart(2, '0')}`,
+  accessible: index !== 12,
+  createdAt: '2026-09-09T00:00:00.000Z'
+}))
+const assigneeStatuses = ['open', 'in_progress', 'waiting_requester', 'resolved'] as const
+const assigneeItems = Array.from({ length: 32 }, (_, index) => ({
+  questionId: `layout-assignee-${String(index + 1).padStart(2, '0')}`,
+  title: index === 0 || index === 31
+    ? `問い合わせ ${String(index + 1).padStart(2, '0')} ${'非常に長い担当者対応タイトル'.repeat(8)}`
+    : `問い合わせ ${String(index + 1).padStart(2, '0')}`,
+  question: index === 0
+    ? `320pxでも省略せず確認する質問です。${'長い質問本文'.repeat(12)}`
+    : `問い合わせ ${index + 1} の確認内容です。`,
+  requesterName: `依頼者 ${String(index + 1).padStart(2, '0')}`,
+  requesterDepartment: index === 0 ? '全社横断アクセシビリティ推進部門'.repeat(4) : '利用部門',
+  assigneeDepartment: index === 31 ? '担当部門名が非常に長い場合の確認'.repeat(5) : '総務部',
+  assigneeGroupId: 'support',
+  category: index % 2 === 0 ? '手続き' : '規程確認',
+  priority: index % 3 === 0 ? 'urgent' : index % 3 === 1 ? 'high' : 'normal',
+  status: assigneeStatuses[index % assigneeStatuses.length],
+  sourceQuestion: `担当者対応 ${index + 1} のsource question`,
+  chatAnswer: index === 0 ? '取得済みの回答候補も狭い画面で折り返します。'.repeat(8) : '担当者による確認が必要です。',
+  createdAt: `2026-09-12T00:${String(index).padStart(2, '0')}:00.000Z`,
+  updatedAt: `2026-09-12T00:${String(index).padStart(2, '0')}:30.000Z`,
+  ...(assigneeStatuses[index % assigneeStatuses.length] === 'resolved'
+    ? { resolvedAt: `2026-09-12T01:${String(index).padStart(2, '0')}:00.000Z` }
+    : {})
+}))
+
+type ScrollRecord = {
+  behavior: ScrollBehavior | null
+  className: string
+  text: string
+}
+
+type DimensionEvidence = {
+  view: string
+  url: string
+  root: { clientWidth: number, scrollWidth: number }
+  region: { clientWidth: number, scrollWidth: number }
+}
+
+async function installScrollObservation(page: Page) {
+  await page.addInitScript(() => {
+    const observedWindow = window as Window & { __layoutStressScrollCalls?: ScrollRecord[] }
+    observedWindow.__layoutStressScrollCalls = []
+    const originalScrollIntoView = Element.prototype.scrollIntoView
+
+    Element.prototype.scrollIntoView = function (options?: boolean | ScrollIntoViewOptions) {
+      observedWindow.__layoutStressScrollCalls?.push({
+        behavior: typeof options === 'object' ? options.behavior ?? null : null,
+        className: this instanceof HTMLElement ? this.className : '',
+        text: (this.textContent ?? '').slice(-160)
+      })
+      originalScrollIntoView?.call(this, options)
+    }
+  })
+}
+
+async function installLayoutStressRoutes(page: Page) {
+  await page.route('http://127.0.0.1:8787/**', async (route: Route) => {
+    const request = route.request()
+    const path = new URL(request.url()).pathname
+    const method = request.method()
+
+    if (path === '/documents' && method === 'GET') {
+      await route.fulfill({
+        json: { documents: documentItems }
+      })
+      return
+    }
+    if (path === '/document-groups' && method === 'GET') {
+      await route.fulfill({ json: { groups: [] } })
+      return
+    }
+    if (path === '/documents/reindex-migrations' && method === 'GET') {
+      await route.fulfill({ json: { migrations: [] } })
+      return
+    }
+    if (path === '/conversation-history' && method === 'GET') {
+      await route.fulfill({ json: { history: historyItems } })
+      return
+    }
+    if (path === '/favorites' && method === 'GET') {
+      await route.fulfill({ json: { favorites: [] } })
+      return
+    }
+    if (path === '/questions' && method === 'GET') {
+      await route.fulfill({ json: { questions: assigneeItems } })
+      return
+    }
+    if (path === '/rpc/chat/startRun' && method === 'POST') {
+      await route.fulfill({
+        json: {
+          json: {
+            runId: 'layout-stress-chat-run',
+            status: 'queued',
+            eventsPath: '/chat-runs/layout-stress-chat-run/events'
+          }
+        }
+      })
+      return
+    }
+    if (path === '/chat-runs/layout-stress-chat-run/events' && method === 'GET') {
+      await route.fulfill({
+        contentType: 'text/event-stream',
+        body: `id: 1\nevent: final\ndata: ${JSON.stringify({
+          answer: longAnswer,
+          isAnswerable: true,
+          citations: [{
+            documentId: 'layout-stress-document',
+            fileName: longFileName,
+            chunkId: 'layout-stress-chunk',
+            score: 0.98,
+            text: '長文回答を支えるテスト専用の参照文です。'
+          }],
+          retrieved: []
+        })}\n\n`
+      })
+      return
+    }
+
+    await route.fallback()
+  })
+}
+
+async function signIn(page: Page) {
+  await page.goto('/')
+  await page.getByPlaceholder('メールアドレスを入力').fill('local@example.com')
+  await page.getByPlaceholder('パスワードを入力').fill('LocalPassword123!')
+  await page.getByRole('button', { name: 'サインイン' }).click()
+  await expect(page.getByRole('region', { name: 'チャット', exact: true })).toBeVisible()
+}
+
+async function openMobileDestination(page: Page, label: string, regionName: string) {
+  await page.getByRole('button', { name: 'メニューを開く' }).click()
+  const panel = page.locator('.mobile-navigation-panel')
+  await expect(page.getByRole('navigation', { name: 'モバイル画面' })).toBeVisible()
+  await panel.getByRole('button', { name: label, exact: true }).click()
+  const region = page.getByRole('region', { name: regionName, exact: true })
+  await expect(region).toBeVisible()
+  return region
+}
+
+async function assertNoHorizontalOverflow(page: Page, region: Locator, view: string): Promise<DimensionEvidence> {
+  const dimensions = {
+    root: await page.evaluate(() => ({
+      clientWidth: document.documentElement.clientWidth,
+      scrollWidth: document.documentElement.scrollWidth
+    })),
+    region: await region.evaluate((element) => ({
+      clientWidth: element.clientWidth,
+      scrollWidth: element.scrollWidth
+    }))
+  }
+
+  expect(dimensions.root.scrollWidth, `${view} の document root が水平 overflow しています`)
+    .toBeLessThanOrEqual(dimensions.root.clientWidth)
+  expect(dimensions.region.scrollWidth, `${view} region が水平 overflow しています`)
+    .toBeLessThanOrEqual(dimensions.region.clientWidth)
+
+  return { view, url: page.url(), ...dimensions }
+}
+
+test.beforeEach(async ({ page }) => {
+  await page.setViewportSize(viewport)
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await installScrollObservation(page)
+  await installLayoutStressRoutes(page)
+})
+
+test('E2E-UI-LAYOUT-STRESS-001: reduced-motion で長文回答と長い引用名が reflow する @smoke @ui-quality', async ({ page }, testInfo) => {
+  const browserProject = testInfo.project.name
+  await signIn(page)
+  expect(await page.evaluate(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(true)
+  await page.evaluate(() => {
+    const observedWindow = window as Window & { __layoutStressScrollCalls?: ScrollRecord[] }
+    observedWindow.__layoutStressScrollCalls = []
+  })
+
+  await page.getByRole('textbox', { name: '質問', exact: true }).fill('長文レイアウトを確認してください')
+  await page.getByRole('button', { name: '質問を送信', exact: true }).click()
+
+  const chatRegion = page.getByRole('region', { name: 'チャット', exact: true })
+  await expect(chatRegion.getByText('LAYOUT-STRESS-START: 長文回答の先頭です。')).toBeVisible()
+  await expect(chatRegion.getByText('LAYOUT-STRESS-END: 長文回答の末尾です。')).toBeVisible()
+  await expect(chatRegion.getByText(longFileName, { exact: true })).toBeVisible()
+
+  const scrollRecords = await page.evaluate(() => {
+    const observedWindow = window as Window & { __layoutStressScrollCalls?: ScrollRecord[] }
+    return observedWindow.__layoutStressScrollCalls ?? []
+  })
+  expect(scrollRecords.some((record) => record.behavior === 'auto' && record.className.includes('message-row'))).toBe(true)
+
+  const dimensions = await assertNoHorizontalOverflow(page, chatRegion, 'chat-long-answer')
+  await testInfo.attach(`layout-stress-reduced-motion-chat-${browserProject}.json`, {
+    body: Buffer.from(JSON.stringify({
+      evidenceId: 'E2E-UI-LAYOUT-STRESS-001',
+      browserProject,
+      viewport,
+      prefersReducedMotion: true,
+      longAnswerLength: longAnswer.length,
+      longFileNameLength: longFileName.length,
+      scrollRecords,
+      dimensions,
+      evidenceBoundary: 'Representative Chromium E2E; not a replacement for real browser zoom, screen reader, real-device, or all CSS animation review'
+    }, null, 2)),
+    contentType: 'application/json'
+  })
+})
+
+test('E2E-UI-LAYOUT-STRESS-001: 長いファイル名・多数件・0件が320pxで reflow する @smoke @ui-quality', async ({ page }, testInfo) => {
+  const browserProject = testInfo.project.name
+  let favoritesReads = 0
+  await page.route(/http:\/\/127\.0\.0\.1:8787\/favorites$/, async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.fallback()
+      return
+    }
+
+    favoritesReads += 1
+    await route.fulfill({ json: { favorites: favoritesReads === 1 ? favoriteItems : [] } })
+  })
+  await signIn(page)
+  expect(await page.evaluate(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(true)
+  const states: DimensionEvidence[] = []
+
+  const assigneeRegion = await openMobileDestination(page, '担当者対応', '担当者対応')
+  await expect(page).toHaveURL(/\?view=assignee$/)
+  const assigneeLanes = assigneeRegion.locator('.kanban-column')
+  const assigneeCards = assigneeRegion.locator('.question-kanban-card')
+  await expect(assigneeLanes).toHaveCount(assigneeStatuses.length)
+  await expect(assigneeCards).toHaveCount(assigneeItems.length)
+  for (let index = 0; index < assigneeStatuses.length; index += 1) {
+    await expect(assigneeLanes.nth(index).locator('.question-kanban-card')).toHaveCount(8)
+  }
+  await expect(assigneeRegion.getByText(assigneeItems[0].title, { exact: true })).toBeVisible()
+  await expect(assigneeRegion.getByText(assigneeItems[0].question, { exact: true })).toBeVisible()
+
+  const lastAssigneeCard = assigneeCards.last()
+  await lastAssigneeCard.scrollIntoViewIfNeeded()
+  await expect(lastAssigneeCard).toBeVisible()
+  const lastAssigneeRect = await lastAssigneeCard.evaluate((element) => {
+    const rect = element.getBoundingClientRect()
+    return { top: rect.top, bottom: rect.bottom }
+  })
+  expect(lastAssigneeRect.top).toBeGreaterThanOrEqual(0)
+  expect(lastAssigneeRect.bottom).toBeLessThanOrEqual(viewport.height)
+  states.push(await assertNoHorizontalOverflow(page, assigneeRegion, 'assignee-32-items'))
+
+  const documentsRegion = await openMobileDestination(page, 'ドキュメント', 'ドキュメント管理')
+  await expect(page).toHaveURL(/\/documents$/)
+  const documentRows = documentsRegion.locator('.document-file-row:not(.document-file-head)')
+  await expect(documentRows).toHaveCount(25)
+  await expect(documentsRegion).toContainText(`1-25 / ${documentItems.length} 件を表示`)
+
+  const documentPageSize = documentsRegion.getByRole('combobox', { name: '表示件数' })
+  await documentPageSize.selectOption('50')
+  await expect(documentPageSize).toHaveValue('50')
+  await expect(documentRows).toHaveCount(documentItems.length)
+  await expect(documentsRegion).toContainText(`1-${documentItems.length} / ${documentItems.length} 件を表示`)
+
+  const firstDocumentFileName = documentItems.at(-1)?.fileName ?? ''
+  const lastDocumentFileName = documentItems[0].fileName
+  await expect(documentsRegion.getByText(firstDocumentFileName, { exact: true })).toBeVisible()
+  const lastDocument = documentsRegion.getByText(lastDocumentFileName, { exact: true })
+  await lastDocument.scrollIntoViewIfNeeded()
+  await expect(lastDocument).toBeVisible()
+  const lastDocumentRect = await lastDocument.evaluate((element) => {
+    const rect = element.getBoundingClientRect()
+    return { top: rect.top, bottom: rect.bottom }
+  })
+  expect(lastDocumentRect.top).toBeGreaterThanOrEqual(0)
+  expect(lastDocumentRect.bottom).toBeLessThanOrEqual(viewport.height)
+  states.push(await assertNoHorizontalOverflow(page, documentsRegion, 'documents-30-items'))
+
+  const historyRegion = await openMobileDestination(page, '履歴', '履歴')
+  await expect(page).toHaveURL(/\?view=history$/)
+  await expect(historyRegion).toContainText('35 件の会話')
+  await expect(historyRegion.locator('.history-item')).toHaveCount(35)
+  const firstHistoryTitle = historyRegion.getByText(historyItems[0].title, { exact: true })
+  const lastHistoryTitle = historyRegion.getByText(historyItems.at(-1)?.title ?? '', { exact: true })
+  await expect(firstHistoryTitle).toBeVisible()
+  await lastHistoryTitle.scrollIntoViewIfNeeded()
+  await expect(lastHistoryTitle).toBeVisible()
+  const lastHistoryRect = await lastHistoryTitle.evaluate((element) => {
+    const rect = element.getBoundingClientRect()
+    return { top: rect.top, bottom: rect.bottom }
+  })
+  expect(lastHistoryRect.top).toBeGreaterThanOrEqual(0)
+  expect(lastHistoryRect.bottom).toBeLessThanOrEqual(viewport.height)
+  states.push(await assertNoHorizontalOverflow(page, historyRegion, 'history-35-items'))
+
+  const favoritesRegion = await openMobileDestination(page, 'お気に入り', 'お気に入り')
+  await expect(page).toHaveURL(/\?view=favorites$/)
+  await expect(favoritesRegion).toContainText(`${favoriteItems.length} 件のショートカット`)
+  await expect(favoritesRegion.locator('.history-item')).toHaveCount(favoriteItems.length)
+  await expect(favoritesRegion.getByText(favoriteItems[0].label, { exact: true })).toBeVisible()
+  await expect(favoritesRegion.getByText(favoriteItems[0].targetId, { exact: true })).toBeVisible()
+  await expect(favoritesRegion.getByText('アクセス不可', { exact: true })).toBeVisible()
+
+  const lastFavorite = favoritesRegion.getByText(favoriteItems.at(-1)?.label ?? '', { exact: true })
+  await lastFavorite.scrollIntoViewIfNeeded()
+  await expect(lastFavorite).toBeVisible()
+  const lastFavoriteRect = await lastFavorite.evaluate((element) => {
+    const rect = element.getBoundingClientRect()
+    return { top: rect.top, bottom: rect.bottom }
+  })
+  expect(lastFavoriteRect.top).toBeGreaterThanOrEqual(0)
+  expect(lastFavoriteRect.bottom).toBeLessThanOrEqual(viewport.height)
+  states.push(await assertNoHorizontalOverflow(page, favoritesRegion, 'favorites-24-items'))
+
+  await page.reload()
+  const emptyFavoritesRegion = page.getByRole('region', { name: 'お気に入り', exact: true })
+  await expect(emptyFavoritesRegion).toBeVisible()
+  await expect(page).toHaveURL(/\?view=favorites$/)
+  await expect(emptyFavoritesRegion).toContainText('0 件のショートカット')
+  await expect(emptyFavoritesRegion).toContainText('取得は完了しており、保存済みのお気に入りは 0 件です。')
+  states.push(await assertNoHorizontalOverflow(page, emptyFavoritesRegion, 'favorites-zero-items'))
+  expect(favoritesReads).toBe(2)
+
+  await testInfo.attach(`layout-stress-collection-states-${browserProject}.json`, {
+    body: Buffer.from(JSON.stringify({
+      evidenceId: 'E2E-UI-LAYOUT-STRESS-001',
+      browserProject,
+      viewport,
+      prefersReducedMotion: true,
+      fixtures: {
+        assigneeCount: assigneeItems.length,
+        assigneeStatusCount: assigneeStatuses.length,
+        assigneeLaneCounts: await Promise.all(Array.from({ length: assigneeStatuses.length }, (_, index) =>
+          assigneeLanes.nth(index).locator('.question-kanban-card').count()
+        )),
+        firstAssigneeTitleLength: assigneeItems[0].title.length,
+        firstAssigneeQuestionLength: assigneeItems[0].question.length,
+        firstAssigneeRequesterDepartmentLength: assigneeItems[0].requesterDepartment.length,
+        lastAssigneeTitleLength: assigneeItems.at(-1)?.title.length ?? 0,
+        lastAssigneeDepartmentLength: assigneeItems.at(-1)?.assigneeDepartment.length ?? 0,
+        documentCount: documentItems.length,
+        documentFileTypeCount: documentFileTypes.length,
+        documentPageSize: 50,
+        firstDocumentFileNameLength: firstDocumentFileName.length,
+        lastDocumentFileNameLength: lastDocumentFileName.length,
+        historyCount: historyItems.length,
+        firstHistoryTitleLength: historyItems[0].title.length,
+        lastHistoryTitleLength: historyItems.at(-1)?.title.length ?? 0,
+        favoritesCount: favoriteItems.length,
+        favoritesTargetTypeCount: favoriteTargetTypes.length,
+        favoritesReads,
+        firstFavoriteLabelLength: favoriteItems[0].label.length,
+        firstFavoriteTargetIdLength: favoriteItems[0].targetId.length,
+        lastFavoriteLabelLength: favoriteItems.at(-1)?.label.length ?? 0,
+        confirmedEmptyFavoritesCount: 0
+      },
+      reachability: {
+        lastAssigneeRect,
+        lastDocumentRect,
+        lastHistoryRect,
+        lastFavoriteRect
+      },
+      states,
+      evidenceBoundary: 'Representative layout stress only; not exhaustive for every locale, string, item count, browser, zoom mode, screen reader, or device'
+    }, null, 2)),
+    contentType: 'application/json'
+  })
+})
