@@ -130,4 +130,4 @@ remote implementation headは`b1cf2c57`。Web UI Quality `34659235875`はE2E Typ
 
 ローカルのcanonical docs、trace 13件、semantic UI 5件、manual evidence schema 7件、quality matrix／infra inventory freshness、hidden Unicode、Taskfile alias、git diff checkはpass。依存が配置されていないためローカルE2E TypeScriptは`tsc: not found`で実行不能とし、remote required gateのsuccessを証跡にする。
 
-evidence head `725a7f19`のWeb UI Quality `34659920279`とsemver `34659920335`もsuccess。MemoRAG CI `34659920312`は外部証跡同期時点で実行中のため、完了待ちを未完了としてIssueへ記録した。
+evidence head `725a7f19`のWeb UI Quality `34659920279`とsemver `34659920335`もsuccess。外部証跡同期head `96ffa462`のWeb UI Quality `34660531014`とsemver `34660531019`もsuccess。MemoRAG CI `34660531013`は、本slice対象のWeb／docsを通過したが、既存API fixture型不整合によるtypecheck／buildとAPI C1 80.75%（目標85%）でfailureを維持する。

@@ -45,7 +45,9 @@ production component／CSSは変更せず、#461が変更する`AssigneeWorkspac
 
 remote implementation head `b1cf2c57`の[Web UI Quality](https://github.com/tsuji-tomonori/rag-assist/actions/runs/34659235875)はsuccessとなり、E2E TypeScript、Chromium 41件、Firefox／WebKit 60件を通過した。[semver検査](https://github.com/tsuji-tomonori/rag-assist/actions/runs/34659235896)もsuccess。
 
-evidence head `725a7f19`の[Web UI Quality](https://github.com/tsuji-tomonori/rag-assist/actions/runs/34659920279)と[semver検査](https://github.com/tsuji-tomonori/rag-assist/actions/runs/34659920335)もsuccess。[MemoRAG CI](https://github.com/tsuji-tomonori/rag-assist/actions/runs/34659920312)は外部証跡同期時点で実行中のため、完了待ちを未完了として扱う。
+evidence head `725a7f19`の[Web UI Quality](https://github.com/tsuji-tomonori/rag-assist/actions/runs/34659920279)と[semver検査](https://github.com/tsuji-tomonori/rag-assist/actions/runs/34659920335)もsuccess。
+
+外部証跡同期head `96ffa462`の[Web UI Quality](https://github.com/tsuji-tomonori/rag-assist/actions/runs/34660531014)と[semver検査](https://github.com/tsuji-tomonori/rag-assist/actions/runs/34660531019)もsuccess。[MemoRAG CI](https://github.com/tsuji-tomonori/rag-assist/actions/runs/34660531013)はWeb lint／typecheck／test 473件／coverage C0 90.02%・C1 85.12%／build／docsを通過したが、既存API fixture型不整合によるtypecheck／buildとAPI C1 80.75%（目標85%）でfailureを維持する。
 
 [MemoRAG CI](https://github.com/tsuji-tomonori/rag-assist/actions/runs/34659235842)ではWeb test 473件を通過した。API test 1,051件はpassしたが、C1 80.75%（目標85%）と既存test fixtureのreadonly／history input型不整合によるAPI typecheck／buildのため全体はfailure。
 
@@ -53,11 +55,10 @@ evidence head `725a7f19`の[Web UI Quality](https://github.com/tsuji-tomonori/ra
 
 local implementation commit `2978c664`とremote implementation head `b1cf2c57`でAC-1〜5に対応する差分と3-browser gateを確認した。画面→要件→受け入れ条件→E2Eは`assignee → SQ-016 → AC-SQ016-001 / 006 / 007 → E2E-UI-LAYOUT-STRESS-001`で一致する。
 
-[PR受け入れ確認](https://github.com/tsuji-tomonori/rag-assist/pull/470#issuecomment-5642014649)、[セルフレビュー](https://github.com/tsuji-tomonori/rag-assist/pull/470#pullrequestreview-5184347859)、[Issue #345進捗](https://github.com/tsuji-tomonori/rag-assist/issues/345#issuecomment-5642033845)を記録した。既存API blocker、evidence headのMemoRAG CI完了待ち、manual evidenceが残るため、taskは`do`、PRはDraftを維持する。
+[PR受け入れ確認](https://github.com/tsuji-tomonori/rag-assist/pull/470#issuecomment-5642014649)、[セルフレビュー](https://github.com/tsuji-tomonori/rag-assist/pull/470#pullrequestreview-5184347859)、[Issue #345進捗](https://github.com/tsuji-tomonori/rag-assist/issues/345#issuecomment-5642033845)を記録した。既存API blockerとmanual evidenceが残るため、taskは`do`、PRはDraftを維持する。
 
 ## 未完了
 
-- evidence head `725a7f19`のMemoRAG CI完了確認。
 - 既存API fixture型不整合によるtypecheck／build失敗とAPI C1 80.75%（目標85%）。
 - representative screen reader、Firefox／WebKit native AX tree、実browser 200%／400% zoom、text-only zoom、OS scaling、touch／実機、manual keyboard／contrast。
 - 実API／AWS認可、#461統合後の最終DOM再検証。
