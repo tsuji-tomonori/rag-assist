@@ -89,6 +89,31 @@ const assigneeItems = Array.from({ length: 32 }, (_, index) => ({
     ? { resolvedAt: `2026-09-12T01:${String(index).padStart(2, '0')}:00.000Z` }
     : {})
 }))
+const adminAuditItems = Array.from({ length: 36 }, (_, index) => ({
+  auditId: index === 35
+    ? `layout-admin-audit-${'末尾の長い監査識別子'.repeat(5)}`
+    : `layout-admin-audit-${String(index + 1).padStart(2, '0')}`,
+  action: index % 2 === 0 ? 'role:assign' : 'user:suspend',
+  result: index % 3 === 0 ? 'success' : index % 3 === 1 ? 'denied' : 'conflict',
+  reason: index === 0 || index === 35
+    ? `監査理由 ${String(index + 1).padStart(2, '0')} ${'長い判断根拠を省略せず表示する'.repeat(3)}`
+    : `監査理由 ${String(index + 1).padStart(2, '0')}`,
+  tenantId: 'layout-stress-tenant',
+  targetType: 'applicationRolePrincipal',
+  actorUserId: `layout-admin-actor-${String(index + 1).padStart(2, '0')}`,
+  actorEmail: `layout-admin-actor-${String(index + 1).padStart(2, '0')}@example.com`,
+  targetUserId: `layout-admin-target-${String(index + 1).padStart(2, '0')}`,
+  targetEmail: index === 0 || index === 35
+    ? `layout-admin-target-${String(index + 1).padStart(2, '0')}-${'long-identifier-'.repeat(4)}@example.com`
+    : `layout-admin-target-${String(index + 1).padStart(2, '0')}@example.com`,
+  policyVersion: index === 35
+    ? `layout-policy-${'long-version-'.repeat(4)}v1`
+    : 'layout-policy-v1',
+  source: 'security_audit_outbox',
+  beforeGroups: ['CHAT_USER'],
+  afterGroups: ['SYSTEM_ADMIN'],
+  createdAt: `2026-09-14T00:${String(index).padStart(2, '0')}:00.000Z`
+}))
 
 type ScrollRecord = {
   behavior: ScrollBehavior | null
@@ -150,6 +175,79 @@ async function installLayoutStressRoutes(page: Page) {
     }
     if (path === '/questions' && method === 'GET') {
       await route.fulfill({ json: { questions: assigneeItems } })
+      return
+    }
+    if (path === '/admin/users' && method === 'GET') {
+      await route.fulfill({
+        json: {
+          users: [{
+            userId: 'layout-admin',
+            email: 'layout-admin@example.com',
+            displayName: 'Layout Admin',
+            status: 'active',
+            groups: ['SYSTEM_ADMIN'],
+            createdAt: '2026-09-14T00:00:00.000Z',
+            updatedAt: '2026-09-14T00:00:00.000Z',
+            capability: { canAssignRoles: false, canSuspend: false, canUnsuspend: false, canDelete: false, blockers: ['self_mutation'] },
+            projection: { source: 'authoritative_identity', asOf: '2026-09-14T00:00:00.000Z', reconciliationState: 'current' }
+          }],
+          total: 1,
+          truncated: false,
+          source: 'authoritative_identity',
+          asOf: '2026-09-14T00:00:00.000Z',
+          version: 'layout-user-ledger-v1'
+        }
+      })
+      return
+    }
+    if (path === '/admin/roles' && method === 'GET') {
+      await route.fulfill({
+        json: {
+          roles: [{ role: 'SYSTEM_ADMIN', displayName: 'システム管理者', description: 'システム全体の管理を行います。', kind: 'systemPreset', permissions: [] }],
+          catalogVersion: 'layout-role-catalog-v1',
+          source: 'canonical-application-role-catalog',
+          asOf: '2026-09-14T00:00:00.000Z'
+        }
+      })
+      return
+    }
+    if (path === '/admin/audit-log' && method === 'GET') {
+      await route.fulfill({
+        json: {
+          auditLog: adminAuditItems,
+          total: adminAuditItems.length,
+          truncated: false,
+          source: 'managed-user-audit-ledger',
+          asOf: '2026-09-14T00:00:00.000Z'
+        }
+      })
+      return
+    }
+    if (path === '/admin/usage' && method === 'GET') {
+      await route.fulfill({ json: { users: [] } })
+      return
+    }
+    if (path === '/admin/costs' && method === 'GET') {
+      await route.fulfill({
+        json: {
+          available: true,
+          periodStart: '2026-09-01T00:00:00.000Z',
+          periodEnd: '2026-09-14T00:00:00.000Z',
+          currency: 'USD',
+          totalEstimatedUsd: 0,
+          pricingCatalogUpdatedAt: '2026-09-14T00:00:00.000Z',
+          users: [],
+          items: []
+        }
+      })
+      return
+    }
+    if (path === '/admin/aliases' && method === 'GET') {
+      await route.fulfill({ json: { aliases: [], total: 0, truncated: false, source: 'tenant-alias-ledger', asOf: '2026-09-14T00:00:00.000Z', version: 'layout-alias-ledger-v1' } })
+      return
+    }
+    if (path === '/admin/aliases/audit-log' && method === 'GET') {
+      await route.fulfill({ json: { auditLog: [], total: 0, truncated: false, source: 'tenant-alias-ledger', asOf: '2026-09-14T00:00:00.000Z' } })
       return
     }
     if (path === '/rpc/chat/startRun' && method === 'POST') {
@@ -311,6 +409,27 @@ test('E2E-UI-LAYOUT-STRESS-001: 長いファイル名・多数件・0件が320px
   expect(lastAssigneeRect.bottom).toBeLessThanOrEqual(viewport.height)
   states.push(await assertNoHorizontalOverflow(page, assigneeRegion, 'assignee-32-items'))
 
+  const adminRegion = await openMobileDestination(page, '管理者設定', '管理者設定')
+  await expect(page).toHaveURL(/\?view=admin/)
+  await adminRegion.getByRole('button', { name: '監査', exact: true }).click()
+  await expect(page).toHaveURL(/view=admin.*section=audit/)
+  const adminAuditEntries = adminRegion.locator('.admin-audit-entry')
+  await expect(adminAuditEntries).toHaveCount(adminAuditItems.length)
+  await expect(adminRegion).toContainText(`${adminAuditItems.length} / ${adminAuditItems.length} 件`)
+  await expect(adminAuditEntries.first()).toContainText(adminAuditItems[0].targetEmail)
+
+  const lastAdminAuditEntry = adminAuditEntries.last()
+  await lastAdminAuditEntry.scrollIntoViewIfNeeded()
+  await expect(lastAdminAuditEntry).toBeVisible()
+  await expect(lastAdminAuditEntry).toContainText(adminAuditItems.at(-1)?.targetEmail ?? '')
+  const lastAdminAuditRect = await lastAdminAuditEntry.evaluate((element) => {
+    const rect = element.getBoundingClientRect()
+    return { top: rect.top, bottom: rect.bottom }
+  })
+  expect(lastAdminAuditRect.top).toBeGreaterThanOrEqual(0)
+  expect(lastAdminAuditRect.bottom).toBeLessThanOrEqual(viewport.height)
+  states.push(await assertNoHorizontalOverflow(page, adminRegion, 'admin-audit-36-items'))
+
   const documentsRegion = await openMobileDestination(page, 'ドキュメント', 'ドキュメント管理')
   await expect(page).toHaveURL(/\/documents$/)
   const documentRows = documentsRegion.locator('.document-file-row:not(.document-file-head)')
@@ -399,6 +518,13 @@ test('E2E-UI-LAYOUT-STRESS-001: 長いファイル名・多数件・0件が320px
         firstAssigneeRequesterDepartmentLength: assigneeItems[0].requesterDepartment.length,
         lastAssigneeTitleLength: assigneeItems.at(-1)?.title.length ?? 0,
         lastAssigneeDepartmentLength: assigneeItems.at(-1)?.assigneeDepartment.length ?? 0,
+        adminAuditCount: adminAuditItems.length,
+        firstAdminAuditTargetLength: adminAuditItems[0].targetEmail.length,
+        firstAdminAuditReasonLength: adminAuditItems[0].reason.length,
+        lastAdminAuditTargetLength: adminAuditItems.at(-1)?.targetEmail.length ?? 0,
+        lastAdminAuditReasonLength: adminAuditItems.at(-1)?.reason.length ?? 0,
+        lastAdminAuditPolicyLength: adminAuditItems.at(-1)?.policyVersion.length ?? 0,
+        lastAdminAuditIdLength: adminAuditItems.at(-1)?.auditId.length ?? 0,
         documentCount: documentItems.length,
         documentFileTypeCount: documentFileTypes.length,
         documentPageSize: 50,
@@ -417,6 +543,7 @@ test('E2E-UI-LAYOUT-STRESS-001: 長いファイル名・多数件・0件が320px
       },
       reachability: {
         lastAssigneeRect,
+        lastAdminAuditRect,
         lastDocumentRect,
         lastHistoryRect,
         lastFavoriteRect
