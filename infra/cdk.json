@@ -1,6 +1,7 @@
 {
   "app": "node --import tsx bin/app.ts",
   "context": {
+    "corsAllowedOrigins": "http://localhost:5173",
     "@aws-cdk/aws-lambda:recognizeLayerVersion": true,
     "@aws-cdk/core:checkSecretUsage": true,
     "@aws-cdk/core:target-partitions": ["aws"],

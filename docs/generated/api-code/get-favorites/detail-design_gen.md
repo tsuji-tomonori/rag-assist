@@ -29,46 +29,25 @@
 | # | 所属関数 | 種別 | 条件の意味 | 根拠式 | 実装位置 |
 | ---: | --- | --- | --- | --- | --- |
 | B001 | `requirePermission` | if | 利用者が 指定された permission を持たない | `!hasPermission(user, permission)` | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| B002 | `MemoRagService.listFavorites` | if | `favorite.targetType` が `"chatSession"` と等しい | `favorite.targetType === "chatSession"` | `apps/api/src/rag/memorag-service.ts:4183 (MemoRagService.listFavorites)` |
-| B003 | `MemoRagService.listFavorites` | if | `favorite.targetType` が `"document"` と等しい | `favorite.targetType === "document"` | `apps/api/src/rag/memorag-service.ts:4186 (MemoRagService.listFavorites)` |
-| B004 | `MemoRagService.listFavorites` | if | `favorite.targetType` が `"folder"` と等しい | `favorite.targetType === "folder"` | `apps/api/src/rag/memorag-service.ts:4190 (MemoRagService.listFavorites)` |
 
 ## 4. 到達する主要実装
 
-handler を起点に TypeScript symbol を解決し、深さ 2 までの主要関数・method を列挙しています。深い helper を含む全到達関数は 114 件で、永続化・外部接続は深さにかかわらず次節へ集約しています。
+handler を起点に TypeScript symbol を解決し、深さ 2 までの主要関数・method を列挙しています。深い helper を含む全到達関数は 9 件で、永続化・外部接続は深さにかかわらず次節へ集約しています。
 
 | 深さ | Symbol | 責務 | 実装位置 |
 | ---: | --- | --- | --- |
 | 0 | `GET /favorites handler` | GET /favorites の request を受け、検証・認可・service 呼び出し・HTTP 応答を調整する。 | `apps/api/src/routes/favorite-routes.ts:18 (GET /favorites handler)` |
 | 1 | `requirePermission` | require permission の実装処理を担当する。 | `apps/api/src/authorization.ts:183 (requirePermission)` |
 | 2 | `hasPermission` | has permission の実装処理を担当する。 | `apps/api/src/authorization.ts:187 (hasPermission)` |
-| 1 | `MemoRagService.listFavorites` | list favorites の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4174 (MemoRagService.listFavorites)` |
-| 2 | `tenantPartitionedOwnerKey` | tenant partitioned owner key の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6098 (tenantPartitionedOwnerKey)` |
-| 2 | `MemoRagService.listDocuments` | list documents の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:902 (MemoRagService.listDocuments)` |
-| 2 | `MemoRagService.listDocumentGroups` | list document groups の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1019 (MemoRagService.listDocumentGroups)` |
-| 2 | `favoriteListItem` | favorite list item の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6460 (favoriteListItem)` |
+| 1 | `MemoRagService.listFavorites` | list favorites の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4263 (MemoRagService.listFavorites)` |
+| 2 | `FavoriteService.list` | list の実装処理を担当する。 | `apps/api/src/favorites/favorite-service.ts:40 (FavoriteService.list)` |
 
 ## 5. データ・外部境界
 
 | 種別 | 境界 | Target | Operation | 目的 | Caller | 実装位置 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 参照 | Store | `this.deps.favoriteStore` | `list` | `this.deps.favoriteStore` に対して list を実行する。 | `MemoRagService.listFavorites` | `apps/api/src/rag/memorag-service.ts:4176 (MemoRagService.listFavorites)` |
-| 参照 | Store | `this.deps.conversationHistoryStore` | `list` | `this.deps.conversationHistoryStore` に対して list を実行する。 | `MemoRagService.listFavorites` | `apps/api/src/rag/memorag-service.ts:4177 (MemoRagService.listFavorites)` |
-| 参照 | Store | `this.deps.objectStore` | `listKeys` | `this.deps.objectStore` に対して list keys を実行する。 | `MemoRagService.listDocuments` | `apps/api/src/rag/memorag-service.ts:904 (MemoRagService.listDocuments)` |
-| 参照 | Store | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `readTenantManifestByKey` | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:93 (readTenantManifestByKey)` |
-| 参照 | Store | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `loadPublicationPointer` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1809 (loadPublicationPointer)` |
-| 参照 | Store | `this.deps.documentGroupStore` | `list` | `this.deps.documentGroupStore` に対して list を実行する。 | `FolderPermissionService.resolveEffectiveFolderPermissionDetail` | `apps/api/src/folders/folder-permission-service.ts:145 (FolderPermissionService.resolveEffectiveFolderPermissionDetail)` |
-| 参照 | Store | `this.deps.userGroupStore` | `get` | `this.deps.userGroupStore` に対して get を実行する。 | `FolderPermissionService.resolveUserMembershipPermission` | `apps/api/src/folders/folder-permission-service.ts:780 (FolderPermissionService.resolveUserMembershipPermission)` |
-| 参照 | Store | `this.deps.groupMembershipStore` | `listByGroupId` | `this.deps.groupMembershipStore` に対して list by group id を実行する。 | `FolderPermissionService.resolveUserMembershipPermission` | `apps/api/src/folders/folder-permission-service.ts:781 (FolderPermissionService.resolveUserMembershipPermission)` |
-| 参照 | Store | `this.deps.folderPolicyStore` | `findByFolderId` | `this.deps.folderPolicyStore` に対して find by folder id を実行する。 | `FolderPermissionService.resolvePolicyContext` | `apps/api/src/folders/folder-permission-service.ts:695 (FolderPermissionService.resolvePolicyContext)` |
-| 参照 | Store | `this.deps.folderPolicyStore` | `get` | `this.deps.folderPolicyStore` に対して get を実行する。 | `FolderPermissionService.resolvePolicyContext` | `apps/api/src/folders/folder-permission-service.ts:711 (FolderPermissionService.resolvePolicyContext)` |
-| 参照 | Store | `objectStore` | `getTextWithVersion` | `objectStore` に対して get text with version を実行する。 | `getTextWithVersion` | `apps/api/src/documents/document-permission-service.ts:946 (getTextWithVersion)` |
-| 参照 | Store | `objectStore` | `getText` | `objectStore` に対して get text を実行する。 | `getTextWithVersion` | `apps/api/src/documents/document-permission-service.ts:947 (getTextWithVersion)` |
-| 参照 | Store | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `DocumentPermissionService.loadLegacyDocumentGrants` | `apps/api/src/documents/document-permission-service.ts:537 (DocumentPermissionService.loadLegacyDocumentGrants)` |
-| 参照 | Store | `this.deps.userGroupStore` | `get` | `this.deps.userGroupStore` に対して get を実行する。 | `DocumentPermissionService.resolveUserMembershipPermission` | `apps/api/src/documents/document-permission-service.ts:683 (DocumentPermissionService.resolveUserMembershipPermission)` |
-| 参照 | Store | `this.deps.groupMembershipStore` | `listByGroupId` | `this.deps.groupMembershipStore` に対して list by group id を実行する。 | `DocumentPermissionService.resolveUserMembershipPermission` | `apps/api/src/documents/document-permission-service.ts:684 (DocumentPermissionService.resolveUserMembershipPermission)` |
-| 参照 | Store | `this.deps.documentGroupStore` | `list` | `this.deps.documentGroupStore` に対して list を実行する。 | `MemoRagService.listDocumentGroups` | `apps/api/src/rag/memorag-service.ts:1020 (MemoRagService.listDocumentGroups)` |
-| 参照 | Store | `this.deps.documentGroupStore` | `get` | `this.deps.documentGroupStore` に対して get を実行する。 | `FolderPermissionService.assertFolderOperation` | `apps/api/src/folders/folder-permission-service.ts:110 (FolderPermissionService.assertFolderOperation)` |
+| 参照 | Store | `this.ports.favoriteStore` | `list` | `this.ports.favoriteStore` に対して list を実行する。 | `FavoriteService.list` | `apps/api/src/favorites/favorite-service.ts:43 (FavoriteService.list)` |
+| 参照 | Store | `this.ports.conversationHistoryStore` | `list` | `this.ports.conversationHistoryStore` に対して list を実行する。 | `FavoriteService.list` | `apps/api/src/favorites/favorite-service.ts:44 (FavoriteService.list)` |
 
 ## 6. 応答・メッセージ
 
@@ -79,14 +58,6 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | OpenAPI contract | `403` | 対象操作を実行する権限がありません。 | OpenAPI で宣言された HTTP 403 response |
 | OpenAPI contract | `500` | サーバー内部で処理エラーが発生しました。 | OpenAPI で宣言された HTTP 500 response |
 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない |
-| 例外 | `-` | User identity is required for tenant-partitioned storage | `userId` が存在しない、または偽である |
-| 例外 | `-` | Authoritative tenant is required for user storage | `config.authEnabled` が存在し、真である、または `config.nodeEnv` が `"production"` と等しい |
-| 例外 | `-` | Artifact key is invalid | `normalized` が存在しない、または偽である、または `normalized` が ".." を含む |
-| 例外 | `-` | Authoritative tenant is required | `normalized` が存在しない、または偽である |
-| 例外 | `-` | Authoritative tenant is required | `normalized` が存在しない、または偽である |
-| 例外 | `-` | `Document manifest tenant mismatch${key ? `: ${key}` : ""}` | `manifestTenantId` が存在しない、または偽である、かつ `options.allowMissingTenant` が存在しない、または偽である、または `manifestTenantId` が存在し、真である、かつ `manifestTenantId` が `normalizedTenantId` と異なる |
-| 例外 | `-` | Document manifest escaped its authoritative tenant partition | uses legacy global document artifacts の判定結果が真ではない、かつ starts with の判定結果が真ではない |
-| ログ | `-` | Skipping missing document manifest listed by object store | is missing object error の判定結果が真である |
 
 ## 7. テスト対応
 

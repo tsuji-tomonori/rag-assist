@@ -1,0 +1,32 @@
+{
+  "contractVersion": 1,
+  "recordSchemaVersion": 1,
+  "evidenceId": "E2E-UI-MANUAL-001",
+  "requiredEvidenceClasses": [
+    "manual_keyboard",
+    "screen_reader",
+    "browser_zoom",
+    "real_device"
+  ],
+  "statuses": ["pass", "fail", "blocked", "not_run", "not_applicable"],
+  "matrixApprovalStatuses": ["approved", "proposed", "open_question"],
+  "ownerAssignmentStatuses": ["assigned", "unassigned"],
+  "manualEvidenceKinds": [
+    "manual_notes",
+    "screenshot_redacted",
+    "screen_recording_redacted",
+    "assistive_technology_log",
+    "browser_observation"
+  ],
+  "defectSeverities": ["critical", "serious", "major", "minor"],
+  "retestStatuses": ["pending", "pass", "fail"],
+  "rules": [
+    "pass and fail require mode=manual, executedAt, executorRole, a complete environment, and manual evidence",
+    "screen_reader pass requires assistive technology metadata",
+    "browser_zoom pass requires an observed 200 or 400 percent browser zoom",
+    "real_device pass requires a non-emulated named device",
+    "fail requires a defect task, assigned owner role, severity, and retest status",
+    "blocked and not_run require reason, risk, owner assignment status, next action, open question, and task",
+    "structural validity does not imply release or Issue completion readiness"
+  ]
+}

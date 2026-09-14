@@ -36,7 +36,7 @@ debug trace 詳細を取得する
 | ---: | --- | --- | --- | --- | --- |
 | B001 | `GET /debug-runs/{runId} handler` | if | `trace` が存在しない、または偽である | `!trace` | `apps/api/src/routes/debug-routes.ts:70 (GET /debug-runs/{runId} handler)` |
 | B002 | `requirePermission` | if | 利用者が 指定された permission を持たない | `!hasPermission(user, permission)` | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| B003 | `MemoRagService.getDebugRun` | if | `key` が存在しない、または偽である | `!key` | `apps/api/src/rag/memorag-service.ts:2349 (MemoRagService.getDebugRun)` |
+| B003 | `MemoRagService.getDebugRun` | if | `key` が存在しない、または偽である | `!key` | `apps/api/src/rag/memorag-service.ts:2456 (MemoRagService.getDebugRun)` |
 | B004 | `settleNonEnumerationTiming` | if | `remaining` が `0` より大きい | `remaining > 0` | `apps/api/src/security/public-resource-response.ts:42 (settleNonEnumerationTiming)` |
 
 ## 4. 到達する主要実装
@@ -50,18 +50,18 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 2 | `hasPermission` | has permission の実装処理を担当する。 | `apps/api/src/authorization.ts:187 (hasPermission)` |
 | 1 | `validParam` | valid param の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:24 (validParam)` |
 | 2 | `validRequest` | valid request の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:36 (validRequest)` |
-| 1 | `MemoRagService.getDebugRun` | get debug run の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:2345 (MemoRagService.getDebugRun)` |
-| 2 | `localTestActor` | local test actor の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6109 (localTestActor)` |
-| 2 | `debugTraceTenantPrefix` | debug trace tenant prefix の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6123 (debugTraceTenantPrefix)` |
-| 2 | `normalizeDebugTrace` | normalize debug trace の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6172 (normalizeDebugTrace)` |
+| 1 | `MemoRagService.getDebugRun` | get debug run の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:2452 (MemoRagService.getDebugRun)` |
+| 2 | `localTestActor` | local test actor の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5719 (localTestActor)` |
+| 2 | `debugTraceTenantPrefix` | debug trace tenant prefix の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5733 (debugTraceTenantPrefix)` |
+| 2 | `normalizeDebugTrace` | normalize debug trace の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5782 (normalizeDebugTrace)` |
 | 1 | `settleNonEnumerationTiming` | settle non enumeration timing の実装処理を担当する。 | `apps/api/src/security/public-resource-response.ts:40 (settleNonEnumerationTiming)` |
 
 ## 5. データ・外部境界
 
 | 種別 | 境界 | Target | Operation | 目的 | Caller | 実装位置 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 参照 | Store | `this.deps.objectStore` | `listKeys` | `this.deps.objectStore` に対して list keys を実行する。 | `MemoRagService.getDebugRun` | `apps/api/src/rag/memorag-service.ts:2347 (MemoRagService.getDebugRun)` |
-| 参照 | Store | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `MemoRagService.getDebugRun` | `apps/api/src/rag/memorag-service.ts:2350 (MemoRagService.getDebugRun)` |
+| 参照 | Store | `this.deps.objectStore` | `listKeys` | `this.deps.objectStore` に対して list keys を実行する。 | `MemoRagService.getDebugRun` | `apps/api/src/rag/memorag-service.ts:2454 (MemoRagService.getDebugRun)` |
+| 参照 | Store | `this.deps.objectStore` | `getText` | `this.deps.objectStore` に対して get text を実行する。 | `MemoRagService.getDebugRun` | `apps/api/src/rag/memorag-service.ts:2457 (MemoRagService.getDebugRun)` |
 
 ## 6. 応答・メッセージ
 
@@ -83,13 +83,13 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 到達 symbol | FR-074 answer replay carries measured pre/post authorization candidate counts | `apps/api/src/chat-orchestration/graph.test.ts:106 (FR-074 answer replay carries measured pre/post authorization candidate counts)` |
 | 到達 symbol | service ingests text, lists manifests, persists debug traces, and deletes all document vectors | `apps/api/src/rag/memorag-service.test.ts:48 (service ingests text, lists manifests, persists debug traces, and deletes all document vectors)` |
 | 到達 symbol | service rejects empty uploads and missing documents | `apps/api/src/rag/memorag-service.test.ts:128 (service rejects empty uploads and missing documents)` |
-| 到達 symbol | FR-090 chat run treats an authorized final append as the last success boundary | `apps/api/src/rag/memorag-service.test.ts:2360 (FR-090 chat run treats an authorized final append as the last success boundary)` |
-| 到達 symbol | asynchronous chat run stores debug trace by reference | `apps/api/src/rag/memorag-service.test.ts:2599 (asynchronous chat run stores debug trace by reference)` |
-| 到達 symbol | FR-074 asynchronous document ingest success persists tenant-scoped replay evidence | `apps/api/src/rag/memorag-service.test.ts:2637 (FR-074 asynchronous document ingest success persists tenant-scoped replay evidence)` |
-| 到達 symbol | FR-074 rejected document ingest persists observed replay evidence without publishing success | `apps/api/src/rag/memorag-service.test.ts:2674 (FR-074 rejected document ingest persists observed replay evidence without publishing success)` |
-| 到達 symbol | FR-074 worker failure persists an unknown-null replay manifest and a redacted trace | `apps/api/src/rag/memorag-service.test.ts:2715 (FR-074 worker failure persists an unknown-null replay manifest and a redacted trace)` |
-| 到達 symbol | FR-074 cancelled document ingest persists replay evidence without accepting caller trace correlation | `apps/api/src/rag/memorag-service.test.ts:2750 (FR-074 cancelled document ingest persists replay evidence without accepting caller trace correlation)` |
-| 到達 symbol | FR-049 legacy debug trace reads use the bounded rag_run default without inferred reclassification | `apps/api/src/rag/memorag-service.test.ts:3842 (FR-049 legacy debug trace reads use the bounded rag_run default without inferred reclassification)` |
+| 到達 symbol | FR-090 chat run treats an authorized final append as the last success boundary | `apps/api/src/rag/memorag-service.test.ts:2362 (FR-090 chat run treats an authorized final append as the last success boundary)` |
+| 到達 symbol | asynchronous chat run stores debug trace by reference | `apps/api/src/rag/memorag-service.test.ts:2601 (asynchronous chat run stores debug trace by reference)` |
+| 到達 symbol | FR-074 asynchronous document ingest success persists tenant-scoped replay evidence | `apps/api/src/rag/memorag-service.test.ts:2639 (FR-074 asynchronous document ingest success persists tenant-scoped replay evidence)` |
+| 到達 symbol | FR-074 rejected document ingest persists observed replay evidence without publishing success | `apps/api/src/rag/memorag-service.test.ts:2676 (FR-074 rejected document ingest persists observed replay evidence without publishing success)` |
+| 到達 symbol | FR-074 worker failure persists an unknown-null replay manifest and a redacted trace | `apps/api/src/rag/memorag-service.test.ts:2717 (FR-074 worker failure persists an unknown-null replay manifest and a redacted trace)` |
+| 到達 symbol | FR-074 cancelled document ingest persists replay evidence without accepting caller trace correlation | `apps/api/src/rag/memorag-service.test.ts:2752 (FR-074 cancelled document ingest persists replay evidence without accepting caller trace correlation)` |
+| 到達 symbol | FR-049 legacy debug trace reads use the bounded rag_run default without inferred reclassification | `apps/api/src/rag/memorag-service.test.ts:3862 (FR-049 legacy debug trace reads use the bounded rag_run default without inferred reclassification)` |
 
 ## 8. 解析上の注意
 

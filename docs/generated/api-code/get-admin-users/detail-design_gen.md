@@ -37,13 +37,13 @@ Cognito と管理台帳を照合し、管理画面で扱うユーザー一覧を
 | B001 | `GET /admin/users handler` | catch | 例外が発生した場合に catch 処理へ移る | `error` | `apps/api/src/routes/admin-routes.ts:145 (GET /admin/users handler)` |
 | B002 | `GET /admin/users handler` | if | `error` が `InvalidPageCursorError` の instance である | `error instanceof InvalidPageCursorError` | `apps/api/src/routes/admin-routes.ts:146 (GET /admin/users handler)` |
 | B003 | `requirePermission` | if | 利用者が 指定された permission を持たない | `!hasPermission(user, permission)` | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| B004 | `MemoRagService.listManagedUsersPage` | 三項条件 | `this.deps.verifiedIdentityProvider` が存在し、真である | `this.deps.verifiedIdentityProvider` | `apps/api/src/rag/memorag-service.ts:1695 (MemoRagService.listManagedUsersPage)` |
-| B005 | `MemoRagService.listManagedUsersPage` | if | `actor.userId` が `user.userId` と等しい | `actor.userId === user.userId` | `apps/api/src/rag/memorag-service.ts:1702 (MemoRagService.listManagedUsersPage)` |
-| B006 | `MemoRagService.listManagedUsersPage` | if | `user.status` が `"active"` と異なる | `user.status !== "active"` | `apps/api/src/rag/memorag-service.ts:1703 (MemoRagService.listManagedUsersPage)` |
-| B007 | `MemoRagService.listManagedUsersPage` | if | `user.groups` が "SYSTEM_ADMIN" を含む、かつ `activeRecoveryPrincipals.length` が `1` 以下である | `user.groups.includes("SYSTEM_ADMIN") && activeRecoveryPrincipals.length <= 1` | `apps/api/src/rag/memorag-service.ts:1704 (MemoRagService.listManagedUsersPage)` |
-| B008 | `MemoRagService.listManagedUsersPage` | 三項条件 | `query.sort` が `"updatedDesc"` と等しい | `query.sort === "updatedDesc"` | `apps/api/src/rag/memorag-service.ts:1718 (MemoRagService.listManagedUsersPage)` |
-| B009 | `MemoRagService.listManagedUsersPage` | 三項条件 | `sort` が `"updatedDesc"` と等しい | `sort === "updatedDesc"` | `apps/api/src/rag/memorag-service.ts:1727 (MemoRagService.listManagedUsersPage)` |
-| B010 | `MemoRagService.listManagedUsersPage` | 三項条件 | `sort` が `"updatedDesc"` と等しい | `sort === "updatedDesc"` | `apps/api/src/rag/memorag-service.ts:1728 (MemoRagService.listManagedUsersPage)` |
+| B004 | `MemoRagService.listManagedUsersPage` | 三項条件 | `this.deps.verifiedIdentityProvider` が存在し、真である | `this.deps.verifiedIdentityProvider` | `apps/api/src/rag/memorag-service.ts:1802 (MemoRagService.listManagedUsersPage)` |
+| B005 | `MemoRagService.listManagedUsersPage` | if | `actor.userId` が `user.userId` と等しい | `actor.userId === user.userId` | `apps/api/src/rag/memorag-service.ts:1809 (MemoRagService.listManagedUsersPage)` |
+| B006 | `MemoRagService.listManagedUsersPage` | if | `user.status` が `"active"` と異なる | `user.status !== "active"` | `apps/api/src/rag/memorag-service.ts:1810 (MemoRagService.listManagedUsersPage)` |
+| B007 | `MemoRagService.listManagedUsersPage` | if | `user.groups` が "SYSTEM_ADMIN" を含む、かつ `activeRecoveryPrincipals.length` が `1` 以下である | `user.groups.includes("SYSTEM_ADMIN") && activeRecoveryPrincipals.length <= 1` | `apps/api/src/rag/memorag-service.ts:1811 (MemoRagService.listManagedUsersPage)` |
+| B008 | `MemoRagService.listManagedUsersPage` | 三項条件 | `query.sort` が `"updatedDesc"` と等しい | `query.sort === "updatedDesc"` | `apps/api/src/rag/memorag-service.ts:1825 (MemoRagService.listManagedUsersPage)` |
+| B009 | `MemoRagService.listManagedUsersPage` | 三項条件 | `sort` が `"updatedDesc"` と等しい | `sort === "updatedDesc"` | `apps/api/src/rag/memorag-service.ts:1834 (MemoRagService.listManagedUsersPage)` |
+| B010 | `MemoRagService.listManagedUsersPage` | 三項条件 | `sort` が `"updatedDesc"` と等しい | `sort === "updatedDesc"` | `apps/api/src/rag/memorag-service.ts:1835 (MemoRagService.listManagedUsersPage)` |
 
 ## 4. 到達する主要実装
 
@@ -57,25 +57,25 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 2 | `getPermissionsForGroups` | get permissions for groups の実装処理を担当する。 | `apps/api/src/authorization.ts:106 (getPermissionsForGroups)` |
 | 1 | `validQuery` | valid query の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:28 (validQuery)` |
 | 2 | `validRequest` | valid request の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:36 (validRequest)` |
-| 1 | `MemoRagService.listManagedUsersPage` | list managed users page の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1687 (MemoRagService.listManagedUsersPage)` |
-| 2 | `MemoRagService.loadAdminLedger` | load admin ledger の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3418 (MemoRagService.loadAdminLedger)` |
+| 1 | `MemoRagService.listManagedUsersPage` | list managed users page の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1794 (MemoRagService.listManagedUsersPage)` |
+| 2 | `MemoRagService.loadAdminLedger` | load admin ledger の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3511 (MemoRagService.loadAdminLedger)` |
 | 2 | `pageByStableCursor` | page by stable cursor の実装処理を担当する。 | `apps/api/src/admin/keyset-pagination.ts:16 (pageByStableCursor)` |
 
 ## 5. データ・外部境界
 
 | 種別 | 境界 | Target | Operation | 目的 | Caller | 実装位置 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 参照 | Store | `this` | `loadAdminLedger` | `this` に対して load admin ledger を実行する。 | `MemoRagService.listManagedUsersPage` | `apps/api/src/rag/memorag-service.ts:1688 (MemoRagService.listManagedUsersPage)` |
-| 実行 | Store | `adminLedgerKeyForTenant` | `adminLedgerKeyForTenant` | `adminLedgerKeyForTenant` に対して admin ledger key for tenant を実行する。 | `MemoRagService.loadAdminLedger` | `apps/api/src/rag/memorag-service.ts:3421 (MemoRagService.loadAdminLedger)` |
-| 参照 | Store | `this.deps.objectStore` | `getTextWithVersion` | `this.deps.objectStore` に対して get text with version を実行する。 | `MemoRagService.loadAdminLedger` | `apps/api/src/rag/memorag-service.ts:3423 (MemoRagService.loadAdminLedger)` |
-| 参照 | Store | `this` | `loadOrMigrateLegacyAdminLedger` | `this` に対して load or migrate legacy admin ledger を実行する。 | `MemoRagService.loadAdminLedger` | `apps/api/src/rag/memorag-service.ts:3428 (MemoRagService.loadAdminLedger)` |
-| 参照 | Store | `this.deps.objectStore` | `getTextWithVersion` | `this.deps.objectStore` に対して get text with version を実行する。 | `MemoRagService.loadOrMigrateLegacyAdminLedger` | `apps/api/src/rag/memorag-service.ts:3490 (MemoRagService.loadOrMigrateLegacyAdminLedger)` |
-| 作成・追記 | Store | `this.deps.objectStore` | `putTextIfVersion` | `this.deps.objectStore` に対して put text if version を実行する。 | `MemoRagService.loadOrMigrateLegacyAdminLedger` | `apps/api/src/rag/memorag-service.ts:3504 (MemoRagService.loadOrMigrateLegacyAdminLedger)` |
-| 参照 | Store | `this.deps.objectStore` | `getTextWithVersion` | `this.deps.objectStore` に対して get text with version を実行する。 | `MemoRagService.loadOrMigrateLegacyAdminLedger` | `apps/api/src/rag/memorag-service.ts:3508 (MemoRagService.loadOrMigrateLegacyAdminLedger)` |
-| 参照 | External | `this.deps.verifiedIdentityProvider` | `getCurrentIdentityBySubject` | `this.deps.verifiedIdentityProvider` へ get current identity by subject を実行する。 | `MemoRagService.loadAdminLedger` | `apps/api/src/rag/memorag-service.ts:3435 (MemoRagService.loadAdminLedger)` |
-| 実行 | External | `this` | `syncUserDirectory` | `this` へ sync user directory を実行する。 | `MemoRagService.loadAdminLedger` | `apps/api/src/rag/memorag-service.ts:3477 (MemoRagService.loadAdminLedger)` |
-| 参照 | External | `this.deps.userDirectory` | `listUsers` | `this.deps.userDirectory` へ list users を実行する。 | `MemoRagService.syncUserDirectory` | `apps/api/src/rag/memorag-service.ts:3515 (MemoRagService.syncUserDirectory)` |
-| 参照 | External | `this.deps.verifiedIdentityProvider` | `getCurrentIdentityBySubject` | `this.deps.verifiedIdentityProvider` へ get current identity by subject を実行する。 | `MemoRagService.syncUserDirectory` | `apps/api/src/rag/memorag-service.ts:3520 (MemoRagService.syncUserDirectory)` |
+| 参照 | Store | `this` | `loadAdminLedger` | `this` に対して load admin ledger を実行する。 | `MemoRagService.listManagedUsersPage` | `apps/api/src/rag/memorag-service.ts:1795 (MemoRagService.listManagedUsersPage)` |
+| 実行 | Store | `adminLedgerKeyForTenant` | `adminLedgerKeyForTenant` | `adminLedgerKeyForTenant` に対して admin ledger key for tenant を実行する。 | `MemoRagService.loadAdminLedger` | `apps/api/src/rag/memorag-service.ts:3514 (MemoRagService.loadAdminLedger)` |
+| 参照 | Store | `this.deps.objectStore` | `getTextWithVersion` | `this.deps.objectStore` に対して get text with version を実行する。 | `MemoRagService.loadAdminLedger` | `apps/api/src/rag/memorag-service.ts:3516 (MemoRagService.loadAdminLedger)` |
+| 参照 | Store | `this` | `loadOrMigrateLegacyAdminLedger` | `this` に対して load or migrate legacy admin ledger を実行する。 | `MemoRagService.loadAdminLedger` | `apps/api/src/rag/memorag-service.ts:3521 (MemoRagService.loadAdminLedger)` |
+| 参照 | Store | `this.deps.objectStore` | `getTextWithVersion` | `this.deps.objectStore` に対して get text with version を実行する。 | `MemoRagService.loadOrMigrateLegacyAdminLedger` | `apps/api/src/rag/memorag-service.ts:3583 (MemoRagService.loadOrMigrateLegacyAdminLedger)` |
+| 作成・追記 | Store | `this.deps.objectStore` | `putTextIfVersion` | `this.deps.objectStore` に対して put text if version を実行する。 | `MemoRagService.loadOrMigrateLegacyAdminLedger` | `apps/api/src/rag/memorag-service.ts:3597 (MemoRagService.loadOrMigrateLegacyAdminLedger)` |
+| 参照 | Store | `this.deps.objectStore` | `getTextWithVersion` | `this.deps.objectStore` に対して get text with version を実行する。 | `MemoRagService.loadOrMigrateLegacyAdminLedger` | `apps/api/src/rag/memorag-service.ts:3601 (MemoRagService.loadOrMigrateLegacyAdminLedger)` |
+| 参照 | External | `this.deps.verifiedIdentityProvider` | `getCurrentIdentityBySubject` | `this.deps.verifiedIdentityProvider` へ get current identity by subject を実行する。 | `MemoRagService.loadAdminLedger` | `apps/api/src/rag/memorag-service.ts:3528 (MemoRagService.loadAdminLedger)` |
+| 実行 | External | `this` | `syncUserDirectory` | `this` へ sync user directory を実行する。 | `MemoRagService.loadAdminLedger` | `apps/api/src/rag/memorag-service.ts:3570 (MemoRagService.loadAdminLedger)` |
+| 参照 | External | `this.deps.userDirectory` | `listUsers` | `this.deps.userDirectory` へ list users を実行する。 | `MemoRagService.syncUserDirectory` | `apps/api/src/rag/memorag-service.ts:3608 (MemoRagService.syncUserDirectory)` |
+| 参照 | External | `this.deps.verifiedIdentityProvider` | `getCurrentIdentityBySubject` | `this.deps.verifiedIdentityProvider` へ get current identity by subject を実行する。 | `MemoRagService.syncUserDirectory` | `apps/api/src/rag/memorag-service.ts:3613 (MemoRagService.syncUserDirectory)` |
 
 ## 6. 応答・メッセージ
 
@@ -93,8 +93,8 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
-| 到達 symbol | service lists all Cognito directory users in the managed user ledger | `apps/api/src/rag/memorag-service.test.ts:2910 (service lists all Cognito directory users in the managed user ledger)` |
-| 到達 symbol | legacy global managed-user ledger is copied once into the configured tenant partition without deleting the source | `apps/api/src/rag/memorag-service.test.ts:3153 (legacy global managed-user ledger is copied once into the configured tenant partition without deleting the source)` |
+| 到達 symbol | service lists all Cognito directory users in the managed user ledger | `apps/api/src/rag/memorag-service.test.ts:2912 (service lists all Cognito directory users in the managed user ledger)` |
+| 到達 symbol | legacy global managed-user ledger is copied once into the configured tenant partition without deleting the source | `apps/api/src/rag/memorag-service.test.ts:3155 (legacy global managed-user ledger is copied once into the configured tenant partition without deleting the source)` |
 
 ## 8. 解析上の注意
 

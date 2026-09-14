@@ -1,6 +1,6 @@
 import { type FormEvent, type KeyboardEvent, type RefObject, useEffect, useRef } from "react"
-import { Icon } from "../../../../shared/components/Icon.js"
-import { LoadingSpinner } from "../../../../shared/components/LoadingSpinner.js"
+import { Icon } from "../../../../shared/ui/Icon.js"
+import { LoadingSpinner } from "../../../../shared/ui/LoadingSpinner.js"
 import type { DocumentManifest } from "../../types.js"
 import type { DocumentOperationState, DocumentUploadState } from "../../hooks/useDocuments.js"
 import { UploadProgressPanel } from "./DocumentDetailPanel.js"

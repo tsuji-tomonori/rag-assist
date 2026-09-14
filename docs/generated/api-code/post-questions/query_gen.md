@@ -8,7 +8,7 @@
 
 | # | CRUD/実行 | Target | Method | 自然言語での目的 | Caller | コード根拠 |
 | ---: | --- | --- | --- | --- | --- | --- |
-| 1 | 作成・追記 | `this.deps.questionStore` | `create` | `this.deps.questionStore` に対して create を実行する。 | `MemoRagService.createQuestion` | `apps/api/src/rag/memorag-service.ts:3128 (MemoRagService.createQuestion)` |
+| 1 | 作成・追記 | `this.ports.questionStore` | `create` | `this.ports.questionStore` に対して create を実行する。 | `QuestionService.create` | `apps/api/src/questions/question-service.ts:32 (QuestionService.create)` |
 
 ## 外部サービス操作
 

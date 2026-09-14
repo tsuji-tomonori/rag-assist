@@ -3,6 +3,9 @@ export { Button } from "./Button.js"
 export { StatusBadge } from "./StatusBadge.js"
 export { OperationFeedback } from "./OperationFeedback.js"
 export { ConfirmDialog } from "./ConfirmDialog.js"
+export { Icon } from "./Icon.js"
+export type { IconName } from "./Icon.js"
+export { LoadingSpinner, LoadingStatus } from "./LoadingSpinner.js"
 export { EmptyState } from "./EmptyState.js"
 export {
   ResourceStateBoundary,

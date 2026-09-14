@@ -57,7 +57,7 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 1 | `validParam` | valid param の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:24 (validParam)` |
 | 2 | `validRequest` | valid request の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:36 (validRequest)` |
 | 1 | `validJson` | valid json の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:20 (validJson)` |
-| 1 | `MemoRagService.moveDocument` | move document の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1211 (MemoRagService.moveDocument)` |
+| 1 | `MemoRagService.moveDocument` | move document の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1318 (MemoRagService.moveDocument)` |
 | 2 | `DocumentLifecycleMutationCoordinator.moveDocument` | move document の実装処理を担当する。 | `apps/api/src/documents/document-lifecycle-mutation-coordinator.ts:166 (DocumentLifecycleMutationCoordinator.moveDocument)` |
 | 1 | `isForbiddenError` | is forbidden error の実装処理を担当する。 | `apps/api/src/routes/document-routes.ts:310 (isForbiddenError)` |
 | 1 | `resourceUnavailable` | resource unavailable の実装処理を担当する。 | `apps/api/src/routes/document-routes.ts:293 (resourceUnavailable)` |

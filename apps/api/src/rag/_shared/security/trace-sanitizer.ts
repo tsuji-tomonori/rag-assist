@@ -103,6 +103,7 @@ function sanitizeDebugTrace(trace: DebugTrace, visibility: DebugTraceVisibility)
     startedAt: trace.startedAt,
     completedAt: trace.completedAt,
     totalLatencyMs: trace.totalLatencyMs,
+    firstTokenTiming: trace.firstTokenTiming,
     status: trace.status,
     isAnswerable: trace.isAnswerable,
     citations: trace.citations.map(sanitizeCitation),

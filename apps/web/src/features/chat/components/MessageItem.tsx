@@ -1,7 +1,7 @@
 import type { RefObject } from "react"
 import type { createQuestion } from "../../questions/api/questionsApi.js"
 import type { HumanQuestion, QuestionOperationOutcome } from "../../questions/types.js"
-import { Icon } from "../../../shared/components/Icon.js"
+import { Icon } from "../../../shared/ui/Icon.js"
 import type { CurrentUser } from "../../../shared/types/common.js"
 import { formatTime } from "../../../shared/utils/format.js"
 import type { Message } from "../types.js"

@@ -30,22 +30,10 @@ Step Functions / CodeBuild runner による非同期 benchmark run を起動し�
 | # | 所属関数 | 種別 | 条件の意味 | 根拠式 | 実装位置 |
 | ---: | --- | --- | --- | --- | --- |
 | B001 | `requirePermission` | if | 利用者が 指定された permission を持たない | `!hasPermission(user, permission)` | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| B002 | `MemoRagService.createBenchmarkRun` | if | `suite` が存在しない、または偽である | `!suite` | `apps/api/src/rag/memorag-service.ts:4577 (MemoRagService.createBenchmarkRun)` |
-| B003 | `MemoRagService.createBenchmarkRun` | if | `(input.mode ?? suite.mode)` が `suite.mode` と異なる | `(input.mode ?? suite.mode) !== suite.mode` | `apps/api/src/rag/memorag-service.ts:4578 (MemoRagService.createBenchmarkRun)` |
-| B004 | `MemoRagService.createBenchmarkRun` | if | `(input.runner ?? "codebuild")` が `"codebuild"` と異なる | `(input.runner ?? "codebuild") !== "codebuild"` | `apps/api/src/rag/memorag-service.ts:4579 (MemoRagService.createBenchmarkRun)` |
-| B005 | `MemoRagService.createBenchmarkRun` | 三項条件 | `input.topK` が `undefined` と等しい | `input.topK === undefined` | `apps/api/src/rag/memorag-service.ts:4599 (MemoRagService.createBenchmarkRun)` |
-| B006 | `MemoRagService.createBenchmarkRun` | 三項条件 | `suite.mode` が `"search"` と等しい | `suite.mode === "search"` | `apps/api/src/rag/memorag-service.ts:4600 (MemoRagService.createBenchmarkRun)` |
-| B007 | `MemoRagService.createBenchmarkRun` | 三項条件 | `suite.mode` が `"search"` と等しい | `suite.mode === "search"` | `apps/api/src/rag/memorag-service.ts:4603 (MemoRagService.createBenchmarkRun)` |
-| B008 | `MemoRagService.createBenchmarkRun` | if | `config.benchmarkStateMachineArn` が存在しない、または偽である | `!config.benchmarkStateMachineArn` | `apps/api/src/rag/memorag-service.ts:4616 (MemoRagService.createBenchmarkRun)` |
-| B009 | `MemoRagService.createBenchmarkRun` | catch | 例外が発生した場合に catch 処理へ移る | `err` | `apps/api/src/rag/memorag-service.ts:4625 (MemoRagService.createBenchmarkRun)` |
-| B010 | `MemoRagService.createBenchmarkRun` | 三項条件 | `permissionRevoked` が存在し、真である | `permissionRevoked` | `apps/api/src/rag/memorag-service.ts:4630 (MemoRagService.createBenchmarkRun)` |
-| B011 | `MemoRagService.createBenchmarkRun` | 三項条件 | `err` が `Error` の instance である | `err instanceof Error` | `apps/api/src/rag/memorag-service.ts:4630 (MemoRagService.createBenchmarkRun)` |
-| B012 | `MemoRagService.createBenchmarkRun` | 三項条件 | `permissionRevoked` が存在し、真である | `permissionRevoked` | `apps/api/src/rag/memorag-service.ts:4631 (MemoRagService.createBenchmarkRun)` |
-| B013 | `MemoRagService.createBenchmarkRun` | if | `permissionRevoked` が存在し、真である | `permissionRevoked` | `apps/api/src/rag/memorag-service.ts:4633 (MemoRagService.createBenchmarkRun)` |
 
 ## 4. 到達する主要実装
 
-handler を起点に TypeScript symbol を解決し、深さ 2 までの主要関数・method を列挙しています。深い helper を含む全到達関数は 28 件で、永続化・外部接続は深さにかかわらず次節へ集約しています。
+handler を起点に TypeScript symbol を解決し、深さ 2 までの主要関数・method を列挙しています。深い helper を含む全到達関数は 12 件で、永続化・外部接続は深さにかかわらず次節へ集約しています。
 
 | 深さ | Symbol | 責務 | 実装位置 |
 | ---: | --- | --- | --- |
@@ -54,30 +42,16 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 2 | `hasPermission` | has permission の実装処理を担当する。 | `apps/api/src/authorization.ts:187 (hasPermission)` |
 | 1 | `validJson` | valid json の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:20 (validJson)` |
 | 2 | `validRequest` | valid request の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:36 (validRequest)` |
-| 1 | `MemoRagService.createBenchmarkRun` | create benchmark run の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4575 (MemoRagService.createBenchmarkRun)` |
-| 2 | `createBenchmarkRunId` | create benchmark run id の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5462 (createBenchmarkRunId)` |
-| 2 | `authoritativeActorTenantId` | authoritative actor tenant id の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6090 (authoritativeActorTenantId)` |
-| 2 | `tenantPartitionId` | tenant partition id の実装処理を担当する。 | `apps/api/src/security/tenant-partition.ts:3 (tenantPartitionId)` |
-| 2 | `MemoRagService.securityResourceRefsForActor` | security resource refs for actor の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1271 (MemoRagService.securityResourceRefsForActor)` |
-| 2 | `normalizeSearchTopK` | normalize search top k の実装処理を担当する。 | `apps/api/src/chat-orchestration/runtime-policy.ts:201 (normalizeSearchTopK)` |
-| 2 | `normalizeTopK` | normalize top k の実装処理を担当する。 | `apps/api/src/chat-orchestration/runtime-policy.ts:193 (normalizeTopK)` |
-| 2 | `normalizeMemoryTopK` | normalize memory top k の実装処理を担当する。 | `apps/api/src/chat-orchestration/runtime-policy.ts:197 (normalizeMemoryTopK)` |
-| 2 | `normalizeMinScore` | normalize min score の実装処理を担当する。 | `apps/api/src/chat-orchestration/runtime-policy.ts:205 (normalizeMinScore)` |
-| 2 | `MemoRagService.authorizeBenchmarkRunBoundary` | authorize benchmark run boundary の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4972 (MemoRagService.authorizeBenchmarkRunBoundary)` |
-| 2 | `MemoRagService.startBenchmarkExecution` | start benchmark execution の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5057 (MemoRagService.startBenchmarkExecution)` |
-| 2 | `isPermissionRevokedError` | is permission revoked error の実装処理を担当する。 | `apps/api/src/security/current-worker-authorization.ts:98 (isPermissionRevokedError)` |
+| 1 | `MemoRagService.createBenchmarkRun` | create benchmark run の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4506 (MemoRagService.createBenchmarkRun)` |
+| 2 | `BenchmarkRunCreationService.create` | create の実装処理を担当する。 | `apps/api/src/benchmark/benchmark-run-creation-service.ts:57 (BenchmarkRunCreationService.create)` |
 
 ## 5. データ・外部境界
 
 | 種別 | 境界 | Target | Operation | 目的 | Caller | 実装位置 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 参照 | Store | `this.deps.groupMembershipStore` | `listByMember` | `this.deps.groupMembershipStore` に対して list by member を実行する。 | `MemoRagService.securityResourceRefsForActor` | `apps/api/src/rag/memorag-service.ts:1278 (MemoRagService.securityResourceRefsForActor)` |
-| 実行 | Store | `(await this.deps.groupMembershipStore.listByMember(tenantId, "user", actor.userId))<br>      ` | `map` | `(await this.deps.groupMembershipStore.listByMember(tenantId, "user", actor.userId))<br>      ` に対して map を実行する。 | `MemoRagService.securityResourceRefsForActor` | `apps/api/src/rag/memorag-service.ts:1278 (MemoRagService.securityResourceRefsForActor)` |
-| 参照 | Store | `this.deps.groupMembershipStore` | `listByMember` | `this.deps.groupMembershipStore` に対して list by member を実行する。 | `MemoRagService.securityResourceRefsForActor` | `apps/api/src/rag/memorag-service.ts:1286 (MemoRagService.securityResourceRefsForActor)` |
-| 作成・追記 | Store | `this.deps.benchmarkRunStore` | `create` | `this.deps.benchmarkRunStore` に対して create を実行する。 | `MemoRagService.createBenchmarkRun` | `apps/api/src/rag/memorag-service.ts:4615 (MemoRagService.createBenchmarkRun)` |
-| 参照 | External | `this.identityProvider` | `getCurrentIdentityBySubject` | `this.identityProvider` へ get current identity by subject を実行する。 | `CurrentWorkerAuthorization.assertAuthorized` | `apps/api/src/security/current-worker-authorization.ts:51 (CurrentWorkerAuthorization.assertAuthorized)` |
-| 更新 | Store | `this.deps.benchmarkRunStore` | `update` | `this.deps.benchmarkRunStore` に対して update を実行する。 | `MemoRagService.createBenchmarkRun` | `apps/api/src/rag/memorag-service.ts:4624 (MemoRagService.createBenchmarkRun)` |
-| 更新 | Store | `this.deps.benchmarkRunStore` | `update` | `this.deps.benchmarkRunStore` に対して update を実行する。 | `MemoRagService.createBenchmarkRun` | `apps/api/src/rag/memorag-service.ts:4627 (MemoRagService.createBenchmarkRun)` |
+| 作成・追記 | Store | `this.ports.benchmarkRunStore` | `create` | `this.ports.benchmarkRunStore` に対して create を実行する。 | `BenchmarkRunCreationService.create` | `apps/api/src/benchmark/benchmark-run-creation-service.ts:97 (BenchmarkRunCreationService.create)` |
+| 更新 | Store | `this.ports.benchmarkRunStore` | `update` | `this.ports.benchmarkRunStore` に対して update を実行する。 | `BenchmarkRunCreationService.create` | `apps/api/src/benchmark/benchmark-run-creation-service.ts:106 (BenchmarkRunCreationService.create)` |
+| 更新 | Store | `this.ports.benchmarkRunStore` | `update` | `this.ports.benchmarkRunStore` に対して update を実行する。 | `BenchmarkRunCreationService.create` | `apps/api/src/benchmark/benchmark-run-creation-service.ts:109 (BenchmarkRunCreationService.create)` |
 
 ## 6. 応答・メッセージ
 
@@ -90,33 +64,17 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない |
 | 例外 | `-` | `Unknown benchmark suite: ${input.suiteId}` | `suite` が存在しない、または偽である |
 | 例外 | `-` | `Suite ${suite.suiteId} does not support mode ${input.mode}` | `(input.mode ?? suite.mode)` が `suite.mode` と異なる |
-| 例外 | `-` | Only codebuild runner is supported in this version | `(input.runner ?? "codebuild")` が `"codebuild"` と異なる |
+| 例外 | `-` | Only codebuild runner is supported in this version | `(input.runner ?? this.ports.defaults.runner)` が `this.ports.defaults.runner` と異なる |
 | 例外 | `-` | Authoritative tenant is required | `normalized` が存在しない、または偽である |
-| 例外 | `-` | `Security resource ${name} is invalid` | `value` が存在しない、または偽である、または `value.trim()` が `value` と異なる |
-| 例外 | `-` | Run admission resource-group identity crossed its tenant boundary | `membership.tenantId` が `tenantId` と異なる、または `membership.memberId` が `groupId` と異なる |
-| 例外 | `-` | worker_tenant_missing | `tenantId` が存在しない、または偽である |
-| 例外 | `-` | worker_identity_not_canonical | canonical の判定結果が真ではない、または canonical の判定結果が真ではない、または canonical の判定結果が真ではない |
-| 例外 | `-` | authoritative_identity_unavailable | 例外を捕捉した場合 |
-| 例外 | `-` | account_deleted | `identity` が存在しない、または偽である |
-| 例外 | `-` | subject_mismatch | `identity.userId` が `request.subject` と異なる |
-| 例外 | `-` | account_inactive | `identity.accountStatus` が `"active"` と異なる |
-| 例外 | `-` | tenant_membership_revoked | `identity.tenantId` が `request.tenantId` と異なる |
-| 例外 | `-` | role_permission_revoked | every の判定結果が真ではない |
-| 例外 | `-` | resource_policy_revoked | `resourceAllowed` が存在しない、または偽である |
-| 例外 | `-` | authoritative_identity_provider_missing | `config.authEnabled` が存在し、真である |
-| 例外 | `-` | local_fixture_permission_missing | `config.nodeEnv` が `"test"` と異なる、かつ every の判定結果が真ではない |
-| 例外 | `-` | local_fixture_resource_policy_denied | `resourceAllowed` が存在しない、または偽である |
-| 例外 | `-` | Tenant item identifier is missing or non-canonical | `canonicalItemId` が存在しない、または偽である、または `canonicalItemId` が `itemId` と異なる |
-| 例外 | `-` | Step Functions executionArn was not returned | `response.executionArn` が存在しない、または偽である |
 
 ## 7. テスト対応
 
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
 | 到達 symbol | service preserves asynchronous chat run options and can mark worker failures | `apps/api/src/rag/memorag-service.test.ts:1744 (service preserves asynchronous chat run options and can mark worker failures)` |
-| 到達 symbol | benchmark CodeBuild log download returns the stored log URL | `apps/api/src/rag/memorag-service.test.ts:3244 (benchmark CodeBuild log download returns the stored log URL)` |
-| 到達 symbol | benchmark CodeBuild log text download uses stored log stream metadata | `apps/api/src/rag/memorag-service.test.ts:3262 (benchmark CodeBuild log text download uses stored log stream metadata)` |
-| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:3469 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
+| 到達 symbol | benchmark CodeBuild log download returns the stored log URL | `apps/api/src/rag/memorag-service.test.ts:3246 (benchmark CodeBuild log download returns the stored log URL)` |
+| 到達 symbol | benchmark CodeBuild log text download uses stored log stream metadata | `apps/api/src/rag/memorag-service.test.ts:3264 (benchmark CodeBuild log text download uses stored log stream metadata)` |
+| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:3471 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
 
 ## 8. 解析上の注意
 

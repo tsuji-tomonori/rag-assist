@@ -75,13 +75,12 @@ test('status primitive exposes a non-color marker and representative views do no
 })
 
 test('confirmation dialogs share native focus semantics and semantic Button intents', async () => {
-  const [componentDialog, uiDialog, button] = await Promise.all([
-    read('apps/web/src/shared/components/ConfirmDialog.tsx'),
+  const [uiDialog, button] = await Promise.all([
     read('apps/web/src/shared/ui/ConfirmDialog.tsx'),
     read('apps/web/src/shared/ui/Button.tsx')
   ])
 
-  for (const dialog of [componentDialog, uiDialog]) {
+  for (const dialog of [uiDialog]) {
     assert.match(dialog, /role="dialog"/)
     assert.match(dialog, /aria-modal="true"/)
     assert.match(dialog, /aria-busy=\{busy\}/)
@@ -89,6 +88,7 @@ test('confirmation dialogs share native focus semantics and semantic Button inte
     assert.match(dialog, /<Button/)
     assert.doesNotMatch(dialog, /confirm-dialog-primary/)
   }
+  await assert.rejects(read('apps/web/src/shared/components/ConfirmDialog.tsx'), { code: 'ENOENT' })
   assert.match(button, /"warning"/)
   assert.match(button, /"danger"/)
 })
@@ -97,7 +97,9 @@ test('AppShell keeps primary navigation outside the single main landmark', async
   const shell = await read('apps/web/src/app/AppShell.tsx')
 
   assert.match(shell, /<div className="app-frame">/)
-  assert.match(shell, /<main className="main-area">/)
+  assert.match(shell, /<main className="main-area"[^>]*>/)
+  assert.match(shell, /href="#main-content"/)
+  assert.match(shell, /id="main-content"/)
   assert.doesNotMatch(shell, /<main className="app-frame">/)
 })
 

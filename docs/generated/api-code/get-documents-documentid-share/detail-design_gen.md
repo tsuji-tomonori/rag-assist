@@ -41,7 +41,7 @@
 | B002 | `GET /documents/{documentId}/share handler` | if | is forbidden error の判定結果が真である | `isForbiddenError(err)` | `apps/api/src/routes/document-routes.ts:888 (GET /documents/{documentId}/share handler)` |
 | B003 | `GET /documents/{documentId}/share handler` | if | `err` が `Error` の instance である、かつ `err.message` が "ENOENT" を含む、または `err.message` が "NoSuchKey" を含む | `err instanceof Error && (err.message.includes("ENOENT") \|\| err.message.includes("NoSuchKey"))` | `apps/api/src/routes/document-routes.ts:889 (GET /documents/{documentId}/share handler)` |
 | B004 | `requirePermission` | if | 利用者が 指定された permission を持たない | `!hasPermission(user, permission)` | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| B005 | `MemoRagService.getDocumentShareInfo` | if | can share document の判定結果が真ではない | `!canShareDocument(effectivePermission, actor)` | `apps/api/src/rag/memorag-service.ts:1181 (MemoRagService.getDocumentShareInfo)` |
+| B005 | `MemoRagService.getDocumentShareInfo` | if | can share document の判定結果が真ではない | `!canShareDocument(effectivePermission, actor)` | `apps/api/src/rag/memorag-service.ts:1288 (MemoRagService.getDocumentShareInfo)` |
 
 ## 4. 到達する主要実装
 
@@ -54,10 +54,10 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 2 | `hasPermission` | has permission の実装処理を担当する。 | `apps/api/src/authorization.ts:187 (hasPermission)` |
 | 1 | `validParam` | valid param の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:24 (validParam)` |
 | 2 | `validRequest` | valid request の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:36 (validRequest)` |
-| 1 | `MemoRagService.getDocumentShareInfo` | get document share info の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1177 (MemoRagService.getDocumentShareInfo)` |
-| 2 | `authoritativeActorTenantId` | authoritative actor tenant id の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6090 (authoritativeActorTenantId)` |
-| 2 | `forbiddenError` | forbidden error の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6484 (forbiddenError)` |
-| 2 | `MemoRagService.getManifest` | get manifest の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3937 (MemoRagService.getManifest)` |
+| 1 | `MemoRagService.getDocumentShareInfo` | get document share info の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1284 (MemoRagService.getDocumentShareInfo)` |
+| 2 | `authoritativeActorTenantId` | authoritative actor tenant id の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5700 (authoritativeActorTenantId)` |
+| 2 | `forbiddenError` | forbidden error の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6061 (forbiddenError)` |
+| 2 | `MemoRagService.getManifest` | get manifest の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4030 (MemoRagService.getManifest)` |
 | 2 | `DocumentPermissionService.resolveEffectiveDocumentPermission` | resolve effective document permission の実装処理を担当する。 | `apps/api/src/documents/document-permission-service.ts:122 (DocumentPermissionService.resolveEffectiveDocumentPermission)` |
 | 2 | `canShareDocument` | can share document の実装処理を担当する。 | `apps/api/src/documents/document-permission-service.ts:819 (canShareDocument)` |
 | 2 | `DocumentPermissionService.getShareInfo` | get share info の実装処理を担当する。 | `apps/api/src/documents/document-permission-service.ts:107 (DocumentPermissionService.getShareInfo)` |

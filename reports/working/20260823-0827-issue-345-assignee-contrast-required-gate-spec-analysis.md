@@ -1,0 +1,77 @@
+# Issue #345 assignee contrast required gate 仕様分析
+
+## Input inventory
+
+- current `main@8e542b31`: Git repository、confirmed
+- Draft PR #462 head `2e7933cc`: GitHub / Git、confirmed
+- Issue #345、open PR / Issue、`tasks/todo/`・`tasks/do/`: GitHub / repository、confirmed
+- `SQ-016`、`DES_UI_UX_001`: canonical requirement / design、confirmed
+- authored UI trace / quality matrix、generated Web docs: machine-readable source / generated evidence、confirmed
+- required Chromium / Firefox / WebKit E2E sourceとworkflow: executable verification source、confirmed
+
+## Report facts
+
+### confirmed
+
+- #341〜#344はmainへ統合済みで、current mainに対する追加競合はない。
+- PR #462はDraft・mergeableで、current mainに対してbehind 0のUI evidence stackである。
+- open PR #461はshared UI primitiveと一部production UIを所有するため、同じproduction pathの編集は競合リスクがある。
+- `AC-SQ016-004`はnormal text 4.5:1、large text / meaningful non-text UI / focus indicator 3:1、color independenceを要求する。
+- 8画面共通auditは1280pxのaxe serious / critical violationをfailさせるが、担当者対応のquality matrixは`automated: blocked`である。
+- 担当者対応にはkeyboard focus幅、state semantics、HTTP 403 private-content suppressionの個別証跡があるが、contrast acceptanceへ束ねるstable E2E IDがない。
+- 自動証跡で未完了の`AC-SQ016-004`は担当者対応、文書、個人設定に残り、個人設定の状態契約はFR-051 owner判断待ちである。
+
+### inferred
+
+- owner判断を要しない担当者対応contrastのpositive evidence追加が、既存作業と重複せず、#461とのproduction競合も避けられる最小の優先改善である。
+- full-screen axe absenceだけではfocus indicatorの実computed比率と色非依存cueを説明できないため、screen-specific E2E contractが必要である。
+
+### conflict
+
+- なし。要求閾値は変更せず、正本は`SQ-016`と`DES_UI_UX_001`、machine-readable joinはauthored trace / matrixに限定する。
+- generated docsは正規generator出力とし、独立した並行正本を作らない。
+
+### open_question
+
+- representative screen reader、manual perception、実browser 200% / 400% zoom、text-only zoom、OS scaling、touch / real deviceは未実施。
+- Firefox / WebKitでの担当者対応contrast固有検査は今回のbounded slice外。
+- documents / profileの`AC-SQ016-004`は後続作業。
+- FR-051永続化、OQ-UI-002、API C1 85%はownerまたは別taskの判断待ち。
+
+## Candidate tasks
+
+1. 担当者対応のcontrast positive evidenceをrequired Chromium gateへ追加する: 採用。
+2. 文書画面のcontrast evidenceを追加する: 有効だが、担当者対応の既存permission / focus証跡のほうが小さいため後続。
+3. 個人設定のcontrast evidenceを追加する: FR-051 owner判断と状態境界が残るため後続。
+
+## Acceptance criteria
+
+- 320 / 1280 CSS pxの担当者対応regionでaxe `color-contrast` violation 0。
+- 検索入力の実computed focus indicatorがsolid 3px以上、背景比3:1以上。
+- HTTP 403で可視案内、`role=alert`、private kanban suppressionを同時に検証。
+- `assignee → SQ-016 → AC-SQ016-004 → E2E-UI-CONTRAST-002`を正本・authored source・生成物で追跡。
+- manual / overallと他画面の未検証statusをblockedのまま維持。
+
+## E2E and non-UI scenarios
+
+- `E2E-UI-CONTRAST-002`: 320 / 1280 CSS pxの担当者対応text・focus contrastとHTTP 403の複数cueをChromiumで検証し、JSON evidenceを添付する。
+- `NONUI-UI-TRACE-001/002`: requirement / AC / verification / evidenceの参照整合性と生成物freshnessを検証する。
+- `NONUI-UI-QUALITY-MATRIX-001〜003`: automated passをmanual passへ誤変換せずoverall blockedを維持する。
+
+## Operation and expectation groups
+
+- 表示: 担当者対応へ遷移 → regionが可視 → text contrast違反0。
+- focus: 検索入力へfocus → 3px solid outline → 背景比3:1以上。
+- permission: `/questions` GETが403 → 可視alert → private kanbanなし → contrast違反0。
+- trace: authored trace / matrix更新 → 正規generator → generated docs一致。
+
+## 採用した追跡
+
+`assignee → SQ-016 → AC-SQ016-004 → E2E-UI-CONTRAST-002 → apps/web/e2e/visual-regression.spec.ts → Web UI Quality Chromium required`
+
+## 証跡境界
+
+- axe `color-contrast`: 320 / 1280 CSS pxの担当者対応region text contrast
+- computed style: 検索入力focus indicatorのstyle / width / foreground / background / ratio
+- multiple cues: permission案内の可視text、`role=alert`、private kanban suppression
+- 非対象: manual / representative assistive technology / real browser zoom / OS scaling / real device

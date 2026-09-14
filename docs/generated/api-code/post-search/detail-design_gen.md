@@ -30,11 +30,11 @@ lexical / vector / RRF を組み合わせた検索結果と診断情報を返し
 | # | 所属関数 | 種別 | 条件の意味 | 根拠式 | 実装位置 |
 | ---: | --- | --- | --- | --- | --- |
 | B001 | `requirePermission` | if | 利用者が 指定された permission を持たない | `!hasPermission(user, permission)` | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| B002 | `MemoRagService.search` | 三項条件 | `input.conversationId` が存在し、真である | `input.conversationId` | `apps/api/src/rag/memorag-service.ts:3116 (MemoRagService.search)` |
+| B002 | `MemoRagService.search` | 三項条件 | `input.conversationId` が存在し、真である | `input.conversationId` | `apps/api/src/rag/memorag-service.ts:3223 (MemoRagService.search)` |
 
 ## 4. 到達する主要実装
 
-handler を起点に TypeScript symbol を解決し、深さ 2 までの主要関数・method を列挙しています。深い helper を含む全到達関数は 339 件で、永続化・外部接続は深さにかかわらず次節へ集約しています。
+handler を起点に TypeScript symbol を解決し、深さ 2 までの主要関数・method を列挙しています。深い helper を含む全到達関数は 340 件で、永続化・外部接続は深さにかかわらず次節へ集約しています。
 
 | 深さ | Symbol | 責務 | 実装位置 |
 | ---: | --- | --- | --- |
@@ -43,16 +43,16 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 2 | `hasPermission` | has permission の実装処理を担当する。 | `apps/api/src/authorization.ts:187 (hasPermission)` |
 | 1 | `validJson` | valid json の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:20 (validJson)` |
 | 2 | `validRequest` | valid request の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:36 (validRequest)` |
-| 1 | `MemoRagService.search` | search の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3113 (MemoRagService.search)` |
-| 2 | `MemoRagService.normalizeChatInputSessionEvidence` | normalize chat input session evidence の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5203 (MemoRagService.normalizeChatInputSessionEvidence)` |
-| 2 | `MemoRagService.assertSearchScopeReadable` | assert search scope readable の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1262 (MemoRagService.assertSearchScopeReadable)` |
+| 1 | `MemoRagService.search` | search の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3220 (MemoRagService.search)` |
+| 2 | `MemoRagService.normalizeChatInputSessionEvidence` | normalize chat input session evidence の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4902 (MemoRagService.normalizeChatInputSessionEvidence)` |
+| 2 | `MemoRagService.assertSearchScopeReadable` | assert search scope readable の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1369 (MemoRagService.assertSearchScopeReadable)` |
 | 2 | `searchRag` | search rag の実装処理を担当する。 | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:217 (searchRag)` |
 
 ## 5. データ・外部境界
 
 | 種別 | 境界 | Target | Operation | 目的 | Caller | 実装位置 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 参照 | Store | `this.deps.conversationHistoryStore` | `get` | `this.deps.conversationHistoryStore` に対して get を実行する。 | `MemoRagService.normalizeChatInputSessionEvidence` | `apps/api/src/rag/memorag-service.ts:5206 (MemoRagService.normalizeChatInputSessionEvidence)` |
+| 参照 | Store | `this.deps.conversationHistoryStore` | `get` | `this.deps.conversationHistoryStore` に対して get を実行する。 | `MemoRagService.normalizeChatInputSessionEvidence` | `apps/api/src/rag/memorag-service.ts:4905 (MemoRagService.normalizeChatInputSessionEvidence)` |
 | 参照 | Store | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `readTenantManifest` | `apps/api/src/rag/_shared/storage/tenant-artifacts.ts:83 (readTenantManifest)` |
 | 参照 | Store | `this.deps.documentGroupStore` | `list` | `this.deps.documentGroupStore` に対して list を実行する。 | `FolderPermissionService.resolveEffectiveFolderPermissionDetail` | `apps/api/src/folders/folder-permission-service.ts:145 (FolderPermissionService.resolveEffectiveFolderPermissionDetail)` |
 | 参照 | Store | `this.deps.userGroupStore` | `get` | `this.deps.userGroupStore` に対して get を実行する。 | `FolderPermissionService.resolveUserMembershipPermission` | `apps/api/src/folders/folder-permission-service.ts:780 (FolderPermissionService.resolveUserMembershipPermission)` |
@@ -79,12 +79,12 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 参照 | Store | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `loadPublicationPointer` | `apps/api/src/rag/_shared/publication/staged-publication-coordinator.ts:1809 (loadPublicationPointer)` |
 | 参照 | Store | `objectStore` | `getTextWithVersion` | `objectStore` に対して get text with version を実行する。 | `readVersionedRecord` | `apps/api/src/rag/offline/pre-retrieval/admission/source-governance-approval-service.ts:1066 (readVersionedRecord)` |
 | 実行 | Store | `new ProductionRagObservationProducer(input.objectStore)<br>        ` | `captureEligibilityProbeOnce` | `new ProductionRagObservationProducer(input.objectStore)<br>        ` に対して capture eligibility probe once を実行する。 | `currentEligibilitySnapshotFromAuthoritativeState` | `apps/api/src/rag/_shared/security/current-rag-eligibility.ts:246 (currentEligibilitySnapshotFromAuthoritativeState)` |
-| 参照 | Store | `this.objectStore` | `getTextWithVersion` | `this.objectStore` に対して get text with version を実行する。 | `ProductionRagObservationProducer.captureEligibilityProbeOnce` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:613 (ProductionRagObservationProducer.captureEligibilityProbeOnce)` |
-| 作成・追記 | Store | `this.objectStore` | `putTextIfVersion` | `this.objectStore` に対して put text if version を実行する。 | `ProductionRagObservationProducer.captureEligibilityProbeOnce` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:632 (ProductionRagObservationProducer.captureEligibilityProbeOnce)` |
-| 参照 | Store | `this.objectStore` | `getTextWithVersion` | `this.objectStore` に対して get text with version を実行する。 | `ProductionRagObservationProducer.captureEligibilityProbeOnce` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:636 (ProductionRagObservationProducer.captureEligibilityProbeOnce)` |
-| 参照 | Store | `this.objectStore` | `getText` | `this.objectStore` に対して get text を実行する。 | `ProductionRagObservationProducer.loadActivePolicy` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:783 (ProductionRagObservationProducer.loadActivePolicy)` |
-| 作成・追記 | Store | `this.objectStore` | `putText` | `this.objectStore` に対して put text を実行する。 | `ProductionRagObservationProducer.persistSample` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:762 (ProductionRagObservationProducer.persistSample)` |
-| 作成・追記 | Store | `this.objectStore` | `putTextIfVersion` | `this.objectStore` に対して put text if version を実行する。 | `ProductionRagObservationProducer.captureEligibilityProbeOnce` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:656 (ProductionRagObservationProducer.captureEligibilityProbeOnce)` |
+| 参照 | Store | `this.objectStore` | `getTextWithVersion` | `this.objectStore` に対して get text with version を実行する。 | `ProductionRagObservationProducer.captureEligibilityProbeOnce` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:665 (ProductionRagObservationProducer.captureEligibilityProbeOnce)` |
+| 作成・追記 | Store | `this.objectStore` | `putTextIfVersion` | `this.objectStore` に対して put text if version を実行する。 | `ProductionRagObservationProducer.captureEligibilityProbeOnce` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:684 (ProductionRagObservationProducer.captureEligibilityProbeOnce)` |
+| 参照 | Store | `this.objectStore` | `getTextWithVersion` | `this.objectStore` に対して get text with version を実行する。 | `ProductionRagObservationProducer.captureEligibilityProbeOnce` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:688 (ProductionRagObservationProducer.captureEligibilityProbeOnce)` |
+| 参照 | Store | `this.objectStore` | `getText` | `this.objectStore` に対して get text を実行する。 | `ProductionRagObservationProducer.loadActivePolicy` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:837 (ProductionRagObservationProducer.loadActivePolicy)` |
+| 作成・追記 | Store | `this.objectStore` | `putText` | `this.objectStore` に対して put text を実行する。 | `ProductionRagObservationProducer.persistSample` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:816 (ProductionRagObservationProducer.persistSample)` |
+| 作成・追記 | Store | `this.objectStore` | `putTextIfVersion` | `this.objectStore` に対して put text if version を実行する。 | `ProductionRagObservationProducer.captureEligibilityProbeOnce` | `apps/api/src/rag/quality-control/production-rag-observation-producer.ts:708 (ProductionRagObservationProducer.captureEligibilityProbeOnce)` |
 | 参照 | Store | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `loadPublishedAliasArtifact` | `apps/api/src/search/alias-artifacts.ts:19 (loadPublishedAliasArtifact)` |
 | 参照 | Store | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `loadPublishedAliasArtifact` | `apps/api/src/search/alias-artifacts.ts:21 (loadPublishedAliasArtifact)` |
 | 参照 | Store | `deps.objectStore` | `getText` | `deps.objectStore` に対して get text を実行する。 | `loadLexicalIndexArtifact` | `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts:1555 (loadLexicalIndexArtifact)` |
@@ -150,6 +150,7 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 例外 | `-` | `Unknown RAG quality signal: ${signalId}` | `RAG_REQUIRED_SIGNAL_IDS` が signalId as RagQualitySignalId を含まない |
 | 例外 | `-` | `Available RAG quality measurement is incomplete: ${signalId}` | is integer の判定結果が真ではない、または `item.sampleCount` が `0` より小さい、または `item.available` が存在し、真である、かつ `item.value` が `null` と等しい、または is finite の判定結果が真ではない、または `item.sampleCount` が `1` より小さい、または `item.confidence` が `null` と等しい、または `item.confidence` が `0` より小さい、または `item.confidence` が `1` より大きい |
 | 例外 | `-` | `Unavailable RAG quality measurement must not contain a value: ${signalId}` | `item.available` が存在しない、または偽である、かつ `item.value` が `null` と異なる、または `item.confidence` が `null` と異なる |
+| 例外 | `-` | `Unknown RAG diagnostic measurement: ${signalId}` | `["retrieval.context_relevance", "evaluation.artifact_failure_count", "evaluation.run_timed_out", "performance.chat_first_token_p50_ms", "performance.chat_first_token_p95_ms", "performance.chat_first_token_p99_ms"]` が signalId を含まない |
 | ログ | `-` | RAG quality source sample was not recorded | `result.skippedReason` が存在し、真である、かつ `process.env.RAG_MONITORING_REQUIRED` が `"1"` と等しい |
 | ログ | `-` | RAG quality source sample persistence failed | 例外を捕捉した場合 |
 | 例外 | `-` | Lexical cache fallback blocked because mandatory guard outcomes were not observed | `artifactLoad.degradationDecision?.action` が `"fail"` と等しい |

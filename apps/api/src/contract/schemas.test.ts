@@ -1,6 +1,6 @@
 import assert from "node:assert/strict"
 import test from "node:test"
-import { ChatRequestSchema, ChatResponseSchema, ConversationHistoryItemSchema, DebugTraceSchema, DocumentIngestRunSchema, DocumentUploadRequestSchema, SearchRequestSchema, SearchResponseSchema, WorkerEventSchema, WorkerResultSchema } from "../schemas.js"
+import { ChatRequestSchema, ChatResponseSchema, ConversationHistoryItemSchema, DebugTraceSchema, DocumentIngestRunSchema, DocumentUploadRequestSchema, SearchRequestSchema, SearchResponseSchema, WorkerEventSchema, WorkerResultSchema, BenchmarkArtifactIntegritySchema, BenchmarkRunMetricsSchema, BenchmarkRunSchema } from "../schemas.js"
 
 test("MT-TEMP-001-006 search scope keeps single compatibility and rejects more than 20 temporary scopes", () => {
   const compatible = ChatRequestSchema.safeParse({
@@ -14,6 +14,47 @@ test("MT-TEMP-001-006 search scope keeps single compatibility and rejects more t
     conversationId: "conversation-1",
     scope: { temporaryScopeIds: Array.from({ length: 21 }, (_, index) => `tmp-${index}`) }
   }).success, false)
+})
+
+test("FR-048 benchmark run schema exposes timeout and exact artifact integrity", () => {
+  const integrity = {
+    schemaVersion: 1,
+    status: "partial_failure",
+    availableCount: 2,
+    failureCount: 2,
+    artifacts: [
+      { kind: "results", status: "available" },
+      { kind: "summary", status: "available" },
+      { kind: "report", status: "generation_failed", failureReason: "report_not_generated" },
+      { kind: "release_audit", status: "upload_failed", failureReason: "release_audit_upload_failed" }
+    ]
+  }
+  assert.equal(BenchmarkArtifactIntegritySchema.safeParse(integrity).success, true)
+  assert.equal(BenchmarkArtifactIntegritySchema.safeParse({ ...integrity, failureCount: 1 }).success, false)
+  assert.equal(BenchmarkArtifactIntegritySchema.safeParse({
+    ...integrity,
+    artifacts: integrity.artifacts.map((artifact) => ({ ...artifact, kind: "results" }))
+  }).success, false)
+  assert.equal(BenchmarkRunSchema.safeParse({
+    runId: "benchmark-timeout-1",
+    status: "timed_out",
+    mode: "agent",
+    runner: "codebuild",
+    suiteId: "standard-agent-v1",
+    datasetS3Key: "datasets/standard.jsonl",
+    createdBy: "quality-owner",
+    createdAt: "2026-07-17T00:00:00.000Z",
+    updatedAt: "2026-07-17T04:00:00.000Z",
+    artifactIntegrity: integrity
+  }).success, true)
+})
+
+test("FR-019 benchmark run metrics bound context relevance and its evidence count", () => {
+  const base = { total: 1, succeeded: 1, failedHttp: 0 }
+  assert.equal(BenchmarkRunMetricsSchema.safeParse({ ...base, faithfulness: 0.75, contextRelevance: 0.5, contextRelevanceSampleCount: 4 }).success, true)
+  assert.equal(BenchmarkRunMetricsSchema.safeParse({ ...base, faithfulness: -0.1 }).success, false)
+  assert.equal(BenchmarkRunMetricsSchema.safeParse({ ...base, contextRelevance: 1.1, contextRelevanceSampleCount: 4 }).success, false)
+  assert.equal(BenchmarkRunMetricsSchema.safeParse({ ...base, contextRelevance: 0.5, contextRelevanceSampleCount: -1 }).success, false)
 })
 
 test("document metadata schema accepts recursive JSON alias metadata", () => {
@@ -324,7 +365,7 @@ test("conversation history schema accepts optional multi-turn state fields", () 
 
   assert.equal(result.success, true)
   if (!result.success) return
-  assert.equal(result.data.schemaVersion, 3)
+  assert.equal(result.data.schemaVersion, 1)
   assert.equal(result.data.decontextualizedQuery?.turnDependency, "follow_up")
   assert.equal(result.data.sessionDocumentContext?.schemaVersion, 1)
 })

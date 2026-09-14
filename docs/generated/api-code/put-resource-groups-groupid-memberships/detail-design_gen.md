@@ -56,8 +56,8 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 1 | `validParam` | valid param の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:24 (validParam)` |
 | 2 | `validRequest` | valid request の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:36 (validRequest)` |
 | 1 | `validJson` | valid json の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:20 (validJson)` |
-| 1 | `MemoRagService.replaceResourceGroupMemberships` | replace resource group memberships の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:450 (MemoRagService.replaceResourceGroupMemberships)` |
-| 2 | `MemoRagService.resourceGroupMembershipService` | resource group membership service の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3806 (MemoRagService.resourceGroupMembershipService)` |
+| 1 | `MemoRagService.replaceResourceGroupMemberships` | replace resource group memberships の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:557 (MemoRagService.replaceResourceGroupMemberships)` |
+| 2 | `MemoRagService.resourceGroupMembershipService` | resource group membership service の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3899 (MemoRagService.resourceGroupMembershipService)` |
 | 2 | `ResourceGroupMembershipService.replaceMemberships` | replace memberships の実装処理を担当する。 | `apps/api/src/security/resource-group-membership-service.ts:113 (ResourceGroupMembershipService.replaceMemberships)` |
 | 1 | `publicMembershipState` | public membership state の実装処理を担当する。 | `apps/api/src/routes/resource-group-routes.ts:399 (publicMembershipState)` |
 

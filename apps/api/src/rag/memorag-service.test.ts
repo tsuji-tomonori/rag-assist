@@ -1765,6 +1765,8 @@ test("service preserves asynchronous chat run options and can mark worker failur
 
   const benchmarkRun = await service.createBenchmarkRun(user, { minScore: 2 })
   assert.equal(benchmarkRun.minScore, 1)
+  assert.match(benchmarkRun.releaseAuditS3Key ?? "", /release-audit\.json$/)
+  assert.equal(benchmarkRun.artifactIntegrity, undefined)
   const mmragSuite = service.listBenchmarkSuites().find((suite) => suite.suiteId === "mmrag-docqa-v1")
   assert.deepEqual(mmragSuite, {
     suiteId: "mmrag-docqa-v1",
@@ -3587,7 +3589,25 @@ test("service covers admin defaults, alias misses, terminal async runs, and benc
   assert.equal(await service.cancelBenchmarkRun(chatUser, "missing-benchmark-run"), undefined)
   assert.equal((await service.cancelBenchmarkRun(chatUser, searchRun.runId))?.status, "cancelled")
   assert.equal(await service.createBenchmarkArtifactDownloadUrl(chatUser, searchRun.runId, "logs"), undefined)
-  await assert.rejects(() => service.createBenchmarkArtifactDownloadUrl(chatUser, searchRun.runId, "summary"), /BENCHMARK_BUCKET_NAME/)
+  assert.equal(await service.createBenchmarkArtifactDownloadUrl(chatUser, searchRun.runId, "summary"), undefined)
+  const timedOutRun = await deps.benchmarkRunStore.update("default", searchRun.runId, {
+    status: "timed_out",
+    completedAt: "2026-07-17T04:00:00.000Z",
+    artifactIntegrity: {
+      schemaVersion: 1,
+      status: "partial_failure",
+      availableCount: 1,
+      failureCount: 3,
+      artifacts: [
+        { kind: "results", status: "available" },
+        { kind: "summary", status: "upload_failed", failureReason: "summary_upload_failed" },
+        { kind: "report", status: "generation_failed", failureReason: "report_not_generated" },
+        { kind: "release_audit", status: "generation_failed", failureReason: "release_audit_not_generated" }
+      ]
+    }
+  })
+  assert.equal((await service.cancelBenchmarkRun(chatUser, timedOutRun.runId))?.status, "timed_out")
+  assert.equal(await service.createBenchmarkArtifactDownloadUrl(chatUser, timedOutRun.runId, "summary"), undefined)
   assert.equal(await service.getBenchmarkCodeBuildLogText(chatUser, searchRun.runId), undefined)
 })
 

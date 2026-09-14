@@ -76,6 +76,8 @@ import {
   parseConfiguredRagGuardProfile,
   type RagGuardProfile
 } from "./rag/_shared/security/safe-degradation-policy.js"
+import { DynamoDbWebSocketTicketStore } from "./adapters/dynamodb-websocket-ticket-store.js"
+import type { WebSocketTicketStore } from "./adapters/websocket-ticket-store.js"
 
 export type Dependencies = {
   /** Strictly parsed fail-closed guard configuration used by RAG runtime entry points. */
@@ -92,6 +94,8 @@ export type Dependencies = {
   questionStore: QuestionStore
   conversationHistoryStore: ConversationHistoryStore
   favoriteStore: FavoriteStore
+  /** Production is always configured; optional only for isolated legacy test fixtures. */
+  webSocketTicketStore?: WebSocketTicketStore
   benchmarkRunStore: BenchmarkRunStore
   chatRunStore: ChatRunStore
   chatRunEventStore: ChatRunEventStore
@@ -152,6 +156,7 @@ export function createDependencies(): Dependencies {
   const questionStore = useLegacyLocalStoresForTests ? new LocalQuestionStore(config.localDataDir) : new DynamoDbQuestionStore(config.questionTableName)
   const conversationHistoryStore = useLegacyLocalStoresForTests ? new LocalConversationHistoryStore(config.localDataDir) : new DynamoDbConversationHistoryStore(config.conversationHistoryTableName)
   const favoriteStore = useLegacyLocalStoresForTests ? new LocalFavoriteStore(config.localDataDir) : new DynamoDbFavoriteStore(config.favoritesTableName)
+  const webSocketTicketStore = new DynamoDbWebSocketTicketStore(config.webSocketTicketsTableName)
   const activeRunAuthorizationIndex = new DynamoDbActiveRunAuthorizationIndex(config.activeRunAuthorizationIndexTableName)
   const benchmarkRunStore = config.useLocalBenchmarkRunStore
     ? new LocalBenchmarkRunStore(config.localDataDir)
@@ -197,7 +202,7 @@ export function createDependencies(): Dependencies {
     : undefined
   const securityAuditOutbox = new ObjectStoreSecurityMutationAuditOutbox(objectStore)
 
-  cached = { ragGuardProfile, objectStore, benchmarkArtifactStore, memoryVectorStore, evidenceVectorStore, textModel, usageEventStore, usageAccountingMode: config.usageAccountingMode, usagePricingCatalog, questionStore, conversationHistoryStore, favoriteStore, benchmarkRunStore, chatRunStore, chatRunEventStore, documentIngestRunStore, documentIngestRunEventStore, documentGroupStore, folderPolicyStore, userGroupStore, groupMembershipStore, codeBuildLogReader, asyncAgentProviders, userDirectory, verifiedIdentityProvider, accountRevocationRegistry, administrativePrincipalTransferFence, resourceUserPrincipalDirectory, securityAuditOutbox, securityAuditReconciliationOutbox: securityAuditOutbox }
+  cached = { ragGuardProfile, objectStore, benchmarkArtifactStore, memoryVectorStore, evidenceVectorStore, textModel, usageEventStore, usageAccountingMode: config.usageAccountingMode, usagePricingCatalog, questionStore, conversationHistoryStore, favoriteStore, webSocketTicketStore, benchmarkRunStore, chatRunStore, chatRunEventStore, documentIngestRunStore, documentIngestRunEventStore, documentGroupStore, folderPolicyStore, userGroupStore, groupMembershipStore, codeBuildLogReader, asyncAgentProviders, userDirectory, verifiedIdentityProvider, accountRevocationRegistry, administrativePrincipalTransferFence, resourceUserPrincipalDirectory, securityAuditOutbox, securityAuditReconciliationOutbox: securityAuditOutbox }
   return cached
 }
 

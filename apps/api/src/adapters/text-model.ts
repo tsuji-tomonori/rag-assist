@@ -5,6 +5,8 @@ export type GenerateOptions = {
   maxTokens?: number
   usageTask?: "clue" | "finalAnswer" | "sufficientContext" | "retrievalJudge" | "answerSupport" | "answerRepair" | "memoryCard"
   onUsage?: (usage: TextModelTokenUsage) => void
+  /** Called once for the first non-empty provider content delta. */
+  onFirstToken?: () => void
 }
 
 export type EmbedOptions = {

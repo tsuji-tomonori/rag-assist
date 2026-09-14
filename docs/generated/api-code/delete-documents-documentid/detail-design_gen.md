@@ -66,7 +66,7 @@
 | B013 | `authorizeDocumentDelete` | if | 利用者が "benchmark:seed_corpus" permission を持たない | `!hasPermission(user, "benchmark:seed_corpus")` | `apps/api/src/routes/benchmark-seed.ts:410 (authorizeDocumentDelete)` |
 | B014 | `authorizeDocumentDelete` | catch | 例外が発生した場合に catch 処理へ移る | `error` | `apps/api/src/routes/benchmark-seed.ts:416 (authorizeDocumentDelete)` |
 | B015 | `authorizeDocumentDelete` | if | is benchmark seed document manifest の判定結果が真ではない、かつ 「`deletionRetry` が存在し、真である、かつ is benchmark seed document identity の判定結果が真である」ではない | `!isBenchmarkSeedDocumentManifest(manifest) && !(deletionRetry && isBenchmarkSeedDocumentIdentity(manifest))` | `apps/api/src/routes/benchmark-seed.ts:420 (authorizeDocumentDelete)` |
-| B016 | `MemoRagService.getBenchmarkDocumentManifest` | if | `tenantId` が存在しない、または偽である | `!tenantId` | `apps/api/src/rag/memorag-service.ts:950 (MemoRagService.getBenchmarkDocumentManifest)` |
+| B016 | `MemoRagService.getBenchmarkDocumentManifest` | if | `tenantId` が存在しない、または偽である | `!tenantId` | `apps/api/src/rag/memorag-service.ts:1057 (MemoRagService.getBenchmarkDocumentManifest)` |
 | B017 | `stringValue` | 三項条件 | `typeof value` が `"string"` と等しい | `typeof value === "string"` | `apps/api/src/routes/document-routes.ts:450 (stringValue)` |
 
 ## 4. 到達する主要実装
@@ -83,15 +83,15 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 1 | `hasPermission` | has permission の実装処理を担当する。 | `apps/api/src/authorization.ts:187 (hasPermission)` |
 | 2 | `isActiveAccount` | is active account の実装処理を担当する。 | `apps/api/src/authorization.ts:191 (isActiveAccount)` |
 | 2 | `getPermissionsForGroups` | get permissions for groups の実装処理を担当する。 | `apps/api/src/authorization.ts:106 (getPermissionsForGroups)` |
-| 2 | `MemoRagService.getDocumentManifest` | get document manifest の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:944 (MemoRagService.getDocumentManifest)` |
-| 2 | `MemoRagService.getManifest` | get manifest の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:3937 (MemoRagService.getManifest)` |
+| 2 | `MemoRagService.getDocumentManifest` | get document manifest の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1051 (MemoRagService.getDocumentManifest)` |
+| 2 | `MemoRagService.getManifest` | get manifest の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4030 (MemoRagService.getManifest)` |
 | 2 | `isDocumentDeletionTombstone` | is document deletion tombstone の実装処理を担当する。 | `apps/api/src/routes/benchmark-seed.ts:425 (isDocumentDeletionTombstone)` |
-| 2 | `MemoRagService.assertDocumentWritable` | assert document writable の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:976 (MemoRagService.assertDocumentWritable)` |
-| 1 | `MemoRagService.getBenchmarkDocumentManifest` | get benchmark document manifest の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:948 (MemoRagService.getBenchmarkDocumentManifest)` |
+| 2 | `MemoRagService.assertDocumentWritable` | assert document writable の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1083 (MemoRagService.assertDocumentWritable)` |
+| 1 | `MemoRagService.getBenchmarkDocumentManifest` | get benchmark document manifest の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1055 (MemoRagService.getBenchmarkDocumentManifest)` |
 | 2 | `isBenchmarkSeedDocumentManifest` | is benchmark seed document manifest の実装処理を担当する。 | `apps/api/src/routes/benchmark-seed.ts:72 (isBenchmarkSeedDocumentManifest)` |
 | 2 | `isBenchmarkSeedDocumentIdentity` | is benchmark seed document identity の実装処理を担当する。 | `apps/api/src/routes/benchmark-seed.ts:435 (isBenchmarkSeedDocumentIdentity)` |
 | 1 | `stringValue` | string value の実装処理を担当する。 | `apps/api/src/routes/document-routes.ts:449 (stringValue)` |
-| 1 | `MemoRagService.deleteDocument` | delete document の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1321 (MemoRagService.deleteDocument)` |
+| 1 | `MemoRagService.deleteDocument` | delete document の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:1428 (MemoRagService.deleteDocument)` |
 | 2 | `DocumentLifecycleMutationCoordinator.deleteDocument` | delete document の実装処理を担当する。 | `apps/api/src/documents/document-lifecycle-mutation-coordinator.ts:309 (DocumentLifecycleMutationCoordinator.deleteDocument)` |
 | 1 | `isForbiddenError` | is forbidden error の実装処理を担当する。 | `apps/api/src/routes/document-routes.ts:310 (isForbiddenError)` |
 | 1 | `resourceUnavailable` | resource unavailable の実装処理を担当する。 | `apps/api/src/routes/document-routes.ts:293 (resourceUnavailable)` |

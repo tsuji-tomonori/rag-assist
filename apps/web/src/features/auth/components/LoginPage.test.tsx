@@ -28,22 +28,32 @@ describe("LoginPage", () => {
 
     await userEvent.type(screen.getByPlaceholderText("メールアドレスを入力"), "tester@example.com")
     await userEvent.type(screen.getByPlaceholderText("パスワードを入力"), "wrong-password")
-    await userEvent.click(screen.getByRole("button", { name: "サインイン" }))
+    const submitButton = screen.getByRole("button", { name: "サインイン" })
+    await userEvent.click(submitButton)
 
     expect(onLogin).toHaveBeenCalledWith({ email: "tester@example.com", password: "wrong-password", remember: false })
     expect(await screen.findByRole("alert")).toHaveTextContent("メールアドレスまたはパスワードが正しくありません。")
-    expect(screen.getByRole("button", { name: "サインイン" })).toBeInTheDocument()
+    expect(screen.getByRole("form", { name: "Cognitoで安全にサインイン" })).toHaveAttribute("aria-describedby", "login-error")
+    expect(submitButton).toHaveFocus()
+    expect(submitButton).toBeEnabled()
+    expect(screen.getByPlaceholderText("メールアドレスを入力")).toBeEnabled()
+    expect(screen.getByPlaceholderText("パスワードを入力")).toBeEnabled()
   })
 
   it("passes remember=true and ignores empty submissions", async () => {
     const onLogin = vi.fn().mockResolvedValue({ email: "tester@example.com", idToken: "id-token", expiresAt: Date.now() + 3600_000 })
     renderLoginPage({ onLogin })
 
+    const email = screen.getByPlaceholderText("メールアドレスを入力")
+    const password = screen.getByPlaceholderText("パスワードを入力")
+    expect(email).toBeRequired()
+    expect(password).toBeRequired()
     await userEvent.click(screen.getByRole("button", { name: "サインイン" }))
     expect(onLogin).not.toHaveBeenCalled()
+    expect(email).toBeInvalid()
 
-    await userEvent.type(screen.getByPlaceholderText("メールアドレスを入力"), "tester@example.com")
-    await userEvent.type(screen.getByPlaceholderText("パスワードを入力"), "Password123!")
+    await userEvent.type(email, "tester@example.com")
+    await userEvent.type(password, "Password123!")
     await userEvent.click(screen.getByLabelText("ログイン状態を保持"))
     await userEvent.click(screen.getByRole("button", { name: "サインイン" }))
 

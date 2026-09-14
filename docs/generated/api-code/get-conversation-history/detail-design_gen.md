@@ -33,23 +33,23 @@
 
 ## 4. 到達する主要実装
 
-handler を起点に TypeScript symbol を解決し、深さ 2 までの主要関数・method を列挙しています。深い helper を含む全到達関数は 11 件で、永続化・外部接続は深さにかかわらず次節へ集約しています。
+handler を起点に TypeScript symbol を解決し、深さ 2 までの主要関数・method を列挙しています。深い helper を含む全到達関数は 12 件で、永続化・外部接続は深さにかかわらず次節へ集約しています。
 
 | 深さ | Symbol | 責務 | 実装位置 |
 | ---: | --- | --- | --- |
 | 0 | `GET /conversation-history handler` | GET /conversation-history の request を受け、検証・認可・service 呼び出し・HTTP 応答を調整する。 | `apps/api/src/routes/conversation-history-routes.ts:21 (GET /conversation-history handler)` |
 | 1 | `requirePermission` | require permission の実装処理を担当する。 | `apps/api/src/authorization.ts:183 (requirePermission)` |
 | 2 | `hasPermission` | has permission の実装処理を担当する。 | `apps/api/src/authorization.ts:187 (hasPermission)` |
-| 1 | `MemoRagService.listConversationHistory` | list conversation history の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4143 (MemoRagService.listConversationHistory)` |
-| 2 | `tenantPartitionedOwnerKey` | tenant partitioned owner key の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6098 (tenantPartitionedOwnerKey)` |
+| 1 | `MemoRagService.listConversationHistory` | list conversation history の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4236 (MemoRagService.listConversationHistory)` |
+| 2 | `tenantPartitionedOwnerKey` | tenant partitioned owner key の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:5708 (tenantPartitionedOwnerKey)` |
 | 2 | `normalizeConversationHistoryInput` | normalize conversation history input の実装処理を担当する。 | `apps/api/src/adapters/conversation-history-store.ts:19 (normalizeConversationHistoryInput)` |
 
 ## 5. データ・外部境界
 
 | 種別 | 境界 | Target | Operation | 目的 | Caller | 実装位置 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 参照 | Store | `this.deps.conversationHistoryStore` | `list` | `this.deps.conversationHistoryStore` に対して list を実行する。 | `MemoRagService.listConversationHistory` | `apps/api/src/rag/memorag-service.ts:4146 (MemoRagService.listConversationHistory)` |
-| 参照 | Store | `this.deps.favoriteStore` | `list` | `this.deps.favoriteStore` に対して list を実行する。 | `MemoRagService.listConversationHistory` | `apps/api/src/rag/memorag-service.ts:4147 (MemoRagService.listConversationHistory)` |
+| 参照 | Store | `this.deps.conversationHistoryStore` | `list` | `this.deps.conversationHistoryStore` に対して list を実行する。 | `MemoRagService.listConversationHistory` | `apps/api/src/rag/memorag-service.ts:4239 (MemoRagService.listConversationHistory)` |
+| 参照 | Store | `this.deps.favoriteStore` | `list` | `this.deps.favoriteStore` に対して list を実行する。 | `MemoRagService.listConversationHistory` | `apps/api/src/rag/memorag-service.ts:4240 (MemoRagService.listConversationHistory)` |
 
 ## 6. 応答・メッセージ
 
@@ -62,6 +62,7 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 例外 | `403` | Forbidden | 利用者が 指定された permission を持たない |
 | 例外 | `-` | User identity is required for tenant-partitioned storage | `userId` が存在しない、または偽である |
 | 例外 | `-` | Authoritative tenant is required for user storage | `config.authEnabled` が存在し、真である、または `config.nodeEnv` が `"production"` と等しい |
+| 例外 | `-` | Unsupported conversation history schema version | 当該処理へ到達した場合 |
 | 例外 | `-` | Session document context must match conversation id | `context.sessionId` が `sessionId` と異なる |
 
 ## 7. テスト対応

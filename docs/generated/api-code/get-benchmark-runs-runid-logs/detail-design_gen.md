@@ -35,8 +35,6 @@ CodeBuild ログをテキストで取得する
 | ---: | --- | --- | --- | --- | --- |
 | B001 | `GET /benchmark-runs/{runId}/logs handler` | if | `download` が存在しない、または偽である | `!download` | `apps/api/src/routes/benchmark-routes.ts:245 (GET /benchmark-runs/{runId}/logs handler)` |
 | B002 | `requirePermission` | if | 利用者が 指定された permission を持たない | `!hasPermission(user, permission)` | `apps/api/src/authorization.ts:184 (requirePermission)` |
-| B003 | `MemoRagService.getBenchmarkCodeBuildLogText` | if | `run` が存在しない、または偽である | `!run` | `apps/api/src/rag/memorag-service.ts:4781 (MemoRagService.getBenchmarkCodeBuildLogText)` |
-| B004 | `MemoRagService.getBenchmarkCodeBuildLogText` | if | `text` が `undefined` と等しい | `text === undefined` | `apps/api/src/rag/memorag-service.ts:4788 (MemoRagService.getBenchmarkCodeBuildLogText)` |
 
 ## 4. 到達する主要実装
 
@@ -49,8 +47,8 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 2 | `hasPermission` | has permission の実装処理を担当する。 | `apps/api/src/authorization.ts:187 (hasPermission)` |
 | 1 | `validParam` | valid param の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:24 (validParam)` |
 | 2 | `validRequest` | valid request の実装処理を担当する。 | `apps/api/src/routes/route-utils.ts:36 (validRequest)` |
-| 1 | `MemoRagService.getBenchmarkCodeBuildLogText` | get benchmark code build log text の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4779 (MemoRagService.getBenchmarkCodeBuildLogText)` |
-| 2 | `authoritativeActorTenantId` | authoritative actor tenant id の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:6090 (authoritativeActorTenantId)` |
+| 1 | `MemoRagService.getBenchmarkCodeBuildLogText` | get benchmark code build log text の実装処理を担当する。 | `apps/api/src/rag/memorag-service.ts:4560 (MemoRagService.getBenchmarkCodeBuildLogText)` |
+| 2 | `BenchmarkRunQueryService.getCodeBuildLogText` | get code build log text の実装処理を担当する。 | `apps/api/src/benchmark/benchmark-run-query-service.ts:23 (BenchmarkRunQueryService.getCodeBuildLogText)` |
 | 1 | `resourceUnavailable` | resource unavailable の実装処理を担当する。 | `apps/api/src/routes/benchmark-routes.ts:254 (resourceUnavailable)` |
 | 2 | `settleNonEnumerationTiming` | settle non enumeration timing の実装処理を担当する。 | `apps/api/src/security/public-resource-response.ts:40 (settleNonEnumerationTiming)` |
 
@@ -59,8 +57,9 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 | 種別 | 境界 | Target | Operation | 目的 | Caller | 実装位置 |
 | --- | --- | --- | --- | --- | --- | --- |
 | 参照 | External | `service` | `getBenchmarkCodeBuildLogText` | `service` へ get benchmark code build log text を実行する。 | `GET /benchmark-runs/{runId}/logs handler` | `apps/api/src/routes/benchmark-routes.ts:244 (GET /benchmark-runs/{runId}/logs handler)` |
-| 参照 | Store | `this.deps.benchmarkRunStore` | `get` | `this.deps.benchmarkRunStore` に対して get を実行する。 | `MemoRagService.getBenchmarkCodeBuildLogText` | `apps/api/src/rag/memorag-service.ts:4780 (MemoRagService.getBenchmarkCodeBuildLogText)` |
-| 参照 | External | `this.deps.codeBuildLogReader?` | `getText` | `this.deps.codeBuildLogReader?` へ get text を実行する。 | `MemoRagService.getBenchmarkCodeBuildLogText` | `apps/api/src/rag/memorag-service.ts:4783 (MemoRagService.getBenchmarkCodeBuildLogText)` |
+| 参照 | External | `this.benchmarkRunQueryService` | `getCodeBuildLogText` | `this.benchmarkRunQueryService` へ get code build log text を実行する。 | `MemoRagService.getBenchmarkCodeBuildLogText` | `apps/api/src/rag/memorag-service.ts:4561 (MemoRagService.getBenchmarkCodeBuildLogText)` |
+| 参照 | Store | `this.ports.benchmarkRunStore` | `get` | `this.ports.benchmarkRunStore` に対して get を実行する。 | `BenchmarkRunQueryService.get` | `apps/api/src/benchmark/benchmark-run-query-service.ts:20 (BenchmarkRunQueryService.get)` |
+| 参照 | External | `this.ports.codeBuildLogReader?` | `getText` | `this.ports.codeBuildLogReader?` へ get text を実行する。 | `BenchmarkRunQueryService.getCodeBuildLogText` | `apps/api/src/benchmark/benchmark-run-query-service.ts:27 (BenchmarkRunQueryService.getCodeBuildLogText)` |
 
 ## 6. 応答・メッセージ
 
@@ -76,8 +75,8 @@ handler を起点に TypeScript symbol を解決し、深さ 2 までの主要�
 
 | 関連 | Test case | 実装位置 |
 | --- | --- | --- |
-| 到達 symbol | benchmark CodeBuild log text download uses stored log stream metadata | `apps/api/src/rag/memorag-service.test.ts:3262 (benchmark CodeBuild log text download uses stored log stream metadata)` |
-| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:3469 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
+| 到達 symbol | benchmark CodeBuild log text download uses stored log stream metadata | `apps/api/src/rag/memorag-service.test.ts:3264 (benchmark CodeBuild log text download uses stored log stream metadata)` |
+| 到達 symbol | service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases | `apps/api/src/rag/memorag-service.test.ts:3471 (service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases)` |
 
 ## 8. 解析上の注意
 

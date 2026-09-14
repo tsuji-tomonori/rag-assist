@@ -46,5 +46,5 @@ test("Issue #359 keeps the benchmark workspace as the only repository source roo
   }
 
   assert.deepEqual(unexpectedReferences, [], `legacy repository path references found:\n${unexpectedReferences.join("\n")}`)
-  assert.equal(externalDatasetKeyReferences.length, 2, "the two existing external S3 dataset-key fixtures must remain explicit")
+  assert.equal(externalDatasetKeyReferences.length, 4, "the four external S3 dataset-key fixtures for benchmark metric integrity must remain explicit")
 })

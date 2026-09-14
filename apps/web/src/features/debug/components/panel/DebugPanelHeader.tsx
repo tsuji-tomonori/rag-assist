@@ -1,6 +1,6 @@
 import type { ChangeEvent } from "react"
 import type { DebugStep, DebugTrace } from "../../types.js"
-import { Icon } from "../../../../shared/components/Icon.js"
+import { Icon } from "../../../../shared/ui/Icon.js"
 import { downloadDebugTrace } from "../../../../shared/utils/downloads.js"
 import type { DebugReplayEnvelope } from "../../utils/debugTraceReplay.js"
 import { downloadDebugReplayEnvelope } from "./debugPanelUtils.js"

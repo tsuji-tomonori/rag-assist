@@ -10,7 +10,7 @@ test("unknown routes return the JSON error contract", async () => {
 
   assert.equal(response.status, 404)
   assert.match(response.headers.get("content-type") ?? "", /application\/json/)
-  assert.equal(response.headers.get("access-control-allow-origin"), "http://localhost:5173")
+  assert.equal(response.headers.get("access-control-allow-origin"), null)
   assert.deepEqual(await response.json(), { error: "Not found" })
 })
 
@@ -44,11 +44,10 @@ test("production config rejects fail-open auth", () => {
   assert.match(result.stderr, /AUTH_ENABLED must be true in production/)
 })
 
-test("production config temporarily allows wildcard CORS origins", () => {
-  const result = importConfigJsonInSubprocess({
+test("production config fails closed for unsafe CORS origin settings", () => {
+  const requiredProductionEnv = {
     NODE_ENV: "production",
     AUTH_ENABLED: "true",
-    CORS_ALLOWED_ORIGINS: "*",
     DOCS_BUCKET_NAME: "docs-bucket",
     FAVORITES_TABLE_NAME: "favorites-table",
     COGNITO_REGION: "ap-northeast-1",
@@ -56,11 +55,31 @@ test("production config temporarily allows wildcard CORS origins", () => {
     COGNITO_APP_CLIENT_ID: "client-id",
     AUTH_TENANT_ID: "tenant-production",
     BENCHMARK_EVALUATION_ENABLED: "false"
-  })
+  }
+  const invalidValues = [
+    undefined,
+    "",
+    "   ",
+    "*",
+    "https://app.example.com,*",
+    "app.example.com",
+    "ftp://app.example.com",
+    "http://app.example.com",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://[::1]:5173",
+    "https://app.example.com/path",
+    "https://app.example.com,https://admin.example.com"
+  ]
 
-  assert.equal(result.status, 0, result.stderr)
-  const config = JSON.parse(result.stdout)
-  assert.deepEqual(config.corsAllowedOrigins, ["*"])
+  for (const corsAllowedOrigins of invalidValues) {
+    const result = importConfigInSubprocess({
+      ...requiredProductionEnv,
+      CORS_ALLOWED_ORIGINS: corsAllowedOrigins
+    })
+    assert.notEqual(result.status, 0, `unsafe CORS setting was accepted: ${String(corsAllowedOrigins)}`)
+    assert.match(result.stderr, /CORS_ALLOWED_ORIGINS/)
+  }
 })
 
 test("production config requires Cognito settings when auth is enabled", () => {
@@ -85,7 +104,7 @@ test("production config parses explicit runtime environment values", () => {
     NODE_ENV: "production",
     AWS_DEFAULT_REGION: "us-west-2",
     AUTH_ENABLED: "true",
-    CORS_ALLOWED_ORIGINS: "https://app.example.com, https://admin.example.com",
+    CORS_ALLOWED_ORIGINS: "https://app.example.com",
     DOCS_BUCKET_NAME: "docs-bucket",
     FAVORITES_TABLE_NAME: "favorites-table",
     COGNITO_USER_POOL_ID: "us-west-2_example",
@@ -114,11 +133,12 @@ test("production config parses explicit runtime environment values", () => {
   assert.equal(result.status, 0, result.stderr)
   const config = JSON.parse(result.stdout)
   assert.equal(config.region, "us-west-2")
+  assert.equal(config.deploymentEnvironment, "prod")
   assert.equal(config.authTenantId, "tenant-production")
   assert.equal(config.benchmarkEvaluationEnabled, true)
   assert.equal(config.benchmarkEvaluationTenantId, "benchmark-production")
   assert.equal(config.port, 9000.5)
-  assert.deepEqual(config.corsAllowedOrigins, ["https://app.example.com", "https://admin.example.com"])
+  assert.deepEqual(config.corsAllowedOrigins, ["https://app.example.com"])
   assert.equal(config.mockBedrock, true)
   assert.equal(config.useLocalVectorStore, false)
   assert.equal(config.useLocalQuestionStore, false)
@@ -219,7 +239,7 @@ test("production config rejects missing docs bucket and invalid scalar values", 
   assert.equal(explicitlyDisabledBenchmark.status, 0, explicitlyDisabledBenchmark.stderr)
 })
 
-test("development config falls back for invalid scalar values", () => {
+test("development config has no implicit CORS wildcard and falls back for invalid scalar values", () => {
   const result = importConfigJsonInSubprocess({
     NODE_ENV: "development",
     MOCK_BEDROCK: "maybe",
@@ -233,11 +253,92 @@ test("development config falls back for invalid scalar values", () => {
   assert.equal(config.authEnabled, false)
   assert.equal(config.port, 8787)
   assert.equal(config.mockBedrock, false)
-  assert.deepEqual(config.corsAllowedOrigins, ["*"])
+  assert.deepEqual(config.corsAllowedOrigins, [])
   assert.equal(config.documentUploadMaxBytes, 20 * 1024 * 1024)
   assert.equal(config.useLocalVectorStore, true)
   assert.equal(config.useLocalQuestionStore, true)
   assert.equal(config.publishLexicalIndexOnSearch, true)
+})
+
+test("development config accepts only explicitly configured exact origins or wildcard", () => {
+  const exactOrigins = importConfigJsonInSubprocess({
+    NODE_ENV: "development",
+    CORS_ALLOWED_ORIGINS: "http://localhost:5173,http://127.0.0.1:5173"
+  })
+  const explicitWildcard = importConfigJsonInSubprocess({
+    NODE_ENV: "development",
+    CORS_ALLOWED_ORIGINS: "*"
+  })
+  const mixedWildcard = importConfigInSubprocess({
+    NODE_ENV: "development",
+    CORS_ALLOWED_ORIGINS: "*,http://localhost:5173"
+  })
+
+  assert.equal(exactOrigins.status, 0, exactOrigins.stderr)
+  assert.deepEqual(JSON.parse(exactOrigins.stdout).corsAllowedOrigins, ["http://localhost:5173", "http://127.0.0.1:5173"])
+  assert.equal(explicitWildcard.status, 0, explicitWildcard.stderr)
+  assert.deepEqual(JSON.parse(explicitWildcard.stdout).corsAllowedOrigins, ["*"])
+  assert.notEqual(mixedWildcard.status, 0)
+  assert.match(mixedWildcard.stderr, /wildcard must be the only entry/)
+})
+
+test("production deployment CORS remains fail-closed when NODE_ENV is development", () => {
+  for (const corsAllowedOrigins of [
+    "*",
+    "http://app.example.com",
+    "https://app.example.com,https://admin.example.com"
+  ]) {
+    const result = importConfigInSubprocess({
+      NODE_ENV: "development",
+      DEPLOYMENT_ENVIRONMENT: "prod",
+      CORS_ALLOWED_ORIGINS: corsAllowedOrigins
+    })
+
+    assert.notEqual(result.status, 0, `unsafe production deployment CORS setting was accepted: ${corsAllowedOrigins}`)
+    assert.match(result.stderr, /CORS_ALLOWED_ORIGINS/)
+  }
+
+  const exactOrigin = importConfigJsonInSubprocess({
+    NODE_ENV: "development",
+    DEPLOYMENT_ENVIRONMENT: "production",
+    CORS_ALLOWED_ORIGINS: "https://app.example.com"
+  })
+  assert.equal(exactOrigin.status, 0, exactOrigin.stderr)
+  assert.deepEqual(JSON.parse(exactOrigin.stdout).corsAllowedOrigins, ["https://app.example.com"])
+})
+
+test("deployed dev Lambda accepts one explicit local origin with NODE_ENV production", () => {
+  const deployedDevEnv = {
+    NODE_ENV: "production",
+    DEPLOYMENT_ENVIRONMENT: "dev",
+    AUTH_ENABLED: "true",
+    DOCS_BUCKET_NAME: "docs-bucket",
+    FAVORITES_TABLE_NAME: "favorites-table",
+    COGNITO_REGION: "ap-northeast-1",
+    COGNITO_USER_POOL_ID: "ap-northeast-1_example",
+    COGNITO_APP_CLIENT_ID: "client-id",
+    AUTH_TENANT_ID: "tenant-dev",
+    BENCHMARK_EVALUATION_ENABLED: "false"
+  }
+  const exactOrigin = importConfigJsonInSubprocess({
+    ...deployedDevEnv,
+    CORS_ALLOWED_ORIGINS: "http://localhost:5173"
+  })
+  const wildcard = importConfigInSubprocess({
+    ...deployedDevEnv,
+    CORS_ALLOWED_ORIGINS: "*"
+  })
+  const multipleOrigins = importConfigInSubprocess({
+    ...deployedDevEnv,
+    CORS_ALLOWED_ORIGINS: "http://localhost:5173,https://dev.example.com"
+  })
+
+  assert.equal(exactOrigin.status, 0, exactOrigin.stderr)
+  assert.deepEqual(JSON.parse(exactOrigin.stdout).corsAllowedOrigins, ["http://localhost:5173"])
+  assert.notEqual(wildcard.status, 0)
+  assert.match(wildcard.stderr, /CORS_ALLOWED_ORIGINS/)
+  assert.notEqual(multipleOrigins.status, 0)
+  assert.match(multipleOrigins.stderr, /CORS_ALLOWED_ORIGINS/)
 })
 
 function importConfigInSubprocess(env: NodeJS.ProcessEnv) {

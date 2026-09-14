@@ -1,0 +1,112 @@
+# Issue #345 履歴 cross-browser semantic required gate
+
+- 状態: do
+- タスク種別: 機能追加
+- 対象Issue: #345
+- 対象PR: #462
+- 作成日時: 2026-08-30 08:58 JST
+
+## 背景
+
+Draft PR #462 head `bed8f493` は current `main@8e542b31` を祖先に含み、履歴画面について320px content stress、Chromium／Firefox／WebKit keyboard journey、Chromium AX tree、Firefox／WebKitのloading／error／permission／retry stateをrequired gateで検証している。一方、履歴workspace、検索、並び順、お気に入りfilter、主要actionのname／role／value／checked stateをFirefox／WebKitで検証するsemantic snapshotはrequired gateにない。
+
+並行Draft PR #461は`HistoryWorkspace.tsx`を含むproduction sourceとgenerated Web inventoryを変更するため、今回sliceはproduction sourceを避け、既存DOM contractをrequired E2Eと正本／生成文書へ同期する。
+
+## 目的
+
+履歴を検索・絞り込み・選択する主要導線のsemantic contractをFirefox／WebKit required gateへ追加し、`history → SQ-016 → AC-SQ016-003 → E2E-UI-CROSS-BROWSER-SEMANTICS-006`を正本、authored trace / quality matrix、生成文書で一意に追跡可能にする。
+
+## スコープ
+
+### 対象
+
+- `apps/web/e2e/cross-browser-semantics.spec.ts`
+- `tools/web-inventory/ui-traceability.json`
+- `tools/web-inventory/ui-quality-matrix.json`
+- `docs/1_要求_REQ/**/REQ_SERVICE_QUALITY_016.md`
+- `docs/3_設計_DES/21_UI_UX/DES_UI_UX_001.md`
+- repository generatorが更新する`docs/generated/`のWeb inventory / quality matrix
+- task / spec analysis / working report
+
+### 対象外
+
+- production component / CSS / API / authorization / RAG contract
+- PR #461が所有するproduction source
+- 既存のloading／error／permission／retry gateの再実装
+- representative screen reader、Firefox／WebKit native AX tree debug output
+- browser UIを操作する実200%／400% zoom、text-only zoom、OS scaling
+- touch／実機、manual keyboard / contrast
+- FR-051、OQ-UI-002、API C1 85%
+- merge、deploy、release、force-push
+
+## 入力と確定事項
+
+- `confirmed`: `main@8e542b31` と #462 head `bed8f493` のbehindは0。
+- `confirmed`: #461はDraftで、`HistoryWorkspace.tsx`を含むproduction sourceとgenerated Web inventoryを変更する。
+- `confirmed`: 履歴はChromium AX、Chromium／Firefox／WebKit keyboard、Firefox／WebKit state、layout stressまでrequiredである。
+- `confirmed`: Firefox／WebKit required gateは現状semantic 10件／合計26件である。
+- `confirmed`: 履歴のFirefox／WebKit semantic snapshotは未実装である。
+- `open_question`: representative screen reader / OS / browser / device matrixとownerは`OQ-UI-002`未決。
+
+## 実施計画
+
+1. 履歴fixtureをPlaywright routeに限定して追加する。
+2. workspace／heading／会話一覧、検索／並び順／お気に入りfilter、favorite／delete／back actionをFirefox／WebKitで検証する。
+3. filter変更後のquery／sort valueとchecked stateを同一実走で検証し、browser別evidenceを添付する。
+4. SQ-016正本、UI正本、trace、quality matrixのE2E IDとrequired件数を同期する。
+5. generatorを実行してgenerated Web docsをauthored sourceから更新する。
+6. targeted lint / typecheck / unit / build / E2E discovery / docs checksを実行し、失敗時は原因を修復して再実行する。
+7. #462を更新し、受け入れ確認・セルフレビュー・#345進捗を記録する。
+
+## ドキュメント保守計画
+
+- 要件の正本は既存`SQ-016`に集約し、新しい並行要件文書を作らない。
+- 画面固有の実装契約は既存`DES_UI_UX_001.md`へ追加する。
+- `tools/web-inventory/*.json`をauthored sourceとし、`docs/generated/`を直接編集しない。
+- Playwright ARIA snapshot / DOM stateをnative AX treeやrepresentative screen readerのpassへ読み替えない。
+
+## 受け入れ条件
+
+- [x] `E2E-UI-CROSS-BROWSER-SEMANTICS-006`がFirefox／WebKitで履歴region／heading／会話一覧、検索／並び順／お気に入りfilter、favorite／delete／back actionを検証する。
+- [x] query／sort valueとお気に入りfilter checked stateの変更を同じ実走で検証する。
+- [x] browser project名、新E2E ID、Playwright ARIA snapshot / DOM stateの証跡境界をartifactへ記録する。
+- [x] `history → SQ-016 → AC-SQ016-003 → E2E-UI-CROSS-BROWSER-SEMANTICS-006`が正本、authored trace / matrix、生成文書で一致する。
+- [x] required Firefox／WebKit scopeの内訳がsemantic 12件／合計28件へ更新される。
+- [x] production component / CSS / API / authorization / RAG contractを変更しない。
+- [x] manual / overall statusは`blocked`を維持し、representative screen reader、native AX tree、実browser zoom、実機をpass扱いしない。
+- [x] 選定したlint、typecheck、unit、build、E2E discovery、docs / freshness checks、`git diff --check`が成功する。
+- [x] Draft PR #462、PR受け入れコメント、セルフレビュー、Issue #345進捗が更新される。
+
+## 検証計画
+
+- `npm ci`
+- targeted ESLint / E2E TypeScript
+- `npm run typecheck -w @memorag-mvp/web`
+- `TZ=Asia/Tokyo npm run test -w @memorag-mvp/web`
+- `npm run build -w @memorag-mvp/web`
+- targeted Firefox／WebKit discovery
+- required Firefox／WebKit 28件discovery
+- `npm run docs:web-inventory`
+- `npm run docs:web-trace:test`
+- `npm run test:web-semantic-ui`
+- `npm run docs:web-inventory:check`
+- `python3 scripts/validate_docs.py`
+- `npm run docs:hidden-unicode:check`
+- authored JSON parse
+- `git diff --check`
+
+対象Playwright実走はlocal browser / server availabilityを確認して実行する。実行できない場合は未実施理由を記録し、GitHub Actions required Firefox／WebKit結果を待つ。
+
+## PRレビュー観点
+
+- test-only fixtureがproduction API / auth / RAG behaviorへ漏れていないか。
+- role / name / value / checkedと主要actionに限定し、装飾的文言を過剰固定していないか。
+- authored sourceとgenerated docsの差分がgenerator出力だけか。
+- #461のproduction ownershipを侵食していないか。
+- manual / native evidenceを自動証跡でpassへ昇格していないか。
+
+## リスク
+
+- Firefox／WebKitのARIA snapshot差により、Chromiumだけでは見えないrole/name差がCIで検出される可能性がある。
+- #461統合後は最終production DOMに対する再検証が必要である。
+- #462は累積stackであり、本sliceがpassしてもPR全体はmerge-readyではない。
