@@ -84,7 +84,7 @@ Draft PR #470 head `1cc3b018` はcurrent `main@8e542b31`を祖先に含み、beh
 
 - Given: 自動証跡とmanual evidenceの境界が異なる。
 - When: PR #470とIssue #345へ進捗を記録する。
-- Then: final head、CI、受け入れ確認、セルフレビュー、manual／owner／既存API blockerを完了扱いせず明記する。
+- Then: final head、CI、受け入れ確認、セルフレビュー、manual／owner／API C1 blockerを完了扱いせず明記する。
 
 ## Done条件
 
@@ -115,7 +115,7 @@ Draft PR #470 head `1cc3b018` はcurrent `main@8e542b31`を祖先に含み、beh
 
 - 320 CSS pxはbrowser chromeを含む実400% zoomを証明しない。
 - route fixtureは実API／認可／永続化の証跡ではない。
-- representative screen reader、native AX tree、実browser zoom、touch／実機、#461統合後再検証、owner判断、既存API build／C1 85%は未完了を維持する。
+- representative screen reader、native AX tree、実browser zoom、touch／実機、#461統合後再検証、owner判断、API C1 85%は未完了を維持する。
 
 ## 実装head検証結果
 
@@ -124,8 +124,8 @@ Draft PR #470 head `1cc3b018` はcurrent `main@8e542b31`を祖先に含み、beh
 - [x] AC-3: document root／管理者設定regionの水平overflowなしと、browser別JSON evidenceを検証した。
 - [x] AC-4: `admin → SQ-016 → AC-SQ016-001 / 006 / 007 → E2E-UI-LAYOUT-STRESS-001`を正本、UI設計、quality matrix、生成文書へ同期した。
 - [x] AC-5: production component／CSS／API／認可は変更せず、#461との競合境界を維持した。
-- [ ] AC-6: PR受け入れ確認、セルフレビュー、Issue #345進捗とfinal headのCI確定を待つ。
+- [x] AC-6: [PR受け入れ確認](https://github.com/tsuji-tomonori/rag-assist/pull/470#issuecomment-5657313078)、[セルフレビュー](https://github.com/tsuji-tomonori/rag-assist/pull/470#pullrequestreview-5192853048)、[Issue #345進捗](https://github.com/tsuji-tomonori/rag-assist/issues/345#issuecomment-5657313254)へCIと未完了境界を記録した。
 
-remote implementation headは`ea5e2bfc`。[Web UI Quality](https://github.com/tsuji-tomonori/rag-assist/actions/runs/34791137327)はRequired E2E TypeScript、Chromium required、Firefox／WebKit requiredを含めsuccess。[semver検査](https://github.com/tsuji-tomonori/rag-assist/actions/runs/34791137353)もsuccess。[MemoRAG CI](https://github.com/tsuji-tomonori/rag-assist/actions/runs/34791137334)は実行中のため未完了とする。
+remote implementation headは`ea5e2bfc`、外部証跡同期headは`ac0f2f0c`。[Web UI Quality](https://github.com/tsuji-tomonori/rag-assist/actions/runs/34791486035)はRequired E2E TypeScript、Chromium required 41件、Firefox／WebKit required 60件を含めsuccess。[semver検査](https://github.com/tsuji-tomonori/rag-assist/actions/runs/34791486085)もsuccess。[MemoRAG CI](https://github.com/tsuji-tomonori/rag-assist/actions/runs/34791485943)はAPI test／typecheck／buildを含む個別step、Web／docsがsuccess。API C1 80.75%（目標85%、既存改善task `tasks/todo/20260712-coverage-api-c1-recovery.md`）だけが未達で全体failureのため、taskは`do`、PRはDraftを維持する。
 
 ローカルは対象ESLint、Web／E2E typecheck、Web build、Web unit 66 files／473 tests（`TZ=Asia/Tokyo`）、E2E discovery 6件、trace 13件、semantic UI 5件、manual evidence schema 7件、Web inventory freshness、hidden Unicode、Taskfile alias、`git diff --check`がpass。Playwright browser本体の取得はCDN timeoutで停止したため、ローカル実走をpassとは扱わずremote required gateを証跡とする。

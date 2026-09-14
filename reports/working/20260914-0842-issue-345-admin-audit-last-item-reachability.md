@@ -50,17 +50,19 @@ Playwright browser本体のローカル取得はCDNへの30秒timeoutを繰り�
 - implementation head `ea5e2bfc`
 - [Web UI Quality 34791137327](https://github.com/tsuji-tomonori/rag-assist/actions/runs/34791137327): success。Required E2E TypeScript、Chromium required、Firefox／WebKit requiredを通過。
 - [Validate Semver Label 34791137353](https://github.com/tsuji-tomonori/rag-assist/actions/runs/34791137353): success。
-- [MemoRAG CI 34791137334](https://github.com/tsuji-tomonori/rag-assist/actions/runs/34791137334): 実行中。確定前なので未完了。
+- 外部証跡同期head `ac0f2f0c`
+- [Web UI Quality 34791486035](https://github.com/tsuji-tomonori/rag-assist/actions/runs/34791486035): success。Required E2E TypeScript、Chromium required 41件、Firefox／WebKit required 60件を通過。
+- [Validate Semver Label 34791486085](https://github.com/tsuji-tomonori/rag-assist/actions/runs/34791486085): success。
+- [MemoRAG CI 34791485943](https://github.com/tsuji-tomonori/rag-assist/actions/runs/34791485943): failure。API test／typecheck／build、Web lint／typecheck／unit 473件／C0 90.02%・C1 85.12%／build、docsを含む個別stepはsuccess。API C1 80.75%（目標85%、既存改善task `tasks/todo/20260712-coverage-api-c1-recovery.md`）だけが未達。
 
 ## 受け入れ判断
 
-AC-1〜5はimplementation headで満たした。PR／Issue証跡とfinal headのCI確定を要するAC-6は未完了である。taskは`do`、PRはDraftを維持する。
+AC-1〜5はimplementation headで満たした。AC-6は[PR受け入れ確認](https://github.com/tsuji-tomonori/rag-assist/pull/470#issuecomment-5657313078)、[セルフレビュー](https://github.com/tsuji-tomonori/rag-assist/pull/470#pullrequestreview-5192853048)、[Issue #345進捗](https://github.com/tsuji-tomonori/rag-assist/issues/345#issuecomment-5657313254)で満たした。API C1とmanual evidenceが未完了のため、taskは`do`、PRはDraftを維持する。
 
 ## 未完了
 
-- MemoRAG CIの完了確認。
 - representative screen reader、Firefox／WebKit native AX tree、実browser 200%／400% zoom、text-only zoom、OS scaling、touch／実機、manual keyboard／contrast。
 - 実API／AWS認可、#461統合後の最終DOM再検証。
-- FR-050／FR-051、TC-003、OQ-UI-002、owner判断、既存API build／C1 85%。
+- FR-050／FR-051、TC-003、OQ-UI-002、owner判断、API C1 85%。
 
 merge、deploy、release、force-pushは実施していない。
