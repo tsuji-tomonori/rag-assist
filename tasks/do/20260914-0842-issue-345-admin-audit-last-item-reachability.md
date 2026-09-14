@@ -116,3 +116,16 @@ Draft PR #470 head `1cc3b018` はcurrent `main@8e542b31`を祖先に含み、beh
 - 320 CSS pxはbrowser chromeを含む実400% zoomを証明しない。
 - route fixtureは実API／認可／永続化の証跡ではない。
 - representative screen reader、native AX tree、実browser zoom、touch／実機、#461統合後再検証、owner判断、既存API build／C1 85%は未完了を維持する。
+
+## 実装head検証結果
+
+- [x] AC-1: 管理APIのtest-only成功fixtureと監査履歴36件を追加し、件数summaryとDOM項目数の一致を検証した。
+- [x] AC-2: DOM末尾の監査項目へscrollし、矩形の`top >= 0`かつ`bottom <= 720`をrequired E2Eで検証した。
+- [x] AC-3: document root／管理者設定regionの水平overflowなしと、browser別JSON evidenceを検証した。
+- [x] AC-4: `admin → SQ-016 → AC-SQ016-001 / 006 / 007 → E2E-UI-LAYOUT-STRESS-001`を正本、UI設計、quality matrix、生成文書へ同期した。
+- [x] AC-5: production component／CSS／API／認可は変更せず、#461との競合境界を維持した。
+- [ ] AC-6: PR受け入れ確認、セルフレビュー、Issue #345進捗とfinal headのCI確定を待つ。
+
+remote implementation headは`ea5e2bfc`。[Web UI Quality](https://github.com/tsuji-tomonori/rag-assist/actions/runs/34791137327)はRequired E2E TypeScript、Chromium required、Firefox／WebKit requiredを含めsuccess。[semver検査](https://github.com/tsuji-tomonori/rag-assist/actions/runs/34791137353)もsuccess。[MemoRAG CI](https://github.com/tsuji-tomonori/rag-assist/actions/runs/34791137334)は実行中のため未完了とする。
+
+ローカルは対象ESLint、Web／E2E typecheck、Web build、Web unit 66 files／473 tests（`TZ=Asia/Tokyo`）、E2E discovery 6件、trace 13件、semantic UI 5件、manual evidence schema 7件、Web inventory freshness、hidden Unicode、Taskfile alias、`git diff --check`がpass。Playwright browser本体の取得はCDN timeoutで停止したため、ローカル実走をpassとは扱わずremote required gateを証跡とする。
